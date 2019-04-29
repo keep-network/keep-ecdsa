@@ -19,6 +19,12 @@ type PublicKey struct {
 	Y *big.Int
 }
 
+// Signature holds a signature in a form of two big.Int R and S values.
+type Signature struct {
+	R *big.Int
+	S *big.Int
+}
+
 // NewSigner creates a new Signer and initializes it with random private and
 // public keys. It utilizes go-ethereum's secp256k1 elliptic curve implementation.
 func NewSigner() (*Signer, error) {
@@ -49,4 +55,15 @@ func (s *Signer) PublicKey() *PublicKey {
 		X: s.privateKey.PublicKey.X,
 		Y: s.privateKey.PublicKey.Y,
 	}
+}
+
+// CalculateSignature returns an ECDSA Signature over provided hash, calculated
+// with Signer's private key.
+func (s *Signer) CalculateSignature(hash []byte) (*Signature, error) {
+	sigR, sigS, err := ecdsa.Sign(crand.Reader, s.privateKey, hash)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Signature{R: sigR, S: sigS}, nil
 }
