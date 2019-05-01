@@ -1,0 +1,6 @@
+# This is a TOML configuration file.
+
+# Connection details of a Electrum Server.
+[electrum]
+    ServerHost  = "testnet.hsmiths.com"
+    ServerPort  = "53012"
