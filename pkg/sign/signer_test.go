@@ -6,7 +6,12 @@ import (
 )
 
 func TestSign(t *testing.T) {
-	signer, err := NewSigner()
+	privateKey,err := GenerateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signer, err := NewSigner(privateKey)
 	if err != nil {
 		t.Fatal(err)
 	}
