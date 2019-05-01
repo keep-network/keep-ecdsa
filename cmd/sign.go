@@ -27,7 +27,12 @@ func init() {
 func Sign(c *cli.Context) error {
 	arg := c.Args().First()
 
-	signer, err := sign.NewSigner()
+	privateKey,err := sign.GenerateKey()
+	if err != nil {
+		return fmt.Errorf("key generation failed [%v]", err)
+	}
+
+	signer, err := sign.NewSigner(privateKey)
 	if err != nil {
 		return fmt.Errorf("signer creation failed [%v]", err)
 	}
