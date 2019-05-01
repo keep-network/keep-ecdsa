@@ -22,8 +22,8 @@ func init() {
 	}
 }
 
-// Sign sets up a set of local virtual nodes and launches the beacon on
-// them, simulating some relay entries and requests.
+// Sign creates a local signer, generates a public/private ECDSA key pair for them
+// and calculates a signature over a provided CLI argument.
 func Sign(c *cli.Context) error {
 	arg := c.Args().First()
 
