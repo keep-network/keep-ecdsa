@@ -25,28 +25,16 @@ type Signature struct {
 	S *big.Int
 }
 
-// NewSigner creates a new Signer and initializes it with random private and
-// public keys. It utilizes go-ethereum's secp256k1 elliptic curve implementation.
-func NewSigner() (*Signer, error) {
-	signer := &Signer{}
-
-	err := signer.generateKey()
-	if err != nil {
-		return nil, err
-	}
-
-	return signer, nil
+// NewSigner creates a new Signer and initializes it with a provided ECDSA
+// private key.
+func NewSigner(privateKey *ecdsa.PrivateKey) (*Signer, error) {
+	return &Signer{privateKey: privateKey}, nil
 }
 
-func (s *Signer) generateKey() error {
-	privateKey, err := ecdsa.GenerateKey(secp256k1.S256(), crand.Reader)
-	if err != nil {
-		return err
-	}
-
-	s.privateKey = privateKey
-
-	return nil
+// GenerateKey generates an ECDSA private key. It utilizes go-ethereum's secp256k1
+// elliptic curve implementation.
+func GenerateKey() (*ecdsa.PrivateKey, error) {
+	return ecdsa.GenerateKey(secp256k1.S256(), crand.Reader)
 }
 
 // PublicKey returns Signer's public key as a pair of X and Y coordinates.
