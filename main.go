@@ -34,6 +34,7 @@ func main() {
 		},
 	}
 	app.Commands = []cli.Command{
+		cmd.SignCommand,
 		cmd.PublishCommand,
 	}
 
