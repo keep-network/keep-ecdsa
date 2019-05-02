@@ -7,7 +7,7 @@ import (
 )
 
 func TestBroadcastTransaction(t *testing.T) {
-	chain := NewChain()
+	chain := Connect()
 
 	var tests = map[string]struct {
 		rawTx          string
@@ -27,7 +27,7 @@ func TestBroadcastTransaction(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			result, err := chain.BroadcastTransaction(test.rawTx)
+			result, err := chain.SubmitTransaction(test.rawTx)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Errorf(

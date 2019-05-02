@@ -12,9 +12,9 @@ import (
 
 type localChain struct{}
 
-// BroadcastTransaction is a stub implementation which calculates a SHA-256 hash
+// SubmitTransaction is a stub implementation which calculates a SHA-256 hash
 // for given string and returns it encoded to a hexadecimal string.
-func (l *localChain) BroadcastTransaction(rawTx string) (string, error) {
+func (l *localChain) SubmitTransaction(rawTx string) (string, error) {
 	if rawTx == "" {
 		return "", fmt.Errorf("empty transaction provided")
 	}

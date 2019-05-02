@@ -3,8 +3,8 @@ package chain
 
 // Interface is an interface that provides ability to interact with a blockchain.
 type Interface interface {
-	// BroadcastTransaction submits a transaction to a chain. It requires raw
+	// SubmitTransaction submits a transaction to a chain. It requires raw
 	// transaction to be provided in a format specific to a chain. It returns
 	// an unique identifier of the transaction.
-	BroadcastTransaction(rawTx string) (string, error)
+	SubmitTransaction(rawTx string) (string, error)
 }

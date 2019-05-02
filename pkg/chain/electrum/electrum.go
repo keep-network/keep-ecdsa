@@ -22,9 +22,9 @@ type Config struct {
 	ServerHost, ServerPort string
 }
 
-// BroadcastTransaction sends a raw transaction provided as a hexadecimal string
+// SubmitTransaction sends a raw transaction provided as a hexadecimal string
 // to the electrum server. It returns a transaction hash as a hexadecimal string.
-func (e *electrum) BroadcastTransaction(rawTx string) (string, error) {
+func (e *electrum) SubmitTransaction(rawTx string) (string, error) {
 	return e.electrumServer.BroadcastTransaction(rawTx)
 }
 
