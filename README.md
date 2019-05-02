@@ -1,5 +1,13 @@
 # keep-tecdsa
 
+## Prerequisites
+
+Dependencies are managed by [Modules](https://github.com/golang/go/wiki/Modules) feature. 
+To work in Go 1.11 it may require setting `GO111MODULE=on` environment variable.
+```sh
+export GO111MODULE=on
+```
+
 ## Build
 
 To build execute a command:
