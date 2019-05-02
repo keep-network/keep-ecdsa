@@ -9,7 +9,9 @@ ENV GOPATH=/go \
 	GOBIN=/go/bin \
 	APP_NAME=keep-tecdsa \
 	APP_DIR=/go/src/github.com/keep-network/keep-tecdsa \
-	BIN_PATH=/usr/local/bin
+	BIN_PATH=/usr/local/bin \
+	# GO111MODULE required to support go modules
+	GO111MODULE=on
 
 RUN apk add --update --no-cache \
 	g++ \
@@ -20,11 +22,6 @@ RUN apk add --update --no-cache \
 RUN mkdir -p $APP_DIR
 
 WORKDIR $APP_DIR
-
-RUN go get -u github.com/golang/dep/cmd/dep
-
-COPY ./Gopkg.toml ./Gopkg.lock ./
-RUN dep ensure -v --vendor-only
 
 COPY ./ $APP_DIR/
 
