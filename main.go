@@ -10,9 +10,15 @@ import (
 	"github.com/urfave/cli"
 )
 
-const defaultConfigPath = "./configs/config.toml"
+const (
+	defaultConfigPath = "./configs/config.toml"
+	defaultChain      = "blockcypher"
+)
 
-var configPath string
+var (
+	configPath string
+	chain      string
+)
 
 func main() {
 	app := cli.NewApp()
@@ -31,6 +37,12 @@ func main() {
 			Value:       defaultConfigPath,
 			Destination: &configPath,
 			Usage:       "full path to the configuration file",
+		},
+		cli.StringFlag{
+			Name:        "chain",
+			Value:       defaultChain,
+			Destination: &chain,
+			Usage:       "way of communication with the block chain",
 		},
 	}
 	app.Commands = []cli.Command{

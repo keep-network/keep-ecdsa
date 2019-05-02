@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-tecdsa/internal/config"
+	"github.com/keep-network/keep-tecdsa/pkg/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/blockcypher"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/electrum"
 	"github.com/keep-network/keep-tecdsa/pkg/transaction"
 	"github.com/urfave/cli"
@@ -12,8 +14,8 @@ import (
 // PublishCommand contains the definition of the publish command-line subcommand.
 var PublishCommand cli.Command
 
-const publishDescription = `The publish command connects to Electrum Server and
-sends a transaction to the network.`
+const publishDescription = `The publish command sends a transaction to the specific
+block chain.`
 
 func init() {
 	PublishCommand = cli.Command{
@@ -24,8 +26,7 @@ func init() {
 	}
 }
 
-// Publish connects to Electrum Server and broadcasts a raw transaction provided
-// as a CLI argument.
+// Publish sends a raw transaction provided as a CLI argument.
 func Publish(c *cli.Context) error {
 	arg := c.Args().First()
 
@@ -34,9 +35,19 @@ func Publish(c *cli.Context) error {
 		return err
 	}
 
-	chain, err := electrum.Connect(&configFile.Electrum)
-	if err != nil {
-		return err
+	var chain chain.Interface
+
+	switch chainFlag := c.GlobalString("chain"); chainFlag {
+	case "electrum":
+		chain, err = electrum.Connect(&configFile.Electrum)
+		if err != nil {
+			return err
+		}
+	default:
+		chain, err = blockcypher.Connect(&configFile.BlockCypher)
+		if err != nil {
+			return err
+		}
 	}
 
 	result, err := transaction.Publish(chain, arg)
