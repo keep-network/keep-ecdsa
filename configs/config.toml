@@ -4,3 +4,9 @@
 [electrum]
     ServerHost  = "testnet.hsmiths.com"
     ServerPort  = "53012"
+
+# Connection details for Block Cypher API.
+[blockcypher]
+    Token   = "d195ca15455f42b7842abd7c691191c9"
+    Coin    = "btc"
+    Chain   = "test3"
