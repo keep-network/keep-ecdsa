@@ -1,0 +1,4 @@
+github.com/keep-network/go-ethereum v1.8.15 h1:ReT/SDDY2rmySjti/sPOgmX5QzA0rLVRxMfpi9WAguE=
+github.com/keep-network/go-ethereum v1.8.15/go.mod h1:Mry72V2nFs3G+WafILiMSHv2ZHPE9dCEoZeUnLxCtqA=
+github.com/urfave/cli v0.0.0-20180226030253-8e01ec4cd3e2 h1:98aNRvvwi7jK4ObVo/OnEKs9hw1bZ8JQNpwlB21ILD0=
+github.com/urfave/cli v0.0.0-20180226030253-8e01ec4cd3e2/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=

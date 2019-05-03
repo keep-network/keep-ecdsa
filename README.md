@@ -1,5 +1,13 @@
 # keep-tecdsa
 
+## Prerequisites
+
+Dependencies are managed by [Modules](https://github.com/golang/go/wiki/Modules) feature. 
+To work in Go 1.11 it may require setting `GO111MODULE=on` environment variable.
+```sh
+export GO111MODULE=on
+```
+
 ## Build
 
 To build execute a command:
@@ -13,6 +21,19 @@ To test execute a command:
 ```sh
 go test ./...
 ```
+
+## Docker
+
+To build a Docker image execute a command:
+```sh
+docker build -t keep-tecdsa .
+```
+
+To run execute a command:
+```sh
+docker run -it keep-tecdsa keep-tecdsa sign <hash>
+```
+Where `<hash>` is a message to sign.
 
 ## Run
 
@@ -32,4 +53,3 @@ Y: d6d1923fa28c29d9fc2eb274cb54efc16875fab6d2d741e56a8afc7783e3f03b
 R: 6479fff99d7aa3f22d9b489f164a6e904abdb74d6cc44fa5b274903accee366a
 S: 3ae8dcb534aa12c84214e7f448c5f60dbc048c64e60977d2b0a81b76cece76c8
 ```
-
