@@ -42,7 +42,7 @@ func main() {
 			Name:        "broadcast-api",
 			Value:       defaultBroadcastAPI,
 			Destination: &broadcastAPI,
-			Usage:       "way of communication with the block chain",
+			Usage:       "external service used to communicate with the blockchain",
 		},
 	}
 	app.Commands = []cli.Command{
