@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestBroadcastTransaction(t *testing.T) {
+func TestPublishTransaction(t *testing.T) {
 	chain := Connect()
 
 	var tests = map[string]struct {
@@ -14,11 +14,11 @@ func TestBroadcastTransaction(t *testing.T) {
 		expectedResult string
 		expectedError  error
 	}{
-		"successful transaction broadcast": {
+		"successful transaction publication": {
 			rawTx:          "0123456789ABCDEF",
 			expectedResult: "2125b2c332b1113aae9bfc5e9f7e3b4c91d828cb942c2df1eeb02502eccae9e9",
 		},
-		"failed transaction broadcast": {
+		"failed transaction publication": {
 			rawTx:          "",
 			expectedResult: "",
 			expectedError:  fmt.Errorf("empty transaction provided"),
@@ -27,7 +27,7 @@ func TestBroadcastTransaction(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			result, err := chain.SubmitTransaction(test.rawTx)
+			result, err := chain.PublishTransaction(test.rawTx)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Errorf(

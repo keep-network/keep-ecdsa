@@ -20,9 +20,9 @@ type Config struct {
 	Chain string // Options: "main", "test3", "test"
 }
 
-// SubmitTransaction sends a raw transaction provided as a hexadecimal string
+// PublishTransaction sends a raw transaction provided as a hexadecimal string
 // to Block Cypher's API. It returns a transaction hash as a hexadecimal string.
-func (bc *blockcypher) SubmitTransaction(rawTx string) (string, error) {
+func (bc *blockcypher) PublishTransaction(rawTx string) (string, error) {
 	tx, err := bc.api.PushTX(rawTx)
 	if err != nil {
 		return "", err
