@@ -73,7 +73,7 @@ Following ways of transaction submission are supported:
 - via Electrum network
 - via Block Cypher API
 
-To choose a chain implementation pass `--chain` flag to execution command.
+To choose a service pass `--broadcast-api` flag to the execution command.
 
 ### Electrum
 
@@ -101,11 +101,11 @@ Sample config file content:
 To publish a raw transaction from the CLI run:
 
 ```sh
-./keep-tecdsa --chain electrum publish <rawTx>
+./keep-tecdsa --broadcast-api electrum publish <rawTx>
 ``` 
 Sample output:
 ```sh
-./keep-tecdsa --chain electrum publish 02000000000101506fda83a9788dab896b90bfc122c700afccd30459e10a0ff270e951202612481600000017160014997f3e8bcf47183fbbe0c8464175047bf391ea83feffffff0279d513000000000016001432b027edb95eee83b40003762a2ff25ae47d560d40420f000000000016001469abce7925fce369303e247c3a465447f6519b780247304402205be426e3e0c2e243eac4808cca306e3f821f7e431e2f0fc0c534851d5551779402202e98a4c7899d0eb2f473af77af6b434a5a47a0d898ed5b41ca2a7692601e36eb012102cb34ff4b355a7f02104cb912dbf4e35a14733030450ac311f6ef498d150a6ad2eb171700
+./keep-tecdsa --broadcast-api electrum publish 02000000000101506fda83a9788dab896b90bfc122c700afccd30459e10a0ff270e951202612481600000017160014997f3e8bcf47183fbbe0c8464175047bf391ea83feffffff0279d513000000000016001432b027edb95eee83b40003762a2ff25ae47d560d40420f000000000016001469abce7925fce369303e247c3a465447f6519b780247304402205be426e3e0c2e243eac4808cca306e3f821f7e431e2f0fc0c534851d5551779402202e98a4c7899d0eb2f473af77af6b434a5a47a0d898ed5b41ca2a7692601e36eb012102cb34ff4b355a7f02104cb912dbf4e35a14733030450ac311f6ef498d150a6ad2eb171700
 
 Connected to Electrum Server.
 Server version: ElectrumX 1.11.0 [Protocol 1.4]
@@ -117,7 +117,8 @@ transaction already in block chain
 
 ### Block Cypher
 
-Transaction is sent to [Block Cypher's API](https://www.blockcypher.com/dev/bitcoin/) to be published on the chain.
+Transaction is sent to [Block Cypher's API](https://www.blockcypher.com/dev/bitcoin/) 
+to be published on the chain.
 
 #### Configuration
 
@@ -138,11 +139,11 @@ To get a developer's `Token` register on Block Cypher [site](https://accounts.bl
 To publish a raw transaction from the CLI run:
 
 ```sh
-./keep-tecdsa --chain blockcypher publish <rawTx>
+./keep-tecdsa --broadcast-api blockcypher publish <rawTx>
 ``` 
 Sample output:
 ```sh
-./keep-tecdsa --chain blockcypher publish 02000000000101506fda83a9788dab896b90bfc122c700afccd30459e10a0ff270e951202612481600000017160014997f3e8bcf47183fbbe0c8464175047bf391ea83feffffff0279d513000000000016001432b027edb95eee83b40003762a2ff25ae47d560d40420f000000000016001469abce7925fce369303e247c3a465447f6519b780247304402205be426e3e0c2e243eac4808cca306e3f821f7e431e2f0fc0c534851d5551779402202e98a4c7899d0eb2f473af77af6b434a5a47a0d898ed5b41ca2a7692601e36eb012102cb34ff4b355a7f02104cb912dbf4e35a14733030450ac311f6ef498d150a6ad2eb171700
+./keep-tecdsa --broadcast-api blockcypher publish 02000000000101506fda83a9788dab896b90bfc122c700afccd30459e10a0ff270e951202612481600000017160014997f3e8bcf47183fbbe0c8464175047bf391ea83feffffff0279d513000000000016001432b027edb95eee83b40003762a2ff25ae47d560d40420f000000000016001469abce7925fce369303e247c3a465447f6519b780247304402205be426e3e0c2e243eac4808cca306e3f821f7e431e2f0fc0c534851d5551779402202e98a4c7899d0eb2f473af77af6b434a5a47a0d898ed5b41ca2a7692601e36eb012102cb34ff4b355a7f02104cb912dbf4e35a14733030450ac311f6ef498d150a6ad2eb171700
 
 2019/05/02 14:26:30 publish failed [transaction broadcast failed [HTTP 400 Bad Request, Message(s): Error validating transaction: Transaction with hash 30f42c9517fb26c93e172647fcf0ab50fa7dfe1f1e0eb9fe9a832ef81f990c47 already exists..]]
 ```

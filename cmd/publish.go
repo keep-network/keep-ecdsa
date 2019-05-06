@@ -37,7 +37,7 @@ func Publish(c *cli.Context) error {
 
 	var chain chain.Interface
 
-	switch chainFlag := c.GlobalString("chain"); chainFlag {
+	switch chainFlag := c.GlobalString("broadcast-api"); chainFlag {
 	case "blockcypher":
 		chain, err = blockcypher.Connect(&configFile.BlockCypher)
 		if err != nil {
