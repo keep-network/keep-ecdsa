@@ -7,8 +7,12 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-tecdsa/cmd"
-	"github.com/urfave/cli"
+	"github.com/keep-network/cli"
 )
+
+const defaultConfigPath = "./configs/config.toml"
+
+var configPath string
 
 func main() {
 	app := cli.NewApp()
@@ -21,9 +25,17 @@ func main() {
 			Email: "info@keep.network",
 		},
 	}
-
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:        "config,c",
+			Value:       defaultConfigPath,
+			Destination: &configPath,
+			Usage:       "full path to the configuration file",
+		},
+	}
 	app.Commands = []cli.Command{
 		cmd.SignCommand,
+		cmd.PublishCommand,
 	}
 
 	err := app.Run(os.Args)

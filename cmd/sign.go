@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/keep-network/cli"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
-	"github.com/urfave/cli"
 )
 
 // SignCommand contains the definition of the sign command-line subcommand.
@@ -27,7 +27,7 @@ func init() {
 func Sign(c *cli.Context) error {
 	arg := c.Args().First()
 
-	privateKey,err := sign.GenerateKey()
+	privateKey, err := sign.GenerateKey()
 	if err != nil {
 		return fmt.Errorf("key generation failed [%v]", err)
 	}

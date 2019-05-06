@@ -1,4 +1,8 @@
+github.com/keep-network/cli v1.20.0 h1:mEufpPsovOVdduTTkk+a2CxS3crIrGFqUsvs58gSik8=
+github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxKNohQWtQhA=
+github.com/keep-network/go-electrum v0.0.0-20190423065222-2dcd82312dcf h1:CGS6NOmCJA8BZ4+h1wmeq/htZoRNMebnM9Kw661OTAs=
+github.com/keep-network/go-electrum v0.0.0-20190423065222-2dcd82312dcf/go.mod h1:ZvM+y3P4A68jBxBZbaCnOusmdjG9yGxUEGywwKVlMtQ=
 github.com/keep-network/go-ethereum v1.8.15 h1:ReT/SDDY2rmySjti/sPOgmX5QzA0rLVRxMfpi9WAguE=
 github.com/keep-network/go-ethereum v1.8.15/go.mod h1:Mry72V2nFs3G+WafILiMSHv2ZHPE9dCEoZeUnLxCtqA=
-github.com/urfave/cli v0.0.0-20180226030253-8e01ec4cd3e2 h1:98aNRvvwi7jK4ObVo/OnEKs9hw1bZ8JQNpwlB21ILD0=
-github.com/urfave/cli v0.0.0-20180226030253-8e01ec4cd3e2/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
+github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
+github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
