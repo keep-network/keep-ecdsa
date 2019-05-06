@@ -1,0 +1,68 @@
+version: 2.1
+
+executors:
+  docker-git:
+    docker:
+      - image: docker:18.06.0-ce-git
+
+orbs:
+  gcp-gcr: circleci/gcp-gcr@0.0.4
+
+jobs:
+  build_client_and_test_go:
+    executor: docker-git
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Run Docker build
+          command: |
+            docker build --target gobuild -t go-build-env .
+            docker build -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa .
+      - run:
+          name: Run Go tests
+          command: |
+            docker run -w /go/src/github.com/keep-network/keep-tecdsa go-build-env go test ./.../
+      - run:
+          name: Save keep-tecdsa image
+          command: |
+            mkdir -p /tmp/images/keep-tecdsa/
+            docker save -o /tmp/images/keep-tecdsa/keep-tecdsa.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
+      - persist_to_workspace:
+          root: /tmp/images
+          paths:
+            - keep-tecdsa
+  publish_client:
+    executor: gcp-gcr/default
+    steps:
+      - attach_workspace:
+          at: /tmp/images
+      - run:
+          name: Load keep-tecdsa image
+          command: |
+            docker load -i /tmp/images/keep-tecdsa/keep-tecdsa.tar
+      - gcp-gcr/gcr-auth:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_PROJECT_ID
+          registry-url: $GCR_REGISTRY_URL
+          image: keep-tecdsa
+          tag: latest
+
+workflows:
+  version: 2
+  build-test-publish:
+    jobs:
+      - build_client_and_test_go:
+          context: keep-dev
+      - publish_client:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - build_client_and_test_go

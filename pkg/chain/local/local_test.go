@@ -39,7 +39,7 @@ func TestBroadcastTransaction(t *testing.T) {
 
 			if test.expectedResult != result {
 				t.Errorf(
-					"\nexpected: %v\nactual:   %v\n",
+					"unexpected result\nexpected: %v\nactual:   %v\n",
 					test.expectedResult,
 					result,
 				)

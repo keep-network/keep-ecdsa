@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-tecdsa/cmd"
-	"github.com/urfave/cli"
+	"github.com/keep-network/cli"
 )
 
 const (
