@@ -6,13 +6,19 @@ import (
 	"path"
 	"time"
 
-	"github.com/keep-network/keep-tecdsa/cmd"
 	"github.com/keep-network/cli"
+	"github.com/keep-network/keep-tecdsa/cmd"
 )
 
-const defaultConfigPath = "./configs/config.toml"
+const (
+	defaultConfigPath   = "./configs/config.toml"
+	defaultBroadcastAPI = "blockcypher"
+)
 
-var configPath string
+var (
+	configPath   string
+	broadcastAPI string
+)
 
 func main() {
 	app := cli.NewApp()
@@ -31,6 +37,12 @@ func main() {
 			Value:       defaultConfigPath,
 			Destination: &configPath,
 			Usage:       "full path to the configuration file",
+		},
+		cli.StringFlag{
+			Name:        "broadcast-api",
+			Value:       defaultBroadcastAPI,
+			Destination: &broadcastAPI,
+			Usage:       "external service used to communicate with the blockchain",
 		},
 	}
 	app.Commands = []cli.Command{
