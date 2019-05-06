@@ -3,10 +3,10 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/keep-network/cli"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/electrum"
 	"github.com/keep-network/keep-tecdsa/pkg/transaction"
-	"github.com/urfave/cli"
 )
 
 // PublishCommand contains the definition of the publish command-line subcommand.

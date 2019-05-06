@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/BurntSushi/toml"
+	"github.com/keep-network/toml"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/electrum"
 )
 

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	goElectrum "github.com/checksum0/go-electrum/electrum"
+	goElectrum "github.com/keep-network/go-electrum/electrum"
 	"github.com/keep-network/keep-tecdsa/pkg/chain"
 )
 
