@@ -67,9 +67,9 @@ S: 3ae8dcb534aa12c84214e7f448c5f60dbc048c64e60977d2b0a81b76cece76c8
 
 ---
 
-## Submit transaction
+## Publish transaction
 
-Following ways of transaction submission are supported:
+Following ways of transaction publishing are supported:
 - via Electrum network
 - via Block Cypher API
 
@@ -77,7 +77,7 @@ To choose a service pass `--broadcast-api` flag to the execution command.
 
 ### Electrum
 
-Transaction is send to Electrum Server to be broadcasted to a network.
+Transaction is submitted to Electrum Server to be published to a network.
 
 #### Configuration
 
@@ -117,7 +117,7 @@ transaction already in block chain
 
 ### Block Cypher
 
-Transaction is sent to [Block Cypher's API](https://www.blockcypher.com/dev/bitcoin/) 
+Transaction is submitted to [Block Cypher's API](https://www.blockcypher.com/dev/bitcoin/) 
 to be published on the chain.
 
 #### Configuration

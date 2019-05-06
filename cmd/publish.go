@@ -14,8 +14,8 @@ import (
 // PublishCommand contains the definition of the publish command-line subcommand.
 var PublishCommand cli.Command
 
-const publishDescription = `The publish command broadcasts a transaction using 
-the specific external service.`
+const publishDescription = `The publish command submits a transaction using the 
+specific external service.`
 
 func init() {
 	PublishCommand = cli.Command{
