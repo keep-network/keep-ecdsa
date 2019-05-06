@@ -38,16 +38,18 @@ func Publish(c *cli.Context) error {
 	var chain chain.Interface
 
 	switch chainFlag := c.GlobalString("chain"); chainFlag {
+	case "blockcypher":
+		chain, err = blockcypher.Connect(&configFile.BlockCypher)
+		if err != nil {
+			return err
+		}
 	case "electrum":
 		chain, err = electrum.Connect(&configFile.Electrum)
 		if err != nil {
 			return err
 		}
 	default:
-		chain, err = blockcypher.Connect(&configFile.BlockCypher)
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("unknown transaction publication service")
 	}
 
 	result, err := transaction.Publish(chain, arg)
