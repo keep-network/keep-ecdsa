@@ -1,4 +1,3 @@
-// Package transaction handles transaction publishing to a block chain.
 package btc
 
 import (
