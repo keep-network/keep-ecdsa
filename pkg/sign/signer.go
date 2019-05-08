@@ -13,11 +13,9 @@ type Signer struct {
 	privateKey *ecdsa.PrivateKey
 }
 
-// PublicKey holds a public key in a form of two big.Int X and Y values.
-type PublicKey struct {
-	X *big.Int
-	Y *big.Int
-}
+// PublicKey holds a public key in a form of X and Y coordinates of a point on
+// an elliptic curve.
+type PublicKey ecdsa.PublicKey
 
 // Signature holds a signature in a form of two big.Int R and S values.
 type Signature struct {
@@ -39,10 +37,7 @@ func GenerateKey(rand io.Reader) (*ecdsa.PrivateKey, error) {
 
 // PublicKey returns Signer's public key as a pair of X and Y coordinates.
 func (s *Signer) PublicKey() *PublicKey {
-	return &PublicKey{
-		X: s.privateKey.PublicKey.X,
-		Y: s.privateKey.PublicKey.Y,
-	}
+	return (*PublicKey)(&s.privateKey.PublicKey)
 }
 
 // CalculateSignature returns an ECDSA Signature over provided hash, calculated
