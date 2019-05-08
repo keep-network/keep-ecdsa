@@ -8,11 +8,10 @@ import (
 
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/chain"
 	"github.com/keep-network/keep-tecdsa/pkg/utils"
 )
-
-const initialTransaction = "0100000001f24d19b6980927dbe47c30fd13b1cc12e56a11cc019efed67a1b4d3937b74bab010000006a47304402201711a033c1b829719716c81419294214a7fce0f0f1f9f51b6821ca3a5beebbdd022059b7bdd0bf1fe08aa4b4654360732d2a1f97c602b2e198a41e7bc53d81376c9a0121028896955d043b5a43957b21901f2cce9f0bfb484531b03ad6cd3153e45e73ee2effffffff022823000000000000160014d849b1e1cede2ac7d7188cf8700e97d6975c91c4b2f9fd00000000001976a914d849b1e1cede2ac7d7188cf8700e97d6975c91c488ac00000000"
 
 type localChain struct {
 	transactions map[string]*wire.MsgTx
@@ -125,7 +124,7 @@ func ValidateTransaction(
 }
 
 func initialTx() *wire.MsgTx {
-	txString := initialTransaction
+	txString := testdata.InitialTx.SignedRaw
 	txBytes, _ := hex.DecodeString(txString)
 	tx, _ := utils.DeserializeTransaction(txBytes)
 	return tx
