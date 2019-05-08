@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	crand "crypto/rand"
 	"fmt"
 
 	"github.com/keep-network/cli"
@@ -27,22 +28,19 @@ func init() {
 func Sign(c *cli.Context) error {
 	arg := c.Args().First()
 
-	privateKey, err := sign.GenerateKey()
+	privateKey, err := sign.GenerateKey(crand.Reader)
 	if err != nil {
 		return fmt.Errorf("key generation failed [%v]", err)
 	}
 
-	signer, err := sign.NewSigner(privateKey)
-	if err != nil {
-		return fmt.Errorf("signer creation failed [%v]", err)
-	}
+	signer := sign.NewSigner(privateKey)
 
 	fmt.Printf("--- Generated Public Key:\nX: %x\nY: %x\n",
 		signer.PublicKey().X,
 		signer.PublicKey().Y,
 	)
 
-	signature, err := signer.CalculateSignature([]byte(arg))
+	signature, err := signer.CalculateSignature(crand.Reader, []byte(arg))
 	if err != nil {
 		return fmt.Errorf("signature calculation failed [%v]", err)
 	}

@@ -2,23 +2,21 @@ package sign
 
 import (
 	"crypto/ecdsa"
+	crand "crypto/rand"
 	"testing"
 )
 
 func TestSign(t *testing.T) {
-	privateKey,err := GenerateKey()
+	privateKey, err := GenerateKey(crand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	signer, err := NewSigner(privateKey)
-	if err != nil {
-		t.Fatal(err)
-	}
+	signer := NewSigner(privateKey)
 
 	hash := []byte("test hash")
 
-	signature, err := signer.CalculateSignature(hash)
+	signature, err := signer.CalculateSignature(crand.Reader, hash)
 	if err != nil {
 		t.Fatal(err)
 	}
