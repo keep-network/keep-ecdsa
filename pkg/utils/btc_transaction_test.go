@@ -11,12 +11,12 @@ func TestSerializeTransactionRoundTrip(t *testing.T) {
 
 	msgTx, err := DeserializeTransaction(expectedTransaction)
 	if err != nil {
-		t.Fatalf("transaction deserialization failed: [%v]", err)
+		t.Fatalf("transaction deserialization failed [%s]", err)
 	}
 
 	result, err := SerializeTransaction(msgTx)
 	if err != nil {
-		t.Fatalf("transaction serialization failed: [%v]", err)
+		t.Fatalf("transaction serialization failed [%s]", err)
 	}
 
 	if !bytes.Equal(result, expectedTransaction) {

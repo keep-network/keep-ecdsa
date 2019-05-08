@@ -25,7 +25,7 @@ func TestPublicKeyToWitnessPubKeyHashAddress(t *testing.T) {
 		&chaincfg.TestNet3Params,
 	)
 	if err != nil {
-		t.Errorf("unexpected error: [%s]", err)
+		t.Errorf("unexpected error [%s]", err)
 	}
 
 	if address != expectedAddress {
