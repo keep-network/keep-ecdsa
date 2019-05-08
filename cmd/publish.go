@@ -1,14 +1,15 @@
 package cmd
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/keep-network/cli"
 	"github.com/keep-network/keep-tecdsa/internal/config"
+	"github.com/keep-network/keep-tecdsa/pkg/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/chain"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/blockcypher"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/electrum"
-	"github.com/keep-network/keep-tecdsa/pkg/transaction"
 )
 
 // PublishCommand contains the definition of the publish command-line subcommand.
@@ -52,7 +53,12 @@ func Publish(c *cli.Context) error {
 		return fmt.Errorf("unknown transaction publication service")
 	}
 
-	result, err := transaction.Publish(chain, arg)
+	rawTx, err := hex.DecodeString(arg)
+	if err != nil {
+		return fmt.Errorf("transaction decoding failed [%v]", err)
+	}
+
+	result, err := btc.Publish(chain, rawTx)
 	if err != nil {
 		return fmt.Errorf("publish failed [%v]", err)
 	}
