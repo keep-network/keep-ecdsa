@@ -23,6 +23,13 @@ RUN mkdir -p $APP_DIR
 
 WORKDIR $APP_DIR
 
+# Get dependencies.
+COPY go.mod $APP_DIR/
+COPY go.sum $APP_DIR/
+
+RUN go mod download
+
+# Build the app.
 COPY ./ $APP_DIR/
 
 RUN GOOS=linux go build -a -o $APP_NAME ./ && \
