@@ -16,3 +16,6 @@ keep-tecdsa
 
 # Application dependencies
 vendor/
+
+# IDE configuration
+.vscode
