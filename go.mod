@@ -12,7 +12,8 @@ replace (
 require (
 	github.com/BurntSushi/toml v0.0.0-00010101000000-000000000000
 	github.com/blockcypher/gobcy v0.0.0-00010101000000-000000000000
-	github.com/btcsuite/btcd v0.0.0-00010101000000-000000000000 // indirect
+	github.com/btcsuite/btcd v0.0.0-00010101000000-000000000000
+	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 	github.com/ethereum/go-ethereum v0.0.0-00010101000000-000000000000
 	github.com/keep-network/go-electrum v0.0.0-20190423065222-2dcd82312dcf
 	github.com/urfave/cli v0.0.0-00010101000000-000000000000
