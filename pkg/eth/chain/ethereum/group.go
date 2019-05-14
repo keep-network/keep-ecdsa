@@ -2,7 +2,6 @@ package ethereum
 
 import (
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -33,7 +32,6 @@ func (ec *EthereumChain) watchGroupRequested(
 		for {
 			select {
 			case event, subscribed := <-eventChan:
-				log.Println("GOT EVENT")
 				subscriptionMutex.Lock()
 				// if eventChan has been closed, it means we have unsubscribed
 				if !subscribed {
@@ -43,15 +41,13 @@ func (ec *EthereumChain) watchGroupRequested(
 				success(event)
 				subscriptionMutex.Unlock()
 			case err := <-eventSubscription.Err():
-				log.Println("GOT FAILURE")
 				fail(err)
 				return
 			}
 		}
 	}()
-	log.Println("registered watchGroupRequested")
+
 	return subscription.NewEventSubscription(func() {
-		log.Println("callback in subscription")
 		subscriptionMutex.Lock()
 		defer subscriptionMutex.Unlock()
 
