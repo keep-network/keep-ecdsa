@@ -1,4 +1,4 @@
-FROM golang:1.11.4-alpine3.7 AS runtime
+FROM golang:1.12.5-alpine3.9 AS runtime
 
 ENV APP_NAME=keep-tecdsa \
 	BIN_PATH=/usr/local/bin
@@ -23,6 +23,13 @@ RUN mkdir -p $APP_DIR
 
 WORKDIR $APP_DIR
 
+# Get dependencies.
+COPY go.mod $APP_DIR/
+COPY go.sum $APP_DIR/
+
+RUN go mod download
+
+# Build the app.
 COPY ./ $APP_DIR/
 
 RUN GOOS=linux go build -a -o $APP_NAME ./ && \
