@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+*.bin
 
 # Executables
 keep-tecdsa
@@ -19,3 +20,10 @@ vendor/
 
 # IDE configuration
 .vscode
+
+# Generated files
+*.abi
+abi/
+
+# Build output
+build/
