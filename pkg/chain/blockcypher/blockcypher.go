@@ -3,7 +3,7 @@
 package blockcypher
 
 import (
-	"github.com/keep-network/gobcy"
+	"github.com/blockcypher/gobcy"
 	"github.com/keep-network/keep-tecdsa/pkg/chain"
 )
 

@@ -6,7 +6,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/keep-network/cli"
+	"github.com/urfave/cli"
 	"github.com/keep-network/keep-tecdsa/cmd"
 )
 

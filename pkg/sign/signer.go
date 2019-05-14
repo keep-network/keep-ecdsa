@@ -5,7 +5,7 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/keep-network/go-ethereum/crypto/secp256k1"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
 // Signer is used to calculate a signature. It holds an ECDSA private key.

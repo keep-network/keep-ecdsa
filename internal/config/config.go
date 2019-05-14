@@ -5,7 +5,7 @@ import (
 
 	"github.com/keep-network/keep-tecdsa/pkg/chain/blockcypher"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/electrum"
-	"github.com/keep-network/toml"
+	"github.com/BurntSushi/toml"
 )
 
 // Config is the top level config structure.
