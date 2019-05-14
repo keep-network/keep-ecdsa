@@ -7,9 +7,9 @@ import (
 	"github.com/urfave/cli"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/btc"
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/blockcypher"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/electrum"
+	"github.com/keep-network/keep-tecdsa/pkg/btc/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/btc/chain/blockcypher"
+	"github.com/keep-network/keep-tecdsa/pkg/btc/chain/electrum"
 )
 
 // PublishCommand contains the definition of the publish command-line subcommand.

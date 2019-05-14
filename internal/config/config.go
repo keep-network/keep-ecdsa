@@ -3,8 +3,8 @@ package config
 import (
 	"fmt"
 
-	"github.com/keep-network/keep-tecdsa/pkg/chain/blockcypher"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/electrum"
+	"github.com/keep-network/keep-tecdsa/pkg/btc/chain/blockcypher"
+	"github.com/keep-network/keep-tecdsa/pkg/btc/chain/electrum"
 	"github.com/BurntSushi/toml"
 )
 

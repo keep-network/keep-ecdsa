@@ -9,7 +9,7 @@ import (
 	"time"
 
 	goElectrum "github.com/keep-network/go-electrum/electrum"
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/btc/chain"
 )
 
 type electrum struct {

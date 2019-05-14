@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/btc/chain"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
 	"github.com/keep-network/keep-tecdsa/pkg/utils"
 )

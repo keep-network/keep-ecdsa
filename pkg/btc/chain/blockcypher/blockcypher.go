@@ -4,7 +4,7 @@ package blockcypher
 
 import (
 	"github.com/blockcypher/gobcy"
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/btc/chain"
 )
 
 type blockcypher struct {
