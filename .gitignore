@@ -19,3 +19,9 @@ vendor/
 
 # IDE configuration
 .vscode
+
+# Generated files
+*.abi
+
+# Build output
+build/
