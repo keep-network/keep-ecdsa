@@ -18,8 +18,8 @@ jobs:
       - run:
           name: Run Docker build
           command: |
-            docker build --target gobuild -t go-build-env .
-            docker build -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa .
+            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN -t go-build-env --target gobuild .
+            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa .
       - run:
           name: Run Go tests
           command: |
