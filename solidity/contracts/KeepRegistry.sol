@@ -13,10 +13,12 @@ contract KeepRegistry {
     /// @dev TODO: This is a stub function - needs to be implemented.
     /// @param _groupSize Number of members in the group.
     /// @param _dishonestThreshold Maximum number of dishonest group members.
+    /// @param _bond Required bond (in Gwei) from each member.
     /// @return Unique request identifier.
-    function requestBondedECDSAKeep(uint32 _groupSize, uint32 _dishonestThreshold) public payable returns (uint256 _requestID) {
+    function requestBondedECDSAKeep(uint32 _groupSize, uint32 _dishonestThreshold, uint256 _bond) public payable returns (uint256 _requestID) {
         _requestID = requestIDSeq++;
         uint256 _groupID = groupIDSeq++;
+        _bond;
 
         emit BondedECDSAKeepRequested(_requestID, _groupID, _groupSize, _dishonestThreshold);
 
