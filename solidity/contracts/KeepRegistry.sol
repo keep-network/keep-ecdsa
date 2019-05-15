@@ -7,6 +7,8 @@ contract KeepRegistry {
     uint256 internal requestIDSeq = 1;
     uint256 internal groupIDSeq = 1;
 
+    // TODO: We don't need to emit this event. Selection will be performed 
+    // on-chain and we will emit an event when Keep is formed.
     event BondedECDSAKeepRequested(uint256 requestID, uint256 groupID, uint32 groupSize, uint32 dishonestThreshold); 
  
     /// @notice Request a new bonded ECDSA Keep.
@@ -20,6 +22,8 @@ contract KeepRegistry {
         uint256 _groupID = groupIDSeq++;
         _bond;
 
+        // TODO: Select group on-chain and emit an event that a group was registered
+        // with specific members.
         emit BondedECDSAKeepRequested(_requestID, _groupID, _groupSize, _dishonestThreshold);
 
         return _requestID;
