@@ -27,20 +27,21 @@ contract ECDSAKeepFactory {
         uint256 _groupSize,
         uint256 _dishonestThreshold,
         address _owner
-    ) public returns (ECDSAKeep keep) {
+    ) public returns (address keepAddress) {
         uint256[] memory _keepMembers = selectECDSAKeepMembers(_groupSize);
 
-        keep = new ECDSAKeep(
+        ECDSAKeep keep = new ECDSAKeep(
             _owner,
             _keepMembers,
             _dishonestThreshold       
         );
-
         keeps.push(keep);
 
-        emit KeepBuilt(address(keep), _keepMembers, _dishonestThreshold);
+        keepAddress = address(keep);
 
-        return keep;
+        emit KeepBuilt(keepAddress, _keepMembers, _dishonestThreshold);
+
+        return keepAddress;
     }
 
     /// @notice Runs member selection for an ECDSA keep.

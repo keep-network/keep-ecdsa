@@ -43,11 +43,11 @@ contract KeepRegistry {
         uint256 _groupSize,
         uint256 _dishonestThreshold
     ) public returns (address keep) {
-        keep = address(ECDSAKeepFactory(ecdsaKeepFactory).buildNewKeep(
+        keep = ECDSAKeepFactory(ecdsaKeepFactory).buildNewKeep(
             _groupSize,
             _dishonestThreshold,
             msg.sender
-        ));
+        );
 
         keeps.push(Keep(msg.sender, keep, KeepTypes.ECDSA));
 
