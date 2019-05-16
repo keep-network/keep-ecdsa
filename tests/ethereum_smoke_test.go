@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/keep-network/keep-tecdsa/pkg/eth/chain/ethereum"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/eth/chain/gen/abi"
 	"github.com/keep-network/keep-tecdsa/pkg/eth/event"
 
