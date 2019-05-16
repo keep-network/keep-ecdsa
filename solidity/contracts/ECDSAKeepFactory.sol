@@ -11,7 +11,7 @@ contract ECDSAKeepFactory {
 
     // Notification that a new keep has been formed. It contains details of the
     // keep.
-    event KeepBuilt(
+    event ECDSAKeepRequested(
         address keepAddress,        // formed keep contract address
         uint256[] keepMembers,      // list of keep members identifiers
         uint256 dishonestThreshold  // maximum number of dishonest keep members
@@ -39,7 +39,7 @@ contract ECDSAKeepFactory {
 
         keepAddress = address(keep);
 
-        emit KeepBuilt(keepAddress, _keepMembers, _dishonestThreshold);
+        emit ECDSAKeepRequested(keepAddress, _keepMembers, _dishonestThreshold);
 
         return keepAddress;
     }
