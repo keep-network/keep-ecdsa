@@ -9,7 +9,7 @@ import (
 
 	"github.com/btcsuite/btcutil"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
-	"github.com/keep-network/keep-tecdsa/pkg/btc/chain/local"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/local"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
 )
 

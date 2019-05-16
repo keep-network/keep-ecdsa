@@ -3,9 +3,9 @@ package config
 import (
 	"fmt"
 
-	"github.com/keep-network/keep-tecdsa/pkg/btc/chain/blockcypher"
-	"github.com/keep-network/keep-tecdsa/pkg/btc/chain/electrum"
 	"github.com/BurntSushi/toml"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/blockcypher"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/electrum"
 )
 
 // Config is the top level config structure.
