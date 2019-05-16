@@ -42,7 +42,7 @@ contract KeepRegistry {
     function buildECDSAKeep(
         uint256 _groupSize,
         uint256 _dishonestThreshold
-    ) public returns (address keep) {
+    ) public payable returns (address keep) {
         keep = ECDSAKeepFactory(ecdsaKeepFactory).buildNewKeep(
             _groupSize,
             _dishonestThreshold,

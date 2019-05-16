@@ -27,7 +27,7 @@ contract ECDSAKeepFactory {
         uint256 _groupSize,
         uint256 _dishonestThreshold,
         address _owner
-    ) public returns (address keepAddress) {
+    ) public payable returns (address keepAddress) {
         uint256[] memory _keepMembers = selectECDSAKeepMembers(_groupSize);
 
         ECDSAKeep keep = new ECDSAKeep(
