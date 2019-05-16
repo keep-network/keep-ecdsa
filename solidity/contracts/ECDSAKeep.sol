@@ -1,13 +1,9 @@
 pragma solidity ^0.5.4;
 
-import "./ECDSAKeepFactory.sol";
-
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
 /// @dev TODO: This is a stub contract - needs to be implemented.
 contract ECDSAKeep {
-    // Factory which built the keep.
-    ECDSAKeepFactory factory;
     // Owner of the keep.
     address owner;
     // List of keep members' unique identifiers.
@@ -20,7 +16,6 @@ contract ECDSAKeep {
         uint256[] memory _keepMembers,
         uint256 _dishonestThreshold
     ) public {
-        factory = ECDSAKeepFactory(msg.sender);
         owner = _owner;
         keepMembers = _keepMembers;
         dishonestThreshold = _dishonestThreshold;
