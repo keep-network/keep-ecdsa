@@ -13,7 +13,9 @@ const (
 
 // Config contains configuration of Ethereum chain.
 type Config struct {
-	URL               string
+	URL string
+	// ContractAddresses map holds contract name as a key and contract address
+	// as a value.
 	ContractAddresses map[string]string
 }
 
@@ -24,6 +26,14 @@ func (c *Config) ContractAddress(contractName string) (common.Address, error) {
 	if !ok {
 		return common.Address{}, fmt.Errorf(
 			"configuration for contract [%s] not found",
+			contractName,
+		)
+	}
+
+	if !common.IsHexAddress(contractAddress) {
+		return common.Address{}, fmt.Errorf(
+			"configured address [%v] for contract [%v] is not valid hex address",
+			contractAddress,
 			contractName,
 		)
 	}
