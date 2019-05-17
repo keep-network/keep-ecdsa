@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/eth/chain/gen/abi"
 )
 
@@ -16,7 +17,7 @@ type EthereumChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(config *Config) (*EthereumChain, error) {
+func Connect(config *Config) (eth.Interface, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		log.Fatal(err)
