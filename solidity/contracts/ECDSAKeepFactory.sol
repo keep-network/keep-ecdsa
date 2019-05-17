@@ -50,6 +50,8 @@ contract ECDSAKeepFactory {
         uint256 _groupSize      
     ) internal pure returns (uint256[] memory keepMembers){
         _groupSize;
+
+        keepMembers = new uint256[](1);
         keepMembers[0] = 1;
 
         // TODO: Currently it assumes members are identified by ID, we should
