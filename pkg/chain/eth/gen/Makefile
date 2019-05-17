@@ -1,4 +1,4 @@
-# In .../github.com/keep-network/keep-tecdsa/pkg/eth/chain/gen
+# In .../github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen
 
 # Directory where the solidity contracts are.
 SOL_DIR=../../../../solidity/contracts
@@ -6,8 +6,8 @@ SOL_DIR=../../../../solidity/contracts
 
 # Relative directory where the Go code needs to go. This is relative to the
 # ${SOL_DIR} directory.
-OP_DIR=../../pkg/eth/chain/gen
-GEN_DIR=../../pkg/eth/chain/gen/abi
+OP_DIR=../../pkg/chain/eth/gen
+GEN_DIR=../../pkg/chain/eth/gen/abi
 
 generate_solidity_go:
 	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )

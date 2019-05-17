@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/subscription"
-	"github.com/keep-network/keep-tecdsa/pkg/eth/chain/gen/abi"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
 
 func (ec *EthereumChain) watchECDSAKeepRequested(

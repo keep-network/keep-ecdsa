@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
-	"github.com/keep-network/keep-tecdsa/pkg/eth/chain/gen/abi"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
 
 // EthereumChain is an implementation of ethereum blockchain interface.
