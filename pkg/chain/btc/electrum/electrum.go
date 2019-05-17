@@ -9,7 +9,7 @@ import (
 	"time"
 
 	goElectrum "github.com/keep-network/go-electrum/electrum"
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/btc"
 )
 
 type electrum struct {
@@ -30,7 +30,7 @@ func (e *electrum) PublishTransaction(rawTx string) (string, error) {
 
 // Connect establishes connection to the Electrum Server defined in a provided
 // config. The server is expected to be connected to a specific network.
-func Connect(config *Config) (chain.Interface, error) {
+func Connect(config *Config) (btc.Interface, error) {
 	serverAddress := strings.Join([]string{config.ServerHost, config.ServerPort}, ":")
 
 	// TODO: Ignore server certificates is a temporary solution for development.

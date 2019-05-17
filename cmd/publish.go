@@ -4,12 +4,12 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/urfave/cli"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/btc"
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/blockcypher"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/electrum"
+	btcChain "github.com/keep-network/keep-tecdsa/pkg/chain/btc"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/blockcypher"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/electrum"
+	"github.com/urfave/cli"
 )
 
 // PublishCommand contains the definition of the publish command-line subcommand.
@@ -36,7 +36,7 @@ func Publish(c *cli.Context) error {
 		return err
 	}
 
-	var chain chain.Interface
+	var chain btcChain.Interface
 
 	switch chainFlag := c.GlobalString("broadcast-api"); chainFlag {
 	case "blockcypher":

@@ -9,7 +9,7 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/utils"
 )
 
@@ -72,7 +72,7 @@ func (l *localChain) PublishTransaction(rawTx string) (string, error) {
 }
 
 // Connect returns a stub implementation of the chain interface.
-func Connect() chain.Interface {
+func Connect() btc.Interface {
 	initialTx := initialTx()
 	return &localChain{
 		transactions: map[string]*wire.MsgTx{
