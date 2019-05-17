@@ -36,7 +36,7 @@ func Publish(c *cli.Context) error {
 		return err
 	}
 
-	var chain btcChain.ChainInterface
+	var chain btcChain.Interface
 
 	switch chainFlag := c.GlobalString("broadcast-api"); chainFlag {
 	case "blockcypher":

@@ -30,7 +30,7 @@ func (e *electrum) PublishTransaction(rawTx string) (string, error) {
 
 // Connect establishes connection to the Electrum Server defined in a provided
 // config. The server is expected to be connected to a specific network.
-func Connect(config *Config) (btc.ChainInterface, error) {
+func Connect(config *Config) (btc.Interface, error) {
 	serverAddress := strings.Join([]string{config.ServerHost, config.ServerPort}, ":")
 
 	// TODO: Ignore server certificates is a temporary solution for development.

@@ -33,7 +33,7 @@ func (bc *blockcypher) PublishTransaction(rawTx string) (string, error) {
 
 // Connect performs initialization for communication with Block Cypher based on
 // provided config.
-func Connect(config *Config) (btc.ChainInterface, error) {
+func Connect(config *Config) (btc.Interface, error) {
 	blockCypherAPI := gobcy.API{
 		Token: config.Token,
 		Coin:  config.Coin,

@@ -72,7 +72,7 @@ func (l *localChain) PublishTransaction(rawTx string) (string, error) {
 }
 
 // Connect returns a stub implementation of the chain interface.
-func Connect() btc.ChainInterface {
+func Connect() btc.Interface {
 	initialTx := initialTx()
 	return &localChain{
 		transactions: map[string]*wire.MsgTx{

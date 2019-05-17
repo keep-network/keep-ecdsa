@@ -1,5 +1,5 @@
-// Package btc contains interface for interaction with a blockchain.
-package btc
+// Package chain contains interface for interaction with a blockchain.
+package chain
 
 // Interface is an interface that provides ability to interact with a blockchain.
 type Interface interface {

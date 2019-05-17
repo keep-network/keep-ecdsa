@@ -24,7 +24,7 @@ import (
 // [BIP-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#specification
 func SignAndPublishTransaction(
 	rand io.Reader,
-	chain btc.ChainInterface,
+	chain btc.Interface,
 	signer *sign.Signer,
 	witnessSignatureHash []byte,
 	transactionPreimage []byte,
