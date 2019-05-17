@@ -1,8 +1,8 @@
-// Package chain contains interface for interaction with a blockchain.
-package chain
+// Package btc contains interface for interaction with a blockchain.
+package btc
 
-// Interface is an interface that provides ability to interact with a blockchain.
-type Interface interface {
+// ChainInterface is an interface that provides ability to interact with a blockchain.
+type ChainInterface interface {
 	// PublishTransaction publishes a transaction to a chain. It requires raw
 	// transaction to be provided in a format specific to a chain. It returns
 	// an unique identifier of the transaction.

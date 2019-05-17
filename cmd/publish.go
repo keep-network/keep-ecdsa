@@ -6,7 +6,7 @@ import (
 
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/btc"
-	"github.com/keep-network/keep-tecdsa/pkg/btc/chain"
+	btcChain "github.com/keep-network/keep-tecdsa/pkg/chain/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/blockcypher"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/electrum"
 	"github.com/urfave/cli"
@@ -36,16 +36,16 @@ func Publish(c *cli.Context) error {
 		return err
 	}
 
-	var btcChain chain.Interface
+	var chain btcChain.ChainInterface
 
 	switch chainFlag := c.GlobalString("broadcast-api"); chainFlag {
 	case "blockcypher":
-		btcChain, err = blockcypher.Connect(&configFile.BlockCypher)
+		chain, err = blockcypher.Connect(&configFile.BlockCypher)
 		if err != nil {
 			return err
 		}
 	case "electrum":
-		btcChain, err = electrum.Connect(&configFile.Electrum)
+		chain, err = electrum.Connect(&configFile.Electrum)
 		if err != nil {
 			return err
 		}
@@ -58,7 +58,7 @@ func Publish(c *cli.Context) error {
 		return fmt.Errorf("transaction decoding failed [%s]", err)
 	}
 
-	result, err := btc.Publish(btcChain, rawTx)
+	result, err := btc.Publish(chain, rawTx)
 	if err != nil {
 		return fmt.Errorf("publish failed [%s]", err)
 	}

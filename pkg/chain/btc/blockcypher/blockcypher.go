@@ -4,7 +4,7 @@ package blockcypher
 
 import (
 	"github.com/blockcypher/gobcy"
-	"github.com/keep-network/keep-tecdsa/pkg/btc/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/btc"
 )
 
 type blockcypher struct {
@@ -33,7 +33,7 @@ func (bc *blockcypher) PublishTransaction(rawTx string) (string, error) {
 
 // Connect performs initialization for communication with Block Cypher based on
 // provided config.
-func Connect(config *Config) (chain.Interface, error) {
+func Connect(config *Config) (btc.ChainInterface, error) {
 	blockCypherAPI := gobcy.API{
 		Token: config.Token,
 		Coin:  config.Coin,
