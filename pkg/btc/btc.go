@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
 	"github.com/keep-network/keep-tecdsa/pkg/utils"
 )
@@ -24,7 +24,7 @@ import (
 // [BIP-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#specification
 func SignAndPublishTransaction(
 	rand io.Reader,
-	chain chain.Interface,
+	chain btc.Interface,
 	signer *sign.Signer,
 	witnessSignatureHash []byte,
 	transactionPreimage []byte,
