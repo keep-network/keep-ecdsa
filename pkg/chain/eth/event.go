@@ -1,5 +1,4 @@
-// Package event reflects structures of events emitted on an ethereum blockchain.
-package event
+package eth
 
 import (
 	"math/big"
@@ -11,8 +10,8 @@ import (
 // TODO: Consider changing to different type e.g. address.
 type MemberID = big.Int
 
-// ECDSAKeepRequested is an event emitted on a new keep creation request.
-type ECDSAKeepRequested struct {
+// ECDSAKeepRequestedEvent is an event emitted on a new keep creation request.
+type ECDSAKeepRequestedEvent struct {
 	KeepAddress        common.Address // keep contract address
 	MemberIDs          []*MemberID    // keep members IDs
 	DishonestThreshold *big.Int       // maximum number of dishonest members `m`
