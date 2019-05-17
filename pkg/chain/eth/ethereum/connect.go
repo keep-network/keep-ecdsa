@@ -11,7 +11,6 @@ import (
 type EthereumChain struct {
 	config                   *Config
 	client                   *ethclient.Client
-	keepTECDSAGroupContract  *abi.KeepTECDSAGroup // TODO: Remove
 	ecdsaKeepFactoryContract *abi.ECDSAKeepFactory
 }
 
@@ -21,19 +20,6 @@ func Connect(config *Config) (*EthereumChain, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	keepTECDSAGroupContractAddress, err := config.ContractAddress(KeepTECDSAGroupContractName)
-	if err != nil {
-		return nil, err
-	}
-
-	keepTECDSAGroupContract, err := abi.NewKeepTECDSAGroup(
-		keepTECDSAGroupContractAddress,
-		client,
-	)
-	if err != nil {
-		return nil, err
 	}
 
 	ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ECDSAKeepFactoryContractName)
@@ -51,7 +37,6 @@ func Connect(config *Config) (*EthereumChain, error) {
 	return &EthereumChain{
 		config:                   config,
 		client:                   client,
-		keepTECDSAGroupContract:  keepTECDSAGroupContract,
 		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
 	}, nil
 }

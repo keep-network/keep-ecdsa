@@ -6,9 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// Definitions of contract names.
 const (
-	// KeepTECDSAGroupContractName name of the group contract.
-	KeepTECDSAGroupContractName  = "KeepTECDSAGroup" // TODO: Remove
 	ECDSAKeepFactoryContractName = "ECDSAKeepFactory"
 )
 
