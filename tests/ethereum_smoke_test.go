@@ -3,25 +3,30 @@ package ethereum
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"log"
 	"math/big"
+	"reflect"
 	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
-	"github.com/keep-network/keep-tecdsa/pkg/eth/chain/gen/abi"
-	"github.com/keep-network/keep-tecdsa/pkg/eth/event"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 
 	configUtil "github.com/keep-network/keep-tecdsa/internal/config"
 )
 
 const configPath = "../configs/config.toml"
 
-func TestConnect(t *testing.T) {
+func TestOnECDSAKeepRequestedPath(t *testing.T) {
+	// TODO: Update this test to a smoke test executed with CLI command.
+	t.Skip("skipping the test - it should be executed as integration smoke test")
+
 	cfg, err := configUtil.ReadConfig(configPath)
 	if err != nil {
 		t.Fatal(err)
@@ -36,26 +41,31 @@ func TestConnect(t *testing.T) {
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(1)
 
-	var actualEvent *event.GroupRequested
-	handle := func(event *event.GroupRequested) {
+	var actualEvent *eth.ECDSAKeepRequestedEvent
+	handle := func(event *eth.ECDSAKeepRequestedEvent) {
 		actualEvent = event
 		waitGroup.Done()
 	}
 
-	subscription, err := chainAPI.OnGroupRequested(handle)
+	subscription, err := chainAPI.OnECDSAKeepRequested(handle)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedGroupSize := uint32(10)
-	expectedDishonestThreshold := uint32(5)
+	expectedGroupSize := big.NewInt(10)
+	expectedDishonestThreshold := big.NewInt(5)
+	expectedOwnerAddress := common.HexToAddress("0x316F8eaf0b6065a53f0eaB3DD19aC6a07af95b3D")
+
+	expectedKeepMembers := []*eth.MemberID{
+		big.NewInt(1),
+	}
 
 	testChain, err := Connect(config)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = requestGroup(testChain, expectedGroupSize, expectedDishonestThreshold)
+	err = requestKeep(testChain, expectedGroupSize, expectedDishonestThreshold, expectedOwnerAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,17 +73,17 @@ func TestConnect(t *testing.T) {
 	waitGroup.Wait()
 	subscription.Unsubscribe()
 
-	if actualEvent.GroupSize != expectedGroupSize {
-		t.Errorf("invalid group size in event\nexpected: %v\nactual:   %v\n", expectedGroupSize, actualEvent.GroupSize)
+	if !reflect.DeepEqual(expectedKeepMembers, actualEvent.MemberIDs) {
+		t.Errorf("invalid members number\nexpected: %v\nactual:   %v\n", expectedKeepMembers, actualEvent.MemberIDs)
 	}
-	if actualEvent.DishonestThreshold != expectedDishonestThreshold {
+	if actualEvent.DishonestThreshold.Cmp(expectedDishonestThreshold) != 0 {
 		t.Errorf("invalid dishonest threshold in event\nexpected: %v\nactual:   %v\n", expectedDishonestThreshold, actualEvent.DishonestThreshold)
 	}
 }
 
 type testChain struct {
-	client                  *ethclient.Client
-	keepTECDSAGroupContract *abi.KeepTECDSAGroup
+	client                   *ethclient.Client
+	ecdsaKeepFactoryContract *abi.ECDSAKeepFactory
 }
 
 func Connect(config *ethereum.Config) (*testChain, error) {
@@ -82,13 +92,12 @@ func Connect(config *ethereum.Config) (*testChain, error) {
 		log.Fatal(err)
 	}
 
-	keepTECDSAGroupContractAddress, err := config.ContractAddress(ethereum.KeepTECDSAGroupContractName)
+	ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ethereum.ECDSAKeepFactoryContractName)
 	if err != nil {
 		return nil, err
 	}
-
-	keepTECDSAGroupContract, err := abi.NewKeepTECDSAGroup(
-		keepTECDSAGroupContractAddress,
+	ecdsaKeepFactoryContract, err := abi.NewECDSAKeepFactory(
+		ecdsaKeepFactoryContractAddress,
 		client,
 	)
 	if err != nil {
@@ -96,12 +105,12 @@ func Connect(config *ethereum.Config) (*testChain, error) {
 	}
 
 	return &testChain{
-		client:                  client,
-		keepTECDSAGroupContract: keepTECDSAGroupContract,
+		client:                   client,
+		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
 	}, nil
 }
 
-func requestGroup(chain *testChain, expectedGroupSize, expectedDishonestThreshold uint32) error {
+func requestKeep(chain *testChain, expectedGroupSize, expectedDishonestThreshold *big.Int, ownerAddress common.Address) error {
 	privateKey, err := crypto.HexToECDSA("61c820b48fe56218ce8260b36e540d677dd0ebae54d906ea0f0baf64933bd810")
 	if err != nil {
 		return err
@@ -132,9 +141,9 @@ func requestGroup(chain *testChain, expectedGroupSize, expectedDishonestThreshol
 	auth.GasPrice = big.NewInt(0)
 	auth.From = fromAddress
 
-	tx, err := chain.keepTECDSAGroupContract.RequestGroup(auth, expectedGroupSize, expectedDishonestThreshold)
+	tx, err := chain.ecdsaKeepFactoryContract.BuildNewKeep(auth, expectedGroupSize, expectedDishonestThreshold, ownerAddress)
 	if err != nil {
-		return err
+		return fmt.Errorf("call to contract failed: [%s]", err)
 	}
 
 	log.Printf("requested group transaction: %v\n", tx.Hash().Hex())
