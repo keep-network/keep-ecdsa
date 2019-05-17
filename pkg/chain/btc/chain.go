@@ -1,4 +1,4 @@
-// Package btc contains interface for interaction with a blockchain.
+// Package btc contains interface for interaction with a bitcoin blockchain.
 package btc
 
 // Interface is an interface that provides ability to interact with a blockchain.
