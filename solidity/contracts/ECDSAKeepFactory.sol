@@ -40,8 +40,6 @@ contract ECDSAKeepFactory {
         keepAddress = address(keep);
 
         emit ECDSAKeepRequested(keepAddress, _keepMembers, _dishonestThreshold);
-
-        return keepAddress;
     }
 
     /// @notice Runs member selection for an ECDSA keep.
@@ -56,6 +54,5 @@ contract ECDSAKeepFactory {
 
         // TODO: Currently it assumes members are identified by ID, we should
         // consider changing it to an account address or other unique identfier. 
-        return keepMembers;
     }
 }

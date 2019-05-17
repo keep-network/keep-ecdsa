@@ -50,7 +50,5 @@ contract KeepRegistry {
         );
 
         keeps.push(Keep(msg.sender, keep, KeepTypes.ECDSA));
-
-        return keep;
     }
 }
