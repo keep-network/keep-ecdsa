@@ -8,7 +8,8 @@ import (
 
 const (
 	// KeepTECDSAGroupContractName name of the group contract.
-	KeepTECDSAGroupContractName = "KeepTECDSAGroup"
+	KeepTECDSAGroupContractName  = "KeepTECDSAGroup" // TODO: Remove
+	ECDSAKeepFactoryContractName = "ECDSAKeepFactory"
 )
 
 // Config contains configuration of Ethereum chain.

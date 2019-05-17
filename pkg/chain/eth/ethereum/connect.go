@@ -9,9 +9,10 @@ import (
 
 // EthereumChain is an implementation of ethereum blockchain interface.
 type EthereumChain struct {
-	config                  *Config
-	client                  *ethclient.Client
-	keepTECDSAGroupContract *abi.KeepTECDSAGroup
+	config                   *Config
+	client                   *ethclient.Client
+	keepTECDSAGroupContract  *abi.KeepTECDSAGroup // TODO: Remove
+	ecdsaKeepFactoryContract *abi.ECDSAKeepFactory
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -35,9 +36,22 @@ func Connect(config *Config) (*EthereumChain, error) {
 		return nil, err
 	}
 
+	ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ECDSAKeepFactoryContractName)
+	if err != nil {
+		return nil, err
+	}
+	ecdsaKeepFactoryContract, err := abi.NewECDSAKeepFactory(
+		ecdsaKeepFactoryContractAddress,
+		client,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &EthereumChain{
-		config:                  config,
-		client:                  client,
-		keepTECDSAGroupContract: keepTECDSAGroupContract,
+		config:                   config,
+		client:                   client,
+		keepTECDSAGroupContract:  keepTECDSAGroupContract,
+		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
 	}, nil
 }
