@@ -10,7 +10,7 @@ import (
 // TODO: Consider changing to different type e.g. address.
 type MemberID = big.Int
 
-// ECDSAKeepRequestedEvent is an event emitted on a new keep creation request.
-type ECDSAKeepRequestedEvent struct {
+// ECDSAKeepCreatedEvent is an event emitted on a new keep creation.
+type ECDSAKeepCreatedEvent struct {
 	KeepAddress common.Address // keep contract address
 }

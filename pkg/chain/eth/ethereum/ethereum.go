@@ -9,16 +9,16 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
 
-// OnECDSAKeepRequested is a callback that is invoked when an on-chain
-// notification of a new ECDSA keep request is seen.
-func (ec *EthereumChain) OnECDSAKeepRequested(
-	handle func(groupRequested *eth.ECDSAKeepRequestedEvent),
+// OnECDSAKeepCreated is a callback that is invoked when an on-chain
+// notification of a new ECDSA keep creation is seen.
+func (ec *EthereumChain) OnECDSAKeepCreated(
+	handle func(groupRequested *eth.ECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
-	return ec.watchECDSAKeepRequested(
+	return ec.watchECDSAKeepCreated(
 		func(
-			chainEvent *abi.ECDSAKeepFactoryECDSAKeepRequested,
+			chainEvent *abi.ECDSAKeepFactoryECDSAKeepCreated,
 		) {
-			handle(&eth.ECDSAKeepRequestedEvent{
+			handle(&eth.ECDSAKeepCreatedEvent{
 				KeepAddress: chainEvent.KeepAddress,
 			})
 		},

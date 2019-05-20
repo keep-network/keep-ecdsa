@@ -9,9 +9,9 @@ import (
 // Interface is an interface that provides ability to interact with ethereum
 // contracts.
 type Interface interface {
-	// OnECDSAKeepRequested is a callback that is invoked when an on-chain
-	// notification of a new ECDSA keep request is seen.
-	OnECDSAKeepRequested(
-		func(request *ECDSAKeepRequestedEvent),
+	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
+	// notification of a new ECDSA keep creation is seen.
+	OnECDSAKeepCreated(
+		func(request *ECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
 }
