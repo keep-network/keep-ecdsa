@@ -8,17 +8,17 @@ contract ECDSAKeep {
     address owner;
     // List of keep members' addresses.
     address[] internal members;
-    // Maximum number of dishonest members in the keep.
-    uint256 dishonestThreshold;
+    // Minimum number of honest members in the keep.
+    uint256 honestThreshold;
 
     constructor(
         address _owner,
         address[] memory _members,
-        uint256 _dishonestThreshold
+        uint256 _honestThreshold
     ) public {
         owner = _owner;
         members = _members;
-        dishonestThreshold = _dishonestThreshold;
+        honestThreshold = _honestThreshold;
     }
 
     /// @notice Calculates a signature over provided digest by the keep.

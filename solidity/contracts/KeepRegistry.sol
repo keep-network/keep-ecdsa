@@ -37,15 +37,15 @@ contract KeepRegistry {
     /// @notice Build a new ECDSA keep.
     /// @dev Calls ECDSA Keep Factory to build a keep.
     /// @param _groupSize Number of members in the keep.
-    /// @param _dishonestThreshold Maximum number of dishonest keep members.
+    /// @param _honestThreshold Minimum number of honest keep members.
     /// @return Built keep address.
     function buildECDSAKeep(
         uint256 _groupSize,
-        uint256 _dishonestThreshold
+        uint256 _honestThreshold
     ) public payable returns (address keep) {
         keep = ECDSAKeepFactory(ecdsaKeepFactory).buildNewKeep(
             _groupSize,
-            _dishonestThreshold,
+            _honestThreshold,
             msg.sender
         );
 

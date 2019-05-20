@@ -14,18 +14,18 @@ contract ECDSAKeepFactory {
     event ECDSAKeepRequested(
         address keepAddress,        // formed keep contract address
         address[] members,          // list of keep members addresses
-        uint256 dishonestThreshold  // maximum number of dishonest keep members
+        uint256 honestThreshold     // minimum number of honest keep members
     );
 
     /// @notice Build a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
     /// @param _groupSize Number of members in the keep.
-    /// @param _dishonestThreshold Maximum number of dishonest keep members.
+    /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Owner of the keep.
     /// @return Built keep.
     function buildNewKeep(
         uint256 _groupSize,
-        uint256 _dishonestThreshold,
+        uint256 _honestThreshold,
         address _owner
     ) public payable returns (address keepAddress) {
         address[] memory _members = selectECDSAKeepMembers(_groupSize);
@@ -33,13 +33,13 @@ contract ECDSAKeepFactory {
         ECDSAKeep keep = new ECDSAKeep(
             _owner,
             _members,
-            _dishonestThreshold       
+            _honestThreshold       
         );
         keeps.push(keep);
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepRequested(keepAddress, _members, _dishonestThreshold);
+        emit ECDSAKeepRequested(keepAddress, _members, _honestThreshold);
     }
 
     /// @notice Runs member selection for an ECDSA keep.
