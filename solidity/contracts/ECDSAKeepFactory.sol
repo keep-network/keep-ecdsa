@@ -12,9 +12,7 @@ contract ECDSAKeepFactory {
     // Notification that a new keep has been formed. It contains details of the
     // keep.
     event ECDSAKeepRequested(
-        address keepAddress,        // formed keep contract address
-        address[] members,          // list of keep members addresses
-        uint256 honestThreshold     // minimum number of honest keep members
+        address keepAddress        // formed keep contract address
     );
 
     /// @notice Build a new ECDSA keep.
@@ -39,7 +37,7 @@ contract ECDSAKeepFactory {
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepRequested(keepAddress, _members, _honestThreshold);
+        emit ECDSAKeepRequested(keepAddress);
     }
 
     /// @notice Runs member selection for an ECDSA keep.
