@@ -6,14 +6,14 @@ pragma solidity ^0.5.4;
 contract ECDSAKeep {
     // Owner of the keep.
     address owner;
-    // List of keep members' unique identifiers.
-    uint256[] internal keepMembers;
+    // List of keep members' addresses.
+    address[] internal keepMembers;
     // Maximum number of dishonest members in the keep.
     uint256 dishonestThreshold;
 
     constructor(
         address _owner,
-        uint256[] memory _keepMembers,
+        address[] memory _keepMembers,
         uint256 _dishonestThreshold
     ) public {
         owner = _owner;
