@@ -35,12 +35,12 @@ contract KeepRegistry is Ownable {
         ecdsaKeepFactory = _ecdsaKeepFactory;
     }
 
-    /// @notice Build a new ECDSA keep.
-    /// @dev Calls ECDSA Keep Factory to build a keep.
+    /// @notice Create a new ECDSA keep.
+    /// @dev Calls ECDSA Keep Factory to create a keep.
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
-    /// @return Built keep address.
-    function buildECDSAKeep(
+    /// @return Created keep address.
+    function createECDSAKeep(
         uint256 _groupSize,
         uint256 _honestThreshold
     ) public payable returns (address keep) {
