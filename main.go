@@ -6,8 +6,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/urfave/cli"
 	"github.com/keep-network/keep-tecdsa/cmd"
+	"github.com/urfave/cli"
 )
 
 const (
@@ -47,6 +47,7 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		cmd.SignCommand,
+		cmd.StartCommand,
 		cmd.PublishCommand,
 	}
 
