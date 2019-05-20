@@ -9,7 +9,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/keep-network/keep-tecdsa/internal/config"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/urfave/cli"
 )
@@ -41,15 +40,10 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	client := client.NewClient(ethereumChain, &chaincfg.TestNet3Params)
-
 	ctx := context.Background()
 
-	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
-		fmt.Printf("New ECDSA Keep created [%+v]\n", event)
-
-		go client.GenerateSignerForKeep(event.KeepAddress.String())
-	})
+	client := client.NewClient(ethereumChain, &chaincfg.TestNet3Params)
+	client.Initialize()
 
 	fmt.Printf("Client started.\n")
 

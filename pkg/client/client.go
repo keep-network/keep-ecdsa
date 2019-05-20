@@ -31,11 +31,20 @@ func NewClient(
 	}
 }
 
+// Initialize initializes the client with rules related to events handling.
+func (c *Client) Initialize() {
+	c.ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
+		fmt.Printf("New ECDSA Keep created [%+v]\n", event)
+
+		go c.GenerateSignerForKeep(event.KeepAddress.String())
+	})
+}
+
 // GenerateSignerForKeep generates a new signer with ECDSA key pair and calculates
 // bitcoin specific P2WPKH address based on signer's public key. It stores the
 // signer in a map assigned to a provided keep address.
 func (c *Client) GenerateSignerForKeep(keepAddress string) error {
-	signer, err := c.generateSigner()
+	signer, err := generateSigner()
 
 	// Calculate bitcoin P2WPKH address.
 	btcAddress, err := btc.PublicKeyToWitnessPubKeyHashAddress(
@@ -58,7 +67,7 @@ func (c *Client) GenerateSignerForKeep(keepAddress string) error {
 	return nil
 }
 
-func (c *Client) generateSigner() (*sign.Signer, error) {
+func generateSigner() (*sign.Signer, error) {
 	privateKey, err := sign.GenerateKey(crand.Reader)
 	if err != nil {
 		return nil, fmt.Errorf("private key generation failed: [%s]", err)
