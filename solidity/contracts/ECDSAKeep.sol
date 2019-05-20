@@ -8,7 +8,7 @@ contract ECDSAKeep {
     address owner;
     // List of keep members' addresses.
     address[] internal members;
-    // Minimum number of honest members in the keep.
+    // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
 
     constructor(
