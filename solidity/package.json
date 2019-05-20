@@ -1,0 +1,26 @@
+{
+  "name": "keep-tecdsa-contracts",
+  "version": "0.1.0",
+  "description": "Smart Contracts for the Keep TECDSA",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keep-network/keep-tecdsa.git"
+  },
+  "scripts": {
+    "truffle": "truffle",
+    "test": "truffle test"
+  },
+  "author": "Jakub Nowakowski <jakub.nowakowski@keep.network>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/keep-network/keep-tecdsa/issues"
+  },
+  "homepage": "https://github.com/keep-network/keep-tecdsa",
+  "dependencies": {
+    "openzeppelin-solidity": "^2.2.0"
+  },
+  "devDependencies": {
+    "solc": "^0.5.8",
+    "truffle": "^5.0.18"
+  }
+}
