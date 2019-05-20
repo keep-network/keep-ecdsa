@@ -1,5 +1,6 @@
 pragma solidity ^0.5.4;
 
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 // TODO: For simplification we use import for the other contracts. `ECDSAKeepFactory.sol` 
 // and `KeepRegistry.sol` will be kept in different repos in the future so a better
 // way of calling another contract from this contract should be introduced.
@@ -8,7 +9,7 @@ import "./ECDSAKeepFactory.sol";
 /// @title Keep Registry
 /// @notice Contract handling keeps registry.
 /// @dev TODO: This is a stub contract - needs to be implemented.
-contract KeepRegistry {
+contract KeepRegistry is Ownable {
     // Enumeration of supported keeps types.
     enum KeepTypes {ECDSA, BondedECDSA}
 
@@ -30,7 +31,7 @@ contract KeepRegistry {
         setECDSAKeepFactory(_ecdsaKeepFactory);
     }
 
-    function setECDSAKeepFactory(address _ecdsaKeepFactory) internal {
+    function setECDSAKeepFactory(address _ecdsaKeepFactory) public onlyOwner {
         ecdsaKeepFactory = _ecdsaKeepFactory;
     }
 
