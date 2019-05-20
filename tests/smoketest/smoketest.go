@@ -36,14 +36,14 @@ func Execute(config *ethereum.Config) error {
 	// Define callback on event.
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(1)
-	var actualEvent *eth.ECDSAKeepRequestedEvent
-	handle := func(event *eth.ECDSAKeepRequestedEvent) {
+	var actualEvent *eth.ECDSAKeepCreatedEvent
+	handle := func(event *eth.ECDSAKeepCreatedEvent) {
 		actualEvent = event
 		waitGroup.Done()
 	}
 
 	// Register for events.
-	subscription, err := chainAPI.OnECDSAKeepRequested(handle)
+	subscription, err := chainAPI.OnECDSAKeepCreated(handle)
 	defer subscription.Unsubscribe()
 	if err != nil {
 		return err
