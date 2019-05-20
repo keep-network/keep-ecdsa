@@ -13,7 +13,7 @@ contract ECDSAKeepFactory {
     // keep.
     event ECDSAKeepRequested(
         address keepAddress,        // formed keep contract address
-        address[] keepMembers,      // list of keep members addresses
+        address[] members,          // list of keep members addresses
         uint256 dishonestThreshold  // maximum number of dishonest keep members
     );
 
@@ -28,18 +28,18 @@ contract ECDSAKeepFactory {
         uint256 _dishonestThreshold,
         address _owner
     ) public payable returns (address keepAddress) {
-        address[] memory _keepMembers = selectECDSAKeepMembers(_groupSize);
+        address[] memory _members = selectECDSAKeepMembers(_groupSize);
 
         ECDSAKeep keep = new ECDSAKeep(
             _owner,
-            _keepMembers,
+            _members,
             _dishonestThreshold       
         );
         keeps.push(keep);
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepRequested(keepAddress, _keepMembers, _dishonestThreshold);
+        emit ECDSAKeepRequested(keepAddress, _members, _dishonestThreshold);
     }
 
     /// @notice Runs member selection for an ECDSA keep.
@@ -48,11 +48,11 @@ contract ECDSAKeepFactory {
     /// @return List of selected members addresses.
     function selectECDSAKeepMembers(
         uint256 _groupSize      
-    ) internal pure returns (address[] memory keepMembers){
+    ) internal pure returns (address[] memory members){
         _groupSize;
 
-        keepMembers = new address[](1);
-        keepMembers[0] = 0xE1d6c440DC87476242F313aA1179196fAE89B93e;
+        members = new address[](1);
+        members[0] = 0xE1d6c440DC87476242F313aA1179196fAE89B93e;
 
         // TODO: Currently it assumes members are identified by ID, we should
         // consider changing it to an account address or other unique identfier. 

@@ -7,17 +7,17 @@ contract ECDSAKeep {
     // Owner of the keep.
     address owner;
     // List of keep members' addresses.
-    address[] internal keepMembers;
+    address[] internal members;
     // Maximum number of dishonest members in the keep.
     uint256 dishonestThreshold;
 
     constructor(
         address _owner,
-        address[] memory _keepMembers,
+        address[] memory _members,
         uint256 _dishonestThreshold
     ) public {
         owner = _owner;
-        keepMembers = _keepMembers;
+        members = _members;
         dishonestThreshold = _dishonestThreshold;
     }
 
