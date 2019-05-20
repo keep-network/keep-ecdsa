@@ -13,10 +13,8 @@
 
 # Connection details of ethereum blockchain.
 [ethereum]
-	URL                = "ws://127.0.0.1:8545"
+    URL                = "ws://127.0.0.1:8545"
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
-	# Hex-encoded address of KeepTECDSAGroup contract
-	KeepTECDSAGroup = "0xbb2Ea17985f13D43e3AEC3963506A1B25ADDd57F"
-    ECDSAKeepFactory = "0xbdDf5E55A1b9C6A80Fc80A7800eaB1637d809C0c"
+     ECDSAKeepFactory = "0xbdDf5E55A1b9C6A80Fc80A7800eaB1637d809C0c"
