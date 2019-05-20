@@ -53,11 +53,6 @@ RUN pwd
 RUN ls $APP_DIR/solidity/contracts
 RUN go generate ./.../gen
 
-RUN go get golang.org/x/tools/cmd/goimports
-RUN goimports $APP_DIR/pkg/chain/eth/gen/abi/ECDSAKeep.go
-
-RUN cat $APP_DIR/pkg/chain/eth/gen/abi/ECDSAKeep.go
-
 # Build the application.
 COPY ./ $APP_DIR/
 
