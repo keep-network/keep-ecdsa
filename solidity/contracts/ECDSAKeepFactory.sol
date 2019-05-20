@@ -3,24 +3,23 @@ pragma solidity ^0.5.4;
 import "./ECDSAKeep.sol";
 
 /// @title ECDSA Keep Factory
-/// @notice Contract handling ECDSA keeps.
+/// @notice Contract creating ECDSA keeps.
 /// @dev TODO: This is a stub contract - needs to be implemented.
 contract ECDSAKeepFactory {
     // List of keeps.
     ECDSAKeep[] keeps;
 
-    // Notification that a new keep has been formed. It contains details of the
-    // keep.
+    // Notification that a new keep has been created.
     event ECDSAKeepCreated(
-        address keepAddress        // formed keep contract address
+        address keepAddress
     );
 
-    /// @notice Build a new ECDSA keep.
+    /// @notice Create a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Owner of the keep.
-    /// @return Built keep.
+    /// @return Created keep.
     function createNewKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,

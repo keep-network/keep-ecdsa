@@ -22,8 +22,7 @@ contract ECDSAKeep {
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
-    /// @dev Stub implementations it should be calling sMPC cluster to produce
-    /// a signature.
+    /// @dev Stub implementations.
     /// @param _digest Digest to be signed.
     function sign(bytes memory _digest) public view {
         require(msg.sender == owner, "Only keep owner can ask to sign");
