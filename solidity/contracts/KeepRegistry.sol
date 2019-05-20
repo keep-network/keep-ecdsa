@@ -43,7 +43,7 @@ contract KeepRegistry {
         uint256 _groupSize,
         uint256 _honestThreshold
     ) public payable returns (address keep) {
-        keep = ECDSAKeepFactory(ecdsaKeepFactory).buildNewKeep(
+        keep = ECDSAKeepFactory(ecdsaKeepFactory).createNewKeep(
             _groupSize,
             _honestThreshold,
             msg.sender

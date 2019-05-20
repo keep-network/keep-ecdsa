@@ -11,7 +11,7 @@ contract ECDSAKeepFactory {
 
     // Notification that a new keep has been formed. It contains details of the
     // keep.
-    event ECDSAKeepRequested(
+    event ECDSAKeepCreated(
         address keepAddress        // formed keep contract address
     );
 
@@ -21,7 +21,7 @@ contract ECDSAKeepFactory {
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Owner of the keep.
     /// @return Built keep.
-    function buildNewKeep(
+    function createNewKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
         address _owner
@@ -37,7 +37,7 @@ contract ECDSAKeepFactory {
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepRequested(keepAddress);
+        emit ECDSAKeepCreated(keepAddress);
     }
 
     /// @notice Runs member selection for an ECDSA keep.
