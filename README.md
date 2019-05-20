@@ -46,6 +46,16 @@ configuration CLI supports `--config` flag.
 
 ---
 
+## Smoke test
+
+To run a smoke test execute a command:
+```sh
+./keep-tecdsa smoke-test
+```
+
+It requires solidity contracts to be deployed and their addresses provided in
+`config.toml` file.
+
 ## Sign hash
 
 To run execute a command:

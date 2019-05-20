@@ -16,6 +16,7 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
 
+// Private key of a transactions to contract sender.
 const senderPrivateKeyString = "bd03a0aa0b96c5cff1accafdc806aa7f655b6a9a13aeb79f4669c9cfad1eb265"
 
 type testChain struct {
