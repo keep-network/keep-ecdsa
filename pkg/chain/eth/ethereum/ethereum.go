@@ -19,9 +19,7 @@ func (ec *EthereumChain) OnECDSAKeepRequested(
 			chainEvent *abi.ECDSAKeepFactoryECDSAKeepRequested,
 		) {
 			handle(&eth.ECDSAKeepRequestedEvent{
-				KeepAddress:        chainEvent.KeepAddress,
-				MemberIDs:          chainEvent.KeepMembers,
-				DishonestThreshold: chainEvent.DishonestThreshold,
+				KeepAddress: chainEvent.KeepAddress,
 			})
 		},
 		func(err error) error {

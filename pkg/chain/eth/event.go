@@ -12,7 +12,5 @@ type MemberID = big.Int
 
 // ECDSAKeepRequestedEvent is an event emitted on a new keep creation request.
 type ECDSAKeepRequestedEvent struct {
-	KeepAddress        common.Address // keep contract address
-	MemberIDs          []*MemberID    // keep members IDs
-	DishonestThreshold *big.Int       // maximum number of dishonest members `m`
+	KeepAddress common.Address // keep contract address
 }
