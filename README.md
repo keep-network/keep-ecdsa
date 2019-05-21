@@ -39,6 +39,12 @@ Where `<hash>` is a message to sign.
 
 ---
 
+## Contracts
+
+See [solidity](./solidity/) directory.
+
+---
+
 ## Configuration
 
 `configs/config.toml` is default path to the config file. To provide custom 
