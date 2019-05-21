@@ -59,7 +59,7 @@ func Execute(config *ethereum.Config) error {
 	honestThreshold := big.NewInt(5)
 	ownerAddress := common.HexToAddress("0x316F8eaf0b6065a53f0eaB3DD19aC6a07af95b3D")
 
-	transaction, err := testChain.ecdsaKeepFactoryContract.BuildNewKeep(
+	transaction, err := testChain.ecdsaKeepFactoryContract.CreateNewKeep(
 		testChain.transactOpts,
 		groupSize,
 		honestThreshold,
