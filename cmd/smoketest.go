@@ -32,7 +32,7 @@ func SmokeTest(c *cli.Context) error {
 		return err
 	}
 
-	if smoketest.Execute(&configFile.Ethereum); err != nil {
+	if err := smoketest.Execute(&configFile.Ethereum); err != nil {
 		return fmt.Errorf("smoke test failed: [%s]", err)
 	}
 
