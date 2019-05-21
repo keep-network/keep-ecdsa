@@ -56,7 +56,7 @@ configuration CLI supports `--config` flag.
 
 To start a `keep-tecdsa` client execute:
 ```sh
-/.keep-tecdsa start
+./keep-tecdsa start
 ```
 
 ---
