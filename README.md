@@ -52,6 +52,15 @@ configuration CLI supports `--config` flag.
 
 ---
 
+## Client
+
+To start a `keep-tecdsa` client execute:
+```sh
+./keep-tecdsa start
+```
+
+---
+
 ## Sign hash
 
 To run execute a command:
