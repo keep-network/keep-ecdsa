@@ -4,6 +4,7 @@ package tecdsa
 import (
 	crand "crypto/rand"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -33,7 +34,11 @@ func Initialize(
 	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
 		fmt.Printf("New ECDSA Keep created [%+v]\n", event)
 
-		go client.GenerateSignerForKeep(event.KeepAddress.String())
+		go func() {
+			if err := client.GenerateSignerForKeep(event.KeepAddress.String()); err != nil {
+				fmt.Fprintf(os.Stderr, "signer generation failed: [%s]", err)
+			}
+		}()
 	})
 }
 
