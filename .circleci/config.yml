@@ -14,7 +14,6 @@ orbs:
 jobs:
   build_and_test_solidity:
     executor: docker-node
-    working_directory: solidity
     steps:
         - checkout
         - run: sudo npm install -g ganache-cli@6.4.2
@@ -24,13 +23,19 @@ jobs:
             background: true
         - run: 
             name: Setup solidity
-            command: npm install && npm run setup 
+            command: |
+              cd solidity
+              npm install && npm run setup 
         - run: 
             name: Build solidity contracts
-            command: npm build
+            command: |
+              cd solidity
+              npm build
         - run: 
             name: Run solidity tests
-            command: npm run test
+            command: |
+              cd solidity 
+              npm run test
   build_client_and_test_go:
     executor: docker-git
     steps:
