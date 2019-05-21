@@ -15,12 +15,23 @@ ENV GOPATH=/go \
 
 RUN apk add --update --no-cache \
 	g++ \
+	make \
+	nodejs \
+	npm \
+	python \
 	git && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
-RUN mkdir -p $APP_DIR
+# Install Solidity compiler.
+COPY --from=ethereum/solc:0.5.8 /usr/bin/solc /usr/bin/solc
 
+# Configure GitHub token to be able to get private repositories.
+ARG GITHUBTOKEN
+RUN git config --global url."https://$GITHUBTOKEN:@github.com/".insteadOf "https://github.com/"
+
+# Configure working directory.
+RUN mkdir -p $APP_DIR
 WORKDIR $APP_DIR
 
 # Get dependencies.
@@ -29,12 +40,26 @@ COPY go.sum $APP_DIR/
 
 RUN go mod download
 
-# Build the app.
+# Install ABI generator.
+RUN cd /go/pkg/mod/github.com/keep-network/go-ethereum@v1.8.27/cmd/abigen && go install .
+
+# Install Solidity contracts.
+COPY ./solidity $APP_DIR/solidity
+RUN cd $APP_DIR/solidity && npm install
+
+# Generate ABI files.
+COPY ./pkg/chain/eth/gen $APP_DIR/pkg/chain/eth/gen
+RUN pwd
+RUN ls $APP_DIR/solidity/contracts
+RUN go generate ./.../gen
+
+# Build the application.
 COPY ./ $APP_DIR/
 
 RUN GOOS=linux go build -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
 
+# Configure runtime container.
 FROM runtime
 
 COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
