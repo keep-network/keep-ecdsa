@@ -35,17 +35,17 @@ func Initialize(
 		fmt.Printf("New ECDSA Keep created [%+v]\n", event)
 
 		go func() {
-			if err := client.GenerateSignerForKeep(event.KeepAddress.String()); err != nil {
+			if err := client.generateSignerForKeep(event.KeepAddress.String()); err != nil {
 				fmt.Fprintf(os.Stderr, "signer generation failed: [%s]", err)
 			}
 		}()
 	})
 }
 
-// GenerateSignerForKeep generates a new signer with ECDSA key pair and calculates
+// generateSignerForKeep generates a new signer with ECDSA key pair and calculates
 // bitcoin specific P2WPKH address based on signer's public key. It stores the
 // signer in a map assigned to a provided keep address.
-func (c *Client) GenerateSignerForKeep(keepAddress string) error {
+func (c *Client) generateSignerForKeep(keepAddress string) error {
 	signer, err := generateSigner()
 
 	// Calculate bitcoin P2WPKH address.
