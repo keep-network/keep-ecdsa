@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/keep-network/keep-tecdsa/pkg/client"
-
 	"github.com/btcsuite/btcd/chaincfg"
-
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
+	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
 	"github.com/urfave/cli"
 )
 
@@ -42,7 +40,7 @@ func Start(c *cli.Context) error {
 
 	ctx := context.Background()
 
-	client := client.NewClient(ethereumChain, &chaincfg.TestNet3Params)
+	client := tecdsa.NewClient(ethereumChain, &chaincfg.TestNet3Params)
 	client.Initialize()
 
 	fmt.Printf("Client started.\n")

@@ -1,5 +1,5 @@
-// Package client defines Keep tECDSA client.
-package client
+// Package tecdsa defines Keep tECDSA client.
+package tecdsa
 
 import (
 	crand "crypto/rand"
