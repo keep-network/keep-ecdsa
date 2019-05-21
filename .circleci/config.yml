@@ -30,7 +30,7 @@ jobs:
             name: Build solidity contracts
             command: |
               cd solidity
-              npm build
+              npm run build
         - run: 
             name: Run solidity tests
             command: |
