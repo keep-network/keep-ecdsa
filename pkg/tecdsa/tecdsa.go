@@ -13,9 +13,9 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
 )
 
-// Client holds blockchain specific configuration, interfaces to interact with the
+// client holds blockchain specific configuration, interfaces to interact with the
 // blockchain and a map of signers for given keeps.
-type Client struct {
+type client struct {
 	ethereumChain    eth.Interface
 	bitcoinNetParams *chaincfg.Params
 	keepsSigners     sync.Map //<keepAddress, signer>
@@ -26,7 +26,7 @@ func Initialize(
 	ethereumChain eth.Interface,
 	bitcoinNetParams *chaincfg.Params,
 ) {
-	client := &Client{
+	client := &client{
 		ethereumChain:    ethereumChain,
 		bitcoinNetParams: bitcoinNetParams,
 	}
@@ -45,7 +45,7 @@ func Initialize(
 // generateSignerForKeep generates a new signer with ECDSA key pair and calculates
 // bitcoin specific P2WPKH address based on signer's public key. It stores the
 // signer in a map assigned to a provided keep address.
-func (c *Client) generateSignerForKeep(keepAddress string) error {
+func (c *client) generateSignerForKeep(keepAddress string) error {
 	signer, err := generateSigner()
 
 	// Calculate bitcoin P2WPKH address.
