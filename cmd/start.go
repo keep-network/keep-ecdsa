@@ -40,8 +40,7 @@ func Start(c *cli.Context) error {
 
 	ctx := context.Background()
 
-	client := tecdsa.NewClient(ethereumChain, &chaincfg.TestNet3Params)
-	client.Initialize()
+	tecdsa.Initialize(ethereumChain, &chaincfg.TestNet3Params)
 
 	fmt.Printf("Client started.\n")
 

@@ -20,23 +20,20 @@ type Client struct {
 	keepsSigners     sync.Map //<keepAddress, signer>
 }
 
-// NewClient creates new client.
-func NewClient(
+// Initialize initializes the tECDSA client with rules related to events handling.
+func Initialize(
 	ethereumChain eth.Interface,
 	bitcoinNetParams *chaincfg.Params,
-) *Client {
-	return &Client{
+) {
+	client := &Client{
 		ethereumChain:    ethereumChain,
 		bitcoinNetParams: bitcoinNetParams,
 	}
-}
 
-// Initialize initializes the client with rules related to events handling.
-func (c *Client) Initialize() {
-	c.ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
+	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
 		fmt.Printf("New ECDSA Keep created [%+v]\n", event)
 
-		go c.GenerateSignerForKeep(event.KeepAddress.String())
+		go client.GenerateSignerForKeep(event.KeepAddress.String())
 	})
 }
 
