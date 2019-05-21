@@ -16,6 +16,9 @@
     "url": "https://github.com/keep-network/keep-tecdsa/issues"
   },
   "homepage": "https://github.com/keep-network/keep-tecdsa",
+  "dependencies": {
+    "openzeppelin-solidity": "^2.2.0"
+  },
   "devDependencies": {
     "solc": "^0.5.8",
     "truffle": "^5.0.18"
