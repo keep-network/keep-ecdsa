@@ -6,12 +6,14 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/blockcypher"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/electrum"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 )
 
 // Config is the top level config structure.
 type Config struct {
 	Electrum    electrum.Config
 	BlockCypher blockcypher.Config
+	Ethereum    ethereum.Config
 }
 
 // ReadConfig reads in the configuration file in .toml format.

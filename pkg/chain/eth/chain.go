@@ -1,10 +1,17 @@
-// Package chain contains interface for interaction with a blockchain.
-package chain
+// Package eth contains interface for interaction with an ethereum blockchain
+// along with structures reflecting events emitted on an ethereum blockchain.
+package eth
 
-// Interface is an interface that provides ability to interact with a blockchain.
+import (
+	"github.com/keep-network/keep-core/pkg/subscription"
+)
+
+// Interface is an interface that provides ability to interact with ethereum
+// contracts.
 type Interface interface {
-	// PublishTransaction publishes a transaction to a chain. It requires raw
-	// transaction to be provided in a format specific to a chain. It returns
-	// an unique identifier of the transaction.
-	PublishTransaction(rawTx string) (string, error)
+	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
+	// notification of a new ECDSA keep creation is seen.
+	OnECDSAKeepCreated(
+		func(request *ECDSAKeepCreatedEvent),
+	) (subscription.EventSubscription, error)
 }

@@ -10,3 +10,11 @@
     Token   = "d195ca15455f42b7842abd7c691191c9"
     Coin    = "btc"
     Chain   = "test3"
+
+# Connection details of ethereum blockchain.
+[ethereum]
+    URL                = "ws://127.0.0.1:8545"
+
+# Addresses of contracts deployed on ethereum blockchain.
+[ethereum.ContractAddresses]
+     ECDSAKeepFactory = "0xbdDf5E55A1b9C6A80Fc80A7800eaB1637d809C0c"
