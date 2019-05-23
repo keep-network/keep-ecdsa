@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"fmt"
+	"context"
+	"time"
 
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/tests/smoketest"
@@ -32,9 +33,19 @@ func SmokeTest(c *cli.Context) error {
 		return err
 	}
 
-	if err := smoketest.Execute(&configFile.Ethereum); err != nil {
-		return fmt.Errorf("smoke test failed: [%s]", err)
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	return nil
+	errChan := make(chan error)
+
+	go func() {
+		errChan <- smoketest.Execute(&configFile.Ethereum)
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-errChan:
+		return err
+	}
 }
