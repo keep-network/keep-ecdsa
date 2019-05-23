@@ -1,7 +1,6 @@
 package smoketest
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"sync"
@@ -76,11 +75,7 @@ func Execute(config *ethereum.Config) error {
 	waitGroup.Wait()
 
 	// Log received event.
-	marshaled, err := json.MarshalIndent(actualEvent, "", " ")
-	if err != nil {
-		return fmt.Errorf("cannot marshal received event: [%s]", err)
-	}
-	fmt.Printf("Received event:\n%s\n", marshaled)
+	fmt.Printf("Received event: %#v\n", actualEvent)
 
 	// Validate received event.
 	if !common.IsHexAddress(actualEvent.KeepAddress.String()) {
