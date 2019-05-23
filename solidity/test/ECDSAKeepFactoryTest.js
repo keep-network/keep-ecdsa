@@ -7,7 +7,7 @@ contract("ECDSAKeepFactory test", async accounts => {
 
         let keepFactory = await ECDSAKeepFactory.deployed();
 
-        let expectedKeepAddress = await keepFactory.createNewKeep.call(
+        let keepAddress = await keepFactory.createNewKeep.call(
             10, // uint256 _groupSize,
             5, // uint256 _honestThreshold,
             "0xbc4862697a1099074168d54A555c4A60169c18BD" // address _owner
@@ -29,15 +29,15 @@ contract("ECDSAKeepFactory test", async accounts => {
         })
 
         assert.isTrue(
-            web3.utils.isAddress(expectedKeepAddress),
-            `keep address ${expectedKeepAddress} is not a valid address`,
+            web3.utils.isAddress(keepAddress),
+            `keep address ${keepAddress} is not a valid address`,
         );
 
         assert.equal(eventList.length, 1, "incorrect number of emitted events")
 
         assert.equal(
             eventList[0].returnValues.keepAddress,
-            expectedKeepAddress,
+            keepAddress,
             "incorrect keep address in emitted event",
         )
     });
