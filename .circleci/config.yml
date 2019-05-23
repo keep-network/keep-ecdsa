@@ -16,7 +16,7 @@ jobs:
     executor: docker-node
     steps:
         - checkout
-        - run: sudo npm install -g ganache-cli@6.4.2
+        - run: npm install ganache-cli@6.4.2
         - run:
             name: Running testrpc
             command: ganache-cli
