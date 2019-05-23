@@ -3,7 +3,7 @@ var ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 contract("ECDSAKeepFactory test", async accounts => {
 
     it("ECDSAKeepCreated event emission", async () => {
-        let blockNumber = await web3.eth.getBlock("latest").number
+        let blockNumber = await web3.eth.getBlockNumber()
 
         let keepFactory = await ECDSAKeepFactory.deployed();
 
