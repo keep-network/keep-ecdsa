@@ -62,6 +62,17 @@ To run a smoke test execute a command:
 It requires solidity contracts to be deployed and their addresses provided in
 `config.toml` file.
 
+---
+
+## Client
+
+To start a `keep-tecdsa` client execute:
+```sh
+./keep-tecdsa start
+```
+
+---
+
 ## Sign hash
 
 To run execute a command:
