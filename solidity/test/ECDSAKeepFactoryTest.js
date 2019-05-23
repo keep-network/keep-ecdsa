@@ -8,17 +8,17 @@ contract("ECDSAKeepFactory test", async accounts => {
         let keepFactory = await ECDSAKeepFactory.deployed();
 
         let keepAddress = await keepFactory.createNewKeep.call(
-            10, // uint256 _groupSize,
-            5, // uint256 _honestThreshold,
-            "0xbc4862697a1099074168d54A555c4A60169c18BD" // address _owner
+            10, // _groupSize,
+            5, // _honestThreshold,
+            "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
         ).catch((err) => {
             console.log(`ecdsa keep creation for failed: ${err}`);
         });
 
         await keepFactory.createNewKeep(
-            10, // uint256 _groupSize,
-            5, // uint256 _honestThreshold,
-            "0xbc4862697a1099074168d54A555c4A60169c18BD" // address _owner
+            10, // _groupSize,
+            5, // _honestThreshold,
+            "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
         ).catch((err) => {
             console.log(`ecdsa keep creation failed: ${err}`);
         });
