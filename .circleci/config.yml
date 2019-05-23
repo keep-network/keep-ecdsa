@@ -1,6 +1,9 @@
 version: 2.1
 
 executors:
+  docker-node:
+    docker:
+      - image: circleci/node:11
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
@@ -9,6 +12,32 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
 
 jobs:
+  build_and_test_solidity:
+    executor: docker-node
+    steps:
+        - checkout
+        - run: npm install ganache-cli@6.4.2
+        - run:
+            name: Running testrpc
+            command: |
+              cd $(npm bin)
+              ./ganache-cli
+            background: true
+        - run: 
+            name: Setup solidity
+            command: |
+              cd solidity
+              npm install
+        - run: 
+            name: Build solidity contracts
+            command: |
+              cd solidity
+              npm run build
+        - run: 
+            name: Run solidity tests
+            command: |
+              cd solidity 
+              npm run test
   build_client_and_test_go:
     executor: docker-git
     steps:
@@ -55,6 +84,9 @@ jobs:
 
 workflows:
   version: 2
+  solidity:
+    jobs:
+      - build_and_test_solidity
   build-test-publish:
     jobs:
       - build_client_and_test_go:

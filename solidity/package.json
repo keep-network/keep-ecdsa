@@ -8,6 +8,7 @@
   },
   "scripts": {
     "truffle": "truffle",
+    "build": "truffle compile",
     "test": "truffle test"
   },
   "author": "Jakub Nowakowski <jakub.nowakowski@keep.network>",
