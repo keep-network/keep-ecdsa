@@ -1,8 +1,8 @@
 package ethereum
 
 import (
-	"log"
-
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
@@ -12,6 +12,7 @@ import (
 type EthereumChain struct {
 	config                   *Config
 	client                   *ethclient.Client
+	transactorOptions        *bind.TransactOpts
 	ecdsaKeepFactoryContract *abi.ECDSAKeepFactory
 }
 
@@ -22,7 +23,13 @@ func Connect(config *Config) (eth.Interface, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	privateKey, err := crypto.HexToECDSA(config.PrivateKey)
+	if err != nil {
+		return nil, err
 	}
+
+	transactorOptions := bind.NewKeyedTransactor(privateKey)
 
 	ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ECDSAKeepFactoryContractName)
 	if err != nil {
@@ -39,6 +46,7 @@ func Connect(config *Config) (eth.Interface, error) {
 	return &EthereumChain{
 		config:                   config,
 		client:                   client,
+		transactorOptions:        transactorOptions,
 		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
 	}, nil
 }
