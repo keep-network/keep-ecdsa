@@ -4,6 +4,7 @@ package ethereum
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
@@ -26,4 +27,34 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 			return fmt.Errorf("keep requested callback failed: [%s]", err)
 		},
 	)
+}
+
+// SubmitKeepPublicKey submits a public key to a keep contract deployed under
+// a given address.
+func (ec *EthereumChain) SubmitKeepPublicKey(
+	address eth.KeepAddress,
+	publicKey eth.KeepPublicKey,
+) error {
+	keepContract, err := ec.getKeepContract(address)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := keepContract.SetPublicKey(ec.transactorOptions, publicKey[:])
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Transaction submitted with hash: %x", transaction.Hash())
+
+	return nil
+}
+
+func (ec *EthereumChain) getKeepContract(address *common.Address) (*abi.ECDSAKeep, error) {
+	ecdsaKeepContract, err := abi.NewECDSAKeep(*address, ec.client)
+	if err != nil {
+		return nil, err
+	}
+
+	return ecdsaKeepContract, nil
 }
