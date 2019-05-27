@@ -13,8 +13,9 @@
 
 # Connection details of ethereum blockchain.
 [ethereum]
-    URL                = "ws://127.0.0.1:8545"
+    URL                 = "ws://127.0.0.1:8545"
+    PrivateKey          = "b257de4d169f15d75866ff25c95f3cc2cde9871d676aed25f8cdf8ce11c8c2f4"
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
-     ECDSAKeepFactory = "0xbdDf5E55A1b9C6A80Fc80A7800eaB1637d809C0c"
+     ECDSAKeepFactory = "0x06704DB5f227d7A97deEf203dfa87213617470d9"
