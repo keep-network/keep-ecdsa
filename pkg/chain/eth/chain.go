@@ -8,7 +8,7 @@ import (
 )
 
 // KeepAddress is a keep contract address.
-type KeepAddress *common.Address
+type KeepAddress = common.Address
 
 // KeepPublicKey is a public key of a signer related to the keep.
 // It is concatenation of X and Y coordinates each of 32-byte length. Value
