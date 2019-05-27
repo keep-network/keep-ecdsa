@@ -7,26 +7,24 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-// Handle is an interface that provides ability to interact with the blockchain.
-type Handle interface {
-	// ECDSAKeepFactory returns an interface for ECDSA Keep Factory contract.
-	ECDSAKeepFactory() (ECDSAKeepFactory, error)
-	// ECDSAKeep returns an interface for ECDSA Keep contract of given address.
-	ECDSAKeep(address *common.Address) (ECDSAKeep, error)
-}
+// KeepAddress is a keep contract address.
+type KeepAddress *common.Address
 
-// ECDSAKeepFactory is an interface that provides ability to interact with
-// ECDSA Keep Factory contract deployed on the blockchain.
-type ECDSAKeepFactory interface {
+// KeepPublicKey is a public key of a signer related to the keep.
+// It is concatenation of X and Y coordinates each of 32-byte length. Value
+// shorter than 32-byte should be preceded with zeros.
+type KeepPublicKey [64]byte
+
+// Interface is an interface that provides ability to interact with ethereum
+// contracts.
+type Interface interface {
 	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
 	// notification of a new ECDSA keep creation is seen.
 	OnECDSAKeepCreated(
 		func(request *ECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
-}
 
-// ECDSAKeep is an interface that provides ability to interact with ECDSA Keep
-// contract deployed on the blockchain.
-type ECDSAKeep interface {
-	SubmitKeepPublicKey(publicKey [64]byte) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
+	// SubmitKeepPublicKey submits a public key to a keep contract deployed under
+	// a given address.
+	SubmitKeepPublicKey(address KeepAddress, publicKey KeepPublicKey) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
 }
