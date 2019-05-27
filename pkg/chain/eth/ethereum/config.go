@@ -17,6 +17,9 @@ type Config struct {
 	// ContractAddresses map holds contract name as a key and contract address
 	// as a value.
 	ContractAddresses map[string]string
+	// Private key for client's address to interact with Ethereum chain.
+	// TODO: Provide more secure solution, e.g. reading protected files from disk.
+	PrivateKey string
 }
 
 // ContractAddress finds a given contract's address configuration and returns it
