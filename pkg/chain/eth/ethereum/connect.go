@@ -20,7 +20,8 @@ type EthereumChain struct {
 func Connect(config *Config) (eth.Interface, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
+	}
 	}
 
 	ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ECDSAKeepFactoryContractName)
