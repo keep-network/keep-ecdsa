@@ -50,8 +50,8 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	return nil
 }
 
-func (ec *EthereumChain) getKeepContract(address *common.Address) (*abi.ECDSAKeep, error) {
-	ecdsaKeepContract, err := abi.NewECDSAKeep(*address, ec.client)
+func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.ECDSAKeep, error) {
+	ecdsaKeepContract, err := abi.NewECDSAKeep(address, ec.client)
 	if err != nil {
 		return nil, err
 	}
