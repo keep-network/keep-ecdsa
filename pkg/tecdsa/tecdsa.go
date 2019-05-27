@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-tecdsa/pkg/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
@@ -48,6 +49,11 @@ func Initialize(
 // bitcoin specific P2WPKH address based on signer's public key. It stores the
 // signer in a map assigned to a provided keep address.
 func (c *client) generateSignerForKeep(keepAddress string) error {
+	// Validate keep address.
+	if !common.IsHexAddress(keepAddress) {
+		return fmt.Errorf("invalid hex address: [%s]", keepAddress)
+	}
+
 	signer, err := generateSigner()
 
 	// Calculate bitcoin P2WPKH address.
@@ -59,7 +65,18 @@ func (c *client) generateSignerForKeep(keepAddress string) error {
 		return fmt.Errorf("p2wpkh address conversion failed: [%s]", err)
 	}
 
-	// TODO: Publish it on ethereum chain in the specific keep contract.
+	// Publish signer's public key on ethereum blockchain in a specific keep
+	// contract.
+	keepPublicKey, err := eth.PublicKeyToKeepPublicKey(signer.PublicKey())
+	if err != nil {
+		return fmt.Errorf("p2wpkh address conversion failed: [%s]", err)
+	}
+
+	c.ethereumChain.SubmitKeepPublicKey(
+		common.HexToAddress(keepAddress),
+		keepPublicKey,
+	)
+
 	fmt.Printf(
 		"Signer for keep [%s] initialized with Bitcoin P2WPKH address [%s]\n",
 		keepAddress,
