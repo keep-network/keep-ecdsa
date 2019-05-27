@@ -1,16 +1,15 @@
 package eth
 
 import (
-	"crypto/ecdsa"
-
+	"github.com/keep-network/keep-tecdsa/pkg/sign"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
 )
 
-// ECDSAPublicKeyToKeepPublicKey serializes ECDSA public key to a format required
+// PublicKeyToKeepPublicKey serializes signer's public key to a format required
 // for public key by a keep contract. It pads each of X, Y coordinates to 32-bytes
 // and returns a 64-byte long serialized public key.
-func ECDSAPublicKeyToKeepPublicKey(
-	publicKey *ecdsa.PublicKey) (KeepPublicKey, error) {
+func PublicKeyToKeepPublicKey(
+	publicKey *sign.PublicKey) (KeepPublicKey, error) {
 	var serialized KeepPublicKey
 
 	x, err := byteutils.LeftPadTo32Bytes(publicKey.X.Bytes())

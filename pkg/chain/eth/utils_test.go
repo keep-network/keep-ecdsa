@@ -2,12 +2,13 @@ package eth
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"math/big"
 	"testing"
+
+	"github.com/keep-network/keep-tecdsa/pkg/sign"
 )
 
-func TestECDSAPublicKeyToKeepPublicKey(t *testing.T) {
+func TestPublicKeyToKeepPublicKey(t *testing.T) {
 	bytes32 := []byte{207, 73, 229, 19, 136, 216, 125, 157, 135, 142, 67, 130,
 		136, 13, 76, 188, 32, 218, 243, 134, 95, 73, 155, 24, 38, 73, 117, 90,
 		215, 95, 216, 19}
@@ -27,8 +28,8 @@ func TestECDSAPublicKeyToKeepPublicKey(t *testing.T) {
 		78, 251, 234, 118, 184, 16, 116, 238, 82, 131, 153, 134, 17, 46, 158, 94,
 	}
 
-	actualResult, err := ECDSAPublicKeyToKeepPublicKey(
-		&ecdsa.PublicKey{
+	actualResult, err := PublicKeyToKeepPublicKey(
+		&sign.PublicKey{
 			X: new(big.Int).SetBytes(bytes32),
 			Y: new(big.Int).SetBytes(bytes31),
 		},
