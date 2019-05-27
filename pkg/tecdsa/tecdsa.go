@@ -25,7 +25,7 @@ type client struct {
 func Initialize(
 	ethereumChain eth.Interface,
 	bitcoinNetParams *chaincfg.Params,
-) {
+) error {
 	client := &client{
 		ethereumChain:    ethereumChain,
 		bitcoinNetParams: bitcoinNetParams,
@@ -40,6 +40,8 @@ func Initialize(
 			}
 		}()
 	})
+
+	return nil
 }
 
 // generateSignerForKeep generates a new signer with ECDSA key pair and calculates
