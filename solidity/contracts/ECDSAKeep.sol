@@ -33,6 +33,12 @@ contract ECDSAKeep {
         publicKey = _publicKey;
     }
 
+    /// @notice Returns the keep signer's public key.
+    /// @return Signer's public key.
+    function getPublicKey() public view returns (bytes memory) {
+       return publicKey;
+    }
+
     /// @notice Calculates a signature over provided digest by the keep.
     /// @dev Stub implementations.
     /// @param _digest Digest to be signed.
