@@ -14,4 +14,8 @@ type Interface interface {
 	OnECDSAKeepCreated(
 		func(request *ECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
+
+	OnECDSAKeepSignatureRequest(
+		func(request *ECDSAKeepSignatureRequestEvent),
+	) (subscription.EventSubscription, error)
 }
