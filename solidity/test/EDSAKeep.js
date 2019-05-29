@@ -9,9 +9,8 @@ contract("ECDSAKeep test", async accounts => {
     it("get public key before it is set", async () => {
         let keep = await ECDSAKeep.new(owner, members, honestThreshold);
 
-        // Test before public key is set
         let publicKey = await keep.getPublicKey.call().catch((err) => {
-            console.log(`ecdsa keep creation failed: ${err}`);
+            assert.fail(`ecdsa keep creation failed: ${err}`);
         });
 
         assert.equal(publicKey, undefined, "incorrect public key")
@@ -21,19 +20,17 @@ contract("ECDSAKeep test", async accounts => {
         let keep = await ECDSAKeep.new(owner, members, honestThreshold);
 
         await keep.setPublicKey(expectedPublicKey).catch((err) => {
-            console.log(`ecdsa keep creation failed: ${err}`);
+            assert.fail(`ecdsa keep creation failed: ${err}`);
         });
 
         publicKey = await keep.getPublicKey.call().catch((err) => {
-            console.log(`ecdsa keep creation failed: ${err}`);
+            assert.fail(`cannot get public key: ${err}`);
         });
-
-        console.log(publicKey)
 
         assert.equal(
             publicKey,
             web3.utils.bytesToHex(expectedPublicKey),
-            "incorrect public"
+            "incorrect public key"
         )
     });
 });
