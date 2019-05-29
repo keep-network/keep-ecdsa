@@ -40,6 +40,22 @@ func Initialize(
 			}
 		}()
 	})
+
+	// // ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ECDSAKeepFactoryContractName)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// ecdsaKeepFactoryContract, err := abi.NewECDSAKeepFactory(
+	// 	ecdsaKeepFactoryContractAddress,
+	// 	client,
+	// )
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// ethereumChain.OnECDSAKeepSignatureRequest(func(event *eth.ECDSAKeepSignatureRequestEvent) {
+	// 	fmt.Printf("New signature requested [%+v]\n", event.Digest)
+	// })
 }
 
 // generateSignerForKeep generates a new signer with ECDSA key pair and calculates

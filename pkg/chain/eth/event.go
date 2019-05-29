@@ -11,6 +11,6 @@ type ECDSAKeepCreatedEvent struct {
 
 // ECDSAKeepSignatureRequestEvent is an event emitted when a user requests
 // a digest to be signed
-type ECDSAKeepSignatureRequestEvent struct {
-	Digest byte[]
+type ECDSAKeepSignatureRequestedEvent struct {
+	Digest []byte
 }

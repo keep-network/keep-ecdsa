@@ -15,7 +15,9 @@ type Interface interface {
 		func(request *ECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
 
-	OnECDSAKeepSignatureRequest(
-		func(request *ECDSAKeepSignatureRequestEvent),
+	// OnECDSAKeepSignatureRequest is a callback that is invoked when an on-chain
+	// notification of a new signing request is seen.
+	OnECDSAKeepSignatureRequested(
+		func(request *ECDSAKeepSignatureRequestedEvent),
 	) (subscription.EventSubscription, error)
 }
