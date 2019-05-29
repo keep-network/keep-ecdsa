@@ -11,6 +11,8 @@ contract ECDSAKeep {
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
 
+    event SignatureRequest(bytes digest);
+
     constructor(
         address _owner,
         address[] memory _members,
@@ -22,11 +24,10 @@ contract ECDSAKeep {
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
-    /// @dev Stub implementations.
+    /// @dev TODO: Access control.
     /// @param _digest Digest to be signed.
-    function sign(bytes memory _digest) public view {
+    function sign(bytes memory _digest) public {
         require(msg.sender == owner, "Only keep owner can ask to sign");
-        // TODO: Emit event to sign the digest.
-        _digest;
+        emit SignatureRequest(_digest);
     }
 }
