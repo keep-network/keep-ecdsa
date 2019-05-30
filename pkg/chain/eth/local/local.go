@@ -15,7 +15,7 @@ type LocalChain struct {
 
 	keeps map[string]*eth.KeepPublicKey
 
-	keepCreatedHandler map[int]func(groupRegistration *eth.ECDSAKeepCreatedEvent)
+	keepCreatedHandlers map[int]func(groupRegistration *eth.ECDSAKeepCreatedEvent)
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -36,13 +36,13 @@ func (lc *LocalChain) OnECDSAKeepCreated(
 
 	handlerID := rand.Int()
 
-	lc.keepCreatedHandler[handlerID] = handle
+	lc.keepCreatedHandlers[handlerID] = handle
 
 	return subscription.NewEventSubscription(func() {
 		lc.handlerMutex.Lock()
 		defer lc.handlerMutex.Unlock()
 
-		delete(lc.keepCreatedHandler, handlerID)
+		delete(lc.keepCreatedHandlers, handlerID)
 	}), nil
 }
 
