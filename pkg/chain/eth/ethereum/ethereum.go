@@ -19,11 +19,11 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 		func(
 			chainEvent *abi.ECDSAKeepFactoryECDSAKeepCreated,
 		) {
+			ec.registerKeepContract(chainEvent.KeepAddress)
+
 			handle(&eth.ECDSAKeepCreatedEvent{
 				KeepAddress: chainEvent.KeepAddress,
 			})
-
-			ec.registerKeepContract(chainEvent.KeepAddress)
 		},
 		func(err error) error {
 			return fmt.Errorf("keep requested callback failed: [%s]", err)
