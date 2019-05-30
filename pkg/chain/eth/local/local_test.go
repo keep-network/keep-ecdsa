@@ -1,13 +1,11 @@
 package local
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
 func TestOnECDSAKeepCreated(t *testing.T) {
@@ -17,7 +15,7 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 
 func TestSubmitKeepPublicKey(t *testing.T) {
 	keepAddress := "0x41048F9B90290A2e96D07f537F3A7E97620E9e47"
-	keepPublicKey := eth.KeepPublicKey{11, 12, 13, 14, 15, 16}
+	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 	expectedDuplicationError := fmt.Errorf(
 		"public key already submitted for keep [%s]",
 		keepAddress,
@@ -33,7 +31,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		t.Fatalf("unexpected error: [%s]", err)
 	}
 
-	if !bytes.Equal(keepPublicKey[:], chain.keeps[keepAddress][:]) {
+	if !reflect.DeepEqual(keepPublicKey, chain.keeps[keepAddress]) {
 		t.Errorf(
 			"unexpected result\nexpected: [%+v]\nactual:   [%+v]",
 			keepPublicKey,

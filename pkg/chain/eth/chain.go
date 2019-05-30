@@ -10,11 +10,6 @@ import (
 // KeepAddress is a keep contract address.
 type KeepAddress = common.Address
 
-// KeepPublicKey is a public key of a signer related to the keep.
-// It is concatenation of X and Y coordinates each of 32-byte length. Value
-// shorter than 32-byte should be preceded with zeros.
-type KeepPublicKey [64]byte
-
 // Interface is an interface that provides ability to interact with ethereum
 // contracts.
 type Interface interface {
@@ -24,7 +19,8 @@ type Interface interface {
 		func(request *ECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
 
-	// SubmitKeepPublicKey submits a public key to a keep contract deployed under
-	// a given address.
-	SubmitKeepPublicKey(address KeepAddress, publicKey KeepPublicKey) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
+	// SubmitKeepPublicKey submits a 64-byte serialized public key to a keep
+	// contract deployed under a given address.
+	SubmitKeepPublicKey(address KeepAddress, publicKey [64]byte) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
+
 }

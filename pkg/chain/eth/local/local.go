@@ -13,7 +13,7 @@ import (
 type LocalChain struct {
 	handlerMutex sync.Mutex
 
-	keeps map[string]*eth.KeepPublicKey
+	keeps map[string][64]byte
 
 	keepCreatedHandlers map[int]func(groupRegistration *eth.ECDSAKeepCreatedEvent)
 }
@@ -22,7 +22,7 @@ type LocalChain struct {
 // based on provided config.
 func Connect() eth.Interface {
 	return &LocalChain{
-		keeps: make(map[string]*eth.KeepPublicKey),
+		keeps: make(map[string][64]byte),
 	}
 }
 
@@ -50,7 +50,7 @@ func (lc *LocalChain) OnECDSAKeepCreated(
 // keep address, if not it stores the key in a map.
 func (lc *LocalChain) SubmitKeepPublicKey(
 	address eth.KeepAddress,
-	publicKey eth.KeepPublicKey,
+	publicKey [64]byte,
 ) error {
 	if _, ok := lc.keeps[address.Hex()]; ok {
 		return fmt.Errorf(
@@ -59,7 +59,7 @@ func (lc *LocalChain) SubmitKeepPublicKey(
 		)
 	}
 
-	lc.keeps[address.Hex()] = &publicKey
+	lc.keeps[address.Hex()] = publicKey
 
 	return nil
 }

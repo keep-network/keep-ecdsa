@@ -33,7 +33,7 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 // a given address.
 func (ec *EthereumChain) SubmitKeepPublicKey(
 	address eth.KeepAddress,
-	publicKey eth.KeepPublicKey,
+	publicKey [64]byte,
 ) error {
 	keepContract, err := ec.getKeepContract(address)
 	if err != nil {
