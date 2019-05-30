@@ -41,6 +41,6 @@ func Connect(config *Config) (eth.Interface, error) {
 		config:                   config,
 		client:                   client,
 		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
-		keepContracts: 			  make(map[common.Address]*abi.ECDSAKeep),
+		keepContracts:            make(map[common.Address]*abi.ECDSAKeep),
 	}, nil
 }

@@ -4,9 +4,25 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
+
+// liamz: ecdsaKeepFactoryContractAddress or address
+// liamz: registerECDSAKeepContract or this?
+func (ec *EthereumChain) registerKeepContract(address common.Address) error {
+	ecdsaKeepContract, err := abi.NewECDSAKeep(
+		address,
+		ec.client,
+	)
+	if err != nil {
+		return err
+	}
+
+	ec.keepContracts[address] = ecdsaKeepContract
+	return nil
+}
 
 func (ec *EthereumChain) watchECDSAKeepSignatureRequested(
 	keepContract *abi.ECDSAKeep,

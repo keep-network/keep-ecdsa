@@ -3,6 +3,7 @@
 package eth
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -18,6 +19,7 @@ type Interface interface {
 	// OnECDSAKeepSignatureRequest is a callback that is invoked when an on-chain
 	// notification of a new signing request is seen.
 	OnECDSAKeepSignatureRequested(
+		common.Address,
 		func(request *ECDSAKeepSignatureRequestedEvent),
 	) (subscription.EventSubscription, error)
 }

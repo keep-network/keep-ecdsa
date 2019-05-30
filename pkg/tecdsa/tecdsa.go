@@ -39,23 +39,14 @@ func Initialize(
 				fmt.Fprintf(os.Stderr, "signer generation failed: [%s]", err)
 			}
 		}()
+
+		ethereumChain.OnECDSAKeepSignatureRequested(
+			event.KeepAddress,
+			func(event *eth.ECDSAKeepSignatureRequestedEvent) {
+				fmt.Printf("New signature requested [%+v]\n", event.Digest)
+			},
+		)
 	})
-
-	// // ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ECDSAKeepFactoryContractName)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// ecdsaKeepFactoryContract, err := abi.NewECDSAKeepFactory(
-	// 	ecdsaKeepFactoryContractAddress,
-	// 	client,
-	// )
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// ethereumChain.OnECDSAKeepSignatureRequest(func(event *eth.ECDSAKeepSignatureRequestEvent) {
-	// 	fmt.Printf("New signature requested [%+v]\n", event.Digest)
-	// })
 }
 
 // generateSignerForKeep generates a new signer with ECDSA key pair and calculates
