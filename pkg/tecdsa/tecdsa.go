@@ -67,14 +67,14 @@ func (c *client) generateSignerForKeep(keepAddress string) error {
 
 	// Publish signer's public key on ethereum blockchain in a specific keep
 	// contract.
-	keepPublicKey, err := eth.PublicKeyToKeepPublicKey(signer.PublicKey())
+	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
 	if err != nil {
 		return fmt.Errorf("p2wpkh address conversion failed: [%s]", err)
 	}
 
 	c.ethereumChain.SubmitKeepPublicKey(
 		common.HexToAddress(keepAddress),
-		keepPublicKey,
+		serializedPublicKey,
 	)
 
 	fmt.Printf(

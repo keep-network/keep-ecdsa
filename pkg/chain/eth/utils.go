@@ -5,12 +5,11 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
 )
 
-// PublicKeyToKeepPublicKey serializes signer's public key to a format required
-// for public key by a keep contract. It pads each of X, Y coordinates to 32-bytes
-// and returns a 64-byte long serialized public key.
-func PublicKeyToKeepPublicKey(
-	publicKey *sign.PublicKey) (KeepPublicKey, error) {
-	var serialized KeepPublicKey
+// SerializePublicKey takes X and Y coordinates of a signer's public key and
+// concatenates it to a 64-byte long array. If any of coordinates is shorter
+// than 32-byte it is preceded with zeros.
+func SerializePublicKey(publicKey *sign.PublicKey) ([64]byte, error) {
+	var serialized [64]byte
 
 	x, err := byteutils.LeftPadTo32Bytes(publicKey.X.Bytes())
 	if err != nil {
