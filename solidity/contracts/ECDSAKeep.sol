@@ -11,7 +11,10 @@ contract ECDSAKeep {
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
 
-    event SignatureRequested(bytes digest);
+    // Notification that the keep was requested to sign a digest.
+    event SignatureRequested(
+        bytes digest
+    );
 
     constructor(
         address _owner,
