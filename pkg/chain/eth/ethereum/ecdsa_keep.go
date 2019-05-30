@@ -9,8 +9,6 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
 
-// liamz: ecdsaKeepFactoryContractAddress or address
-// liamz: registerECDSAKeepContract or this?
 func (ec *EthereumChain) registerKeepContract(address common.Address) error {
 	ecdsaKeepContract, err := abi.NewECDSAKeep(
 		address,
@@ -20,7 +18,11 @@ func (ec *EthereumChain) registerKeepContract(address common.Address) error {
 		return err
 	}
 
+	if _, ok := ec.keepContracts[address]; ok {
+		return fmt.Errorf("keep already registered: [%v]", address)
+	}
 	ec.keepContracts[address] = ecdsaKeepContract
+
 	return nil
 }
 
