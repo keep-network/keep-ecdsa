@@ -37,7 +37,7 @@ contract('ECDSAKeep', function(accounts) {
 
     it('emits event', async () => {
         let res = await instance.sign('0x00')
-        truffleAssert.eventEmitted(res, 'SignatureRequest', (ev) => {
+        truffleAssert.eventEmitted(res, 'SignatureRequested', (ev) => {
             return ev.digest == '0x00'
         });
     })
