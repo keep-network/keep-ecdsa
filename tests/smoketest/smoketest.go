@@ -65,7 +65,7 @@ func Execute(config *ethereum.Config) error {
 		return fmt.Errorf("call to contract failed: [%s]", err)
 	}
 	fmt.Printf(
-		"New keep requested, transaction hash: %s.\n",
+		"New keep requested, transaction hash: [%s].\n",
 		transaction.Hash().Hex(),
 	)
 
@@ -73,14 +73,14 @@ func Execute(config *ethereum.Config) error {
 	waitGroup.Wait()
 
 	// Log received event.
-	fmt.Printf("Received event: %#v\n", actualEvent)
+	fmt.Printf("Received event: [%#v]\n", actualEvent)
 
 	// Validate received event.
 	if !common.IsHexAddress(actualEvent.KeepAddress.String()) {
-		return fmt.Errorf("invalid hex address: %v", actualEvent.KeepAddress)
+		return fmt.Errorf("invalid hex address: [%v]", actualEvent.KeepAddress)
 	}
 
-	fmt.Printf("ECDSA keep built with address: %s\n", actualEvent.KeepAddress.String())
+	fmt.Printf("ECDSA keep built with address: [%s]\n", actualEvent.KeepAddress.String())
 
 	return nil
 }
