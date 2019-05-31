@@ -14,6 +14,8 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
 
+var keepOwnerAddress = common.HexToAddress("0x316F8eaf0b6065a53f0eaB3DD19aC6a07af95b3D")
+
 // Execute runs an ECDSA event smoke test. It tests if an event is emitted after
 // new ECDSA keep is requested.
 func Execute(config *ethereum.Config) error {
@@ -51,7 +53,6 @@ func Execute(config *ethereum.Config) error {
 
 	groupSize := big.NewInt(10)
 	honestThreshold := big.NewInt(5)
-	keepOwnerAddress := common.HexToAddress("0x316F8eaf0b6065a53f0eaB3DD19aC6a07af95b3D")
 
 	// Request a new keep creation.
 	transaction, err := ecdsaKeepFactory.CreateNewKeep(
