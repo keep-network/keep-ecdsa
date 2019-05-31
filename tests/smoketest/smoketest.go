@@ -24,6 +24,17 @@ func Execute(config *ethereum.Config) error {
 		return err
 	}
 
+	// Setup connection to ECDSA Keep Factory contract.
+	ecdsaKeepFactory, err := initializeECDSAKeepFactory(config)
+	if err != nil {
+		return err
+	}
+
+	transactorOpts, err := createTransactorOpts(config)
+	if err != nil {
+		return err
+	}
+
 	// Define callback on event.
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(1)
@@ -36,17 +47,6 @@ func Execute(config *ethereum.Config) error {
 	// Register for events.
 	subscription, err := chainAPI.OnECDSAKeepCreated(handle)
 	defer subscription.Unsubscribe()
-	if err != nil {
-		return err
-	}
-
-	// Setup connection to ECDSA Keep Factory contract.
-	ecdsaKeepFactory, err := initializeECDSAKeepFactory(config)
-	if err != nil {
-		return err
-	}
-
-	transactorOpts, err := createTransactorOpts(config)
 	if err != nil {
 		return err
 	}
