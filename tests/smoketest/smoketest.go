@@ -3,7 +3,6 @@ package smoketest
 import (
 	"fmt"
 	"math/big"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -36,12 +35,10 @@ func Execute(config *ethereum.Config) error {
 	}
 
 	// Define callback on event.
-	waitGroup := sync.WaitGroup{}
-	waitGroup.Add(1)
-	var actualEvent *eth.ECDSAKeepCreatedEvent
+	eventChan := make(chan *eth.ECDSAKeepCreatedEvent)
+
 	handle := func(event *eth.ECDSAKeepCreatedEvent) {
-		actualEvent = event
-		waitGroup.Done()
+		eventChan <- event
 	}
 
 	// Register for events.
@@ -70,7 +67,7 @@ func Execute(config *ethereum.Config) error {
 	)
 
 	// Wait for event emission.
-	waitGroup.Wait()
+	actualEvent := <-eventChan
 
 	// Log received event.
 	fmt.Printf("Received event: [%#v]\n", actualEvent)
