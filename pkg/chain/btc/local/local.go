@@ -13,8 +13,12 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/utils"
 )
 
+// Difficulty target bits from Bitcoin mainnet from block 578661.
+const currentTargetBits = 388348790
+
 type localChain struct {
-	transactions map[string]*wire.MsgTx
+	transactions      map[string]*wire.MsgTx
+	currentTargetBits int
 }
 
 // PublishTransaction performs validation on a transaction encoded to hexadecimal
@@ -71,10 +75,15 @@ func (l *localChain) PublishTransaction(rawTx string) (string, error) {
 	return txHash, nil
 }
 
+func (l *localChain) GetCurrentTargetBits() (int, error) {
+	return l.currentTargetBits, nil
+}
+
 // Connect returns a stub implementation of the chain interface.
 func Connect() btc.Interface {
 	initialTx := initialTx()
 	return &localChain{
+		currentTargetBits: currentTargetBits,
 		transactions: map[string]*wire.MsgTx{
 			initialTx.TxHash().String(): initialTx,
 		},
