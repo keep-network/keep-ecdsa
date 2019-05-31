@@ -14,9 +14,6 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
 
-// Private key of a transactions to contract sender.
-const senderPrivateKeyString = "bd03a0aa0b96c5cff1accafdc806aa7f655b6a9a13aeb79f4669c9cfad1eb265"
-
 // Execute runs an ECDSA event smoke test. It tests if an event is emitted after
 // new ECDSA keep is requested.
 func Execute(config *ethereum.Config) error {
@@ -47,7 +44,7 @@ func Execute(config *ethereum.Config) error {
 		return err
 	}
 
-	transactorOpts, err := createTransactorOpts()
+	transactorOpts, err := createTransactorOpts(config)
 	if err != nil {
 		return err
 	}
@@ -108,8 +105,8 @@ func initializeECDSAKeepFactory(config *ethereum.Config) (*abi.ECDSAKeepFactory,
 	return ecdsaKeepFactoryContract, nil
 }
 
-func createTransactorOpts() (*bind.TransactOpts, error) {
-	privateKey, err := crypto.HexToECDSA(senderPrivateKeyString)
+func createTransactorOpts(config *ethereum.Config) (*bind.TransactOpts, error) {
+	privateKey, err := crypto.HexToECDSA(config.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
