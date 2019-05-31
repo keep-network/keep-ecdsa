@@ -31,6 +31,20 @@ func (bc *blockcypher) PublishTransaction(rawTx string) (string, error) {
 	return tx.Trans.Hash, nil
 }
 
+func (bc *blockcypher) GetCurrentTargetBits() (int, error) {
+	chain, err := bc.api.GetChain()
+	if err != nil {
+		return -1, err
+	}
+
+	block, err := bc.api.GetBlock(0, chain.Hash, nil)
+	if err != nil {
+		return -1, err
+	}
+
+	return block.Bits, nil
+}
+
 // Connect performs initialization for communication with Block Cypher based on
 // provided config.
 func Connect(config *Config) (btc.Interface, error) {
@@ -41,4 +55,8 @@ func Connect(config *Config) (btc.Interface, error) {
 	}
 
 	return &blockcypher{api: blockCypherAPI}, nil
+}
+
+func (bc *blockcypher) API() gobcy.API {
+	return bc.api
 }
