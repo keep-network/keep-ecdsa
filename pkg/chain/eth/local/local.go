@@ -9,8 +9,8 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
-// LocalChain is an implementation of ethereum blockchain interface.
-type LocalChain struct {
+// localChain is an implementation of ethereum blockchain interface.
+type localChain struct {
 	handlerMutex sync.Mutex
 
 	keeps map[string][64]byte
@@ -21,14 +21,14 @@ type LocalChain struct {
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
 func Connect() eth.Interface {
-	return &LocalChain{
+	return &localChain{
 		keeps: make(map[string][64]byte),
 	}
 }
 
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
-func (lc *LocalChain) OnECDSAKeepCreated(
+func (lc *localChain) OnECDSAKeepCreated(
 	handle func(groupRequested *eth.ECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.handlerMutex.Lock()
@@ -48,7 +48,7 @@ func (lc *LocalChain) OnECDSAKeepCreated(
 
 // SubmitKeepPublicKey checks if public key has been already submitted for given
 // keep address, if not it stores the key in a map.
-func (lc *LocalChain) SubmitKeepPublicKey(
+func (lc *localChain) SubmitKeepPublicKey(
 	address eth.KeepAddress,
 	publicKey [64]byte,
 ) error {

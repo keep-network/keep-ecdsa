@@ -52,6 +52,6 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	}
 }
 
-func initializeLocalChain() *LocalChain {
-	return Connect().(*LocalChain)
+func initializeLocalChain() *localChain {
+	return Connect().(*localChain)
 }
