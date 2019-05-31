@@ -3,8 +3,12 @@
 package eth
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
+
+// KeepAddress is a keep contract address.
+type KeepAddress = common.Address
 
 // Interface is an interface that provides ability to interact with ethereum
 // contracts.
@@ -14,4 +18,9 @@ type Interface interface {
 	OnECDSAKeepCreated(
 		func(request *ECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
+
+	// SubmitKeepPublicKey submits a 64-byte serialized public key to a keep
+	// contract deployed under a given address.
+	SubmitKeepPublicKey(address KeepAddress, publicKey [64]byte) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
+
 }
