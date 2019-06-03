@@ -3,7 +3,6 @@ package ethereum
 import (
 	"log"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
@@ -14,7 +13,6 @@ type EthereumChain struct {
 	config                   *Config
 	client                   *ethclient.Client
 	ecdsaKeepFactoryContract *abi.ECDSAKeepFactory
-	keepContracts            map[common.Address]*abi.ECDSAKeep
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -41,6 +39,5 @@ func Connect(config *Config) (eth.Interface, error) {
 		config:                   config,
 		client:                   client,
 		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
-		keepContracts:            make(map[common.Address]*abi.ECDSAKeep),
 	}, nil
 }

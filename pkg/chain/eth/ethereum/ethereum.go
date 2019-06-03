@@ -19,8 +19,6 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 		func(
 			chainEvent *abi.ECDSAKeepFactoryECDSAKeepCreated,
 		) {
-			ec.registerKeepContract(chainEvent.KeepAddress)
-
 			handle(&eth.ECDSAKeepCreatedEvent{
 				KeepAddress: chainEvent.KeepAddress,
 			})
@@ -31,21 +29,26 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 	)
 }
 
-func (ec *EthereumChain) OnECDSAKeepSignatureRequested(
-	KeepAddress common.Address,
-	handle func(event *eth.ECDSAKeepSignatureRequestedEvent),
+// OnSignatureRequested is a callback that is invoked on-chain
+// when a keep's signature is requested.
+func (ec *EthereumChain) OnSignatureRequested(
+	keepAddress common.Address,
+	handle func(event *eth.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, ok := ec.keepContracts[KeepAddress]
-	if !ok {
-		return nil, fmt.Errorf("keep contract not found: [%s]", KeepAddress)
+	keep, err := abi.NewECDSAKeep(
+		keepAddress,
+		ec.client,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not create contract ABI: [%v]", err)
 	}
 
-	return ec.watchECDSAKeepSignatureRequested(
-		keepContract,
+	return ec.watchSignatureRequested(
+		keep,
 		func(
 			chainEvent *abi.ECDSAKeepSignatureRequested,
 		) {
-			handle(&eth.ECDSAKeepSignatureRequestedEvent{
+			handle(&eth.SignatureRequestedEvent{
 				Digest: chainEvent.Digest,
 			})
 		},

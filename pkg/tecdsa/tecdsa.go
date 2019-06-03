@@ -40,9 +40,9 @@ func Initialize(
 			}
 		}()
 
-		ethereumChain.OnECDSAKeepSignatureRequested(
+		ethereumChain.OnSignatureRequested(
 			event.KeepAddress,
-			func(event *eth.ECDSAKeepSignatureRequestedEvent) {
+			func(event *eth.SignatureRequestedEvent) {
 				fmt.Printf("New signature requested [%+v]\n", event.Digest)
 			},
 		)

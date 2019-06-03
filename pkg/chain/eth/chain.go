@@ -13,13 +13,13 @@ type Interface interface {
 	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
 	// notification of a new ECDSA keep creation is seen.
 	OnECDSAKeepCreated(
-		func(request *ECDSAKeepCreatedEvent),
+		callback func(request *ECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
 
-	// OnECDSAKeepSignatureRequest is a callback that is invoked when an on-chain
+	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new signing request is seen.
-	OnECDSAKeepSignatureRequested(
-		common.Address,
-		func(request *ECDSAKeepSignatureRequestedEvent),
+	OnSignatureRequested(
+		keepAddress common.Address,
+		callback func(request *SignatureRequestedEvent),
 	) (subscription.EventSubscription, error)
 }
