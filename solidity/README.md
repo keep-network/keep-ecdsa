@@ -42,3 +42,22 @@ for each contract and copy-paste it to [config.toml](../configs/config.toml) fil
 
 [Truffle]: https://www.truffleframework.com/truffle
 [Ganache]: https://truffleframework.com/ganache
+
+
+### Testing
+
+#### Unit
+
+Unit tests use Truffle's test framework, and redeploy contracts for a clean environment every test. An example:
+
+```sh
+truffle test test/TestECDSAKeep.js
+```
+
+#### Scenarios
+
+Tests in `test/integration/` are for testing different scenarios in the Go client. They do **not** redeploy contracts, instead using the already deployed instances from `truffle migrate`.
+
+```sh
+truffle exec test/integration/keep_signature_requested.js
+```
