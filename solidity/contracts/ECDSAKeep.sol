@@ -10,6 +10,9 @@ contract ECDSAKeep {
     address[] internal members;
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
+    // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
+    // are padded with zeros to 32-byte each.
+    bytes publicKey;
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(
@@ -24,6 +27,21 @@ contract ECDSAKeep {
         owner = _owner;
         members = _members;
         honestThreshold = _honestThreshold;
+    }
+
+    /// @notice Set a signer's public key for the keep.
+    /// @dev Stub implementations.
+    /// @param _publicKey Signer's public key.
+    function setPublicKey(bytes memory _publicKey) public {
+        // TODO: Validate if `msg.sender` is on `members` list.
+        // TODO: Validate format: 32-bytes X + 32-bytes Y.
+        publicKey = _publicKey;
+    }
+
+    /// @notice Returns the keep signer's public key.
+    /// @return Signer's public key.
+    function getPublicKey() public view returns (bytes memory) {
+       return publicKey;
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
