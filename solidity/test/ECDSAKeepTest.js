@@ -66,7 +66,7 @@ contract('ECDSAKeep', function(accounts) {
             assert.fail(`ecdsa keep creation failed: ${err}`);
         });
 
-        publicKey = await keep.getPublicKey.call().catch((err) => {
+        let publicKey = await keep.getPublicKey.call().catch((err) => {
             assert.fail(`cannot get public key: ${err}`);
         });
 
