@@ -13,7 +13,7 @@ import (
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnECDSAKeepCreated(
-	handle func(groupRequested *eth.ECDSAKeepCreatedEvent),
+	handle func(keepCreated *eth.ECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	return ec.watchECDSAKeepCreated(
 		func(
@@ -24,7 +24,7 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf("keep requested callback failed: [%s]", err)
+			return fmt.Errorf("keep created callback failed: [%s]", err)
 		},
 	)
 }
@@ -50,7 +50,7 @@ func (ec *EthereumChain) OnSignatureRequested(
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf("keep requested callback failed: [%s]", err)
+			return fmt.Errorf("keep signature requested callback failed: [%s]", err)
 		},
 	)
 }
