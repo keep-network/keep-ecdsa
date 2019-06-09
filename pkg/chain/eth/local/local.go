@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
@@ -44,6 +45,15 @@ func (lc *localChain) OnECDSAKeepCreated(
 
 		delete(lc.keepCreatedHandlers, handlerID)
 	}), nil
+}
+
+// OnSignatureRequested is a callback that is invoked on-chain
+// when a keep's signature is requested.
+func (lc *localChain) OnSignatureRequested(
+	keepAddress common.Address,
+	handle func(event *eth.SignatureRequestedEvent),
+) (subscription.EventSubscription, error) {
+	return nil, fmt.Errorf("unimplemented: localChain.OnSignatureRequested")
 }
 
 // SubmitKeepPublicKey checks if public key has been already submitted for given

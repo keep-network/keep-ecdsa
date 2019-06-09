@@ -13,6 +13,11 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 	t.SkipNow()
 }
 
+func TestOnSignatureRequested(t *testing.T) {
+	// TODO: Implement
+	t.SkipNow()
+}
+
 func TestSubmitKeepPublicKey(t *testing.T) {
 	keepAddress := "0x41048F9B90290A2e96D07f537F3A7E97620E9e47"
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
