@@ -3,6 +3,12 @@
 
 ## Configure Development Environment
 
+Install the project dependencies:
+
+```sh
+npm install
+```
+
 ### Truffle
 
 [Truffle] is a development framework for Ethereum.
@@ -21,7 +27,7 @@ To start testing and developing you need to have a test blockchain set up. You
 can use [Ganache] for this.
 
  To install Ganache on MacOS run:
-```shell
+```sh
 brew cask install ganache
 ```
 
@@ -32,7 +38,8 @@ on port `8545`.
 
 To deploy contracts ensure Ganache is running and Truffle configured. If all is set
 run:
-```
+
+```sh
 truffle migrate --reset
 ```
 
