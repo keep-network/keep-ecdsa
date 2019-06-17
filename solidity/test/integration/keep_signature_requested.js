@@ -29,7 +29,7 @@ module.exports = async function() {
         return true;
     });
 
-    // expect(instanceAddress).to.not.be.empty;
+    expect(instanceAddress.length).to.eq(42);
 
     let instance = await ECDSAKeep.at(instanceAddress)
 
