@@ -13,13 +13,13 @@ import (
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnECDSAKeepCreated(
-	handle func(keepCreated *eth.ECDSAKeepCreatedEvent),
+	callback func(keepCreated *eth.ECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	return ec.watchECDSAKeepCreated(
 		func(
 			chainEvent *abi.ECDSAKeepFactoryECDSAKeepCreated,
 		) {
-			handle(&eth.ECDSAKeepCreatedEvent{
+			callback(&eth.ECDSAKeepCreatedEvent{
 				KeepAddress: chainEvent.KeepAddress,
 			})
 		},
@@ -33,7 +33,7 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 // when a keep's signature is requested.
 func (ec *EthereumChain) OnSignatureRequested(
 	keepAddress common.Address,
-	handle func(event *eth.SignatureRequestedEvent),
+	callback func(event *eth.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
@@ -45,7 +45,7 @@ func (ec *EthereumChain) OnSignatureRequested(
 		func(
 			chainEvent *abi.ECDSAKeepSignatureRequested,
 		) {
-			handle(&eth.SignatureRequestedEvent{
+			callback(&eth.SignatureRequestedEvent{
 				Digest: chainEvent.Digest,
 			})
 		},
