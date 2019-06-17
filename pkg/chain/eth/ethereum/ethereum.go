@@ -13,7 +13,7 @@ import (
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnECDSAKeepCreated(
-	callback func(keepCreated *eth.ECDSAKeepCreatedEvent),
+	callback func(event *eth.ECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	return ec.watchECDSAKeepCreated(
 		func(

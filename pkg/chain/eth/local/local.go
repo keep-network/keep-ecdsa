@@ -30,7 +30,7 @@ func Connect() eth.Interface {
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (lc *localChain) OnECDSAKeepCreated(
-	handle func(groupRequested *eth.ECDSAKeepCreatedEvent),
+	handle func(event *eth.ECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
