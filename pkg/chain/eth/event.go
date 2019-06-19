@@ -8,3 +8,9 @@ import (
 type ECDSAKeepCreatedEvent struct {
 	KeepAddress common.Address // keep contract address
 }
+
+// SignatureRequestedEvent is an event emitted when a user requests
+// a digest to be signed.
+type SignatureRequestedEvent struct {
+	Digest []byte
+}

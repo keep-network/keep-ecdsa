@@ -3,6 +3,12 @@
 
 ## Configure Development Environment
 
+Install the project dependencies:
+
+```sh
+npm install
+```
+
 ### Truffle
 
 [Truffle] is a development framework for Ethereum.
@@ -21,7 +27,7 @@ To start testing and developing you need to have a test blockchain set up. You
 can use [Ganache] for this.
 
  To install Ganache on MacOS run:
-```shell
+```sh
 brew cask install ganache
 ```
 
@@ -32,7 +38,8 @@ on port `8545`.
 
 To deploy contracts ensure Ganache is running and Truffle configured. If all is set
 run:
-```
+
+```sh
 truffle migrate --reset
 ```
 
@@ -42,3 +49,22 @@ for each contract and copy-paste it to [config.toml](../configs/config.toml) fil
 
 [Truffle]: https://www.truffleframework.com/truffle
 [Ganache]: https://truffleframework.com/ganache
+
+
+### Testing
+
+#### Unit
+
+Unit tests use Truffle's test framework, and redeploy contracts for a clean environment every test. An example:
+
+```sh
+truffle test test/ECDSAKeepTest.js
+```
+
+#### Scenarios
+
+Tests in `test/integration/` are for testing different scenarios in the Go client. They do **not** redeploy contracts, instead using the already deployed instances from `truffle migrate`.
+
+```sh
+truffle exec test/integration/keep_signature_requested.js
+```

@@ -13,18 +13,44 @@ import (
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnECDSAKeepCreated(
-	handle func(groupRequested *eth.ECDSAKeepCreatedEvent),
+	handler func(event *eth.ECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	return ec.watchECDSAKeepCreated(
 		func(
 			chainEvent *abi.ECDSAKeepFactoryECDSAKeepCreated,
 		) {
-			handle(&eth.ECDSAKeepCreatedEvent{
+			handler(&eth.ECDSAKeepCreatedEvent{
 				KeepAddress: chainEvent.KeepAddress,
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf("keep requested callback failed: [%s]", err)
+			return fmt.Errorf("keep created callback failed: [%s]", err)
+		},
+	)
+}
+
+// OnSignatureRequested is a callback that is invoked on-chain
+// when a keep's signature is requested.
+func (ec *EthereumChain) OnSignatureRequested(
+	keepAddress common.Address,
+	handler func(event *eth.SignatureRequestedEvent),
+) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("could not create contract ABI: [%v]", err)
+	}
+
+	return ec.watchSignatureRequested(
+		keepContract,
+		func(
+			chainEvent *abi.ECDSAKeepSignatureRequested,
+		) {
+			handler(&eth.SignatureRequestedEvent{
+				Digest: chainEvent.Digest,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep signature requested callback failed: [%s]", err)
 		},
 	)
 }

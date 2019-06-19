@@ -21,7 +21,15 @@
     "openzeppelin-solidity": "^2.2.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.5",
+    "@babel/node": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0",
+    "chai": "^4.2.0",
     "solc": "^0.5.8",
-    "truffle": "^5.0.18"
+    "truffle": "^5.0.18",
+    "truffle-assertions": "^0.9.1"
   }
 }

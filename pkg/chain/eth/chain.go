@@ -16,7 +16,14 @@ type Interface interface {
 	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
 	// notification of a new ECDSA keep creation is seen.
 	OnECDSAKeepCreated(
-		func(request *ECDSAKeepCreatedEvent),
+		handler func(event *ECDSAKeepCreatedEvent),
+	) (subscription.EventSubscription, error)
+
+	// OnSignatureRequested is a callback that is invoked when an on-chain
+	// notification of a new signing request for a given keep is seen.
+	OnSignatureRequested(
+		keepAddress common.Address,
+		handler func(event *SignatureRequestedEvent),
 	) (subscription.EventSubscription, error)
 
 	// SubmitKeepPublicKey submits a 64-byte serialized public key to a keep

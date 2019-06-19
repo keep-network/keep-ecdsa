@@ -12,6 +12,9 @@ export GO111MODULE=on
 
 To build execute a command:
 ```sh
+# Regenerate Solidity bindings
+go generate ./...
+
 go build .
 ```
 

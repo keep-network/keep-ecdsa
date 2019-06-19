@@ -40,6 +40,13 @@ func Initialize(
 				fmt.Fprintf(os.Stderr, "signer generation failed: [%s]", err)
 			}
 		}()
+
+		ethereumChain.OnSignatureRequested(
+			event.KeepAddress,
+			func(event *eth.SignatureRequestedEvent) {
+				fmt.Printf("New signature requested [%+v]\n", event.Digest)
+			},
+		)
 	})
 
 	return nil
