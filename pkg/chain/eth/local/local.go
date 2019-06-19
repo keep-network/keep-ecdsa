@@ -16,14 +16,15 @@ type localChain struct {
 
 	keeps map[string][64]byte
 
-	keepCreatedHandlers map[int]func(groupRegistration *eth.ECDSAKeepCreatedEvent)
+	keepCreatedHandlers map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
 func Connect() eth.Interface {
 	return &localChain{
-		keeps: make(map[string][64]byte),
+		keeps:               make(map[string][64]byte),
+		keepCreatedHandlers: make(map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)),
 	}
 }
 

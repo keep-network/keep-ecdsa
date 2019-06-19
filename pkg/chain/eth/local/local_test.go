@@ -1,16 +1,54 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
 func TestOnECDSAKeepCreated(t *testing.T) {
-	// TODO: Implement
-	t.SkipNow()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chain := initializeLocalChain()
+
+	eventFired := make(chan *eth.ECDSAKeepCreatedEvent)
+
+	subscription, err := chain.OnECDSAKeepCreated(
+		func(event *eth.ECDSAKeepCreatedEvent) {
+			eventFired <- event
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	chain.createKeep(keepAddress)
+
+	expectedEvent := &eth.ECDSAKeepCreatedEvent{
+		KeepAddress: keepAddress,
+	}
+
+	select {
+	case event := <-eventFired:
+		if !reflect.DeepEqual(event, expectedEvent) {
+			t.Fatalf(
+				"Unexpected keep creation event\nExpected: [%v]\nActual:   [%v]",
+				expectedEvent,
+				event,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
 }
 
 func TestOnSignatureRequested(t *testing.T) {

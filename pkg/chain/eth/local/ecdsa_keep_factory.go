@@ -1,21 +1,21 @@
-package ethereum
+package local
 
 import (
-	"fmt"
-	"sync"
-
-	"github.com/keep-network/keep-core/pkg/subscription"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
 func (c *localChain) createKeep(keepAddress common.Address) {
 	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
 
-	// keepAddress
-	for _, handler := range c.keepCreatedHandlers {
-		go func(handler func(event *eth.ECDSAKeepCreatedEvent) {
-			handler(event)
-		}(handler, event)
+	keepCreatedEvent := &eth.ECDSAKeepCreatedEvent{
+		KeepAddress: keepAddress,
 	}
-	c.handlerMutex.Unlock()
+
+	for _, handler := range c.keepCreatedHandlers {
+		go func(handler func(event *eth.ECDSAKeepCreatedEvent), keepCreatedEvent *eth.ECDSAKeepCreatedEvent) {
+			handler(keepCreatedEvent)
+		}(handler, keepCreatedEvent)
+	}
 }
