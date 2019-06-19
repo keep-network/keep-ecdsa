@@ -11,7 +11,7 @@ func (c *localChain) createKeep(keepAddress common.Address) {
 
 	localKeep := &localKeep{
 		signatureRequestedHandlers: make(map[int]func(keepCreated *eth.SignatureRequestedEvent)),
-		publicKey: [64]byte{},
+		publicKey:                  [64]byte{},
 	}
 	c.keeps[keepAddress] = localKeep
 

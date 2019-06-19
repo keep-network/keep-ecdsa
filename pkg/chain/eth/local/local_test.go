@@ -58,7 +58,7 @@ func TestOnSignatureRequested(t *testing.T) {
 	eventFired := make(chan *eth.SignatureRequestedEvent)
 
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
-	digest := []byte{0,}
+	digest := []byte{1}
 	chain.createKeep(keepAddress)
 
 	subscription, err := chain.OnSignatureRequested(

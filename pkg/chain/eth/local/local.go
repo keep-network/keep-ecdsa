@@ -22,15 +22,15 @@ type localChain struct {
 
 	keeps map[eth.KeepAddress]*localKeep
 
-	keepCreatedHandlers        map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)
+	keepCreatedHandlers map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
 func Connect() eth.Interface {
 	return &localChain{
-		keeps:                      make(map[eth.KeepAddress]*localKeep),
-		keepCreatedHandlers:        make(map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)),
+		keeps:               make(map[eth.KeepAddress]*localKeep),
+		keepCreatedHandlers: make(map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)),
 	}
 }
 
@@ -65,7 +65,7 @@ func (lc *localChain) OnSignatureRequested(
 
 	handlerID := rand.Int()
 
-	keep, ok := lc.keeps[keepAddress];
+	keep, ok := lc.keeps[keepAddress]
 	if !ok {
 		return nil, fmt.Errorf(
 			"keep not found for address [%s]",
