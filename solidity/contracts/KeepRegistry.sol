@@ -52,4 +52,10 @@ contract KeepRegistry is Ownable {
 
         keeps.push(Keep(msg.sender, keep, KeepTypes.ECDSA));
     }
+
+    //Hacky function to get Keep address of the latest added Keep
+    function getLatestKeepAddress()public view returns (address){
+        require(keeps.length != 0, "There are no recent keeps");
+        return keeps[keeps.length - 1].keepAddress;
+    }
 }
