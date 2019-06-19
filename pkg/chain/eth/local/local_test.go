@@ -93,7 +93,7 @@ func TestOnSignatureRequested(t *testing.T) {
 }
 
 func TestSubmitKeepPublicKey(t *testing.T) {
-	keepAddress := "0x41048F9B90290A2e96D07f537F3A7E97620E9e47"
+	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 	expectedDuplicationError := fmt.Errorf(
 		"public key already submitted for keep [%s]",
@@ -101,9 +101,10 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	)
 
 	chain := initializeLocalChain()
+	chain.createKeep(keepAddress)
 
 	err := chain.SubmitKeepPublicKey(
-		common.HexToAddress(keepAddress),
+		keepAddress,
 		keepPublicKey,
 	)
 	if err != nil {
@@ -119,7 +120,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	}
 
 	err = chain.SubmitKeepPublicKey(
-		common.HexToAddress(keepAddress),
+		keepAddress,
 		keepPublicKey,
 	)
 	if !reflect.DeepEqual(expectedDuplicationError, err) {

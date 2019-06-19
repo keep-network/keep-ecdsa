@@ -9,6 +9,12 @@ func (c *localChain) createKeep(keepAddress common.Address) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
+	localKeep := &localKeep{
+		signatureRequestedHandlers: make(map[int]func(keepCreated *eth.SignatureRequestedEvent)),
+		publicKey: [64]byte{},
+	}
+	c.keeps[keepAddress] = localKeep
+
 	keepCreatedEvent := &eth.ECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
 	}

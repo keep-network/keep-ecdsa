@@ -5,26 +5,32 @@ import (
 	"math/rand"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
+	// "github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
+
+type localKeep struct {
+	publicKey [64]byte
+
+	signatureRequestedHandlers map[int]func(keepCreated *eth.SignatureRequestedEvent)
+}
 
 // localChain is an implementation of ethereum blockchain interface.
 type localChain struct {
 	handlerMutex sync.Mutex
 
-	keeps map[string][64]byte
+	keeps map[eth.KeepAddress]*localKeep
 
-	keepCreatedHandlers map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)
+	keepCreatedHandlers        map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
 func Connect() eth.Interface {
 	return &localChain{
-		keeps:               make(map[string][64]byte),
-		keepCreatedHandlers: make(map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)),
+		keeps:                      make(map[eth.KeepAddress]*localKeep),
+		keepCreatedHandlers:        make(map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)),
 	}
 }
 
@@ -51,11 +57,30 @@ func (lc *localChain) OnECDSAKeepCreated(
 // OnSignatureRequested is a callback that is invoked on-chain
 // when a keep's signature is requested.
 func (lc *localChain) OnSignatureRequested(
-	keepAddress common.Address,
+	keepAddress eth.KeepAddress,
 	handler func(event *eth.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
-	// TODO(liamz): implement per #31
-	return nil, fmt.Errorf("unimplemented: localChain.OnSignatureRequested")
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	handlerID := rand.Int()
+
+	keep, ok := lc.keeps[keepAddress];
+	if !ok {
+		return nil, fmt.Errorf(
+			"keep not found for address [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	keep.signatureRequestedHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		lc.handlerMutex.Lock()
+		defer lc.handlerMutex.Unlock()
+
+		delete(keep.signatureRequestedHandlers, handlerID)
+	}), nil
 }
 
 // SubmitKeepPublicKey checks if public key has been already submitted for given
@@ -64,14 +89,22 @@ func (lc *localChain) SubmitKeepPublicKey(
 	address eth.KeepAddress,
 	publicKey [64]byte,
 ) error {
-	if _, ok := lc.keeps[address.Hex()]; ok {
+	keep, ok := lc.keeps[address]
+	if !ok {
+		return fmt.Errorf(
+			"keep not found for address [%s]",
+			address.String(),
+		)
+	}
+
+	if keep.publicKey == ([64]byte{}) {
 		return fmt.Errorf(
 			"public key already submitted for keep [%s]",
 			address.String(),
 		)
 	}
 
-	lc.keeps[address.Hex()] = publicKey
+	keep.publicKey = publicKey
 
 	return nil
 }
