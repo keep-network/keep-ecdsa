@@ -30,14 +30,14 @@ func Connect() eth.Interface {
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (lc *localChain) OnECDSAKeepCreated(
-	handle func(event *eth.ECDSAKeepCreatedEvent),
+	handler func(event *eth.ECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
 
 	handlerID := rand.Int()
 
-	lc.keepCreatedHandlers[handlerID] = handle
+	lc.keepCreatedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
 		lc.handlerMutex.Lock()
@@ -51,8 +51,9 @@ func (lc *localChain) OnECDSAKeepCreated(
 // when a keep's signature is requested.
 func (lc *localChain) OnSignatureRequested(
 	keepAddress common.Address,
-	handle func(event *eth.SignatureRequestedEvent),
+	handler func(event *eth.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
+	// TODO(liamz): implement per #31
 	return nil, fmt.Errorf("unimplemented: localChain.OnSignatureRequested")
 }
 
