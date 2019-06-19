@@ -97,7 +97,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 	expectedDuplicationError := fmt.Errorf(
 		"public key already submitted for keep [%s]",
-		keepAddress,
+		keepAddress.Hex(),
 	)
 
 	chain := initializeLocalChain()
@@ -111,11 +111,11 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		t.Fatalf("unexpected error: [%s]", err)
 	}
 
-	if !reflect.DeepEqual(keepPublicKey, chain.keeps[keepAddress]) {
+	if !reflect.DeepEqual(keepPublicKey, chain.keeps[keepAddress].publicKey) {
 		t.Errorf(
 			"unexpected result\nexpected: [%+v]\nactual:   [%+v]",
 			keepPublicKey,
-			chain.keeps[keepAddress],
+			chain.keeps[keepAddress].publicKey,
 		)
 	}
 

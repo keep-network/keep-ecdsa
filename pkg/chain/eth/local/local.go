@@ -97,7 +97,7 @@ func (lc *localChain) SubmitKeepPublicKey(
 		)
 	}
 
-	if keep.publicKey == ([64]byte{}) {
+	if keep.publicKey != [64]byte{} {
 		return fmt.Errorf(
 			"public key already submitted for keep [%s]",
 			address.String(),
