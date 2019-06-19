@@ -27,7 +27,6 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	defer subscription.Unsubscribe()
 
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
@@ -52,8 +51,45 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 }
 
 func TestOnSignatureRequested(t *testing.T) {
-	// TODO: Implement
-	t.SkipNow()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chain := initializeLocalChain()
+	eventFired := make(chan *eth.SignatureRequestedEvent)
+
+	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	digest := []byte{0,}
+	chain.createKeep(keepAddress)
+
+	subscription, err := chain.OnSignatureRequested(
+		keepAddress,
+		func(event *eth.SignatureRequestedEvent) {
+			eventFired <- event
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer subscription.Unsubscribe()
+
+	chain.requestSignature(keepAddress, digest)
+
+	expectedEvent := &eth.SignatureRequestedEvent{
+		Digest: digest,
+	}
+
+	select {
+	case event := <-eventFired:
+		if !reflect.DeepEqual(event, expectedEvent) {
+			t.Fatalf(
+				"Unexpected signature requested event\nExpected: [%v]\nActual:   [%v]",
+				expectedEvent,
+				event,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
 }
 
 func TestSubmitKeepPublicKey(t *testing.T) {
