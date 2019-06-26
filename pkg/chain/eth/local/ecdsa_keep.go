@@ -1,9 +1,9 @@
 package local
 
 import (
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
-
 	"fmt"
+
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
 type localKeep struct {
