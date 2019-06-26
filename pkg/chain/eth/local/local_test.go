@@ -29,7 +29,7 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	chain.createKeep(keepAddress)
 
 	expectedEvent := &eth.ECDSAKeepCreatedEvent{
@@ -40,7 +40,7 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 	case event := <-eventFired:
 		if !reflect.DeepEqual(event, expectedEvent) {
 			t.Fatalf(
-				"Unexpected keep creation event\nExpected: [%v]\nActual:   [%v]",
+				"unexpected keep creation event\nexpected: [%v]\nactual:   [%v]",
 				expectedEvent,
 				event,
 			)
