@@ -5,16 +5,9 @@ import (
 	"math/rand"
 	"sync"
 
-	// "github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
-
-type localKeep struct {
-	publicKey [64]byte
-
-	signatureRequestedHandlers map[int]func(keepCreated *eth.SignatureRequestedEvent)
-}
 
 // localChain is an implementation of ethereum blockchain interface.
 type localChain struct {
@@ -22,7 +15,7 @@ type localChain struct {
 
 	keeps map[eth.KeepAddress]*localKeep
 
-	keepCreatedHandlers map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)
+	keepCreatedHandlers map[int]func(event *eth.ECDSAKeepCreatedEvent)
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -30,7 +23,7 @@ type localChain struct {
 func Connect() eth.Interface {
 	return &localChain{
 		keeps:               make(map[eth.KeepAddress]*localKeep),
-		keepCreatedHandlers: make(map[int]func(keepCreated *eth.ECDSAKeepCreatedEvent)),
+		keepCreatedHandlers: make(map[int]func(event *eth.ECDSAKeepCreatedEvent)),
 	}
 }
 

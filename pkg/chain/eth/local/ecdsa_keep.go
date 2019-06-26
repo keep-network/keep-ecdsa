@@ -6,6 +6,12 @@ import (
 	"fmt"
 )
 
+type localKeep struct {
+	publicKey [64]byte
+
+	signatureRequestedHandlers map[int]func(event *eth.SignatureRequestedEvent)
+}
+
 func (c *localChain) requestSignature(address eth.KeepAddress, digest []byte) error {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
@@ -14,7 +20,7 @@ func (c *localChain) requestSignature(address eth.KeepAddress, digest []byte) er
 	if !ok {
 		return fmt.Errorf(
 			"keep not found for address [%s]",
-			address.String(),
+			address,
 		)
 	}
 
