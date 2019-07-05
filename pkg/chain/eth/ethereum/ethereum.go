@@ -71,7 +71,7 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return err
 	}
 
-	fmt.Printf("Transaction submitted with hash: %x", transaction.Hash())
+	fmt.Printf("Transaction submitted with hash: [%x]\n", transaction.Hash())
 
 	return nil
 }
