@@ -79,10 +79,13 @@ func (c *client) generateSignerForKeep(keepAddress string) error {
 		return fmt.Errorf("p2wpkh address conversion failed: [%s]", err)
 	}
 
-	c.ethereumChain.SubmitKeepPublicKey(
+	err = c.ethereumChain.SubmitKeepPublicKey(
 		common.HexToAddress(keepAddress),
 		serializedPublicKey,
 	)
+	if err != nil {
+		return fmt.Errorf("public key submission failed: [%s]", err)
+	}
 
 	fmt.Printf(
 		"Signer for keep [%s] initialized with Bitcoin P2WPKH address [%s]\n",
