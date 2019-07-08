@@ -57,7 +57,7 @@ func TestOnSignatureRequested(t *testing.T) {
 	chain := initializeLocalChain()
 	eventFired := make(chan *eth.SignatureRequestedEvent)
 
-	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := []byte{1}
 	chain.createKeep(keepAddress)
 
