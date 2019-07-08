@@ -20,7 +20,7 @@ func (c *localChain) requestSignature(address eth.KeepAddress, digest []byte) er
 	if !ok {
 		return fmt.Errorf(
 			"keep not found for address [%s]",
-			address,
+			address.String(),
 		)
 	}
 
