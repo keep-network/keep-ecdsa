@@ -82,7 +82,7 @@ func TestOnSignatureRequested(t *testing.T) {
 	case event := <-eventFired:
 		if !reflect.DeepEqual(event, expectedEvent) {
 			t.Fatalf(
-				"Unexpected signature requested event\nExpected: [%v]\nActual:   [%v]",
+				"unexpected signature requested event\nexpected: [%v]\nactual:   [%v]",
 				expectedEvent,
 				event,
 			)
@@ -97,7 +97,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 	expectedDuplicationError := fmt.Errorf(
 		"public key already submitted for keep [%s]",
-		keepAddress.Hex(),
+		keepAddress.String(),
 	)
 
 	chain := initializeLocalChain()
