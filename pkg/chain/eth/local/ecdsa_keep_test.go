@@ -26,9 +26,14 @@ func TestRequestSignatureNonexistentKeep(t *testing.T) {
 	}
 }
 
-// func TestRequestSignatureNoHandler(t *testing.T) {
-// 	// handler := func(event *eth.SignatureRequestedEvent)
-// }
+func TestRequestSignatureNoHandler(t *testing.T) {
+	chain := initializeLocalChain()
+	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	digest := []byte{1}
+
+	chain.createKeep(keepAddress)
+	chain.requestSignature(keepAddress, digest)
+}
 
 func TestRequestSignature(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
