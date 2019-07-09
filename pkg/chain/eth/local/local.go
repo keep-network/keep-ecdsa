@@ -10,6 +10,9 @@ import (
 )
 
 // localChain is an implementation of ethereum blockchain interface.
+//
+// It mocks the behaviour of a real blockchain, without the complexity of deployments,
+// accounts, async transactions and so on. For use in tests ONLY.
 type localChain struct {
 	handlerMutex sync.Mutex
 
