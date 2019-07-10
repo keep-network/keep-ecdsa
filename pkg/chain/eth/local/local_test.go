@@ -72,7 +72,10 @@ func TestOnSignatureRequested(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	chain.requestSignature(keepAddress, digest)
+	err = chain.requestSignature(keepAddress, digest)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expectedEvent := &eth.SignatureRequestedEvent{
 		Digest: digest,
@@ -101,9 +104,13 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	)
 
 	chain := initializeLocalChain()
-	chain.createKeep(keepAddress)
 
-	err := chain.SubmitKeepPublicKey(
+	err := chain.createKeep(keepAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = chain.SubmitKeepPublicKey(
 		keepAddress,
 		keepPublicKey,
 	)

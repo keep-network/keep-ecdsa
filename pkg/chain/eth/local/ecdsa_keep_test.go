@@ -3,6 +3,8 @@ package local
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -14,10 +16,10 @@ func TestRequestSignatureNonexistentKeep(t *testing.T) {
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := []byte{1}
 
-	expectedError := "keep not found for address [0x0000000000000000000000000000000000000001]"
+	expectedError := fmt.Errorf("keep not found for address [0x0000000000000000000000000000000000000001]")
 	err := chain.requestSignature(keepAddress, digest)
 
-	if err.Error() != expectedError {
+	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf(
 			"unexpected error\nexpected: [%v]\nactual:   [%v]",
 			expectedError,
@@ -31,8 +33,15 @@ func TestRequestSignatureNoHandler(t *testing.T) {
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := []byte{1}
 
-	chain.createKeep(keepAddress)
-	chain.requestSignature(keepAddress, digest)
+	err := chain.createKeep(keepAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = chain.requestSignature(keepAddress, digest)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestRequestSignature(t *testing.T) {
@@ -49,12 +58,15 @@ func TestRequestSignature(t *testing.T) {
 		eventEmitted <- event
 	}
 
-	chain.createKeep(keepAddress)
+	err := chain.createKeep(keepAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
 	chain.keeps[keepAddress].signatureRequestedHandlers[0] = handler
 
-	err := chain.requestSignature(keepAddress, digest)
+	err = chain.requestSignature(keepAddress, digest)
 	if err != nil {
-		t.Fatalf("unexpected error: %s", err.Error())
+		t.Fatal(err)
 	}
 
 	select {
