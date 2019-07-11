@@ -16,8 +16,11 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 	defer cancel()
 
 	chain := initializeLocalChain()
-
 	eventFired := make(chan *eth.ECDSAKeepCreatedEvent)
+	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	expectedEvent := &eth.ECDSAKeepCreatedEvent{
+		KeepAddress: keepAddress,
+	}
 
 	subscription, err := chain.OnECDSAKeepCreated(
 		func(event *eth.ECDSAKeepCreatedEvent) {
@@ -29,14 +32,9 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	err = chain.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	expectedEvent := &eth.ECDSAKeepCreatedEvent{
-		KeepAddress: keepAddress,
 	}
 
 	select {
@@ -59,9 +57,9 @@ func TestOnSignatureRequested(t *testing.T) {
 
 	chain := initializeLocalChain()
 	eventFired := make(chan *eth.SignatureRequestedEvent)
-
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := []byte{1}
+
 	err := chain.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
@@ -102,14 +100,13 @@ func TestOnSignatureRequested(t *testing.T) {
 }
 
 func TestSubmitKeepPublicKey(t *testing.T) {
+	chain := initializeLocalChain()
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 	expectedDuplicationError := fmt.Errorf(
 		"public key already submitted for keep [%s]",
 		keepAddress.String(),
 	)
-
-	chain := initializeLocalChain()
 
 	err := chain.createKeep(keepAddress)
 	if err != nil {

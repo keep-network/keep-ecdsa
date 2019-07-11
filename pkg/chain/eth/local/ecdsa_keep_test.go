@@ -15,8 +15,8 @@ func TestRequestSignatureNonexistentKeep(t *testing.T) {
 	chain := initializeLocalChain()
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := []byte{1}
-
 	expectedError := fmt.Errorf("keep not found for address [0x0000000000000000000000000000000000000001]")
+
 	err := chain.requestSignature(keepAddress, digest)
 
 	if !reflect.DeepEqual(err, expectedError) {
@@ -51,9 +51,7 @@ func TestRequestSignature(t *testing.T) {
 	chain := initializeLocalChain()
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := []byte{1}
-
 	eventEmitted := make(chan *eth.SignatureRequestedEvent)
-
 	handler := func(event *eth.SignatureRequestedEvent) {
 		eventEmitted <- event
 	}

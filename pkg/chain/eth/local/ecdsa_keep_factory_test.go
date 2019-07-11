@@ -11,7 +11,6 @@ import (
 
 func TestCreateKeepDuplicate(t *testing.T) {
 	chain := initializeLocalChain()
-
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	expectedError := fmt.Errorf("keep already exists for address [0x0000000000000000000000000000000000000001]")
 
@@ -32,7 +31,6 @@ func TestCreateKeepDuplicate(t *testing.T) {
 
 func TestCreateKeep(t *testing.T) {
 	chain := initializeLocalChain()
-
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	expectedPublicKey := [64]byte{}
 
