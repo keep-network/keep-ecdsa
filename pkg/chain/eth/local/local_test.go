@@ -30,7 +30,10 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 	defer subscription.Unsubscribe()
 
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
-	chain.createKeep(keepAddress)
+	err = chain.createKeep(keepAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expectedEvent := &eth.ECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
@@ -59,7 +62,10 @@ func TestOnSignatureRequested(t *testing.T) {
 
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := []byte{1}
-	chain.createKeep(keepAddress)
+	err := chain.createKeep(keepAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	subscription, err := chain.OnSignatureRequested(
 		keepAddress,
