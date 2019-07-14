@@ -4,8 +4,8 @@ import (
 	crand "crypto/rand"
 	"fmt"
 
-	"github.com/urfave/cli"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/urfave/cli"
 )
 
 // SignCommand contains the definition of the sign command-line subcommand.
