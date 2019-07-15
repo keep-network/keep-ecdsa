@@ -1,55 +1,38 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-// TODO: For simplification we use import for the other contracts. `ECDSAKeepFactory.sol` 
-// and `KeepRegistry.sol` will be kept in different repos in the future so a better
-// way of calling another contract from this contract should be introduced.
-import "./ECDSAKeepFactory.sol";
 
 /// @title Keep Registry
 /// @notice Contract handling keeps registry.
-/// @dev TODO: This is a stub contract - needs to be implemented.
+/// @dev The keep registry serves the role of the master list and tracks sanctioned
+/// vendors. It ensures that only approved contracts are used. A new type of keep
+/// can be added without upgradeable registry.
+/// TODO: This is a stub contract - needs to be implemented.
 contract KeepRegistry is Ownable {
-    // Enumeration of supported keeps types.
-    enum KeepTypes {ECDSA, BondedECDSA}
+    // Registered keep vendors. Mapping of a keep type to a keep vendor address.
+    mapping (string => address) internal keepVendors;
 
-    // Structure holding keep details.
-    struct Keep {
-        address owner;          // owner of the keep
-        address keepAddress;    // address of the keep contract
-        KeepTypes keepType;     // type of the keep
+    /// @notice Set a keep vendor contract address for a keep type.
+    /// @dev Only contract owner can call this function.
+    /// @param _keepType Keep type.
+    /// @param _vendorAddress Keep Vendor contract address.
+    function setKeepTypeVendor(string memory _keepType, address _vendorAddress) public onlyOwner {
+        require(_vendorAddress != address(0), "Vendor address cannot be zero");
+
+        keepVendors[_keepType] = _vendorAddress;
     }
 
-    // Factory handling ECDSA keeps.
-    address internal ecdsaKeepFactory;
-
-    // List of created keeps.
-    Keep[] keeps;
-
-    constructor(address _ecdsaKeepFactory) public {
-        require(_ecdsaKeepFactory != address(0), "Implementation address can't be zero.");
-        setECDSAKeepFactory(_ecdsaKeepFactory);
+    /// @notice Get a keep vendor contract address for a keep type.
+    /// @param _keepType Keep type.
+    /// @return Keep vendor contract address.
+    function getKeepVendor(string memory _keepType) public view returns (address) {
+        return keepVendors[_keepType];
     }
 
-    function setECDSAKeepFactory(address _ecdsaKeepFactory) public onlyOwner {
-        ecdsaKeepFactory = _ecdsaKeepFactory;
-    }
-
-    /// @notice Create a new ECDSA keep.
-    /// @dev Calls ECDSA Keep Factory to create a keep.
-    /// @param _groupSize Number of members in the keep.
-    /// @param _honestThreshold Minimum number of honest keep members.
-    /// @return Created keep address.
-    function createECDSAKeep(
-        uint256 _groupSize,
-        uint256 _honestThreshold
-    ) public payable returns (address keep) {
-        keep = ECDSAKeepFactory(ecdsaKeepFactory).createNewKeep(
-            _groupSize,
-            _honestThreshold,
-            msg.sender
-        );
-
-        keeps.push(Keep(msg.sender, keep, KeepTypes.ECDSA));
+    /// @notice Remove a keep type from the registry.
+    /// @dev Only contract owner can call this function.
+    /// @param _keepType Keep type.
+    function removeKeepType(string memory _keepType) public onlyOwner {
+        delete keepVendors[_keepType];
     }
 }
