@@ -1,7 +1,6 @@
 var ECDSAKeepVendor = artifacts.require('ECDSAKeepVendor')
 var ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
 
-
 contract("ECDSAKeepVendor", async accounts => {
     const address0 = "0x0000000000000000000000000000000000000000"
     const address1 = "0xF2D3Af2495E286C7820643B963FB9D34418c871d"
