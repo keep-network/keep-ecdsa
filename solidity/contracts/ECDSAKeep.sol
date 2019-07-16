@@ -41,7 +41,7 @@ contract ECDSAKeep {
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
     function getPublicKey() public view returns (bytes memory) {
-       return publicKey;
+        return publicKey;
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
