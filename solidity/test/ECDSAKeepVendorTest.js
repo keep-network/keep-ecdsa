@@ -25,20 +25,13 @@ contract("ECDSAKeepVendor", async accounts => {
                 expectedResult = [address1]
 
                 await keepVendor.registerFactory(address1)
-                    .catch((err) => {
-                        assert.fail(`factory registration failed: ${err}`)
-                    })
             })
 
             it("registers two factory addresses", async () => {
                 expectedResult = [address1, address2]
 
-                try {
-                    await keepVendor.registerFactory(address1)
-                    await keepVendor.registerFactory(address2)
-                } catch (err) {
-                    assert.fail(`factory registration failed: ${err}`)
-                }
+                await keepVendor.registerFactory(address1)
+                await keepVendor.registerFactory(address2)
             })
 
             it("fails with zero address", async () => {
@@ -56,9 +49,6 @@ contract("ECDSAKeepVendor", async accounts => {
                 expectedResult = [address1]
 
                 await keepVendor.registerFactory(address1)
-                    .catch((err) => {
-                        assert.fail(`factory registration failed: ${err}`)
-                    })
 
                 try {
                     await keepVendor.registerFactory(address1)
@@ -83,18 +73,12 @@ contract("ECDSAKeepVendor", async accounts => {
         describe("removeFactory", async () => {
             beforeEach(async () => {
                 await keepVendor.registerFactory(address1)
-                    .catch((err) => {
-                        assert.fail(`factory registration failed: ${err}`)
-                    })
             })
 
             it("remove factory address", async () => {
                 expectedResult = []
 
                 await keepVendor.removeFactory(address1)
-                    .catch((err) => {
-                        assert.fail(`factory removal failed: ${err}`)
-                    })
             })
 
             it("remove factory address which was not registered", async () => {
@@ -103,9 +87,6 @@ contract("ECDSAKeepVendor", async accounts => {
                 // If address2 has not been registered we don't expect to 
                 // get any error on it's removal.
                 await keepVendor.removeFactory(address2)
-                    .catch((err) => {
-                        assert.fail(`factory removal failed: ${err}`)
-                    })
             })
 
             it("cannot be called by non owner", async () => {
@@ -125,21 +106,14 @@ contract("ECDSAKeepVendor", async accounts => {
         before(async () => {
             keepVendor = await ECDSAKeepVendor.new()
 
-            try {
-                await keepVendor.registerFactory(address1)
-                await keepVendor.registerFactory(address2)
-            } catch (err) {
-                assert.fail(`factory registration failed: ${err}`)
-            }
+            await keepVendor.registerFactory(address1)
+            await keepVendor.registerFactory(address2)
         })
 
         it("returns first factory from the list", async () => {
             let expectedResult = address1
 
             let result = await keepVendor.selectFactory.call()
-                .catch((err) => {
-                    assert.fail(`factory selection failed: ${err}`)
-                })
 
             assert.equal(result, expectedResult, "unexpected factory selected")
         })
@@ -151,12 +125,8 @@ contract("ECDSAKeepVendor", async accounts => {
             let factoryStub1 = await ECDSAKeepFactoryStub.new()
             let factoryStub2 = await ECDSAKeepFactoryStub.new()
 
-            try {
-                await keepVendor.registerFactory(factoryStub1.address)
-                await keepVendor.registerFactory(factoryStub2.address)
-            } catch (err) {
-                assert.fail(`factory registration failed: ${err}`)
-            }
+            await keepVendor.registerFactory(factoryStub1.address)
+            await keepVendor.registerFactory(factoryStub2.address)
         })
 
         it("calls selected factory", async () => {
@@ -171,9 +141,6 @@ contract("ECDSAKeepVendor", async accounts => {
                 5, // _honestThreshold
                 "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
             )
-                .catch((err) => {
-                    assert.fail(`factory selection failed: ${err}`)
-                })
 
             assert.equal(result, expectedResult, "unexpected opened keep address")
         })
