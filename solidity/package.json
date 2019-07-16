@@ -8,6 +8,7 @@
   },
   "scripts": {
     "truffle": "truffle",
+    "clean": "rm -rf build/",
     "build": "truffle compile",
     "test": "truffle test"
   },
