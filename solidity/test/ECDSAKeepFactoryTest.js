@@ -8,16 +8,16 @@ contract("ECDSAKeepFactory", async accounts => {
         let keepFactory = await ECDSAKeepFactory.deployed();
 
         let keepAddress = await keepFactory.openKeep.call(
-            10, // _groupSize,
-            5, // _honestThreshold,
+            10, // _groupSize
+            5, // _honestThreshold
             "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
         ).catch((err) => {
             assert.fail(`ecdsa keep creation failed: ${err}`);
         });
 
         await keepFactory.openKeep(
-            10, // _groupSize,
-            5, // _honestThreshold,
+            10, // _groupSize
+            5, // _honestThreshold
             "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
         ).catch((err) => {
             assert.fail(`ecdsa keep creation failed: ${err}`);
