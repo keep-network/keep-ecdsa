@@ -4,16 +4,11 @@ const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 
 module.exports = async function (deployer) {
     await deployer.deploy(ECDSAKeepFactory)
-    let ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
+    const ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
 
-    await deployer.deploy(ECDSAKeepVendor)
-        .then((instance) => {
-            instance.registerFactory(ecdsaKeepFactory.address)
-        })
-    let ecdsaKeepVendor = await ECDSAKeepVendor.deployed()
+    const ecdsaKeepVendor = await deployer.deploy(ECDSAKeepVendor)
+    ecdsaKeepVendor.registerFactory(ecdsaKeepFactory.address)
 
-    await deployer.deploy(KeepRegistry)
-        .then((instance) => {
-            instance.setKeepTypeVendor('ECDSAKeep', ecdsaKeepVendor.address)
-        })
+    const keepRegistry = await deployer.deploy(KeepRegistry)
+    keepRegistry.setKeepTypeVendor('ECDSAKeep', ecdsaKeepVendor.address)
 }
