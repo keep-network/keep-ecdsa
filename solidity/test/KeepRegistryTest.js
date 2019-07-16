@@ -22,7 +22,7 @@ contract("KeepRegistry", async accounts => {
                     assert.fail(`vendor registration failed: ${err}`)
                 })
 
-            let result = await keepRegistry.getKeepVendor.call(keepType1)
+            let result = await keepRegistry.getKeepTypeVendor.call(keepType1)
             assert.deepEqual(result, address1, "unexpected keep vendor address")
         })
 
@@ -34,7 +34,7 @@ contract("KeepRegistry", async accounts => {
                 assert.fail(`vendor registration failed: ${err}`)
             }
 
-            let result = await keepRegistry.getKeepVendor.call(keepType1)
+            let result = await keepRegistry.getKeepTypeVendor.call(keepType1)
             assert.deepEqual(result, address2, "unexpected keep vendor address")
         })
 
@@ -46,10 +46,10 @@ contract("KeepRegistry", async accounts => {
                 assert.fail(`vendor registration failed: ${err}`)
             }
 
-            let result1 = await keepRegistry.getKeepVendor.call(keepType1)
+            let result1 = await keepRegistry.getKeepTypeVendor.call(keepType1)
             assert.deepEqual(result1, address1, "unexpected keep vendor address")
 
-            let result2 = await keepRegistry.getKeepVendor.call(keepType2)
+            let result2 = await keepRegistry.getKeepTypeVendor.call(keepType2)
             assert.deepEqual(result2, address2, "unexpected keep vendor address")
         })
 
@@ -61,10 +61,10 @@ contract("KeepRegistry", async accounts => {
                 assert.fail(`vendor registration failed: ${err}`)
             }
 
-            let result1 = await keepRegistry.getKeepVendor.call(keepType1)
+            let result1 = await keepRegistry.getKeepTypeVendor.call(keepType1)
             assert.deepEqual(result1, address1, "unexpected keep vendor address")
 
-            let result2 = await keepRegistry.getKeepVendor.call(keepType2)
+            let result2 = await keepRegistry.getKeepTypeVendor.call(keepType2)
             assert.deepEqual(result2, address1, "unexpected keep vendor address")
         })
 
@@ -77,7 +77,7 @@ contract("KeepRegistry", async accounts => {
                 assert.include(e.message, 'Vendor address cannot be zero')
             }
 
-            let result = await keepRegistry.getKeepVendor.call(keepType1)
+            let result = await keepRegistry.getKeepTypeVendor.call(keepType1)
             assert.deepEqual(result, address1, "unexpected keep vendor address")
         })
 
@@ -91,9 +91,9 @@ contract("KeepRegistry", async accounts => {
         })
     })
 
-    describe("getKeepVendor", async () => {
+    describe("getKeepTypeVendor", async () => {
         it("returns zero for not registered keep type", async () => {
-            let result = await keepRegistry.getKeepVendor.call("NOT EXISTING")
+            let result = await keepRegistry.getKeepTypeVendor.call("NOT EXISTING")
             assert.deepEqual(result, address0, "unexpected keep vendor address")
         })
     })
@@ -114,7 +114,7 @@ contract("KeepRegistry", async accounts => {
                     assert.fail(`vendor removal failed: ${err}`)
                 })
 
-            let result = await keepRegistry.getKeepVendor.call(keepType1)
+            let result = await keepRegistry.getKeepTypeVendor.call(keepType1)
             assert.deepEqual(result, address0, "unexpected keep vendor address")
         })
 

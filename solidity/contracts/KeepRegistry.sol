@@ -25,7 +25,7 @@ contract KeepRegistry is Ownable {
     /// @notice Get a keep vendor contract address for a keep type.
     /// @param _keepType Keep type.
     /// @return Keep vendor contract address.
-    function getKeepVendor(string memory _keepType) public view returns (address) {
+    function getKeepTypeVendor(string memory _keepType) public view returns (address) {
         return keepVendors[_keepType];
     }
 
