@@ -22,7 +22,7 @@ type Interface interface {
 	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new signing request for a given keep is seen.
 	OnSignatureRequested(
-		keepAddress common.Address,
+		keepAddress KeepAddress,
 		handler func(event *SignatureRequestedEvent),
 	) (subscription.EventSubscription, error)
 
