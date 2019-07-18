@@ -10,5 +10,5 @@ module.exports = async function (deployer) {
     ecdsaKeepVendor.registerFactory(ecdsaKeepFactory.address)
 
     const keepRegistry = await deployer.deploy(KeepRegistry)
-    keepRegistry.setKeepTypeVendor('ECDSAKeep', ecdsaKeepVendor.address)
+    keepRegistry.setVendorForKeepType('ECDSAKeep', ecdsaKeepVendor.address)
 }

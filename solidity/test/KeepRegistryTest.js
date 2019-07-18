@@ -13,63 +13,63 @@ contract("KeepRegistry", async accounts => {
         keepRegistry = await KeepRegistry.deployed()
     })
 
-    describe("setKeepTypeVendor", async () => {
+    describe("setVendorForKeepType", async () => {
         it("sets vendor address for new keep type", async () => {
             keepRegistry = await KeepRegistry.new()
 
-            await keepRegistry.setKeepTypeVendor(keepType1, address1)
+            await keepRegistry.setVendorForKeepType(keepType1, address1)
 
-            let result = await keepRegistry.getKeepTypeVendor.call(keepType1)
+            let result = await keepRegistry.getVendorForKeepType.call(keepType1)
             assert.deepEqual(result, address1, "unexpected keep vendor address")
         })
 
         it("replaces vendor address for keep type", async () => {
-            await keepRegistry.setKeepTypeVendor(keepType1, address1)
-            await keepRegistry.setKeepTypeVendor(keepType1, address2)
+            await keepRegistry.setVendorForKeepType(keepType1, address1)
+            await keepRegistry.setVendorForKeepType(keepType1, address2)
 
-            let result = await keepRegistry.getKeepTypeVendor.call(keepType1)
+            let result = await keepRegistry.getVendorForKeepType.call(keepType1)
             assert.deepEqual(result, address2, "unexpected keep vendor address")
         })
 
         it("sets two keep types with different addresses", async () => {
-            await keepRegistry.setKeepTypeVendor(keepType1, address1)
-            await keepRegistry.setKeepTypeVendor(keepType2, address2)
+            await keepRegistry.setVendorForKeepType(keepType1, address1)
+            await keepRegistry.setVendorForKeepType(keepType2, address2)
 
-            let result1 = await keepRegistry.getKeepTypeVendor.call(keepType1)
+            let result1 = await keepRegistry.getVendorForKeepType.call(keepType1)
             assert.deepEqual(result1, address1, "unexpected keep vendor address")
 
-            let result2 = await keepRegistry.getKeepTypeVendor.call(keepType2)
+            let result2 = await keepRegistry.getVendorForKeepType.call(keepType2)
             assert.deepEqual(result2, address2, "unexpected keep vendor address")
         })
 
         it("sets two keep types with the same addresses", async () => {
-            await keepRegistry.setKeepTypeVendor(keepType1, address1)
-            await keepRegistry.setKeepTypeVendor(keepType2, address1)
+            await keepRegistry.setVendorForKeepType(keepType1, address1)
+            await keepRegistry.setVendorForKeepType(keepType2, address1)
 
-            let result1 = await keepRegistry.getKeepTypeVendor.call(keepType1)
+            let result1 = await keepRegistry.getVendorForKeepType.call(keepType1)
             assert.deepEqual(result1, address1, "unexpected keep vendor address")
 
-            let result2 = await keepRegistry.getKeepTypeVendor.call(keepType2)
+            let result2 = await keepRegistry.getVendorForKeepType.call(keepType2)
             assert.deepEqual(result2, address1, "unexpected keep vendor address")
         })
 
         it("fails with zero address", async () => {
-            await keepRegistry.setKeepTypeVendor(keepType1, address1)
+            await keepRegistry.setVendorForKeepType(keepType1, address1)
 
             try {
-                await keepRegistry.setKeepTypeVendor(keepType1, address0)
+                await keepRegistry.setVendorForKeepType(keepType1, address0)
                 assert(false, 'Test call did not error as expected')
             } catch (e) {
                 assert.include(e.message, 'Vendor address cannot be zero')
             }
 
-            let result = await keepRegistry.getKeepTypeVendor.call(keepType1)
+            let result = await keepRegistry.getVendorForKeepType.call(keepType1)
             assert.deepEqual(result, address1, "unexpected keep vendor address")
         })
 
         it("cannot be called by non owner", async () => {
             try {
-                await keepRegistry.setKeepTypeVendor.call(keepType1, address1, { from: accounts[1] })
+                await keepRegistry.setVendorForKeepType.call(keepType1, address1, { from: accounts[1] })
                 assert(false, 'Test call did not error as expected')
             } catch (e) {
                 assert.include(e.message, 'Ownable: caller is not the owner')
@@ -77,23 +77,23 @@ contract("KeepRegistry", async accounts => {
         })
     })
 
-    describe("getKeepTypeVendor", async () => {
+    describe("getVendorForKeepType", async () => {
         it("returns zero for not registered keep type", async () => {
-            let result = await keepRegistry.getKeepTypeVendor.call("NOT EXISTING")
+            let result = await keepRegistry.getVendorForKeepType.call("NOT EXISTING")
             assert.deepEqual(result, address0, "unexpected keep vendor address")
         })
     })
 
     describe("removeKeepType", async () => {
         before(async () => {
-            await keepRegistry.setKeepTypeVendor(keepType1, address1)
-            await keepRegistry.setKeepTypeVendor(keepType2, address2)
+            await keepRegistry.setVendorForKeepType(keepType1, address1)
+            await keepRegistry.setVendorForKeepType(keepType2, address2)
         })
 
         it("removes keep type address", async () => {
             await keepRegistry.removeKeepType(keepType1)
 
-            let result = await keepRegistry.getKeepTypeVendor.call(keepType1)
+            let result = await keepRegistry.getVendorForKeepType.call(keepType1)
             assert.deepEqual(result, address0, "unexpected keep vendor address")
         })
 
