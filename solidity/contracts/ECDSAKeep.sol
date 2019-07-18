@@ -19,6 +19,15 @@ contract ECDSAKeep {
         bytes digest
     );
 
+    // Notification that the signature has been calculated. Contains a digest which
+    // was used for signature calculation and a signature in a form of R and S
+    // values.
+    event SignatureSubmitted(
+        bytes digest,
+        bytes r,
+        bytes s
+    );
+
     constructor(
         address _owner,
         address[] memory _members,
@@ -50,5 +59,15 @@ contract ECDSAKeep {
     function sign(bytes memory _digest) public {
         require(msg.sender == owner, "Only keep owner can ask to sign");
         emit SignatureRequested(_digest);
+    }
+
+    /// @notice Submits a signature calculated for the given digest.
+    /// @dev TODO: Access control.
+    /// @param _digest Digest for which calculator was calculated.
+    /// @param _r Calculated signature's R value.
+    /// @param _s Calculated signature's S value.
+    function submitSignature(bytes memory _digest, bytes memory _r, bytes memory _s) public {
+        // TODO: Add signature verification?
+        emit SignatureSubmitted(_digest, _r, _s);
     }
 }
