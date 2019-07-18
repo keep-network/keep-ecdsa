@@ -14,7 +14,7 @@ import (
 func TestRequestSignatureNonexistentKeep(t *testing.T) {
 	chain := initializeLocalChain()
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
-	digest := []byte{1}
+	digest := [32]byte{1}
 	expectedError := fmt.Errorf("keep not found for address [0x0000000000000000000000000000000000000001]")
 
 	err := chain.requestSignature(keepAddress, digest)
@@ -31,7 +31,7 @@ func TestRequestSignatureNonexistentKeep(t *testing.T) {
 func TestRequestSignatureNoHandler(t *testing.T) {
 	chain := initializeLocalChain()
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
-	digest := []byte{1}
+	digest := [32]byte{1}
 
 	err := chain.createKeep(keepAddress)
 	if err != nil {
@@ -50,7 +50,7 @@ func TestRequestSignature(t *testing.T) {
 
 	chain := initializeLocalChain()
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
-	digest := []byte{1}
+	digest := [32]byte{1}
 	eventEmitted := make(chan *eth.SignatureRequestedEvent)
 	handler := func(event *eth.SignatureRequestedEvent) {
 		eventEmitted <- event
@@ -69,7 +69,7 @@ func TestRequestSignature(t *testing.T) {
 
 	select {
 	case event := <-eventEmitted:
-		if !bytes.Equal(event.Digest, digest) {
+		if !bytes.Equal(event.Digest[:], digest[:]) {
 			t.Errorf(
 				"unexpected digest from signature request\nexpected: %x\nactual:   %x\n",
 				digest,
