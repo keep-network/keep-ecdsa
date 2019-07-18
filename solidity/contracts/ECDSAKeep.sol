@@ -1,11 +1,12 @@
 pragma solidity ^0.5.4;
 
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
 /// @dev TODO: This is a stub contract - needs to be implemented.
-contract ECDSAKeep {
-    // Owner of the keep.
-    address owner;
+contract ECDSAKeep is Ownable {
+
     // List of keep members' addresses.
     address[] internal members;
     // Minimum number of honest keep members required to produce a signature.
@@ -33,7 +34,7 @@ contract ECDSAKeep {
         address[] memory _members,
         uint256 _honestThreshold
     ) public {
-        owner = _owner;
+        transferOwnership(_owner);
         members = _members;
         honestThreshold = _honestThreshold;
     }
@@ -54,10 +55,8 @@ contract ECDSAKeep {
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
-    /// @dev TODO: Access control.
     /// @param _digest Digest to be signed.
-    function sign(bytes memory _digest) public {
-        require(msg.sender == owner, "Only keep owner can ask to sign");
+    function sign(bytes memory _digest) public onlyOwner {
         emit SignatureRequested(_digest);
     }
 
