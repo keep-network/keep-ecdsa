@@ -43,7 +43,7 @@ contract ECDSAKeep {
     /// @param _publicKey Signer's public key.
     function setPublicKey(bytes memory _publicKey) public {
         // TODO: Validate if `msg.sender` is on `members` list.
-        // TODO: Validate format: 32-bytes X + 32-bytes Y.
+        require(_publicKey.length == 64, "Public key must be 64 bytes long");
         publicKey = _publicKey;
     }
 
