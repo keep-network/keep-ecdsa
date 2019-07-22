@@ -16,7 +16,7 @@ contract ECDSAKeep {
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(
-        bytes digest
+        bytes32 digest
     );
 
     constructor(
@@ -47,7 +47,7 @@ contract ECDSAKeep {
     /// @notice Calculates a signature over provided digest by the keep.
     /// @dev TODO: Access control.
     /// @param _digest Digest to be signed.
-    function sign(bytes memory _digest) public {
+    function sign(bytes32 _digest) public {
         require(msg.sender == owner, "Only keep owner can ask to sign");
         emit SignatureRequested(_digest);
     }

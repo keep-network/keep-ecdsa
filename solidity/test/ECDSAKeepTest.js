@@ -36,10 +36,12 @@ contract('ECDSAKeep', function (accounts) {
         });
 
         it('emits event', async () => {
-            let res = await instance.sign('0x00')
+            const digest = '0xbb0b57005f01018b19c278c55273a60118ffdd3e5790ccc8a48cad03907fa521'
+
+            let res = await instance.sign(digest)
             truffleAssert.eventEmitted(res, 'SignatureRequested', (ev) => {
-                return ev.digest == '0x00'
-            });
+                return ev.digest == digest
+            })
         })
     })
 
@@ -70,5 +72,5 @@ contract('ECDSAKeep', function (accounts) {
                 "incorrect public key"
             )
         });
-    })
+    });
 });
