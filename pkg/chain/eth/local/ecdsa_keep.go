@@ -12,15 +12,15 @@ type localKeep struct {
 	signatureRequestedHandlers map[int]func(event *eth.SignatureRequestedEvent)
 }
 
-func (c *localChain) requestSignature(address eth.KeepAddress, digest []byte) error {
+func (c *localChain) requestSignature(keepAddress eth.KeepAddress, digest []byte) error {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	keep, ok := c.keeps[address]
+	keep, ok := c.keeps[keepAddress]
 	if !ok {
 		return fmt.Errorf(
 			"keep not found for address [%s]",
-			address.String(),
+			keepAddress.String(),
 		)
 	}
 

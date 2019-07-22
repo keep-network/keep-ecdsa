@@ -33,7 +33,7 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 // OnSignatureRequested is a callback that is invoked on-chain
 // when a keep's signature is requested.
 func (ec *EthereumChain) OnSignatureRequested(
-	keepAddress common.Address,
+	keepAddress eth.KeepAddress,
 	handler func(event *eth.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
@@ -59,10 +59,10 @@ func (ec *EthereumChain) OnSignatureRequested(
 // SubmitKeepPublicKey submits a public key to a keep contract deployed under
 // a given address.
 func (ec *EthereumChain) SubmitKeepPublicKey(
-	address eth.KeepAddress,
+	keepAddress eth.KeepAddress,
 	publicKey [64]byte,
 ) error {
-	keepContract, err := ec.getKeepContract(address)
+	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
 		return err
 	}

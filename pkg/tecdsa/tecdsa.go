@@ -91,7 +91,7 @@ func (c *client) generateSignerForKeep(keepAddress string) error {
 	}
 
 	err = c.ethereumChain.SubmitKeepPublicKey(
-		common.HexToAddress(keepAddress),
+		keepAddress,
 		serializedPublicKey,
 	)
 	if err != nil {
@@ -99,8 +99,8 @@ func (c *client) generateSignerForKeep(keepAddress string) error {
 	}
 
 	fmt.Printf(
-		"Signer for keep [%s] initialized with Bitcoin P2WPKH address [%s]\n",
-		keepAddress,
+		"Signer for keep [%s] initialized with Bitcoin P2WPKH address: [%s]\n",
+		keepAddress.String(),
 		btcAddress,
 	)
 
