@@ -17,8 +17,6 @@ contract KeepRegistry is Ownable {
     /// @param _keepType Keep type.
     /// @param _vendorAddress Keep Vendor contract address.
     function setVendorForKeepType(string memory _keepType, address _vendorAddress) public onlyOwner {
-        require(_vendorAddress != address(0), "Vendor address cannot be zero");
-
         keepVendors[_keepType] = _vendorAddress;
     }
 
