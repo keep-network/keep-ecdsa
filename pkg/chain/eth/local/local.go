@@ -7,6 +7,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
+	"github.com/keep-network/keep-tecdsa/pkg/sign"
 )
 
 // localChain is an implementation of ethereum blockchain interface.
@@ -102,5 +103,15 @@ func (lc *localChain) SubmitKeepPublicKey(
 
 	keep.publicKey = publicKey
 
+	return nil
+}
+
+// SubmitSignature submits a signature to a keep contract deployed under a
+// given address.
+func (lc *localChain) SubmitSignature(
+	keepAddress eth.KeepAddress,
+	digest []byte,
+	signature *sign.Signature,
+) error {
 	return nil
 }
