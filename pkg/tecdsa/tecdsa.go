@@ -116,7 +116,7 @@ func generateSigner() (*sign.Signer, error) {
 	return sign.NewSigner(privateKey), nil
 }
 
-func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest []byte) error {
+func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [32]byte) error {
 	signer, ok := c.keepsSigners.Load(keepAddress.String())
 	if !ok {
 		return fmt.Errorf("cannot load signer for keep: [%s]", keepAddress.String())
@@ -124,7 +124,7 @@ func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [
 
 	signature, err := signer.(*sign.Signer).CalculateSignature(
 		crand.Reader,
-		digest,
+		digest[:],
 	)
 
 	fmt.Printf("Signature calculated: [%+v]\n", signature)

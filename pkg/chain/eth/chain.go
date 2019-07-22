@@ -35,7 +35,7 @@ type Interface interface {
 	// given address.
 	SubmitSignature(
 		keepAddress KeepAddress,
-		digest []byte,
+		digest [32]byte,
 		signature *sign.Signature,
 	) error // TODO: Add promise *async.SignatureSubmissionPromise
 }

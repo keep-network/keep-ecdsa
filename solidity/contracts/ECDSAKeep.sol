@@ -26,7 +26,7 @@ contract ECDSAKeep is Ownable {
     // was used for signature calculation and a signature in a form of R and S
     // values.
     event SignatureSubmitted(
-        bytes digest,
+        bytes32 digest,
         bytes r,
         bytes s
     );
@@ -65,7 +65,7 @@ contract ECDSAKeep is Ownable {
     /// @param _digest Digest for which calculator was calculated.
     /// @param _r Calculated signature's R value.
     /// @param _s Calculated signature's S value.
-    function submitSignature(bytes memory _digest, bytes memory _r, bytes memory _s) public onlyMember {
+    function submitSignature(bytes32 _digest, bytes memory _r, bytes memory _s) public onlyMember {
         // TODO: Add signature verification?
         emit SignatureSubmitted(_digest, _r, _s);
     }

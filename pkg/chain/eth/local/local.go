@@ -110,7 +110,7 @@ func (lc *localChain) SubmitKeepPublicKey(
 // given address.
 func (lc *localChain) SubmitSignature(
 	keepAddress eth.KeepAddress,
-	digest []byte,
+	digest [32]byte,
 	signature *sign.Signature,
 ) error {
 	return nil
