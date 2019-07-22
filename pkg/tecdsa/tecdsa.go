@@ -43,8 +43,19 @@ func Initialize(
 
 		ethereumChain.OnSignatureRequested(
 			event.KeepAddress,
-			func(event *eth.SignatureRequestedEvent) {
-				fmt.Printf("New signature requested [%+v]\n", event.Digest)
+			func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
+				fmt.Printf("New signature requested [%+x]\n", signatureRequestedEvent)
+
+				go func() {
+					err := client.calculateSignatureForKeep(
+						event.KeepAddress,
+						signatureRequestedEvent.Digest,
+					)
+
+					if err != nil {
+						fmt.Fprintf(os.Stderr, "signature calculation failed: [%s]", err)
+					}
+				}()
 			},
 		)
 	})
@@ -105,4 +116,29 @@ func generateSigner() (*sign.Signer, error) {
 	}
 
 	return sign.NewSigner(privateKey), nil
+}
+
+func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest []byte) error {
+	signer, ok := c.keepsSigners.Load(keepAddress.String())
+	if !ok {
+		return fmt.Errorf("cannot load signer for keep: [%s]", keepAddress.String())
+	}
+
+	signature, err := signer.(*sign.Signer).CalculateSignature(
+		crand.Reader,
+		digest,
+	)
+
+	fmt.Printf("Signature calculated: [%+v]\n", signature)
+
+	err = c.ethereumChain.SubmitSignature(
+		keepAddress,
+		digest,
+		signature,
+	)
+	if err != nil {
+		return fmt.Errorf("signature submission failed: [%s]", err)
+	}
+
+	return nil
 }
