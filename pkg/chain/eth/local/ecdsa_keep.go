@@ -12,7 +12,7 @@ type localKeep struct {
 	signatureRequestedHandlers map[int]func(event *eth.SignatureRequestedEvent)
 }
 
-func (c *localChain) requestSignature(address eth.KeepAddress, digest []byte) error {
+func (c *localChain) requestSignature(address eth.KeepAddress, digest [32]byte) error {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
