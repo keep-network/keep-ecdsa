@@ -16,14 +16,14 @@ contract KeepRegistry is Ownable {
     /// @dev Only contract owner can call this function.
     /// @param _keepType Keep type.
     /// @param _vendorAddress Keep Vendor contract address.
-    function setVendorForKeepType(string memory _keepType, address _vendorAddress) public onlyOwner {
+    function setVendor(string memory _keepType, address _vendorAddress) public onlyOwner {
         keepVendors[_keepType] = _vendorAddress;
     }
 
     /// @notice Get a keep vendor contract address for a keep type.
     /// @param _keepType Keep type.
     /// @return Keep vendor contract address.
-    function getVendorForKeepType(string memory _keepType) public view returns (address) {
+    function getVendor(string memory _keepType) public view returns (address) {
         return keepVendors[_keepType];
     }
 }
