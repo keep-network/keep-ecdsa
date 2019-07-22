@@ -18,7 +18,7 @@ contract('ECDSAKeep', (accounts) => {
     })
   })
 
-  describe.only('#sign', async () => {
+  describe('#sign', async () => {
     const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
     let keep
 
@@ -27,6 +27,8 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('emits event', async () => {
+      const digest = '0xbb0b57005f01018b19c278c55273a60118ffdd3e5790ccc8a48cad03907fa521'
+
       let res = await keep.sign(digest, { from: owner })
       truffleAssert.eventEmitted(res, 'SignatureRequested', (ev) => {
         return ev.digest == digest

@@ -19,7 +19,7 @@ contract ECDSAKeep is Ownable {
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(
-        bytes digest
+        bytes32 digest
     );
 
     // Notification that the signature has been calculated. Contains a digest which
@@ -57,7 +57,7 @@ contract ECDSAKeep is Ownable {
 
     /// @notice Calculates a signature over provided digest by the keep.
     /// @param _digest Digest to be signed.
-    function sign(bytes memory _digest) public onlyOwner {
+    function sign(bytes32 _digest) public onlyOwner {
         emit SignatureRequested(_digest);
     }
 

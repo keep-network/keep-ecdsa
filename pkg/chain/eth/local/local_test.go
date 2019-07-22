@@ -58,7 +58,7 @@ func TestOnSignatureRequested(t *testing.T) {
 	chain := initializeLocalChain()
 	eventFired := make(chan *eth.SignatureRequestedEvent)
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
-	digest := []byte{1}
+	digest := [32]byte{1}
 
 	err := chain.createKeep(keepAddress)
 	if err != nil {
