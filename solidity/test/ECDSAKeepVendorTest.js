@@ -1,4 +1,4 @@
-var ECDSAKeepVendor = artifacts.require('ECDSAKeepVendor')
+var ECDSAKeepVendor = artifacts.require('ECDSAKeepVendorStub')
 var ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
 
 contract("ECDSAKeepVendor", async accounts => {
@@ -8,7 +8,7 @@ contract("ECDSAKeepVendor", async accounts => {
 
     let keepVendor
 
-    describe("register, remove and get factories", async () => {
+    describe("registerFactory", async () => {
         let expectedResult
 
         beforeEach(async () => {
@@ -20,85 +20,47 @@ contract("ECDSAKeepVendor", async accounts => {
             assert.deepEqual(result, expectedResult, "unexpected registered factories list")
         })
 
-        describe("registerFactory", async () => {
-            it("registers one factory address", async () => {
-                expectedResult = [address1]
+        it("registers one factory address", async () => {
+            expectedResult = [address1]
 
-                await keepVendor.registerFactory(address1)
-            })
-
-            it("registers two factory addresses", async () => {
-                expectedResult = [address1, address2]
-
-                await keepVendor.registerFactory(address1)
-                await keepVendor.registerFactory(address2)
-            })
-
-            it("fails with zero address", async () => {
-                expectedResult = []
-
-                try {
-                    await keepVendor.registerFactory(address0)
-                    assert(false, 'Test call did not error as expected')
-                } catch (e) {
-                    assert.include(e.message, 'Factory address cannot be zero')
-                }
-            })
-
-            it("fails if address already exists", async () => {
-                expectedResult = [address1]
-
-                await keepVendor.registerFactory(address1)
-
-                try {
-                    await keepVendor.registerFactory(address1)
-                    assert(false, 'Test call did not error as expected')
-                } catch (e) {
-                    assert.include(e.message, 'Factory address already registered')
-                }
-            })
-
-            it("cannot be called by non owner", async () => {
-                expectedResult = []
-
-                try {
-                    await keepVendor.registerFactory.call(address1, { from: accounts[1] })
-                    assert(false, 'Test call did not error as expected')
-                } catch (e) {
-                    assert.include(e.message, 'Ownable: caller is not the owner')
-                }
-            })
+            await keepVendor.registerFactory(address1)
         })
 
-        describe("removeFactory", async () => {
-            beforeEach(async () => {
+        it("registers factory with zero address", async () => {
+            expectedResult = [address0]
+
+            await keepVendor.registerFactory(address0)
+        })
+
+        it("registers two factory addresses", async () => {
+            expectedResult = [address1, address2]
+
+            await keepVendor.registerFactory(address1)
+            await keepVendor.registerFactory(address2)
+        })
+
+        it("fails if address already exists", async () => {
+            expectedResult = [address1]
+
+            await keepVendor.registerFactory(address1)
+
+            try {
                 await keepVendor.registerFactory(address1)
-            })
+                assert(false, 'Test call did not error as expected')
+            } catch (e) {
+                assert.include(e.message, 'Factory address already registered')
+            }
+        })
 
-            it("remove factory address", async () => {
-                expectedResult = []
+        it("cannot be called by non owner", async () => {
+            expectedResult = []
 
-                await keepVendor.removeFactory(address1)
-            })
-
-            it("remove factory address which was not registered", async () => {
-                expectedResult = [address1]
-
-                // If address2 has not been registered we don't expect to 
-                // get any error on it's removal.
-                await keepVendor.removeFactory(address2)
-            })
-
-            it("cannot be called by non owner", async () => {
-                expectedResult = [address1]
-
-                try {
-                    await keepVendor.removeFactory.call(address1, { from: accounts[1] })
-                    assert(false, 'Test call did not error as expected')
-                } catch (e) {
-                    assert.include(e.message, 'Ownable: caller is not the owner')
-                }
-            })
+            try {
+                await keepVendor.registerFactory.call(address1, { from: accounts[1] })
+                assert(false, 'Test call did not error as expected')
+            } catch (e) {
+                assert.include(e.message, 'Ownable: caller is not the owner')
+            }
         })
     })
 
@@ -113,7 +75,7 @@ contract("ECDSAKeepVendor", async accounts => {
         it("returns first factory from the list", async () => {
             let expectedResult = address1
 
-            let result = await keepVendor.selectFactory.call()
+            let result = await keepVendor.selectFactoryPublic.call()
 
             assert.equal(result, expectedResult, "unexpected factory selected")
         })
@@ -122,16 +84,14 @@ contract("ECDSAKeepVendor", async accounts => {
     describe("openKeep", async () => {
         before(async () => {
             keepVendor = await ECDSAKeepVendor.new()
-            let factoryStub1 = await ECDSAKeepFactoryStub.new()
-            let factoryStub2 = await ECDSAKeepFactoryStub.new()
+            let factoryStub = await ECDSAKeepFactoryStub.new()
 
-            await keepVendor.registerFactory(factoryStub1.address)
-            await keepVendor.registerFactory(factoryStub2.address)
+            await keepVendor.registerFactory(factoryStub.address)
         })
 
         it("calls selected factory", async () => {
             let selectedFactory = await ECDSAKeepFactoryStub.at(
-                await keepVendor.selectFactory.call()
+                await keepVendor.selectFactoryPublic.call()
             )
 
             let expectedResult = await selectedFactory.calculateKeepAddress.call()
