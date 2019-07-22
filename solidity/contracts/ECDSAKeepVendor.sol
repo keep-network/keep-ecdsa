@@ -31,7 +31,7 @@ contract ECDSAKeepVendor is Ownable {
     /// ECDSA keep factories.
     /// @dev This is a stub implementation returning first factory on the list.
     /// @return Selected ECDSA keep factory address.
-    function selectFactory() public view returns (address) {
+    function selectFactory() internal view returns (address) {
         // TODO: Implement factory selection mechanism.
         return factories[0];
     }
