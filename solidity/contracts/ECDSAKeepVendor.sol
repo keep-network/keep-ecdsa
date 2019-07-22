@@ -22,23 +22,9 @@ contract ECDSAKeepVendor is Ownable {
     /// cannot be zero and cannot be already registered.
     /// @param _factory ECDSA keep factory address.
     function registerFactory(address _factory) public onlyOwner {
-        require(_factory != address(0), "Factory address cannot be zero");
         require(!factories.contains(_factory), "Factory address already registered");
 
         factories.push(_factory);
-    }
-
-    /// @notice Unregister ECDSA keep factory.
-    /// @dev Removes a factory address from the list of registered factories.
-    /// @param _factory ECDSA keep factory address.
-    function removeFactory(address _factory) public onlyOwner {
-        factories.removeAddress(_factory);
-    }
-
-    /// @notice Get registered ECDSA keep factories.
-    /// @return List of registered ECDSA keep factory addresses.
-    function getFactories() public view returns (address[] memory) {
-        return factories;
     }
 
     /// @notice Select a recommended ECDSA keep factory from all registered
