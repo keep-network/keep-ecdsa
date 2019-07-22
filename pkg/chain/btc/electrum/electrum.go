@@ -58,7 +58,7 @@ func Connect(config *Config) (btc.Interface, error) {
 	go func() {
 		for {
 			if err := server.Ping(); err != nil {
-				fmt.Printf("ping failed [%s]", err)
+				fmt.Printf("ping failed [%s]\n", err)
 			}
 			time.Sleep(60 * time.Second)
 		}

@@ -87,7 +87,7 @@ func (c *client) generateSignerForKeep(keepAddress string) error {
 	// contract.
 	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
 	if err != nil {
-		return fmt.Errorf("p2wpkh address conversion failed: [%s]", err)
+		return fmt.Errorf("public key serialization failed: [%s]", err)
 	}
 
 	err = c.ethereumChain.SubmitKeepPublicKey(
