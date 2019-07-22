@@ -26,11 +26,4 @@ contract KeepRegistry is Ownable {
     function getVendorForKeepType(string memory _keepType) public view returns (address) {
         return keepVendors[_keepType];
     }
-
-    /// @notice Remove a keep type from the registry.
-    /// @dev Only contract owner can call this function.
-    /// @param _keepType Keep type.
-    function removeKeepType(string memory _keepType) public onlyOwner {
-        delete keepVendors[_keepType];
-    }
 }
