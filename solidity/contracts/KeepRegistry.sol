@@ -5,8 +5,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 /// @title Keep Registry
 /// @notice Contract handling keeps registry.
 /// @dev The keep registry serves the role of the master list and tracks sanctioned
-/// vendors. It ensures that only approved contracts are used. A new type of keep
-/// can be added without upgradeable registry.
+/// vendors. It ensures that only approved contracts are used.
 /// TODO: This is a stub contract - needs to be implemented.
 contract KeepRegistry is Ownable {
     // Registered keep vendors. Mapping of a keep type to a keep vendor address.
@@ -24,6 +23,7 @@ contract KeepRegistry is Ownable {
     /// @param _keepType Keep type.
     /// @return Keep vendor contract address.
     function getVendor(string memory _keepType) public view returns (address) {
+        // TODO: We should probably refer to vendor via proxy - https://github.com/keep-network/keep-tecdsa/pull/43#discussion_r306207111
         return keepVendors[_keepType];
     }
 }

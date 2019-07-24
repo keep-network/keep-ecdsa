@@ -31,7 +31,7 @@ func Connect() eth.Interface {
 }
 
 // OnTECDSAKeepCreated is a callback that is invoked when an on-chain
-// notification of a new ECDSA keep creation is seen.
+// notification of a new TECDSA keep creation is seen.
 func (lc *localChain) OnTECDSAKeepCreated(
 	handler func(event *eth.TECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
