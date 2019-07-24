@@ -72,8 +72,8 @@ contract("TECDSAKeepVendor", async accounts => {
             await keepVendor.registerFactory(address2)
         })
 
-        it("returns first factory from the list", async () => {
-            let expectedResult = address1
+        it("returns last factory from the list", async () => {
+            let expectedResult = address2
 
             let result = await keepVendor.selectFactoryPublic.call()
 

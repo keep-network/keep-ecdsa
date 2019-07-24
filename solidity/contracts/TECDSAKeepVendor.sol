@@ -33,7 +33,7 @@ contract TECDSAKeepVendor is Ownable {
     /// @return Selected TECDSA keep factory address.
     function selectFactory() internal view returns (address) {
         // TODO: Implement factory selection mechanism.
-        return factories[0];
+        return factories[factories.length - 1];
     }
 
     /// @notice Open a new TECDSA keep.
