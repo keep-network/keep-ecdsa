@@ -9,38 +9,37 @@ contract("TECDSAKeepVendor", async accounts => {
     let keepVendor
 
     describe("registerFactory", async () => {
-        let expectedResult
-
         beforeEach(async () => {
             keepVendor = await TECDSAKeepVendor.new()
         })
 
-        afterEach(async () => {
-            let result = await keepVendor.getFactories.call()
-            assert.deepEqual(result, expectedResult, "unexpected registered factories list")
-        })
-
         it("registers one factory address", async () => {
-            expectedResult = [address1]
+            let expectedResult = [address1]
 
             await keepVendor.registerFactory(address1)
+
+            assertFactories(expectedResult)
         })
 
         it("registers factory with zero address", async () => {
-            expectedResult = [address0]
+            let expectedResult = [address0]
 
             await keepVendor.registerFactory(address0)
+
+            assertFactories(expectedResult)
         })
 
         it("registers two factory addresses", async () => {
-            expectedResult = [address1, address2]
+            let expectedResult = [address1, address2]
 
             await keepVendor.registerFactory(address1)
             await keepVendor.registerFactory(address2)
+
+            assertFactories(expectedResult)
         })
 
         it("fails if address already exists", async () => {
-            expectedResult = [address1]
+            let expectedResult = []
 
             await keepVendor.registerFactory(address1)
 
@@ -50,10 +49,12 @@ contract("TECDSAKeepVendor", async accounts => {
             } catch (e) {
                 assert.include(e.message, 'Factory address already registered')
             }
+
+            assertFactories(expectedResult)
         })
 
         it("cannot be called by non owner", async () => {
-            expectedResult = []
+            let expectedResult = []
 
             try {
                 await keepVendor.registerFactory.call(address1, { from: accounts[1] })
@@ -61,7 +62,14 @@ contract("TECDSAKeepVendor", async accounts => {
             } catch (e) {
                 assert.include(e.message, 'Ownable: caller is not the owner')
             }
+
+            assertFactories(expectedResult)
         })
+
+        async function assertFactories(expectedFactories) {
+            let result = await keepVendor.getFactories.call()
+            assert.deepEqual(result, expectedFactories, "unexpected registered factories list")
+        }
     })
 
     describe("selectFactory", async () => {
