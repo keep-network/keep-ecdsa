@@ -39,7 +39,7 @@ contract("ECDSAKeepVendor", async accounts => {
         })
 
         it("fails if address already exists", async () => {
-            let expectedResult = []
+            let expectedResult = [address1]
 
             await keepVendor.registerFactory(address1)
 
