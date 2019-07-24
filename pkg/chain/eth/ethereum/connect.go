@@ -13,7 +13,7 @@ type EthereumChain struct {
 	config                   *Config
 	client                   *ethclient.Client
 	transactorOptions        *bind.TransactOpts
-	tecdsaKeepFactoryContract *abi.TECDSAKeepFactory
+	ecdsaKeepFactoryContract *abi.ECDSAKeepFactory
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -31,12 +31,12 @@ func Connect(config *Config) (eth.Interface, error) {
 
 	transactorOptions := bind.NewKeyedTransactor(privateKey)
 
-	tecdsaKeepFactoryContractAddress, err := config.ContractAddress(TECDSAKeepFactoryContractName)
+	ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ECDSAKeepFactoryContractName)
 	if err != nil {
 		return nil, err
 	}
-	tecdsaKeepFactoryContract, err := abi.NewTECDSAKeepFactory(
-		tecdsaKeepFactoryContractAddress,
+	ecdsaKeepFactoryContract, err := abi.NewECDSAKeepFactory(
+		ecdsaKeepFactoryContractAddress,
 		client,
 	)
 	if err != nil {
@@ -47,6 +47,6 @@ func Connect(config *Config) (eth.Interface, error) {
 		config:                   config,
 		client:                   client,
 		transactorOptions:        transactorOptions,
-		tecdsaKeepFactoryContract: tecdsaKeepFactoryContract,
+		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
 	}, nil
 }

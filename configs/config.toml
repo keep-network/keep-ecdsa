@@ -18,4 +18,4 @@
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
-    TECDSAKeepFactory = "0xAF92505961C06C9013176b5ef6569Bd44bE37afA"
+     ECDSAKeepFactory = "0x6312d9689665DAB22E21b11B6fDf86547E566288"

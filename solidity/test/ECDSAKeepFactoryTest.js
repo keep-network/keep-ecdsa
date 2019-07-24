@@ -1,11 +1,11 @@
-var TECDSAKeepFactory = artifacts.require('TECDSAKeepFactory');
+var ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 
-contract("TECDSAKeepFactory", async accounts => {
+contract("ECDSAKeepFactory", async accounts => {
 
-    it("emits TECDSAKeepCreated event upon keep creation", async () => {
+    it("emits ECDSAKeepCreated event upon keep creation", async () => {
         let blockNumber = await web3.eth.getBlockNumber()
 
-        let keepFactory = await TECDSAKeepFactory.deployed();
+        let keepFactory = await ECDSAKeepFactory.deployed();
 
         let keepAddress = await keepFactory.openKeep.call(
             10, // _groupSize
@@ -19,7 +19,7 @@ contract("TECDSAKeepFactory", async accounts => {
             "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
         )
 
-        let eventList = await keepFactory.getPastEvents('TECDSAKeepCreated', {
+        let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
             fromBlock: blockNumber,
             toBlock: 'latest'
         })

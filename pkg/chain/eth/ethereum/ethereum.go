@@ -10,16 +10,16 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
 
-// OnTECDSAKeepCreated is a callback that is invoked when an on-chain
-// notification of a new TECDSA keep creation is seen.
-func (ec *EthereumChain) OnTECDSAKeepCreated(
-	handler func(event *eth.TECDSAKeepCreatedEvent),
+// OnECDSAKeepCreated is a callback that is invoked when an on-chain
+// notification of a new ECDSA keep creation is seen.
+func (ec *EthereumChain) OnECDSAKeepCreated(
+	handler func(event *eth.ECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
-	return ec.watchTECDSAKeepCreated(
+	return ec.watchECDSAKeepCreated(
 		func(
-			chainEvent *abi.TECDSAKeepFactoryTECDSAKeepCreated,
+			chainEvent *abi.ECDSAKeepFactoryECDSAKeepCreated,
 		) {
-			handler(&eth.TECDSAKeepCreatedEvent{
+			handler(&eth.ECDSAKeepCreatedEvent{
 				KeepAddress: chainEvent.KeepAddress,
 			})
 		},
@@ -43,7 +43,7 @@ func (ec *EthereumChain) OnSignatureRequested(
 	return ec.watchSignatureRequested(
 		keepContract,
 		func(
-			chainEvent *abi.TECDSAKeepSignatureRequested,
+			chainEvent *abi.ECDSAKeepSignatureRequested,
 		) {
 			handler(&eth.SignatureRequestedEvent{
 				Digest: chainEvent.Digest,
@@ -76,11 +76,11 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	return nil
 }
 
-func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.TECDSAKeep, error) {
-	tecdsaKeepContract, err := abi.NewTECDSAKeep(address, ec.client)
+func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.ECDSAKeep, error) {
+	ecdsaKeepContract, err := abi.NewECDSAKeep(address, ec.client)
 	if err != nil {
 		return nil, err
 	}
 
-	return tecdsaKeepContract, nil
+	return ecdsaKeepContract, nil
 }

@@ -32,7 +32,7 @@ func Initialize(
 		bitcoinNetParams: bitcoinNetParams,
 	}
 
-	ethereumChain.OnTECDSAKeepCreated(func(event *eth.TECDSAKeepCreatedEvent) {
+	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
 		fmt.Printf("New ECDSA Keep created [%+v]\n", event)
 
 		go func() {

@@ -58,7 +58,7 @@ for each contract and copy-paste it to [config.toml](../configs/config.toml) fil
 Unit tests use Truffle's test framework, and redeploy contracts for a clean environment every test. An example:
 
 ```sh
-truffle test test/TECDSAKeepTest.js
+truffle test test/ECDSAKeepTest.js
 ```
 
 #### Scenarios

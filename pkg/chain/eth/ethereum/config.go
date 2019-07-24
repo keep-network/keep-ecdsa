@@ -8,7 +8,7 @@ import (
 
 // Definitions of contract names.
 const (
-	TECDSAKeepFactoryContractName = "TECDSAKeepFactory"
+	ECDSAKeepFactoryContractName = "ECDSAKeepFactory"
 )
 
 // Config contains configuration of Ethereum chain.

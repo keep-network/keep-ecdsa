@@ -1,20 +1,20 @@
 pragma solidity ^0.5.4;
 
-import "./TECDSAKeep.sol";
+import "./ECDSAKeep.sol";
 
-/// @title TECDSA Keep Factory
-/// @notice Contract creating TECDSA keeps.
+/// @title ECDSA Keep Factory
+/// @notice Contract creating ECDSA keeps.
 /// @dev TODO: This is a stub contract - needs to be implemented.
-contract TECDSAKeepFactory {
+contract ECDSAKeepFactory {
     // List of keeps.
-    TECDSAKeep[] keeps;
+    ECDSAKeep[] keeps;
 
     // Notification that a new keep has been created.
-    event TECDSAKeepCreated(
+    event ECDSAKeepCreated(
         address keepAddress
     );
 
-    /// @notice Open a new TECDSA keep.
+    /// @notice Open a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
@@ -25,9 +25,9 @@ contract TECDSAKeepFactory {
         uint256 _honestThreshold,
         address _owner
     ) public payable returns (address keepAddress) {
-        address[] memory _members = selectMembers(_groupSize);
+        address[] memory _members = selectECDSAKeepMembers(_groupSize);
 
-        TECDSAKeep keep = new TECDSAKeep(
+        ECDSAKeep keep = new ECDSAKeep(
             _owner,
             _members,
             _honestThreshold
@@ -36,14 +36,14 @@ contract TECDSAKeepFactory {
 
         keepAddress = address(keep);
 
-        emit TECDSAKeepCreated(keepAddress);
+        emit ECDSAKeepCreated(keepAddress);
     }
 
-    /// @notice Runs member selection for an TECDSA keep.
+    /// @notice Runs member selection for an ECDSA keep.
     /// @dev Stub implementations gets only one member with a fixed address.
     /// @param _groupSize Number of members to be selected.
     /// @return List of selected members addresses.
-    function selectMembers(
+    function selectECDSAKeepMembers(
         uint256 _groupSize
     ) internal pure returns (address[] memory members){
         // TODO: Implement

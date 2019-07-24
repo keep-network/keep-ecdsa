@@ -1,10 +1,10 @@
 pragma solidity ^0.5.4;
 
-import "../../contracts/TECDSAKeepVendor.sol";
+import "../../contracts/ECDSAKeepVendor.sol";
 
-/// @title TECDSA Keep Vendor Stub
+/// @title ECDSA Keep Vendor Stub
 /// @dev This contract is for testing purposes only.
-contract TECDSAKeepVendorStub is TECDSAKeepVendor {
+contract ECDSAKeepVendorStub is ECDSAKeepVendor {
 
     /// @notice Get registered ECDSA keep factories.
     /// @dev This is a stub implementation to validate the factories list.

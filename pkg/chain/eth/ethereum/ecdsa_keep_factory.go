@@ -8,13 +8,13 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
 
-func (ec *EthereumChain) watchTECDSAKeepCreated(
-	success func(event *abi.TECDSAKeepFactoryTECDSAKeepCreated),
+func (ec *EthereumChain) watchECDSAKeepCreated(
+	success func(event *abi.ECDSAKeepFactoryECDSAKeepCreated),
 	fail func(err error) error,
 ) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TECDSAKeepFactoryTECDSAKeepCreated)
+	eventChan := make(chan *abi.ECDSAKeepFactoryECDSAKeepCreated)
 
-	eventSubscription, err := ec.tecdsaKeepFactoryContract.WatchTECDSAKeepCreated(
+	eventSubscription, err := ec.ecdsaKeepFactoryContract.WatchECDSAKeepCreated(
 		nil,
 		eventChan,
 	)

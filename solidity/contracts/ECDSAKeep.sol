@@ -1,9 +1,9 @@
 pragma solidity ^0.5.4;
 
-/// @title TECDSA Keep
-/// @notice Contract reflecting an TECDSA keep.
+/// @title ECDSA Keep
+/// @notice Contract reflecting an ECDSA keep.
 /// @dev TODO: This is a stub contract - needs to be implemented.
-contract TECDSAKeep {
+contract ECDSAKeep {
     // Owner of the keep.
     address owner;
     // List of keep members' addresses.
