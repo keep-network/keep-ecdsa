@@ -21,13 +21,6 @@ contract("KeepRegistry", async accounts => {
             assert.deepEqual(result, address1, "unexpected keep vendor address")
         })
 
-        it("sets vendor address to zero", async () => {
-            await keepRegistry.setVendor(keepType1, address0)
-
-            let result = await keepRegistry.getVendor.call(keepType1)
-            assert.deepEqual(result, address0, "unexpected keep vendor address")
-        })
-
         it("replaces vendor address for keep type", async () => {
             await keepRegistry.setVendor(keepType1, address1)
             await keepRegistry.setVendor(keepType1, address2)
@@ -45,17 +38,6 @@ contract("KeepRegistry", async accounts => {
 
             let result2 = await keepRegistry.getVendor.call(keepType2)
             assert.deepEqual(result2, address2, "unexpected keep vendor address")
-        })
-
-        it("sets two keep types with the same addresses", async () => {
-            await keepRegistry.setVendor(keepType1, address1)
-            await keepRegistry.setVendor(keepType2, address1)
-
-            let result1 = await keepRegistry.getVendor.call(keepType1)
-            assert.deepEqual(result1, address1, "unexpected keep vendor address")
-
-            let result2 = await keepRegistry.getVendor.call(keepType2)
-            assert.deepEqual(result2, address1, "unexpected keep vendor address")
         })
 
         it("cannot be called by non owner", async () => {
