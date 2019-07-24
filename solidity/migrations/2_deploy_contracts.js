@@ -7,8 +7,8 @@ module.exports = async function (deployer) {
     const tecdsaKeepFactory = await TECDSAKeepFactory.deployed()
 
     const tecdsaKeepVendor = await deployer.deploy(TECDSAKeepVendor)
-    tecdsaKeepVendor.registerFactory(tecdsaKeepFactory.address)
+    await tecdsaKeepVendor.registerFactory(tecdsaKeepFactory.address)
 
     const keepRegistry = await deployer.deploy(KeepRegistry)
-    keepRegistry.setVendor('TECDSAKeep', tecdsaKeepVendor.address)
+    await keepRegistry.setVendor('TECDSAKeep', tecdsaKeepVendor.address)
 }
