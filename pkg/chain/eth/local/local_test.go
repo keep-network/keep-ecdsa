@@ -11,19 +11,19 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
-func TestOnECDSAKeepCreated(t *testing.T) {
+func TestOnTECDSAKeepCreated(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	chain := initializeLocalChain()
-	eventFired := make(chan *eth.ECDSAKeepCreatedEvent)
+	eventFired := make(chan *eth.TECDSAKeepCreatedEvent)
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
-	expectedEvent := &eth.ECDSAKeepCreatedEvent{
+	expectedEvent := &eth.TECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
 	}
 
-	subscription, err := chain.OnECDSAKeepCreated(
-		func(event *eth.ECDSAKeepCreatedEvent) {
+	subscription, err := chain.OnTECDSAKeepCreated(
+		func(event *eth.TECDSAKeepCreatedEvent) {
 			eventFired <- event
 		},
 	)

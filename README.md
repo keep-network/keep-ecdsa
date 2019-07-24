@@ -60,7 +60,7 @@ configuration CLI supports `--config` flag.
 **Prerequisites**
 - contracts deployed: `truffle migrate --reset`
 - Ethereum account `PrivateKey` provided in `config.toml`
-- `ECDSAKeepFactory` contract address provided in `config.toml`
+- `TECDSAKeepFactory` contract address provided in `config.toml`
 - app built: `go build -o keep-tecdsa .`
 
 To run a smoke test execute a command:

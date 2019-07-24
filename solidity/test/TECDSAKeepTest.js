@@ -1,16 +1,16 @@
-const ECDSAKeepFactory = artifacts.require('./ECDSAKeepFactory.sol');
-const ECDSAKeep = artifacts.require('./ECDSAKeep.sol');
+const TECDSAKeepFactory = artifacts.require('./TECDSAKeepFactory.sol');
+const TECDSAKeep = artifacts.require('./TECDSAKeep.sol');
 
 const truffleAssert = require('truffle-assertions');
 
-contract('ECDSAKeep', function (accounts) {
+contract('TECDSAKeep', function (accounts) {
     describe("#constructor", async function () {
         it('succeeds', async () => {
             let owner = accounts[0]
             let members = [owner];
             let threshold = 1;
 
-            let instance = await ECDSAKeep.new(
+            let instance = await TECDSAKeep.new(
                 owner,
                 members,
                 threshold
@@ -28,7 +28,7 @@ contract('ECDSAKeep', function (accounts) {
             let members = [owner];
             let threshold = 1;
 
-            instance = await ECDSAKeep.new(
+            instance = await TECDSAKeep.new(
                 owner,
                 members,
                 threshold
@@ -52,7 +52,7 @@ contract('ECDSAKeep', function (accounts) {
         let honestThreshold = 5;
 
         it("get public key before it is set", async () => {
-            let keep = await ECDSAKeep.new(owner, members, honestThreshold);
+            let keep = await TECDSAKeep.new(owner, members, honestThreshold);
 
             let publicKey = await keep.getPublicKey.call()
 
@@ -60,7 +60,7 @@ contract('ECDSAKeep', function (accounts) {
         });
 
         it("set public key and get it", async () => {
-            let keep = await ECDSAKeep.new(owner, members, honestThreshold);
+            let keep = await TECDSAKeep.new(owner, members, honestThreshold);
 
             await keep.setPublicKey(expectedPublicKey)
 

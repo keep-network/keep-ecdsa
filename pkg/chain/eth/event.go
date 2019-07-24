@@ -4,8 +4,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// ECDSAKeepCreatedEvent is an event emitted on a new keep creation.
-type ECDSAKeepCreatedEvent struct {
+// TECDSAKeepCreatedEvent is an event emitted on a new keep creation.
+type TECDSAKeepCreatedEvent struct {
 	KeepAddress common.Address // keep contract address
 }
 

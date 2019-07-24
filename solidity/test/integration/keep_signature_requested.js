@@ -1,15 +1,15 @@
-const ECDSAKeepFactory = artifacts.require('./ECDSAKeepFactory.sol');
-const ECDSAKeep = artifacts.require('./ECDSAKeep.sol');
+const TECDSAKeepFactory = artifacts.require('./TECDSAKeepFactory.sol');
+const TECDSAKeep = artifacts.require('./TECDSAKeep.sol');
 
 const truffleAssert = require('truffle-assertions');
 
-// ECDSAKeep
+// TECDSAKeep
 // signature request
 // creates a new keep and calls .sign
 module.exports = async function () {
     let accounts = await web3.eth.getAccounts();
 
-    let factoryInstance = await ECDSAKeepFactory.deployed();
+    let factoryInstance = await TECDSAKeepFactory.deployed();
 
     // Deploy Keep
     let groupSize = 1;
@@ -24,14 +24,14 @@ module.exports = async function () {
 
     // Get the Keep's address
     let instanceAddress;
-    truffleAssert.eventEmitted(createKeepTx, 'ECDSAKeepCreated', (ev) => {
+    truffleAssert.eventEmitted(createKeepTx, 'TECDSAKeepCreated', (ev) => {
         instanceAddress = ev.keepAddress;
         return true;
     });
 
     expect(instanceAddress.length).to.eq(42);
 
-    let instance = await ECDSAKeep.at(instanceAddress)
+    let instance = await TECDSAKeep.at(instanceAddress)
 
     let signTx = await instance.sign('0x00')
     truffleAssert.eventEmitted(signTx, 'SignatureRequested', (ev) => {

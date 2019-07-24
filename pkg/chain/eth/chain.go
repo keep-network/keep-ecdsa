@@ -13,10 +13,10 @@ type KeepAddress = common.Address
 // Interface is an interface that provides ability to interact with ethereum
 // contracts.
 type Interface interface {
-	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
-	// notification of a new ECDSA keep creation is seen.
-	OnECDSAKeepCreated(
-		handler func(event *ECDSAKeepCreatedEvent),
+	// OnTECDSAKeepCreated is a callback that is invoked when an on-chain
+	// notification of a new TECDSA keep creation is seen.
+	OnTECDSAKeepCreated(
+		handler func(event *TECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
 
 	// OnSignatureRequested is a callback that is invoked when an on-chain

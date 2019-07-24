@@ -23,12 +23,12 @@ func (c *localChain) createKeep(keepAddress eth.KeepAddress) error {
 	}
 	c.keeps[keepAddress] = localKeep
 
-	keepCreatedEvent := &eth.ECDSAKeepCreatedEvent{
+	keepCreatedEvent := &eth.TECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
 	}
 
 	for _, handler := range c.keepCreatedHandlers {
-		go func(handler func(event *eth.ECDSAKeepCreatedEvent), keepCreatedEvent *eth.ECDSAKeepCreatedEvent) {
+		go func(handler func(event *eth.TECDSAKeepCreatedEvent), keepCreatedEvent *eth.TECDSAKeepCreatedEvent) {
 			handler(keepCreatedEvent)
 		}(handler, keepCreatedEvent)
 	}

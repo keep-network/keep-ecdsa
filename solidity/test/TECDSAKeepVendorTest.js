@@ -1,7 +1,7 @@
-var ECDSAKeepVendor = artifacts.require('ECDSAKeepVendorStub')
-var ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
+var TECDSAKeepVendor = artifacts.require('TECDSAKeepVendorStub')
+var TECDSAKeepFactoryStub = artifacts.require('TECDSAKeepFactoryStub')
 
-contract("ECDSAKeepVendor", async accounts => {
+contract("TECDSAKeepVendor", async accounts => {
     const address0 = "0x0000000000000000000000000000000000000000"
     const address1 = "0xF2D3Af2495E286C7820643B963FB9D34418c871d"
     const address2 = "0x4566716c07617c5854fe7dA9aE5a1219B19CCd27"
@@ -12,7 +12,7 @@ contract("ECDSAKeepVendor", async accounts => {
         let expectedResult
 
         beforeEach(async () => {
-            keepVendor = await ECDSAKeepVendor.new()
+            keepVendor = await TECDSAKeepVendor.new()
         })
 
         afterEach(async () => {
@@ -66,7 +66,7 @@ contract("ECDSAKeepVendor", async accounts => {
 
     describe("selectFactory", async () => {
         before(async () => {
-            keepVendor = await ECDSAKeepVendor.new()
+            keepVendor = await TECDSAKeepVendor.new()
 
             await keepVendor.registerFactory(address1)
             await keepVendor.registerFactory(address2)
@@ -83,14 +83,14 @@ contract("ECDSAKeepVendor", async accounts => {
 
     describe("openKeep", async () => {
         before(async () => {
-            keepVendor = await ECDSAKeepVendor.new()
-            let factoryStub = await ECDSAKeepFactoryStub.new()
+            keepVendor = await TECDSAKeepVendor.new()
+            let factoryStub = await TECDSAKeepFactoryStub.new()
 
             await keepVendor.registerFactory(factoryStub.address)
         })
 
         it("calls selected factory", async () => {
-            let selectedFactory = await ECDSAKeepFactoryStub.at(
+            let selectedFactory = await TECDSAKeepFactoryStub.at(
                 await keepVendor.selectFactoryPublic.call()
             )
 

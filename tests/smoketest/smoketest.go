@@ -24,7 +24,7 @@ func Execute(config *ethereum.Config) error {
 	}
 
 	// Setup connection to ECDSA Keep Factory contract.
-	ecdsaKeepFactory, err := initializeECDSAKeepFactory(config)
+	tecdsaKeepFactory, err := initializeTECDSAKeepFactory(config)
 	if err != nil {
 		return err
 	}
@@ -35,14 +35,14 @@ func Execute(config *ethereum.Config) error {
 	}
 
 	// Define callback on event.
-	eventChan := make(chan *eth.ECDSAKeepCreatedEvent)
+	eventChan := make(chan *eth.TECDSAKeepCreatedEvent)
 
-	handle := func(event *eth.ECDSAKeepCreatedEvent) {
+	handle := func(event *eth.TECDSAKeepCreatedEvent) {
 		eventChan <- event
 	}
 
 	// Register for events.
-	subscription, err := chainAPI.OnECDSAKeepCreated(handle)
+	subscription, err := chainAPI.OnTECDSAKeepCreated(handle)
 	defer subscription.Unsubscribe()
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func Execute(config *ethereum.Config) error {
 	honestThreshold := big.NewInt(5)
 
 	// Request a new keep creation.
-	transaction, err := ecdsaKeepFactory.OpenKeep(
+	transaction, err := tecdsaKeepFactory.OpenKeep(
 		transactorOpts,
 		groupSize,
 		honestThreshold,
@@ -82,25 +82,25 @@ func Execute(config *ethereum.Config) error {
 	return nil
 }
 
-func initializeECDSAKeepFactory(config *ethereum.Config) (*abi.ECDSAKeepFactory, error) {
+func initializeTECDSAKeepFactory(config *ethereum.Config) (*abi.TECDSAKeepFactory, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ethereum.ECDSAKeepFactoryContractName)
+	tecdsaKeepFactoryContractAddress, err := config.ContractAddress(ethereum.TECDSAKeepFactoryContractName)
 	if err != nil {
 		return nil, err
 	}
-	ecdsaKeepFactoryContract, err := abi.NewECDSAKeepFactory(
-		ecdsaKeepFactoryContractAddress,
+	tecdsaKeepFactoryContract, err := abi.NewTECDSAKeepFactory(
+		tecdsaKeepFactoryContractAddress,
 		client,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return ecdsaKeepFactoryContract, nil
+	return tecdsaKeepFactoryContract, nil
 }
 
 func createTransactorOpts(config *ethereum.Config) (*bind.TransactOpts, error) {

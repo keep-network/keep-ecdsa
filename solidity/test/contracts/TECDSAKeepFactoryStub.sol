@@ -1,10 +1,10 @@
 pragma solidity ^0.5.4;
 
-import "../../contracts/ECDSAKeepFactory.sol";
+import "../../contracts/TECDSAKeepFactory.sol";
 
-/// @title ECDSA Keep Factory Stub
+/// @title TECDSA Keep Factory Stub
 /// @dev This contract is for testing purposes only.
-contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
+contract TECDSAKeepFactoryStub is TECDSAKeepFactory {
 
     /// @dev Returns calculated keep address.
     function openKeep(

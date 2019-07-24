@@ -18,7 +18,7 @@ type localChain struct {
 
 	keeps map[eth.KeepAddress]*localKeep
 
-	keepCreatedHandlers map[int]func(event *eth.ECDSAKeepCreatedEvent)
+	keepCreatedHandlers map[int]func(event *eth.TECDSAKeepCreatedEvent)
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -26,14 +26,14 @@ type localChain struct {
 func Connect() eth.Interface {
 	return &localChain{
 		keeps:               make(map[eth.KeepAddress]*localKeep),
-		keepCreatedHandlers: make(map[int]func(event *eth.ECDSAKeepCreatedEvent)),
+		keepCreatedHandlers: make(map[int]func(event *eth.TECDSAKeepCreatedEvent)),
 	}
 }
 
-// OnECDSAKeepCreated is a callback that is invoked when an on-chain
+// OnTECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
-func (lc *localChain) OnECDSAKeepCreated(
-	handler func(event *eth.ECDSAKeepCreatedEvent),
+func (lc *localChain) OnTECDSAKeepCreated(
+	handler func(event *eth.TECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
