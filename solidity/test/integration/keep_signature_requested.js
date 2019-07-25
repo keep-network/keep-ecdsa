@@ -6,7 +6,7 @@ const truffleAssert = require('truffle-assertions');
 // ECDSAKeep
 // signature request
 // creates a new keep and calls .sign
-module.exports = async function() {
+module.exports = async function () {
     let accounts = await web3.eth.getAccounts();
 
     let factoryInstance = await ECDSAKeepFactory.deployed();
@@ -16,7 +16,7 @@ module.exports = async function() {
     let honestThreshold = 1;
     let owner = accounts[0];
 
-    let createKeepTx = await factoryInstance.createNewKeep(
+    let createKeepTx = await factoryInstance.openKeep(
         groupSize,
         honestThreshold,
         owner
