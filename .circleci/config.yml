@@ -62,6 +62,28 @@ jobs:
           root: /tmp/images
           paths:
             - keep-tecdsa
+  migrate_contracts:
+    executor: docker-thesis-buildpack
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Set Gcloud Auth
+          command: |
+            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+      - run:
+          name: Migrate Contracts
+          command: |
+            export BUILD_TAG=$CIRCLE_SHA1
+            export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
+            mkdir -p /tmp/keep-client/contracts
+            solidity/scripts/circleci-migrate-contracts.sh
+      - persist_to_workspace:
+          root: /tmp/keep-client
+          paths:
+            - contracts            
   publish_client:
     executor: gcp-gcr/default
     steps:
@@ -87,10 +109,14 @@ workflows:
   solidity:
     jobs:
       - build_and_test_solidity
-  build-test-publish:
+  build-test-migrate-publish:
     jobs:
       - build_client_and_test_go:
           context: keep-dev
+      - migrate_contracts:
+          context: keep-dev
+          requires: 
+            - build_client_and_test_go
       - publish_client:
           filters:
             branches:
@@ -98,3 +124,4 @@ workflows:
           context: keep-dev
           requires:
             - build_client_and_test_go
+            - migrate_contracts
