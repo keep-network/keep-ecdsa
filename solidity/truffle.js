@@ -32,7 +32,7 @@ module.exports = {
       websockets: true,      // Enable EventEmitter interface for web3 (default: false)
     },
     keep_dev: {
-      host: "eth-tx-node.default.svc.cluster.local",
+      host: "localhost",
       port: 8545,
       network_id: "*",
       from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB",
