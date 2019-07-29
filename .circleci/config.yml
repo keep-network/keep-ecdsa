@@ -7,6 +7,9 @@ executors:
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
+  docker-thesis-buildpack:
+    docker:
+      - image: thesisco/docker-buildpack:bionic      
 
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
