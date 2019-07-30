@@ -120,7 +120,7 @@ async function createKeepTecdsaConfig(operator) {
     parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
     parsedConfigFile.ethereum.ContractAddresses.ECDSAKeepFactory = ecdsaKeepFactoryContractAddress;
 
-    fs.writeFile('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', parsedConfigFile, (error) => {
+    fs.writeFile('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
       if (error) throw error;
     });
   }));
