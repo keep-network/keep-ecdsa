@@ -64,7 +64,7 @@ jobs:
       - persist_to_workspace:
           root: /tmp/keep-tecdsa
           paths:
-            - docker-im
+            - docker-images
   build_initcontainer:
     executor: docker-git
     steps:
