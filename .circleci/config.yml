@@ -81,12 +81,12 @@ jobs:
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
-            mkdir -p /tmp/keep-client/contracts
+            mkdir -p /tmp/keep-tecdsa/contracts
             solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
-          root: /tmp/keep-client
+          root: /tmp/keep-tecdsa
           paths:
-            - contracts            
+            - contracts              
   publish_client:
     executor: gcp-gcr/default
     steps:
