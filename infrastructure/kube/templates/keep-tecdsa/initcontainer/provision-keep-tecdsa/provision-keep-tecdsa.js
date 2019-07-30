@@ -55,6 +55,9 @@ async function provisionKeepTecdsa() {
     // Eth account that's both miner and coinbase on internal testnet
     let purse = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
+    console.log('\n<<<<<<<<<<<< Unlocking Contract Owner Account ' + contractOwner + ' >>>>>>>>>>>>');
+    await unlockEthAccount(contractOwner, process.env.KEEP_TECDSA_ETH_ACCOUNT_PASSWORD);   
+
     console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
     await fundOperatorAccount(operator, purse, '1');
 
