@@ -80,8 +80,6 @@ jobs:
             cd infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
             docker build \
               --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
-              --build-arg ETH_WS_PORT=$ETH_WS_PORT \
-              --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
               --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
               --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
               -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-tecdsa .
