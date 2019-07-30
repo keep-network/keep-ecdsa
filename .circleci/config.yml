@@ -59,12 +59,12 @@ jobs:
       - run:
           name: Save keep-tecdsa image
           command: |
-            mkdir -p /tmp/images/keep-tecdsa/
-            docker save -o /tmp/images/keep-tecdsa/keep-tecdsa.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
+            mkdir -p /tmp/keep-tecdsa/docker-images
+            docker save -o /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
       - persist_to_workspace:
-          root: /tmp/images
+          root: /tmp/keep-tecdsa
           paths:
-            - keep-tecdsa
+            - docker-images
   build_initcontainer:
     executor: docker-git
     steps:
@@ -117,12 +117,12 @@ jobs:
     executor: gcp-gcr/default
     steps:
       - attach_workspace:
-          at: /tmp/images
+          at: /tmp/keep-tecdsa
       - run:
-          name: Load keep-tecdsa image
+          name: Load Docker images
           command: |
-            docker load -i /tmp/images/keep-tecdsa/keep-tecdsa.tar
-            docker load -i /tmp/imags/keep-tecdsa/initcontainer-provision-keep-tecdsa.tar
+            docker load -i /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar
+            docker load -i /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
