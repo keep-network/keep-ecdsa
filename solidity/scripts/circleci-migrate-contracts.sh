@@ -61,8 +61,8 @@ ssh utilitybox << EOF
 EOF
 
 echo "<<<<<<START Contract Copy START<<<<<<"
-echo "scp utilitybox:/tmp/$BUILD_TAG/solidity/build/contracts/* /tmp/keep-client/contracts"
-scp utilitybox:/tmp/$BUILD_TAG/solidity/build/contracts/* /tmp/keep-client/contracts
+echo "scp utilitybox:/tmp/$BUILD_TAG/solidity/build/contracts/* /tmp/keep-tecdsa/contracts"
+scp utilitybox:/tmp/$BUILD_TAG/solidity/build/contracts/* /tmp/keep-tecdsa/contracts
 echo ">>>>>>FINISH Contract Copy>>>>>>"
 
 echo "<<<<<<START Migration Dir Cleanup START<<<<<<"
