@@ -64,7 +64,7 @@ jobs:
       - persist_to_workspace:
           root: /tmp/keep-tecdsa
           paths:
-            - docker-images
+            - docker-im
   build_initcontainer:
     executor: docker-git
     steps:
@@ -149,17 +149,23 @@ workflows:
       - build_client_and_test_go:
           context: keep-dev
       - build_initcontainer:
+ #         filters:
+ #           branches:
+ #             only: master        
           context: keep-dev
           requires:
             - migrate_contracts
       - migrate_contracts:
+ #         filters:
+ #           branches:
+ #             only: master        
           context: keep-dev
           requires: 
             - build_client_and_test_go
       - publish_client:
-          filters:
-            branches:
-              only: master
+ #         filters:
+ #           branches:
+ #             only: master
           context: keep-dev
           requires:
             - build_client_and_test_go
