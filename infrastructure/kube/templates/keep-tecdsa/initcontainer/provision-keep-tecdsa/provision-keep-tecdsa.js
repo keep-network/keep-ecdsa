@@ -41,7 +41,7 @@ async function provisionKeepTecdsa() {
     console.log('###########  Provisioning keep-tecdsa! ###########');
     console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
 
-    let operatorEthAccountPassword = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
+    let operatorEthAccountPassword = process.env.KEEP_TECDSA_ETH_ACCOUNT_PASSWORD;
     let operatorAccount = await createOperatorEthAccount('operator');
     var operator = operatorAccount['address'];
 
