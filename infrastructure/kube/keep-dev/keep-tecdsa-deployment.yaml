@@ -1,0 +1,66 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: keep-tecdsa
+  labels:
+    keel.sh/policy: all
+    app: keep
+    type: tecdsa
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: keep
+      type: tecdsa
+  template:
+    metadata:
+      labels:
+        app: keep
+        type: tecdsa
+    spec:
+      initContainers:
+      - name: initcontainer-provision-keep-tecdsa
+        image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-tecdsa
+        env:
+          - name: KEEP_TECDSA_ETH_ACCOUNT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: eth-account-passphrase
+                key: account-passphrase
+        volumeMounts:
+          - name: keep-tecdsa
+            mountPath: /mnt/keep-tecdsa/config
+        command: ["node", "/tmp/provision-keep-tecdsa.js"]
+      containers:
+      - name: keep-tecdsa
+        image: gcr.io/keep-dev-fe24/keep-tecdsa
+        ports:
+          - containerPort: 3919
+        env:
+          - name: KEEP_ETHEREUM_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: eth-account-passphrase
+                key: account-passphrase
+          - name: LOG_LEVEL
+            value: debug
+        volumeMounts:
+          - name: keep-tecdsa
+            mountPath: /mnt/keep-tecdsa/config
+        command: ["keep-tecdsa", "-config", "/mnt/keep-tecdsa/config/keep-tecdsa-config.toml", "start"]
+      volumes:
+      - name: keep-tecdsa
+        persistentVolumeClaim:
+          claimName: keep-tecdsa
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keep-tecdsa
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Mi
