@@ -4,7 +4,6 @@ kind: Deployment
 metadata:
   name: keep-tecdsa
   labels:
-    keel.sh/policy: all
     app: keep
     type: tecdsa
 spec:
