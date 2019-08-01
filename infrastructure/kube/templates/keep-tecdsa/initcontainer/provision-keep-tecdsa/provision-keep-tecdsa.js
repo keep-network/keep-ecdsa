@@ -29,7 +29,6 @@ Each <contract.json> file is sourced directly from the InitContainer.  Files are
 Truffle during contract and copied to the InitContainer image via Circle.
 */
 
-// keepRandomBeaconService, only contract address for config file create
 const ecdsaKeepFactoryJsonFile = '/tmp/ECDSAKeepFactory.json';
 const ecdsaKeepFactoryParsed = JSON.parse(fs.readFileSync(ecdsaKeepFactoryJsonFile));
 const ecdsaKeepFactoryContractAddress = ecdsaKeepFactoryParsed.networks[ethNetworkId].address;
