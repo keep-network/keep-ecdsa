@@ -59,12 +59,40 @@ jobs:
       - run:
           name: Save keep-tecdsa image
           command: |
-            mkdir -p /tmp/images/keep-tecdsa/
-            docker save -o /tmp/images/keep-tecdsa/keep-tecdsa.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
+            mkdir -p /tmp/keep-tecdsa/docker-images
+            docker save -o /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
       - persist_to_workspace:
-          root: /tmp/images
+          root: /tmp/keep-tecdsa
           paths:
-            - keep-tecdsa
+            - docker-images
+  build_initcontainer:
+    executor: docker-git
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-tecdsa
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Run Docker build
+          command: |
+            cp /tmp/keep-tecdsa/contracts/* infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
+            cd infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
+            docker build \
+              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
+              --build-arg ETH_WS_PORT=$ETH_WS_PORT \
+              --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
+              --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
+              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-tecdsa .
+      - run:
+          name: Save keep-tecdsa-initcontainer image
+          command: |
+            docker save -o /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-tecdsa
+      - persist_to_workspace:
+          root: /tmp/keep-tecdsa
+          paths:
+            - docker-images            
   migrate_contracts:
     executor: docker-thesis-buildpack
     steps:
@@ -91,11 +119,12 @@ jobs:
     executor: gcp-gcr/default
     steps:
       - attach_workspace:
-          at: /tmp/images
+          at: /tmp/keep-tecdsa
       - run:
-          name: Load keep-tecdsa image
+          name: Load Docker images
           command: |
-            docker load -i /tmp/images/keep-tecdsa/keep-tecdsa.tar
+            docker load -i /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar
+            docker load -i /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -106,6 +135,11 @@ jobs:
           registry-url: $GCR_REGISTRY_URL
           image: keep-tecdsa
           tag: latest
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_PROJECT_ID
+          registry-url: $GCR_REGISTRY_URL
+          image: initcontainer-provision-keep-tecdsa
+          tag: latest          
 
 workflows:
   version: 2
@@ -116,11 +150,18 @@ workflows:
     jobs:
       - build_client_and_test_go:
           context: keep-dev
-      - migrate_contracts:
-          context: keep-dev
+      - build_initcontainer:
           filters:
             branches:
-              only: master
+              only: master        
+          context: keep-dev
+          requires:
+            - migrate_contracts
+      - migrate_contracts:
+          filters:
+            branches:
+              only: master        
+          context: keep-dev
           requires: 
             - build_client_and_test_go
       - publish_client:
@@ -130,4 +171,6 @@ workflows:
           context: keep-dev
           requires:
             - build_client_and_test_go
+            - build_initcontainer
             - migrate_contracts
+
