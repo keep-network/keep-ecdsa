@@ -6,9 +6,6 @@
 *.dylib
 *.bin
 
-# Executables
-keep-tecdsa
-
 # Test binary, build with `go test -c`
 *.test
 
