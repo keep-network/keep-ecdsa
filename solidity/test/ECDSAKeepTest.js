@@ -59,7 +59,7 @@ contract('ECDSAKeep', function (accounts) {
         it('set public key emits event', async () => {
             let res = await keep.setPublicKey(expectedPublicKey)
 
-            truffleAssert.eventEmitted(res, 'PublicKeySet', (ev) => {
+            truffleAssert.eventEmitted(res, 'PublicKeyPublished', (ev) => {
                 return ev.publicKey == expectedPublicKey
             })
         })

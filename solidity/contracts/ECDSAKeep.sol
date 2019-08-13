@@ -14,8 +14,8 @@ contract ECDSAKeep {
     // are padded with zeros to 32-byte each.
     bytes publicKey;
 
-    // Notification that a signer's public key was set for the keep.
-    event PublicKeySet(
+    // Notification that a signer's public key was published for the keep.
+    event PublicKeyPublished(
         bytes publicKey
     );
 
@@ -41,7 +41,7 @@ contract ECDSAKeep {
         // TODO: Validate if `msg.sender` is on `members` list.
         // TODO: Validate format: 32-bytes X + 32-bytes Y.
         publicKey = _publicKey;
-        emit PublicKeySet(_publicKey);
+        emit PublicKeyPublished(_publicKey);
     }
 
     /// @notice Returns the keep signer's public key.
