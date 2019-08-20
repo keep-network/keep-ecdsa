@@ -52,7 +52,7 @@ func Execute(config *ethereum.Config) error {
 	honestThreshold := big.NewInt(5)
 
 	// Request a new keep creation.
-	transaction, err := ecdsaKeepFactory.CreateNewKeep(
+	transaction, err := ecdsaKeepFactory.OpenKeep(
 		transactorOpts,
 		groupSize,
 		honestThreshold,

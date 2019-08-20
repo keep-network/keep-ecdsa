@@ -14,13 +14,13 @@ contract ECDSAKeepFactory {
         address keepAddress
     );
 
-    /// @notice Create a new ECDSA keep.
+    /// @notice Open a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
-    /// @param _owner Owner of the keep.
-    /// @return Created keep.
-    function createNewKeep(
+    /// @param _owner Address of the keep owner.
+    /// @return Created keep address.
+    function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
         address _owner
@@ -30,7 +30,7 @@ contract ECDSAKeepFactory {
         ECDSAKeep keep = new ECDSAKeep(
             _owner,
             _members,
-            _honestThreshold       
+            _honestThreshold
         );
         keeps.push(keep);
 
@@ -44,7 +44,7 @@ contract ECDSAKeepFactory {
     /// @param _groupSize Number of members to be selected.
     /// @return List of selected members addresses.
     function selectECDSAKeepMembers(
-        uint256 _groupSize      
+        uint256 _groupSize
     ) internal pure returns (address[] memory members){
         // TODO: Implement members selection
         _groupSize;

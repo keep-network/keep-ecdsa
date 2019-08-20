@@ -17,6 +17,11 @@ contract ECDSAKeep is Ownable {
     // are padded with zeros to 32-byte each.
     bytes publicKey;
 
+    // Notification that a signer's public key was published for the keep.
+    event PublicKeyPublished(
+        bytes publicKey
+    );
+
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(
         bytes32 digest
@@ -47,6 +52,7 @@ contract ECDSAKeep is Ownable {
     function setPublicKey(bytes memory _publicKey) public onlyMember {
         require(_publicKey.length == 64, "Public key must be 64 bytes long");
         publicKey = _publicKey;
+        emit PublicKeyPublished(_publicKey);
     }
 
     /// @notice Returns the keep signer's public key.

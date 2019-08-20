@@ -4,14 +4,14 @@ const truffleAssert = require('truffle-assertions')
 contract('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
   const members = [accounts[2], accounts[3]]
-  const threshold = 5
+  const honestThreshold = 5
 
   describe('#constructor', async () => {
     it('succeeds', async () => {
       let keep = await ECDSAKeep.new(
         owner,
         members,
-        threshold
+        honestThreshold
       )
 
       assert(web3.utils.isAddress(keep.address), 'invalid keep address')
@@ -23,7 +23,7 @@ contract('ECDSAKeep', (accounts) => {
     let keep
 
     before(async () => {
-      keep = await ECDSAKeep.new(owner, members, threshold)
+      keep = await ECDSAKeep.new(owner, members, honestThreshold)
     })
 
     it('emits event', async () => {
@@ -57,12 +57,12 @@ contract('ECDSAKeep', (accounts) => {
   })
 
   describe('public key', () => {
-    const publicKey = web3.utils.hexToBytes('0xa899b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a')
+    const expectedPublicKey = '0xa899b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
 
     let keep
 
     beforeEach(async () => {
-      keep = await ECDSAKeep.new(owner, members, threshold)
+      keep = await ECDSAKeep.new(owner, members, honestThreshold);
     })
 
     it('get public key before it is set', async () => {
@@ -71,36 +71,44 @@ contract('ECDSAKeep', (accounts) => {
       assert.equal(publicKey, undefined, 'incorrect public key')
     })
 
-    it.only('set public key and get it', async () => {
-      await keep.setPublicKey(publicKey, { from: members[0] })
+    it('set public key and get it', async () => {
+      await keep.setPublicKey(expectedPublicKey, { from: members[0] })
 
-      const result = await keep.getPublicKey.call()
+      let publicKey = await keep.getPublicKey.call()
 
       assert.equal(
-        result,
-        web3.utils.bytesToHex(publicKey),
+        publicKey,
+        expectedPublicKey,
         'incorrect public key'
       )
+    })
 
-      describe('setPublicKey', async () => {
-        describe('cannot be called by non member', async () => {
-          it('cannot be called by default account', async () => {
-            try {
-              await keep.setPublicKey(publicKey)
-              assert(false, 'Test call did not error as expected')
-            } catch (e) {
-              assert.include(e.message, 'Caller is not the keep member')
-            }
-          })
+    describe('setPublicKey', async () => {
+      it('emits an event', async () => {
+        let res = await keep.setPublicKey(expectedPublicKey, { from: members[0] })
 
-          it('cannot be called by owner', async () => {
-            try {
-              await keep.setPublicKey(publicKey, { from: owner })
-              assert(false, 'Test call did not error as expected')
-            } catch (e) {
-              assert.include(e.message, 'Caller is not the keep member')
-            }
-          })
+        truffleAssert.eventEmitted(res, 'PublicKeyPublished', (ev) => {
+          return ev.publicKey == expectedPublicKey
+        })
+      })
+
+      describe('cannot be called by non member', async () => {
+        it('cannot be called by default account', async () => {
+          try {
+            await keep.setPublicKey(expectedPublicKey)
+            assert(false, 'Test call did not error as expected')
+          } catch (e) {
+            assert.include(e.message, 'Caller is not the keep member')
+          }
+        })
+
+        it('cannot be called by owner', async () => {
+          try {
+            await keep.setPublicKey(expectedPublicKey, { from: owner })
+            assert(false, 'Test call did not error as expected')
+          } catch (e) {
+            assert.include(e.message, 'Caller is not the keep member')
+          }
         })
       })
     })

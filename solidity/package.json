@@ -8,6 +8,7 @@
   },
   "scripts": {
     "truffle": "truffle",
+    "clean": "rm -rf build/",
     "build": "truffle compile",
     "test": "truffle test"
   },
@@ -18,7 +19,7 @@
   },
   "homepage": "https://github.com/keep-network/keep-tecdsa",
   "dependencies": {
-    "openzeppelin-solidity": "^2.2.0"
+    "openzeppelin-solidity": "^2.3.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.4.4",
