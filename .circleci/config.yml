@@ -9,9 +9,10 @@ executors:
       - image: docker:18.06.0-ce-git
   docker-thesis-buildpack:
     docker:
-      - image: thesisco/docker-buildpack:bionic      
+      - image: thesisco/docker-buildpack:bionic
 
 orbs:
+  gcp-cli: circleci/gcp-cli@1.8.2
   gcp-gcr: circleci/gcp-gcr@0.0.4
 
 jobs:
@@ -26,20 +27,20 @@ jobs:
               cd $(npm bin)
               ./ganache-cli
             background: true
-        - run: 
+        - run:
             name: Setup solidity
             command: |
               cd solidity
               npm install
-        - run: 
+        - run:
             name: Build solidity contracts
             command: |
               cd solidity
               npm run build
-        - run: 
+        - run:
             name: Run solidity tests
             command: |
-              cd solidity 
+              cd solidity
               npm run test
   build_client_and_test_go:
     executor: docker-git
@@ -92,7 +93,7 @@ jobs:
       - persist_to_workspace:
           root: /tmp/keep-tecdsa
           paths:
-            - docker-images            
+            - docker-images
   migrate_contracts:
     executor: docker-thesis-buildpack
     steps:
@@ -114,7 +115,7 @@ jobs:
       - persist_to_workspace:
           root: /tmp/keep-tecdsa
           paths:
-            - contracts              
+            - contracts
   publish_client:
     executor: gcp-gcr/default
     steps:
@@ -139,7 +140,23 @@ jobs:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: initcontainer-provision-keep-tecdsa
-          tag: latest          
+          tag: latest
+  publish_contract_data:
+      executor: gcp-cli/default
+      steps:
+        - attach_workspace:
+            at: /tmp/keep-tecdsa
+        - gcp-cli/install
+        - gcp-cli/initialize:
+            google-project-id: GOOGLE_PROJECT_ID
+            google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+            # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+            gcloud-service-key: GCLOUD_SERVICE_KEY
+        - run:
+            name: Upload contract data
+            command: |
+              cd /tmp/keep-tecdsa/contracts
+              gsutil -m cp * gs://keep-dev-contract-data/keep-tecdsa
 
 workflows:
   version: 2
@@ -153,16 +170,16 @@ workflows:
       - build_initcontainer:
           filters:
             branches:
-              only: master        
+              only: master
           context: keep-dev
           requires:
             - migrate_contracts
       - migrate_contracts:
           filters:
             branches:
-              only: master        
+              only: master
           context: keep-dev
-          requires: 
+          requires:
             - build_client_and_test_go
       - publish_client:
           filters:
@@ -172,5 +189,12 @@ workflows:
           requires:
             - build_client_and_test_go
             - build_initcontainer
+            - migrate_contracts
+      - publish_contract_data:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
             - migrate_contracts
 
