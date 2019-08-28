@@ -40,7 +40,7 @@ contract("KeepRegistry", async accounts => {
             assert.deepEqual(result2, address2, "unexpected keep vendor address")
         })
 
-        it("cannot be called by non owner", async () => {
+        it("cannot be called by non-owner", async () => {
             try {
                 await keepRegistry.setVendor.call(keepType1, address1, { from: accounts[1] })
                 assert(false, 'Test call did not error as expected')

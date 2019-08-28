@@ -35,24 +35,22 @@ contract('ECDSAKeep', (accounts) => {
       })
     })
 
-    describe('cannot be called by non owner', async () => {
-      it('cannot be called by default account', async () => {
-        try {
-          await keep.sign(digest)
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Ownable: caller is not the owner.')
-        }
-      })
+    it('cannot be called by non-owner', async () => {
+      try {
+        await keep.sign(digest)
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, 'Ownable: caller is not the owner.')
+      }
+    })
 
-      it('cannot be called by member', async () => {
-        try {
-          await keep.sign(digest, { from: members[0] })
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Ownable: caller is not the owner.')
-        }
-      })
+    it('cannot be called by member', async () => {
+      try {
+        await keep.sign(digest, { from: members[0] })
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, 'Ownable: caller is not the owner.')
+      }
     })
   })
 
@@ -92,24 +90,22 @@ contract('ECDSAKeep', (accounts) => {
         })
       })
 
-      describe('cannot be called by non member', async () => {
-        it('cannot be called by default account', async () => {
-          try {
-            await keep.setPublicKey(expectedPublicKey)
-            assert(false, 'Test call did not error as expected')
-          } catch (e) {
-            assert.include(e.message, 'Caller is not the keep member')
-          }
-        })
+      it('cannot be called by non-member', async () => {
+        try {
+          await keep.setPublicKey(expectedPublicKey)
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'Caller is not the keep member')
+        }
+      })
 
-        it('cannot be called by owner', async () => {
-          try {
-            await keep.setPublicKey(expectedPublicKey, { from: owner })
-            assert(false, 'Test call did not error as expected')
-          } catch (e) {
-            assert.include(e.message, 'Caller is not the keep member')
-          }
-        })
+      it('cannot be called by owner', async () => {
+        try {
+          await keep.setPublicKey(expectedPublicKey, { from: owner })
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'Caller is not the keep member')
+        }
       })
     })
   })
@@ -177,24 +173,22 @@ contract('ECDSAKeep', (accounts) => {
       })
     })
 
-    describe('cannot be called by non member', async () => {
-      it('cannot be called by default account', async () => {
-        try {
-          await keep.submitSignature(digest, signatureR, signatureS)
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Caller is not the keep member')
-        }
-      })
+    it('cannot be called by non-member', async () => {
+      try {
+        await keep.submitSignature(digest, signatureR, signatureS)
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, 'Caller is not the keep member')
+      }
+    })
 
-      it('cannot be called by owner', async () => {
-        try {
-          await keep.submitSignature(digest, signatureR, signatureS, { from: owner })
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Caller is not the keep member')
-        }
-      })
+    it('cannot be called by owner', async () => {
+      try {
+        await keep.submitSignature(digest, signatureR, signatureS, { from: owner })
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, 'Caller is not the keep member')
+      }
     })
   })
 })
