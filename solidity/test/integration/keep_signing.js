@@ -15,7 +15,7 @@ module.exports = async function () {
 
     const startBlockNumber = await web3.eth.getBlock('latest').number
 
-    let createNewKeepTx = await factory.createNewKeep(
+    let openKeepTx = await factory.openKeep(
         groupSize,
         honestThreshold,
         owner
@@ -24,12 +24,7 @@ module.exports = async function () {
         process.exit(1)
     })
 
-    const keepAddress = createNewKeepTx.logs[0].args.keepAddress
-
-    if (!web3.utils.isAddress(keepAddress)) {
-        console.error(`invalid keep address: [${keepAddress}]`)
-        process.exit(1)
-    }
+    const keepAddress = openKeepTx.logs[0].args.keepAddress
 
     console.log("New keep created with address:", keepAddress)
 
@@ -45,11 +40,6 @@ module.exports = async function () {
             process.exit(1)
         })
 
-    if (signTx.logs[0].args.digest != digest) {
-        console.error(`unexpected digest: ${signTx.logs[0].args.digest}`)
-        process.exit(1)
-    }
-
     // Give off-chain client some time to calculate and submit a signature.
     await sleep(1000);
 
@@ -63,6 +53,7 @@ module.exports = async function () {
         console.error(`unexpected digest: ${eventList[0].returnValues.digest}`)
         process.exit(1)
     }
+    // TODO: Validate signature.
 
     console.log(`Received signature:\nR: ${eventList[0].returnValues.r}\nS: ${eventList[0].returnValues.s}`)
 
