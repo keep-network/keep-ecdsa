@@ -4,7 +4,7 @@ const truffleAssert = require('truffle-assertions')
 contract('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
   const members = [accounts[2], accounts[3]]
-  const honestThreshold = 5
+  const honestThreshold = 1
 
   describe('#constructor', async () => {
     it('succeeds', async () => {
@@ -44,7 +44,7 @@ contract('ECDSAKeep', (accounts) => {
       }
     })
 
-    it('cannot be called by member', async () => {
+    it('cannot be called by non-owner member', async () => {
       try {
         await keep.sign(digest, { from: members[0] })
         assert(false, 'Test call did not error as expected')
@@ -66,7 +66,7 @@ contract('ECDSAKeep', (accounts) => {
     it('get public key before it is set', async () => {
       let publicKey = await keep.getPublicKey.call()
 
-      assert.equal(publicKey, undefined, 'incorrect public key')
+      assert.equal(publicKey, undefined, 'public key should not be set')
     })
 
     it('set public key and get it', async () => {
@@ -99,7 +99,7 @@ contract('ECDSAKeep', (accounts) => {
         }
       })
 
-      it('cannot be called by owner', async () => {
+      it('cannot be called by non-owner member', async () => {
         try {
           await keep.setPublicKey(expectedPublicKey, { from: owner })
           assert(false, 'Test call did not error as expected')
@@ -182,7 +182,7 @@ contract('ECDSAKeep', (accounts) => {
       }
     })
 
-    it('cannot be called by owner', async () => {
+    it('cannot be called by non-owner member', async () => {
       try {
         await keep.submitSignature(digest, signatureR, signatureS, { from: owner })
         assert(false, 'Test call did not error as expected')

@@ -57,7 +57,7 @@ module.exports = async function () {
 
     // TODO: Validate signature.
 
-    console.log(`Received signature:\nR: ${receivedSignatureEvent.returnValues.r}\nS: ${receivedSignatureEvent.returnValues.s}`)
+    console.log(`Received valid signature:\nR: ${receivedSignatureEvent.returnValues.r}\nS: ${receivedSignatureEvent.returnValues.s}`)
 
     process.exit(0)
 }
