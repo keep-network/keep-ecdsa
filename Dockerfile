@@ -44,13 +44,13 @@ RUN go mod download
 RUN cd /go/pkg/mod/github.com/keep-network/go-ethereum@v1.8.27/cmd/abigen && go install .
 
 # Install Solidity contracts.
+COPY ./package.json $APP_DIR/
+COPY ./package-lock.json $APP_DIR/
 COPY ./solidity $APP_DIR/solidity
-RUN cd $APP_DIR/solidity && npm install
+RUN npm install
 
 # Generate ABI files.
 COPY ./pkg/chain/eth/gen $APP_DIR/pkg/chain/eth/gen
-RUN pwd
-RUN ls $APP_DIR/solidity/contracts
 RUN go generate ./.../gen
 
 # Build the application.
