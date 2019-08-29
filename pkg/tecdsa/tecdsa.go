@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-tecdsa/pkg/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
@@ -36,15 +35,29 @@ func Initialize(
 		fmt.Printf("New ECDSA Keep created [%+v]\n", event)
 
 		go func() {
-			if err := client.generateSignerForKeep(event.KeepAddress.String()); err != nil {
+			if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
 				fmt.Fprintf(os.Stderr, "signer generation failed: [%s]", err)
 			}
 		}()
 
 		ethereumChain.OnSignatureRequested(
 			event.KeepAddress,
-			func(event *eth.SignatureRequestedEvent) {
-				fmt.Printf("New signature requested [%+v]\n", event.Digest)
+			func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
+				fmt.Printf(
+					"new signature requested for digest: [%+x]\n",
+					signatureRequestedEvent.Digest,
+				)
+
+				go func() {
+					err := client.calculateSignatureForKeep(
+						event.KeepAddress,
+						signatureRequestedEvent.Digest,
+					)
+
+					if err != nil {
+						fmt.Fprintf(os.Stderr, "signature calculation failed: [%s]", err)
+					}
+				}()
 			},
 		)
 	})
@@ -55,15 +68,12 @@ func Initialize(
 // generateSignerForKeep generates a new signer with ECDSA key pair and calculates
 // bitcoin specific P2WPKH address based on signer's public key. It stores the
 // signer in a map assigned to a provided keep address.
-func (c *client) generateSignerForKeep(keepAddress string) error {
-	// Validate keep address.
-	if !common.IsHexAddress(keepAddress) {
-		return fmt.Errorf("invalid hex address: [%s]", keepAddress)
-	}
-
+func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	signer, err := generateSigner()
 
 	// Calculate bitcoin P2WPKH address.
+	// TODO: We don't need to calculate the address here. It should be done in
+	// tBTC utils tool. But we do it for development simplification.
 	btcAddress, err := btc.PublicKeyToWitnessPubKeyHashAddress(
 		signer.PublicKey(),
 		c.bitcoinNetParams,
@@ -76,11 +86,11 @@ func (c *client) generateSignerForKeep(keepAddress string) error {
 	// contract.
 	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
 	if err != nil {
-		return fmt.Errorf("p2wpkh address conversion failed: [%s]", err)
+		return fmt.Errorf("public key serialization failed: [%s]", err)
 	}
 
 	err = c.ethereumChain.SubmitKeepPublicKey(
-		common.HexToAddress(keepAddress),
+		keepAddress,
 		serializedPublicKey,
 	)
 	if err != nil {
@@ -88,12 +98,14 @@ func (c *client) generateSignerForKeep(keepAddress string) error {
 	}
 
 	fmt.Printf(
-		"Signer for keep [%s] initialized with Bitcoin P2WPKH address [%s]\n",
-		keepAddress,
+		"Signer for keep [%s] initialized with Bitcoin P2WPKH address: [%s]\n",
+		keepAddress.String(),
 		btcAddress,
 	)
 
-	c.keepsSigners.Store(keepAddress, signer)
+	// Store the signer in a map, with the keep address as a key. Keep address
+	// is converted to a hexadecimal string prefiexed with `0x`.
+	c.keepsSigners.Store(keepAddress.String(), signer)
 
 	return nil
 }
@@ -105,4 +117,29 @@ func generateSigner() (*sign.Signer, error) {
 	}
 
 	return sign.NewSigner(privateKey), nil
+}
+
+func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [32]byte) error {
+	signer, ok := c.keepsSigners.Load(keepAddress.String())
+	if !ok {
+		return fmt.Errorf("signer not available for keep: [%s]", keepAddress.String())
+	}
+
+	signature, err := signer.(*sign.Signer).CalculateSignature(
+		crand.Reader,
+		digest[:],
+	)
+
+	fmt.Printf("Signature calculated: [%+v]\n", signature)
+
+	err = c.ethereumChain.SubmitSignature(
+		keepAddress,
+		digest,
+		signature,
+	)
+	if err != nil {
+		return fmt.Errorf("signature submission failed: [%s]", err)
+	}
+
+	return nil
 }

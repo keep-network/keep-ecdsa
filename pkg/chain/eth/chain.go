@@ -5,6 +5,7 @@ package eth
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-tecdsa/pkg/sign"
 )
 
 // KeepAddress is a keep contract address.
@@ -28,6 +29,13 @@ type Interface interface {
 
 	// SubmitKeepPublicKey submits a 64-byte serialized public key to a keep
 	// contract deployed under a given address.
-	SubmitKeepPublicKey(address KeepAddress, publicKey [64]byte) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
+	SubmitKeepPublicKey(keepAddress KeepAddress, publicKey [64]byte) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
 
+	// SubmitSignature submits a signature to a keep contract deployed under a
+	// given address.
+	SubmitSignature(
+		keepAddress KeepAddress,
+		digest [32]byte,
+		signature *sign.Signature,
+	) error // TODO: Add promise *async.SignatureSubmissionPromise
 }

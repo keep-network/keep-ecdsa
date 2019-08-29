@@ -62,7 +62,7 @@ func Execute(config *ethereum.Config) error {
 		return fmt.Errorf("call to contract failed: [%s]", err)
 	}
 	fmt.Printf(
-		"New keep requested, transaction hash: [%s].\n",
+		"New keep requested, transaction hash: [%s]\n",
 		transaction.Hash().Hex(),
 	)
 

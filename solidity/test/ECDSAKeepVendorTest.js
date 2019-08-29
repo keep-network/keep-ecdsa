@@ -53,7 +53,7 @@ contract("ECDSAKeepVendor", async accounts => {
             assertFactories(expectedResult)
         })
 
-        it("cannot be called by non owner", async () => {
+        it("cannot be called by non-owner", async () => {
             let expectedResult = []
 
             try {

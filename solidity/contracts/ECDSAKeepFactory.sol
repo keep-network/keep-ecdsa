@@ -46,10 +46,13 @@ contract ECDSAKeepFactory {
     function selectECDSAKeepMembers(
         uint256 _groupSize
     ) internal pure returns (address[] memory members){
-        // TODO: Implement
+        // TODO: Implement members selection
         _groupSize;
 
         members = new address[](1);
-        members[0] = 0xE1d6c440DC87476242F313aA1179196fAE89B93e;
+
+        // For development we use a member address calculated from the following
+        // private key: 0x0789df7d07e6947a93576b9ef60b97aed9adb944fb3ff6bae5215fd3ab0ad0dd
+        members[0] = 0x1C25f178599d00b3887BF6D9084cf0C6d49a3097;
     }
 }

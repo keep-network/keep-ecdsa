@@ -8,6 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
+	"github.com/keep-network/keep-tecdsa/pkg/sign"
 )
 
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
@@ -32,7 +33,7 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 // OnSignatureRequested is a callback that is invoked on-chain
 // when a keep's signature is requested.
 func (ec *EthereumChain) OnSignatureRequested(
-	keepAddress common.Address,
+	keepAddress eth.KeepAddress,
 	handler func(event *eth.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
@@ -58,10 +59,10 @@ func (ec *EthereumChain) OnSignatureRequested(
 // SubmitKeepPublicKey submits a public key to a keep contract deployed under
 // a given address.
 func (ec *EthereumChain) SubmitKeepPublicKey(
-	address eth.KeepAddress,
+	keepAddress eth.KeepAddress,
 	publicKey [64]byte,
 ) error {
-	keepContract, err := ec.getKeepContract(address)
+	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
 		return err
 	}
@@ -83,4 +84,31 @@ func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.ECDSAKeep
 	}
 
 	return ecdsaKeepContract, nil
+}
+
+// SubmitSignature submits a signature to a keep contract deployed under a
+// given address.
+func (ec *EthereumChain) SubmitSignature(
+	keepAddress eth.KeepAddress,
+	digest [32]byte,
+	signature *sign.Signature,
+) error {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := keepContract.SubmitSignature(
+		ec.transactorOptions,
+		digest,
+		signature.R.Bytes(),
+		signature.S.Bytes(),
+	)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Transaction submitted with hash: [%x]\n", transaction.Hash())
+
+	return nil
 }

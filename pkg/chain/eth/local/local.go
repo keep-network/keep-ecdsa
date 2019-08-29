@@ -7,6 +7,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
+	"github.com/keep-network/keep-tecdsa/pkg/sign"
 )
 
 // localChain is an implementation of ethereum blockchain interface.
@@ -82,25 +83,35 @@ func (lc *localChain) OnSignatureRequested(
 // SubmitKeepPublicKey checks if public key has been already submitted for given
 // keep address, if not it stores the key in a map.
 func (lc *localChain) SubmitKeepPublicKey(
-	address eth.KeepAddress,
+	keepAddress eth.KeepAddress,
 	publicKey [64]byte,
 ) error {
-	keep, ok := lc.keeps[address]
+	keep, ok := lc.keeps[keepAddress]
 	if !ok {
 		return fmt.Errorf(
 			"keep not found for address [%s]",
-			address.String(),
+			keepAddress.String(),
 		)
 	}
 
 	if keep.publicKey != [64]byte{} {
 		return fmt.Errorf(
 			"public key already submitted for keep [%s]",
-			address.String(),
+			keepAddress.String(),
 		)
 	}
 
 	keep.publicKey = publicKey
 
+	return nil
+}
+
+// SubmitSignature submits a signature to a keep contract deployed under a
+// given address.
+func (lc *localChain) SubmitSignature(
+	keepAddress eth.KeepAddress,
+	digest [32]byte,
+	signature *sign.Signature,
+) error {
 	return nil
 }
