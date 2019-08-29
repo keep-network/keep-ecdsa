@@ -99,7 +99,7 @@ contract('ECDSAKeep', (accounts) => {
         }
       })
 
-      it('cannot be called by non-owner member', async () => {
+      it('cannot be called by non-member owner', async () => {
         try {
           await keep.setPublicKey(expectedPublicKey, { from: owner })
           assert(false, 'Test call did not error as expected')
@@ -182,7 +182,7 @@ contract('ECDSAKeep', (accounts) => {
       }
     })
 
-    it('cannot be called by non-owner member', async () => {
+    it('cannot be called by non-member owner', async () => {
       try {
         await keep.submitSignature(digest, signatureR, signatureS, { from: owner })
         assert(false, 'Test call did not error as expected')
