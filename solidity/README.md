@@ -9,6 +9,16 @@ Install the project dependencies:
 npm install
 ```
 
+## Usage
+
+Currently contracts can be installed as npm dependency, in the future we may
+consider supporting [EthPM](http://www.ethpm.com/).
+
+<!-- 
+TODO: Configure EthPM, publish contracts and use them where needed.
+https://www.trufflesuite.com/docs/truffle/reference/configuration#ethpm-configuration
+-->
+
 ### Truffle
 
 [Truffle] is a development framework for Ethereum.
