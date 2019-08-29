@@ -66,5 +66,5 @@ truffle test test/ECDSAKeepTest.js
 Tests in `test/integration/` are for testing different scenarios in the Go client. They do **not** redeploy contracts, instead using the already deployed instances from `truffle migrate`.
 
 ```sh
-truffle exec test/integration/keep_signature_requested.js
+truffle exec test/integration/keep_signing.js
 ```
