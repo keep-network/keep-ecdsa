@@ -141,7 +141,7 @@ contract('ECDSAKeep', (accounts) => {
           await keep.submitSignature(digest, bytes31, signatureS, { from: members[0] })
           assert(false, 'Test call did not error as expected')
         } catch (e) {
-          assert.include(e.message, "Signature's R value is not 32-bytes long")
+          assert.include(e.message, "R must be 32-bytes long")
         }
       })
 
@@ -150,7 +150,7 @@ contract('ECDSAKeep', (accounts) => {
           await keep.submitSignature(digest, bytes33, signatureS, { from: members[0] })
           assert(false, 'Test call did not error as expected')
         } catch (e) {
-          assert.include(e.message, "Signature's R value is not 32-bytes long")
+          assert.include(e.message, "R must be 32-bytes long")
         }
       })
 
@@ -159,7 +159,7 @@ contract('ECDSAKeep', (accounts) => {
           await keep.submitSignature(digest, signatureR, bytes31, { from: members[0] })
           assert(false, 'Test call did not error as expected')
         } catch (e) {
-          assert.include(e.message, "Signature's S value is not 32-bytes long")
+          assert.include(e.message, "S must be 32-bytes long")
         }
       })
 
@@ -168,7 +168,7 @@ contract('ECDSAKeep', (accounts) => {
           await keep.submitSignature(digest, signatureR, bytes33, { from: members[0] })
           assert(false, 'Test call did not error as expected')
         } catch (e) {
-          assert.include(e.message, "Signature's S value is not 32-bytes long")
+          assert.include(e.message, "S must be 32-bytes long")
         }
       })
     })

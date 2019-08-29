@@ -72,8 +72,8 @@ contract ECDSAKeep is Ownable {
     /// @param _r Calculated signature's R value.
     /// @param _s Calculated signature's S value.
     function submitSignature(bytes32 _digest, bytes memory _r, bytes memory _s) public onlyMember {
-        require(_r.length == 32, "Signature's R value is not 32-bytes long");
-        require(_s.length == 32, "Signature's S value is not 32-bytes long");
+        require(_r.length == 32, "R must be 32-bytes long");
+        require(_s.length == 32, "S must be 32-bytes long");
 
         // TODO: Add signature verification?
 

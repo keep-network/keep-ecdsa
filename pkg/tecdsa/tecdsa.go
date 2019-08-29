@@ -43,7 +43,10 @@ func Initialize(
 		ethereumChain.OnSignatureRequested(
 			event.KeepAddress,
 			func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
-				fmt.Printf("New signature requested [%+x]\n", signatureRequestedEvent)
+				fmt.Printf(
+					"new signature requested for digest: [%+x]\n",
+					signatureRequestedEvent.Digest,
+				)
 
 				go func() {
 					err := client.calculateSignatureForKeep(
@@ -119,7 +122,7 @@ func generateSigner() (*sign.Signer, error) {
 func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [32]byte) error {
 	signer, ok := c.keepsSigners.Load(keepAddress.String())
 	if !ok {
-		return fmt.Errorf("cannot load signer for keep: [%s]", keepAddress.String())
+		return fmt.Errorf("signer not available for keep: [%s]", keepAddress.String())
 	}
 
 	signature, err := signer.(*sign.Signer).CalculateSignature(
