@@ -14,5 +14,5 @@ contract IECDSAKeepVendor {
         uint256 _groupSize,
         uint256 _honestThreshold,
         address _owner
-    ) public payable returns (address keepAddress);
+    ) external payable returns (address keepAddress);
 }

@@ -7,5 +7,5 @@ contract IKeepRegistry {
     /// @notice Get a keep vendor contract address for a keep type.
     /// @param _keepType Keep type.
     /// @return Keep vendor contract address.
-    function getVendor(string memory _keepType) public view returns (address);
+    function getVendor(string calldata _keepType) external view returns (address);
 }

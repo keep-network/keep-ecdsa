@@ -22,7 +22,7 @@ contract ECDSAKeepVendor is IECDSAKeepVendor, Ownable {
     /// @dev Adds a factory address to the list of registered factories. Address
     /// cannot be zero and cannot be already registered.
     /// @param _factory ECDSA keep factory address.
-    function registerFactory(address _factory) public onlyOwner {
+    function registerFactory(address _factory) external onlyOwner {
         require(!factories.contains(_factory), "Factory address already registered");
 
         factories.push(_factory);
@@ -47,7 +47,7 @@ contract ECDSAKeepVendor is IECDSAKeepVendor, Ownable {
         uint256 _groupSize,
         uint256 _honestThreshold,
         address _owner
-    ) public payable returns (address keepAddress) {
+    ) external payable returns (address keepAddress) {
         address factory = selectFactory();
 
         return ECDSAKeepFactory(factory).openKeep(

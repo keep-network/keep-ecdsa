@@ -16,14 +16,14 @@ contract KeepRegistry is IKeepRegistry, Ownable {
     /// @dev Only contract owner can call this function.
     /// @param _keepType Keep type.
     /// @param _vendorAddress Keep Vendor contract address.
-    function setVendor(string memory _keepType, address _vendorAddress) public onlyOwner {
+    function setVendor(string calldata _keepType, address _vendorAddress) external onlyOwner {
         keepVendors[_keepType] = _vendorAddress;
     }
 
     /// @notice Get a keep vendor contract address for a keep type.
     /// @param _keepType Keep type.
     /// @return Keep vendor contract address.
-    function getVendor(string memory _keepType) public view returns (address) {
+    function getVendor(string calldata _keepType) external view returns (address) {
         // TODO: We should probably refer to vendor via proxy - https://github.com/keep-network/keep-tecdsa/pull/43#discussion_r306207111
         return keepVendors[_keepType];
     }

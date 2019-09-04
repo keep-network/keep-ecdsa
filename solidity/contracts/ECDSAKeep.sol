@@ -50,7 +50,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// @notice Set a signer's public key for the keep.
     /// @dev Stub implementations.
     /// @param _publicKey Signer's public key.
-    function setPublicKey(bytes memory _publicKey) public onlyMember {
+    function setPublicKey(bytes calldata _publicKey) external onlyMember {
         require(_publicKey.length == 64, "Public key must be 64 bytes long");
         publicKey = _publicKey;
         emit PublicKeyPublished(_publicKey);
@@ -58,13 +58,13 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
 
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
-    function getPublicKey() public view returns (bytes memory) {
+    function getPublicKey() external view returns (bytes memory) {
        return publicKey;
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
     /// @param _digest Digest to be signed.
-    function sign(bytes32 _digest) public onlyOwner {
+    function sign(bytes32 _digest) external onlyOwner {
         emit SignatureRequested(_digest);
     }
 
@@ -72,7 +72,11 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// @param _digest Digest for which calculator was calculated.
     /// @param _r Calculated signature's R value.
     /// @param _s Calculated signature's S value.
-    function submitSignature(bytes32 _digest, bytes memory _r, bytes memory _s) public onlyMember {
+    function submitSignature(
+        bytes32 _digest,
+        bytes calldata _r,
+        bytes calldata _s
+    ) external onlyMember {
         require(_r.length == 32, "R must be 32-bytes long");
         require(_s.length == 32, "S must be 32-bytes long");
 
