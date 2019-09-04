@@ -1,13 +1,14 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./api/IKeepRegistry.sol";
 
 /// @title Keep Registry
 /// @notice Contract handling keeps registry.
 /// @dev The keep registry serves the role of the master list and tracks sanctioned
 /// vendors. It ensures that only approved contracts are used.
 /// TODO: This is a stub contract - needs to be implemented.
-contract KeepRegistry is Ownable {
+contract KeepRegistry is IKeepRegistry, Ownable {
     // Registered keep vendors. Mapping of a keep type to a keep vendor address.
     mapping (string => address) internal keepVendors;
 

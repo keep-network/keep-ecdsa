@@ -1,12 +1,13 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./api/IECDSAKeep.sol";
 import "./utils/AddressArrayUtils.sol";
 
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
 /// @dev TODO: This is a stub contract - needs to be implemented.
-contract ECDSAKeep is Ownable {
+contract ECDSAKeep is IECDSAKeep, Ownable {
     using AddressArrayUtils for address[];
 
     // List of keep members' addresses.

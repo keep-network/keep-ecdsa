@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./api/IECDSAKeepVendor.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./ECDSAKeepFactory.sol";
 
@@ -11,7 +12,7 @@ import "./ECDSAKeepFactory.sol";
 /// TODO: This is a stub contract - needs to be implemented.
 /// TODO: When more keep types are added consider extracting registration and
 /// selection to a separate inheritable contract.
-contract ECDSAKeepVendor is Ownable {
+contract ECDSAKeepVendor is IECDSAKeepVendor, Ownable {
     using AddressArrayUtils for address[];
 
     // List of ECDSA keep factories.
