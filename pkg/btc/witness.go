@@ -20,7 +20,9 @@ func SetSignatureWitnessToTransaction(
 ) {
 	hashType := txscript.SigHashAll
 
-	sig := append((*btcec.Signature)(signature).Serialize(), byte(hashType))
+	btcecSignature := &btcec.Signature{R: signature.R, S: signature.S}
+
+	sig := append(btcecSignature.Serialize(), byte(hashType))
 
 	pkData := (*btcec.PublicKey)(publicKey).SerializeCompressed()
 
