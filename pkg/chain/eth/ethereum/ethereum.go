@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
 )
 
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
@@ -98,11 +99,22 @@ func (ec *EthereumChain) SubmitSignature(
 		return err
 	}
 
+	signatureR, err := byteutils.BytesTo32Byte(signature.R.Bytes())
+	if err != nil {
+		return err
+	}
+
+	signatureS, err := byteutils.BytesTo32Byte(signature.S.Bytes())
+	if err != nil {
+		return err
+	}
+
 	transaction, err := keepContract.SubmitSignature(
 		ec.transactorOptions,
 		digest,
-		signature.R.Bytes(),
-		signature.S.Bytes(),
+		signatureR,
+		signatureS,
+		uint8(signature.RecoveryID),
 	)
 	if err != nil {
 		return err
