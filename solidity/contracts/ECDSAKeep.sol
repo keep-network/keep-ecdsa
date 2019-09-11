@@ -28,12 +28,13 @@ contract ECDSAKeep is Ownable {
     );
 
     // Notification that the signature has been calculated. Contains a digest which
-    // was used for signature calculation and a signature in a form of R and S
+    // was used for signature calculation and a signature in a form of R, S, V
     // values.
     event SignatureSubmitted(
         bytes32 digest,
         bytes32 r,
-        bytes32 s
+        bytes32 s,
+        uint8   v
     );
 
     constructor(
@@ -91,7 +92,7 @@ contract ECDSAKeep is Ownable {
             "Invalid signature"
         );
 
-        emit SignatureSubmitted(_digest, _r, _s);
+        emit SignatureSubmitted(_digest, _r, _s, _v);
     }
 
     /// @notice Checks if the caller is a keep member.
