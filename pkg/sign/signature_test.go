@@ -29,7 +29,7 @@ func TestCalculateSignature(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		publicKey, err := crypto.SigToPub(hash, serializedSignature[:])
+		publicKey, err := crypto.SigToPub(hash, serializedSignature)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -179,13 +179,11 @@ func serializeSignature(signature *Signature) ([]byte, error) {
 		return nil, err
 	}
 
-	v := byte(signature.V)
+	recoveryID := byte(signature.recoveryID)
 
 	serializedBytes = append(serializedBytes, r...)
 	serializedBytes = append(serializedBytes, s...)
-	serializedBytes = append(serializedBytes, v)
-
-	// copy(serialized[:], serializedBytes)
+	serializedBytes = append(serializedBytes, recoveryID)
 
 	return serializedBytes, nil
 }
