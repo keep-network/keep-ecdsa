@@ -83,4 +83,14 @@ contract ECDSAKeep is Ownable {
         require(members.contains(msg.sender), "Caller is not the keep member");
         _;
     }
+
+    /// @notice Coverts a public key to an ethereum address.
+    /// @param _publicKey Public key provided as 64-bytes concatenation of
+    /// X and Y coordinates (32-bytes each).
+    /// @return Ethereum address.
+    function publicKeyToAddress(bytes memory _publicKey) internal pure returns (address) {
+        // We hash the public key and then truncate last 20 bytes of the digest
+        // which is the ethereum address.
+        return address(uint160(uint256(keccak256(_publicKey))));
+    }
 }
