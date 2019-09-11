@@ -71,8 +71,25 @@ contract ECDSAKeep is Ownable {
     /// @param _digest Digest for which calculator was calculated.
     /// @param _r Calculated signature's R value.
     /// @param _s Calculated signature's S value.
-    function submitSignature(bytes32 _digest, bytes32 _r,bytes32 _s) public onlyMember {
-        // TODO: Add signature verification?
+    /// @param _recoveryID Calculated signature's recovery ID (one of {0, 1, 2, 3}).
+    function submitSignature(
+        bytes32 _digest,
+        bytes32 _r,
+        bytes32 _s,
+        uint8 _recoveryID
+    ) public onlyMember {
+        require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
+
+        // We add 27 to the recovery ID to align it with ethereum and bitcoin
+        // protocols where 27 is added to recovery ID to indicate usage of
+        // uncompressed public keys.
+        uint8 _v = 27 + _recoveryID;
+
+        // Validate signature.
+        require(
+            publicKeyToAddress(publicKey) == ecrecover(_digest, _v, _r, _s),
+            "Invalid signature"
+        );
 
         emit SignatureSubmitted(_digest, _r, _s);
     }
