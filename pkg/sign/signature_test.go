@@ -179,7 +179,7 @@ func serializeSignature(signature *Signature) ([]byte, error) {
 		return nil, err
 	}
 
-	recoveryID := byte(signature.recoveryID)
+	recoveryID := byte(signature.RecoveryID)
 
 	serializedBytes = append(serializedBytes, r...)
 	serializedBytes = append(serializedBytes, s...)

@@ -10,12 +10,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
-// Signature holds a signature in a form of two big.Int R and S values and a
+// Signature holds a signature in a form of two big.Int r and s values and a
 // recovery ID value in {0, 1, 2, 3}.
 type Signature struct {
 	R          *big.Int
 	S          *big.Int
-	recoveryID int
+	RecoveryID int
 }
 
 // CalculateSignature returns an signature over provided hash, calculated
@@ -36,7 +36,7 @@ func (s *Signer) CalculateSignature(rand io.Reader, hash []byte) (*Signature, er
 	return &Signature{
 		R:          sigR,
 		S:          sigS,
-		recoveryID: recoveryID,
+		RecoveryID: recoveryID,
 	}, nil
 }
 
