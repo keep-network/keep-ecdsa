@@ -32,8 +32,8 @@ contract ECDSAKeep is Ownable {
     // values.
     event SignatureSubmitted(
         bytes32 digest,
-        bytes r,
-        bytes s
+        bytes32 r,
+        bytes32 s
     );
 
     constructor(
@@ -71,10 +71,7 @@ contract ECDSAKeep is Ownable {
     /// @param _digest Digest for which calculator was calculated.
     /// @param _r Calculated signature's R value.
     /// @param _s Calculated signature's S value.
-    function submitSignature(bytes32 _digest, bytes memory _r, bytes memory _s) public onlyMember {
-        require(_r.length == 32, "R must be 32-bytes long");
-        require(_s.length == 32, "S must be 32-bytes long");
-
+    function submitSignature(bytes32 _digest, bytes32 _r,bytes32 _s) public onlyMember {
         // TODO: Add signature verification?
 
         emit SignatureSubmitted(_digest, _r, _s);
