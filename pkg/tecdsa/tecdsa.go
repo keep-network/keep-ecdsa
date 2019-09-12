@@ -130,7 +130,12 @@ func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [
 		digest[:],
 	)
 
-	fmt.Printf("Signature calculated: [%+v]\n", signature)
+	fmt.Printf(
+		"signature calculated:\nr: [%#x]\ns: [%#x]\nrecovery ID: [%d]\n",
+		signature.R,
+		signature.S,
+		signature.RecoveryID,
+	)
 
 	err = c.ethereumChain.SubmitSignature(
 		keepAddress,
