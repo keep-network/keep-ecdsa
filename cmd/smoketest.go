@@ -28,6 +28,9 @@ func init() {
 
 // SmokeTest executes a smoke test.
 func SmokeTest(c *cli.Context) error {
+	// Start client.
+	go Start(c)
+
 	configFile, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return err
