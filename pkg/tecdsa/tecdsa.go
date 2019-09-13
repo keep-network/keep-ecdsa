@@ -73,17 +73,6 @@ func Initialize(
 func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	signer, err := generateSigner()
 
-	// Calculate bitcoin P2WPKH address.
-	// TODO: We don't need to calculate the address here. It should be done in
-	// tBTC utils tool. But we do it for development simplification.
-	btcAddress, err := btc.PublicKeyToWitnessPubKeyHashAddress(
-		signer.PublicKey(),
-		c.bitcoinNetParams,
-	)
-	if err != nil {
-		return fmt.Errorf("p2wpkh address conversion failed: [%s]", err)
-	}
-
 	// Publish signer's public key on ethereum blockchain in a specific keep
 	// contract.
 	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
