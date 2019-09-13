@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-tecdsa/cmd"
 	"github.com/urfave/cli"
 )
@@ -24,7 +25,7 @@ var (
 )
 
 func main() {
-	err := setUpLogging(os.Getenv("LOG_LEVEL"))
+	err := logging.Configure(os.Getenv("LOG_LEVEL"))
 	if err != nil {
 		goLog.Fatal(err)
 	}
