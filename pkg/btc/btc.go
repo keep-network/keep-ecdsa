@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
 	"github.com/keep-network/keep-tecdsa/pkg/utils"
 )
+
+var logger = log.Logger("keep-btc")
 
 // SignAndPublishTransaction calculates signature over Witness Signature Hash for
 // a transaction, sets the signature on the transaction and publishes it to the
@@ -45,7 +48,7 @@ func SignAndPublishTransaction(
 	}
 
 	// TODO: Publish signature to the ethereum chain and add validation to test
-	fmt.Printf("Signature: %v\n", signature)
+	logger.Debugf("Signature: %v", signature)
 
 	SetSignatureWitnessToTransaction(
 		signature,
@@ -59,14 +62,14 @@ func SignAndPublishTransaction(
 		return err
 	}
 
-	fmt.Printf("Publish transaction:\n%v\n", hex.EncodeToString(rawSignedTransaction))
+	logger.Debugf("Publish transaction:\n%v", hex.EncodeToString(rawSignedTransaction))
 
 	transactionHash, err := Publish(chain, rawSignedTransaction)
 	if err != nil {
 		return fmt.Errorf("transaction publication failed [%s]", err)
 	}
 
-	fmt.Printf("Published transaction hash: %v\n", transactionHash)
+	logger.Debugf("Published transaction hash: %v", transactionHash)
 
 	return nil
 }

@@ -63,7 +63,7 @@ func Publish(c *cli.Context) error {
 		return fmt.Errorf("publish failed [%s]", err)
 	}
 
-	fmt.Printf("Published transaction ID: %v\n", result)
+	logger.Infof("Published transaction ID: %v", result)
 
 	return nil
 }

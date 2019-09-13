@@ -5,11 +5,14 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
 )
+
+var logger = log.Logger("keep-chain-eth-ethereum")
 
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
@@ -72,7 +75,7 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return err
 	}
 
-	fmt.Printf("Transaction submitted with hash: [%x]\n", transaction.Hash())
+	logger.Debugf("Transaction submitted with hash: [%x]", transaction.Hash())
 
 	return nil
 }
@@ -108,7 +111,7 @@ func (ec *EthereumChain) SubmitSignature(
 		return err
 	}
 
-	fmt.Printf("Transaction submitted with hash: [%x]\n", transaction.Hash())
+	logger.Debugf("Transaction submitted with hash: [%x]", transaction.Hash())
 
 	return nil
 }

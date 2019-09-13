@@ -8,9 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ipfs/go-log"
 	goElectrum "github.com/keep-network/go-electrum/electrum"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/btc"
 )
+
+var logger = log.Logger("keep-chain-btc-electrum")
 
 type electrum struct {
 	electrumServer *goElectrum.Server
@@ -48,8 +51,8 @@ func Connect(config *Config) (btc.Interface, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot get server version [%s]", err)
 	}
-	fmt.Printf(
-		"Connected to Electrum Server.\nServer version: %s [Protocol %s]\n",
+	logger.Infof(
+		"Connected to Electrum Server.\nServer version: %s [Protocol %s]",
 		serverVersion,
 		protocolVersion,
 	)
@@ -58,7 +61,7 @@ func Connect(config *Config) (btc.Interface, error) {
 	go func() {
 		for {
 			if err := server.Ping(); err != nil {
-				fmt.Printf("ping failed [%s]\n", err)
+				logger.Warningf("ping failed [%s]", err)
 			}
 			time.Sleep(60 * time.Second)
 		}

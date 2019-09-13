@@ -35,7 +35,7 @@ func Sign(c *cli.Context) error {
 
 	signer := sign.NewSigner(privateKey)
 
-	fmt.Printf("--- Generated Public Key:\nX: %x\nY: %x\n",
+	logger.Debugf("--- Generated Public Key:\nX: %x\nY: %x",
 		signer.PublicKey().X,
 		signer.PublicKey().Y,
 	)
@@ -45,7 +45,7 @@ func Sign(c *cli.Context) error {
 		return fmt.Errorf("signature calculation failed [%s]", err)
 	}
 
-	fmt.Printf("--- Signature:\nR: %x\nS: %x\n", signature.R, signature.S)
+	logger.Infof("--- Signature:\nR: %x\nS: %x", signature.R, signature.S)
 
 	return nil
 }

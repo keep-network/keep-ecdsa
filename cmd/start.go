@@ -5,11 +5,14 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
 	"github.com/urfave/cli"
 )
+
+var logger = log.Logger("keep-cmd")
 
 // StartCommand contains the definition of the start command-line subcommand.
 var StartCommand cli.Command
@@ -44,7 +47,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("client initialization failed: [%s]", err)
 	}
 
-	fmt.Printf("Client started.\n")
+	logger.Infof("Client started.")
 
 	select {
 	case <-ctx.Done():

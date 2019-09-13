@@ -8,10 +8,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
+
+var logger = log.Logger("keep-smoketest")
 
 var keepOwnerAddress = common.HexToAddress("0x316F8eaf0b6065a53f0eaB3DD19aC6a07af95b3D")
 
@@ -61,8 +64,8 @@ func Execute(config *ethereum.Config) error {
 	if err != nil {
 		return fmt.Errorf("call to contract failed: [%s]", err)
 	}
-	fmt.Printf(
-		"New keep requested, transaction hash: [%s]\n",
+	logger.Infof(
+		"New keep requested, transaction hash: [%s]",
 		transaction.Hash().Hex(),
 	)
 
@@ -70,14 +73,14 @@ func Execute(config *ethereum.Config) error {
 	actualEvent := <-eventChan
 
 	// Log received event.
-	fmt.Printf("Received event: [%#v]\n", actualEvent)
+	logger.Infof("Received event: [%#v]", actualEvent)
 
 	// Validate received event.
 	if !common.IsHexAddress(actualEvent.KeepAddress.String()) {
 		return fmt.Errorf("invalid hex address: [%v]", actualEvent.KeepAddress)
 	}
 
-	fmt.Printf("ECDSA keep built with address: [%s]\n", actualEvent.KeepAddress.String())
+	logger.Infof("ECDSA keep built with address: [%s]", actualEvent.KeepAddress.String())
 
 	return nil
 }

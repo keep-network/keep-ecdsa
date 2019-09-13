@@ -4,14 +4,16 @@ package tecdsa
 import (
 	crand "crypto/rand"
 	"fmt"
-	"os"
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/pkg/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
 )
+
+var logger = log.Logger("keep-tecdsa")
 
 // client holds blockchain specific configuration, interfaces to interact with the
 // blockchain and a map of signers for given keeps.
@@ -32,19 +34,19 @@ func Initialize(
 	}
 
 	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
-		fmt.Printf("New ECDSA Keep created [%+v]\n", event)
+		logger.Debugf("New ECDSA Keep created [%+v]", event)
 
 		go func() {
 			if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
-				fmt.Fprintf(os.Stderr, "signer generation failed: [%s]", err)
+				logger.Errorf("signer generation failed: [%s]", err)
 			}
 		}()
 
 		ethereumChain.OnSignatureRequested(
 			event.KeepAddress,
 			func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
-				fmt.Printf(
-					"new signature requested for digest: [%+x]\n",
+				logger.Debugf(
+					"new signature requested for digest: [%+x]",
 					signatureRequestedEvent.Digest,
 				)
 
@@ -55,7 +57,7 @@ func Initialize(
 					)
 
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "signature calculation failed: [%s]", err)
+						logger.Errorf("signature calculation failed: [%s]", err)
 					}
 				}()
 			},
@@ -97,8 +99,8 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 		return fmt.Errorf("public key submission failed: [%s]", err)
 	}
 
-	fmt.Printf(
-		"Signer for keep [%s] initialized with Bitcoin P2WPKH address: [%s]\n",
+	logger.Debugf(
+		"Signer for keep [%s] initialized with Bitcoin P2WPKH address: [%s]",
 		keepAddress.String(),
 		btcAddress,
 	)
@@ -130,7 +132,7 @@ func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [
 		digest[:],
 	)
 
-	fmt.Printf("Signature calculated: [%+v]\n", signature)
+	logger.Debugf("Signature calculated: [%+v]", signature)
 
 	err = c.ethereumChain.SubmitSignature(
 		keepAddress,
