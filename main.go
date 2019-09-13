@@ -1,14 +1,17 @@
 package main
 
 import (
-	"log"
+	goLog "log"
 	"os"
 	"path"
 	"time"
 
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/cmd"
 	"github.com/urfave/cli"
 )
+
+var logger = log.Logger("keep-main")
 
 const (
 	defaultConfigPath   = "./configs/config.toml"
@@ -21,6 +24,11 @@ var (
 )
 
 func main() {
+	err := setUpLogging(os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		goLog.Fatal(err)
+	}
+
 	app := cli.NewApp()
 	app.Name = path.Base(os.Args[0])
 	app.Usage = "CLI for t-ECDSA keep"
@@ -52,9 +60,8 @@ func main() {
 		cmd.SmokeTestCommand,
 	}
 
-	err := app.Run(os.Args)
-
+	err = app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }
