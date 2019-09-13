@@ -75,7 +75,7 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return err
 	}
 
-	logger.Debugf("Transaction submitted with hash: [%x]", transaction.Hash())
+	logger.Debugf("submitted SetPublicKey transaction with hash: [%x]", transaction.Hash())
 
 	return nil
 }
@@ -111,7 +111,7 @@ func (ec *EthereumChain) SubmitSignature(
 		return err
 	}
 
-	logger.Debugf("Transaction submitted with hash: [%x]", transaction.Hash())
+	logger.Debugf("submitted SubmitSignature transaction with hash: [%x]", transaction.Hash())
 
 	return nil
 }

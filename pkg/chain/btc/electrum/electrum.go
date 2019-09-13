@@ -52,7 +52,7 @@ func Connect(config *Config) (btc.Interface, error) {
 		return nil, fmt.Errorf("cannot get server version [%s]", err)
 	}
 	logger.Infof(
-		"Connected to Electrum Server.\nServer version: %s [Protocol %s]",
+		"connected to electrum server\nserver version: [%s] [protocol [%s]]",
 		serverVersion,
 		protocolVersion,
 	)

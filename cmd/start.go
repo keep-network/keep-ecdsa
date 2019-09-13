@@ -47,7 +47,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("client initialization failed: [%s]", err)
 	}
 
-	logger.Infof("Client started.")
+	logger.Infof("client started")
 
 	select {
 	case <-ctx.Done():

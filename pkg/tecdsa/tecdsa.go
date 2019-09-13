@@ -8,7 +8,6 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-tecdsa/pkg/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/sign"
 )
@@ -34,7 +33,10 @@ func Initialize(
 	}
 
 	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
-		logger.Debugf("New ECDSA Keep created [%+v]", event)
+		logger.Infof(
+			"received notification of a new keep creation with address: [%s]",
+			event.KeepAddress.String(),
+		)
 
 		go func() {
 			if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
@@ -73,6 +75,12 @@ func Initialize(
 func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	signer, err := generateSigner()
 
+	logger.Debugf(
+		"generated signer with public key:\nx: [%x]\ny: [%x]",
+		signer.PublicKey().X,
+		signer.PublicKey().Y,
+	)
+
 	// Publish signer's public key on ethereum blockchain in a specific keep
 	// contract.
 	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
@@ -88,10 +96,9 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 		return fmt.Errorf("public key submission failed: [%s]", err)
 	}
 
-	logger.Debugf(
-		"Signer for keep [%s] initialized with Bitcoin P2WPKH address: [%s]",
+	logger.Infof(
+		"initialized signer for keep [%s]",
 		keepAddress.String(),
-		btcAddress,
 	)
 
 	// Store the signer in a map, with the keep address as a key. Keep address
@@ -121,7 +128,7 @@ func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [
 		digest[:],
 	)
 
-	logger.Debugf("Signature calculated: [%+v]", signature)
+	logger.Debugf("calculated signature: [%+v]", signature)
 
 	err = c.ethereumChain.SubmitSignature(
 		keepAddress,

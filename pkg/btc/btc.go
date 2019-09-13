@@ -2,7 +2,6 @@
 package btc
 
 import (
-	"encoding/hex"
 	"fmt"
 	"io"
 
@@ -48,7 +47,7 @@ func SignAndPublishTransaction(
 	}
 
 	// TODO: Publish signature to the ethereum chain and add validation to test
-	logger.Debugf("Signature: %v", signature)
+	logger.Debugf("calculated signature: [%+v]", signature)
 
 	SetSignatureWitnessToTransaction(
 		signature,
@@ -62,14 +61,14 @@ func SignAndPublishTransaction(
 		return err
 	}
 
-	logger.Debugf("Publish transaction:\n%v", hex.EncodeToString(rawSignedTransaction))
+	logger.Debugf("publish transaction: [%x]", rawSignedTransaction)
 
 	transactionHash, err := Publish(chain, rawSignedTransaction)
 	if err != nil {
 		return fmt.Errorf("transaction publication failed [%s]", err)
 	}
 
-	logger.Debugf("Published transaction hash: %v", transactionHash)
+	logger.Infof("published transaction with hash: [%s]", transactionHash)
 
 	return nil
 }
