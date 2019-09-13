@@ -21,7 +21,7 @@ func (ec *EthereumChain) watchECDSAKeepCreated(
 	if err != nil {
 		close(eventChan)
 		return nil, fmt.Errorf(
-			"could not create watch for KeepTECDSAGroupGroupRequested event: [%v]",
+			"failed to create watch for KeepTECDSAGroupGroupRequested event: [%v]",
 			err,
 		)
 	}

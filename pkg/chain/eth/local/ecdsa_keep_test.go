@@ -15,7 +15,7 @@ func TestRequestSignatureNonexistentKeep(t *testing.T) {
 	chain := initializeLocalChain()
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
-	expectedError := fmt.Errorf("keep not found for address [0x0000000000000000000000000000000000000001]")
+	expectedError := fmt.Errorf("failed to find keep with address: [0x0000000000000000000000000000000000000001]")
 
 	err := chain.requestSignature(keepAddress, digest)
 

@@ -22,7 +22,7 @@ func (ec *EthereumChain) watchSignatureRequested(
 	if err != nil {
 		close(eventChan)
 		return nil, fmt.Errorf(
-			"could not create watch for ECDSAKeepSignatureRequested event: [%v]",
+			"failed to create watch for ECDSAKeepSignatureRequested event: [%v]",
 			err,
 		)
 	}

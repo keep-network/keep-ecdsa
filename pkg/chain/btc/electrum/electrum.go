@@ -44,12 +44,12 @@ func Connect(config *Config) (btc.Interface, error) {
 	// TODO: For development we support only SSL connections because there are
 	// more SSL than TCP electrum servers available for BTC testnet.
 	if err := server.ConnectSSL(serverAddress, tlsConfig); err != nil {
-		return nil, fmt.Errorf("connecting to %s failed [%s]", serverAddress, err)
+		return nil, fmt.Errorf("failed to connect to [%s]: [%v]", serverAddress, err)
 	}
 
 	serverVersion, protocolVersion, err := server.ServerVersion()
 	if err != nil {
-		return nil, fmt.Errorf("cannot get server version [%s]", err)
+		return nil, fmt.Errorf("failed to get server version: [%v]", err)
 	}
 	logger.Infof(
 		"connected to electrum server\nserver version: [%s] [protocol [%s]]",
@@ -61,7 +61,7 @@ func Connect(config *Config) (btc.Interface, error) {
 	go func() {
 		for {
 			if err := server.Ping(); err != nil {
-				logger.Warningf("ping failed [%s]", err)
+				logger.Warningf("failed ping request: [%v]", err)
 			}
 			time.Sleep(60 * time.Second)
 		}

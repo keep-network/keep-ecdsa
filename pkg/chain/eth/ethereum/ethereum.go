@@ -28,7 +28,7 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf("keep created callback failed: [%s]", err)
+			return fmt.Errorf("failed keep creation callback: [%v]", err)
 		},
 	)
 }
@@ -41,7 +41,7 @@ func (ec *EthereumChain) OnSignatureRequested(
 ) (subscription.EventSubscription, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
-		return nil, fmt.Errorf("could not create contract ABI: [%v]", err)
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
 
 	return ec.watchSignatureRequested(
@@ -54,7 +54,7 @@ func (ec *EthereumChain) OnSignatureRequested(
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf("keep signature requested callback failed: [%s]", err)
+			return fmt.Errorf("failed keep signature requested callback: [%v]", err)
 		},
 	)
 }

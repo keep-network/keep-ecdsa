@@ -55,12 +55,12 @@ func Publish(c *cli.Context) error {
 
 	rawTx, err := hex.DecodeString(arg)
 	if err != nil {
-		return fmt.Errorf("transaction decoding failed [%s]", err)
+		return fmt.Errorf("failed to decode transaction: [%s]", err)
 	}
 
 	result, err := btc.Publish(chain, rawTx)
 	if err != nil {
-		return fmt.Errorf("publish failed [%s]", err)
+		return fmt.Errorf("failed to publish transaction: [%s]", err)
 	}
 
 	logger.Infof("published transaction with ID: [%v]", result)

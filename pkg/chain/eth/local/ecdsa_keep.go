@@ -19,7 +19,7 @@ func (c *localChain) requestSignature(keepAddress eth.KeepAddress, digest [32]by
 	keep, ok := c.keeps[keepAddress]
 	if !ok {
 		return fmt.Errorf(
-			"keep not found for address [%s]",
+			"failed to find keep with address: [%s]",
 			keepAddress.String(),
 		)
 	}

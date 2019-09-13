@@ -32,7 +32,7 @@ func TestSignAndPublishTransaction(t *testing.T) {
 func signer() (*sign.Signer, error) {
 	wif, err := btcutil.DecodeWIF("923CjseKgQf7Xz185dmYUJer9i8jsb9Cd18Rtec4DFKeiBZg3wi")
 	if err != nil {
-		return nil, fmt.Errorf("cannot decode WIF [%s]", err)
+		return nil, fmt.Errorf("failed to decode WIF: [%v]", err)
 	}
 	privateKey := (*ecdsa.PrivateKey)(wif.PrivKey)
 

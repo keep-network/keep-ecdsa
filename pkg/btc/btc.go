@@ -33,7 +33,7 @@ func SignAndPublishTransaction(
 ) error {
 	transaction, err := utils.DeserializeTransaction(transactionPreimage)
 	if err != nil {
-		return fmt.Errorf("cannot deserialize transaction preimage [%s]", err)
+		return fmt.Errorf("failed to deserialize transaction preimage: [%v]", err)
 	}
 
 	if len(transaction.TxIn) > 1 {
@@ -65,7 +65,7 @@ func SignAndPublishTransaction(
 
 	transactionHash, err := Publish(chain, rawSignedTransaction)
 	if err != nil {
-		return fmt.Errorf("transaction publication failed [%s]", err)
+		return fmt.Errorf("failed to publish transaction: [%v]", err)
 	}
 
 	logger.Infof("published transaction with hash: [%s]", transactionHash)

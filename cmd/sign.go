@@ -30,7 +30,7 @@ func Sign(c *cli.Context) error {
 
 	privateKey, err := sign.GenerateKey(crand.Reader)
 	if err != nil {
-		return fmt.Errorf("key generation failed [%s]", err)
+		return fmt.Errorf("failed to generate key: [%s]", err)
 	}
 
 	signer := sign.NewSigner(privateKey)
@@ -42,7 +42,7 @@ func Sign(c *cli.Context) error {
 
 	signature, err := signer.CalculateSignature(crand.Reader, []byte(arg))
 	if err != nil {
-		return fmt.Errorf("signature calculation failed [%s]", err)
+		return fmt.Errorf("failed to calculate signature [%s]", err)
 	}
 
 	logger.Infof("calculated signature:\nR: %x\nS: %x", signature.R, signature.S)

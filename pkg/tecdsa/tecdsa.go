@@ -85,7 +85,7 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	// contract.
 	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
 	if err != nil {
-		return fmt.Errorf("public key serialization failed: [%s]", err)
+		return fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
 	err = c.ethereumChain.SubmitKeepPublicKey(
@@ -93,7 +93,7 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 		serializedPublicKey,
 	)
 	if err != nil {
-		return fmt.Errorf("public key submission failed: [%s]", err)
+		return fmt.Errorf("failed to submit public key: [%v]", err)
 	}
 
 	logger.Infof(
@@ -111,7 +111,7 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 func generateSigner() (*sign.Signer, error) {
 	privateKey, err := sign.GenerateKey(crand.Reader)
 	if err != nil {
-		return nil, fmt.Errorf("private key generation failed: [%s]", err)
+		return nil, fmt.Errorf("failed to generate private key: [%v]", err)
 	}
 
 	return sign.NewSigner(privateKey), nil
@@ -120,7 +120,7 @@ func generateSigner() (*sign.Signer, error) {
 func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [32]byte) error {
 	signer, ok := c.keepsSigners.Load(keepAddress.String())
 	if !ok {
-		return fmt.Errorf("signer not available for keep: [%s]", keepAddress.String())
+		return fmt.Errorf("failed to find signer for keep: [%s]", keepAddress.String())
 	}
 
 	signature, err := signer.(*sign.Signer).CalculateSignature(
@@ -136,7 +136,7 @@ func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [
 		signature,
 	)
 	if err != nil {
-		return fmt.Errorf("signature submission failed: [%s]", err)
+		return fmt.Errorf("failed to submit signature: [%v]", err)
 	}
 
 	return nil
