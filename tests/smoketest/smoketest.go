@@ -65,7 +65,7 @@ func Execute(config *ethereum.Config) error {
 		return fmt.Errorf("call to contract failed: [%s]", err)
 	}
 	logger.Infof(
-		"New keep requested, transaction hash: [%s]",
+		"new keep requested, transaction hash: [%s]",
 		transaction.Hash().Hex(),
 	)
 
@@ -73,7 +73,7 @@ func Execute(config *ethereum.Config) error {
 	actualEvent := <-eventChan
 
 	// Log received event.
-	logger.Infof("Received event: [%#v]", actualEvent)
+	logger.Infof("received event: [%#v]", actualEvent)
 
 	// Validate received event.
 	if !common.IsHexAddress(actualEvent.KeepAddress.String()) {
