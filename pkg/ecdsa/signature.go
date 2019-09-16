@@ -1,3 +1,7 @@
+// Package ecdsa implements ECDSA signing it uses standards described in [SEC 1].
+//
+//   [SEC 1]: Standards for Efficient Cryptography, SEC 1: Elliptic Curve
+//     Cryptography, Certicom Research, https://www.secg.org/sec1-v2.pdf
 package ecdsa
 
 import (
@@ -94,8 +98,6 @@ func (s *Signer) findRecoveryID(sigR, sigS *big.Int, hash []byte) (int, error) {
 //
 // It requires the elliptic curve to be a short-form Weierstrass curve where
 // `a = 0` (`y² = x³ + b`).
-//
-// [SEC 1]: SEC 1: Elliptic Curve Cryptography, Version 2.0, May 21, 2009.
 func recoverPublicKeyFromSignature(
 	curve *secp256k1.BitCurve,
 	sigR, sigS *big.Int, // signature's `r` and `s` values
@@ -120,6 +122,9 @@ func recoverPublicKeyFromSignature(
 
 	// 1.3 Estimate y coordinate of the R point. For each x cooridnate there are
 	// two possible points on the elliptic curve - `R` and `-R`.
+
+	// `calculateY` always returns `y` coordinate of `R` point. We calculate `-R`
+	// point later if it is required.
 	Ry := calculateY(curve, Rx)
 	if Ry == nil {
 		return nil, fmt.Errorf("failed to calculate y")
@@ -177,7 +182,7 @@ func recoverPublicKeyFromSignature(
 // calculateY calculates `y` coordinate for `x` curve point coordinate using the provided
 // elliptic curve implementation. It expects the elliptic curve to be a
 // short-form Weierstrass curve with `a = 0`, defined by the equation `y² = x³ + b`.
-// `b` is a parameter of the particular curve implementation.
+// `b` is a constant of the curve equation, specific for the particular curve.
 func calculateY(curve *secp256k1.BitCurve, x *big.Int) *big.Int {
 	// x³
 	x3 := new(big.Int).Exp(x, big.NewInt(3), big.NewInt(0))
@@ -189,13 +194,7 @@ func calculateY(curve *secp256k1.BitCurve, x *big.Int) *big.Int {
 	return x3.ModSqrt(y2, curve.Params().P)
 }
 
-// hashToInt converts a hash value to an integer. There is some disagreement
-// about how this is done. [NSA] suggests that this is done in the obvious
-// manner, but [SECG] truncates the hash to the bit-length of the curve order
-// first. We follow [SECG] because that's what OpenSSL does. Additionally,
-// OpenSSL right shifts excess bits from the number if the hash is too large
-// and we mirror that too.
-// This solution is consistent with go-ethereum library.
+// This code is borrowed from Golang's crypto/ecdsa/ecdsa.go.
 func hashToInt(c elliptic.Curve, hash []byte) *big.Int {
 	orderBits := c.Params().N.BitLen()
 	orderBytes := (orderBits + 7) / 8
