@@ -2,7 +2,7 @@ package smoketest
 
 import (
 	"bytes"
-	"crypto/ecdsa"
+	cecdsa "crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -162,13 +162,13 @@ func Execute(config *ethereum.Config) error {
 		return err
 	}
 
-	ecdsaPubicKey := &ecdsa.PublicKey{
+	ecdsaPubicKey := &cecdsa.PublicKey{
 		Curve: secp256k1.S256(),
 		X:     new(big.Int).SetBytes(keepPublicKey[:32]),
 		Y:     new(big.Int).SetBytes(keepPublicKey[32:]),
 	}
 
-	if !ecdsa.Verify(
+	if !cecdsa.Verify(
 		ecdsaPubicKey,
 		signatureSubmittedEvent.Digest[:],
 		new(big.Int).SetBytes(signatureSubmittedEvent.R[:]),

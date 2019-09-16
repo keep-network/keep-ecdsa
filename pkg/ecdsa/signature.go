@@ -1,7 +1,7 @@
-package sign
+package ecdsa
 
 import (
-	"crypto/ecdsa"
+	cecdsa "crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
 	"io"
@@ -49,7 +49,7 @@ func (s *Signer) calculateECDSASignature(
 	sigR, sigS *big.Int,
 	err error,
 ) {
-	sigR, sigS, err = ecdsa.Sign(rand, s.privateKey, hash)
+	sigR, sigS, err = cecdsa.Sign(rand, s.privateKey, hash)
 	return
 }
 

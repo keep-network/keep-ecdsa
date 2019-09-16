@@ -1,7 +1,7 @@
 package btc
 
 import (
-	"crypto/ecdsa"
+	cecdsa "crypto/ecdsa"
 	crand "crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/local"
-	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
 func TestSignAndPublishTransaction(t *testing.T) {
@@ -30,7 +30,7 @@ func TestSignAndPublishTransaction(t *testing.T) {
 	}
 }
 
-func newTestSigner() (*sign.Signer, error) {
+func newTestSigner() (*ecdsa.Signer, error) {
 	curve := secp256k1.S256()
 
 	wif, err := btcutil.DecodeWIF("923CjseKgQf7Xz185dmYUJer9i8jsb9Cd18Rtec4DFKeiBZg3wi")
@@ -40,10 +40,10 @@ func newTestSigner() (*sign.Signer, error) {
 
 	k := wif.PrivKey.D
 
-	privateKey := new(ecdsa.PrivateKey)
+	privateKey := new(cecdsa.PrivateKey)
 	privateKey.PublicKey.Curve = curve
 	privateKey.D = k
 	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(k.Bytes())
 
-	return sign.NewSigner(privateKey), nil
+	return ecdsa.NewSigner(privateKey), nil
 }

@@ -1,7 +1,7 @@
-package sign
+package ecdsa
 
 import (
-	"crypto/ecdsa"
+	cecdsa "crypto/ecdsa"
 	crand "crypto/rand"
 	"encoding/hex"
 	"math/big"
@@ -54,7 +54,7 @@ func TestCalculateECDSASignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !ecdsa.Verify(
+	if !cecdsa.Verify(
 		&signer.privateKey.PublicKey,
 		hash,
 		sigR,
@@ -158,7 +158,7 @@ func newTestSigner() *Signer {
 	curve := secp256k1.S256()
 	k := big.NewInt(8)
 
-	privateKey := new(ecdsa.PrivateKey)
+	privateKey := new(cecdsa.PrivateKey)
 	privateKey.PublicKey.Curve = curve
 	privateKey.D = k
 	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(k.Bytes())

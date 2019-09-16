@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
-	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
 )
 
@@ -92,7 +92,7 @@ func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.ECDSAKeep
 func (ec *EthereumChain) SubmitSignature(
 	keepAddress eth.KeepAddress,
 	digest [32]byte,
-	signature *sign.Signature,
+	signature *ecdsa.Signature,
 ) error {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {

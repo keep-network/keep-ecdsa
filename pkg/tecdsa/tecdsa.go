@@ -10,7 +10,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/keep-network/keep-tecdsa/pkg/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
-	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
 // client holds blockchain specific configuration, interfaces to interact with the
@@ -110,13 +110,13 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	return nil
 }
 
-func generateSigner() (*sign.Signer, error) {
-	privateKey, err := sign.GenerateKey(crand.Reader)
+func generateSigner() (*ecdsa.Signer, error) {
+	privateKey, err := ecdsa.GenerateKey(crand.Reader)
 	if err != nil {
 		return nil, fmt.Errorf("private key generation failed: [%s]", err)
 	}
 
-	return sign.NewSigner(privateKey), nil
+	return ecdsa.NewSigner(privateKey), nil
 }
 
 func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [32]byte) error {
@@ -125,7 +125,7 @@ func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [
 		return fmt.Errorf("signer not available for keep: [%s]", keepAddress.String())
 	}
 
-	signature, err := signer.(*sign.Signer).CalculateSignature(
+	signature, err := signer.(*ecdsa.Signer).CalculateSignature(
 		crand.Reader,
 		digest[:],
 	)
