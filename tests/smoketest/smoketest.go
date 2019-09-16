@@ -178,10 +178,10 @@ func Execute(config *ethereum.Config) error {
 	}
 
 	// Log received event.
-	fmt.Printf("Received Signature:\nR: [%#x]\nS: [%#x]\nV: [%d]",
+	fmt.Printf("Received Signature:\nr: [%#x]\ns: [%#x]\nRecovery ID: [%d]",
 		signatureSubmittedEvent.R,
 		signatureSubmittedEvent.S,
-		signatureSubmittedEvent.V,
+		signatureSubmittedEvent.RecoveryID,
 	)
 
 	return nil
