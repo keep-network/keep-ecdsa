@@ -183,12 +183,7 @@ func calculateY(curve *secp256k1.BitCurve, x *big.Int) *big.Int {
 	x3 := new(big.Int).Exp(x, big.NewInt(3), big.NewInt(0))
 
 	// x³ + b
-	y2 := new(big.Int).Add(
-		x3,
-		curve.Params().B,
-	)
-
-	y2.Mod(y2, curve.Params().P)
+	y2 := new(big.Int).Add(x3, curve.Params().B)
 
 	// solve y² = x³ + b
 	return x3.ModSqrt(y2, curve.Params().P)
