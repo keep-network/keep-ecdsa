@@ -15,7 +15,12 @@ import (
 )
 
 func TestCalculateSignature(t *testing.T) {
-	signer := newTestSigner()
+	privateKey, err := GenerateKey(crand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	signer := NewSigner(privateKey)
+
 	hash, _ := hex.DecodeString("54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b")
 
 	signature, err := signer.CalculateSignature(crand.Reader, hash)
@@ -44,7 +49,16 @@ func TestCalculateSignature(t *testing.T) {
 }
 
 func TestFindRecoveryID(t *testing.T) {
-	signer := newTestSigner()
+	curve := secp256k1.S256()
+	k := big.NewInt(8)
+
+	privateKey := new(cecdsa.PrivateKey)
+	privateKey.PublicKey.Curve = curve
+	privateKey.D = k
+	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(k.Bytes())
+
+	signer := NewSigner(privateKey)
+
 	hash, _ := hex.DecodeString("54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b")
 
 	var tests = map[string]struct {
@@ -104,18 +118,6 @@ func TestCalculateY(t *testing.T) {
 			y,
 		)
 	}
-}
-
-func newTestSigner() *Signer {
-	curve := secp256k1.S256()
-	k := big.NewInt(8)
-
-	privateKey := new(cecdsa.PrivateKey)
-	privateKey.PublicKey.Curve = curve
-	privateKey.D = k
-	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(k.Bytes())
-
-	return NewSigner(privateKey)
 }
 
 func serializeSignature(signature *Signature) ([]byte, error) {
