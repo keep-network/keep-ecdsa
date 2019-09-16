@@ -25,7 +25,7 @@ type Signature struct {
 // CalculateSignature returns an signature over provided hash, calculated
 // with Signer's private key. Signature is returned in `(r, s, v)` form.
 func (s *Signer) CalculateSignature(rand io.Reader, hash []byte) (*Signature, error) {
-	sigR, sigS, err := s.calculateECDSASignature(rand, hash)
+	sigR, sigS, err := cecdsa.Sign(rand, s.privateKey, hash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate ECDSA signature: [%v]", err)
 	}
@@ -42,19 +42,6 @@ func (s *Signer) CalculateSignature(rand io.Reader, hash []byte) (*Signature, er
 		S:          sigS,
 		RecoveryID: recoveryID,
 	}, nil
-}
-
-// CalculateSignature returns an ECDSA Signature over provided hash, calculated
-// with Signer's private key.
-func (s *Signer) calculateECDSASignature(
-	rand io.Reader,
-	hash []byte,
-) (
-	sigR, sigS *big.Int,
-	err error,
-) {
-	sigR, sigS, err = cecdsa.Sign(rand, s.privateKey, hash)
-	return
 }
 
 // findRecoveryID finds recovery ID for the signature. Recovery ID is a value used

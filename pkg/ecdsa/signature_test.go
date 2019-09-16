@@ -43,26 +43,6 @@ func TestCalculateSignature(t *testing.T) {
 			)
 		}
 	}
-}
-func TestCalculateECDSASignature(t *testing.T) {
-	signer := newTestSigner()
-
-	hash := []byte("test hash")
-
-	sigR, sigS, err := signer.calculateECDSASignature(crand.Reader, hash)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !cecdsa.Verify(
-		&signer.privateKey.PublicKey,
-		hash,
-		sigR,
-		sigS,
-	) {
-		t.Errorf("signature is invalid")
-	}
-}
 
 func TestFindRecoveryID(t *testing.T) {
 	signer := newTestSigner()
