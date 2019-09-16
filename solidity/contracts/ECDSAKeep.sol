@@ -28,13 +28,16 @@ contract ECDSAKeep is Ownable {
     );
 
     // Notification that the signature has been calculated. Contains a digest which
-    // was used for signature calculation and a signature in a form of R, S, V
-    // values.
+    // was used for signature calculation and a signature in a form of r, s and
+    // recovery ID values.
+    // The signature is chain-agnostic. Some chains (e.g. Ethereum and BTC) requires
+    // `v` to be calculated by increasing recovery id by 27. Please consult the
+    // documentation about what the particular chain expects.
     event SignatureSubmitted(
         bytes32 digest,
         bytes32 r,
         bytes32 s,
-        uint8   v
+        uint8   recoveryID
     );
 
     constructor(
@@ -92,7 +95,7 @@ contract ECDSAKeep is Ownable {
             "Invalid signature"
         );
 
-        emit SignatureSubmitted(_digest, _r, _s, _v);
+        emit SignatureSubmitted(_digest, _r, _s, _recoveryID);
     }
 
     /// @notice Checks if the caller is a keep member.

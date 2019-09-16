@@ -126,8 +126,6 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('emits an event', async () => {
-      const expectedV = 27 + signatureRecoveryID
-
       let res = await keep.submitSignature(
         digest,
         signatureR,
@@ -140,7 +138,7 @@ contract('ECDSAKeep', (accounts) => {
         return ev.digest == digest
           && ev.r == signatureR
           && ev.s == signatureS
-          && ev.v == expectedV
+          && ev.recoveryID == signatureRecoveryID
       })
     })
 
