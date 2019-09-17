@@ -14,7 +14,7 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
 )
 
-func TestCalculateSignature(t *testing.T) {
+func TestCalculateSignatureVerifyECDSA(t *testing.T) {
 	privateKey, err := GenerateKey(crand.Reader)
 	if err != nil {
 		t.Fatal(err)
@@ -28,6 +28,30 @@ func TestCalculateSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Verify that signature in form (r, s) is a valid ECDSA signature.
+	if !cecdsa.Verify((*cecdsa.PublicKey)(signer.PublicKey()), hash, signature.R, signature.S) {
+		t.Fatal("invalid ECDSA signature")
+	}
+}
+
+func TestCalculateSignatureVerifyEthereum(t *testing.T) {
+	privateKey, err := GenerateKey(crand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	signer := NewSigner(privateKey)
+
+	hash, _ := hex.DecodeString("54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b")
+
+	signature, err := signer.CalculateSignature(crand.Reader, hash)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Validate that signature in form (r, s, recoveryID) is a valid ethereum
+	// signature. `SigToPub` is a wrapper on `Ecrecover` that allows us to
+	// validate a signature in the same way as it's done on-chain, we extract
+	// public key from the signature and compare it with signer's public key.
 	serializedSignature, err := serializeSignature(signature)
 	if err != nil {
 		t.Fatal(err)
