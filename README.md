@@ -61,11 +61,12 @@ configuration CLI supports `--config` flag.
 - contracts deployed: `truffle migrate --reset`
 - Ethereum account `PrivateKey` provided in `config.toml`
 - `ECDSAKeepFactory` contract address provided in `config.toml`
-- app built: `go build -o keep-tecdsa .`
+- off-chain client running: `go run . start`
 
-To run a smoke test execute a command:
+To run a smoke test execute:
 ```sh
-./keep-tecdsa smoke-test
+cd solidity/
+truffle exec integration/smoke_test.js
 ```
 
 It requires solidity contracts to be deployed and their addresses provided in
