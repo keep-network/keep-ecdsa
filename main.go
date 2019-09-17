@@ -1,7 +1,7 @@
 package main
 
 import (
-	golog "log"
+	"fmt"
 	"os"
 	"path"
 	"time"
@@ -27,7 +27,7 @@ var (
 func main() {
 	err := logging.Configure(os.Getenv("LOG_LEVEL"))
 	if err != nil {
-		golog.Fatal(err)
+		fmt.Fprintf(os.Stderr, "failed to configure logging: [%v]\n", err)
 	}
 
 	app := cli.NewApp()
