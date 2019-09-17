@@ -5,7 +5,7 @@ import (
 	"github.com/btcsuite/btcutil"
 
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
 // PublicKeyToWitnessPubKeyHashAddress convert public key to bitcoin Witness
@@ -16,7 +16,7 @@ import (
 //
 // [BIP-173]: https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
 func PublicKeyToWitnessPubKeyHashAddress(
-	publicKey *sign.PublicKey,
+	publicKey *ecdsa.PublicKey,
 	netParams *chaincfg.Params,
 ) (string, error) {
 	compressedPublicKey := (*btcec.PublicKey)(publicKey).SerializeCompressed()
