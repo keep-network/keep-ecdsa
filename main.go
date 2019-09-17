@@ -1,14 +1,18 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"path"
 	"time"
 
+	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-tecdsa/cmd"
 	"github.com/urfave/cli"
 )
+
+var logger = log.Logger("keep-main")
 
 const (
 	defaultConfigPath   = "./configs/config.toml"
@@ -21,6 +25,11 @@ var (
 )
 
 func main() {
+	err := logging.Configure(os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to configure logging: [%v]\n", err)
+	}
+
 	app := cli.NewApp()
 	app.Name = path.Base(os.Args[0])
 	app.Usage = "CLI for t-ECDSA keep"
@@ -51,9 +60,8 @@ func main() {
 		cmd.PublishCommand,
 	}
 
-	err := app.Run(os.Args)
-
+	err = app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }

@@ -2,14 +2,16 @@
 package btc
 
 import (
-	"encoding/hex"
 	"fmt"
 	"io"
 
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/utils"
 )
+
+var logger = log.Logger("keep-btc")
 
 // SignAndPublishTransaction calculates signature over Witness Signature Hash for
 // a transaction, sets the signature on the transaction and publishes it to the
@@ -31,7 +33,7 @@ func SignAndPublishTransaction(
 ) error {
 	transaction, err := utils.DeserializeTransaction(transactionPreimage)
 	if err != nil {
-		return fmt.Errorf("cannot deserialize transaction preimage [%s]", err)
+		return fmt.Errorf("failed to deserialize transaction preimage: [%v]", err)
 	}
 
 	if len(transaction.TxIn) > 1 {
@@ -45,7 +47,7 @@ func SignAndPublishTransaction(
 	}
 
 	// TODO: Publish signature to the ethereum chain and add validation to test
-	fmt.Printf("Signature: %v\n", signature)
+	logger.Debugf("calculated signature: [%+v]", signature)
 
 	SetSignatureWitnessToTransaction(
 		signature,
@@ -59,14 +61,14 @@ func SignAndPublishTransaction(
 		return err
 	}
 
-	fmt.Printf("Publish transaction:\n%v\n", hex.EncodeToString(rawSignedTransaction))
+	logger.Debugf("publishing transaction: [%x]", rawSignedTransaction)
 
 	transactionHash, err := Publish(chain, rawSignedTransaction)
 	if err != nil {
-		return fmt.Errorf("transaction publication failed [%s]", err)
+		return fmt.Errorf("failed to publish transaction: [%v]", err)
 	}
 
-	fmt.Printf("Published transaction hash: %v\n", transactionHash)
+	logger.Infof("published transaction with hash: [%s]", transactionHash)
 
 	return nil
 }

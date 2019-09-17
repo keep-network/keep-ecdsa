@@ -5,11 +5,14 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
 	"github.com/urfave/cli"
 )
+
+var logger = log.Logger("keep-cmd")
 
 // StartCommand contains the definition of the start command-line subcommand.
 var StartCommand cli.Command
@@ -30,21 +33,21 @@ func init() {
 func Start(c *cli.Context) error {
 	config, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
-		return fmt.Errorf("error reading config file: %v", err)
+		return fmt.Errorf("failed while reading config file: [%v]", err)
 	}
 
 	ethereumChain, err := ethereum.Connect(&config.Ethereum)
 	if err != nil {
-		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
+		return fmt.Errorf("failed to connect to ethereum node: [%v]", err)
 	}
 
 	ctx := context.Background()
 
 	if err := tecdsa.Initialize(ethereumChain, &chaincfg.TestNet3Params); err != nil {
-		return fmt.Errorf("client initialization failed: [%s]", err)
+		return fmt.Errorf("failed to initialize client: [%v]", err)
 	}
 
-	fmt.Printf("Client started.\n")
+	logger.Info("client started")
 
 	select {
 	case <-ctx.Done():

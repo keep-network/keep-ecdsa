@@ -30,22 +30,22 @@ func Sign(c *cli.Context) error {
 
 	privateKey, err := ecdsa.GenerateKey(crand.Reader)
 	if err != nil {
-		return fmt.Errorf("key generation failed [%s]", err)
+		return fmt.Errorf("failed to generate key: [%v]", err)
 	}
 
 	signer := ecdsa.NewSigner(privateKey)
 
-	fmt.Printf("--- Generated Public Key:\nX: %x\nY: %x\n",
+	logger.Debugf("generated public key:\nX: %x\nY: %x",
 		signer.PublicKey().X,
 		signer.PublicKey().Y,
 	)
 
 	signature, err := signer.CalculateSignature(crand.Reader, []byte(arg))
 	if err != nil {
-		return fmt.Errorf("signature calculation failed [%s]", err)
+		return fmt.Errorf("failed to calculate signature: [%v]", err)
 	}
 
-	fmt.Printf("--- Signature:\nR: %x\nS: %x\n", signature.R, signature.S)
+	logger.Infof("calculated signature:\nR: %x\nS: %x", signature.R, signature.S)
 
 	return nil
 }

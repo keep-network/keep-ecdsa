@@ -11,8 +11,12 @@ import (
 	"io"
 	"math/big"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
+
+var logger = log.Logger("keep-ecdsa")
 
 // Signature holds a signature in a form of two big.Int `r` and `s` values and a
 // recovery ID value in {0, 1, 2, 3}.
@@ -154,8 +158,7 @@ func (s *Signer) findRecoveryID(sigR, sigS *big.Int, hash []byte) (int, error) {
 		if err != nil {
 			// If key recovery is executed in appropriate order we we don't expect
 			// the error to happen.
-			// TODO: Change to logger.Warnf after logging is merged to master.
-			fmt.Printf(
+			logger.Warningf(
 				"failed to recover public key in iteration [%d]: [%v]",
 				i,
 				err,

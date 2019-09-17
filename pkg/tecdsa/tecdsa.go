@@ -4,14 +4,15 @@ package tecdsa
 import (
 	crand "crypto/rand"
 	"fmt"
-	"os"
+	"github.com/ipfs/go-log"
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/keep-network/keep-tecdsa/pkg/btc"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
+
+var logger = log.Logger("keep-tecdsa")
 
 // client holds blockchain specific configuration, interfaces to interact with the
 // blockchain and a map of signers for given keeps.
@@ -32,19 +33,22 @@ func Initialize(
 	}
 
 	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
-		fmt.Printf("New ECDSA Keep created [%+v]\n", event)
+		logger.Infof(
+			"new keep created with address: [%s]",
+			event.KeepAddress.String(),
+		)
 
 		go func() {
 			if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
-				fmt.Fprintf(os.Stderr, "signer generation failed: [%s]", err)
+				logger.Errorf("signer generation failed: [%v]", err)
 			}
 		}()
 
 		ethereumChain.OnSignatureRequested(
 			event.KeepAddress,
 			func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
-				fmt.Printf(
-					"new signature requested for digest: [%+x]\n",
+				logger.Debugf(
+					"new signature requested for digest: [%+x]",
 					signatureRequestedEvent.Digest,
 				)
 
@@ -55,7 +59,7 @@ func Initialize(
 					)
 
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "signature calculation failed: [%s]", err)
+						logger.Errorf("signature calculation failed: [%v]", err)
 					}
 				}()
 			},
@@ -71,22 +75,17 @@ func Initialize(
 func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	signer, err := generateSigner()
 
-	// Calculate bitcoin P2WPKH address.
-	// TODO: We don't need to calculate the address here. It should be done in
-	// tBTC utils tool. But we do it for development simplification.
-	btcAddress, err := btc.PublicKeyToWitnessPubKeyHashAddress(
-		signer.PublicKey(),
-		c.bitcoinNetParams,
+	logger.Debugf(
+		"generated signer with public key: [x: [%x], y: [%x]]",
+		signer.PublicKey().X,
+		signer.PublicKey().Y,
 	)
-	if err != nil {
-		return fmt.Errorf("p2wpkh address conversion failed: [%s]", err)
-	}
 
 	// Publish signer's public key on ethereum blockchain in a specific keep
 	// contract.
 	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
 	if err != nil {
-		return fmt.Errorf("public key serialization failed: [%s]", err)
+		return fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
 	err = c.ethereumChain.SubmitKeepPublicKey(
@@ -94,13 +93,12 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 		serializedPublicKey,
 	)
 	if err != nil {
-		return fmt.Errorf("public key submission failed: [%s]", err)
+		return fmt.Errorf("failed to submit public key: [%v]", err)
 	}
 
-	fmt.Printf(
-		"Signer for keep [%s] initialized with Bitcoin P2WPKH address: [%s]\n",
+	logger.Infof(
+		"initialized signer for keep [%s]",
 		keepAddress.String(),
-		btcAddress,
 	)
 
 	// Store the signer in a map, with the keep address as a key. Keep address
@@ -113,7 +111,7 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 func generateSigner() (*ecdsa.Signer, error) {
 	privateKey, err := ecdsa.GenerateKey(crand.Reader)
 	if err != nil {
-		return nil, fmt.Errorf("private key generation failed: [%s]", err)
+		return nil, fmt.Errorf("failed to generate private key: [%v]", err)
 	}
 
 	return ecdsa.NewSigner(privateKey), nil
@@ -122,7 +120,7 @@ func generateSigner() (*ecdsa.Signer, error) {
 func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [32]byte) error {
 	signer, ok := c.keepsSigners.Load(keepAddress.String())
 	if !ok {
-		return fmt.Errorf("signer not available for keep: [%s]", keepAddress.String())
+		return fmt.Errorf("failed to find signer for keep: [%s]", keepAddress.String())
 	}
 
 	signature, err := signer.(*ecdsa.Signer).CalculateSignature(
@@ -130,7 +128,7 @@ func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [
 		digest[:],
 	)
 
-	fmt.Printf(
+	logger.Debugf(
 		"signature calculated:\nr: [%#x]\ns: [%#x]\nrecovery ID: [%d]\n",
 		signature.R,
 		signature.S,
@@ -143,7 +141,7 @@ func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [
 		signature,
 	)
 	if err != nil {
-		return fmt.Errorf("signature submission failed: [%s]", err)
+		return fmt.Errorf("failed to submit signature: [%v]", err)
 	}
 
 	return nil

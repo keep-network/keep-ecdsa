@@ -65,7 +65,7 @@ func (lc *localChain) OnSignatureRequested(
 	keep, ok := lc.keeps[keepAddress]
 	if !ok {
 		return nil, fmt.Errorf(
-			"keep not found for address [%s]",
+			"failed to find keep with address: [%s]",
 			keepAddress.String(),
 		)
 	}
@@ -89,7 +89,7 @@ func (lc *localChain) SubmitKeepPublicKey(
 	keep, ok := lc.keeps[keepAddress]
 	if !ok {
 		return fmt.Errorf(
-			"keep not found for address [%s]",
+			"failed to find keep with address: [%s]",
 			keepAddress.String(),
 		)
 	}

@@ -15,7 +15,7 @@ func DeserializeTransaction(transactionHex []byte) (*wire.MsgTx, error) {
 	reader := bytes.NewReader(transactionHex)
 	err := msgTx.Deserialize(reader)
 	if err != nil {
-		return nil, fmt.Errorf("cannot deserialize transaction [%s]", err)
+		return nil, fmt.Errorf("failed to deserialize transaction: [%v]", err)
 	}
 
 	return msgTx, nil
@@ -28,7 +28,7 @@ func SerializeTransaction(msgTx *wire.MsgTx) ([]byte, error) {
 
 	err := msgTx.Serialize(&buffer)
 	if err != nil {
-		return nil, fmt.Errorf("cannot serialize transaction [%s]", err)
+		return nil, fmt.Errorf("failed to serialize transaction: [%v]", err)
 	}
 
 	return buffer.Bytes(), nil
