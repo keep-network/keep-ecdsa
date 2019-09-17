@@ -9,7 +9,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
-	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
 )
 
 var logger = log.Logger("keep-chain-eth-ethereum")
@@ -94,9 +95,19 @@ func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.ECDSAKeep
 func (ec *EthereumChain) SubmitSignature(
 	keepAddress eth.KeepAddress,
 	digest [32]byte,
-	signature *sign.Signature,
+	signature *ecdsa.Signature,
 ) error {
 	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return err
+	}
+
+	signatureR, err := byteutils.BytesTo32Byte(signature.R.Bytes())
+	if err != nil {
+		return err
+	}
+
+	signatureS, err := byteutils.BytesTo32Byte(signature.S.Bytes())
 	if err != nil {
 		return err
 	}
@@ -104,8 +115,9 @@ func (ec *EthereumChain) SubmitSignature(
 	transaction, err := keepContract.SubmitSignature(
 		ec.transactorOptions,
 		digest,
-		signature.R.Bytes(),
-		signature.S.Bytes(),
+		signatureR,
+		signatureS,
+		uint8(signature.RecoveryID),
 	)
 	if err != nil {
 		return err

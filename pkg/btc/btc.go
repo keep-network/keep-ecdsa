@@ -7,7 +7,7 @@ import (
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/btc"
-	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/utils"
 )
 
@@ -27,7 +27,7 @@ var logger = log.Logger("keep-btc")
 func SignAndPublishTransaction(
 	rand io.Reader,
 	chain btc.Interface,
-	signer *sign.Signer,
+	signer *ecdsa.Signer,
 	witnessSignatureHash []byte,
 	transactionPreimage []byte,
 ) error {

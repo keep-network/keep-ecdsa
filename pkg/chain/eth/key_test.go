@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
 func TestSerializePublicKey(t *testing.T) {
@@ -29,7 +29,7 @@ func TestSerializePublicKey(t *testing.T) {
 	}
 
 	actualResult, err := SerializePublicKey(
-		&sign.PublicKey{
+		&ecdsa.PublicKey{
 			X: new(big.Int).SetBytes(bytes32),
 			Y: new(big.Int).SetBytes(bytes31),
 		},

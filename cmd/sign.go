@@ -4,7 +4,7 @@ import (
 	crand "crypto/rand"
 	"fmt"
 
-	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/urfave/cli"
 )
 
@@ -28,12 +28,12 @@ func init() {
 func Sign(c *cli.Context) error {
 	arg := c.Args().First()
 
-	privateKey, err := sign.GenerateKey(crand.Reader)
+	privateKey, err := ecdsa.GenerateKey(crand.Reader)
 	if err != nil {
 		return fmt.Errorf("failed to generate key: [%v]", err)
 	}
 
-	signer := sign.NewSigner(privateKey)
+	signer := ecdsa.NewSigner(privateKey)
 
 	logger.Debugf("generated public key:\nX: %x\nY: %x",
 		signer.PublicKey().X,

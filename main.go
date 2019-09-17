@@ -58,7 +58,6 @@ func main() {
 		cmd.SignCommand,
 		cmd.StartCommand,
 		cmd.PublishCommand,
-		cmd.SmokeTestCommand,
 	}
 
 	err = app.Run(os.Args)

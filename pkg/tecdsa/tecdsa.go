@@ -4,12 +4,12 @@ package tecdsa
 import (
 	crand "crypto/rand"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
-	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
 var logger = log.Logger("keep-tecdsa")
@@ -108,13 +108,13 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	return nil
 }
 
-func generateSigner() (*sign.Signer, error) {
-	privateKey, err := sign.GenerateKey(crand.Reader)
+func generateSigner() (*ecdsa.Signer, error) {
+	privateKey, err := ecdsa.GenerateKey(crand.Reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate private key: [%v]", err)
 	}
 
-	return sign.NewSigner(privateKey), nil
+	return ecdsa.NewSigner(privateKey), nil
 }
 
 func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [32]byte) error {
@@ -123,12 +123,17 @@ func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [
 		return fmt.Errorf("failed to find signer for keep: [%s]", keepAddress.String())
 	}
 
-	signature, err := signer.(*sign.Signer).CalculateSignature(
+	signature, err := signer.(*ecdsa.Signer).CalculateSignature(
 		crand.Reader,
 		digest[:],
 	)
 
-	logger.Debugf("calculated signature: [%+v]", signature)
+	logger.Debugf(
+		"signature calculated:\nr: [%#x]\ns: [%#x]\nrecovery ID: [%d]\n",
+		signature.R,
+		signature.S,
+		signature.RecoveryID,
+	)
 
 	err = c.ethereumChain.SubmitSignature(
 		keepAddress,

@@ -7,7 +7,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/keep-network/keep-tecdsa/pkg/sign"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
 func TestPublicKeyToWitnessPubKeyHashAddress(t *testing.T) {
@@ -21,7 +21,7 @@ func TestPublicKeyToWitnessPubKeyHashAddress(t *testing.T) {
 	}
 
 	address, err := PublicKeyToWitnessPubKeyHashAddress(
-		(*sign.PublicKey)(btcecPublicKey),
+		(*ecdsa.PublicKey)(btcecPublicKey),
 		&chaincfg.TestNet3Params,
 	)
 	if err != nil {
