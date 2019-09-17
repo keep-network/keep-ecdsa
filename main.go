@@ -1,7 +1,7 @@
 package main
 
 import (
-	goLog "log"
+	golog "log"
 	"os"
 	"path"
 	"time"
@@ -27,7 +27,7 @@ var (
 func main() {
 	err := logging.Configure(os.Getenv("LOG_LEVEL"))
 	if err != nil {
-		goLog.Fatal(err)
+		golog.Fatal(err)
 	}
 
 	app := cli.NewApp()
