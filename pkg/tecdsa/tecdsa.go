@@ -4,7 +4,7 @@ package tecdsa
 import (
 	crand "crypto/rand"
 	"fmt"
-	"log"
+	"github.com/ipfs/go-log"
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg"
