@@ -31,7 +31,7 @@ func (l *localChain) PublishTransaction(rawTx string) (string, error) {
 	}
 	msgTx, err := utils.DeserializeTransaction(rawTxBytes)
 	if err != nil {
-		return "", fmt.Errorf("failed to decode transaction [%s]", err)
+		return "", fmt.Errorf("failed to deserialize transaction: [%v]", err)
 	}
 
 	// Check for duplicate.

@@ -62,7 +62,7 @@ func Execute(config *ethereum.Config) error {
 		keepOwnerAddress,
 	)
 	if err != nil {
-		return fmt.Errorf("call to contract failed: [%s]", err)
+		return fmt.Errorf("failed to call contract: [%v]", err)
 	}
 	logger.Infof(
 		"new keep requested, transaction hash: [%s]",

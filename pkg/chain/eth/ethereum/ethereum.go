@@ -28,7 +28,7 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf("failed keep creation callback: [%v]", err)
+			return fmt.Errorf("keep created callback failed: [%v]", err)
 		},
 	)
 }
@@ -54,7 +54,7 @@ func (ec *EthereumChain) OnSignatureRequested(
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf("failed keep signature requested callback: [%v]", err)
+			return fmt.Errorf("keep signature requested callback failed: [%v]", err)
 		},
 	)
 }

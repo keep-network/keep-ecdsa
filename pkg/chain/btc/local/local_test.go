@@ -82,7 +82,7 @@ func TestValidateTransaction(t *testing.T) {
 		testdata.ValidTx.PreviousOutAmount,
 		msgTx,
 	); err != nil {
-		t.Errorf("transaction validation failed [%s]", err)
+		t.Errorf("transaction validation failed: [%v]", err)
 	}
 }
 

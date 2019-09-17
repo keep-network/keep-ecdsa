@@ -34,13 +34,13 @@ func Initialize(
 
 	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
 		logger.Infof(
-			"received notification of a new keep creation with address: [%s]",
+			"new keep created with address: [%s]",
 			event.KeepAddress.String(),
 		)
 
 		go func() {
 			if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
-				logger.Errorf("signer generation failed: [%s]", err)
+				logger.Errorf("signer generation failed: [%v]", err)
 			}
 		}()
 
@@ -59,7 +59,7 @@ func Initialize(
 					)
 
 					if err != nil {
-						logger.Errorf("signature calculation failed: [%s]", err)
+						logger.Errorf("signature calculation failed: [%v]", err)
 					}
 				}()
 			},
@@ -76,7 +76,7 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	signer, err := generateSigner()
 
 	logger.Debugf(
-		"generated signer with public key:\nx: [%x]\ny: [%x]",
+		"generated signer with public key: [x: [%x], y: [%x]]",
 		signer.PublicKey().X,
 		signer.PublicKey().Y,
 	)

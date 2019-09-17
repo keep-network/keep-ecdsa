@@ -61,7 +61,7 @@ func SignAndPublishTransaction(
 		return err
 	}
 
-	logger.Debugf("publish transaction: [%x]", rawSignedTransaction)
+	logger.Debugf("publishing transaction: [%x]", rawSignedTransaction)
 
 	transactionHash, err := Publish(chain, rawSignedTransaction)
 	if err != nil {
