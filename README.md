@@ -59,9 +59,13 @@ configuration CLI supports `--config` flag.
 
 **Prerequisites**
 - contracts deployed: `truffle migrate --reset`
-- Ethereum account `PrivateKey` provided in `config.toml`
 - `ECDSAKeepFactory` contract address provided in `config.toml`
-- off-chain client running: `go run . start`
+- ethereum account `KeyFile` path provided in `config.toml` and password to the
+  key file provided as `KEEP_ETHEREUM_PASSWORD` environment variable
+- off-chain client running: 
+    ```sh
+    LOG_LEVEL=debug KEEP_ETHEREUM_PASSWORD=password go run . start
+    ```
 
 To run a smoke test execute:
 ```sh
