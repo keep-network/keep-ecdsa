@@ -1,6 +1,8 @@
 package ethereum
 
 import (
+	"crypto/ecdsa"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -18,13 +20,8 @@ type EthereumChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(config *Config) (eth.Interface, error) {
+func Connect(privateKey *ecdsa.PrivateKey, config *Config) (eth.Interface, error) {
 	client, err := ethclient.Dial(config.URL)
-	if err != nil {
-		return nil, err
-	}
-
-	privateKey, err := crypto.HexToECDSA(config.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
