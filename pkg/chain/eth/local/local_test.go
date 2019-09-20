@@ -118,7 +118,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		keepPublicKey,
 	)
 	if err != nil {
-		t.Fatalf("unexpected error: [%s]", err)
+		t.Fatalf("unexpected error: [%v]", err)
 	}
 
 	if !reflect.DeepEqual(keepPublicKey, chain.keeps[keepAddress].publicKey) {

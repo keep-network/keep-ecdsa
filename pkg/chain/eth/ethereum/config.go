@@ -28,7 +28,7 @@ func (c *Config) ContractAddress(contractName string) (common.Address, error) {
 	contractAddress, ok := c.ContractAddresses[contractName]
 	if !ok {
 		return common.Address{}, fmt.Errorf(
-			"configuration for contract [%s] not found",
+			"failed to find configuration for contract [%s]",
 			contractName,
 		)
 	}

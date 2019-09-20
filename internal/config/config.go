@@ -20,7 +20,7 @@ type Config struct {
 func ReadConfig(filePath string) (*Config, error) {
 	config := &Config{}
 	if _, err := toml.DecodeFile(filePath, config); err != nil {
-		return nil, fmt.Errorf("unable to decode .toml file [%s] error [%s]", filePath, err)
+		return nil, fmt.Errorf("failed to decode file [%s]: [%v]", filePath, err)
 	}
 
 	return config, nil

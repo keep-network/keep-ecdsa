@@ -12,7 +12,7 @@ import (
 func Publish(chain btc.Interface, rawTx []byte) (string, error) {
 	result, err := chain.PublishTransaction(hex.EncodeToString(rawTx))
 	if err != nil {
-		return "", fmt.Errorf("transaction broadcast failed [%s]", err)
+		return "", fmt.Errorf("failed to publish transaction: [%v]", err)
 	}
 	return result, nil
 }

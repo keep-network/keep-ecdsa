@@ -27,11 +27,11 @@ func (l *localChain) PublishTransaction(rawTx string) (string, error) {
 
 	rawTxBytes, err := hex.DecodeString(rawTx)
 	if err != nil {
-		return "", fmt.Errorf("cannot decode string [%s]", err)
+		return "", fmt.Errorf("failed to decode transaction: [%v]", err)
 	}
 	msgTx, err := utils.DeserializeTransaction(rawTxBytes)
 	if err != nil {
-		return "", fmt.Errorf("cannot deserialize transaction [%s]", err)
+		return "", fmt.Errorf("failed to deserialize transaction: [%v]", err)
 	}
 
 	// Check for duplicate.
@@ -94,7 +94,7 @@ func ValidateTransaction(
 
 	subscript, err := hex.DecodeString(previousOutputScript)
 	if err != nil {
-		return fmt.Errorf("source subscript decoding failed [%s]", err)
+		return fmt.Errorf("failed to decode source subscript: [%v]", err)
 	}
 
 	validationEngine, err := txscript.NewEngine(
@@ -108,14 +108,14 @@ func ValidateTransaction(
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"cannot create validation engine [%s]",
+			"failed to create validation engine: [%v]",
 			err,
 		)
 	}
 
 	if err := validationEngine.Execute(); err != nil {
 		return fmt.Errorf(
-			"transaction validation failed [%s]",
+			"failed to validate transaction: [%v]",
 			err,
 		)
 	}

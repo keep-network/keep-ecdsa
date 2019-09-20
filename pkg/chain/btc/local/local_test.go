@@ -42,7 +42,7 @@ func TestPublishTransaction(t *testing.T) {
 		"transaction validation failed - unsigned transaction": {
 			rawTx:          txUnsigned(),
 			expectedResult: "",
-			expectedError:  fmt.Errorf("transaction validation failed [should have exactly two items in witness, instead have 0]"),
+			expectedError:  fmt.Errorf("failed to validate transaction: [should have exactly two items in witness, instead have 0]"),
 		},
 	}
 
@@ -82,7 +82,7 @@ func TestValidateTransaction(t *testing.T) {
 		testdata.ValidTx.PreviousOutAmount,
 		msgTx,
 	); err != nil {
-		t.Errorf("transaction validation failed [%s]", err)
+		t.Errorf("transaction validation failed: [%v]", err)
 	}
 }
 

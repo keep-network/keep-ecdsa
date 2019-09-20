@@ -29,12 +29,16 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     );
 
     // Notification that the signature has been calculated. Contains a digest which
-    // was used for signature calculation and a signature in a form of R and S
-    // values.
+    // was used for signature calculation and a signature in a form of r, s and
+    // recovery ID values.
+    // The signature is chain-agnostic. Some chains (e.g. Ethereum and BTC) requires
+    // `v` to be calculated by increasing recovery id by 27. Please consult the
+    // documentation about what the particular chain expects.
     event SignatureSubmitted(
         bytes32 digest,
-        bytes r,
-        bytes s
+        bytes32 r,
+        bytes32 s,
+        uint8   recoveryID
     );
 
     constructor(
@@ -72,17 +76,27 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// @param _digest Digest for which calculator was calculated.
     /// @param _r Calculated signature's R value.
     /// @param _s Calculated signature's S value.
+    /// @param _recoveryID Calculated signature's recovery ID (one of {0, 1, 2, 3}).
     function submitSignature(
         bytes32 _digest,
-        bytes calldata _r,
-        bytes calldata _s
+        bytes32 _r,
+        bytes32 _s,
+        uint8 _recoveryID
     ) external onlyMember {
-        require(_r.length == 32, "R must be 32-bytes long");
-        require(_s.length == 32, "S must be 32-bytes long");
+        require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
-        // TODO: Add signature verification?
+        // We add 27 to the recovery ID to align it with ethereum and bitcoin
+        // protocols where 27 is added to recovery ID to indicate usage of
+        // uncompressed public keys.
+        uint8 _v = 27 + _recoveryID;
 
-        emit SignatureSubmitted(_digest, _r, _s);
+        // Validate signature.
+        require(
+            publicKeyToAddress(publicKey) == ecrecover(_digest, _v, _r, _s),
+            "Invalid signature"
+        );
+
+        emit SignatureSubmitted(_digest, _r, _s, _recoveryID);
     }
 
     /// @notice Checks if the caller is a keep member.
@@ -90,5 +104,15 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     modifier onlyMember() {
         require(members.contains(msg.sender), "Caller is not the keep member");
         _;
+    }
+
+    /// @notice Coverts a public key to an ethereum address.
+    /// @param _publicKey Public key provided as 64-bytes concatenation of
+    /// X and Y coordinates (32-bytes each).
+    /// @return Ethereum address.
+    function publicKeyToAddress(bytes memory _publicKey) internal pure returns (address) {
+        // We hash the public key and then truncate last 20 bytes of the digest
+        // which is the ethereum address.
+        return address(uint160(uint256(keccak256(_publicKey))));
     }
 }

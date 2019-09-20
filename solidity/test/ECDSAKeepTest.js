@@ -111,10 +111,11 @@ contract('ECDSAKeep', (accounts) => {
   })
 
   describe('submitSignature', () => {
-    const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
-    const publicKey = '0xda7deb4491a25c6d3ef36e291c825aa7cfbba776f54c4373ebee9d15cb4b988858879cb2c60c61cdaac1524e9f5e5b0ca2e52e0172cdec932ee6180383eca830'
-    const signatureR = '0x7a31b539b7b67ae1d998f1929d95a89b497b600db36e8b474f4b9e703decd82a'
-    const signatureS = '0x597fbca252abeedab90ef2e8b8088eeef9e2e3ac824b4626396fc46f2934f185'
+    const digest = '0x54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
+    const publicKey = '0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051'
+    const signatureR = '0x9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
+    const signatureS = '0x90838891021e1c7d0d1336613f24ecab703dee5ff1b6c8881bccc2c011606a35'
+    const signatureRecoveryID = 0
 
     let keep
 
@@ -125,57 +126,62 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('emits an event', async () => {
-      let res = await keep.submitSignature(digest, signatureR, signatureS, { from: members[0] })
+      let res = await keep.submitSignature(
+        digest,
+        signatureR,
+        signatureS,
+        signatureRecoveryID,
+        { from: members[0] }
+      )
 
       truffleAssert.eventEmitted(res, 'SignatureSubmitted', (ev) => {
-        return ev.digest == digest && ev.r == signatureR && ev.s == signatureS
+        return ev.digest == digest
+          && ev.r == signatureR
+          && ev.s == signatureS
+          && ev.recoveryID == signatureRecoveryID
       })
     })
 
     describe('validates signature', async () => {
-      const bytes31 = '0x01020304050607080910111213141516171819202122232425262728293031'
-      const bytes33 = '0x010203040506070809101112131415161718192021222324252627282930313233'
-
-      it('rejects R of 31-byte length', async () => {
+      it('rejects recovery ID out of allowed range', async () => {
         try {
-          await keep.submitSignature(digest, bytes31, signatureS, { from: members[0] })
+          await keep.submitSignature(
+            digest,
+            signatureR,
+            signatureS,
+            4,
+            { from: members[0] }
+          )
           assert(false, 'Test call did not error as expected')
         } catch (e) {
-          assert.include(e.message, "R must be 32-bytes long")
+          assert.include(e.message, "Recovery ID must be one of {0, 1, 2, 3}")
         }
       })
 
-      it('rejects R of 33-byte length', async () => {
+      it('rejects invalid signature', async () => {
         try {
-          await keep.submitSignature(digest, bytes33, signatureS, { from: members[0] })
+          await keep.submitSignature(
+            digest,
+            signatureR,
+            signatureS,
+            1,
+            { from: members[0] }
+          )
           assert(false, 'Test call did not error as expected')
         } catch (e) {
-          assert.include(e.message, "R must be 32-bytes long")
-        }
-      })
-
-      it('rejects S of 31-byte length', async () => {
-        try {
-          await keep.submitSignature(digest, signatureR, bytes31, { from: members[0] })
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, "S must be 32-bytes long")
-        }
-      })
-
-      it('rejects S of 33-byte length', async () => {
-        try {
-          await keep.submitSignature(digest, signatureR, bytes33, { from: members[0] })
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, "S must be 32-bytes long")
+          assert.include(e.message, "Invalid signature")
         }
       })
     })
 
     it('cannot be called by non-member', async () => {
       try {
-        await keep.submitSignature(digest, signatureR, signatureS)
+        await keep.submitSignature(
+          digest,
+          signatureR,
+          signatureS,
+          signatureRecoveryID
+        )
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'Caller is not the keep member')
@@ -184,7 +190,13 @@ contract('ECDSAKeep', (accounts) => {
 
     it('cannot be called by non-member owner', async () => {
       try {
-        await keep.submitSignature(digest, signatureR, signatureS, { from: owner })
+        await keep.submitSignature(
+          digest,
+          signatureR,
+          signatureS,
+          signatureRecoveryID,
+          { from: owner }
+        )
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'Caller is not the keep member')

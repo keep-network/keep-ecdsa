@@ -8,9 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ipfs/go-log"
 	goElectrum "github.com/keep-network/go-electrum/electrum"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/btc"
 )
+
+var logger = log.Logger("keep-chain-btc-electrum")
 
 type electrum struct {
 	electrumServer *goElectrum.Server
@@ -41,15 +44,16 @@ func Connect(config *Config) (btc.Interface, error) {
 	// TODO: For development we support only SSL connections because there are
 	// more SSL than TCP electrum servers available for BTC testnet.
 	if err := server.ConnectSSL(serverAddress, tlsConfig); err != nil {
-		return nil, fmt.Errorf("connecting to %s failed [%s]", serverAddress, err)
+		return nil, fmt.Errorf("failed to connect to [%s]: [%v]", serverAddress, err)
 	}
 
 	serverVersion, protocolVersion, err := server.ServerVersion()
 	if err != nil {
-		return nil, fmt.Errorf("cannot get server version [%s]", err)
+		return nil, fmt.Errorf("failed to get server version: [%v]", err)
 	}
-	fmt.Printf(
-		"Connected to Electrum Server.\nServer version: %s [Protocol %s]\n",
+
+	logger.Infof(
+		"connected to electrum server: [server version: [%s], protocol: [%s]]",
 		serverVersion,
 		protocolVersion,
 	)
@@ -58,7 +62,7 @@ func Connect(config *Config) (btc.Interface, error) {
 	go func() {
 		for {
 			if err := server.Ping(); err != nil {
-				fmt.Printf("ping failed [%s]\n", err)
+				logger.Warningf("failed ping request: [%v]", err)
 			}
 			time.Sleep(60 * time.Second)
 		}
