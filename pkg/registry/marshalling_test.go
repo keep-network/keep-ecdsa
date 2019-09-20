@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/utils/pbutils"
 )
 
 func TestMembershipRoundtrip(t *testing.T) {
@@ -25,29 +25,11 @@ func TestMembershipRoundtrip(t *testing.T) {
 
 	unmarshaled := &Membership{}
 
-	err = RoundTrip(membership, unmarshaled)
+	err = pbutils.RoundTrip(membership, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(membership, unmarshaled) {
 		t.Fatalf("unexpected content of unmarshaled membership")
 	}
-}
-
-// Code borrowed from keep-core/pkg/internal/pbutils
-func RoundTrip(
-	marshaler proto.Marshaler,
-	unmarshaler proto.Unmarshaler,
-) error {
-	bytes, err := marshaler.Marshal()
-	if err != nil {
-		return err
-	}
-
-	err = unmarshaler.Unmarshal(bytes)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
