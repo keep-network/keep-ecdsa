@@ -22,7 +22,7 @@ require (
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/go-electrum v0.0.0-20190423065222-2dcd82312dcf
 	github.com/keep-network/keep-common v0.0.0-20190913171706-8724d3522a8d
-	github.com/keep-network/keep-core v0.3.0
+	github.com/keep-network/keep-core v0.6.0
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/rs/cors v1.6.0 // indirect

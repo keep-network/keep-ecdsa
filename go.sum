@@ -46,6 +46,8 @@ github.com/keep-network/keep-common v0.0.0-20190913171706-8724d3522a8d h1:9unxY3
 github.com/keep-network/keep-common v0.0.0-20190913171706-8724d3522a8d/go.mod h1:N2gmkjBNNWw93GQCA0UlSKi6NoZHf3HcE1zo59A0O+E=
 github.com/keep-network/keep-core v0.3.0 h1:nhVu6u0rXdGv92AJ9wBLPY/RRExn5JXQwHYsdJIscf4=
 github.com/keep-network/keep-core v0.3.0/go.mod h1:WcX2u+DI+szY7DyyBW+W0mm3/aG8EyAwVtYFHgJkAUg=
+github.com/keep-network/keep-core v0.6.0 h1:0ba9BXMDqxJRD9adRWE5Gc/qV60Ze6orasETy7LE1S4=
+github.com/keep-network/keep-core v0.6.0/go.mod h1:WcX2u+DI+szY7DyyBW+W0mm3/aG8EyAwVtYFHgJkAUg=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
