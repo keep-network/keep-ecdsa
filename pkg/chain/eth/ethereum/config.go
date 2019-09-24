@@ -17,9 +17,22 @@ type Config struct {
 	// ContractAddresses map holds contract name as a key and contract address
 	// as a value.
 	ContractAddresses map[string]string
-	// Private key for client's address to interact with Ethereum chain.
-	// TODO: Provide more secure solution, e.g. reading protected files from disk.
-	PrivateKey string
+
+	Account Account
+}
+
+// Account is a struct that contains the configuration for accessing Ethereum
+// network.
+type Account struct {
+	// Keyfile is a full path to a key file. Normally this file is one of the
+	// imported keys in your local Ethereum server. It can normally be found in
+	// a directory <some-path>/data/keystore/ and starts with its creation date
+	// "UTC--.*".
+	KeyFile string
+
+	// KeyFilePassword is the password used to unlock the account specified in
+	// KeyFile.
+	KeyFilePassword string
 }
 
 // ContractAddress finds a given contract's address configuration and returns it
