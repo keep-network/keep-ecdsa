@@ -4,10 +4,10 @@ package tecdsa
 import (
 	crand "crypto/rand"
 	"fmt"
-	"github.com/ipfs/go-log"
-	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -38,6 +38,16 @@ func Initialize(
 		groupRegistry:    groupRegistry,
 	}
 
+	// Load current signing group memberships from storage and register for
+	// signing events.
+	groupRegistry.LoadExistingGroups()
+
+	groupRegistry.ForEachGroup(func(keepAddress common.Address, membership *registry.Membership) bool {
+		client.registerForSignEvents(keepAddress)
+		return true
+	})
+
+	// Watch for new keeps creation.
 	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
 		logger.Infof(
 			"new keep created with address: [%s]",
@@ -48,31 +58,37 @@ func Initialize(
 			if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
 				logger.Errorf("signer generation failed: [%v]", err)
 			}
+
+			client.registerForSignEvents(event.KeepAddress)
 		}()
-
-		ethereumChain.OnSignatureRequested(
-			event.KeepAddress,
-			func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
-				logger.Debugf(
-					"new signature requested for digest: [%+x]",
-					signatureRequestedEvent.Digest,
-				)
-
-				go func() {
-					err := client.calculateSignatureForKeep(
-						event.KeepAddress,
-						signatureRequestedEvent.Digest,
-					)
-
-					if err != nil {
-						logger.Errorf("signature calculation failed: [%v]", err)
-					}
-				}()
-			},
-		)
 	})
 
 	return nil
+}
+
+// registerForSignEvents registers for signature requested events emitted by
+// specific keep contract.
+func (c *client) registerForSignEvents(keepAddress eth.KeepAddress) {
+	c.ethereumChain.OnSignatureRequested(
+		keepAddress,
+		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
+			logger.Debugf(
+				"new signature requested for digest: [%+x]",
+				signatureRequestedEvent.Digest,
+			)
+
+			go func() {
+				err := c.calculateSignatureForKeep(
+					keepAddress,
+					signatureRequestedEvent.Digest,
+				)
+
+				if err != nil {
+					logger.Errorf("signature calculation failed: [%v]", err)
+				}
+			}()
+		},
+	)
 }
 
 // generateSignerForKeep generates a new signer with ECDSA key pair and calculates
