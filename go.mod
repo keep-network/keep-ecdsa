@@ -19,6 +19,7 @@ require (
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/ethereum/go-ethereum v0.0.0-00010101000000-000000000000
 	github.com/go-stack/stack v1.8.0 // indirect
+	github.com/gogo/protobuf v1.2.1
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/go-electrum v0.0.0-20190423065222-2dcd82312dcf
 	github.com/keep-network/keep-common v0.0.0-20190913171706-8724d3522a8d
