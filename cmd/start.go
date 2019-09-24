@@ -7,6 +7,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
@@ -52,9 +53,18 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("failed to connect to ethereum node: [%v]", err)
 	}
 
+	persistence := persistence.NewEncryptedPersistence(
+		persistence.NewDiskHandle(config.Storage.DataDir),
+		config.Ethereum.Account.KeyFilePassword,
+	)
+
 	ctx := context.Background()
 
-	if err := tecdsa.Initialize(ethereumChain, &chaincfg.TestNet3Params); err != nil {
+	if err := tecdsa.Initialize(
+		ethereumChain,
+		&chaincfg.TestNet3Params,
+		persistence,
+	); err != nil {
 		return fmt.Errorf("failed to initialize client: [%v]", err)
 	}
 
