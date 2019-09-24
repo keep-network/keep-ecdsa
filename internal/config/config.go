@@ -17,6 +17,12 @@ type Config struct {
 	Electrum    electrum.Config
 	BlockCypher blockcypher.Config
 	Ethereum    ethereum.Config
+	Storage     Storage
+}
+
+// Storage stores meta-info about keeping data on disk
+type Storage struct {
+	DataDir string
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file
