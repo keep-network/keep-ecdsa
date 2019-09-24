@@ -43,7 +43,7 @@ func Start(c *cli.Context) error {
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"failed to read KeyFile: %s [%v]", config.Ethereum.Account.KeyFile, err,
+			"failed to read key file [%s]: [%v]", config.Ethereum.Account.KeyFile, err,
 		)
 	}
 

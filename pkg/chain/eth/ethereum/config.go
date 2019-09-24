@@ -21,11 +21,11 @@ type Config struct {
 	Account Account
 }
 
-// Account is a struct that contains the configuration for accessing an
-// Ethereum network and a contract on the network.
+// Account is a struct that contains the configuration for accessing Ethereum
+// network.
 type Account struct {
-	// Keyfile is a full path to a key file.  Normally this file is one of the
-	// imported keys in your local Ethereum server.  It can normally be found in
+	// Keyfile is a full path to a key file. Normally this file is one of the
+	// imported keys in your local Ethereum server. It can normally be found in
 	// a directory <some-path>/data/keystore/ and starts with its creation date
 	// "UTC--.*".
 	KeyFile string
