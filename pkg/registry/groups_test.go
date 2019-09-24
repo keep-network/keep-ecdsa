@@ -75,7 +75,7 @@ func TestGetGroup(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
 	gr := NewGroupRegistry(persistenceMock)
 
-	gr.myGroups.Store(keepAddress1.String(), signer1)
+	gr.myGroups.Store(keepAddress1.String(), &Membership{keepAddress1, signer1})
 
 	var tests = map[string]struct {
 		keepAddress   common.Address
