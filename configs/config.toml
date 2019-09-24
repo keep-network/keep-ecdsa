@@ -20,7 +20,7 @@
     # which is set as a keep member in ECDSAKeepFactory contract. This is a 
     # temporary solution which should be replaced with an actual generated key 
     # after member registration is implemented in https://github.com/keep-network/keep-tecdsa/issues/63.
-	KeyFile = "solidity/test/integration/eth_key_1c25f178599d00b3887bf6d9084cf0c6d49a3097"
+	KeyFile = "solidity/integration/eth_key_1c25f178599d00b3887bf6d9084cf0c6d49a3097"
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
