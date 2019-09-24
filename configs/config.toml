@@ -16,7 +16,11 @@
     URL = "ws://127.0.0.1:8545"
     
 [ethereum.account]
-	KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    # We use key file of an account 0x1C25f178599d00b3887BF6D9084cf0C6d49a3097
+    # which is set as a keep member in ECDSAKeepFactory contract. This is a 
+    # temporary solution which should be replaced with an actual generated key 
+    # after member registration is implemented in https://github.com/keep-network/keep-tecdsa/issues/63.
+	KeyFile = "solidity/test/integration/eth_key_1c25f178599d00b3887bf6d9084cf0c6d49a3097"
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
