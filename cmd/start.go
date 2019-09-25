@@ -6,6 +6,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
@@ -36,7 +37,17 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("failed while reading config file: [%v]", err)
 	}
 
-	ethereumChain, err := ethereum.Connect(&config.Ethereum)
+	ethereumKey, err := ethutil.DecryptKeyFile(
+		config.Ethereum.Account.KeyFile,
+		config.Ethereum.Account.KeyFilePassword,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to read key file [%s]: [%v]", config.Ethereum.Account.KeyFile, err,
+		)
+	}
+
+	ethereumChain, err := ethereum.Connect(ethereumKey.PrivateKey, &config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("failed to connect to ethereum node: [%v]", err)
 	}

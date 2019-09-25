@@ -63,9 +63,10 @@ configuration CLI supports `--config` flag.
 
 **Prerequisites**
 - contracts deployed: `truffle migrate --reset`
-- Ethereum account `PrivateKey` provided in `config.toml`
 - `ECDSAKeepFactory` contract address provided in `config.toml`
-- off-chain client running: `go run . start`
+- ethereum account `KeyFile` path provided in `config.toml` and password to the
+  key file provided as `KEEP_ETHEREUM_PASSWORD` environment variable
+- off-chain [client](#Client) running
 
 To run a smoke test execute:
 ```sh
@@ -73,16 +74,20 @@ cd solidity/
 truffle exec integration/smoke_test.js
 ```
 
-It requires solidity contracts to be deployed and their addresses provided in
-`config.toml` file.
-
 ---
 
 ## Client
 
 To start a `keep-tecdsa` client execute:
 ```sh
-./keep-tecdsa start
+LOG_LEVEL="debug" KEEP_ETHEREUM_PASSWORD="password" ./keep-tecdsa start
+```
+
+### Development
+
+To start a client from source code execute:
+```sh
+LOG_LEVEL="debug" KEEP_ETHEREUM_PASSWORD="password" go run . start
 ```
 
 ---
