@@ -7,7 +7,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-core/pkg/persistence"
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
