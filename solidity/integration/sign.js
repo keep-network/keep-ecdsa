@@ -39,8 +39,9 @@ module.exports = async function () {
 
     try {
         console.log('request signature...')
-        const digest = web3.eth.accounts.hashMessage("hello")
         const signatureSubmittedEvent = watchSignatureSubmittedEvent(keep)
+
+        const digest = web3.eth.accounts.hashMessage("hello")
 
         await keep.sign(digest, { from: keepOwner })
 
