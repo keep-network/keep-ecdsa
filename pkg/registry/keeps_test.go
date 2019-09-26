@@ -27,7 +27,7 @@ func TestRegisterSigner(t *testing.T) {
 	gr := NewKeepsRegistry(persistenceMock)
 
 	expectedSignerBytes, _ := signer1.Marshal()
-	expectedPersistedSigner := &testFileInfo{
+	expectedFile := &testFileInfo{
 		data:      expectedSignerBytes,
 		directory: keepAddress1.String(),
 		name:      "/signer_0",
@@ -45,27 +45,13 @@ func TestRegisterSigner(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(
-		expectedPersistedSigner,
+		expectedFile,
 		persistenceMock.persistedGroups[0],
 	) {
 		t.Errorf(
 			"unexpected persisted group\nexpected: [%+v]\nactual:   [%+v]",
-			expectedPersistedSigner,
+			expectedFile,
 			persistenceMock.persistedGroups[0],
-		)
-	}
-
-	// Verify stored in a map.
-	signer, ok := gr.myKeeps.Load(keepAddress1.String())
-	if !ok {
-		t.Errorf("failed to load signer")
-	}
-
-	if !reflect.DeepEqual(signer1, signer) {
-		t.Errorf(
-			"unexpected signer\nexpected: [%+v]\nactual:   [%+v]",
-			signer1,
-			signer,
 		)
 	}
 }
@@ -81,7 +67,7 @@ func TestGetGroup(t *testing.T) {
 		expectedSigner *ecdsa.Signer
 		expectedError  error
 	}{
-		"returns group for registered keep": {
+		"returns registered keep": {
 			keepAddress:    keepAddress1,
 			expectedSigner: signer1,
 		},
@@ -122,6 +108,9 @@ func TestRegisterNewGroupForTheSameKeep(t *testing.T) {
 	gr.RegisterSigner(keepAddress1, signer2)
 
 	signer, err := gr.GetSigner(keepAddress1)
+	if err != nil {
+		t.Error(err)
+	}
 
 	if !reflect.DeepEqual(signer2, signer) {
 		t.Errorf(
@@ -131,9 +120,6 @@ func TestRegisterNewGroupForTheSameKeep(t *testing.T) {
 		)
 	}
 
-	if err != nil {
-		t.Errorf("unexpected error: [%v]", err)
-	}
 }
 
 func TestLoadExistingGroups(t *testing.T) {
