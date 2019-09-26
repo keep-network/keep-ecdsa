@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
@@ -41,10 +40,9 @@ func Initialize(
 	// Load current keeps signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
 
-	keepsRegistry.ForEachKeep(func(keepAddress common.Address, signer *ecdsa.Signer) bool {
+	for _, keepAddress := range keepsRegistry.GetKeepsAddresses() {
 		client.registerForSignEvents(keepAddress)
-		return true
-	})
+	}
 
 	// Watch for new keeps creation.
 	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {

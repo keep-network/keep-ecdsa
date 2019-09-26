@@ -87,7 +87,7 @@ func TestGetGroup(t *testing.T) {
 		},
 		"returns error for not registered keep": {
 			keepAddress:   keepAddress2,
-			expectedError: fmt.Errorf("failed to find signer for keep: [%s]", keepAddress2.String()),
+			expectedError: fmt.Errorf("could not find signer: [%s]", keepAddress2.String()),
 		},
 	}
 
@@ -141,23 +141,17 @@ func TestLoadExistingGroups(t *testing.T) {
 
 	gr := NewKeepsRegistry(persistenceMock)
 
-	gr.ForEachKeep(func(keepAddress common.Address, signer *ecdsa.Signer) bool {
-		t.Fatal("unexpected signer at start")
-		return false
-	})
+	if len(gr.GetKeepsAddresses()) != 0 {
+		t.Fatal("unexpected keeps number at start")
+	}
 
 	gr.LoadExistingKeeps()
 
 	signersCount := 0
 
-	gr.ForEachKeep(func(keepAddress common.Address, signer *ecdsa.Signer) bool {
-		signersCount++
-		return true
-	})
-
-	if signersCount != 2 {
+	if len(gr.GetKeepsAddresses()) != 2 {
 		t.Fatalf(
-			"unexpected number of signers\nexpected: [%d]\nactual:   [%d]",
+			"unexpected number of keeps\nexpected: [%d]\nactual:   [%d]",
 			2,
 			signersCount,
 		)

@@ -43,21 +43,22 @@ func (g *Keeps) RegisterSigner(
 func (g *Keeps) GetSigner(keepAddress common.Address) (*ecdsa.Signer, error) {
 	signer, ok := g.myKeeps.Load(keepAddress.String())
 	if !ok {
-		return nil, fmt.Errorf("failed to find signer for keep: [%s]", keepAddress.String())
+		return nil, fmt.Errorf("could not find signer: [%s]", keepAddress.String())
 	}
 	return signer.(*ecdsa.Signer), nil
 }
 
-// ForEachKeep calls function sequentially for each keep address and its' signer
-// present in the keeps map. If the function returns false, range stops the
-// iteration.
-func (g *Keeps) ForEachKeep(
-	function func(keepAddress common.Address, signer *ecdsa.Signer) bool,
-) {
+// GetKeepsAddresses returns addresses of all registered keeps.
+func (g *Keeps) GetKeepsAddresses() []common.Address {
+	keepsAddresses := make([]common.Address, 0)
+
 	g.myKeeps.Range(func(key, value interface{}) bool {
 		keepAddress := common.HexToAddress(key.(string))
-		return function(keepAddress, value.(*ecdsa.Signer))
+		keepsAddresses = append(keepsAddresses, keepAddress)
+		return true
 	})
+
+	return keepsAddresses
 }
 
 // LoadExistingKeeps iterates over all signers stored on disk and loads them
@@ -96,12 +97,12 @@ func (g *Keeps) LoadExistingKeeps() {
 }
 
 func (g *Keeps) printSigners() {
-	g.ForEachKeep(func(keepAddress common.Address, signer *ecdsa.Signer) bool {
+	g.myKeeps.Range(func(key, value interface{}) bool {
 		logger.Infof(
 			"signer for keep [%s] was loaded with public key: [x: [%x], y: [%x]]",
-			keepAddress.String(),
-			signer.PublicKey().X,
-			signer.PublicKey().Y,
+			key,
+			value.(*ecdsa.Signer).PublicKey().X,
+			value.(*ecdsa.Signer).PublicKey().Y,
 		)
 		return true
 	})
