@@ -6,8 +6,8 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
@@ -60,13 +60,11 @@ func Start(c *cli.Context) error {
 
 	ctx := context.Background()
 
-	if err := tecdsa.Initialize(
+	tecdsa.Initialize(
 		ethereumChain,
 		&chaincfg.TestNet3Params,
 		persistence,
-	); err != nil {
-		return fmt.Errorf("failed to initialize client: [%v]", err)
-	}
+	)
 
 	logger.Info("client started")
 

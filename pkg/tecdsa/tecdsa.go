@@ -28,7 +28,7 @@ func Initialize(
 	ethereumChain eth.Interface,
 	bitcoinNetParams *chaincfg.Params,
 	persistence persistence.Handle,
-) error {
+) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
 	client := &client{
@@ -59,8 +59,6 @@ func Initialize(
 			client.registerForSignEvents(event.KeepAddress)
 		}()
 	})
-
-	return nil
 }
 
 // registerForSignEvents registers for signature requested events emitted by
