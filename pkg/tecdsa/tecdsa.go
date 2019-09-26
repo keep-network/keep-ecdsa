@@ -87,8 +87,8 @@ func (c *client) registerForSignEvents(keepAddress eth.KeepAddress) {
 }
 
 // generateSignerForKeep generates a new signer with ECDSA key pair and calculates
-// bitcoin specific P2WPKH address based on signer's public key. It stores the
-// signer in a map assigned to a provided keep address.
+// bitcoin specific P2WPKH address based on signer's public key. It registers
+// signer in a keeps registry for a given keep address.
 func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	signer, err := generateSigner()
 

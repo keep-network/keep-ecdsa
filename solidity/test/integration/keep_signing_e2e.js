@@ -24,7 +24,7 @@ module.exports = async function () {
 
         const keepAddress = openKeepTx.logs[0].args.keepAddress
 
-        console.log("New keep created with address:", keepAddress)
+        console.log("new keep created at address:", keepAddress)
 
         const keep = await ECDSAKeep.at(keepAddress)
 
@@ -52,7 +52,7 @@ async function requestSignature(keep, keepOwner, digest) {
             throw new Error(`event watching failed: [${err}]`)
         })
 
-    console.log('Sign digest:', digest)
+    console.log('signing digest:', digest)
 
     await keep.sign(digest, { from: keepOwner })
         .catch(err => {
@@ -65,7 +65,5 @@ async function requestSignature(keep, keepOwner, digest) {
         throw new Error(`unexpected digest: ${receivedSignatureEvent.returnValues.digest}`)
     }
 
-    // TODO: Validate signature.
-
-    console.log(`Received valid signature:\nR: ${receivedSignatureEvent.returnValues.r}\nS: ${receivedSignatureEvent.returnValues.s}`)
+    console.log(`received signature:\nR: ${receivedSignatureEvent.returnValues.r}\nS: ${receivedSignatureEvent.returnValues.s}`)
 }
