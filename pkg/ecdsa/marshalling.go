@@ -1,19 +1,16 @@
 package ecdsa
 
 import (
-	cecdsa "crypto/ecdsa"
 	"fmt"
-	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-tecdsa/pkg/registry/gen/pb"
 )
 
 // Marshal converts Signer to byte array.
 func (s *Signer) Marshal() ([]byte, error) {
 	return (&pb.Signer{
-		PrivateKey: s.privateKey.D.Text(16),
+		PrivateKey: crypto.FromECDSA(s.privateKey),
 	}).Marshal()
 }
 
@@ -24,17 +21,10 @@ func (s *Signer) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	privateKeyD, ok := new(big.Int).SetString(pbSigner.PrivateKey, 16)
-	if !ok {
-		return fmt.Errorf("failed to set private key from string")
+	privateKey, err := crypto.ToECDSA(pbSigner.PrivateKey)
+	if err != nil {
+		return fmt.Errorf("failed to decode private key: [%v]", err)
 	}
-
-	privateKey := &cecdsa.PrivateKey{}
-	curve := secp256k1.S256()
-
-	privateKey.PublicKey.Curve = curve
-	privateKey.D = privateKeyD
-	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(privateKeyD.Bytes())
 
 	s.privateKey = privateKey
 
