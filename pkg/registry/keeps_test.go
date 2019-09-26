@@ -27,7 +27,7 @@ func TestRegisterSigner(t *testing.T) {
 	gr := NewKeepsRegistry(persistenceMock)
 
 	expectedSignerBytes, _ := signer1.Marshal()
-	expectedPersistedSigner := &storageMock{
+	expectedPersistedSigner := &testFileInfo{
 		data:      expectedSignerBytes,
 		directory: keepAddress1.String(),
 		name:      "/signer_0",
@@ -175,11 +175,11 @@ func TestLoadExistingGroups(t *testing.T) {
 }
 
 type persistenceHandleMock struct {
-	persistedGroups []*storageMock
+	persistedGroups []*testFileInfo
 	archivedGroups  []string
 }
 
-type storageMock struct {
+type testFileInfo struct {
 	data      []byte
 	directory string
 	name      string
@@ -188,7 +188,7 @@ type storageMock struct {
 func (phm *persistenceHandleMock) Save(data []byte, directory string, name string) error {
 	phm.persistedGroups = append(
 		phm.persistedGroups,
-		&storageMock{data, directory, name},
+		&testFileInfo{data, directory, name},
 	)
 	return nil
 }
