@@ -21,7 +21,7 @@ var logger = log.Logger("keep-tecdsa")
 type client struct {
 	ethereumChain    eth.Interface
 	bitcoinNetParams *chaincfg.Params
-	groupRegistry    *registry.Groups
+	keepsRegistry    *registry.Keeps
 }
 
 // Initialize initializes the tECDSA client with rules related to events handling.
@@ -30,19 +30,19 @@ func Initialize(
 	bitcoinNetParams *chaincfg.Params,
 	persistence persistence.Handle,
 ) error {
-	groupRegistry := registry.NewGroupRegistry(persistence)
+	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
 	client := &client{
 		ethereumChain:    ethereumChain,
 		bitcoinNetParams: bitcoinNetParams,
-		groupRegistry:    groupRegistry,
+		keepsRegistry:    keepsRegistry,
 	}
 
 	// Load current signing group memberships from storage and register for
 	// signing events.
-	groupRegistry.LoadExistingGroups()
+	keepsRegistry.LoadExistingKeeps()
 
-	groupRegistry.ForEachGroup(func(keepAddress common.Address, membership *registry.Membership) bool {
+	keepsRegistry.ForEachKeep(func(keepAddress common.Address, membership *registry.Membership) bool {
 		client.registerForSignEvents(keepAddress)
 		return true
 	})
@@ -124,7 +124,7 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	)
 
 	// Store the signer in a map, with the keep address as a key.
-	c.groupRegistry.RegisterGroup(keepAddress, signer)
+	c.keepsRegistry.RegisterSigner(keepAddress, signer)
 
 	return nil
 }
@@ -139,7 +139,7 @@ func generateSigner() (*ecdsa.Signer, error) {
 }
 
 func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [32]byte) error {
-	membership, err := c.groupRegistry.GetGroup(keepAddress)
+	membership, err := c.keepsRegistry.GetMembership(keepAddress)
 	if err != nil {
 		return fmt.Errorf("failed to get group for keep [%s]: [%v]", keepAddress.String(), err)
 	}

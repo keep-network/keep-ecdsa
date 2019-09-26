@@ -9,6 +9,8 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
+// Keeps represents a collection of keeps in which the given client is a member.
+type Keeps struct {
 	myKeeps sync.Map // <keepAddress, membership>
 
 	storage storage
@@ -20,16 +22,16 @@ type Membership struct {
 	Signer      *ecdsa.Signer
 }
 
-// NewGroupRegistry returns an empty GroupRegistry.
-func NewGroupRegistry(persistence persistence.Handle) *Groups {
-	return &Groups{
+// NewKeepsRegistry returns an empty keeps registry.
+func NewKeepsRegistry(persistence persistence.Handle) *Keeps {
+	return &Keeps{
 		storage: newStorage(persistence),
 	}
 }
 
-// RegisterGroup registers that a group was successfully created for the given
+// RegisterSigner registers that a signer was successfully created for the given
 // keep.
-func (g *Groups) RegisterGroup(
+func (g *Keeps) RegisterSigner(
 	keepAddress common.Address,
 	signer *ecdsa.Signer,
 ) error {
@@ -49,7 +51,7 @@ func (g *Groups) RegisterGroup(
 }
 
 // GetMembership gets a membership by a keep address.
-func (g *Groups) GetMembership(keepAddress common.Address) (*Membership, error) {
+func (g *Keeps) GetMembership(keepAddress common.Address) (*Membership, error) {
 	membership, ok := g.myKeeps.Load(keepAddress.String())
 	if !ok {
 		return nil, fmt.Errorf("failed to find signer for keep: [%s]", keepAddress.String())
@@ -57,10 +59,10 @@ func (g *Groups) GetMembership(keepAddress common.Address) (*Membership, error) 
 	return membership.(*Membership), nil
 }
 
-// ForEachGroup calls function sequentially for each keep address and its'
-// membership present in the groups map. If the function returns false, range
+// ForEachKeep calls function sequentially for each keep address and its'
+// membership present in the keeps map. If the function returns false, range
 // stops the iteration.
-func (g *Groups) ForEachGroup(
+func (g *Keeps) ForEachKeep(
 	function func(keepAddress common.Address, membership *Membership) bool,
 ) {
 	g.myKeeps.Range(func(key, value interface{}) bool {
@@ -69,13 +71,13 @@ func (g *Groups) ForEachGroup(
 	})
 }
 
-// LoadExistingGroups iterates over all stored memberships on disk and loads them
+// LoadExistingKeeps iterates over all stored memberships on disk and loads them
 // into memory
-func (g *Groups) LoadExistingGroups() {
+func (g *Keeps) LoadExistingKeeps() {
 	membershipsChannel, errorsChannel := g.storage.readAll()
 
 	// Two goroutines read from memberships and errors channels and either
-	// adds memberships to the group registry or outputs an error to stderr.
+	// adds memberships to the keeps registry or outputs an error to stderr.
 	// The reason for using two goroutines at the same time - one for
 	// memberships and one for errors is because channels do not have to be
 	// buffered and we do not know in what order information is written to
@@ -107,8 +109,8 @@ func (g *Groups) LoadExistingGroups() {
 	g.printMemberships()
 }
 
-func (g *Groups) printMemberships() {
-	g.ForEachGroup(func(keepAddress common.Address, membership *Membership) bool {
+func (g *Keeps) printMemberships() {
+	g.ForEachKeep(func(keepAddress common.Address, membership *Membership) bool {
 		logger.Infof(
 			"membership for keep [%s] was loaded with member public key: [x: [%x], y: [%x]]",
 			keepAddress.String(),

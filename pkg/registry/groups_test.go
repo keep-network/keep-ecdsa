@@ -22,9 +22,9 @@ var (
 	signer2 = newTestSigner(big.NewInt(20))
 )
 
-func TestRegisterGroup(t *testing.T) {
+func TestRegisterSigner(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
-	gr := NewGroupRegistry(persistenceMock)
+	gr := NewKeepsRegistry(persistenceMock)
 
 	expectedGroup := &Membership{keepAddress1, signer1}
 	expectedGroupBytes, _ := expectedGroup.Marshal()
@@ -34,7 +34,7 @@ func TestRegisterGroup(t *testing.T) {
 		name:      "/membership_0",
 	}
 
-	gr.RegisterGroup(keepAddress1, signer1)
+	gr.RegisterSigner(keepAddress1, signer1)
 
 	// Verify persisted to storage.
 	if len(persistenceMock.persistedGroups) != 1 {
@@ -73,7 +73,7 @@ func TestRegisterGroup(t *testing.T) {
 
 func TestGetGroup(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
-	gr := NewGroupRegistry(persistenceMock)
+	gr := NewKeepsRegistry(persistenceMock)
 
 	gr.myKeeps.Store(keepAddress1.String(), &Membership{keepAddress1, signer1})
 
@@ -94,7 +94,7 @@ func TestGetGroup(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			group, err := gr.GetGroup(test.keepAddress)
+			group, err := gr.GetMembership(test.keepAddress)
 
 			if !reflect.DeepEqual(test.expectedGroup, group) {
 				t.Errorf(
@@ -117,14 +117,14 @@ func TestGetGroup(t *testing.T) {
 
 func TestRegisterNewGroupForTheSameKeep(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
-	gr := NewGroupRegistry(persistenceMock)
+	gr := NewKeepsRegistry(persistenceMock)
 
 	expectedGroup := &Membership{keepAddress1, signer2}
 
-	gr.RegisterGroup(keepAddress1, signer1)
-	gr.RegisterGroup(keepAddress1, signer2)
+	gr.RegisterSigner(keepAddress1, signer1)
+	gr.RegisterSigner(keepAddress1, signer2)
 
-	group, err := gr.GetGroup(keepAddress1)
+	group, err := gr.GetMembership(keepAddress1)
 
 	if !reflect.DeepEqual(expectedGroup, group) {
 		t.Errorf(
@@ -141,21 +141,21 @@ func TestRegisterNewGroupForTheSameKeep(t *testing.T) {
 func TestLoadExistingGroups(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
 
-	gr := NewGroupRegistry(persistenceMock)
+	gr := NewKeepsRegistry(persistenceMock)
 
 	expectedMembership1 := &Membership{keepAddress1, signer1}
 	expectedMembership2 := &Membership{keepAddress2, signer2}
 
-	gr.ForEachGroup(func(keepAddress common.Address, membership *Membership) bool {
+	gr.ForEachKeep(func(keepAddress common.Address, membership *Membership) bool {
 		t.Fatal("unexpected group membership at start")
 		return false
 	})
 
-	gr.LoadExistingGroups()
+	gr.LoadExistingKeeps()
 
 	groupsCount := 0
 
-	gr.ForEachGroup(func(keepAddress common.Address, membership *Membership) bool {
+	gr.ForEachKeep(func(keepAddress common.Address, membership *Membership) bool {
 		groupsCount++
 		return true
 	})
@@ -168,7 +168,7 @@ func TestLoadExistingGroups(t *testing.T) {
 		)
 	}
 
-	actualMembership1, err := gr.GetGroup(keepAddress1)
+	actualMembership1, err := gr.GetMembership(keepAddress1)
 	if err != nil {
 		t.Fatalf("unexpected error: [%v]", err)
 	}
@@ -176,7 +176,7 @@ func TestLoadExistingGroups(t *testing.T) {
 		t.Errorf("\nexpected: [%v]\nactual:   [%v]", expectedMembership1, actualMembership1)
 	}
 
-	actualMembership2, err := gr.GetGroup(keepAddress2)
+	actualMembership2, err := gr.GetMembership(keepAddress2)
 	if err != nil {
 		t.Fatalf("unexpected error: [%v]", err)
 	}
