@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option go_package = "pb";
+package registry;
+
+message Signer { 
+    bytes privateKey = 1; 
+}
+
+message Membership {
+  bytes keepAddress = 1;
+  bytes signer = 2;
+}

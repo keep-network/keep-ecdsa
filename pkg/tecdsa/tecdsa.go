@@ -4,12 +4,13 @@ package tecdsa
 import (
 	crand "crypto/rand"
 	"fmt"
-	"github.com/ipfs/go-log"
-	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/registry"
 )
 
 var logger = log.Logger("keep-tecdsa")
@@ -19,19 +20,31 @@ var logger = log.Logger("keep-tecdsa")
 type client struct {
 	ethereumChain    eth.Interface
 	bitcoinNetParams *chaincfg.Params
-	keepsSigners     sync.Map //<keepAddress, signer>
+	keepsRegistry    *registry.Keeps
 }
 
 // Initialize initializes the tECDSA client with rules related to events handling.
 func Initialize(
 	ethereumChain eth.Interface,
 	bitcoinNetParams *chaincfg.Params,
-) error {
+	persistence persistence.Handle,
+) {
+	keepsRegistry := registry.NewKeepsRegistry(persistence)
+
 	client := &client{
 		ethereumChain:    ethereumChain,
 		bitcoinNetParams: bitcoinNetParams,
+		keepsRegistry:    keepsRegistry,
 	}
 
+	// Load current keeps signers from storage and register for signing events.
+	keepsRegistry.LoadExistingKeeps()
+
+	for _, keepAddress := range keepsRegistry.GetKeepsAddresses() {
+		client.registerForSignEvents(keepAddress)
+	}
+
+	// Watch for new keeps creation.
 	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
 		logger.Infof(
 			"new keep created with address: [%s]",
@@ -42,36 +55,40 @@ func Initialize(
 			if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
 				logger.Errorf("signer generation failed: [%v]", err)
 			}
-		}()
 
-		ethereumChain.OnSignatureRequested(
-			event.KeepAddress,
-			func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
-				logger.Debugf(
-					"new signature requested for digest: [%+x]",
+			client.registerForSignEvents(event.KeepAddress)
+		}()
+	})
+}
+
+// registerForSignEvents registers for signature requested events emitted by
+// specific keep contract.
+func (c *client) registerForSignEvents(keepAddress eth.KeepAddress) {
+	c.ethereumChain.OnSignatureRequested(
+		keepAddress,
+		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
+			logger.Debugf(
+				"new signature requested for digest: [%+x]",
+				signatureRequestedEvent.Digest,
+			)
+
+			go func() {
+				err := c.calculateSignatureForKeep(
+					keepAddress,
 					signatureRequestedEvent.Digest,
 				)
 
-				go func() {
-					err := client.calculateSignatureForKeep(
-						event.KeepAddress,
-						signatureRequestedEvent.Digest,
-					)
-
-					if err != nil {
-						logger.Errorf("signature calculation failed: [%v]", err)
-					}
-				}()
-			},
-		)
-	})
-
-	return nil
+				if err != nil {
+					logger.Errorf("signature calculation failed: [%v]", err)
+				}
+			}()
+		},
+	)
 }
 
 // generateSignerForKeep generates a new signer with ECDSA key pair and calculates
-// bitcoin specific P2WPKH address based on signer's public key. It stores the
-// signer in a map assigned to a provided keep address.
+// bitcoin specific P2WPKH address based on signer's public key. It registers
+// signer in a keeps registry for a given keep address.
 func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	signer, err := generateSigner()
 
@@ -101,9 +118,8 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 		keepAddress.String(),
 	)
 
-	// Store the signer in a map, with the keep address as a key. Keep address
-	// is converted to a hexadecimal string prefiexed with `0x`.
-	c.keepsSigners.Store(keepAddress.String(), signer)
+	// Store the signer in a map, with the keep address as a key.
+	c.keepsRegistry.RegisterSigner(keepAddress, signer)
 
 	return nil
 }
@@ -118,12 +134,12 @@ func generateSigner() (*ecdsa.Signer, error) {
 }
 
 func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [32]byte) error {
-	signer, ok := c.keepsSigners.Load(keepAddress.String())
-	if !ok {
-		return fmt.Errorf("failed to find signer for keep: [%s]", keepAddress.String())
+	signer, err := c.keepsRegistry.GetSigner(keepAddress)
+	if err != nil {
+		return fmt.Errorf("failed to get group for keep [%s]: [%v]", keepAddress.String(), err)
 	}
 
-	signature, err := signer.(*ecdsa.Signer).CalculateSignature(
+	signature, err := signer.CalculateSignature(
 		crand.Reader,
 		digest[:],
 	)
