@@ -44,6 +44,8 @@ github.com/keep-network/gobcy v1.3.1 h1:6T+wsN1A3ZHZMqwySwGTdGQZuD3h2acNUd03tQzc
 github.com/keep-network/gobcy v1.3.1/go.mod h1:CTs0o6sp/VkW0FdyKVbdav2aqdfU0/iHA8zGETLOvuQ=
 github.com/keep-network/keep-common v0.0.0-20190913171706-8724d3522a8d h1:9unxY3+cCO7b6g63UjdZuzI5olHDjUOOcGi5X8DculU=
 github.com/keep-network/keep-common v0.0.0-20190913171706-8724d3522a8d/go.mod h1:N2gmkjBNNWw93GQCA0UlSKi6NoZHf3HcE1zo59A0O+E=
+github.com/keep-network/keep-common v0.0.0-20190926082707-18ec764f799e h1:VP7WRl1Nlhq28u5TShUrh/PMfKamoOYwz75Vh/wEEaM=
+github.com/keep-network/keep-common v0.0.0-20190926082707-18ec764f799e/go.mod h1:RqoMEdcr7gMqOszlmtjgHVjyuiwF9eefaelZOH04rbQ=
 github.com/keep-network/keep-core v0.3.0 h1:nhVu6u0rXdGv92AJ9wBLPY/RRExn5JXQwHYsdJIscf4=
 github.com/keep-network/keep-core v0.3.0/go.mod h1:WcX2u+DI+szY7DyyBW+W0mm3/aG8EyAwVtYFHgJkAUg=
 github.com/keep-network/keep-core v0.6.0 h1:0ba9BXMDqxJRD9adRWE5Gc/qV60Ze6orasETy7LE1S4=
@@ -89,6 +91,7 @@ golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJ
 golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20180926160741-c2ed4eda69e7/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223 h1:DH4skfRX4EBpamg7iV4ZlCpblAHI6s6TDM39bFZumv8=
 golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/tools v0.0.0-20180221164845-07fd8470d635/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
@@ -98,5 +101,7 @@ golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8T
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/fsnotify.v1 v1.4.7/go.mod h1:Tz8NjZHkW78fSQdbUxIjBTcgA1z1m8ZHf0WmKUhAMys=
 gopkg.in/karalabe/cookiejar.v2 v2.0.0-20150724131613-8dcd6a7f4951/go.mod h1:owOxCRGGeAx1uugABik6K9oeNu1cgxP/R9ItzLDxNWA=
+gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce h1:+JknDZhAj8YMt7GC73Ei8pv4MzjDUNPHgQWJdtMAaDU=
+gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce/go.mod h1:5AcXVHNjg+BDxry382+8OKon8SEWiKktQR07RKPsv1c=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWDmTeBkI65Dw0HsyUHuEVlX15mw=
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
