@@ -7,16 +7,19 @@ const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 // To execute this test run:
 // truffle exec integration/sign.js <KEEP_ADDRESS>
 module.exports = async function () {
-    let keepAddress
+    const keepAddress = process.argv[4]
+    const keepOwnerArg = process.argv[5]
+
     let keepOwner
     let keep
     let keepPublicKey
 
     try {
-        keepAddress = process.argv[4]
+        if (!keepOwnerArg) {
+            const accounts = await web3.eth.getAccounts();
+            keepOwner = accounts[1]
+        }
 
-        const accounts = await web3.eth.getAccounts();
-        keepOwner = accounts[1]
         keep = await ECDSAKeep.at(keepAddress)
 
         startBlockNumber = await web3.eth.getBlock('latest').number
