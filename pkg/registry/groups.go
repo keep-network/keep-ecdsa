@@ -9,10 +9,7 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
-// Groups represents a collection of keep groups in which the given client is a
-// member.
-type Groups struct {
-	myGroups sync.Map // <keepAddress, membership>
+	myKeeps sync.Map // <keepAddress, membership>
 
 	storage storage
 }
@@ -46,14 +43,14 @@ func (g *Groups) RegisterGroup(
 		return fmt.Errorf("could not persist membership to the storage: [%v]", err)
 	}
 
-	g.myGroups.Store(keepAddress.String(), membership)
+	g.myKeeps.Store(keepAddress.String(), membership)
 
 	return nil
 }
 
-// GetGroup gets a group by a keep address.
-func (g *Groups) GetGroup(keepAddress common.Address) (*Membership, error) {
-	membership, ok := g.myGroups.Load(keepAddress.String())
+// GetMembership gets a membership by a keep address.
+func (g *Groups) GetMembership(keepAddress common.Address) (*Membership, error) {
+	membership, ok := g.myKeeps.Load(keepAddress.String())
 	if !ok {
 		return nil, fmt.Errorf("failed to find signer for keep: [%s]", keepAddress.String())
 	}
@@ -66,7 +63,7 @@ func (g *Groups) GetGroup(keepAddress common.Address) (*Membership, error) {
 func (g *Groups) ForEachGroup(
 	function func(keepAddress common.Address, membership *Membership) bool,
 ) {
-	g.myGroups.Range(func(key, value interface{}) bool {
+	g.myKeeps.Range(func(key, value interface{}) bool {
 		keepAddress := common.HexToAddress(key.(string))
 		return function(keepAddress, value.(*Membership))
 	})
@@ -88,7 +85,7 @@ func (g *Groups) LoadExistingGroups() {
 
 	go func() {
 		for membership := range membershipsChannel {
-			g.myGroups.Store(membership.KeepAddress.String(), membership)
+			g.myKeeps.Store(membership.KeepAddress.String(), membership)
 		}
 
 		wg.Done()

@@ -57,7 +57,7 @@ func TestRegisterGroup(t *testing.T) {
 	}
 
 	// Verify stored in a map.
-	group, ok := gr.myGroups.Load(keepAddress1.String())
+	group, ok := gr.myKeeps.Load(keepAddress1.String())
 	if !ok {
 		t.Errorf("failed to load group")
 	}
@@ -75,7 +75,7 @@ func TestGetGroup(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
 	gr := NewGroupRegistry(persistenceMock)
 
-	gr.myGroups.Store(keepAddress1.String(), &Membership{keepAddress1, signer1})
+	gr.myKeeps.Store(keepAddress1.String(), &Membership{keepAddress1, signer1})
 
 	var tests = map[string]struct {
 		keepAddress   common.Address
