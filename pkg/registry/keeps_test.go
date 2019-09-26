@@ -26,12 +26,11 @@ func TestRegisterSigner(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
 	gr := NewKeepsRegistry(persistenceMock)
 
-	expectedGroup := &Membership{keepAddress1, signer1}
-	expectedGroupBytes, _ := expectedGroup.Marshal()
-	expectedPersistedGroup := &storageMock{
-		data:      expectedGroupBytes,
+	expectedSignerBytes, _ := signer1.Marshal()
+	expectedPersistedSigner := &storageMock{
+		data:      expectedSignerBytes,
 		directory: keepAddress1.String(),
-		name:      "/membership_0",
+		name:      "/signer_0",
 	}
 
 	gr.RegisterSigner(keepAddress1, signer1)
@@ -46,27 +45,27 @@ func TestRegisterSigner(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(
-		expectedPersistedGroup,
+		expectedPersistedSigner,
 		persistenceMock.persistedGroups[0],
 	) {
 		t.Errorf(
 			"unexpected persisted group\nexpected: [%+v]\nactual:   [%+v]",
-			expectedPersistedGroup,
+			expectedPersistedSigner,
 			persistenceMock.persistedGroups[0],
 		)
 	}
 
 	// Verify stored in a map.
-	group, ok := gr.myKeeps.Load(keepAddress1.String())
+	signer, ok := gr.myKeeps.Load(keepAddress1.String())
 	if !ok {
-		t.Errorf("failed to load group")
+		t.Errorf("failed to load signer")
 	}
 
-	if !reflect.DeepEqual(expectedGroup, group) {
+	if !reflect.DeepEqual(signer1, signer) {
 		t.Errorf(
-			"unexpected group\nexpected: [%+v]\nactual:   [%+v]",
-			expectedGroup,
-			group,
+			"unexpected signer\nexpected: [%+v]\nactual:   [%+v]",
+			signer1,
+			signer,
 		)
 	}
 }
@@ -75,16 +74,16 @@ func TestGetGroup(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
 	gr := NewKeepsRegistry(persistenceMock)
 
-	gr.myKeeps.Store(keepAddress1.String(), &Membership{keepAddress1, signer1})
+	gr.RegisterSigner(keepAddress1, signer1)
 
 	var tests = map[string]struct {
-		keepAddress   common.Address
-		expectedGroup *Membership
-		expectedError error
+		keepAddress    common.Address
+		expectedSigner *ecdsa.Signer
+		expectedError  error
 	}{
 		"returns group for registered keep": {
-			keepAddress:   keepAddress1,
-			expectedGroup: &Membership{keepAddress1, signer1},
+			keepAddress:    keepAddress1,
+			expectedSigner: signer1,
 		},
 		"returns error for not registered keep": {
 			keepAddress:   keepAddress2,
@@ -94,13 +93,13 @@ func TestGetGroup(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			group, err := gr.GetMembership(test.keepAddress)
+			signer, err := gr.GetSigner(test.keepAddress)
 
-			if !reflect.DeepEqual(test.expectedGroup, group) {
+			if !reflect.DeepEqual(test.expectedSigner, signer) {
 				t.Errorf(
 					"unexpected group\nexpected: [%+v]\nactual:   [%+v]",
-					test.expectedGroup,
-					group,
+					test.expectedSigner,
+					signer,
 				)
 			}
 
@@ -119,18 +118,16 @@ func TestRegisterNewGroupForTheSameKeep(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
 	gr := NewKeepsRegistry(persistenceMock)
 
-	expectedGroup := &Membership{keepAddress1, signer2}
-
 	gr.RegisterSigner(keepAddress1, signer1)
 	gr.RegisterSigner(keepAddress1, signer2)
 
-	group, err := gr.GetMembership(keepAddress1)
+	signer, err := gr.GetSigner(keepAddress1)
 
-	if !reflect.DeepEqual(expectedGroup, group) {
+	if !reflect.DeepEqual(signer2, signer) {
 		t.Errorf(
 			"unexpected group\nexpected: [%+v]\nactual:   [%+v]",
-			expectedGroup,
-			group,
+			signer2,
+			signer,
 		)
 	}
 
@@ -138,50 +135,48 @@ func TestRegisterNewGroupForTheSameKeep(t *testing.T) {
 		t.Errorf("unexpected error: [%v]", err)
 	}
 }
+
 func TestLoadExistingGroups(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
 
 	gr := NewKeepsRegistry(persistenceMock)
 
-	expectedMembership1 := &Membership{keepAddress1, signer1}
-	expectedMembership2 := &Membership{keepAddress2, signer2}
-
-	gr.ForEachKeep(func(keepAddress common.Address, membership *Membership) bool {
-		t.Fatal("unexpected group membership at start")
+	gr.ForEachKeep(func(keepAddress common.Address, signer *ecdsa.Signer) bool {
+		t.Fatal("unexpected signer at start")
 		return false
 	})
 
 	gr.LoadExistingKeeps()
 
-	groupsCount := 0
+	signersCount := 0
 
-	gr.ForEachKeep(func(keepAddress common.Address, membership *Membership) bool {
-		groupsCount++
+	gr.ForEachKeep(func(keepAddress common.Address, signer *ecdsa.Signer) bool {
+		signersCount++
 		return true
 	})
 
-	if groupsCount != 2 {
+	if signersCount != 2 {
 		t.Fatalf(
-			"unexpected number of group memberships\nexpected: [%d]\nactual:   [%d]",
+			"unexpected number of signers\nexpected: [%d]\nactual:   [%d]",
 			2,
-			groupsCount,
+			signersCount,
 		)
 	}
 
-	actualMembership1, err := gr.GetMembership(keepAddress1)
+	actualSigner1, err := gr.GetSigner(keepAddress1)
 	if err != nil {
 		t.Fatalf("unexpected error: [%v]", err)
 	}
-	if !reflect.DeepEqual(expectedMembership1, actualMembership1) {
-		t.Errorf("\nexpected: [%v]\nactual:   [%v]", expectedMembership1, actualMembership1)
+	if !reflect.DeepEqual(signer1, actualSigner1) {
+		t.Errorf("\nexpected: [%v]\nactual:   [%v]", signer1, actualSigner1)
 	}
 
-	actualMembership2, err := gr.GetMembership(keepAddress2)
+	actualSigner2, err := gr.GetSigner(keepAddress2)
 	if err != nil {
 		t.Fatalf("unexpected error: [%v]", err)
 	}
-	if !reflect.DeepEqual(expectedMembership2, actualMembership2) {
-		t.Errorf("\nexpected: [%v]\nactual:   [%v]", expectedMembership2, actualMembership2)
+	if !reflect.DeepEqual(signer2, actualSigner2) {
+		t.Errorf("\nexpected: [%v]\nactual:   [%v]", signer2, actualSigner2)
 	}
 }
 
@@ -205,21 +200,14 @@ func (phm *persistenceHandleMock) Save(data []byte, directory string, name strin
 }
 
 func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, <-chan error) {
-	membershipBytes1, _ := (&Membership{
-		KeepAddress: keepAddress1,
-		Signer:      signer1,
-	}).Marshal()
-
-	membershipBytes2, _ := (&Membership{
-		KeepAddress: keepAddress2,
-		Signer:      signer2,
-	}).Marshal()
+	signerBytes1, _ := signer1.Marshal()
+	signerBytes2, _ := signer2.Marshal()
 
 	outputData := make(chan persistence.DataDescriptor, 2)
 	outputErrors := make(chan error)
 
-	outputData <- &testDataDescriptor{"1", "dir", membershipBytes1}
-	outputData <- &testDataDescriptor{"2", "dir", membershipBytes2}
+	outputData <- &testDataDescriptor{"/membership_0", keepAddress1.String(), signerBytes1}
+	outputData <- &testDataDescriptor{"/membership_0", keepAddress2.String(), signerBytes2}
 
 	close(outputData)
 	close(outputErrors)

@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
 type storage interface {
-	save(membership *Membership) error
-	readAll() (<-chan *Membership, <-chan error)
+	save(keepAddress common.Address, signer *ecdsa.Signer) error
+	readAll() (<-chan *keepSigner, <-chan error)
 	archive(keepAddress string) error
 }
 
@@ -23,23 +25,28 @@ func newStorage(persistence persistence.Handle) storage {
 	}
 }
 
-func (ps *persistentStorage) save(membership *Membership) error {
-	membershipBytes, err := membership.Marshal()
+func (ps *persistentStorage) save(keepAddress common.Address, signer *ecdsa.Signer) error {
+	signerBytes, err := signer.Marshal()
 	if err != nil {
-		return fmt.Errorf("failed to marshal the membership: [%v]", err)
+		return fmt.Errorf("failed to marshal signer: [%v]", err)
 	}
 
 	return ps.handle.Save(
-		membershipBytes,
-		membership.KeepAddress.String(),
+		signerBytes,
+		keepAddress.String(),
 		// TODO: Currently we support only single signer, we should use
-		// different membership IDs when multi-party group is available.
-		fmt.Sprintf("/membership_%d", 0),
+		// different signer IDs when multi-party group is available.
+		"/signer_0",
 	)
 }
 
-func (ps *persistentStorage) readAll() (<-chan *Membership, <-chan error) {
-	outputMemberships := make(chan *Membership)
+type keepSigner struct {
+	keepAddress common.Address
+	signer      *ecdsa.Signer
+}
+
+func (ps *persistentStorage) readAll() (<-chan *keepSigner, <-chan error) {
+	outputKeepSigner := make(chan *keepSigner)
 	outputErrors := make(chan error)
 
 	inputData, inputErrors := ps.handle.ReadAll()
@@ -49,16 +56,16 @@ func (ps *persistentStorage) readAll() (<-chan *Membership, <-chan error) {
 	// producers write information to channels.
 	// The third goroutine waits for those two goroutines to finish and it
 	// closes the output channels. Channels are not closed by two other goroutines
-	// because data goroutine writes both to output memberships and errors
+	// because data goroutine writes both to output signers and errors
 	// channel and we want to avoid a situation when we close the errors channel
 	// and errors goroutine tries to write to it. The same the other way round.
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	// Close channels when memberships and errors goroutines are done.
+	// Close channels when signers and errors goroutines are done.
 	go func() {
 		wg.Wait()
-		close(outputMemberships)
+		close(outputKeepSigner)
 		close(outputErrors)
 	}()
 
@@ -71,16 +78,16 @@ func (ps *persistentStorage) readAll() (<-chan *Membership, <-chan error) {
 		wg.Done()
 	}()
 
-	// Memberships goroutine reads data from input channel, tries to unmarshal
-	// the data to Membership and write the unmarshalled Membership to the
-	// output memberships channel. In case of an error, goroutine writes that
-	// error to an output errors channel.
+	// Signers goroutine reads data from input channel, tries to unmarshal
+	// the data to Signer and write the unmarshalled Signer to the output signers
+	// channel. In case of an error, goroutine writes that error to an output
+	// errors channel.
 	go func() {
 		for descriptor := range inputData {
 			content, err := descriptor.Content()
 			if err != nil {
 				outputErrors <- fmt.Errorf(
-					"could not unmarshal membership from file [%v] in directory [%v]: [%v]",
+					"failed to decode content from file [%v] in directory [%v]: [%v]",
 					descriptor.Name(),
 					descriptor.Directory(),
 					err,
@@ -88,12 +95,20 @@ func (ps *persistentStorage) readAll() (<-chan *Membership, <-chan error) {
 				continue
 			}
 
-			membership := &Membership{}
+			if !common.IsHexAddress(descriptor.Directory()) {
+				outputErrors <- fmt.Errorf(
+					"directory name [%v] is not valid ethereum address",
+					descriptor.Directory(),
+				)
+				continue
+			}
+			keepAddress := common.HexToAddress(descriptor.Directory())
 
-			err = membership.Unmarshal(content)
+			signer := &ecdsa.Signer{}
+			err = signer.Unmarshal(content)
 			if err != nil {
 				outputErrors <- fmt.Errorf(
-					"could not unmarshal membership from file [%v] in directory [%v]: [%v]",
+					"failed to unmarshal signer from file [%v] in directory [%v]: [%v]",
 					descriptor.Name(),
 					descriptor.Directory(),
 					err,
@@ -101,13 +116,16 @@ func (ps *persistentStorage) readAll() (<-chan *Membership, <-chan error) {
 				continue
 			}
 
-			outputMemberships <- membership
+			outputKeepSigner <- &keepSigner{
+				keepAddress: keepAddress,
+				signer:      signer,
+			}
 		}
 
 		wg.Done()
 	}()
 
-	return outputMemberships, outputErrors
+	return outputKeepSigner, outputErrors
 }
 
 func (ps *persistentStorage) archive(groupName string) error {

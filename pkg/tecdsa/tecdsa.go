@@ -38,11 +38,10 @@ func Initialize(
 		keepsRegistry:    keepsRegistry,
 	}
 
-	// Load current signing group memberships from storage and register for
-	// signing events.
+	// Load current keeps signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
 
-	keepsRegistry.ForEachKeep(func(keepAddress common.Address, membership *registry.Membership) bool {
+	keepsRegistry.ForEachKeep(func(keepAddress common.Address, signer *ecdsa.Signer) bool {
 		client.registerForSignEvents(keepAddress)
 		return true
 	})
@@ -139,12 +138,12 @@ func generateSigner() (*ecdsa.Signer, error) {
 }
 
 func (c *client) calculateSignatureForKeep(keepAddress eth.KeepAddress, digest [32]byte) error {
-	membership, err := c.keepsRegistry.GetMembership(keepAddress)
+	signer, err := c.keepsRegistry.GetSigner(keepAddress)
 	if err != nil {
 		return fmt.Errorf("failed to get group for keep [%s]: [%v]", keepAddress.String(), err)
 	}
 
-	signature, err := membership.Signer.CalculateSignature(
+	signature, err := signer.CalculateSignature(
 		crand.Reader,
 		digest[:],
 	)
