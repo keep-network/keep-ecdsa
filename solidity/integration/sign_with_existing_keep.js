@@ -5,7 +5,7 @@ const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 // signature for a specific keep contract provided as a <KEEP_ADDRESS> argument.
 // 
 // To execute this test run:
-// truffle exec integration/sign.js <KEEP_ADDRESS>
+// truffle exec integration/sign_with_existing_keep.js <KEEP_ADDRESS>
 module.exports = async function () {
     const keepAddress = process.argv[4]
     const keepOwnerArg = process.argv[5]
