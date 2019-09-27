@@ -93,9 +93,8 @@ func (c *client) generateSignerForKeep(keepAddress eth.KeepAddress) error {
 	signer, err := generateSigner()
 
 	logger.Debugf(
-		"generated signer with public key: [x: [%x], y: [%x]]",
-		signer.PublicKey().X,
-		signer.PublicKey().Y,
+		"generated signer with public key: [%x]",
+		signer.PublicKey().Marshal(),
 	)
 
 	// Publish signer's public key on ethereum blockchain in a specific keep

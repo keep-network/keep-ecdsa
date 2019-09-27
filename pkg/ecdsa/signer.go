@@ -4,6 +4,7 @@ import (
 	cecdsa "crypto/ecdsa"
 	"io"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
@@ -36,4 +37,10 @@ func (s *Signer) PublicKey() *PublicKey {
 // Curve returns elliptic curve instance used by the Signer.
 func (s *Signer) Curve() *secp256k1.BitCurve {
 	return s.privateKey.Curve.(*secp256k1.BitCurve)
+}
+
+// Marshal serializes Public Key to bytes in uncompressed form as described in
+// [SEC 1] section 2.3.3: `04 + <x coordinate> + <y coordinate>`
+func (pk *PublicKey) Marshal() []byte {
+	return crypto.FromECDSAPub((*cecdsa.PublicKey)(pk))
 }
