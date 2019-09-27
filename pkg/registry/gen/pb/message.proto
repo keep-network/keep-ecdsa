@@ -6,8 +6,3 @@ package registry;
 message Signer { 
     bytes privateKey = 1; 
 }
-
-message Membership {
-  bytes keepAddress = 1;
-  bytes signer = 2;
-}
