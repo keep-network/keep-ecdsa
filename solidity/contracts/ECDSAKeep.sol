@@ -1,12 +1,13 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./api/IECDSAKeep.sol";
 import "./utils/AddressArrayUtils.sol";
 
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
 /// @dev TODO: This is a stub contract - needs to be implemented.
-contract ECDSAKeep is Ownable {
+contract ECDSAKeep is IECDSAKeep, Ownable {
     using AddressArrayUtils for address[];
 
     // List of keep members' addresses.
@@ -53,7 +54,7 @@ contract ECDSAKeep is Ownable {
     /// @notice Set a signer's public key for the keep.
     /// @dev Stub implementations.
     /// @param _publicKey Signer's public key.
-    function setPublicKey(bytes memory _publicKey) public onlyMember {
+    function setPublicKey(bytes calldata _publicKey) external onlyMember {
         require(_publicKey.length == 64, "Public key must be 64 bytes long");
         publicKey = _publicKey;
         emit PublicKeyPublished(_publicKey);
@@ -61,13 +62,13 @@ contract ECDSAKeep is Ownable {
 
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
-    function getPublicKey() public view returns (bytes memory) {
+    function getPublicKey() external view returns (bytes memory) {
        return publicKey;
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
     /// @param _digest Digest to be signed.
-    function sign(bytes32 _digest) public onlyOwner {
+    function sign(bytes32 _digest) external onlyOwner {
         emit SignatureRequested(_digest);
     }
 
@@ -81,7 +82,7 @@ contract ECDSAKeep is Ownable {
         bytes32 _r,
         bytes32 _s,
         uint8 _recoveryID
-    ) public onlyMember {
+    ) external onlyMember {
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // We add 27 to the recovery ID to align it with ethereum and bitcoin

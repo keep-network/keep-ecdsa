@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./api/IECDSAKeepVendor.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./ECDSAKeepFactory.sol";
 
@@ -11,7 +12,7 @@ import "./ECDSAKeepFactory.sol";
 /// TODO: This is a stub contract - needs to be implemented.
 /// TODO: When more keep types are added consider extracting registration and
 /// selection to a separate inheritable contract.
-contract ECDSAKeepVendor is Ownable {
+contract ECDSAKeepVendor is IECDSAKeepVendor, Ownable {
     using AddressArrayUtils for address[];
 
     // List of ECDSA keep factories.
@@ -21,7 +22,7 @@ contract ECDSAKeepVendor is Ownable {
     /// @dev Adds a factory address to the list of registered factories. Address
     /// cannot be zero and cannot be already registered.
     /// @param _factory ECDSA keep factory address.
-    function registerFactory(address _factory) public onlyOwner {
+    function registerFactory(address _factory) external onlyOwner {
         require(!factories.contains(_factory), "Factory address already registered");
 
         factories.push(_factory);
@@ -46,7 +47,7 @@ contract ECDSAKeepVendor is Ownable {
         uint256 _groupSize,
         uint256 _honestThreshold,
         address _owner
-    ) public payable returns (address keepAddress) {
+    ) external payable returns (address keepAddress) {
         address factory = selectFactory();
 
         return ECDSAKeepFactory(factory).openKeep(

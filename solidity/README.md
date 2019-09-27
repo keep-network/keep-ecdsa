@@ -9,6 +9,16 @@ Install the project dependencies:
 npm install
 ```
 
+## Usage
+
+Currently contracts can be installed as npm dependency, in the future we may
+consider supporting [EthPM](http://www.ethpm.com/).
+
+<!-- 
+TODO: Configure EthPM, publish contracts and use them where needed.
+https://www.trufflesuite.com/docs/truffle/reference/configuration#ethpm-configuration
+-->
+
 ### Truffle
 
 [Truffle] is a development framework for Ethereum.
@@ -66,5 +76,5 @@ truffle test test/ECDSAKeepTest.js
 Tests in `test/integration/` are for testing different scenarios in the Go client. They do **not** redeploy contracts, instead using the already deployed instances from `truffle migrate`.
 
 ```sh
-truffle exec test/integration/keep_signature_requested.js
+truffle exec test/integration/keep_signing.js
 ```

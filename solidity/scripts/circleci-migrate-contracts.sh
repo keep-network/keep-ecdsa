@@ -52,7 +52,7 @@ ssh utilitybox << EOF
   echo ">>>>>>FINISH Unlock Contract Owner ETH Account FINISH>>>>>>"
 
   echo "<<<<<<START Contract Migration START<<<<<<"
-  cd /tmp/$BUILD_TAG/solidity
+  cd /tmp/$BUILD_TAG
 
   npm install
 

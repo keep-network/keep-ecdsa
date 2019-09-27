@@ -46,6 +46,10 @@ Where `<hash>` is a message to sign.
 
 See [solidity](./solidity/) directory.
 
+As a workaround for npm limitation [not allowing to use subdirectory of a git 
+repository as a dependency](https://github.com/npm/npm/issues/2974) we extracted
+npm and truffle configuration to a root directory.
+
 ---
 
 ## Configuration
