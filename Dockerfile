@@ -19,7 +19,8 @@ RUN apk add --update --no-cache \
 	nodejs \
 	npm \
 	python \
-	git && \
+	git \ 
+	protobuf && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
@@ -40,8 +41,9 @@ COPY go.sum $APP_DIR/
 
 RUN go mod download
 
-# Install ABI generator.
+# Install code generators.
 RUN cd /go/pkg/mod/github.com/keep-network/go-ethereum@v1.8.27/cmd/abigen && go install .
+RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.2.1/protoc-gen-gogoslick && go install .
 
 # Install Solidity contracts.
 COPY ./package.json $APP_DIR/
@@ -49,8 +51,9 @@ COPY ./package-lock.json $APP_DIR/
 COPY ./solidity $APP_DIR/solidity
 RUN npm install
 
-# Generate ABI files.
+# Generate code.
 COPY ./pkg/chain/eth/gen $APP_DIR/pkg/chain/eth/gen
+COPY ./pkg/registry/gen $APP_DIR/pkg/registry/gen
 RUN go generate ./.../gen
 
 # Build the application.

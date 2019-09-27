@@ -1,5 +1,7 @@
 module github.com/keep-network/keep-tecdsa
 
+go 1.12
+
 replace (
 	github.com/BurntSushi/toml => github.com/keep-network/toml v0.3.0
 	github.com/blockcypher/gobcy => github.com/keep-network/gobcy v1.3.1
@@ -16,11 +18,18 @@ require (
 	github.com/blockcypher/gobcy v0.0.0-00010101000000-000000000000
 	github.com/btcsuite/btcd v0.0.0-00010101000000-000000000000
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
+	github.com/cespare/cp v1.1.1 // indirect
 	github.com/deckarep/golang-set v1.7.1 // indirect
+	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/ethereum/go-ethereum v0.0.0-00010101000000-000000000000
+	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gogo/protobuf v1.2.1
+	github.com/hashicorp/golang-lru v0.5.3 // indirect
+	github.com/huin/goupnp v1.0.0 // indirect
 	github.com/ipfs/go-log v0.0.1
+	github.com/jackpal/go-nat-pmp v1.0.1 // indirect
+	github.com/karalabe/hid v1.0.0 // indirect
 	github.com/keep-network/go-electrum v0.0.0-20190423065222-2dcd82312dcf
 	github.com/keep-network/keep-common v0.0.0-20190926082707-18ec764f799e
 	github.com/keep-network/keep-core v0.6.0
