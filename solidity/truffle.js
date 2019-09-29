@@ -39,13 +39,6 @@ module.exports = {
     },
   },
 
-  // Configure paths. We can't use default path, because we moved truffle configuration
-  // file out of the directory where contracts live.
-  contracts_directory: "./solidity/contracts",
-  contracts_build_directory: "./solidity/build",
-  migrations_directory: "./solidity/migrations",
-  test_directory: "./solidity/test",
-
   // Configure your compilers
   compilers: {
     solc: {

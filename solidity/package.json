@@ -1,7 +1,7 @@
 {
   "name": "keep-tecdsa",
   "version": "0.1.0",
-  "description": "Smart contracts for the Keep TECDSA",
+  "description": "Smart contracts for Keep tECDSA",
   "repository": {
     "type": "git",
     "url": "https://github.com/keep-network/keep-tecdsa.git"
@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "truffle": "truffle",
-    "clean": "rm -rf ./solidity/build/",
+    "clean": "rm -rf build/",
     "build": "truffle compile",
     "test": "truffle test"
   },
