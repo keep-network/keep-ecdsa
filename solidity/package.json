@@ -7,8 +7,7 @@
     "url": "ssh://git@github.com/keep-network/keep-tecdsa.git"
   },
   "files": [
-    "/solidity/contracts/api/*.sol",
-    "!./README.md"
+    "contracts/**/*.sol"
   ],
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
