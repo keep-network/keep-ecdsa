@@ -28,8 +28,8 @@ RUN apk add --update --no-cache \
 COPY --from=ethereum/solc:0.5.8 /usr/bin/solc /usr/bin/solc
 
 # Configure GitHub token to be able to get private repositories.
-ARG GITHUBTOKEN
-RUN git config --global url."https://$GITHUBTOKEN:@github.com/".insteadOf "https://github.com/"
+ARG GITHUB_TOKEN
+RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
 
 # Configure working directory.
 RUN mkdir -p $APP_DIR

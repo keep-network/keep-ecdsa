@@ -19,29 +19,29 @@ jobs:
   build_and_test_solidity:
     executor: docker-node
     steps:
-        - checkout
-        - run: npm install ganache-cli@6.4.2
-        - run:
-            name: Running testrpc
-            command: |
-              cd $(npm bin)
-              ./ganache-cli
-            background: true
-        - run:
-            name: Setup solidity
-            command: |
-              cd solidity
-              npm install
-        - run:
-            name: Build solidity contracts
-            command: |
-              cd solidity
-              npm run build
-        - run:
-            name: Run solidity tests
-            command: |
-              cd solidity
-              npm run test
+      - checkout
+      - run: npm install ganache-cli@6.4.2
+      - run:
+          name: Running testrpc
+          command: |
+            cd $(npm bin)
+            ./ganache-cli
+          background: true
+      - run:
+          name: Setup solidity
+          command: |
+            cd solidity
+            npm install
+      - run:
+          name: Build solidity contracts
+          command: |
+            cd solidity
+            npm run build
+      - run:
+          name: Run solidity tests
+          command: |
+            cd solidity
+            npm run test
   build_client_and_test_go:
     executor: docker-git
     steps:
@@ -51,8 +51,8 @@ jobs:
       - run:
           name: Run Docker build
           command: |
-            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN -t go-build-env --target gobuild .
-            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa .
+            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t go-build-env --target gobuild .
+            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa .
       - run:
           name: Run Go tests
           command: |
@@ -142,21 +142,21 @@ jobs:
           image: initcontainer-provision-keep-tecdsa
           tag: latest
   publish_contract_data:
-      executor: gcp-cli/default
-      steps:
-        - attach_workspace:
-            at: /tmp/keep-tecdsa
-        - gcp-cli/install
-        - gcp-cli/initialize:
-            google-project-id: GOOGLE_PROJECT_ID
-            google-compute-zone: GOOGLE_COMPUTE_ZONE_A
-            # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
-            gcloud-service-key: GCLOUD_SERVICE_KEY
-        - run:
-            name: Upload contract data
-            command: |
-              cd /tmp/keep-tecdsa/contracts
-              gsutil -m cp * gs://keep-dev-contract-data/keep-tecdsa
+    executor: gcp-cli/default
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-tecdsa
+      - gcp-cli/install
+      - gcp-cli/initialize:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - run:
+          name: Upload contract data
+          command: |
+            cd /tmp/keep-tecdsa/contracts
+            gsutil -m cp * gs://keep-dev-contract-data/keep-tecdsa
 
 workflows:
   version: 2
@@ -197,4 +197,3 @@ workflows:
           context: keep-dev
           requires:
             - migrate_contracts
-
