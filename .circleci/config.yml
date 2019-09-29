@@ -28,6 +28,11 @@ jobs:
             ./ganache-cli
           background: true
       - run:
+          name: Authenticate GitHub Package Registry
+          command: |
+            cd solidity
+            echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" > .npmrc
+      - run:
           name: Setup solidity
           command: |
             cd solidity
@@ -48,6 +53,11 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
+      - run:
+          name: Authenticate GitHub Package Registry
+          command: |
+            cd solidity
+            echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" > .npmrc
       - run:
           name: Run Docker build
           command: |
