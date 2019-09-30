@@ -29,24 +29,20 @@ jobs:
           background: true
       - run:
           name: Authenticate GitHub Package Registry
-          command: |
-            cd solidity
-            echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" > .npmrc
+          working_directory: ~/project/solidity
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" > .npmrc
       - run:
           name: Setup solidity
-          command: |
-            cd solidity
-            npm install
+          working_directory: ~/project/solidity
+          command: npm install
       - run:
           name: Build solidity contracts
-          command: |
-            cd solidity
-            npm run build
+          working_directory: ~/project/solidity
+          command: npm run build
       - run:
           name: Run solidity tests
-          command: |
-            cd solidity
-            npm run test
+          working_directory: ~/project/solidity
+          command: npm run test
   build_client_and_test_go:
     executor: docker-git
     steps:
@@ -55,9 +51,8 @@ jobs:
       - checkout
       - run:
           name: Authenticate GitHub Package Registry
-          command: |
-            cd solidity
-            echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" > .npmrc
+          working_directory: ~/project/solidity
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" > .npmrc
       - run:
           name: Run Docker build
           command: |
