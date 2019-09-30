@@ -30,7 +30,7 @@ jobs:
       - run:
           name: Authenticate GitHub Package Registry
           working_directory: ~/project/solidity
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" > .npmrc
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       - run:
           name: Setup solidity
           working_directory: ~/project/solidity
@@ -52,7 +52,7 @@ jobs:
       - run:
           name: Authenticate GitHub Package Registry
           working_directory: ~/project/solidity
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" > .npmrc
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       - run:
           name: Run Docker build
           command: |
