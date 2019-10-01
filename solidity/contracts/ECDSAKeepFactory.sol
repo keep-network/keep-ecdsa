@@ -9,10 +9,21 @@ contract ECDSAKeepFactory {
     // List of keeps.
     ECDSAKeep[] keeps;
 
+    // List of candidates to be selected as keep members.
+    // TODO: Remove stale members.
+    address[] candidates;
+
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress
     );
+
+    /// @notice Register candidate to be selected as keep member.
+    /// @dev TODO: This is a simplified solution until we have proper registration
+    /// and group selection.
+    function registerCandidate() external {
+        candidates.push(msg.sender);
+    }
 
     /// @notice Open a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
