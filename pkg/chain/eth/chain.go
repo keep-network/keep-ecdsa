@@ -11,15 +11,25 @@ import (
 // KeepAddress is a keep contract address.
 type KeepAddress = common.Address
 
-// Interface is an interface that provides ability to interact with ethereum
-// contracts.
-type Interface interface {
+// Handle represents a handle to an ethereum blockchain.
+type Handle interface {
+	ECDSAKeepFactory
+	ECDSAKeep
+}
+
+// ECDSAKeepFactory is an interface that provides ability to interact with
+// ECDSAKeepFactory ethereum contracts.
+type ECDSAKeepFactory interface {
 	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
 	// notification of a new ECDSA keep creation is seen.
 	OnECDSAKeepCreated(
 		handler func(event *ECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
+}
 
+// ECDSAKeep is an interface that provides ability to interact with ECDSAKeep
+// ethereum contracts.
+type ECDSAKeep interface {
 	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new signing request for a given keep is seen.
 	OnSignatureRequested(

@@ -19,7 +19,7 @@ type EthereumChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Interface, error) {
+func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
