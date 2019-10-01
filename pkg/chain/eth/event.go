@@ -6,7 +6,8 @@ import (
 
 // ECDSAKeepCreatedEvent is an event emitted on a new keep creation.
 type ECDSAKeepCreatedEvent struct {
-	KeepAddress common.Address // keep contract address
+	KeepAddress common.Address   // keep contract address
+	Members     []common.Address // keep members addresses
 }
 
 // SignatureRequestedEvent is an event emitted when a user requests

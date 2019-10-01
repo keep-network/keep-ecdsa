@@ -26,6 +26,7 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 		) {
 			handler(&eth.ECDSAKeepCreatedEvent{
 				KeepAddress: chainEvent.KeepAddress,
+				Members:     chainEvent.Members,
 			})
 		},
 		func(err error) error {
