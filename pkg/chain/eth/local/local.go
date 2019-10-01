@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -20,15 +21,28 @@ type localChain struct {
 	keeps map[eth.KeepAddress]*localKeep
 
 	keepCreatedHandlers map[int]func(event *eth.ECDSAKeepCreatedEvent)
+
+	clientAddress common.Address
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect() eth.Interface {
+func Connect() eth.Handle {
 	return &localChain{
 		keeps:               make(map[eth.KeepAddress]*localKeep),
 		keepCreatedHandlers: make(map[int]func(event *eth.ECDSAKeepCreatedEvent)),
+		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
 	}
+}
+
+// Address returns client's ethereum address.
+func (lc *localChain) Address() common.Address {
+	return lc.clientAddress
+}
+
+// RegisterCandidate registers client as a candidate to be selected to a keep.
+func (lc *localChain) RegisterCandidate() error {
+	return nil
 }
 
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
