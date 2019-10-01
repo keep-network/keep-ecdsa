@@ -191,7 +191,7 @@ workflows:
   build-test-migrate-publish:
     jobs:
       - build_client_and_test_go:
-          context: keep-dev
+          context: github-package-registry
       - build_initcontainer:
           filters:
             branches:
