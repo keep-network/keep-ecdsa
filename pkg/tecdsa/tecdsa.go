@@ -19,14 +19,14 @@ var logger = log.Logger("keep-tecdsa")
 // client holds blockchain specific configuration, interfaces to interact with the
 // blockchain and a map of signers for given keeps.
 type client struct {
-	ethereumChain    eth.Interface
+	ethereumChain    eth.Handle
 	bitcoinNetParams *chaincfg.Params
 	keepsRegistry    *registry.Keeps
 }
 
 // Initialize initializes the tECDSA client with rules related to events handling.
 func Initialize(
-	ethereumChain eth.Interface,
+	ethereumChain eth.Handle,
 	bitcoinNetParams *chaincfg.Params,
 	persistence persistence.Handle,
 ) {
