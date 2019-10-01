@@ -7,6 +7,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -51,13 +52,15 @@ func Initialize(
 			event.KeepAddress.String(),
 		)
 
-		go func() {
-			if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
-				logger.Errorf("signer generation failed: [%v]", err)
-			}
+		if event.ContainsMember(ethereumChain.Address()) {
+			go func() {
+				if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
+					logger.Errorf("signer generation failed: [%v]", err)
+				}
 
-			client.registerForSignEvents(event.KeepAddress)
-		}()
+				client.registerForSignEvents(event.KeepAddress)
+			}()
+		}
 	})
 
 	// Register as a candidate member for keep.
