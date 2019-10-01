@@ -15,7 +15,8 @@ contract ECDSAKeepFactory {
 
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
-        address keepAddress
+        address keepAddress,
+        address[] members
     );
 
     /// @notice Register candidate to be selected as keep member.
@@ -47,7 +48,7 @@ contract ECDSAKeepFactory {
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepCreated(keepAddress);
+        emit ECDSAKeepCreated(keepAddress, _members);
     }
 
     /// @notice Runs member selection for an ECDSA keep.
