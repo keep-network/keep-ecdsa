@@ -146,7 +146,7 @@ jobs:
           name: Load Docker images
           command: |
             docker load -i /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar
-            docker load -i /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar
+            # docker load -i /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -157,11 +157,11 @@ jobs:
           registry-url: $GCR_REGISTRY_URL
           image: keep-tecdsa
           tag: latest
-      - gcp-gcr/push-image:
-          google-project-id: GOOGLE_PROJECT_ID
-          registry-url: $GCR_REGISTRY_URL
-          image: initcontainer-provision-keep-tecdsa
-          tag: latest
+      # - gcp-gcr/push-image:
+      #     google-project-id: GOOGLE_PROJECT_ID
+      #     registry-url: $GCR_REGISTRY_URL
+      #     image: initcontainer-provision-keep-tecdsa
+      #     tag: latest
   publish_contract_data:
     executor: gcp-cli/default
     steps:
