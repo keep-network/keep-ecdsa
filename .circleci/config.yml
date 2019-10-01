@@ -64,17 +64,26 @@ jobs:
       - run:
           name: Run Docker build
           command: |
-            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t go-build-env --target gobuild .
-            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa .
+            docker build \
+              --build-arg GITHUB_TOKEN=$GITHUB_TOKEN \
+              --tag keep-tecdsa \
+              --target gobuild \
+              --save /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar \
+              .
       - run:
           name: Run Go tests
           command: |
-            docker run -w /go/src/github.com/keep-network/keep-tecdsa go-build-env go test ./.../
+            docker run \
+              --workdir /go/src/github.com/keep-network/keep-tecdsa \
+              keep-tecdsa \
+              go test ./.../
       - run:
           name: Save keep-tecdsa image
           command: |
             mkdir -p /tmp/keep-tecdsa/docker-images
-            docker save -o /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
+            docker save \
+              --output /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar \
+              keep-tecdsa
       - persist_to_workspace:
           root: /tmp/keep-tecdsa
           paths:
