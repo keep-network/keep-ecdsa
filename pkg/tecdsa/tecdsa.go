@@ -59,6 +59,11 @@ func Initialize(
 			client.registerForSignEvents(event.KeepAddress)
 		}()
 	})
+
+	// Register as a candidate member for keep.
+	if err := ethereumChain.RegisterCandidate(); err != nil {
+		logger.Errorf("failed to register member: [%v]", err)
+	}
 }
 
 // registerForSignEvents registers for signature requested events emitted by
