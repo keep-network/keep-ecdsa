@@ -54,19 +54,32 @@ jobs:
           working_directory: ~/project/solidity
           command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       - run:
-          name: Run Docker build
+          name: Run Docker build for GO build environment container
           command: |
-            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t go-build-env --target gobuild .
-            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa .
+            docker build \
+              --build-arg GITHUB_TOKEN=$GITHUB_TOKEN \
+              --tag go-build-env \
+              --target gobuild .
       - run:
           name: Run Go tests
           command: |
-            docker run -w /go/src/github.com/keep-network/keep-tecdsa go-build-env go test ./.../
+            docker run \
+              --workdir /go/src/github.com/keep-network/keep-tecdsa \
+              go-build-env \
+              go test ./.../
+      - run:
+          name: Run Docker build for keep-tecdsa runtime container
+          command: |
+            docker build \
+              --build-arg GITHUB_TOKEN=$GITHUB_TOKEN \
+              --tag keep-tecdsa .
       - run:
           name: Save keep-tecdsa image
           command: |
             mkdir -p /tmp/keep-tecdsa/docker-images
-            docker save -o /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
+            docker save \
+              --output /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar \
+              keep-tecdsa
       - persist_to_workspace:
           root: /tmp/keep-tecdsa
           paths:
@@ -90,11 +103,13 @@ jobs:
               --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
               --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
               --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
-              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-tecdsa .
+              --tag initcontainer-provision-keep-tecdsa .
       - run:
           name: Save keep-tecdsa-initcontainer image
           command: |
-            docker save -o /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-tecdsa
+            docker save \
+              --output /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar \
+              initcontainer-provision-keep-tecdsa
       - persist_to_workspace:
           root: /tmp/keep-tecdsa
           paths:
@@ -131,6 +146,11 @@ jobs:
           command: |
             docker load -i /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar
             docker load -i /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar
+      - run:
+          name: Tag Docker images
+          command: |
+            docker tag keep-tecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
+            docker tag initcontainer-provision-keep-tecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-tecdsa
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
