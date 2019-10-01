@@ -9,6 +9,11 @@ Install the project dependencies:
 npm install
 ```
 
+The project uses [GitHub Package Registry](https://github.com/orgs/keep-network/packages)
+for dependencies. It requires `npm login` to be executed to authenticate with 
+GitHub account. You can login with GitHub access token by providing your username
+and instead of password use the token.
+
 ## Usage
 
 Currently contracts can be installed as npm dependency, in the future we may

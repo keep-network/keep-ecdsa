@@ -28,13 +28,20 @@ jobs:
             ./ganache-cli
           background: true
       - run:
+          name: Authenticate GitHub Package Registry
+          working_directory: ~/project/solidity
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - run:
           name: Setup solidity
+          working_directory: ~/project/solidity
           command: npm install
       - run:
           name: Build solidity contracts
+          working_directory: ~/project/solidity
           command: npm run build
       - run:
           name: Run solidity tests
+          working_directory: ~/project/solidity
           command: npm run test
   build_client_and_test_go:
     executor: docker-git
@@ -43,10 +50,14 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
+          name: Authenticate GitHub Package Registry
+          working_directory: ~/project/solidity
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - run:
           name: Run Docker build
           command: |
-            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN -t go-build-env --target gobuild .
-            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa .
+            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t go-build-env --target gobuild .
+            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa .
       - run:
           name: Run Go tests
           command: |

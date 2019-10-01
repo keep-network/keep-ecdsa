@@ -1,18 +1,20 @@
 {
-  "name": "keep-tecdsa",
-  "version": "0.1.0",
-  "description": "Smart contracts for the Keep TECDSA",
+  "name": "@keep-network/keep-ecdsa",
+  "version": "0.1.1",
+  "description": "Smart contracts for ECDSA Keep",
   "repository": {
     "type": "git",
-    "url": "https://github.com/keep-network/keep-tecdsa.git"
+    "url": "ssh://git@github.com/keep-network/keep-tecdsa.git"
   },
   "files": [
-    "/solidity/contracts/api/*.sol",
-    "!./README.md"
+    "contracts/**/*.sol"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "scripts": {
     "truffle": "truffle",
-    "clean": "rm -rf ./solidity/build/",
+    "clean": "rm -rf build/",
     "build": "truffle compile",
     "test": "truffle test"
   },

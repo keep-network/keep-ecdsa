@@ -28,8 +28,8 @@ RUN apk add --update --no-cache \
 COPY --from=ethereum/solc:0.5.8 /usr/bin/solc /usr/bin/solc
 
 # Configure GitHub token to be able to get private repositories.
-ARG GITHUBTOKEN
-RUN git config --global url."https://$GITHUBTOKEN:@github.com/".insteadOf "https://github.com/"
+ARG GITHUB_TOKEN
+RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
 
 # Configure working directory.
 RUN mkdir -p $APP_DIR
@@ -46,10 +46,8 @@ RUN cd /go/pkg/mod/github.com/keep-network/go-ethereum@v1.8.27/cmd/abigen && go 
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.2.1/protoc-gen-gogoslick && go install .
 
 # Install Solidity contracts.
-COPY ./package.json $APP_DIR/
-COPY ./package-lock.json $APP_DIR/
 COPY ./solidity $APP_DIR/solidity
-RUN npm install
+RUN cd $APP_DIR/solidity && npm install
 
 # Generate code.
 COPY ./pkg/chain/eth/gen $APP_DIR/pkg/chain/eth/gen
