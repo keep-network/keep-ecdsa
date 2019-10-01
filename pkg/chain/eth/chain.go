@@ -13,6 +13,9 @@ type KeepAddress = common.Address
 
 // Handle represents a handle to an ethereum blockchain.
 type Handle interface {
+	// Address returns client's ethereum address.
+	Address() common.Address
+
 	ECDSAKeepFactory
 	ECDSAKeep
 }

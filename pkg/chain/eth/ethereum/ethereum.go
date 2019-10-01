@@ -15,6 +15,11 @@ import (
 
 var logger = log.Logger("keep-chain-eth-ethereum")
 
+// Address returns client's ethereum address.
+func (ec *EthereumChain) Address() common.Address {
+	return ec.transactorOptions.From
+}
+
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnECDSAKeepCreated(
