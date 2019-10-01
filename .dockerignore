@@ -1,0 +1,8 @@
+.vscode
+.circleci
+
+vendor/
+infrastructure/
+
+solidity/node_modules/
+solidity/build/
