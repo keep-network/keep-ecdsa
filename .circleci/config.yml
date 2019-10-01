@@ -147,6 +147,11 @@ jobs:
           command: |
             docker load -i /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar
             # docker load -i /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar
+      - run:
+          name: Tag Docker images
+          command: |
+            docker tag keep-tecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
+            docker tag initcontainer-provision-keep-tecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-tecdsa
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
