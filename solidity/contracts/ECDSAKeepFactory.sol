@@ -52,19 +52,24 @@ contract ECDSAKeepFactory {
     }
 
     /// @notice Runs member selection for an ECDSA keep.
-    /// @dev Stub implementations gets only one member with a fixed address.
+    /// @dev Stub implementations generates a group with only one member. Member
+    /// is randomly selected from registered candidates.
     /// @param _groupSize Number of members to be selected.
     /// @return List of selected members addresses.
     function selectECDSAKeepMembers(
         uint256 _groupSize
-    ) internal pure returns (address[] memory members){
-        // TODO: Implement members selection
+    ) internal view returns (address[] memory members){
+        require(candidates.length > 0, 'candidates list is empty');
+
+        // TODO: Handle groups with more than one member.
         _groupSize;
 
         members = new address[](1);
 
-        // For development we use a member address calculated from the following
-        // private key: 0x0789df7d07e6947a93576b9ef60b97aed9adb944fb3ff6bae5215fd3ab0ad0dd
-        members[0] = 0x1C25f178599d00b3887BF6D9084cf0C6d49a3097;
+        // TODO: Implement with better randomness source.
+        uint randomNumber = uint(blockhash(block.number));
+        uint randomIndex = randomNumber % (candidates.length + 1);
+
+        members[0] = candidates[randomIndex];
     }
 }
