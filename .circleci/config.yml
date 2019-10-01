@@ -68,7 +68,6 @@ jobs:
               --build-arg GITHUB_TOKEN=$GITHUB_TOKEN \
               --tag keep-tecdsa \
               --target gobuild \
-              --save /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar \
               .
       - run:
           name: Run Go tests
