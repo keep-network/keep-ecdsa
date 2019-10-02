@@ -62,7 +62,7 @@ jobs:
       - attach_workspace:
           at: solidity
       - run:
-          name: Run Docker build for GO build environment container
+          name: Build Go build environment image
           command: |
             docker build \
               --build-arg GITHUB_TOKEN=$GITHUB_TOKEN \
@@ -76,7 +76,7 @@ jobs:
               go-build-env \
               go test ./.../
       - run:
-          name: Run Docker build for keep-tecdsa runtime container
+          name: Build keep-tecdsa runtime image
           command: |
             docker build \
               --build-arg GITHUB_TOKEN=$GITHUB_TOKEN \
@@ -101,7 +101,7 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
-          name: Run Docker build
+          name: Build keep-tecdsa-initcontainer image
           command: |
             cp /tmp/keep-tecdsa/contracts/* infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
             cd infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
