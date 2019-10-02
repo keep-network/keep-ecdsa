@@ -1,0 +1,43 @@
+name: NPM
+
+on:
+  push:
+    branches:
+      # TODO: Change `actions-npm` to `master` across the file when it's ready to be merged.
+      - actions-npm
+    # paths:
+    #   - "solidity/contracts/**"
+
+jobs:
+  publish-contracts:
+    # Don't run the job if commit message starts with `[CI]`.
+    if: startsWith(github.event.commits[0].message, '[CI]') == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "11.x"
+          registry-url: "https://npm.pkg.github.com"
+      # - name: Publish package
+      #   working-directory: solidity
+      #   run: npm publish
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Bump version
+        working-directory: solidity
+        run: npm version prerelease --preid=pre
+      - name: Setup git
+        run: |
+          git remote set-url origin https://${{ secrets.CI_GITHUB_TOKEN }}@github.com/keep-network/keep-tecdsa.git
+          git config user.email "thesis-heimdall@users.noreply.github.com"
+          git config user.name "Heimdall"
+      - name: Commit
+        working-directory: solidity
+        run: |
+          GITHUB_REF=${{ github.ref }}
+          BRANCH=${GITHUB_REF#refs/heads/} # strip branch name from github reference, branch name is prefixed with `refs/heads`
+          git checkout $BRANCH
+          git add package.json package-lock.json
+          git commit -m "[CI] - bump npm package version"
+          git push origin $BRANCH
