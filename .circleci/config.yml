@@ -16,10 +16,24 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
 
 jobs:
+  setup_github_package_registry:
+    executor: docker-node
+    steps:
+      - checkout
+      - run:
+          name: Authenticate GitHub Package Registry
+          working_directory: ~/project/solidity
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - persist_to_workspace:
+          root: solidity
+          paths:
+            - .npmrc
   build_and_test_solidity:
     executor: docker-node
     steps:
       - checkout
+      - attach_workspace:
+          at: solidity
       - run: npm install ganache-cli@6.4.2
       - run:
           name: Running testrpc
@@ -27,10 +41,6 @@ jobs:
             cd $(npm bin)
             ./ganache-cli
           background: true
-      - run:
-          name: Authenticate GitHub Package Registry
-          working_directory: ~/project/solidity
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       - run:
           name: Setup solidity
           working_directory: ~/project/solidity
@@ -49,10 +59,8 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
-      - run:
-          name: Authenticate GitHub Package Registry
-          working_directory: ~/project/solidity
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - attach_workspace:
+          at: solidity
       - run:
           name: Run Docker build for GO build environment container
           command: |
@@ -187,11 +195,19 @@ workflows:
   version: 2
   solidity:
     jobs:
-      - build_and_test_solidity
+      - setup_github_package_registry:
+          context: github-package-registry
+      - build_and_test_solidity:
+          requires:
+            - setup_github_package_registry
   build-test-migrate-publish:
     jobs:
+      - setup_github_package_registry:
+          context: github-package-registry
       - build_client_and_test_go:
           context: github-package-registry
+          requires:
+            - setup_github_package_registry
       - build_initcontainer:
           filters:
             branches:
