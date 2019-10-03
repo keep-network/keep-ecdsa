@@ -75,7 +75,7 @@ contract ECDSAKeepFactory {
 
         // TODO: Use the random beacon for randomness.
         uint randomNumber = uint(blockhash(block.number));
-        uint randomIndex = randomNumber % (memberCandidates.length + 1);
+        uint randomIndex = randomNumber % (memberCandidates.length);
 
         members[0] = memberCandidates[randomIndex];
     }
