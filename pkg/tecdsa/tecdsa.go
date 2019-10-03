@@ -52,7 +52,7 @@ func Initialize(
 			event.KeepAddress.String(),
 		)
 
-		if event.ContainsMember(ethereumChain.Address()) {
+		if event.IsMember(ethereumChain.Address()) {
 			go func() {
 				if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
 					logger.Errorf("signer generation failed: [%v]", err)

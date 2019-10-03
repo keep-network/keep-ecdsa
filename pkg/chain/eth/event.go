@@ -10,8 +10,8 @@ type ECDSAKeepCreatedEvent struct {
 	Members     []common.Address // keep members addresses
 }
 
-// ContainsMember checks if list of members contains given address.
-func (e *ECDSAKeepCreatedEvent) ContainsMember(address common.Address) bool {
+// IsMember checks if list of members contains the given address.
+func (e *ECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
 	for _, member := range e.Members {
 		if member == address {
 			return true

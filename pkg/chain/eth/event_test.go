@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func TestContainsMember(t *testing.T) {
+func TestIsMember(t *testing.T) {
 	address1 := common.HexToAddress("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 	address2 := common.HexToAddress("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1")
 	address3 := common.HexToAddress("1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
@@ -37,7 +37,7 @@ func TestContainsMember(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			event := &ECDSAKeepCreatedEvent{Members: test.members}
 
-			result := event.ContainsMember(test.address)
+			result := event.IsMember(test.address)
 
 			if result != test.expectedResult {
 				t.Errorf(
