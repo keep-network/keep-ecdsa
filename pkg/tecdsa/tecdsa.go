@@ -56,6 +56,7 @@ func Initialize(
 			go func() {
 				if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
 					logger.Errorf("signer generation failed: [%v]", err)
+					return
 				}
 
 				client.registerForSignEvents(event.KeepAddress)
