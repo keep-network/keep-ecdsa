@@ -52,6 +52,7 @@ See [solidity](./solidity/) directory.
 
 `configs/config.toml` is default path to the config file. To provide custom 
 configuration CLI supports `--config` flag.
+Sample configuration can be found in [config.toml.SAMPLE](configs/config.toml.SAMPLE).
 
 ---
 
@@ -123,7 +124,7 @@ Transaction is submitted to Electrum Server to be published to a network.
 
 #### Configuration
 
-To configure connection details of Electrum Server update [config.toml](configs/config.toml)
+To configure connection details of Electrum Server update `config.toml`
  file. 
 
 A list of Electrum Servers working on Bitcoin testnet can be found [here](https://1209k.com/bitcoin-eye/ele.php?chain=tbtc).
@@ -164,7 +165,7 @@ to be published on the chain.
 
 #### Configuration
 
-To configure Block Cypher communication details update [config.toml](configs/config.toml)
+To configure Block Cypher communication details update `config.toml`
  file. 
 
  Sample config file content:
