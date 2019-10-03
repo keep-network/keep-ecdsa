@@ -21,6 +21,16 @@ func TestIsMember(t *testing.T) {
 			address:        address1,
 			expectedResult: true,
 		},
+		"matches first item in multiple item slice": {
+			members:        []common.Address{address1, address2, address3},
+			address:        address1,
+			expectedResult: true,
+		},
+		"matches middle item in multiple item slice": {
+			members:        []common.Address{address1, address2, address3},
+			address:        address2,
+			expectedResult: true,
+		},
 		"matches last item in multiple item slice": {
 			members:        []common.Address{address1, address2, address3},
 			address:        address3,
