@@ -69,12 +69,11 @@ contract ECDSAKeepFactory {
     ) internal view returns (address[] memory members){
         require(memberCandidates.length > 0, 'keep member candidates list is empty');
 
-        // TODO: Handle groups with more than one member.
         _groupSize;
 
         members = new address[](1);
 
-        // TODO: Implement with better randomness source.
+        // TODO: Use the random beacon for randomness.
         uint randomNumber = uint(blockhash(block.number));
         uint randomIndex = randomNumber % (memberCandidates.length + 1);
 
