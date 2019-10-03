@@ -23,6 +23,10 @@ func TestSignerRoundtrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(signer, unmarshaled) {
-		t.Fatalf("unexpected content of unmarshaled signer")
+		t.Fatalf(
+			"unexpected content of unmarshaled signer\nexpected: [%+v]\nactual:   [%+v]\n",
+			signer,
+			unmarshaled,
+		)
 	}
 }

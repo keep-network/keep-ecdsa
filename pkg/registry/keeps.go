@@ -99,10 +99,9 @@ func (g *Keeps) LoadExistingKeeps() {
 func (g *Keeps) printSigners() {
 	g.myKeeps.Range(func(key, value interface{}) bool {
 		logger.Infof(
-			"signer for keep [%s] was loaded with public key: [x: [%x], y: [%x]]",
+			"signer for keep [%s] was loaded with public key: [%x]",
 			key,
-			value.(*ecdsa.Signer).PublicKey().X,
-			value.(*ecdsa.Signer).PublicKey().Y,
+			value.(*ecdsa.Signer).PublicKey().Marshal(),
 		)
 		return true
 	})

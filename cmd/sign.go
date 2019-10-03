@@ -35,9 +35,8 @@ func Sign(c *cli.Context) error {
 
 	signer := ecdsa.NewSigner(privateKey)
 
-	logger.Debugf("generated public key:\nX: %x\nY: %x",
-		signer.PublicKey().X,
-		signer.PublicKey().Y,
+	logger.Debugf("generated public key: [%x]",
+		signer.PublicKey().Marshal(),
 	)
 
 	signature, err := signer.CalculateSignature(crand.Reader, []byte(arg))
