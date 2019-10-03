@@ -1,11 +1,14 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
+import "./utils/AddressArrayUtils.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating ECDSA keeps.
 /// @dev TODO: This is a stub contract - needs to be implemented.
 contract ECDSAKeepFactory {
+    using AddressArrayUtils for address[];
+
     // List of keeps.
     ECDSAKeep[] keeps;
 
@@ -22,10 +25,13 @@ contract ECDSAKeepFactory {
     );
 
     /// @notice Register caller as a candidate to be selected as keep member.
+    /// @dev If caller is already registered it returns without any changes.
     /// TODO: This is a simplified solution until we have proper registration
     /// and group selection.
     function registerMemberCandidate() external {
+        if (!memberCandidates.contains(msg.sender)) {
             memberCandidates.push(msg.sender);
+        }
     }
 
     /// @notice Open a new ECDSA keep.

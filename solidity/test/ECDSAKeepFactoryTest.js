@@ -1,13 +1,44 @@
-var ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
+const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
+const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 
 contract("ECDSAKeepFactory", async accounts => {
     let keepFactory
 
-    before(async () => {
-        keepFactory = await ECDSAKeepFactory.new()
+    describe.only("registerMemberCandidate", async () => {
+        before(async () => {
+            keepFactory = await ECDSAKeepFactoryStub.new()
+        })
+
+        it("reverts if no member candidates are registered", async () => {
+            const member = accounts[1]
+
+            await keepFactory.registerMemberCandidate({ from: member })
+
+            const memberCandidates1 = await keepFactory.getMemberCandidates()
+
+            assert.equal(
+                memberCandidates1,
+                member,
+                "incorrect registered member candidates list",
+            )
+
+            await keepFactory.registerMemberCandidate({ from: member })
+
+            const memberCandidates2 = await keepFactory.getMemberCandidates()
+
+            assert.equal(
+                memberCandidates2,
+                member,
+                "incorrect registered member candidates list after re-registration",
+            )
+        })
     })
 
     describe("openKeep", async () => {
+        before(async () => {
+            keepFactory = await ECDSAKeepFactory.new()
+        })
+
         it("reverts if no member candidates are registered", async () => {
             keepFactory = await ECDSAKeepFactory.new()
 
@@ -64,7 +95,7 @@ contract("ECDSAKeepFactory", async accounts => {
             assert.equal(
                 eventList[0].returnValues.members,
                 member,
-                "incorrect member in emitted event",
+                "incorrect keep member in emitted event",
             )
         })
     })
