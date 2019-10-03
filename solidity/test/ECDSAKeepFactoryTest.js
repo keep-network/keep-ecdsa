@@ -4,7 +4,7 @@ const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 contract("ECDSAKeepFactory", async accounts => {
     let keepFactory
 
-    describe.only("registerMemberCandidate", async () => {
+    describe("registerMemberCandidate", async () => {
         before(async () => {
             keepFactory = await ECDSAKeepFactoryStub.new()
         })
