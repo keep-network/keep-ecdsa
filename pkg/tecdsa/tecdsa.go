@@ -63,8 +63,8 @@ func Initialize(
 		}
 	})
 
-	// Register as a candidate member for keep.
-	if err := ethereumChain.RegisterCandidate(); err != nil {
+	// Register client as a candidate member for keep.
+	if err := ethereumChain.RegisterAsMemberCandidate(); err != nil {
 		logger.Errorf("failed to register member: [%v]", err)
 	}
 }

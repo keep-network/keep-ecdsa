@@ -23,8 +23,9 @@ type Handle interface {
 // ECDSAKeepFactory is an interface that provides ability to interact with
 // ECDSAKeepFactory ethereum contracts.
 type ECDSAKeepFactory interface {
-	// RegisterCandidate registers client as a candidate to be selected to a keep.
-	RegisterCandidate() error
+	// RegisterAsMemberCandidate registers client as a candidate to be selected
+	// to a keep.
+	RegisterAsMemberCandidate() error
 
 	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
 	// notification of a new ECDSA keep creation is seen.
