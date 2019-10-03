@@ -20,7 +20,7 @@
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
-     ECDSAKeepFactory = "0x8bA0f04C9059995AFF03CC5365EA02FBa13147d0"
+     ECDSAKeepFactory = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 [Storage]
-    DataDir = "/Users/jakub/.keep/storage"
+    DataDir = "/my/secure/location"
