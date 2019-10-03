@@ -9,9 +9,11 @@ contract ECDSAKeepFactory {
     // List of keeps.
     ECDSAKeep[] keeps;
 
-    // List of candidates to be selected as keep members.
-    // TODO: Remove stale members.
-    address[] candidates;
+    // List of candidates to be selected as keep members. Once the candidate is
+    // registered it remains on the list forever.
+    // TODO: It's a temporary solution until we implement proper candidate
+    // registration and member selection.
+    address[] memberCandidates;
 
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
@@ -19,11 +21,11 @@ contract ECDSAKeepFactory {
         address[] members
     );
 
-    /// @notice Register candidate to be selected as keep member.
-    /// @dev TODO: This is a simplified solution until we have proper registration
+    /// @notice Register caller as a candidate to be selected as keep member.
+    /// TODO: This is a simplified solution until we have proper registration
     /// and group selection.
-    function registerCandidate() external {
-        candidates.push(msg.sender);
+    function registerMemberCandidate() external {
+            memberCandidates.push(msg.sender);
     }
 
     /// @notice Open a new ECDSA keep.
@@ -53,13 +55,13 @@ contract ECDSAKeepFactory {
 
     /// @notice Runs member selection for an ECDSA keep.
     /// @dev Stub implementations generates a group with only one member. Member
-    /// is randomly selected from registered candidates.
+    /// is randomly selected from registered member candidates.
     /// @param _groupSize Number of members to be selected.
     /// @return List of selected members addresses.
     function selectECDSAKeepMembers(
         uint256 _groupSize
     ) internal view returns (address[] memory members){
-        require(candidates.length > 0, 'candidates list is empty');
+        require(memberCandidates.length > 0, 'keep member candidates list is empty');
 
         // TODO: Handle groups with more than one member.
         _groupSize;
@@ -68,8 +70,8 @@ contract ECDSAKeepFactory {
 
         // TODO: Implement with better randomness source.
         uint randomNumber = uint(blockhash(block.number));
-        uint randomIndex = randomNumber % (candidates.length + 1);
+        uint randomIndex = randomNumber % (memberCandidates.length + 1);
 
-        members[0] = candidates[randomIndex];
+        members[0] = memberCandidates[randomIndex];
     }
 }

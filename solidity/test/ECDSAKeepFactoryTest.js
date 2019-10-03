@@ -27,7 +27,7 @@ contract("ECDSAKeepFactory", async accounts => {
         it("emits ECDSAKeepCreated event upon keep creation", async () => {
             const member = accounts[1]
 
-            await keepFactory.registerCandidate({ from: member })
+            await keepFactory.registerMemberCandidate({ from: member })
 
             let blockNumber = await web3.eth.getBlockNumber()
 
