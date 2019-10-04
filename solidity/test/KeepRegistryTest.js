@@ -42,7 +42,7 @@ contract("KeepRegistry", async accounts => {
 
         it("cannot be called by non-owner", async () => {
             try {
-                await keepRegistry.setVendor.call(keepType1, address1, { from: accounts[1] })
+                await keepRegistry.setVendor(keepType1, address1, { from: accounts[1] })
                 assert(false, 'Test call did not error as expected')
             } catch (e) {
                 assert.include(e.message, 'Ownable: caller is not the owner')

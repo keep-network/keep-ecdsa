@@ -43,7 +43,7 @@ contract("ECDSAKeepFactory", async accounts => {
             keepFactory = await ECDSAKeepFactory.new()
 
             try {
-                await keepFactory.openKeep.call(
+                await keepFactory.openKeep(
                     10, // _groupSize
                     5, // _honestThreshold
                     "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
@@ -51,7 +51,7 @@ contract("ECDSAKeepFactory", async accounts => {
 
                 assert(false, 'Test call did not error as expected')
             } catch (e) {
-                assert.include(e.message, "candidates list is empty")
+                assert.include(e.message, "keep member candidates list is empty")
             }
         })
 
