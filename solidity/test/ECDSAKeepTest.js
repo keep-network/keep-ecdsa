@@ -253,7 +253,7 @@ contract('ECDSAKeep', (accounts) => {
       const initialBalances = await getERC20BalancesFromList(members, token)
       await token.mint(accounts[0], ERC20Value)
       await token.approve(keep.address, ERC20Value)
-      await keep.distributeERC20ToKeepGroup(accounts[0], token.address, ERC20Value)
+      await keep.distributeERC20ToKeepGroup(token.address, ERC20Value)
 
       const newBalances = await getERC20BalancesFromList(members, token)
       const check = subtractBalancesFromList(newBalances, ERC20Value / members.length)
@@ -263,7 +263,7 @@ contract('ECDSAKeep', (accounts) => {
 
     it('fails with insufficient approval', async () => {
       await expectThrow(
-        keep.distributeERC20ToKeepGroup(accounts[0], token.address, ERC20Value),
+        keep.distributeERC20ToKeepGroup(token.address, ERC20Value),
         "SafeMath: subtraction overflow"
       )      
     })
@@ -271,7 +271,7 @@ contract('ECDSAKeep', (accounts) => {
     it('fails with zero value', async () => {
       await token.mint(accounts[0], ERC20Value)
       await expectThrow(
-        keep.distributeERC20ToKeepGroup(accounts[0], token.address, 0),
+        keep.distributeERC20ToKeepGroup(token.address, 0),
         "value must be non-zero"
       )      
     })

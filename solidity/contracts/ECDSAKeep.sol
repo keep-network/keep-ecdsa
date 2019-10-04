@@ -142,7 +142,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     ///         token amount. We don't explicitly check for allowance, SafeMath
     ///         subtraction overflow is enough protection.
     /// @return true if the function completes execution
-    function distributeERC20ToKeepGroup(address _depositContract, address _tokenAddress, uint256 _value) public returns (bool){
+    function distributeERC20ToKeepGroup(address _tokenAddress, uint256 _value) public returns (bool){
         IERC20 token = IERC20(_tokenAddress);
 
         uint256 memberCount = members.length;
@@ -151,7 +151,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         require(dividend > 0, "value must be non-zero");
 
         for(uint8 i = 0; i < memberCount; i++){
-            token.transferFrom(_depositContract, members[i], dividend);
+            token.transferFrom(msg.sender, members[i], dividend);
         }
 
     return true;
