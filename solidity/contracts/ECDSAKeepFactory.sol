@@ -25,7 +25,7 @@ contract ECDSAKeepFactory {
         uint256 _honestThreshold,
         address _owner
     ) external payable returns (address keepAddress) {
-        address[] memory _members = selectECDSAKeepMembers(_groupSize);
+        address payable[] memory _members = selectECDSAKeepMembers(_groupSize);
 
         ECDSAKeep keep = new ECDSAKeep(
             _owner,
@@ -45,11 +45,11 @@ contract ECDSAKeepFactory {
     /// @return List of selected members addresses.
     function selectECDSAKeepMembers(
         uint256 _groupSize
-    ) internal pure returns (address[] memory members){
+    ) internal pure returns (address payable[] memory members){
         // TODO: Implement members selection
         _groupSize;
 
-        members = new address[](1);
+        members = new address payable[](1);
 
         // For development we use a member address calculated from the following
         // private key: 0x0789df7d07e6947a93576b9ef60b97aed9adb944fb3ff6bae5215fd3ab0ad0dd
