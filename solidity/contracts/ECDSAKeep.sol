@@ -10,10 +10,11 @@ import "./utils/AddressArrayUtils.sol";
 contract ECDSAKeep is IECDSAKeep, Ownable {
     using AddressArrayUtils for address[];
 
-    using AddressArrayUtils for address payable[];
-    using SafeMath for uint256;
+    // List of keep members' addresses.
     address[] internal members;
-    // Minimum number of honest keep members required to produce a signature.
+
+    // List of keep members' addresses.
+    address payable[] internal members;
     uint256 honestThreshold;
     // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
