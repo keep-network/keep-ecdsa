@@ -1,8 +1,6 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "./api/IECDSAKeep.sol";
 import "./utils/AddressArrayUtils.sol";
 
@@ -12,7 +10,8 @@ import "./utils/AddressArrayUtils.sol";
 contract ECDSAKeep is IECDSAKeep, Ownable {
     using AddressArrayUtils for address[];
 
-    // List of keep members' addresses.
+    using AddressArrayUtils for address payable[];
+    using SafeMath for uint256;
     address[] internal members;
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
