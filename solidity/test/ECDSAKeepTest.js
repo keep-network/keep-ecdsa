@@ -1,5 +1,13 @@
+//import getBalancesFromList from './helpers/listBalanceUtils'
+//import subtractBalancesFromList from './helpers/listBalanceUtils'
+import { getEthBalancesFromList, getERC20BalancesFromList, subtractBalancesFromList } from './helpers/listBalanceUtils'
+import expectThrow from './helpers/expectThrow'
+
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
+const TestToken = artifacts.require('./TestToken.sol')
 const truffleAssert = require('truffle-assertions')
+
+const BN = require('bn.js')
 
 contract('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
@@ -201,6 +209,71 @@ contract('ECDSAKeep', (accounts) => {
       } catch (e) {
         assert.include(e.message, 'Caller is not the keep member')
       }
+    })
+  })
+
+  describe('#distributeEthToKeepGroup', async () => {
+    const ethValue = 100000
+    let keep
+
+    beforeEach(async () => {
+      keep = await ECDSAKeep.new(owner, members, honestThreshold)
+    })
+
+    it('correctly distributes ETH', async () => {
+      const initialBalances = await getEthBalancesFromList(members)
+
+      await keep.distributeEthToKeepGroup({ value: ethValue})
+
+      const newBalances = await getEthBalancesFromList(members)
+      const check = subtractBalancesFromList(newBalances, ethValue / members.length)
+
+      assert.equal(initialBalances.toString(), check.toString())
+    })
+
+    it('reverts with zero value', async () => {
+      await expectThrow(
+        keep.distributeEthToKeepGroup(),
+        'must send value with TX'
+      )
+    })
+  })
+
+  describe('#distributeERC20ToKeepGroup', async () => {
+    const ERC20Value = 100000
+    let keep
+    let token
+
+    beforeEach(async () => {
+      keep = await ECDSAKeep.new(owner, members, honestThreshold)
+      token = await TestToken.new()
+    })
+
+    it('correctly distributes ERC20', async () => {
+      const initialBalances = await getERC20BalancesFromList(members, token)
+      await token.mint(accounts[0], ERC20Value)
+      await token.approve(keep.address, ERC20Value)
+      await keep.distributeERC20ToKeepGroup(accounts[0], token.address, ERC20Value)
+
+      const newBalances = await getERC20BalancesFromList(members, token)
+      const check = subtractBalancesFromList(newBalances, ERC20Value / members.length)
+
+      assert.equal(initialBalances.toString(), check.toString())
+    })
+
+    it('fails with insufficient approval', async () => {
+      await expectThrow(
+        keep.distributeERC20ToKeepGroup(accounts[0], token.address, ERC20Value),
+        "SafeMath: subtraction overflow"
+      )      
+    })
+
+    it('fails with zero value', async () => {
+      await token.mint(accounts[0], ERC20Value)
+      await expectThrow(
+        keep.distributeERC20ToKeepGroup(accounts[0], token.address, 0),
+        "value must be non-zero"
+      )      
     })
   })
 })
