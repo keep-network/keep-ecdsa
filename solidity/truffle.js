@@ -19,17 +19,22 @@ module.exports = {
    */
 
   networks: {
-    // Useful for testing. The `development` name is special - truffle uses it by default
-    // if it's defined here and no other network is specified at the command line.
-    // You should run a client (like ganache-cli, geth or parity) in a separate terminal
-    // tab if you use this network and you must also set the `host`, `port` and `network_id`
-    // options below to some value.
-    //
     development: {
-      host: "127.0.0.1",     // Localhost (default: none)
-      port: 8545,            // Standard Ethereum port (default: none)
-      network_id: "*",       // Any network (default: none)
-      websockets: true,      // Enable EventEmitter interface for web3 (default: false)
+      host: "127.0.0.1",
+      port: 8545,
+      network_id: "*",
+      websockets: true, // Enable EventEmitter interface for web3
+    },
+    geth: {
+      host: "127.0.0.1",
+      port: 8546,
+      network_id: "*",
+      websockets: true,
+      // Gas is set to a value lower as gas limit set in geth's `--targetgaslimit` 
+      // option and in chain's genesis block (hex: `0x47B760`).
+      // In case of exceeded block limit errors try lowering it.
+      gas: "4000000",
+      gasPrice: "1000000000", // same as on configured in geth (`web3.eth.gasPrice`)
     },
     keep_dev: {
       host: "localhost",
@@ -39,10 +44,9 @@ module.exports = {
     },
   },
 
-  // Configure your compilers
   compilers: {
     solc: {
-      version: "0.5.4",    // Fetch exact version from solc-bin (default: truffle's version)
+      version: "0.5.12",
     }
   }
 }
