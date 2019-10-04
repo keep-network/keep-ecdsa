@@ -141,7 +141,9 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     ///         openZeppelin. This function only has authority over pre-approved
     ///         token amount. We don't explicitly check for allowance, SafeMath
     ///         subtraction overflow is enough protection.
-    /// @return true if the function completes execution
+    /// @param _tokenAddress Address of the ERC20 token to distribute
+    /// @param _value        Amount of ERC20 token to destribute
+    /// @return              True if the function completes execution
     function distributeERC20ToKeepGroup(address _tokenAddress, uint256 _value) public returns (bool){
         IERC20 token = IERC20(_tokenAddress);
 
