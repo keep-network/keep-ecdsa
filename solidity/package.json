@@ -25,7 +25,8 @@
   },
   "homepage": "https://github.com/keep-network/keep-tecdsa",
   "dependencies": {
-    "openzeppelin-solidity": "^2.3.0"
+    "openzeppelin-solidity": "^2.3.0",
+    "bn.js": "^4.11.8"
   },
   "devDependencies": {
     "@babel/cli": "^7.4.4",
