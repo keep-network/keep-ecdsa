@@ -52,7 +52,7 @@ contract ECDSAKeepVendor is IECDSAKeepVendor, Ownable {
     ) external payable returns (address keepAddress) {
         address factory = selectFactory();
 
-        return ECDSAKeepFactory(factory).openKeep(
+        keepAddress = ECDSAKeepFactory(factory).openKeep.value(msg.value)(
             _groupSize,
             _honestThreshold,
             _owner
