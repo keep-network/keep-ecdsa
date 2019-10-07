@@ -7,6 +7,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -18,14 +19,14 @@ var logger = log.Logger("keep-tecdsa")
 // client holds blockchain specific configuration, interfaces to interact with the
 // blockchain and a map of signers for given keeps.
 type client struct {
-	ethereumChain    eth.Interface
+	ethereumChain    eth.Handle
 	bitcoinNetParams *chaincfg.Params
 	keepsRegistry    *registry.Keeps
 }
 
 // Initialize initializes the tECDSA client with rules related to events handling.
 func Initialize(
-	ethereumChain eth.Interface,
+	ethereumChain eth.Handle,
 	bitcoinNetParams *chaincfg.Params,
 	persistence persistence.Handle,
 ) {
@@ -51,14 +52,25 @@ func Initialize(
 			event.KeepAddress.String(),
 		)
 
-		go func() {
-			if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
-				logger.Errorf("signer generation failed: [%v]", err)
-			}
+		if event.IsMember(ethereumChain.Address()) {
+			go func() {
+				if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
+					logger.Errorf("signer generation failed: [%v]", err)
+					return
+				}
 
-			client.registerForSignEvents(event.KeepAddress)
-		}()
+				client.registerForSignEvents(event.KeepAddress)
+			}()
+		}
 	})
+
+	// Register client as a candidate member for keep.
+	err := ethereumChain.RegisterAsMemberCandidate()
+	if err != nil {
+		logger.Errorf("failed to register member: [%v]", err)
+	} else {
+		logger.Infof("client registered as member candidate in keep factory")
+	}
 }
 
 // registerForSignEvents registers for signature requested events emitted by

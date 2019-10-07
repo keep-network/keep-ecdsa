@@ -57,7 +57,7 @@ contract("ECDSAKeepVendor", async accounts => {
             let expectedResult = []
 
             try {
-                await keepVendor.registerFactory.call(address1, { from: accounts[1] })
+                await keepVendor.registerFactory(address1, { from: accounts[1] })
                 assert(false, 'Test call did not error as expected')
             } catch (e) {
                 assert.include(e.message, 'Ownable: caller is not the owner')
@@ -75,15 +75,15 @@ contract("ECDSAKeepVendor", async accounts => {
     describe("selectFactory", async () => {
         before(async () => {
             keepVendor = await ECDSAKeepVendor.new()
-
-            await keepVendor.registerFactory(address1)
-            await keepVendor.registerFactory(address2)
         })
 
         it("returns last factory from the list", async () => {
+            await keepVendor.registerFactory(address1)
+            await keepVendor.registerFactory(address2)
+
             let expectedResult = address2
 
-            let result = await keepVendor.selectFactoryPublic.call()
+            let result = await keepVendor.selectFactoryPublic()
 
             assert.equal(result, expectedResult, "unexpected factory selected")
         })
@@ -92,25 +92,43 @@ contract("ECDSAKeepVendor", async accounts => {
     describe("openKeep", async () => {
         before(async () => {
             keepVendor = await ECDSAKeepVendor.new()
-            let factoryStub = await ECDSAKeepFactoryStub.new()
+        })
 
-            await keepVendor.registerFactory(factoryStub.address)
+        it("reverts if no factories registered", async () => {
+            try {
+                await keepVendor.openKeep(
+                    10, // _groupSize
+                    5, // _honestThreshold
+                    "0xbc4862697a1099074168d54A555c4A60169c18BD", // _owner
+                )
+
+                assert(false, 'Test call did not error as expected')
+            } catch (e) {
+                assert.include(e.message, 'No factories registered')
+            }
         })
 
         it("calls selected factory", async () => {
+            let factoryStub = await ECDSAKeepFactoryStub.new()
+            await keepVendor.registerFactory(factoryStub.address)
+
             let selectedFactory = await ECDSAKeepFactoryStub.at(
                 await keepVendor.selectFactoryPublic.call()
             )
 
             let expectedResult = await selectedFactory.calculateKeepAddress.call()
 
-            let result = await keepVendor.openKeep.call(
+            const result = await keepVendor.openKeep.call(
                 10, // _groupSize
                 5, // _honestThreshold
-                "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
+                "0xbc4862697a1099074168d54A555c4A60169c18BD", // _owner
             )
 
             assert.equal(result, expectedResult, "unexpected opened keep address")
+        })
+
+        it.skip("transfers value to factory", async () => {
+            // TODO: Write test
         })
     })
 })

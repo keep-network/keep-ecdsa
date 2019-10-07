@@ -26,3 +26,6 @@ pkg/**/gen/*/*.go
 
 # Build output
 build/
+
+# Configuration files
+configs/config.toml

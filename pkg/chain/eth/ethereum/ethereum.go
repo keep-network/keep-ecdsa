@@ -15,6 +15,24 @@ import (
 
 var logger = log.Logger("keep-chain-eth-ethereum")
 
+// Address returns client's ethereum address.
+func (ec *EthereumChain) Address() common.Address {
+	return ec.transactorOptions.From
+}
+
+// RegisterAsMemberCandidate registers client as a candidate to be selected
+// to a keep.
+func (ec *EthereumChain) RegisterAsMemberCandidate() error {
+	transaction, err := ec.ecdsaKeepFactoryContract.RegisterMemberCandidate(ec.transactorOptions)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf("submitted RegisterMemberCandidate transaction with hash: [%x]", transaction.Hash())
+
+	return nil
+}
+
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnECDSAKeepCreated(
@@ -26,6 +44,7 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 		) {
 			handler(&eth.ECDSAKeepCreatedEvent{
 				KeepAddress: chainEvent.KeepAddress,
+				Members:     chainEvent.Members,
 			})
 		},
 		func(err error) error {

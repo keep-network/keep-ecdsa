@@ -1,18 +1,38 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
+import "./utils/AddressArrayUtils.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating ECDSA keeps.
 /// @dev TODO: This is a stub contract - needs to be implemented.
 contract ECDSAKeepFactory {
+    using AddressArrayUtils for address[];
+
     // List of keeps.
     ECDSAKeep[] keeps;
 
+    // List of candidates to be selected as keep members. Once the candidate is
+    // registered it remains on the list forever.
+    // TODO: It's a temporary solution until we implement proper candidate
+    // registration and member selection.
+    address[] memberCandidates;
+
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
-        address keepAddress
+        address keepAddress,
+        address[] members
     );
+
+    /// @notice Register caller as a candidate to be selected as keep member.
+    /// @dev If caller is already registered it returns without any changes.
+    /// TODO: This is a simplified solution until we have proper registration
+    /// and group selection.
+    function registerMemberCandidate() external {
+        if (!memberCandidates.contains(msg.sender)) {
+            memberCandidates.push(msg.sender);
+        }
+    }
 
     /// @notice Open a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
@@ -36,23 +56,27 @@ contract ECDSAKeepFactory {
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepCreated(keepAddress);
+        emit ECDSAKeepCreated(keepAddress, _members);
     }
 
     /// @notice Runs member selection for an ECDSA keep.
-    /// @dev Stub implementations gets only one member with a fixed address.
+    /// @dev Stub implementations generates a group with only one member. Member
+    /// is randomly selected from registered member candidates.
     /// @param _groupSize Number of members to be selected.
     /// @return List of selected members addresses.
     function selectECDSAKeepMembers(
         uint256 _groupSize
-    ) internal pure returns (address[] memory members){
-        // TODO: Implement members selection
+    ) internal view returns (address[] memory members){
+        require(memberCandidates.length > 0, 'keep member candidates list is empty');
+
         _groupSize;
 
         members = new address[](1);
 
-        // For development we use a member address calculated from the following
-        // private key: 0x0789df7d07e6947a93576b9ef60b97aed9adb944fb3ff6bae5215fd3ab0ad0dd
-        members[0] = 0x1C25f178599d00b3887BF6D9084cf0C6d49a3097;
+        // TODO: Use the random beacon for randomness.
+        uint memberIndex = uint256(keccak256(abi.encodePacked(block.timestamp)))
+            % memberCandidates.length;
+
+        members[0] = memberCandidates[memberIndex];
     }
 }
