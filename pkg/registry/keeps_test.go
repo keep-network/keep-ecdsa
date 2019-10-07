@@ -145,7 +145,7 @@ func TestLoadExistingGroups(t *testing.T) {
 
 	actualSigner1, err := gr.GetSigner(keepAddress1)
 	if err != nil {
-		t.Fatalf("unexpected error: [%v]", err)
+		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(signer1, actualSigner1) {
 		t.Errorf("\nexpected: [%v]\nactual:   [%v]", signer1, actualSigner1)
@@ -153,7 +153,7 @@ func TestLoadExistingGroups(t *testing.T) {
 
 	actualSigner2, err := gr.GetSigner(keepAddress2)
 	if err != nil {
-		t.Fatalf("unexpected error: [%v]", err)
+		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(signer2, actualSigner2) {
 		t.Errorf("\nexpected: [%v]\nactual:   [%v]", signer2, actualSigner2)
