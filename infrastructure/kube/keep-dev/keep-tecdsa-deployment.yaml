@@ -34,6 +34,12 @@ spec:
       containers:
       - name: keep-tecdsa
         image: gcr.io/keep-dev-fe24/keep-tecdsa
+        env:
+          - name: KEEP_ETHEREUM_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: eth-account-passphrase
+                key: account-passphrase
         volumeMounts:
           - name: keep-tecdsa
             mountPath: /mnt/keep-tecdsa/config
