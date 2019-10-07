@@ -36,7 +36,6 @@ module.exports = async function () {
         const keepVendorAddress = await keepRegistry.getVendor.call("ECDSAKeep")
         const keepVendor = await ECDSAKeepVendor.at(keepVendorAddress)
 
-
         const keepCreatedEvent = watchKeepCreatedEvent(keepFactory)
 
         await keepVendor.openKeep(

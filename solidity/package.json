@@ -35,8 +35,8 @@
     "babel-polyfill": "^6.26.0",
     "babel-register": "^6.26.0",
     "chai": "^4.2.0",
-    "solc": "^0.5.8",
-    "truffle": "^5.0.18",
+    "solc": "^0.5.12",
+    "truffle": "^5.0.39",
     "truffle-assertions": "^0.9.1"
   }
 }
