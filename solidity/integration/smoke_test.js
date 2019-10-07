@@ -3,6 +3,8 @@ const ECDSAKeepVendor = artifacts.require('./ECDSAKeepVendor.sol')
 const ECDSAKeepFactory = artifacts.require('./ECDSAKeepFactory.sol')
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 
+const waitForEvent = require('../test/helpers/waitForEvent')
+
 // This test validates integration between on-chain contracts and off-chain client.
 // It requires contracts to be deployed before running the test and the client
 // to be configured with `ECDSAKeepFactory` address.
@@ -13,7 +15,6 @@ module.exports = async function () {
     let keepRegistry
     let keepFactory
     let keepOwner
-    let startBlockNumber
     let keep
     let keepPublicKey
 
@@ -34,18 +35,19 @@ module.exports = async function () {
         console.log('open new keep...')
         const keepVendorAddress = await keepRegistry.getVendor.call("ECDSAKeep")
         const keepVendor = await ECDSAKeepVendor.at(keepVendorAddress)
+
+
+        const keepCreatedEvent = watchKeepCreatedEvent(keepFactory)
+
         await keepVendor.openKeep(
             10,
             5,
             keepOwner
         )
 
-        const eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
-            fromBlock: startBlockNumber,
-            toBlock: 'latest',
-        })
+        const keepCreated = (await keepCreatedEvent).returnValues
 
-        const keepAddress = eventList[0].returnValues.keepAddress
+        const keepAddress = keepCreated.keepAddress
         keep = await ECDSAKeep.at(keepAddress)
 
         console.log(`new keep opened with address: [${keepAddress}]`)
@@ -56,12 +58,17 @@ module.exports = async function () {
 
     try {
         console.log('get public key...')
-        const eventList = await keep.getPastEvents('PublicKeyPublished', {
-            fromBlock: startBlockNumber,
-            toBlock: 'latest',
-        })
-
-        keepPublicKey = eventList[0].returnValues.publicKey
+        await watchPublicKeyPublishedEvent(keep)
+            .then(
+                // onFulfilled - get public key from emitted event
+                async (event) => {
+                    keepPublicKey = event.returnValues.publicKey
+                },
+                // onRejected - as fallback check if keep already has public key
+                async () => {
+                    keepPublicKey = await keep.getPublicKey()
+                }
+            )
 
         console.log(`public key generated for keep: [${keepPublicKey}]`)
     } catch (err) {
@@ -113,13 +120,16 @@ module.exports = async function () {
     process.exit()
 }
 
-function watchSignatureSubmittedEvent(keep) {
-    return new Promise(async (resolve) => {
-        keep.SignatureSubmitted()
-            .on('data', event => {
-                resolve(event)
-            })
-    })
+function watchKeepCreatedEvent(factory, timeout = 1000) {
+    return waitForEvent(factory.ECDSAKeepCreated(), timeout)
+}
+
+function watchPublicKeyPublishedEvent(keep, timeout = 1000) {
+    return waitForEvent(keep.PublicKeyPublished(), timeout)
+}
+
+function watchSignatureSubmittedEvent(keep, timeout = 1000) {
+    return waitForEvent(keep.SignatureSubmitted(), timeout)
 }
 
 function publicKeyToAddress(publicKey) {
