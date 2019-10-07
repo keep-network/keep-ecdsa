@@ -65,8 +65,11 @@ func Initialize(
 	})
 
 	// Register client as a candidate member for keep.
-	if err := ethereumChain.RegisterAsMemberCandidate(); err != nil {
+	err := ethereumChain.RegisterAsMemberCandidate()
+	if err != nil {
 		logger.Errorf("failed to register member: [%v]", err)
+	} else {
+		logger.Infof("client registered as member candidate in keep factory")
 	}
 }
 
