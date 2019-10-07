@@ -40,7 +40,7 @@ async function provisionKeepTecdsa() {
     console.log('###########  Provisioning keep-tecdsa! ###########');
     console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
 
-    let operatorEthAccountPassword = process.env.KEEP_TECDSA_ETH_ACCOUNT_PASSWORD;
+    let operatorEthAccountPassword = process.env.KEEP_ETHEREUM_PASSWORD;
     let operatorAccount = await createOperatorEthAccount('operator');
     var operator = operatorAccount['address'];
 
@@ -55,7 +55,7 @@ async function provisionKeepTecdsa() {
     let purse = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
     console.log('\n<<<<<<<<<<<< Unlocking Contract Owner Account ' + contractOwner + ' >>>>>>>>>>>>');
-    await unlockEthAccount(contractOwner, process.env.KEEP_TECDSA_ETH_ACCOUNT_PASSWORD);
+    await unlockEthAccount(contractOwner, process.env.KEEP_ETHEREUM_PASSWORD);
 
     console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
     await fundOperatorAccount(operator, purse, '1');
