@@ -13,9 +13,14 @@
 
 # Connection details of ethereum blockchain.
 [ethereum]
-  URL                 = "Set by Kube"
-  PrivateKey          = "0789df7d07e6947a93576b9ef60b97aed9adb944fb3ff6bae5215fd3ab0ad0dd" # ethereum address: 0x1C25f178599d00b3887BF6D9084cf0C6d49a3097
+  URL = "Set by Kube"
+
+[ethereum.account]
+  KeyFile = "Set by Kube"
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
   ECDSAKeepFactory = "Set by Kube"
+
+[Storage]
+    DataDir = "/tmp"
