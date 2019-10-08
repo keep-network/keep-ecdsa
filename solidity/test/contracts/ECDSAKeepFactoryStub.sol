@@ -6,6 +6,11 @@ import "../../contracts/ECDSAKeepFactory.sol";
 /// @dev This contract is for testing purposes only.
 contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
 
+    // @dev Returns list of registered members.
+    function getMemberCandidates() public view returns (address payable[] memory){
+        return memberCandidates;
+    }
+
     /// @dev Returns calculated keep address.
     function openKeep(
         uint256 _groupSize,

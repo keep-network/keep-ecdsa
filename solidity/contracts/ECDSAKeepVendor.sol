@@ -33,6 +33,8 @@ contract ECDSAKeepVendor is IECDSAKeepVendor, Ownable {
     /// @dev This is a stub implementation returning first factory on the list.
     /// @return Selected ECDSA keep factory address.
     function selectFactory() internal view returns (address payable) {
+        require(factories.length > 0, "No factories registered");
+
         // TODO: Implement factory selection mechanism.
         return factories[factories.length - 1];
     }
@@ -50,7 +52,7 @@ contract ECDSAKeepVendor is IECDSAKeepVendor, Ownable {
     ) external payable returns (address keepAddress) {
         address factory = selectFactory();
 
-        return ECDSAKeepFactory(factory).openKeep(
+        keepAddress = ECDSAKeepFactory(factory).openKeep.value(msg.value)(
             _groupSize,
             _honestThreshold,
             _owner
