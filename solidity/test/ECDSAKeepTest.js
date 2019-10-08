@@ -212,7 +212,7 @@ contract('ECDSAKeep', (accounts) => {
     })
   })
 
-  describe('#distributeEthToKeepGroup', async () => {
+  describe('#distributeETHToMembers', async () => {
     const ethValue = 100000
     let keep
 
@@ -223,7 +223,7 @@ contract('ECDSAKeep', (accounts) => {
     it('correctly distributes ETH', async () => {
       const initialBalances = await getEthBalancesFromList(members)
 
-      await keep.distributeEthToKeepGroup({ value: ethValue})
+      await keep.distributeETHToMembers({ value: ethValue})
 
       const newBalances = await getEthBalancesFromList(members)
       const check = subtractBalancesFromList(newBalances, ethValue / members.length)
@@ -233,13 +233,13 @@ contract('ECDSAKeep', (accounts) => {
 
     it('reverts with zero value', async () => {
       await expectThrow(
-        keep.distributeEthToKeepGroup(),
+        keep.distributeETHToMembers(),
         'must send value with TX'
       )
     })
   })
 
-  describe('#distributeERC20ToKeepGroup', async () => {
+  describe('#distributeERC20ToMembers', async () => {
     const ERC20Value = 100000
     let keep
     let token
@@ -253,7 +253,7 @@ contract('ECDSAKeep', (accounts) => {
       const initialBalances = await getERC20BalancesFromList(members, token)
       await token.mint(accounts[0], ERC20Value)
       await token.approve(keep.address, ERC20Value)
-      await keep.distributeERC20ToKeepGroup(token.address, ERC20Value)
+      await keep.distributeERC20ToMembers(token.address, ERC20Value)
 
       const newBalances = await getERC20BalancesFromList(members, token)
       const check = subtractBalancesFromList(newBalances, ERC20Value / members.length)
@@ -263,7 +263,7 @@ contract('ECDSAKeep', (accounts) => {
 
     it('fails with insufficient approval', async () => {
       await expectThrow(
-        keep.distributeERC20ToKeepGroup(token.address, ERC20Value),
+        keep.distributeERC20ToMembers(token.address, ERC20Value),
         "SafeMath: subtraction overflow"
       )      
     })
@@ -271,7 +271,7 @@ contract('ECDSAKeep', (accounts) => {
     it('fails with zero value', async () => {
       await token.mint(accounts[0], ERC20Value)
       await expectThrow(
-        keep.distributeERC20ToKeepGroup(token.address, 0),
+        keep.distributeERC20ToMembers(token.address, 0),
         "value must be non-zero"
       )      
     })
