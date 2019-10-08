@@ -1,0 +1,78 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keep-tecdsa
+  labels:
+    app: keep
+    type: tecdsa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keep
+      type: tecdsa
+  serviceName: keep-tecdsa
+  volumeClaimTemplates:
+  - metadata:
+      name: keep-tecdsa-data
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 512Mi
+  template:
+    metadata:
+      labels:
+        app: keep
+        type: tecdsa
+    spec:
+      containers:
+      - name: keep-tecdsa
+        image: gcr.io/keep-dev-fe24/keep-tecdsa
+        env:
+          - name: KEEP_ETHEREUM_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: eth-account-passphrase
+                key: account-passphrase
+        volumeMounts:
+          - name: keep-tecdsa-config
+            mountPath: /mnt/keep-tecdsa/config
+          - name: keep-tecdsa-data
+            mountPath: /mnt/keep-tecdsa/data
+        command: ["keep-tecdsa", "-config", "/mnt/keep-tecdsa/config/keep-tecdsa-config.toml", "start"]
+      volumes:
+      - name: keep-tecdsa-config
+        persistentVolumeClaim:
+          claimName: keep-tecdsa-config
+      - name: keep-tecdsa-data
+        persistentVolumeClaim:
+          claimName: keep-tecdsa-config
+      initContainers:
+      - name: initcontainer-provision-keep-tecdsa
+        image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-tecdsa
+        env:
+          - name: KEEP_ETHEREUM_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: eth-account-passphrase
+                key: account-passphrase
+          - name: KEEP_DATA_DIR
+            value: /mnt/keep-tecdsa/data
+        volumeMounts:
+          - name: keep-tecdsa-config
+            mountPath: /mnt/keep-tecdsa/config
+        command: ["node", "/tmp/provision-keep-tecdsa.js"]
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keep-tecdsa-config
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Mi
