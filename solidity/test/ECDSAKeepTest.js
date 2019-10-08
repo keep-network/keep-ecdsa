@@ -1,7 +1,6 @@
-//import getBalancesFromList from './helpers/listBalanceUtils'
-//import subtractBalancesFromList from './helpers/listBalanceUtils'
 import { getEthBalancesFromList, getERC20BalancesFromList, subtractBalancesFromList } from './helpers/listBalanceUtils'
-import expectThrow from './helpers/expectThrow'
+const { expectRevert } = require('openzeppelin-test-helpers');
+
 
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
@@ -232,7 +231,7 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('reverts with zero value', async () => {
-      await expectThrow(
+      await expectRevert(
         keep.distributeETHToMembers(),
         'must send value with TX'
       )
@@ -262,7 +261,7 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('fails with insufficient approval', async () => {
-      await expectThrow(
+      await expectRevert(
         keep.distributeERC20ToMembers(token.address, ERC20Value),
         "SafeMath: subtraction overflow"
       )      
@@ -270,7 +269,7 @@ contract('ECDSAKeep', (accounts) => {
 
     it('fails with zero value', async () => {
       await token.mint(accounts[0], ERC20Value)
-      await expectThrow(
+      await expectRevert(
         keep.distributeERC20ToMembers(token.address, 0),
         "value must be non-zero"
       )      
