@@ -119,8 +119,8 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         return address(uint160(uint256(keccak256(_publicKey))));
     }
 
-    /// @notice Distributes eth evnly across all keep members
-    /// @dev    Only the value passed to this function will be distributed
+    /// @notice Distributes eth evely across all keep members
+    /// @dev Only the value passed to this function will be distributed
     /// @return true if the function completes execution
     function distributeETHToMembers() public payable {
         uint256 memberCount = members.length;
@@ -133,15 +133,15 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         }
     }
 
-    /// @notice Distributes ERC20 token evnly across all keep members
-    /// @dev    This works with any ERC20 token that implements a transferFrom
-    ///         function similar to the interface imported here from
-    ///         openZeppelin. This function only has authority over pre-approved
-    ///         token amount. We don't explicitly check for allowance, SafeMath
-    ///         subtraction overflow is enough protection.
+    /// @notice Distributes ERC20 token evenly across all keep members
+    /// @dev This works with any ERC20 token that implements a transferFrom
+    /// function similar to the interface imported here from
+    /// openZeppelin. This function only has authority over pre-approved
+    /// token amount. We don't explicitly check for allowance, SafeMath
+    /// subtraction overflow is enough protection.
     /// @param _tokenAddress Address of the ERC20 token to distribute
-    /// @param _value        Amount of ERC20 token to destribute
-    /// @return              True if the function completes execution
+    /// @param _value Amount of ERC20 token to destribute
+    /// @return True if the function completes execution
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value) public {
         IERC20 token = IERC20(_tokenAddress);
 
