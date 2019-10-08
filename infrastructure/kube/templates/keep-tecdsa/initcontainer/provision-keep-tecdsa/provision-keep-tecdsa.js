@@ -40,7 +40,7 @@ async function provisionKeepTecdsa() {
     console.log('###########  Provisioning keep-tecdsa! ###########');
     console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
 
-    let operatorEthAccountPassword = process.env.KEEP_TECDSA_ETH_ACCOUNT_PASSWORD;
+    let operatorEthAccountPassword = process.env.KEEP_ETHEREUM_PASSWORD;
     let operatorAccount = await createOperatorEthAccount('operator');
     var operator = operatorAccount['address'];
 
@@ -48,14 +48,14 @@ async function provisionKeepTecdsa() {
 
     // We wallet add to make the local account available to web3 functions in the script.
     await web3.eth.accounts.wallet.add(operatorAccount['privateKey']);
-    
+
     // Eth account that contracts are migrated against.
     let contractOwner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
     // Eth account that's both miner and coinbase on internal testnet
     let purse = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
     console.log('\n<<<<<<<<<<<< Unlocking Contract Owner Account ' + contractOwner + ' >>>>>>>>>>>>');
-    await unlockEthAccount(contractOwner, process.env.KEEP_TECDSA_ETH_ACCOUNT_PASSWORD);   
+    await unlockEthAccount(contractOwner, process.env.KEEP_ETHEREUM_PASSWORD);
 
     console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
     await fundOperatorAccount(operator, purse, '1');
@@ -117,13 +117,14 @@ async function createKeepTecdsaConfig(operator) {
     let parsedConfigFile = toml.parse(data);
 
     parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
+    parsedConfigFile.ethereum.account.KeyFile = '/mnt/keep-tecdsa/config/eth_account_keyfile';
     parsedConfigFile.ethereum.ContractAddresses.ECDSAKeepFactory = ecdsaKeepFactoryContractAddress;
 
     fs.writeFile('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
       if (error) throw error;
     });
   }));
-  
+
   console.log("keep-tecdsa config written to /mnt/keep-tecdsa/config/keep-tecdsa-config.toml");
 };
 
