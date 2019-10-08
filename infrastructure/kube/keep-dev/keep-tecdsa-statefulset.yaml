@@ -48,7 +48,7 @@ spec:
           claimName: keep-tecdsa-config
       - name: keep-tecdsa-data
         persistentVolumeClaim:
-          claimName: keep-tecdsa-config
+          claimName: keep-tecdsa-data
       initContainers:
       - name: initcontainer-provision-keep-tecdsa
         image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-tecdsa
