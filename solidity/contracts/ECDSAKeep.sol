@@ -122,7 +122,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// @notice Distributes eth evnly across all keep members
     /// @dev    Only the value passed to this function will be distributed
     /// @return true if the function completes execution
-    function distributeETHToMembers() public payable returns (bool){
+    function distributeETHToMembers() public payable {
         uint256 memberCount = members.length;
         uint256 dividend = msg.value.div(memberCount);
 
@@ -131,8 +131,6 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         for(uint8 i = 0; i < memberCount; i++){
             members[i].transfer(dividend);
         }
-
-    return true;
     }
 
     /// @notice Distributes ERC20 token evnly across all keep members
@@ -144,7 +142,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// @param _tokenAddress Address of the ERC20 token to distribute
     /// @param _value        Amount of ERC20 token to destribute
     /// @return              True if the function completes execution
-    function distributeERC20ToMembers(address _tokenAddress, uint256 _value) public returns (bool){
+    function distributeERC20ToMembers(address _tokenAddress, uint256 _value) public {
         IERC20 token = IERC20(_tokenAddress);
 
         uint256 memberCount = members.length;
@@ -155,7 +153,5 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         for(uint8 i = 0; i < memberCount; i++){
             token.transferFrom(msg.sender, members[i], dividend);
         }
-
-    return true;
     }
 }
