@@ -23,4 +23,4 @@
   ECDSAKeepFactory = "Set by Kube"
 
 [Storage]
-    DataDir = "/tmp"
+    DataDir = "Set by Kube"
