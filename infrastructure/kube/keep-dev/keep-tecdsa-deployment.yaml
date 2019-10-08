@@ -28,7 +28,7 @@ spec:
                 name: eth-account-passphrase
                 key: account-passphrase
         volumeMounts:
-          - name: keep-tecdsa
+          - name: keep-tecdsa-config
             mountPath: /mnt/keep-tecdsa/config
         command: ["node", "/tmp/provision-keep-tecdsa.js"]
       containers:
@@ -41,18 +41,18 @@ spec:
                 name: eth-account-passphrase
                 key: account-passphrase
         volumeMounts:
-          - name: keep-tecdsa
+          - name: keep-tecdsa-config
             mountPath: /mnt/keep-tecdsa/config
         command: ["keep-tecdsa", "-config", "/mnt/keep-tecdsa/config/keep-tecdsa-config.toml", "start"]
       volumes:
-      - name: keep-tecdsa
+      - name: keep-tecdsa-config
         persistentVolumeClaim:
-          claimName: keep-tecdsa
+          claimName: keep-tecdsa-config
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: keep-tecdsa
+  name: keep-tecdsa-config
 spec:
   accessModes:
     - ReadWriteOnce
