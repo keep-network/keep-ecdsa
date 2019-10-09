@@ -6,12 +6,12 @@ const BN = require('bn.js')
  *  @return list of balances in BN notation
  */
 const getEthBalancesFromList = async (members) =>{
-  const onAsync = async address => {
+  const getBalance = async address => {
     let balance =  await web3.eth.getBalance(address)
     return new BN(balance)
   }
   const getBalances = async (members) => {
-    return await Promise.all(members.map(address => onAsync(address)))
+    return await Promise.all(members.map(address => getBalance(address)))
   }
     return getBalances(members)
 }
@@ -23,12 +23,12 @@ const getEthBalancesFromList = async (members) =>{
  *  @return list of balances in BN notation
  */
 const getERC20BalancesFromList = async (members, token) =>{
-  const onAsync = async address => {
+  const getBalance = async address => {
     let balance =  await token.balanceOf(address)
     return new BN(balance)
   }
   const getBalances = async (members) => {
-    return await Promise.all(members.map(address => onAsync(address)))
+    return await Promise.all(members.map(address => getBalance(address)))
   }
     return getBalances(members)
 }

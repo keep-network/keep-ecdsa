@@ -233,13 +233,13 @@ contract('ECDSAKeep', (accounts) => {
     it('reverts with zero value', async () => {
       await expectRevert(
         keep.distributeETHToMembers(),
-        'must send value with TX'
+        'dividend value must be non-zero'
       )
     })
   })
 
   describe('#distributeERC20ToMembers', async () => {
-    const ERC20Value = 100000
+    const erc20Value = 100000
     let keep
     let token
 
@@ -250,28 +250,28 @@ contract('ECDSAKeep', (accounts) => {
 
     it('correctly distributes ERC20', async () => {
       const initialBalances = await getERC20BalancesFromList(members, token)
-      await token.mint(accounts[0], ERC20Value)
-      await token.approve(keep.address, ERC20Value)
-      await keep.distributeERC20ToMembers(token.address, ERC20Value)
+      await token.mint(accounts[0], erc20Value)
+      await token.approve(keep.address, erc20Value)
+      await keep.distributeERC20ToMembers(token.address, erc20Value)
 
       const newBalances = await getERC20BalancesFromList(members, token)
-      const check = subtractBalancesFromList(newBalances, ERC20Value / members.length)
+      const check = subtractBalancesFromList(newBalances, erc20Value / members.length)
 
       assert.equal(initialBalances.toString(), check.toString())
     })
 
     it('fails with insufficient approval', async () => {
       await expectRevert(
-        keep.distributeERC20ToMembers(token.address, ERC20Value),
+        keep.distributeERC20ToMembers(token.address, erc20Value),
         "SafeMath: subtraction overflow"
       )      
     })
 
     it('fails with zero value', async () => {
-      await token.mint(accounts[0], ERC20Value)
+      await token.mint(accounts[0], erc20Value)
       await expectRevert(
         keep.distributeERC20ToMembers(token.address, 0),
-        "value must be non-zero"
+        "dividend value must be non-zero"
       )      
     })
   })
