@@ -121,7 +121,6 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
 
     /// @notice Distributes eth evely across all keep members
     /// @dev Only the value passed to this function will be distributed
-    /// @return true if the function completes execution
     function distributeETHToMembers() public payable {
         uint256 memberCount = members.length;
         uint256 dividend = msg.value.div(memberCount);
@@ -141,7 +140,6 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// subtraction overflow is enough protection.
     /// @param _tokenAddress Address of the ERC20 token to distribute
     /// @param _value Amount of ERC20 token to destribute
-    /// @return True if the function completes execution
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value) public {
         IERC20 token = IERC20(_tokenAddress);
 
