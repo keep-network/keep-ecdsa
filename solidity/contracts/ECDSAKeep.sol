@@ -127,7 +127,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for(uint8 i = 0; i < memberCount; i++){
+        for(uint16 i = 0; i < memberCount; i++){
             members[i].transfer(dividend);
         }
     }
@@ -148,7 +148,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for(uint8 i = 0; i < memberCount; i++){
+        for(uint16 i = 0; i < memberCount; i++){
             token.transferFrom(msg.sender, members[i], dividend);
         }
     }
