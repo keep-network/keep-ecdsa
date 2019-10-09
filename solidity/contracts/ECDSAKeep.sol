@@ -125,7 +125,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         uint256 memberCount = members.length;
         uint256 dividend = msg.value.div(memberCount);
 
-        require(dividend > 0, "must send value with TX");
+        require(dividend > 0, "dividend value must be non-zero");
 
         for(uint8 i = 0; i < memberCount; i++){
             members[i].transfer(dividend);
@@ -139,14 +139,14 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// token amount. We don't explicitly check for allowance, SafeMath
     /// subtraction overflow is enough protection.
     /// @param _tokenAddress Address of the ERC20 token to distribute
-    /// @param _value Amount of ERC20 token to destribute
+    /// @param _value Amount of ERC20 token to distribute
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value) public {
         IERC20 token = IERC20(_tokenAddress);
 
         uint256 memberCount = members.length;
         uint256 dividend = _value.div(memberCount);
 
-        require(dividend > 0, "value must be non-zero");
+        require(dividend > 0, "dividend value must be non-zero");
 
         for(uint8 i = 0; i < memberCount; i++){
             token.transferFrom(msg.sender, members[i], dividend);
