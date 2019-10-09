@@ -10,10 +10,7 @@ const getEthBalancesFromList = async (members) =>{
     let balance =  await web3.eth.getBalance(address)
     return new BN(balance)
   }
-  const getBalances = async (members) => {
-    return await Promise.all(members.map(address => getBalance(address)))
-  }
-    return getBalances(members)
+  return await Promise.all(members.map(address => getBalance(address)))
 }
 
 /**
@@ -27,10 +24,7 @@ const getERC20BalancesFromList = async (members, token) =>{
     let balance =  await token.balanceOf(address)
     return new BN(balance)
   }
-  const getBalances = async (members) => {
-    return await Promise.all(members.map(address => getBalance(address)))
-  }
-    return getBalances(members)
+  return await Promise.all(members.map(address => getBalance(address)))
 }
 
 /**
