@@ -119,7 +119,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         return address(uint160(uint256(keccak256(_publicKey))));
     }
 
-    /// @notice Distributes eth evely across all keep members
+    /// @notice Distributes eth evenly across all keep members
     /// @dev Only the value passed to this function will be distributed
     function distributeETHToMembers() public payable {
         uint256 memberCount = members.length;
