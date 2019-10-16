@@ -1,6 +1,10 @@
-import { getEthBalancesFromList, getERC20BalancesFromList, subtractBalancesFromList } from './helpers/listBalanceUtils'
-const { expectRevert } = require('openzeppelin-test-helpers');
+import { 
+  getEthBalancesFromList,
+  getERC20BalancesFromList,
+  subtractBalancesFromList
+} from './helpers/listBalanceUtils'
 
+const { expectRevert } = require('openzeppelin-test-helpers');
 
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
@@ -236,6 +240,14 @@ contract('ECDSAKeep', (accounts) => {
         'dividend value must be non-zero'
       )
     })
+
+    it('reverts with zero dividend', async () => {
+      const msgValue = members.length -1
+      await expectRevert(
+        keep.distributeETHToMembers({ value: msgValue }),
+        'dividend value must be non-zero'
+      )
+    })
   })
 
   describe('#distributeERC20ToMembers', async () => {
@@ -273,6 +285,16 @@ contract('ECDSAKeep', (accounts) => {
         keep.distributeERC20ToMembers(token.address, 0),
         "dividend value must be non-zero"
       )      
+    })
+
+    it('reverts with zero dividend', async () => {
+      const value = members.length -1
+      await token.mint(accounts[0],  value)
+      await token.approve(keep.address, erc20Value)
+      await expectRevert(
+        keep.distributeERC20ToMembers(token.address, value),
+        'dividend value must be non-zero'
+      )
     })
   })
 })
