@@ -5,8 +5,8 @@ const BN = require('bn.js')
  *  @param members List of addreses 
  *  @return list of balances in BN notation
  */
-const getEthBalancesFromList = async (members) =>{
-  const getBalance = async address => {
+async function getEthBalancesFromList(members) {
+  async function getBalance(address){
     let balance =  await web3.eth.getBalance(address)
     return new BN(balance)
   }
@@ -19,8 +19,8 @@ const getEthBalancesFromList = async (members) =>{
  *  @param tokens ERC20 token instance
  *  @return list of balances in BN notation
  */
-const getERC20BalancesFromList = async (members, token) =>{
-  const getBalance = async address => {
+async function getERC20BalancesFromList(members, token) {
+  async function getBalance(address){
     let balance =  await token.balanceOf(address)
     return new BN(balance)
   }
@@ -33,7 +33,7 @@ const getERC20BalancesFromList = async (members, token) =>{
  *  @param decrement amount to subtract from each element
  *  @return new list in BN notation
  */
-const subtractBalancesFromList = (list, decrement) =>{
+function subtractBalancesFromList(list, decrement) {
   return list.map(element => element.sub(new BN(decrement)));
 }
 
