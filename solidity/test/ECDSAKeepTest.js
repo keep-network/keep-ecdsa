@@ -234,6 +234,19 @@ contract('ECDSAKeep', (accounts) => {
       assert.equal(initialBalances.toString(), check.toString())
     })
 
+    it('correctly handles unused remainder', async () => {
+      const valueWithRemainder = 10001
+      const initialKeepBalance = await web3.eth.getBalance(keep.address)
+
+      await keep.distributeETHToMembers({ value: valueWithRemainder})
+
+      const expectedRemainder = valueWithRemainder % members.length
+      const finalKeepBalance = await web3.eth.getBalance(keep.address)
+      const keepBalanceCheck = finalKeepBalance - initialKeepBalance
+
+      assert.equal(keepBalanceCheck, new BN(expectedRemainder))
+    })
+
     it('reverts with zero value', async () => {
       await expectRevert(
         keep.distributeETHToMembers(),
@@ -251,7 +264,7 @@ contract('ECDSAKeep', (accounts) => {
   })
 
   describe('#distributeERC20ToMembers', async () => {
-    const erc20Value = 100000
+    const erc20Value = 1000000
     let keep
     let token
 
@@ -270,6 +283,21 @@ contract('ECDSAKeep', (accounts) => {
       const check = subtractBalancesFromList(newBalances, erc20Value / members.length)
 
       assert.equal(initialBalances.toString(), check.toString())
+    })
+  
+    it('correctly handles unused remainder', async () => {
+      const valueWithRemainder = 10000
+      const initialKeepBalance = await token.balanceOf(keep.address)
+
+      await token.mint(accounts[0], valueWithRemainder)
+      await token.approve(keep.address, valueWithRemainder)
+      await keep.distributeERC20ToMembers(token.address, valueWithRemainder)
+
+      const finalKeepBalance = await token.balanceOf(keep.address)
+      const expectedRemainder = 0
+      const keepBalanceCheck = initialKeepBalance - finalKeepBalance
+ 
+      assert.equal(keepBalanceCheck, expectedRemainder)
     })
 
     it('fails with insufficient approval', async () => {
