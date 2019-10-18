@@ -2,7 +2,7 @@ const BN = require('bn.js')
 
 /**
  *  gets a list of ETH balances from a list of addresses. 
- *  @param members List of addreses 
+ *  @param members List of addresses 
  *  @return list of balances in BN notation
  */
 async function getEthBalancesFromList(members) {
@@ -15,7 +15,7 @@ async function getEthBalancesFromList(members) {
 
 /**
  *  gets a list of ERC20 balances given a token and a list of addresses. 
- *  @param members List of addreses 
+ *  @param members List of addresses 
  *  @param tokens ERC20 token instance
  *  @return list of balances in BN notation
  */

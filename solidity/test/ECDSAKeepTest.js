@@ -238,7 +238,7 @@ contract('ECDSAKeep', (accounts) => {
       const valueWithRemainder = 10001
       const initialKeepBalance = await web3.eth.getBalance(keep.address)
 
-      await keep.distributeETHToMembers({ value: valueWithRemainder})
+      await keep.distributeETHToMembers({ value: valueWithRemainder })
 
       const expectedRemainder = valueWithRemainder % members.length
       const finalKeepBalance = await web3.eth.getBalance(keep.address)
@@ -255,7 +255,7 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('reverts with zero dividend', async () => {
-      const msgValue = members.length -1
+      const msgValue = members.length - 1
       await expectRevert(
         keep.distributeETHToMembers({ value: msgValue }),
         'dividend value must be non-zero'
