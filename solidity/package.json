@@ -34,7 +34,6 @@
     "@babel/polyfill": "^7.4.4",
     "@babel/preset-env": "^7.4.5",
     "@babel/register": "^7.4.4",
-    "bn.js": "^4.11.8",
     "chai": "^4.2.0",
     "openzeppelin-test-helpers": "^0.4.3",
     "solc": "^0.5.8",
