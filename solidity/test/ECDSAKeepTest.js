@@ -1,5 +1,5 @@
 import { 
-  getEthBalancesFromList,
+  getETHBalancesFromList,
   getERC20BalancesFromList,
   subtractBalancesFromList
 } from './helpers/listBalanceUtils'
@@ -224,11 +224,11 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('correctly distributes ETH', async () => {
-      const initialBalances = await getEthBalancesFromList(members)
+      const initialBalances = await getETHBalancesFromList(members)
 
       await keep.distributeETHToMembers({ value: ethValue})
 
-      const newBalances = await getEthBalancesFromList(members)
+      const newBalances = await getETHBalancesFromList(members)
       const check = subtractBalancesFromList(newBalances, ethValue / members.length)
 
       assert.equal(initialBalances.toString(), check.toString())
