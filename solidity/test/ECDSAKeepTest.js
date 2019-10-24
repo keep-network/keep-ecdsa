@@ -235,12 +235,12 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('correctly handles unused remainder', async () => {
-      const valueWithRemainder = 10001
+      const expectedRemainder = 1
+      const valueWithRemainder = members.length + expectedRemainder
       const initialKeepBalance = await web3.eth.getBalance(keep.address)
 
       await keep.distributeETHToMembers({ value: valueWithRemainder })
 
-      const expectedRemainder = valueWithRemainder % members.length
       const finalKeepBalance = await web3.eth.getBalance(keep.address)
       const keepBalanceCheck = finalKeepBalance - initialKeepBalance
 
@@ -286,7 +286,7 @@ contract('ECDSAKeep', (accounts) => {
     })
   
     it('correctly handles unused remainder', async () => {
-      const valueWithRemainder = 10000
+      const valueWithRemainder = members.length + 1
       const initialKeepBalance = await token.balanceOf(keep.address)
 
       await token.mint(accounts[0], valueWithRemainder)
