@@ -1,4 +1,4 @@
-const BN = require('bn.js')
+const BN = web3.utils.BN
 
 /**
  *  Gets a list of ETH balances from a list of addresses. 

@@ -10,7 +10,7 @@ const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
 const truffleAssert = require('truffle-assertions')
 
-const BN = require('bn.js')
+const BN = web3.utils.BN
 
 contract('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
@@ -238,7 +238,7 @@ contract('ECDSAKeep', (accounts) => {
       const expectedRemainder = 1
       const valueWithRemainder = members.length + expectedRemainder
       const initialKeepBalance = await web3.eth.getBalance(keep.address)
-
+ß
       await keep.distributeETHToMembers({ value: valueWithRemainder })
 
       const finalKeepBalance = await web3.eth.getBalance(keep.address)
