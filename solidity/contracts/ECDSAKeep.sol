@@ -128,6 +128,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         require(dividend > 0, "dividend value must be non-zero");
 
         for(uint16 i = 0; i < memberCount; i++){
+            // Using send over transfer to prevent potential fallback revert
             members[i].send(dividend);
         }
     }
