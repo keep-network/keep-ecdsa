@@ -121,7 +121,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
 
     /// @notice Distributes ETH evenly across all keep members
     /// @dev Only the value passed to this function will be distributed
-    function distributeETHToMembers() public payable {
+    function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
         uint256 dividend = msg.value.div(memberCount);
 
@@ -141,7 +141,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// subtraction overflow is enough protection.
     /// @param _tokenAddress Address of the ERC20 token to distribute
     /// @param _value Amount of ERC20 token to distribute
-    function distributeERC20ToMembers(address _tokenAddress, uint256 _value) public {
+    function distributeERC20ToMembers(address _tokenAddress, uint256 _value) external {
         IERC20 token = IERC20(_tokenAddress);
 
         uint256 memberCount = members.length;
