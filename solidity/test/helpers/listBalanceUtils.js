@@ -41,6 +41,5 @@ function addBalancesToList(list, increment) {
 export {
   getETHBalancesFromList,
   getERC20BalancesFromList,
-  subtractBalancesFromList,
   addBalancesToList
 };
