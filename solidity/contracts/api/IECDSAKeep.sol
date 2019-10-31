@@ -19,8 +19,8 @@ contract IECDSAKeep {
 
     /// @notice Distributes ERC20 token evenly across all keep members.
     /// @dev This works with any ERC20 token that implements a transferFrom
-    /// function similar to the interface imported here from
-    /// openZeppelin. This function only has authority over pre-approved
+    /// function.
+    /// This function only has authority over pre-approved
     /// token amount. We don't explicitly check for allowance, SafeMath
     /// subtraction overflow is enough protection.
     /// @param _tokenAddress Address of the ERC20 token to distribute.
