@@ -1,7 +1,8 @@
 import { 
   getETHBalancesFromList,
   getERC20BalancesFromList,
-  subtractBalancesFromList
+  subtractBalancesFromList,
+  addBalancesToList
 } from './helpers/listBalanceUtils'
 
 const { expectRevert } = require('openzeppelin-test-helpers');
@@ -229,9 +230,9 @@ contract('ECDSAKeep', (accounts) => {
       await keep.distributeETHToMembers({ value: ethValue})
 
       const newBalances = await getETHBalancesFromList(members)
-      const check = subtractBalancesFromList(newBalances, ethValue / members.length)
+      const check = addBalancesToList(initialBalances, ethValue / members.length)
 
-      assert.equal(initialBalances.toString(), check.toString())
+      assert.equal(newBalances.toString(), check.toString())
     })
 
     it('correctly handles unused remainder', async () => {
@@ -280,9 +281,9 @@ contract('ECDSAKeep', (accounts) => {
       await keep.distributeERC20ToMembers(token.address, erc20Value)
 
       const newBalances = await getERC20BalancesFromList(members, token)
-      const check = subtractBalancesFromList(newBalances, erc20Value / members.length)
+      const check = addBalancesToList(initialBalances, erc20Value / members.length)
 
-      assert.equal(initialBalances.toString(), check.toString())
+      assert.equal(newBalances.toString(), check.toString())
     })
   
     it('correctly handles unused remainder', async () => {
