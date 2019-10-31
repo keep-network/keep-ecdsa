@@ -37,4 +37,20 @@ function subtractBalancesFromList(list, decrement) {
   return list.map(element => element.sub(new BN(decrement)));
 }
 
-export {getETHBalancesFromList, getERC20BalancesFromList, subtractBalancesFromList};
+/**
+ *  Adds a value to every element in a list
+ *  @param list A list of values 
+ *  @param increment The amount to add to each element
+ *  @return The new list in BN notation
+ */
+function addBalancesToList(list, increment) {
+  return list.map(element => element.add(new BN(increment)));
+}
+
+
+export {
+  getETHBalancesFromList,
+  getERC20BalancesFromList,
+  subtractBalancesFromList,
+  addBalancesToList
+};
