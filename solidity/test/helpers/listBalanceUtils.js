@@ -16,7 +16,7 @@ async function getETHBalancesFromList(members) {
 /**
  *  Gets a list of ERC20 balances given a token and a list of addresses. 
  *  @param members A list of addresses 
- *  @param tokens ERC20 token instance
+ *  @param token ERC20 token instance
  *  @return The list of balances in BN notation
  */
 async function getERC20BalancesFromList(members, token) {
