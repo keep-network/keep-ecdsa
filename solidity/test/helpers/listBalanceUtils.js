@@ -28,16 +28,6 @@ async function getERC20BalancesFromList(members, token) {
 }
 
 /**
- *  Subtracts a value from every element in a list
- *  @param list A list of values 
- *  @param decrement The amount to subtract from each element
- *  @return The new list in BN notation
- */
-function subtractBalancesFromList(list, decrement) {
-  return list.map(element => element.sub(new BN(decrement)));
-}
-
-/**
  *  Adds a value to every element in a list
  *  @param list A list of values 
  *  @param increment The amount to add to each element

@@ -1,7 +1,6 @@
 import { 
   getETHBalancesFromList,
   getERC20BalancesFromList,
-  subtractBalancesFromList,
   addBalancesToList
 } from './helpers/listBalanceUtils'
 
