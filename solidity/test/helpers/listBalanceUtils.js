@@ -33,7 +33,7 @@ async function getERC20BalancesFromList(members, token) {
  *  @param increment The amount to add to each element
  *  @return The new list in BN notation
  */
-function addBalancesToList(list, increment) {
+function addToBalances(list, increment) {
   return list.map(element => element.add(new BN(increment)));
 }
 
@@ -41,5 +41,5 @@ function addBalancesToList(list, increment) {
 export {
   getETHBalancesFromList,
   getERC20BalancesFromList,
-  addBalancesToList
+  addToBalances
 };
