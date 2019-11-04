@@ -7,7 +7,7 @@ import "./utils/AddressArrayUtils.sol";
 /// @notice Contract creating ECDSA keeps.
 /// @dev TODO: This is a stub contract - needs to be implemented.
 contract ECDSAKeepFactory {
-    using AddressArrayUtils for address[];
+    using AddressArrayUtils for address payable[];
 
     // List of keeps.
     ECDSAKeep[] keeps;
@@ -16,12 +16,12 @@ contract ECDSAKeepFactory {
     // registered it remains on the list forever.
     // TODO: It's a temporary solution until we implement proper candidate
     // registration and member selection.
-    address[] memberCandidates;
+    address payable[] memberCandidates;
 
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
-        address[] members
+        address payable[] members
     );
 
     /// @notice Register caller as a candidate to be selected as keep member.
@@ -45,7 +45,7 @@ contract ECDSAKeepFactory {
         uint256 _honestThreshold,
         address _owner
     ) external payable returns (address keepAddress) {
-        address[] memory _members = selectECDSAKeepMembers(_groupSize);
+        address payable[] memory _members = selectECDSAKeepMembers(_groupSize);
 
         ECDSAKeep keep = new ECDSAKeep(
             _owner,
@@ -66,12 +66,12 @@ contract ECDSAKeepFactory {
     /// @return List of selected members addresses.
     function selectECDSAKeepMembers(
         uint256 _groupSize
-    ) internal view returns (address[] memory members){
+    ) internal view returns (address payable[] memory members){
         require(memberCandidates.length > 0, 'keep member candidates list is empty');
 
         _groupSize;
 
-        members = new address[](1);
+        members = new address payable[](1);
 
         // TODO: Use the random beacon for randomness.
         uint memberIndex = uint256(keccak256(abi.encodePacked(block.timestamp)))

@@ -7,7 +7,7 @@ import "../../contracts/ECDSAKeepFactory.sol";
 contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
 
     // @dev Returns list of registered members.
-    function getMemberCandidates() public view returns (address[] memory){
+    function getMemberCandidates() public view returns (address payable[] memory){
         return memberCandidates;
     }
 

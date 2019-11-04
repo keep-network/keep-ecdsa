@@ -9,7 +9,7 @@ contract ECDSAKeepVendorStub is ECDSAKeepVendor {
     /// @notice Get registered ECDSA keep factories.
     /// @dev This is a stub implementation to validate the factories list.
     /// @return List of registered ECDSA keep factory addresses.
-    function getFactories() public view returns (address[] memory) {
+    function getFactories() public view returns (address payable[] memory) {
         return factories;
     }
 

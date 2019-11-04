@@ -35,6 +35,7 @@
     "@babel/preset-env": "^7.4.5",
     "@babel/register": "^7.4.4",
     "chai": "^4.2.0",
+    "openzeppelin-test-helpers": "^0.4.3",
     "solc": "^0.5.8",
     "truffle": "^5.0.18",
     "truffle-assertions": "^0.9.1"

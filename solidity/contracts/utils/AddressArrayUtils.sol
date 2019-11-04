@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 library AddressArrayUtils {
-    function contains(address[] memory self, address _address)
+    function contains(address payable[] memory self, address _address)
         internal
         pure
         returns (bool)

@@ -1,5 +1,16 @@
+import { 
+  getETHBalancesFromList,
+  getERC20BalancesFromList,
+  addToBalances
+} from './helpers/listBalanceUtils'
+
+const { expectRevert } = require('openzeppelin-test-helpers');
+
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
+const TestToken = artifacts.require('./TestToken.sol')
 const truffleAssert = require('truffle-assertions')
+
+const BN = web3.utils.BN
 
 contract('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
@@ -201,6 +212,117 @@ contract('ECDSAKeep', (accounts) => {
       } catch (e) {
         assert.include(e.message, 'Caller is not the keep member')
       }
+    })
+  })
+
+  describe('#distributeETHToMembers', async () => {
+    const ethValue = 100000
+    let keep
+
+    beforeEach(async () => {
+      keep = await ECDSAKeep.new(owner, members, honestThreshold)
+    })
+
+    it('correctly distributes ETH', async () => {
+      const initialBalances = await getETHBalancesFromList(members)
+
+      await keep.distributeETHToMembers({ value: ethValue})
+
+      const newBalances = await getETHBalancesFromList(members)
+      const check = addToBalances(initialBalances, ethValue / members.length)
+
+      assert.equal(newBalances.toString(), check.toString())
+    })
+
+    it('correctly handles unused remainder', async () => {
+      const expectedRemainder = 1
+      const valueWithRemainder = members.length + expectedRemainder
+      const initialKeepBalance = await web3.eth.getBalance(keep.address)
+
+      await keep.distributeETHToMembers({ value: valueWithRemainder })
+
+      const finalKeepBalance = await web3.eth.getBalance(keep.address)
+      const keepBalanceCheck = finalKeepBalance - initialKeepBalance
+
+      assert.equal(keepBalanceCheck, new BN(expectedRemainder))
+    })
+
+    it('reverts with zero value', async () => {
+      await expectRevert(
+        keep.distributeETHToMembers(),
+        'dividend value must be non-zero'
+      )
+    })
+
+    it('reverts with zero dividend', async () => {
+      const msgValue = members.length - 1
+      await expectRevert(
+        keep.distributeETHToMembers({ value: msgValue }),
+        'dividend value must be non-zero'
+      )
+    })
+  })
+
+  describe('#distributeERC20ToMembers', async () => {
+    const erc20Value = 1000000
+    let keep
+    let token
+
+    beforeEach(async () => {
+      keep = await ECDSAKeep.new(owner, members, honestThreshold)
+      token = await TestToken.new()
+    })
+
+    it('correctly distributes ERC20', async () => {
+      const initialBalances = await getERC20BalancesFromList(members, token)
+      await token.mint(accounts[0], erc20Value)
+      await token.approve(keep.address, erc20Value)
+      await keep.distributeERC20ToMembers(token.address, erc20Value)
+
+      const newBalances = await getERC20BalancesFromList(members, token)
+      const check = addToBalances(initialBalances, erc20Value / members.length)
+
+      assert.equal(newBalances.toString(), check.toString())
+    })
+  
+    it('correctly handles unused remainder', async () => {
+      const valueWithRemainder = members.length + 1
+      const initialKeepBalance = await token.balanceOf(keep.address)
+
+      await token.mint(accounts[0], valueWithRemainder)
+      await token.approve(keep.address, valueWithRemainder)
+      await keep.distributeERC20ToMembers(token.address, valueWithRemainder)
+
+      const finalKeepBalance = await token.balanceOf(keep.address)
+      const expectedRemainder = 0
+      const keepBalanceCheck = initialKeepBalance - finalKeepBalance
+ 
+      assert.equal(keepBalanceCheck, expectedRemainder)
+    })
+
+    it('fails with insufficient approval', async () => {
+      await expectRevert(
+        keep.distributeERC20ToMembers(token.address, erc20Value),
+        "SafeMath: subtraction overflow"
+      )      
+    })
+
+    it('fails with zero value', async () => {
+      await token.mint(accounts[0], erc20Value)
+      await expectRevert(
+        keep.distributeERC20ToMembers(token.address, 0),
+        "dividend value must be non-zero"
+      )      
+    })
+
+    it('reverts with zero dividend', async () => {
+      const value = members.length -1
+      await token.mint(accounts[0],  value)
+      await token.approve(keep.address, erc20Value)
+      await expectRevert(
+        keep.distributeERC20ToMembers(token.address, value),
+        'dividend value must be non-zero'
+      )
     })
   })
 })

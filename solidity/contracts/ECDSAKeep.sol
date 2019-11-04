@@ -1,6 +1,8 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "./api/IECDSAKeep.sol";
 import "./utils/AddressArrayUtils.sol";
 
@@ -8,10 +10,11 @@ import "./utils/AddressArrayUtils.sol";
 /// @notice Contract reflecting an ECDSA keep.
 /// @dev TODO: This is a stub contract - needs to be implemented.
 contract ECDSAKeep is IECDSAKeep, Ownable {
-    using AddressArrayUtils for address[];
+    using AddressArrayUtils for address payable[];
+    using SafeMath for uint256;
 
     // List of keep members' addresses.
-    address[] internal members;
+    address payable[] internal members;
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
     // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
@@ -43,7 +46,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
 
     constructor(
         address _owner,
-        address[] memory _members,
+        address payable[] memory _members,
         uint256 _honestThreshold
     ) public {
         transferOwnership(_owner);
@@ -114,5 +117,40 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         // We hash the public key and then truncate last 20 bytes of the digest
         // which is the ethereum address.
         return address(uint160(uint256(keccak256(_publicKey))));
+    }
+
+    /// @notice Distributes ETH evenly across all keep members.
+    /// @dev Only the value passed to this function will be distributed.
+    function distributeETHToMembers() external payable {
+        uint256 memberCount = members.length;
+        uint256 dividend = msg.value.div(memberCount);
+
+        require(dividend > 0, "dividend value must be non-zero");
+
+        for(uint16 i = 0; i < memberCount; i++){
+            // Using send over transfer to prevent potential fallback revert
+            members[i].send(dividend);
+        }
+    }
+
+    /// @notice Distributes ERC20 token evenly across all keep members.
+    /// @dev This works with any ERC20 token that implements a transferFrom
+    /// function similar to the interface imported here from
+    /// openZeppelin. This function only has authority over pre-approved
+    /// token amount. We don't explicitly check for allowance, SafeMath
+    /// subtraction overflow is enough protection.
+    /// @param _tokenAddress Address of the ERC20 token to distribute.
+    /// @param _value Amount of ERC20 token to distribute.
+    function distributeERC20ToMembers(address _tokenAddress, uint256 _value) external {
+        IERC20 token = IERC20(_tokenAddress);
+
+        uint256 memberCount = members.length;
+        uint256 dividend = _value.div(memberCount);
+
+        require(dividend > 0, "dividend value must be non-zero");
+
+        for(uint16 i = 0; i < memberCount; i++){
+            token.transferFrom(msg.sender, members[i], dividend);
+        }
     }
 }

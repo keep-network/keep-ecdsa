@@ -13,16 +13,16 @@ import "./ECDSAKeepFactory.sol";
 /// TODO: When more keep types are added consider extracting registration and
 /// selection to a separate inheritable contract.
 contract ECDSAKeepVendor is IECDSAKeepVendor, Ownable {
-    using AddressArrayUtils for address[];
+    using AddressArrayUtils for address payable[];
 
     // List of ECDSA keep factories.
-    address[] public factories;
+    address payable[] public factories;
 
     /// @notice Register new ECDSA keep factory.
     /// @dev Adds a factory address to the list of registered factories. Address
     /// cannot be zero and cannot be already registered.
     /// @param _factory ECDSA keep factory address.
-    function registerFactory(address _factory) external onlyOwner {
+    function registerFactory(address payable _factory) external onlyOwner {
         require(!factories.contains(_factory), "Factory address already registered");
 
         factories.push(_factory);
@@ -32,7 +32,7 @@ contract ECDSAKeepVendor is IECDSAKeepVendor, Ownable {
     /// ECDSA keep factories.
     /// @dev This is a stub implementation returning first factory on the list.
     /// @return Selected ECDSA keep factory address.
-    function selectFactory() internal view returns (address) {
+    function selectFactory() internal view returns (address payable) {
         require(factories.length > 0, "No factories registered");
 
         // TODO: Implement factory selection mechanism.
