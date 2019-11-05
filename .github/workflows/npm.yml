@@ -3,10 +3,9 @@ name: NPM
 on:
   push:
     branches:
-      # TODO: Change `actions-npm` to `master` across the file when it's ready to be merged.
-      - actions-npm
-    # paths:
-    #   - "solidity/contracts/**"
+      - master
+    paths:
+      - "solidity/contracts/**"
 
 jobs:
   publish-contracts:
@@ -19,11 +18,11 @@ jobs:
         with:
           node-version: "11.x"
           registry-url: "https://npm.pkg.github.com"
-      # - name: Publish package
-      #   working-directory: solidity
-      #   run: npm publish
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish package
+        working-directory: solidity
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Bump version
         working-directory: solidity
         run: |
