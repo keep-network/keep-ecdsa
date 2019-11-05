@@ -25,12 +25,18 @@ func Initialize(
 		EthereumChain: ethereumChain,
 	}
 
-	// Load current keeps signers from storage and register for signing events.
+	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
 
-	for _, keepAddress := range keepsRegistry.GetKeepsAddresses() {
-		client.registerForSignEvents(keepAddress)
-	}
+	keepsRegistry.ForEachSigner(
+		func(keepAddress common.Address, signer *ecdsa.Signer) {
+			tecdsa.RegisterForSignEvents(keepAddress, signer)
+			logger.Debugf(
+				"signer registered for events from keep: [%s]",
+				keepAddress.String(),
+			)
+		},
+	)
 
 	// Watch for new keeps creation.
 	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
