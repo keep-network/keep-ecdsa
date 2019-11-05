@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
-	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/client"
 	"github.com/urfave/cli"
 )
 
@@ -59,7 +59,7 @@ func Start(c *cli.Context) error {
 
 	ctx := context.Background()
 
-	tecdsa.Initialize(
+	client.Initialize(
 		ethereumChain,
 		persistence,
 	)

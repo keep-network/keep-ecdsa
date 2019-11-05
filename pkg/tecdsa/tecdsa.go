@@ -7,10 +7,8 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-tecdsa/pkg/registry"
 )
 
 var logger = log.Logger("keep-tecdsa")
@@ -18,53 +16,6 @@ var logger = log.Logger("keep-tecdsa")
 // TECDSA holds an interface to interact with the blockchain.
 type TECDSA struct {
 	EthereumChain eth.Handle
-}
-
-// Initialize initializes the tECDSA client with rules related to events handling.
-func Initialize(
-	ethereumChain eth.Handle,
-	persistence persistence.Handle,
-) {
-	keepsRegistry := registry.NewKeepsRegistry(persistence)
-
-	client := &client{
-		ethereumChain: ethereumChain,
-		keepsRegistry: keepsRegistry,
-	}
-
-	// Load current keeps signers from storage and register for signing events.
-	keepsRegistry.LoadExistingKeeps()
-
-	for _, keepAddress := range keepsRegistry.GetKeepsAddresses() {
-		client.registerForSignEvents(keepAddress)
-	}
-
-	// Watch for new keeps creation.
-	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
-		logger.Infof(
-			"new keep created with address: [%s]",
-			event.KeepAddress.String(),
-		)
-
-		if event.IsMember(ethereumChain.Address()) {
-			go func() {
-				if err := client.generateSignerForKeep(event.KeepAddress); err != nil {
-					logger.Errorf("signer generation failed: [%v]", err)
-					return
-				}
-
-				client.registerForSignEvents(event.KeepAddress)
-			}()
-		}
-	})
-
-	// Register client as a candidate member for keep.
-	err := ethereumChain.RegisterAsMemberCandidate()
-	if err != nil {
-		logger.Errorf("failed to register member: [%v]", err)
-	} else {
-		logger.Infof("client registered as member candidate in keep factory")
-	}
 }
 
 // RegisterForSignEvents registers for signature requested events emitted by
