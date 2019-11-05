@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
@@ -62,7 +61,6 @@ func Start(c *cli.Context) error {
 
 	tecdsa.Initialize(
 		ethereumChain,
-		&chaincfg.TestNet3Params,
 		persistence,
 	)
 
