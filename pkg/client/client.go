@@ -28,7 +28,7 @@ func Initialize(
 	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
 
-	keepsRegistry.ForEachSigner(
+	keepsRegistry.ForEachKeep(
 		func(keepAddress common.Address, signer *ecdsa.Signer) {
 			tecdsa.RegisterForSignEvents(keepAddress, signer)
 			logger.Debugf(

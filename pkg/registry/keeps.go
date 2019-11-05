@@ -96,8 +96,8 @@ func (g *Keeps) LoadExistingKeeps() {
 	g.printSigners()
 }
 
-// ForEachSigner executes callback function for every entry in keeps' registry.
-func (g *Keeps) ForEachSigner(
+// ForEachKeep executes callback function for every entry in keeps' registry.
+func (g *Keeps) ForEachKeep(
 	callback func(keepAddress common.Address, signer *ecdsa.Signer),
 ) {
 	g.myKeeps.Range(func(key, value interface{}) bool {
