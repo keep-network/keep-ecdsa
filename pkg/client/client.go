@@ -41,8 +41,9 @@ func Initialize(
 	// Watch for new keeps creation.
 	ethereumChain.OnECDSAKeepCreated(func(event *eth.ECDSAKeepCreatedEvent) {
 		logger.Infof(
-			"new keep created with address: [%s]",
+			"new keep [%s] created with members: [%x]\n",
 			event.KeepAddress.String(),
+			event.Members,
 		)
 
 		if event.IsMember(ethereumChain.Address()) {
