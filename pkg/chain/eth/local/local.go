@@ -18,7 +18,8 @@ import (
 type LocalChain struct {
 	handlerMutex sync.Mutex
 
-	keeps map[eth.KeepAddress]*localKeep
+	keeps            map[eth.KeepAddress]*localKeep
+	memberCandidates []common.Address
 
 	keepCreatedHandlers map[int]func(event *eth.ECDSAKeepCreatedEvent)
 
@@ -30,6 +31,7 @@ type LocalChain struct {
 func Connect() eth.Handle {
 	return &LocalChain{
 		keeps:               make(map[eth.KeepAddress]*localKeep),
+		memberCandidates:    []common.Address{},
 		keepCreatedHandlers: make(map[int]func(event *eth.ECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
 	}
@@ -43,7 +45,14 @@ func (lc *LocalChain) Address() common.Address {
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
 func (lc *LocalChain) RegisterAsMemberCandidate() error {
+	lc.memberCandidates = append(lc.memberCandidates, lc.Address())
 	return nil
+}
+
+// GetMemberCandidates returns list of registered candidates for keep members
+// selection.
+func (lc *LocalChain) GetMemberCandidates() []common.Address {
+	return lc.memberCandidates
 }
 
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
