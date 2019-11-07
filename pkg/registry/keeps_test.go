@@ -6,16 +6,17 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/internal/testutils/mock"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
 var (
-	keepAddress1 = common.HexToAddress("0x770a9E2F2Aa1eC2d3Ca916Fc3e6A55058A898632")
-	keepAddress2 = common.HexToAddress("0x8B3BccB3A3994681A1C1584DE4b4E8b23ed1Ed6d")
+	keepAddress1 = testdata.KeepAddress1
+	keepAddress2 = testdata.KeepAddress2
 
-	signer1 = newTestSigner(big.NewInt(10))
-	signer2 = newTestSigner(big.NewInt(20))
+	signer1 = testdata.KeepSigners[keepAddress1]
+	signer2 = testdata.KeepSigners[keepAddress2]
 )
 
 func TestRegisterSigner(t *testing.T) {
@@ -154,14 +155,4 @@ func TestLoadExistingGroups(t *testing.T) {
 	if !reflect.DeepEqual(signer2, actualSigner2) {
 		t.Errorf("\nexpected: [%v]\nactual:   [%v]", signer2, actualSigner2)
 	}
-}
-func newTestSigner(privateKeyD *big.Int) *ecdsa.Signer {
-	curve := secp256k1.S256()
-
-	privateKey := new(cecdsa.PrivateKey)
-	privateKey.PublicKey.Curve = curve
-	privateKey.D = privateKeyD
-	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(privateKeyD.Bytes())
-
-	return ecdsa.NewSigner(privateKey)
 }
