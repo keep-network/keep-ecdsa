@@ -20,6 +20,7 @@ type LocalChain struct {
 
 	keeps            map[eth.KeepAddress]*localKeep
 	memberCandidates []common.Address
+	signatures       map[string]*ecdsa.Signature
 
 	keepCreatedHandlers map[int]func(event *eth.ECDSAKeepCreatedEvent)
 
@@ -32,6 +33,7 @@ func Connect() eth.Handle {
 	return &LocalChain{
 		keeps:               make(map[eth.KeepAddress]*localKeep),
 		memberCandidates:    []common.Address{},
+		signatures:          make(map[string]*ecdsa.Signature),
 		keepCreatedHandlers: make(map[int]func(event *eth.ECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
 	}
@@ -137,5 +139,16 @@ func (lc *LocalChain) SubmitSignature(
 	digest [32]byte,
 	signature *ecdsa.Signature,
 ) error {
+	key := keepAddress.String() + string(digest[:])
+	lc.signatures[key] = signature
 	return nil
+}
+
+// GetSignature returns a signature submitted to keep for given digest.
+func (lc *LocalChain) GetSignature(
+	keepAddress eth.KeepAddress,
+	digest [32]byte,
+) (*ecdsa.Signature, error) {
+	key := keepAddress.Hex() + string(digest[:])
+	return lc.signatures[key], nil
 }
