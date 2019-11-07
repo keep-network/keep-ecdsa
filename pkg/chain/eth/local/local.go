@@ -132,6 +132,19 @@ func (lc *LocalChain) SubmitKeepPublicKey(
 	return nil
 }
 
+// GetKeepPublicKey returns a public key submitted for the keep.
+func (lc *LocalChain) GetKeepPublicKey(keepAddress eth.KeepAddress) ([64]byte, error) {
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return [64]byte{}, fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	return keep.publicKey, nil
+}
+
 // SubmitSignature submits a signature to a keep contract deployed under a
 // given address.
 func (lc *LocalChain) SubmitSignature(
