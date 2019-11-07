@@ -17,9 +17,13 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 
 	chain := initializeLocalChain()
 	eventFired := make(chan *eth.ECDSAKeepCreatedEvent)
+
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	keepMembers := []common.Address{common.BytesToAddress([]byte{1, 2, 3})}
+
 	expectedEvent := &eth.ECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
+		Members:     keepMembers,
 	}
 
 	subscription, err := chain.OnECDSAKeepCreated(
@@ -32,7 +36,7 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	err = chain.createKeep(keepAddress)
+	err = chain.CreateKeep(keepAddress, keepMembers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,10 +61,13 @@ func TestOnSignatureRequested(t *testing.T) {
 
 	chain := initializeLocalChain()
 	eventFired := make(chan *eth.SignatureRequestedEvent)
+
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	keepMembers := []common.Address{}
+
 	digest := [32]byte{1}
 
-	err := chain.createKeep(keepAddress)
+	err := chain.CreateKeep(keepAddress, keepMembers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +83,7 @@ func TestOnSignatureRequested(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,14 +108,17 @@ func TestOnSignatureRequested(t *testing.T) {
 
 func TestSubmitKeepPublicKey(t *testing.T) {
 	chain := initializeLocalChain()
+
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
+	keepMembers := []common.Address{}
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
+
 	expectedDuplicationError := fmt.Errorf(
 		"public key already submitted for keep [%s]",
 		keepAddress.String(),
 	)
 
-	err := chain.createKeep(keepAddress)
+	err := chain.CreateKeep(keepAddress, keepMembers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,6 +152,6 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	}
 }
 
-func initializeLocalChain() *localChain {
-	return Connect().(*localChain)
+func initializeLocalChain() *LocalChain {
+	return Connect().(*LocalChain)
 }
