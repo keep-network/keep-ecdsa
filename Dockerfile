@@ -43,7 +43,7 @@ RUN go mod download
 
 # Install code generators.
 RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.7/cmd/abigen && go install .
-RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.2.1/protoc-gen-gogoslick && go install .
+RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.1/protoc-gen-gogoslick && go install .
 
 # Install Solidity contracts.
 COPY ./solidity $APP_DIR/solidity
