@@ -247,7 +247,8 @@ workflows:
             tags:
               only: /^v.*/
           context: github-package-registry
-          requires: keep_test_approval
+          requires:
+            - keep_test_approval
       - build_client_and_test_go:
           filters:
             tags:
