@@ -242,6 +242,9 @@ workflows:
     jobs:
       - keep_test_approval:
           type: approval
+          filters:
+            tags:
+              only: /^v.*/
       - setup_github_package_registry:
           filters:
             tags:
