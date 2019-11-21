@@ -1,6 +1,6 @@
 /**
- * Use this file to configure your truffle project. 
- * 
+ * Use this file to configure your truffle project.
+ *
  * More information about configuration can be found at:
  * truffleframework.com/docs/advanced/configuration
  *
@@ -12,7 +12,7 @@ require('@babel/polyfill');
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
-   * defaults web3 uses to send transactions. You can ask a truffle command to 
+   * defaults web3 uses to send transactions. You can ask a truffle command to
    * use a specific network from the command line, e.g
    *
    * $ truffle test --network <network-name>
@@ -32,6 +32,12 @@ module.exports = {
       websockets: true,      // Enable EventEmitter interface for web3 (default: false)
     },
     keep_dev: {
+      host: "localhost",
+      port: 8545,
+      network_id: "*",
+      from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB",
+    },
+    keep_test: {
       host: "localhost",
       port: 8545,
       network_id: "*",
