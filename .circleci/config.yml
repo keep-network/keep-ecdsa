@@ -200,7 +200,7 @@ workflows:
       - build_and_test_solidity:
           requires:
             - setup_github_package_registry
-  build-test-migrate-publish:
+  build-test-migrate-publish-keep-dev:
     jobs:
       - setup_github_package_registry:
           context: github-package-registry
@@ -236,5 +236,52 @@ workflows:
             branches:
               only: master
           context: keep-dev
+          requires:
+            - migrate_contracts
+  build-test-migrate-publish-keep-test:
+    jobs:
+      - keep_test_approval:
+          type: approval
+      - setup_github_package_registry:
+          filters:
+            tags:
+              only: /^v.*/
+          context: github-package-registry
+          requires: keep_test_approval
+      - build_client_and_test_go:
+          filters:
+            tags:
+              only: /^v.*/
+          context: github-package-registry
+          requires:
+            - setup_github_package_registry
+      - build_initcontainer:
+          filters:
+            tags:
+              only: /^v.*/
+          context: keep-test
+          requires:
+            - migrate_contracts
+      - migrate_contracts:
+          filters:
+            tags:
+              only: /^v.*/
+          context: keep-test
+          requires:
+            - build_client_and_test_go
+      - publish_client:
+          filters:
+            tags:
+              only: /^v.*/
+          context: keep-test
+          requires:
+            - build_client_and_test_go
+            - build_initcontainer
+            - migrate_contracts
+      - publish_contract_data:
+          filters:
+            tags:
+              only: /^v.*/
+          context: keep-test
           requires:
             - migrate_contracts
