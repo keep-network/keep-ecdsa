@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/client"
