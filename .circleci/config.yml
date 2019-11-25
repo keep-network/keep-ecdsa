@@ -245,15 +245,15 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
       - setup_github_package_registry:
           context: github-package-registry
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
           requires:
             - keep_test_approval
       - build_client_and_test_go:
@@ -261,8 +261,8 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
           requires:
             - setup_github_package_registry
       - build_initcontainer:
@@ -270,8 +270,8 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
           requires:
             - migrate_contracts
       - migrate_contracts:
@@ -279,8 +279,8 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
           requires:
             - build_client_and_test_go
       - publish_client:
@@ -288,8 +288,8 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
           requires:
             - build_client_and_test_go
             - build_initcontainer
@@ -299,7 +299,7 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
           requires:
             - migrate_contracts
