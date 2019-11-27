@@ -18,10 +18,8 @@ require (
 	github.com/ethereum/go-ethereum v1.9.7
 	github.com/gogo/protobuf v1.3.1
 	github.com/ipfs/go-log v0.0.1
-	github.com/karalabe/hid v1.0.0 // indirect
 	github.com/keep-network/go-electrum v0.0.0-20190423065222-2dcd82312dcf
 	github.com/keep-network/keep-common v0.1.1-0.20191125111950-b9621e71e096
 	github.com/keep-network/keep-core v0.6.1-0.20191125124131-866987d36eb5
 	github.com/urfave/cli v0.0.0-00010101000000-000000000000
-	gopkg.in/karalabe/cookiejar.v2 v2.0.0-20150724131613-8dcd6a7f4951 // indirect
 )
