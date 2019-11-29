@@ -67,8 +67,10 @@ func TestGenerateSigner(t *testing.T) {
 				errChan <- fmt.Errorf("failed to generate signer: [%v]", err)
 			}
 
-			resultWait.Done()
 			results = append(results, signer)
+
+			resultWait.Done()
+
 		}(memberKey)
 	}
 
