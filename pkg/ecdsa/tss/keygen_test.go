@@ -70,7 +70,6 @@ func TestGenerateSigner(t *testing.T) {
 			results = append(results, signer)
 
 			resultWait.Done()
-
 		}(memberKey)
 	}
 
