@@ -71,11 +71,14 @@ func NewSigner(
 		networkChannel,
 		errChan,
 	)
+	logger.Debugf("initialized key generation party: [%v]", keyGenParty.PartyID())
 
 	signer := &Signer{tssParty: keyGenParty}
 
 	// TODO: We may want to sync all parties and start key generation at the same
 	// time, when all parties finished the initialization.
+	time.Sleep(500 * time.Millisecond)
+
 	err := signer.startKeyGeneration()
 	if err != nil {
 		return nil, fmt.Errorf("failed to start key generation: [%v]", err)
