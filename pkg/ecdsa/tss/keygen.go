@@ -111,14 +111,9 @@ func initializeKeyGenerationParty(
 	outChan := make(chan tss.Message)
 	endChan := make(chan keygen.LocalPartySaveData)
 
-	party := newParty(
-		currentPartyID,
-		groupPartiesIDs,
-		threshold,
-		*tssPreParams,
-		outChan,
-		endChan,
-	)
+	ctx := tss.NewPeerContext(tss.SortPartyIDs(groupPartiesIDs))
+	params := tss.NewParameters(ctx, currentPartyID, len(groupPartiesIDs), threshold)
+	party := keygen.NewLocalParty(params, outChan, endChan, *tssPreParams)
 
 	go func() {
 		for {
