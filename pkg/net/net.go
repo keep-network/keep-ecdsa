@@ -1,8 +1,7 @@
 package net
 
 // NetworkChannel represents a channel for members to exchange messages.
-// TODO: Wrap `tss.Message` type with internal message type.
-// TODO: Reuse keep-core?
+// TODO: Use keep-core network provider after adding support for unicast messages.
 type NetworkChannel interface {
 	// TODO: Send function has to support broadcast and unicast or we can provide
 	// separate functions for point-to-point and broadcast communication.
