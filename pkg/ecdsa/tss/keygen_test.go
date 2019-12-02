@@ -6,10 +6,10 @@ import (
 	"sync"
 	"testing"
 
-	tssLib "github.com/binance-chain/tss-lib/tss"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
+	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
 func TestInitializeSignerAndGenerateKey(t *testing.T) {
@@ -56,7 +56,7 @@ func TestInitializeSignerAndGenerateKey(t *testing.T) {
 
 			preParams := testData[i].LocalPreParams
 
-			network.register(string(thisMemberKey.Bytes()), networkChannel)
+			network.register(thisMemberKey.Bytes(), networkChannel)
 
 			signer, err := InitializeSigner(
 				thisMemberKey,
@@ -135,30 +135,30 @@ func (c *testNetwork) newTestChannel() *testChannel {
 	}
 }
 
-func (c *testNetwork) register(name string, channel *testChannel) {
-	c.channels.Store(name, channel)
+func (c *testNetwork) register(key []byte, channel *testChannel) {
+	c.channels.Store(string(key), channel)
 }
 
 type testChannel struct {
 	network *testNetwork
-	handler func(msg tssLib.Message) error
+	handler func(msg net.Message) error
 }
 
-func (c *testChannel) Send(message tssLib.Message) error {
+func (c *testChannel) Send(message net.Message) error {
 	c.network.deliver(message)
 	return nil
 }
 
-func (c *testChannel) Receive(handler func(msg tssLib.Message) error) {
+func (c *testChannel) Receive(handler func(msg net.Message) error) {
 	c.handler = handler
 }
 
-func (c *testNetwork) deliver(message tssLib.Message) {
-	from := message.GetFrom()
-	to := message.GetTo()
+func (c *testNetwork) deliver(message net.Message) {
+	from := message.From
+	to := message.To
 
 	c.channels.Range(func(key, value interface{}) bool {
-		if string(from.Key) == key {
+		if string(from) == key {
 			return true // don't self-delvier messages
 		}
 
@@ -170,19 +170,16 @@ func (c *testNetwork) deliver(message tssLib.Message) {
 					c.errChan <- fmt.Errorf("failed to deliver broadcasted message: %v", err)
 				}
 			}()
-
 			return true
 		}
 
-		for _, destination := range to { // unicast
-			if string(destination.Key) == key {
-				go func() {
-					if err := channel.handler(message); err != nil {
-						c.errChan <- fmt.Errorf("failed to deliver unicasted message: %v", err)
-					}
-				}()
-				return true
-			}
+		if string(to) == key { // unicast
+			go func() {
+				if err := channel.handler(message); err != nil {
+					c.errChan <- fmt.Errorf("failed to deliver unicasted message: %v", err)
+				}
+			}()
+			return true
 		}
 
 		return true
