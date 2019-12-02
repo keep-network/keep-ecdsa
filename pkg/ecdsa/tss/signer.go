@@ -15,7 +15,7 @@ type Signer struct {
 	keygenData keygen.LocalPartySaveData
 }
 
-// PublicKey returns Signer's public key as a pair of X and Y coordinates.
+// PublicKey returns Signer's ECDSA public key.
 func (s *Signer) PublicKey() *ecdsa.PublicKey {
 	pkX, pkY := s.keygenData.ECDSAPub.X(), s.keygenData.ECDSAPub.Y()
 
