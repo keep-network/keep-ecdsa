@@ -46,7 +46,7 @@ func TestGenerateSigner(t *testing.T) {
 
 	var resultWait sync.WaitGroup
 	resultWait.Add(len(groupMembersKeys))
-	results := []*Signer{}
+	signers := []*Signer{}
 
 	for i, memberKey := range groupMembersKeys {
 		go func(thisMemberKey *big.Int) {
@@ -67,7 +67,7 @@ func TestGenerateSigner(t *testing.T) {
 				errChan <- fmt.Errorf("failed to generate signer: [%v]", err)
 			}
 
-			results = append(results, signer)
+			signers = append(signers, signer)
 
 			resultWait.Done()
 		}(memberKey)
@@ -75,26 +75,22 @@ func TestGenerateSigner(t *testing.T) {
 
 	resultWait.Wait()
 
-	if len(results) != len(groupMembersKeys) {
+	if len(signers) != len(groupMembersKeys) {
 		t.Errorf(
-			"unexpected number of results\nexpected: %d\nactual:   %d\n",
+			"unexpected number of signers\nexpected: %d\nactual:   %d\n",
 			len(groupMembersKeys),
-			len(results),
+			len(signers),
 		)
 	}
 
-	firstPublicKey := results[0].PublicKey()
+	firstPublicKey := signers[0].PublicKey()
 	curve := secp256k1.S256()
 
 	if !curve.IsOnCurve(firstPublicKey.X, firstPublicKey.Y) {
 		t.Error("public key is not on curve")
 	}
 
-	if firstPublicKey.X.Sign() == 0 || firstPublicKey.Y.Sign() == 0 {
-		t.Error("public key coordinates cannot be zero")
-	}
-
-	for i, signer := range results {
+	for i, signer := range signers {
 		publicKey := signer.PublicKey()
 		if publicKey.X.Cmp(firstPublicKey.X) != 0 || publicKey.Y.Cmp(firstPublicKey.Y) != 0 {
 			t.Errorf("public key for party [%v] doesn't match expected", i)
@@ -116,7 +112,7 @@ type testNetwork struct {
 
 func (c *testNetwork) newTestChannel() *testChannel {
 	return &testChannel{
-		parent: c,
+		network: c,
 	}
 }
 
@@ -125,13 +121,12 @@ func (c *testNetwork) register(name string, channel *testChannel) {
 }
 
 type testChannel struct {
-	destination string
-	parent      *testNetwork
-	handler     func(msg tssLib.Message) error
+	network *testNetwork
+	handler func(msg tssLib.Message) error
 }
 
 func (c *testChannel) Send(message tssLib.Message) error {
-	c.parent.deliver(message)
+	c.network.deliver(message)
 	return nil
 }
 
