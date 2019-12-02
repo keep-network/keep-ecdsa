@@ -114,8 +114,8 @@ func initializeKeyGenerationParty(
 	networkChannel net.NetworkChannel,
 	errChan chan error,
 ) (tss.Party, <-chan keygen.LocalPartySaveData) {
-	recvChan := make(chan tss.Message, len(groupPartiesIDs))
-	networkChannel.Receive(func(message tss.Message) error {
+	recvChan := make(chan net.Message, len(groupPartiesIDs))
+	networkChannel.Receive(func(message net.Message) error {
 		recvChan <- message
 		return nil
 	})
@@ -131,19 +131,45 @@ func initializeKeyGenerationParty(
 		for {
 			select {
 			case msg := <-outChan:
-				networkChannel.Send(msg)
-			case msg := <-recvChan:
-				go func() {
-					// TODO: We should move marshalling of the message to step
-					// where we send the message. This will be handled when we
-					// implement proper network channel.
-					bytes, _, err := msg.WireBytes()
-					if err != nil {
-						errChan <- party.WrapError(err)
-						return
+				bytes, routing, err := msg.WireBytes()
+				if err != nil {
+					errChan <- fmt.Errorf("failed to encode message: [%v]", party.WrapError(err))
+					return
+				}
+
+				destinations := routing.To
+
+				if destinations == nil {
+					// broadcast
+					message := net.Message{
+						From:        party.PartyID().Key,
+						IsBroadcast: true,
+						Payload:     bytes,
 					}
 
-					if _, err := party.UpdateFromBytes(bytes, msg.GetFrom(), msg.IsBroadcast()); err != nil {
+					networkChannel.Send(message)
+				} else {
+					for _, dest := range destinations {
+						// unicast
+						message := net.Message{
+							From:        party.PartyID().Key,
+							To:          dest.GetKey(),
+							IsBroadcast: false,
+							Payload:     bytes,
+						}
+						networkChannel.Send(message)
+					}
+				}
+			case msg := <-recvChan:
+				go func() {
+					fromKeyInt := new(big.Int).SetBytes(msg.From)
+					fromPartyID := params.Parties().IDs().FindByKey(fromKeyInt)
+
+					if _, err := party.UpdateFromBytes(
+						msg.Payload,
+						fromPartyID,
+						msg.IsBroadcast,
+					); err != nil {
 						errChan <- party.WrapError(err)
 					}
 				}()
