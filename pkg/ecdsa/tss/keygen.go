@@ -50,7 +50,7 @@ func NewSigner(
 	for index, memberKey := range groupMembersKeys {
 		newPartyID := tss.NewPartyID(
 			fmt.Sprintf("party-%d", index),   // id - unique string representing this party in the network
-			fmt.Sprintf("moniker-%d", index), // moniker - can anything (even left blank)
+			fmt.Sprintf("moniker-%d", index), // moniker - can be anything (even left blank)
 			memberKey,                        // key - unique identifying key
 		)
 
