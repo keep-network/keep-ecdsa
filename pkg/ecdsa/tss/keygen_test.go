@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 )
 
-func TestGenerateSigner(t *testing.T) {
+func TestInitializeSignerAndGenerateKey(t *testing.T) {
 	groupSize := 5
 	threshold := groupSize
 
@@ -44,9 +44,11 @@ func TestGenerateSigner(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	var resultWait sync.WaitGroup
-	resultWait.Add(len(groupMembersKeys))
 	signers := []*Signer{}
+
+	// Signer initialization.
+	var initWait sync.WaitGroup
+	initWait.Add(len(groupMembersKeys))
 
 	for i, memberKey := range groupMembersKeys {
 		go func(thisMemberKey *big.Int) {
@@ -56,7 +58,7 @@ func TestGenerateSigner(t *testing.T) {
 
 			network.register(string(thisMemberKey.Bytes()), networkChannel)
 
-			signer, err := NewSigner(
+			signer, err := InitializeSigner(
 				thisMemberKey,
 				groupMembersKeys,
 				threshold,
@@ -64,16 +66,16 @@ func TestGenerateSigner(t *testing.T) {
 				networkChannel,
 			)
 			if err != nil {
-				errChan <- fmt.Errorf("failed to generate signer: [%v]", err)
+				errChan <- fmt.Errorf("failed to initialize signer: [%v]", err)
 			}
 
 			signers = append(signers, signer)
 
-			resultWait.Done()
+			initWait.Done()
 		}(memberKey)
 	}
 
-	resultWait.Wait()
+	initWait.Wait()
 
 	if len(signers) != len(groupMembersKeys) {
 		t.Errorf(
@@ -82,6 +84,23 @@ func TestGenerateSigner(t *testing.T) {
 			len(signers),
 		)
 	}
+
+	// Key generaton.
+	var keyGenWait sync.WaitGroup
+	keyGenWait.Add(len(groupMembersKeys))
+
+	for _, signer := range signers {
+		go func(signer *Signer) {
+			err = signer.GenerateKey()
+			if err != nil {
+				errChan <- fmt.Errorf("failed to generate key: [%v]", err)
+			}
+
+			keyGenWait.Done()
+		}(signer)
+	}
+
+	keyGenWait.Wait()
 
 	firstPublicKey := signers[0].PublicKey()
 	curve := secp256k1.S256()

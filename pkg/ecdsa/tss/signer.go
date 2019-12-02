@@ -9,7 +9,10 @@ import (
 
 // Signer is threshold signer.
 type Signer struct {
-	tssParty tssLib.Party
+	keygenParty tssLib.Party
+	// Channels where results of the key generation protocol execution will be written to.
+	keygenEndChan <-chan keygen.LocalPartySaveData // data from a successful execution
+	keygenErrChan <-chan error                     // errors emitted during the protocol execution
 	// keygenData contains output of key generation stage. This data should be
 	// persisted to local storage.
 	keygenData keygen.LocalPartySaveData

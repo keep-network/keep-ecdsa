@@ -25,8 +25,8 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 	return preParams, nil
 }
 
-// NewSigner runs a threshold multi-party key generation protocol to create a
-// signer.
+// InitializeSigner initializes a member to run a threshold multi-party key
+// generation protocol.
 //
 // It expects unique identifiers of members to be provided as `big.Int`.
 // List of group members should contain all identifiers of members in the signing
@@ -36,7 +36,7 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 // execution. The parameters should be generated prior to initializing the signer.
 //
 // Network channel should support broadcast and unicast messages transport.
-func NewSigner(
+func InitializeSigner(
 	currentMemberKey *big.Int,
 	groupMembersKeys []*big.Int,
 	threshold int,
@@ -73,23 +73,35 @@ func NewSigner(
 	)
 	logger.Debugf("initialized key generation party: [%v]", keyGenParty.PartyID())
 
-	signer := &Signer{tssParty: keyGenParty}
+	signer := &Signer{
+		keygenParty:   keyGenParty,
+		keygenEndChan: endChan,
+		keygenErrChan: errChan,
+	}
 
-	// TODO: We may want to sync all parties and start key generation at the same
-	// time, when all parties finished the initialization.
-	time.Sleep(500 * time.Millisecond)
+	return signer, nil
+}
 
-	err := signer.startKeyGeneration()
-	if err != nil {
-		return nil, fmt.Errorf("failed to start key generation: [%v]", err)
+// GenerateKey executes the protocol to generate a signing key. This function
+// needs to be executed only after all members finished the initialization stage.
+// As a result the signer will be updated with the key generation data.
+func (s *Signer) GenerateKey() error {
+	if err := s.keygenParty.Start(); err != nil {
+		return fmt.Errorf(
+			"failed to start key generation: [%v]",
+			s.keygenParty.WrapError(err),
+		)
 	}
 
 	for {
 		select {
-		case signer.keygenData = <-endChan:
-			return signer, nil
-		case err := <-errChan:
-			return nil, fmt.Errorf("failed to generate signer: [%v]", err)
+		case s.keygenData = <-s.keygenEndChan:
+			return nil
+		case err := <-s.keygenErrChan:
+			return fmt.Errorf(
+				"failed to generate signer key: [%v]",
+				s.keygenParty.WrapError(err),
+			)
 		}
 	}
 }
@@ -140,12 +152,4 @@ func initializeKeyGenerationParty(
 	}()
 
 	return party, endChan
-}
-
-func (m *Signer) startKeyGeneration() error {
-	if err := m.tssParty.Start(); err != nil {
-		return m.tssParty.WrapError(err)
-	}
-
-	return nil
 }
