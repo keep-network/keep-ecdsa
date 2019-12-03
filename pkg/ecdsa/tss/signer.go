@@ -5,14 +5,13 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
-	"github.com/binance-chain/tss-lib/tss"
 	tssLib "github.com/binance-chain/tss-lib/tss"
 )
 
 // Signer is threshold signer.
 type Signer struct {
-	keygenParty  tssLib.Party
-	keygenParams *tss.Parameters
+	tssParameters *tssLib.Parameters
+	keygenParty   tssLib.Party
 	// Network channels used for messages transport.
 	networkProvider net.Provider
 	// Channels where results of the key generation protocol execution will be written to.

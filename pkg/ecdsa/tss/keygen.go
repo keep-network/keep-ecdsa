@@ -67,8 +67,8 @@ func InitializeSigner(
 	logger.Debugf("initialized key generation party: [%v]", keyGenParty.PartyID())
 
 	signer := &Signer{
+		tssParameters:   params,
 		keygenParty:     keyGenParty,
-		keygenParams:    params,
 		networkProvider: networkProvider,
 		keygenEndChan:   endChan,
 		keygenErrChan:   errChan,
@@ -84,7 +84,7 @@ func (s *Signer) GenerateKey() error {
 	defer unregisterRecv(
 		s.networkProvider,
 		s.keygenParty,
-		s.keygenParams,
+		s.tssParameters,
 		s.keygenErrChan,
 	)
 
