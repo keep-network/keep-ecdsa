@@ -56,16 +56,19 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	// Signer initialization.
-	signers := []*Signer{}
+	networkProviders := []net.Provider{}
 
-	// Signer initialization.
+	// Members initialization.
+	members := []*Member{}
+
 	for i, memberID := range groupMemberIDs {
 		network, err := newTestNetProvider(memberID, groupMembersKeys, errChan)
 
+		networkProviders = append(networkProviders, network)
+
 		preParams := testData[i].LocalPreParams
 
-		signer, err := InitializeSigner(
+		member, err := InitializeKeyGeneration(
 			memberID,
 			groupSize,
 			threshold,
@@ -76,42 +79,49 @@ func TestGenerateKeyAndSign(t *testing.T) {
 			t.Fatalf("failed to initialize signer: [%v]", err)
 		}
 
-		signers = append(signers, signer)
+		members = append(members, member)
 	}
 
-	if len(signers) != len(groupMemberIDs) {
+	if len(members) != len(groupMemberIDs) {
 		t.Fatalf(
 			"unexpected number of signers\nexpected: %d\nactual:   %d\n",
 			len(groupMemberIDs),
-			len(signers),
+			len(members),
 		)
 	}
 
 	// Key generaton.
+	signersMutex := sync.Mutex{}
+	signers := []*Signer{}
+
 	go func() {
 		var keyGenWait sync.WaitGroup
-		keyGenWait.Add(len(signers))
+		keyGenWait.Add(len(members))
 
-		for _, signer := range signers {
-			go func(signer *Signer) {
+		for _, member := range members {
+			go func(member *Member) {
 				go func() {
 					for {
 						select {
-						case err := <-signer.keygenErrChan:
+						case err := <-member.keygenErrChan:
 							errChan <- err
 							return
 						}
 					}
 				}()
 
-				err = signer.GenerateKey()
+				signer, err := member.GenerateKey()
 				if err != nil {
 					errChan <- fmt.Errorf("failed to generate key: [%v]", err)
 					return
 				}
 
+				signersMutex.Lock()
+				signers = append(signers, signer)
+				signersMutex.Unlock()
+
 				keyGenWait.Done()
-			}(signer)
+			}(member)
 		}
 
 		keyGenWait.Wait()
@@ -126,7 +136,8 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Fatal(ctx.Err())
 	}
 
-	firstPublicKey := signers[0].PublicKey()
+	firstSigner := signers[0]
+	firstPublicKey := firstSigner.PublicKey()
 	curve := secp256k1.S256()
 
 	if !curve.IsOnCurve(firstPublicKey.X, firstPublicKey.Y) {
@@ -136,7 +147,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	for i, signer := range signers {
 		publicKey := signer.PublicKey()
 		if publicKey.X.Cmp(firstPublicKey.X) != 0 || publicKey.Y.Cmp(firstPublicKey.Y) != 0 {
-			t.Errorf("public key for party [%v] doesn't match expected", i)
+			t.Errorf("public key for signer [%d] doesn't match expected", i)
 		}
 	}
 
@@ -144,34 +155,30 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	message := []byte("message to sign")
 	digest := sha256.Sum256(message)
 
+	signingSigners := []*SigningSigner{}
+
 	var initSigningWait sync.WaitGroup
-	initSigningWait.Add(len(signers))
+	initSigningWait.Add(len(groupMembersKeys))
 
-	for _, signer := range signers {
-		go func(signer *Signer) {
-			networkChannel, err := network.getTestChannel(signer.keygenParty.PartyID().GetKey())
-			if err != nil {
-				t.Errorf("failed to get test channel: [%v]", err)
-			}
+	for i, signer := range signers {
+		signingSigner := signer.InitializeSigning(
+			digest[:],
+			networkProviders[i],
+		)
 
-			signer.InitializeSigning(digest[:], networkChannel)
-
-			initSigningWait.Done()
-		}(signer)
+		signingSigners = append(signingSigners, signingSigner)
 	}
-
-	initSigningWait.Wait()
 
 	// Signing.
 	signatures := []*ecdsa.Signature{}
 	signaturesMutex := &sync.Mutex{}
 
 	var signingWait sync.WaitGroup
-	signingWait.Add(len(signers))
+	signingWait.Add(len(groupMembersKeys))
 
-	for _, signer := range signers {
-		go func(signer *Signer) {
-			signature, err := signer.Sign()
+	for _, signingSigner := range signingSigners {
+		go func() {
+			signature, err := signingSigner.Sign()
 			if err != nil {
 				t.Errorf("failed to sign: [%v]", err)
 			}
@@ -181,13 +188,13 @@ func TestGenerateKeyAndSign(t *testing.T) {
 			signaturesMutex.Unlock()
 
 			signingWait.Done()
-		}(signer)
+		}()
 	}
 
 	signingWait.Wait()
 
 	if len(signatures) != groupSize {
-		t.Errorf("invalid number of signatures\nexpected: %d\nactual:   %d", len(signers), len(signatures))
+		t.Errorf("invalid number of signatures\nexpected: %d\nactual:   %d", groupSize, len(signatures))
 	}
 
 	firstSignature := signatures[0]
@@ -202,10 +209,8 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		}
 	}
 
-	signerPublicKey := signers[0].PublicKey()
-
 	if !cecdsa.Verify(
-		(*cecdsa.PublicKey)(signerPublicKey),
+		(*cecdsa.PublicKey)(firstPublicKey),
 		digest[:],
 		firstSignature.R,
 		firstSignature.S,
@@ -213,7 +218,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Errorf("invalid signature: [%+v]", firstSignature)
 	}
 
-	testutils.VerifyEthereumSignature(t, digest[:], firstSignature, signerPublicKey)
+	testutils.VerifyEthereumSignature(t, digest[:], firstSignature, firstPublicKey)
 }
 
 type testNetProvider struct {
