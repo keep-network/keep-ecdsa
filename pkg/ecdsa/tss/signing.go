@@ -19,7 +19,7 @@ import (
 func (s *Signer) InitializeSigning(
 	digest []byte,
 	networkChannel net.NetworkChannel,
-) {
+) *SigningSigner {
 	digestInt := new(big.Int).SetBytes(digest)
 
 	errChan := make(chan error)
@@ -32,15 +32,27 @@ func (s *Signer) InitializeSigning(
 		errChan,
 	)
 
-	s.signingParty = party
-	s.signingEndChan = endChan
-	s.signingErrChan = errChan
+	return &SigningSigner{
+		signingParty:   party,
+		signingEndChan: endChan,
+		signingErrChan: errChan,
+	}
+}
+
+// SigningSigner represents Signer who initialized signing stage and is ready to
+// start signature calculation.
+type SigningSigner struct {
+	// Signing
+	signingParty tssLib.Party
+	// Channels where results of the signing protocol execution will be written to.
+	signingEndChan <-chan signing.SignatureData // data from a successful execution
+	signingErrChan <-chan error                 // errors emitted during the protocol execution
 }
 
 // Sign executes the protocol to calculate a signature. This function needs to be
 // executed only after all members finished the initialization stage. As a result
 // the calculated ECDSA signature will be returned.
-func (s *Signer) Sign() (*ecdsa.Signature, error) {
+func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 	if s.signingParty == nil {
 		return nil, fmt.Errorf("failed to get initialized signing party")
 	}
@@ -48,7 +60,7 @@ func (s *Signer) Sign() (*ecdsa.Signature, error) {
 	if err := s.signingParty.Start(); err != nil {
 		return nil, fmt.Errorf(
 			"failed to start signing: [%v]",
-			s.keygenParty.WrapError(err),
+			s.signingParty.WrapError(err),
 		)
 	}
 
@@ -61,7 +73,7 @@ func (s *Signer) Sign() (*ecdsa.Signature, error) {
 			return nil,
 				fmt.Errorf(
 					"failed to sign: [%v]",
-					s.keygenParty.WrapError(err),
+					s.signingParty.WrapError(err),
 				)
 		}
 	}

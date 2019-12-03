@@ -31,7 +31,7 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 	return preParams, nil
 }
 
-// InitializeSigner initializes a member to run a threshold multi-party key
+// InitializeKeyGeneration initializes a member to run a threshold multi-party key
 // generation protocol.
 //
 // It expects unique indices of members in the signing group as well as a group
@@ -41,13 +41,13 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 // execution. The parameters should be generated prior to initializing the signer.
 //
 // Network provider needs to support broadcast and unicast transport.
-func InitializeSigner(
+func InitializeKeyGeneration(
 	memberIndex group.MemberIndex,
 	groupSize int,
 	threshold int,
 	tssPreParams *keygen.LocalPreParams,
 	networkProvider net.Provider,
-) (*Signer, error) {
+) (*Member, error) {
 	if memberIndex <= 0 {
 		return nil, fmt.Errorf("member index must be greater than 0")
 	}
@@ -66,21 +66,33 @@ func InitializeSigner(
 	)
 	logger.Debugf("initialized key generation party: [%v]", keyGenParty.PartyID())
 
-	signer := &Signer{
-		tssParameters:   params,
+	signer := &Member{
 		keygenParty:     keyGenParty,
-		networkProvider: networkProvider,
 		keygenEndChan:   endChan,
 		keygenErrChan:   errChan,
+		tssParameters:   params,
+		networkProvider: networkProvider,
 	}
 
 	return signer, nil
 }
 
+// Member represents an initialized member who is ready to start distributed key
+// generation.
+type Member struct {
+	tssParameters   *tss.Parameters
+	networkProvider net.Provider // network provider used for messages transport
+	keygenParty     tss.Party
+	// Channels where results of the key generation protocol execution will be written to.
+	keygenEndChan <-chan keygen.LocalPartySaveData // data from a successful execution
+	keygenErrChan chan error                       // errors emitted during the protocol execution
+
+}
+
 // GenerateKey executes the protocol to generate a signing key. This function
 // needs to be executed only after all members finished the initialization stage.
-// As a result the signer will be updated with the key generation data.
-func (s *Signer) GenerateKey() error {
+// As a result it will return a Signer who has completed key generation.
+func (s *Member) GenerateKey() (*Signer, error) {
 	defer unregisterRecv(
 		s.networkProvider,
 		s.keygenParty,
@@ -89,7 +101,7 @@ func (s *Signer) GenerateKey() error {
 	)
 
 	if err := s.keygenParty.Start(); err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to start key generation: [%v]",
 			s.keygenParty.WrapError(err),
 		)
@@ -97,10 +109,14 @@ func (s *Signer) GenerateKey() error {
 
 	for {
 		select {
-		case s.keygenData = <-s.keygenEndChan:
-			return nil
+		case keygenData := <-s.keygenEndChan:
+			signer := &Signer{
+				tssParameters: s.tssParameters,
+				keygenData:    keygenData,
+			}
+			return signer, nil
 		case err := <-s.keygenErrChan:
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"failed to generate signer key: [%v]",
 				s.keygenParty.WrapError(err),
 			)

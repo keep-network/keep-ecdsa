@@ -2,32 +2,17 @@ package tss
 
 import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
-	"github.com/binance-chain/tss-lib/ecdsa/signing"
 	tssLib "github.com/binance-chain/tss-lib/tss"
 )
 
-// Signer is threshold signer.
+// Signer is a threshold signer who completed key generation stage.
 type Signer struct {
 	tssParameters *tssLib.Parameters
-	// Network channels used for messages transport.
-	networkProvider net.Provider
-	// Key generation
-	keygenParty tssLib.Party
-	// Channels where results of the key generation protocol execution will be written to.
-	keygenEndChan <-chan keygen.LocalPartySaveData // data from a successful execution
-	keygenErrChan chan error                       // errors emitted during the protocol execution
 	// keygenData contains output of key generation stage. This data should be
 	// persisted to local storage.
 	keygenData keygen.LocalPartySaveData
-
-	// Signing
-	signingParty tssLib.Party
-	// Channels where results of the signing protocol execution will be written to.
-	signingEndChan <-chan signing.SignatureData // data from a successful execution
-	signingErrChan <-chan error                 // errors emitted during the protocol execution
 }
 
 // PublicKey returns Signer's ECDSA public key.
