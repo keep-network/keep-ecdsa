@@ -2,7 +2,10 @@ package tss
 
 import (
 	"context"
+	cecdsa "crypto/ecdsa"
+	"crypto/sha256"
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -12,15 +15,17 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 	"github.com/keep-network/keep-tecdsa/pkg/net/local"
+	"github.com/keep-network/keep-tecdsa/pkg/utils/testutils"
 )
 
-func TestInitializeSignerAndGenerateKey(t *testing.T) {
+func TestGenerateKeyAndSign(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	groupSize := 2
-	threshold := groupSize
+	groupSize := 5
+	threshold := groupSize - 1
 
 	err := log.SetLogLevel("*", "INFO")
 	if err != nil {
@@ -51,12 +56,11 @@ func TestInitializeSignerAndGenerateKey(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	signersMutex := &sync.Mutex{}
+	// Signer initialization.
 	signers := []*Signer{}
 
 	// Signer initialization.
 	for i, memberID := range groupMemberIDs {
-
 		network, err := newTestNetProvider(memberID, groupMembersKeys, errChan)
 
 		preParams := testData[i].LocalPreParams
@@ -72,9 +76,7 @@ func TestInitializeSignerAndGenerateKey(t *testing.T) {
 			t.Fatalf("failed to initialize signer: [%v]", err)
 		}
 
-		signersMutex.Lock()
 		signers = append(signers, signer)
-		signersMutex.Unlock()
 	}
 
 	if len(signers) != len(groupMemberIDs) {
@@ -138,6 +140,80 @@ func TestInitializeSignerAndGenerateKey(t *testing.T) {
 		}
 	}
 
+	// Signing initialization.
+	message := []byte("message to sign")
+	digest := sha256.Sum256(message)
+
+	var initSigningWait sync.WaitGroup
+	initSigningWait.Add(len(signers))
+
+	for _, signer := range signers {
+		go func(signer *Signer) {
+			networkChannel, err := network.getTestChannel(signer.keygenParty.PartyID().GetKey())
+			if err != nil {
+				t.Errorf("failed to get test channel: [%v]", err)
+			}
+
+			signer.InitializeSigning(digest[:], networkChannel)
+
+			initSigningWait.Done()
+		}(signer)
+	}
+
+	initSigningWait.Wait()
+
+	// Signing.
+	signatures := []*ecdsa.Signature{}
+	signaturesMutex := &sync.Mutex{}
+
+	var signingWait sync.WaitGroup
+	signingWait.Add(len(signers))
+
+	for _, signer := range signers {
+		go func(signer *Signer) {
+			signature, err := signer.Sign()
+			if err != nil {
+				t.Errorf("failed to sign: [%v]", err)
+			}
+
+			signaturesMutex.Lock()
+			signatures = append(signatures, signature)
+			signaturesMutex.Unlock()
+
+			signingWait.Done()
+		}(signer)
+	}
+
+	signingWait.Wait()
+
+	if len(signatures) != groupSize {
+		t.Errorf("invalid number of signatures\nexpected: %d\nactual:   %d", len(signers), len(signatures))
+	}
+
+	firstSignature := signatures[0]
+	for i, signature := range signatures {
+		if !reflect.DeepEqual(firstSignature, signature) {
+			t.Errorf(
+				"signature for party [%v] doesn't match expected\nexpected: [%v]\nactual: [%v]",
+				i,
+				firstSignature,
+				signature,
+			)
+		}
+	}
+
+	signerPublicKey := signers[0].PublicKey()
+
+	if !cecdsa.Verify(
+		(*cecdsa.PublicKey)(signerPublicKey),
+		digest[:],
+		firstSignature.R,
+		firstSignature.S,
+	) {
+		t.Errorf("invalid signature: [%+v]", firstSignature)
+	}
+
+	testutils.VerifyEthereumSignature(t, digest[:], firstSignature, signerPublicKey)
 }
 
 type testNetProvider struct {
