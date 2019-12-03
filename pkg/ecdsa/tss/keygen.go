@@ -43,23 +43,7 @@ func InitializeSigner(
 	tssPreParams *keygen.LocalPreParams,
 	networkChannel net.NetworkChannel,
 ) (*Signer, error) {
-	var thisPartyID *tss.PartyID
-	groupPartiesIDs := []*tss.PartyID{}
-
-	// Generate tss-lib specific parties IDs.
-	for index, memberKey := range groupMembersKeys {
-		newPartyID := tss.NewPartyID(
-			fmt.Sprintf("party-%d", index),   // id - unique string representing this party in the network
-			fmt.Sprintf("moniker-%d", index), // moniker - can be anything (even left blank)
-			memberKey,                        // key - unique identifying key
-		)
-
-		if memberKey.Cmp(currentMemberKey) == 0 {
-			thisPartyID = newPartyID
-		}
-
-		groupPartiesIDs = append(groupPartiesIDs, newPartyID)
-	}
+	thisPartyID, groupPartiesIDs := generateGroupPartiesIDs(currentMemberKey, groupMembersKeys)
 
 	errChan := make(chan error)
 
@@ -104,6 +88,27 @@ func (s *Signer) GenerateKey() error {
 			)
 		}
 	}
+}
+
+func generateGroupPartiesIDs(currentMemberKey *big.Int, groupMembersKeys []*big.Int) (*tss.PartyID, []*tss.PartyID) {
+	var thisPartyID *tss.PartyID
+	groupPartiesIDs := []*tss.PartyID{}
+
+	for index, memberKey := range groupMembersKeys {
+		newPartyID := tss.NewPartyID(
+			fmt.Sprintf("party-%d", index),   // id - unique string representing this party in the network
+			fmt.Sprintf("moniker-%d", index), // moniker - can be anything (even left blank)
+			memberKey,                        // key - unique identifying key
+		)
+
+		if memberKey.Cmp(currentMemberKey) == 0 {
+			thisPartyID = newPartyID
+		}
+
+		groupPartiesIDs = append(groupPartiesIDs, newPartyID)
+	}
+
+	return thisPartyID, groupPartiesIDs
 }
 
 func initializeKeyGenerationParty(
