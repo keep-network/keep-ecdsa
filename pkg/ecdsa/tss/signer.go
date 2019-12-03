@@ -11,10 +11,16 @@ import (
 type Signer struct {
 	GroupInfo
 
-	tssParameters *tssLib.Parameters
+	tssParameters *tssParameters
 	// keygenData contains output of key generation stage. This data should be
 	// persisted to local storage.
 	keygenData keygen.LocalPartySaveData
+}
+
+type tssParameters struct {
+	currentPartyID *tssLib.PartyID
+	sortedPartyIDs []*tssLib.PartyID
+	threshold      int
 }
 
 // PublicKey returns Signer's ECDSA public key.
