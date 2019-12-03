@@ -112,8 +112,12 @@ func (s *Member) GenerateKey() (*Signer, error) {
 		select {
 		case keygenData := <-s.keygenEndChan:
 			signer := &Signer{
-				tssParameters: s.tssParameters,
-				keygenData:    keygenData,
+				tssParameters: &tssParameters{
+					currentPartyID: s.keygenParty.PartyID(),
+					sortedPartyIDs: s.tssParameters.Parties().IDs(),
+					threshold:      s.tssParameters.Threshold(),
+				},
+				keygenData: keygenData,
 			}
 
 			return signer, nil

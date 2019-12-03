@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
+	"github.com/binance-chain/tss-lib/tss"
 	tssLib "github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
@@ -87,18 +89,27 @@ func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 
 func (s *Signer) initializeSigningParty(
 	digest *big.Int,
+	tssParameters *tssParameters,
+	keygenData keygen.LocalPartySaveData,
 	networkBridge *NetworkBridge,
 	errChan chan error,
 ) (tssLib.Party, <-chan signing.SignatureData, error) {
-	outChan := make(chan tssLib.Message, s.tssParameters.PartyCount())
+	outChan := make(chan tssLib.Message, len(tssParameters.sortedPartyIDs))
 	endChan := make(chan signing.SignatureData)
 
-	party := signing.NewLocalParty(digest, s.tssParameters, s.keygenData, outChan, endChan)
+	params := tss.NewParameters(
+		tss.NewPeerContext(tssParameters.sortedPartyIDs),
+		tssParameters.currentPartyID,
+		len(tssParameters.sortedPartyIDs),
+		tssParameters.threshold,
+	)
+
+	party := signing.NewLocalParty(digest, params, s.keygenData, outChan, endChan)
 
 	if err := networkBridge.start(
 		s.groupMembers,
 		party,
-		s.tssParameters,
+		params,
 		outChan,
 		errChan,
 	); err != nil {
