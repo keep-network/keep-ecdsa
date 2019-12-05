@@ -41,7 +41,8 @@ func InitializeSigner(
 	groupMembersKeys []*big.Int,
 	threshold int,
 	tssPreParams *keygen.LocalPreParams,
-	networkChannel net.NetworkChannel,
+	broadcastChannel net.BroadcastChannel,
+	unicastChannels map[string]net.UnicastChannel,
 ) (*Signer, error) {
 	thisPartyID, groupPartiesIDs := generateGroupPartiesIDs(currentMemberKey, groupMembersKeys)
 
@@ -52,15 +53,18 @@ func InitializeSigner(
 		groupPartiesIDs,
 		threshold,
 		tssPreParams,
-		networkChannel,
+		broadcastChannel,
+		unicastChannels,
 		errChan,
 	)
 	logger.Debugf("initialized key generation party: [%v]", keyGenParty.PartyID())
 
 	signer := &Signer{
-		keygenParty:   keyGenParty,
-		keygenEndChan: endChan,
-		keygenErrChan: errChan,
+		keygenParty:      keyGenParty,
+		broadcastChannel: broadcastChannel,
+		unicastChannels:  unicastChannels,
+		keygenEndChan:    endChan,
+		keygenErrChan:    errChan,
 	}
 
 	return signer, nil
@@ -116,7 +120,8 @@ func initializeKeyGenerationParty(
 	groupPartiesIDs []*tss.PartyID,
 	threshold int,
 	tssPreParams *keygen.LocalPreParams,
-	networkChannel net.NetworkChannel,
+	broadcastChannel net.BroadcastChannel,
+	unicastChannels map[string]net.UnicastChannel,
 	errChan chan error,
 ) (tss.Party, <-chan keygen.LocalPartySaveData) {
 	recvChan := make(chan net.Message, len(groupPartiesIDs))

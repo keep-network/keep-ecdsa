@@ -2,6 +2,7 @@ package tss
 
 import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/net"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	tssLib "github.com/binance-chain/tss-lib/tss"
@@ -10,6 +11,9 @@ import (
 // Signer is threshold signer.
 type Signer struct {
 	keygenParty tssLib.Party
+	// Network channels used for messages transport.
+	broadcastChannel net.BroadcastChannel
+	unicastChannels  map[string]net.UnicastChannel
 	// Channels where results of the key generation protocol execution will be written to.
 	keygenEndChan <-chan keygen.LocalPartySaveData // data from a successful execution
 	keygenErrChan <-chan error                     // errors emitted during the protocol execution
