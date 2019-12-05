@@ -1,106 +1,128 @@
 package tss
 
 import (
+	"context"
 	"fmt"
-	"math/big"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
+	"github.com/keep-network/keep-tecdsa/pkg/net/local"
 )
 
 func TestInitializeSignerAndGenerateKey(t *testing.T) {
-	groupSize := 5
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	groupSize := 2
 	threshold := groupSize
 
 	err := log.SetLogLevel("*", "INFO")
 	if err != nil {
-		logger.Infof("logger initialization failed: [%v]", err)
+		t.Errorf("logger initialization failed: [%v]", err)
 	}
 
-	groupMembersKeys := []*big.Int{}
+	completed := make(chan interface{})
+	errChan := make(chan error)
+
+	// go func() {
+	groupMemberIDs := []group.MemberIndex{}
+	groupMembersKeys := make(map[group.MemberIndex]*key.NetworkPublic, groupSize)
 
 	for i := 0; i < groupSize; i++ {
-		groupMembersKeys = append(groupMembersKeys, big.NewInt(int64(100+i)))
-	}
-
-	errChan := make(chan error)
-	network := newTestNetwork(errChan)
-
-	go func() {
-		for {
-			select {
-			case err := <-errChan:
-				t.Fatalf("unexpected error: [%v]", err)
-			}
+		_, publicKey, err := key.GenerateStaticNetworkKey()
+		if err != nil {
+			t.Fatalf("failed to generate network key: [%v]", err)
 		}
-	}()
+
+		memberIndex := group.MemberIndex(i + 1)
+
+		groupMemberIDs = append(groupMemberIDs, memberIndex)
+		groupMembersKeys[memberIndex] = publicKey
+	}
 
 	testData, err := testdata.LoadKeygenTestFixtures(groupSize)
 	if err != nil {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
+	signersMutex := &sync.Mutex{}
 	signers := []*Signer{}
 
 	// Signer initialization.
-	var initWait sync.WaitGroup
-	initWait.Add(len(groupMembersKeys))
+	for i, memberID := range groupMemberIDs {
 
-	for i, memberKey := range groupMembersKeys {
-		go func(thisMemberKey *big.Int) {
-			networkChannel := network.newTestChannel()
+		network, err := newTestNetProvider(memberID, groupMembersKeys, errChan)
 
-			preParams := testData[i].LocalPreParams
+		preParams := testData[i].LocalPreParams
 
-			network.register(thisMemberKey.Bytes(), networkChannel)
+		signer, err := InitializeSigner(
+			memberID,
+			groupSize,
+			threshold,
+			&preParams,
+			network,
+		)
+		if err != nil {
+			t.Fatalf("failed to initialize signer: [%v]", err)
+		}
 
-			signer, err := InitializeSigner(
-				thisMemberKey,
-				groupMembersKeys,
-				threshold,
-				&preParams,
-				networkChannel,
-			)
-			if err != nil {
-				errChan <- fmt.Errorf("failed to initialize signer: [%v]", err)
-			}
-
-			signers = append(signers, signer)
-
-			initWait.Done()
-		}(memberKey)
+		signersMutex.Lock()
+		signers = append(signers, signer)
+		signersMutex.Unlock()
 	}
 
-	initWait.Wait()
-
-	if len(signers) != len(groupMembersKeys) {
-		t.Errorf(
+	if len(signers) != len(groupMemberIDs) {
+		t.Fatalf(
 			"unexpected number of signers\nexpected: %d\nactual:   %d\n",
-			len(groupMembersKeys),
+			len(groupMemberIDs),
 			len(signers),
 		)
 	}
 
 	// Key generaton.
-	var keyGenWait sync.WaitGroup
-	keyGenWait.Add(len(groupMembersKeys))
+	go func() {
+		var keyGenWait sync.WaitGroup
+		keyGenWait.Add(len(signers))
 
-	for _, signer := range signers {
-		go func(signer *Signer) {
-			err = signer.GenerateKey()
-			if err != nil {
-				errChan <- fmt.Errorf("failed to generate key: [%v]", err)
-			}
+		for _, signer := range signers {
+			go func(signer *Signer) {
+				go func() {
+					for {
+						select {
+						case err := <-signer.keygenErrChan:
+							errChan <- err
+							return
+						}
+					}
+				}()
 
-			keyGenWait.Done()
-		}(signer)
+				err = signer.GenerateKey()
+				if err != nil {
+					errChan <- fmt.Errorf("failed to generate key: [%v]", err)
+					return
+				}
+
+				keyGenWait.Done()
+			}(signer)
+		}
+
+		keyGenWait.Wait()
+		completed <- "DONE"
+	}()
+
+	select {
+	case <-completed:
+	case err := <-errChan:
+		t.Fatalf("unexpected error on key generation: [%v]", err)
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
 	}
-
-	keyGenWait.Wait()
 
 	firstPublicKey := signers[0].PublicKey()
 	curve := secp256k1.S256()
@@ -115,73 +137,22 @@ func TestInitializeSignerAndGenerateKey(t *testing.T) {
 			t.Errorf("public key for party [%v] doesn't match expected", i)
 		}
 	}
+
 }
 
-func newTestNetwork(errChan chan error) *testNetwork {
-	return &testNetwork{
-		channels: &sync.Map{},
-		errChan:  errChan,
-	}
+type testNetProvider struct {
 }
 
-type testNetwork struct {
-	channels *sync.Map
-	errChan  chan error
-}
+func newTestNetProvider(
+	memberID group.MemberIndex,
+	membersNetworkKeys map[group.MemberIndex]*key.NetworkPublic,
+	errChan chan error,
+) (net.Provider, error) {
+	provider := local.LocalProvider(
+		memberID.Int().String(),
+		membersNetworkKeys[memberID],
+		errChan,
+	)
 
-func (c *testNetwork) newTestChannel() *testChannel {
-	return &testChannel{
-		network: c,
-	}
-}
-
-func (c *testNetwork) register(key []byte, channel *testChannel) {
-	c.channels.Store(string(key), channel)
-}
-
-type testChannel struct {
-	network *testNetwork
-	handler func(msg net.Message) error
-}
-
-func (c *testChannel) Send(message net.Message) error {
-	c.network.deliver(message)
-	return nil
-}
-
-func (c *testChannel) Receive(handler func(msg net.Message) error) {
-	c.handler = handler
-}
-
-func (c *testNetwork) deliver(message net.Message) {
-	from := message.From
-	to := message.To
-
-	c.channels.Range(func(key, value interface{}) bool {
-		if string(from) == key {
-			return true // don't self-delvier messages
-		}
-
-		channel := value.(*testChannel)
-
-		if to == nil { // broadcast
-			go func() {
-				if err := channel.handler(message); err != nil {
-					c.errChan <- fmt.Errorf("failed to deliver broadcasted message: %v", err)
-				}
-			}()
-			return true
-		}
-
-		if string(to) == key { // unicast
-			go func() {
-				if err := channel.handler(message); err != nil {
-					c.errChan <- fmt.Errorf("failed to deliver unicasted message: %v", err)
-				}
-			}()
-			return true
-		}
-
-		return true
-	})
+	return provider, nil
 }
