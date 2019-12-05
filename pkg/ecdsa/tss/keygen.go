@@ -8,6 +8,7 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
@@ -33,23 +34,27 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 // InitializeSigner initializes a member to run a threshold multi-party key
 // generation protocol.
 //
-// It expects unique identifiers of members to be provided as `big.Int`.
-// List of group members should contain all identifiers of members in the signing
-// group including the current member.
+// It expects unique indices of members in the signing group as well as a group
+// size to produce a unique members identifiers.
 //
 // TSS protocol requires pre-parameters such as safe primes to be generated for
 // execution. The parameters should be generated prior to initializing the signer.
 //
-// Network channel should support broadcast and unicast messages transport.
+// Broadcast and unicast network transport channels should be provided. Unicast
+// channels should be provided as a map with keys equal to peer members indices.
 func InitializeSigner(
-	currentMemberKey *big.Int,
-	groupMembersKeys []*big.Int,
+	memberIndex group.MemberIndex,
+	groupSize int,
 	threshold int,
 	tssPreParams *keygen.LocalPreParams,
 	broadcastChannel net.BroadcastChannel,
 	unicastChannels map[string]net.UnicastChannel,
 ) (*Signer, error) {
-	thisPartyID, groupPartiesIDs := generateGroupPartiesIDs(currentMemberKey, groupMembersKeys)
+	if memberIndex <= 0 {
+		return nil, fmt.Errorf("member index must be greater than 0")
+	}
+
+	thisPartyID, groupPartiesIDs := generateGroupPartiesIDs(memberIndex, groupSize)
 
 	errChan := make(chan error)
 
@@ -105,18 +110,21 @@ func (s *Signer) GenerateKey() error {
 	}
 }
 
-func generateGroupPartiesIDs(currentMemberKey *big.Int, groupMembersKeys []*big.Int) (*tss.PartyID, []*tss.PartyID) {
+func generateGroupPartiesIDs(
+	memberIndex group.MemberIndex,
+	groupSize int,
+) (*tss.PartyID, []*tss.PartyID) {
 	var thisPartyID *tss.PartyID
 	groupPartiesIDs := []*tss.PartyID{}
 
-	for index, memberKey := range groupMembersKeys {
+	for i := 1; i <= groupSize; i++ {
 		newPartyID := tss.NewPartyID(
-			fmt.Sprintf("party-%d", index),   // id - unique string representing this party in the network
-			fmt.Sprintf("moniker-%d", index), // moniker - can be anything (even left blank)
-			memberKey,                        // key - unique identifying key
+			string(i),            // id - unique string representing this party in the network
+			"",                   // moniker - can be anything (even left blank)
+			big.NewInt(int64(i)), // key - unique identifying key
 		)
 
-		if memberKey.Cmp(currentMemberKey) == 0 {
+		if memberIndex.Equals(i) {
 			thisPartyID = newPartyID
 		}
 
@@ -186,9 +194,9 @@ func initializeKeyGenerationParty(
 					broadcastChannel.Send(msg)
 				} else {
 					for _, destination := range routing.To {
-						peerID := MemberID(destination.GetKey())
+						peerID := destination.KeyInt().String()
 
-						unicastChannel, ok := unicastChannels[peerID.String()]
+						unicastChannel, ok := unicastChannels[peerID]
 						if !ok {
 							errChan <- fmt.Errorf("failed to find unicast channel for: [%v]", peerID)
 							continue
