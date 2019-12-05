@@ -16,6 +16,11 @@ const preParamsGenerationTimeout = 90 * time.Second
 var logger = log.Logger("keep-ecdsa")
 
 // GenerateTSSPreParams calculates parameters required by TSS key generation.
+// It times out after 90 seconds if the required parameters could not be generated.
+// It is possible to generate the parameters way ahead of the TSS protocol
+// execution.
+// TODO: Consider pre-generating parameters to a pool and use them on protocol
+// start.
 func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 	preParams, err := keygen.GeneratePreParams(preParamsGenerationTimeout)
 	if err != nil {
