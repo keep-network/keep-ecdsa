@@ -40,15 +40,13 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 // TSS protocol requires pre-parameters such as safe primes to be generated for
 // execution. The parameters should be generated prior to initializing the signer.
 //
-// Broadcast and unicast network transport channels should be provided. Unicast
-// channels should be provided as a map with keys equal to peer members indices.
+// Network provider needs to support broadcast and unicast transport.
 func InitializeSigner(
 	memberIndex group.MemberIndex,
 	groupSize int,
 	threshold int,
 	tssPreParams *keygen.LocalPreParams,
-	broadcastChannel net.BroadcastChannel,
-	unicastChannels map[string]net.UnicastChannel,
+	networkProvider net.Provider,
 ) (*Signer, error) {
 	if memberIndex <= 0 {
 		return nil, fmt.Errorf("member index must be greater than 0")
@@ -58,23 +56,22 @@ func InitializeSigner(
 
 	errChan := make(chan error)
 
-	keyGenParty, endChan := initializeKeyGenerationParty(
+	keyGenParty, params, endChan := initializeKeyGenerationParty(
 		thisPartyID,
 		groupPartiesIDs,
 		threshold,
 		tssPreParams,
-		broadcastChannel,
-		unicastChannels,
+		networkProvider,
 		errChan,
 	)
 	logger.Debugf("initialized key generation party: [%v]", keyGenParty.PartyID())
 
 	signer := &Signer{
-		keygenParty:      keyGenParty,
-		broadcastChannel: broadcastChannel,
-		unicastChannels:  unicastChannels,
-		keygenEndChan:    endChan,
-		keygenErrChan:    errChan,
+		keygenParty:     keyGenParty,
+		keygenParams:    params,
+		networkProvider: networkProvider,
+		keygenEndChan:   endChan,
+		keygenErrChan:   errChan,
 	}
 
 	return signer, nil
@@ -84,11 +81,12 @@ func InitializeSigner(
 // needs to be executed only after all members finished the initialization stage.
 // As a result the signer will be updated with the key generation data.
 func (s *Signer) GenerateKey() error {
-	defer s.broadcastChannel.UnregisterRecv(TSSmessageType)
-
-	for _, unicastChannel := range s.unicastChannels {
-		defer unicastChannel.UnregisterRecv(TSSmessageType)
-	}
+	defer unregisterRecv(
+		s.networkProvider,
+		s.keygenParty,
+		s.keygenParams,
+		s.keygenErrChan,
+	)
 
 	if err := s.keygenParty.Start(); err != nil {
 		return fmt.Errorf(
@@ -139,34 +137,9 @@ func initializeKeyGenerationParty(
 	groupPartiesIDs []*tss.PartyID,
 	threshold int,
 	tssPreParams *keygen.LocalPreParams,
-	broadcastChannel net.BroadcastChannel,
-	unicastChannels map[string]net.UnicastChannel,
+	networkProvider net.Provider,
 	errChan chan error,
-) (tss.Party, <-chan keygen.LocalPartySaveData) {
-	recvMessage := make(chan *TSSMessage, len(groupPartiesIDs))
-
-	handleMessageFunc := func(channel chan *TSSMessage) net.HandleMessageFunc {
-		return net.HandleMessageFunc{
-			Type: TSSmessageType,
-			Handler: func(msg net.Message) error {
-				switch tssMessage := msg.Payload().(type) {
-				case *TSSMessage:
-					channel <- tssMessage
-				default:
-					return fmt.Errorf("unexpected message: [%v]", msg.Payload())
-				}
-
-				return nil
-			},
-		}
-	}
-
-	broadcastChannel.Recv(handleMessageFunc(recvMessage))
-
-	for _, unicastChannel := range unicastChannels {
-		unicastChannel.Recv(handleMessageFunc(recvMessage))
-	}
-
+) (tss.Party, *tss.Parameters, <-chan keygen.LocalPartySaveData) {
 	outChan := make(chan tss.Message)
 	endChan := make(chan keygen.LocalPartySaveData)
 
@@ -174,56 +147,14 @@ func initializeKeyGenerationParty(
 	params := tss.NewParameters(ctx, currentPartyID, len(groupPartiesIDs), threshold)
 	party := keygen.NewLocalParty(params, outChan, endChan, *tssPreParams)
 
-	go func() {
-		for {
-			select {
-			case tssLibMsg := <-outChan:
-				bytes, routing, err := tssLibMsg.WireBytes()
-				if err != nil {
-					errChan <- fmt.Errorf("failed to encode message: [%v]", party.WrapError(err))
-					break
-				}
+	go bridgeNetwork(
+		networkProvider,
+		outChan,
+		endChan,
+		errChan,
+		party,
+		params,
+	)
 
-				msg := &TSSMessage{
-					SenderID:    routing.From.GetKey(),
-					Payload:     bytes,
-					IsBroadcast: routing.IsBroadcast,
-				}
-
-				if routing.To == nil {
-					broadcastChannel.Send(msg)
-				} else {
-					for _, destination := range routing.To {
-						peerID := destination.KeyInt().String()
-
-						unicastChannel, ok := unicastChannels[peerID]
-						if !ok {
-							errChan <- fmt.Errorf("failed to find unicast channel for: [%v]", peerID)
-							continue
-						}
-
-						unicastChannel.Send(msg)
-					}
-				}
-			case msg := <-recvMessage:
-				go func() {
-					senderKey := new(big.Int).SetBytes(msg.SenderID)
-					senderPartyID := params.Parties().IDs().FindByKey(senderKey)
-
-					bytes := msg.Payload
-
-					if _, err := party.UpdateFromBytes(
-						bytes,
-						senderPartyID,
-						msg.IsBroadcast,
-					); err != nil {
-						errChan <- party.WrapError(err)
-						return
-					}
-				}()
-			}
-		}
-	}()
-
-	return party, endChan
+	return party, params, endChan
 }
