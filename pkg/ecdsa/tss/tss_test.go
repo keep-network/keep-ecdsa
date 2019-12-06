@@ -48,7 +48,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	members := make(map[MemberID]*Member)
 
 	for i, memberID := range groupMemberIDs {
-		network, err := newTestNetProvider(memberID, groupMembersKeys, errChan)
+		network, err := newTestBridge(memberID, groupMembersKeys, errChan)
 		if err != nil {
 			t.Fatalf("failed to create network provider: [%v]", err)
 		}
@@ -256,7 +256,7 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[MemberID]*key.NetworkPub
 type testNetProvider struct {
 }
 
-func newTestNetProvider(
+func newTestBridge(
 	memberID MemberID,
 	membersNetworkKeys map[MemberID]*key.NetworkPublic,
 	errChan chan error,

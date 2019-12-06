@@ -29,14 +29,17 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 	return preParams, nil
 }
 
-// InitializeKeyGeneration initializes a member to run a threshold multi-party key
-// generation protocol.
+// InitializeKeyGeneration initializes a signing group member to run a threshold
+// multi-party key generation protocol.
 //
-// It expects unique indices of members in the signing group as well as a group
-// size to produce a unique members identifiers.
+// It expects unique identifiers of the current member as well as identifiers of
+// all members of the signing group.
 //
 // TSS protocol requires pre-parameters such as safe primes to be generated for
 // execution. The parameters should be generated prior to initializing the signer.
+//
+// Threshold defines a size of a signing subgroup which cannot sign successfully.
+// Protocol requires at least `t + 1` member to sign.
 //
 // Network provider needs to support broadcast and unicast transport.
 func InitializeKeyGeneration(
@@ -48,6 +51,14 @@ func InitializeKeyGeneration(
 ) (*Member, error) {
 	errChan := make(chan error)
 
+	if len(groupMemberIDs) <= threshold {
+		return nil, fmt.Errorf(
+			"group size [%d], should be greater than threshold [%d]",
+			len(groupMemberIDs),
+			threshold,
+		)
+	}
+
 	keyGenParty, params, endChan, err := initializeKeyGenerationParty(
 		memberID,
 		groupMemberIDs,
@@ -57,19 +68,17 @@ func InitializeKeyGeneration(
 		errChan,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize key generation party: [%v]", err)
+		return nil, fmt.Errorf("failed to initialize key generation member: [%v]", err)
 	}
-	logger.Debugf("initialized key generation party: [%v]", keyGenParty.PartyID())
+	logger.Debugf("initialized key generation member: [%v]", keyGenParty.PartyID())
 
-	signer := &Member{
+	return &Member{
 		keygenParty:   keyGenParty,
 		keygenEndChan: endChan,
 		keygenErrChan: errChan,
 		tssParameters: params,
 		networkBridge: networkBridge,
-	}
-
-	return signer, nil
+	}, nil
 }
 
 // Member represents an initialized member who is ready to start distributed key
