@@ -27,17 +27,16 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	groupSize := 5
 	threshold := groupSize - 1
 
-	err := log.SetLogLevel("*", "INFO")
+	err := log.SetLogLevel("*", "ERROR")
 	if err != nil {
-		t.Errorf("logger initialization failed: [%v]", err)
+		t.Fatalf("logger initialization failed: [%v]", err)
 	}
 
-	completed := make(chan interface{})
 	errChan := make(chan error)
 
-	// go func() {
 	groupMemberIDs := []group.MemberIndex{}
 	groupMembersKeys := make(map[group.MemberIndex]*key.NetworkPublic, groupSize)
+	networkProviders := make(map[group.MemberIndex]net.Provider, groupSize)
 
 	for i := 0; i < groupSize; i++ {
 		_, publicKey, err := key.GenerateStaticNetworkKey()
@@ -56,15 +55,13 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	networkProviders := []net.Provider{}
-
 	// Members initialization.
-	members := []*Member{}
+	members := make(map[group.MemberIndex]*Member)
 
 	for i, memberID := range groupMemberIDs {
 		network, err := newTestNetProvider(memberID, groupMembersKeys, errChan)
 
-		networkProviders = append(networkProviders, network)
+		networkProviders[memberID] = network
 
 		preParams := testData[i].LocalPreParams
 
@@ -76,10 +73,10 @@ func TestGenerateKeyAndSign(t *testing.T) {
 			network,
 		)
 		if err != nil {
-			t.Fatalf("failed to initialize signer: [%v]", err)
+			t.Fatalf("failed to initialize member: [%v]", err)
 		}
 
-		members = append(members, member)
+		members[memberID] = member
 	}
 
 	if len(members) != len(groupMemberIDs) {
@@ -90,16 +87,18 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		)
 	}
 
-	// Key generaton.
+	// Key generation.
 	signersMutex := sync.Mutex{}
-	signers := []*Signer{}
+	signers := make(map[group.MemberIndex]*Signer)
+
+	keyGenDone := make(chan interface{})
 
 	go func() {
 		var keyGenWait sync.WaitGroup
-		keyGenWait.Add(len(members))
+		keyGenWait.Add(groupSize)
 
-		for _, member := range members {
-			go func(member *Member) {
+		for memberID, member := range members {
+			go func(memberID group.MemberIndex, member *Member) {
 				go func() {
 					for {
 						select {
@@ -117,26 +116,26 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				}
 
 				signersMutex.Lock()
-				signers = append(signers, signer)
+				signers[memberID] = signer
 				signersMutex.Unlock()
 
 				keyGenWait.Done()
-			}(member)
+			}(memberID, member)
 		}
 
 		keyGenWait.Wait()
-		completed <- "DONE"
+		close(keyGenDone)
 	}()
 
 	select {
-	case <-completed:
+	case <-keyGenDone:
 	case err := <-errChan:
 		t.Fatalf("unexpected error on key generation: [%v]", err)
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
 	}
 
-	firstSigner := signers[0]
+	firstSigner := signers[groupMemberIDs[0]]
 	firstPublicKey := firstSigner.PublicKey()
 	curve := secp256k1.S256()
 
@@ -144,65 +143,98 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Error("public key is not on curve")
 	}
 
-	for i, signer := range signers {
+	for _, signer := range signers {
 		publicKey := signer.PublicKey()
 		if publicKey.X.Cmp(firstPublicKey.X) != 0 || publicKey.Y.Cmp(firstPublicKey.Y) != 0 {
-			t.Errorf("public key for signer [%d] doesn't match expected", i)
+			t.Errorf(
+				"public key doesn't match expected\nexpected: [%v]\nactual: [%v]",
+				firstPublicKey,
+				publicKey,
+			)
 		}
 	}
+
+	// Give it some time to clean up after key generation run.
+	time.Sleep(100 * time.Millisecond)
 
 	// Signing initialization.
 	message := []byte("message to sign")
 	digest := sha256.Sum256(message)
 
-	signingSigners := []*SigningSigner{}
+	signingSigners := make(map[group.MemberIndex]*SigningSigner)
 
 	var initSigningWait sync.WaitGroup
 	initSigningWait.Add(len(groupMembersKeys))
 
-	for i, signer := range signers {
-		signingSigner := signer.InitializeSigning(
+	for memberID, signer := range signers {
+		signingSigner, err := signer.InitializeSigning(
 			digest[:],
-			networkProviders[i],
+			networkProviders[memberID],
 		)
+		if err != nil {
+			t.Fatalf("failed to initialize signer: [%v]", err)
+		}
 
-		signingSigners = append(signingSigners, signingSigner)
+		signingSigners[memberID] = signingSigner
 	}
 
 	// Signing.
+	signatureMutex := sync.Mutex{}
 	signatures := []*ecdsa.Signature{}
-	signaturesMutex := &sync.Mutex{}
 
-	var signingWait sync.WaitGroup
-	signingWait.Add(len(groupMembersKeys))
+	signingDone := make(chan interface{})
 
-	for _, signingSigner := range signingSigners {
-		go func() {
-			signature, err := signingSigner.Sign()
-			if err != nil {
-				t.Errorf("failed to sign: [%v]", err)
-			}
+	go func() {
+		var signingWait sync.WaitGroup
+		signingWait.Add(groupSize)
 
-			signaturesMutex.Lock()
-			signatures = append(signatures, signature)
-			signaturesMutex.Unlock()
+		for memberID, signingSigner := range signingSigners {
+			go func(memberID group.MemberIndex, signingSigner *SigningSigner) {
+				go func() {
+					for {
+						select {
+						case err := <-signingSigner.signingErrChan:
+							errChan <- err
+							return
+						}
+					}
+				}()
 
-			signingWait.Done()
-		}()
+				signature, err := signingSigner.Sign()
+				if err != nil {
+					errChan <- fmt.Errorf("failed to sign: [%v]", err)
+					return
+				}
+
+				signatureMutex.Lock()
+				signatures = append(signatures, signature)
+				signatureMutex.Unlock()
+
+				signingWait.Done()
+			}(memberID, signingSigner)
+		}
+
+		signingWait.Wait()
+		close(signingDone)
+	}()
+
+	select {
+	case <-signingDone:
+	case err := <-errChan:
+		t.Fatalf("unexpected error on key generation: [%v]", err)
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
 	}
-
-	signingWait.Wait()
 
 	if len(signatures) != groupSize {
 		t.Errorf("invalid number of signatures\nexpected: %d\nactual:   %d", groupSize, len(signatures))
 	}
 
-	firstSignature := signatures[0]
-	for i, signature := range signatures {
+	firstSignature := signatures[groupMemberIDs[0]]
+	for _, signature := range signatures {
 		if !reflect.DeepEqual(firstSignature, signature) {
 			t.Errorf(
-				"signature for party [%v] doesn't match expected\nexpected: [%v]\nactual: [%v]",
-				i,
+				"signature doesn't match expected\nexpected: [%v]\nactual: [%v]",
 				firstSignature,
 				signature,
 			)
