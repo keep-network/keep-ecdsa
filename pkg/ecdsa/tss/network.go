@@ -13,17 +13,20 @@ import (
 )
 
 type networkBridge struct {
-	networkProvider net.Provider
-	party           tss.Party
-	params          *tss.Parameters
-	errChan         chan<- error
+	groupMembersIDs []MemberID
 
+	party   tss.Party
+	params  *tss.Parameters
+	errChan chan<- error
+
+	networkProvider  net.Provider
 	broadcastChannel net.BroadcastChannel
 	unicastChannels  map[string]net.UnicastChannel
 }
 
 func bridgeNetwork(
 	networkProvider net.Provider,
+	groupMembersIDs []MemberID,
 	outChan <-chan tss.Message,
 	errChan chan<- error,
 	doneChan <-chan struct{},
@@ -34,6 +37,7 @@ func bridgeNetwork(
 
 	bridge := &networkBridge{
 		networkProvider: networkProvider,
+		groupMembersIDs: groupMembersIDs,
 		party:           party,
 		params:          params,
 		errChan:         errChan,
@@ -80,10 +84,10 @@ func bridgeNetwork(
 	return nil
 }
 
-func broadcastChannelName(parties tss.SortedPartyIDs) string {
+func broadcastChannelName(members []MemberID) string {
 	ids := []string{}
-	for _, id := range parties.Keys() {
-		ids = append(ids, id.Text(16))
+	for _, id := range members {
+		ids = append(ids, string(id))
 	}
 
 	digest := sha256.Sum256([]byte(strings.Join(ids, "-")))
@@ -110,7 +114,7 @@ func (b *networkBridge) initializeChannels(recvMessageChan chan *TSSMessage) err
 
 	// Initialize broadcast channel.
 	broadcastChannel, err := b.networkProvider.BroadcastChannelFor(
-		broadcastChannelName(b.params.Parties().IDs()),
+		broadcastChannelName(b.groupMembersIDs),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
@@ -179,7 +183,6 @@ func (b *networkBridge) sendMessage(tssLibMsg tss.Message) {
 		}
 	} else {
 		for _, destination := range routing.To {
-			// peerNetID := destination.KeyInt().Text(16)
 			peerNetID := destination.KeyInt().String()
 
 			unicastChannel, ok := b.unicastChannels[peerNetID]

@@ -8,7 +8,6 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
@@ -42,24 +41,18 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 //
 // Network provider needs to support broadcast and unicast transport.
 func InitializeKeyGeneration(
-	memberIndex group.MemberIndex,
-	groupSize int,
+	memberID MemberID,
+	groupMemberIDs []MemberID,
 	threshold int,
 	tssPreParams *keygen.LocalPreParams,
 	networkProvider net.Provider,
 ) (*Member, error) {
-	if memberIndex <= 0 {
-		return nil, fmt.Errorf("member index must be greater than 0")
-	}
-
-	thisPartyID, groupPartiesIDs := generateGroupPartiesIDs(memberIndex, groupSize)
-
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
 
 	keyGenParty, params, endChan, err := initializeKeyGenerationParty(
-		thisPartyID,
-		groupPartiesIDs,
+		memberID,
+		groupMemberIDs,
 		threshold,
 		tssPreParams,
 		networkProvider,
@@ -126,33 +119,41 @@ func (s *Member) GenerateKey() (*Signer, error) {
 	}
 }
 
-func generateGroupPartiesIDs(
-	memberIndex group.MemberIndex,
-	groupSize int,
-) (*tss.PartyID, []*tss.PartyID) {
+func generatePartiesIDs(
+	thisMemberID MemberID,
+	groupMemberIDs []MemberID,
+) (
+	*tss.PartyID,
+	[]*tss.PartyID,
+	error,
+) {
 	var thisPartyID *tss.PartyID
 	groupPartiesIDs := []*tss.PartyID{}
 
-	for i := 1; i <= groupSize; i++ {
+	for _, memberID := range groupMemberIDs {
+		if memberID.bigInt().Cmp(big.NewInt(0)) <= 0 {
+			return nil, nil, fmt.Errorf("member ID must be greater than 0, but found [%v]", memberID.bigInt())
+		}
+
 		newPartyID := tss.NewPartyID(
-			string(i),            // id - unique string representing this party in the network
-			"",                   // moniker - can be anything (even left blank)
-			big.NewInt(int64(i)), // key - unique identifying key
+			string(memberID),  // id - unique string representing this party in the network
+			"",                // moniker - can be anything (even left blank)
+			memberID.bigInt(), // key - unique identifying key
 		)
 
-		if memberIndex.Equals(i) {
+		if thisMemberID == memberID {
 			thisPartyID = newPartyID
 		}
 
 		groupPartiesIDs = append(groupPartiesIDs, newPartyID)
 	}
 
-	return thisPartyID, groupPartiesIDs
+	return thisPartyID, groupPartiesIDs, nil
 }
 
 func initializeKeyGenerationParty(
-	currentPartyID *tss.PartyID,
-	groupPartiesIDs []*tss.PartyID,
+	memberID MemberID,
+	groupMembersIDs []MemberID,
 	threshold int,
 	tssPreParams *keygen.LocalPreParams,
 	networkProvider net.Provider,
@@ -164,6 +165,11 @@ func initializeKeyGenerationParty(
 	<-chan keygen.LocalPartySaveData,
 	error,
 ) {
+	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(memberID, groupMembersIDs)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
+	}
+
 	outChan := make(chan tss.Message)
 	endChan := make(chan keygen.LocalPartySaveData)
 
@@ -173,6 +179,7 @@ func initializeKeyGenerationParty(
 
 	if err := bridgeNetwork(
 		networkProvider,
+		groupMembersIDs,
 		outChan,
 		errChan,
 		doneChan,

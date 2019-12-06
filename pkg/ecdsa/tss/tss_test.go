@@ -12,7 +12,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -34,20 +33,9 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 	errChan := make(chan error)
 
-	groupMemberIDs := []group.MemberIndex{}
-	groupMembersKeys := make(map[group.MemberIndex]*key.NetworkPublic, groupSize)
-	networkProviders := make(map[group.MemberIndex]net.Provider, groupSize)
-
-	for i := 0; i < groupSize; i++ {
-		_, publicKey, err := key.GenerateStaticNetworkKey()
-		if err != nil {
-			t.Fatalf("failed to generate network key: [%v]", err)
-		}
-
-		memberIndex := group.MemberIndex(i + 1)
-
-		groupMemberIDs = append(groupMemberIDs, memberIndex)
-		groupMembersKeys[memberIndex] = publicKey
+	groupMemberIDs, groupMembersKeys, err := generateMemberKeys(groupSize)
+	if err != nil {
+		t.Fatalf("failed to generate members keys: [%v]", err)
 	}
 
 	testData, err := testdata.LoadKeygenTestFixtures(groupSize)
@@ -55,8 +43,10 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
+	networkProviders := make(map[MemberID]net.Provider, groupSize)
+
 	// Members initialization.
-	members := make(map[group.MemberIndex]*Member)
+	members := make(map[MemberID]*Member)
 
 	for i, memberID := range groupMemberIDs {
 		network, err := newTestNetProvider(memberID, groupMembersKeys, errChan)
@@ -67,7 +57,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 		member, err := InitializeKeyGeneration(
 			memberID,
-			groupSize,
+			groupMemberIDs,
 			threshold,
 			&preParams,
 			network,
@@ -81,7 +71,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 	// Key generation.
 	signersMutex := sync.Mutex{}
-	signers := make(map[group.MemberIndex]*Signer)
+	signers := make(map[MemberID]*Signer)
 
 	keyGenDone := make(chan interface{})
 
@@ -90,7 +80,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		keyGenWait.Add(groupSize)
 
 		for memberID, member := range members {
-			go func(memberID group.MemberIndex, member *Member) {
+			go func(memberID MemberID, member *Member) {
 				go func() {
 					for {
 						select {
@@ -153,7 +143,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	message := []byte("message to sign")
 	digest := sha256.Sum256(message)
 
-	signingSigners := make(map[group.MemberIndex]*SigningSigner)
+	signingSigners := make(map[MemberID]*SigningSigner)
 
 	var initSigningWait sync.WaitGroup
 	initSigningWait.Add(len(groupMembersKeys))
@@ -172,7 +162,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 	// Signing.
 	signatureMutex := sync.Mutex{}
-	signatures := []*ecdsa.Signature{}
+	signatures := make(map[MemberID]*ecdsa.Signature)
 
 	signingDone := make(chan interface{})
 
@@ -181,7 +171,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		signingWait.Add(groupSize)
 
 		for memberID, signingSigner := range signingSigners {
-			go func(memberID group.MemberIndex, signingSigner *SigningSigner) {
+			go func(memberID MemberID, signingSigner *SigningSigner) {
 				go func() {
 					for {
 						select {
@@ -199,7 +189,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				}
 
 				signatureMutex.Lock()
-				signatures = append(signatures, signature)
+				signatures[memberID] = signature
 				signatureMutex.Unlock()
 
 				signingWait.Done()
@@ -245,16 +235,35 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	testutils.VerifyEthereumSignature(t, digest[:], firstSignature, firstPublicKey)
 }
 
+func generateMemberKeys(groupSize int) ([]MemberID, map[MemberID]*key.NetworkPublic, error) {
+	memberIDs := []MemberID{}
+	groupMembersKeys := make(map[MemberID]*key.NetworkPublic, groupSize)
+
+	for i := 0; i < groupSize; i++ {
+		_, publicKey, err := key.GenerateStaticNetworkKey()
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to generate network key: [%v]", err)
+		}
+
+		memberID := MemberID(string(key.Marshal(publicKey)))
+
+		memberIDs = append(memberIDs, memberID)
+		groupMembersKeys[memberID] = publicKey
+	}
+
+	return memberIDs, groupMembersKeys, nil
+}
+
 type testNetProvider struct {
 }
 
 func newTestNetProvider(
-	memberID group.MemberIndex,
-	membersNetworkKeys map[group.MemberIndex]*key.NetworkPublic,
+	memberID MemberID,
+	membersNetworkKeys map[MemberID]*key.NetworkPublic,
 	errChan chan error,
 ) (net.Provider, error) {
 	provider := local.LocalProvider(
-		memberID.Int().String(),
+		memberID.bigInt().String(),
 		membersNetworkKeys[memberID],
 		errChan,
 	)
