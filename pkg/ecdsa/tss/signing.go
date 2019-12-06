@@ -6,7 +6,6 @@ import (
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
-	"github.com/binance-chain/tss-lib/tss"
 	tssLib "github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
@@ -18,20 +17,24 @@ import (
 // Network channel should support broadcast and unicast messages transport.
 func (s *Signer) InitializeSigning(
 	digest []byte,
-	networkChannel net.NetworkChannel,
-) *SigningSigner {
+	networkChannel net.Provider,
+) (*SigningSigner, error) {
 	digestInt := new(big.Int).SetBytes(digest)
 
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
 
-	party, endChan := initializeSigningParty(
+	party, endChan, err := initializeSigningParty(
 		digestInt,
 		s.tssParameters,
 		s.keygenData,
 		networkChannel,
 		errChan,
+		doneChan,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize signing party: [%v]", err)
+	}
 
 	return &SigningSigner{
 		signingParty:   party,
@@ -88,25 +91,29 @@ func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 
 func initializeSigningParty(
 	digest *big.Int,
-	tssParameters *tss.Parameters,
+	tssParameters *tssLib.Parameters,
 	keygenData keygen.LocalPartySaveData,
-	networkChannel net.NetworkChannel,
+	networkProvider net.Provider,
 	errChan chan error,
-) (tss.Party, <-chan signing.SignatureData) {
-	outChan := make(chan tssLib.Message)
+	doneChan chan struct{},
+) (tssLib.Party, <-chan signing.SignatureData, error) {
+	outChan := make(chan tssLib.Message, tssParameters.PartyCount())
 	endChan := make(chan signing.SignatureData)
 
-	recvChan := make(chan net.Message, tssParameters.PartyCount())
-	networkChannel.Receive(func(message net.Message) error {
-		recvChan <- message
-		return nil
-	})
+	party := signing.NewLocalParty(digest, tssParameters, keygenData, outChan, endChan).(*signing.LocalParty)
 
-	party := signing.NewLocalParty(digest, tssParameters, keygenData, outChan, endChan)
+	if err := bridgeNetwork(
+		networkProvider,
+		outChan,
+		errChan,
+		doneChan,
+		party,
+		tssParameters,
+	); err != nil {
+		return nil, nil, fmt.Errorf("failed to initialize bridge network for signing: [%v]", err)
+	}
 
-	go handleMessages(party, tssParameters, networkChannel, outChan, recvChan, errChan)
-
-	return party, endChan
+	return party, endChan, nil
 }
 
 func convertSignatureTSStoECDSA(tssSignature signing.SignatureData) ecdsa.Signature {
