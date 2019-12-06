@@ -15,7 +15,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
 	"github.com/keep-network/keep-tecdsa/pkg/net/local"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/testutils"
 )
@@ -43,15 +42,18 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	networkProviders := make(map[MemberID]net.Provider, groupSize)
+	networkBridges := make(map[MemberID]*NetworkBridge, groupSize)
 
 	// Members initialization.
 	members := make(map[MemberID]*Member)
 
 	for i, memberID := range groupMemberIDs {
 		network, err := newTestNetProvider(memberID, groupMembersKeys, errChan)
+		if err != nil {
+			t.Fatalf("failed to create network provider: [%v]", err)
+		}
 
-		networkProviders[memberID] = network
+		networkBridges[memberID] = network
 
 		preParams := testData[i].LocalPreParams
 
@@ -136,9 +138,6 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		}
 	}
 
-	// Give it some time to clean up after key generation run.
-	time.Sleep(100 * time.Millisecond)
-
 	// Signing initialization.
 	message := []byte("message to sign")
 	digest := sha256.Sum256(message)
@@ -151,7 +150,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	for memberID, signer := range signers {
 		signingSigner, err := signer.InitializeSigning(
 			digest[:],
-			networkProviders[memberID],
+			networkBridges[memberID],
 		)
 		if err != nil {
 			t.Fatalf("failed to initialize signer: [%v]", err)
@@ -261,12 +260,14 @@ func newTestNetProvider(
 	memberID MemberID,
 	membersNetworkKeys map[MemberID]*key.NetworkPublic,
 	errChan chan error,
-) (net.Provider, error) {
+) (*NetworkBridge, error) {
 	provider := local.LocalProvider(
 		memberID.bigInt().String(),
 		membersNetworkKeys[memberID],
 		errChan,
 	)
 
-	return provider, nil
+	bridge := NewNetworkBridge(provider)
+
+	return bridge, nil
 }

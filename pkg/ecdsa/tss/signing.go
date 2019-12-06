@@ -7,7 +7,6 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
 	tssLib "github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
 // InitializeSigning initializes a member to run a threshold multi-party signature
@@ -16,18 +15,16 @@ import (
 // Network channel should support broadcast and unicast messages transport.
 func (s *Signer) InitializeSigning(
 	digest []byte,
-	networkChannel net.Provider,
+	networkBridge *NetworkBridge,
 ) (*SigningSigner, error) {
 	digestInt := new(big.Int).SetBytes(digest)
 
 	errChan := make(chan error)
-	doneChan := make(chan struct{})
 
 	party, endChan, err := s.initializeSigningParty(
 		digestInt,
-		networkChannel,
+		networkBridge,
 		errChan,
-		doneChan,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize signing party: [%v]", err)
@@ -35,10 +32,10 @@ func (s *Signer) InitializeSigning(
 
 	return &SigningSigner{
 		BaseMember:     s.BaseMember,
+		networkBridge:  networkBridge,
 		signingParty:   party,
 		signingEndChan: endChan,
 		signingErrChan: errChan,
-		doneChan:       doneChan,
 	}, nil
 }
 
@@ -47,20 +44,19 @@ func (s *Signer) InitializeSigning(
 type SigningSigner struct {
 	BaseMember
 
+	networkBridge *NetworkBridge
 	// Signing
 	signingParty tssLib.Party
 	// Channels where results of the signing protocol execution will be written to.
 	signingEndChan <-chan signing.SignatureData // data from a successful execution
 	signingErrChan <-chan error                 // errors emitted during the protocol execution
-
-	doneChan chan struct{}
 }
 
 // Sign executes the protocol to calculate a signature. This function needs to be
 // executed only after all members finished the initialization stage. As a result
 // the calculated ECDSA signature will be returned.
 func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
-	defer close(s.doneChan)
+	defer s.networkBridge.close()
 
 	if s.signingParty == nil {
 		return nil, fmt.Errorf("failed to get initialized signing party")
@@ -91,25 +87,22 @@ func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 
 func (s *Signer) initializeSigningParty(
 	digest *big.Int,
-	networkProvider net.Provider,
+	networkBridge *NetworkBridge,
 	errChan chan error,
-	doneChan chan struct{},
 ) (tssLib.Party, <-chan signing.SignatureData, error) {
 	outChan := make(chan tssLib.Message, s.tssParameters.PartyCount())
 	endChan := make(chan signing.SignatureData)
 
 	party := signing.NewLocalParty(digest, s.tssParameters, s.keygenData, outChan, endChan)
 
-	if err := bridgeNetwork(
-		networkProvider,
+	if err := networkBridge.start(
 		s.groupMembers,
-		outChan,
-		errChan,
-		doneChan,
 		party,
 		s.tssParameters,
+		outChan,
+		errChan,
 	); err != nil {
-		return nil, nil, fmt.Errorf("failed to initialize bridge network for signing: [%v]", err)
+		return nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
 
 	return party, endChan, nil

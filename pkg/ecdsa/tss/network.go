@@ -7,43 +7,53 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"sync"
 
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
-type networkBridge struct {
+// NetworkBridge is used to communicate with network provider on broadcast and
+// unicast channels. It broadcast and unicast channels.
+type NetworkBridge struct {
+	networkProvider net.Provider
+
 	groupMembersIDs []MemberID
 
 	party   tss.Party
 	params  *tss.Parameters
 	errChan chan<- error
 
-	networkProvider  net.Provider
-	broadcastChannel net.BroadcastChannel
-	unicastChannels  map[string]net.UnicastChannel
+	channelsMutex     *sync.Mutex
+	broadcastChannels map[string]net.BroadcastChannel
+	unicastChannels   map[string]net.UnicastChannel
 }
 
-func bridgeNetwork(
-	networkProvider net.Provider,
+// NewNetworkBridge initializes a new network bridge for given network provider.
+func NewNetworkBridge(networkProvider net.Provider) *NetworkBridge {
+	return &NetworkBridge{
+		networkProvider:   networkProvider,
+		channelsMutex:     &sync.Mutex{},
+		broadcastChannels: make(map[string]net.BroadcastChannel),
+		unicastChannels:   make(map[string]net.UnicastChannel),
+	}
+}
+
+func (b *NetworkBridge) start(
 	groupMembersIDs []MemberID,
-	outChan <-chan tss.Message,
-	errChan chan<- error,
-	doneChan <-chan struct{},
 	party tss.Party,
 	params *tss.Parameters,
+	outChan <-chan tss.Message,
+	errChan chan<- error,
 ) error {
+	b.groupMembersIDs = groupMembersIDs
+	b.party = party
+	b.params = params
+	b.errChan = errChan
+
 	recvMessage := make(chan *TSSMessage, params.PartyCount())
 
-	bridge := &networkBridge{
-		networkProvider: networkProvider,
-		groupMembersIDs: groupMembersIDs,
-		party:           party,
-		params:          params,
-		errChan:         errChan,
-	}
-
-	if err := bridge.initializeChannels(recvMessage); err != nil {
+	if err := b.initializeChannels(recvMessage); err != nil {
 		return fmt.Errorf("failed to initialize channels: [%v]", err)
 	}
 
@@ -51,12 +61,9 @@ func bridgeNetwork(
 		for {
 			select {
 			case tssLibMsg := <-outChan:
-				go bridge.sendMessage(tssLibMsg)
+				go b.sendMessage(tssLibMsg)
 			case msg := <-recvMessage:
-				go bridge.receiveMessage(msg)
-			case <-doneChan:
-				bridge.unregisterRecv()
-				return
+				go b.receiveMessage(msg)
 			}
 		}
 	}()
@@ -64,22 +71,7 @@ func bridgeNetwork(
 	return nil
 }
 
-func broadcastChannelName(members []MemberID) string {
-	ids := []string{}
-	for _, id := range members {
-		ids = append(ids, string(id))
-	}
-
-	digest := sha256.Sum256([]byte(strings.Join(ids, "-")))
-
-	return hex.EncodeToString(digest[:])
-}
-
-func unicastChannelName(peerPartyID tss.PartyID) string {
-	return peerPartyID.KeyInt().String()
-}
-
-func (b *networkBridge) initializeChannels(recvMessageChan chan *TSSMessage) error {
+func (b *NetworkBridge) initializeChannels(recvMessageChan chan *TSSMessage) error {
 	handleMessageFunc := func(channel chan<- *TSSMessage) net.HandleMessageFunc {
 		return net.HandleMessageFunc{
 			Type: TSSmessageType,
@@ -97,59 +89,101 @@ func (b *networkBridge) initializeChannels(recvMessageChan chan *TSSMessage) err
 	}
 
 	// Initialize broadcast channel.
-	broadcastChannel, err := b.networkProvider.BroadcastChannelFor(
-		broadcastChannelName(b.groupMembersIDs),
-	)
+	broadcastChannel, err := b.broadcastChannelFor(broadcastChannelName(b.groupMembersIDs))
 	if err != nil {
-		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
+		if err != nil {
+			return fmt.Errorf("failed to get broadcast channel: [%v]", err)
+		}
 	}
-
-	if err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &TSSMessage{}
-	}); err != nil {
-		// TODO: For signing it fails because unmarshaler was already registered on keygen.
-		// return fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
-	}
-
 	if err := broadcastChannel.Recv(handleMessageFunc(recvMessageChan)); err != nil {
 		return fmt.Errorf("failed to register receive handler for broadcast channel: [%v]", err)
 	}
 
 	// Initialize unicast channels.
-	unicastChannels := make(map[string]net.UnicastChannel)
 	for _, peerPartyID := range b.params.Parties().IDs() {
 		if bytes.Equal(peerPartyID.GetKey(), b.party.PartyID().GetKey()) {
 			continue
 		}
 
-		unicastChannel, err := b.networkProvider.UnicastChannelWith(
-			unicastChannelName(*peerPartyID),
-		)
+		unicastChannel, err := b.unicastChannelWith(unicastChannelName(*peerPartyID))
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
-		}
-
-		if err := unicastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-			return &TSSMessage{}
-		}); err != nil {
-			// TODO: For signing it fails because unmarshaler was already registered on keygen.
-			// return fmt.Errorf("failed to register unmarshaler: [%v]", err)
 		}
 
 		if err := unicastChannel.Recv(handleMessageFunc(recvMessageChan)); err != nil {
 			return fmt.Errorf("failed to register receive handler for unicast channel: [%v]", err)
 		}
-
-		unicastChannels[peerPartyID.KeyInt().String()] = unicastChannel
 	}
-
-	b.broadcastChannel = broadcastChannel
-	b.unicastChannels = unicastChannels
 
 	return nil
 }
 
-func (b *networkBridge) sendMessage(tssLibMsg tss.Message) {
+func (b *NetworkBridge) broadcastChannelFor(name string) (net.BroadcastChannel, error) {
+	b.channelsMutex.Lock()
+	defer b.channelsMutex.Unlock()
+
+	broadcastChannel, exists := b.broadcastChannels[name]
+	if exists {
+		return broadcastChannel, nil
+	}
+
+	broadcastChannel, err := b.networkProvider.BroadcastChannelFor(name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
+	}
+
+	if err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &TSSMessage{}
+	}); err != nil {
+		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
+	}
+
+	b.broadcastChannels[name] = broadcastChannel
+
+	return broadcastChannel, nil
+}
+
+func broadcastChannelName(members []MemberID) string {
+	ids := []string{}
+	for _, id := range members {
+		ids = append(ids, string(id))
+	}
+
+	digest := sha256.Sum256([]byte(strings.Join(ids, "-")))
+
+	return hex.EncodeToString(digest[:])
+}
+
+func (b *NetworkBridge) unicastChannelWith(peer string) (net.UnicastChannel, error) {
+	b.channelsMutex.Lock()
+	defer b.channelsMutex.Unlock()
+
+	unicastChannel, exists := b.unicastChannels[peer]
+	if exists {
+		return unicastChannel, nil
+	}
+
+	unicastChannel, err := b.networkProvider.UnicastChannelWith(peer)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get unicast channel: [%v]", err)
+	}
+
+	if err := unicastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &TSSMessage{}
+	}); err != nil {
+		return nil, fmt.Errorf("failed to register unmarshaler for unicast channel: [%v]", err)
+	}
+
+	b.unicastChannels[peer] = unicastChannel
+
+	return unicastChannel, nil
+}
+
+func unicastChannelName(peerPartyID tss.PartyID) string {
+	return peerPartyID.KeyInt().String()
+}
+
+func (b *NetworkBridge) sendMessage(tssLibMsg tss.Message) {
 	bytes, routing, err := tssLibMsg.WireBytes()
 	if err != nil {
 		b.errChan <- fmt.Errorf("failed to encode message: [%v]", b.party.WrapError(err))
@@ -163,7 +197,14 @@ func (b *networkBridge) sendMessage(tssLibMsg tss.Message) {
 	}
 
 	if routing.To == nil {
-		if err := b.broadcastChannel.Send(msg); err != nil {
+		channelName := broadcastChannelName(b.groupMembersIDs)
+		broadcastChannel, err := b.broadcastChannelFor(channelName)
+		if err != nil {
+			b.errChan <- fmt.Errorf("failed to find unicast channel: [%v]", channelName)
+			return
+		}
+
+		if broadcastChannel.Send(msg); err != nil {
 			b.errChan <- fmt.Errorf("failed to send broadcast message: [%v]", err)
 			return
 		}
@@ -171,8 +212,8 @@ func (b *networkBridge) sendMessage(tssLibMsg tss.Message) {
 		for _, destination := range routing.To {
 			channelName := unicastChannelName(*destination)
 
-			unicastChannel, ok := b.unicastChannels[channelName]
-			if !ok {
+			unicastChannel, err := b.unicastChannelWith(channelName)
+			if err != nil {
 				b.errChan <- fmt.Errorf("failed to find unicast channel: [%v]", channelName)
 				continue
 			}
@@ -185,7 +226,7 @@ func (b *networkBridge) sendMessage(tssLibMsg tss.Message) {
 	}
 }
 
-func (b *networkBridge) receiveMessage(msg *TSSMessage) {
+func (b *NetworkBridge) receiveMessage(msg *TSSMessage) {
 	senderKey := new(big.Int).SetBytes(msg.SenderID)
 	senderPartyID := b.params.Parties().IDs().FindByKey(senderKey)
 
@@ -205,20 +246,32 @@ func (b *networkBridge) receiveMessage(msg *TSSMessage) {
 	}
 }
 
-func (b *networkBridge) unregisterRecv() {
-	if err := b.broadcastChannel.UnregisterRecv(TSSmessageType); err != nil {
-		b.errChan <- fmt.Errorf(
-			"failed to unregister receive handler for broadcast channel: [%v]",
-			err,
-		)
+func (b *NetworkBridge) close() error {
+	if err := b.unregisterRecvs(); err != nil {
+		return fmt.Errorf("failed to unregister receivers: [%v]", err)
 	}
 
+	return nil
+}
+
+func (b *NetworkBridge) unregisterRecvs() error {
+	for _, broadcastChannel := range b.broadcastChannels {
+		if err := broadcastChannel.UnregisterRecv(TSSmessageType); err != nil {
+			return fmt.Errorf(
+				"failed to unregister receive handler for broadcast channel: [%v]",
+				err,
+			)
+		}
+
+	}
 	for _, unicastChannel := range b.unicastChannels {
 		if err := unicastChannel.UnregisterRecv(TSSmessageType); err != nil {
-			b.errChan <- fmt.Errorf(
+			return fmt.Errorf(
 				"failed to unregister receive handler for unicast channel: [%v]",
 				err,
 			)
 		}
 	}
+
+	return nil
 }

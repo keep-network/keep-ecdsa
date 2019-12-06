@@ -8,7 +8,6 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
 const preParamsGenerationTimeout = 90 * time.Second
@@ -45,19 +44,17 @@ func InitializeKeyGeneration(
 	groupMemberIDs []MemberID,
 	threshold int,
 	tssPreParams *keygen.LocalPreParams,
-	networkProvider net.Provider,
+	networkBridge *NetworkBridge,
 ) (*Member, error) {
 	errChan := make(chan error)
-	doneChan := make(chan struct{})
 
 	keyGenParty, params, endChan, err := initializeKeyGenerationParty(
 		memberID,
 		groupMemberIDs,
 		threshold,
 		tssPreParams,
-		networkProvider,
+		networkBridge,
 		errChan,
-		doneChan,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize key generation party: [%v]", err)
@@ -65,12 +62,11 @@ func InitializeKeyGeneration(
 	logger.Debugf("initialized key generation party: [%v]", keyGenParty.PartyID())
 
 	signer := &Member{
-		keygenParty:     keyGenParty,
-		keygenEndChan:   endChan,
-		keygenErrChan:   errChan,
-		tssParameters:   params,
-		networkProvider: networkProvider,
-		doneChan:        doneChan,
+		keygenParty:   keyGenParty,
+		keygenEndChan: endChan,
+		keygenErrChan: errChan,
+		tssParameters: params,
+		networkBridge: networkBridge,
 	}
 
 	return signer, nil
@@ -81,20 +77,20 @@ func InitializeKeyGeneration(
 type Member struct {
 	BaseMember
 
-	tssParameters   *tss.Parameters
-	networkProvider net.Provider // network provider used for messages transport
-	keygenParty     tss.Party
+	networkBridge *NetworkBridge // network bridge used for messages transport
+
+	tssParameters *tss.Parameters
+	keygenParty   tss.Party
 	// Channels where results of the key generation protocol execution will be written to.
 	keygenEndChan <-chan keygen.LocalPartySaveData // data from a successful execution
 	keygenErrChan chan error                       // errors emitted during the protocol execution
-	doneChan      chan struct{}                    // signal that execution completed
 }
 
 // GenerateKey executes the protocol to generate a signing key. This function
 // needs to be executed only after all members finished the initialization stage.
 // As a result it will return a Signer who has completed key generation.
 func (s *Member) GenerateKey() (*Signer, error) {
-	defer close(s.doneChan)
+	defer s.networkBridge.close()
 
 	if err := s.keygenParty.Start(); err != nil {
 		return nil, fmt.Errorf(
@@ -158,9 +154,8 @@ func initializeKeyGenerationParty(
 	groupMembersIDs []MemberID,
 	threshold int,
 	tssPreParams *keygen.LocalPreParams,
-	networkProvider net.Provider,
+	bridge *NetworkBridge,
 	errChan chan error,
-	doneChan chan struct{},
 ) (
 	tss.Party,
 	*tss.Parameters,
@@ -179,16 +174,14 @@ func initializeKeyGenerationParty(
 	params := tss.NewParameters(ctx, currentPartyID, len(groupPartiesIDs), threshold)
 	party := keygen.NewLocalParty(params, outChan, endChan, *tssPreParams)
 
-	if err := bridgeNetwork(
-		networkProvider,
+	if err := bridge.start(
 		groupMembersIDs,
-		outChan,
-		errChan,
-		doneChan,
 		party,
 		params,
+		outChan,
+		errChan,
 	); err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to initialize bridge network for signing: [%v]", err)
+		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
 
 	return party, params, endChan, nil
