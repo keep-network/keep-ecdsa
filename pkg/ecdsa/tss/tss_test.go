@@ -22,12 +22,12 @@ import (
 )
 
 func TestGenerateKeyAndSign(t *testing.T) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 
 	groupSize := 5
 	threshold := groupSize - 1
 
-	err := log.SetLogLevel("*", "ERROR")
+	err := log.SetLogLevel("*", "INFO")
 	if err != nil {
 		t.Fatalf("logger initialization failed: [%v]", err)
 	}
