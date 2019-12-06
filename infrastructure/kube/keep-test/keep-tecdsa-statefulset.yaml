@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: keep-tecdsa
+  namespace: tbtc
   labels:
     app: keep
     type: tecdsa
@@ -29,7 +30,7 @@ spec:
     spec:
       containers:
       - name: keep-tecdsa
-        image: gcr.io//keep-test-f3e0/keep-tecdsa
+        image: gcr.io/keep-test-f3e0/keep-tecdsa
         env:
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
@@ -53,7 +54,7 @@ spec:
           claimName: keep-tecdsa-data
       initContainers:
       - name: initcontainer-provision-keep-tecdsa
-        image: gcr.io//keep-test-f3e0/initcontainer-provision-keep-tecdsa
+        image: gcr.io/keep-test-f3e0/initcontainer-provision-keep-tecdsa
         env:
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
@@ -72,6 +73,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: keep-tecdsa-config
+  namespace: tbtc
 spec:
   accessModes:
     - ReadWriteOnce
