@@ -9,6 +9,8 @@ import (
 
 // Signer is a threshold signer who completed key generation stage.
 type Signer struct {
+	BaseMember
+
 	tssParameters *tssLib.Parameters
 	// keygenData contains output of key generation stage. This data should be
 	// persisted to local storage.

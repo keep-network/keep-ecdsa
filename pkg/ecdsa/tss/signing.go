@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
 	tssLib "github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -24,10 +23,8 @@ func (s *Signer) InitializeSigning(
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
 
-	party, endChan, err := initializeSigningParty(
+	party, endChan, err := s.initializeSigningParty(
 		digestInt,
-		s.tssParameters,
-		s.keygenData,
 		networkChannel,
 		errChan,
 		doneChan,
@@ -37,6 +34,7 @@ func (s *Signer) InitializeSigning(
 	}
 
 	return &SigningSigner{
+		BaseMember:     s.BaseMember,
 		signingParty:   party,
 		signingEndChan: endChan,
 		signingErrChan: errChan,
@@ -47,6 +45,8 @@ func (s *Signer) InitializeSigning(
 // SigningSigner represents Signer who initialized signing stage and is ready to
 // start signature calculation.
 type SigningSigner struct {
+	BaseMember
+
 	// Signing
 	signingParty tssLib.Party
 	// Channels where results of the signing protocol execution will be written to.
@@ -89,26 +89,25 @@ func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 	}
 }
 
-func initializeSigningParty(
+func (s *Signer) initializeSigningParty(
 	digest *big.Int,
-	tssParameters *tssLib.Parameters,
-	keygenData keygen.LocalPartySaveData,
 	networkProvider net.Provider,
 	errChan chan error,
 	doneChan chan struct{},
 ) (tssLib.Party, <-chan signing.SignatureData, error) {
-	outChan := make(chan tssLib.Message, tssParameters.PartyCount())
+	outChan := make(chan tssLib.Message, s.tssParameters.PartyCount())
 	endChan := make(chan signing.SignatureData)
 
-	party := signing.NewLocalParty(digest, tssParameters, keygenData, outChan, endChan).(*signing.LocalParty)
+	party := signing.NewLocalParty(digest, s.tssParameters, s.keygenData, outChan, endChan)
 
 	if err := bridgeNetwork(
 		networkProvider,
+		s.groupMembers,
 		outChan,
 		errChan,
 		doneChan,
 		party,
-		tssParameters,
+		s.tssParameters,
 	); err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize bridge network for signing: [%v]", err)
 	}

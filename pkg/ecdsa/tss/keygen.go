@@ -79,6 +79,8 @@ func InitializeKeyGeneration(
 // Member represents an initialized member who is ready to start distributed key
 // generation.
 type Member struct {
+	BaseMember
+
 	tssParameters   *tss.Parameters
 	networkProvider net.Provider // network provider used for messages transport
 	keygenParty     tss.Party
