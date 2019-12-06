@@ -136,7 +136,7 @@ func (b *networkBridge) initializeChannels(recvMessageChan chan *TSSMessage) err
 
 		unicastChannel, err := b.networkProvider.UnicastChannelWith(peerPartyID.KeyInt().Text(16))
 		if err != nil {
-			return fmt.Errorf("failed to get broadcast channel: [%v]", err)
+			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}
 
 		if err := unicastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {

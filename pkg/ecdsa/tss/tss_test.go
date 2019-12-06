@@ -79,14 +79,6 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		members[memberID] = member
 	}
 
-	if len(members) != len(groupMemberIDs) {
-		t.Fatalf(
-			"unexpected number of signers\nexpected: %d\nactual:   %d\n",
-			len(groupMemberIDs),
-			len(members),
-		)
-	}
-
 	// Key generation.
 	signersMutex := sync.Mutex{}
 	signers := make(map[group.MemberIndex]*Signer)
