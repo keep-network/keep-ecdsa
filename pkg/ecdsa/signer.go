@@ -29,7 +29,7 @@ func GenerateKey(rand io.Reader) (*cecdsa.PrivateKey, error) {
 	return cecdsa.GenerateKey(secp256k1.S256(), rand)
 }
 
-// PublicKey returns Signer's public key as a pair of X and Y coordinates.
+// PublicKey returns Signer's ECDSA public key.
 func (s *Signer) PublicKey() *PublicKey {
 	return (*PublicKey)(&s.privateKey.PublicKey)
 }
