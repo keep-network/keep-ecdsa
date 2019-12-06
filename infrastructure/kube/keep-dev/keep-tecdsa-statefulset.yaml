@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: keep-tecdsa
+  namspace: tbtc
   labels:
     app: keep
     type: tecdsa
@@ -43,8 +44,16 @@ spec:
             mountPath: /mnt/keep-tecdsa/config
           - name: keep-tecdsa-data
             mountPath: /mnt/keep-tecdsa/data
+          - name: eth-account-keyfile
+            mountPath: /mnt/keep-tecdsa/eth
         command: ["keep-tecdsa", "-config", "/mnt/keep-tecdsa/config/keep-tecdsa-config.toml", "start"]
       volumes:
+      - name: eth-account-keyfile
+        configMap:
+          name: keep-tecdsa
+          items:
+            - key: eth_account_keyfile
+              path: eth_account_keyfile
       - name: keep-tecdsa-config
         persistentVolumeClaim:
           claimName: keep-tecdsa-config
@@ -60,6 +69,8 @@ spec:
               secretKeyRef:
                 name: eth-account-passphrase
                 key: account-passphrase
+          - name: KEEP_TECDSA_ETH_KEYFILE
+            value: /mnt/keep-tecdsa/eth/eth_account_keyfile
           - name: KEEP_DATA_DIR
             value: /mnt/keep-tecdsa/data
         volumeMounts:
