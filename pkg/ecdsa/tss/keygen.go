@@ -55,6 +55,7 @@ func InitializeKeyGeneration(
 	thisPartyID, groupPartiesIDs := generateGroupPartiesIDs(memberIndex, groupSize)
 
 	errChan := make(chan error)
+	doneChan := make(chan struct{})
 
 	keyGenParty, params, endChan, err := initializeKeyGenerationParty(
 		thisPartyID,
@@ -63,6 +64,7 @@ func InitializeKeyGeneration(
 		tssPreParams,
 		networkProvider,
 		errChan,
+		doneChan,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize key generation party: [%v]", err)
@@ -75,6 +77,7 @@ func InitializeKeyGeneration(
 		keygenErrChan:   errChan,
 		tssParameters:   params,
 		networkProvider: networkProvider,
+		doneChan:        doneChan,
 	}
 
 	return signer, nil
@@ -89,19 +92,14 @@ type Member struct {
 	// Channels where results of the key generation protocol execution will be written to.
 	keygenEndChan <-chan keygen.LocalPartySaveData // data from a successful execution
 	keygenErrChan chan error                       // errors emitted during the protocol execution
-
+	doneChan      chan struct{}                    // signal that execution completed
 }
 
 // GenerateKey executes the protocol to generate a signing key. This function
 // needs to be executed only after all members finished the initialization stage.
 // As a result it will return a Signer who has completed key generation.
 func (s *Member) GenerateKey() (*Signer, error) {
-	defer unregisterRecv(
-		s.networkProvider,
-		s.keygenParty,
-		s.tssParameters,
-		s.keygenErrChan,
-	)
+	defer close(s.doneChan)
 
 	if err := s.keygenParty.Start(); err != nil {
 		return nil, fmt.Errorf(
@@ -159,6 +157,7 @@ func initializeKeyGenerationParty(
 	tssPreParams *keygen.LocalPreParams,
 	networkProvider net.Provider,
 	errChan chan error,
+	doneChan chan struct{},
 ) (
 	tss.Party,
 	*tss.Parameters,

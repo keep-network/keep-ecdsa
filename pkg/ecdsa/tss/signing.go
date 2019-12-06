@@ -23,6 +23,7 @@ func (s *Signer) InitializeSigning(
 	digestInt := new(big.Int).SetBytes(digest)
 
 	errChan := make(chan error)
+	doneChan := make(chan struct{})
 
 	party, endChan := initializeSigningParty(
 		digestInt,
@@ -36,7 +37,8 @@ func (s *Signer) InitializeSigning(
 		signingParty:   party,
 		signingEndChan: endChan,
 		signingErrChan: errChan,
-	}
+		doneChan:       doneChan,
+	}, nil
 }
 
 // SigningSigner represents Signer who initialized signing stage and is ready to
@@ -47,12 +49,16 @@ type SigningSigner struct {
 	// Channels where results of the signing protocol execution will be written to.
 	signingEndChan <-chan signing.SignatureData // data from a successful execution
 	signingErrChan <-chan error                 // errors emitted during the protocol execution
+
+	doneChan chan struct{}
 }
 
 // Sign executes the protocol to calculate a signature. This function needs to be
 // executed only after all members finished the initialization stage. As a result
 // the calculated ECDSA signature will be returned.
 func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
+	defer close(s.doneChan)
+
 	if s.signingParty == nil {
 		return nil, fmt.Errorf("failed to get initialized signing party")
 	}
@@ -68,6 +74,7 @@ func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 		select {
 		case signature := <-s.signingEndChan:
 			ecdsaSignature := convertSignatureTSStoECDSA(signature)
+
 			return &ecdsaSignature, nil
 		case err := <-s.signingErrChan:
 			return nil,
