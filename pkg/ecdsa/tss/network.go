@@ -51,29 +51,9 @@ func bridgeNetwork(
 		for {
 			select {
 			case tssLibMsg := <-outChan:
-				go func(tssLibMsg tss.Message) {
-					bridge.sendMessage(tssLibMsg)
-				}(tssLibMsg)
+				go bridge.sendMessage(tssLibMsg)
 			case msg := <-recvMessage:
-				go func(msg *TSSMessage) {
-					senderKey := new(big.Int).SetBytes(msg.SenderID)
-					senderPartyID := params.Parties().IDs().FindByKey(senderKey)
-
-					if senderPartyID == party.PartyID() {
-						return
-					}
-
-					bytes := msg.Payload
-
-					_, err := party.UpdateFromBytes(
-						bytes,
-						senderPartyID,
-						msg.IsBroadcast,
-					)
-					if err != nil {
-						errChan <- party.WrapError(err)
-					}
-				}(msg)
+				go bridge.receiveMessage(msg)
 			case <-doneChan:
 				bridge.unregisterRecv()
 				return
@@ -205,7 +185,7 @@ func (b *networkBridge) sendMessage(tssLibMsg tss.Message) {
 	}
 }
 
-func (b *networkBridge) receiveMessage(msg TSSMessage) {
+func (b *networkBridge) receiveMessage(msg *TSSMessage) {
 	senderKey := new(big.Int).SetBytes(msg.SenderID)
 	senderPartyID := b.params.Parties().IDs().FindByKey(senderKey)
 
