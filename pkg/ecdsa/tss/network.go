@@ -95,6 +95,10 @@ func broadcastChannelName(members []MemberID) string {
 	return hex.EncodeToString(digest[:])
 }
 
+func unicastChannelName(peerPartyID tss.PartyID) string {
+	return peerPartyID.KeyInt().String()
+}
+
 func (b *networkBridge) initializeChannels(recvMessageChan chan *TSSMessage) error {
 	handleMessageFunc := func(channel chan<- *TSSMessage) net.HandleMessageFunc {
 		return net.HandleMessageFunc{
@@ -138,7 +142,9 @@ func (b *networkBridge) initializeChannels(recvMessageChan chan *TSSMessage) err
 			continue
 		}
 
-		unicastChannel, err := b.networkProvider.UnicastChannelWith(peerPartyID.KeyInt().Text(16))
+		unicastChannel, err := b.networkProvider.UnicastChannelWith(
+			unicastChannelName(*peerPartyID),
+		)
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}
@@ -183,11 +189,11 @@ func (b *networkBridge) sendMessage(tssLibMsg tss.Message) {
 		}
 	} else {
 		for _, destination := range routing.To {
-			peerNetID := destination.KeyInt().String()
+			channelName := unicastChannelName(*destination)
 
-			unicastChannel, ok := b.unicastChannels[peerNetID]
+			unicastChannel, ok := b.unicastChannels[channelName]
 			if !ok {
-				b.errChan <- fmt.Errorf("failed to find unicast channel for: [%v]", peerNetID)
+				b.errChan <- fmt.Errorf("failed to find unicast channel: [%v]", channelName)
 				continue
 			}
 
