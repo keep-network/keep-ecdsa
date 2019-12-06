@@ -56,7 +56,7 @@ func InitializeKeyGeneration(
 
 	errChan := make(chan error)
 
-	keyGenParty, params, endChan := initializeKeyGenerationParty(
+	keyGenParty, params, endChan, err := initializeKeyGenerationParty(
 		thisPartyID,
 		groupPartiesIDs,
 		threshold,
@@ -64,6 +64,9 @@ func InitializeKeyGeneration(
 		networkProvider,
 		errChan,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize key generation party: [%v]", err)
+	}
 	logger.Debugf("initialized key generation party: [%v]", keyGenParty.PartyID())
 
 	signer := &Member{
@@ -114,6 +117,7 @@ func (s *Member) GenerateKey() (*Signer, error) {
 				tssParameters: s.tssParameters,
 				keygenData:    keygenData,
 			}
+
 			return signer, nil
 		case err := <-s.keygenErrChan:
 			return nil, fmt.Errorf(
@@ -155,7 +159,12 @@ func initializeKeyGenerationParty(
 	tssPreParams *keygen.LocalPreParams,
 	networkProvider net.Provider,
 	errChan chan error,
-) (tss.Party, *tss.Parameters, <-chan keygen.LocalPartySaveData) {
+) (
+	tss.Party,
+	*tss.Parameters,
+	<-chan keygen.LocalPartySaveData,
+	error,
+) {
 	outChan := make(chan tss.Message)
 	endChan := make(chan keygen.LocalPartySaveData)
 
@@ -163,14 +172,16 @@ func initializeKeyGenerationParty(
 	params := tss.NewParameters(ctx, currentPartyID, len(groupPartiesIDs), threshold)
 	party := keygen.NewLocalParty(params, outChan, endChan, *tssPreParams)
 
-	go bridgeNetwork(
+	if err := bridgeNetwork(
 		networkProvider,
 		outChan,
-		endChan,
 		errChan,
+		doneChan,
 		party,
 		params,
-	)
+	); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to initialize bridge network for signing: [%v]", err)
+	}
 
-	return party, params, endChan
+	return party, params, endChan, nil
 }
