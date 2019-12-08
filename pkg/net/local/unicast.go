@@ -146,7 +146,12 @@ func (uc *unicastChannel) doSend(payload net.TaggedMarshaler) error {
 
 		unmarshaler, found := targetChannel.unmarshalersByType.Load(payload.Type())
 		if !found {
-			provider.errChan <- fmt.Errorf("couldn't find unmarshaler for type %s", payload.Type())
+			provider.errChan <- fmt.Errorf(
+				"couldn't find unmarshaler for type [%s] in unicast channel",
+				payload.Type(),
+			)
+
+			return true
 		}
 
 		unmarshaled := unmarshaler.(func() net.TaggedUnmarshaler)()
