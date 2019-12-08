@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
 	"github.com/binance-chain/tss-lib/tss"
 	tssLib "github.com/binance-chain/tss-lib/tss"
@@ -85,8 +84,6 @@ func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 
 func (s *Signer) initializeSigningParty(
 	digest *big.Int,
-	tssParameters *tssParameters,
-	keygenData keygen.LocalPartySaveData,
 	networkBridge *NetworkBridge,
 ) (
 	tssLib.Party,
@@ -94,15 +91,15 @@ func (s *Signer) initializeSigningParty(
 	chan error,
 	error,
 ) {
-	tssMessageChan := make(chan tssLib.Message, len(tssParameters.sortedPartyIDs))
+	tssMessageChan := make(chan tssLib.Message, len(s.tssParameters.sortedPartyIDs))
 	endChan := make(chan signing.SignatureData)
 	errChan := make(chan error)
 
 	params := tss.NewParameters(
-		tss.NewPeerContext(tssParameters.sortedPartyIDs),
-		tssParameters.currentPartyID,
-		len(tssParameters.sortedPartyIDs),
-		tssParameters.threshold,
+		tss.NewPeerContext(s.tssParameters.sortedPartyIDs),
+		s.tssParameters.currentPartyID,
+		len(s.tssParameters.sortedPartyIDs),
+		s.tssParameters.threshold,
 	)
 
 	party := signing.NewLocalParty(
