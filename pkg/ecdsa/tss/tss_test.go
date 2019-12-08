@@ -253,9 +253,6 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[MemberID]*key.NetworkPub
 	return memberIDs, groupMembersKeys, nil
 }
 
-type testNetProvider struct {
-}
-
 func newTestBridge(
 	memberID MemberID,
 	membersNetworkKeys map[MemberID]*key.NetworkPublic,
