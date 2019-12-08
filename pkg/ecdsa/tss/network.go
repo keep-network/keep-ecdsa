@@ -91,10 +91,9 @@ func (b *NetworkBridge) initializeChannels(recvMessageChan chan *TSSMessage) err
 	// Initialize broadcast channel.
 	broadcastChannel, err := b.broadcastChannelFor(broadcastChannelName(b.groupMembersIDs))
 	if err != nil {
-		if err != nil {
-			return fmt.Errorf("failed to get broadcast channel: [%v]", err)
-		}
+		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
+
 	if err := broadcastChannel.Recv(handleMessageFunc(recvMessageChan)); err != nil {
 		return fmt.Errorf("failed to register receive handler for broadcast channel: [%v]", err)
 	}
