@@ -26,7 +26,7 @@ type NetworkBridge struct {
 	unicastChannels map[string]net.UnicastChannel
 }
 
-// NewNetworkBridge initializes a new network bridge for given network provider.
+// NewNetworkBridge initializes a new network bridge for the given network provider.
 func NewNetworkBridge(networkProvider net.Provider) *NetworkBridge {
 	return &NetworkBridge{
 		networkProvider: networkProvider,
@@ -39,7 +39,7 @@ func (b *NetworkBridge) connect(
 	groupID string,
 	party tss.Party,
 	params *tss.Parameters,
-	tssMessageChan <-chan tss.Message,
+	tssOutChan <-chan tss.Message,
 	errChan chan<- error,
 ) error {
 	b.groupID = groupID
@@ -47,19 +47,19 @@ func (b *NetworkBridge) connect(
 	b.params = params
 	b.errChan = errChan
 
-	recvMessage := make(chan *TSSMessage, params.PartyCount())
+	netInChan := make(chan *TSSMessage, params.PartyCount())
 
-	if err := b.initializeChannels(recvMessage); err != nil {
+	if err := b.initializeChannels(netInChan); err != nil {
 		return fmt.Errorf("failed to initialize channels: [%v]", err)
 	}
 
 	go func() {
 		for {
 			select {
-			case tssLibMsg := <-tssMessageChan:
+			case tssLibMsg := <-tssOutChan:
 				go b.sendMessage(tssLibMsg)
-			case msg := <-recvMessage:
-				go b.receiveMessage(msg)
+			case netMsg := <-netInChan:
+				go b.receiveMessage(netMsg)
 			}
 		}
 	}()
@@ -67,7 +67,7 @@ func (b *NetworkBridge) connect(
 	return nil
 }
 
-func (b *NetworkBridge) initializeChannels(recvMessageChan chan *TSSMessage) error {
+func (b *NetworkBridge) initializeChannels(netInChan chan *TSSMessage) error {
 	handleMessageFunc := func(channel chan<- *TSSMessage) net.HandleMessageFunc {
 		return net.HandleMessageFunc{
 			Type: TSSmessageType,
@@ -90,7 +90,7 @@ func (b *NetworkBridge) initializeChannels(recvMessageChan chan *TSSMessage) err
 		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	if err := broadcastChannel.Recv(handleMessageFunc(recvMessageChan)); err != nil {
+	if err := broadcastChannel.Recv(handleMessageFunc(netInChan)); err != nil {
 		return fmt.Errorf("failed to register receive handler for broadcast channel: [%v]", err)
 	}
 
@@ -105,7 +105,7 @@ func (b *NetworkBridge) initializeChannels(recvMessageChan chan *TSSMessage) err
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}
 
-		if err := unicastChannel.Recv(handleMessageFunc(recvMessageChan)); err != nil {
+		if err := unicastChannel.Recv(handleMessageFunc(netInChan)); err != nil {
 			return fmt.Errorf("failed to register receive handler for unicast channel: [%v]", err)
 		}
 	}
@@ -208,20 +208,20 @@ func (b *NetworkBridge) sendMessage(tssLibMsg tss.Message) {
 	}
 }
 
-func (b *NetworkBridge) receiveMessage(msg *TSSMessage) {
-	senderKey := new(big.Int).SetBytes(msg.SenderID)
+func (b *NetworkBridge) receiveMessage(netMsg *TSSMessage) {
+	senderKey := new(big.Int).SetBytes(netMsg.SenderID)
 	senderPartyID := b.params.Parties().IDs().FindByKey(senderKey)
 
 	if senderPartyID == b.party.PartyID() {
 		return
 	}
 
-	bytes := msg.Payload
+	bytes := netMsg.Payload
 
 	_, err := b.party.UpdateFromBytes(
 		bytes,
 		senderPartyID,
-		msg.IsBroadcast,
+		netMsg.IsBroadcast,
 	)
 	if err != nil {
 		b.errChan <- fmt.Errorf("failed to update party: [%v]", b.party.WrapError(err))
