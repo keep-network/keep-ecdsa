@@ -68,20 +68,18 @@ func (b *NetworkBridge) connect(
 }
 
 func (b *NetworkBridge) initializeChannels(netInChan chan *TSSMessage) error {
-	handleMessageFunc := func(channel chan<- *TSSMessage) net.HandleMessageFunc {
-		return net.HandleMessageFunc{
-			Type: TSSmessageType,
-			Handler: func(msg net.Message) error {
-				switch tssMessage := msg.Payload().(type) {
-				case *TSSMessage:
-					channel <- tssMessage
-				default:
-					return fmt.Errorf("unexpected message: [%v]", msg.Payload())
-				}
+	handleMessageFunc := net.HandleMessageFunc{
+		Type: TSSmessageType,
+		Handler: func(msg net.Message) error {
+			switch tssMessage := msg.Payload().(type) {
+			case *TSSMessage:
+				netInChan <- tssMessage
+			default:
+				return fmt.Errorf("unexpected message: [%v]", msg.Payload())
+			}
 
-				return nil
-			},
-		}
+			return nil
+		},
 	}
 
 	// Initialize broadcast channel.
@@ -90,7 +88,7 @@ func (b *NetworkBridge) initializeChannels(netInChan chan *TSSMessage) error {
 		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	if err := broadcastChannel.Recv(handleMessageFunc(netInChan)); err != nil {
+	if err := broadcastChannel.Recv(handleMessageFunc); err != nil {
 		return fmt.Errorf("failed to register receive handler for broadcast channel: [%v]", err)
 	}
 
@@ -105,7 +103,7 @@ func (b *NetworkBridge) initializeChannels(netInChan chan *TSSMessage) error {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}
 
-		if err := unicastChannel.Recv(handleMessageFunc(netInChan)); err != nil {
+		if err := unicastChannel.Recv(handleMessageFunc); err != nil {
 			return fmt.Errorf("failed to register receive handler for unicast channel: [%v]", err)
 		}
 	}
