@@ -57,7 +57,7 @@ func (b *NetworkBridge) connect(
 		for {
 			select {
 			case tssLibMsg := <-tssOutChan:
-				go b.sendMessage(tssLibMsg)
+				go b.sendTSSMessage(tssLibMsg)
 			case netMsg := <-netInChan:
 				go b.receiveMessage(netMsg)
 			}
@@ -160,7 +160,7 @@ func (b *NetworkBridge) unicastChannelWith(partyID *tss.PartyID) (net.UnicastCha
 	return unicastChannel, nil
 }
 
-func (b *NetworkBridge) sendMessage(tssLibMsg tss.Message) {
+func (b *NetworkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	bytes, routing, err := tssLibMsg.WireBytes()
 	if err != nil {
 		b.errChan <- fmt.Errorf("failed to encode message: [%v]", b.party.WrapError(err))
