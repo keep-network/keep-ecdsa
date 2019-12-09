@@ -97,7 +97,7 @@ func (s *Signer) initializeSigningParty(
 
 	party := signing.NewLocalParty(digest, s.tssParameters, s.keygenData, tssMessageChan, endChan)
 
-	if err := networkBridge.start(
+	if err := networkBridge.connect(
 		s.groupMembers,
 		party,
 		s.tssParameters,

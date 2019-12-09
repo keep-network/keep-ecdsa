@@ -13,8 +13,8 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
-// NetworkBridge is used to communicate with network provider on broadcast and
-// unicast channels. It broadcast and unicast channels.
+// NetworkBridge translates TSS library network interface to unicast and
+// broadcast channels provided by our net abstraction.
 type NetworkBridge struct {
 	networkProvider net.Provider
 
@@ -39,7 +39,7 @@ func NewNetworkBridge(networkProvider net.Provider) *NetworkBridge {
 	}
 }
 
-func (b *NetworkBridge) start(
+func (b *NetworkBridge) connect(
 	groupMembersIDs []MemberID,
 	party tss.Party,
 	params *tss.Parameters,

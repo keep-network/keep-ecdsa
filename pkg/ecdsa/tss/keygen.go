@@ -183,7 +183,7 @@ func initializeKeyGenerationParty(
 	params := tss.NewParameters(ctx, currentPartyID, len(groupPartiesIDs), dishonestThreshold)
 	party := keygen.NewLocalParty(params, tssMessageChan, endChan, *tssPreParams)
 
-	if err := bridge.start(
+	if err := bridge.connect(
 		groupMembersIDs,
 		party,
 		params,
