@@ -11,8 +11,9 @@ func (id MemberID) bigInt() *big.Int {
 	return new(big.Int).SetBytes([]byte(id))
 }
 
-// BaseMember holds base member's information.
-type BaseMember struct {
-	id           MemberID
-	groupMembers []MemberID
+// GroupInfo holds information about the group selected for protocol execution.
+type GroupInfo struct {
+	groupID        string // globally unique group identifier
+	memberID       MemberID
+	groupMemberIDs []MemberID
 }

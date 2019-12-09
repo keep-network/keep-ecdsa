@@ -28,7 +28,7 @@ func (s *Signer) InitializeSigning(
 	}
 
 	return &SigningSigner{
-		BaseMember:     s.BaseMember,
+		GroupInfo:      s.GroupInfo,
 		networkBridge:  networkBridge,
 		signingParty:   party,
 		signingEndChan: endChan,
@@ -39,7 +39,7 @@ func (s *Signer) InitializeSigning(
 // SigningSigner represents Signer who initialized signing stage and is ready to
 // start signature calculation.
 type SigningSigner struct {
-	BaseMember
+	GroupInfo
 
 	networkBridge *NetworkBridge
 	// Signing
@@ -98,7 +98,7 @@ func (s *Signer) initializeSigningParty(
 	party := signing.NewLocalParty(digest, s.tssParameters, s.keygenData, tssMessageChan, endChan)
 
 	if err := networkBridge.connect(
-		s.groupMembers,
+		s.GroupInfo.groupID,
 		party,
 		s.tssParameters,
 		tssMessageChan,

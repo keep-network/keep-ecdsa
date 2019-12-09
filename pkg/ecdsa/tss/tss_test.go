@@ -5,6 +5,7 @@ import (
 	cecdsa "crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"sync"
 	"testing"
@@ -24,6 +25,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 	groupSize := 5
 	dishonestThreshold := groupSize - 1
+	groupID := fmt.Sprintf("tss-test-%d", rand.Int())
 
 	err := log.SetLogLevel("*", "INFO")
 	if err != nil {
@@ -48,6 +50,12 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	members := make(map[MemberID]*Member)
 
 	for i, memberID := range groupMemberIDs {
+		groupInfo := &GroupInfo{
+			groupID:        groupID,
+			memberID:       memberID,
+			groupMemberIDs: groupMemberIDs,
+		}
+
 		network, err := newTestBridge(memberID, groupMembersKeys, errChan)
 		if err != nil {
 			t.Fatalf("failed to create network provider: [%v]", err)
@@ -58,8 +66,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		preParams := testData[i].LocalPreParams
 
 		member, err := InitializeKeyGeneration(
-			memberID,
-			groupMemberIDs,
+			groupInfo,
 			dishonestThreshold,
 			&preParams,
 			network,

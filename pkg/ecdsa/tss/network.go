@@ -2,11 +2,8 @@ package tss
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"math/big"
-	"strings"
 	"sync"
 
 	"github.com/binance-chain/tss-lib/tss"
@@ -18,7 +15,7 @@ import (
 type NetworkBridge struct {
 	networkProvider net.Provider
 
-	groupMembersIDs []MemberID
+	groupID string
 
 	party   tss.Party
 	params  *tss.Parameters
@@ -39,13 +36,13 @@ func NewNetworkBridge(networkProvider net.Provider) *NetworkBridge {
 }
 
 func (b *NetworkBridge) connect(
-	groupMembersIDs []MemberID,
+	groupID string,
 	party tss.Party,
 	params *tss.Parameters,
 	tssMessageChan <-chan tss.Message,
 	errChan chan<- error,
 ) error {
-	b.groupMembersIDs = groupMembersIDs
+	b.groupID = groupID
 	b.party = party
 	b.params = params
 	b.errChan = errChan
@@ -124,9 +121,7 @@ func (b *NetworkBridge) broadcastChannel() (net.BroadcastChannel, error) {
 		return b.broadcastChan, nil
 	}
 
-	channelName := broadcastChannelName(b.groupMembersIDs)
-
-	broadcastChannel, err := b.networkProvider.BroadcastChannelFor(channelName)
+	broadcastChannel, err := b.networkProvider.BroadcastChannelFor(string(b.groupID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
@@ -140,17 +135,6 @@ func (b *NetworkBridge) broadcastChannel() (net.BroadcastChannel, error) {
 	b.broadcastChan = broadcastChannel
 
 	return broadcastChannel, nil
-}
-
-func broadcastChannelName(members []MemberID) string {
-	ids := []string{}
-	for _, id := range members {
-		ids = append(ids, string(id))
-	}
-
-	digest := sha256.Sum256([]byte(strings.Join(ids, "-")))
-
-	return hex.EncodeToString(digest[:])
 }
 
 func (b *NetworkBridge) unicastChannelWith(peer string) (net.UnicastChannel, error) {

@@ -44,23 +44,21 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 //
 // Network provider needs to support broadcast and unicast transport.
 func InitializeKeyGeneration(
-	memberID MemberID,
-	groupMemberIDs []MemberID,
+	groupInfo *GroupInfo,
 	dishonestThreshold int,
 	tssPreParams *keygen.LocalPreParams,
 	networkBridge *NetworkBridge,
 ) (*Member, error) {
-	if len(groupMemberIDs) <= dishonestThreshold {
+	if len(groupInfo.groupMemberIDs) <= dishonestThreshold {
 		return nil, fmt.Errorf(
 			"group size [%d], should be greater than dishonest threshold [%d]",
-			len(groupMemberIDs),
+			len(groupInfo.groupMemberIDs),
 			dishonestThreshold,
 		)
 	}
 
 	keyGenParty, params, endChan, errChan, err := initializeKeyGenerationParty(
-		memberID,
-		groupMemberIDs,
+		groupInfo,
 		dishonestThreshold,
 		tssPreParams,
 		networkBridge,
@@ -82,7 +80,7 @@ func InitializeKeyGeneration(
 // Member represents an initialized member who is ready to start distributed key
 // generation.
 type Member struct {
-	BaseMember
+	GroupInfo
 
 	networkBridge *NetworkBridge // network bridge used for messages transport
 
@@ -158,8 +156,7 @@ func generatePartiesIDs(
 }
 
 func initializeKeyGenerationParty(
-	memberID MemberID,
-	groupMembersIDs []MemberID,
+	groupInfo *GroupInfo,
 	dishonestThreshold int,
 	tssPreParams *keygen.LocalPreParams,
 	bridge *NetworkBridge,
@@ -170,7 +167,10 @@ func initializeKeyGenerationParty(
 	chan error,
 	error,
 ) {
-	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(memberID, groupMembersIDs)
+	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(
+		groupInfo.memberID,
+		groupInfo.groupMemberIDs,
+	)
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
 	}
@@ -184,7 +184,7 @@ func initializeKeyGenerationParty(
 	party := keygen.NewLocalParty(params, tssMessageChan, endChan, *tssPreParams)
 
 	if err := bridge.connect(
-		groupMembersIDs,
+		groupInfo.groupID,
 		party,
 		params,
 		tssMessageChan,
