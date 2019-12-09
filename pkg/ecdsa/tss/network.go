@@ -74,8 +74,6 @@ func (b *NetworkBridge) initializeChannels(netInChan chan *TSSMessage) error {
 			switch tssMessage := msg.Payload().(type) {
 			case *TSSMessage:
 				netInChan <- tssMessage
-			default:
-				return fmt.Errorf("unexpected message: [%v]", msg.Payload())
 			}
 
 			return nil
