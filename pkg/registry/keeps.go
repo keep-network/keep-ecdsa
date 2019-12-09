@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 )
 
 // Keeps represents a collection of keeps in which the given client is a member.
@@ -27,7 +27,7 @@ func NewKeepsRegistry(persistence persistence.Handle) *Keeps {
 // keep.
 func (g *Keeps) RegisterSigner(
 	keepAddress common.Address,
-	signer *ecdsa.Signer,
+	signer *tss.ThresholdSigner,
 ) error {
 	err := g.storage.save(keepAddress, signer)
 	if err != nil {
@@ -40,12 +40,12 @@ func (g *Keeps) RegisterSigner(
 }
 
 // GetSigner gets a signer by a keep address.
-func (g *Keeps) GetSigner(keepAddress common.Address) (*ecdsa.Signer, error) {
+func (g *Keeps) GetSigner(keepAddress common.Address) (*tss.ThresholdSigner, error) {
 	signer, ok := g.myKeeps.Load(keepAddress.String())
 	if !ok {
 		return nil, fmt.Errorf("could not find signer: [%s]", keepAddress.String())
 	}
-	return signer.(*ecdsa.Signer), nil
+	return signer.(*tss.ThresholdSigner), nil
 }
 
 // GetKeepsAddresses returns addresses of all registered keeps.
@@ -98,12 +98,12 @@ func (g *Keeps) LoadExistingKeeps() {
 
 // ForEachKeep executes callback function for every entry in keeps' registry.
 func (g *Keeps) ForEachKeep(
-	callback func(keepAddress common.Address, signer *ecdsa.Signer),
+	callback func(keepAddress common.Address, signer **tss.ThresholdSigner),
 ) {
 	g.myKeeps.Range(func(key, value interface{}) bool {
 		keepAddress := common.HexToAddress(key.(string))
 
-		callback(keepAddress, value.(*ecdsa.Signer))
+		callback(keepAddress, value.(**tss.ThresholdSigner))
 
 		return true
 	})
@@ -114,7 +114,7 @@ func (g *Keeps) printSigners() {
 		logger.Infof(
 			"signer for keep [%s] was loaded with public key: [%x]",
 			key,
-			value.(*ecdsa.Signer).PublicKey().Marshal(),
+			value.(*tss.ThresholdSigner).PublicKey().Marshal(),
 		)
 		return true
 	})

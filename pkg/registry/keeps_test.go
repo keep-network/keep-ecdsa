@@ -1,25 +1,28 @@
 package registry
 
 import (
-	cecdsa "crypto/ecdsa"
 	"fmt"
-	"math/big"
 	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/internal/testdata"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 )
 
 var (
 	keepAddress1 = common.HexToAddress("0x770a9E2F2Aa1eC2d3Ca916Fc3e6A55058A898632")
 	keepAddress2 = common.HexToAddress("0x8B3BccB3A3994681A1C1584DE4b4E8b23ed1Ed6d")
 
-	signer1 = newTestSigner(big.NewInt(10))
-	signer2 = newTestSigner(big.NewInt(20))
+	groupMemberIDs = []tss.MemberID{
+		tss.MemberID("member-1"),
+		tss.MemberID("member-2"),
+	}
+
+	signer1 = newTestSigner(groupMemberIDs[0])
+	signer2 = newTestSigner(groupMemberIDs[1])
 )
 
 func TestRegisterSigner(t *testing.T) {
@@ -64,7 +67,7 @@ func TestGetGroup(t *testing.T) {
 
 	var tests = map[string]struct {
 		keepAddress    common.Address
-		expectedSigner *ecdsa.Signer
+		expectedSigner *tss.ThresholdSigner
 		expectedError  error
 	}{
 		"returns registered keep": {
@@ -83,7 +86,7 @@ func TestGetGroup(t *testing.T) {
 
 			if !reflect.DeepEqual(test.expectedSigner, signer) {
 				t.Errorf(
-					"unexpected group\nexpected: [%+v]\nactual:   [%+v]",
+					"unexpected signer\nexpected: [%+v]\nactual:   [%+v]",
 					test.expectedSigner,
 					signer,
 				)
@@ -219,13 +222,16 @@ func (tdd *testDataDescriptor) Content() ([]byte, error) {
 	return tdd.content, nil
 }
 
-func newTestSigner(privateKeyD *big.Int) *ecdsa.Signer {
-	curve := secp256k1.S256()
+func newTestSigner(memberID tss.MemberID) *tss.ThresholdSigner {
+	testData, _ := testdata.LoadKeygenTestFixtures(1)
 
-	privateKey := new(cecdsa.PrivateKey)
-	privateKey.PublicKey.Curve = curve
-	privateKey.D = privateKeyD
-	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(privateKeyD.Bytes())
-
-	return ecdsa.NewSigner(privateKey)
+	return &tss.ThresholdSigner(
+		tss.GroupInfo{
+			GroupID:            "test-group-1",
+			MemberID:           memberID,
+			GroupMemberIDs:     groupMemberIDs,
+			DishonestThreshold: 3,
+		},
+		testData[0],
+	)
 }
