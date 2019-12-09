@@ -24,18 +24,17 @@ type NetworkBridge struct {
 	params  *tss.Parameters
 	errChan chan<- error
 
-	channelsMutex     *sync.Mutex
-	broadcastChannels map[string]net.BroadcastChannel
-	unicastChannels   map[string]net.UnicastChannel
+	channelsMutex   *sync.Mutex
+	broadcastChan   net.BroadcastChannel
+	unicastChannels map[string]net.UnicastChannel
 }
 
 // NewNetworkBridge initializes a new network bridge for given network provider.
 func NewNetworkBridge(networkProvider net.Provider) *NetworkBridge {
 	return &NetworkBridge{
-		networkProvider:   networkProvider,
-		channelsMutex:     &sync.Mutex{},
-		broadcastChannels: make(map[string]net.BroadcastChannel),
-		unicastChannels:   make(map[string]net.UnicastChannel),
+		networkProvider: networkProvider,
+		channelsMutex:   &sync.Mutex{},
+		unicastChannels: make(map[string]net.UnicastChannel),
 	}
 }
 
@@ -89,7 +88,7 @@ func (b *NetworkBridge) initializeChannels(recvMessageChan chan *TSSMessage) err
 	}
 
 	// Initialize broadcast channel.
-	broadcastChannel, err := b.broadcastChannelFor(broadcastChannelName(b.groupMembersIDs))
+	broadcastChannel, err := b.broadcastChannel()
 	if err != nil {
 		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
@@ -117,16 +116,17 @@ func (b *NetworkBridge) initializeChannels(recvMessageChan chan *TSSMessage) err
 	return nil
 }
 
-func (b *NetworkBridge) broadcastChannelFor(name string) (net.BroadcastChannel, error) {
+func (b *NetworkBridge) broadcastChannel() (net.BroadcastChannel, error) {
 	b.channelsMutex.Lock()
 	defer b.channelsMutex.Unlock()
 
-	broadcastChannel, exists := b.broadcastChannels[name]
-	if exists {
-		return broadcastChannel, nil
+	if b.broadcastChan != nil {
+		return b.broadcastChan, nil
 	}
 
-	broadcastChannel, err := b.networkProvider.BroadcastChannelFor(name)
+	channelName := broadcastChannelName(b.groupMembersIDs)
+
+	broadcastChannel, err := b.networkProvider.BroadcastChannelFor(channelName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
@@ -137,7 +137,7 @@ func (b *NetworkBridge) broadcastChannelFor(name string) (net.BroadcastChannel, 
 		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
 	}
 
-	b.broadcastChannels[name] = broadcastChannel
+	b.broadcastChan = broadcastChannel
 
 	return broadcastChannel, nil
 }
@@ -196,10 +196,9 @@ func (b *NetworkBridge) sendMessage(tssLibMsg tss.Message) {
 	}
 
 	if routing.To == nil {
-		channelName := broadcastChannelName(b.groupMembersIDs)
-		broadcastChannel, err := b.broadcastChannelFor(channelName)
+		broadcastChannel, err := b.broadcastChannel()
 		if err != nil {
-			b.errChan <- fmt.Errorf("failed to find unicast channel: [%v]", channelName)
+			b.errChan <- fmt.Errorf("failed to find broadcast channel: [%v]", err)
 			return
 		}
 
@@ -254,15 +253,13 @@ func (b *NetworkBridge) close() error {
 }
 
 func (b *NetworkBridge) unregisterRecvs() error {
-	for _, broadcastChannel := range b.broadcastChannels {
-		if err := broadcastChannel.UnregisterRecv(TSSmessageType); err != nil {
-			return fmt.Errorf(
-				"failed to unregister receive handler for broadcast channel: [%v]",
-				err,
-			)
-		}
-
+	if err := b.broadcastChan.UnregisterRecv(TSSmessageType); err != nil {
+		return fmt.Errorf(
+			"failed to unregister receive handler for broadcast channel: [%v]",
+			err,
+		)
 	}
+
 	for _, unicastChannel := range b.unicastChannels {
 		if err := unicastChannel.UnregisterRecv(TSSmessageType); err != nil {
 			return fmt.Errorf(
