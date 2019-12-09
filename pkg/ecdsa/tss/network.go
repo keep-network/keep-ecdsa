@@ -43,7 +43,7 @@ func (b *NetworkBridge) start(
 	groupMembersIDs []MemberID,
 	party tss.Party,
 	params *tss.Parameters,
-	outChan <-chan tss.Message,
+	tssMessageChan <-chan tss.Message,
 	errChan chan<- error,
 ) error {
 	b.groupMembersIDs = groupMembersIDs
@@ -60,7 +60,7 @@ func (b *NetworkBridge) start(
 	go func() {
 		for {
 			select {
-			case tssLibMsg := <-outChan:
+			case tssLibMsg := <-tssMessageChan:
 				go b.sendMessage(tssLibMsg)
 			case msg := <-recvMessage:
 				go b.receiveMessage(msg)

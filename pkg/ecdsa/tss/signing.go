@@ -91,17 +91,17 @@ func (s *Signer) initializeSigningParty(
 	chan error,
 	error,
 ) {
-	outChan := make(chan tssLib.Message, s.tssParameters.PartyCount())
+	tssMessageChan := make(chan tssLib.Message, s.tssParameters.PartyCount())
 	endChan := make(chan signing.SignatureData)
 	errChan := make(chan error)
 
-	party := signing.NewLocalParty(digest, s.tssParameters, s.keygenData, outChan, endChan)
+	party := signing.NewLocalParty(digest, s.tssParameters, s.keygenData, tssMessageChan, endChan)
 
 	if err := networkBridge.start(
 		s.groupMembers,
 		party,
 		s.tssParameters,
-		outChan,
+		tssMessageChan,
 		errChan,
 	); err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)

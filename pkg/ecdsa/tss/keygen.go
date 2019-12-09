@@ -175,19 +175,19 @@ func initializeKeyGenerationParty(
 		return nil, nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
 	}
 
-	outChan := make(chan tss.Message)
+	tssMessageChan := make(chan tss.Message)
 	endChan := make(chan keygen.LocalPartySaveData)
 	errChan := make(chan error)
 
 	ctx := tss.NewPeerContext(tss.SortPartyIDs(groupPartiesIDs))
 	params := tss.NewParameters(ctx, currentPartyID, len(groupPartiesIDs), dishonestThreshold)
-	party := keygen.NewLocalParty(params, outChan, endChan, *tssPreParams)
+	party := keygen.NewLocalParty(params, tssMessageChan, endChan, *tssPreParams)
 
 	if err := bridge.start(
 		groupMembersIDs,
 		party,
 		params,
-		outChan,
+		tssMessageChan,
 		errChan,
 	); err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
