@@ -96,7 +96,7 @@ func (b *NetworkBridge) initializeChannels(netInChan chan *TSSMessage) error {
 			continue
 		}
 
-		unicastChannel, err := b.unicastChannelWith(unicastChannelName(*peerPartyID))
+		unicastChannel, err := b.unicastChannelWith(peerPartyID)
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}
@@ -133,16 +133,18 @@ func (b *NetworkBridge) broadcastChannel() (net.BroadcastChannel, error) {
 	return broadcastChannel, nil
 }
 
-func (b *NetworkBridge) unicastChannelWith(peer string) (net.UnicastChannel, error) {
+func (b *NetworkBridge) unicastChannelWith(partyID *tss.PartyID) (net.UnicastChannel, error) {
 	b.channelsMutex.Lock()
 	defer b.channelsMutex.Unlock()
 
-	unicastChannel, exists := b.unicastChannels[peer]
+	channelName := partyID.KeyInt().String()
+
+	unicastChannel, exists := b.unicastChannels[channelName]
 	if exists {
 		return unicastChannel, nil
 	}
 
-	unicastChannel, err := b.networkProvider.UnicastChannelWith(peer)
+	unicastChannel, err := b.networkProvider.UnicastChannelWith(channelName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get unicast channel: [%v]", err)
 	}
@@ -153,13 +155,9 @@ func (b *NetworkBridge) unicastChannelWith(peer string) (net.UnicastChannel, err
 		return nil, fmt.Errorf("failed to register unmarshaler for unicast channel: [%v]", err)
 	}
 
-	b.unicastChannels[peer] = unicastChannel
+	b.unicastChannels[channelName] = unicastChannel
 
 	return unicastChannel, nil
-}
-
-func unicastChannelName(peerPartyID tss.PartyID) string {
-	return peerPartyID.KeyInt().String()
 }
 
 func (b *NetworkBridge) sendMessage(tssLibMsg tss.Message) {
@@ -188,11 +186,13 @@ func (b *NetworkBridge) sendMessage(tssLibMsg tss.Message) {
 		}
 	} else {
 		for _, destination := range routing.To {
-			channelName := unicastChannelName(*destination)
-
-			unicastChannel, err := b.unicastChannelWith(channelName)
+			unicastChannel, err := b.unicastChannelWith(destination)
 			if err != nil {
-				b.errChan <- fmt.Errorf("failed to find unicast channel: [%v]", channelName)
+				b.errChan <- fmt.Errorf(
+					"failed to find unicast channel for [%v]: [%v]",
+					destination,
+					err,
+				)
 				continue
 			}
 
