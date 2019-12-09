@@ -19,12 +19,9 @@ func (s *Signer) InitializeSigning(
 ) (*SigningSigner, error) {
 	digestInt := new(big.Int).SetBytes(digest)
 
-	errChan := make(chan error)
-
-	party, endChan, err := s.initializeSigningParty(
+	party, endChan, errChan, err := s.initializeSigningParty(
 		digestInt,
 		networkBridge,
-		errChan,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize signing party: [%v]", err)
@@ -49,7 +46,7 @@ type SigningSigner struct {
 	signingParty tssLib.Party
 	// Channels where results of the signing protocol execution will be written to.
 	signingEndChan <-chan signing.SignatureData // data from a successful execution
-	signingErrChan <-chan error                 // errors emitted during the protocol execution
+	signingErrChan <-chan error                 // error from a failed execution
 }
 
 // Sign executes the protocol to calculate a signature. This function needs to be
@@ -88,10 +85,15 @@ func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 func (s *Signer) initializeSigningParty(
 	digest *big.Int,
 	networkBridge *NetworkBridge,
-	errChan chan error,
-) (tssLib.Party, <-chan signing.SignatureData, error) {
+) (
+	tssLib.Party,
+	<-chan signing.SignatureData,
+	chan error,
+	error,
+) {
 	outChan := make(chan tssLib.Message, s.tssParameters.PartyCount())
 	endChan := make(chan signing.SignatureData)
+	errChan := make(chan error)
 
 	party := signing.NewLocalParty(digest, s.tssParameters, s.keygenData, outChan, endChan)
 
@@ -102,10 +104,10 @@ func (s *Signer) initializeSigningParty(
 		outChan,
 		errChan,
 	); err != nil {
-		return nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
+		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
 
-	return party, endChan, nil
+	return party, endChan, errChan, nil
 }
 
 func convertSignatureTSStoECDSA(tssSignature signing.SignatureData) ecdsa.Signature {
