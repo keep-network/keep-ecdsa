@@ -23,7 +23,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 
 	groupSize := 5
-	threshold := groupSize - 1
+	dishonestThreshold := groupSize - 1
 
 	err := log.SetLogLevel("*", "INFO")
 	if err != nil {
@@ -60,7 +60,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		member, err := InitializeKeyGeneration(
 			memberID,
 			groupMemberIDs,
-			threshold,
+			dishonestThreshold,
 			&preParams,
 			network,
 		)

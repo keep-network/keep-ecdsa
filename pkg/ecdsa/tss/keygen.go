@@ -38,31 +38,32 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 // TSS protocol requires pre-parameters such as safe primes to be generated for
 // execution. The parameters should be generated prior to initializing the signer.
 //
-// Threshold defines a size of a signing subgroup which cannot sign successfully.
-// Protocol requires at least `t + 1` member to sign.
+// Dishonest threshold `t` defines a maximum number of signers controlled by the
+// adversary such that the adversary still cannot produce a signature. Any subset
+// of `t + 1` players can jointly sign, but any smaller subset cannot.
 //
 // Network provider needs to support broadcast and unicast transport.
 func InitializeKeyGeneration(
 	memberID MemberID,
 	groupMemberIDs []MemberID,
-	threshold int,
+	dishonestThreshold int,
 	tssPreParams *keygen.LocalPreParams,
 	networkBridge *NetworkBridge,
 ) (*Member, error) {
 	errChan := make(chan error)
 
-	if len(groupMemberIDs) <= threshold {
+	if len(groupMemberIDs) <= dishonestThreshold {
 		return nil, fmt.Errorf(
-			"group size [%d], should be greater than threshold [%d]",
+			"group size [%d], should be greater than dishonest threshold [%d]",
 			len(groupMemberIDs),
-			threshold,
+			dishonestThreshold,
 		)
 	}
 
 	keyGenParty, params, endChan, err := initializeKeyGenerationParty(
 		memberID,
 		groupMemberIDs,
-		threshold,
+		dishonestThreshold,
 		tssPreParams,
 		networkBridge,
 		errChan,
@@ -161,7 +162,7 @@ func generatePartiesIDs(
 func initializeKeyGenerationParty(
 	memberID MemberID,
 	groupMembersIDs []MemberID,
-	threshold int,
+	dishonestThreshold int,
 	tssPreParams *keygen.LocalPreParams,
 	bridge *NetworkBridge,
 	errChan chan error,
@@ -180,7 +181,7 @@ func initializeKeyGenerationParty(
 	endChan := make(chan keygen.LocalPartySaveData)
 
 	ctx := tss.NewPeerContext(tss.SortPartyIDs(groupPartiesIDs))
-	params := tss.NewParameters(ctx, currentPartyID, len(groupPartiesIDs), threshold)
+	params := tss.NewParameters(ctx, currentPartyID, len(groupPartiesIDs), dishonestThreshold)
 	party := keygen.NewLocalParty(params, outChan, endChan, *tssPreParams)
 
 	if err := bridge.start(
