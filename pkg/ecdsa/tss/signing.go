@@ -11,8 +11,6 @@ import (
 
 // InitializeSigning initializes a member to run a threshold multi-party signature
 // calculation protocol. Signature will be calculated for provided digest.
-//
-// Network channel should support broadcast and unicast messages transport.
 func (s *Signer) InitializeSigning(
 	digest []byte,
 	networkBridge *NetworkBridge,
@@ -51,7 +49,8 @@ type SigningSigner struct {
 
 // Sign executes the protocol to calculate a signature. This function needs to be
 // executed only after all members finished the initialization stage. As a result
-// the calculated ECDSA signature will be returned.
+// the calculated ECDSA signature will be returned or error, if the signature
+// generation failed.
 func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 	defer s.networkBridge.close()
 

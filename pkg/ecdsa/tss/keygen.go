@@ -41,8 +41,6 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 // Dishonest threshold `t` defines a maximum number of signers controlled by the
 // adversary such that the adversary still cannot produce a signature. Any subset
 // of `t + 1` players can jointly sign, but any smaller subset cannot.
-//
-// Network provider needs to support broadcast and unicast transport.
 func InitializeKeyGeneration(
 	groupInfo *GroupInfo,
 	dishonestThreshold int,
