@@ -38,7 +38,7 @@ func (s *Signer) InitializeSigning(
 // SigningSigner represents Signer who initialized signing stage and is ready to
 // start signature calculation.
 type SigningSigner struct {
-	GroupInfo
+	*GroupInfo
 
 	networkBridge *NetworkBridge
 	// Signing
@@ -91,15 +91,23 @@ func (s *Signer) initializeSigningParty(
 	chan error,
 	error,
 ) {
-	tssMessageChan := make(chan tssLib.Message, len(s.tssParameters.sortedPartyIDs))
+	tssMessageChan := make(chan tss.Message, len(s.GroupInfo.groupMemberIDs))
 	endChan := make(chan signing.SignatureData)
 	errChan := make(chan error)
 
+	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(
+		s.GroupInfo.memberID,
+		s.GroupInfo.groupMemberIDs,
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
+	}
+
 	params := tss.NewParameters(
-		tss.NewPeerContext(s.tssParameters.sortedPartyIDs),
-		s.tssParameters.currentPartyID,
-		len(s.tssParameters.sortedPartyIDs),
-		s.tssParameters.threshold,
+		tss.NewPeerContext(tss.SortPartyIDs(groupPartiesIDs)),
+		currentPartyID,
+		len(groupPartiesIDs),
+		s.GroupInfo.dishonestThreshold,
 	)
 
 	party := signing.NewLocalParty(

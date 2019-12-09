@@ -16,4 +16,8 @@ type GroupInfo struct {
 	groupID        string // globally unique group identifier
 	memberID       MemberID
 	groupMemberIDs []MemberID
+	// Dishonest threshold `t` defines a maximum number of signers controlled by the
+	// adversary such that the adversary still cannot produce a signature. Any subset
+	// of `t + 1` players can jointly sign, but any smaller subset cannot.
+	dishonestThreshold int
 }

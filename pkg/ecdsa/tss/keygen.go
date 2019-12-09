@@ -37,27 +37,21 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 //
 // TSS protocol requires pre-parameters such as safe primes to be generated for
 // execution. The parameters should be generated prior to initializing the signer.
-//
-// Dishonest threshold `t` defines a maximum number of signers controlled by the
-// adversary such that the adversary still cannot produce a signature. Any subset
-// of `t + 1` players can jointly sign, but any smaller subset cannot.
 func InitializeKeyGeneration(
 	groupInfo *GroupInfo,
-	dishonestThreshold int,
 	tssPreParams *keygen.LocalPreParams,
 	networkBridge *NetworkBridge,
 ) (*Member, error) {
-	if len(groupInfo.groupMemberIDs) <= dishonestThreshold {
+	if len(groupInfo.groupMemberIDs) <= groupInfo.dishonestThreshold {
 		return nil, fmt.Errorf(
 			"group size [%d], should be greater than dishonest threshold [%d]",
 			len(groupInfo.groupMemberIDs),
-			dishonestThreshold,
+			groupInfo.dishonestThreshold,
 		)
 	}
 
-	keyGenParty, params, endChan, errChan, err := initializeKeyGenerationParty(
+	keyGenParty, endChan, errChan, err := initializeKeyGenerationParty(
 		groupInfo,
-		dishonestThreshold,
 		tssPreParams,
 		networkBridge,
 	)
@@ -67,10 +61,10 @@ func InitializeKeyGeneration(
 	logger.Debugf("initialized key generation member: [%v]", keyGenParty.PartyID())
 
 	return &Member{
+		GroupInfo:     groupInfo,
 		keygenParty:   keyGenParty,
 		keygenEndChan: endChan,
 		keygenErrChan: errChan,
-		tssParameters: params,
 		networkBridge: networkBridge,
 	}, nil
 }
@@ -78,12 +72,11 @@ func InitializeKeyGeneration(
 // Member represents an initialized member who is ready to start distributed key
 // generation.
 type Member struct {
-	GroupInfo
+	*GroupInfo
 
 	networkBridge *NetworkBridge // network bridge used for messages transport
 
-	tssParameters *tss.Parameters
-	keygenParty   tss.Party
+	keygenParty tss.Party
 	// Channels where results of the key generation protocol execution will be written to.
 	keygenEndChan <-chan keygen.LocalPartySaveData // data from a successful execution
 	keygenErrChan chan error                       // error from a failed execution
@@ -107,11 +100,7 @@ func (s *Member) GenerateKey() (*Signer, error) {
 		select {
 		case keygenData := <-s.keygenEndChan:
 			signer := &Signer{
-				tssParameters: &tssParameters{
-					currentPartyID: s.keygenParty.PartyID(),
-					sortedPartyIDs: s.tssParameters.Parties().IDs(),
-					threshold:      s.tssParameters.Threshold(),
-				},
+				GroupInfo:  s.GroupInfo,
 				keygenData: keygenData,
 			}
 
@@ -133,6 +122,10 @@ func generatePartiesIDs(
 	[]*tss.PartyID,
 	error,
 ) {
+	if len(groupMemberIDs) < 1 {
+		return nil, nil, fmt.Errorf("group should have at least one member")
+	}
+
 	var thisPartyID *tss.PartyID
 	groupPartiesIDs := []*tss.PartyID{}
 
@@ -159,30 +152,33 @@ func generatePartiesIDs(
 
 func initializeKeyGenerationParty(
 	groupInfo *GroupInfo,
-	dishonestThreshold int,
 	tssPreParams *keygen.LocalPreParams,
 	bridge *NetworkBridge,
 ) (
 	tss.Party,
-	*tss.Parameters,
 	<-chan keygen.LocalPartySaveData,
 	chan error,
 	error,
 ) {
+	tssMessageChan := make(chan tss.Message, len(groupInfo.groupMemberIDs))
+	endChan := make(chan keygen.LocalPartySaveData)
+	errChan := make(chan error)
+
 	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(
 		groupInfo.memberID,
 		groupInfo.groupMemberIDs,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
+		return nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
 	}
 
-	tssMessageChan := make(chan tss.Message)
-	endChan := make(chan keygen.LocalPartySaveData)
-	errChan := make(chan error)
+	params := tss.NewParameters(
+		tss.NewPeerContext(tss.SortPartyIDs(groupPartiesIDs)),
+		currentPartyID,
+		len(groupPartiesIDs),
+		groupInfo.dishonestThreshold,
+	)
 
-	ctx := tss.NewPeerContext(tss.SortPartyIDs(groupPartiesIDs))
-	params := tss.NewParameters(ctx, currentPartyID, len(groupPartiesIDs), dishonestThreshold)
 	party := keygen.NewLocalParty(params, tssMessageChan, endChan, *tssPreParams)
 
 	if err := bridge.connect(
@@ -192,8 +188,8 @@ func initializeKeyGenerationParty(
 		tssMessageChan,
 		errChan,
 	); err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
+		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
 
-	return party, params, endChan, errChan, nil
+	return party, endChan, errChan, nil
 }
