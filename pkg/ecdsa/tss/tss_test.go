@@ -45,7 +45,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	networkProviders := make(map[MemberID]net.Provider, groupSize)
+	networkProviders := &sync.Map{} // < MemberID, net.Provider >
 
 	// Key generation.
 	signersMutex := sync.Mutex{}
@@ -72,7 +72,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				}()
 
 				network := newTestNetProvider(memberID, groupMembersKeys, keygenErrChan)
-				networkProviders[memberID] = network
+				networkProviders.Store(memberID, network)
 
 				preParams := testData[i].LocalPreParams
 
@@ -156,9 +156,16 @@ func TestGenerateKeyAndSign(t *testing.T) {
 					}
 				}()
 
+				value, loaded := networkProviders.Load(memberID)
+				if !loaded {
+					errChan <- fmt.Errorf("failed to load network provider")
+					return
+				}
+				networkProvider := value.(net.Provider)
+
 				signature, err := signer.CalculateSignature(
 					digest[:],
-					networkProviders[memberID],
+					networkProvider,
 				)
 				if err != nil {
 					errChan <- fmt.Errorf("failed to sign: [%v]", err)
