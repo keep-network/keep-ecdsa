@@ -244,7 +244,7 @@ func newTestNetProvider(
 	errChan chan error,
 ) net.Provider {
 	return local.LocalProvider(
-		memberID.bigInt().String(),
+		string(memberID),
 		membersNetworkKeys[memberID],
 		errChan,
 	)

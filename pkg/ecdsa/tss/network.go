@@ -137,7 +137,7 @@ func (b *networkBridge) getUnicastChannelWith(partyID *tss.PartyID) (net.Unicast
 	b.channelsMutex.Lock()
 	defer b.channelsMutex.Unlock()
 
-	channelName := partyID.KeyInt().String()
+	channelName := string(partyID.GetKey())
 
 	unicastChannel, exists := b.unicastChannels[channelName]
 	if exists {
