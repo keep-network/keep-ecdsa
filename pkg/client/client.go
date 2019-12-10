@@ -21,9 +21,7 @@ func Initialize(
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
-	tecdsa := &tecdsa.TECDSA{
-		EthereumChain: ethereumChain,
-	}
+	tecdsa := tecdsa.NewTECDSA(ethereumChain, networkProvider)
 
 	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()

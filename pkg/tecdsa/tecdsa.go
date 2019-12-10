@@ -14,11 +14,29 @@ import (
 
 var logger = log.Logger("keep-tecdsa")
 
-// TECDSA holds an interface to interact with the blockchain.
+// TECDSA holds interfaces to interact with the blockchain and network messages
+// transport layer.
 type TECDSA struct {
-	EthereumChain eth.Handle
+	ethereumChain   eth.Handle
+	networkProvider net.Provider
+	tssParamsPool   *tssPreParamsPool
+}
 
-	tssParamsPool *tssPreParamsPool
+// NewTECDSA initializes TECDSA struct with provided ethereum chain interface and
+// network provider. It also initializes TSS Pre-Parameters pool. But does not
+// start parameters generation. This should be called separately.
+func NewTECDSA(
+	ethereumChain eth.Handle,
+	networkProvider net.Provider,
+) *TECDSA {
+	return &TECDSA{
+		ethereumChain:   ethereumChain,
+		networkProvider: networkProvider,
+		tssParamsPool: &tssPreParamsPool{
+			poolMutex: &sync.Mutex{},
+			pool:      []*keygen.LocalPreParams{},
+		},
+	}
 }
 
 // RegisterForSignEvents registers for signature requested events emitted by
@@ -27,7 +45,7 @@ func (t *TECDSA) RegisterForSignEvents(
 	keepAddress eth.KeepAddress,
 	signer *tss.ThresholdSigner,
 ) {
-	t.EthereumChain.OnSignatureRequested(
+	t.ethereumChain.OnSignatureRequested(
 		keepAddress,
 		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
 			logger.Debugf(
