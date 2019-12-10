@@ -113,8 +113,14 @@ func (g *Keeps) ForEachKeep(
 
 func (g *Keeps) printSigners() {
 	g.myKeeps.Range(func(key, value interface{}) bool {
+		logger.Infof(
+			"loaded [%d] signers for keep [%s]",
+			len(signers),
+			keepAddress,
+		)
+
 		for _, signer := range value.([]*tss.ThresholdSigner) {
-			logger.Infof(
+			logger.Debugf(
 				"signer for keep [%s] was loaded with public key: [%x]",
 				key,
 				signer.PublicKey().Marshal(),
@@ -129,6 +135,7 @@ func (g *Keeps) storeSigner(
 	signer *tss.ThresholdSigner,
 ) {
 	g.myKeepsMutex.Lock()
+	defer g.myKeepsMutex.Unlock()
 
 	var signers []*tss.ThresholdSigner
 	if value, exists := g.myKeeps.Load(keepAddress.String()); exists {
@@ -138,6 +145,4 @@ func (g *Keeps) storeSigner(
 	signers = append(signers, signer)
 
 	g.myKeeps.Store(keepAddress.String(), signers)
-
-	g.myKeepsMutex.Unlock()
 }
