@@ -10,37 +10,37 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
-// InitializeSigning initializes a member to run a threshold multi-party signature
+// initializeSigning initializes a member to run a threshold multi-party signature
 // calculation protocol. Signature will be calculated for provided digest.
-func (s *Signer) InitializeSigning(
+func (s *Signer) initializeSigning(
 	digest []byte,
-	networkBridge *NetworkBridge,
-) (*SigningSigner, error) {
+	netBridge *networkBridge,
+) (*signingSigner, error) {
 	digestInt := new(big.Int).SetBytes(digest)
 
 	party, endChan, errChan, err := s.initializeSigningParty(
 		digestInt,
-		networkBridge,
+		netBridge,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize signing party: [%v]", err)
 	}
 
-	return &SigningSigner{
+	return &signingSigner{
 		GroupInfo:      s.GroupInfo,
-		networkBridge:  networkBridge,
+		networkBridge:  netBridge,
 		signingParty:   party,
 		signingEndChan: endChan,
 		signingErrChan: errChan,
 	}, nil
 }
 
-// SigningSigner represents Signer who initialized signing stage and is ready to
+// signingSigner represents Signer who initialized signing stage and is ready to
 // start signature calculation.
-type SigningSigner struct {
+type signingSigner struct {
 	*GroupInfo
 
-	networkBridge *NetworkBridge
+	networkBridge *networkBridge
 	// Signing
 	signingParty tssLib.Party
 	// Channels where results of the signing protocol execution will be written to.
@@ -48,11 +48,11 @@ type SigningSigner struct {
 	signingErrChan <-chan error                 // error from a failed execution
 }
 
-// Sign executes the protocol to calculate a signature. This function needs to be
+// sign executes the protocol to calculate a signature. This function needs to be
 // executed only after all members finished the initialization stage. As a result
-// the calculated ECDSA signature will be returned or error, if the signature
+// the calculated ECDSA signature will be returned or an error, if the signature
 // generation failed.
-func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
+func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 	defer s.networkBridge.close()
 
 	if s.signingParty == nil {
@@ -84,7 +84,7 @@ func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 
 func (s *Signer) initializeSigningParty(
 	digest *big.Int,
-	networkBridge *NetworkBridge,
+	netBridge *networkBridge,
 ) (
 	tssLib.Party,
 	<-chan signing.SignatureData,
@@ -118,7 +118,7 @@ func (s *Signer) initializeSigningParty(
 		endChan,
 	)
 
-	if err := networkBridge.connect(
+	if err := netBridge.connect(
 		s.GroupInfo.groupID,
 		party,
 		params,

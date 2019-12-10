@@ -10,9 +10,9 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
-// NetworkBridge translates TSS library network interface to unicast and
+// networkBridge translates TSS library network interface to unicast and
 // broadcast channels provided by our net abstraction.
-type NetworkBridge struct {
+type networkBridge struct {
 	networkProvider net.Provider
 
 	groupID string
@@ -26,16 +26,16 @@ type NetworkBridge struct {
 	unicastChannels  map[string]net.UnicastChannel
 }
 
-// NewNetworkBridge initializes a new network bridge for the given network provider.
-func NewNetworkBridge(networkProvider net.Provider) *NetworkBridge {
-	return &NetworkBridge{
+// newNetworkBridge initializes a new network bridge for the given network provider.
+func newNetworkBridge(networkProvider net.Provider) *networkBridge {
+	return &networkBridge{
 		networkProvider: networkProvider,
 		channelsMutex:   &sync.Mutex{},
 		unicastChannels: make(map[string]net.UnicastChannel),
 	}
 }
 
-func (b *NetworkBridge) connect(
+func (b *networkBridge) connect(
 	groupID string,
 	party tss.Party,
 	params *tss.Parameters,
@@ -67,7 +67,7 @@ func (b *NetworkBridge) connect(
 	return nil
 }
 
-func (b *NetworkBridge) initializeChannels(netInChan chan *TSSMessage) error {
+func (b *networkBridge) initializeChannels(netInChan chan *TSSMessage) error {
 	handleMessageFunc := net.HandleMessageFunc{
 		Type: TSSmessageType,
 		Handler: func(msg net.Message) error {
@@ -109,7 +109,7 @@ func (b *NetworkBridge) initializeChannels(netInChan chan *TSSMessage) error {
 	return nil
 }
 
-func (b *NetworkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
+func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 	b.channelsMutex.Lock()
 	defer b.channelsMutex.Unlock()
 
@@ -133,7 +133,7 @@ func (b *NetworkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 	return broadcastChannel, nil
 }
 
-func (b *NetworkBridge) getUnicastChannelWith(partyID *tss.PartyID) (net.UnicastChannel, error) {
+func (b *networkBridge) getUnicastChannelWith(partyID *tss.PartyID) (net.UnicastChannel, error) {
 	b.channelsMutex.Lock()
 	defer b.channelsMutex.Unlock()
 
@@ -160,7 +160,7 @@ func (b *NetworkBridge) getUnicastChannelWith(partyID *tss.PartyID) (net.Unicast
 	return unicastChannel, nil
 }
 
-func (b *NetworkBridge) sendTSSMessage(tssLibMsg tss.Message) {
+func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	bytes, routing, err := tssLibMsg.WireBytes()
 	if err != nil {
 		b.errChan <- fmt.Errorf("failed to encode message: [%v]", b.party.WrapError(err))
@@ -204,7 +204,7 @@ func (b *NetworkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 }
 
-func (b *NetworkBridge) receiveMessage(netMsg *TSSMessage) {
+func (b *networkBridge) receiveMessage(netMsg *TSSMessage) {
 	senderKey := new(big.Int).SetBytes(netMsg.SenderID)
 	senderPartyID := b.params.Parties().IDs().FindByKey(senderKey)
 
@@ -224,7 +224,7 @@ func (b *NetworkBridge) receiveMessage(netMsg *TSSMessage) {
 	}
 }
 
-func (b *NetworkBridge) close() error {
+func (b *networkBridge) close() error {
 	if err := b.unregisterRecvs(); err != nil {
 		return fmt.Errorf("failed to unregister receivers: [%v]", err)
 	}
@@ -232,7 +232,7 @@ func (b *NetworkBridge) close() error {
 	return nil
 }
 
-func (b *NetworkBridge) unregisterRecvs() error {
+func (b *networkBridge) unregisterRecvs() error {
 	if err := b.broadcastChannel.UnregisterRecv(TSSmessageType); err != nil {
 		return fmt.Errorf(
 			"failed to unregister receive handler for broadcast channel: [%v]",

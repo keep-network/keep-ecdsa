@@ -7,12 +7,9 @@ import (
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
-	"github.com/ipfs/go-log"
 )
 
 const preParamsGenerationTimeout = 90 * time.Second
-
-var logger = log.Logger("keep-ecdsa")
 
 // GenerateTSSPreParams calculates parameters required by TSS key generation.
 // It times out after 90 seconds if the required parameters could not be generated.
@@ -29,7 +26,7 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 	return preParams, nil
 }
 
-// InitializeKeyGeneration initializes a signing group member to run a threshold
+// initializeKeyGeneration initializes a signing group member to run a threshold
 // multi-party key generation protocol.
 //
 // It expects unique identifiers of the current member as well as identifiers of
@@ -37,11 +34,11 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 //
 // TSS protocol requires pre-parameters such as safe primes to be generated for
 // execution. The parameters should be generated prior to initializing the signer.
-func InitializeKeyGeneration(
+func initializeKeyGeneration(
 	groupInfo *GroupInfo,
 	tssPreParams *keygen.LocalPreParams,
-	networkBridge *NetworkBridge,
-) (*Member, error) {
+	netBridge *networkBridge,
+) (*member, error) {
 	if len(groupInfo.groupMemberIDs) <= groupInfo.dishonestThreshold {
 		return nil, fmt.Errorf(
 			"group size [%d], should be greater than dishonest threshold [%d]",
@@ -53,28 +50,28 @@ func InitializeKeyGeneration(
 	keyGenParty, endChan, errChan, err := initializeKeyGenerationParty(
 		groupInfo,
 		tssPreParams,
-		networkBridge,
+		netBridge,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize key generation member: [%v]", err)
 	}
 	logger.Debugf("initialized key generation member: [%v]", keyGenParty.PartyID())
 
-	return &Member{
+	return &member{
 		GroupInfo:     groupInfo,
 		keygenParty:   keyGenParty,
 		keygenEndChan: endChan,
 		keygenErrChan: errChan,
-		networkBridge: networkBridge,
+		networkBridge: netBridge,
 	}, nil
 }
 
-// Member represents an initialized member who is ready to start distributed key
+// member represents an initialized member who is ready to start distributed key
 // generation.
-type Member struct {
+type member struct {
 	*GroupInfo
 
-	networkBridge *NetworkBridge // network bridge used for messages transport
+	networkBridge *networkBridge // network bridge used for messages transport
 
 	keygenParty tss.Party
 	// Channels where results of the key generation protocol execution will be written to.
@@ -82,11 +79,11 @@ type Member struct {
 	keygenErrChan chan error                       // error from a failed execution
 }
 
-// GenerateKey executes the protocol to generate a signing key. This function
+// generateKey executes the protocol to generate a signing key. This function
 // needs to be executed only after all members finished the initialization stage.
 // As a result it will return a Signer who has completed key generation, or error
 // if the key generation failed.
-func (s *Member) GenerateKey() (*Signer, error) {
+func (s *member) generateKey() (*Signer, error) {
 	defer s.networkBridge.close()
 
 	if err := s.keygenParty.Start(); err != nil {
@@ -153,7 +150,7 @@ func generatePartiesIDs(
 func initializeKeyGenerationParty(
 	groupInfo *GroupInfo,
 	tssPreParams *keygen.LocalPreParams,
-	bridge *NetworkBridge,
+	bridge *networkBridge,
 ) (
 	tss.Party,
 	<-chan keygen.LocalPartySaveData,
