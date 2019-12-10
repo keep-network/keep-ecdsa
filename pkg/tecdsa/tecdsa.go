@@ -17,6 +17,8 @@ var logger = log.Logger("keep-tecdsa")
 // TECDSA holds an interface to interact with the blockchain.
 type TECDSA struct {
 	EthereumChain eth.Handle
+
+	tssParamsPool *tssPreParamsPool
 }
 
 // RegisterForSignEvents registers for signature requested events emitted by
