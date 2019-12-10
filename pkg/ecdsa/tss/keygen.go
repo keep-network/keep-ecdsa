@@ -37,20 +37,12 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 func initializeKeyGeneration(
 	groupInfo *GroupInfo,
 	tssPreParams *keygen.LocalPreParams,
-	netBridge *networkBridge,
+	network *networkBridge,
 ) (*member, error) {
-	if len(groupInfo.groupMemberIDs) <= groupInfo.dishonestThreshold {
-		return nil, fmt.Errorf(
-			"group size [%d], should be greater than dishonest threshold [%d]",
-			len(groupInfo.groupMemberIDs),
-			groupInfo.dishonestThreshold,
-		)
-	}
-
 	keyGenParty, endChan, errChan, err := initializeKeyGenerationParty(
 		groupInfo,
 		tssPreParams,
-		netBridge,
+		network,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize key generation member: [%v]", err)
@@ -62,7 +54,7 @@ func initializeKeyGeneration(
 		keygenParty:   keyGenParty,
 		keygenEndChan: endChan,
 		keygenErrChan: errChan,
-		networkBridge: netBridge,
+		networkBridge: network,
 	}, nil
 }
 
