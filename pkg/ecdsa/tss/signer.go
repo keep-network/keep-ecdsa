@@ -15,6 +15,11 @@ type ThresholdSigner struct {
 	keygenData keygen.LocalPartySaveData
 }
 
+// MemberID returns member's unique identifer.
+func (s *ThresholdSigner) MemberID() MemberID {
+	return s.memberID
+}
+
 // PublicKey returns Signer's ECDSA public key.
 func (s *ThresholdSigner) PublicKey() *ecdsa.PublicKey {
 	pkX, pkY := s.keygenData.ECDSAPub.X(), s.keygenData.ECDSAPub.Y()
