@@ -119,10 +119,6 @@ func generatePartiesIDs(
 	[]*tss.PartyID,
 	error,
 ) {
-	if len(groupMemberIDs) < 1 {
-		return nil, nil, fmt.Errorf("group should have at least one member")
-	}
-
 	var thisPartyID *tss.PartyID
 	groupPartiesIDs := []*tss.PartyID{}
 

@@ -47,13 +47,16 @@ func GenerateThresholdSigner(
 	networkProvider net.Provider,
 	tssPreParams *keygen.LocalPreParams,
 ) (*ThresholdSigner, error) {
-	if tssPreParams == nil {
-		logger.Info("tss pre-params were not provided, generating them now")
-		params, err := GenerateTSSPreParams()
-		if err != nil {
-			return nil, err
-		}
-		tssPreParams = params
+	if len(groupMemberIDs) < 1 {
+		return nil, fmt.Errorf("group should have at least one member")
+	}
+
+	if len(groupMemberIDs) <= int(dishonestThreshold) {
+		return nil, fmt.Errorf(
+			"group size [%d], should be greater than dishonest threshold [%d]",
+			len(groupMemberIDs),
+			dishonestThreshold,
+		)
 	}
 
 	groupInfo := &GroupInfo{
@@ -61,6 +64,15 @@ func GenerateThresholdSigner(
 		memberID:           memberID,
 		groupMemberIDs:     groupMemberIDs,
 		dishonestThreshold: int(dishonestThreshold),
+	}
+
+	if tssPreParams == nil {
+		logger.Info("tss pre-params were not provided, generating them now")
+		params, err := GenerateTSSPreParams()
+		if err != nil {
+			return nil, err
+		}
+		tssPreParams = params
 	}
 
 	netBridge := newNetworkBridge(networkProvider)
