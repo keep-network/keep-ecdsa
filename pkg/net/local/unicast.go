@@ -90,7 +90,9 @@ func (uc *unicastChannel) RegisterUnmarshaler(
 ) (err error) {
 	_, exists := uc.unmarshalersByType.Load(unmarshaler().Type())
 	if exists {
-		err = fmt.Errorf("unmarshaler already registered for type: [%v]", unmarshaler().Type())
+		// TODO: Disabled temporarily because it causes failures on protocol run.
+		// We need to confirm how the local unicast channel should be implemented.
+		// err = fmt.Errorf("unmarshaler already registered for type: [%v]", unmarshaler().Type())
 	} else {
 		uc.unmarshalersByType.Store(unmarshaler().Type(), unmarshaler)
 	}
