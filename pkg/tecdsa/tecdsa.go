@@ -48,23 +48,22 @@ func (t *TECDSA) RegisterForSignEvents(
 	t.ethereumChain.OnSignatureRequested(
 		keepAddress,
 		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
-			logger.Debugf(
+			logger.Infof(
 				"new signature requested from keep [%s] for digest: [%+x]",
 				keepAddress.String(),
 				signatureRequestedEvent.Digest,
 			)
 
 			go func() {
-				// TODO: Replace it with Threshold Signer
-				// err := t.calculateSignatureForKeep(
-				// 	keepAddress,
-				// 	nil,
-				// 	signatureRequestedEvent.Digest,
-				// )
+				err := t.calculateSignatureForKeep(
+					keepAddress,
+					signer,
+					signatureRequestedEvent.Digest,
+				)
 
-				// if err != nil {
-				// 	logger.Errorf("signature calculation failed: [%v]", err)
-				// }
+				if err != nil {
+					logger.Errorf("signature calculation failed: [%v]", err)
+				}
 			}()
 		},
 	)
@@ -74,11 +73,32 @@ func (t *TECDSA) RegisterForSignEvents(
 // the signer's public key to the keep.
 func (t *TECDSA) GenerateSignerForKeep(
 	keepAddress eth.KeepAddress,
-) (*ecdsa.Signer, error) {
-	signer, err := generateSigner()
+	keepMembers []common.Address,
+) (*tss.ThresholdSigner, error) {
+	groupMemberIDs := []tss.MemberID{}
+	for _, member := range keepMembers {
+		groupMemberIDs = append(
+			groupMemberIDs,
+			tss.MemberID(member.String()),
+		)
+	}
+
+	memberID := tss.MemberID(t.ethereumChain.Address().String())
+
+	signer, err := tss.GenerateThresholdSigner(
+		keepAddress.Hex(),
+		memberID,
+		groupMemberIDs,
+		uint(len(keepMembers)-1),
+		t.networkProvider,
+		t.tssParamsPool.get(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate threshold signer: [%v]", err)
+	}
 
 	logger.Debugf(
-		"generated signer with public key: [%x]",
+		"generated threshold signer with public key: [%x]",
 		signer.PublicKey().Marshal(),
 	)
 
@@ -89,38 +109,37 @@ func (t *TECDSA) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
-	err = t.EthereumChain.SubmitKeepPublicKey(
-		keepAddress,
-		serializedPublicKey,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to submit public key: [%v]", err)
-	}
+	// TODO: Temp solution only the first member in the group publishes.
+	// We need to replace it with proper publisher selection.
+	if memberID == groupMemberIDs[0] {
+		err = t.ethereumChain.SubmitKeepPublicKey(
+			keepAddress,
+			serializedPublicKey,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to submit public key: [%v]", err)
 
-	logger.Debugf(
-		"submitted public key to the keep [%s]: [%x]",
-		keepAddress.String(),
-		serializedPublicKey,
-	)
+		}
+
+		logger.Debugf(
+			"submitted public key to the keep [%s]: [%x]",
+			keepAddress.String(),
+			serializedPublicKey,
+		)
+	}
 
 	return signer, nil
 }
 
-func generateSigner() (*ecdsa.Signer, error) {
-	privateKey, err := ecdsa.GenerateKey(crand.Reader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate private key: [%v]", err)
-	}
-
-	return ecdsa.NewSigner(privateKey), nil
-}
-
 func (t *TECDSA) calculateSignatureForKeep(
 	keepAddress eth.KeepAddress,
-	signer *ecdsa.Signer,
+	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) error {
-	signature, err := signer.CalculateSignature(crand.Reader, digest[:])
+	signature, err := signer.CalculateSignature(digest[:], t.networkProvider)
+	if err != nil {
+		return fmt.Errorf("failed to calculate signature: [%v]", err)
+	}
 
 	logger.Debugf(
 		"signature calculated:\nr: [%#x]\ns: [%#x]\nrecovery ID: [%d]\n",
@@ -129,7 +148,7 @@ func (t *TECDSA) calculateSignatureForKeep(
 		signature.RecoveryID,
 	)
 
-	err = t.EthereumChain.SubmitSignature(keepAddress, digest, signature)
+	err = t.ethereumChain.SubmitSignature(keepAddress, digest, signature)
 	if err != nil {
 		return fmt.Errorf("failed to submit signature: [%v]", err)
 	}
