@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"math/big"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -68,10 +67,6 @@ func StartLocal(c *cli.Context) error {
 			operatorPrivateKey, operatorPublicKey,
 		)
 
-		transportID := new(big.Int).SetBytes(
-			[]byte(ethereumChain.Address().String()),
-		).String()
-
 		netErrChan := make(chan error)
 		go func() {
 			for {
@@ -80,7 +75,7 @@ func StartLocal(c *cli.Context) error {
 		}()
 
 		networkProvider := local.LocalProvider(
-			transportID,
+			ethereumChain.Address().String(),
 			networkPublicKey,
 			netErrChan,
 		)

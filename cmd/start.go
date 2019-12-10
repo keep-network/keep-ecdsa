@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"math/big"
 
 	"github.com/ipfs/go-log"
 	"github.com/urfave/cli"
@@ -64,10 +63,6 @@ func Start(c *cli.Context) error {
 		operatorPrivateKey, operatorPublicKey,
 	)
 
-	transportID := new(big.Int).SetBytes(
-		[]byte(ethereumChain.Address().String()),
-	).String()
-
 	netErrChan := make(chan error)
 	go func() {
 		for {
@@ -76,7 +71,7 @@ func Start(c *cli.Context) error {
 	}()
 
 	networkProvider := local.LocalProvider(
-		transportID,
+		ethereumChain.Address().String(),
 		networkPublicKey,
 		netErrChan,
 	)
