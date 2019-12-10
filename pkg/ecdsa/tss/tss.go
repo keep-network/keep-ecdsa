@@ -47,8 +47,11 @@ func GenerateThresholdSigner(
 	networkProvider net.Provider,
 	tssPreParams *keygen.LocalPreParams,
 ) (*ThresholdSigner, error) {
-	if len(groupMemberIDs) < 1 {
-		return nil, fmt.Errorf("group should have at least one member")
+	if len(groupMemberIDs) < 2 {
+		return nil, fmt.Errorf(
+			"group should have at least 2 members but got: [%d]",
+			len(groupMemberIDs),
+		)
 	}
 
 	if len(groupMemberIDs) <= int(dishonestThreshold) {
