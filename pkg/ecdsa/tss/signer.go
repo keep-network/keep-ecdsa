@@ -8,7 +8,7 @@ import (
 
 // ThresholdSigner is a threshold signer who completed key generation stage.
 type ThresholdSigner struct {
-	*GroupInfo
+	*groupInfo
 
 	// keygenData contains output of key generation stage. This data should be
 	// persisted to local storage.

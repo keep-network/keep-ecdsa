@@ -35,12 +35,12 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 // TSS protocol requires pre-parameters such as safe primes to be generated for
 // execution. The parameters should be generated prior to initializing the signer.
 func initializeKeyGeneration(
-	groupInfo *GroupInfo,
+	group *groupInfo,
 	tssPreParams *keygen.LocalPreParams,
 	network *networkBridge,
 ) (*member, error) {
 	keyGenParty, endChan, errChan, err := initializeKeyGenerationParty(
-		groupInfo,
+		group,
 		tssPreParams,
 		network,
 	)
@@ -50,7 +50,7 @@ func initializeKeyGeneration(
 	logger.Debugf("initialized key generation member: [%v]", keyGenParty.PartyID())
 
 	return &member{
-		GroupInfo:     groupInfo,
+		groupInfo:     group,
 		keygenParty:   keyGenParty,
 		keygenEndChan: endChan,
 		keygenErrChan: errChan,
@@ -61,7 +61,7 @@ func initializeKeyGeneration(
 // member represents an initialized member who is ready to start distributed key
 // generation.
 type member struct {
-	*GroupInfo
+	*groupInfo
 
 	networkBridge *networkBridge // network bridge used for messages transport
 
@@ -89,7 +89,7 @@ func (s *member) generateKey() (*ThresholdSigner, error) {
 		select {
 		case keygenData := <-s.keygenEndChan:
 			signer := &ThresholdSigner{
-				GroupInfo:  s.GroupInfo,
+				groupInfo:  s.groupInfo,
 				keygenData: keygenData,
 			}
 
@@ -136,7 +136,7 @@ func generatePartiesIDs(
 }
 
 func initializeKeyGenerationParty(
-	groupInfo *GroupInfo,
+	groupInfo *groupInfo,
 	tssPreParams *keygen.LocalPreParams,
 	bridge *networkBridge,
 ) (

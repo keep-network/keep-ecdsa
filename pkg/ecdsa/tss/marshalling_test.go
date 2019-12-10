@@ -26,7 +26,7 @@ func TestMarshalling(t *testing.T) {
 	}
 
 	signer := &ThresholdSigner{
-		GroupInfo: &GroupInfo{
+		groupInfo: &groupInfo{
 			groupID:            "test-group-id-1",
 			memberID:           groupMembersIDs[signerIndex],
 			groupMemberIDs:     groupMembersIDs,

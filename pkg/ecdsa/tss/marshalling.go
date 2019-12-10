@@ -7,7 +7,7 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
-// Marshal converts Signer to byte array.
+// Marshal converts ThresholdSigner to byte array.
 func (s *ThresholdSigner) Marshal() ([]byte, error) {
 	keygenData, err := json.Marshal(s.keygenData)
 	if err != nil {
@@ -20,7 +20,7 @@ func (s *ThresholdSigner) Marshal() ([]byte, error) {
 		groupMemberIDs[i] = string(memberID)
 	}
 
-	groupInfo := &pb.ThresholdSigner_GroupInfo{
+	group := &pb.ThresholdSigner_GroupInfo{
 		GroupID:            s.groupID,
 		MemberID:           string(s.memberID),
 		GroupMemberIDs:     groupMemberIDs,
@@ -28,12 +28,12 @@ func (s *ThresholdSigner) Marshal() ([]byte, error) {
 	}
 
 	return (&pb.ThresholdSigner{
-		GroupInfo:    groupInfo,
+		GroupInfo:    group,
 		ThresholdKey: keygenData,
 	}).Marshal()
 }
 
-// Unmarshal converts a byte array back to Signer.
+// Unmarshal converts a byte array back to ThresholdSigner.
 func (s *ThresholdSigner) Unmarshal(bytes []byte) error {
 	pbSigner := pb.ThresholdSigner{
 		GroupInfo: &pb.ThresholdSigner_GroupInfo{},
@@ -54,7 +54,7 @@ func (s *ThresholdSigner) Unmarshal(bytes []byte) error {
 		groupMemberIDs[i] = MemberID(memberID)
 	}
 
-	s.GroupInfo = &GroupInfo{
+	s.groupInfo = &groupInfo{
 		groupID:            pbGroupInfo.GetGroupID(),
 		memberID:           MemberID(pbGroupInfo.GetMemberID()),
 		groupMemberIDs:     groupMemberIDs,

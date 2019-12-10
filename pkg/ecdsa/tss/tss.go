@@ -59,7 +59,7 @@ func GenerateThresholdSigner(
 		)
 	}
 
-	groupInfo := &GroupInfo{
+	group := &groupInfo{
 		groupID:            groupID,
 		memberID:           memberID,
 		groupMemberIDs:     groupMemberIDs,
@@ -78,7 +78,7 @@ func GenerateThresholdSigner(
 	netBridge := newNetworkBridge(networkProvider)
 
 	keyGenSigner, err := initializeKeyGeneration(
-		groupInfo,
+		group,
 		tssPreParams,
 		netBridge,
 	)

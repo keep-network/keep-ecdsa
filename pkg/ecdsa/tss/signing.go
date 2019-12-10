@@ -27,7 +27,7 @@ func (s *ThresholdSigner) initializeSigning(
 	}
 
 	return &signingSigner{
-		GroupInfo:      s.GroupInfo,
+		groupInfo:      s.groupInfo,
 		networkBridge:  netBridge,
 		signingParty:   party,
 		signingEndChan: endChan,
@@ -38,7 +38,7 @@ func (s *ThresholdSigner) initializeSigning(
 // signingSigner represents Signer who initialized signing stage and is ready to
 // start signature calculation.
 type signingSigner struct {
-	*GroupInfo
+	*groupInfo
 
 	networkBridge *networkBridge
 	// Signing
@@ -91,13 +91,13 @@ func (s *ThresholdSigner) initializeSigningParty(
 	chan error,
 	error,
 ) {
-	tssMessageChan := make(chan tss.Message, len(s.GroupInfo.groupMemberIDs))
+	tssMessageChan := make(chan tss.Message, len(s.groupMemberIDs))
 	endChan := make(chan signing.SignatureData)
 	errChan := make(chan error)
 
 	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(
-		s.GroupInfo.memberID,
-		s.GroupInfo.groupMemberIDs,
+		s.memberID,
+		s.groupMemberIDs,
 	)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
@@ -107,7 +107,7 @@ func (s *ThresholdSigner) initializeSigningParty(
 		tss.NewPeerContext(tss.SortPartyIDs(groupPartiesIDs)),
 		currentPartyID,
 		len(groupPartiesIDs),
-		s.GroupInfo.dishonestThreshold,
+		s.dishonestThreshold,
 	)
 
 	party := signing.NewLocalParty(
@@ -119,7 +119,7 @@ func (s *ThresholdSigner) initializeSigningParty(
 	)
 
 	if err := netBridge.connect(
-		s.GroupInfo.groupID,
+		s.groupID,
 		party,
 		params,
 		tssMessageChan,
