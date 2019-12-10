@@ -5,7 +5,7 @@ import (
 )
 
 // TODO: This are temporary aliases which should be removed after we integrate
-// this package info keep-core `net` package
+// this package into keep-core `net` package
 type TransportIdentifier = coreNet.TransportIdentifier
 type Message = coreNet.Message
 type TaggedMarshaler = coreNet.TaggedMarshaler
