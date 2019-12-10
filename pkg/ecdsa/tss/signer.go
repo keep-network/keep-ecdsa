@@ -6,8 +6,8 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
-// Signer is a threshold signer who completed key generation stage.
-type Signer struct {
+// ThresholdSigner is a threshold signer who completed key generation stage.
+type ThresholdSigner struct {
 	*GroupInfo
 
 	// keygenData contains output of key generation stage. This data should be
@@ -16,7 +16,7 @@ type Signer struct {
 }
 
 // PublicKey returns Signer's ECDSA public key.
-func (s *Signer) PublicKey() *ecdsa.PublicKey {
+func (s *ThresholdSigner) PublicKey() *ecdsa.PublicKey {
 	pkX, pkY := s.keygenData.ECDSAPub.X(), s.keygenData.ECDSAPub.Y()
 
 	curve := tssLib.EC()

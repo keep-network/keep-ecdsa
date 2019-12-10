@@ -49,7 +49,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 	// Key generation.
 	signersMutex := sync.Mutex{}
-	signers := make(map[MemberID]*Signer)
+	signers := make(map[MemberID]*ThresholdSigner)
 
 	keyGenDone := make(chan interface{})
 	KeyGenSync.Add(groupSize) // TODO: Temp Sync
@@ -143,7 +143,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		signingWait.Add(groupSize)
 
 		for memberID, signer := range signers {
-			go func(memberID MemberID, signer *Signer) {
+			go func(memberID MemberID, signer *ThresholdSigner) {
 				signingErrChan := make(chan error)
 
 				go func() {

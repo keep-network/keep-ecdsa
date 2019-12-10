@@ -83,7 +83,7 @@ type member struct {
 // needs to be executed only after all members finished the initialization stage.
 // As a result it will return a Signer who has completed key generation, or error
 // if the key generation failed.
-func (s *member) generateKey() (*Signer, error) {
+func (s *member) generateKey() (*ThresholdSigner, error) {
 	defer s.networkBridge.close()
 
 	if err := s.keygenParty.Start(); err != nil {
@@ -96,7 +96,7 @@ func (s *member) generateKey() (*Signer, error) {
 	for {
 		select {
 		case keygenData := <-s.keygenEndChan:
-			signer := &Signer{
+			signer := &ThresholdSigner{
 				GroupInfo:  s.GroupInfo,
 				keygenData: keygenData,
 			}

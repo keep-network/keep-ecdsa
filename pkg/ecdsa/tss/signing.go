@@ -12,7 +12,7 @@ import (
 
 // initializeSigning initializes a member to run a threshold multi-party signature
 // calculation protocol. Signature will be calculated for provided digest.
-func (s *Signer) initializeSigning(
+func (s *ThresholdSigner) initializeSigning(
 	digest []byte,
 	netBridge *networkBridge,
 ) (*signingSigner, error) {
@@ -82,7 +82,7 @@ func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 	}
 }
 
-func (s *Signer) initializeSigningParty(
+func (s *ThresholdSigner) initializeSigningParty(
 	digest *big.Int,
 	netBridge *networkBridge,
 ) (

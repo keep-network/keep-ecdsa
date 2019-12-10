@@ -46,7 +46,7 @@ func GenerateThresholdSigner(
 	dishonestThreshold uint,
 	networkProvider net.Provider,
 	tssPreParams *keygen.LocalPreParams,
-) (*Signer, error) {
+) (*ThresholdSigner, error) {
 	if tssPreParams == nil {
 		logger.Info("tss pre-params were not provided, generating them now")
 		params, err := GenerateTSSPreParams()
@@ -94,7 +94,7 @@ func GenerateThresholdSigner(
 // CalculateSignature executes a threshold multi-party signature calculation
 // protocol for the given digest. As a result the calculated ECDSA signature will
 // be returned or an error, if the signature generation failed.
-func (s *Signer) CalculateSignature(
+func (s *ThresholdSigner) CalculateSignature(
 	digest []byte,
 	networkProvider net.Provider,
 ) (*ecdsa.Signature, error) {
