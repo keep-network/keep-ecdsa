@@ -20,7 +20,9 @@ import (
 // subcommand.
 var StartLocalCommand cli.Command
 
-const startLocalDescription = `Starts the Keep tECDSA client in the foreground in local signer mode.`
+const startLocalDescription = `Starts three Keep tECDSA client in the foreground in 
+local signer mode. It requires three config files named 'config_1.toml', 'config_2.toml', 
+'config_3.toml' for each client to be provided in 'configs' directory.`
 
 func init() {
 	StartLocalCommand = cli.Command{
