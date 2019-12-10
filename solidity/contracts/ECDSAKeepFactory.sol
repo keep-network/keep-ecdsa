@@ -69,14 +69,18 @@ contract ECDSAKeepFactory {
     ) internal view returns (address payable[] memory members){
         require(memberCandidates.length > 0, 'keep member candidates list is empty');
 
-        _groupSize;
-
-        members = new address payable[](1);
+         members = new address payable[](_groupSize);
 
         // TODO: Use the random beacon for randomness.
-        uint memberIndex = uint256(keccak256(abi.encodePacked(block.timestamp)))
+        uint firstIndex = uint256(keccak256(abi.encodePacked(block.timestamp)))
             % memberCandidates.length;
 
-        members[0] = memberCandidates[memberIndex];
+        // TODO: Temporary solution until group selection protocol is implemented.
+        uint nextIndex = firstIndex;
+        for (uint i = 0; i < _groupSize; i++) {
+            members[i] = memberCandidates[nextIndex];
+            nextIndex++;
+            nextIndex = nextIndex % memberCandidates.length;
+        }
     }
 }
