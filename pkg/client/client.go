@@ -69,7 +69,14 @@ func Initialize(
 			logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
 
 			// Store the signer in a map, with the keep address as a key.
-			keepsRegistry.RegisterSigner(event.KeepAddress, signer)
+			err = keepsRegistry.RegisterSigner(event.KeepAddress, signer)
+			if err != nil {
+				logger.Errorf(
+					"failed to register threshold signer for keep [%s]: [%v]",
+					event.KeepAddress,
+					err,
+				)
+			}
 
 			tecdsa.RegisterForSignEvents(event.KeepAddress, signer)
 		}
