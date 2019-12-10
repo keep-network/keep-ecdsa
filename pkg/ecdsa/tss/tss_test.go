@@ -16,6 +16,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/net"
 	"github.com/keep-network/keep-tecdsa/pkg/net/local"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/testutils"
 )
@@ -24,7 +25,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 
 	groupSize := 5
-	dishonestThreshold := groupSize - 1
+	dishonestThreshold := uint(groupSize - 1)
 	groupID := fmt.Sprintf("tss-test-%d", rand.Int())
 
 	err := log.SetLogLevel("*", "INFO")
@@ -44,66 +45,47 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Fatalf("failed to load test data: [%v]", err)
 	}
 
-	networkBridges := make(map[MemberID]*NetworkBridge, groupSize)
-
-	// Members initialization.
-	members := make(map[MemberID]*Member)
-
-	for i, memberID := range groupMemberIDs {
-		groupInfo := &GroupInfo{
-			groupID:        groupID,
-			memberID:       memberID,
-			groupMemberIDs: groupMemberIDs,
-		}
-
-		network, err := newTestBridge(memberID, groupMembersKeys, errChan)
-		if err != nil {
-			t.Fatalf("failed to create network provider: [%v]", err)
-		}
-
-		networkBridges[memberID] = network
-
-		preParams := testData[i].LocalPreParams
-
-		member, err := InitializeKeyGeneration(
-			groupInfo,
-			dishonestThreshold,
-			&preParams,
-			network,
-		)
-		if err != nil {
-			t.Fatalf("failed to initialize member: [%v]", err)
-		}
-
-		members[memberID] = member
-	}
+	networkProviders := &sync.Map{} // < MemberID, net.Provider >
 
 	// Key generation.
 	signersMutex := sync.Mutex{}
-	signers := make(map[MemberID]*Signer)
+	signers := make(map[MemberID]*ThresholdSigner)
 
 	keyGenDone := make(chan interface{})
+	KeyGenSync.Add(groupSize) // TODO: Temp Sync
 
 	go func() {
 		var keyGenWait sync.WaitGroup
 		keyGenWait.Add(groupSize)
 
-		for memberID, member := range members {
-			go func(memberID MemberID, member *Member) {
+		for i, memberID := range groupMemberIDs {
+			go func(memberID MemberID) {
+				keygenErrChan := make(chan error)
 				go func() {
 					for {
 						select {
-						case err := <-member.keygenErrChan:
+						case err := <-keygenErrChan:
 							errChan <- err
 							return
 						}
 					}
 				}()
 
-				signer, err := member.GenerateKey()
+				network := newTestNetProvider(memberID, groupMembersKeys, keygenErrChan)
+				networkProviders.Store(memberID, network)
+
+				preParams := testData[i].LocalPreParams
+
+				signer, err := GenerateThresholdSigner(
+					groupID,
+					memberID,
+					groupMemberIDs,
+					dishonestThreshold,
+					network,
+					&preParams,
+				)
 				if err != nil {
-					errChan <- fmt.Errorf("failed to generate key: [%v]", err)
-					return
+					keygenErrChan <- fmt.Errorf("failed to generate signer: [%v]", err)
 				}
 
 				signersMutex.Lock()
@@ -111,7 +93,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				signersMutex.Unlock()
 
 				keyGenWait.Done()
-			}(memberID, member)
+			}(memberID)
 		}
 
 		keyGenWait.Wait()
@@ -145,50 +127,46 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		}
 	}
 
-	// Signing initialization.
+	// Signing.
 	message := []byte("message to sign")
 	digest := sha256.Sum256(message)
 
-	signingSigners := make(map[MemberID]*SigningSigner)
-
-	var initSigningWait sync.WaitGroup
-	initSigningWait.Add(len(groupMembersKeys))
-
-	for memberID, signer := range signers {
-		signingSigner, err := signer.InitializeSigning(
-			digest[:],
-			networkBridges[memberID],
-		)
-		if err != nil {
-			t.Fatalf("failed to initialize signer: [%v]", err)
-		}
-
-		signingSigners[memberID] = signingSigner
-	}
-
-	// Signing.
 	signatureMutex := sync.Mutex{}
 	signatures := make(map[MemberID]*ecdsa.Signature)
 
 	signingDone := make(chan interface{})
 
+	SigningSync.Add(groupSize) // TODO: Temp Sync
+
 	go func() {
 		var signingWait sync.WaitGroup
 		signingWait.Add(groupSize)
 
-		for memberID, signingSigner := range signingSigners {
-			go func(memberID MemberID, signingSigner *SigningSigner) {
+		for memberID, signer := range signers {
+			go func(memberID MemberID, signer *ThresholdSigner) {
+				signingErrChan := make(chan error)
+
 				go func() {
 					for {
 						select {
-						case err := <-signingSigner.signingErrChan:
+						case err := <-signingErrChan:
 							errChan <- err
 							return
 						}
 					}
 				}()
 
-				signature, err := signingSigner.Sign()
+				value, loaded := networkProviders.Load(memberID)
+				if !loaded {
+					errChan <- fmt.Errorf("failed to load network provider")
+					return
+				}
+				networkProvider := value.(net.Provider)
+
+				signature, err := signer.CalculateSignature(
+					digest[:],
+					networkProvider,
+				)
 				if err != nil {
 					errChan <- fmt.Errorf("failed to sign: [%v]", err)
 					return
@@ -199,7 +177,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				signatureMutex.Unlock()
 
 				signingWait.Done()
-			}(memberID, signingSigner)
+			}(memberID, signer)
 		}
 
 		signingWait.Wait()
@@ -260,18 +238,14 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[MemberID]*key.NetworkPub
 	return memberIDs, groupMembersKeys, nil
 }
 
-func newTestBridge(
+func newTestNetProvider(
 	memberID MemberID,
 	membersNetworkKeys map[MemberID]*key.NetworkPublic,
 	errChan chan error,
-) (*NetworkBridge, error) {
-	provider := local.LocalProvider(
+) net.Provider {
+	return local.LocalProvider(
 		memberID.bigInt().String(),
 		membersNetworkKeys[memberID],
 		errChan,
 	)
-
-	bridge := NewNetworkBridge(provider)
-
-	return bridge, nil
 }

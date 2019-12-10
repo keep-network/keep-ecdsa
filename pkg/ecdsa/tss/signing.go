@@ -5,41 +5,42 @@ import (
 	"math/big"
 
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
+	"github.com/binance-chain/tss-lib/tss"
 	tssLib "github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
-// InitializeSigning initializes a member to run a threshold multi-party signature
+// initializeSigning initializes a member to run a threshold multi-party signature
 // calculation protocol. Signature will be calculated for provided digest.
-func (s *Signer) InitializeSigning(
+func (s *ThresholdSigner) initializeSigning(
 	digest []byte,
-	networkBridge *NetworkBridge,
-) (*SigningSigner, error) {
+	netBridge *networkBridge,
+) (*signingSigner, error) {
 	digestInt := new(big.Int).SetBytes(digest)
 
 	party, endChan, errChan, err := s.initializeSigningParty(
 		digestInt,
-		networkBridge,
+		netBridge,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize signing party: [%v]", err)
 	}
 
-	return &SigningSigner{
-		GroupInfo:      s.GroupInfo,
-		networkBridge:  networkBridge,
+	return &signingSigner{
+		groupInfo:      s.groupInfo,
+		networkBridge:  netBridge,
 		signingParty:   party,
 		signingEndChan: endChan,
 		signingErrChan: errChan,
 	}, nil
 }
 
-// SigningSigner represents Signer who initialized signing stage and is ready to
+// signingSigner represents Signer who initialized signing stage and is ready to
 // start signature calculation.
-type SigningSigner struct {
-	GroupInfo
+type signingSigner struct {
+	*groupInfo
 
-	networkBridge *NetworkBridge
+	networkBridge *networkBridge
 	// Signing
 	signingParty tssLib.Party
 	// Channels where results of the signing protocol execution will be written to.
@@ -47,11 +48,11 @@ type SigningSigner struct {
 	signingErrChan <-chan error                 // error from a failed execution
 }
 
-// Sign executes the protocol to calculate a signature. This function needs to be
+// sign executes the protocol to calculate a signature. This function needs to be
 // executed only after all members finished the initialization stage. As a result
-// the calculated ECDSA signature will be returned or error, if the signature
+// the calculated ECDSA signature will be returned or an error, if the signature
 // generation failed.
-func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
+func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 	defer s.networkBridge.close()
 
 	if s.signingParty == nil {
@@ -81,25 +82,46 @@ func (s *SigningSigner) Sign() (*ecdsa.Signature, error) {
 	}
 }
 
-func (s *Signer) initializeSigningParty(
+func (s *ThresholdSigner) initializeSigningParty(
 	digest *big.Int,
-	networkBridge *NetworkBridge,
+	netBridge *networkBridge,
 ) (
 	tssLib.Party,
 	<-chan signing.SignatureData,
 	chan error,
 	error,
 ) {
-	tssMessageChan := make(chan tssLib.Message, s.tssParameters.PartyCount())
+	tssMessageChan := make(chan tss.Message, len(s.groupMemberIDs))
 	endChan := make(chan signing.SignatureData)
 	errChan := make(chan error)
 
-	party := signing.NewLocalParty(digest, s.tssParameters, s.keygenData, tssMessageChan, endChan)
+	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(
+		s.memberID,
+		s.groupMemberIDs,
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
+	}
 
-	if err := networkBridge.connect(
-		s.GroupInfo.groupID,
+	params := tss.NewParameters(
+		tss.NewPeerContext(tss.SortPartyIDs(groupPartiesIDs)),
+		currentPartyID,
+		len(groupPartiesIDs),
+		s.dishonestThreshold,
+	)
+
+	party := signing.NewLocalParty(
+		digest,
+		params,
+		s.keygenData,
+		tssMessageChan,
+		endChan,
+	)
+
+	if err := netBridge.connect(
+		s.groupID,
 		party,
-		s.tssParameters,
+		params,
 		tssMessageChan,
 		errChan,
 	); err != nil {
