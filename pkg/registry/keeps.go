@@ -100,12 +100,12 @@ func (g *Keeps) LoadExistingKeeps() {
 
 // ForEachKeep executes callback function for every entry in keeps' registry.
 func (g *Keeps) ForEachKeep(
-	callback func(keepAddress common.Address, signer *tss.ThresholdSigner),
+	callback func(keepAddress common.Address, signer []*tss.ThresholdSigner),
 ) {
 	g.myKeeps.Range(func(key, value interface{}) bool {
 		keepAddress := common.HexToAddress(key.(string))
 
-		callback(keepAddress, value.(*tss.ThresholdSigner))
+		callback(keepAddress, value.([]*tss.ThresholdSigner))
 
 		return true
 	})

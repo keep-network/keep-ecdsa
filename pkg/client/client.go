@@ -29,12 +29,14 @@ func Initialize(
 	keepsRegistry.LoadExistingKeeps()
 
 	keepsRegistry.ForEachKeep(
-		func(keepAddress common.Address, signer *ecdsa.Signer) {
-			tecdsa.RegisterForSignEvents(keepAddress, signer)
-			logger.Debugf(
-				"signer registered for events from keep: [%s]",
-				keepAddress.String(),
-			)
+		func(keepAddress common.Address, signer []*tss.ThresholdSigner) {
+			for _, signer := range signer {
+				tecdsa.RegisterForSignEvents(keepAddress, signer)
+				logger.Debugf(
+					"signer registered for events from keep: [%s]",
+					keepAddress.String(),
+				)
+			}
 		},
 	)
 
