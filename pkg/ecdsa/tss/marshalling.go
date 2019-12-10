@@ -20,29 +20,29 @@ func (s *ThresholdSigner) Marshal() ([]byte, error) {
 		groupMemberIDs[i] = string(memberID)
 	}
 
-	groupInfo := &pb.Signer_GroupInfo{
+	groupInfo := &pb.ThresholdSigner_GroupInfo{
 		GroupID:            s.groupID,
 		MemberID:           string(s.memberID),
 		GroupMemberIDs:     groupMemberIDs,
 		DishonestThreshold: int32(s.dishonestThreshold),
 	}
 
-	return (&pb.Signer{
-		GroupInfo:  groupInfo,
-		KeygenData: keygenData,
+	return (&pb.ThresholdSigner{
+		GroupInfo:    groupInfo,
+		ThresholdKey: keygenData,
 	}).Marshal()
 }
 
 // Unmarshal converts a byte array back to Signer.
 func (s *ThresholdSigner) Unmarshal(bytes []byte) error {
-	pbSigner := pb.Signer{
-		GroupInfo: &pb.Signer_GroupInfo{},
+	pbSigner := pb.ThresholdSigner{
+		GroupInfo: &pb.ThresholdSigner_GroupInfo{},
 	}
 	if err := pbSigner.Unmarshal(bytes); err != nil {
 		return fmt.Errorf("failed to unmarshal signer: [%v]", err)
 	}
 
-	if err := json.Unmarshal(pbSigner.GetKeygenData(), &s.keygenData); err != nil {
+	if err := json.Unmarshal(pbSigner.GetThresholdKey(), &s.keygenData); err != nil {
 		return fmt.Errorf("failed to unmarshal key data: [%v]", err)
 	}
 
