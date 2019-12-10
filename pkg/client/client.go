@@ -17,6 +17,7 @@ var logger = log.Logger("keep-tecdsa")
 // Initialize initializes the tECDSA client with rules related to events handling.
 func Initialize(
 	ethereumChain eth.Handle,
+	networkProvider net.Provider,
 	persistence persistence.Handle,
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
