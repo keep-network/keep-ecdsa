@@ -56,6 +56,7 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		cmd.StartCommand,
+		cmd.StartLocalCommand,
 	}
 
 	err = app.Run(os.Args)
