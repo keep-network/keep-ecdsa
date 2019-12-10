@@ -11,7 +11,8 @@ import (
 
 // Keeps represents a collection of keeps in which the given client is a member.
 type Keeps struct {
-	myKeeps sync.Map // <keepAddress, signer>
+	myKeepsMutex *sync.Mutex
+	myKeeps      sync.Map // <keepAddress, []signer>
 
 	storage storage
 }
@@ -19,7 +20,8 @@ type Keeps struct {
 // NewKeepsRegistry returns an empty keeps registry.
 func NewKeepsRegistry(persistence persistence.Handle) *Keeps {
 	return &Keeps{
-		storage: newStorage(persistence),
+		myKeepsMutex: &sync.Mutex{},
+		storage:      newStorage(persistence),
 	}
 }
 
@@ -34,18 +36,18 @@ func (g *Keeps) RegisterSigner(
 		return fmt.Errorf("could not persist signer to the storage: [%v]", err)
 	}
 
-	g.myKeeps.Store(keepAddress.String(), signer)
+	g.storeSigner(keepAddress, signer)
 
 	return nil
 }
 
-// GetSigner gets a signer by a keep address.
-func (g *Keeps) GetSigner(keepAddress common.Address) (*tss.ThresholdSigner, error) {
-	signer, ok := g.myKeeps.Load(keepAddress.String())
+// GetSigners gets signers by a keep address.
+func (g *Keeps) GetSigners(keepAddress common.Address) ([]*tss.ThresholdSigner, error) {
+	signers, ok := g.myKeeps.Load(keepAddress.String())
 	if !ok {
-		return nil, fmt.Errorf("could not find signer: [%s]", keepAddress.String())
+		return nil, fmt.Errorf("could not find signers for keep: [%s]", keepAddress.String())
 	}
-	return signer.(*tss.ThresholdSigner), nil
+	return signers.([]*tss.ThresholdSigner), nil
 }
 
 // GetKeepsAddresses returns addresses of all registered keeps.
@@ -77,7 +79,7 @@ func (g *Keeps) LoadExistingKeeps() {
 
 	go func() {
 		for keepSigner := range keepSignersChannel {
-			g.myKeeps.Store(keepSigner.keepAddress.String(), keepSigner.signer)
+			g.storeSigner(keepSigner.keepAddress, keepSigner.signer)
 		}
 
 		wg.Done()
@@ -98,12 +100,12 @@ func (g *Keeps) LoadExistingKeeps() {
 
 // ForEachKeep executes callback function for every entry in keeps' registry.
 func (g *Keeps) ForEachKeep(
-	callback func(keepAddress common.Address, signer **tss.ThresholdSigner),
+	callback func(keepAddress common.Address, signer *tss.ThresholdSigner),
 ) {
 	g.myKeeps.Range(func(key, value interface{}) bool {
 		keepAddress := common.HexToAddress(key.(string))
 
-		callback(keepAddress, value.(**tss.ThresholdSigner))
+		callback(keepAddress, value.(*tss.ThresholdSigner))
 
 		return true
 	})
@@ -111,11 +113,31 @@ func (g *Keeps) ForEachKeep(
 
 func (g *Keeps) printSigners() {
 	g.myKeeps.Range(func(key, value interface{}) bool {
-		logger.Infof(
-			"signer for keep [%s] was loaded with public key: [%x]",
-			key,
-			value.(*tss.ThresholdSigner).PublicKey().Marshal(),
-		)
+		for _, signer := range value.([]*tss.ThresholdSigner) {
+			logger.Infof(
+				"signer for keep [%s] was loaded with public key: [%x]",
+				key,
+				signer.PublicKey().Marshal(),
+			)
+		}
 		return true
 	})
+}
+
+func (g *Keeps) storeSigner(
+	keepAddress common.Address,
+	signer *tss.ThresholdSigner,
+) {
+	g.myKeepsMutex.Lock()
+
+	var signers []*tss.ThresholdSigner
+	if value, exists := g.myKeeps.Load(keepAddress.String()); exists {
+		signers = value.([]*tss.ThresholdSigner)
+	}
+
+	signers = append(signers, signer)
+
+	g.myKeeps.Store(keepAddress.String(), signers)
+
+	g.myKeepsMutex.Unlock()
 }
