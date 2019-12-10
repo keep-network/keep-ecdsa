@@ -275,7 +275,6 @@ func newTestSigner(memberIndex int) (*tss.ThresholdSigner, error) {
 		MemberID:           groupMemberIDs[memberIndex],
 		GroupMemberIDs:     groupMemberIDs,
 		DishonestThreshold: 3,
-		MemberIndex:        uint32(memberIndex),
 	}
 	pbSigner := &pb.ThresholdSigner{
 		GroupInfo:    pbGroup,
