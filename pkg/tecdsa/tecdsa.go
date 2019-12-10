@@ -2,14 +2,17 @@
 package tecdsa
 
 import (
-	crand "crypto/rand"
 	"fmt"
+	"sync"
+	"time"
 
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
 var logger = log.Logger("keep-tecdsa")
@@ -54,6 +57,10 @@ func (t *TECDSA) RegisterForSignEvents(
 				signatureRequestedEvent.Digest,
 			)
 
+			// TODO: Temp Sync
+			tss.SigningSync.Add(1)
+			time.Sleep(1 * time.Second)
+
 			go func() {
 				err := t.calculateSignatureForKeep(
 					keepAddress,
@@ -75,6 +82,10 @@ func (t *TECDSA) GenerateSignerForKeep(
 	keepAddress eth.KeepAddress,
 	keepMembers []common.Address,
 ) (*tss.ThresholdSigner, error) {
+	// TODO: Temp Sync
+	tss.KeyGenSync.Add(1)
+	time.Sleep(2 * time.Second)
+
 	groupMemberIDs := []tss.MemberID{}
 	for _, member := range keepMembers {
 		groupMemberIDs = append(
