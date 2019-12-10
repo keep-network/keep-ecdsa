@@ -17,6 +17,9 @@ module.exports = async function () {
     let keep
     let keepPublicKey
 
+    const groupSize = 3
+    const threshold = 3
+
     try {
         keepRegistry = await KeepRegistry.deployed()
         keepFactory = await ECDSAKeepFactory.deployed()
@@ -35,8 +38,8 @@ module.exports = async function () {
         const keepVendorAddress = await keepRegistry.getVendor.call("ECDSAKeep")
         const keepVendor = await ECDSAKeepVendor.at(keepVendorAddress)
         await keepVendor.openKeep(
-            10,
-            5,
+            groupSize,
+            threshold,
             keepOwner
         )
 
