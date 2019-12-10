@@ -79,7 +79,7 @@ type unicastChannel struct {
 	senderPublicKey *key.NetworkPublic
 
 	messageHandlersMutex sync.Mutex
-	messageHandlers      sync.Map // <string, net.HandleMessageFunc>
+	messageHandlers      sync.Map // <string, []net.HandleMessageFunc>
 	unmarshalersByType   sync.Map // <string, net.TaggedUnmarshaler>
 
 	errChan chan error
@@ -104,12 +104,15 @@ func (uc *unicastChannel) Recv(handler net.HandleMessageFunc) (err error) {
 	uc.messageHandlersMutex.Lock()
 	defer uc.messageHandlersMutex.Unlock()
 
-	_, exists := uc.messageHandlers.Load(handler.Type)
-	if exists {
-		err = fmt.Errorf("handler already registered with type: [%v]", handler.Type)
-	} else {
-		uc.messageHandlers.Store(handler.Type, handler)
+	var handlers []*net.HandleMessageFunc
+
+	if value, exists := uc.messageHandlers.Load(handler.Type); exists {
+		handlers = value.([]*net.HandleMessageFunc)
 	}
+
+	handlers = append(handlers, &handler)
+
+	uc.messageHandlers.Store(handler.Type, handlers)
 
 	return
 }
@@ -193,14 +196,16 @@ func (uc *unicastChannel) deliver(
 	)
 
 	uc.messageHandlers.Range(func(key, value interface{}) bool {
-		handler := value.(net.HandleMessageFunc)
+		handlers := value.([]*net.HandleMessageFunc)
 
-		go func() {
-			err := handler.Handler(message)
-			if err != nil {
-				errChan <- fmt.Errorf("failed to handle message: [%v]", err)
-			}
-		}()
+		for _, handler := range handlers {
+			go func(handler *net.HandleMessageFunc) {
+				err := handler.Handler(message)
+				if err != nil {
+					errChan <- fmt.Errorf("failed to handle message: [%v]", err)
+				}
+			}(handler)
+		}
 
 		return true
 	})
