@@ -120,20 +120,17 @@ func (g *Keeps) printSigners() {
 	g.myKeepsMutex.RLock()
 	defer g.myKeepsMutex.RUnlock()
 
+	logger.Infof(
+		"loaded [%s] keeps from the local storage",
+		len(g.myKeeps),
+	)
+
 	for keepAddress, signers := range g.myKeeps {
-		logger.Infof(
+		logger.Debugf(
 			"loaded [%d] signers for keep [%s]",
 			len(signers),
 			keepAddress,
 		)
-
-		for _, signer := range signers {
-			logger.Debugf(
-				"signer for keep [%s] was loaded with public key: [%x]",
-				keepAddress,
-				signer.PublicKey().Marshal(),
-			)
-		}
 	}
 }
 
