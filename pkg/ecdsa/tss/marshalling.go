@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
+	"github.com/keep-network/keep-tecdsa/pkg/registry/gen/pb"
 )
 
 // Marshal converts ThresholdSigner to byte array.

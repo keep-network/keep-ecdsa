@@ -6,12 +6,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 )
 
 // Keeps represents a collection of keeps in which the given client is a member.
 type Keeps struct {
-	myKeeps sync.Map // <keepAddress, signer>
+	myKeepsMutex *sync.RWMutex
+	myKeeps      map[eth.KeepAddress][]*tss.ThresholdSigner
 
 	storage storage
 }
@@ -19,7 +21,9 @@ type Keeps struct {
 // NewKeepsRegistry returns an empty keeps registry.
 func NewKeepsRegistry(persistence persistence.Handle) *Keeps {
 	return &Keeps{
-		storage: newStorage(persistence),
+		myKeepsMutex: &sync.RWMutex{},
+		myKeeps:      make(map[eth.KeepAddress][]*tss.ThresholdSigner),
+		storage:      newStorage(persistence),
 	}
 }
 
@@ -27,36 +31,40 @@ func NewKeepsRegistry(persistence persistence.Handle) *Keeps {
 // keep.
 func (g *Keeps) RegisterSigner(
 	keepAddress common.Address,
-	signer *ecdsa.Signer,
+	signer *tss.ThresholdSigner,
 ) error {
 	err := g.storage.save(keepAddress, signer)
 	if err != nil {
 		return fmt.Errorf("could not persist signer to the storage: [%v]", err)
 	}
 
-	g.myKeeps.Store(keepAddress.String(), signer)
+	g.storeSigner(keepAddress, signer)
 
 	return nil
 }
 
-// GetSigner gets a signer by a keep address.
-func (g *Keeps) GetSigner(keepAddress common.Address) (*ecdsa.Signer, error) {
-	signer, ok := g.myKeeps.Load(keepAddress.String())
+// GetSigners gets signers by a keep address.
+func (g *Keeps) GetSigners(keepAddress common.Address) ([]*tss.ThresholdSigner, error) {
+	g.myKeepsMutex.RLock()
+	defer g.myKeepsMutex.RUnlock()
+
+	signers, ok := g.myKeeps[keepAddress]
 	if !ok {
-		return nil, fmt.Errorf("could not find signer: [%s]", keepAddress.String())
+		return nil, fmt.Errorf("could not find signers for keep: [%s]", keepAddress.String())
 	}
-	return signer.(*ecdsa.Signer), nil
+	return signers, nil
 }
 
 // GetKeepsAddresses returns addresses of all registered keeps.
 func (g *Keeps) GetKeepsAddresses() []common.Address {
+	g.myKeepsMutex.RLock()
+	defer g.myKeepsMutex.RUnlock()
+
 	keepsAddresses := make([]common.Address, 0)
 
-	g.myKeeps.Range(func(key, value interface{}) bool {
-		keepAddress := common.HexToAddress(key.(string))
+	for keepAddress := range g.myKeeps {
 		keepsAddresses = append(keepsAddresses, keepAddress)
-		return true
-	})
+	}
 
 	return keepsAddresses
 }
@@ -77,7 +85,7 @@ func (g *Keeps) LoadExistingKeeps() {
 
 	go func() {
 		for keepSigner := range keepSignersChannel {
-			g.myKeeps.Store(keepSigner.keepAddress.String(), keepSigner.signer)
+			g.storeSigner(keepSigner.keepAddress, keepSigner.signer)
 		}
 
 		wg.Done()
@@ -98,24 +106,45 @@ func (g *Keeps) LoadExistingKeeps() {
 
 // ForEachKeep executes callback function for every entry in keeps' registry.
 func (g *Keeps) ForEachKeep(
-	callback func(keepAddress common.Address, signer *ecdsa.Signer),
+	callback func(keepAddress common.Address, signer []*tss.ThresholdSigner),
 ) {
-	g.myKeeps.Range(func(key, value interface{}) bool {
-		keepAddress := common.HexToAddress(key.(string))
+	g.myKeepsMutex.RLock()
+	defer g.myKeepsMutex.RUnlock()
 
-		callback(keepAddress, value.(*ecdsa.Signer))
-
-		return true
-	})
+	for keepAddress, signers := range g.myKeeps {
+		callback(keepAddress, signers)
+	}
 }
 
 func (g *Keeps) printSigners() {
-	g.myKeeps.Range(func(key, value interface{}) bool {
-		logger.Infof(
-			"signer for keep [%s] was loaded with public key: [%x]",
-			key,
-			value.(*ecdsa.Signer).PublicKey().Marshal(),
+	g.myKeepsMutex.RLock()
+	defer g.myKeepsMutex.RUnlock()
+
+	logger.Infof(
+		"loaded [%s] keeps from the local storage",
+		len(g.myKeeps),
+	)
+
+	for keepAddress, signers := range g.myKeeps {
+		logger.Debugf(
+			"loaded [%d] signers for keep [%s]",
+			len(signers),
+			keepAddress,
 		)
-		return true
-	})
+	}
+}
+
+func (g *Keeps) storeSigner(
+	keepAddress common.Address,
+	signer *tss.ThresholdSigner,
+) {
+	g.myKeepsMutex.Lock()
+	defer g.myKeepsMutex.Unlock()
+
+	signers, exists := g.myKeeps[keepAddress]
+	if exists {
+		g.myKeeps[keepAddress] = append(signers, signer)
+	} else {
+		g.myKeeps[keepAddress] = []*tss.ThresholdSigner{signer}
+	}
 }

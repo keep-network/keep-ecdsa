@@ -7,7 +7,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/registry"
 	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
 )
@@ -29,12 +29,14 @@ func Initialize(
 	keepsRegistry.LoadExistingKeeps()
 
 	keepsRegistry.ForEachKeep(
-		func(keepAddress common.Address, signer *ecdsa.Signer) {
-			tecdsa.RegisterForSignEvents(keepAddress, signer)
-			logger.Debugf(
-				"signer registered for events from keep: [%s]",
-				keepAddress.String(),
-			)
+		func(keepAddress common.Address, signer []*tss.ThresholdSigner) {
+			for _, signer := range signer {
+				tecdsa.RegisterForSignEvents(keepAddress, signer)
+				logger.Debugf(
+					"signer registered for events from keep: [%s]",
+					keepAddress.String(),
+				)
+			}
 		},
 	)
 
@@ -48,11 +50,7 @@ func Initialize(
 
 		if event.IsMember(ethereumChain.Address()) {
 			go func(keepAddress common.Address) {
-				signer, err := tecdsa.GenerateSignerForKeep(event.KeepAddress)
-				if err != nil {
-					logger.Errorf("signer generation failed: [%v]", err)
-					return
-				}
+				signer := &tss.ThresholdSigner{} // TODO: Integrate with threshold signer
 
 				logger.Infof("initialized signer for keep [%s]", keepAddress.String())
 

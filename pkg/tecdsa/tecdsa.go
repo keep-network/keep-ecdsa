@@ -9,6 +9,7 @@ import (
 
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 )
 
 var logger = log.Logger("keep-tecdsa")
@@ -22,7 +23,7 @@ type TECDSA struct {
 // specific keep contract.
 func (t *TECDSA) RegisterForSignEvents(
 	keepAddress eth.KeepAddress,
-	signer *ecdsa.Signer,
+	signer *tss.ThresholdSigner,
 ) {
 	t.EthereumChain.OnSignatureRequested(
 		keepAddress,
@@ -34,15 +35,16 @@ func (t *TECDSA) RegisterForSignEvents(
 			)
 
 			go func() {
-				err := t.calculateSignatureForKeep(
-					keepAddress,
-					signer,
-					signatureRequestedEvent.Digest,
-				)
+				// TODO: Replace it with Threshold Signer
+				// err := t.calculateSignatureForKeep(
+				// 	keepAddress,
+				// 	nil,
+				// 	signatureRequestedEvent.Digest,
+				// )
 
-				if err != nil {
-					logger.Errorf("signature calculation failed: [%v]", err)
-				}
+				// if err != nil {
+				// 	logger.Errorf("signature calculation failed: [%v]", err)
+				// }
 			}()
 		},
 	)
