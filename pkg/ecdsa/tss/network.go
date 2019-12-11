@@ -69,7 +69,9 @@ func (b *networkBridge) connect(
 
 func (b *networkBridge) initializeChannels(netInChan chan *TSSMessage) error {
 	handleMessageFunc := net.HandleMessageFunc{
-		Type: TSSmessageType,
+		// TODO: This will be set to group ID now, but we may want to add some
+		// session ID for concurrent execution.
+		Type: b.groupID,
 		Handler: func(msg net.Message) error {
 			switch tssMessage := msg.Payload().(type) {
 			case *TSSMessage:
@@ -236,7 +238,7 @@ func (b *networkBridge) close() error {
 }
 
 func (b *networkBridge) unregisterRecvs() error {
-	if err := b.broadcastChannel.UnregisterRecv(TSSmessageType); err != nil {
+	if err := b.broadcastChannel.UnregisterRecv(b.groupID); err != nil {
 		return fmt.Errorf(
 			"failed to unregister receive handler for broadcast channel: [%v]",
 			err,
@@ -244,7 +246,7 @@ func (b *networkBridge) unregisterRecvs() error {
 	}
 
 	for _, unicastChannel := range b.unicastChannels {
-		if err := unicastChannel.UnregisterRecv(TSSmessageType); err != nil {
+		if err := unicastChannel.UnregisterRecv(b.groupID); err != nil {
 			return fmt.Errorf(
 				"failed to unregister receive handler for unicast channel: [%v]",
 				err,
