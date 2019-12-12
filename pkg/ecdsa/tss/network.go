@@ -191,13 +191,13 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 
 	if routing.To == nil {
 		b.sendMessage(&MessageRouting{
-			ReceiverID: nil,
+			ReceiverID: "",
 			Message:    protocolMessage,
 		})
 	} else {
 		for _, destination := range routing.To {
 			b.sendMessage(&MessageRouting{
-				ReceiverID: destination.GetKey(),
+				ReceiverID: destination.GetId(),
 				Message:    protocolMessage,
 			})
 		}
@@ -205,7 +205,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 }
 
 func (b *networkBridge) sendMessage(msg *MessageRouting) error {
-	if msg.ReceiverID == nil {
+	if msg.ReceiverID == "" {
 		broadcastChannel, err := b.getBroadcastChannel()
 		if err != nil {
 			return fmt.Errorf("failed to find broadcast channel: [%v]", err)
@@ -216,7 +216,7 @@ func (b *networkBridge) sendMessage(msg *MessageRouting) error {
 			return fmt.Errorf("failed to send broadcast message: [%v]", err)
 		}
 	} else {
-		unicastChannel, err := b.getUnicastChannelWith(string(msg.ReceiverID))
+		unicastChannel, err := b.getUnicastChannelWith(msg.ReceiverID)
 		if err != nil {
 			return fmt.Errorf(
 				"[m:%x]: failed to find unicast channel for [%v]: [%v]",
