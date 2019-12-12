@@ -17,8 +17,8 @@ require (
 	github.com/ethereum/go-ethereum v1.9.7
 	github.com/gogo/protobuf v1.3.1
 	github.com/ipfs/go-log v0.0.1
-	github.com/keep-network/keep-common v0.1.1-0.20191125111950-b9621e71e096
-	github.com/keep-network/keep-core v0.6.1-0.20191125124131-866987d36eb5
+	github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e
+	github.com/keep-network/keep-core v0.6.1-0.20191212171027-d2436c6ca77e
 	github.com/pkg/errors v0.8.1
 	github.com/urfave/cli v0.0.0-00010101000000-000000000000
 )
