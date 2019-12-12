@@ -50,7 +50,7 @@ func newNetworkBridge(
 func (b *networkBridge) connect(
 	tssOutChan <-chan tss.Message,
 ) error {
-	netInChan := make(chan *TSSMessage, len(b.groupInfo.groupMemberIDs))
+	netInChan := make(chan interface{}, len(b.groupInfo.groupMemberIDs))
 
 	if err := b.initializeChannels(netInChan); err != nil {
 		return fmt.Errorf("failed to initialize channels: [%v]", err)
@@ -71,8 +71,11 @@ func (b *networkBridge) connect(
 			select {
 			case tssLibMsg := <-tssOutChan:
 				go b.sendTSSMessage(tssLibMsg)
-			case netMsg := <-netInChan:
-				go b.receiveMessage(netMsg)
+			case inMessage := <-netInChan:
+				switch msg := inMessage.(type) {
+				case *TSSMessage:
+					go b.handleTSSMessage(msg)
+				}
 			}
 		}
 	}()
@@ -80,7 +83,7 @@ func (b *networkBridge) connect(
 	return nil
 }
 
-func (b *networkBridge) initializeChannels(netInChan chan *TSSMessage) error {
+func (b *networkBridge) initializeChannels(netInChan chan interface{}) error {
 	handleMessageFunc := net.HandleMessageFunc{
 		// TODO: This will be set to group ID now, but we may want to add some
 		// session ID for concurrent execution.
