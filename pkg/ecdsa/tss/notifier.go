@@ -2,11 +2,15 @@ package tss
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
+
+const notificationWaitTimeout = 10 * time.Second
 
 type joinNotifier struct {
 	wait             *sync.WaitGroup
@@ -53,7 +57,6 @@ func newJoinNotifier(group *groupInfo, networkProvider net.Provider) (*joinNotif
 			select {
 			case msg := <-joinInChan:
 				senderPublicKey := msg.SenderPublicKey()
-				logger.Infof("[%x] received message from [%x]", group.memberID, senderPublicKey)
 
 				if bytes.Equal(senderPublicKey, []byte(group.memberID)) {
 					continue
@@ -61,8 +64,6 @@ func newJoinNotifier(group *groupInfo, networkProvider net.Provider) (*joinNotif
 
 				for i, memberID := range waitingForMember {
 					if bytes.Equal(senderPublicKey, []byte(memberID)) {
-						logger.Debugf("member [%s] is ready", senderPublicKey)
-
 						waitingForMember[i] = waitingForMember[len(waitingForMember)-1]
 						waitingForMember = waitingForMember[:len(waitingForMember)-1]
 
@@ -82,9 +83,31 @@ func newJoinNotifier(group *groupInfo, networkProvider net.Provider) (*joinNotif
 }
 
 func (jn *joinNotifier) notifyReady() error {
-	return jn.broadcastChannel.Send(&JoinMessage{})
-}
+	ctx, cancel := context.WithTimeout(context.Background(), notificationWaitTimeout)
 
-func (jn *joinNotifier) waitForAll() {
-	jn.wait.Wait()
+	go func() {
+		for {
+			if err := jn.broadcastChannel.Send(&JoinMessage{}); err != nil {
+				logger.Errorf("failed to send readiness notification: [%v]", err)
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	go func() {
+		defer cancel()
+		jn.wait.Wait()
+	}()
+
+	<-ctx.Done()
+	switch ctx.Err() {
+	case context.DeadlineExceeded:
+		return fmt.Errorf(
+			"waiting for notifications timed out after: [%v]", notificationWaitTimeout,
+		)
+	case context.Canceled:
+		return nil
+	default:
+		return fmt.Errorf("unexpected context error: [%v]", ctx.Err())
+	}
 }
