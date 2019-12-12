@@ -124,6 +124,10 @@ func (s *ThresholdSigner) initializeSigningParty(
 		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
 
+	netBridge.registerTSSMessageHandler(
+		party, params.Parties().IDs(),
+	)
+
 	return party, endChan, errChan, nil
 }
 

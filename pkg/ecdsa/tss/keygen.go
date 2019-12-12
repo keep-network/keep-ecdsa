@@ -172,5 +172,7 @@ func initializeKeyGenerationParty(
 		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
 
+	bridge.registerTSSMessageHandler(party, params.Parties().IDs())
+
 	return party, endChan, errChan, nil
 }

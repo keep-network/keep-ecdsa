@@ -20,8 +20,13 @@ type networkBridge struct {
 	broadcastChannel net.BroadcastChannel
 	unicastChannels  map[string]net.UnicastChannel
 
+	tssMessageHandlersMutex *sync.Mutex
+	tssMessageHandlers      []tssMessageHandler
+
 	errChan chan error
 }
+
+type tssMessageHandler func(netMsg *TSSMessage) error
 
 // newNetworkBridge initializes a new network bridge for the given network provider.
 func newNetworkBridge(
@@ -34,6 +39,9 @@ func newNetworkBridge(
 
 		channelsMutex:   &sync.Mutex{},
 		unicastChannels: make(map[string]net.UnicastChannel),
+
+		tssMessageHandlersMutex: &sync.Mutex{},
+		tssMessageHandlers:      []tssMessageHandler{},
 	}
 
 	return networkBridge, nil
@@ -214,21 +222,44 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 }
 
-func (b *networkBridge) receiveMessage(netMsg *TSSMessage) {
-	senderKey := new(big.Int).SetBytes(netMsg.SenderID)
-	senderPartyID := b.params.Parties().IDs().FindByKey(senderKey)
+func (b *networkBridge) registerTSSMessageHandler(
+	party tss.Party,
+	sortedPartyIDs tss.SortedPartyIDs,
+) {
+	handler := func(netMsg *TSSMessage) error {
+		senderKey := new(big.Int).SetBytes(netMsg.SenderID)
+		senderPartyID := sortedPartyIDs.FindByKey(senderKey)
 
-	if senderPartyID == b.party.PartyID() {
-		return
+		if senderPartyID == party.PartyID() {
+			return nil
+		}
+
+		_, err := party.UpdateFromBytes(
+			netMsg.Payload,
+			senderPartyID,
+			netMsg.IsBroadcast,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to update party: [%v]", party.WrapError(err))
+		}
+
+		return nil
 	}
 
-	_, err := b.party.UpdateFromBytes(
-		netMsg.Payload,
-		senderPartyID,
-		netMsg.IsBroadcast,
-	)
-	if err != nil {
-		b.errChan <- fmt.Errorf("failed to update party: [%v]", b.party.WrapError(err))
+	b.tssMessageHandlersMutex.Lock()
+	defer b.tssMessageHandlersMutex.Unlock()
+
+	b.tssMessageHandlers = append(b.tssMessageHandlers, handler)
+}
+
+func (b *networkBridge) handleTSSMessage(tssMessage *TSSMessage) {
+	b.tssMessageHandlersMutex.Lock()
+	defer b.tssMessageHandlersMutex.Unlock()
+
+	for _, handler := range b.tssMessageHandlers {
+		if err := handler(tssMessage); err != nil {
+			b.errChan <- err
+		}
 	}
 }
 
