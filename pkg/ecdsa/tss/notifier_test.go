@@ -35,10 +35,7 @@ func TestJoinNotifier(t *testing.T) {
 			groupMemberIDs: groupMembers,
 		}
 
-		networkProvider, err := newTestNetProvider(memberNetworkKey, errChan)
-		if err != nil {
-			t.Fatalf("failed to initialize network provider: [%v]", err)
-		}
+		networkProvider := newTestNetProvider(memberNetworkKey)
 
 		joinNotifier, err := newJoinNotifier(groupInfo, networkProvider)
 		if err != nil {

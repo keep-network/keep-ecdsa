@@ -60,7 +60,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 		for i, memberID := range groupMemberIDs {
 			go func(memberID MemberID) {
-				network := newTestNetProvider(memberID, groupMembersKeys)
+				network := newTestNetProvider(groupMembersKeys[memberID])
 				networkProviders.Store(memberID, network)
 
 				preParams := testData[i].LocalPreParams
@@ -215,9 +215,6 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[MemberID]*key.NetworkPub
 	return memberIDs, groupMembersKeys, nil
 }
 
-func newTestNetProvider(
-	memberID MemberID,
-	membersNetworkKeys map[MemberID]*key.NetworkPublic,
-) net.Provider {
-	return local.LocalProvider(membersNetworkKeys[memberID])
+func newTestNetProvider(memberNetworkKey *key.NetworkPublic) net.Provider {
+	return local.LocalProvider(memberNetworkKey)
 }
