@@ -26,7 +26,7 @@ type networkBridge struct {
 	errChan chan error
 }
 
-type tssMessageHandler func(netMsg *TSSMessage) error
+type tssMessageHandler func(netMsg *ProtocolMessage) error
 
 // newNetworkBridge initializes a new network bridge for the given network provider.
 func newNetworkBridge(
@@ -73,7 +73,7 @@ func (b *networkBridge) connect(
 				go b.sendTSSMessage(tssLibMsg)
 			case inMessage := <-netInChan:
 				switch msg := inMessage.(type) {
-				case *TSSMessage:
+				case *ProtocolMessage:
 					go b.handleTSSMessage(msg)
 				}
 			}
@@ -90,7 +90,7 @@ func (b *networkBridge) initializeChannels(netInChan chan interface{}) error {
 		Type: b.groupInfo.groupID,
 		Handler: func(msg net.Message) error {
 			switch tssMessage := msg.Payload().(type) {
-			case *TSSMessage:
+			case *ProtocolMessage:
 				netInChan <- tssMessage
 			}
 
@@ -141,7 +141,7 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 	}
 
 	if err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &TSSMessage{}
+		return &ProtocolMessage{}
 	}); err != nil {
 		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
 	}
@@ -166,7 +166,7 @@ func (b *networkBridge) getUnicastChannelWith(remotePeerID string) (net.UnicastC
 	}
 
 	if err := unicastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &TSSMessage{}
+		return &ProtocolMessage{}
 	}); err != nil {
 		return nil, fmt.Errorf("failed to register unmarshaler for unicast channel: [%v]", err)
 	}
@@ -183,7 +183,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 		return
 	}
 
-	msg := &TSSMessage{
+	protocolMessage := &ProtocolMessage{
 		SenderID:    routing.From.GetKey(),
 		Payload:     bytes,
 		IsBroadcast: routing.IsBroadcast,
@@ -192,13 +192,13 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	if routing.To == nil {
 		b.sendMessage(&MessageRouting{
 			ReceiverID: nil,
-			Message:    msg,
+			Message:    protocolMessage,
 		})
 	} else {
 		for _, destination := range routing.To {
 			b.sendMessage(&MessageRouting{
 				ReceiverID: destination.GetKey(),
-				Message:    msg,
+				Message:    protocolMessage,
 			})
 		}
 	}
@@ -243,8 +243,8 @@ func (b *networkBridge) registerTSSMessageHandler(
 	party tss.Party,
 	sortedPartyIDs tss.SortedPartyIDs,
 ) {
-	handler := func(netMsg *TSSMessage) error {
-		senderKey := new(big.Int).SetBytes(netMsg.SenderID)
+	handler := func(protocolMessage *ProtocolMessage) error {
+		senderKey := new(big.Int).SetBytes(protocolMessage.SenderID)
 		senderPartyID := sortedPartyIDs.FindByKey(senderKey)
 
 		if senderPartyID == party.PartyID() {
@@ -252,9 +252,9 @@ func (b *networkBridge) registerTSSMessageHandler(
 		}
 
 		_, err := party.UpdateFromBytes(
-			netMsg.Payload,
+			protocolMessage.Payload,
 			senderPartyID,
-			netMsg.IsBroadcast,
+			protocolMessage.IsBroadcast,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to update party: [%v]", party.WrapError(err))
@@ -269,12 +269,12 @@ func (b *networkBridge) registerTSSMessageHandler(
 	b.tssMessageHandlers = append(b.tssMessageHandlers, handler)
 }
 
-func (b *networkBridge) handleTSSMessage(tssMessage *TSSMessage) {
+func (b *networkBridge) handleTSSMessage(protocolMessage *ProtocolMessage) {
 	b.tssMessageHandlersMutex.Lock()
 	defer b.tssMessageHandlersMutex.Unlock()
 
 	for _, handler := range b.tssMessageHandlers {
-		if err := handler(tssMessage); err != nil {
+		if err := handler(protocolMessage); err != nil {
 			b.errChan <- err
 		}
 	}
