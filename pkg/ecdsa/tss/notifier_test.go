@@ -1,30 +1,30 @@
 package tss
 
 import (
-	"fmt"
+	"context"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/ipfs/go-log"
 )
 
 func TestJoinNotifier(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+
 	err := log.SetLogLevel("*", "INFO")
 	if err != nil {
 		t.Fatalf("logger initialization failed: [%v]", err)
 	}
 
-	groupMembers, groupMembersKeys, err := generateMemberKeys(2)
+	groupSize := 5
+
+	groupMembers, groupMembersKeys, err := generateMemberKeys(groupSize)
 	if err != nil {
 		t.Fatalf("failed to generate members keys: [%v]", err)
 	}
 
 	errChan := make(chan error)
-
-	go func() {
-		for {
-			fmt.Printf("%v", <-errChan)
-		}
-	}()
 
 	joinNotifiers := []*joinNotifier{}
 
@@ -45,11 +45,43 @@ func TestJoinNotifier(t *testing.T) {
 		joinNotifiers = append(joinNotifiers, joinNotifier)
 	}
 
-	for _, joinNotifier := range joinNotifiers {
-		if err := joinNotifier.notifyReady(); err != nil {
-			t.Errorf("failed to notify: [%v]", err)
-		}
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(groupSize)
+
+	mutex := &sync.RWMutex{}
+	joinedCount := 0
+
+	for _, jn := range joinNotifiers {
+		go func(jn *joinNotifier) {
+			defer waitGroup.Done()
+
+			if err := jn.notifyReady(); err != nil {
+				errChan <- err
+				return
+			}
+
+			mutex.Lock()
+			joinedCount++
+			mutex.Unlock()
+		}(jn)
 	}
 
-	joinNotifiers[0].waitForAll()
+	go func() {
+		defer cancel()
+		waitGroup.Wait()
+	}()
+
+	select {
+	case <-ctx.Done():
+		if joinedCount != groupSize {
+			t.Errorf(
+				"invalid number of received notifications\nexpected: [%d]\nactual:  [%d]",
+				groupSize-1,
+				joinedCount,
+			)
+		}
+	case err := <-errChan:
+		t.Fatal(err)
+	}
+
 }
