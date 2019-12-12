@@ -190,39 +190,53 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 
 	if routing.To == nil {
-		broadcastChannel, err := b.getBroadcastChannel()
-		if err != nil {
-			b.errChan <- fmt.Errorf("failed to find broadcast channel: [%v]", err)
-			return
-		}
-
-		if broadcastChannel.Send(msg); err != nil {
-			b.errChan <- fmt.Errorf("failed to send broadcast message: [%v]", err)
-			return
-		}
+		b.sendMessage(&MessageRouting{
+			ReceiverID: nil,
+			Message:    msg,
+		})
 	} else {
 		for _, destination := range routing.To {
-			unicastChannel, err := b.getUnicastChannelWith(string(destination.GetKey()))
-			if err != nil {
-				b.errChan <- fmt.Errorf(
-					"[m:%x]: failed to find unicast channel for [%v]: [%v]",
-					b.groupInfo.memberID,
-					destination,
-					err,
-				)
-				continue
-			}
-
-			if err := unicastChannel.Send(msg); err != nil {
-				b.errChan <- fmt.Errorf(
-					"[m:%x]: failed to send unicast message: [%v]",
-					b.groupInfo.memberID,
-					err,
-				)
-				continue
-			}
+			b.sendMessage(&MessageRouting{
+				ReceiverID: destination.GetKey(),
+				Message:    msg,
+			})
 		}
 	}
+}
+
+func (b *networkBridge) sendMessage(msg *MessageRouting) error {
+	if msg.ReceiverID == nil {
+		broadcastChannel, err := b.getBroadcastChannel()
+		if err != nil {
+			return fmt.Errorf("failed to find broadcast channel: [%v]", err)
+
+		}
+
+		if broadcastChannel.Send(msg.Message); err != nil {
+			return fmt.Errorf("failed to send broadcast message: [%v]", err)
+		}
+	} else {
+		unicastChannel, err := b.getUnicastChannelWith(string(msg.ReceiverID))
+		if err != nil {
+			return fmt.Errorf(
+				"[m:%x]: failed to find unicast channel for [%v]: [%v]",
+				b.groupInfo.memberID,
+				msg.ReceiverID,
+				err,
+			)
+
+		}
+
+		if err := unicastChannel.Send(msg.Message); err != nil {
+			return fmt.Errorf(
+				"[m:%x]: failed to send unicast message: [%v]",
+				b.groupInfo.memberID,
+				err,
+			)
+
+		}
+	}
+	return nil
 }
 
 func (b *networkBridge) registerTSSMessageHandler(

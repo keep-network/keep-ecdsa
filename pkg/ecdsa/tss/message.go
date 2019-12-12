@@ -3,7 +3,17 @@ package tss
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
+
+// MessageRouting holds the information required to route a message. It determines
+// a type of routing based on the receiver. If receiver is `nil` it will assume
+// to broadcast the message. If receiver is provided it will send direct unicast
+// message to the receiver. It holds the message itself as well.
+type MessageRouting struct {
+	ReceiverID []byte
+	Message    net.TaggedMarshaler
+}
 
 // TSSMessage is a network message used to transport messages in TSS protocol
 // execution.
