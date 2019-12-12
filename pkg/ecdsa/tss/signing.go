@@ -119,11 +119,7 @@ func (s *ThresholdSigner) initializeSigningParty(
 	)
 
 	if err := netBridge.connect(
-		s.groupID,
-		party,
-		params,
 		tssMessageChan,
-		errChan,
 	); err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}

@@ -77,7 +77,11 @@ func GenerateThresholdSigner(
 			"tss pre-params were not provided, they will be generated on protocol execution",
 		)
 	}
-	netBridge := newNetworkBridge(networkProvider)
+
+	netBridge, err := newNetworkBridge(group, networkProvider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
+	}
 
 	keyGenSigner, err := initializeKeyGeneration(
 		group,
@@ -112,7 +116,10 @@ func (s *ThresholdSigner) CalculateSignature(
 	digest []byte,
 	networkProvider net.Provider,
 ) (*ecdsa.Signature, error) {
-	netBridge := newNetworkBridge(networkProvider)
+	netBridge, err := newNetworkBridge(s.groupInfo, networkProvider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
+	}
 
 	signingSigner, err := s.initializeSigning(digest[:], netBridge)
 	if err != nil {

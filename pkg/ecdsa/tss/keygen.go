@@ -167,11 +167,7 @@ func initializeKeyGenerationParty(
 	party := keygen.NewLocalParty(params, tssMessageChan, endChan, *tssPreParams)
 
 	if err := bridge.connect(
-		groupInfo.groupID,
-		party,
-		params,
 		tssMessageChan,
-		errChan,
 	); err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
