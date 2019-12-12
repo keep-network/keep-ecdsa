@@ -184,9 +184,9 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 
 	protocolMessage := &ProtocolMessage{
-		SenderID:    routing.From.GetKey(),
-		Payload:     bytes,
-		IsBroadcast: routing.IsBroadcast,
+		SenderPublicKey: routing.From.GetKey(),
+		Payload:         bytes,
+		IsBroadcast:     routing.IsBroadcast,
 	}
 
 	if routing.To == nil {
@@ -244,7 +244,7 @@ func (b *networkBridge) registerTSSMessageHandler(
 	sortedPartyIDs tss.SortedPartyIDs,
 ) {
 	handler := func(protocolMessage *ProtocolMessage) error {
-		senderKey := new(big.Int).SetBytes(protocolMessage.SenderID)
+		senderKey := new(big.Int).SetBytes(protocolMessage.SenderPublicKey)
 		senderPartyID := sortedPartyIDs.FindByKey(senderKey)
 
 		if senderPartyID == party.PartyID() {
