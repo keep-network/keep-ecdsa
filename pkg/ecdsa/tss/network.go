@@ -184,9 +184,9 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 
 	protocolMessage := &ProtocolMessage{
-		SenderPublicKey: routing.From.GetKey(),
-		Payload:         bytes,
-		IsBroadcast:     routing.IsBroadcast,
+		SenderID:    MemberIDFromBytes(routing.From.GetKey()),
+		Payload:     bytes,
+		IsBroadcast: routing.IsBroadcast,
 	}
 
 	if routing.To == nil {
