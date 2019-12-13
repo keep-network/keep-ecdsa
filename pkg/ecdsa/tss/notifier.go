@@ -13,6 +13,7 @@ import (
 const notificationWaitTimeout = 10 * time.Second
 
 type joinNotifier struct {
+	memberID         MemberID
 	wait             *sync.WaitGroup
 	broadcastChannel net.BroadcastChannel
 }
@@ -28,15 +29,15 @@ func newJoinNotifier(group *groupInfo, networkProvider net.Provider) (*joinNotif
 		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
 	}
 
-	joinInChan := make(chan net.Message)
+	joinInChan := make(chan *JoinMessage)
 	handleJoinMessage := net.HandleMessageFunc{
 		// TODO: This will be set to group ID now, but we may want to add some
 		// session ID for concurrent execution.
 		Type: fmt.Sprintf(group.groupID),
 		Handler: func(netMsg net.Message) error {
-			switch netMsg.Payload().(type) {
+			switch msg := netMsg.Payload().(type) {
 			case *JoinMessage:
-				joinInChan <- netMsg
+				joinInChan <- msg
 			}
 
 			return nil
@@ -56,14 +57,12 @@ func newJoinNotifier(group *groupInfo, networkProvider net.Provider) (*joinNotif
 		for {
 			select {
 			case msg := <-joinInChan:
-				senderPublicKey := msg.SenderPublicKey()
-
-				if bytes.Equal(senderPublicKey, []byte(group.memberID)) {
+				if bytes.Equal(msg.SenderPublicKey, []byte(group.memberID)) {
 					continue
 				}
 
 				for i, memberID := range waitingForMember {
-					if bytes.Equal(senderPublicKey, []byte(memberID)) {
+					if bytes.Equal(msg.SenderPublicKey, []byte(memberID)) {
 						waitingForMember[i] = waitingForMember[len(waitingForMember)-1]
 						waitingForMember = waitingForMember[:len(waitingForMember)-1]
 
@@ -77,6 +76,7 @@ func newJoinNotifier(group *groupInfo, networkProvider net.Provider) (*joinNotif
 	}()
 
 	return &joinNotifier{
+		memberID:         group.memberID,
 		wait:             joinWait,
 		broadcastChannel: broadcastChannel,
 	}, nil
@@ -87,7 +87,9 @@ func (jn *joinNotifier) notifyReady() error {
 
 	go func() {
 		for {
-			if err := jn.broadcastChannel.Send(&JoinMessage{}); err != nil {
+			if err := jn.broadcastChannel.Send(
+				&JoinMessage{SenderPublicKey: []byte(jn.memberID)},
+			); err != nil {
 				logger.Errorf("failed to send readiness notification: [%v]", err)
 			}
 			time.Sleep(1 * time.Second)

@@ -98,7 +98,9 @@ func GenerateThresholdSigner(
 	}
 	logger.Infof("[party:%s]: initialized key generation", keyGenSigner.keygenParty.PartyID())
 
-	joinNotifier.notifyReady()
+	if err := joinNotifier.notifyReady(); err != nil {
+		return nil, fmt.Errorf("failed joining notification: [%v]", err)
+	}
 
 	logger.Infof("[party:%s]: starting key generation", keyGenSigner.keygenParty.PartyID())
 
@@ -134,7 +136,9 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, fmt.Errorf("failed to initialize signer: [%v]", err)
 	}
 
-	joinNotifier.notifyReady()
+	if err := joinNotifier.notifyReady(); err != nil {
+		return nil, fmt.Errorf("failed joining notification: [%v]", err)
+	}
 
 	signature, err := signingSigner.sign()
 	if err != nil {
