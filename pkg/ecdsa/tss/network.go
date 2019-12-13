@@ -137,14 +137,14 @@ func (b *networkBridge) getUnicastChannelWith(partyID *tss.PartyID) (net.Unicast
 	b.channelsMutex.Lock()
 	defer b.channelsMutex.Unlock()
 
-	channelName := string(partyID.GetKey())
+	remotePeerID := string(partyID.GetKey())
 
-	unicastChannel, exists := b.unicastChannels[channelName]
+	unicastChannel, exists := b.unicastChannels[remotePeerID]
 	if exists {
 		return unicastChannel, nil
 	}
 
-	unicastChannel, err := b.networkProvider.UnicastChannelWith(channelName)
+	unicastChannel, err := b.networkProvider.UnicastChannelWith(remotePeerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get unicast channel: [%v]", err)
 	}
@@ -155,7 +155,7 @@ func (b *networkBridge) getUnicastChannelWith(partyID *tss.PartyID) (net.Unicast
 		return nil, fmt.Errorf("failed to register unmarshaler for unicast channel: [%v]", err)
 	}
 
-	b.unicastChannels[channelName] = unicastChannel
+	b.unicastChannels[remotePeerID] = unicastChannel
 
 	return unicastChannel, nil
 }
