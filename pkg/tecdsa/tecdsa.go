@@ -3,10 +3,8 @@ package tecdsa
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
@@ -22,7 +20,7 @@ var logger = log.Logger("keep-tecdsa")
 type TECDSA struct {
 	ethereumChain   eth.Handle
 	networkProvider net.Provider
-	tssParamsPool   *tssPreParamsPool
+	tssParamsPool   *TSSPreParamsPool
 }
 
 // NewTECDSA initializes TECDSA struct with provided ethereum chain interface and
@@ -35,10 +33,6 @@ func NewTECDSA(
 	return &TECDSA{
 		ethereumChain:   ethereumChain,
 		networkProvider: networkProvider,
-		tssParamsPool: &tssPreParamsPool{
-			poolMutex: &sync.Mutex{},
-			pool:      []*keygen.LocalPreParams{},
-		},
 	}
 }
 
@@ -102,7 +96,7 @@ func (t *TECDSA) GenerateSignerForKeep(
 		groupMemberIDs,
 		uint(len(keepMembers)-1),
 		t.networkProvider,
-		t.tssParamsPool.get(),
+		t.tssParamsPool.Get(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate threshold signer: [%v]", err)

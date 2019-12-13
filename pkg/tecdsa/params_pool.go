@@ -1,60 +1,79 @@
 package tecdsa
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 )
 
-type tssPreParamsPool struct {
-	poolMutex *sync.Mutex
-	pool      []*keygen.LocalPreParams
+// TSSPreParamsPool is a pool holding TSS pre parameters. It autogenerates entries
+// up to the pool size. When an entry is pulled from the pool it will generate
+// new entry.
+type TSSPreParamsPool struct {
+	pumpFuncMutex *sync.Mutex // lock concurrent executions of pumping function
+
+	paramsMutex *sync.Mutex
+	params      []*keygen.LocalPreParams
+
+	new func() (*keygen.LocalPreParams, error)
+
+	poolSize int
 }
 
-// GenerateTSSPreParams generates TSS pre-parameters and stores them in a pool.
-func (t *TECDSA) GenerateTSSPreParams() {
-	poolSize := 2
+// InitializeTSSPreParamsPool generates TSS pre-parameters and stores them in a pool.
+func (t *TECDSA) InitializeTSSPreParamsPool() {
+	t.tssParamsPool = &TSSPreParamsPool{
+		pumpFuncMutex: &sync.Mutex{},
+		paramsMutex:   &sync.Mutex{},
+		params:        []*keygen.LocalPreParams{},
+		poolSize:      2,
+		new: func() (*keygen.LocalPreParams, error) {
+			return tss.GenerateTSSPreParams()
+		},
+	}
 
-	for i := 0; i < poolSize; i++ {
-		err := t.tssParamsPool.generateNew()
-		if err != nil {
-			logger.Warningf("failed to generate new tss pre-parameters: [%]", err)
+	go t.tssParamsPool.pumpPool()
+}
+
+func (t *TSSPreParamsPool) pumpPool() {
+	t.pumpFuncMutex.Lock()
+	defer t.pumpFuncMutex.Unlock()
+
+	for {
+		if len(t.params) >= t.poolSize {
+			logger.Debugf("tss pre parameters pool is pumped")
+			return
 		}
+
+		params, err := t.new()
+		if err != nil {
+			logger.Warningf("failed to generate tss pre parameters: [%v]", err)
+			return
+		}
+
+		t.paramsMutex.Lock()
+		t.params = append(t.params, params)
+		t.paramsMutex.Unlock()
+
+		logger.Debugf("generated new tss pre parameters")
 	}
 }
 
-func (t *tssPreParamsPool) generateNew() error {
-	params, err := tss.GenerateTSSPreParams()
-	if err != nil {
-		return fmt.Errorf("failed to generate tss pre parameters: [%v]", err)
-	}
-
-	t.poolMutex.Lock()
-	defer t.poolMutex.Unlock()
-
-	t.pool = append(t.pool, params)
-
-	return nil
-}
-
-func (t *tssPreParamsPool) get() *keygen.LocalPreParams {
+// Get returns TSS pre parameters from the pool. It pumps the pool after getting
+// and entry. If no entries were found in the pool it return nil.
+func (t *TSSPreParamsPool) Get() *keygen.LocalPreParams {
 	var params *keygen.LocalPreParams
 
-	if len(t.pool) > 0 {
-		t.poolMutex.Lock()
-		defer t.poolMutex.Unlock()
+	t.paramsMutex.Lock()
+	defer t.paramsMutex.Unlock()
 
-		params = t.pool[0]
-		t.pool = t.pool[1:len(t.pool)]
+	if len(t.params) > 0 {
+		params = t.params[0]
+		t.params = t.params[1:len(t.params)]
 	}
 
-	go func() {
-		if err := t.generateNew(); err != nil {
-			logger.Errorf("failed to generate new tss pre parameters", err)
-		}
-	}()
+	go t.pumpPool()
 
 	return params
 }
