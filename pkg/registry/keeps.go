@@ -129,7 +129,7 @@ func (g *Keeps) printSigners() {
 		logger.Debugf(
 			"loaded [%d] signers for keep [%s]",
 			len(signers),
-			keepAddress,
+			keepAddress.String(),
 		)
 	}
 }
