@@ -64,7 +64,8 @@ func (up *unicastProvider) channel(peerID string) (net.UnicastChannel, error) {
 		transportID:          up.transportID,
 		peerID:               localIdentifier(peerID),
 		senderPublicKey:      up.publicKey,
-		messageHandlersMutex: sync.Mutex{},
+		messageHandlersMutex: &sync.RWMutex{},
+		messageHandlers:      make(map[string][]*net.HandleMessageFunc),
 		errChan:              up.errChan,
 	}
 
@@ -79,8 +80,8 @@ type unicastChannel struct {
 
 	senderPublicKey *key.NetworkPublic
 
-	messageHandlersMutex sync.Mutex
-	messageHandlers      sync.Map // <string, []net.HandleMessageFunc>
+	messageHandlersMutex *sync.RWMutex
+	messageHandlers      map[string][]*net.HandleMessageFunc
 	unmarshalersByType   sync.Map // <string, net.TaggedUnmarshaler>
 
 	errChan chan error
@@ -107,13 +108,13 @@ func (uc *unicastChannel) Recv(handler net.HandleMessageFunc) (err error) {
 
 	var handlers []*net.HandleMessageFunc
 
-	if value, exists := uc.messageHandlers.Load(handler.Type); exists {
-		handlers = value.([]*net.HandleMessageFunc)
+	if value, exists := uc.messageHandlers[handler.Type]; exists {
+		handlers = value
 	}
 
 	handlers = append(handlers, &handler)
 
-	uc.messageHandlers.Store(handler.Type, handlers)
+	uc.messageHandlers[handler.Type] = handlers
 
 	return
 }
@@ -122,7 +123,7 @@ func (uc *unicastChannel) UnregisterRecv(handlerType string) error {
 	uc.messageHandlersMutex.Lock()
 	defer uc.messageHandlersMutex.Unlock()
 
-	uc.messageHandlers.Delete(handlerType)
+	uc.messageHandlers[handlerType] = nil
 
 	return nil
 }
@@ -196,9 +197,8 @@ func (uc *unicastChannel) deliver(
 		key.Marshal(senderPublicKey),
 	)
 
-	uc.messageHandlers.Range(func(key, value interface{}) bool {
-		handlers := value.([]*net.HandleMessageFunc)
-
+	uc.messageHandlersMutex.RLock()
+	for _, handlers := range uc.messageHandlers {
 		for _, handler := range handlers {
 			go func(handler *net.HandleMessageFunc) {
 				err := handler.Handler(message)
@@ -207,9 +207,8 @@ func (uc *unicastChannel) deliver(
 				}
 			}(handler)
 		}
-
-		return true
-	})
+	}
+	uc.messageHandlersMutex.RUnlock()
 
 	return nil
 }
