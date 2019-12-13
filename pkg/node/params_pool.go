@@ -13,7 +13,7 @@ import (
 type TSSPreParamsPool struct {
 	pumpFuncMutex *sync.Mutex // lock concurrent executions of pumping function
 
-	paramsMutex *sync.Mutex
+	paramsMutex *sync.Cond
 	params      []*keygen.LocalPreParams
 
 	new func() (*keygen.LocalPreParams, error)
@@ -25,7 +25,7 @@ type TSSPreParamsPool struct {
 func (t *Node) InitializeTSSPreParamsPool() {
 	t.tssParamsPool = &TSSPreParamsPool{
 		pumpFuncMutex: &sync.Mutex{},
-		paramsMutex:   &sync.Mutex{},
+		paramsMutex:   sync.NewCond(&sync.Mutex{}),
 		params:        []*keygen.LocalPreParams{},
 		poolSize:      2,
 		new: func() (*keygen.LocalPreParams, error) {
@@ -52,26 +52,27 @@ func (t *TSSPreParamsPool) pumpPool() {
 			return
 		}
 
-		t.paramsMutex.Lock()
+		t.paramsMutex.L.Lock()
 		t.params = append(t.params, params)
-		t.paramsMutex.Unlock()
+		t.paramsMutex.Signal()
+		t.paramsMutex.L.Unlock()
 
 		logger.Debugf("generated new tss pre parameters")
 	}
 }
 
 // Get returns TSS pre parameters from the pool. It pumps the pool after getting
-// and entry. If no entries were found in the pool it return nil.
+// and entry. If the pool is empty it will wait for a new entry to be generated.
 func (t *TSSPreParamsPool) Get() *keygen.LocalPreParams {
-	var params *keygen.LocalPreParams
+	t.paramsMutex.L.Lock()
+	defer t.paramsMutex.L.Unlock()
 
-	t.paramsMutex.Lock()
-	defer t.paramsMutex.Unlock()
-
-	if len(t.params) > 0 {
-		params = t.params[0]
-		t.params = t.params[1:len(t.params)]
+	for len(t.params) == 0 {
+		t.paramsMutex.Wait()
 	}
+
+	params := t.params[0]
+	t.params = t.params[1:len(t.params)]
 
 	go t.pumpPool()
 
