@@ -36,8 +36,9 @@ func NewNode(
 	}
 }
 
-// GenerateSignerForKeep generates a new signer with ECDSA key pair. It publishes
-// the signer's public key to the keep.
+// GenerateSignerForKeep generates a new threshold signer with ECDSA key pair. The
+// public key is a public key of the signing group. It publishes the public key
+// to the keep. It uses keep address as unique signing group identifier.
 func (n *Node) GenerateSignerForKeep(
 	keepAddress eth.KeepAddress,
 	keepMembers []common.Address,
@@ -102,10 +103,9 @@ func (n *Node) GenerateSignerForKeep(
 	return signer, nil
 }
 
-// CalculateSignatureForKeep calculates a signature over a digest with threshold
-// signer and publishes the result to the keep.
-func (n *Node) CalculateSignatureForKeep(
-	keepAddress eth.KeepAddress,
+// CalculateSignature calculates a signature over a digest with threshold
+// signer and publishes the result to the keep associated with the signer.
+func (n *Node) CalculateSignature(
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) error {
@@ -120,6 +120,8 @@ func (n *Node) CalculateSignatureForKeep(
 		signature.S,
 		signature.RecoveryID,
 	)
+
+	keepAddress := common.HexToAddress(signer.GroupID())
 
 	err = n.ethereumChain.SubmitSignature(keepAddress, digest, signature)
 	if err != nil {

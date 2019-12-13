@@ -118,7 +118,6 @@ func registerForSignEvents(
 
 			go func() {
 				err := tssNode.CalculateSignatureForKeep(
-					keepAddress,
 					signer,
 					signatureRequestedEvent.Digest,
 				)

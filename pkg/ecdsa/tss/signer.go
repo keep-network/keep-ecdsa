@@ -20,7 +20,13 @@ func (s *ThresholdSigner) MemberID() MemberID {
 	return s.memberID
 }
 
-// PublicKey returns Signer's ECDSA public key.
+// GroupID return signing group unique identifer.
+func (s *ThresholdSigner) GroupID() string {
+	return s.groupID
+}
+
+// PublicKey returns signer's ECDSA public key which is also the signing group's
+// public key.
 func (s *ThresholdSigner) PublicKey() *ecdsa.PublicKey {
 	pkX, pkY := s.keygenData.ECDSAPub.X(), s.keygenData.ECDSAPub.Y()
 
