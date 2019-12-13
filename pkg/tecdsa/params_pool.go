@@ -14,25 +14,15 @@ type tssPreParamsPool struct {
 }
 
 // GenerateTSSPreParams generates TSS pre-parameters and stores them in a pool.
-func (t *TECDSA) GenerateTSSPreParams() error {
+func (t *TECDSA) GenerateTSSPreParams() {
 	poolSize := 2
-
-	retryCount := 0
-	retryLimit := 1
 
 	for i := 0; i < poolSize; i++ {
 		err := t.tssParamsPool.generateNew()
 		if err != nil {
 			logger.Warningf("failed to generate new tss pre-parameters: [%]", err)
-
-			if retryCount > retryLimit {
-				return fmt.Errorf("too many failures: [%v]", retryCount)
-			}
-			retryCount++
 		}
 	}
-
-	return nil
 }
 
 func (t *tssPreParamsPool) generateNew() error {
