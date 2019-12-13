@@ -121,7 +121,7 @@ func (g *Keeps) printSigners() {
 	defer g.myKeepsMutex.RUnlock()
 
 	logger.Infof(
-		"loaded [%s] keeps from the local storage",
+		"loaded [%d] keeps from the local storage",
 		len(g.myKeeps),
 	)
 
