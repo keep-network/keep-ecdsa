@@ -1,5 +1,5 @@
-// Package tecdsa defines Keep tECDSA protocol.
-package tecdsa
+// Package node defines a node executing the TSS protocol.
+package node
 
 import (
 	"fmt"
@@ -15,22 +15,22 @@ import (
 
 var logger = log.Logger("keep-tecdsa")
 
-// TECDSA holds interfaces to interact with the blockchain and network messages
+// Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
-type TECDSA struct {
+type Node struct {
 	ethereumChain   eth.Handle
 	networkProvider net.Provider
 	tssParamsPool   *TSSPreParamsPool
 }
 
-// NewTECDSA initializes TECDSA struct with provided ethereum chain interface and
+// NewNode initializes node struct with provided ethereum chain interface and
 // network provider. It also initializes TSS Pre-Parameters pool. But does not
 // start parameters generation. This should be called separately.
-func NewTECDSA(
+func NewNode(
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
-) *TECDSA {
-	return &TECDSA{
+) *Node {
+	return &Node{
 		ethereumChain:   ethereumChain,
 		networkProvider: networkProvider,
 	}
@@ -38,7 +38,7 @@ func NewTECDSA(
 
 // RegisterForSignEvents registers for signature requested events emitted by
 // specific keep contract.
-func (t *TECDSA) RegisterForSignEvents(
+func (t *Node) RegisterForSignEvents(
 	keepAddress eth.KeepAddress,
 	signer *tss.ThresholdSigner,
 ) {
@@ -72,7 +72,7 @@ func (t *TECDSA) RegisterForSignEvents(
 
 // GenerateSignerForKeep generates a new signer with ECDSA key pair. It publishes
 // the signer's public key to the keep.
-func (t *TECDSA) GenerateSignerForKeep(
+func (n *Node) GenerateSignerForKeep(
 	keepAddress eth.KeepAddress,
 	keepMembers []common.Address,
 ) (*tss.ThresholdSigner, error) {
@@ -88,15 +88,15 @@ func (t *TECDSA) GenerateSignerForKeep(
 		)
 	}
 
-	memberID := tss.MemberID(t.ethereumChain.Address().String())
+	memberID := tss.MemberID(n.ethereumChain.Address().String())
 
 	signer, err := tss.GenerateThresholdSigner(
 		keepAddress.Hex(),
 		memberID,
 		groupMemberIDs,
 		uint(len(keepMembers)-1),
-		t.networkProvider,
-		t.tssParamsPool.Get(),
+		n.networkProvider,
+		n.tssParamsPool.Get(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate threshold signer: [%v]", err)
@@ -117,7 +117,7 @@ func (t *TECDSA) GenerateSignerForKeep(
 	// TODO: Temp solution only the first member in the group publishes.
 	// We need to replace it with proper publisher selection.
 	if memberID == groupMemberIDs[0] {
-		err = t.ethereumChain.SubmitKeepPublicKey(
+		err = n.ethereumChain.SubmitKeepPublicKey(
 			keepAddress,
 			serializedPublicKey,
 		)
@@ -136,12 +136,12 @@ func (t *TECDSA) GenerateSignerForKeep(
 	return signer, nil
 }
 
-func (t *TECDSA) calculateSignatureForKeep(
+func (n *Node) calculateSignatureForKeep(
 	keepAddress eth.KeepAddress,
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) error {
-	signature, err := signer.CalculateSignature(digest[:], t.networkProvider)
+	signature, err := signer.CalculateSignature(digest[:], n.networkProvider)
 	if err != nil {
 		return fmt.Errorf("failed to calculate signature: [%v]", err)
 	}
@@ -153,7 +153,7 @@ func (t *TECDSA) calculateSignatureForKeep(
 		signature.RecoveryID,
 	)
 
-	err = t.ethereumChain.SubmitSignature(keepAddress, digest, signature)
+	err = n.ethereumChain.SubmitSignature(keepAddress, digest, signature)
 	if err != nil {
 		return fmt.Errorf("failed to submit signature: [%v]", err)
 	}

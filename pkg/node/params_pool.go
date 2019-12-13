@@ -1,4 +1,4 @@
-package tecdsa
+package node
 
 import (
 	"sync"
@@ -22,7 +22,7 @@ type TSSPreParamsPool struct {
 }
 
 // InitializeTSSPreParamsPool generates TSS pre-parameters and stores them in a pool.
-func (t *TECDSA) InitializeTSSPreParamsPool() {
+func (t *Node) InitializeTSSPreParamsPool() {
 	t.tssParamsPool = &TSSPreParamsPool{
 		pumpFuncMutex: &sync.Mutex{},
 		paramsMutex:   &sync.Mutex{},

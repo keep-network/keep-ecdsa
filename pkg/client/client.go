@@ -9,13 +9,13 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
+	"github.com/keep-network/keep-tecdsa/pkg/node"
 	"github.com/keep-network/keep-tecdsa/pkg/registry"
-	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
 )
 
 var logger = log.Logger("keep-tecdsa")
 
-// Initialize initializes the tECDSA client with rules related to events handling.
+// Initialize initializes the ECDSA client with rules related to events handling.
 func Initialize(
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
@@ -23,9 +23,9 @@ func Initialize(
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
-	tecdsa := tecdsa.NewTECDSA(ethereumChain, networkProvider)
+	tssNode := node.NewNode(ethereumChain, networkProvider)
 
-	tecdsa.InitializeTSSPreParamsPool()
+	tssNode.InitializeTSSPreParamsPool()
 
 	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
@@ -33,7 +33,7 @@ func Initialize(
 	keepsRegistry.ForEachKeep(
 		func(keepAddress common.Address, signer []*tss.ThresholdSigner) {
 			for _, signer := range signer {
-				tecdsa.RegisterForSignEvents(keepAddress, signer)
+				tssNode.RegisterForSignEvents(keepAddress, signer)
 				logger.Debugf(
 					"signer registered for events from keep: [%s]",
 					keepAddress.String(),
@@ -51,7 +51,7 @@ func Initialize(
 		)
 
 		if event.IsMember(ethereumChain.Address()) {
-			signer, err := tecdsa.GenerateSignerForKeep(
+			signer, err := tssNode.GenerateSignerForKeep(
 				event.KeepAddress,
 				event.Members,
 			)
@@ -71,7 +71,7 @@ func Initialize(
 				)
 			}
 
-			tecdsa.RegisterForSignEvents(event.KeepAddress, signer)
+			tssNode.RegisterForSignEvents(event.KeepAddress, signer)
 		}
 	})
 

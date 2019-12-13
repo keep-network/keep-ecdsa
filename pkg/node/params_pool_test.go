@@ -1,4 +1,4 @@
-package tecdsa
+package node
 
 import (
 	"sync"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
-	"github.com/ipfs/go-log"
 )
 
 func TestTSSPreParamsPool(t *testing.T) {
