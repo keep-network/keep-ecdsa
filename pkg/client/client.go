@@ -2,6 +2,8 @@
 package client
 
 import (
+	"time"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
@@ -33,7 +35,12 @@ func Initialize(
 	keepsRegistry.ForEachKeep(
 		func(keepAddress common.Address, signer []*tss.ThresholdSigner) {
 			for _, signer := range signer {
-				tssNode.RegisterForSignEvents(keepAddress, signer)
+				registerForSignEvents(
+					ethereumChain,
+					tssNode,
+					keepAddress,
+					signer,
+				)
 				logger.Debugf(
 					"signer registered for events from keep: [%s]",
 					keepAddress.String(),
@@ -71,7 +78,12 @@ func Initialize(
 				)
 			}
 
-			tssNode.RegisterForSignEvents(event.KeepAddress, signer)
+			registerForSignEvents(
+				ethereumChain,
+				tssNode,
+				event.KeepAddress,
+				signer,
+			)
 		}
 	})
 
@@ -81,4 +93,40 @@ func Initialize(
 	}
 
 	logger.Infof("client registered as member candidate in keep factory")
+}
+
+// registerForSignEvents registers for signature requested events emitted by
+// specific keep contract.
+func registerForSignEvents(
+	ethereumChain eth.Handle,
+	tssNode *node.Node,
+	keepAddress eth.KeepAddress,
+	signer *tss.ThresholdSigner,
+) {
+	ethereumChain.OnSignatureRequested(
+		keepAddress,
+		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
+			logger.Infof(
+				"new signature requested from keep [%s] for digest: [%+x]",
+				keepAddress.String(),
+				signatureRequestedEvent.Digest,
+			)
+
+			// TODO: Temp Sync
+			tss.SigningSync.Add(1)
+			time.Sleep(1 * time.Second)
+
+			go func() {
+				err := tssNode.CalculateSignatureForKeep(
+					keepAddress,
+					signer,
+					signatureRequestedEvent.Digest,
+				)
+
+				if err != nil {
+					logger.Errorf("signature calculation failed: [%v]", err)
+				}
+			}()
+		},
+	)
 }

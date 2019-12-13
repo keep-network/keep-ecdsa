@@ -36,40 +36,6 @@ func NewNode(
 	}
 }
 
-// RegisterForSignEvents registers for signature requested events emitted by
-// specific keep contract.
-func (t *Node) RegisterForSignEvents(
-	keepAddress eth.KeepAddress,
-	signer *tss.ThresholdSigner,
-) {
-	t.ethereumChain.OnSignatureRequested(
-		keepAddress,
-		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
-			logger.Infof(
-				"new signature requested from keep [%s] for digest: [%+x]",
-				keepAddress.String(),
-				signatureRequestedEvent.Digest,
-			)
-
-			// TODO: Temp Sync
-			tss.SigningSync.Add(1)
-			time.Sleep(1 * time.Second)
-
-			go func() {
-				err := t.calculateSignatureForKeep(
-					keepAddress,
-					signer,
-					signatureRequestedEvent.Digest,
-				)
-
-				if err != nil {
-					logger.Errorf("signature calculation failed: [%v]", err)
-				}
-			}()
-		},
-	)
-}
-
 // GenerateSignerForKeep generates a new signer with ECDSA key pair. It publishes
 // the signer's public key to the keep.
 func (n *Node) GenerateSignerForKeep(
@@ -136,7 +102,9 @@ func (n *Node) GenerateSignerForKeep(
 	return signer, nil
 }
 
-func (n *Node) calculateSignatureForKeep(
+// CalculateSignatureForKeep calculates a signature over a digest with threshold
+// signer and publishes the result to the keep.
+func (n *Node) CalculateSignatureForKeep(
 	keepAddress eth.KeepAddress,
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
