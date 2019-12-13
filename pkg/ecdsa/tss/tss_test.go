@@ -229,7 +229,7 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[MemberID]*key.NetworkPub
 			return nil, nil, fmt.Errorf("failed to generate network key: [%v]", err)
 		}
 
-		memberID := MemberID(string(key.Marshal(publicKey)))
+		memberID := MemberID(key.NetworkPubKeyToEthAddress(publicKey))
 
 		memberIDs = append(memberIDs, memberID)
 		groupMembersKeys[memberID] = publicKey
@@ -244,7 +244,6 @@ func newTestNetProvider(
 	errChan chan error,
 ) net.Provider {
 	return local.LocalProvider(
-		string(memberID),
 		membersNetworkKeys[memberID],
 		errChan,
 	)

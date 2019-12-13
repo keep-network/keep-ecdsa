@@ -16,15 +16,13 @@ type localProvider struct {
 // LocalProvider returns local implementation of net.Provider which can be used
 // for testing.
 func LocalProvider(
-	transportID string, // node's network identifier
 	publicKey *key.NetworkPublic, // node's public key
 	errChan chan error,
 ) net.Provider {
 	return &localProvider{
 		errChan:           errChan,
-		transportID:       localIdentifier(transportID),
 		broadcastProvider: brdcLocal.ConnectWithKey(publicKey),
-		unicastProvider:   unicastConnectWithKey(transportID, publicKey, errChan),
+		unicastProvider:   unicastConnectWithKey(publicKey, errChan),
 	}
 }
 

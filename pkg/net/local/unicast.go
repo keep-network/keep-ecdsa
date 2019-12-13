@@ -21,12 +21,13 @@ type unicastProvider struct {
 }
 
 func unicastConnectWithKey(
-	transportID string,
 	publicKey *key.NetworkPublic,
 	errChan chan error,
 ) *unicastProvider {
 	providersMutex.Lock()
 	defer providersMutex.Unlock()
+
+	transportID := key.NetworkPubKeyToEthAddress(publicKey)
 
 	existingProvider, ok := providers.Load(transportID)
 	if ok {

@@ -71,7 +71,6 @@ func Start(c *cli.Context) error {
 	}()
 
 	networkProvider := local.LocalProvider(
-		ethereumChain.Address().String(),
 		networkPublicKey,
 		netErrChan,
 	)
