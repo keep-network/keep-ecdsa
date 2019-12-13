@@ -180,14 +180,6 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 			return
 		}
 
-		logger.Debugf(
-			"[%s]: sending broadcast tss message [%v] from [%v]: [%v]",
-			b.party.PartyID().String(),
-			tssLibMsg.Type(),
-			routing.From.String(),
-			tssLibMsg.String(),
-		)
-
 		if broadcastChannel.Send(msg); err != nil {
 			b.errChan <- fmt.Errorf("failed to send broadcast message: [%v]", err)
 			return
@@ -204,15 +196,6 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 				)
 				continue
 			}
-
-			logger.Debugf(
-				"[party-%s]: sending unicast tss message [%v] from [%v] to [%v]: [%v]",
-				b.party.PartyID().String(),
-				tssLibMsg.Type(),
-				routing.From.String(),
-				destination.String(),
-				tssLibMsg.String(),
-			)
 
 			if err := unicastChannel.Send(msg); err != nil {
 				b.errChan <- fmt.Errorf(
@@ -232,22 +215,6 @@ func (b *networkBridge) receiveMessage(netMsg *TSSMessage) {
 
 	if senderPartyID == b.party.PartyID() {
 		return
-	}
-
-	if netMsg.IsBroadcast {
-		logger.Debugf(
-			"[party-%s]: received broadcast tss message [%v] from [%v]",
-			b.party.PartyID().String(),
-			netMsg.Type(),
-			senderPartyID.String(),
-		)
-	} else {
-		logger.Debugf(
-			"[party-%s]: received unicast tss message [%v] from [%v]",
-			b.party.PartyID().String(),
-			netMsg.Type(),
-			senderPartyID.String(),
-		)
 	}
 
 	_, err := b.party.UpdateFromBytes(
