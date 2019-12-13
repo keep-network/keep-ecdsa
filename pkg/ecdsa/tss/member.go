@@ -7,8 +7,24 @@ import (
 // MemberID is an unique identifier of a member across the network.
 type MemberID string
 
-func (id MemberID) bigInt() *big.Int {
-	return new(big.Int).SetBytes([]byte(id))
+// BigInt converts MemberID to string.
+func (id MemberID) String() string {
+	return string(id)
+}
+
+// BigInt converts MemberID to big.Int.
+func (id MemberID) BigInt() *big.Int {
+	return new(big.Int).SetBytes(id.Bytes())
+}
+
+// Bytes converts MemberID to bytes slice.
+func (id MemberID) Bytes() []byte {
+	return []byte(id)
+}
+
+// MemberIDFromBytes converts bytes slice to MemberID.
+func MemberIDFromBytes(bytes []byte) MemberID {
+	return MemberID(string(bytes))
 }
 
 // groupInfo holds information about the group selected for protocol execution.

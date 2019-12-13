@@ -17,12 +17,12 @@ func (s *ThresholdSigner) Marshal() ([]byte, error) {
 	// Group Info
 	groupMemberIDs := make([]string, len(s.groupMemberIDs))
 	for i, memberID := range s.groupMemberIDs {
-		groupMemberIDs[i] = string(memberID)
+		groupMemberIDs[i] = memberID.String()
 	}
 
 	group := &pb.ThresholdSigner_GroupInfo{
 		GroupID:            s.groupID,
-		MemberID:           string(s.memberID),
+		MemberID:           s.memberID.String(),
 		GroupMemberIDs:     groupMemberIDs,
 		DishonestThreshold: int32(s.dishonestThreshold),
 	}

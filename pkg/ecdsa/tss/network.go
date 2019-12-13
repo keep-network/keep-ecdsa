@@ -2,7 +2,6 @@ package tss
 
 import (
 	"fmt"
-	"math/big"
 	"sync"
 
 	"github.com/binance-chain/tss-lib/tss"
@@ -114,7 +113,7 @@ func (b *networkBridge) initializeChannels(netInChan chan interface{}) error {
 			continue
 		}
 
-		unicastChannel, err := b.getUnicastChannelWith(string(peerMemberID))
+		unicastChannel, err := b.getUnicastChannelWith(peerMemberID.String())
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}
@@ -135,7 +134,7 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 		return b.broadcastChannel, nil
 	}
 
-	broadcastChannel, err := b.networkProvider.BroadcastChannelFor(string(b.groupInfo.groupID))
+	broadcastChannel, err := b.networkProvider.BroadcastChannelFor(b.groupInfo.groupID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
@@ -244,8 +243,7 @@ func (b *networkBridge) registerTSSMessageHandler(
 	sortedPartyIDs tss.SortedPartyIDs,
 ) {
 	handler := func(protocolMessage *ProtocolMessage) error {
-		senderKey := new(big.Int).SetBytes(protocolMessage.SenderPublicKey)
-		senderPartyID := sortedPartyIDs.FindByKey(senderKey)
+		senderPartyID := sortedPartyIDs.FindByKey(protocolMessage.SenderID.BigInt())
 
 		if senderPartyID == party.PartyID() {
 			return nil

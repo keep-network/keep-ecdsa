@@ -1,7 +1,6 @@
 package tss
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"sync"
@@ -57,12 +56,12 @@ func newJoinNotifier(group *groupInfo, networkProvider net.Provider) (*joinNotif
 		for {
 			select {
 			case msg := <-joinInChan:
-				if bytes.Equal(msg.SenderPublicKey, []byte(group.memberID)) {
+				if msg.SenderID == group.memberID {
 					continue
 				}
 
 				for i, memberID := range waitingForMember {
-					if bytes.Equal(msg.SenderPublicKey, []byte(memberID)) {
+					if msg.SenderID == memberID {
 						waitingForMember[i] = waitingForMember[len(waitingForMember)-1]
 						waitingForMember = waitingForMember[:len(waitingForMember)-1]
 
@@ -88,7 +87,7 @@ func (jn *joinNotifier) notifyReady() error {
 	go func() {
 		for {
 			if err := jn.broadcastChannel.Send(
-				&JoinMessage{SenderPublicKey: []byte(jn.memberID)},
+				&JoinMessage{SenderID: jn.memberID},
 			); err != nil {
 				logger.Errorf("failed to send readiness notification: [%v]", err)
 			}
