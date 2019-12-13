@@ -117,7 +117,7 @@ func registerForSignEvents(
 			time.Sleep(1 * time.Second)
 
 			go func() {
-				err := tssNode.CalculateSignatureForKeep(
+				err := tssNode.CalculateSignature(
 					signer,
 					signatureRequestedEvent.Digest,
 				)
