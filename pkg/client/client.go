@@ -25,13 +25,7 @@ func Initialize(
 
 	tecdsa := tecdsa.NewTECDSA(ethereumChain, networkProvider)
 
-	go func() {
-		if err := tecdsa.GenerateTSSPreParams(); err != nil {
-			logger.Errorf("failed to initialize tss pre parameters pool: [%v]", err)
-		}
-
-		logger.Infof("completed tss pre parameters pool initialization")
-	}()
+	tecdsa.InitializeTSSPreParamsPool()
 
 	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
