@@ -21,8 +21,8 @@ type tssPreParamsPool struct {
 	poolSize int
 }
 
-// initializeTSSPreParamsPool generates TSS pre-parameters and stores them in a pool.
-func (n *Node) initializeTSSPreParamsPool() {
+// InitializeTSSPreParamsPool generates TSS pre-parameters and stores them in a pool.
+func (n *Node) InitializeTSSPreParamsPool() {
 	n.tssParamsPool = &tssPreParamsPool{
 		pumpFuncMutex: &sync.Mutex{},
 		paramsMutex:   sync.NewCond(&sync.Mutex{}),
