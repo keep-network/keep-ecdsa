@@ -9,14 +9,14 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/net/internal"
 )
 
-var providersMutex = &sync.Mutex{}
-var providers = &sync.Map{} // < transportID, unicastProvider >
+var providersMutex = &sync.RWMutex{}
+var providers = make(map[localIdentifier]*unicastProvider)
 
 type unicastProvider struct {
 	publicKey     *key.NetworkPublic
 	transportID   localIdentifier
-	channelsMutex *sync.Mutex
-	channels      *sync.Map // < transportID, net.UnicastChannel>
+	channelsMutex *sync.RWMutex
+	channels      map[localIdentifier]*unicastChannel
 	errChan       chan error
 }
 
@@ -29,20 +29,20 @@ func unicastConnectWithKey(
 
 	transportID := key.NetworkPubKeyToEthAddress(publicKey)
 
-	existingProvider, ok := providers.Load(transportID)
+	existingProvider, ok := providers[localIdentifier(transportID)]
 	if ok {
-		return existingProvider.(*unicastProvider)
+		return existingProvider
 	}
 
 	provider := &unicastProvider{
 		publicKey:     publicKey,
 		transportID:   localIdentifier(transportID),
-		channels:      &sync.Map{},
-		channelsMutex: &sync.Mutex{},
+		channels:      make(map[localIdentifier]*unicastChannel),
+		channelsMutex: &sync.RWMutex{},
 		errChan:       errChan,
 	}
 
-	providers.Store(transportID, provider)
+	providers[localIdentifier(transportID)] = provider
 
 	return provider
 }
@@ -55,9 +55,9 @@ func (up *unicastProvider) channel(peerID string) (net.UnicastChannel, error) {
 	up.channelsMutex.Lock()
 	defer up.channelsMutex.Unlock()
 
-	existingChannel, ok := up.channels.Load(peerID)
+	existingChannel, ok := up.channels[localIdentifier(peerID)]
 	if ok {
-		return existingChannel.(*unicastChannel), nil
+		return existingChannel, nil
 	}
 
 	channel := &unicastChannel{
@@ -69,7 +69,7 @@ func (up *unicastProvider) channel(peerID string) (net.UnicastChannel, error) {
 		errChan:              up.errChan,
 	}
 
-	up.channels.Store(peerID, channel)
+	up.channels[localIdentifier(peerID)] = channel
 
 	return channel, nil
 }
@@ -133,22 +133,21 @@ func (uc *unicastChannel) Send(message net.TaggedMarshaler) error {
 }
 
 func (uc *unicastChannel) doSend(payload net.TaggedMarshaler) error {
-	value, found := providers.Load(uc.peerID.String())
+	providersMutex.RLock()
+	provider, found := providers[uc.peerID]
 	if !found {
 		return fmt.Errorf("failed to find provider for: [%v]", uc.peerID)
 	}
-	provider := value.(*unicastProvider)
+	providersMutex.RUnlock()
 
 	bytes, err := payload.Marshal()
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: [%v]", err)
 	}
 
-	provider.channels.Range(func(key, value interface{}) bool {
-		targetChannel := value.(*unicastChannel)
-
-		if targetChannel.transportID.String() == key.(string) {
-			return true // don't send to self
+	for peerID, targetChannel := range provider.channels {
+		if targetChannel.transportID.String() == peerID.String() {
+			continue // don't send to self
 		}
 
 		unmarshaler, found := targetChannel.unmarshalersByType.Load(payload.Type())
@@ -157,8 +156,6 @@ func (uc *unicastChannel) doSend(payload net.TaggedMarshaler) error {
 				"couldn't find unmarshaler for type [%s] in unicast channel",
 				payload.Type(),
 			)
-
-			return true
 		}
 
 		unmarshaled := unmarshaler.(func() net.TaggedUnmarshaler)()
