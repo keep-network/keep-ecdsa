@@ -17,30 +17,20 @@ func TestRegisterAndFireHandler(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	errChan := make(chan error)
-	go func() {
-		for {
-			select {
-			case err := <-errChan:
-				t.Errorf("unexpected error: [%v]", err)
-			}
-		}
-	}()
+	_, publicKey1, _ := key.GenerateStaticNetworkKey()
+	_, publicKey2, _ := key.GenerateStaticNetworkKey()
 
-	_, member1, _ := key.GenerateStaticNetworkKey()
-	_, member2, _ := key.GenerateStaticNetworkKey()
+	transportID1 := key.NetworkPubKeyToEthAddress(publicKey1)
+	transportID2 := key.NetworkPubKeyToEthAddress(publicKey2)
 
-	member1ID := "member-1"
-	member2ID := "member-2"
+	netProvider1 := LocalProvider(publicKey1)
+	netProvider2 := LocalProvider(publicKey2)
 
-	netProvider1 := LocalProvider(member1ID, member1, errChan)
-	netProvider2 := LocalProvider(member2ID, member2, errChan)
-
-	localChannel1, err := netProvider1.UnicastChannelWith(member2ID)
+	localChannel1, err := netProvider1.UnicastChannelWith(transportID2)
 	if err != nil {
 		t.Fatal(err)
 	}
-	localChannel2, err := netProvider2.UnicastChannelWith(member1ID)
+	localChannel2, err := netProvider2.UnicastChannelWith(transportID1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,10 +64,10 @@ func TestRegisterAndFireHandler(t *testing.T) {
 	}
 
 	expectedDeliveredMessage := internal.BasicMessage(
-		localIdentifier(member1ID),
+		localIdentifier(transportID1),
 		msgToSend,
 		msgToSend.Type(),
-		key.Marshal(member1),
+		key.Marshal(publicKey1),
 	)
 
 	if err := localChannel1.Send(msgToSend); err != nil {
@@ -138,26 +128,16 @@ func TestUnregisterHandler(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
 
-			_, member1, _ := key.GenerateStaticNetworkKey()
-			_, member2, _ := key.GenerateStaticNetworkKey()
+			_, publicKey1, _ := key.GenerateStaticNetworkKey()
+			_, publicKey2, _ := key.GenerateStaticNetworkKey()
 
-			member1ID := key.NetworkPubKeyToEthAddress(member1)
-			member2ID := key.NetworkPubKeyToEthAddress(member2)
+			transportID1 := key.NetworkPubKeyToEthAddress(publicKey1)
+			transportID2 := key.NetworkPubKeyToEthAddress(publicKey2)
 
-			errChan := make(chan error)
-			go func() {
-				for {
-					select {
-					case err := <-errChan:
-						t.Errorf("unexpected error: [%v]", err)
-					}
-				}
-			}()
+			netProvider1 := LocalProvider(publicKey1)
+			netProvider2 := LocalProvider(publicKey2)
 
-			netProvider1 := LocalProvider(member1ID, member1, errChan)
-			netProvider2 := LocalProvider(member2ID, member2, errChan)
-
-			localChannel1, err := netProvider1.UnicastChannelWith(member2ID)
+			localChannel1, err := netProvider1.UnicastChannelWith(transportID2)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -167,7 +147,7 @@ func TestUnregisterHandler(t *testing.T) {
 				t.Fatalf("failed to register unmarshaler: [%v]", err)
 			}
 
-			localChannel2, err := netProvider2.UnicastChannelWith(member1ID)
+			localChannel2, err := netProvider2.UnicastChannelWith(transportID1)
 			if err != nil {
 				t.Fatal(err)
 			}
