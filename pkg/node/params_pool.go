@@ -49,7 +49,7 @@ func (n *tssPreParamsPool) pumpPool() {
 		params, err := n.new()
 		if err != nil {
 			logger.Warningf("failed to generate tss pre parameters: [%v]", err)
-			return
+			continue
 		}
 
 		n.paramsMutex.L.Lock()
