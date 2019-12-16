@@ -20,7 +20,7 @@ var logger = log.Logger("keep-tecdsa")
 type Node struct {
 	ethereumChain   eth.Handle
 	networkProvider net.Provider
-	tssParamsPool   *TSSPreParamsPool
+	tssParamsPool   *tssPreParamsPool
 }
 
 // NewNode initializes node struct with provided ethereum chain interface and
@@ -63,7 +63,7 @@ func (n *Node) GenerateSignerForKeep(
 		groupMemberIDs,
 		uint(len(keepMembers)-1),
 		n.networkProvider,
-		n.tssParamsPool.Get(),
+		n.tssParamsPool.get(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate threshold signer: [%v]", err)

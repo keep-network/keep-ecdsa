@@ -38,12 +38,12 @@ func TestTSSPreParamsPool(t *testing.T) {
 	// and lock new entry autogeneration.
 	tssPool.pumpFuncMutex.Lock()
 
-	result := tssPool.Get()
+	result := tssPool.get()
 	if result == nil {
 		t.Errorf("result is nil")
 	}
 
-	result = tssPool.Get()
+	result = tssPool.get()
 	if result == nil {
 		t.Errorf("result is nil")
 	}
@@ -94,7 +94,7 @@ func TestTSSPreParamsPoolEmpty(t *testing.T) {
 	}()
 
 	// Get entry from pool.
-	result := tssPool.Get()
+	result := tssPool.get()
 	if result == nil {
 		t.Errorf("result is nil")
 	}
@@ -129,13 +129,13 @@ func TestTSSPreParamsPoolConcurrent(t *testing.T) {
 	waitGroup.Add(2)
 
 	go func() {
-		if result := tssPool.Get(); result == nil {
+		if result := tssPool.get(); result == nil {
 			t.Errorf("result is nil")
 		}
 		waitGroup.Done()
 	}()
 	go func() {
-		if result := tssPool.Get(); result == nil {
+		if result := tssPool.get(); result == nil {
 			t.Errorf("result is nil")
 		}
 		waitGroup.Done()
@@ -167,8 +167,8 @@ func TestTSSPreParamsPoolConcurrent(t *testing.T) {
 	}
 }
 
-func newTestPool(poolSize int) *TSSPreParamsPool {
-	return &TSSPreParamsPool{
+func newTestPool(poolSize int) *tssPreParamsPool {
+	return &tssPreParamsPool{
 		pumpFuncMutex: &sync.Mutex{},
 		paramsMutex:   sync.NewCond(&sync.Mutex{}),
 		params:        []*keygen.LocalPreParams{},

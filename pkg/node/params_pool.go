@@ -7,10 +7,10 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 )
 
-// TSSPreParamsPool is a pool holding TSS pre parameters. It autogenerates entries
+// tssPreParamsPool is a pool holding TSS pre parameters. It autogenerates entries
 // up to the pool size. When an entry is pulled from the pool it will generate
 // new entry.
-type TSSPreParamsPool struct {
+type tssPreParamsPool struct {
 	pumpFuncMutex *sync.Mutex // lock concurrent executions of pumping function
 
 	paramsMutex *sync.Cond
@@ -21,9 +21,9 @@ type TSSPreParamsPool struct {
 	poolSize int
 }
 
-// InitializeTSSPreParamsPool generates TSS pre-parameters and stores them in a pool.
-func (n *Node) InitializeTSSPreParamsPool() {
-	n.tssParamsPool = &TSSPreParamsPool{
+// initializeTSSPreParamsPool generates TSS pre-parameters and stores them in a pool.
+func (n *Node) initializeTSSPreParamsPool() {
+	n.tssParamsPool = &tssPreParamsPool{
 		pumpFuncMutex: &sync.Mutex{},
 		paramsMutex:   sync.NewCond(&sync.Mutex{}),
 		params:        []*keygen.LocalPreParams{},
@@ -36,7 +36,7 @@ func (n *Node) InitializeTSSPreParamsPool() {
 	go n.tssParamsPool.pumpPool()
 }
 
-func (n *TSSPreParamsPool) pumpPool() {
+func (n *tssPreParamsPool) pumpPool() {
 	n.pumpFuncMutex.Lock()
 	defer n.pumpFuncMutex.Unlock()
 
@@ -61,9 +61,9 @@ func (n *TSSPreParamsPool) pumpPool() {
 	}
 }
 
-// Get returns TSS pre parameters from the pool. It pumps the pool after getting
+// get returns TSS pre parameters from the pool. It pumps the pool after getting
 // and entry. If the pool is empty it will wait for a new entry to be generated.
-func (n *TSSPreParamsPool) Get() *keygen.LocalPreParams {
+func (n *tssPreParamsPool) get() *keygen.LocalPreParams {
 	n.paramsMutex.L.Lock()
 	defer n.paramsMutex.L.Unlock()
 
