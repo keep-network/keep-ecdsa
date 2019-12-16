@@ -60,18 +60,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 		for i, memberID := range groupMemberIDs {
 			go func(memberID MemberID) {
-				keygenErrChan := make(chan error)
-				go func() {
-					for {
-						select {
-						case err := <-keygenErrChan:
-							errChan <- err
-							return
-						}
-					}
-				}()
-
-				network := newTestNetProvider(memberID, groupMembersKeys, keygenErrChan)
+				network := newTestNetProvider(memberID, groupMembersKeys)
 				networkProviders.Store(memberID, network)
 
 				preParams := testData[i].LocalPreParams
@@ -85,7 +74,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 					&preParams,
 				)
 				if err != nil {
-					keygenErrChan <- fmt.Errorf("failed to generate signer: [%v]", err)
+					errChan <- fmt.Errorf("failed to generate signer: [%v]", err)
 				}
 
 				signersMutex.Lock()
@@ -144,18 +133,6 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 		for memberID, signer := range signers {
 			go func(memberID MemberID, signer *ThresholdSigner) {
-				signingErrChan := make(chan error)
-
-				go func() {
-					for {
-						select {
-						case err := <-signingErrChan:
-							errChan <- err
-							return
-						}
-					}
-				}()
-
 				value, loaded := networkProviders.Load(memberID)
 				if !loaded {
 					errChan <- fmt.Errorf("failed to load network provider")
@@ -241,10 +218,6 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[MemberID]*key.NetworkPub
 func newTestNetProvider(
 	memberID MemberID,
 	membersNetworkKeys map[MemberID]*key.NetworkPublic,
-	errChan chan error,
 ) net.Provider {
-	return local.LocalProvider(
-		membersNetworkKeys[memberID],
-		errChan,
-	)
+	return local.LocalProvider(membersNetworkKeys[memberID])
 }

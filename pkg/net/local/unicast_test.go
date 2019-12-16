@@ -17,24 +17,14 @@ func TestRegisterAndFireHandler(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	errChan := make(chan error)
-	go func() {
-		for {
-			select {
-			case err := <-errChan:
-				t.Errorf("unexpected error: [%v]", err)
-			}
-		}
-	}()
-
 	_, publicKey1, _ := key.GenerateStaticNetworkKey()
 	_, publicKey2, _ := key.GenerateStaticNetworkKey()
 
 	transportID1 := key.NetworkPubKeyToEthAddress(publicKey1)
 	transportID2 := key.NetworkPubKeyToEthAddress(publicKey2)
 
-	netProvider1 := LocalProvider(publicKey1, errChan)
-	netProvider2 := LocalProvider(publicKey2, errChan)
+	netProvider1 := LocalProvider(publicKey1)
+	netProvider2 := LocalProvider(publicKey2)
 
 	localChannel1, err := netProvider1.UnicastChannelWith(transportID2)
 	if err != nil {
@@ -144,18 +134,8 @@ func TestUnregisterHandler(t *testing.T) {
 			transportID1 := key.NetworkPubKeyToEthAddress(publicKey1)
 			transportID2 := key.NetworkPubKeyToEthAddress(publicKey2)
 
-			errChan := make(chan error)
-			go func() {
-				for {
-					select {
-					case err := <-errChan:
-						t.Errorf("unexpected error: [%v]", err)
-					}
-				}
-			}()
-
-			netProvider1 := LocalProvider(publicKey1, errChan)
-			netProvider2 := LocalProvider(publicKey2, errChan)
+			netProvider1 := LocalProvider(publicKey1)
+			netProvider2 := LocalProvider(publicKey2)
 
 			localChannel1, err := netProvider1.UnicastChannelWith(transportID2)
 			if err != nil {

@@ -17,12 +17,10 @@ type unicastProvider struct {
 	transportID   localIdentifier
 	channelsMutex *sync.RWMutex
 	channels      map[localIdentifier]*unicastChannel
-	errChan       chan error
 }
 
 func unicastConnectWithKey(
 	publicKey *key.NetworkPublic,
-	errChan chan error,
 ) *unicastProvider {
 	providersMutex.Lock()
 	defer providersMutex.Unlock()
@@ -39,7 +37,6 @@ func unicastConnectWithKey(
 		transportID:   localIdentifier(transportID),
 		channels:      make(map[localIdentifier]*unicastChannel),
 		channelsMutex: &sync.RWMutex{},
-		errChan:       errChan,
 	}
 
 	providers[localIdentifier(transportID)] = provider
@@ -66,7 +63,6 @@ func (up *unicastProvider) channel(peerID string) (net.UnicastChannel, error) {
 		senderPublicKey:      up.publicKey,
 		messageHandlersMutex: &sync.RWMutex{},
 		messageHandlers:      make(map[string][]*net.HandleMessageFunc),
-		errChan:              up.errChan,
 	}
 
 	up.channels[localIdentifier(peerID)] = channel
@@ -83,8 +79,6 @@ type unicastChannel struct {
 	messageHandlersMutex *sync.RWMutex
 	messageHandlers      map[string][]*net.HandleMessageFunc
 	unmarshalersByType   sync.Map // <string, net.TaggedUnmarshaler>
-
-	errChan chan error
 }
 
 func (uc *unicastChannel) RegisterUnmarshaler(
@@ -145,6 +139,9 @@ func (uc *unicastChannel) doSend(payload net.TaggedMarshaler) error {
 		return fmt.Errorf("failed to marshal payload: [%v]", err)
 	}
 
+	provider.channelsMutex.RLock()
+	defer provider.channelsMutex.RUnlock()
+
 	for peerID, targetChannel := range provider.channels {
 		if targetChannel.transportID.String() == peerID.String() {
 			continue // don't send to self
@@ -152,7 +149,7 @@ func (uc *unicastChannel) doSend(payload net.TaggedMarshaler) error {
 
 		unmarshaler, found := targetChannel.unmarshalersByType.Load(payload.Type())
 		if !found {
-			provider.errChan <- fmt.Errorf(
+			return fmt.Errorf(
 				"couldn't find unmarshaler for type [%s] in unicast channel",
 				payload.Type(),
 			)
@@ -161,21 +158,16 @@ func (uc *unicastChannel) doSend(payload net.TaggedMarshaler) error {
 		unmarshaled := unmarshaler.(func() net.TaggedUnmarshaler)()
 		err = unmarshaled.Unmarshal(bytes)
 		if err != nil {
-			provider.errChan <- err
+			return fmt.Errorf("failed to unmarshal message: [%v]", err)
 		}
 
-		if err := targetChannel.deliver(
+		targetChannel.deliver(
 			uc.transportID,
 			uc.senderPublicKey,
 			unmarshaled,
 			payload.Type(),
-			provider.errChan,
-		); err != nil {
-			provider.errChan <- err
-		}
-
-		return true
-	})
+		)
+	}
 
 	return nil
 }
@@ -185,8 +177,7 @@ func (uc *unicastChannel) deliver(
 	senderPublicKey *key.NetworkPublic,
 	payload interface{},
 	messageType string,
-	errChan chan error,
-) error {
+) {
 	message := internal.BasicMessage(
 		senderTransportID,
 		payload,
@@ -200,12 +191,10 @@ func (uc *unicastChannel) deliver(
 			go func(handler *net.HandleMessageFunc) {
 				err := handler.Handler(message)
 				if err != nil {
-					errChan <- fmt.Errorf("failed to handle message: [%v]", err)
+					logger.Errorf("failed to handle message: [%v]", err)
 				}
 			}(handler)
 		}
 	}
 	uc.messageHandlersMutex.RUnlock()
-
-	return nil
 }

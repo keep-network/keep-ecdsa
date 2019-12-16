@@ -1,13 +1,16 @@
 package local
 
 import (
+	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/net/key"
 	brdcLocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
+var logger = log.Logger("keep-net")
+
 type localProvider struct {
-	errChan           chan error
 	transportID       localIdentifier
 	broadcastProvider net.BroadcastProvider
 	unicastProvider   *unicastProvider
@@ -17,12 +20,10 @@ type localProvider struct {
 // for testing.
 func LocalProvider(
 	publicKey *key.NetworkPublic, // node's public key
-	errChan chan error,
 ) net.Provider {
 	return &localProvider{
-		errChan:           errChan,
 		broadcastProvider: brdcLocal.ConnectWithKey(publicKey),
-		unicastProvider:   unicastConnectWithKey(publicKey, errChan),
+		unicastProvider:   unicastConnectWithKey(publicKey),
 	}
 }
 

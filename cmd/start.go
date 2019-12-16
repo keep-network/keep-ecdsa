@@ -63,16 +63,8 @@ func Start(c *cli.Context) error {
 		operatorPrivateKey, operatorPublicKey,
 	)
 
-	netErrChan := make(chan error)
-	go func() {
-		for {
-			logger.Errorf("network error ocurred: [%v]", <-netErrChan)
-		}
-	}()
-
 	networkProvider := local.LocalProvider(
 		networkPublicKey,
-		netErrChan,
 	)
 
 	persistence := persistence.NewEncryptedPersistence(
