@@ -22,8 +22,8 @@ type TSSPreParamsPool struct {
 }
 
 // InitializeTSSPreParamsPool generates TSS pre-parameters and stores them in a pool.
-func (t *Node) InitializeTSSPreParamsPool() {
-	t.tssParamsPool = &TSSPreParamsPool{
+func (n *Node) InitializeTSSPreParamsPool() {
+	n.tssParamsPool = &TSSPreParamsPool{
 		pumpFuncMutex: &sync.Mutex{},
 		paramsMutex:   sync.NewCond(&sync.Mutex{}),
 		params:        []*keygen.LocalPreParams{},
@@ -33,29 +33,29 @@ func (t *Node) InitializeTSSPreParamsPool() {
 		},
 	}
 
-	go t.tssParamsPool.pumpPool()
+	go n.tssParamsPool.pumpPool()
 }
 
-func (t *TSSPreParamsPool) pumpPool() {
-	t.pumpFuncMutex.Lock()
-	defer t.pumpFuncMutex.Unlock()
+func (n *TSSPreParamsPool) pumpPool() {
+	n.pumpFuncMutex.Lock()
+	defer n.pumpFuncMutex.Unlock()
 
 	for {
-		if len(t.params) >= t.poolSize {
+		if len(n.params) >= n.poolSize {
 			logger.Debugf("tss pre parameters pool is pumped")
 			return
 		}
 
-		params, err := t.new()
+		params, err := n.new()
 		if err != nil {
 			logger.Warningf("failed to generate tss pre parameters: [%v]", err)
 			return
 		}
 
-		t.paramsMutex.L.Lock()
-		t.params = append(t.params, params)
-		t.paramsMutex.Signal()
-		t.paramsMutex.L.Unlock()
+		n.paramsMutex.L.Lock()
+		n.params = append(n.params, params)
+		n.paramsMutex.Signal()
+		n.paramsMutex.L.Unlock()
 
 		logger.Debugf("generated new tss pre parameters")
 	}
@@ -63,18 +63,18 @@ func (t *TSSPreParamsPool) pumpPool() {
 
 // Get returns TSS pre parameters from the pool. It pumps the pool after getting
 // and entry. If the pool is empty it will wait for a new entry to be generated.
-func (t *TSSPreParamsPool) Get() *keygen.LocalPreParams {
-	t.paramsMutex.L.Lock()
-	defer t.paramsMutex.L.Unlock()
+func (n *TSSPreParamsPool) Get() *keygen.LocalPreParams {
+	n.paramsMutex.L.Lock()
+	defer n.paramsMutex.L.Unlock()
 
-	for len(t.params) == 0 {
-		t.paramsMutex.Wait()
+	for len(n.params) == 0 {
+		n.paramsMutex.Wait()
 	}
 
-	params := t.params[0]
-	t.params = t.params[1:len(t.params)]
+	params := n.params[0]
+	n.params = n.params[1:len(n.params)]
 
-	go t.pumpPool()
+	go n.pumpPool()
 
 	return params
 }
