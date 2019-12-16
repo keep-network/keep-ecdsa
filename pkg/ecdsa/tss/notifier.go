@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
-const notificationWaitTimeout = 10 * time.Second
+const notificationWaitTimeout = 120 * time.Second
 
 type joinNotifier struct {
 	memberID         MemberID
