@@ -39,7 +39,7 @@ func initializeKeyGeneration(
 	tssPreParams *keygen.LocalPreParams,
 	network *networkBridge,
 ) (*member, error) {
-	keyGenParty, endChan, errChan, err := initializeKeyGenerationParty(
+	keyGenParty, endChan, err := initializeKeyGenerationParty(
 		group,
 		tssPreParams,
 		network,
@@ -53,7 +53,6 @@ func initializeKeyGeneration(
 		groupInfo:     group,
 		keygenParty:   keyGenParty,
 		keygenEndChan: endChan,
-		keygenErrChan: errChan,
 		networkBridge: network,
 	}, nil
 }
@@ -68,7 +67,6 @@ type member struct {
 	keygenParty tss.Party
 	// Channels where results of the key generation protocol execution will be written to.
 	keygenEndChan <-chan keygen.LocalPartySaveData // data from a successful execution
-	keygenErrChan chan error                       // error from a failed execution
 }
 
 // generateKey executes the protocol to generate a signing key. This function
@@ -142,19 +140,17 @@ func initializeKeyGenerationParty(
 ) (
 	tss.Party,
 	<-chan keygen.LocalPartySaveData,
-	chan error,
 	error,
 ) {
 	tssMessageChan := make(chan tss.Message, len(groupInfo.groupMemberIDs))
 	endChan := make(chan keygen.LocalPartySaveData)
-	errChan := make(chan error)
 
 	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(
 		groupInfo.memberID,
 		groupInfo.groupMemberIDs,
 	)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
+		return nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
 	}
 
 	params := tss.NewParameters(
@@ -169,10 +165,10 @@ func initializeKeyGenerationParty(
 	if err := bridge.connect(
 		tssMessageChan,
 	); err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
+		return nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
 
 	bridge.registerTSSMessageHandler(party, params.Parties().IDs())
 
-	return party, endChan, errChan, nil
+	return party, endChan, nil
 }
