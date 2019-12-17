@@ -92,11 +92,6 @@ func (s *member) generateKey() (*ThresholdSigner, error) {
 			}
 
 			return signer, nil
-		case err := <-s.keygenErrChan:
-			return nil, fmt.Errorf(
-				"failed to generate signer key: [%v]",
-				s.keygenParty.WrapError(err),
-			)
 		}
 	}
 }
