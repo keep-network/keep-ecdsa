@@ -52,7 +52,6 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	signers := make(map[MemberID]*ThresholdSigner)
 
 	keyGenDone := make(chan interface{})
-	KeyGenSync.Add(groupSize) // TODO: Temp Sync
 
 	go func() {
 		var keyGenWait sync.WaitGroup
@@ -124,8 +123,6 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	signatures := make(map[MemberID]*ecdsa.Signature)
 
 	signingDone := make(chan interface{})
-
-	SigningSync.Add(groupSize) // TODO: Temp Sync
 
 	go func() {
 		var signingWait sync.WaitGroup
