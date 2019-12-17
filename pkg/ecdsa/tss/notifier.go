@@ -24,11 +24,10 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 		return fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
 	}
 
+	handleType := fmt.Sprintf("%s-%s", group.groupID, time.Now())
 	joinInChan := make(chan *JoinMessage)
 	handleJoinMessage := net.HandleMessageFunc{
-		// TODO: This will be set to group ID now, but we may want to add some
-		// session ID for concurrent execution.
-		Type: fmt.Sprintf(group.groupID),
+		Type: handleType,
 		Handler: func(netMsg net.Message) error {
 			switch msg := netMsg.Payload().(type) {
 			case *JoinMessage:
@@ -39,7 +38,7 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 		},
 	}
 	broadcastChannel.Recv(handleJoinMessage)
-	// TODO: Unregister Recv
+	defer broadcastChannel.UnregisterRecv(handleType)
 
 	joinWait := &sync.WaitGroup{}
 	joinWait.Add(len(group.groupMemberIDs) - 1) // don't wait for self (minus 1)
