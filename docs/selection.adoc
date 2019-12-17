@@ -260,7 +260,8 @@ Unlike the Beacon,
 we only need to store the 3 best tickets
 and can just read+compare each submitted ticket to all of them.
 
-If operator _P_ submits a ticket
+If we prohibit visible duplicate members
+yet operator _P_ submits a ticket
 while the best 3 tickets already have a ticket from _P_,
 only the better of the two tickets is kept
 and the other one is discarded.
