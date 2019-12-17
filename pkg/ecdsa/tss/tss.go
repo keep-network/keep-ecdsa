@@ -99,8 +99,7 @@ func GenerateThresholdSigner(
 
 	signer, err := keyGenSigner.generateKey()
 	if err != nil {
-		logger.Errorf("err")
-		return nil, err
+		return nil, fmt.Errorf("failed to generate key: [%v]", err)
 	}
 	logger.Infof("[party:%s]: completed key generation", keyGenSigner.keygenParty.PartyID())
 
