@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 func TestJoinNotifier(t *testing.T) {
@@ -26,36 +27,25 @@ func TestJoinNotifier(t *testing.T) {
 
 	errChan := make(chan error)
 
-	joinNotifiers := []*joinNotifier{}
-
-	for memberID, memberNetworkKey := range groupMembersKeys {
-		groupInfo := &groupInfo{
-			groupID:        "test-group-1",
-			memberID:       memberID,
-			groupMemberIDs: groupMembers,
-		}
-
-		networkProvider := newTestNetProvider(memberNetworkKey)
-
-		joinNotifier, err := newJoinNotifier(groupInfo, networkProvider)
-		if err != nil {
-			t.Fatalf("failed to initialize join notifier: [%v]", err)
-		}
-
-		joinNotifiers = append(joinNotifiers, joinNotifier)
-	}
-
 	waitGroup := &sync.WaitGroup{}
 	waitGroup.Add(groupSize)
 
 	mutex := &sync.RWMutex{}
 	joinedCount := 0
 
-	for _, jn := range joinNotifiers {
-		go func(jn *joinNotifier) {
+	for memberID, memberNetworkKey := range groupMembersKeys {
+		go func(memberID MemberID, memberNetworkKey *key.NetworkPublic) {
+			groupInfo := &groupInfo{
+				groupID:        "test-group-1",
+				memberID:       memberID,
+				groupMemberIDs: groupMembers,
+			}
+
+			networkProvider := newTestNetProvider(memberNetworkKey)
+
 			defer waitGroup.Done()
 
-			if err := jn.notifyReady(); err != nil {
+			if err := joinProtocol(groupInfo, networkProvider); err != nil {
 				errChan <- err
 				return
 			}
@@ -63,7 +53,7 @@ func TestJoinNotifier(t *testing.T) {
 			mutex.Lock()
 			joinedCount++
 			mutex.Unlock()
-		}(jn)
+		}(memberID, memberNetworkKey)
 	}
 
 	go func() {

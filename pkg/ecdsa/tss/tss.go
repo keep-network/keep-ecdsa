@@ -62,11 +62,6 @@ func GenerateThresholdSigner(
 		dishonestThreshold: int(dishonestThreshold),
 	}
 
-	joinNotifier, err := newJoinNotifier(group, networkProvider)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize join notifier: [%v]", err)
-	}
-
 	if tssPreParams == nil {
 		// TODO: Should we return an error here? We expect the params to be provided
 		// from pool but if they are not provided to this function they will
@@ -91,7 +86,7 @@ func GenerateThresholdSigner(
 	}
 	logger.Infof("[party:%s]: initialized key generation", keyGenSigner.keygenParty.PartyID())
 
-	if err := joinNotifier.notifyReady(); err != nil {
+	if err := joinProtocol(group, networkProvider); err != nil {
 		return nil, fmt.Errorf("failed joining notification: [%v]", err)
 	}
 
@@ -113,11 +108,6 @@ func (s *ThresholdSigner) CalculateSignature(
 	digest []byte,
 	networkProvider net.Provider,
 ) (*ecdsa.Signature, error) {
-	joinNotifier, err := newJoinNotifier(s.groupInfo, networkProvider)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize join notifier: [%v]", err)
-	}
-
 	netBridge, err := newNetworkBridge(s.groupInfo, networkProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
@@ -128,7 +118,7 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, fmt.Errorf("failed to initialize signer: [%v]", err)
 	}
 
-	if err := joinNotifier.notifyReady(); err != nil {
+	if err := joinProtocol(s.groupInfo, networkProvider); err != nil {
 		return nil, fmt.Errorf("failed joining notification: [%v]", err)
 	}
 

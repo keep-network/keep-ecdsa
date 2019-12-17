@@ -11,21 +11,17 @@ import (
 
 const notificationWaitTimeout = 120 * time.Second
 
-type joinNotifier struct {
-	memberID         MemberID
-	wait             *sync.WaitGroup
-	broadcastChannel net.BroadcastChannel
-}
+func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
+	ctx, cancel := context.WithTimeout(context.Background(), notificationWaitTimeout)
 
-func newJoinNotifier(group *groupInfo, networkProvider net.Provider) (*joinNotifier, error) {
 	broadcastChannel, err := networkProvider.BroadcastChannelFor(group.groupID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
+		return fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
 	}
 	if err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &JoinMessage{}
 	}); err != nil {
-		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
+		return fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
 	}
 
 	joinInChan := make(chan *JoinMessage)
@@ -43,6 +39,7 @@ func newJoinNotifier(group *groupInfo, networkProvider net.Provider) (*joinNotif
 		},
 	}
 	broadcastChannel.Recv(handleJoinMessage)
+	// TODO: Unregister Recv
 
 	joinWait := &sync.WaitGroup{}
 	joinWait.Add(len(group.groupMemberIDs) - 1) // don't wait for self (minus 1)
@@ -74,20 +71,10 @@ func newJoinNotifier(group *groupInfo, networkProvider net.Provider) (*joinNotif
 		}
 	}()
 
-	return &joinNotifier{
-		memberID:         group.memberID,
-		wait:             joinWait,
-		broadcastChannel: broadcastChannel,
-	}, nil
-}
-
-func (jn *joinNotifier) notifyReady() error {
-	ctx, cancel := context.WithTimeout(context.Background(), notificationWaitTimeout)
-
 	go func() {
 		for {
-			if err := jn.broadcastChannel.Send(
-				&JoinMessage{SenderID: jn.memberID},
+			if err := broadcastChannel.Send(
+				&JoinMessage{SenderID: group.memberID},
 			); err != nil {
 				logger.Errorf("failed to send readiness notification: [%v]", err)
 			}
@@ -96,8 +83,8 @@ func (jn *joinNotifier) notifyReady() error {
 	}()
 
 	go func() {
-		defer cancel()
-		jn.wait.Wait()
+		joinWait.Wait()
+		cancel()
 	}()
 
 	<-ctx.Done()
