@@ -8,7 +8,6 @@ package tss
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
@@ -17,12 +16,6 @@ import (
 )
 
 var logger = log.Logger("keep-tss")
-
-// TODO: Temporary synchronization mechanism just for local signer implementation.
-var (
-	KeyGenSync  sync.WaitGroup
-	SigningSync sync.WaitGroup
-)
 
 // GenerateThresholdSigner executes a threshold multi-party key generation protocol.
 //

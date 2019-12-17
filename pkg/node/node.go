@@ -3,7 +3,6 @@ package node
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
@@ -43,10 +42,6 @@ func (n *Node) GenerateSignerForKeep(
 	keepAddress eth.KeepAddress,
 	keepMembers []common.Address,
 ) (*tss.ThresholdSigner, error) {
-	// TODO: Temp Sync
-	tss.KeyGenSync.Add(1)
-	time.Sleep(2 * time.Second)
-
 	groupMemberIDs := []tss.MemberID{}
 	for _, member := range keepMembers {
 		groupMemberIDs = append(

@@ -2,8 +2,6 @@
 package client
 
 import (
-	"time"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
@@ -111,10 +109,6 @@ func registerForSignEvents(
 				keepAddress.String(),
 				signatureRequestedEvent.Digest,
 			)
-
-			// TODO: Temp Sync
-			tss.SigningSync.Add(1)
-			time.Sleep(1 * time.Second)
 
 			go func() {
 				err := tssNode.CalculateSignature(
