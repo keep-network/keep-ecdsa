@@ -185,7 +185,7 @@ The Random Beacon currently uses a scheme
 where each operator has a number of virtual stakers
 equal to their staker weight
 (total stake divided by the minimum stake to participate),
-and each virtual staker gets assigned a pseudorandom _ticket_ value,
+and each virtual staker gets assigned a pseudorandom _ticket_ value
 in each group selection,
 with a smaller ticket value being more valuable.
 The operators then submit promising tickets on-chain,
@@ -254,7 +254,22 @@ Miner censorship attacks aren't affected by this mitigation.
 
 === Implementation
 
-TBD
+As in the Beacon,
+operators calculate and submit tickets.
+Unlike the Beacon,
+we only need to store the 3 best tickets
+and can just read+compare each submitted ticket to all of them.
+
+If operator _P_ submits a ticket
+while the best 3 tickets already have a ticket from _P_,
+only the better of the two tickets is kept
+and the other one is discarded.
+
+Ticket-based selection has a practical cost floor of
+_21,000 + 2,400 + 5,000 = 28,400_ gas per ticket
+for _n = 3_
+(transaction base fee + 3 read operations + 1 write).
+The total cost floor is _85,200_ gas.
 
 == Lazy non-interactive sortition
 
@@ -344,13 +359,13 @@ the number of possible virtual stakers is roughly 2^14^.
 The number of KEEP owned by each account
 is expected to follow a power law distribution,
 and the number of accounts holding at least 1/2^14^ of the total
-is expected to be approximately 2^13^ to 2^14^.
-Again taking the optimal case gives a height of 13 for a binary tree.
+is expected to be approximately 2^11^ to 2^14^.
+Again taking the optimal case gives a height of 11 for a binary tree.
 Updating a single node in the tree,
 along with its path from the root,
-would require up to 14 write operations at a cost of 70,000 gas.
+would require up to 14 write operations at a cost of 55,000 ~ 70,000 gas.
 Accessing a node in the tree
-would similarly require 14 read operations at 11,200 gas.
+would similarly require up to 14 read operations at 8,800 ~ 11,200 gas.
 
 ==== Optimized higher arity trees
 
