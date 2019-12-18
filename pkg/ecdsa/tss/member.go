@@ -7,23 +7,23 @@ import (
 // MemberID is an unique identifier of a member across the network.
 type MemberID string
 
-// BigInt converts MemberID to string.
-func (id MemberID) String() string {
+// string converts MemberID to string.
+func (id MemberID) string() string {
 	return string(id)
 }
 
-// BigInt converts MemberID to big.Int.
-func (id MemberID) BigInt() *big.Int {
-	return new(big.Int).SetBytes(id.Bytes())
+// bigInt converts MemberID to big.Int.
+func (id MemberID) bigInt() *big.Int {
+	return new(big.Int).SetBytes(id.bytes())
 }
 
-// Bytes converts MemberID to bytes slice.
-func (id MemberID) Bytes() []byte {
+// bytes converts MemberID to bytes slice.
+func (id MemberID) bytes() []byte {
 	return []byte(id)
 }
 
-// MemberIDFromBytes converts bytes slice to MemberID.
-func MemberIDFromBytes(bytes []byte) MemberID {
+// memberIDFromBytes converts bytes slice to MemberID.
+func memberIDFromBytes(bytes []byte) MemberID {
 	return MemberID(string(bytes))
 }
 

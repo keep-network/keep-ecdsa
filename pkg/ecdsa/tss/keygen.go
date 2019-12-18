@@ -108,14 +108,14 @@ func generatePartiesIDs(
 	groupPartiesIDs := []*tss.PartyID{}
 
 	for _, memberID := range groupMemberIDs {
-		if memberID.BigInt().Cmp(big.NewInt(0)) <= 0 {
-			return nil, nil, fmt.Errorf("member ID must be greater than 0, but found [%v]", memberID.BigInt())
+		if memberID.bigInt().Cmp(big.NewInt(0)) <= 0 {
+			return nil, nil, fmt.Errorf("member ID must be greater than 0, but found [%v]", memberID.bigInt())
 		}
 
 		newPartyID := tss.NewPartyID(
-			memberID.String(), // id - unique string representing this party in the network
+			memberID.string(), // id - unique string representing this party in the network
 			"",                // moniker - can be anything (even left blank)
-			memberID.BigInt(), // key - unique identifying key
+			memberID.bigInt(), // key - unique identifying key
 		)
 
 		if thisMemberID == memberID {
