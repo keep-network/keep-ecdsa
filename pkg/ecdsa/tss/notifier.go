@@ -26,7 +26,7 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 	}
 
 	handleType := fmt.Sprintf("%s-%s", group.groupID, time.Now())
-	joinInChan := make(chan *JoinMessage)
+	joinInChan := make(chan *JoinMessage, len(group.groupMemberIDs))
 	handleJoinMessage := net.HandleMessageFunc{
 		Type: handleType,
 		Handler: func(netMsg net.Message) error {
