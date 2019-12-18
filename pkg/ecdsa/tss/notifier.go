@@ -47,24 +47,20 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 	joinWait.Add(len(group.groupMemberIDs) - 1) // don't wait for self (minus 1)
 
 	go func() {
-		waitingForMember := []MemberID{}
-		for _, memberID := range group.groupMemberIDs {
-			waitingForMember = append(waitingForMember, memberID)
-		}
+		readyMembers := make(map[MemberID]bool)
 
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case msg := <-joinInChan:
-
-				for i, memberID := range waitingForMember {
+				for _, memberID := range group.groupMemberIDs {
 					if msg.SenderID == memberID {
-						waitingForMember[i] = waitingForMember[len(waitingForMember)-1]
-						waitingForMember = waitingForMember[:len(waitingForMember)-1]
-
-						joinWait.Done()
-						continue
+						if readyMembers[msg.SenderID] == false {
+							readyMembers[msg.SenderID] = true
+							joinWait.Done()
+							break
+						}
 					}
 				}
 			}
