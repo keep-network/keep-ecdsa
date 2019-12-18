@@ -66,7 +66,7 @@ func TestJoinNotifier(t *testing.T) {
 		if joinedCount != groupSize {
 			t.Errorf(
 				"invalid number of received notifications\nexpected: [%d]\nactual:  [%d]",
-				groupSize-1,
+				groupSize,
 				joinedCount,
 			)
 		}
