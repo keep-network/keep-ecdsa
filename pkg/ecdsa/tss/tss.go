@@ -115,7 +115,7 @@ func (s *ThresholdSigner) CalculateSignature(
 
 	signingSigner, err := s.initializeSigning(digest[:], netBridge)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize signer: [%v]", err)
+		return nil, fmt.Errorf("failed to initialize signing: [%v]", err)
 	}
 
 	if err := joinProtocol(s.groupInfo, networkProvider); err != nil {
@@ -124,7 +124,7 @@ func (s *ThresholdSigner) CalculateSignature(
 
 	signature, err := signingSigner.sign()
 	if err != nil {
-		return nil, fmt.Errorf("failed to start signing: [%v]", err)
+		return nil, fmt.Errorf("failed to sign: [%v]", err)
 	}
 
 	return signature, err
