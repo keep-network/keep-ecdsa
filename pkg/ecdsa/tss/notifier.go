@@ -13,6 +13,7 @@ const notificationWaitTimeout = 120 * time.Second
 
 func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 	ctx, cancel := context.WithTimeout(context.Background(), notificationWaitTimeout)
+	defer cancel()
 
 	broadcastChannel, err := networkProvider.BroadcastChannelFor(group.groupID)
 	if err != nil {
@@ -51,6 +52,8 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 
 		for {
 			select {
+			case <-ctx.Done():
+				return
 			case msg := <-joinInChan:
 				if msg.SenderID == group.memberID {
 					continue
@@ -65,19 +68,28 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 						continue
 					}
 				}
-
 			}
 		}
 	}()
 
 	go func() {
-		for {
+		sendMessage := func() {
 			if err := broadcastChannel.Send(
 				&JoinMessage{SenderID: group.memberID},
 			); err != nil {
 				logger.Errorf("failed to send readiness notification: [%v]", err)
 			}
-			time.Sleep(1 * time.Second)
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				sendMessage()
+				return
+			default:
+				sendMessage()
+				time.Sleep(1 * time.Second)
+			}
 		}
 	}()
 
