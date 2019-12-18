@@ -1,6 +1,7 @@
 package tss
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -9,7 +10,10 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 )
 
-const preParamsGenerationTimeout = 90 * time.Second
+const (
+	preParamsGenerationTimeout = 90 * time.Second
+	keyGenerationTimeout       = 120 * time.Second
+)
 
 // GenerateTSSPreParams calculates parameters required by TSS key generation.
 // It times out after 90 seconds if the required parameters could not be generated.
@@ -76,6 +80,9 @@ type member struct {
 func (s *member) generateKey() (*ThresholdSigner, error) {
 	defer s.networkBridge.close()
 
+	ctx, cancel := context.WithTimeout(context.Background(), keyGenerationTimeout)
+	defer cancel()
+
 	if err := s.keygenParty.Start(); err != nil {
 		return nil, fmt.Errorf(
 			"failed to start key generation: [%v]",
@@ -92,6 +99,18 @@ func (s *member) generateKey() (*ThresholdSigner, error) {
 			}
 
 			return signer, nil
+		case <-ctx.Done():
+			if ctx.Err() == context.DeadlineExceeded {
+				memberIDs := []MemberID{}
+
+				if s.keygenParty.WaitingFor() != nil {
+					for _, partyID := range s.keygenParty.WaitingFor() {
+						memberIDs = append(memberIDs, MemberID(partyID.GetId()))
+					}
+				}
+
+				return nil, timeoutError{keyGenerationTimeout, "key generation", memberIDs}
+			}
 		}
 	}
 }

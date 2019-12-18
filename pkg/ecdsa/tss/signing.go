@@ -1,14 +1,18 @@
 package tss
 
 import (
+	"context"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
 	"github.com/binance-chain/tss-lib/tss"
 	tssLib "github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
+
+const signingTimeout = 120 * time.Second
 
 // initializeSigning initializes a member to run a threshold multi-party signature
 // calculation protocol. Signature will be calculated for provided digest.
@@ -57,6 +61,9 @@ func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 		return nil, fmt.Errorf("failed to get initialized signing party")
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), signingTimeout)
+	defer cancel()
+
 	if err := s.signingParty.Start(); err != nil {
 		return nil, fmt.Errorf(
 			"failed to start signing: [%v]",
@@ -70,6 +77,18 @@ func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 			ecdsaSignature := convertSignatureTSStoECDSA(signature)
 
 			return &ecdsaSignature, nil
+		case <-ctx.Done():
+			if ctx.Err() == context.DeadlineExceeded {
+				memberIDs := []MemberID{}
+
+				if s.signingParty.WaitingFor() != nil {
+					for _, partyID := range s.signingParty.WaitingFor() {
+						memberIDs = append(memberIDs, MemberID(partyID.GetId()))
+					}
+				}
+
+				return nil, timeoutError{signingTimeout, "signing", memberIDs}
+			}
 		}
 	}
 }
