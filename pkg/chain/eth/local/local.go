@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -32,6 +33,15 @@ func Connect() eth.Handle {
 	return &LocalChain{
 		keepCreatedHandlers: make(map[int]func(event *eth.ECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
+	}
+}
+
+// Connect performs initialization for communication with Ethereum blockchain
+// based on provided config.
+func ConnectWithKey(publicKey *key.NetworkPublic) eth.Handle {
+	return &LocalChain{
+		keepCreatedHandlers: make(map[int]func(event *eth.ECDSAKeepCreatedEvent)),
+		clientAddress:       common.HexToAddress(key.NetworkPubKeyToEthAddress(publicKey)),
 	}
 }
 
