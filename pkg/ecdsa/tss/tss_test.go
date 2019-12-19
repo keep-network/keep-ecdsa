@@ -22,7 +22,8 @@ import (
 )
 
 func TestGenerateKeyAndSign(t *testing.T) {
-	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
 	groupSize := 5
 	dishonestThreshold := uint(groupSize - 1)
