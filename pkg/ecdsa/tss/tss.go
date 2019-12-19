@@ -87,7 +87,7 @@ func GenerateThresholdSigner(
 	logger.Infof("[party:%s]: initialized key generation", keyGenSigner.keygenParty.PartyID())
 
 	if err := joinProtocol(group, networkProvider); err != nil {
-		return nil, fmt.Errorf("failed joining notification: [%v]", err)
+		return nil, fmt.Errorf("failed to join the protocol: [%v]", err)
 	}
 
 	logger.Infof("[party:%s]: starting key generation", keyGenSigner.keygenParty.PartyID())
@@ -119,7 +119,7 @@ func (s *ThresholdSigner) CalculateSignature(
 	}
 
 	if err := joinProtocol(s.groupInfo, networkProvider); err != nil {
-		return nil, fmt.Errorf("failed joining notification: [%v]", err)
+		return nil, fmt.Errorf("failed to join the protocol:: [%v]", err)
 	}
 
 	signature, err := signingSigner.sign()
