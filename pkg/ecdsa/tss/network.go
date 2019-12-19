@@ -23,7 +23,7 @@ type networkBridge struct {
 	tssMessageHandlers      []tssMessageHandler
 }
 
-type tssMessageHandler func(netMsg *ProtocolMessage) error
+type tssMessageHandler func(netMsg *TSSProtocolMessage) error
 
 // newNetworkBridge initializes a new network bridge for the given network provider.
 func newNetworkBridge(
@@ -47,7 +47,7 @@ func newNetworkBridge(
 func (b *networkBridge) connect(
 	tssOutChan <-chan tss.Message,
 ) error {
-	netInChan := make(chan *ProtocolMessage, len(b.groupInfo.groupMemberIDs))
+	netInChan := make(chan *TSSProtocolMessage, len(b.groupInfo.groupMemberIDs))
 
 	if err := b.initializeChannels(netInChan); err != nil {
 		return fmt.Errorf("failed to initialize channels: [%v]", err)
@@ -59,7 +59,7 @@ func (b *networkBridge) connect(
 			case tssLibMsg := <-tssOutChan:
 				go b.sendTSSMessage(tssLibMsg)
 			case msg := <-netInChan:
-				go b.handleProtocolMessage(msg)
+				go b.handleTSSProtocolMessage(msg)
 			}
 		}
 	}()
@@ -67,14 +67,14 @@ func (b *networkBridge) connect(
 	return nil
 }
 
-func (b *networkBridge) initializeChannels(netInChan chan *ProtocolMessage) error {
+func (b *networkBridge) initializeChannels(netInChan chan *TSSProtocolMessage) error {
 	handleMessageFunc := net.HandleMessageFunc{
 		// TODO: This will be set to group ID now, but we may want to add some
 		// session ID for concurrent execution.
 		Type: b.groupInfo.groupID,
 		Handler: func(msg net.Message) error {
 			switch protocolMessage := msg.Payload().(type) {
-			case *ProtocolMessage:
+			case *TSSProtocolMessage:
 				netInChan <- protocolMessage
 			}
 
@@ -125,7 +125,7 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 	}
 
 	if err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &ProtocolMessage{}
+		return &TSSProtocolMessage{}
 	}); err != nil {
 		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
 	}
@@ -150,7 +150,7 @@ func (b *networkBridge) getUnicastChannelWith(remotePeerID string) (net.UnicastC
 	}
 
 	if err := unicastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &ProtocolMessage{}
+		return &TSSProtocolMessage{}
 	}); err != nil {
 		return nil, fmt.Errorf("failed to register unmarshaler for unicast channel: [%v]", err)
 	}
@@ -167,7 +167,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 		return
 	}
 
-	protocolMessage := &ProtocolMessage{
+	protocolMessage := &TSSProtocolMessage{
 		SenderID:    memberIDFromBytes(routing.From.GetKey()),
 		Payload:     bytes,
 		IsBroadcast: routing.IsBroadcast,
@@ -182,7 +182,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 }
 
-func (b *networkBridge) broadcast(msg *ProtocolMessage) error {
+func (b *networkBridge) broadcast(msg *TSSProtocolMessage) error {
 	broadcastChannel, err := b.getBroadcastChannel()
 	if err != nil {
 		return fmt.Errorf("failed to find broadcast channel: [%v]", err)
@@ -196,7 +196,7 @@ func (b *networkBridge) broadcast(msg *ProtocolMessage) error {
 	return nil
 }
 
-func (b *networkBridge) sendTo(receiverID string, msg *ProtocolMessage) error {
+func (b *networkBridge) sendTo(receiverID string, msg *TSSProtocolMessage) error {
 	unicastChannel, err := b.getUnicastChannelWith(receiverID)
 	if err != nil {
 		return fmt.Errorf(
@@ -224,7 +224,7 @@ func (b *networkBridge) registerProtocolMessageHandler(
 	party tss.Party,
 	sortedPartyIDs tss.SortedPartyIDs,
 ) {
-	handler := func(protocolMessage *ProtocolMessage) error {
+	handler := func(protocolMessage *TSSProtocolMessage) error {
 		senderPartyID := sortedPartyIDs.FindByKey(protocolMessage.SenderID.bigInt())
 
 		if senderPartyID == party.PartyID() {
@@ -249,7 +249,7 @@ func (b *networkBridge) registerProtocolMessageHandler(
 	b.tssMessageHandlers = append(b.tssMessageHandlers, handler)
 }
 
-func (b *networkBridge) handleProtocolMessage(protocolMessage *ProtocolMessage) {
+func (b *networkBridge) handleTSSProtocolMessage(protocolMessage *TSSProtocolMessage) {
 	b.tssMessageHandlersMutex.Lock()
 	defer b.tssMessageHandlersMutex.Unlock()
 
