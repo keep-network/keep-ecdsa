@@ -97,7 +97,7 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
 		return fmt.Errorf(
-			"waiting for notifications timed out after: [%v]", notificationWaitTimeout,
+			"waiting for notifications timed out after: [%v]", protocolJoinTimeout,
 		)
 	case context.Canceled:
 		return nil
