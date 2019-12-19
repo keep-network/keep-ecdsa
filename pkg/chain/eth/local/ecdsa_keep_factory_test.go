@@ -14,12 +14,12 @@ func TestCreateKeepDuplicate(t *testing.T) {
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	expectedError := fmt.Errorf("keep already exists for address [0x0000000000000000000000000000000000000001]")
 
-	err := chain.createKeep(keepAddress)
+	err := chain.CreateKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = chain.createKeep(keepAddress)
+	err = chain.CreateKeep(keepAddress)
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf(
 			"unexpected error\nexpected: [%v]\nactual:   [%v]",
@@ -34,7 +34,7 @@ func TestCreateKeep(t *testing.T) {
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	expectedPublicKey := [64]byte{}
 
-	err := chain.createKeep(keepAddress)
+	err := chain.CreateKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}

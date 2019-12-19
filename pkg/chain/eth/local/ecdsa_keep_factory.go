@@ -7,7 +7,7 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
-func (c *localChain) createKeep(keepAddress common.Address) error {
+func (c *LocalChain) CreateKeep(keepAddress common.Address) error {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 

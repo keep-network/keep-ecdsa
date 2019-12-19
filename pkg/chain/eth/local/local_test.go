@@ -32,7 +32,7 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	err = chain.createKeep(keepAddress)
+	err = chain.CreateKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestOnSignatureRequested(t *testing.T) {
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
-	err := chain.createKeep(keepAddress)
+	err := chain.CreateKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		keepAddress.String(),
 	)
 
-	err := chain.createKeep(keepAddress)
+	err := chain.CreateKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,6 +142,6 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	}
 }
 
-func initializeLocalChain() *localChain {
-	return Connect().(*localChain)
+func initializeLocalChain() *LocalChain {
+	return Connect().(*LocalChain)
 }

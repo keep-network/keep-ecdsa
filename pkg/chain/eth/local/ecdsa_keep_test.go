@@ -34,7 +34,7 @@ func TestRequestSignatureNoHandler(t *testing.T) {
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
-	err := chain.createKeep(keepAddress)
+	err := chain.CreateKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestRequestSignature(t *testing.T) {
 		eventEmitted <- event
 	}
 
-	err := chain.createKeep(keepAddress)
+	err := chain.CreateKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
