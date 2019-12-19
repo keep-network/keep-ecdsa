@@ -3,7 +3,6 @@ package tss
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/keep-network/keep-tecdsa/pkg/net"
@@ -53,9 +52,6 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 	broadcastChannel.Recv(handleJoinMessage)
 	defer broadcastChannel.UnregisterRecv(handleType)
 
-	joinWait := &sync.WaitGroup{}
-	joinWait.Add(len(group.groupMemberIDs) - 1) // don't wait for self (minus 1)
-
 	go func() {
 		readyMembers := make(map[MemberID]bool)
 
@@ -68,10 +64,13 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 					if msg.SenderID == memberID {
 						if readyMembers[msg.SenderID] == false {
 							readyMembers[msg.SenderID] = true
-							joinWait.Done()
 							break
 						}
 					}
+				}
+
+				if len(readyMembers) == (len(group.groupMemberIDs) - 1) { // don't wait for self (minus 1)
+					cancel()
 				}
 			}
 		}
@@ -96,11 +95,6 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 				time.Sleep(1 * time.Second)
 			}
 		}
-	}()
-
-	go func() {
-		joinWait.Wait()
-		cancel()
 	}()
 
 	<-ctx.Done()
