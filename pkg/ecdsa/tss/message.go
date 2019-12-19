@@ -17,7 +17,7 @@ type TSSProtocolMessage struct {
 // Type returns a string type of the `TSSMessage` so that it conforms to
 // `net.Message` interface.
 func (m *TSSProtocolMessage) Type() string {
-	return fmt.Sprintf("%T", m)
+	return "ecdsa/tss_message"
 }
 
 // Marshal converts this message to a byte array suitable for network communication.
