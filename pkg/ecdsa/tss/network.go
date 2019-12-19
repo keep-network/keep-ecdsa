@@ -47,7 +47,7 @@ func newNetworkBridge(
 func (b *networkBridge) connect(
 	tssOutChan <-chan tss.Message,
 ) error {
-	netInChan := make(chan interface{}, len(b.groupInfo.groupMemberIDs))
+	netInChan := make(chan *ProtocolMessage, len(b.groupInfo.groupMemberIDs))
 
 	if err := b.initializeChannels(netInChan); err != nil {
 		return fmt.Errorf("failed to initialize channels: [%v]", err)
@@ -58,11 +58,8 @@ func (b *networkBridge) connect(
 			select {
 			case tssLibMsg := <-tssOutChan:
 				go b.sendTSSMessage(tssLibMsg)
-			case inMessage := <-netInChan:
-				switch msg := inMessage.(type) {
-				case *ProtocolMessage:
-					go b.handleTSSMessage(msg)
-				}
+			case msg := <-netInChan:
+				go b.handleProtocolMessage(msg)
 			}
 		}
 	}()
@@ -70,15 +67,15 @@ func (b *networkBridge) connect(
 	return nil
 }
 
-func (b *networkBridge) initializeChannels(netInChan chan interface{}) error {
+func (b *networkBridge) initializeChannels(netInChan chan *ProtocolMessage) error {
 	handleMessageFunc := net.HandleMessageFunc{
 		// TODO: This will be set to group ID now, but we may want to add some
 		// session ID for concurrent execution.
 		Type: b.groupInfo.groupID,
 		Handler: func(msg net.Message) error {
-			switch tssMessage := msg.Payload().(type) {
+			switch protocolMessage := msg.Payload().(type) {
 			case *ProtocolMessage:
-				netInChan <- tssMessage
+				netInChan <- protocolMessage
 			}
 
 			return nil
@@ -226,7 +223,7 @@ func (b *networkBridge) sendMessage(msg *MessageRouting) error {
 	return nil
 }
 
-func (b *networkBridge) registerTSSMessageHandler(
+func (b *networkBridge) registerProtocolMessageHandler(
 	party tss.Party,
 	sortedPartyIDs tss.SortedPartyIDs,
 ) {
@@ -255,7 +252,7 @@ func (b *networkBridge) registerTSSMessageHandler(
 	b.tssMessageHandlers = append(b.tssMessageHandlers, handler)
 }
 
-func (b *networkBridge) handleTSSMessage(protocolMessage *ProtocolMessage) {
+func (b *networkBridge) handleProtocolMessage(protocolMessage *ProtocolMessage) {
 	b.tssMessageHandlersMutex.Lock()
 	defer b.tssMessageHandlersMutex.Unlock()
 
