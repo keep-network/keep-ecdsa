@@ -1,4 +1,4 @@
-package testdata
+package tss
 
 import (
 	"encoding/json"
@@ -11,10 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	testFixtureDirFormat  = "%s/tss"
-	testFixtureFileFormat = "keygen_data_%d.json"
-)
+const testFixtureFileFormat = "keygen_data_%d.json"
 
 // LoadKeygenTestFixtures loads key generation test data.
 // Code copied from:
@@ -63,6 +60,8 @@ func LoadKeygenTestFixtures(count int) ([]keygen.LocalPartySaveData, error) {
 func makeTestFixtureFilePath(partyIndex int) string {
 	_, callerFileName, _, _ := runtime.Caller(0)
 	srcDirName := filepath.Dir(callerFileName)
-	fixtureDirName := fmt.Sprintf(testFixtureDirFormat, srcDirName)
-	return fmt.Sprintf("%s/"+testFixtureFileFormat, fixtureDirName, partyIndex)
+
+	fileName := fmt.Sprintf(testFixtureFileFormat, partyIndex)
+
+	return fmt.Sprintf("%s/%s", srcDirName, fileName)
 }

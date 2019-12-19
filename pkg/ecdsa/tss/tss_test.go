@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net/key"
-	"github.com/keep-network/keep-tecdsa/internal/testdata"
+	testdata "github.com/keep-network/keep-tecdsa/internal/testdata/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 	"github.com/keep-network/keep-tecdsa/pkg/net/local"
