@@ -62,10 +62,8 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 			case msg := <-joinInChan:
 				for _, memberID := range group.groupMemberIDs {
 					if msg.SenderID == memberID {
-						if readyMembers[msg.SenderID] == false {
-							readyMembers[msg.SenderID] = true
-							break
-						}
+						readyMembers[msg.SenderID] = true
+						break
 					}
 				}
 
