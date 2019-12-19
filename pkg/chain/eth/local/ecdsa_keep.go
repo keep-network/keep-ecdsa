@@ -2,15 +2,20 @@ package local
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
 type localKeep struct {
 	publicKey [64]byte
 
 	signatureRequestedHandlers map[int]func(event *eth.SignatureRequestedEvent)
+
+	signaturesMutex *sync.RWMutex
+	signatures      map[[32]byte][]*ecdsa.Signature
 }
 
 func (c *LocalChain) requestSignature(keepAddress common.Address, digest [32]byte) error {

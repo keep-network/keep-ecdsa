@@ -140,5 +140,27 @@ func (lc *LocalChain) SubmitSignature(
 	keepAddress common.Address,
 	signature *ecdsa.Signature,
 ) error {
+	keepsMutex.Lock()
+	defer keepsMutex.Unlock()
+
+	keep, ok := keeps[keepAddress]
+	if !ok {
+		return fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	keep.signaturesMutex.Lock()
+	defer keep.signaturesMutex.Unlock()
+
+	signatures, ok := keep.signatures[digest]
+	if !ok {
+		signatures = []*ecdsa.Signature{}
+	}
+	signatures = append(signatures, signature)
+
+	keep.signatures[digest] = signatures
+
 	return nil
 }
