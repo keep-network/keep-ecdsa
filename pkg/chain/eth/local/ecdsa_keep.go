@@ -37,3 +37,18 @@ func (c *LocalChain) requestSignature(keepAddress common.Address, digest [32]byt
 
 	return nil
 }
+
+func (lc *LocalChain) GetKeepPublicKey(keepAddress eth.KeepAddress) ([64]byte, error) {
+	keepsMutex.RLock()
+	defer keepsMutex.RUnlock()
+
+	keep, ok := keeps[keepAddress]
+	if !ok {
+		return [64]byte{}, fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	return keep.publicKey, nil
+}
