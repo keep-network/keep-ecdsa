@@ -20,6 +20,10 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
     bytes publicKey;
+
+    // Timeout in blocks for a signature to appear on the chain. Blocks are
+    // counted from the moment sign request occurred.
+    uint256 public signingTimeout = 5;
     // Number of block when signing process was started. Used to track if signing
     // is in progress. Value `0` indicates that there is no signing process in progress.
     uint256 internal currentSigningStartBlock;
@@ -77,7 +81,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external onlyOwner {
         // TODO: Add timeout handling.
-        require(!isSigningInProgress(), "Signer is busy");
+        require(!isSigningInProgress() || hasSigningTimedOut(), "Signer is busy");
 
         currentSigningStartBlock = block.number;
 
@@ -98,6 +102,8 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         uint8 _recoveryID
     ) external onlyMember {
         require(isSigningInProgress(), "Signature has been already submitted");
+        require(!hasSigningTimedOut(), "Signing timed out");
+
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // We add 27 to the recovery ID to align it with ethereum and bitcoin
@@ -116,11 +122,16 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         emit SignatureSubmitted(_digest, _r, _s, _recoveryID);
     }
 
-    /**
-     * @notice Returns true if signing of a digest is currently in progress.
-     */
+    /// @notice Returns true if signing of a digest is currently in progress.
     function isSigningInProgress() internal view returns (bool) {
         return currentSigningStartBlock != 0;
+    }
+
+    /// @dev Returns true if the currently ongoing signing process timed out.
+    /// There is a certain timeout for a signature to be produced, see `signingTimeout`
+    /// value.
+    function hasSigningTimedOut() internal view returns (bool) {
+        return currentSigningStartBlock != 0 && block.number > currentSigningStartBlock + signingTimeout;
     }
 
     /// @notice Checks if the caller is a keep member.
