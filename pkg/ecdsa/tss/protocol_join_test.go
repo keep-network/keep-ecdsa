@@ -57,8 +57,8 @@ func TestJoinNotifier(t *testing.T) {
 	}
 
 	go func() {
-		defer cancel()
 		waitGroup.Wait()
+		cancel()
 	}()
 
 	select {
