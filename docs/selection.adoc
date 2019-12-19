@@ -141,6 +141,25 @@ To ensure we don't screw up right in the beginning of the process,
 this draft isn't going to commit either way on this question.
 Both options will be explored.
 
+=== Fast response time?
+
+In the Random Beacon,
+the signing group producing each entry
+is selected from a pool of existing groups.
+A signing group can only be called to perform work
+when member selection and key generation have finished.
+The only major downside of slower member selection and DKG
+is that the rate of signing group creation is limited
+as the current design requires any existing group creation
+to finish or time out before another group creation may begin.
+A future redesign to permit concurrent group creation
+could eliminate this constraint.
+
+When a request for an ECDSA keep is made,
+the keep may be required right away
+depending on the customer application.
+Significant latency in this process is detrimental to the service.
+
 == Common features
 
 Some solutions to various parts of the whole question
@@ -171,6 +190,46 @@ In the case of privileged customer applications,
 the privileged application itself must be authorized.
 If the privileged applications can only seize bonds,
 the staking contract doesn't need to be changed to accommodate them.
+
+===  Pooling keeps?
+
+If ECDSA keeps are created in response to requests,
+creating a keep requires acquiring a selection seed from the Random Beacon.
+The Random Beacon cannot produce entries instantly,
+so ECDSA keeps could only be returned through a later callback.
+Any additional latency beyond the beacon entry
+would add further delay to the customer receiving the keep.
+
+If ECDSA keeps are created in advance and kept in a pool,
+most requests can be served immediately from the pool
+instead of requiring a later callback.
+
+Being able to return the keep address
+immediately when the customer requests a keep
+would provide a superior customer experience.
+However, this is impossible to guarantee
+as any number of pooled keeps
+can be exhausted by a greater number of keep requests
+in a sufficiently short period of time.
+Thus, an interface that can return a keep immediately
+would need to either error out when it cannot return a keep,
+requiring the customer to request again later,
+or to return a newly created keep in a callback
+if one isn't immediately available.
+In either case the customer application must be designed
+to deal with the more complex scenario.
+
+Another advantage of pooling keeps is that keeps can be created in batches.
+Standard methods exist for deriving an arbitrary number of pseudorandom numbers
+from a single high-entropy seed.
+If a single entry from the Random Beacon is used
+to create a large number of ECDSA keeps, e.g. 20,
+the cost of the beacon entry is divided among them.
+
+Additionally, selecting a larger number of members
+and dividing them among the batched keeps
+may affect the characteristics of the member selection scheme
+either favorably or unfavorably.
 
 == Adapted ticket scheme
 
@@ -252,6 +311,22 @@ at the cost of higher gas expenses
 by using a signature of the selection seed as the ticket value.
 Miner censorship attacks aren't affected by this mitigation.
 
+=== Batched selection
+
+If ECDSA keeps are created in batches,
+it has both positive and negative effects on ticket-based member selection.
+
+The upside of selecting a larger number of members at once
+is that the risk of redundant ticket submissions is lessened.
+30 members do not require 10 times the ticket submission time as 3 members.
+
+The downside is that the cost of ticket submission
+scales with the number of members selected at once.
+With 3 members tracking the 3 best tickets is simple and inexpensive.
+Tracking and ordering the 60 best tickets
+requires significantly more optimization.
+Ticket-based selection has theoretically _O(n^2^)_ cost.
+
 === Implementation
 
 As in the Beacon,
@@ -281,7 +356,8 @@ rejecting and removing ineligible operators from the pool
 even with logarithmic data structures,
 but once optimized is easily scalable for larger _n_
 - Requires significant implementation work
-- Provides instant results and is less affected by censorship,
+- Provides instant results once the seed is received
+and is less affected by censorship,
 although malicious miners can still censor DKG result submissions
 
 A logarithmic data structure could be used
@@ -535,3 +611,9 @@ so _P_ is deleted from the sortition pool.
 If _B~P~ >= 2B_ and we previously proceeded,
 the operator _P_ is selected and they have enough bond to stay in the pool.
 We then perform queued updates, if any.
+
+=== Batched keep creation
+
+Unlike ticket-based selection,
+selecting a larger number of members at once
+does not have a significant impact on tree-based sortition pools.
