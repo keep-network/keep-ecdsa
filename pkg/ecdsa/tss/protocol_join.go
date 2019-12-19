@@ -9,10 +9,19 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
-const notificationWaitTimeout = 120 * time.Second
+// protocolJoinTimeout defines a period within which the member sends and receives
+// notifications from peer members about their readiness to begin the protocol
+// execution. If the time limit is reached the join protocol stage fails.
+const protocolJoinTimeout = 120 * time.Second
 
+// joinProtocol exchanges messages with peer members about readiness to start
+// the protocol execution. The member keeps sending the message in intervals
+// until they receive messages from all peer members. Function exits without an
+// error if messages were received from all peer members. If the timeout is
+// reached before receiving messages from all peer members the function returns
+// an error.
 func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
-	ctx, cancel := context.WithTimeout(context.Background(), notificationWaitTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), protocolJoinTimeout)
 	defer cancel()
 
 	broadcastChannel, err := networkProvider.BroadcastChannelFor(group.groupID)
