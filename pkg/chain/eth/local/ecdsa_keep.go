@@ -57,3 +57,24 @@ func (lc *LocalChain) GetKeepPublicKey(keepAddress eth.KeepAddress) ([64]byte, e
 
 	return keep.publicKey, nil
 }
+
+func (lc *LocalChain) GetSignatures(
+	keepAddress eth.KeepAddress,
+	digest [32]byte,
+) ([]*ecdsa.Signature, error) {
+	keepsMutex.RLock()
+	defer keepsMutex.RUnlock()
+
+	keep, ok := keeps[keepAddress]
+	if !ok {
+		return nil, fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	keep.signaturesMutex.Lock()
+	defer keep.signaturesMutex.Unlock()
+
+	return keep.signatures[digest], nil
+}
