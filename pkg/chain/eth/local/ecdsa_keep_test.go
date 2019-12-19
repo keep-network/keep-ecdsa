@@ -61,7 +61,7 @@ func TestRequestSignature(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	chain.keeps[keepAddress].signatureRequestedHandlers[0] = handler
+	keeps[keepAddress].signatureRequestedHandlers[0] = handler
 
 	err = chain.requestSignature(keepAddress, digest)
 	if err != nil {

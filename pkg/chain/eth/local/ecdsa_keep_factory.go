@@ -11,7 +11,7 @@ func (c *LocalChain) CreateKeep(keepAddress common.Address) error {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	if _, ok := c.keeps[keepAddress]; ok {
+	if _, ok := keeps[keepAddress]; ok {
 		return fmt.Errorf(
 			"keep already exists for address [%s]",
 			keepAddress.String(),
@@ -22,7 +22,7 @@ func (c *LocalChain) CreateKeep(keepAddress common.Address) error {
 		signatureRequestedHandlers: make(map[int]func(event *eth.SignatureRequestedEvent)),
 		publicKey:                  [64]byte{},
 	}
-	c.keeps[keepAddress] = localKeep
+	keeps[keepAddress] = localKeep
 
 	keepCreatedEvent := &eth.ECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,

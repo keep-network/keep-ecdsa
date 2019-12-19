@@ -125,7 +125,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		t.Errorf(
 			"unexpected result\nexpected: [%+v]\nactual:   [%+v]",
 			keepPublicKey,
-			chain.keeps[keepAddress].publicKey,
+			keeps[keepAddress].publicKey,
 		)
 	}
 
@@ -143,5 +143,6 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 }
 
 func initializeLocalChain() *LocalChain {
+	keeps = make(map[eth.KeepAddress]*localKeep)
 	return Connect().(*LocalChain)
 }

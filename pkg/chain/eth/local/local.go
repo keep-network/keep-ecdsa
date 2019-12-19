@@ -11,14 +11,15 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
+var keepsMutex = &sync.RWMutex{}
+var keeps = make(map[common.Address]*localKeep)
+
 // LocalChain is an implementation of ethereum blockchain interface.
 //
 // It mocks the behaviour of a real blockchain, without the complexity of deployments,
 // accounts, async transactions and so on. For use in tests ONLY.
 type LocalChain struct {
 	handlerMutex sync.Mutex
-
-	keeps map[common.Address]*localKeep
 
 	keepCreatedHandlers map[int]func(event *eth.ECDSAKeepCreatedEvent)
 
@@ -29,7 +30,6 @@ type LocalChain struct {
 // based on provided config.
 func Connect() eth.Handle {
 	return &LocalChain{
-		keeps:               make(map[common.Address]*localKeep),
 		keepCreatedHandlers: make(map[int]func(event *eth.ECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
 	}
@@ -77,7 +77,7 @@ func (lc *LocalChain) OnSignatureRequested(
 
 	handlerID := rand.Int()
 
-	keep, ok := lc.keeps[keepAddress]
+	keep, ok := keeps[keepAddress]
 	if !ok {
 		return nil, fmt.Errorf(
 			"failed to find keep with address: [%s]",
@@ -101,7 +101,10 @@ func (lc *LocalChain) SubmitKeepPublicKey(
 	keepAddress common.Address,
 	publicKey [64]byte,
 ) error {
-	keep, ok := lc.keeps[keepAddress]
+	keepsMutex.Lock()
+	defer keepsMutex.Unlock()
+
+	keep, ok := keeps[keepAddress]
 	if !ok {
 		return fmt.Errorf(
 			"failed to find keep with address: [%s]",

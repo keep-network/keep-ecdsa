@@ -17,7 +17,7 @@ func (c *LocalChain) requestSignature(keepAddress common.Address, digest [32]byt
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	keep, ok := c.keeps[keepAddress]
+	keep, ok := keeps[keepAddress]
 	if !ok {
 		return fmt.Errorf(
 			"failed to find keep with address: [%s]",

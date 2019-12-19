@@ -39,7 +39,7 @@ func TestCreateKeep(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	keep, ok := chain.keeps[keepAddress]
+	keep, ok := keeps[keepAddress]
 	if !ok {
 		t.Fatal("keep not found after creation")
 	}
