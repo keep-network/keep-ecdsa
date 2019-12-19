@@ -28,11 +28,12 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
 	}
-	if err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	// TODO: We ignore the error for the case when the unmarshaler is already
+	// registered. We should rework the `RegisterUnmarshaler` to not return
+	// an error in such case.
+	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &JoinMessage{}
-	}); err != nil {
-		return fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
-	}
+	})
 
 	handleType := fmt.Sprintf("%s-%s", group.groupID, time.Now())
 	joinInChan := make(chan *JoinMessage, len(group.groupMemberIDs))
