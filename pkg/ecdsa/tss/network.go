@@ -174,46 +174,49 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 
 	if routing.To == nil {
-		b.sendMessage("", protocolMessage)
+		b.broadcast(protocolMessage)
 	} else {
 		for _, destination := range routing.To {
-			b.sendMessage(destination.GetId(), protocolMessage)
+			b.sendTo(destination.GetId(), protocolMessage)
 		}
 	}
 }
 
-func (b *networkBridge) sendMessage(receiverID string, msg *ProtocolMessage) error {
-	if receiverID == "" {
-		broadcastChannel, err := b.getBroadcastChannel()
-		if err != nil {
-			return fmt.Errorf("failed to find broadcast channel: [%v]", err)
+func (b *networkBridge) broadcast(msg *ProtocolMessage) error {
+	broadcastChannel, err := b.getBroadcastChannel()
+	if err != nil {
+		return fmt.Errorf("failed to find broadcast channel: [%v]", err)
 
-		}
-
-		if broadcastChannel.Send(msg); err != nil {
-			return fmt.Errorf("failed to send broadcast message: [%v]", err)
-		}
-	} else {
-		unicastChannel, err := b.getUnicastChannelWith(receiverID)
-		if err != nil {
-			return fmt.Errorf(
-				"[m:%x]: failed to find unicast channel for [%v]: [%v]",
-				b.groupInfo.memberID,
-				receiverID,
-				err,
-			)
-
-		}
-
-		if err := unicastChannel.Send(msg); err != nil {
-			return fmt.Errorf(
-				"[m:%x]: failed to send unicast message: [%v]",
-				b.groupInfo.memberID,
-				err,
-			)
-
-		}
 	}
+
+	if broadcastChannel.Send(msg); err != nil {
+		return fmt.Errorf("failed to send broadcast message: [%v]", err)
+	}
+
+	return nil
+}
+
+func (b *networkBridge) sendTo(receiverID string, msg *ProtocolMessage) error {
+	unicastChannel, err := b.getUnicastChannelWith(receiverID)
+	if err != nil {
+		return fmt.Errorf(
+			"[m:%x]: failed to find unicast channel for [%v]: [%v]",
+			b.groupInfo.memberID,
+			receiverID,
+			err,
+		)
+
+	}
+
+	if err := unicastChannel.Send(msg); err != nil {
+		return fmt.Errorf(
+			"[m:%x]: failed to send unicast message: [%v]",
+			b.groupInfo.memberID,
+			err,
+		)
+
+	}
+
 	return nil
 }
 
