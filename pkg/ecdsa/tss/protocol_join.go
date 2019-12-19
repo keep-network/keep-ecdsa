@@ -86,6 +86,10 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 		for {
 			select {
 			case <-ctx.Done():
+				// Send the message once again as the member received messages
+				// from all peer members but not all peer members could receive
+				// the message from the member as some peer member could join
+				// the protocol after the member sent the last message.
 				sendMessage()
 				return
 			default:
