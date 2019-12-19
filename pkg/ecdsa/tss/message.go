@@ -1,8 +1,9 @@
 package tss
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
 // TSSProtocolMessage is a network message used to transport messages generated in
@@ -22,19 +23,23 @@ func (m *TSSProtocolMessage) Type() string {
 
 // Marshal converts this message to a byte array suitable for network communication.
 func (m *TSSProtocolMessage) Marshal() ([]byte, error) {
-	return json.Marshal(m)
+	return (&pb.TSSProtocolMessage{
+		SenderID:    m.SenderID.string(),
+		Payload:     m.Payload,
+		IsBroadcast: m.IsBroadcast,
+	}).Marshal()
 }
 
 // Unmarshal converts a byte array produced by Marshal to a message.
 func (m *TSSProtocolMessage) Unmarshal(bytes []byte) error {
-	var message TSSProtocolMessage
-	if err := json.Unmarshal(bytes, &message); err != nil {
+	pbMsg := &pb.TSSProtocolMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
-	m.SenderID = message.SenderID
-	m.Payload = message.Payload
-	m.IsBroadcast = message.IsBroadcast
+	m.SenderID = MemberID(pbMsg.SenderID)
+	m.Payload = pbMsg.Payload
+	m.IsBroadcast = pbMsg.IsBroadcast
 
 	return nil
 }
@@ -52,17 +57,19 @@ func (m *JoinMessage) Type() string {
 
 // Marshal converts this message to a byte array suitable for network communication.
 func (m *JoinMessage) Marshal() ([]byte, error) {
-	return json.Marshal(m)
+	return (&pb.JoinMessage{
+		SenderID: m.SenderID.string(),
+	}).Marshal()
 }
 
 // Unmarshal converts a byte array produced by Marshal to a message.
 func (m *JoinMessage) Unmarshal(bytes []byte) error {
-	var message JoinMessage
-	if err := json.Unmarshal(bytes, &message); err != nil {
+	pbMsg := &pb.JoinMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
-	m.SenderID = message.SenderID
+	m.SenderID = MemberID(pbMsg.SenderID)
 
 	return nil
 }
