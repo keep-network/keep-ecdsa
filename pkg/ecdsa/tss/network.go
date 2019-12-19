@@ -73,8 +73,8 @@ func (b *networkBridge) connect(
 
 func (b *networkBridge) initializeChannels(netInChan chan *TSSProtocolMessage) error {
 	handleMessageFunc := net.HandleMessageFunc{
-		// TODO: This will be set to group ID now, but we may want to add some
-		// session ID for concurrent execution.
+		// We don't allow concurrent execution of the protocol, so we use group
+		// ID as handler identifier.
 		Type: b.groupInfo.groupID,
 		Handler: func(msg net.Message) error {
 			switch protocolMessage := msg.Payload().(type) {
