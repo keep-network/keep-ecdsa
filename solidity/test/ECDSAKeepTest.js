@@ -4,6 +4,8 @@ import {
   addToBalances
 } from './helpers/listBalanceUtils'
 
+import { mineBlocks } from "./helpers/mineBlocks";
+
 const { expectRevert } = require('openzeppelin-test-helpers');
 
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
@@ -72,6 +74,15 @@ contract('ECDSAKeep', (accounts) => {
       } catch (e) {
         assert.include(e.message, 'Signer is busy')
       }
+    })
+
+    it('can be requested again after timeout passed', async () => {
+      await keep.sign(digest, { from: owner })
+
+      const signingTimeout = await keep.signingTimeout.call()
+      mineBlocks(signingTimeout)
+
+      await keep.sign(digest, { from: owner })
     })
   })
 
@@ -174,6 +185,24 @@ contract('ECDSAKeep', (accounts) => {
       )
 
       await keep.sign(digest, { from: owner })
+    })
+
+    it('cannot be submitted after timeout passed', async () => {
+      const signingTimeout = await keep.signingTimeout.call()
+      mineBlocks(signingTimeout)
+
+      try {
+        await keep.submitSignature(
+          digest,
+          signatureR,
+          signatureS,
+          signatureRecoveryID,
+          { from: members[0] }
+        )
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, "Signing timed out")
+      }
     })
 
     describe('validates signature', async () => {
