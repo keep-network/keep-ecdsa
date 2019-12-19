@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/utils/pbutils"
 )
 
-func TestMarshalling(t *testing.T) {
+func TestSignerMarshalling(t *testing.T) {
 	groupSize := 5
 	dishonestThreshold := 4
 	signerIndex := 2
