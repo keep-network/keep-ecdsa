@@ -84,9 +84,9 @@ func (n *Node) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
-	// TODO: Temp solution only the first member in the group publishes.
-	// We need to replace it with proper publisher selection.
-	if memberID.Equal(groupMemberIDs[0]) {
+	// TODO: Publisher Selection: Temp solution only the first member in the group
+	// publishes. We need to replace it with proper publisher selection.
+	if signer.MemberIndex() == 0 {
 		err = n.ethereumChain.SubmitKeepPublicKey(
 			keepAddress,
 			serializedPublicKey,
@@ -126,12 +126,16 @@ func (n *Node) CalculateSignature(
 
 	keepAddress := common.HexToAddress(signer.GroupID())
 
-	err = n.ethereumChain.SubmitSignature(keepAddress, digest, signature)
-	if err != nil {
-		return fmt.Errorf("failed to submit signature: [%v]", err)
-	}
+	// TODO: Publisher Selection: Temp solution only the first member in the group
+	// publishes. We need to replace it with proper publisher selection.
+	if signer.MemberIndex() == 0 {
+		err = n.ethereumChain.SubmitSignature(keepAddress, digest, signature)
+		if err != nil {
+			return fmt.Errorf("failed to submit signature: [%v]", err)
+		}
 
-	logger.Infof("submitted signature for digest: [%+x]", digest)
+		logger.Infof("submitted signature for digest: [%+x]", digest)
+	}
 
 	return nil
 }
