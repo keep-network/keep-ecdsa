@@ -21,8 +21,6 @@ type networkBridge struct {
 
 	tssMessageHandlersMutex *sync.Mutex
 	tssMessageHandlers      []tssMessageHandler
-
-	errChan chan error
 }
 
 type tssMessageHandler func(netMsg *ProtocolMessage) error
@@ -54,16 +52,6 @@ func (b *networkBridge) connect(
 	if err := b.initializeChannels(netInChan); err != nil {
 		return fmt.Errorf("failed to initialize channels: [%v]", err)
 	}
-
-	b.errChan = make(chan error, len(b.groupInfo.groupMemberIDs))
-	go func() {
-		for {
-			select {
-			case err := <-b.errChan:
-				logger.Errorf("network error ocurred: [%v]", err)
-			}
-		}
-	}()
 
 	go func() {
 		for {
@@ -178,7 +166,7 @@ func (b *networkBridge) getUnicastChannelWith(remotePeerID string) (net.UnicastC
 func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	bytes, routing, err := tssLibMsg.WireBytes()
 	if err != nil {
-		b.errChan <- fmt.Errorf("failed to encode message: [%v]", err)
+		logger.Errorf("failed to encode message: [%v]", err)
 		return
 	}
 
@@ -273,7 +261,7 @@ func (b *networkBridge) handleTSSMessage(protocolMessage *ProtocolMessage) {
 
 	for _, handler := range b.tssMessageHandlers {
 		if err := handler(protocolMessage); err != nil {
-			b.errChan <- err
+			logger.Errorf("failed to handle protocol message: [%v]", err)
 		}
 	}
 }
