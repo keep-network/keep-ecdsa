@@ -110,13 +110,11 @@ func (s *ThresholdSigner) initializeSigningParty(
 
 	if err := netBridge.connect(
 		tssMessageChan,
+		party,
+		params.Parties().IDs(),
 	); err != nil {
 		return nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
-
-	netBridge.registerProtocolMessageHandler(
-		party, params.Parties().IDs(),
-	)
 
 	return party, endChan, nil
 }

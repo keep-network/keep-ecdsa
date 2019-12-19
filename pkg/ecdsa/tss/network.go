@@ -46,6 +46,8 @@ func newNetworkBridge(
 
 func (b *networkBridge) connect(
 	tssOutChan <-chan tss.Message,
+	party tss.Party,
+	sortedPartyIDs tss.SortedPartyIDs,
 ) error {
 	netInChan := make(chan *TSSProtocolMessage, len(b.groupInfo.groupMemberIDs))
 
@@ -63,6 +65,8 @@ func (b *networkBridge) connect(
 			}
 		}
 	}()
+
+	b.registerProtocolMessageHandler(party, sortedPartyIDs)
 
 	return nil
 }
