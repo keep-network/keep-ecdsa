@@ -41,9 +41,7 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 		Handler: func(netMsg net.Message) error {
 			switch msg := netMsg.Payload().(type) {
 			case *JoinMessage:
-				if msg.SenderID != group.memberID {
-					joinInChan <- msg
-				}
+				joinInChan <- msg
 			}
 
 			return nil
@@ -67,7 +65,7 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 					}
 				}
 
-				if len(readyMembers) == (len(group.groupMemberIDs) - 1) { // don't wait for self (minus 1)
+				if len(readyMembers) == len(group.groupMemberIDs) {
 					cancel()
 				}
 			}
