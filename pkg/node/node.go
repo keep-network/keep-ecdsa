@@ -43,14 +43,22 @@ func (n *Node) GenerateSignerForKeep(
 	keepMembers []common.Address,
 ) (*tss.ThresholdSigner, error) {
 	groupMemberIDs := []tss.MemberID{}
-	for _, member := range keepMembers {
+	for _, memberAddress := range keepMembers {
+		memberID, err := tss.MemberIDFromHex(memberAddress.Hex())
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert member address to member ID: [%v]", err)
+		}
+
 		groupMemberIDs = append(
 			groupMemberIDs,
-			tss.MemberID(member.String()),
+			memberID,
 		)
 	}
 
-	memberID := tss.MemberID(n.ethereumChain.Address().String())
+	memberID, err := tss.MemberIDFromHex(n.ethereumChain.Address().String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert client's address to member ID: [%v]", err)
+	}
 
 	signer, err := tss.GenerateThresholdSigner(
 		keepAddress.Hex(),
@@ -78,7 +86,7 @@ func (n *Node) GenerateSignerForKeep(
 
 	// TODO: Temp solution only the first member in the group publishes.
 	// We need to replace it with proper publisher selection.
-	if memberID == groupMemberIDs[0] {
+	if memberID.Equal(groupMemberIDs[0]) {
 		err = n.ethereumChain.SubmitKeepPublicKey(
 			keepAddress,
 			serializedPublicKey,

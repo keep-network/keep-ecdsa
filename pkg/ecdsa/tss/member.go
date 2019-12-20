@@ -3,11 +3,31 @@ package tss
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 )
 
 // MemberID is an unique identifier of a member across the network.
 type MemberID []byte
+
+// MemberIDFromHex converts hexadecimal string to MemberID.
+func MemberIDFromHex(id string) (MemberID, error) {
+	// Skip `0x` or `0X` prefix.
+	if len(id) >= 2 && id[0] == '0' && (id[1] == 'x' || id[1] == 'X') {
+		id = id[2:]
+	}
+
+	if len(id) == 0 {
+		return nil, fmt.Errorf("empty string")
+	}
+
+	memberID, err := hex.DecodeString(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode string: [%v]", err)
+	}
+
+	return memberID, nil
+}
 
 // String converts MemberID to string.
 func (id MemberID) String() string {
