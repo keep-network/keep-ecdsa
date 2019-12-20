@@ -1,15 +1,17 @@
 package tss
 
 import (
+	"bytes"
+	"encoding/hex"
 	"math/big"
 )
 
 // MemberID is an unique identifier of a member across the network.
-type MemberID string
+type MemberID []byte
 
-// string converts MemberID to string.
-func (id MemberID) string() string {
-	return string(id)
+// String converts MemberID to string.
+func (id MemberID) String() string {
+	return hex.EncodeToString(id)
 }
 
 // bigInt converts MemberID to big.Int.
@@ -24,7 +26,12 @@ func (id MemberID) bytes() []byte {
 
 // memberIDFromBytes converts bytes slice to MemberID.
 func memberIDFromBytes(bytes []byte) MemberID {
-	return MemberID(string(bytes))
+	return MemberID(bytes)
+}
+
+// Equal checks if member IDs are equal.
+func (id MemberID) Equal(memberID MemberID) bool {
+	return bytes.Equal(id, memberID)
 }
 
 // groupInfo holds information about the group selected for protocol execution.

@@ -113,12 +113,12 @@ func generatePartiesIDs(
 		}
 
 		newPartyID := tss.NewPartyID(
-			memberID.string(), // id - unique string representing this party in the network
+			memberID.String(), // id - unique string representing this party in the network
 			"",                // moniker - can be anything (even left blank)
 			memberID.bigInt(), // key - unique identifying key
 		)
 
-		if thisMemberID == memberID {
+		if thisMemberID.Equal(memberID) {
 			thisPartyID = newPartyID
 		}
 

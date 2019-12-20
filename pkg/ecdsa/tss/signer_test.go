@@ -22,7 +22,7 @@ func TestSignerMarshalling(t *testing.T) {
 	groupMembersIDs := make([]MemberID, groupSize)
 
 	for i := range groupMembersIDs {
-		groupMembersIDs[i] = MemberID(fmt.Sprintf("member-%d", i))
+		groupMembersIDs[i] = MemberID([]byte(fmt.Sprintf("member-%d", i)))
 	}
 
 	signer := &ThresholdSigner{

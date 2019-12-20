@@ -51,7 +51,7 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 	defer broadcastChannel.UnregisterRecv(handleType)
 
 	go func() {
-		readyMembers := make(map[MemberID]bool)
+		readyMembers := make(map[string]bool)
 
 		for {
 			select {
@@ -59,8 +59,8 @@ func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
 				return
 			case msg := <-joinInChan:
 				for _, memberID := range group.groupMemberIDs {
-					if msg.SenderID == memberID {
-						readyMembers[msg.SenderID] = true
+					if msg.SenderID.Equal(memberID) {
+						readyMembers[msg.SenderID.String()] = true
 						break
 					}
 				}

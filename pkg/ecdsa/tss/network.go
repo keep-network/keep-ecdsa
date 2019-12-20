@@ -98,11 +98,11 @@ func (b *networkBridge) initializeChannels(netInChan chan *TSSProtocolMessage) e
 
 	// Initialize unicast channels.
 	for _, peerMemberID := range b.groupInfo.groupMemberIDs {
-		if peerMemberID == b.groupInfo.memberID {
+		if peerMemberID.Equal(b.groupInfo.memberID) {
 			continue
 		}
 
-		unicastChannel, err := b.getUnicastChannelWith(peerMemberID.string())
+		unicastChannel, err := b.getUnicastChannelWith(peerMemberID.String())
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}

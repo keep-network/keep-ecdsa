@@ -9,7 +9,7 @@ import (
 
 func TestTSSProtocolMessageMarshalling(t *testing.T) {
 	msg := &TSSProtocolMessage{
-		SenderID:    MemberID("member-1"),
+		SenderID:    MemberID([]byte("member-1")),
 		Payload:     []byte("very important message"),
 		IsBroadcast: true,
 	}
@@ -30,7 +30,7 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 
 func TestJoinMessageMarshalling(t *testing.T) {
 	msg := &JoinMessage{
-		SenderID: MemberID("member-1"),
+		SenderID: MemberID([]byte("member-1")),
 	}
 
 	unmarshaled := &JoinMessage{}

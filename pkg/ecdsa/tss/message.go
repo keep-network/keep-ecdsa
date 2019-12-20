@@ -24,7 +24,7 @@ func (m *TSSProtocolMessage) Type() string {
 // Marshal converts this message to a byte array suitable for network communication.
 func (m *TSSProtocolMessage) Marshal() ([]byte, error) {
 	return (&pb.TSSProtocolMessage{
-		SenderID:    m.SenderID.string(),
+		SenderID:    m.SenderID,
 		Payload:     m.Payload,
 		IsBroadcast: m.IsBroadcast,
 	}).Marshal()
@@ -58,7 +58,7 @@ func (m *JoinMessage) Type() string {
 // Marshal converts this message to a byte array suitable for network communication.
 func (m *JoinMessage) Marshal() ([]byte, error) {
 	return (&pb.JoinMessage{
-		SenderID: m.SenderID.string(),
+		SenderID: m.SenderID,
 	}).Marshal()
 }
 

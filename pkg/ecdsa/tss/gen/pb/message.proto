@@ -4,11 +4,11 @@ option go_package = "pb";
 package tss;
 
 message TSSProtocolMessage {
-  string senderID = 1;
+  bytes senderID = 1;
   bytes payload = 2;
   bool isBroadcast = 3;
 }
 
 message JoinMessage {
-  string senderID = 1;
+  bytes senderID = 1;
 }
