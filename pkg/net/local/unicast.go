@@ -25,47 +25,47 @@ func unicastConnectWithKey(
 	providersMutex.Lock()
 	defer providersMutex.Unlock()
 
-	transportID := key.NetworkPubKeyToEthAddress(publicKey)
+	transportID := localIdentifierFromNetworkKey(publicKey)
 
-	existingProvider, ok := providers[localIdentifier(transportID)]
+	existingProvider, ok := providers[transportID]
 	if ok {
 		return existingProvider
 	}
 
 	provider := &unicastProvider{
 		publicKey:     publicKey,
-		transportID:   localIdentifier(transportID),
+		transportID:   transportID,
 		channels:      make(map[localIdentifier]*unicastChannel),
 		channelsMutex: &sync.RWMutex{},
 	}
 
-	providers[localIdentifier(transportID)] = provider
+	providers[transportID] = provider
 
 	return provider
 }
 
 func (up *unicastProvider) ChannelFor(peer string) (net.UnicastChannel, error) {
-	return up.channel(peer)
+	return up.channel(localIdentifier(peer))
 }
 
-func (up *unicastProvider) channel(peerID string) (net.UnicastChannel, error) {
+func (up *unicastProvider) channel(peerID localIdentifier) (net.UnicastChannel, error) {
 	up.channelsMutex.Lock()
 	defer up.channelsMutex.Unlock()
 
-	existingChannel, ok := up.channels[localIdentifier(peerID)]
+	existingChannel, ok := up.channels[peerID]
 	if ok {
 		return existingChannel, nil
 	}
 
 	channel := &unicastChannel{
 		transportID:          up.transportID,
-		peerID:               localIdentifier(peerID),
+		peerID:               peerID,
 		senderPublicKey:      up.publicKey,
 		messageHandlersMutex: &sync.RWMutex{},
 		messageHandlers:      make(map[string][]*net.HandleMessageFunc),
 	}
 
-	up.channels[localIdentifier(peerID)] = channel
+	up.channels[peerID] = channel
 
 	return channel, nil
 }

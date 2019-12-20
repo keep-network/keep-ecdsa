@@ -20,17 +20,17 @@ func TestRegisterAndFireHandler(t *testing.T) {
 	_, publicKey1, _ := key.GenerateStaticNetworkKey()
 	_, publicKey2, _ := key.GenerateStaticNetworkKey()
 
-	transportID1 := key.NetworkPubKeyToEthAddress(publicKey1)
-	transportID2 := key.NetworkPubKeyToEthAddress(publicKey2)
+	transportID1 := localIdentifierFromNetworkKey(publicKey1)
+	transportID2 := localIdentifierFromNetworkKey(publicKey2)
 
 	netProvider1 := LocalProvider(publicKey1)
 	netProvider2 := LocalProvider(publicKey2)
 
-	localChannel1, err := netProvider1.UnicastChannelWith(transportID2)
+	localChannel1, err := netProvider1.UnicastChannelWith(transportID2.String())
 	if err != nil {
 		t.Fatal(err)
 	}
-	localChannel2, err := netProvider2.UnicastChannelWith(transportID1)
+	localChannel2, err := netProvider2.UnicastChannelWith(transportID1.String())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,13 +131,13 @@ func TestUnregisterHandler(t *testing.T) {
 			_, publicKey1, _ := key.GenerateStaticNetworkKey()
 			_, publicKey2, _ := key.GenerateStaticNetworkKey()
 
-			transportID1 := key.NetworkPubKeyToEthAddress(publicKey1)
-			transportID2 := key.NetworkPubKeyToEthAddress(publicKey2)
+			transportID1 := localIdentifierFromNetworkKey(publicKey1)
+			transportID2 := localIdentifierFromNetworkKey(publicKey2)
 
 			netProvider1 := LocalProvider(publicKey1)
 			netProvider2 := LocalProvider(publicKey2)
 
-			localChannel1, err := netProvider1.UnicastChannelWith(transportID2)
+			localChannel1, err := netProvider1.UnicastChannelWith(transportID2.String())
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -147,7 +147,7 @@ func TestUnregisterHandler(t *testing.T) {
 				t.Fatalf("failed to register unmarshaler: [%v]", err)
 			}
 
-			localChannel2, err := netProvider2.UnicastChannelWith(transportID1)
+			localChannel2, err := netProvider2.UnicastChannelWith(transportID1.String())
 			if err != nil {
 				t.Fatal(err)
 			}
