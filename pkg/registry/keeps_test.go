@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
-	"github.com/keep-network/keep-tecdsa/pkg/registry/gen/pb"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
 var (
