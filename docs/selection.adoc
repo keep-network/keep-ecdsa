@@ -484,3 +484,35 @@ and the bonded amount is added to `unbondedCurrency[operator]`.
 
 `freeBond(address operator, uint reference)`
 
+=== Signer selection
+
+For V1 we can minimize implementation effort
+by lifting most of a ticket-based scheme straight from the Beacon.
+Only a few differences are required:
+
+- When a valid ticket is submitted and accepted,
+a corresponding bond is created.
+If the ticket is later replaced by a ticket with a lower value,
+the replaced ticket's bond is freed.
+
+- When ticket submission has ended,
+the tickets are divided into groups of 3.
+It's not immediately clear
+how visible duplicates among the tickets should be dealt with,
+if visible duplicates in ECDSA keeps are prohibited.
+Distributing duplicate members first
+and then filling the remaining spots with non-dupes
+has some unlikely but annoying edge cases
+such as a single operator getting more than 1/3 of the tickets.
+
+- When the ECDSA keeps are created,
+the bonds of their members are reassigned from the factory to the keeps.
+
+- To compensate for locking bonds right away,
+the selected operators are rewarded
+when a keep successfully completes key generation.
+If a keep fails to generate a key,
+the bonds are released and no compensation is paid out.
+This acts as further incentive for the operators to finish DKG.
+These rewards are paid out from a dedicated reward pool,
+and payments from depositers are added to the pool.
