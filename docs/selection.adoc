@@ -159,7 +159,6 @@ When a request for an ECDSA keep is made,
 the keep may be required right away
 depending on the customer application.
 Significant latency in this process is detrimental to the service.
-
 == Common features
 
 Some solutions to various parts of the whole question
@@ -346,4 +345,142 @@ _21,000 + 2,400 + 5,000 = 28,400_ gas per ticket
 for _n = 3_
 (transaction base fee + 3 read operations + 1 write).
 The total cost floor is _85,200_ gas.
+
+== Implementation
+
+=== Bonding contract
+
+The bonding contract makes Ethereum bonds available as collateral
+for operator contracts and privileged customer applications.
+
+Unlike staked KEEP,
+the proportionality requirement does not apply to currency bonding.
+However, once an amount of ETH is bonded as collateral for an operation
+it is tied to the specific operation until freed,
+and unavailable for other operations.
+
+==== Unassigned bonding currency
+
+Currency that an operator has available for bonding
+but that has not been assigned for any specific bond
+is recorded in `unbondedCurrency`.
+
+Anyone can add bonding currency to an operator at any time
+by calling `deposit(operator)` with a payment.
+The amount of ETH received by the bonding contract
+is added to the specified `operator`'s `unbondedCurrency`.
+
+An operator can withdraw some or all of their unassigned bonding currency
+at any time by calling `withdraw(amount, destination)`.
+If the specified `amount` is less than the `unbondedCurrency[msg.sender]`,
+it is transferred to the address `destination`.
+
+`mapping(address operator => uint) unbondedCurrency`::
+
+`payable deposit(address operator)`::
+
+`withdraw(uint amount, address destination)`::
+
+==== Authorizations
+
+As with the staking contract,
+operator contracts must be authorized by an operator's authorizer
+in order to create bonds.
+Once a bond has been created by an authorized operator contract
+it can be reassigned at will to any other contract.
+The current holder of a bond may reassign, seize or free it at will.
+An authorized operator contract is expected
+to treat bonds it creates with appropriate caution.
+
+Additionally, privileged customer applications
+that wish to have the authority to cause operators' bonds to be seized
+should be identified to the bonding contract
+and authorized by an operator's authorizer.
+However, seizing a bond based on input from a privileged customer application
+is actually performed by the holder of the bond,
+so this authorization is absolutely non-enforceable
+and serves as more of a sanity check.
+Authorized operator contracts are expected
+to play nice and honor this sanity check,
+and operators' authorizers are expected
+to not authorize operator contracts that do not respect the sanity check.
+
+Authorized operator contracts and authorized privileged customers
+are recorded in the bonding contract
+as `authorizedOperatorContracts[authorizer]`
+and `privilegedCustomers[authorizer]` respectively.
+As with the staking contract,
+all operators using `authorizer` as their authorizer
+share the authorizations.
+To reduce cross-contract calls to the staking contract,
+positive authorizations can be cached in the bonding contract.
+
+==== Creating a bond
+
+Similarly to the staking contract,
+the bonding contract provides a single function
+operator contracts can use to determine whether a bond can be created.
+`availableBondingCurrency(operator, privilegedCustomer)`
+performs all the applicable authorization checks 
+and returns the amount of ETH that can be bonded
+from the `operator`, to the caller `msg.sender`,
+and trusting the `privilegedCustomer` if present.
+
+To actually create a bond,
+an operator contract calls
+`createBond(operator, amount, reference, privilegedCustomer)`.
+This performs the same checks as `eligibleBondingCurrency()`
+and if the amount available for the requested bond
+is equal or greater than the requested `amount`,
+the bond `amount` is subtracted from the `unbondedCurrency` of the operator
+and the bond is created at `lockedBonds[operator, msg.sender, reference]`.
+The `reference` is additionally recorded at
+`bondAssignments[operator, msg.sender]`.
+If the amount available is less than requested,
+`createBond()` returns an error.
+
+`availableBondingCurrency(address operator, address optional privilegedCustomer)`
+
+`createBond(address operator, uint amount, uint reference, address optional privilegedCustomer)`.
+
+`mapping(address operator, address holder, uint reference => uint) lockedBonds`
+
+`mapping(address operator, address holder => uint[]) bondAssignments`
+
+==== Assigned bonds
+
+When an operator joins an operation requiring a currency bond
+it is subtracted from the `unbondedCurrency` of the operator,
+and a bond is created.
+The created bond is identified by the address of the `operator`,
+the address of the operator contract that is the `holder` of the bond,
+and the `reference` identifier of the specific bond.
+
+The specific bond is recorded in `lockedBonds`,
+and the `reference` is added to the list of `bondAssignments`
+corresponding to the `operator, holder` pair.
+
+The `holder` of a bond can reassign it
+to a different holder and/or reference
+by calling `reassign(operator, reference, newHolder, newReference)`.
+This removes the bond `lockedBonds[operator, holder, reference]`
+and creates a new bond at `lockedBonds[operator, newHolder, newReference]`.
+
+The `holder` of a bond can seize some or all of a locked bond
+by calling `seizeBond(operator, reference, amount)`.
+The specified `amount` must be
+equal or less than the bond at `lockedBonds[operator, holder, reference]`.
+The `amount` is subtracted from the bond
+and transferred to the `holder`.
+
+The `holder` of a bond can free the bond
+by calling `freeBond(operator, reference)`.
+The bond at `lockedBonds[operator, holder, reference]` is removed
+and the bonded amount is added to `unbondedCurrency[operator]`.
+
+`reassign(address operator, uint reference, address newHolder, uint newReference)`
+
+`seizeBond(address operator, uint reference, uint amount)`
+
+`freeBond(address operator, uint reference)`
 
