@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option go_package = "pb";
+package tss;
+
+message TSSProtocolMessage {
+  bytes senderID = 1;
+  bytes payload = 2;
+  bool isBroadcast = 3;
+}
+
+message JoinMessage {
+  bytes senderID = 1;
+}

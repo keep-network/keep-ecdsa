@@ -18,7 +18,7 @@ func (s *ThresholdSigner) initializeSigning(
 ) (*signingSigner, error) {
 	digestInt := new(big.Int).SetBytes(digest)
 
-	party, endChan, errChan, err := s.initializeSigningParty(
+	party, endChan, err := s.initializeSigningParty(
 		digestInt,
 		netBridge,
 	)
@@ -31,7 +31,6 @@ func (s *ThresholdSigner) initializeSigning(
 		networkBridge:  netBridge,
 		signingParty:   party,
 		signingEndChan: endChan,
-		signingErrChan: errChan,
 	}, nil
 }
 
@@ -45,7 +44,6 @@ type signingSigner struct {
 	signingParty tssLib.Party
 	// Channels where results of the signing protocol execution will be written to.
 	signingEndChan <-chan signing.SignatureData // data from a successful execution
-	signingErrChan <-chan error                 // error from a failed execution
 }
 
 // sign executes the protocol to calculate a signature. This function needs to be
@@ -72,12 +70,6 @@ func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 			ecdsaSignature := convertSignatureTSStoECDSA(signature)
 
 			return &ecdsaSignature, nil
-		case err := <-s.signingErrChan:
-			return nil,
-				fmt.Errorf(
-					"failed to sign: [%v]",
-					s.signingParty.WrapError(err),
-				)
 		}
 	}
 }
@@ -88,19 +80,17 @@ func (s *ThresholdSigner) initializeSigningParty(
 ) (
 	tssLib.Party,
 	<-chan signing.SignatureData,
-	chan error,
 	error,
 ) {
 	tssMessageChan := make(chan tss.Message, len(s.groupMemberIDs))
 	endChan := make(chan signing.SignatureData)
-	errChan := make(chan error)
 
 	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(
 		s.memberID,
 		s.groupMemberIDs,
 	)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
+		return nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
 	}
 
 	params := tss.NewParameters(
@@ -119,16 +109,14 @@ func (s *ThresholdSigner) initializeSigningParty(
 	)
 
 	if err := netBridge.connect(
-		s.groupID,
-		party,
-		params,
 		tssMessageChan,
-		errChan,
+		party,
+		params.Parties().IDs(),
 	); err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
+		return nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
 
-	return party, endChan, errChan, nil
+	return party, endChan, nil
 }
 
 func convertSignatureTSStoECDSA(tssSignature signing.SignatureData) ecdsa.Signature {

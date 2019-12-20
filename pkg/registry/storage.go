@@ -36,7 +36,7 @@ func (ps *persistentStorage) save(keepAddress common.Address, signer *tss.Thresh
 		keepAddress.String(),
 		// TODO: Currently we support only single signer, we should use
 		// different signer IDs when multi-party group is available.
-		fmt.Sprintf("/membership_%s", signer.MemberID()),
+		fmt.Sprintf("/membership_%s", signer.MemberID().String()),
 	)
 }
 

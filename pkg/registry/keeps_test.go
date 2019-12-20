@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
-	"github.com/keep-network/keep-tecdsa/pkg/registry/gen/pb"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
 var (
@@ -20,10 +20,10 @@ var (
 	keepAddress2 = common.HexToAddress("0x8B3BccB3A3994681A1C1584DE4b4E8b23ed1Ed6d")
 	keepAddress3 = common.HexToAddress("0x0472ec0185ebb8202f3d4ddb0226998889663cf2")
 
-	groupMemberIDs = []string{
-		"member-1",
-		"member-2",
-		"member-3",
+	groupMemberIDs = [][]byte{
+		[]byte("member-1"),
+		[]byte("member-2"),
+		[]byte("member-3"),
 	}
 )
 
@@ -44,7 +44,7 @@ func TestRegisterSigner(t *testing.T) {
 	expectedFile := &testFileInfo{
 		data:      expectedSignerBytes,
 		directory: keepAddress1.String(),
-		name:      fmt.Sprintf("/membership_%s", signer1.MemberID()),
+		name:      fmt.Sprintf("/membership_%s", signer1.MemberID().String()),
 	}
 
 	gr.RegisterSigner(keepAddress1, signer1)

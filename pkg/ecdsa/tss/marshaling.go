@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/keep-network/keep-tecdsa/pkg/registry/gen/pb"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
 // Marshal converts ThresholdSigner to byte array.
@@ -15,14 +15,14 @@ func (s *ThresholdSigner) Marshal() ([]byte, error) {
 	}
 
 	// Group Info
-	groupMemberIDs := make([]string, len(s.groupMemberIDs))
+	groupMemberIDs := make([][]byte, len(s.groupMemberIDs))
 	for i, memberID := range s.groupMemberIDs {
-		groupMemberIDs[i] = string(memberID)
+		groupMemberIDs[i] = memberID
 	}
 
 	group := &pb.ThresholdSigner_GroupInfo{
 		GroupID:            s.groupID,
-		MemberID:           string(s.memberID),
+		MemberID:           s.memberID,
 		GroupMemberIDs:     groupMemberIDs,
 		DishonestThreshold: int32(s.dishonestThreshold),
 	}
@@ -60,6 +60,48 @@ func (s *ThresholdSigner) Unmarshal(bytes []byte) error {
 		groupMemberIDs:     groupMemberIDs,
 		dishonestThreshold: int(pbGroupInfo.GetDishonestThreshold()),
 	}
+
+	return nil
+}
+
+// Marshal converts this message to a byte array suitable for network communication.
+func (m *TSSProtocolMessage) Marshal() ([]byte, error) {
+	return (&pb.TSSProtocolMessage{
+		SenderID:    m.SenderID,
+		Payload:     m.Payload,
+		IsBroadcast: m.IsBroadcast,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to a message.
+func (m *TSSProtocolMessage) Unmarshal(bytes []byte) error {
+	pbMsg := &pb.TSSProtocolMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	m.SenderID = MemberID(pbMsg.SenderID)
+	m.Payload = pbMsg.Payload
+	m.IsBroadcast = pbMsg.IsBroadcast
+
+	return nil
+}
+
+// Marshal converts this message to a byte array suitable for network communication.
+func (m *JoinMessage) Marshal() ([]byte, error) {
+	return (&pb.JoinMessage{
+		SenderID: m.SenderID,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to a message.
+func (m *JoinMessage) Unmarshal(bytes []byte) error {
+	pbMsg := &pb.JoinMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	m.SenderID = MemberID(pbMsg.SenderID)
 
 	return nil
 }

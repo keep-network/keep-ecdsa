@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/utils/pbutils"
 )
 
-func TestMarshalling(t *testing.T) {
+func TestSignerMarshalling(t *testing.T) {
 	groupSize := 5
 	dishonestThreshold := 4
 	signerIndex := 2
@@ -22,7 +22,7 @@ func TestMarshalling(t *testing.T) {
 	groupMembersIDs := make([]MemberID, groupSize)
 
 	for i := range groupMembersIDs {
-		groupMembersIDs[i] = MemberID(fmt.Sprintf("member-%d", i))
+		groupMembersIDs[i] = MemberID([]byte(fmt.Sprintf("member-%d", i)))
 	}
 
 	signer := &ThresholdSigner{
@@ -44,6 +44,46 @@ func TestMarshalling(t *testing.T) {
 		t.Fatalf(
 			"unexpected content of unmarshaled signer\nexpected: [%+v]\nactual:   [%+v]\n",
 			signer,
+			unmarshaled,
+		)
+	}
+}
+
+func TestTSSProtocolMessageMarshalling(t *testing.T) {
+	msg := &TSSProtocolMessage{
+		SenderID:    MemberID([]byte("member-1")),
+		Payload:     []byte("very important message"),
+		IsBroadcast: true,
+	}
+
+	unmarshaled := &TSSProtocolMessage{}
+
+	if err := pbutils.RoundTrip(msg, unmarshaled); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf(
+			"unexpected content of unmarshaled message\nexpected: [%+v]\nactual:   [%+v]\n",
+			msg,
+			unmarshaled,
+		)
+	}
+}
+
+func TestJoinMessageMarshalling(t *testing.T) {
+	msg := &JoinMessage{
+		SenderID: MemberID([]byte("member-1")),
+	}
+
+	unmarshaled := &JoinMessage{}
+
+	if err := pbutils.RoundTrip(msg, unmarshaled); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf(
+			"unexpected content of unmarshaled message\nexpected: [%+v]\nactual:   [%+v]\n",
+			msg,
 			unmarshaled,
 		)
 	}

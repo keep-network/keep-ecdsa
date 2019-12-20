@@ -1,6 +1,9 @@
 package local
 
 import (
+	"encoding/hex"
+
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -39,4 +42,9 @@ type localIdentifier string
 
 func (li localIdentifier) String() string {
 	return string(li)
+}
+
+func localIdentifierFromNetworkKey(publicKey *key.NetworkPublic) localIdentifier {
+	ethereumAddress := key.NetworkPubKeyToEthAddress(publicKey)
+	return localIdentifier(hex.EncodeToString(common.FromHex(ethereumAddress)))
 }

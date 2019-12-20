@@ -8,7 +8,6 @@ package tss
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
@@ -17,12 +16,6 @@ import (
 )
 
 var logger = log.Logger("keep-tss")
-
-// TODO: Temporary synchronization mechanism just for local signer implementation.
-var (
-	KeyGenSync  sync.WaitGroup
-	SigningSync sync.WaitGroup
-)
 
 // GenerateThresholdSigner executes a threshold multi-party key generation protocol.
 //
@@ -77,7 +70,11 @@ func GenerateThresholdSigner(
 			"tss pre-params were not provided, they will be generated on protocol execution",
 		)
 	}
-	netBridge := newNetworkBridge(networkProvider)
+
+	netBridge, err := newNetworkBridge(group, networkProvider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
+	}
 
 	keyGenSigner, err := initializeKeyGeneration(
 		group,
@@ -89,16 +86,15 @@ func GenerateThresholdSigner(
 	}
 	logger.Infof("[party:%s]: initialized key generation", keyGenSigner.keygenParty.PartyID())
 
-	// TODO: Sync
-	KeyGenSync.Done()
-	KeyGenSync.Wait()
+	if err := joinProtocol(group, networkProvider); err != nil {
+		return nil, fmt.Errorf("failed to join the protocol: [%v]", err)
+	}
 
 	logger.Infof("[party:%s]: starting key generation", keyGenSigner.keygenParty.PartyID())
 
 	signer, err := keyGenSigner.generateKey()
 	if err != nil {
-		logger.Errorf("err")
-		return nil, err
+		return nil, fmt.Errorf("failed to generate key: [%v]", err)
 	}
 	logger.Infof("[party:%s]: completed key generation", keyGenSigner.keygenParty.PartyID())
 
@@ -112,16 +108,19 @@ func (s *ThresholdSigner) CalculateSignature(
 	digest []byte,
 	networkProvider net.Provider,
 ) (*ecdsa.Signature, error) {
-	netBridge := newNetworkBridge(networkProvider)
+	netBridge, err := newNetworkBridge(s.groupInfo, networkProvider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
+	}
 
 	signingSigner, err := s.initializeSigning(digest[:], netBridge)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize signer: [%v]", err)
 	}
 
-	// TODO: Sync
-	SigningSync.Done()
-	SigningSync.Wait()
+	if err := joinProtocol(s.groupInfo, networkProvider); err != nil {
+		return nil, fmt.Errorf("failed to join the protocol:: [%v]", err)
+	}
 
 	signature, err := signingSigner.sign()
 	if err != nil {
