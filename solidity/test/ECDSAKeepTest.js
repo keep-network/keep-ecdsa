@@ -64,7 +64,7 @@ contract('ECDSAKeep', (accounts) => {
       }
     })
 
-    it('cannot be requested if already requested', async () => {
+    it('cannot be requested if already in progress', async () => {
       await keep.sign(digest, { from: owner })
       try {
         await keep.sign('0x02', { from: owner })

@@ -73,7 +73,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
-    /// @dev Only one concurrent signing process is allowed.
+    /// @dev Only one signing process can be in progress at a time.
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external onlyOwner {
         // TODO: Add timeout handling.
