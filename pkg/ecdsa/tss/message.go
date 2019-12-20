@@ -1,8 +1,6 @@
 package tss
 
 import (
-	"fmt"
-
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
@@ -52,7 +50,7 @@ type JoinMessage struct {
 
 // Type returns a string type of the `JoinMessage`.
 func (m *JoinMessage) Type() string {
-	return fmt.Sprintf("%T", m)
+	return "ecdsa/join_message"
 }
 
 // Marshal converts this message to a byte array suitable for network communication.
