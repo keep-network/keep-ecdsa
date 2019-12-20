@@ -58,7 +58,6 @@ RUN cd $APP_DIR/solidity && npm install
 # Generate code.
 COPY ./pkg/chain/eth/gen $APP_DIR/pkg/chain/eth/gen
 COPY ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
-COPY ./pkg/registry/gen $APP_DIR/pkg/registry/gen
 RUN go generate ./.../gen
 
 # Build the application.
