@@ -71,7 +71,7 @@ func Initialize(
 			if err != nil {
 				logger.Errorf(
 					"failed to register threshold signer for keep [%s]: [%v]",
-					event.KeepAddress,
+					event.KeepAddress.String(),
 					err,
 				)
 			}
