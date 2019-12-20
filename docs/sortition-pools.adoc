@@ -1,0 +1,270 @@
+== Lazy non-interactive sortition
+
+- Each privileged customer has its own sortition pool
+and eligibility is checked when an operator is selected,
+rejecting and removing ineligible operators from the pool
+- Non-interactive sortition requires significant optimization
+even with logarithmic data structures,
+but once optimized is easily scalable for larger _n_
+- Requires significant implementation work
+- Provides instant results once the seed is received
+and is less affected by censorship,
+although malicious miners can still censor DKG result submissions
+
+A logarithmic data structure could be used
+to store the pool of eligible operators,
+weighted by their stakes.
+Sortition from the pool would be performed
+without waiting for input from operators.
+
+=== Lazy eligibility evaluation
+
+Each pair of (keep factory, privileged customer)
+would require its own sortition pool.
+An operator enters a sortition pool by opting in.
+The pool checks their eligible tokens
+(including operator status and authorization to slash stakes),
+and available bonding currency
+(including authorization to seize bonds).
+The operator pays the transaction fees for the pool update.
+
+Keeping these pools up to date cannot be done eagerly
+as proliferation of privileged customers
+could be used to perform DOS attacks
+by increasing the cost of such updates.
+When a sortition pool prospectively selects an operator,
+the selected operator's eligibility status and weight are checked
+and, if necessary, updated in the sortition pool.
+If the changes would be detrimental to the operator,
+the operator selection is performed again with the updated input
+to ensure correctness.
+
+The number of operator selections required to get _n_ valid members
+averages _n / (1 - e)_
+where _e_ equals the fraction of weight in the pool
+belonging to operators whose information is detrimentally out of date.
+If 50% of the pool weight is outdated,
+the average number of selections is 6,
+roughly 2% of ECDSA keeps would require 12 or more operator selections,
+and more than 20 selections would be extremely rare.
+Sortition pools that are used more often would be less outdated.
+
+=== Optimizing data structures
+
+Even though logarithmic data structures are well-known,
+the particular characteristics of Ethereum smart contracts
+require specialized optimization
+to make non-interactive sortition viable.
+
+To enable weighted sortition,
+each sortition pool would have a weighted tree
+where each leaf stores an operator
+and is labeled with the operator's sortition weight,
+and each branch is labeled with the sum of the weights of its children.
+To select an operator from the pool,
+a pseudorandom number in _[0, W)_
+(where _W_ is the total sortition weight of the tree)
+is acquired and used to index into the tree.
+
+==== Background
+
+A single storage field in the EVM consists of 256 bits/32 bytes.
+Data structures on the EVM are naturally sparse.
+An implicit heap can eliminate the need for pointers
+so the full capacity of each storage field can be used for content data.
+
+KEEP tokens have 18 decimals and the total supply is 1,000,000,000 KEEP.
+A precise token amount would require roughly 96 bits/12 bytes to store.
+However, the minimum stake required to participate
+is expected to be in the region of 1/100,000 of the total KEEP supply.
+
+==== Unoptimized binary trees
+
+Only a binary tree is possible with precise token amounts.
+Even with a conservative estimate of minimum stake
+at 62,000 KEEP (more than 1/16,384 of all KEEP)
+the number of possible virtual stakers is roughly 2^14^.
+The number of KEEP owned by each account
+is expected to follow a power law distribution,
+and the number of accounts holding at least 1/2^14^ of the total
+is expected to be approximately 2^11^ to 2^14^.
+Again taking the optimal case gives a height of 11 for a binary tree.
+Updating a single node in the tree,
+along with its path from the root,
+would require up to 14 write operations at a cost of 55,000 ~ 70,000 gas.
+Accessing a node in the tree
+would similarly require up to 14 read operations at 8,800 ~ 11,200 gas.
+
+==== Optimized higher arity trees
+
+Instead of using the exact token amount,
+each operator's sortition weight should use their staker weight
+as in the Random Beacon group selection.
+Because a staker weight exceeding 65,535
+would represent catastrophic centralization in the network,
+16 bits is sufficient for all practical purposes
+even if the minimum stake is somewhat less than 10,000 KEEP.
+
+A storage field can hold 16 values of 16 bits.
+This gives a theoretical ceiling of 1,048,560 possible virtual stakers
+for a node containing the weights of its 16 children. 
+With a pessimal distribution of child nodes' weights,
+524,288 virtual stakers can be accommodated.
+The maximum permitted staker weight of 65,535
+represents approximately 13% of all tokens in the pessimal distribution.
+Assuming each staker divides their staked tokens
+equally between two different operators
+as recommended for smooth upgrades,
+a single actor following best practices would need to hold 25% of all KEEP
+to be affected by the staker weight cap of 16 bits.
+Such an actor would already be a threat to the Keep network
+and we have no need to accommodate them,
+so all child nodes can be capped to 16 bits without issues.
+
+===== Version A: up to 524,288 virtual stakers
+
+If the tree is instead packed optimally using `uint16`,
+we get the following numbers of nodes per level:
+
+. 1
+. 16
+. 256
+. 4,096
+. 65,536
+. 1,048,576
+
+A 16-ary tree of height 6 is sufficient to hold all possible operators
+within the limits of the pessimal distribution of 16-bit weights.
+Updating a path in this tree would only use up to 30,000 gas,
+and accessing a node would cost at most 4,800 gas.
+
+The minimum stake must be at least 1,910 KEEP.
+
+A branch node consists of `{uint16[16] children}`
+where each field is the weight of its corresponding child.
+A weight of `0` means the child node is empty.
+
+A leaf node consists of `{uint16 weight; address operator}`.
+
+===== Version B: up to 131,072 virtual stakers
+
+If the minimum stake to participate
+is at least 7,630 KEEP (more than 1/131,072 of the total supply)
+the height of the tree can be reduced to 5
+by using `uint8` for the children of level 4 branches,
+with the width of level 5 being 131,072.
+Operators with more than 255 times the minimum stake
+would be held in leaves of level 4 or less.
+Because there can be at most 512 such operators,
+level 4 is wide enough to hold them.
+
+A branch on levels 1 to 3 consists of `{uint16[16] children}`,
+while a branch on level 4 consists of `{uint8[32] children}`.
+
+A leaf consists of `{0x0000; uint16 weight; address operator}`.
+
+To make the magic number `0x0000` useful
+at distinguishing leaves from branches,
+it is necessary to enforce the invariant
+that the first child of a branch may not be empty.
+If the first child of a branch is deleted,
+another child must be moved into the first position.
+
+===== Version C: up to 65,536 virtual stakers
+
+If the minimum stake is at least 15,260 KEEP
+(at most 65,536 virtual stakers),
+a tree of height 5 can be used without the special cases of _version B_.
+Branches and leaves are as in _version A_.
+
+==== Metadata
+
+===== Empty node locations
+
+To help insert operators into the tree,
+there should be lists for levels 2 to 5 (_version A_)
+or 2 to 4 (_version B & C_)
+containing the branches with empty children on that level.
+
+===== Operators' tree positions?
+
+In addition to the weighted tree,
+a sortition pool may have a `mapping(address operator => uint) treePosition`
+to help locate operators in the tree.
+However, because of the lazy updates this is not strictly necessary.
+
+==== Operations
+
+===== Insertion
+
+Inserting a new operator into the tree
+is performed in the leftmost empty node of the appropriate level
+whose level 2 ancestor's weight would not overflow
+from the addition of the new operator.
+The weights of the node's ancestors are updated,
+and if the parent node's children are now full
+it is removed from the list of branches with empty children.
+
+===== Selection
+
+The total weight of the tree _W_ can either be stored separately
+or calculated by summing the weights of the root's children.
+
+An entry _V_ is requested from the Random Beacon,
+and an index _i_ in the range _[0, W)_ is derived from _V_
+using a standard algorithm for secure integers in an arbitrary interval.
+Using `i = V % W` is not safe and will lead to biasing the results,
+summoning demons from hell,
+and embarrassing the entire company on Twitter and Hacker News.
+
+At a branch node,
+if _i_ is less than the first child's weight _w~1~_
+the first child is entered;
+otherwise _i -= w~1~_
+and is compared to the second child's weight _w~2~_
+and so on until a leaf is reached.
+
+The address _P_ in the leaf is the _prospective selected operator_,
+with weight _w~P~_.
+
+The staking contract is queried to get the eligible stake of _P_,
+and the up-to-date weight _W'~P~_ is calculated.
+
+If _W'~P~ = W~P~_, the weight is up to date and we proceed.
+
+If _W'~P~ > W~P~_, something funny is going on
+because the current spec doesn't include
+increasing the staked tokens of an operator after the operator has been created
+but if this is the future and we're doing that now
+we proceed but also queue the weight for updating.
+
+If _W'~P~ < W~P~_, we queue the weight for updating
+and because the update would be in a direction detrimental to the operator,
+we also queue a new operator selection with the same _i_
+once we're done with the update.
+If _W'~P~ == 0_, the operator _P_ is queued for deletion
+and we don't bother querying the bond.
+
+Then we query the bonding contract to get the available bond _B~P~_
+and compare it to the minimum bond _B_:
+
+If _B~P~ < B_, we queue the operator for deletion
+and queue a new selection with _i_
+after _P_ is deleted from the sortition pool.
+
+If _B~P~ >= B_ and we previously queued a new selection,
+we perform the queued update and selection.
+
+If _B =< B~P~ < 2B_ and we previously proceeded,
+the operator _P_ is selected but they don't have enough bond to stay eligible
+so _P_ is deleted from the sortition pool.
+
+If _B~P~ >= 2B_ and we previously proceeded,
+the operator _P_ is selected and they have enough bond to stay in the pool.
+We then perform queued updates, if any.
+
+=== Batched keep creation
+
+Unlike ticket-based selection,
+selecting a larger number of members at once
+does not have a significant impact on tree-based sortition pools.
