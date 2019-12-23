@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -263,9 +262,10 @@ func newTestSigner(memberIndex int) (*tss.ThresholdSigner, error) {
 		return nil, fmt.Errorf("failed to load key gen test fixtures: [%v]", err)
 	}
 
-	keygenData, err := json.Marshal(testData[0])
+	thresholdKey := tss.ThresholdKey(testData[0])
+	threshdolKeyBytes, err := thresholdKey.Marshal()
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal key data: [%v]", err)
+		return nil, fmt.Errorf("failed to marshal threshold key: [%v]", err)
 	}
 
 	signer := &tss.ThresholdSigner{}
@@ -278,7 +278,7 @@ func newTestSigner(memberIndex int) (*tss.ThresholdSigner, error) {
 	}
 	pbSigner := &pb.ThresholdSigner{
 		GroupInfo:    pbGroup,
-		ThresholdKey: keygenData,
+		ThresholdKey: threshdolKeyBytes,
 	}
 
 	bytes, err := proto.Marshal(pbSigner)
