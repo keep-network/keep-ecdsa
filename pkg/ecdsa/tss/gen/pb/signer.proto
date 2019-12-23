@@ -14,3 +14,33 @@ message ThresholdSigner {
   GroupInfo groupInfo = 1;
   bytes thresholdKey = 2;
 }
+
+message LocalPartySaveData {
+  message LocalPreParams {
+    message PrivateKey {
+      bytes publicKey = 1;
+      bytes lambdaN = 2;
+      bytes phiN = 3;
+    }
+
+    PrivateKey paillierSK = 1;
+    bytes nTilde = 2;
+    bytes h1i = 3;
+    bytes h2i = 4;
+  }
+
+  message LocalSecrets {
+    bytes xi = 1;
+    bytes shareID = 2;
+  }
+
+  LocalPreParams localPreParams = 1;
+  LocalSecrets localSecrets = 2;
+  repeated bytes ks = 3;
+  repeated bytes nTildej = 4;
+  repeated bytes h1j = 5;
+  repeated bytes h2j = 6;
+  repeated bytes bigXj = 7;
+  repeated bytes paillierPKs = 8;
+  bytes ecdsaPub = 9;
+}
