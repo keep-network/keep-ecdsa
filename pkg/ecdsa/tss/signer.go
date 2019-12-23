@@ -29,7 +29,7 @@ func (s *ThresholdSigner) GroupID() string {
 // publishes. We need to replace it with proper publisher selection.
 func (s *ThresholdSigner) MemberIndex() int {
 	for i, memberID := range s.groupMemberIDs {
-		if memberID == s.MemberID() {
+		if memberID.Equal(s.MemberID()) {
 			return i
 		}
 	}
