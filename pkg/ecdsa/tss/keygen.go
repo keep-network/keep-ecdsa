@@ -100,17 +100,15 @@ func (s *member) generateKey() (*ThresholdSigner, error) {
 
 			return signer, nil
 		case <-ctx.Done():
-			if ctx.Err() == context.DeadlineExceeded {
-				memberIDs := []MemberID{}
+			memberIDs := []MemberID{}
 
-				if s.keygenParty.WaitingFor() != nil {
-					for _, partyID := range s.keygenParty.WaitingFor() {
-						memberIDs = append(memberIDs, MemberID(partyID.GetId()))
-					}
+			if s.keygenParty.WaitingFor() != nil {
+				for _, partyID := range s.keygenParty.WaitingFor() {
+					memberIDs = append(memberIDs, MemberID(partyID.GetId()))
 				}
-
-				return nil, timeoutError{keyGenerationTimeout, "key generation", memberIDs}
 			}
+
+			return nil, timeoutError{keyGenerationTimeout, "key generation", memberIDs}
 		}
 	}
 }

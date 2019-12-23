@@ -78,17 +78,15 @@ func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 
 			return &ecdsaSignature, nil
 		case <-ctx.Done():
-			if ctx.Err() == context.DeadlineExceeded {
-				memberIDs := []MemberID{}
+			memberIDs := []MemberID{}
 
-				if s.signingParty.WaitingFor() != nil {
-					for _, partyID := range s.signingParty.WaitingFor() {
-						memberIDs = append(memberIDs, MemberID(partyID.GetId()))
-					}
+			if s.signingParty.WaitingFor() != nil {
+				for _, partyID := range s.signingParty.WaitingFor() {
+					memberIDs = append(memberIDs, MemberID(partyID.GetId()))
 				}
-
-				return nil, timeoutError{signingTimeout, "signing", memberIDs}
 			}
+
+			return nil, timeoutError{signingTimeout, "signing", memberIDs}
 		}
 	}
 }
