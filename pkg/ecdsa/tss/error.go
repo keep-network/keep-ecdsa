@@ -17,7 +17,7 @@ func (t timeoutError) Error() string {
 		stringIDs := []string{}
 
 		for _, memberID := range t.memberIDs {
-			stringIDs = append(stringIDs, memberID.string())
+			stringIDs = append(stringIDs, memberID.String())
 		}
 
 		return fmt.Sprintf(
