@@ -25,9 +25,8 @@ func (s *ThresholdSigner) GroupID() string {
 	return s.groupID
 }
 
-// TODO: Publisher Selection: Temp solution only the first member in the group
-// publishes. We need to replace it with proper publisher selection.
-func (s *ThresholdSigner) MemberIndex() int {
+// PublisherIndex is an index value of the signer in a signing group.
+func (s *ThresholdSigner) PublisherIndex() int {
 	for i, memberID := range s.groupMemberIDs {
 		if memberID.Equal(s.MemberID()) {
 			return i
