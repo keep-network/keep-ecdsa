@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
 	"github.com/binance-chain/tss-lib/tss"
 	tssLib "github.com/binance-chain/tss-lib/tss"
@@ -103,7 +104,7 @@ func (s *ThresholdSigner) initializeSigningParty(
 	party := signing.NewLocalParty(
 		digest,
 		params,
-		s.keygenData,
+		keygen.LocalPartySaveData(s.thresholdKey),
 		tssMessageChan,
 		endChan,
 	)
