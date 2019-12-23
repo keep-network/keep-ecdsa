@@ -13,7 +13,7 @@ type MemberID []byte
 // MemberIDFromHex converts hexadecimal string to MemberID.
 func MemberIDFromHex(id string) (MemberID, error) {
 	// Skip `0x` or `0X` prefix.
-	if len(id) >= 2 && id[0] == '0' && (id[1] == 'x' || id[1] == 'X') {
+	if len(id) >= 2 && (id[:2] == "0x" || id[:2] == "0X") {
 		id = id[2:]
 	}
 
