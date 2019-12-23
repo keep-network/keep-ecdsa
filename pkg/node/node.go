@@ -39,7 +39,7 @@ func NewNode(
 // public key is a public key of the signing group. It publishes the public key
 // to the keep. It uses keep address as unique signing group identifier.
 func (n *Node) GenerateSignerForKeep(
-	keepAddress eth.KeepAddress,
+	keepAddress common.Address,
 	keepMembers []common.Address,
 ) (*tss.ThresholdSigner, error) {
 	groupMemberIDs := []tss.MemberID{}

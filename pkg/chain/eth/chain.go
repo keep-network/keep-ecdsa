@@ -8,9 +8,6 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
-// KeepAddress is a keep contract address.
-type KeepAddress = common.Address
-
 // Handle represents a handle to an ethereum blockchain.
 type Handle interface {
 	// Address returns client's ethereum address.
@@ -40,18 +37,18 @@ type ECDSAKeep interface {
 	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new signing request for a given keep is seen.
 	OnSignatureRequested(
-		keepAddress KeepAddress,
+		keepAddress common.Address,
 		handler func(event *SignatureRequestedEvent),
 	) (subscription.EventSubscription, error)
 
 	// SubmitKeepPublicKey submits a 64-byte serialized public key to a keep
 	// contract deployed under a given address.
-	SubmitKeepPublicKey(keepAddress KeepAddress, publicKey [64]byte) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
+	SubmitKeepPublicKey(keepAddress common.Address, publicKey [64]byte) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
 
 	// SubmitSignature submits a signature to a keep contract deployed under a
 	// given address.
 	SubmitSignature(
-		keepAddress KeepAddress,
+		keepAddress common.Address,
 		digest [32]byte,
 		signature *ecdsa.Signature,
 	) error // TODO: Add promise *async.SignatureSubmissionPromise

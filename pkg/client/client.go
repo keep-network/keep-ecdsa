@@ -98,7 +98,7 @@ func Initialize(
 func registerForSignEvents(
 	ethereumChain eth.Handle,
 	tssNode *node.Node,
-	keepAddress eth.KeepAddress,
+	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
 ) {
 	ethereumChain.OnSignatureRequested(

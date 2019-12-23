@@ -6,14 +6,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 )
 
 // Keeps represents a collection of keeps in which the given client is a member.
 type Keeps struct {
 	myKeepsMutex *sync.RWMutex
-	myKeeps      map[eth.KeepAddress][]*tss.ThresholdSigner
+	myKeeps      map[common.Address][]*tss.ThresholdSigner
 
 	storage storage
 }
@@ -22,7 +21,7 @@ type Keeps struct {
 func NewKeepsRegistry(persistence persistence.Handle) *Keeps {
 	return &Keeps{
 		myKeepsMutex: &sync.RWMutex{},
-		myKeeps:      make(map[eth.KeepAddress][]*tss.ThresholdSigner),
+		myKeeps:      make(map[common.Address][]*tss.ThresholdSigner),
 		storage:      newStorage(persistence),
 	}
 }
