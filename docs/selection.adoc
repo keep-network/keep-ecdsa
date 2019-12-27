@@ -516,3 +516,149 @@ the bonds are released and no compensation is paid out.
 This acts as further incentive for the operators to finish DKG.
 These rewards are paid out from a dedicated reward pool,
 and payments from depositers are added to the pool.
+
+=== Batching
+
+We want to create keeps in batches
+for a variety of reasons
+like ensuring we aren't limited by beacon throughput,
+and improving cost-efficiency because we pay less to beacon gas fees.
+
+One _batch_ is created for every _epoch_.
+A batch involves creating one or more keeps,
+realistically more.
+Because demand for keeps is expected to fluctuate,
+we need to account for it somehow.
+Either the batch size or epoch length, or both,
+has to accommodate changes in demand.
+
+==== Responding to demand
+
+===== Flexible batches and fixed epochs
+
+Number of keeps per batch responds to demand,
+epoch length held constant.
+
+This isn't very good
+because ticket submission costs scale _O(n^2^)_.
+With our optimizations we can cope with 64 members in the beacon
+making ~20 keeps per batch realistic,
+but in the face of serious growth this is non-viable.
+
+===== Fixed batches and flexible epochs
+
+Number of keeps per batch constant,
+epoch length responds to demand.
+
+Every time we've provided _batch size_ keeps to customers,
+we create another batch.
+This doesn't mean the _pool size = batch size_
+as we can keep some keeps in reserve.
+
+We're theoretically still limited by the beacon throughput,
+just multiplied by _batch size_.
+
+===== Flexible batches and flexible epochs
+
+Both keeps per batch and epoch length responds to demand.
+
+If we keep batches constant until we hit beacon limits,
+and then start increasing batch size,
+it probably provides the best way to scale on the current beacon.
+
+==== Batching and privileged customers
+
+Batching keeps without privileged customers is simple.
+However, each privileged customer requires its own batch
+to ensure that all selected signers have authorized the privileged customer.
+This implies keeping separate keep pools each privileged customer,
+similar to sortition pools.
+With privileged customers that have a high demand for keeps,
+this is not a problem as any keeps created in a batch
+will be requested in a reasonable time.
+With privileged customers that require keeps only rarely,
+creating full-sized batches can lead to keeps being unused.
+
+To cope with this,
+the _minimum batch size_ should be 1.
+Batch size should respond to demand enough
+so that both high-demand and low-demand customers can be served.
+
+
+////
+Epoch length whatever
+
+Request keeps
+
+If keep available in pool,
+
+
+==== Keep pool
+
+Keeps that aren't currently assigned to customers
+are kept in the keep pool.
+When a customer requests a keep
+we try to provide it from the pool,
+but this can't be guaranteed.
+
+If the number of keeps in the pool falls below _minimum pool size_
+we trigger a pool refill by creating another batch of keeps.
+
+===== Batch adjustment
+
+The time of the last refill is recorded.
+Time between last refill and the request which reduces the pool below minimum
+is the _epoch length_.
+
+If the time since the last refill is less than _threshold epoch length_
+we add one to the _current batch size_
+up to the _maximum batch size_.
+If the time since the last refill is more than the threshold,
+we subtract one from the _current batch size_
+down to the _minimum batch size_.
+
+==== Pool refill
+
+When the keep pool is below _minimum pool size_
+any operator can trigger a pool refill.
+
+When a pool refill is triggered,
+the factory requests an entry from the Random Beacon,
+the _selection seed_.
+The operator performing the trigger call is reimbursed
+for the gas cost of the call.
+
+When the beacon has generated the entry,
+it performs the callback from the request
+which begins the signer selection.
+
+The _selection seed_ is salted with some identifier
+(e.g. the address of the factory)
+to make sure that we get different outputs
+than a possible beacon group selection.
+(We should probably salt the beacon too)address of the factory)
+to make sure that we get different outputs
+than a possible beacon group selection.
+(We should probably salt the beacon too,
+just for consistency.)
+The _salted seed_ is used as an input for ticket value calculation,
+alongside operator address and virtual staker index.
+
+The factory emits an event specifying that it
+
+When a ticket is submitted,
+for 
+
+Keeps are created in a batch
+where members are all selected at once
+and paid their initial reward when keep creation is finished.
+The money for this comes from the _keep creation pool_.
+
+When a customer application requests a keep
+they pay the factory a _keep recruitment fee_.
+The _keep recruitment fee_ is paid into the _keep creation pool_.
+
+The keep creation pool needs to be kept funded
+so that we can create batches.
+
+////
