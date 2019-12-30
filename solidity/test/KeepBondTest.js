@@ -1,3 +1,5 @@
+const KeepBond = artifacts.require('./KeepBond.sol')
+
 const { expectRevert } = require('openzeppelin-test-helpers');
 const BN = web3.utils.BN
 
