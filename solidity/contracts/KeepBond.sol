@@ -4,7 +4,7 @@ pragma solidity ^0.5.4;
 /// @notice Contract holding deposits from keeps' operators.
 contract KeepBond {
    // Unassigned ether values deposited by operators.
-   mapping(address => uint) internal pot;
+   mapping(address => uint256) internal pot;
 
    /// @notice Returns value of ether available for bonding for the operator.
    /// @param operator Address of the operator.
@@ -21,8 +21,8 @@ contract KeepBond {
    /// @notice Draw amount from sender's value available for bonding.
    /// @param amount Value to withdraw.
    /// @param destination Address to send amount.
-   function withdraw(uint amount, address payable destination) external {
-      require(pot[msg.sender] >= amount, "Insufficient pot");
+   function withdraw(uint256 amount, address payable destination) external {
+      require(availableForBonding(msg.sender) >= amount, "Insufficient pot");
 
       pot[msg.sender] -= amount;
       destination.transfer(amount);
