@@ -20,6 +20,9 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
     bytes publicKey;
+    // Number of block when signing process was started. Used to track if signing
+    // is in progress. Value `0` indicates that there is no signing process in progress.
+    uint256 internal currentSigningStartBlock;
 
     // Notification that a signer's public key was published for the keep.
     event PublicKeyPublished(
@@ -70,12 +73,20 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
+    /// @dev Only one signing process can be in progress at a time.
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external onlyOwner {
+        // TODO: Add timeout handling.
+        require(!isSigningInProgress(), "Signer is busy");
+
+        currentSigningStartBlock = block.number;
+
         emit SignatureRequested(_digest);
     }
 
     /// @notice Submits a signature calculated for the given digest.
+    /// @dev Fails if signature has not been requested or a signature has already
+    /// been submitted.
     /// @param _digest Digest for which calculator was calculated.
     /// @param _r Calculated signature's R value.
     /// @param _s Calculated signature's S value.
@@ -86,6 +97,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         bytes32 _s,
         uint8 _recoveryID
     ) external onlyMember {
+        require(isSigningInProgress(), "Signature has been already submitted");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // We add 27 to the recovery ID to align it with ethereum and bitcoin
@@ -99,7 +111,16 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
             "Invalid signature"
         );
 
+        currentSigningStartBlock = 0;
+
         emit SignatureSubmitted(_digest, _r, _s, _recoveryID);
+    }
+
+    /**
+     * @notice Returns true if signing of a digest is currently in progress.
+     */
+    function isSigningInProgress() internal view returns (bool) {
+        return currentSigningStartBlock != 0;
     }
 
     /// @notice Checks if the caller is a keep member.

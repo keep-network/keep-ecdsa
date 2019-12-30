@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = "pb";
+package tss;
+
+message ThresholdSigner {
+  message GroupInfo {
+    string groupID = 1;
+    bytes memberID = 2;
+    repeated bytes groupMemberIDs = 3;
+    int32 dishonestThreshold = 4;
+  }
+
+  GroupInfo groupInfo = 1;
+  bytes thresholdKey = 2;
+}
