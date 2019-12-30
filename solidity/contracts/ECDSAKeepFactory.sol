@@ -17,14 +17,8 @@ contract ECDSAKeepFactory {
     ECDSAKeep[] keeps;
 
     // Tickets submitted by member candidates during the current group
-    // selection execution and accepted by the protocol for the
-    // consideration.
+    // selection execution and accepted by the protocol for the consideration.
     uint64[] tickets;
-
-    // Tail represents an index of a ticket in a tickets[] array which holds
-    // the highest ticket value. It is a tail of the linked list defined by
-    // `previousTicketIndex`.
-    uint256 tail;
 
     // Map simulates a sorted linked list of ticket values by their indexes.
     // key -> value represent indices from the tickets[] array.
@@ -44,6 +38,11 @@ contract ECDSAKeepFactory {
     // Pseudorandom seed value used as an input for the group selection.
     // TODO: call random beacon for a new seed. This is hardcoded for now.
     uint256 seed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
+
+    // Tail represents an index of a ticket in a tickets[] array which holds
+    // the highest ticket value. It is a tail of the linked list defined by
+    // `previousTicketIndex`.
+    uint256 tail;
 
     // Number of block at which the group selection started and from which
     // ticket submissions are accepted.
@@ -99,7 +98,6 @@ contract ECDSAKeepFactory {
         if (block.number > ticketSubmissionStartBlock.add(ticketSubmissionTimeout)) {
             revert("Ticket submission is over");
         }
-
 
         if (memberCandidates[ticketValue] != address(0)) {
             revert("Duplicate ticket");

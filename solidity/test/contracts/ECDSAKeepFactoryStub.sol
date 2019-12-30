@@ -7,8 +7,8 @@ import "../../contracts/ECDSAKeepFactory.sol";
 contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
 
     // @dev Returns list of registered members.
-    function getMemberCandidates() public view returns (address payable[] memory){
-        return memberCandidates;
+    function getMemberCandidates(uint256 ticket) public view returns (address payable){
+        return memberCandidates[ticket];
     }
 
     /// @dev Returns calculated keep address.
@@ -30,4 +30,16 @@ contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
         uint256 factoryAddressInt = uint256(address(this));
         return address(factoryAddressInt % 1000000000000);
     }
+
+    /**
+     * @dev Gets the number of submitted group candidate tickets so far.
+     */
+    function submittedTicketsCount() public view returns (uint256) {
+        return tickets.length;
+    }
+
+    function getGroupSelectionRelayEntry() public view returns (uint256) {
+        return seed;
+    }
+
 }
