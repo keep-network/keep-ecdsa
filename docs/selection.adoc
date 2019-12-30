@@ -584,81 +584,200 @@ the _minimum batch size_ should be 1.
 Batch size should respond to demand enough
 so that both high-demand and low-demand customers can be served.
 
+=== Ticket pool
 
-////
-Epoch length whatever
+We don't actually need to create keeps in batches;
+it's sufficient to pool received tickets
+and create keeps on demand,
+using the tickets like a queue.
 
-Request keeps
+Each privileged customer has their own ticket pool and request queue.
+Keeps without a privileged customer share one pool and queue
+regardless of the customer address.
+Where a privileged customer is specified,
+it may also be "none".
 
-If keep available in pool,
+Tickets in the ticket pool are _unassigned_
+and available for populating a requested keep.
 
+The validity of a ticket
+(and the respective operator's eligibility for work selection)
+is evaluated upon both submission and assignment.
 
-==== Keep pool
+==== Serving requests
 
-Keeps that aren't currently assigned to customers
-are kept in the keep pool.
-When a customer requests a keep
-we try to provide it from the pool,
-but this can't be guaranteed.
+When a request for a keep is received,
+the factory tries to create a keep
+using unassigned tickets in the ticket pool.
 
-If the number of keeps in the pool falls below _minimum pool size_
-we trigger a pool refill by creating another batch of keeps.
+Starting from the first (lowest-valued, with some caveats) ticket,
+unassigned tickets are evaluated for validity,
+and prospectively assigned to the request.
 
-===== Batch adjustment
+Tickets that are no longer valid
+(e.g. due to not having sufficient ETH available for bonding anymore)
+are discarded.
 
-The time of the last refill is recorded.
-Time between last refill and the request which reduces the pool below minimum
-is the _epoch length_.
+If a visible duplicate would be selected,
+i.e. a ticket from an operator
+whose earlier ticket has already been assigned to the request,
+the second ticket is skipped for the purposes of the current request
+but not discarded.
+This may trigger a pool refill under unexpected circumstances.
 
-If the time since the last refill is less than _threshold epoch length_
-we add one to the _current batch size_
-up to the _maximum batch size_.
-If the time since the last refill is more than the threshold,
-we subtract one from the _current batch size_
-down to the _minimum batch size_.
+If only 1 or 2 tickets can be assigned to the request,
+the request remains pending while the ticket pool is refilled.
+If all 3 required tickets can be assigned to the request,
+the assigned operators have their bonds created
+and are expected to begin the keep creation process.
+This should not lead to weird behavior
+because we just checked for their eligibility earlier in the same call
+and visible dupes are prohibited
+(visible dupes could run out of bond for the second or third signer
+even if the bond appears ok).
+If it nonetheless does,
+we switch to creating the bond when the operator is prospectively assigned,
+and freeing it if the operator is unassigned
+because we can't populate the keep.
+
+When tickets are actually assigned,
+they are removed from the ticket pool.
 
 ==== Pool refill
 
-When the keep pool is below _minimum pool size_
-any operator can trigger a pool refill.
+===== Triggering a ticket pool refill
 
-When a pool refill is triggered,
-the factory requests an entry from the Random Beacon,
-the _selection seed_.
-The operator performing the trigger call is reimbursed
-for the gas cost of the call.
+Ticket pool refill can be triggered on any of the following conditions:
+
+- The factory has received a request for a keep,
+but there are insufficient unassigned tickets for the request.
+
+- The factory has received a request for a keep,
+but the previous ticket submission
+was at least _maximum epoch length_ time ago,
+so the tickets have expired.
+
+////
+- The factory has received a request for a keep,
+and it has enough unassigned tickets for the request
+but the number of remaining tickets
+is insufficient for the customer's _constant pool_.
+////
+
+===== Acquiring the selection seed
+
+When a pool refill has been triggered,
+any operator can submit a transaction
+calling the factory to request a _beacon entry_ from the random beacon.
+The operator is reimbursed for the cost of the call.
+
+This is a separate transaction from the customer requesting a keep,
+to ensure that the cost of requesting a keep
+stays steady and predictable.
 
 When the beacon has generated the entry,
 it performs the callback from the request
-which begins the signer selection.
+which begins the ticket submission.
 
-The _selection seed_ is salted with some identifier
+The _beacon entry_ is salted with some identifier
 (e.g. the address of the factory)
-to make sure that we get different outputs
-than a possible beacon group selection.
-(We should probably salt the beacon too)address of the factory)
 to make sure that we get different outputs
 than a possible beacon group selection.
 (We should probably salt the beacon too,
 just for consistency.)
-The _salted seed_ is used as an input for ticket value calculation,
+The salted entry becomes the _selection seed_
+and is used as an input for ticket value calculation,
 alongside operator address and virtual staker index.
 
-The factory emits an event specifying that it
+===== Number of tickets
 
-When a ticket is submitted,
-for 
-
-Keeps are created in a batch
-where members are all selected at once
-and paid their initial reward when keep creation is finished.
-The money for this comes from the _keep creation pool_.
-
-When a customer application requests a keep
-they pay the factory a _keep recruitment fee_.
-The _keep recruitment fee_ is paid into the _keep creation pool_.
-
-The keep creation pool needs to be kept funded
-so that we can create batches.
-
+When the _selection seed_ is acquired,
+the factory determines how many tickets it requests
+in this pool refresh.
+Because more requests may have arrived while waiting for the beacon,
 ////
+and because the pool refresh may have been triggered
+by the need to maintain a _constant pool_,
+////
+the number of currently pending keep requests may not be 1.
+
+Each privileged customer's ticket pool
+stores their _current queue size_,
+which specifies how many keeps
+that customer is expected to request within a ticket epoch.
+
+If pool refresh is called
+because insufficient tickets were available to assign to a request,
+and the time since the previous pool refresh
+is less than the _minimum epoch length_,
+the _current queue size_ is increased by 1
+limited by the _maximum queue size_.
+
+If pool refresh is called
+due to more than _maximum epoch length_ time having passed,
+and the pool had unassigned tickets that thus expired,
+the _current queue size_ is decreased by 1
+limited by the minimum of 1.
+If the time since the last refill is greater than _N * maximum epoch length_,
+and the number of expired tickets is equal or greater than _3N_,
+where _N >= 2_,
+we decrease the _current queue size_ by _N_ instead of 1.
+
+If pool refresh is called
+due to more than _maximum epoch length_ time having passed,
+but all previous tickets had been assigned,
+the _current queue size_ remains unchanged.
+The same applies if pool refresh is called
+due to running out of unassigned tickets for the pending requests,
+but the time elapsed since previous pool refresh
+is between the _minimum_ and _maximum epoch length_.
+
+After the _current queue size_ has been adjusted,
+the tickets to be requested are calculated.
+
+The number of tickets required in this epoch
+is calculated by:
+
+`requestedTickets = max(currentQueueSize, pendingRequests) * 3 - unexpiredUnassignedTickets`
+
+===== Ticket submission
+
+Tickets are submitted as in the beacon,
+except for the additional eligibility checks
+for bond status and privileged customer authorization.
+
+Once the ticket submission time is over,
+the received tickets (in order from low to high)
+are concatenated to any unexpired unassigned tickets already in the pool.
+
+==== Constant pool
+
+If a privileged customer has a sustained high demand for keeps,
+we may implement a _constant pool_
+that tries to prevent the ticket pool from ever becoming entirely empty.
+If the customer is eligible for a constant pool,
+their ticket pool is refilled when the number of unassigned tickets
+falls below the constant pool threshold.
+
+The constant pool is probably out of scope for now
+and we may want to move to sortition pools early enough
+that it won't matter anyway.
+Thus, further details have been omitted.
+
+==== Funding
+
+To refill the ticket pool,
+we need an entry from the Beacon.
+As any keep request can lead to requesting a beacon entry,
+it seems necessary to set the price of a keep request
+to cover the beacon entry.
+When the ticket pool is used to stretch one entry for multiple keeps,
+we can donate the created surplus to the beacon.
+
+A pool refill requires operators to submit tickets.
+The reward for submitting a ticket
+is a reasonable probability of getting selected to a keep later.
+Operators that have a problem with this can simply not submit.
+
+Operators' bonds are locked only when they are actually assigned to a keep,
+so we don't need to worry about that part either.
