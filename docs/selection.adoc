@@ -781,3 +781,36 @@ Operators that have a problem with this can simply not submit.
 
 Operators' bonds are locked only when they are actually assigned to a keep,
 so we don't need to worry about that part either.
+
+=== Or just skip the pool altogether?
+
+In this option we treat privileged customers separately,
+but don't pool tickets for later use.
+When a request for a keep is received
+we request an entry from the Random Beacon.
+When we get the entry
+we have the operators submit `3 * pendingRequests` tickets,
+and then create the keeps for the submitted tickets.
+
+This is a lot simpler to implement
+and works just as well at particularly high levels of demand.
+If we get more requests
+between requesting the selection seed and beginning ticket submission
+we can immediately adapt the number of tickets we request.
+If we get more requests
+while ticket submission is ongoing,
+we go immediately back to requesting a beacon entry
+when the ticket submission finishes.
+Thus, neither the beacon nor ticket submission act as bottlenecks
+(except if we hit the cap of how many tickets can be requested at once).
+
+If sequential ticket submission hits _O(n^2^)_ too hard
+we can just run ticket submissions in parallel,
+requesting the selection seed for another one
+when the previous seed is received.
+
+This doesn't scale as well
+when the interval between requests is longer than the entry+ticket latency
+but shorter than the epoch we'd use for ticket pools.
+However, the lack of ticket pool complexity makes the gas costs lower
+and also did I mention the low development effort?
