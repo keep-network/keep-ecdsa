@@ -1,7 +1,12 @@
 const KeepBond = artifacts.require('./KeepBond.sol')
 
 const { expectRevert } = require('openzeppelin-test-helpers');
+
 const BN = web3.utils.BN
+
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
+const expect = chai.expect
 
 contract('KeepBond', (accounts) => {
     let keepBond
@@ -21,7 +26,7 @@ contract('KeepBond', (accounts) => {
 
             const pot = await keepBond.availableForBonding(account)
 
-            assert.equal(pot.toString(), expectedPot.toString(), 'invalid pot')
+            expect(pot).to.eq.BN(expectedPot, 'invalid pot')
         })
     })
 
@@ -43,10 +48,10 @@ contract('KeepBond', (accounts) => {
             await keepBond.withdraw(value, destination, { from: account })
 
             const pot = await keepBond.availableForBonding(account)
-            assert.equal(pot, expectedPot.toNumber(), 'invalid pot')
+            expect(pot).to.eq.BN(expectedPot, 'invalid pot')
 
             const destinationBalance = await web3.eth.getBalance(destination)
-            assert.equal(destinationBalance, expectedDestinationBalance.toString(), 'invalid destination balance')
+            expect(destinationBalance).to.eq.BN(expectedDestinationBalance, 'invalid destination balance')
         })
 
         it('fails if insufficient pot', async () => {
@@ -73,7 +78,7 @@ contract('KeepBond', (accounts) => {
 
             const pot = await keepBond.availableForBonding(operator)
 
-            assert.equal(pot.toString(), expectedPot.toString(), 'invalid pot')
+            expect(pot).to.eq.BN(expectedPot, 'invalid pot')
         })
 
         it('returns value of operators deposit', async () => {
@@ -82,7 +87,7 @@ contract('KeepBond', (accounts) => {
 
             const pot = await keepBond.availableForBonding(operator)
 
-            assert.equal(pot.toString(), expectedPot.toString(), 'invalid pot')
+            expect(pot).to.eq.BN(expectedPot, 'invalid pot')
         })
     })
 })
