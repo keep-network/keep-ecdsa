@@ -31,6 +31,12 @@ module.exports = {
       network_id: "*",       // Any network (default: none)
       websockets: false,      // Enable EventEmitter interface for web3 (default: false)
     },
+    local: {
+      host: "127.0.0.1",     // Localhost (default: none)
+      port: 7545,            // Standard Ethereum port (default: none)
+      network_id: "*",       // Any network (default: none)
+      websockets: false,      // Enable EventEmitter interface for web3 (default: false)
+    },
     keep_dev: {
       host: "localhost",
       port: 8545,
