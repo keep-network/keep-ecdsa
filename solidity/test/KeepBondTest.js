@@ -1,4 +1,4 @@
-const KeepBond = artifacts.require('./KeepBond.sol')
+const KeepBond = artifacts.require('./KeepBondStub.sol')
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -88,6 +88,69 @@ contract('KeepBond', (accounts) => {
             const pot = await keepBond.availableForBonding(operator)
 
             expect(pot).to.eq.BN(expectedPot, 'invalid pot')
+        })
+    })
+
+    describe('createBond', async () => {
+        const operator = accounts[1]
+        const holder = accounts[3]
+
+        beforeEach(async () => {
+            keepBond = await KeepBond.new()
+
+            const value = new BN(100)
+            await keepBond.deposit({ from: operator, value: value })
+        })
+
+        it('creates bond', async () => {
+            const value = (await keepBond.availableForBonding(operator))
+            const reference = 888
+
+            const expectedPot = (await keepBond.availableForBonding(operator)).sub(value)
+
+            await keepBond.createBond(operator, reference, value, { from: holder })
+
+            const pot = await keepBond.availableForBonding(operator)
+            expect(pot).to.eq.BN(expectedPot, 'invalid pot')
+
+            const lockedBonds = await keepBond.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(value, 'invalid locked bonds')
+
+            const bondAssignments = await keepBond.getBondAssignments(holder, operator)
+            expect(bondAssignments).to.eq.BN(reference, 'invalid bond assignments')
+        })
+
+        it('creates two bonds with the same reference', async () => {
+            const operator = accounts[2]
+            await keepBond.deposit({ from: operator, value: 20 })
+
+            const value = new BN(10)
+            const reference = 777
+
+            const expectedPot = (await keepBond.availableForBonding(operator)).sub(value.mul(new BN(2)))
+
+            await keepBond.createBond(operator, reference, value, { from: holder })
+            await keepBond.createBond(operator, reference, value, { from: holder })
+
+            const pot = await keepBond.availableForBonding(operator)
+            expect(pot).to.eq.BN(expectedPot, 'invalid pot')
+
+            const lockedBonds = await keepBond.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(value.mul(new BN(2)), 'invalid locked bonds')
+
+            const bondAssignments = await keepBond.getBondAssignments(holder, operator)
+            expect(bondAssignments).to.have.lengthOf(2, 'invalid bond assignment length')
+            expect(bondAssignments[0]).to.eq.BN(reference, 'invalid bond assignment 1')
+            expect(bondAssignments[1]).to.eq.BN(reference, 'invalid bond assignment 2')
+        })
+
+        it('fails if insufficient pot', async () => {
+            const value = (await keepBond.availableForBonding(operator)).add(new BN(1))
+
+            await expectRevert(
+                keepBond.createBond(operator, 0, value),
+                "Insufficient pot"
+            )
         })
     })
 })
