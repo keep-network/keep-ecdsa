@@ -3,7 +3,6 @@ pragma solidity ^0.5.4;
 import "./ECDSAKeep.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating ECDSA keeps.
@@ -11,7 +10,6 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 contract ECDSAKeepFactory {
     using AddressArrayUtils for address payable[];
     using SafeMath for uint256;
-    using BytesLib for bytes;
 
     // List of keeps.
     ECDSAKeep[] keeps;
@@ -277,6 +275,9 @@ contract ECDSAKeepFactory {
 
         emit ECDSAKeepCreated(keepAddress, _members);
     }
+
+
+    // TODO: Selection of ECDSA Keep members will be rewritten.
 
     /// @notice Runs member selection for an ECDSA keep.
     /// @dev Stub implementations generates a group with only one member. Member
