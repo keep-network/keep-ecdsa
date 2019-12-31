@@ -1,6 +1,6 @@
 const ECDSAKeepFactoryTicketsOrderingStub = artifacts.require('ECDSAKeepFactoryTicketsOrderingStub');
 
-contract.only("ECDSAKeepFactory", () => {
+contract("ECDSAKeepFactory", () => {
     let keepFactory;
     const groupSize = 10;
 
