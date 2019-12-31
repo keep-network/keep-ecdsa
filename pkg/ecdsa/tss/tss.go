@@ -9,11 +9,17 @@ package tss
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
+)
+
+const (
+	keyGenerationTimeout = 120 * time.Second
+	signingTimeout       = 120 * time.Second
 )
 
 var logger = log.Logger("keep-tss")
