@@ -17,11 +17,10 @@ const signingTimeout = 120 * time.Second
 // initializeSigning initializes a member to run a threshold multi-party signature
 // calculation protocol. Signature will be calculated for provided digest.
 func (s *ThresholdSigner) initializeSigning(
+	ctx context.Context,
 	digest []byte,
 	netBridge *networkBridge,
 ) (*signingSigner, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), signingTimeout)
-
 	digestInt := new(big.Int).SetBytes(digest)
 
 	party, endChan, err := s.initializeSigningParty(
@@ -30,14 +29,11 @@ func (s *ThresholdSigner) initializeSigning(
 		netBridge,
 	)
 	if err != nil {
-		cancel()
 		return nil, fmt.Errorf("failed to initialize signing party: [%v]", err)
 	}
 
 	return &signingSigner{
 		groupInfo:      s.groupInfo,
-		context:        ctx,
-		contextCancel:  cancel,
 		networkBridge:  netBridge,
 		signingParty:   party,
 		signingEndChan: endChan,
@@ -49,9 +45,6 @@ func (s *ThresholdSigner) initializeSigning(
 type signingSigner struct {
 	*groupInfo
 
-	// Context for protocol execution with a timeout.
-	context       context.Context
-	contextCancel context.CancelFunc
 	// Network bridge used for messages transport.
 	networkBridge *networkBridge
 	// Party for TSS protocol execution.
@@ -64,9 +57,7 @@ type signingSigner struct {
 // executed only after all members finished the initialization stage. As a result
 // the calculated ECDSA signature will be returned or an error, if the signature
 // generation failed.
-func (s *signingSigner) sign() (*ecdsa.Signature, error) {
-	defer s.contextCancel()
-
+func (s *signingSigner) sign(ctx context.Context) (*ecdsa.Signature, error) {
 	if s.signingParty == nil {
 		return nil, fmt.Errorf("failed to get initialized signing party")
 	}
@@ -84,7 +75,7 @@ func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 			ecdsaSignature := convertSignatureTSStoECDSA(signature)
 
 			return &ecdsaSignature, nil
-		case <-s.context.Done():
+		case <-ctx.Done():
 			memberIDs := []MemberID{}
 
 			if s.signingParty.WaitingFor() != nil {

@@ -7,6 +7,7 @@
 package tss
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -76,7 +77,11 @@ func GenerateThresholdSigner(
 		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), keyGenerationTimeout)
+	defer cancel()
+
 	keyGenSigner, err := initializeKeyGeneration(
+		ctx,
 		group,
 		tssPreParams,
 		netBridge,
@@ -86,13 +91,13 @@ func GenerateThresholdSigner(
 	}
 	logger.Infof("[party:%s]: initialized key generation", keyGenSigner.keygenParty.PartyID())
 
-	if err := joinProtocol(group, networkProvider); err != nil {
+	if err := joinProtocol(ctx, group, networkProvider); err != nil {
 		return nil, fmt.Errorf("failed to join the protocol: [%v]", err)
 	}
 
 	logger.Infof("[party:%s]: starting key generation", keyGenSigner.keygenParty.PartyID())
 
-	signer, err := keyGenSigner.generateKey()
+	signer, err := keyGenSigner.generateKey(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate key: [%v]", err)
 	}
@@ -113,16 +118,19 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
 	}
 
-	signingSigner, err := s.initializeSigning(digest[:], netBridge)
+	ctx, cancel := context.WithTimeout(context.Background(), keyGenerationTimeout)
+	defer cancel()
+
+	signingSigner, err := s.initializeSigning(ctx, digest[:], netBridge)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize signing: [%v]", err)
 	}
 
-	if err := joinProtocol(s.groupInfo, networkProvider); err != nil {
+	if err := joinProtocol(ctx, s.groupInfo, networkProvider); err != nil {
 		return nil, fmt.Errorf("failed to join the protocol:: [%v]", err)
 	}
 
-	signature, err := signingSigner.sign()
+	signature, err := signingSigner.sign(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign: [%v]", err)
 	}

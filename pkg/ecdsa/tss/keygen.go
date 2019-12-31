@@ -39,12 +39,11 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 // TSS protocol requires pre-parameters such as safe primes to be generated for
 // execution. The parameters should be generated prior to initializing the signer.
 func initializeKeyGeneration(
+	ctx context.Context,
 	group *groupInfo,
 	tssPreParams *keygen.LocalPreParams,
 	network *networkBridge,
 ) (*member, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), keyGenerationTimeout)
-
 	keyGenParty, endChan, err := initializeKeyGenerationParty(
 		ctx,
 		group,
@@ -52,15 +51,12 @@ func initializeKeyGeneration(
 		network,
 	)
 	if err != nil {
-		cancel()
 		return nil, fmt.Errorf("failed to initialize key generation member: [%v]", err)
 	}
 	logger.Debugf("initialized key generation member: [%v]", keyGenParty.PartyID())
 
 	return &member{
 		groupInfo:     group,
-		context:       ctx,
-		contextCancel: cancel,
 		keygenParty:   keyGenParty,
 		keygenEndChan: endChan,
 		networkBridge: network,
@@ -72,9 +68,6 @@ func initializeKeyGeneration(
 type member struct {
 	*groupInfo
 
-	// Context for protocol execution with a timeout.
-	context       context.Context
-	contextCancel context.CancelFunc
 	// Network bridge used for messages transport.
 	networkBridge *networkBridge
 	// Party for TSS protocol execution.
@@ -88,9 +81,7 @@ type member struct {
 // needs to be executed only after all members finished the initialization stage.
 // As a result it will return a Signer who has completed key generation, or error
 // if the key generation failed.
-func (s *member) generateKey() (*ThresholdSigner, error) {
-	defer s.contextCancel()
-
+func (s *member) generateKey(ctx context.Context) (*ThresholdSigner, error) {
 	if err := s.keygenParty.Start(); err != nil {
 		return nil, fmt.Errorf(
 			"failed to start key generation: [%v]",
@@ -107,7 +98,7 @@ func (s *member) generateKey() (*ThresholdSigner, error) {
 			}
 
 			return signer, nil
-		case <-s.context.Done():
+		case <-ctx.Done():
 			memberIDs := []MemberID{}
 
 			if s.keygenParty.WaitingFor() != nil {
