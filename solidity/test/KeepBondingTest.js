@@ -1,3 +1,5 @@
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
+
 const KeepBonding = artifacts.require('./KeepBonding.sol')
 
 const { expectRevert } = require('openzeppelin-test-helpers');
@@ -13,6 +15,14 @@ contract('KeepBonding', (accounts) => {
 
     before(async () => {
         keepBonding = await KeepBonding.new()
+    })
+
+    beforeEach(async () => {
+        await createSnapshot()
+    })
+
+    afterEach(async () => {
+        await restoreSnapshot()
     })
 
     describe('deposit', async () => {
@@ -34,7 +44,7 @@ contract('KeepBonding', (accounts) => {
         const operator = accounts[1]
         const destination = accounts[2]
 
-        before(async () => {
+        beforeEach(async () => {
             const value = new BN(100)
             await keepBonding.deposit(operator, { value: value })
         })
@@ -68,7 +78,7 @@ contract('KeepBonding', (accounts) => {
         const operator = accounts[1]
         const value = new BN(100)
 
-        before(async () => {
+        beforeEach(async () => {
             await keepBonding.deposit(operator, { value: value })
         })
 
