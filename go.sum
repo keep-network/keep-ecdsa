@@ -26,6 +26,8 @@ github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+Ce
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/binance-chain/tss-lib v1.1.0 h1:ZvY2n1JaxjyJRE7Q/Obz8CkjfXuUkwgJ9/ffSWqAFYU=
 github.com/binance-chain/tss-lib v1.1.0/go.mod h1:5mmPQOOkBIjHxyGVesSUB2AemcZj5YkMJ+HPZY4Jd38=
+github.com/binance-chain/tss-lib v1.1.1 h1:WWVVb7GlWuOy2usumPDWuzR0pTPl+t+faGEjk910o1A=
+github.com/binance-chain/tss-lib v1.1.1/go.mod h1:5mmPQOOkBIjHxyGVesSUB2AemcZj5YkMJ+HPZY4Jd38=
 github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f h1:bAs4lUbRJpnnkd9VhRV3jjAVU7DJVjMaK+IsvSeZvFo=
 github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f/go.mod h1:TdznJufoqS23FtqVCzL0ZqgP5MqXbb4fg/WgDys70nA=
 github.com/btcsuite/go-socks v0.0.0-20170105172521-4720035b7bfd/go.mod h1:HHNXQzUsZCxOoE+CPiyCTO6x34Zs86zZUiwtpXoGdtg=
