@@ -1,6 +1,7 @@
 package tss
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -45,6 +46,7 @@ func newNetworkBridge(
 }
 
 func (b *networkBridge) connect(
+	ctx context.Context,
 	tssOutChan <-chan tss.Message,
 	party tss.Party,
 	sortedPartyIDs tss.SortedPartyIDs,
@@ -62,6 +64,8 @@ func (b *networkBridge) connect(
 				go b.sendTSSMessage(tssLibMsg)
 			case msg := <-netInChan:
 				go b.handleTSSProtocolMessage(msg)
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()

@@ -20,18 +20,24 @@ func (s *ThresholdSigner) initializeSigning(
 	digest []byte,
 	netBridge *networkBridge,
 ) (*signingSigner, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), signingTimeout)
+
 	digestInt := new(big.Int).SetBytes(digest)
 
 	party, endChan, err := s.initializeSigningParty(
+		ctx,
 		digestInt,
 		netBridge,
 	)
 	if err != nil {
+		cancel()
 		return nil, fmt.Errorf("failed to initialize signing party: [%v]", err)
 	}
 
 	return &signingSigner{
 		groupInfo:      s.groupInfo,
+		context:        ctx,
+		contextCancel:  cancel,
 		networkBridge:  netBridge,
 		signingParty:   party,
 		signingEndChan: endChan,
@@ -43,6 +49,9 @@ func (s *ThresholdSigner) initializeSigning(
 type signingSigner struct {
 	*groupInfo
 
+	// Context for protocol execution with a timeout.
+	context       context.Context
+	contextCancel context.CancelFunc
 	networkBridge *networkBridge
 	// Signing
 	signingParty tssLib.Party
@@ -56,13 +65,12 @@ type signingSigner struct {
 // generation failed.
 func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 	defer s.networkBridge.close()
+	
+	defer s.contextCancel()
 
 	if s.signingParty == nil {
 		return nil, fmt.Errorf("failed to get initialized signing party")
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), signingTimeout)
-	defer cancel()
 
 	if err := s.signingParty.Start(); err != nil {
 		return nil, fmt.Errorf(
@@ -77,7 +85,7 @@ func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 			ecdsaSignature := convertSignatureTSStoECDSA(signature)
 
 			return &ecdsaSignature, nil
-		case <-ctx.Done():
+		case <-s.context.Done():
 			memberIDs := []MemberID{}
 
 			if s.signingParty.WaitingFor() != nil {
@@ -92,6 +100,7 @@ func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 }
 
 func (s *ThresholdSigner) initializeSigningParty(
+	ctx context.Context,
 	digest *big.Int,
 	netBridge *networkBridge,
 ) (
@@ -126,6 +135,7 @@ func (s *ThresholdSigner) initializeSigningParty(
 	)
 
 	if err := netBridge.connect(
+		ctx,
 		tssMessageChan,
 		party,
 		params.Parties().IDs(),

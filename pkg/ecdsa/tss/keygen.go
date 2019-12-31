@@ -43,18 +43,24 @@ func initializeKeyGeneration(
 	tssPreParams *keygen.LocalPreParams,
 	network *networkBridge,
 ) (*member, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), keyGenerationTimeout)
+
 	keyGenParty, endChan, err := initializeKeyGenerationParty(
+		ctx,
 		group,
 		tssPreParams,
 		network,
 	)
 	if err != nil {
+		cancel()
 		return nil, fmt.Errorf("failed to initialize key generation member: [%v]", err)
 	}
 	logger.Debugf("initialized key generation member: [%v]", keyGenParty.PartyID())
 
 	return &member{
 		groupInfo:     group,
+		context:       ctx,
+		contextCancel: cancel,
 		keygenParty:   keyGenParty,
 		keygenEndChan: endChan,
 		networkBridge: network,
@@ -65,6 +71,10 @@ func initializeKeyGeneration(
 // generation.
 type member struct {
 	*groupInfo
+
+	// Context for protocol execution with a timeout.
+	context       context.Context
+	contextCancel context.CancelFunc
 
 	networkBridge *networkBridge // network bridge used for messages transport
 
@@ -80,8 +90,7 @@ type member struct {
 func (s *member) generateKey() (*ThresholdSigner, error) {
 	defer s.networkBridge.close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), keyGenerationTimeout)
-	defer cancel()
+	defer s.contextCancel()
 
 	if err := s.keygenParty.Start(); err != nil {
 		return nil, fmt.Errorf(
@@ -99,7 +108,7 @@ func (s *member) generateKey() (*ThresholdSigner, error) {
 			}
 
 			return signer, nil
-		case <-ctx.Done():
+		case <-s.context.Done():
 			memberIDs := []MemberID{}
 
 			if s.keygenParty.WaitingFor() != nil {
@@ -146,6 +155,7 @@ func generatePartiesIDs(
 }
 
 func initializeKeyGenerationParty(
+	ctx context.Context,
 	groupInfo *groupInfo,
 	tssPreParams *keygen.LocalPreParams,
 	bridge *networkBridge,
@@ -175,6 +185,7 @@ func initializeKeyGenerationParty(
 	party := keygen.NewLocalParty(params, tssMessageChan, endChan, *tssPreParams)
 
 	if err := bridge.connect(
+		ctx,
 		tssMessageChan,
 		party,
 		params.Parties().IDs(),
