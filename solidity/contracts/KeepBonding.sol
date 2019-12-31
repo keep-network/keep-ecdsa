@@ -9,7 +9,7 @@ contract KeepBonding {
    /// @notice Returns value of ether available for bonding for the operator.
    /// @param operator Address of the operator.
    /// @return Value of deposited ether available for bonding.
-   function availableForBonding(address operator) public view returns (uint256) {
+   function availableBondingValue(address operator) public view returns (uint256) {
       return unbondedValue[operator];
    }
 
@@ -23,7 +23,7 @@ contract KeepBonding {
    /// @param amount Value to withdraw.
    /// @param destination Address to send amount.
    function withdraw(uint256 amount, address payable destination) external {
-      require(availableForBonding(msg.sender) >= amount, "Insufficient unbonded value");
+      require(availableBondingValue(msg.sender) >= amount, "Insufficient unbonded value");
 
       unbondedValue[msg.sender] -= amount;
       destination.transfer(amount);

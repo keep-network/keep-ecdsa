@@ -20,11 +20,11 @@ contract('KeepBonding', (accounts) => {
             const account = accounts[1]
             const value = new BN(100)
 
-            const expectedUnbonded = (await keepBonding.availableForBonding(account)).add(value)
+            const expectedUnbonded = (await keepBonding.availableBondingValue(account)).add(value)
 
             await keepBonding.deposit(account, { value: value })
 
-            const unbonded = await keepBonding.availableForBonding(account)
+            const unbonded = await keepBonding.availableBondingValue(account)
 
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
@@ -40,14 +40,14 @@ contract('KeepBonding', (accounts) => {
         })
 
         it('transfers unbonded value', async () => {
-            const value = (await keepBonding.availableForBonding(account))
+            const value = (await keepBonding.availableBondingValue(account))
 
-            const expectedUnbonded = (await keepBonding.availableForBonding(account)).sub(value)
+            const expectedUnbonded = (await keepBonding.availableBondingValue(account)).sub(value)
             const expectedDestinationBalance = web3.utils.toBN(await web3.eth.getBalance(destination)).add(value)
 
             await keepBonding.withdraw(value, destination, { from: account })
 
-            const unbonded = await keepBonding.availableForBonding(account)
+            const unbonded = await keepBonding.availableBondingValue(account)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
 
             const destinationBalance = await web3.eth.getBalance(destination)
@@ -55,7 +55,7 @@ contract('KeepBonding', (accounts) => {
         })
 
         it('fails if insufficient unbonded value', async () => {
-            const value = (await keepBonding.availableForBonding(account)).add(new BN(1))
+            const value = (await keepBonding.availableBondingValue(account)).add(new BN(1))
 
             await expectRevert(
                 keepBonding.withdraw(value, destination, { from: account }),
@@ -64,7 +64,7 @@ contract('KeepBonding', (accounts) => {
         })
     })
 
-    describe('availableForBonding', async () => {
+    describe('availableBondingValue', async () => {
         const account = accounts[1]
         const value = new BN(100)
 
@@ -76,7 +76,7 @@ contract('KeepBonding', (accounts) => {
             const operator = "0x0000000000000000000000000000000000000001"
             const expectedUnbonded = 0
 
-            const unbondedValue = await keepBonding.availableForBonding(operator)
+            const unbondedValue = await keepBonding.availableBondingValue(operator)
 
             expect(unbondedValue).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
@@ -85,7 +85,7 @@ contract('KeepBonding', (accounts) => {
             const operator = account
             const expectedUnbonded = value
 
-            const unbonded = await keepBonding.availableForBonding(operator)
+            const unbonded = await keepBonding.availableBondingValue(operator)
 
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
