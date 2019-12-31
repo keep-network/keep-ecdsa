@@ -88,8 +88,6 @@ type member struct {
 // As a result it will return a Signer who has completed key generation, or error
 // if the key generation failed.
 func (s *member) generateKey() (*ThresholdSigner, error) {
-	defer s.networkBridge.close()
-
 	defer s.contextCancel()
 
 	if err := s.keygenParty.Start(); err != nil {

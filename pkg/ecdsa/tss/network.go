@@ -65,6 +65,10 @@ func (b *networkBridge) connect(
 			case msg := <-netInChan:
 				go b.handleTSSProtocolMessage(msg)
 			case <-ctx.Done():
+				if err := b.unregisterRecvs(); err != nil {
+					logger.Errorf("failed to unregister receivers: [%v]", err)
+				}
+
 				return
 			}
 		}
@@ -266,14 +270,6 @@ func (b *networkBridge) handleTSSProtocolMessage(protocolMessage *TSSProtocolMes
 			logger.Errorf("failed to handle protocol message: [%v]", err)
 		}
 	}
-}
-
-func (b *networkBridge) close() error {
-	if err := b.unregisterRecvs(); err != nil {
-		return fmt.Errorf("failed to unregister receivers: [%v]", err)
-	}
-
-	return nil
 }
 
 func (b *networkBridge) unregisterRecvs() error {

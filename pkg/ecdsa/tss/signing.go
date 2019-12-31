@@ -64,8 +64,6 @@ type signingSigner struct {
 // the calculated ECDSA signature will be returned or an error, if the signature
 // generation failed.
 func (s *signingSigner) sign() (*ecdsa.Signature, error) {
-	defer s.networkBridge.close()
-	
 	defer s.contextCancel()
 
 	if s.signingParty == nil {
