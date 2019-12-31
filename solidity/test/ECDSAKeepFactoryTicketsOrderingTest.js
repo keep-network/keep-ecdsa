@@ -1,11 +1,13 @@
 const ECDSAKeepFactoryTicketsOrderingStub = artifacts.require('ECDSAKeepFactoryTicketsOrderingStub');
+const KeepBond = artifacts.require('KeepBond');
 
 contract("ECDSAKeepFactory", () => {
-    let keepFactory;
+    let keepFactory, keepBond;
     const groupSize = 10;
 
     beforeEach(async () => {
-        keepFactory = await ECDSAKeepFactoryTicketsOrderingStub.new()
+        keepBond = await KeepBond.new()
+        keepFactory = await ECDSAKeepFactoryTicketsOrderingStub.new(keepBond.address)
         keepFactory.setGroupSize(groupSize);
     });
 

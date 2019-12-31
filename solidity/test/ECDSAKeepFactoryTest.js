@@ -3,15 +3,19 @@ import packTicket from './helpers/packTicket';
 import generateTickets from './helpers/generateTickets';
 
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
+const KeepBond = artifacts.require('KeepBond');
 
 contract("ECDSAKeepFactory", async accounts => {
-    let keepFactory, tickets1
+    let keepFactory, tickets1, keepBond;
     const member = accounts[1]
     const operatorStakingWeight = 2000;
+    const bondReference = 777;
+    const bondAmount = 4242;
 
     describe("openKeep", async () => {
         beforeEach(async () => {
-            keepFactory = await ECDSAKeepFactoryStub.new()
+            keepBond = await KeepBond.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(keepBond.address)
         })
 
         //TODO: add snapshots
@@ -24,7 +28,7 @@ contract("ECDSAKeepFactory", async accounts => {
             );
 
             let ticket = packTicket(tickets1[0].valueHex, 1, member);
-            await keepFactory.submitTicket(ticket, {from: member});
+            await keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: member});
 
             let blockNumber = await web3.eth.getBlockNumber()
 

@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
+import "./KeepBond.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -13,6 +14,8 @@ contract ECDSAKeepFactory {
 
     // List of keeps.
     ECDSAKeep[] keeps;
+
+    KeepBond public keepBond;
 
     // Tickets submitted by member candidates during the current group
     // selection execution and accepted by the protocol for the consideration.
@@ -52,17 +55,23 @@ contract ECDSAKeepFactory {
     // Ticket's size group.
     uint256 public groupSize = 60;
 
+    mapping(uint64 => uint256) bondReferenceByTicket;
+
     // List of candidates to be selected as keep members. Once the candidate is
     // registered it remains on the list forever.
     // TODO: It's a temporary solution until we implement proper candidate
     // registration and member selection.
-    mapping(uint256 => address payable) memberCandidates;
+    mapping(uint64 => address payable) memberCandidates;
 
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
         address payable[] members
     );
+
+    constructor(address _keepBondContract) public {
+        keepBond = KeepBond(_keepBondContract);
+    }
 
     /**
      * @dev Submits ticket to request to participate in a new candidate group.
@@ -75,7 +84,7 @@ contract ECDSAKeepFactory {
      *   has to be unique for all tickets submitted by the given staker for the
      *   current candidate group selection.
      */
-    function submitTicket(bytes32 ticket) public {
+    function submitTicket(bytes32 ticket, uint256 bondReference, uint256 bondAmount) public {
         uint64 ticketValue;
         uint160 stakerValue;
         uint32 virtualStakerIndex;
@@ -109,6 +118,8 @@ contract ECDSAKeepFactory {
             seed
         )) {
             addTicket(ticketValue);
+            keepBond.createBond(msg.sender, bondReference, bondAmount);
+            bondReferenceByTicket[ticketValue] = bondReference;
         } else {
             revert("Invalid ticket");
         }
@@ -179,7 +190,7 @@ contract ECDSAKeepFactory {
             }
             memberCandidates[newTicketValue] = msg.sender;
         } else if (newTicketValue < tickets[tail]) {
-            uint256 ticketToRemove = tickets[tail];
+            uint64 ticketToRemove = tickets[tail];
             // new ticket is lower than currently lowest
             if (newTicketValue < tickets[ordered[0]]) {
                 // replacing highest ticket with the new lowest
@@ -203,6 +214,9 @@ contract ECDSAKeepFactory {
             // about the submitter
             delete memberCandidates[ticketToRemove];
             memberCandidates[newTicketValue] = msg.sender;
+            // since the ticket is replaced by another ticket, we need to clean
+            // up the ticket-bond association
+            delete bondReferenceByTicket[ticketToRemove];
         }
     }
 
