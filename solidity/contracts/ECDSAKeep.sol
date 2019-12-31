@@ -23,6 +23,12 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     // Digest requested to be signed. Used to track if signing is in progress.
     // Empty value indicates that there is no signing process in progress.
     bytes32 digest;
+    // Timeout in blocks for a signature to appear on the chain. Blocks are
+    // counted from the moment sign request occurred.
+    uint256 public signingTimeout = 10;
+    // Number of block when signing process was started. Used to track if signing
+    // is in progress. Value `0` indicates that there is no signing process in progress.
+    uint256 internal currentSigningStartBlock;
 
     // Notification that a signer's public key was published for the keep.
     event PublicKeyPublished(
@@ -76,9 +82,10 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// @dev Only one signing process can be in progress at a time.
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external onlyOwner {
-        require(!isSigningInProgress(), "Signer is busy");
+        require(!isSigningInProgress() || hasSigningTimedOut(), "Signer is busy");
         require(_digest != "", "Digest cannot be empty");
 
+        currentSigningStartBlock = block.number;
         digest = _digest;
 
         emit SignatureRequested(_digest);
@@ -97,7 +104,8 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         bytes32 _s,
         uint8 _recoveryID
     ) external onlyMember {
-        require(isSigningInProgress(), "Signature has been already submitted");
+        require(isSigningInProgress(), "Not awaiting a signature");
+        require(!hasSigningTimedOut(), "Signing timed out");
         require(digest == _digest, "Signature has not been requested for digest");
 
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
@@ -113,16 +121,22 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
             "Invalid signature"
         );
 
-        digest = "";
+        currentSigningStartBlock = 0;
 
         emit SignatureSubmitted(_digest, _r, _s, _recoveryID);
     }
 
     /// @notice Returns true if signing of a digest is currently in progress.
     function isSigningInProgress() internal view returns (bool) {
-        return digest != "";
+        return currentSigningStartBlock != 0;
     }
 
+    /// @notice Returns true if the currently ongoing signing process timed out.
+    /// @dev There is a certain timeout for a signature to be produced, see
+    /// `signingTimeout` value.
+    function hasSigningTimedOut() internal view returns (bool) {
+        return currentSigningStartBlock != 0 && block.number > currentSigningStartBlock + signingTimeout;
+    }
 
     /// @notice Checks if the caller is a keep member.
     /// @dev Throws an error if called by any account other than one of the members.
