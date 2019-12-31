@@ -94,20 +94,16 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// @notice Submits a signature calculated for the given digest.
     /// @dev Fails if signature has not been requested or a signature has already
     /// been submitted.
-    /// @param _digest Digest for which calculator was calculated.
     /// @param _r Calculated signature's R value.
     /// @param _s Calculated signature's S value.
     /// @param _recoveryID Calculated signature's recovery ID (one of {0, 1, 2, 3}).
     function submitSignature(
-        bytes32 _digest,
         bytes32 _r,
         bytes32 _s,
         uint8 _recoveryID
     ) external onlyMember {
         require(isSigningInProgress(), "Not awaiting a signature");
         require(!hasSigningTimedOut(), "Signing timed out");
-        require(digest == _digest, "Signature has not been requested for digest");
-
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // We add 27 to the recovery ID to align it with ethereum and bitcoin
@@ -117,13 +113,13 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
 
         // Validate signature.
         require(
-            publicKeyToAddress(publicKey) == ecrecover(_digest, _v, _r, _s),
+            publicKeyToAddress(publicKey) == ecrecover(digest, _v, _r, _s),
             "Invalid signature"
         );
 
         currentSigningStartBlock = 0;
 
-        emit SignatureSubmitted(_digest, _r, _s, _recoveryID);
+        emit SignatureSubmitted(digest, _r, _s, _recoveryID);
     }
 
     /// @notice Returns true if signing of a digest is currently in progress.

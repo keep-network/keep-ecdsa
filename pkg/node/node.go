@@ -129,7 +129,7 @@ func (n *Node) CalculateSignature(
 	// TODO: Publisher Selection: Temp solution only the first member in the group
 	// publishes. We need to replace it with proper publisher selection.
 	if signer.PublisherIndex() == 0 {
-		err = n.ethereumChain.SubmitSignature(keepAddress, digest, signature)
+		err = n.ethereumChain.SubmitSignature(keepAddress, signature)
 		if err != nil {
 			return fmt.Errorf("failed to submit signature: [%v]", err)
 		}
