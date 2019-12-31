@@ -22,7 +22,7 @@ contract('KeepBonding', (accounts) => {
 
             const expectedPot = (await keepBonding.availableForBonding(account)).add(value)
 
-            await keepBonding.deposit({ from: account, value: value })
+            await keepBonding.deposit(account, { value: value })
 
             const pot = await keepBonding.availableForBonding(account)
 
@@ -36,7 +36,7 @@ contract('KeepBonding', (accounts) => {
 
         before(async () => {
             const value = new BN(100)
-            await keepBonding.deposit({ from: account, value: value })
+            await keepBonding.deposit(account, { value: value })
         })
 
         it('transfers value', async () => {
@@ -69,7 +69,7 @@ contract('KeepBonding', (accounts) => {
         const value = new BN(100)
 
         before(async () => {
-            await keepBonding.deposit({ from: account, value: value })
+            await keepBonding.deposit(account, { value: value })
         })
 
         it('returns zero for not deposited operator', async () => {

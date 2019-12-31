@@ -13,9 +13,10 @@ contract KeepBonding {
       return pot[operator];
    }
 
-   /// @notice Add ether to sender's value available for bonding.
-   function deposit() external payable {
-      pot[msg.sender] += msg.value;
+   /// @notice Add ether to operator's value available for bonding.
+   /// @param operator Address of the operator.
+   function deposit(address operator) external payable {
+      pot[operator] += msg.value;
    }
 
    /// @notice Draw amount from sender's value available for bonding.
