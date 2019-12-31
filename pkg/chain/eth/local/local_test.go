@@ -17,7 +17,7 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 
 	chain := initializeLocalChain()
 	eventFired := make(chan *eth.ECDSAKeepCreatedEvent)
-	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	expectedEvent := &eth.ECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
 	}
@@ -57,7 +57,7 @@ func TestOnSignatureRequested(t *testing.T) {
 
 	chain := initializeLocalChain()
 	eventFired := make(chan *eth.SignatureRequestedEvent)
-	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
 	err := chain.createKeep(keepAddress)
