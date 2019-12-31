@@ -1,8 +1,8 @@
 pragma solidity ^0.5.4;
 
-/// @title Keep Bond
+/// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
-contract KeepBond {
+contract KeepBonding {
    // Unassigned ether values deposited by operators.
    mapping(address => uint256) internal pot;
 

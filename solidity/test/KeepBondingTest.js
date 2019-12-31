@@ -1,4 +1,4 @@
-const KeepBond = artifacts.require('./KeepBond.sol')
+const KeepBonding = artifacts.require('./KeepBonding.sol')
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -8,11 +8,11 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract('KeepBond', (accounts) => {
-    let keepBond
+contract('KeepBonding', (accounts) => {
+    let keepBonding
 
     before(async () => {
-        keepBond = await KeepBond.new()
+        keepBonding = await KeepBonding.new()
     })
 
     describe('deposit', async () => {
@@ -20,11 +20,11 @@ contract('KeepBond', (accounts) => {
             const account = accounts[1]
             const value = new BN(100)
 
-            const expectedPot = (await keepBond.availableForBonding(account)).add(value)
+            const expectedPot = (await keepBonding.availableForBonding(account)).add(value)
 
-            await keepBond.deposit({ from: account, value: value })
+            await keepBonding.deposit({ from: account, value: value })
 
-            const pot = await keepBond.availableForBonding(account)
+            const pot = await keepBonding.availableForBonding(account)
 
             expect(pot).to.eq.BN(expectedPot, 'invalid pot')
         })
@@ -36,18 +36,18 @@ contract('KeepBond', (accounts) => {
 
         before(async () => {
             const value = new BN(100)
-            await keepBond.deposit({ from: account, value: value })
+            await keepBonding.deposit({ from: account, value: value })
         })
 
         it('transfers value', async () => {
-            const value = (await keepBond.availableForBonding(account))
+            const value = (await keepBonding.availableForBonding(account))
 
-            const expectedPot = (await keepBond.availableForBonding(account)).sub(value)
+            const expectedPot = (await keepBonding.availableForBonding(account)).sub(value)
             const expectedDestinationBalance = web3.utils.toBN(await web3.eth.getBalance(destination)).add(value)
 
-            await keepBond.withdraw(value, destination, { from: account })
+            await keepBonding.withdraw(value, destination, { from: account })
 
-            const pot = await keepBond.availableForBonding(account)
+            const pot = await keepBonding.availableForBonding(account)
             expect(pot).to.eq.BN(expectedPot, 'invalid pot')
 
             const destinationBalance = await web3.eth.getBalance(destination)
@@ -55,10 +55,10 @@ contract('KeepBond', (accounts) => {
         })
 
         it('fails if insufficient pot', async () => {
-            const value = (await keepBond.availableForBonding(account)).add(new BN(1))
+            const value = (await keepBonding.availableForBonding(account)).add(new BN(1))
 
             await expectRevert(
-                keepBond.withdraw(value, destination, { from: account }),
+                keepBonding.withdraw(value, destination, { from: account }),
                 "Insufficient pot"
             )
         })
@@ -69,14 +69,14 @@ contract('KeepBond', (accounts) => {
         const value = new BN(100)
 
         before(async () => {
-            await keepBond.deposit({ from: account, value: value })
+            await keepBonding.deposit({ from: account, value: value })
         })
 
         it('returns zero for not deposited operator', async () => {
             const operator = "0x0000000000000000000000000000000000000001"
             const expectedPot = 0
 
-            const pot = await keepBond.availableForBonding(operator)
+            const pot = await keepBonding.availableForBonding(operator)
 
             expect(pot).to.eq.BN(expectedPot, 'invalid pot')
         })
@@ -85,7 +85,7 @@ contract('KeepBond', (accounts) => {
             const operator = account
             const expectedPot = value
 
-            const pot = await keepBond.availableForBonding(operator)
+            const pot = await keepBonding.availableForBonding(operator)
 
             expect(pot).to.eq.BN(expectedPot, 'invalid pot')
         })
