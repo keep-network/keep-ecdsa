@@ -75,12 +75,13 @@ type member struct {
 	// Context for protocol execution with a timeout.
 	context       context.Context
 	contextCancel context.CancelFunc
-
-	networkBridge *networkBridge // network bridge used for messages transport
-
+	// Network bridge used for messages transport.
+	networkBridge *networkBridge
+	// Party for TSS protocol execution.
 	keygenParty tss.Party
-	// Channels where results of the key generation protocol execution will be written to.
-	keygenEndChan <-chan keygen.LocalPartySaveData // data from a successful execution
+	// Channel where a result of the key generation protocol execution will be
+	// written to.
+	keygenEndChan <-chan keygen.LocalPartySaveData
 }
 
 // generateKey executes the protocol to generate a signing key. This function

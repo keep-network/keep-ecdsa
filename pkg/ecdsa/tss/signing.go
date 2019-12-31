@@ -52,11 +52,12 @@ type signingSigner struct {
 	// Context for protocol execution with a timeout.
 	context       context.Context
 	contextCancel context.CancelFunc
+	// Network bridge used for messages transport.
 	networkBridge *networkBridge
-	// Signing
+	// Party for TSS protocol execution.
 	signingParty tssLib.Party
-	// Channels where results of the signing protocol execution will be written to.
-	signingEndChan <-chan signing.SignatureData // data from a successful execution
+	// Channel where a result of the signing protocol execution will be written to.
+	signingEndChan <-chan signing.SignatureData
 }
 
 // sign executes the protocol to calculate a signature. This function needs to be
