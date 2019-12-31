@@ -1,64 +1,30 @@
-const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
+
+import packTicket from './helpers/packTicket';
+import generateTickets from './helpers/generateTickets';
+
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 
 contract("ECDSAKeepFactory", async accounts => {
-    let keepFactory
+    let keepFactory, tickets1
+    const member = accounts[1]
+    const operatorStakingWeight = 2000;
 
-    describe("registerMemberCandidate", async () => {
-        before(async () => {
+    describe("openKeep", async () => {
+        beforeEach(async () => {
             keepFactory = await ECDSAKeepFactoryStub.new()
         })
 
-        it("reverts if no member candidates are registered", async () => {
-            const member = accounts[1]
-
-            await keepFactory.registerMemberCandidate({ from: member })
-
-            const memberCandidates1 = await keepFactory.getMemberCandidates()
-
-            assert.equal(
-                memberCandidates1,
-                member,
-                "incorrect registered member candidates list",
-            )
-
-            await keepFactory.registerMemberCandidate({ from: member })
-
-            const memberCandidates2 = await keepFactory.getMemberCandidates()
-
-            assert.equal(
-                memberCandidates2,
-                member,
-                "incorrect registered member candidates list after re-registration",
-            )
-        })
-    })
-
-    describe("openKeep", async () => {
-        before(async () => {
-            keepFactory = await ECDSAKeepFactory.new()
-        })
-
-        it("reverts if no member candidates are registered", async () => {
-            keepFactory = await ECDSAKeepFactory.new()
-
-            try {
-                await keepFactory.openKeep(
-                    10, // _groupSize
-                    5, // _honestThreshold
-                    "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
-                )
-
-                assert(false, 'Test call did not error as expected')
-            } catch (e) {
-                assert.include(e.message, "keep member candidates list is empty")
-            }
-        })
+        //TODO: add snapshots
 
         it("emits ECDSAKeepCreated event upon keep creation", async () => {
-            const member = accounts[1]
+            tickets1 = generateTickets(
+                await keepFactory.getGroupSelectionRelayEntry(), 
+                member, 
+                operatorStakingWeight
+            );
 
-            await keepFactory.registerMemberCandidate({ from: member })
+            let ticket = packTicket(tickets1[0].valueHex, 1, member);
+            await keepFactory.submitTicket(ticket, {from: member});
 
             let blockNumber = await web3.eth.getBlockNumber()
 
