@@ -30,7 +30,7 @@ contract('KeepBonding', (accounts) => {
             const operator = accounts[1]
             const value = new BN(100)
 
-            const expectedUnbonded = (await keepBonding.availableBondingValue(operator)).add(value)
+            const expectedUnbonded = value
 
             await keepBonding.deposit(operator, { value: value })
 
@@ -43,16 +43,14 @@ contract('KeepBonding', (accounts) => {
     describe('withdraw', async () => {
         const operator = accounts[1]
         const destination = accounts[2]
+        const value = new BN(100)
 
         beforeEach(async () => {
-            const value = new BN(100)
             await keepBonding.deposit(operator, { value: value })
         })
 
         it('transfers unbonded value', async () => {
-            const value = (await keepBonding.availableBondingValue(operator))
-
-            const expectedUnbonded = (await keepBonding.availableBondingValue(operator)).sub(value)
+            const expectedUnbonded = 0
             const expectedDestinationBalance = web3.utils.toBN(await web3.eth.getBalance(destination)).add(value)
 
             await keepBonding.withdraw(value, destination, { from: operator })
@@ -65,10 +63,10 @@ contract('KeepBonding', (accounts) => {
         })
 
         it('fails if insufficient unbonded value', async () => {
-            const value = (await keepBonding.availableBondingValue(operator)).add(new BN(1))
+            const invalidValue = value.add(new BN(1))
 
             await expectRevert(
-                keepBonding.withdraw(value, destination, { from: operator }),
+                keepBonding.withdraw(invalidValue, destination, { from: operator }),
                 "Insufficient unbonded value"
             )
         })
