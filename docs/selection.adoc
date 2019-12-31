@@ -359,23 +359,23 @@ However, once an amount of ETH is bonded as collateral for an operation
 it is tied to the specific operation until freed,
 and unavailable for other operations.
 
-==== Unassigned bonding currency
+==== Unbonded value
 
-Currency that an operator has available for bonding
+ETH that an operator has available for bonding
 but that has not been assigned for any specific bond
-is recorded in `unbondedCurrency`.
+is recorded in `unbondedValue`.
 
-Anyone can add bonding currency to an operator at any time
+Anyone can add bonding ETH to an operator at any time
 by calling `deposit(operator)` with a payment.
 The amount of ETH received by the bonding contract
-is added to the specified `operator`'s `unbondedCurrency`.
+is added to the specified `operator`'s `unbondedValue`.
 
-An operator can withdraw some or all of their unassigned bonding currency
+An operator can withdraw some or all of their unbonded value
 at any time by calling `withdraw(amount, destination)`.
-If the specified `amount` is less than the `unbondedCurrency[msg.sender]`,
+If the specified `amount` is less than the `unbondedValue[msg.sender]`,
 it is transferred to the address `destination`.
 
-`mapping(address operator => uint) unbondedCurrency`::
+`mapping(address operator => uint) unbondedValue`::
 
 `payable deposit(address operator)`::
 
@@ -420,7 +420,7 @@ positive authorizations can be cached in the bonding contract.
 Similarly to the staking contract,
 the bonding contract provides a single function
 operator contracts can use to determine whether a bond can be created.
-`availableBondingCurrency(operator, privilegedCustomer)`
+`availableUnbondedValue(operator, privilegedCustomer)`
 performs all the applicable authorization checks 
 and returns the amount of ETH that can be bonded
 from the `operator`, to the caller `msg.sender`,
@@ -429,17 +429,17 @@ and trusting the `privilegedCustomer` if present.
 To actually create a bond,
 an operator contract calls
 `createBond(operator, amount, reference, privilegedCustomer)`.
-This performs the same checks as `eligibleBondingCurrency()`
+This performs the same checks as `availableUnbondedValue()`
 and if the amount available for the requested bond
 is equal or greater than the requested `amount`,
-the bond `amount` is subtracted from the `unbondedCurrency` of the operator
+the bond `amount` is subtracted from the `unbondedValue` of the operator
 and the bond is created at `lockedBonds[operator, msg.sender, reference]`.
 The `reference` is additionally recorded at
 `bondAssignments[operator, msg.sender]`.
 If the amount available is less than requested,
 `createBond()` returns an error.
 
-`availableBondingCurrency(address operator, address optional privilegedCustomer)`
+`availableUnbondedValue(address operator, address optional privilegedCustomer)`
 
 `createBond(address operator, uint amount, uint reference, address optional privilegedCustomer)`.
 
@@ -449,8 +449,8 @@ If the amount available is less than requested,
 
 ==== Assigned bonds
 
-When an operator joins an operation requiring a currency bond
-it is subtracted from the `unbondedCurrency` of the operator,
+When an operator joins an operation requiring a bond
+it is subtracted from the `unbondedValue` of the operator,
 and a bond is created.
 The created bond is identified by the address of the `operator`,
 the address of the operator contract that is the `holder` of the bond,
@@ -476,7 +476,7 @@ and transferred to the `holder`.
 The `holder` of a bond can free the bond
 by calling `freeBond(operator, reference)`.
 The bond at `lockedBonds[operator, holder, reference]` is removed
-and the bonded amount is added to `unbondedCurrency[operator]`.
+and the bonded amount is added to `unbondedValue[operator]`.
 
 `reassign(address operator, uint reference, address newHolder, uint newReference)`
 
