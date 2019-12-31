@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "../../contracts/ECDSAKeepVendor.sol";
+import "./ECDSAKeepFactoryStub.sol";
 
 /// @title ECDSA Keep Vendor Stub
 /// @dev This contract is for testing purposes only.
@@ -19,5 +20,19 @@ contract ECDSAKeepVendorStub is ECDSAKeepVendor {
     /// @return Selected ECDSA keep factory address.
     function selectFactoryPublic() public view returns (address) {
         return selectFactory();
+    }
+
+    function openKeep(
+        uint256 _groupSize,
+        uint256 _honestThreshold,
+        address _owner
+    ) external payable returns (address keepAddress) {
+        address factory = selectFactory();
+
+        keepAddress = ECDSAKeepFactoryStub(factory).openKeepStub.value(msg.value)(
+            _groupSize,
+            _honestThreshold,
+            _owner
+        );
     }
 }

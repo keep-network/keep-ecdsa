@@ -11,8 +11,8 @@ contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
         return memberCandidates[ticket];
     }
 
-    /// @dev Returns calculated keep address.
-    function openKeep(
+    // @dev Returns calculated keep address.
+    function openKeepStub(
         uint256 _groupSize,
         uint256 _honestThreshold,
         address _owner
