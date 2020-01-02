@@ -20,8 +20,7 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
     bytes publicKey;
-    // Digest requested to be signed. Used to track if signing is in progress.
-    // Empty value indicates that there is no signing process in progress.
+    // Digest requested to be signed. Used to validate submitted signature.
     bytes32 digest;
     // Timeout in blocks for a signature to appear on the chain. Blocks are
     // counted from the moment sign request occurred.
