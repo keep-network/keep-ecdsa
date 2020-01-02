@@ -15,7 +15,7 @@ func (s *ThresholdSigner) Marshal() ([]byte, error) {
 	// Threshold key
 	keygenData, err := s.thresholdKey.Marshal()
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert local party save data: [%v]", err)
+		return nil, err
 	}
 
 	// Group Info
