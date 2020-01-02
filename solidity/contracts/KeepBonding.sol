@@ -36,18 +36,18 @@ contract KeepBonding {
    /// @dev Function can be executed only by authorized contract which will become
    /// bond's holder.
    /// @param operator Address of the operator to bond.
-   /// @param ref Reference used to track the bond by holder.
+   /// @param referenceID Reference ID used to track the bond by holder.
    /// @param amount Value to bond.
-   function createBond(address operator, uint256 ref, uint256 amount) public onlyAuthorized {
+   function createBond(address operator, uint256 referenceID, uint256 amount) public onlyAuthorized {
       require(availableBondingValue(operator) >= amount, "Insufficient unbonded value");
 
       address holder = msg.sender;
-      bytes memory bondID = abi.encodePacked(operator, holder, ref);
+      bytes memory bondID = abi.encodePacked(operator, holder, referenceID);
       bytes memory assignment = abi.encodePacked(operator, holder);
 
       unbondedValue[operator] -= amount;
       lockedBonds[bondID] += amount;
-      bondAssignments[assignment].push(ref);
+      bondAssignments[assignment].push(referenceID);
    }
 
    /// @notice Checks if the caller is an authorized contract.
