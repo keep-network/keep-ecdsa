@@ -24,7 +24,7 @@ contract KeepBonding {
 
    /// @notice Draw amount from sender's value available for bonding.
    /// @param amount Value to withdraw.
-   /// @param destination Address to send amount.
+   /// @param destination Address to send the amount to.
    function withdraw(uint256 amount, address payable destination) external {
       require(availableBondingValue(msg.sender) >= amount, "Insufficient unbonded value");
 
