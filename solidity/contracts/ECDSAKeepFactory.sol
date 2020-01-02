@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
-import "./KeepBond.sol";
+import "./KeepBonding.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -15,7 +15,7 @@ contract ECDSAKeepFactory {
     // List of keeps.
     ECDSAKeep[] keeps;
 
-    KeepBond public keepBond;
+    KeepBonding public keepBonding;
 
     // Tickets submitted by member candidates during the current group
     // selection execution and accepted by the protocol for the consideration.
@@ -69,8 +69,8 @@ contract ECDSAKeepFactory {
         address payable[] members
     );
 
-    constructor(address _keepBondContract) public {
-        keepBond = KeepBond(_keepBondContract);
+    constructor(address _keepBondingContract) public {
+        keepBonding = KeepBonding(_keepBondingContract);
     }
 
     /**
@@ -118,7 +118,7 @@ contract ECDSAKeepFactory {
             seed
         )) {
             addTicket(ticketValue);
-            keepBond.createBond(msg.sender, bondReference, bondAmount);
+            keepBonding.createBond(msg.sender, bondReference, bondAmount);
             bondReferenceByTicket[ticketValue] = bondReference;
         } else {
             revert("Invalid ticket");

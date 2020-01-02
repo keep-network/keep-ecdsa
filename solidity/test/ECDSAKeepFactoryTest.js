@@ -1,24 +1,39 @@
 
 import packTicket from './helpers/packTicket';
 import generateTickets from './helpers/generateTickets';
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
-const KeepBond = artifacts.require('KeepBond');
+const KeepBonding = artifacts.require('KeepBonding');
+const BN = web3.utils.BN
+
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
 
 contract("ECDSAKeepFactory", async accounts => {
-    let keepFactory, tickets1, keepBond;
-    const member = accounts[1]
+    let keepFactory, tickets1, keepBonding;
+    const member = accounts[1];
     const operatorStakingWeight = 2000;
     const bondReference = 777;
-    const bondAmount = 4242;
+    const bondAmount = new BN(50);
+    const depositValue = new BN(100000);
+
 
     describe("openKeep", async () => {
-        beforeEach(async () => {
-            keepBond = await KeepBond.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(keepBond.address)
+        before(async () => {
+            keepBonding = await KeepBonding.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(keepBonding.address)
+
+            await keepBonding.deposit(member, { value: depositValue })
         })
 
-        //TODO: add snapshots
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
 
         it("emits ECDSAKeepCreated event upon keep creation", async () => {
             tickets1 = generateTickets(

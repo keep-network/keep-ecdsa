@@ -1,10 +1,10 @@
 pragma solidity ^0.5.4;
 
-import "../../contracts/KeepBond.sol";
+import "../../contracts/KeepBonding.sol";
 
 /// @title Keep Bond Stub
 /// @dev This contract is for testing purposes only.
-contract KeepBondStub is KeepBond {
+contract KeepBondStub is KeepBonding {
 
     /// @notice Get registered locked bonds.
     /// @dev This is a stub implementation to validate bonds mapping.

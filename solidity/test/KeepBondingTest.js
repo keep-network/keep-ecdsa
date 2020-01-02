@@ -25,7 +25,7 @@ contract('KeepBonding', (accounts) => {
         await restoreSnapshot()
     })
 
-    describe('deposit', async () => {
+    xdescribe('deposit', async () => {
         it('registers unbonded value', async () => {
             const operator = accounts[1]
             const value = new BN(100)
@@ -40,7 +40,7 @@ contract('KeepBonding', (accounts) => {
         })
     })
 
-    describe('withdraw', async () => {
+    xdescribe('withdraw', async () => {
         const operator = accounts[1]
         const destination = accounts[2]
         const value = new BN(100)
@@ -72,7 +72,7 @@ contract('KeepBonding', (accounts) => {
         })
     })
 
-    describe('availableBondingValue', async () => {
+    xdescribe('availableBondingValue', async () => {
         const operator = accounts[1]
         const value = new BN(100)
 

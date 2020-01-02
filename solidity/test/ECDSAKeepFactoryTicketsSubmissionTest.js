@@ -1,23 +1,31 @@
 import packTicket from './helpers/packTicket';
 import generateTickets from './helpers/generateTickets';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
-const KeepBond = artifacts.require('KeepBond');
+const KeepBonding = artifacts.require('KeepBonding');
+const BN = web3.utils.BN
+
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
 
 contract("ECDSAKeepFactory", async accounts => {
-    let keepFactory, tickets1, keepBond,
-    operator1 = accounts[2],
-    operator2 = accounts[3];
+    let keepFactory, tickets1, keepBonding,
+    operator1 = accounts[1],
+    operator2 = accounts[2];
 
     const operator1StakingWeight = 2000;
     const bondReference = 777;
-    const bondAmount = 4242;
+    const bondAmount = new BN(50);
+    const depositValue = new BN(100000)
 
     describe("ticket submission", async () => {
-        beforeEach(async () => {
-            keepBond = await KeepBond.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(keepBond.address)
+        before(async () => {
+            keepBonding = await KeepBonding.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(keepBonding.address)
+            
+            await keepBonding.deposit(operator1, { value: depositValue })
 
             tickets1 = generateTickets(
                 await keepFactory.getGroupSelectionRelayEntry(), 
@@ -26,7 +34,13 @@ contract("ECDSAKeepFactory", async accounts => {
             );
         })
 
-        // TODO: add snapshots and change ^ to before
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
 
         it("should accept valid ticket with minimum virtual staker index", async () => {
             let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
