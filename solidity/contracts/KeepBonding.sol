@@ -33,7 +33,7 @@ contract KeepBonding {
 
    /// @notice Create bond for given operator, reference and amount.
    /// @dev Function can be executed only by authorized contract which will become
-   /// bond's holder.
+   /// bond's holder. Reference ID should be unique for holder and operator.
    /// @param operator Address of the operator to bond.
    /// @param referenceID Reference ID used to track the bond by holder.
    /// @param amount Value to bond.
@@ -42,6 +42,8 @@ contract KeepBonding {
 
       address holder = msg.sender;
       bytes memory bondID = abi.encodePacked(operator, holder, referenceID);
+
+      require(lockedBonds[bondID] == 0, "Reference ID not unique for holder and operator");
 
       unbondedValue[operator] -= amount;
       lockedBonds[bondID] += amount;
