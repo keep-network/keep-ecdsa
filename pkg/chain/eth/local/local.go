@@ -105,8 +105,7 @@ func (lc *LocalChain) OnSignatureRequested(
 	}), nil
 }
 
-// SubmitKeepPublicKey checks if public key has been already submitted for given
-// keep address, if not it stores the key in a map.
+// SubmitKeepPublicKey stores a public key for given keep.
 func (lc *LocalChain) SubmitKeepPublicKey(
 	keepAddress common.Address,
 	publicKey [64]byte,
@@ -118,13 +117,6 @@ func (lc *LocalChain) SubmitKeepPublicKey(
 	if !ok {
 		return fmt.Errorf(
 			"failed to find keep with address: [%s]",
-			keepAddress.String(),
-		)
-	}
-
-	if keep.publicKey != [64]byte{} {
-		return fmt.Errorf(
-			"public key already submitted for keep [%s]",
 			keepAddress.String(),
 		)
 	}
@@ -152,15 +144,8 @@ func (lc *LocalChain) SubmitSignature(
 	}
 
 	keep.signaturesMutex.Lock()
-	defer keep.signaturesMutex.Unlock()
-
-	signatures, ok := keep.signatures[digest]
-	if !ok {
-		signatures = []*ecdsa.Signature{}
-	}
-	signatures = append(signatures, signature)
-
-	keep.signatures[digest] = signatures
+	keep.signatures = append(keep.signatures, signature)
+	keep.signaturesMutex.Unlock()
 
 	return nil
 }

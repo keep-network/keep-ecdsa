@@ -30,9 +30,7 @@ func TestGenerateSignerForKeep(t *testing.T) {
 	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1})
 
 	localChain := ethLocal.Connect()
-	if err := localChain.(*ethLocal.LocalChain).CreateKeep(keepAddress); err != nil {
-		t.Fatal(err)
-	}
+	localChain.(*ethLocal.LocalChain).CreateKeep(keepAddress)
 
 	waitGroup := &sync.WaitGroup{}
 	waitGroup.Add(groupSize)
@@ -100,9 +98,7 @@ func TestCalculateSignature(t *testing.T) {
 	keepAddress := common.HexToAddress(signer.GroupID())
 
 	localChain := ethLocal.Connect()
-	if err := localChain.(*ethLocal.LocalChain).CreateKeep(keepAddress); err != nil {
-		t.Fatal(err)
-	}
+	localChain.(*ethLocal.LocalChain).CreateKeep(keepAddress)
 
 	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
 	if err != nil {

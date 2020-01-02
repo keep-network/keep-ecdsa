@@ -2,7 +2,6 @@ package local
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -34,10 +33,7 @@ func TestOnECDSAKeepCreated(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	err = chain.CreateKeep(keepAddress)
-	if err != nil {
-		t.Fatal(err)
-	}
+	chain.CreateKeep(keepAddress)
 
 	select {
 	case event := <-eventFired:
@@ -62,10 +58,7 @@ func TestOnSignatureRequested(t *testing.T) {
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
-	err := chain.CreateKeep(keepAddress)
-	if err != nil {
-		t.Fatal(err)
-	}
+	chain.CreateKeep(keepAddress)
 
 	subscription, err := chain.OnSignatureRequested(
 		keepAddress,
@@ -105,17 +98,10 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	chain := initializeLocalChain()
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
-	expectedDuplicationError := fmt.Errorf(
-		"public key already submitted for keep [%s]",
-		keepAddress.String(),
-	)
 
-	err := chain.CreateKeep(keepAddress)
-	if err != nil {
-		t.Fatal(err)
-	}
+	chain.CreateKeep(keepAddress)
 
-	err = chain.SubmitKeepPublicKey(
+	err := chain.SubmitKeepPublicKey(
 		keepAddress,
 		keepPublicKey,
 	)
@@ -135,34 +121,17 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 			keeps[keepAddress].publicKey,
 		)
 	}
-
-	err = chain.SubmitKeepPublicKey(
-		keepAddress,
-		keepPublicKey,
-	)
-	if !reflect.DeepEqual(expectedDuplicationError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: [%+v]\nactual:   [%+v]",
-			expectedDuplicationError,
-			err,
-		)
-	}
 }
 
 func TestSubmitSignature(t *testing.T) {
 	chain := initializeLocalChain()
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
-	digest := [32]byte{1}
 	signature := &ecdsa.Signature{R: big.NewInt(8), S: big.NewInt(7)}
 
-	err := chain.CreateKeep(keepAddress)
-	if err != nil {
-		t.Fatal(err)
-	}
+	chain.CreateKeep(keepAddress)
 
-	err = chain.SubmitSignature(
+	err := chain.SubmitSignature(
 		keepAddress,
-		digest,
 		signature,
 	)
 	if err != nil {
