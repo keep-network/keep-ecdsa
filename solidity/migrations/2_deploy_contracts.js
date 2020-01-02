@@ -1,10 +1,10 @@
-const KeepBond = artifacts.require("./KeepBond.sol");
+const KeepBonding = artifacts.require("./KeepBonding.sol");
 const ECDSAKeepFactory = artifacts.require("./ECDSAKeepFactory.sol");
 const ECDSAKeepVendor = artifacts.require("./ECDSAKeepVendor.sol");
 const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 
 module.exports = async function (deployer) {
-    await deployer.deploy(KeepBond)
+    await deployer.deploy(KeepBonding)
 
     await deployer.deploy(ECDSAKeepFactory, KeepBond.address)
     const ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
