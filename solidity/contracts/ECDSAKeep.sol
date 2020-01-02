@@ -83,7 +83,6 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external onlyOwner {
         require(!isSigningInProgress() || hasSigningTimedOut(), "Signer is busy");
-        require(_digest != "", "Digest cannot be empty");
 
         currentSigningStartBlock = block.number;
         digest = _digest;
@@ -103,7 +102,6 @@ contract ECDSAKeep is IECDSAKeep, Ownable {
         uint8 _recoveryID
     ) external onlyMember {
         require(isSigningInProgress(), "Not awaiting a signature");
-        require(!hasSigningTimedOut(), "Signing timed out");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // We add 27 to the recovery ID to align it with ethereum and bitcoin
