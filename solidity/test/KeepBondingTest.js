@@ -119,9 +119,6 @@ contract('KeepBonding', (accounts) => {
 
             const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
             expect(lockedBonds).to.eq.BN(value, 'invalid locked bonds')
-
-            const bondAssignments = await keepBonding.getBondAssignments(holder, operator)
-            expect(bondAssignments).to.eq.BN(reference, 'invalid bond assignments')
         })
 
         it('creates two bonds with the same reference', async () => {
@@ -138,11 +135,6 @@ contract('KeepBonding', (accounts) => {
 
             const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
             expect(lockedBonds).to.eq.BN(bondValue.mul(new BN(2)), 'invalid locked bonds')
-
-            const bondAssignments = await keepBonding.getBondAssignments(holder, operator)
-            expect(bondAssignments).to.have.lengthOf(2, 'invalid bond assignment length')
-            expect(bondAssignments[0]).to.eq.BN(reference, 'invalid bond assignment 1')
-            expect(bondAssignments[1]).to.eq.BN(reference, 'invalid bond assignment 2')
         })
 
         it('fails if insufficient unbonded value', async () => {

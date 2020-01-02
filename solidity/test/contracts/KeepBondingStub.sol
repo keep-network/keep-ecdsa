@@ -13,12 +13,4 @@ contract KeepBondingStub is KeepBonding {
         bytes memory bondID = abi.encodePacked(operator, holder, referenceID);
         return lockedBonds[bondID];
     }
-
-    /// @notice Get registered pot for account.
-    /// @dev This is a stub implementation to validate bonds mapping.
-    /// @return Value assigned in the bond assignments mapping.
-    function getBondAssignments(address holder, address operator) public view returns (uint256[] memory) {
-        bytes memory assignment = abi.encodePacked(operator, holder);
-        return bondAssignments[assignment];
-    }
 }

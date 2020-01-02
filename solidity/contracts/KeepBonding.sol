@@ -7,7 +7,6 @@ contract KeepBonding {
    mapping(address => uint256) internal unbondedValue;
    // References to created bonds.
    mapping(bytes => uint256) internal lockedBonds;
-   mapping(bytes => uint256[]) internal bondAssignments;
 
    /// @notice Returns value of ether available for bonding for the operator.
    /// @param operator Address of the operator.
@@ -43,11 +42,9 @@ contract KeepBonding {
 
       address holder = msg.sender;
       bytes memory bondID = abi.encodePacked(operator, holder, referenceID);
-      bytes memory assignment = abi.encodePacked(operator, holder);
 
       unbondedValue[operator] -= amount;
       lockedBonds[bondID] += amount;
-      bondAssignments[assignment].push(referenceID);
    }
 
    /// @notice Checks if the caller is an authorized contract.
