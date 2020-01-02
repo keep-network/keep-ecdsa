@@ -7,6 +7,7 @@ import (
 	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/crypto/paillier"
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
@@ -96,13 +97,12 @@ func (tk *ThresholdKey) Marshal() ([]byte, error) {
 		return bytesSlice
 	}
 
-	bigXj := make([][]byte, len(tk.BigXj))
+	bigXj := make([]*pb.LocalPartySaveData_ECPoint, len(tk.BigXj))
 	for i, bigX := range tk.BigXj {
-		encoded, err := bigX.GobEncode()
-		if err != nil {
-			return nil, fmt.Errorf("failed to encode BigXj: [%v]", err)
+		bigXj[i] = &pb.LocalPartySaveData_ECPoint{
+			X: bigX.X().Bytes(),
+			Y: bigX.Y().Bytes(),
 		}
-		bigXj[i] = encoded
 	}
 
 	paillierPKs := make([][]byte, len(tk.PaillierPKs))
@@ -110,9 +110,9 @@ func (tk *ThresholdKey) Marshal() ([]byte, error) {
 		paillierPKs[i] = paillierPK.N.Bytes()
 	}
 
-	ecdsaPub, err := tk.ECDSAPub.GobEncode()
-	if err != nil {
-		return nil, fmt.Errorf("failed to encode ECDSAPub: [%v]", err)
+	ecdsaPub := &pb.LocalPartySaveData_ECPoint{
+		X: tk.ECDSAPub.X().Bytes(),
+		Y: tk.ECDSAPub.Y().Bytes(),
 	}
 
 	return (&pb.LocalPartySaveData{
@@ -165,10 +165,16 @@ func (tk *ThresholdKey) Unmarshal(bytes []byte) error {
 
 	tk.BigXj = make([]*crypto.ECPoint, len(pbData.GetBigXj()))
 	for i, bigX := range pbData.GetBigXj() {
-		tk.BigXj[i] = &crypto.ECPoint{}
-		if err := tk.BigXj[i].GobDecode(bigX); err != nil {
+		decoded, err := crypto.NewECPoint(
+			tss.EC(),
+			new(big.Int).SetBytes(bigX.X),
+			new(big.Int).SetBytes(bigX.Y),
+		)
+		if err != nil {
 			return fmt.Errorf("failed to decode BigXj: [%v]", err)
 		}
+
+		tk.BigXj[i] = decoded
 	}
 
 	tk.PaillierPKs = make([]*paillier.PublicKey, len(pbData.GetPaillierPKs()))
@@ -178,10 +184,15 @@ func (tk *ThresholdKey) Unmarshal(bytes []byte) error {
 		}
 	}
 
-	tk.ECDSAPub = &crypto.ECPoint{}
-	if err := tk.ECDSAPub.GobDecode(pbData.GetEcdsaPub()); err != nil {
+	decoded, err := crypto.NewECPoint(
+		tss.EC(),
+		new(big.Int).SetBytes(pbData.GetEcdsaPub().GetX()),
+		new(big.Int).SetBytes(pbData.GetEcdsaPub().GetY()),
+	)
+	if err != nil {
 		return fmt.Errorf("failed to decode ECDSAPub: [%v]", err)
 	}
+	tk.ECDSAPub = decoded
 
 	tk.Ks = unmarshalBigIntSlice(pbData.GetKs())
 	tk.NTildej = unmarshalBigIntSlice(pbData.GetNTildej())

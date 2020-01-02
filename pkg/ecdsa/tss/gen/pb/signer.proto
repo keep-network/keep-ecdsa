@@ -34,13 +34,18 @@ message LocalPartySaveData {
     bytes shareID = 2;
   }
 
+  message ECPoint {
+    bytes x = 1;
+    bytes y = 2;
+  }
+
   LocalPreParams localPreParams = 1;
   LocalSecrets localSecrets = 2;
   repeated bytes ks = 3;
   repeated bytes nTildej = 4;
   repeated bytes h1j = 5;
   repeated bytes h2j = 6;
-  repeated bytes bigXj = 7;
+  repeated ECPoint bigXj = 7;
   repeated bytes paillierPKs = 8;
-  bytes ecdsaPub = 9;
+  ECPoint ecdsaPub = 9;
 }
