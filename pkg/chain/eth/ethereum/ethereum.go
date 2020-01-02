@@ -23,14 +23,12 @@ func (ec *EthereumChain) Address() common.Address {
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
 func (ec *EthereumChain) RegisterAsMemberCandidate() error {
-	//TODO: Will need to rewrite this code.
+	transaction, err := ec.ecdsaKeepFactoryContract.RegisterMemberCandidate(ec.transactorOptions)
+	if err != nil {
+		return err
+	}
 
-	// transaction, err := ec.ecdsaKeepFactoryContract.RegisterMemberCandidate(ec.transactorOptions)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// logger.Debugf("submitted RegisterMemberCandidate transaction with hash: [%x]", transaction.Hash())
+	logger.Debugf("submitted RegisterMemberCandidate transaction with hash: [%x]", transaction.Hash())
 
 	return nil
 }

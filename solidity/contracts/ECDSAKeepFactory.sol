@@ -56,13 +56,26 @@ contract ECDSAKeepFactory {
     // registered it remains on the list forever.
     // TODO: It's a temporary solution until we implement proper candidate
     // registration and member selection.
-    mapping(uint256 => address payable) memberCandidates;
+    address payable[] memberCandidates;
+
+    // Information about ticket submitters.
+    mapping(uint256 => address payable) candidates;
 
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
         address payable[] members
     );
+
+    /// @notice Register caller as a candidate to be selected as keep member.
+    /// @dev If caller is already registered it returns without any changes.
+    /// TODO: This is a simplified solution until we have proper registration
+    /// and group selection.
+    function registerMemberCandidate() external {
+        if (!memberCandidates.contains(msg.sender)) {
+            memberCandidates.push(msg.sender);
+        }
+    }
 
     /**
      * @dev Submits ticket to request to participate in a new candidate group.
@@ -97,7 +110,7 @@ contract ECDSAKeepFactory {
             revert("Ticket submission is over");
         }
 
-        if (memberCandidates[ticketValue] != address(0)) {
+        if (candidates[ticketValue] != address(0)) {
             revert("Duplicate ticket");
         }
 
@@ -177,7 +190,7 @@ contract ECDSAKeepFactory {
                 previousTicketIndex[tickets.length - 1] = previousTicketIndex[j];
                 previousTicketIndex[j] = tickets.length - 1;
             }
-            memberCandidates[newTicketValue] = msg.sender;
+            candidates[newTicketValue] = msg.sender;
         } else if (newTicketValue < tickets[tail]) {
             uint256 ticketToRemove = tickets[tail];
             // new ticket is lower than currently lowest
@@ -201,8 +214,8 @@ contract ECDSAKeepFactory {
             }
             // we are replacing tickets so we also need to replace information
             // about the submitter
-            delete memberCandidates[ticketToRemove];
-            memberCandidates[newTicketValue] = msg.sender;
+            delete candidates[ticketToRemove];
+            candidates[newTicketValue] = msg.sender;
         }
     }
 
@@ -287,17 +300,16 @@ contract ECDSAKeepFactory {
     function selectECDSAKeepMembers(
         uint256 _groupSize
     ) internal view returns (address payable[] memory members){
-        // require(memberCandidates.length > 0, 'keep member candidates list is empty');
+        require(memberCandidates.length > 0, 'keep member candidates list is empty');
 
         _groupSize;
 
         members = new address payable[](1);
 
         // TODO: Use the random beacon for randomness.
-        // uint memberIndex = uint256(keccak256(abi.encodePacked(block.timestamp)))
-        //     % memberCandidates.length;
-        uint256 memberIndex = 0;
+        uint memberIndex = uint256(keccak256(abi.encodePacked(block.timestamp)))
+            % memberCandidates.length;
 
-        members[0] = memberCandidates[tickets[memberIndex]];
+        members[0] = memberCandidates[memberIndex];
     }
 }
