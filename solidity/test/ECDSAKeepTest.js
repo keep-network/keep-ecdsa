@@ -66,15 +66,6 @@ contract('ECDSAKeep', (accounts) => {
       }
     })
 
-    it('cannot be requested for empty digest', async () => {
-      try {
-        await keep.sign([], { from: owner })
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Digest cannot be empty')
-      }
-    })
-
     it('cannot be requested if already in progress', async () => {
       await keep.sign(digest, { from: owner })
       try {
@@ -212,21 +203,16 @@ contract('ECDSAKeep', (accounts) => {
       }
     })
 
-    it('cannot be submitted after timeout passed', async () => {
+    it('accepts signature after timeout', async () => {
       const signingTimeout = await keep.signingTimeout.call()
       mineBlocks(signingTimeout)
 
-      try {
-        await keep.submitSignature(
-          signatureR,
-          signatureS,
-          signatureRecoveryID,
-          { from: members[0] }
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, "Signing timed out")
-      }
+      await keep.submitSignature(
+        signatureR,
+        signatureS,
+        signatureRecoveryID,
+        { from: members[0] }
+      )
     })
 
     describe('validates signature', async () => {
