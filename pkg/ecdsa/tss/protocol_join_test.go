@@ -47,7 +47,7 @@ func TestJoinNotifier(t *testing.T) {
 
 			defer waitGroup.Done()
 
-			if err := joinProtocol(groupInfo, networkProvider); err != nil {
+			if err := joinProtocol(ctx, groupInfo, networkProvider); err != nil {
 				errChan <- err
 				return
 			}

@@ -49,7 +49,6 @@ type ECDSAKeep interface {
 	// given address.
 	SubmitSignature(
 		keepAddress common.Address,
-		digest [32]byte,
 		signature *ecdsa.Signature,
 	) error // TODO: Add promise *async.SignatureSubmissionPromise
 }

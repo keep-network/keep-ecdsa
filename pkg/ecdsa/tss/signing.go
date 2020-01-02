@@ -1,6 +1,7 @@
 package tss
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -14,12 +15,14 @@ import (
 // initializeSigning initializes a member to run a threshold multi-party signature
 // calculation protocol. Signature will be calculated for provided digest.
 func (s *ThresholdSigner) initializeSigning(
+	ctx context.Context,
 	digest []byte,
 	netBridge *networkBridge,
 ) (*signingSigner, error) {
 	digestInt := new(big.Int).SetBytes(digest)
 
 	party, endChan, err := s.initializeSigningParty(
+		ctx,
 		digestInt,
 		netBridge,
 	)
@@ -40,20 +43,19 @@ func (s *ThresholdSigner) initializeSigning(
 type signingSigner struct {
 	*groupInfo
 
+	// Network bridge used for messages transport.
 	networkBridge *networkBridge
-	// Signing
+	// Party for TSS protocol execution.
 	signingParty tssLib.Party
-	// Channels where results of the signing protocol execution will be written to.
-	signingEndChan <-chan signing.SignatureData // data from a successful execution
+	// Channel where a result of the signing protocol execution will be written to.
+	signingEndChan <-chan signing.SignatureData
 }
 
 // sign executes the protocol to calculate a signature. This function needs to be
 // executed only after all members finished the initialization stage. As a result
 // the calculated ECDSA signature will be returned or an error, if the signature
 // generation failed.
-func (s *signingSigner) sign() (*ecdsa.Signature, error) {
-	defer s.networkBridge.close()
-
+func (s *signingSigner) sign(ctx context.Context) (*ecdsa.Signature, error) {
 	if s.signingParty == nil {
 		return nil, fmt.Errorf("failed to get initialized signing party")
 	}
@@ -71,11 +73,22 @@ func (s *signingSigner) sign() (*ecdsa.Signature, error) {
 			ecdsaSignature := convertSignatureTSStoECDSA(signature)
 
 			return &ecdsaSignature, nil
+		case <-ctx.Done():
+			memberIDs := []MemberID{}
+
+			if s.signingParty.WaitingFor() != nil {
+				for _, partyID := range s.signingParty.WaitingFor() {
+					memberIDs = append(memberIDs, MemberID(partyID.GetId()))
+				}
+			}
+
+			return nil, timeoutError{signingTimeout, "signing", memberIDs}
 		}
 	}
 }
 
 func (s *ThresholdSigner) initializeSigningParty(
+	ctx context.Context,
 	digest *big.Int,
 	netBridge *networkBridge,
 ) (
@@ -110,6 +123,7 @@ func (s *ThresholdSigner) initializeSigningParty(
 	)
 
 	if err := netBridge.connect(
+		ctx,
 		tssMessageChan,
 		party,
 		params.Parties().IDs(),

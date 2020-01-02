@@ -1,6 +1,7 @@
 package tss
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -45,6 +46,7 @@ func newNetworkBridge(
 }
 
 func (b *networkBridge) connect(
+	ctx context.Context,
 	tssOutChan <-chan tss.Message,
 	party tss.Party,
 	sortedPartyIDs tss.SortedPartyIDs,
@@ -62,6 +64,12 @@ func (b *networkBridge) connect(
 				go b.sendTSSMessage(tssLibMsg)
 			case msg := <-netInChan:
 				go b.handleTSSProtocolMessage(msg)
+			case <-ctx.Done():
+				if err := b.unregisterRecvs(); err != nil {
+					logger.Errorf("failed to unregister receivers: [%v]", err)
+				}
+
+				return
 			}
 		}
 	}()
@@ -262,14 +270,6 @@ func (b *networkBridge) handleTSSProtocolMessage(protocolMessage *TSSProtocolMes
 			logger.Errorf("failed to handle protocol message: [%v]", err)
 		}
 	}
-}
-
-func (b *networkBridge) close() error {
-	if err := b.unregisterRecvs(); err != nil {
-		return fmt.Errorf("failed to unregister receivers: [%v]", err)
-	}
-
-	return nil
 }
 
 func (b *networkBridge) unregisterRecvs() error {

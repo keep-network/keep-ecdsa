@@ -19,8 +19,8 @@ const protocolJoinTimeout = 120 * time.Second
 // error if messages were received from all peer members. If the timeout is
 // reached before receiving messages from all peer members the function returns
 // an error.
-func joinProtocol(group *groupInfo, networkProvider net.Provider) error {
-	ctx, cancel := context.WithTimeout(context.Background(), protocolJoinTimeout)
+func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider net.Provider) error {
+	ctx, cancel := context.WithTimeout(parentCtx, protocolJoinTimeout)
 	defer cancel()
 
 	broadcastChannel, err := networkProvider.BroadcastChannelFor(group.groupID)

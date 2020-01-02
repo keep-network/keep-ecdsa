@@ -4,6 +4,8 @@ import {
   addToBalances
 } from './helpers/listBalanceUtils'
 
+import { mineBlocks } from "./helpers/mineBlocks";
+
 const { expectRevert } = require('openzeppelin-test-helpers');
 
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
@@ -72,6 +74,15 @@ contract('ECDSAKeep', (accounts) => {
       } catch (e) {
         assert.include(e.message, 'Signer is busy')
       }
+    })
+
+    it('can be requested again after timeout passed', async () => {
+      await keep.sign(digest, { from: owner })
+
+      const signingTimeout = await keep.signingTimeout.call()
+      mineBlocks(signingTimeout)
+
+      await keep.sign(digest, { from: owner })
     })
   })
 
@@ -149,7 +160,6 @@ contract('ECDSAKeep', (accounts) => {
 
     it('emits an event', async () => {
       let res = await keep.submitSignature(
-        digest,
         signatureR,
         signatureS,
         signatureRecoveryID,
@@ -166,7 +176,6 @@ contract('ECDSAKeep', (accounts) => {
 
     it('clears signing lock after submission', async () => {
       await keep.submitSignature(
-        digest,
         signatureR,
         signatureS,
         signatureRecoveryID,
@@ -176,11 +185,40 @@ contract('ECDSAKeep', (accounts) => {
       await keep.sign(digest, { from: owner })
     })
 
+    it('cannot be submitted if signing was not requested', async () => {
+      keep = await ECDSAKeep.new(owner, members, honestThreshold)
+
+      await keep.setPublicKey(publicKey, { from: members[0] })
+
+      try {
+        await keep.submitSignature(
+          signatureR,
+          signatureS,
+          signatureRecoveryID,
+          { from: members[0] }
+        )
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, "Not awaiting a signature")
+      }
+    })
+
+    it('accepts signature after timeout', async () => {
+      const signingTimeout = await keep.signingTimeout.call()
+      mineBlocks(signingTimeout)
+
+      await keep.submitSignature(
+        signatureR,
+        signatureS,
+        signatureRecoveryID,
+        { from: members[0] }
+      )
+    })
+
     describe('validates signature', async () => {
       it('rejects recovery ID out of allowed range', async () => {
         try {
           await keep.submitSignature(
-            digest,
             signatureR,
             signatureS,
             4,
@@ -195,7 +233,6 @@ contract('ECDSAKeep', (accounts) => {
       it('rejects invalid signature', async () => {
         try {
           await keep.submitSignature(
-            digest,
             signatureR,
             signatureS,
             1,
@@ -211,7 +248,6 @@ contract('ECDSAKeep', (accounts) => {
     it('cannot be called by non-member', async () => {
       try {
         await keep.submitSignature(
-          digest,
           signatureR,
           signatureS,
           signatureRecoveryID
@@ -225,7 +261,6 @@ contract('ECDSAKeep', (accounts) => {
     it('cannot be called by non-member owner', async () => {
       try {
         await keep.submitSignature(
-          digest,
           signatureR,
           signatureS,
           signatureRecoveryID,

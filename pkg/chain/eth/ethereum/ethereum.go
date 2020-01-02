@@ -113,7 +113,6 @@ func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.ECDSAKeep
 // given address.
 func (ec *EthereumChain) SubmitSignature(
 	keepAddress common.Address,
-	digest [32]byte,
 	signature *ecdsa.Signature,
 ) error {
 	keepContract, err := ec.getKeepContract(keepAddress)
@@ -133,7 +132,6 @@ func (ec *EthereumChain) SubmitSignature(
 
 	transaction, err := keepContract.SubmitSignature(
 		ec.transactorOptions,
-		digest,
 		signatureR,
 		signatureS,
 		uint8(signature.RecoveryID),

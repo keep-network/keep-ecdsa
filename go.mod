@@ -13,7 +13,7 @@ replace (
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/aristanetworks/goarista v0.0.0-20191206003309-5d8d36c240c9 // indirect
-	github.com/binance-chain/tss-lib v1.1.0
+	github.com/binance-chain/tss-lib v1.1.1
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/ethereum/go-ethereum v1.9.7
 	github.com/gogo/protobuf v1.3.1

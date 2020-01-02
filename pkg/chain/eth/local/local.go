@@ -125,7 +125,6 @@ func (lc *localChain) SubmitKeepPublicKey(
 // given address.
 func (lc *localChain) SubmitSignature(
 	keepAddress common.Address,
-	digest [32]byte,
 	signature *ecdsa.Signature,
 ) error {
 	return nil
