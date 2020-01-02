@@ -161,6 +161,6 @@ func TestSubmitSignature(t *testing.T) {
 }
 
 func initializeLocalChain() *LocalChain {
-	keeps = make(map[eth.KeepAddress]*localKeep)
+	keeps = make(map[common.Address]*localKeep)
 	return Connect().(*LocalChain)
 }
