@@ -27,7 +27,7 @@ func TestGenerateSignerForKeep(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1})
+	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1})
 
 	localChain := ethLocal.Connect()
 	localChain.(*ethLocal.LocalChain).CreateKeep(keepAddress)
@@ -59,7 +59,6 @@ func TestGenerateSignerForKeep(t *testing.T) {
 			}
 
 			signers[memberID.String()] = signer
-
 		}(i, memberID)
 	}
 

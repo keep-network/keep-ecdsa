@@ -43,7 +43,7 @@ func (c *LocalChain) requestSignature(keepAddress common.Address, digest [32]byt
 	return nil
 }
 
-func (lc *LocalChain) GetKeepPublicKey(keepAddress eth.KeepAddress) ([64]byte, error) {
+func (lc *LocalChain) GetKeepPublicKey(keepAddress common.Address) ([64]byte, error) {
 	keepsMutex.RLock()
 	defer keepsMutex.RUnlock()
 
@@ -59,7 +59,7 @@ func (lc *LocalChain) GetKeepPublicKey(keepAddress eth.KeepAddress) ([64]byte, e
 }
 
 func (lc *LocalChain) GetSignatures(
-	keepAddress eth.KeepAddress,
+	keepAddress common.Address,
 ) ([]*ecdsa.Signature, error) {
 	keepsMutex.RLock()
 	defer keepsMutex.RUnlock()
