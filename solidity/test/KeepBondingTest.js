@@ -1,6 +1,6 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
-const KeepBonding = artifacts.require('./KeepBonding.sol')
+const KeepBonding = artifacts.require('./KeepBondingStub.sol')
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -95,6 +95,76 @@ contract('KeepBonding', (accounts) => {
             const unbonded = await keepBonding.availableBondingValue(operator)
 
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
+        })
+    })
+
+    describe('createBond', async () => {
+        const operator = accounts[1]
+        const holder = accounts[3]
+        const value = new BN(100)
+
+        beforeEach(async () => {
+            await keepBonding.deposit(operator, { value: value })
+        })
+
+        it('creates bond', async () => {
+            const reference = 888
+
+            const expectedUnbonded = 0
+
+            await keepBonding.createBond(operator, reference, value, { from: holder })
+
+            const unbonded = await keepBonding.availableBondingValue(operator)
+            expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
+
+            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(value, 'invalid locked bonds')
+        })
+
+        it('creates two bonds with the same reference for different operators', async () => {
+            const operator2 = accounts[2]
+            const bondValue = new BN(10)
+            const reference = 777
+
+            const expectedUnbonded = value.sub(bondValue)
+
+            await keepBonding.deposit(operator2, { value: value })
+
+            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
+            await keepBonding.createBond(operator2, reference, bondValue, { from: holder })
+
+            const unbonded1 = await keepBonding.availableBondingValue(operator)
+            expect(unbonded1).to.eq.BN(expectedUnbonded, 'invalid unbonded value 1')
+
+            const unbonded2 = await keepBonding.availableBondingValue(operator2)
+            expect(unbonded2).to.eq.BN(expectedUnbonded, 'invalid unbonded value 2')
+
+            const lockedBonds1 = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds1).to.eq.BN(bondValue, 'invalid locked bonds')
+
+            const lockedBonds2 = await keepBonding.getLockedBonds(holder, operator2, reference)
+            expect(lockedBonds2).to.eq.BN(bondValue, 'invalid locked bonds')
+        })
+
+        it('fails to create two bonds with the same reference for the same operator', async () => {
+            const bondValue = new BN(10)
+            const reference = 777
+
+            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
+
+            await expectRevert(
+                keepBonding.createBond(operator, reference, bondValue, { from: holder }),
+                "Reference ID not unique for holder and operator"
+            )
+        })
+
+        it('fails if insufficient unbonded value', async () => {
+            const bondValue = value.add(new BN(1))
+
+            await expectRevert(
+                keepBonding.createBond(operator, 0, bondValue),
+                "Insufficient unbonded value"
+            )
         })
     })
 })
