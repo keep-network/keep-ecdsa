@@ -1,28 +1,28 @@
 package local
 
 import (
-	"fmt"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
-func (c *localChain) createKeep(keepAddress common.Address) error {
+func (c *LocalChain) CreateKeep(keepAddress common.Address) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	if _, ok := c.keeps[keepAddress]; ok {
-		return fmt.Errorf(
-			"keep already exists for address [%s]",
-			keepAddress.String(),
-		)
+	if _, ok := keeps[keepAddress]; ok {
+		return
 	}
 
 	localKeep := &localKeep{
 		signatureRequestedHandlers: make(map[int]func(event *eth.SignatureRequestedEvent)),
 		publicKey:                  [64]byte{},
+		signaturesMutex:            &sync.RWMutex{},
+		signatures:                 []*ecdsa.Signature{},
 	}
-	c.keeps[keepAddress] = localKeep
+	keeps[keepAddress] = localKeep
 
 	keepCreatedEvent := &eth.ECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
@@ -33,6 +33,4 @@ func (c *localChain) createKeep(keepAddress common.Address) error {
 			handler(keepCreatedEvent)
 		}(handler, keepCreatedEvent)
 	}
-
-	return nil
 }

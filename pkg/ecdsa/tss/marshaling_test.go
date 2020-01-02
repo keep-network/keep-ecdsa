@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-tecdsa/internal/testdata"
+	testdata "github.com/keep-network/keep-tecdsa/internal/testdata/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/pbutils"
 )
 

@@ -20,6 +20,7 @@ require (
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e
 	github.com/keep-network/keep-core v0.7.0
+	github.com/libp2p/go-libp2p-core v0.2.5
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/urfave/cli v0.0.0-00010101000000-000000000000

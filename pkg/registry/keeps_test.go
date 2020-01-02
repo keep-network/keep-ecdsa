@@ -9,7 +9,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-tecdsa/internal/testdata"
+	testdata "github.com/keep-network/keep-tecdsa/internal/testdata/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
 )

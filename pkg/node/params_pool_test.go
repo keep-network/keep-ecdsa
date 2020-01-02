@@ -7,6 +7,7 @@ import (
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
+	testdata "github.com/keep-network/keep-tecdsa/internal/testdata/tss"
 )
 
 func TestTSSPreParamsPool(t *testing.T) {
@@ -168,11 +169,13 @@ func TestTSSPreParamsPoolConcurrent(t *testing.T) {
 }
 
 func newTestPool(poolSize int) *tssPreParamsPool {
+	testData, _ := testdata.LoadKeygenTestFixtures(1)
+
 	return &tssPreParamsPool{
 		pool: make(chan *keygen.LocalPreParams, poolSize),
 		new: func() (*keygen.LocalPreParams, error) {
 			time.Sleep(10 * time.Millisecond)
-			return &keygen.LocalPreParams{}, nil
+			return &testData[0].LocalPreParams, nil
 		},
 	}
 }
