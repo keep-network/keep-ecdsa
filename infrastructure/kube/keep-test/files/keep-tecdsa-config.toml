@@ -14,7 +14,7 @@ URL = "ws://eth-tx.test.keep.network:8546"
 KeyFile = "/mnt/keep-tecdsa/eth/eth_account_keyfile"
 
 [ethereum.ContractAddresses]
-ECDSAKeepFactory = "0xF28cd46F4e674fCa02a26BF2C18fdC654E0FC9fE"
+ECDSAKeepFactory = "0x9684Ea6608Ec757F92fa217341c6765870DAc664"
 
 [Storage]
 DataDir = "/mnt/keep-tecdsa/data"
