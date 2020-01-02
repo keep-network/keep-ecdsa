@@ -59,16 +59,6 @@ func TestThresholdKeyMarshalling(t *testing.T) {
 
 	unmarshaled := &ThresholdKey{}
 
-	marshaled, err := key.Marshal()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = unmarshaled.Unmarshal(marshaled)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	if err := pbutils.RoundTrip(&key, unmarshaled); err != nil {
 		t.Fatal(err)
 	}
