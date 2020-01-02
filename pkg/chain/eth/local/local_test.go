@@ -138,7 +138,7 @@ func TestSubmitSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signatures, err := chain.GetSignatures(keepAddress, digest)
+	signatures, err := chain.GetSignatures(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}

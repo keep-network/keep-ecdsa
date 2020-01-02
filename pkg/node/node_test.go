@@ -140,7 +140,7 @@ func TestCalculateSignature(t *testing.T) {
 
 	waitGroup.Wait()
 
-	signatures, err := localChain.(*ethLocal.LocalChain).GetSignatures(keepAddress, digest)
+	signatures, err := localChain.(*ethLocal.LocalChain).GetSignatures(keepAddress)
 	if err != nil {
 		t.Fatalf("failed to get signatures for keep: [%v]", err)
 	}

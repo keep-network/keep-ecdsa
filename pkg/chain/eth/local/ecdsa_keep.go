@@ -15,7 +15,7 @@ type localKeep struct {
 	signatureRequestedHandlers map[int]func(event *eth.SignatureRequestedEvent)
 
 	signaturesMutex *sync.RWMutex
-	signatures      map[[32]byte][]*ecdsa.Signature
+	signatures      []*ecdsa.Signature
 }
 
 func (c *LocalChain) requestSignature(keepAddress common.Address, digest [32]byte) error {
@@ -60,7 +60,6 @@ func (lc *LocalChain) GetKeepPublicKey(keepAddress eth.KeepAddress) ([64]byte, e
 
 func (lc *LocalChain) GetSignatures(
 	keepAddress eth.KeepAddress,
-	digest [32]byte,
 ) ([]*ecdsa.Signature, error) {
 	keepsMutex.RLock()
 	defer keepsMutex.RUnlock()
@@ -73,8 +72,8 @@ func (lc *LocalChain) GetSignatures(
 		)
 	}
 
-	keep.signaturesMutex.Lock()
-	defer keep.signaturesMutex.Unlock()
+	keep.signaturesMutex.RLock()
+	defer keep.signaturesMutex.RUnlock()
 
-	return keep.signatures[digest], nil
+	return keep.signatures, nil
 }

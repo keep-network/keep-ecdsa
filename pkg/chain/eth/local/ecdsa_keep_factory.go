@@ -20,7 +20,7 @@ func (c *LocalChain) CreateKeep(keepAddress common.Address) {
 		signatureRequestedHandlers: make(map[int]func(event *eth.SignatureRequestedEvent)),
 		publicKey:                  [64]byte{},
 		signaturesMutex:            &sync.RWMutex{},
-		signatures:                 make(map[[32]byte][]*ecdsa.Signature),
+		signatures:                 []*ecdsa.Signature{},
 	}
 	keeps[keepAddress] = localKeep
 
