@@ -32,7 +32,7 @@ func TestSignerMarshalling(t *testing.T) {
 			groupMemberIDs:     groupMembersIDs,
 			dishonestThreshold: dishonestThreshold,
 		},
-		keygenData: testData[signerIndex],
+		thresholdKey: ThresholdKey(testData[signerIndex]),
 	}
 
 	unmarshaled := &ThresholdSigner{}
@@ -44,6 +44,28 @@ func TestSignerMarshalling(t *testing.T) {
 		t.Fatalf(
 			"unexpected content of unmarshaled signer\nexpected: [%+v]\nactual:   [%+v]\n",
 			signer,
+			unmarshaled,
+		)
+	}
+}
+
+func TestThresholdKeyMarshalling(t *testing.T) {
+	testData, err := testdata.LoadKeygenTestFixtures(1)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	key := ThresholdKey(testData[0])
+
+	unmarshaled := &ThresholdKey{}
+
+	if err := pbutils.RoundTrip(&key, unmarshaled); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(&key, unmarshaled) {
+		t.Fatalf(
+			"unexpected content of unmarshaled signer\nexpected: [%+v]\nactual:   [%+v]\n",
+			&key,
 			unmarshaled,
 		)
 	}

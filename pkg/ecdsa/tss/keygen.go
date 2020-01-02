@@ -87,8 +87,8 @@ func (s *member) generateKey() (*ThresholdSigner, error) {
 		select {
 		case keygenData := <-s.keygenEndChan:
 			signer := &ThresholdSigner{
-				groupInfo:  s.groupInfo,
-				keygenData: keygenData,
+				groupInfo:    s.groupInfo,
+				thresholdKey: ThresholdKey(keygenData),
 			}
 
 			return signer, nil
