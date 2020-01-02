@@ -1,0 +1,20 @@
+[electrum]
+ServerHost = "electrumx-server.tbtc.svc.cluster.local"
+ServerPort = "50002"
+
+[blockcypher]
+Token = "d195ca15455f42b7842abd7c691191c9"
+Coin = "btc"
+Chain = "test3"
+
+[ethereum]
+URL = "ws://eth-tx.test.keep.network:8546"
+
+[ethereum.account]
+KeyFile = "/mnt/keep-tecdsa/eth/eth_account_keyfile"
+
+[ethereum.ContractAddresses]
+ECDSAKeepFactory = "0xF28cd46F4e674fCa02a26BF2C18fdC654E0FC9fE"
+
+[Storage]
+DataDir = "/mnt/keep-tecdsa/data"
