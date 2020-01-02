@@ -124,7 +124,7 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), keyGenerationTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), signingTimeout)
 	defer cancel()
 
 	signingSigner, err := s.initializeSigning(ctx, digest[:], netBridge)
