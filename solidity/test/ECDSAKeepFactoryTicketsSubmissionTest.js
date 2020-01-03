@@ -1,19 +1,28 @@
 import packTicket from './helpers/packTicket';
 import generateTickets from './helpers/generateTickets';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
+const KeepBondingStub = artifacts.require('KeepBondingStub');
+const BN = web3.utils.BN
 
 contract("ECDSAKeepFactory", async accounts => {
-    let keepFactory, tickets1, 
+    let keepFactory, tickets1, keepBonding, 
     operator1 = accounts[2],
     operator2 = accounts[3];
 
     const operator1StakingWeight = 2000;
+    const bondReference = 777;
+    const bondAmount = new BN(50);
+    const depositValue = new BN(100000)
 
     describe("ticket submission", async () => {
-        beforeEach(async () => {
-            keepFactory = await ECDSAKeepFactoryStub.new()
+        before(async () => {
+            keepBonding = await KeepBondingStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(keepBonding.address)
+
+            await keepBonding.deposit(operator1, { value: depositValue })
 
             tickets1 = generateTickets(
                 await keepFactory.getGroupSelectionRelayEntry(), 
@@ -22,11 +31,17 @@ contract("ECDSAKeepFactory", async accounts => {
             );
         })
 
-        // TODO: add snapshots and change ^ to before
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
 
         it("should accept valid ticket with minimum virtual staker index", async () => {
             let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
-            await keepFactory.submitTicket(ticket, {from: operator1});
+            await keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1});
         
             let submittedCount = await keepFactory.submittedTicketsCount();
             assert.equal(1, submittedCount, "Ticket should be accepted");
@@ -34,7 +49,7 @@ contract("ECDSAKeepFactory", async accounts => {
 
         it("should accept valid ticket with maximum virtual staker index", async () => {
             let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length, operator1);
-            await keepFactory.submitTicket(ticket,{from: operator1});
+            await keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1});
         
             let submittedCount = await keepFactory.submittedTicketsCount();
             assert.equal(1, submittedCount, "Ticket should be accepted");
@@ -43,7 +58,7 @@ contract("ECDSAKeepFactory", async accounts => {
         it("should reject ticket with too high virtual staker index", async () => {
             let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length + 1, operator1);
             await expectThrowWithMessage(
-                keepFactory.submitTicket(ticket, {from: operator1}),
+                keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1}),
                 "Invalid ticket"
             );
         });
@@ -51,7 +66,7 @@ contract("ECDSAKeepFactory", async accounts => {
         it("should reject ticket with invalid value", async() => {
             let ticket = packTicket('0x1337', 1, operator1);
             await expectThrowWithMessage(
-                keepFactory.submitTicket(ticket, {from: operator1}),
+                keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1}),
                 "Invalid ticket"
             );
         });
@@ -59,7 +74,7 @@ contract("ECDSAKeepFactory", async accounts => {
         it("should reject ticket with not matching operator", async() => {
             let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
             await expectThrowWithMessage(
-                keepFactory.submitTicket(ticket, {from: operator2}),
+                keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator2}),
                 "Invalid ticket"
             )
         });
@@ -67,17 +82,17 @@ contract("ECDSAKeepFactory", async accounts => {
         it("should reject ticket with not matching virtual staker index", async() => {
             let ticket = packTicket(tickets1[0].valueHex, 2, operator1);
             await expectThrowWithMessage(
-                keepFactory.submitTicket(ticket, {from: operator1}),
+                keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1}),
                 "Invalid ticket"
             )
         });
     
         it("should reject duplicate ticket", async () => {
             let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
-            await keepFactory.submitTicket(ticket, {from: operator1});
+            await keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1});
     
             await expectThrowWithMessage(
-                keepFactory.submitTicket(ticket, {from: operator1}),
+                keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1}),
                 "Duplicate ticket"
             );
         });

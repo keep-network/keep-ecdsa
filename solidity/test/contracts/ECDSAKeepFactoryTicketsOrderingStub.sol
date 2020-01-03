@@ -6,6 +6,9 @@ import "../../contracts/ECDSAKeepFactory.sol";
 /// @dev This contract is for testing purposes only.
 contract ECDSAKeepFactoryTicketsOrderingStub is ECDSAKeepFactory {
 
+    constructor(address _keepBondingContract)
+        ECDSAKeepFactory(_keepBondingContract) public {}
+
     /**
     * @dev Gets an index of a ticket that a higherTicketValueIndex points to.
     * Ex. tickets[23, 5, 65]

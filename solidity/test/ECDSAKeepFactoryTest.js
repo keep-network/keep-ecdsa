@@ -1,13 +1,26 @@
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
+
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
+const KeepBondingStub = artifacts.require('KeepBondingStub');
 
 contract("ECDSAKeepFactory", async accounts => {
-    let keepFactory
+    let keepFactory, keepBonding;
+
+    before(async () => {
+        keepBonding = await KeepBondingStub.new()
+        keepFactory = await ECDSAKeepFactoryStub.new(keepBonding.address)
+    })
+
+    beforeEach(async () => {
+        await createSnapshot()
+    })
+
+    afterEach(async () => {
+        await restoreSnapshot()
+    })
 
     describe("registerMemberCandidate", async () => {
-        before(async () => {
-            keepFactory = await ECDSAKeepFactoryStub.new()
-        })
 
         it("reverts if no member candidates are registered", async () => {
             const member = accounts[1]
@@ -35,12 +48,8 @@ contract("ECDSAKeepFactory", async accounts => {
     })
 
     describe("openKeep", async () => {
-        before(async () => {
-            keepFactory = await ECDSAKeepFactory.new()
-        })
 
         it("reverts if no member candidates are registered", async () => {
-            keepFactory = await ECDSAKeepFactory.new()
 
             try {
                 await keepFactory.openKeep(

@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
 import "./utils/AddressArrayUtils.sol";
+import "./KeepBonding.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title ECDSA Keep Factory
@@ -13,6 +14,9 @@ contract ECDSAKeepFactory {
 
     // List of keeps.
     ECDSAKeep[] keeps;
+
+    // Bonding contract.
+    KeepBonding public keepBonding;
 
     // Tickets submitted by member candidates during the current group
     // selection execution and accepted by the protocol for the consideration.
@@ -61,11 +65,18 @@ contract ECDSAKeepFactory {
     // Information about ticket submitters.
     mapping(uint256 => address payable) candidates;
 
+    // Associating bonds with ticket values.
+    mapping(uint64 => uint256) bondReferenceByTicket;
+
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
         address payable[] members
     );
+
+    constructor(address _keepBondingContract) public {
+        keepBonding = KeepBonding(_keepBondingContract);
+    }
 
     /// @notice Register caller as a candidate to be selected as keep member.
     /// @dev If caller is already registered it returns without any changes.
@@ -77,18 +88,18 @@ contract ECDSAKeepFactory {
         }
     }
 
-    /**
-     * @dev Submits ticket to request to participate in a new candidate group.
-     * @param ticket Bytes representation of a ticket that holds the following:
-     * - ticketValue: first 8 bytes of a result of keccak256 cryptography hash
-     *   function on the combination of the group selection seed (previous
-     *   beacon output), staker-specific value (address) and virtual staker index.
-     * - stakerValue: a staker-specific value which is the address of the staker.
-     * - virtualStakerIndex: 4-bytes number within a range of 1 to staker's weight;
-     *   has to be unique for all tickets submitted by the given staker for the
-     *   current candidate group selection.
-     */
-    function submitTicket(bytes32 ticket) public {
+    /// @dev Submits ticket to request to participate in a new candidate group.
+    /// @param ticket Bytes representation of a ticket that holds the following:
+    /// - ticketValue: first 8 bytes of a result of keccak256 cryptography hash
+    ///   function on the combination of the group selection seed (previous
+    ///   beacon output), staker-specific value (address) and virtual staker index.
+    /// - stakerValue: a staker-specific value which is the address of the staker.
+    /// - virtualStakerIndex: 4-bytes number within a range of 1 to staker's weight;
+    ///   has to be unique for all tickets submitted by the given staker for the
+    ///   current candidate group selection.
+    /// @param bondReference Reference of the bond that will be created.
+    /// @param bondAmount Amount of the bond.
+    function submitTicket(bytes32 ticket, uint256 bondReference, uint256 bondAmount) public {
         uint64 ticketValue;
         uint160 stakerValue;
         uint32 virtualStakerIndex;
@@ -122,6 +133,8 @@ contract ECDSAKeepFactory {
             seed
         )) {
             addTicket(ticketValue);
+            keepBonding.createBond(msg.sender, bondReference, bondAmount);
+            bondReferenceByTicket[ticketValue] = bondReference;
         } else {
             revert("Invalid ticket");
         }
@@ -192,7 +205,7 @@ contract ECDSAKeepFactory {
             }
             candidates[newTicketValue] = msg.sender;
         } else if (newTicketValue < tickets[tail]) {
-            uint256 ticketToRemove = tickets[tail];
+            uint64 ticketToRemove = tickets[tail];
             // new ticket is lower than currently lowest
             if (newTicketValue < tickets[ordered[0]]) {
                 // replacing highest ticket with the new lowest
@@ -216,6 +229,10 @@ contract ECDSAKeepFactory {
             // about the submitter
             delete candidates[ticketToRemove];
             candidates[newTicketValue] = msg.sender;
+
+            // since the ticket is replaced by another ticket, we need to clean
+            // up the ticket-bond association
+            delete bondReferenceByTicket[ticketToRemove];
         }
     }
 

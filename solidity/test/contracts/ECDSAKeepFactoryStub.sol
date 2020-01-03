@@ -6,6 +6,9 @@ import "../../contracts/ECDSAKeepFactory.sol";
 /// @dev This contract is for testing purposes only.
 contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
 
+    constructor(address _keepBondingContract)
+        ECDSAKeepFactory(_keepBondingContract) public {}
+
     // @dev Returns list of registered members.
     function getMemberCandidates() public view returns (address payable[] memory){
         return memberCandidates;

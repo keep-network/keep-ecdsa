@@ -1,15 +1,26 @@
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
+
 const ECDSAKeepFactoryTicketsOrderingStub = artifacts.require('ECDSAKeepFactoryTicketsOrderingStub');
+const KeepBondingStub = artifacts.require('KeepBondingStub');
 
 contract("ECDSAKeepFactory", () => {
-    let keepFactory;
+    let keepFactory, keepBonding;
     const groupSize = 10;
 
-    beforeEach(async () => {
-        keepFactory = await ECDSAKeepFactoryTicketsOrderingStub.new()
-        keepFactory.setGroupSize(groupSize);
+    before(async () => {
+      keepBonding = await KeepBondingStub.new()
+      keepFactory = await ECDSAKeepFactoryTicketsOrderingStub.new(keepBonding.address)
+
+      keepFactory.setGroupSize(groupSize);
     });
 
-    // TODO: add snapshots
+    beforeEach(async () => {
+        await createSnapshot()
+    })
+
+    afterEach(async () => {
+        await restoreSnapshot()
+    })
 
     describe("ticket insertion", () => {
 

@@ -1,5 +1,6 @@
-var ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
-var ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
+const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
+const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
+const KeepBondingStub = artifacts.require('KeepBondingStub');
 
 contract("ECDSAKeepVendor", async accounts => {
     const address0 = "0x0000000000000000000000000000000000000000"
@@ -109,7 +110,8 @@ contract("ECDSAKeepVendor", async accounts => {
         })
 
         it("calls selected factory", async () => {
-            let factoryStub = await ECDSAKeepFactoryStub.new()
+            let keepBonding = await KeepBondingStub.new()
+            let factoryStub = await ECDSAKeepFactoryStub.new(keepBonding.address)
             await keepVendor.registerFactory(factoryStub.address)
 
             let selectedFactory = await ECDSAKeepFactoryStub.at(
