@@ -10,12 +10,11 @@ contract("ECDSAKeepFactory", () => {
     before(async () => {
       keepBonding = await KeepBondingStub.new()
       keepFactory = await ECDSAKeepFactoryTicketsOrderingStub.new(keepBonding.address)
-
-      keepFactory.setGroupSize(groupSize);
     });
 
     beforeEach(async () => {
-        await createSnapshot()
+      await createSnapshot()
+      keepFactory.setGroupSize(groupSize);
     })
 
     afterEach(async () => {
