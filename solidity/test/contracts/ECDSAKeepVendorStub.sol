@@ -21,18 +21,4 @@ contract ECDSAKeepVendorStub is ECDSAKeepVendor {
     function selectFactoryPublic() public view returns (address) {
         return selectFactory();
     }
-
-    function openKeep(
-        uint256 _groupSize,
-        uint256 _honestThreshold,
-        address _owner
-    ) external payable returns (address keepAddress) {
-        address factory = selectFactory();
-
-        keepAddress = ECDSAKeepFactoryStub(factory).openKeep.value(msg.value)(
-            _groupSize,
-            _honestThreshold,
-            _owner
-        );
-    }
 }
