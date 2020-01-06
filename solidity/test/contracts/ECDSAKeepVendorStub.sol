@@ -29,7 +29,7 @@ contract ECDSAKeepVendorStub is ECDSAKeepVendor {
     ) external payable returns (address keepAddress) {
         address factory = selectFactory();
 
-        keepAddress = ECDSAKeepFactoryStub(factory).openKeepStub.value(msg.value)(
+        keepAddress = ECDSAKeepFactoryStub(factory).openKeep.value(msg.value)(
             _groupSize,
             _honestThreshold,
             _owner

@@ -12,7 +12,7 @@ contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
     }
 
     // @dev Returns calculated keep address.
-    function openKeepStub(
+    function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
         address _owner
@@ -31,9 +31,6 @@ contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
         return address(factoryAddressInt % 1000000000000);
     }
 
-    /**
-     * @dev Gets the number of submitted group candidate tickets so far.
-     */
     function submittedTicketsCount() public view returns (uint256) {
         return tickets.length;
     }
