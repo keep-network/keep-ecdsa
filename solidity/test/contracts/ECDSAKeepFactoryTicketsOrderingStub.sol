@@ -15,17 +15,14 @@ contract ECDSAKeepFactoryTicketsOrderingStub is ECDSAKeepFactory {
         return previousTicketIndex[higherTicketValueIndex];
     }
 
-    function setGroupSize(uint256 size) public {
-        groupSize = size;
+    function setPoolSize(uint256 size) public {
+        poolSize = size;
     }
 
     function addNewTicket(uint64 newTicketValue) public {
         addTicket(newTicketValue);
     }
 
-     /**
-    * @dev Gets submitted group candidate tickets so far.
-    */
     function getAllTickets() public view returns (uint64[] memory) {
         return tickets;
     }

@@ -14,8 +14,8 @@ contract ECDSAKeepFactory {
     // List of keeps.
     ECDSAKeep[] keeps;
 
-    // Tickets submitted by member candidates during the current group
-    // selection execution and accepted by the protocol for the consideration.
+    // Tickets submitted by member candidates during the signing group selection
+    // execution and accepted by the protocol for consideration.
     uint64[] tickets;
 
     // Map simulates a sorted linked list of ticket values by their indexes.
@@ -33,7 +33,7 @@ contract ECDSAKeepFactory {
     // Traversing from tail: [2]->[0]->[1]->[3] result in 175->151->42->7
     mapping(uint256 => uint256) previousTicketIndex;
 
-    // Pseudorandom seed value used as an input for the group selection.
+    // Pseudorandom seed value used as an input for the pool selection.
     // TODO: call random beacon for a new seed. This is hardcoded for now.
     uint256 seed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
@@ -42,15 +42,15 @@ contract ECDSAKeepFactory {
     // `previousTicketIndex`.
     uint256 tail;
 
-    // Number of block at which the group selection started and from which
+    // Number of block at which the pool selection started and from which
     // ticket submissions are accepted.
     uint256 ticketSubmissionStartBlock = block.number;
 
     // Timeout in blocks after which the ticket submission is finished.
     uint256 ticketSubmissionTimeout = 12;
 
-    // Ticket's size group.
-    uint256 public groupSize = 60;
+    // Ticket's size pool.
+    uint256 public poolSize = 60;
 
     // List of candidates to be selected as keep members. Once the candidate is
     // registered it remains on the list forever.
@@ -70,7 +70,7 @@ contract ECDSAKeepFactory {
     /// @notice Register caller as a candidate to be selected as keep member.
     /// @dev If caller is already registered it returns without any changes.
     /// TODO: This is a simplified solution until we have proper registration
-    /// and group selection.
+    /// and pool selection.
     function registerMemberCandidate() external {
         if (!memberCandidates.contains(msg.sender)) {
             memberCandidates.push(msg.sender);
@@ -78,15 +78,15 @@ contract ECDSAKeepFactory {
     }
 
     /**
-     * @dev Submits ticket to request to participate in a new candidate group.
+     * @dev Submits ticket to request to participate in a keep.
      * @param ticket Bytes representation of a ticket that holds the following:
      * - ticketValue: first 8 bytes of a result of keccak256 cryptography hash
-     *   function on the combination of the group selection seed (previous
-     *   beacon output), staker-specific value (address) and virtual staker index.
+     *   function on the combination of the pool selection seed, staker-specific
+     *   value (address) and virtual staker index.
      * - stakerValue: a staker-specific value which is the address of the staker.
      * - virtualStakerIndex: 4-bytes number within a range of 1 to staker's weight;
      *   has to be unique for all tickets submitted by the given staker for the
-     *   current candidate group selection.
+     *   current candidate pool selection.
      */
     function submitTicket(bytes32 ticket) public {
         uint64 ticketValue;
@@ -132,13 +132,13 @@ contract ECDSAKeepFactory {
         uint256 stakerValue,
         uint256 virtualStakerIndex,
         uint256 stakingWeight,
-        uint256 groupSelectionSeed
+        uint256 selectionSeed
     ) internal view returns(bool) {
         uint64 ticketValueExpected;
         bytes memory ticketBytes = abi.encodePacked(
             keccak256(
                 abi.encodePacked(
-                    groupSelectionSeed,
+                    selectionSeed,
                     stakerValue,
                     virtualStakerIndex
                 )
@@ -160,13 +160,13 @@ contract ECDSAKeepFactory {
      /**
      * @dev Adds a new, verified ticket. Ticket is accepted when it is lower
      * than the currently highest ticket or when the number of tickets is still
-     * below the group size.
+     * below the pool size.
      */
     function addTicket(uint64 newTicketValue) internal {
         uint256[] memory ordered = getTicketValueOrderedIndices();
 
-        // any ticket goes when the tickets array size is lower than the group size
-        if (tickets.length < groupSize) {
+        // any ticket goes when the tickets array size is lower than the pool size
+        if (tickets.length < poolSize) {
             // no tickets
             if (tickets.length == 0) {
                 tickets.push(newTicketValue);
@@ -266,16 +266,16 @@ contract ECDSAKeepFactory {
 
     /// @notice Open a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
-    /// @param _groupSize Number of members in the keep.
+    /// @param _poolSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Address of the keep owner.
     /// @return Created keep address.
     function openKeep(
-        uint256 _groupSize,
+        uint256 _poolSize,
         uint256 _honestThreshold,
         address _owner
     ) external payable returns (address keepAddress) {
-        address payable[] memory _members = selectECDSAKeepMembers(_groupSize);
+        address payable[] memory _members = selectECDSAKeepMembers(_poolSize);
 
         ECDSAKeep keep = new ECDSAKeep(
             _owner,
@@ -293,16 +293,16 @@ contract ECDSAKeepFactory {
     // TODO: Selection of ECDSA Keep members will be rewritten.
 
     /// @notice Runs member selection for an ECDSA keep.
-    /// @dev Stub implementations generates a group with only one member. Member
+    /// @dev Stub implementations generates a pool with only one member. Member
     /// is randomly selected from registered member candidates.
-    /// @param _groupSize Number of members to be selected.
+    /// @param _poolSize Number of members to be selected.
     /// @return List of selected members addresses.
     function selectECDSAKeepMembers(
-        uint256 _groupSize
+        uint256 _poolSize
     ) internal view returns (address payable[] memory members){
         require(memberCandidates.length > 0, 'keep member candidates list is empty');
 
-        _groupSize;
+        _poolSize;
 
         members = new address payable[](1);
 

@@ -2,11 +2,11 @@ const ECDSAKeepFactoryTicketsOrderingStub = artifacts.require('ECDSAKeepFactoryT
 
 contract("ECDSAKeepFactory", () => {
     let keepFactory;
-    const groupSize = 10;
+    const poolSize = 10;
 
     beforeEach(async () => {
         keepFactory = await ECDSAKeepFactoryTicketsOrderingStub.new()
-        keepFactory.setGroupSize(groupSize);
+        keepFactory.setPoolSize(poolSize);
     });
 
     // TODO: add snapshots
@@ -85,7 +85,7 @@ contract("ECDSAKeepFactory", () => {
     
         });
     
-        describe("tickets array size is less than a group size", () => {
+        describe("tickets array size is less than a pool size", () => {
     
           it("should add all the tickets and keep track the order when the latest ticket is the highest one", async () => {
             let ticketsToAdd = [1, 3, 5, 7, 4, 9, 6, 11];
@@ -151,8 +151,8 @@ contract("ECDSAKeepFactory", () => {
           let tickets = await keepFactory.getAllTickets();
           assert.isAtMost(
             tickets.length,
-            groupSize, 
-            "array of tickets cannot have more elements than the group size"
+            poolSize, 
+            "array of tickets cannot have more elements than the pool size"
           );
     
           // Assert ticket values
