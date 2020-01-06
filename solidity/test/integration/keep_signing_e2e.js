@@ -9,12 +9,12 @@ module.exports = async function () {
         let factory = await ECDSAKeepFactory.deployed();
 
         // Create new keep.
-        let poolSize = 1;
+        let groupSize = 1;
         let honestThreshold = 1;
         let keepOwner = accounts[1];
 
         let openKeepTx = await factory.openKeep(
-            poolSize,
+            groupSize,
             honestThreshold,
             keepOwner
         ).catch(err => {
