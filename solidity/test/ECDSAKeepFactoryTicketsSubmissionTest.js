@@ -1,8 +1,7 @@
-import packTicket from './helpers/packTicket';
 import generateTickets from './helpers/generateTickets';
-import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
+const { expectRevert } = require('openzeppelin-test-helpers');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBondingStub = artifacts.require('KeepBondingStub');
 const BN = web3.utils.BN
@@ -30,7 +29,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 operator1StakingWeight
             );
         })
-
+        
         beforeEach(async () => {
             await createSnapshot()
         })
@@ -40,58 +39,50 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("should accept valid ticket with minimum virtual staker index", async () => {
-            let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
-            await keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1});
+            await keepFactory.submitTicket(tickets1[0], bondReference, bondAmount, {from: operator1});
         
             let submittedCount = await keepFactory.submittedTicketsCount();
             assert.equal(1, submittedCount, "Ticket should be accepted");
         });
 
         it("should accept valid ticket with maximum virtual staker index", async () => {
-            let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length, operator1);
-            await keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1});
+            await keepFactory.submitTicket(tickets1[tickets1.length - 1], bondReference, bondAmount, {from: operator1});
         
             let submittedCount = await keepFactory.submittedTicketsCount();
             assert.equal(1, submittedCount, "Ticket should be accepted");
         });
 
         it("should reject ticket with too high virtual staker index", async () => {
-            let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length + 1, operator1);
-            await expectThrowWithMessage(
+            let ticket = tickets1[tickets1.length - 1]
+            ticket[31] = 209 // changing last byte for staker index, making it 2001
+
+            await expectRevert(
                 keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1}),
                 "Invalid ticket"
             );
         });
 
         it("should reject ticket with invalid value", async() => {
-            let ticket = packTicket('0x1337', 1, operator1);
-            await expectThrowWithMessage(
+            let ticket = tickets1[0]
+            ticket[0] = 19
+            await expectRevert(
                 keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1}),
                 "Invalid ticket"
             );
         });
         
         it("should reject ticket with not matching operator", async() => {
-            let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
-            await expectThrowWithMessage(
-                keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator2}),
-                "Invalid ticket"
-            )
-        });
-    
-        it("should reject ticket with not matching virtual staker index", async() => {
-            let ticket = packTicket(tickets1[0].valueHex, 2, operator1);
-            await expectThrowWithMessage(
-                keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1}),
+            await expectRevert(
+                keepFactory.submitTicket(tickets1[0], bondReference, bondAmount, {from: operator2}),
                 "Invalid ticket"
             )
         });
     
         it("should reject duplicate ticket", async () => {
-            let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
+            let ticket = tickets1[1];
             await keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1});
     
-            await expectThrowWithMessage(
+            await expectRevert(
                 keepFactory.submitTicket(ticket, bondReference, bondAmount, {from: operator1}),
                 "Duplicate ticket"
             );
