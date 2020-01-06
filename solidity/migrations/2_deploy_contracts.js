@@ -5,8 +5,9 @@ const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 
 module.exports = async function (deployer) {
     await deployer.deploy(KeepBonding)
+    const keepBonding = await KeepBonding.deployed()
 
-    await deployer.deploy(ECDSAKeepFactory, KeepBonding.address)
+    await deployer.deploy(ECDSAKeepFactory, keepBonding.address)
     const ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
 
     const ecdsaKeepVendor = await deployer.deploy(ECDSAKeepVendor)
