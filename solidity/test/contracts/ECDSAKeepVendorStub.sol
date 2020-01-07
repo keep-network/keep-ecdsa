@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "../../contracts/ECDSAKeepVendor.sol";
+import "./ECDSAKeepFactoryStub.sol";
 
 /// @title ECDSA Keep Vendor Stub
 /// @dev This contract is for testing purposes only.
