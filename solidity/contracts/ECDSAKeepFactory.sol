@@ -295,14 +295,14 @@ contract ECDSAKeepFactory {
     /// @notice Runs member selection for an ECDSA keep.
     /// @dev Stub implementations generates a group with only one member. Member
     /// is randomly selected from registered member candidates.
-    /// @param _poolSize Number of members to be selected.
+    /// @param _groupSize Number of members to be selected.
     /// @return List of selected members addresses.
     function selectECDSAKeepMembers(
-        uint256 _poolSize
+        uint256 _groupSize
     ) internal view returns (address payable[] memory members){
         require(memberCandidates.length > 0, 'keep member candidates list is empty');
 
-        _poolSize;
+        _groupSize;
 
         members = new address payable[](1);
 
