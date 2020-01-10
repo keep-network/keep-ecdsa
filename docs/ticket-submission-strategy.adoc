@@ -1,0 +1,56 @@
+= Ticket submission strategy
+
+We want to minimize the time required for ticket submission,
+but we also want to minimize the number of redundant tickets
+that aren't selected into the group.
+
+We also want the ticket submission strategy
+to be robust with respect to variation in group size,
+number of operators participating, etc.
+
+Ticket values are 64-bit integers.
+
+Let `txLatency` be the reasonable number of blocks
+it takes for a transaction to get mined.
+
+Let `vsCeiling = 2^v` for some integer `v` be
+the smallest power of two that is equal or greater than
+the number of possible virtual stakers;
+`vsCeiling >= totalTokens / minimumStake`.
+
+Let `g` be the smallest integer for which `n =< 2^g`.
+
+Tickets are submitted in rounds of `txLatency` blocks.
+On-chain doesn't care about the rounds.
+
+Because lower-valued tickets are better than higher-valued ones,
+we can use the leading zeros in the ticket value
+to determine the submission round.
+
+As the basic principle,
+the number of leading zeros in the ticket value
+is subtracted from the number of rounds
+to determine the round the ticket is submitted in.
+
+In each round, the expected number of submitted tickets doubles.
+Assuming all tickets are mined within `txLatency` time,
+the number of redundant tickets is expected to be approximately `n`.
+
+The lowest ticket in any given ticket submission
+is unlikely to have more than `v` leading zeros.
+Due to this, we need at most `v` rounds.
+Most importantly,
+it is quite unlikely that there would be more than `n` tickets
+with `v` or more leading zeros.
+If `vsCeiling` equals the number of active virtual stakers
+there is only a 2% chance (by Poisson) of there being 4 or more tickets
+with at least `v` leading zeros.
+
+There's also a very small chance of there being less than `n` tickets
+when the expected number of tickets is `8n` or more.
+This suggests that 4 rounds will likely get us enough tickets
+if all tokens are efficiently staked (`n + 2n + 4n + 8n`).
+8 rounds gives us significantly more tickets
+even if the amount of staked tokens
+for the particular operator contract is fairly low
+(`16n + 32n + 64n + 128n` for a total of `255n` expected tickets).
