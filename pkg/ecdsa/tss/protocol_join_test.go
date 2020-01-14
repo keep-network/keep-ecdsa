@@ -2,12 +2,12 @@ package tss
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 func TestJoinNotifier(t *testing.T) {
@@ -20,7 +20,7 @@ func TestJoinNotifier(t *testing.T) {
 
 	groupSize := 5
 
-	groupMembers, groupMembersKeys, err := generateMemberKeys(groupSize)
+	testMembers, err := generateTestMembers(groupSize, groupSize-2)
 	if err != nil {
 		t.Fatalf("failed to generate members keys: [%v]", err)
 	}
@@ -33,21 +33,17 @@ func TestJoinNotifier(t *testing.T) {
 	mutex := &sync.RWMutex{}
 	joinedCount := 0
 
-	for memberIDstring, memberNetworkKey := range groupMembersKeys {
-		memberID, _ := MemberIDFromHex(memberIDstring)
-
-		go func(memberID MemberID, memberNetworkKey *key.NetworkPublic) {
+	for i, tm := range testMembers {
+		go func(i int, tm *testMember) {
 			groupInfo := &groupInfo{
 				groupID:        "test-group-1",
-				memberID:       memberID,
-				groupMemberIDs: groupMembers,
+				memberID:       MemberID([]byte(fmt.Sprintf("member-%d", i))),
+				groupMemberIDs: testMembers.memberIDs(),
 			}
-
-			networkProvider := newTestNetProvider(memberNetworkKey)
 
 			defer waitGroup.Done()
 
-			if err := joinProtocol(ctx, groupInfo, networkProvider); err != nil {
+			if err := joinProtocol(ctx, groupInfo, tm.networkProvider); err != nil {
 				errChan <- err
 				return
 			}
@@ -55,7 +51,7 @@ func TestJoinNotifier(t *testing.T) {
 			mutex.Lock()
 			joinedCount++
 			mutex.Unlock()
-		}(memberID, memberNetworkKey)
+		}(i, tm)
 	}
 
 	go func() {
