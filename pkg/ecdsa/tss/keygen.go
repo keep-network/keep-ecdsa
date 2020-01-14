@@ -123,7 +123,7 @@ func generatePartiesIDs(
 
 	for _, memberID := range groupMemberIDs {
 		if memberID <= 0 {
-			return nil, nil, fmt.Errorf("member ID must be greater than 0, but found [%d]")
+			return nil, nil, fmt.Errorf("member ID must be greater than 0, but found [%d]", memberID)
 		}
 
 		newPartyID := tss.NewPartyID(
