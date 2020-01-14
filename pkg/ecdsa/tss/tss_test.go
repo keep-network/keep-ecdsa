@@ -217,7 +217,7 @@ func generateTestMembers(groupSize int, localMembersCount int) (testMembers, err
 		}
 
 		networkProvider := newTestNetProvider(publicKey)
-		memberID := MemberID(fmt.Sprintf("member-%d", i))
+		memberID := MemberID(i + 1)
 
 		members[i] = &testMember{
 			memberID:        memberID,
@@ -233,7 +233,7 @@ func generateTestMembers(groupSize int, localMembersCount int) (testMembers, err
 		networkProvider := newTestNetProvider(publicKey)
 
 		for i := groupSize - localMembersCount; i < groupSize; i++ {
-			memberID := MemberID(fmt.Sprintf("member-%d", i))
+			memberID := MemberID(i + 1)
 
 			members[i] = &testMember{
 				memberID:        memberID,

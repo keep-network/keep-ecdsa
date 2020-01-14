@@ -48,7 +48,7 @@ func (n *Node) GenerateSignerForKeep(
 	membersNetworkIDs := make(map[tss.MemberID]net.TransportIdentifier)
 
 	for i, keepMember := range keepMembers {
-		memberID := tss.MemberID(fmt.Sprintf("member-%d", i))
+		memberID := tss.MemberID(i + 1)
 
 		groupMemberIDs = append(
 			groupMemberIDs,

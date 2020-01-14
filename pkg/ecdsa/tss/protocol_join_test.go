@@ -2,7 +2,6 @@ package tss
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -37,7 +36,7 @@ func TestJoinNotifier(t *testing.T) {
 		go func(i int, tm *testMember) {
 			groupInfo := &groupInfo{
 				groupID:        "test-group-1",
-				memberID:       MemberID([]byte(fmt.Sprintf("member-%d", i))),
+				memberID:       MemberID(i + 1),
 				groupMemberIDs: testMembers.memberIDs(),
 			}
 
