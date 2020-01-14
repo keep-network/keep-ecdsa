@@ -43,6 +43,8 @@ func (n *Node) GenerateSignerForKeep(
 	keepMembers []common.Address,
 ) (*tss.ThresholdSigner, error) {
 	groupMemberIDs := []tss.MemberID{}
+	membersNetworkIDs := make(map[string]net.TransportIdentifier) // < memberID, networkID >
+
 	for i, keepMember := range keepMembers {
 		memberID := tss.MemberID(fmt.Sprintf("member-%d", i))
 
@@ -50,11 +52,9 @@ func (n *Node) GenerateSignerForKeep(
 			groupMemberIDs,
 			memberID,
 		)
-	}
 
-	memberID, err := tss.MemberIDFromHex(n.ethereumChain.Address().String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert client's address to member ID: [%v]", err)
+		networkID := hex.EncodeToString(keepMember.Bytes())
+		membersNetworkIDs[memberID.String()] = tss.NetworkID(networkID)
 	}
 
 	signer, err := tss.GenerateThresholdSigner(
@@ -62,6 +62,7 @@ func (n *Node) GenerateSignerForKeep(
 		memberID,
 		groupMemberIDs,
 		uint(len(keepMembers)-1),
+		membersNetworkIDs,
 		n.networkProvider,
 		n.tssParamsPool.get(),
 	)
