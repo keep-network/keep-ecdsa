@@ -1,39 +1,19 @@
 package tss
 
 import (
-	"bytes"
-	"encoding/hex"
-	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
-// MemberID is an unique identifier of a member across the network.
-type MemberID []byte
-
-// MemberIDFromHex converts hexadecimal string to MemberID.
-func MemberIDFromHex(id string) (MemberID, error) {
-	// Skip `0x` or `0X` prefix.
-	if len(id) >= 2 && (id[:2] == "0x" || id[:2] == "0X") {
-		id = id[2:]
-	}
-
-	if len(id) == 0 {
-		return nil, fmt.Errorf("empty string")
-	}
-
-	memberID, err := hex.DecodeString(id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode string: [%v]", err)
-	}
-
-	return memberID, nil
-}
+// MemberID is an unique identifier of a member across the signing group.
+// TSS protocol requires that value of the ID is greater than 0.
+type MemberID uint32
 
 // String converts MemberID to string.
 func (id MemberID) String() string {
-	return hex.EncodeToString(id)
+	return strconv.FormatUint(uint64(id), 10)
 }
 
 // bigInt converts MemberID to big.Int.
@@ -43,17 +23,19 @@ func (id MemberID) bigInt() *big.Int {
 
 // bytes converts MemberID to bytes slice.
 func (id MemberID) bytes() []byte {
-	return []byte(id)
+	return new(big.Int).SetUint64(uint64(id)).Bytes()
 }
 
 // memberIDFromBytes converts bytes slice to MemberID.
 func memberIDFromBytes(bytes []byte) MemberID {
-	return MemberID(bytes)
+	bigInt := new(big.Int).SetBytes(bytes)
+
+	return MemberID(bigInt.Int64())
 }
 
 // Equal checks if member IDs are equal.
 func (id MemberID) Equal(memberID MemberID) bool {
-	return bytes.Equal(id, memberID)
+	return id == memberID
 }
 
 // groupInfo holds information about the group selected for protocol execution.
@@ -68,5 +50,5 @@ type groupInfo struct {
 	// References from unique MemberID used in protocol to an operator's network
 	// layer transport ID. The mapping is used to route unicast messages to an
 	// operator's channel as one operator can serve multiple members.
-	membersNetworkIDs map[string]net.TransportIdentifier
+	membersNetworkIDs map[MemberID]net.TransportIdentifier
 }
