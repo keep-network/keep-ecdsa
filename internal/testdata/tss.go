@@ -24,7 +24,10 @@ const (
 func LoadKeygenTestFixtures(count int) ([]keygen.LocalPartySaveData, error) {
 	keys := make([]keygen.LocalPartySaveData, 0, count)
 	for j := 0; j < count; j++ {
-		fixtureFilePath := makeTestFixtureFilePath(j)
+		// We do `% 5` because only 5 files are stored in test fixtures path.
+		// We loop over the files which allows us to support `count > 5`.
+		fixtureFilePath := makeTestFixtureFilePath(j % 5)
+
 		bz, err := ioutil.ReadFile(fixtureFilePath)
 		if err != nil {
 			return nil, errors.Wrapf(err,
