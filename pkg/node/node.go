@@ -43,11 +43,8 @@ func (n *Node) GenerateSignerForKeep(
 	keepMembers []common.Address,
 ) (*tss.ThresholdSigner, error) {
 	groupMemberIDs := []tss.MemberID{}
-	for _, memberAddress := range keepMembers {
-		memberID, err := tss.MemberIDFromHex(memberAddress.Hex())
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert member address to member ID: [%v]", err)
-		}
+	for i, keepMember := range keepMembers {
+		memberID := tss.MemberID(fmt.Sprintf("member-%d", i))
 
 		groupMemberIDs = append(
 			groupMemberIDs,
