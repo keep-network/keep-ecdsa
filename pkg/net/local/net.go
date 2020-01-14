@@ -14,7 +14,7 @@ import (
 var logger = log.Logger("keep-net")
 
 type localProvider struct {
-	transportID       localIdentifier
+	transportID       net.TransportIdentifier
 	broadcastProvider net.BroadcastProvider
 	unicastProvider   *unicastProvider
 }
@@ -25,9 +25,14 @@ func LocalProvider(
 	publicKey *key.NetworkPublic, // node's public key
 ) net.Provider {
 	return &localProvider{
+		transportID:       localIdentifierFromNetworkKey(publicKey),
 		broadcastProvider: brdcLocal.ConnectWithKey(publicKey),
 		unicastProvider:   unicastConnectWithKey(publicKey),
 	}
+}
+
+func (p *localProvider) ID() net.TransportIdentifier {
+	return p.transportID
 }
 
 func (p *localProvider) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {

@@ -1,6 +1,7 @@
 package net
 
 import (
+	"github.com/keep-network/keep-core/pkg/net"
 	coreNet "github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -19,6 +20,7 @@ type BroadcastChannel = coreNet.BroadcastChannel
 // Providers expose the ability to get a named BroadcastChannel and an
 // UnicastChannel established with a peer.
 type Provider interface {
+	ID() net.TransportIdentifier
 	BroadcastChannelFor(name string) (BroadcastChannel, error)
 	UnicastChannelWith(peer TransportIdentifier) (UnicastChannel, error)
 }
