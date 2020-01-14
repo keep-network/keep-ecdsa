@@ -5,8 +5,9 @@ package tss;
 
 message TSSProtocolMessage {
   bytes senderID = 1;
-  bytes payload = 2;
-  bool isBroadcast = 3;
+  bytes receiverID = 2;
+  bytes payload = 3;
+  bool isBroadcast = 4;
 }
 
 message JoinMessage {

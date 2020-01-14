@@ -219,6 +219,7 @@ func (tk *ThresholdKey) Unmarshal(bytes []byte) error {
 func (m *TSSProtocolMessage) Marshal() ([]byte, error) {
 	return (&pb.TSSProtocolMessage{
 		SenderID:    m.SenderID,
+		ReceiverID:  m.ReceiverID,
 		Payload:     m.Payload,
 		IsBroadcast: m.IsBroadcast,
 	}).Marshal()
@@ -232,6 +233,7 @@ func (m *TSSProtocolMessage) Unmarshal(bytes []byte) error {
 	}
 
 	m.SenderID = MemberID(pbMsg.SenderID)
+	m.ReceiverID = MemberID(pbMsg.ReceiverID)
 	m.Payload = pbMsg.Payload
 	m.IsBroadcast = pbMsg.IsBroadcast
 

@@ -5,6 +5,7 @@ package tss
 // implementation of the protocol.
 type TSSProtocolMessage struct {
 	SenderID    MemberID
+	ReceiverID  MemberID
 	Payload     []byte
 	IsBroadcast bool
 }

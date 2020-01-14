@@ -81,6 +81,7 @@ func TestThresholdKeyMarshalling(t *testing.T) {
 func TestTSSProtocolMessageMarshalling(t *testing.T) {
 	msg := &TSSProtocolMessage{
 		SenderID:    MemberID([]byte("member-1")),
+		ReceiverID:  MemberID([]byte("member-2")),
 		Payload:     []byte("very important message"),
 		IsBroadcast: true,
 	}
