@@ -23,12 +23,12 @@ func TestSignerMarshalling(t *testing.T) {
 	groupMembersIDs := make([]MemberID, groupSize)
 
 	for i := range groupMembersIDs {
-		groupMembersIDs[i] = MemberID([]byte(fmt.Sprintf("member-%d", i)))
+		groupMembersIDs[i] = MemberID(i + 1)
 	}
 
-	membersNetworkIDs := make(map[string]net.TransportIdentifier, groupSize)
+	membersNetworkIDs := make(map[MemberID]net.TransportIdentifier, groupSize)
 	for i, memberID := range groupMembersIDs {
-		membersNetworkIDs[memberID.String()] = NetworkID(fmt.Sprintf("member-%d", i))
+		membersNetworkIDs[memberID] = NetworkID(fmt.Sprintf("member-%d", i))
 	}
 
 	signer := &ThresholdSigner{
@@ -80,8 +80,8 @@ func TestThresholdKeyMarshalling(t *testing.T) {
 
 func TestTSSProtocolMessageMarshalling(t *testing.T) {
 	msg := &TSSProtocolMessage{
-		SenderID:    MemberID([]byte("member-1")),
-		ReceiverID:  MemberID([]byte("member-2")),
+		SenderID:    MemberID(1),
+		ReceiverID:  MemberID(2),
 		Payload:     []byte("very important message"),
 		IsBroadcast: true,
 	}
@@ -102,7 +102,7 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 
 func TestJoinMessageMarshalling(t *testing.T) {
 	msg := &JoinMessage{
-		SenderID: MemberID([]byte("member-1")),
+		SenderID: MemberID(1),
 	}
 
 	unmarshaled := &JoinMessage{}

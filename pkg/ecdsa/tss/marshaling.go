@@ -21,19 +21,19 @@ func (s *ThresholdSigner) Marshal() ([]byte, error) {
 	}
 
 	// Group Info
-	groupMemberIDs := make([][]byte, len(s.groupMemberIDs))
+	groupMemberIDs := make([]uint32, len(s.groupMemberIDs))
 	for i, memberID := range s.groupMemberIDs {
-		groupMemberIDs[i] = memberID
+		groupMemberIDs[i] = uint32(memberID)
 	}
 
-	membersNetworkIDs := make(map[string]string, len(s.membersNetworkIDs))
+	membersNetworkIDs := make(map[uint32]string, len(s.membersNetworkIDs))
 	for memberID, networkID := range s.membersNetworkIDs {
-		membersNetworkIDs[memberID] = networkID.String()
+		membersNetworkIDs[uint32(memberID)] = networkID.String()
 	}
 
 	group := &pb.ThresholdSigner_GroupInfo{
 		GroupID:            s.groupID,
-		MemberID:           s.memberID,
+		MemberID:           uint32(s.memberID),
 		GroupMemberIDs:     groupMemberIDs,
 		DishonestThreshold: int32(s.dishonestThreshold),
 		MembersNetworkIDs:  membersNetworkIDs,
@@ -68,9 +68,9 @@ func (s *ThresholdSigner) Unmarshal(bytes []byte) error {
 		groupMemberIDs[i] = MemberID(memberID)
 	}
 
-	membersNetworkIDs := make(map[string]net.TransportIdentifier, len(pbGroupInfo.GetGroupMemberIDs()))
+	membersNetworkIDs := make(map[MemberID]net.TransportIdentifier, len(pbGroupInfo.GetGroupMemberIDs()))
 	for memberID, networkID := range pbGroupInfo.GetMembersNetworkIDs() {
-		membersNetworkIDs[memberID] = NetworkID(networkID)
+		membersNetworkIDs[MemberID(memberID)] = NetworkID(networkID)
 	}
 
 	s.groupInfo = &groupInfo{
@@ -218,8 +218,8 @@ func (tk *ThresholdKey) Unmarshal(bytes []byte) error {
 // Marshal converts this message to a byte array suitable for network communication.
 func (m *TSSProtocolMessage) Marshal() ([]byte, error) {
 	return (&pb.TSSProtocolMessage{
-		SenderID:    m.SenderID,
-		ReceiverID:  m.ReceiverID,
+		SenderID:    uint32(m.SenderID),
+		ReceiverID:  uint32(m.ReceiverID),
 		Payload:     m.Payload,
 		IsBroadcast: m.IsBroadcast,
 	}).Marshal()
@@ -243,7 +243,7 @@ func (m *TSSProtocolMessage) Unmarshal(bytes []byte) error {
 // Marshal converts this message to a byte array suitable for network communication.
 func (m *JoinMessage) Marshal() ([]byte, error) {
 	return (&pb.JoinMessage{
-		SenderID: m.SenderID,
+		SenderID: uint32(m.SenderID),
 	}).Marshal()
 }
 
