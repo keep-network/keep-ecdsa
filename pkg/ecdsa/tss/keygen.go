@@ -101,7 +101,7 @@ func (s *member) generateKey(ctx context.Context) (*ThresholdSigner, error) {
 
 			if s.keygenParty.WaitingFor() != nil {
 				for _, partyID := range s.keygenParty.WaitingFor() {
-					memberIDs = append(memberIDs, MemberID(partyID.GetId()))
+					memberIDs = append(memberIDs, memberIDFromBytes(partyID.GetKey()))
 				}
 			}
 

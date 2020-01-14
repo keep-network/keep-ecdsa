@@ -121,7 +121,7 @@ func (b *networkBridge) initializeChannels(netInChan chan *TSSProtocolMessage) e
 		}
 
 		unicastChannel, err := b.getUnicastChannelWith(
-			b.groupInfo.membersNetworkIDs[peerMemberID.String()],
+			b.groupInfo.membersNetworkIDs[peerMemberID],
 		)
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
@@ -202,7 +202,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	} else {
 		for _, destination := range routing.To {
 			b.sendTo(
-				b.groupInfo.membersNetworkIDs[destination.GetId()],
+				b.groupInfo.membersNetworkIDs[memberIDFromBytes(destination.GetKey())],
 				&TSSProtocolMessage{
 					SenderID:    memberIDFromBytes(routing.From.GetKey()),
 					ReceiverID:  memberIDFromBytes(destination.GetKey()),

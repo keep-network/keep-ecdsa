@@ -47,7 +47,7 @@ func GenerateThresholdSigner(
 	memberID MemberID,
 	groupMemberIDs []MemberID,
 	dishonestThreshold uint,
-	membersNetworkIDs map[string]net.TransportIdentifier,
+	membersNetworkIDs map[MemberID]net.TransportIdentifier,
 	networkProvider net.Provider,
 	tssPreParams *keygen.LocalPreParams,
 ) (*ThresholdSigner, error) {

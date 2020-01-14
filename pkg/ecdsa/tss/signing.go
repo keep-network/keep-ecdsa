@@ -78,7 +78,7 @@ func (s *signingSigner) sign(ctx context.Context) (*ecdsa.Signature, error) {
 
 			if s.signingParty.WaitingFor() != nil {
 				for _, partyID := range s.signingParty.WaitingFor() {
-					memberIDs = append(memberIDs, MemberID(partyID.GetId()))
+					memberIDs = append(memberIDs, memberIDFromBytes(partyID.GetKey()))
 				}
 			}
 

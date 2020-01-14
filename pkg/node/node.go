@@ -45,7 +45,7 @@ func (n *Node) GenerateSignerForKeep(
 	keepMemberIndex uint,
 ) (*tss.ThresholdSigner, error) {
 	groupMemberIDs := []tss.MemberID{}
-	membersNetworkIDs := make(map[string]net.TransportIdentifier) // < memberID, networkID >
+	membersNetworkIDs := make(map[tss.MemberID]net.TransportIdentifier)
 
 	for i, keepMember := range keepMembers {
 		memberID := tss.MemberID(fmt.Sprintf("member-%d", i))
@@ -56,7 +56,7 @@ func (n *Node) GenerateSignerForKeep(
 		)
 
 		networkID := hex.EncodeToString(keepMember.Bytes())
-		membersNetworkIDs[memberID.String()] = tss.NetworkID(networkID)
+		membersNetworkIDs[memberID] = tss.NetworkID(networkID)
 	}
 
 	signer, err := tss.GenerateThresholdSigner(
