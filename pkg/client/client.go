@@ -55,33 +55,44 @@ func Initialize(
 			event.Members,
 		)
 
-		if event.IsMember(ethereumChain.Address()) {
-			signer, err := tssNode.GenerateSignerForKeep(
-				event.KeepAddress,
-				event.Members,
-			)
-			if err != nil {
-				logger.Errorf("signer generation failed: [%v]", err)
-				return
+		for memberIndex, memberAddress := range event.Members {
+			if memberAddress == ethereumChain.Address() {
+				go func(memberIndex uint) {
+					logger.Infof(
+						"generate signer for keep [%s] with member index [%d]",
+						event.KeepAddress.String(),
+						memberIndex,
+					)
+
+					signer, err := tssNode.GenerateSignerForKeep(
+						event.KeepAddress,
+						event.Members,
+						memberIndex,
+					)
+					if err != nil {
+						logger.Errorf("signer generation failed: [%v]", err)
+						return
+					}
+
+					logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
+
+					err = keepsRegistry.RegisterSigner(event.KeepAddress, signer)
+					if err != nil {
+						logger.Errorf(
+							"failed to register threshold signer for keep [%s]: [%v]",
+							event.KeepAddress.String(),
+							err,
+						)
+					}
+
+					registerForSignEvents(
+						ethereumChain,
+						tssNode,
+						event.KeepAddress,
+						signer,
+					)
+				}(uint(memberIndex))
 			}
-
-			logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
-
-			err = keepsRegistry.RegisterSigner(event.KeepAddress, signer)
-			if err != nil {
-				logger.Errorf(
-					"failed to register threshold signer for keep [%s]: [%v]",
-					event.KeepAddress.String(),
-					err,
-				)
-			}
-
-			registerForSignEvents(
-				ethereumChain,
-				tssNode,
-				event.KeepAddress,
-				signer,
-			)
 		}
 	})
 
