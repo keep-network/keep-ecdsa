@@ -34,6 +34,9 @@ var logger = log.Logger("keep-tss")
 // adversary such that the adversary still cannot produce a signature. Any subset
 // of `t + 1` players can jointly sign, but any smaller subset cannot.
 //
+// Members' Network IDs contains references between Member ID and network layer
+// transport identifier used for protocol messages routing.
+//
 // TSS protocol requires pre-parameters such as safe primes to be generated for
 // execution. The parameters should be generated prior to running this function.
 // If not provided they will be generated.
@@ -44,6 +47,7 @@ func GenerateThresholdSigner(
 	memberID MemberID,
 	groupMemberIDs []MemberID,
 	dishonestThreshold uint,
+	membersNetworkIDs map[string]net.TransportIdentifier,
 	networkProvider net.Provider,
 	tssPreParams *keygen.LocalPreParams,
 ) (*ThresholdSigner, error) {
@@ -67,6 +71,7 @@ func GenerateThresholdSigner(
 		memberID:           memberID,
 		groupMemberIDs:     groupMemberIDs,
 		dishonestThreshold: int(dishonestThreshold),
+		membersNetworkIDs:  membersNetworkIDs,
 	}
 
 	if tssPreParams == nil {
