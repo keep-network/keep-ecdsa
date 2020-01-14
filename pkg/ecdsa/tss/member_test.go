@@ -1,61 +1,39 @@
 package tss
 
 import (
-	"fmt"
-	"reflect"
+	"math/big"
 	"testing"
 )
 
-func TestMemberIDFromHex(t *testing.T) {
-	var tests = map[string]struct {
-		inputHex       string
-		expectedString string
-		expectedError  error
-	}{
-		"converts mixed case hex string": {
-			inputHex:       "0123456789aAbBcCdDeEfF",
-			expectedString: "0123456789aabbccddeeff",
-		},
-		"converts 0x prefixed string": {
-			inputHex:       "0x0123456789aAbBcCdDeEfF",
-			expectedString: "0123456789aabbccddeeff",
-		},
-		"converts 0X prefixed string": {
-			inputHex:       "0X0123456789aAbBcCdDeEfF",
-			expectedString: "0123456789aabbccddeeff",
-		},
-		"fails for empty string": {
-			inputHex:      "",
-			expectedError: fmt.Errorf("empty string"),
-		},
-		"fails for odd length": {
-			inputHex:      "123456789aAbBcCdDeEfF",
-			expectedError: fmt.Errorf("failed to decode string: [encoding/hex: odd length hex string]"),
-		},
-		"fails for non hex character": {
-			inputHex:      "0123456789aAbBcCdDeEfZ",
-			expectedError: fmt.Errorf("failed to decode string: [encoding/hex: invalid byte: U+005A 'Z']"),
-		},
+func TestMemberIDConversions(t *testing.T) {
+	memberID := MemberID(1234567890)
+
+	expectedString := "1234567890"
+	expectedBigInt := big.NewInt(1234567890)
+
+	if memberID.String() != expectedString {
+		t.Errorf(
+			"invalid string\nexpected: %v\nactual:   %v\n",
+			expectedString,
+			memberID.String(),
+		)
 	}
 
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			memberID, err := MemberIDFromHex(test.inputHex)
-			if !reflect.DeepEqual(err, test.expectedError) {
-				t.Errorf(
-					"invalid error\nexpected: %v\nactual:   %v\n",
-					test.expectedError,
-					err,
-				)
-			}
+	if memberID.bigInt().Cmp(expectedBigInt) != 0 {
+		t.Errorf(
+			"invalid big int\nexpected: %v\nactual:   %v\n",
+			expectedBigInt,
+			memberID.bigInt(),
+		)
+	}
 
-			if memberID.String() != test.expectedString {
-				t.Errorf(
-					"invalid converted memberID\nexpected: %v\nactual:   %v\n",
-					test.expectedString,
-					memberID.String(),
-				)
-			}
-		})
+	bytes := memberID.bytes()
+	fromBytes := memberIDFromBytes(bytes)
+	if memberID != fromBytes {
+		t.Errorf(
+			"invalid member id from bytes\nexpected: %v\nactual:   %v\n",
+			memberID,
+			fromBytes,
+		)
 	}
 }
