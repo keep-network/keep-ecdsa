@@ -194,9 +194,9 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	if routing.To == nil {
 		b.broadcast(
 			&TSSProtocolMessage{
-		SenderID:    memberIDFromBytes(routing.From.GetKey()),
-		Payload:     bytes,
-		IsBroadcast: routing.IsBroadcast,
+				SenderID:    memberIDFromBytes(routing.From.GetKey()),
+				Payload:     bytes,
+				IsBroadcast: routing.IsBroadcast,
 			},
 		)
 	} else {
@@ -261,6 +261,15 @@ func (b *networkBridge) registerProtocolMessageHandler(
 
 		if senderPartyID == party.PartyID() {
 			return nil
+		}
+
+		// Ignore unicast messages addressed to other parties.
+		if !protocolMessage.IsBroadcast {
+			receiverPartyID := sortedPartyIDs.FindByKey(protocolMessage.ReceiverID.bigInt())
+
+			if receiverPartyID != party.PartyID() {
+				return nil
+			}
 		}
 
 		_, err := party.UpdateFromBytes(
