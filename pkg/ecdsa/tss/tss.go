@@ -66,6 +66,10 @@ func GenerateThresholdSigner(
 		)
 	}
 
+	if memberID <= 0 {
+		return nil, fmt.Errorf("member ID must be greater than 0, but found [%d]", memberID)
+	}
+
 	group := &groupInfo{
 		groupID:            groupID,
 		memberID:           memberID,

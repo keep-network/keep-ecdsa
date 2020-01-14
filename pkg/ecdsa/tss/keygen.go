@@ -3,7 +3,6 @@ package tss
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -123,8 +122,8 @@ func generatePartiesIDs(
 	groupPartiesIDs := []*tss.PartyID{}
 
 	for _, memberID := range groupMemberIDs {
-		if memberID.bigInt().Cmp(big.NewInt(0)) <= 0 {
-			return nil, nil, fmt.Errorf("member ID must be greater than 0, but found [%v]", memberID.bigInt())
+		if memberID <= 0 {
+			return nil, nil, fmt.Errorf("member ID must be greater than 0, but found [%d]")
 		}
 
 		newPartyID := tss.NewPartyID(
