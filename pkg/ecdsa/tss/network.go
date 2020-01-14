@@ -157,11 +157,11 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 	return broadcastChannel, nil
 }
 
-func (b *networkBridge) getUnicastChannelWith(remotePeerID string) (net.UnicastChannel, error) {
+func (b *networkBridge) getUnicastChannelWith(remotePeerID net.TransportIdentifier) (net.UnicastChannel, error) {
 	b.channelsMutex.Lock()
 	defer b.channelsMutex.Unlock()
 
-	unicastChannel, exists := b.unicastChannels[remotePeerID]
+	unicastChannel, exists := b.unicastChannels[remotePeerID.String()]
 	if exists {
 		return unicastChannel, nil
 	}
@@ -177,7 +177,7 @@ func (b *networkBridge) getUnicastChannelWith(remotePeerID string) (net.UnicastC
 		return nil, fmt.Errorf("failed to register unmarshaler for unicast channel: [%v]", err)
 	}
 
-	b.unicastChannels[remotePeerID] = unicastChannel
+	b.unicastChannels[remotePeerID.String()] = unicastChannel
 
 	return unicastChannel, nil
 }
@@ -218,7 +218,7 @@ func (b *networkBridge) broadcast(msg *TSSProtocolMessage) error {
 	return nil
 }
 
-func (b *networkBridge) sendTo(receiverID string, msg *TSSProtocolMessage) error {
+func (b *networkBridge) sendTo(receiverID net.TransportIdentifier, msg *TSSProtocolMessage) error {
 	unicastChannel, err := b.getUnicastChannelWith(receiverID)
 	if err != nil {
 		return fmt.Errorf(

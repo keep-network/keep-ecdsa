@@ -44,8 +44,8 @@ func unicastConnectWithKey(
 	return provider
 }
 
-func (up *unicastProvider) ChannelFor(peer string) (net.UnicastChannel, error) {
-	return up.channel(localIdentifier(peer))
+func (up *unicastProvider) ChannelFor(peer net.TransportIdentifier) (net.UnicastChannel, error) {
+	return up.channel(localIdentifier(peer.String()))
 }
 
 func (up *unicastProvider) channel(peerID localIdentifier) (net.UnicastChannel, error) {

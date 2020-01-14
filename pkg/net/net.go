@@ -20,7 +20,7 @@ type BroadcastChannel = coreNet.BroadcastChannel
 // UnicastChannel established with a peer.
 type Provider interface {
 	BroadcastChannelFor(name string) (BroadcastChannel, error)
-	UnicastChannelWith(peer string) (UnicastChannel, error)
+	UnicastChannelWith(peer TransportIdentifier) (UnicastChannel, error)
 }
 
 // UnicastChannel represents a point-to-point channel to a peer. It allows

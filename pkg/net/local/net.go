@@ -34,8 +34,8 @@ func (p *localProvider) BroadcastChannelFor(name string) (net.BroadcastChannel, 
 	return p.broadcastProvider.ChannelFor(name)
 }
 
-func (p *localProvider) UnicastChannelWith(name string) (net.UnicastChannel, error) {
-	return p.unicastProvider.ChannelFor(name)
+func (p *localProvider) UnicastChannelWith(peer net.TransportIdentifier) (net.UnicastChannel, error) {
+	return p.unicastProvider.ChannelFor(peer)
 }
 
 type localIdentifier string
