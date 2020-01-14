@@ -142,11 +142,7 @@ func (uc *unicastChannel) doSend(payload net.TaggedMarshaler) error {
 	provider.channelsMutex.RLock()
 	defer provider.channelsMutex.RUnlock()
 
-	for peerID, targetChannel := range provider.channels {
-		if targetChannel.transportID.String() == peerID.String() {
-			continue // don't send to self
-		}
-
+	for _, targetChannel := range provider.channels {
 		unmarshaler, found := targetChannel.unmarshalersByType.Load(payload.Type())
 		if !found {
 			return fmt.Errorf(
