@@ -19,11 +19,7 @@ var (
 	keepAddress2 = common.HexToAddress("0x8B3BccB3A3994681A1C1584DE4b4E8b23ed1Ed6d")
 	keepAddress3 = common.HexToAddress("0x0472ec0185ebb8202f3d4ddb0226998889663cf2")
 
-	groupMemberIDs = [][]byte{
-		[]byte("member-1"),
-		[]byte("member-2"),
-		[]byte("member-3"),
-	}
+	groupMemberIDs = []uint32{1, 2, 3}
 )
 
 func TestRegisterSigner(t *testing.T) {

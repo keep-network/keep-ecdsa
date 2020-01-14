@@ -245,11 +245,11 @@ func generateTestMembers(groupSize int, localMembersCount int) (testMembers, err
 	return members, nil
 }
 
-func (tms testMembers) groupNetworkIDs() map[string]net.TransportIdentifier {
-	networkIDs := make(map[string]net.TransportIdentifier, len(tms))
+func (tms testMembers) groupNetworkIDs() map[MemberID]net.TransportIdentifier {
+	networkIDs := make(map[MemberID]net.TransportIdentifier, len(tms))
 
 	for _, tm := range tms {
-		networkIDs[tm.memberID.String()] = tm.networkProvider.ID()
+		networkIDs[tm.memberID] = tm.networkProvider.ID()
 	}
 
 	return networkIDs
