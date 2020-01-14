@@ -4,6 +4,8 @@ const tomlify = require('tomlify-j0.4');
 const concat = require('concat-stream');
 const Web3 = require('web3');
 
+const { depositBondingValue } = require('./bonding')
+
 // ETH host info
 const ethHost = process.env.ETH_HOSTNAME;
 const ethWsPort = process.env.ETH_WS_PORT;
@@ -33,6 +35,12 @@ const ecdsaKeepFactoryJsonFile = '/tmp/ECDSAKeepFactory.json';
 const ecdsaKeepFactoryParsed = JSON.parse(fs.readFileSync(ecdsaKeepFactoryJsonFile));
 const ecdsaKeepFactoryContractAddress = ecdsaKeepFactoryParsed.networks[ethNetworkId].address;
 
+const keepBondingContractJsonFile = '/tmp/KeepBonding.json';
+const keepBondingContractParsed = JSON.parse(fs.readFileSync(keepBondingContractJsonFile));
+const keepBondingContractAbi = keepBondingContractParsed.abi;
+const keepBondingContractAddress = keepBondingContractParsed.networks[ethNetworkId].address;
+const keepBondingContract = new web3.eth.Contract(keepBondingContractAbi, keepBondingContractAddress);
+
 async function provisionKeepTecdsa() {
 
   try {
@@ -59,6 +67,9 @@ async function provisionKeepTecdsa() {
 
     console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
     await fundOperatorAccount(operator, purse, '1');
+
+    console.log('\n<<<<<<<<<<<< Depositing Bonding Value for Operator Account ' + operator + ' >>>>>>>>>>>>');
+    await depositBondingValue(keepBondingContract, purse, operator, '10');
 
     console.log('\n<<<<<<<<<<<< Creating keep-tecdsa Config File >>>>>>>>>>>>');
     await createKeepTecdsaConfig(operator);

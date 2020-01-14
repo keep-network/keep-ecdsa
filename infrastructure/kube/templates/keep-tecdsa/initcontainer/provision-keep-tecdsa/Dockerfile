@@ -2,7 +2,7 @@ FROM node:11 AS runtime
 
 WORKDIR /tmp
 
-RUN npm install web3@1.0.0-beta.55
+RUN npm install web3@1.2.4
 RUN npm install concat-stream@2.0.0
 RUN npm install toml@3.0.0
 RUN npm install tomlify-j0.4@3.0.0
@@ -23,10 +23,11 @@ ARG ETH_NETWORK_ID
 ENV ETH_NETWORK_ID=$ETH_NETWORK_ID
 
 COPY ./ECDSAKeepFactory.json /tmp/ECDSAKeepFactory.json
+COPY ./KeepBonding.json /tmp/KeepBonding.json
 
 COPY ./keep-tecdsa-template.toml /tmp/keep-tecdsa-template.toml
 
+COPY ./bonding.js /tmp/bonding.js
 COPY ./provision-keep-tecdsa.js /tmp/provision-keep-tecdsa.js
 
 ENTRYPOINT ["node", "./provision-keep-tecdsa.js"]
-

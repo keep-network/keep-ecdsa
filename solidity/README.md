@@ -65,6 +65,14 @@ for each contract and copy-paste it to [config.toml](../configs/config.toml) fil
 [Truffle]: https://www.truffleframework.com/truffle
 [Ganache]: https://truffleframework.com/ganache
 
+### Setup Client
+
+After scripts were migrated it is required to update client configuration. This
+is covered by running following script:
+
+```sh
+KEEP_ETHEREUM_PASSWORD=password truffle exec scripts/setup-operator.js ../configs/config.toml
+```
 
 ### Testing
 

@@ -36,8 +36,12 @@
     "@babel/register": "^7.4.4",
     "bn-chai": "^1.0.1",
     "chai": "^4.2.0",
+    "concat-stream": "^2.0.0",
     "openzeppelin-test-helpers": "^0.4.3",
     "solc": "^0.5.8",
+    "toml": "^3.0.0",
+    "tomlify": "^0.2.2",
+    "tomlify-j0.4": "^3.0.0",
     "truffle": "^5.0.18",
     "truffle-assertions": "^0.9.1"
   }
