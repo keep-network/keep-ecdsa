@@ -2,6 +2,7 @@
 package node
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -41,6 +42,7 @@ func NewNode(
 func (n *Node) GenerateSignerForKeep(
 	keepAddress common.Address,
 	keepMembers []common.Address,
+	memberIndex uint,
 ) (*tss.ThresholdSigner, error) {
 	groupMemberIDs := []tss.MemberID{}
 	membersNetworkIDs := make(map[string]net.TransportIdentifier) // < memberID, networkID >
@@ -59,7 +61,7 @@ func (n *Node) GenerateSignerForKeep(
 
 	signer, err := tss.GenerateThresholdSigner(
 		keepAddress.Hex(),
-		memberID,
+		groupMemberIDs[memberIndex],
 		groupMemberIDs,
 		uint(len(keepMembers)-1),
 		membersNetworkIDs,
