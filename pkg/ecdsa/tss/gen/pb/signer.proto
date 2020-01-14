@@ -9,6 +9,7 @@ message ThresholdSigner {
     bytes memberID = 2;
     repeated bytes groupMemberIDs = 3;
     int32 dishonestThreshold = 4;
+    map<string, string> membersNetworkIDs = 5;
   }
 
   GroupInfo groupInfo = 1;

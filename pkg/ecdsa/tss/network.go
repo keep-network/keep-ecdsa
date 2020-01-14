@@ -9,6 +9,16 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
+// NetworkID is an implementation of net.TransportIdentifier interface. It defines
+// operator's network layer identifier used for unicast messages routing.
+// TODO: We can consider replacing it with a type implemented in specific network
+// implementation we will use.
+type NetworkID string
+
+func (n NetworkID) String() string {
+	return string(n)
+}
+
 // networkBridge translates TSS library network interface to unicast and
 // broadcast channels provided by our net abstraction.
 type networkBridge struct {
