@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+
+	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
 // MemberID is an unique identifier of a member across the network.
