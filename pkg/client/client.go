@@ -40,8 +40,9 @@ func Initialize(
 					signer,
 				)
 				logger.Debugf(
-					"signer registered for events from keep: [%s]",
+					"registered for events from keep [%s] with signer: [%s]",
 					keepAddress.String(),
+					signer.MemberID(),
 				)
 			}
 		},
