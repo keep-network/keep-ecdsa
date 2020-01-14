@@ -42,7 +42,7 @@ func NewNode(
 func (n *Node) GenerateSignerForKeep(
 	keepAddress common.Address,
 	keepMembers []common.Address,
-	memberIndex uint,
+	keepMemberIndex uint,
 ) (*tss.ThresholdSigner, error) {
 	groupMemberIDs := []tss.MemberID{}
 	membersNetworkIDs := make(map[string]net.TransportIdentifier) // < memberID, networkID >
@@ -61,7 +61,7 @@ func (n *Node) GenerateSignerForKeep(
 
 	signer, err := tss.GenerateThresholdSigner(
 		keepAddress.Hex(),
-		groupMemberIDs[memberIndex],
+		groupMemberIDs[keepMemberIndex],
 		groupMemberIDs,
 		uint(len(keepMembers)-1),
 		membersNetworkIDs,

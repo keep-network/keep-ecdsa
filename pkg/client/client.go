@@ -57,17 +57,17 @@ func Initialize(
 
 		for memberIndex, memberAddress := range event.Members {
 			if memberAddress == ethereumChain.Address() {
-				go func(memberIndex uint) {
+				go func(keepMemberIndex uint) {
 					logger.Infof(
-						"generate signer for keep [%s] with member index [%d]",
+						"generate signer for keep [%s] with keep member index [%d]",
 						event.KeepAddress.String(),
-						memberIndex,
+						keepMemberIndex,
 					)
 
 					signer, err := tssNode.GenerateSignerForKeep(
 						event.KeepAddress,
 						event.Members,
-						memberIndex,
+						keepMemberIndex,
 					)
 					if err != nil {
 						logger.Errorf("signer generation failed: [%v]", err)
