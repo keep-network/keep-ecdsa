@@ -26,11 +26,11 @@ func TestRegisterAndFireHandler(t *testing.T) {
 	netProvider1 := LocalProvider(publicKey1)
 	netProvider2 := LocalProvider(publicKey2)
 
-	localChannel1, err := netProvider1.UnicastChannelWith(transportID2.String())
+	localChannel1, err := netProvider1.UnicastChannelWith(transportID2)
 	if err != nil {
 		t.Fatal(err)
 	}
-	localChannel2, err := netProvider2.UnicastChannelWith(transportID1.String())
+	localChannel2, err := netProvider2.UnicastChannelWith(transportID1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +137,7 @@ func TestUnregisterHandler(t *testing.T) {
 			netProvider1 := LocalProvider(publicKey1)
 			netProvider2 := LocalProvider(publicKey2)
 
-			localChannel1, err := netProvider1.UnicastChannelWith(transportID2.String())
+			localChannel1, err := netProvider1.UnicastChannelWith(transportID2)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -147,7 +147,7 @@ func TestUnregisterHandler(t *testing.T) {
 				t.Fatalf("failed to register unmarshaler: [%v]", err)
 			}
 
-			localChannel2, err := netProvider2.UnicastChannelWith(transportID1.String())
+			localChannel2, err := netProvider2.UnicastChannelWith(transportID1)
 			if err != nil {
 				t.Fatal(err)
 			}
