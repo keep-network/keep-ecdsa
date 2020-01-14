@@ -191,17 +191,25 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 		return
 	}
 
-	protocolMessage := &TSSProtocolMessage{
+	if routing.To == nil {
+		b.broadcast(
+			&TSSProtocolMessage{
 		SenderID:    memberIDFromBytes(routing.From.GetKey()),
 		Payload:     bytes,
 		IsBroadcast: routing.IsBroadcast,
-	}
-
-	if routing.To == nil {
-		b.broadcast(protocolMessage)
+			},
+		)
 	} else {
 		for _, destination := range routing.To {
-			b.sendTo(b.groupInfo.membersNetworkIDs[destination.GetId()], protocolMessage)
+			b.sendTo(
+				b.groupInfo.membersNetworkIDs[destination.GetId()],
+				&TSSProtocolMessage{
+					SenderID:    memberIDFromBytes(routing.From.GetKey()),
+					ReceiverID:  memberIDFromBytes(destination.GetKey()),
+					Payload:     bytes,
+					IsBroadcast: routing.IsBroadcast,
+				},
+			)
 		}
 	}
 }
