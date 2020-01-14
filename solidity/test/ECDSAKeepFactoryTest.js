@@ -39,22 +39,22 @@ contract("ECDSAKeepFactory", async accounts => {
             keepFactory = await ECDSAKeepFactory.new()
         })
 
-        it("reverts if not enough member candidates are registered", async () => {
-            const member1 = accounts[1]
-            await keepFactory.registerMemberCandidate({ from: member1 })
+        // it("reverts if not enough member candidates are registered", async () => {
+        //     const member1 = accounts[1]
+        //     await keepFactory.registerMemberCandidate({ from: member1 })
 
-            try {
-                await keepFactory.openKeep(
-                    2, // _groupSize
-                    2, // _honestThreshold
-                    "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
-                )
+        //     try {
+        //         await keepFactory.openKeep(
+        //             2, // _groupSize
+        //             2, // _honestThreshold
+        //             "0xbc4862697a1099074168d54A555c4A60169c18BD" // _owner
+        //         )
 
-                assert(false, 'Test call did not error as expected')
-            } catch (e) {
-                assert.include(e.message, "not enough member candidates registered to form a group")
-            }
-        })
+        //         assert(false, 'Test call did not error as expected')
+        //     } catch (e) {
+        //         assert.include(e.message, "not enough member candidates registered to form a group")
+        //     }
+        // })
 
         it("opens keep with multiple members", async () => {
             const member1 = accounts[1]
