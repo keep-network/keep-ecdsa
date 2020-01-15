@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/keep-ecdsa",
-  "version": "0.1.2",
+  "version": "0.1.7",
   "description": "Smart contracts for ECDSA Keep",
   "repository": {
     "type": "git",
