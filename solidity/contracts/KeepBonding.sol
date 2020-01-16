@@ -50,6 +50,32 @@ contract KeepBonding {
       lockedBonds[bondID] += amount;
    }
 
+   /// @notice Reassigns a bond to a new holder under a new reference.
+   /// @dev Function requires that a caller is the holder of the bond which is
+   /// being reassigned.
+   /// @param operator Address of the bonded operator.
+   /// @param referenceID Reference ID of the bond.
+   /// @param newHolder Address of the new holder of the bond.
+   /// @param newReferenceID New reference ID to register the bond.
+   function reassignBond(
+      address operator,
+      uint256 referenceID,
+      address newHolder,
+      uint256 newReferenceID
+   ) public {
+      address holder = msg.sender;
+      bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
+
+      require(lockedBonds[bondID] > 0, "Bond not found");
+
+      bytes32 newBondID = keccak256(abi.encodePacked(operator, newHolder, newReferenceID));
+
+      require(lockedBonds[newBondID] == 0,  "Reference ID not unique for holder and operator");
+
+      lockedBonds[newBondID] = lockedBonds[bondID];
+      lockedBonds[bondID] = 0;
+   }
+
    /// @notice Checks if the caller is an authorized contract.
    /// @dev Throws an error if called by any account other than one of the authorized
    /// contracts.
