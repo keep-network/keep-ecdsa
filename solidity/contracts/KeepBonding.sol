@@ -5,8 +5,9 @@ pragma solidity ^0.5.4;
 contract KeepBonding {
    // Unassigned ether values deposited by operators.
    mapping(address => uint256) internal unbondedValue;
-   // References to created bonds.
-   mapping(bytes => uint256) internal lockedBonds;
+   // References to created bonds. Bond identifier is built from operator's
+   // address, holder's address and reference assigned on bond creation.
+   mapping(bytes32 => uint256) internal lockedBonds;
 
    /// @notice Returns value of ether available for bonding for the operator.
    /// @param operator Address of the operator.
@@ -24,7 +25,7 @@ contract KeepBonding {
    /// @notice Draw amount from sender's value available for bonding.
    /// @param amount Value to withdraw.
    /// @param destination Address to send the amount to.
-   function withdraw(uint256 amount, address payable destination) external {
+   function withdraw(uint256 amount, address payable destination) public {
       require(availableBondingValue(msg.sender) >= amount, "Insufficient unbonded value");
 
       unbondedValue[msg.sender] -= amount;
@@ -41,7 +42,7 @@ contract KeepBonding {
       require(availableBondingValue(operator) >= amount, "Insufficient unbonded value");
 
       address holder = msg.sender;
-      bytes memory bondID = abi.encodePacked(operator, holder, referenceID);
+      bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
 
       require(lockedBonds[bondID] == 0, "Reference ID not unique for holder and operator");
 
