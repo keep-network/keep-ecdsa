@@ -1,63 +1,60 @@
 package registry
 
 import (
-	cecdsa "crypto/ecdsa"
 	"fmt"
-	"math/big"
 	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-tecdsa/internal/testdata"
+	"github.com/keep-network/keep-tecdsa/internal/testutils/mock"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
 var (
-	keepAddress1 = common.HexToAddress("0x770a9E2F2Aa1eC2d3Ca916Fc3e6A55058A898632")
-	keepAddress2 = common.HexToAddress("0x8B3BccB3A3994681A1C1584DE4b4E8b23ed1Ed6d")
+	keepAddress1 = testdata.KeepAddress1
+	keepAddress2 = testdata.KeepAddress2
 
-	signer1 = newTestSigner(big.NewInt(10))
-	signer2 = newTestSigner(big.NewInt(20))
+	signer1 = testdata.KeepSigners[keepAddress1]
+	signer2 = testdata.KeepSigners[keepAddress2]
 )
 
 func TestRegisterSigner(t *testing.T) {
-	persistenceMock := &persistenceHandleMock{}
+	persistenceMock := &mock.PersistenceHandle{}
 	gr := NewKeepsRegistry(persistenceMock)
 
 	expectedSignerBytes, _ := signer1.Marshal()
-	expectedFile := &testFileInfo{
-		data:      expectedSignerBytes,
-		directory: keepAddress1.String(),
-		name:      "/signer_0",
+	expectedFile := &mock.TestFileInfo{
+		Data:      expectedSignerBytes,
+		Directory: keepAddress1.String(),
+		Name:      "/signer_0",
 	}
 
 	gr.RegisterSigner(keepAddress1, signer1)
 
 	// Verify persisted to storage.
-	if len(persistenceMock.persistedGroups) != 1 {
+	if len(persistenceMock.PersistedGroups) != 1 {
 		t.Errorf(
 			"unexpected number of persisted groups\nexpected: [%d]\nactual:   [%d]",
 			1,
-			len(persistenceMock.persistedGroups),
+			len(persistenceMock.PersistedGroups),
 		)
 	}
 
 	if !reflect.DeepEqual(
 		expectedFile,
-		persistenceMock.persistedGroups[0],
+		persistenceMock.PersistedGroups[0],
 	) {
 		t.Errorf(
 			"unexpected persisted group\nexpected: [%+v]\nactual:   [%+v]",
 			expectedFile,
-			persistenceMock.persistedGroups[0],
+			persistenceMock.PersistedGroups[0],
 		)
 	}
 }
 
 func TestGetGroup(t *testing.T) {
-	persistenceMock := &persistenceHandleMock{}
+	persistenceMock := &mock.PersistenceHandle{}
 	gr := NewKeepsRegistry(persistenceMock)
 
 	gr.RegisterSigner(keepAddress1, signer1)
@@ -101,7 +98,7 @@ func TestGetGroup(t *testing.T) {
 }
 
 func TestRegisterNewGroupForTheSameKeep(t *testing.T) {
-	persistenceMock := &persistenceHandleMock{}
+	persistenceMock := &mock.PersistenceHandle{}
 	gr := NewKeepsRegistry(persistenceMock)
 
 	gr.RegisterSigner(keepAddress1, signer1)
@@ -123,7 +120,7 @@ func TestRegisterNewGroupForTheSameKeep(t *testing.T) {
 }
 
 func TestLoadExistingGroups(t *testing.T) {
-	persistenceMock := &persistenceHandleMock{}
+	persistenceMock := &mock.PersistenceHandle{}
 
 	gr := NewKeepsRegistry(persistenceMock)
 
@@ -158,74 +155,4 @@ func TestLoadExistingGroups(t *testing.T) {
 	if !reflect.DeepEqual(signer2, actualSigner2) {
 		t.Errorf("\nexpected: [%v]\nactual:   [%v]", signer2, actualSigner2)
 	}
-}
-
-type persistenceHandleMock struct {
-	persistedGroups []*testFileInfo
-	archivedGroups  []string
-}
-
-type testFileInfo struct {
-	data      []byte
-	directory string
-	name      string
-}
-
-func (phm *persistenceHandleMock) Save(data []byte, directory string, name string) error {
-	phm.persistedGroups = append(
-		phm.persistedGroups,
-		&testFileInfo{data, directory, name},
-	)
-	return nil
-}
-
-func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, <-chan error) {
-	signerBytes1, _ := signer1.Marshal()
-	signerBytes2, _ := signer2.Marshal()
-
-	outputData := make(chan persistence.DataDescriptor, 2)
-	outputErrors := make(chan error)
-
-	outputData <- &testDataDescriptor{"/membership_0", keepAddress1.String(), signerBytes1}
-	outputData <- &testDataDescriptor{"/membership_0", keepAddress2.String(), signerBytes2}
-
-	close(outputData)
-	close(outputErrors)
-
-	return outputData, outputErrors
-}
-
-func (phm *persistenceHandleMock) Archive(directory string) error {
-	phm.archivedGroups = append(phm.archivedGroups, directory)
-
-	return nil
-}
-
-type testDataDescriptor struct {
-	name      string
-	directory string
-	content   []byte
-}
-
-func (tdd *testDataDescriptor) Name() string {
-	return tdd.name
-}
-
-func (tdd *testDataDescriptor) Directory() string {
-	return tdd.directory
-}
-
-func (tdd *testDataDescriptor) Content() ([]byte, error) {
-	return tdd.content, nil
-}
-
-func newTestSigner(privateKeyD *big.Int) *ecdsa.Signer {
-	curve := secp256k1.S256()
-
-	privateKey := new(cecdsa.PrivateKey)
-	privateKey.PublicKey.Curve = curve
-	privateKey.D = privateKeyD
-	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(privateKeyD.Bytes())
-
-	return ecdsa.NewSigner(privateKey)
 }

@@ -11,14 +11,16 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
-// localChain is an implementation of ethereum blockchain interface.
+// LocalChain is an implementation of ethereum blockchain interface.
 //
-// It mocks the behaviour of a real blockchain, without the complexity of deployments,
+// It mocks the behavior of a real blockchain, without the complexity of deployments,
 // accounts, async transactions and so on. For use in tests ONLY.
-type localChain struct {
+type LocalChain struct {
 	handlerMutex sync.Mutex
 
-	keeps map[eth.KeepAddress]*localKeep
+	keeps            map[eth.KeepAddress]*localKeep
+	memberCandidates []common.Address
+	signatures       map[string]*ecdsa.Signature
 
 	keepCreatedHandlers map[int]func(event *eth.ECDSAKeepCreatedEvent)
 
@@ -28,27 +30,36 @@ type localChain struct {
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
 func Connect() eth.Handle {
-	return &localChain{
+	return &LocalChain{
 		keeps:               make(map[eth.KeepAddress]*localKeep),
+		memberCandidates:    []common.Address{},
+		signatures:          make(map[string]*ecdsa.Signature),
 		keepCreatedHandlers: make(map[int]func(event *eth.ECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
 	}
 }
 
 // Address returns client's ethereum address.
-func (lc *localChain) Address() common.Address {
+func (lc *LocalChain) Address() common.Address {
 	return lc.clientAddress
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
-func (lc *localChain) RegisterAsMemberCandidate() error {
+func (lc *LocalChain) RegisterAsMemberCandidate() error {
+	lc.memberCandidates = append(lc.memberCandidates, lc.Address())
 	return nil
+}
+
+// GetMemberCandidates returns list of registered candidates for keep members
+// selection.
+func (lc *LocalChain) GetMemberCandidates() []common.Address {
+	return lc.memberCandidates
 }
 
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
-func (lc *localChain) OnECDSAKeepCreated(
+func (lc *LocalChain) OnECDSAKeepCreated(
 	handler func(event *eth.ECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.handlerMutex.Lock()
@@ -68,7 +79,7 @@ func (lc *localChain) OnECDSAKeepCreated(
 
 // OnSignatureRequested is a callback that is invoked on-chain
 // when a keep's signature is requested.
-func (lc *localChain) OnSignatureRequested(
+func (lc *LocalChain) OnSignatureRequested(
 	keepAddress eth.KeepAddress,
 	handler func(event *eth.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
@@ -97,7 +108,7 @@ func (lc *localChain) OnSignatureRequested(
 
 // SubmitKeepPublicKey checks if public key has been already submitted for given
 // keep address, if not it stores the key in a map.
-func (lc *localChain) SubmitKeepPublicKey(
+func (lc *LocalChain) SubmitKeepPublicKey(
 	keepAddress eth.KeepAddress,
 	publicKey [64]byte,
 ) error {
@@ -121,12 +132,36 @@ func (lc *localChain) SubmitKeepPublicKey(
 	return nil
 }
 
+// GetKeepPublicKey returns a public key submitted for the keep.
+func (lc *LocalChain) GetKeepPublicKey(keepAddress eth.KeepAddress) ([64]byte, error) {
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return [64]byte{}, fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	return keep.publicKey, nil
+}
+
 // SubmitSignature submits a signature to a keep contract deployed under a
 // given address.
-func (lc *localChain) SubmitSignature(
+func (lc *LocalChain) SubmitSignature(
 	keepAddress eth.KeepAddress,
 	digest [32]byte,
 	signature *ecdsa.Signature,
 ) error {
+	key := keepAddress.String() + string(digest[:])
+	lc.signatures[key] = signature
 	return nil
+}
+
+// GetSignature returns a signature submitted to keep for given digest.
+func (lc *LocalChain) GetSignature(
+	keepAddress eth.KeepAddress,
+	digest [32]byte,
+) (*ecdsa.Signature, error) {
+	key := keepAddress.Hex() + string(digest[:])
+	return lc.signatures[key], nil
 }

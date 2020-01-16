@@ -3,10 +3,14 @@ package local
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
-func (c *localChain) createKeep(keepAddress eth.KeepAddress) error {
+func (c *LocalChain) CreateKeep(
+	keepAddress eth.KeepAddress,
+	members []common.Address,
+) error {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -25,6 +29,7 @@ func (c *localChain) createKeep(keepAddress eth.KeepAddress) error {
 
 	keepCreatedEvent := &eth.ECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
+		Members:     members,
 	}
 
 	for _, handler := range c.keepCreatedHandlers {
