@@ -50,6 +50,22 @@ contract KeepBonding {
       lockedBonds[bondID] += amount;
    }
 
+   /// @notice Releases a bond to the operator's available bonding value.
+   /// @dev Function requires that a caller is the holder of the bond which is
+   /// being released.
+   /// @param operator Address of the bonded operator.
+   /// @param referenceID Reference ID of the bond.
+   function freeBond(address operator, uint256 referenceID) public {
+      address holder = msg.sender;
+      bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
+
+      require(lockedBonds[bondID] > 0, "Bond not found");
+
+      uint256 amount = lockedBonds[bondID];
+      lockedBonds[bondID] = 0;
+      unbondedValue[operator] = amount;
+   }
+
    /// @notice Checks if the caller is an authorized contract.
    /// @dev Throws an error if called by any account other than one of the authorized
    /// contracts.
