@@ -50,6 +50,22 @@ contract KeepBonding {
       lockedBonds[bondID] += amount;
    }
 
+   /// @notice Transfers a bond to the holder's account.
+   /// @dev Function requires that a caller is the holder of the bond which is
+   /// being seized.
+   /// @param operator Address of the bonded operator.
+   /// @param referenceID Reference ID of the bond.
+   /// @param amount Amount to be seized.
+   function seizeBond(address operator, uint256 referenceID, uint256 amount) public {
+      address payable holder = msg.sender;
+      bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
+
+      require(lockedBonds[bondID] >= amount, "Requested amount is greater than the bond");
+
+      lockedBonds[bondID] -= amount;
+      holder.transfer(amount);
+   }
+
    /// @notice Checks if the caller is an authorized contract.
    /// @dev Throws an error if called by any account other than one of the authorized
    /// contracts.
