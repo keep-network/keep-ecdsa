@@ -167,4 +167,32 @@ contract('KeepBonding', (accounts) => {
             )
         })
     })
+    describe('freeBond', async () => {
+        const operator = accounts[1]
+        const holder = accounts[2]
+        const bondValue = new BN(100)
+        const reference = 777
+
+        beforeEach(async () => {
+            await keepBonding.deposit(operator, { value: bondValue })
+            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
+        })
+
+        it('releases bond amount to operator\'s available bonding value', async () => {
+            await keepBonding.freeBond(operator, reference, { from: holder })
+
+            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
+
+            const unbondedValue = await keepBonding.availableBondingValue(operator)
+            expect(unbondedValue).to.eq.BN(bondValue, 'invalid locked bonds')
+        })
+
+        it('fails if sender is not the holder', async () => {
+            await expectRevert(
+                keepBonding.freeBond(operator, reference, { from: accounts[0] }),
+                "Bond not found"
+            )
+        })
+    })
 })
