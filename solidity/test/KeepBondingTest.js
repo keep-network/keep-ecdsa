@@ -167,4 +167,75 @@ contract('KeepBonding', (accounts) => {
             )
         })
     })
+    describe('seizeBond', async () => {
+        const operator = accounts[1]
+        const holder = accounts[2]
+        const bondValue = new BN(100)
+        const reference = 777
+
+        beforeEach(async () => {
+            await keepBonding.deposit(operator, { value: bondValue })
+            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
+        })
+
+        it('transfers whole bond amount to holder\'s account', async () => {
+            const amount = bondValue
+            let expectedBalance = web3.utils.toBN(await web3.eth.getBalance(holder)).add(amount)
+
+            const tx = await keepBonding.seizeBond(operator, reference, amount, { from: holder })
+
+            const gasPrice = web3.utils.toBN(await web3.eth.getGasPrice())
+            const txCost = gasPrice.mul(web3.utils.toBN(tx.receipt.gasUsed))
+            expectedBalance = expectedBalance.sub(txCost)
+
+            const actualBalance = await web3.eth.getBalance(holder)
+            expect(actualBalance).to.eq.BN(expectedBalance, 'invalid holder\'s account balance')
+
+            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
+        })
+
+        it('transfers less than bond amount to holder\'s account', async () => {
+            const remainingBond = new BN(1)
+            const amount = bondValue.sub(remainingBond)
+            let expectedBalance = web3.utils.toBN(await web3.eth.getBalance(holder)).add(amount)
+
+            const tx = await keepBonding.seizeBond(operator, reference, amount, { from: holder })
+
+            const gasPrice = web3.utils.toBN(await web3.eth.getGasPrice())
+            const txCost = gasPrice.mul(web3.utils.toBN(tx.receipt.gasUsed))
+            expectedBalance = expectedBalance.sub(txCost)
+
+            const actualBalance = await web3.eth.getBalance(holder)
+            expect(actualBalance).to.eq.BN(expectedBalance, 'invalid holder\'s account balance')
+
+            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(remainingBond, 'invalid locked bonds')
+        })
+
+        it('accepts seized amount equal zero', async () => {
+            const amount = new BN(0)
+            let expectedBalance = web3.utils.toBN(await web3.eth.getBalance(holder))
+
+            const tx = await keepBonding.seizeBond(operator, reference, amount, { from: holder })
+
+            const gasPrice = web3.utils.toBN(await web3.eth.getGasPrice())
+            const txCost = gasPrice.mul(web3.utils.toBN(tx.receipt.gasUsed))
+            expectedBalance = expectedBalance.sub(txCost)
+
+            const actualBalance = await web3.eth.getBalance(holder)
+            expect(actualBalance).to.eq.BN(expectedBalance, 'invalid holder\'s account balance')
+
+            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(bondValue, 'invalid locked bonds')
+        })
+
+        it('fails if seized amount is greater than bond value', async () => {
+            const amount = bondValue.add(new BN(1))
+            await expectRevert(
+                keepBonding.seizeBond(operator, reference, amount, { from: holder }),
+                "Requested amount is greater than the bond"
+            )
+        })
+    })
 })
