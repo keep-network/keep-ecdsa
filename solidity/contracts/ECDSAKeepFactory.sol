@@ -12,78 +12,69 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
     using AddressArrayUtils for address payable[];
     using SafeMath for uint256;
 
-    // List of keeps.
-    ECDSAKeep[] keeps;
-
-    //SortitionPool pool;
-
-    // List of candidates to be selected as keep members. Once the candidate is
-    // registered it remains on the list forever.
-    // TODO: It's a temporary solution until we implement proper candidate
-    // registration and member selection.
-    address payable[] memberCandidates;
-
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
-        address payable[] members
+        address payable[] members,
+        address application
     );
 
-    /// @notice Register caller as a candidate to be selected as keep member.
+    mapping(address => address) signerPools; // aplication -> signer pool
+
+    bytes32 groupSelectionSeed;
+
+    /// @notice Register caller as a candidate to be selected as keep member
+    /// for the provided customer application
     /// @dev If caller is already registered it returns without any changes.
-    /// TODO: This is a simplified solution until we have proper registration
-    /// and pool selection.
-    function registerMemberCandidate() external {
-        if (!memberCandidates.contains(msg.sender)) {
-            memberCandidates.push(msg.sender);
+    function registerMemberCandidate(address _application) external {
+        if (signerPools[_application] == address(0)) {
+            // This is the first time someone registers as signer for this
+            // application so let's create a signer pool for it.
+            signerPools[_application] = address(new Sortition());
         }
+
+        Sortition signerPool = Sortition(signerPools[_application]);
+        signerPool.insertOperator(msg.sender, 500); // TODO: take weight from staking contract
     }
 
     /// @notice Open a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
-    /// @param _owner Address of the keep owner.
+    /// @param _application Address of the application for which the keep is
+    /// going to be created. This application will be the keep owner.
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
-        address _owner
+        address _application
     ) external payable returns (address keepAddress) {
-        address payable[] memory _members = selectECDSAKeepMembers(_groupSize);
+        address pool = signerPools[_application];
+        require(pool != address(0), "No signer pool for this application");
+
+        address[] memory selected = SortitionPool(pool).selectGroup(
+            _groupSize,
+            groupSelectionSeed
+        );
+
+        address payable[] memory members = new address payable[](_groupSize);
+        for (uint i = 0; i < _groupSize; i++) {
+          // TODO: for each selected member, validate staking weight and create,
+          // bond. If validation failed or bond could not be created, remove
+          // operator from pool and try again.
+          members[i] = address(uint160(selected[i]));
+        }
 
         ECDSAKeep keep = new ECDSAKeep(
-            _owner,
-            _members,
+            _application,
+            members,
             _honestThreshold
         );
-        keeps.push(keep);
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepCreated(keepAddress, _members);
-    }
+        emit ECDSAKeepCreated(keepAddress, members, _application);
 
-    // TODO: Selection of ECDSA Keep members will be rewritten.
-
-    /// @notice Runs member selection for an ECDSA keep.
-    /// @dev Stub implementations generates a group with only one member. Member
-    /// is randomly selected from registered member candidates.
-    /// @param _groupSize Number of members to be selected.
-    /// @return List of selected members addresses.
-    function selectECDSAKeepMembers(
-        uint256 _groupSize
-    ) internal view returns (address payable[] memory members){
-        require(memberCandidates.length > 0, 'keep member candidates list is empty');
-
-        _groupSize;
-
-        members = new address payable[](1);
-
-        // TODO: Use the random beacon for randomness.
-        uint memberIndex = uint256(keccak256(abi.encodePacked(block.timestamp)))
-            % memberCandidates.length;
-
-        members[0] = memberCandidates[memberIndex];
+        // TODO: as beacon for new entry and update groupSelectionSeed in callback
     }
 }
