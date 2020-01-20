@@ -4,6 +4,7 @@ import "./ECDSAKeep.sol";
 import "./api/IECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
@@ -13,6 +14,8 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
 
     // List of keeps.
     ECDSAKeep[] keeps;
+
+    //SortitionPool pool;
 
     // List of candidates to be selected as keep members. Once the candidate is
     // registered it remains on the list forever.
