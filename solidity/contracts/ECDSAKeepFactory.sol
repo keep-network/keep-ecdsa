@@ -5,6 +5,7 @@ import "./api/IECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "@keep-network/sortition-pools/contracts/proxy/SortitionPoolFactory.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
@@ -36,10 +37,11 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
         if (signerPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
-            signerPools[_application] = address(new Sortition());
+            signerPools[_application] = SortitionPoolFactory(sortitionPoolFactoryAddress)
+                .createSortitionPool();
         }
 
-        Sortition signerPool = Sortition(signerPools[_application]);
+        SortitionPool signerPool = SortitionPool(signerPools[_application]);
         signerPool.insertOperator(msg.sender, 500); // TODO: take weight from staking contract
     }
 
