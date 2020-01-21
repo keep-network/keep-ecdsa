@@ -47,17 +47,19 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
 
     /// @notice Open a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
+    /// A caller of this function is expected to be an application for which
+    /// member candidates were registered in a pool.
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
-    /// @param _application Address of the application for which the keep is
-    /// going to be created. This application will be the keep owner.
+    /// @param _owner Address of the keep owner.
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
-        address _application
+        address _owner
     ) external payable returns (address keepAddress) {
-        address pool = signerPools[_application];
+        address application = msg.sender;
+        address pool = signerPools[application];
         require(pool != address(0), "No signer pool for this application");
 
         address[] memory selected = SortitionPool(pool).selectGroup(
@@ -74,7 +76,7 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
         }
 
         ECDSAKeep keep = new ECDSAKeep(
-            _application,
+            _owner,
             members,
             _honestThreshold
         );
