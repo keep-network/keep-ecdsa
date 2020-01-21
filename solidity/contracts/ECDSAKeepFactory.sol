@@ -21,7 +21,8 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
         address application
     );
 
-    mapping(address => address) signerPools; // aplication -> signer pool
+    // Mapping of pools with registered member candidates for each application.
+    mapping(address => address) candidatesPools; // application -> candidates pool
 
     bytes32 groupSelectionSeed;
 
@@ -35,15 +36,15 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
     /// for the provided customer application
     /// @dev If caller is already registered it returns without any changes.
     function registerMemberCandidate(address _application) external {
-        if (signerPools[_application] == address(0)) {
+        if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
-            signerPools[_application] = SortitionPoolFactory(sortitionPoolFactoryAddress)
+            candidatesPools[_application] = SortitionPoolFactory(sortitionPoolFactoryAddress)
                 .createSortitionPool();
         }
 
-        SortitionPool signerPool = SortitionPool(signerPools[_application]);
-        signerPool.insertOperator(msg.sender, 500); // TODO: take weight from staking contract
+        SortitionPool candidatesPool = SortitionPool(candidatesPools[_application]);
+        candidatesPool.insertOperator(msg.sender, 500); // TODO: take weight from staking contract
     }
 
     /// @notice Open a new ECDSA keep.
@@ -60,7 +61,7 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
         address _owner
     ) external payable returns (address keepAddress) {
         address application = msg.sender;
-        address pool = signerPools[application];
+        address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
         address[] memory selected = SortitionPool(pool).selectGroup(
