@@ -17,6 +17,7 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
     event ECDSAKeepCreated(
         address keepAddress,
         address payable[] members,
+        address owner,
         address application
     );
 
@@ -83,7 +84,7 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepCreated(keepAddress, members, _application);
+        emit ECDSAKeepCreated(keepAddress, members, _owner, application);
 
         // TODO: as beacon for new entry and update groupSelectionSeed in callback
     }
