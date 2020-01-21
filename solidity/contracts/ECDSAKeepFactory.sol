@@ -23,6 +23,12 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
 
     bytes32 groupSelectionSeed;
 
+    address sortitionPoolFactoryAddress;
+
+    constructor(address sortitionPoolFactory) public {
+        sortitionPoolFactoryAddress = sortitionPoolFactory;
+    }
+
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application
     /// @dev If caller is already registered it returns without any changes.
