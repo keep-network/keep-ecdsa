@@ -3,10 +3,12 @@ const ECDSAKeepFactory = artifacts.require("./ECDSAKeepFactory.sol");
 const ECDSAKeepVendor = artifacts.require("./ECDSAKeepVendor.sol");
 const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 
+const { SortitionPoolFactoryAddress } = require('./externals')
+
 module.exports = async function (deployer) {
     await deployer.deploy(KeepBonding)
 
-    await deployer.deploy(ECDSAKeepFactory)
+    await deployer.deploy(ECDSAKeepFactory, SortitionPoolFactoryAddress)
     const ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
 
     const ecdsaKeepVendor = await deployer.deploy(ECDSAKeepVendor)
