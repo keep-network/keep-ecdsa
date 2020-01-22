@@ -167,6 +167,74 @@ contract('KeepBonding', (accounts) => {
             )
         })
     })
+
+    describe('reassignBond', async () => {
+        const operator = accounts[1]
+        const holder = accounts[2]
+        const newHolder = accounts[3]
+        const bondValue = new BN(100)
+        const reference = 777
+        const newReference = 888
+
+        beforeEach(async () => {
+            await keepBonding.deposit(operator, { value: bondValue })
+            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
+        })
+
+        it('reassigns bond to a new holder and a new reference', async () => {
+            await keepBonding.reassignBond(operator, reference, newHolder, newReference, { from: holder })
+
+            let lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
+
+            lockedBonds = await keepBonding.getLockedBonds(holder, operator, newReference)
+            expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
+
+            lockedBonds = await keepBonding.getLockedBonds(newHolder, operator, reference)
+            expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
+
+            lockedBonds = await keepBonding.getLockedBonds(newHolder, operator, newReference)
+            expect(lockedBonds).to.eq.BN(bondValue, 'invalid locked bonds')
+        })
+
+        it('reassigns bond to the same holder and a new reference', async () => {
+            await keepBonding.reassignBond(operator, reference, holder, newReference, { from: holder })
+
+            let lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
+
+            lockedBonds = await keepBonding.getLockedBonds(holder, operator, newReference)
+            expect(lockedBonds).to.eq.BN(bondValue, 'invalid locked bonds')
+        })
+
+        it('reassigns bond to a new holder and the same reference', async () => {
+            await keepBonding.reassignBond(operator, reference, newHolder, reference, { from: holder })
+
+            let lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
+
+            lockedBonds = await keepBonding.getLockedBonds(newHolder, operator, reference)
+            expect(lockedBonds).to.eq.BN(bondValue, 'invalid locked bonds')
+        })
+
+        it('fails if sender is not the holder', async () => {
+            await expectRevert(
+                keepBonding.reassignBond(operator, reference, newHolder, newReference, { from: accounts[0] }),
+                "Bond not found"
+            )
+        })
+
+        it('fails if reassigned to the same holder and the same reference', async () => {
+            await keepBonding.deposit(operator, { value: bondValue })
+            await keepBonding.createBond(operator, newReference, bondValue, { from: holder })
+
+            await expectRevert(
+                keepBonding.reassignBond(operator, reference, holder, newReference, { from: holder }),
+                "Reference ID not unique for holder and operator"
+            )
+        })
+    })
+
     describe('freeBond', async () => {
         const operator = accounts[1]
         const holder = accounts[2]
