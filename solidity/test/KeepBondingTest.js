@@ -118,7 +118,7 @@ contract('KeepBonding', (accounts) => {
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
 
             const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
-            expect(lockedBonds).to.eq.BN(value, 'invalid locked bonds')
+            expect(lockedBonds).to.eq.BN(value, 'unexpected bond value')
         })
 
         it('creates two bonds with the same reference for different operators', async () => {
@@ -140,10 +140,10 @@ contract('KeepBonding', (accounts) => {
             expect(unbonded2).to.eq.BN(expectedUnbonded, 'invalid unbonded value 2')
 
             const lockedBonds1 = await keepBonding.getLockedBonds(holder, operator, reference)
-            expect(lockedBonds1).to.eq.BN(bondValue, 'invalid locked bonds')
+            expect(lockedBonds1).to.eq.BN(bondValue, 'unexpected bond value 1')
 
             const lockedBonds2 = await keepBonding.getLockedBonds(holder, operator2, reference)
-            expect(lockedBonds2).to.eq.BN(bondValue, 'invalid locked bonds')
+            expect(lockedBonds2).to.eq.BN(bondValue, 'unexpected bond value 2')
         })
 
         it('fails to create two bonds with the same reference for the same operator', async () => {
@@ -192,7 +192,7 @@ contract('KeepBonding', (accounts) => {
             expect(actualBalance).to.eq.BN(expectedBalance, 'invalid holder\'s account balance')
 
             const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
-            expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
+            expect(lockedBonds).to.eq.BN(0, 'unexpected remaining bond value')
         })
 
         it('transfers less than bond amount to holder\'s account', async () => {
@@ -210,7 +210,7 @@ contract('KeepBonding', (accounts) => {
             expect(actualBalance).to.eq.BN(expectedBalance, 'invalid holder\'s account balance')
 
             const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
-            expect(lockedBonds).to.eq.BN(remainingBond, 'invalid locked bonds')
+            expect(lockedBonds).to.eq.BN(remainingBond, 'unexpected remaining bond value')
         })
 
         it('accepts seized amount equal zero', async () => {
@@ -227,7 +227,7 @@ contract('KeepBonding', (accounts) => {
             expect(actualBalance).to.eq.BN(expectedBalance, 'invalid holder\'s account balance')
 
             const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
-            expect(lockedBonds).to.eq.BN(bondValue, 'invalid locked bonds')
+            expect(lockedBonds).to.eq.BN(bondValue, 'unexpected remaining bond value')
         })
 
         it('fails if seized amount is greater than bond value', async () => {
