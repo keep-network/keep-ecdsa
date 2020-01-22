@@ -118,7 +118,7 @@ contract('KeepBonding', (accounts) => {
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
 
             const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
-            expect(lockedBonds).to.eq.BN(value, 'invalid locked bonds')
+            expect(lockedBonds).to.eq.BN(value, 'unexpected bond value')
         })
 
         it('creates two bonds with the same reference for different operators', async () => {
@@ -140,10 +140,10 @@ contract('KeepBonding', (accounts) => {
             expect(unbonded2).to.eq.BN(expectedUnbonded, 'invalid unbonded value 2')
 
             const lockedBonds1 = await keepBonding.getLockedBonds(holder, operator, reference)
-            expect(lockedBonds1).to.eq.BN(bondValue, 'invalid locked bonds')
+            expect(lockedBonds1).to.eq.BN(bondValue, 'unexpected bond value 1')
 
             const lockedBonds2 = await keepBonding.getLockedBonds(holder, operator2, reference)
-            expect(lockedBonds2).to.eq.BN(bondValue, 'invalid locked bonds')
+            expect(lockedBonds2).to.eq.BN(bondValue, 'unexpected bond value 2')
         })
 
         it('fails to create two bonds with the same reference for the same operator', async () => {
@@ -231,6 +231,69 @@ contract('KeepBonding', (accounts) => {
             await expectRevert(
                 keepBonding.reassignBond(operator, reference, holder, newReference, { from: holder }),
                 "Reference ID not unique for holder and operator"
+            )
+        })
+    })
+
+    describe('seizeBond', async () => {
+        const operator = accounts[1]
+        const holder = accounts[2]
+        const bondValue = new BN(100)
+        const reference = 777
+
+        beforeEach(async () => {
+            await keepBonding.deposit(operator, { value: bondValue })
+            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
+        })
+
+        it('transfers whole bond amount to holder\'s account', async () => {
+            const amount = bondValue
+            let expectedBalance = web3.utils.toBN(await web3.eth.getBalance(holder)).add(amount)
+
+            const tx = await keepBonding.seizeBond(operator, reference, amount, { from: holder })
+
+            const gasPrice = web3.utils.toBN(await web3.eth.getGasPrice())
+            const txCost = gasPrice.mul(web3.utils.toBN(tx.receipt.gasUsed))
+            expectedBalance = expectedBalance.sub(txCost)
+
+            const actualBalance = await web3.eth.getBalance(holder)
+            expect(actualBalance).to.eq.BN(expectedBalance, 'invalid holder\'s account balance')
+
+            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(0, 'unexpected remaining bond value')
+        })
+
+        it('transfers less than bond amount to holder\'s account', async () => {
+            const remainingBond = new BN(1)
+            const amount = bondValue.sub(remainingBond)
+            let expectedBalance = web3.utils.toBN(await web3.eth.getBalance(holder)).add(amount)
+
+            const tx = await keepBonding.seizeBond(operator, reference, amount, { from: holder })
+
+            const gasPrice = web3.utils.toBN(await web3.eth.getGasPrice())
+            const txCost = gasPrice.mul(web3.utils.toBN(tx.receipt.gasUsed))
+            expectedBalance = expectedBalance.sub(txCost)
+
+            const actualBalance = await web3.eth.getBalance(holder)
+            expect(actualBalance).to.eq.BN(expectedBalance, 'invalid holder\'s account balance')
+
+            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(remainingBond, 'unexpected remaining bond value')
+        })
+
+        it('fails if seized amount equals zero', async () => {
+            const amount = new BN(0)
+            await expectRevert(
+                keepBonding.seizeBond(operator, reference, amount, { from: holder }),
+                "Requested amount should be greater than zero"
+            )
+        })
+
+        it('fails if seized amount is greater than bond value', async () => {
+            const amount = bondValue.add(new BN(1))
+            await expectRevert(
+                keepBonding.seizeBond(operator, reference, amount, { from: holder }),
+                "Requested amount is greater than the bond"
             )
         })
     })

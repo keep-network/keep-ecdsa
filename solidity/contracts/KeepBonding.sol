@@ -6,7 +6,7 @@ contract KeepBonding {
    // Unassigned ether values deposited by operators.
    mapping(address => uint256) internal unbondedValue;
    // References to created bonds. Bond identifier is built from operator's
-   // address, holder's address and reference assigned on bond creation.
+   // address, holder's address and reference ID assigned on bond creation.
    mapping(bytes32 => uint256) internal lockedBonds;
 
    /// @notice Returns value of ether available for bonding for the operator.
@@ -74,6 +74,25 @@ contract KeepBonding {
 
       lockedBonds[newBondID] = lockedBonds[bondID];
       lockedBonds[bondID] = 0;
+   }
+
+   /// @notice Seizes the bond by moving some or all of a locked bond to holder's
+   /// account.
+   /// @dev Function requires that a caller is the holder of the bond which is
+   /// being seized.
+   /// @param operator Address of the bonded operator.
+   /// @param referenceID Reference ID of the bond.
+   /// @param amount Amount to be seized.
+   function seizeBond(address operator, uint256 referenceID, uint256 amount) public {
+      require(amount > 0, "Requested amount should be greater than zero");
+
+      address payable holder = msg.sender;
+      bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
+
+      require(lockedBonds[bondID] >= amount, "Requested amount is greater than the bond");
+
+      lockedBonds[bondID] -= amount;
+      holder.transfer(amount);
    }
 
    /// @notice Checks if the caller is an authorized contract.
