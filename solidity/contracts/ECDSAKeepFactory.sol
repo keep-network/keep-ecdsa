@@ -67,12 +67,6 @@ contract ECDSAKeepFactory {
     function selectECDSAKeepMembers(
         uint256 _groupSize
     ) internal view returns (address payable[] memory members){
-        // TODO: Temporarily removed until group selection is implemented.
-        // require(
-        //     memberCandidates.length >= _groupSize,
-        //     'not enough member candidates registered to form a group'
-        // );
-
          members = new address payable[](_groupSize);
 
         // TODO: Use the random beacon for randomness.
