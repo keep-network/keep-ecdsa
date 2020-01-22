@@ -14,6 +14,7 @@ import (
 const (
 	testFixtureDirFormat  = "%s/tss"
 	testFixtureFileFormat = "keygen_data_%d.json"
+	testFixtureFilesCount = 5
 )
 
 // LoadKeygenTestFixtures loads key generation test data.
@@ -24,9 +25,10 @@ const (
 func LoadKeygenTestFixtures(count int) ([]keygen.LocalPartySaveData, error) {
 	keys := make([]keygen.LocalPartySaveData, 0, count)
 	for j := 0; j < count; j++ {
-		// We do `% 5` because only 5 files are stored in test fixtures path.
-		// We loop over the files which allows us to support `count > 5`.
-		fixtureFilePath := makeTestFixtureFilePath(j % 5)
+		// We do `%` because only this number of files are stored in test fixtures path.
+		// We loop over the files which allows us to support `count` greater than
+		// number of files.
+		fixtureFilePath := makeTestFixtureFilePath(j % testFixtureFilesCount)
 
 		bz, err := ioutil.ReadFile(fixtureFilePath)
 		if err != nil {
