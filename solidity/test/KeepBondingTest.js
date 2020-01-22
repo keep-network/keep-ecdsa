@@ -250,10 +250,10 @@ contract('KeepBonding', (accounts) => {
             await keepBonding.freeBond(operator, reference, { from: holder })
 
             const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
-            expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
+            expect(lockedBonds).to.eq.BN(0, 'unexpected remaining locked bonds')
 
             const unbondedValue = await keepBonding.availableBondingValue(operator)
-            expect(unbondedValue).to.eq.BN(bondValue, 'invalid locked bonds')
+            expect(unbondedValue).to.eq.BN(bondValue, 'unexpected unbonded value')
         })
 
         it('fails if sender is not the holder', async () => {
