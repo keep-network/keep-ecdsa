@@ -6,7 +6,7 @@ contract KeepBonding {
    // Unassigned ether values deposited by operators.
    mapping(address => uint256) internal unbondedValue;
    // References to created bonds. Bond identifier is built from operator's
-   // address, holder's address and reference assigned on bond creation.
+   // address, holder's address and reference ID assigned on bond creation.
    mapping(bytes32 => uint256) internal lockedBonds;
 
    /// @notice Returns value of ether available for bonding for the operator.
@@ -76,7 +76,8 @@ contract KeepBonding {
       lockedBonds[bondID] = 0;
    }
 
-   /// @notice Releases a bond to the operator's available bonding value.
+   /// @notice Releases the bond and moves the bond value to the operator's
+   /// unbounded value pool.
    /// @dev Function requires that a caller is the holder of the bond which is
    /// being released.
    /// @param operator Address of the bonded operator.
