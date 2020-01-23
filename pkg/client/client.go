@@ -60,7 +60,7 @@ func Initialize(
 			if memberAddress == ethereumChain.Address() {
 				go func(keepMemberIndex uint) {
 					logger.Infof(
-						"generate signer for keep [%s] with keep member index [%d]",
+						"generating signer for keep [%s] with member index [%d]",
 						event.KeepAddress.String(),
 						keepMemberIndex,
 					)
@@ -75,7 +75,11 @@ func Initialize(
 						return
 					}
 
-					logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
+					logger.Infof(
+						"initialized signer for keep [%s] with member index [%d]",
+						event.KeepAddress.String(),
+						keepMemberIndex,
+					)
 
 					err = keepsRegistry.RegisterSigner(event.KeepAddress, signer)
 					if err != nil {
