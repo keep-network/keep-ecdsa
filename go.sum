@@ -24,8 +24,6 @@ github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
-github.com/binance-chain/tss-lib v1.1.0 h1:ZvY2n1JaxjyJRE7Q/Obz8CkjfXuUkwgJ9/ffSWqAFYU=
-github.com/binance-chain/tss-lib v1.1.0/go.mod h1:5mmPQOOkBIjHxyGVesSUB2AemcZj5YkMJ+HPZY4Jd38=
 github.com/binance-chain/tss-lib v1.1.1 h1:WWVVb7GlWuOy2usumPDWuzR0pTPl+t+faGEjk910o1A=
 github.com/binance-chain/tss-lib v1.1.1/go.mod h1:5mmPQOOkBIjHxyGVesSUB2AemcZj5YkMJ+HPZY4Jd38=
 github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f h1:bAs4lUbRJpnnkd9VhRV3jjAVU7DJVjMaK+IsvSeZvFo=
@@ -190,8 +188,8 @@ github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199 h
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199/go.mod h1:MtZSKNavpxpPY0VLt2sl118IxptrGQDUb/MBu+j2Yow=
 github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e h1:iGKWRCKuuqw8JhByY0d4ahnKem8bh6P/jwzCmlOOxBk=
 github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
-github.com/keep-network/keep-core v0.7.0 h1:EDqdosKVKDbvy4KBbtPJiO2pDQzaxTTzO/Yh4c8ysPg=
-github.com/keep-network/keep-core v0.7.0/go.mod h1:yO/rRZ4Jok7wpvkr2QzdOqmt4efYCW29dGoQfbmPDlY=
+github.com/keep-network/keep-core v0.8.0 h1:HNzr2qA25hW2nGiKlJroKMXIT3yjYutwm8fgoNEFk84=
+github.com/keep-network/keep-core v0.8.0/go.mod h1:yO/rRZ4Jok7wpvkr2QzdOqmt4efYCW29dGoQfbmPDlY=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
