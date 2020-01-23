@@ -22,6 +22,7 @@ type Provider interface {
 	ID() net.TransportIdentifier
 	BroadcastChannelFor(name string) (BroadcastChannel, error)
 	UnicastChannelWith(peer TransportIdentifier) (UnicastChannel, error)
+	TransportIDForPublicKey(publicKey []byte) (net.TransportIdentifier, error)
 }
 
 // UnicastChannel represents a point-to-point channel to a peer. It allows
