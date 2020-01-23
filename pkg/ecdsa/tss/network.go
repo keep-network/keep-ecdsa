@@ -71,6 +71,7 @@ func (b *networkBridge) connect(
 		for {
 			select {
 			case tssLibMsg := <-tssOutChan:
+				go b.sendTSSMessage(ctx, tssLibMsg)
 			case msg := <-b.netInChan:
 				go b.handleTSSProtocolMessage(msg)
 			case <-ctx.Done():
@@ -189,6 +190,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 
 	if routing.To == nil {
 		b.broadcast(
+			ctx,
 			&TSSProtocolMessage{
 				SenderID:    memberIDFromBytes(routing.From.GetKey()),
 				Payload:     bytes,
@@ -210,8 +212,8 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 }
 
-func (b *networkBridge) broadcast(msg *TSSProtocolMessage) error {
-	broadcastChannel, err := b.getBroadcastChannel()
+func (b *networkBridge) broadcast(ctx context.Context, msg *TSSProtocolMessage) error {
+	broadcastChannel, err := b.getBroadcastChannel(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to find broadcast channel: [%v]", err)
 
@@ -224,8 +226,18 @@ func (b *networkBridge) broadcast(msg *TSSProtocolMessage) error {
 	return nil
 }
 
-func (b *networkBridge) sendTo(receiverID net.TransportIdentifier, msg *TSSProtocolMessage) error {
-	unicastChannel, err := b.getUnicastChannelWith(receiverID)
+func (b *networkBridge) sendTo(ctx context.Context, msg *TSSProtocolMessage) error { // TODO: Rename to `send`
+	receiverID := msg.ReceiverID
+	if receiverID == nil {
+		return fmt.Errorf("receiver id not provided")
+	}
+
+	if b.isSameOperator(receiverID) {
+		// TODO: Not supported
+		return fmt.Errorf("remote peer network ID same as current member network ID")
+	}
+
+	unicastChannel, err := b.getUnicastChannelWith(ctx, receiverID)
 	if err != nil {
 		return fmt.Errorf(
 			"[m:%x]: failed to find unicast channel for [%v]: [%v]",

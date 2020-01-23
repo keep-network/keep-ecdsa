@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 
@@ -52,8 +53,8 @@ func (p *localProvider) BroadcastChannelFor(name string) (net.BroadcastChannel, 
 	return p.broadcastProvider.ChannelFor(name)
 }
 
-func (p *localProvider) UnicastChannelWith(peer net.TransportIdentifier) (net.UnicastChannel, error) {
-	return p.unicastProvider.ChannelFor(peer)
+func (p *localProvider) UnicastChannelWith(ctx context.Context, peer net.TransportIdentifier) (net.UnicastChannel, error) {
+	return p.unicastProvider.ChannelFor(ctx, peer)
 }
 
 type localIdentifier string

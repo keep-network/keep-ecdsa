@@ -23,7 +23,7 @@ type BroadcastChannel = coreNet.BroadcastChannel
 type Provider interface {
 	ID() net.TransportIdentifier
 	BroadcastChannelFor(name string) (BroadcastChannel, error)
-	UnicastChannelWith(peer TransportIdentifier) (UnicastChannel, error)
+	UnicastChannelWith(ctx context.Context, peer TransportIdentifier) (UnicastChannel, error)
 	TransportIDForPublicKey(publicKey []byte) (net.TransportIdentifier, error)
 }
 
