@@ -105,6 +105,13 @@ func GenerateThresholdSigner(
 		return nil, fmt.Errorf("failed to join the protocol: [%v]", err)
 	}
 
+	logger.Infof("[party:%s]: members are ready for keygen execution", keyGenSigner.keygenParty.PartyID())
+
+	err = netBridge.initializeUnicastChannels(ctx, membersPublicKeys)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize unicast channels: [%v]", err)
+	}
+
 	logger.Infof("[party:%s]: starting key generation", keyGenSigner.keygenParty.PartyID())
 
 	signer, err := keyGenSigner.generateKey(ctx)
@@ -140,6 +147,15 @@ func (s *ThresholdSigner) CalculateSignature(
 	if err != nil {
 		return nil, fmt.Errorf("failed to join the protocol:: [%v]", err)
 	}
+
+	logger.Infof("[party:%s]: members are ready for signing execution", signingSigner.signingParty.PartyID())
+
+	err = netBridge.initializeUnicastChannels(ctx, membersPublicKeys)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize unicast channels: [%v]", err)
+	}
+
+	logger.Infof("[party:%s]: starting signing", signingSigner.signingParty.PartyID())
 
 	signature, err := signingSigner.sign(ctx)
 	if err != nil {

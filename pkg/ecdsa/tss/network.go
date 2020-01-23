@@ -61,9 +61,9 @@ func (b *networkBridge) connect(
 	party tss.Party,
 	sortedPartyIDs tss.SortedPartyIDs,
 ) error {
-	netInChan := make(chan *TSSProtocolMessage, len(b.groupInfo.groupMemberIDs))
+	b.netInChan = make(chan *TSSProtocolMessage, len(b.groupInfo.groupMemberIDs))
 
-	if err := b.initializeChannels(netInChan); err != nil {
+	if err := b.initializeBroadcastChannel(ctx); err != nil {
 		return fmt.Errorf("failed to initialize channels: [%v]", err)
 	}
 
@@ -71,8 +71,7 @@ func (b *networkBridge) connect(
 		for {
 			select {
 			case tssLibMsg := <-tssOutChan:
-				go b.sendTSSMessage(tssLibMsg)
-			case msg := <-netInChan:
+			case msg := <-b.netInChan:
 				go b.handleTSSProtocolMessage(msg)
 			case <-ctx.Done():
 				if err := b.unregisterRecvs(); err != nil {
@@ -89,20 +88,14 @@ func (b *networkBridge) connect(
 	return nil
 }
 
-func (b *networkBridge) initializeChannels(netInChan chan *TSSProtocolMessage) error {
-	handleMessageFunc := net.HandleMessageFunc{
-		// We don't allow concurrent execution of the protocol, so we use group
-		// ID as handler identifier.
-		Type: b.groupInfo.groupID,
-		Handler: func(msg net.Message) error {
-			switch protocolMessage := msg.Payload().(type) {
-			case *TSSProtocolMessage:
-				netInChan <- protocolMessage
-			}
-
-			return nil
-		},
+func (b *networkBridge) initializeBroadcastChannel(ctx context.Context) error {
+	_, err := b.getBroadcastChannel(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
+
+	return nil
+}
 
 	// Initialize broadcast channel.
 	broadcastChannel, err := b.getBroadcastChannel()
@@ -132,31 +125,34 @@ func (b *networkBridge) initializeChannels(netInChan chan *TSSProtocolMessage) e
 		}
 	}
 
+func (b *networkBridge) initializeUnicastChannels(
+	ctx context.Context,
+	membersPublicKeys map[string][]byte,
+) error {
+	b.membersPublicKeys = membersPublicKeys
+
+	// Initialize unicast channels.
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(len(b.groupInfo.groupMemberIDs) - 1)
+
+	for _, peerMemberID := range b.groupInfo.groupMemberIDs {
+		go func(peerMemberID MemberID) {
+			if peerMemberID.Equal(b.groupInfo.memberID) {
+				return
+			}
+
+			_, err := b.getUnicastChannelWith(ctx, peerMemberID)
+			if err != nil {
+				logger.Errorf("failed to get unicast channel with [%s]: [%v]", peerMemberID, err)
+			}
+
+			waitGroup.Done()
+		}(peerMemberID)
+	}
+
+	waitGroup.Wait()
+
 	return nil
-}
-
-func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
-	b.channelsMutex.Lock()
-	defer b.channelsMutex.Unlock()
-
-	if b.broadcastChannel != nil {
-		return b.broadcastChannel, nil
-	}
-
-	broadcastChannel, err := b.networkProvider.BroadcastChannelFor(b.groupInfo.groupID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
-	}
-
-	if err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &TSSProtocolMessage{}
-	}); err != nil {
-		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
-	}
-
-	b.broadcastChannel = broadcastChannel
-
-	return broadcastChannel, nil
 }
 
 func (b *networkBridge) getUnicastChannelWith(remotePeerID net.TransportIdentifier) (net.UnicastChannel, error) {
