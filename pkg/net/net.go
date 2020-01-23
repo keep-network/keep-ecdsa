@@ -11,7 +11,6 @@ type TransportIdentifier = coreNet.TransportIdentifier
 type Message = coreNet.Message
 type TaggedMarshaler = coreNet.TaggedMarshaler
 type TaggedUnmarshaler = coreNet.TaggedUnmarshaler
-type HandleMessageFunc = coreNet.HandleMessageFunc
 type BroadcastProvider = coreNet.Provider
 type BroadcastChannel = coreNet.BroadcastChannel
 
@@ -34,7 +33,7 @@ type UnicastChannel interface {
 	Send(m TaggedMarshaler) error
 	// Recv registers a handler function to be called upon receipt of a message
 	// delivered through UnicastChannel.
-	Recv(h HandleMessageFunc) error
+	Recv(ctx context.Context, handler func(m Message))
 	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any
 	// registered message handling functions. The unmarshaler should be a
@@ -44,7 +43,4 @@ type UnicastChannel interface {
 	// The string type associated with the unmarshaler is the result of calling
 	// Type() on a raw unmarshaler.
 	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
-	// UnregisterRecv takes the type of HandleMessageFunc and returns an
-	// error. This function should be defered.
-	UnregisterRecv(handlerType string) error
 }
