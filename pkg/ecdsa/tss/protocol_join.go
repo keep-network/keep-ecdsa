@@ -19,13 +19,13 @@ const protocolJoinTimeout = 120 * time.Second
 // error if messages were received from all peer members. If the timeout is
 // reached before receiving messages from all peer members the function returns
 // an error.
-func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider net.Provider) error {
+func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider net.Provider) (map[string][]byte, error) {
 	ctx, cancel := context.WithTimeout(parentCtx, protocolJoinTimeout)
 	defer cancel()
 
 	broadcastChannel, err := networkProvider.BroadcastChannelFor(group.groupID)
 	if err != nil {
-		return fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
+		return nil, fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
 	}
 	// TODO: We ignore the error for the case when the unmarshaler is already
 	// registered. We should rework the `RegisterUnmarshaler` to not return
@@ -34,38 +34,35 @@ func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider n
 		return &JoinMessage{}
 	})
 
-	handleType := fmt.Sprintf("%s-%s", group.groupID, time.Now())
-	joinInChan := make(chan *JoinMessage, len(group.groupMemberIDs))
-	handleJoinMessage := net.HandleMessageFunc{
-		Type: handleType,
-		Handler: func(netMsg net.Message) error {
-			switch msg := netMsg.Payload().(type) {
-			case *JoinMessage:
-				joinInChan <- msg
-			}
-
-			return nil
-		},
+	joinInChan := make(chan net.Message, len(group.groupMemberIDs))
+	handleJoinMessage := func(netMsg net.Message) {
+		switch netMsg.Payload().(type) {
+		case *JoinMessage:
+			joinInChan <- netMsg
+		}
 	}
-	broadcastChannel.Recv(handleJoinMessage)
-	defer broadcastChannel.UnregisterRecv(handleType)
+	broadcastChannel.Recv(ctx, handleJoinMessage)
+
+	membersPublicKeys := make(map[string][]byte) // TODO: Change key type to MemberID
 
 	go func() {
-		readyMembers := make(map[string]bool)
-
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case msg := <-joinInChan:
+			case netMsg := <-joinInChan:
 				for _, memberID := range group.groupMemberIDs {
-					if msg.SenderID.Equal(memberID) {
-						readyMembers[msg.SenderID.String()] = true
+					senderID := netMsg.Payload().(*JoinMessage).SenderID
+
+					if senderID.Equal(memberID) {
+						// TODO: Validate sender public key against SenderID
+
+						membersPublicKeys[senderID.String()] = netMsg.SenderPublicKey()
 						break
 					}
 				}
 
-				if len(readyMembers) == len(group.groupMemberIDs) {
+				if len(membersPublicKeys) == len(group.groupMemberIDs) {
 					cancel()
 				}
 			}
@@ -75,6 +72,7 @@ func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider n
 	go func() {
 		sendMessage := func() {
 			if err := broadcastChannel.Send(
+				ctx,
 				&JoinMessage{SenderID: group.memberID},
 			); err != nil {
 				logger.Errorf("failed to send readiness notification: [%v]", err)
@@ -100,12 +98,12 @@ func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider n
 	<-ctx.Done()
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"waiting for notifications timed out after: [%v]", protocolJoinTimeout,
 		)
 	case context.Canceled:
-		return nil
+		return membersPublicKeys, nil
 	default:
-		return fmt.Errorf("unexpected context error: [%v]", ctx.Err())
+		return nil, fmt.Errorf("unexpected context error: [%v]", ctx.Err())
 	}
 }

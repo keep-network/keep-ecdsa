@@ -3,6 +3,7 @@ package tss
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -43,9 +44,18 @@ func TestJoinNotifier(t *testing.T) {
 
 			defer waitGroup.Done()
 
-			if err := joinProtocol(ctx, groupInfo, tm.networkProvider); err != nil {
+			membersPublicKeys, err := joinProtocol(ctx, groupInfo, tm.networkProvider)
+			if err != nil {
 				errChan <- err
 				return
+			}
+
+			if !reflect.DeepEqual(membersPublicKeys, testMembers.groupPublicKeys()) {
+				t.Errorf(
+					"invalid list of members public keys\nexpected: [%v]\nactual:   [%v]",
+					testMembers.groupPublicKeys(),
+					membersPublicKeys,
+				)
 			}
 
 			mutex.Lock()
@@ -63,7 +73,7 @@ func TestJoinNotifier(t *testing.T) {
 	case <-ctx.Done():
 		if joinedCount != groupSize {
 			t.Errorf(
-				"invalid number of received notifications\nexpected: [%d]\nactual:  [%d]",
+				"invalid number of received notifications\nexpected: [%d]\nactual:   [%d]",
 				groupSize,
 				joinedCount,
 			)
@@ -71,5 +81,4 @@ func TestJoinNotifier(t *testing.T) {
 	case err := <-errChan:
 		t.Fatal(err)
 	}
-
 }
