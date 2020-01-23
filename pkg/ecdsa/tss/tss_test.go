@@ -25,7 +25,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 
 	groupSize := 5
-	localCount := 3
+	localCount := 0 // Current local unicast channel implementation doesn't support multiple members on the same operator.
 	dishonestThreshold := uint(groupSize - 1)
 
 	groupID := fmt.Sprintf("tss-test-%d", rand.Int())
@@ -66,7 +66,6 @@ func TestGenerateKeyAndSign(t *testing.T) {
 					tm.memberID,
 					testMembers.memberIDs(),
 					dishonestThreshold,
-					testMembers.groupNetworkIDs(),
 					tm.networkProvider,
 					&preParams,
 				)
@@ -190,6 +189,7 @@ type testMember struct {
 	memberID        MemberID
 	networkProvider net.Provider
 	networkID       net.TransportIdentifier
+	publicKey       []byte
 }
 
 type testMembers []*testMember
@@ -222,6 +222,7 @@ func generateTestMembers(groupSize int, localMembersCount int) (testMembers, err
 		members[i] = &testMember{
 			memberID:        memberID,
 			networkProvider: networkProvider,
+			publicKey:       key.Marshal(publicKey),
 		}
 	}
 
@@ -238,6 +239,7 @@ func generateTestMembers(groupSize int, localMembersCount int) (testMembers, err
 			members[i] = &testMember{
 				memberID:        memberID,
 				networkProvider: networkProvider,
+				publicKey:       key.Marshal(publicKey),
 			}
 		}
 	}
@@ -245,14 +247,14 @@ func generateTestMembers(groupSize int, localMembersCount int) (testMembers, err
 	return members, nil
 }
 
-func (tms testMembers) groupNetworkIDs() map[string]net.TransportIdentifier {
-	networkIDs := make(map[string]net.TransportIdentifier, len(tms))
+func (tms testMembers) groupPublicKeys() map[string][]byte {
+	publicKeys := make(map[string][]byte, len(tms))
 
 	for _, tm := range tms {
-		networkIDs[tm.memberID.String()] = tm.networkProvider.ID()
+		publicKeys[tm.memberID.String()] = tm.publicKey
 	}
 
-	return networkIDs
+	return publicKeys
 }
 
 func newTestNetProvider(memberNetworkKey *key.NetworkPublic) net.Provider {
