@@ -5,8 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
-
-	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
 // MemberID is an unique identifier of a member across the network.
@@ -65,8 +63,4 @@ type groupInfo struct {
 	// adversary such that the adversary still cannot produce a signature. Any subset
 	// of `t + 1` players can jointly sign, but any smaller subset cannot.
 	dishonestThreshold int
-	// References from unique MemberID used in protocol to an operator's network
-	// layer transport ID. The mapping is used to route unicast messages to an
-	// operator's channel as one operator can serve multiple members.
-	membersNetworkIDs map[string]net.TransportIdentifier
 }

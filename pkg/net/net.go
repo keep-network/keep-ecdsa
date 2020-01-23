@@ -1,6 +1,8 @@
 package net
 
 import (
+	"context"
+
 	"github.com/keep-network/keep-core/pkg/net"
 	coreNet "github.com/keep-network/keep-core/pkg/net"
 )

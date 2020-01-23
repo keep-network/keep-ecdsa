@@ -47,7 +47,6 @@ func GenerateThresholdSigner(
 	memberID MemberID,
 	groupMemberIDs []MemberID,
 	dishonestThreshold uint,
-	membersNetworkIDs map[string]net.TransportIdentifier,
 	networkProvider net.Provider,
 	tssPreParams *keygen.LocalPreParams,
 ) (*ThresholdSigner, error) {
@@ -71,7 +70,6 @@ func GenerateThresholdSigner(
 		memberID:           memberID,
 		groupMemberIDs:     groupMemberIDs,
 		dishonestThreshold: int(dishonestThreshold),
-		membersNetworkIDs:  membersNetworkIDs,
 	}
 
 	if tssPreParams == nil {
@@ -102,7 +100,8 @@ func GenerateThresholdSigner(
 	}
 	logger.Infof("[party:%s]: initialized key generation", keyGenSigner.keygenParty.PartyID())
 
-	if err := joinProtocol(ctx, group, networkProvider); err != nil {
+	membersPublicKeys, err := joinProtocol(ctx, group, networkProvider)
+	if err != nil {
 		return nil, fmt.Errorf("failed to join the protocol: [%v]", err)
 	}
 
@@ -137,7 +136,8 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, fmt.Errorf("failed to initialize signing: [%v]", err)
 	}
 
-	if err := joinProtocol(ctx, s.groupInfo, networkProvider); err != nil {
+	membersPublicKeys, err := joinProtocol(ctx, s.groupInfo, networkProvider)
+	if err != nil {
 		return nil, fmt.Errorf("failed to join the protocol:: [%v]", err)
 	}
 

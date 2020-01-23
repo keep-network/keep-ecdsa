@@ -9,7 +9,6 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
 // Marshal converts ThresholdSigner to byte array.
@@ -26,17 +25,11 @@ func (s *ThresholdSigner) Marshal() ([]byte, error) {
 		groupMemberIDs[i] = memberID
 	}
 
-	membersNetworkIDs := make(map[string]string, len(s.membersNetworkIDs))
-	for memberID, networkID := range s.membersNetworkIDs {
-		membersNetworkIDs[memberID] = networkID.String()
-	}
-
 	group := &pb.ThresholdSigner_GroupInfo{
 		GroupID:            s.groupID,
 		MemberID:           s.memberID,
 		GroupMemberIDs:     groupMemberIDs,
 		DishonestThreshold: int32(s.dishonestThreshold),
-		MembersNetworkIDs:  membersNetworkIDs,
 	}
 
 	return (&pb.ThresholdSigner{
@@ -68,17 +61,11 @@ func (s *ThresholdSigner) Unmarshal(bytes []byte) error {
 		groupMemberIDs[i] = MemberID(memberID)
 	}
 
-	membersNetworkIDs := make(map[string]net.TransportIdentifier, len(pbGroupInfo.GetGroupMemberIDs()))
-	for memberID, networkID := range pbGroupInfo.GetMembersNetworkIDs() {
-		membersNetworkIDs[memberID] = NetworkID(networkID)
-	}
-
 	s.groupInfo = &groupInfo{
 		groupID:            pbGroupInfo.GetGroupID(),
 		memberID:           MemberID(pbGroupInfo.GetMemberID()),
 		groupMemberIDs:     groupMemberIDs,
 		dishonestThreshold: int(pbGroupInfo.GetDishonestThreshold()),
-		membersNetworkIDs:  membersNetworkIDs,
 	}
 
 	return nil

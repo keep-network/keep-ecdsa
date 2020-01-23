@@ -37,7 +37,6 @@ func TestSignerMarshalling(t *testing.T) {
 			memberID:           groupMembersIDs[signerIndex],
 			groupMemberIDs:     groupMembersIDs,
 			dishonestThreshold: dishonestThreshold,
-			membersNetworkIDs:  membersNetworkIDs,
 		},
 		thresholdKey: ThresholdKey(testData[signerIndex]),
 	}

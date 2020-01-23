@@ -2,7 +2,6 @@
 package node
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -45,18 +44,13 @@ func (n *Node) GenerateSignerForKeep(
 	keepMemberIndex uint,
 ) (*tss.ThresholdSigner, error) {
 	groupMemberIDs := []tss.MemberID{}
-	membersNetworkIDs := make(map[string]net.TransportIdentifier) // < memberID, networkID >
-
-	for i, keepMember := range keepMembers {
+	for i := range keepMembers {
 		memberID := tss.MemberID(fmt.Sprintf("member-%d", i))
 
 		groupMemberIDs = append(
 			groupMemberIDs,
 			memberID,
 		)
-
-		networkID := hex.EncodeToString(keepMember.Bytes())
-		membersNetworkIDs[memberID.String()] = tss.NetworkID(networkID)
 	}
 
 	signer, err := tss.GenerateThresholdSigner(
@@ -64,7 +58,6 @@ func (n *Node) GenerateSignerForKeep(
 		groupMemberIDs[keepMemberIndex],
 		groupMemberIDs,
 		uint(len(keepMembers)-1),
-		membersNetworkIDs,
 		n.networkProvider,
 		n.tssParamsPool.get(),
 	)
