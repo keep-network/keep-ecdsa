@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/pbutils"
 )
 
@@ -24,11 +23,6 @@ func TestSignerMarshalling(t *testing.T) {
 
 	for i := range groupMembersIDs {
 		groupMembersIDs[i] = MemberID([]byte(fmt.Sprintf("member-%d", i)))
-	}
-
-	membersNetworkIDs := make(map[string]net.TransportIdentifier, groupSize)
-	for i, memberID := range groupMembersIDs {
-		membersNetworkIDs[memberID.String()] = NetworkID(fmt.Sprintf("member-%d", i))
 	}
 
 	signer := &ThresholdSigner{
