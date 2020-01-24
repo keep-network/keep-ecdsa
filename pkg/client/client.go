@@ -15,9 +15,12 @@ import (
 var logger = log.Logger("keep-tecdsa")
 
 // Initialize initializes the tECDSA client with rules related to events handling.
+// Expects a slice of sanctioned applications selected by the operator for which
+// operator will be registered as a member candidate.
 func Initialize(
 	ethereumChain eth.Handle,
 	persistence persistence.Handle,
+	sanctionedApplications []common.Address,
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
