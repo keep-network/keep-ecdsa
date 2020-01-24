@@ -6,8 +6,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/blockcypher"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/btc/electrum"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 )
 
@@ -15,8 +13,6 @@ const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
 // Config is the top level config structure.
 type Config struct {
-	Electrum               electrum.Config
-	BlockCypher            blockcypher.Config
 	Ethereum               ethereum.Config
 	SanctionedApplications SanctionedApplications
 	Storage                Storage
