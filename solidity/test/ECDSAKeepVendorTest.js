@@ -88,47 +88,4 @@ contract("ECDSAKeepVendor", async accounts => {
             assert.equal(result, expectedResult, "unexpected factory selected")
         })
     })
-
-    describe("openKeep", async () => {
-        before(async () => {
-            keepVendor = await ECDSAKeepVendorStub.new()
-        })
-
-        it("reverts if no factories registered", async () => {
-            try {
-                await keepVendor.openKeep(
-                    10, // _groupSize
-                    5, // _honestThreshold
-                    "0xbc4862697a1099074168d54A555c4A60169c18BD", // _owner
-                )
-
-                assert(false, 'Test call did not error as expected')
-            } catch (e) {
-                assert.include(e.message, 'No factories registered')
-            }
-        })
-
-        it("calls selected factory", async () => {
-            let factoryStub = await ECDSAKeepFactoryStub.new()
-            await keepVendor.registerFactory(factoryStub.address)
-
-            let selectedFactory = await ECDSAKeepFactoryStub.at(
-                await keepVendor.selectFactoryPublic.call()
-            )
-
-            let expectedResult = await selectedFactory.calculateKeepAddress.call()
-
-            const result = await keepVendor.openKeep.call(
-                10, // _groupSize
-                5, // _honestThreshold
-                "0xbc4862697a1099074168d54A555c4A60169c18BD", // _owner
-            )
-
-            assert.equal(result, expectedResult, "unexpected opened keep address")
-        })
-
-        it.skip("transfers value to factory", async () => {
-            // TODO: Write test
-        })
-    })
 })

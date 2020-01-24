@@ -1,13 +1,13 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
+import "./api/IECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title ECDSA Keep Factory
-/// @notice Contract creating ECDSA keeps.
-/// @dev TODO: This is a stub contract - needs to be implemented.
-contract ECDSAKeepFactory {
+/// @notice Contract creating bonded ECDSA keeps.
+contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAKeepFactory
     using AddressArrayUtils for address payable[];
     using SafeMath for uint256;
 
