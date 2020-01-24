@@ -10,10 +10,11 @@ const snapshotIdsStack = [];
 export async function createSnapshot() {
     return await new Promise((res, rej) => {
         web3.currentProvider.send({
+            id: Math.random(), // we provide id as this is required by WS provider
             jsonrpc: '2.0',
             method: 'evm_snapshot',
             params: [],
-        }, function(err, result) {
+        }, function (err, result) {
             if (err) rej(err);
             const snapshotId = result.result;
             snapshotIdsStack.push(snapshotId);
@@ -29,10 +30,11 @@ export async function restoreSnapshot() {
     const snapshotId = snapshotIdsStack.pop();
     return await new Promise((res, rej) => {
         web3.currentProvider.send({
+            id: Math.random(), // we provide id as this is required by WS provider
             jsonrpc: '2.0',
             method: 'evm_revert',
             params: [snapshotId],
-        }, function(err, result) {
+        }, function (err, result) {
             if (err) rej(err);
             else res()
         })

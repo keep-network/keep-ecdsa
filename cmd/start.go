@@ -59,9 +59,15 @@ func Start(c *cli.Context) error {
 
 	ctx := context.Background()
 
+	sanctionedApplications, err := config.SanctionedApplications.Addresses()
+	if err != nil {
+		return fmt.Errorf("failed to get sanctioned applications addresses: [%v]", err)
+	}
+
 	client.Initialize(
 		ethereumChain,
 		persistence,
+		sanctionedApplications,
 	)
 
 	logger.Info("client started")

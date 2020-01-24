@@ -6,9 +6,11 @@ import "../../contracts/ECDSAKeepFactory.sol";
 /// @dev This contract is for testing purposes only.
 contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
 
-    // @dev Returns list of registered members.
-    function getMemberCandidates() public view returns (address payable[] memory){
-        return memberCandidates;
+    constructor(address sortitionPoolFactory) ECDSAKeepFactory(sortitionPoolFactory) public {}
+
+    // @dev Returns address of registered signer pool.
+    function getSignerPool(address application) public view returns (address){
+        return candidatesPools[application];
     }
 
     // @dev Returns calculated keep address.
@@ -30,13 +32,4 @@ contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
         uint256 factoryAddressInt = uint256(address(this));
         return address(factoryAddressInt % 1000000000000);
     }
-
-    function submittedTicketsCount() public view returns (uint256) {
-        return tickets.length;
-    }
-
-    function getGroupSelectionRelayEntry() public view returns (uint256) {
-        return seed;
-    }
-
 }

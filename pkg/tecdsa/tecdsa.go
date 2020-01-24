@@ -46,6 +46,8 @@ func (t *TECDSA) RegisterForSignEvents(
 			}()
 		},
 	)
+
+	logger.Debugf("registered for signing requests from keep [%s]", keepAddress.String())
 }
 
 // GenerateSignerForKeep generates a new signer with ECDSA key pair. It publishes
