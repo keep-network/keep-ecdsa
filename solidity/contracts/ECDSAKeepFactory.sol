@@ -26,10 +26,10 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
 
     bytes32 groupSelectionSeed;
 
-    address sortitionPoolFactoryAddress;
+    SortitionPoolFactory sortitionPoolFactory;
 
-    constructor(address sortitionPoolFactory) public {
-        sortitionPoolFactoryAddress = sortitionPoolFactory;
+    constructor(address _sortitionPoolFactory) public {
+        sortitionPoolFactory = SortitionPoolFactory(_sortitionPoolFactory);
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
@@ -39,8 +39,7 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
         if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
-            candidatesPools[_application] = SortitionPoolFactory(sortitionPoolFactoryAddress)
-                .createSortitionPool();
+            candidatesPools[_application] = sortitionPoolFactory.createSortitionPool();
         }
 
         SortitionPool candidatesPool = SortitionPool(candidatesPools[_application]);
