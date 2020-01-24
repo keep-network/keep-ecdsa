@@ -10,7 +10,7 @@ contract KeepBondingStub is KeepBonding {
     /// @dev This is a stub implementation to validate bonds mapping.
     /// @return Value assigned in the locked bond mapping.
     function getLockedBonds(address holder, address operator, uint256 referenceID) public view returns (uint256) {
-        bytes memory bondID = abi.encodePacked(operator, holder, referenceID);
+        bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
         return lockedBonds[bondID];
     }
 }
