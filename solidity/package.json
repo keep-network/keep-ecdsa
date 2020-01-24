@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/keep-network/keep-tecdsa",
   "dependencies": {
-    "@keep-network/sortition-pools": "git+ssh://git@github.com/keep-network/sortition-pools.git#clone-factory",
+    "@keep-network/sortition-pools": "0.1.1-pre.2",
     "openzeppelin-solidity": "2.3.0",
     "solidity-bytes-utils": "0.0.7"
   },
