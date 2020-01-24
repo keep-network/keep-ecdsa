@@ -13,6 +13,7 @@ module.exports = async function () {
     let keepRegistry
     let keepFactory
     let keepOwner
+    let application
     let startBlockNumber
     let keep
     let keepPublicKey
@@ -23,6 +24,7 @@ module.exports = async function () {
 
         const accounts = await web3.eth.getAccounts();
         keepOwner = accounts[1]
+        application = "0x2AA420Af8CB62888ACBD8C7fAd6B4DdcDD89BC82"
 
         startBlockNumber = await web3.eth.getBlock('latest').number
     } catch (err) {
@@ -34,10 +36,13 @@ module.exports = async function () {
         console.log('open new keep...')
         const keepVendorAddress = await keepRegistry.getVendor.call("ECDSAKeep")
         const keepVendor = await ECDSAKeepVendor.at(keepVendorAddress)
-        await keepVendor.openKeep(
+        const keepFactoryAddress = await keepVendor.selectFactory()
+        keepFactory = await ECDSAKeepFactory.at(keepFactoryAddress)
+        await keepFactory.openKeep(
             10,
             5,
-            keepOwner
+            keepOwner,
+            { from: application }
         )
 
         const eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
