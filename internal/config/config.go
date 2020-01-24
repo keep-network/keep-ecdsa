@@ -22,8 +22,8 @@ type Config struct {
 	Storage                Storage
 }
 
-// SanctionedApplications contains addresses of applications which operator selected
-// as approved and wants to opt in.
+// SanctionedApplications contains addresses of applications approved by the
+// operator.
 type SanctionedApplications struct {
 	AddressesStrings []string `toml:"Addresses"`
 }

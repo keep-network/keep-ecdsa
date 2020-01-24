@@ -61,7 +61,7 @@ func Start(c *cli.Context) error {
 
 	sanctionedApplications, err := config.SanctionedApplications.Addresses()
 	if err != nil {
-		return fmt.Errorf("failed to get applications addresses: [%v]", err)
+		return fmt.Errorf("failed to get sanctioned applications addresses: [%v]", err)
 	}
 
 	client.Initialize(

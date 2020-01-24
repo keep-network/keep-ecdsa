@@ -69,6 +69,9 @@ func Initialize(
 
 	// Register client as a candidate member for keep.
 	for _, application := range sanctionedApplications {
+		// TODO: Validate if client is already registered and can be registered.
+		// If can register but it is not registered, it is registering. If can't
+		// be registered yet (stake maturation period), waits some time and tries again
 		if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
 			logger.Errorf(
 				"failed to register member for application [%s]: [%v]",
