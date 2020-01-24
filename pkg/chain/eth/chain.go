@@ -25,7 +25,7 @@ type Handle interface {
 type ECDSAKeepFactory interface {
 	// RegisterAsMemberCandidate registers client as a candidate to be selected
 	// to a keep.
-	RegisterAsMemberCandidate() error
+	RegisterAsMemberCandidate(application common.Address) error
 
 	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
 	// notification of a new ECDSA keep creation is seen.
