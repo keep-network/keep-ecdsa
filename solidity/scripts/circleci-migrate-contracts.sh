@@ -56,6 +56,8 @@ ssh utilitybox << EOF
 
   npm install
 
+  ./migrations/external/fetch-contracts.sh
+
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
 EOF
