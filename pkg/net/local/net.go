@@ -35,7 +35,7 @@ func (p *localProvider) BroadcastChannelFor(name string) (net.BroadcastChannel, 
 }
 
 func (p *localProvider) UnicastChannelWith(name string) (net.UnicastChannel, error) {
-	return p.unicastProvider.ChannelFor(name)
+	return p.unicastProvider.UnicastChannelWith(name)
 }
 
 type localIdentifier string
