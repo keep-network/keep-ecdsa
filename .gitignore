@@ -29,3 +29,6 @@ build/
 
 # Configuration files
 configs/config.toml
+
+# External artifacts
+solidity/migrations/external/contracts/*.json
