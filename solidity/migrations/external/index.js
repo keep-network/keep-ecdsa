@@ -3,8 +3,6 @@
 
 const TruffleContract = require('@truffle/contract')
 
-const SortitionPoolFactory = TruffleContract(require("./contracts/SortitionPoolFactory.json"))
-
-module.exports = {
-  SortitionPoolFactory,
+export function SortitionPoolFactory() {
+  return TruffleContract(require("./contracts/SortitionPoolFactory.json"))
 }
