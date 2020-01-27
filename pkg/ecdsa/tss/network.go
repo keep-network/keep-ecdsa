@@ -53,7 +53,7 @@ func (b *networkBridge) connect(
 ) error {
 	netInChan := make(chan *TSSProtocolMessage, len(b.groupInfo.groupMemberIDs))
 
-	if err := b.initializeChannels(netInChan); err != nil {
+	if err := b.initializeChannels(ctx, netInChan); err != nil {
 		return fmt.Errorf("failed to initialize channels: [%v]", err)
 	}
 
@@ -79,19 +79,15 @@ func (b *networkBridge) connect(
 	return nil
 }
 
-func (b *networkBridge) initializeChannels(netInChan chan *TSSProtocolMessage) error {
-	handleMessageFunc := net.HandleMessageFunc{
-		// We don't allow concurrent execution of the protocol, so we use group
-		// ID as handler identifier.
-		Type: b.groupInfo.groupID,
-		Handler: func(msg net.Message) error {
-			switch protocolMessage := msg.Payload().(type) {
-			case *TSSProtocolMessage:
-				netInChan <- protocolMessage
-			}
-
-			return nil
-		},
+func (b *networkBridge) initializeChannels(
+	ctx context.Context,
+	netInChan chan *TSSProtocolMessage,
+) error {
+	handleFn := func(msg net.Message) {
+		switch protocolMessage := msg.Payload().(type) {
+		case *TSSProtocolMessage:
+			netInChan <- protocolMessage
+		}
 	}
 
 	// Initialize broadcast channel.
@@ -100,7 +96,12 @@ func (b *networkBridge) initializeChannels(netInChan chan *TSSProtocolMessage) e
 		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	if err := broadcastChannel.Recv(handleMessageFunc); err != nil {
+	if err := broadcastChannel.Recv(net.HandleMessageFunc{
+		Type: b.groupInfo.groupID,
+		Handler: func(msg net.Message) error {
+			handleFn(msg)
+			return nil
+		}}); err != nil {
 		return fmt.Errorf("failed to register receive handler for broadcast channel: [%v]", err)
 	}
 
@@ -115,9 +116,7 @@ func (b *networkBridge) initializeChannels(netInChan chan *TSSProtocolMessage) e
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}
 
-		if err := unicastChannel.Recv(handleMessageFunc); err != nil {
-			return fmt.Errorf("failed to register receive handler for unicast channel: [%v]", err)
-		}
+		unicastChannel.Recv(ctx, handleFn)
 	}
 
 	return nil
@@ -161,11 +160,9 @@ func (b *networkBridge) getUnicastChannelWith(remotePeerID string) (net.UnicastC
 		return nil, fmt.Errorf("failed to get unicast channel: [%v]", err)
 	}
 
-	if err := unicastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	unicastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &TSSProtocolMessage{}
-	}); err != nil {
-		return nil, fmt.Errorf("failed to register unmarshaler for unicast channel: [%v]", err)
-	}
+	})
 
 	b.unicastChannels[remotePeerID] = unicastChannel
 
@@ -278,15 +275,6 @@ func (b *networkBridge) unregisterRecvs() error {
 			"failed to unregister receive handler for broadcast channel: [%v]",
 			err,
 		)
-	}
-
-	for _, unicastChannel := range b.unicastChannels {
-		if err := unicastChannel.UnregisterRecv(b.groupInfo.groupID); err != nil {
-			return fmt.Errorf(
-				"failed to unregister receive handler for unicast channel: [%v]",
-				err,
-			)
-		}
 	}
 
 	return nil
