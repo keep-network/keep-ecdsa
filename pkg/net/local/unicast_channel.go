@@ -1,19 +1,19 @@
-package local2
+package local
 
 import (
 	"context"
 	"fmt"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
+	"github.com/keep-network/keep-tecdsa/pkg/net/internal"
 )
 
 type unicastChannel struct {
 	structMutex *sync.RWMutex
 
 	senderTransportID net.TransportIdentifier
-	senderPublicKey   *key.NetworkPublic
+	senderPublicKey   []byte
 
 	receiverTransportID net.TransportIdentifier
 
@@ -28,7 +28,7 @@ type unicastChannelRecv struct {
 
 func newUnicastChannel(
 	senderTransportID net.TransportIdentifier,
-	senderPublicKey *key.NetworkPublic,
+	senderPublicKey []byte,
 	receiverTransportID net.TransportIdentifier,
 ) *unicastChannel {
 	return &unicastChannel{
@@ -42,7 +42,17 @@ func newUnicastChannel(
 }
 
 func (uc *unicastChannel) Send(message net.TaggedMarshaler) error {
-	panic("not implemented yet")
+	marshalled, err := message.Marshal()
+	if err != nil {
+		return fmt.Errorf("could not marshal message [%v]", err)
+	}
+
+	return deliverMessage(
+		uc.senderTransportID,
+		uc.receiverTransportID,
+		marshalled,
+		message.Type(),
+	)
 }
 
 func (uc *unicastChannel) Recv(
@@ -58,26 +68,42 @@ func (uc *unicastChannel) Recv(
 	)
 }
 
-func (uc *unicastChannel) RegisterUnmarshaler(
+func (uc *unicastChannel) SetUnmarshaler(
 	unmarshaler func() net.TaggedUnmarshaler,
+) {
+	uc.structMutex.Lock()
+	defer uc.structMutex.Unlock()
+
+	uc.unmarshalersByType[unmarshaler().Type()] = unmarshaler
+}
+
+func (uc *unicastChannel) receiveMessage(
+	messagePayload []byte,
+	messageType string,
 ) error {
 	uc.structMutex.Lock()
 	defer uc.structMutex.Unlock()
 
-	tpe := unmarshaler().Type()
-
-	_, exists := uc.unmarshalersByType[tpe]
-	if exists {
-		return fmt.Errorf("type %s already has an associated unmarshaler", tpe)
+	unmarshaler, found := uc.unmarshalersByType[messageType]
+	if !found {
+		return fmt.Errorf(
+			"couldn't find unmarshaler for type [%s]",
+			messageType,
+		)
 	}
 
-	uc.unmarshalersByType[tpe] = unmarshaler
-	return nil
-}
+	unmarshaled := unmarshaler()
+	err := unmarshaled.Unmarshal(messagePayload)
+	if err != nil {
+		return err
+	}
 
-func (uc *unicastChannel) receiveMessage(message net.Message) {
-	uc.structMutex.Lock()
-	defer uc.structMutex.Unlock()
+	message := internal.BasicMessage(
+		uc.senderTransportID,
+		unmarshaled,
+		messageType,
+		uc.senderPublicKey,
+	)
 
 	i := 0
 	for _, receiver := range uc.messageReceivers {
@@ -95,4 +121,6 @@ func (uc *unicastChannel) receiveMessage(message net.Message) {
 
 	// cleaning up those no longer active
 	uc.messageReceivers = uc.messageReceivers[:i]
+
+	return nil
 }

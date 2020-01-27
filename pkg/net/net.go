@@ -1,6 +1,9 @@
 package net
 
 import (
+	"context"
+
+	"github.com/keep-network/keep-core/pkg/net"
 	coreNet "github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -20,7 +23,9 @@ type BroadcastChannel = coreNet.BroadcastChannel
 // UnicastChannel established with a peer.
 type Provider interface {
 	BroadcastChannelFor(name string) (BroadcastChannel, error)
-	UnicastChannelWith(peer string) (UnicastChannel, error)
+
+	UnicastChannelWith(remotePeer net.TransportIdentifier) (UnicastChannel, error)
+	OnUnicastChannelOpened(ctx context.Context, handler func(remote UnicastChannel))
 }
 
 // UnicastChannel represents a point-to-point channel to a peer. It allows
@@ -32,8 +37,8 @@ type UnicastChannel interface {
 	Send(m TaggedMarshaler) error
 	// Recv registers a handler function to be called upon receipt of a message
 	// delivered through UnicastChannel.
-	Recv(h HandleMessageFunc) error
-	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
+	Recv(ctx context.Context, handler func(message net.Message))
+	// SetUnmarshaler sets an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any
 	// registered message handling functions. The unmarshaler should be a
 	// function that returns a fresh object of type proto.TaggedUnmarshaler,
@@ -41,8 +46,5 @@ type UnicastChannel interface {
 	//
 	// The string type associated with the unmarshaler is the result of calling
 	// Type() on a raw unmarshaler.
-	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
-	// UnregisterRecv takes the type of HandleMessageFunc and returns an
-	// error. This function should be defered.
-	UnregisterRecv(handlerType string) error
+	SetUnmarshaler(unmarshaler func() TaggedUnmarshaler)
 }

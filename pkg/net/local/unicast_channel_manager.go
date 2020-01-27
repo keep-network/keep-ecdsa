@@ -1,7 +1,6 @@
-package local2
+package local
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/keep-network/keep-tecdsa/pkg/net"
@@ -13,24 +12,20 @@ type unicastChannelManager struct {
 }
 
 func newUnicastChannelManager() *unicastChannelManager {
-	return &unicastChannelManager {
+	return &unicastChannelManager{
 		structMutex: &sync.RWMutex{},
-		channels: make(map[net.TransportIdentifier]*unicastChannel),
+		channels:    make(map[net.TransportIdentifier]*unicastChannel),
 	}
 }
 
 func (ucm *unicastChannelManager) getChannel(
 	receiver net.TransportIdentifier,
-) (*unicastChannel, error) {
+) (*unicastChannel, bool) {
 	ucm.structMutex.RLock()
 	defer ucm.structMutex.RUnlock()
 
 	channel, ok := ucm.channels[receiver]
-	if !ok {
-		return nil, fmt.Errorf("no channel with [%v]", receiver)
-	}
-
-	return channel, nil
+	return channel, ok
 }
 
 func (ucm *unicastChannelManager) addChannel(channel *unicastChannel) {

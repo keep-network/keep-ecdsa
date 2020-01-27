@@ -1,4 +1,4 @@
-package local2
+package local
 
 import (
 	"context"
@@ -6,9 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
-	"github.com/keep-network/keep-tecdsa/pkg/net/internal"
 )
 
 func TestReceiveUnicastMessage(t *testing.T) {
@@ -18,19 +16,15 @@ func TestReceiveUnicastMessage(t *testing.T) {
 	ctx2, cancel2 := context.WithCancel(context.Background())
 	defer cancel2()
 
-	peer1ID := localIdentifier("peer-1")
-	_, peer1PubKey, err := key.GenerateStaticNetworkKey()
-	if err != nil {
-		t.Fatal(err)
-	}
+	peer1ID := localIdentifier("peer-0x1231AA")
+	peer1PubKey := []byte("0x1231AA")
 
-	peer2ID := localIdentifier("peer-2")
-	_, peer2PubKey, err := key.GenerateStaticNetworkKey()
-	if err != nil {
-		t.Fatal(err)
-	}
+	peer2ID := localIdentifier("peer-0xAEA712")
 
 	unicastChannel := newUnicastChannel(peer1ID, peer1PubKey, peer2ID)
+	unicastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &mockMessage{}
+	})
 
 	received := make(chan net.Message)
 	unicastChannel.Recv(ctx, func(msg net.Message) {
@@ -42,14 +36,19 @@ func TestReceiveUnicastMessage(t *testing.T) {
 		received2 <- msg
 	})
 
-	message := internal.BasicMessage(peer2ID, "payload", "type", peer2PubKey.X.Bytes())
-	unicastChannel.receiveMessage(message)
+	message := &mockMessage{"hello"}
+	marshaled, err := message.Marshal()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	unicastChannel.receiveMessage(marshaled, message.Type())
 
 	select {
 	case <-ctx.Done():
 		t.Fatal("expected message not received")
 	case actual := <-received:
-		if !reflect.DeepEqual(actual, message) {
+		if !reflect.DeepEqual(actual.Payload(), message) {
 			t.Errorf(
 				"unexpected message\nactual:   [%v]\nexpected: [%v]",
 				actual,
@@ -62,7 +61,7 @@ func TestReceiveUnicastMessage(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal("expected message not received")
 	case actual := <-received2:
-		if !reflect.DeepEqual(actual, message) {
+		if !reflect.DeepEqual(actual.Payload(), message) {
 			t.Errorf(
 				"unexpected message\nactual:   [%v]\nexpected: [%v]",
 				actual,
@@ -79,19 +78,15 @@ func TestTimedOutHandlerNotReceiveUnicastMessage(t *testing.T) {
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel2()
 
-	peer1ID := localIdentifier("peer-1")
-	_, peer1PubKey, err := key.GenerateStaticNetworkKey()
-	if err != nil {
-		t.Fatal(err)
-	}
+	peer1ID := localIdentifier("peer-0xAAEF12")
+	peer1PubKey := []byte("0xAAEF12")
 
-	peer2ID := localIdentifier("peer-2")
-	_, peer2PubKey, err := key.GenerateStaticNetworkKey()
-	if err != nil {
-		t.Fatal(err)
-	}
+	peer2ID := localIdentifier("peer-0x121211")
 
 	unicastChannel := newUnicastChannel(peer1ID, peer1PubKey, peer2ID)
+	unicastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &mockMessage{}
+	})
 
 	received := make(chan net.Message)
 	unicastChannel.Recv(ctx, func(msg net.Message) {
@@ -105,8 +100,13 @@ func TestTimedOutHandlerNotReceiveUnicastMessage(t *testing.T) {
 
 	cancel() // cancel the first context
 
-	message := internal.BasicMessage(peer2ID, "payload", "type", peer2PubKey.X.Bytes())
-	unicastChannel.receiveMessage(message)
+	message := &mockMessage{"hello"}
+	marshaled, err := message.Marshal()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	unicastChannel.receiveMessage(marshaled, message.Type())
 
 	select {
 	case <-received:
