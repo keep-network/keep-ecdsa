@@ -2,39 +2,78 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./api/IECDSAKeepVendor.sol";
-import "./utils/AddressArrayUtils.sol";
 
-/// @title ECDSA Keep Vendor
-/// @notice The contract can be used to obtain a new ECDSA keep.
-/// @dev Interacts with ECDSA keep factory to obtain a new instance of the ECDSA
-/// keep. Several versions of ECDSA keep factories can be registered for the vendor.
-/// TODO: This is a stub contract - needs to be implemented.
-/// TODO: When more keep types are added consider extracting registration and
-/// selection to a separate inheritable contract.
-contract ECDSAKeepVendor is IECDSAKeepVendor, Ownable { // TODO: Rename to BondedECDSAKeepVendor
-    using AddressArrayUtils for address payable[];
+contract ECDSAKeepVendor is Ownable {
+    // Storage position of the address of the current implementation
+    bytes32 private constant implementationPosition = keccak256(
+        "network.keep.bondedecdsavendor.proxy.implementation"
+    );
 
-    // List of ECDSA keep factories.
-    address payable[] public factories;
+    event Upgraded(address implementation);
 
-    /// @notice Register new ECDSA keep factory.
-    /// @dev Adds a factory address to the list of registered factories. Address
-    /// cannot be zero and cannot be already registered.
-    /// @param _factory ECDSA keep factory address.
-    function registerFactory(address payable _factory) external onlyOwner {
-        require(!factories.contains(_factory), "Factory address already registered");
-
-        factories.push(_factory);
+    constructor(address _implementation) public {
+        require(_implementation != address(0), "Implementation address can't be zero.");
+        setImplementation(_implementation);
     }
 
-    /// @notice Select a recommended ECDSA keep factory from all registered
-    /// ECDSA keep factories.
-    /// @dev This is a stub implementation returning first factory on the list.
-    /// @return Selected ECDSA keep factory address.
-    function selectFactory() public view returns (address payable) {
-        require(factories.length > 0, "No factories registered");
+    /**
+     * @dev Gets the address of the current implementation.
+     * @return address of the current implementation.
+    */
+    function implementation() public view returns (address _implementation) {
+        bytes32 position = implementationPosition;
+        /* solium-disable-next-line */
+        assembly {
+            _implementation := sload(position)
+        }
+    }
 
-        // TODO: Implement factory selection mechanism.
-        return factories[factories.length - 1];
+    /**
+     * @dev Sets the address of the current implementation.
+     * @param _implementation address representing the new implementation to be set.
+    */
+    function setImplementation(address _implementation) internal {
+        bytes32 position = implementationPosition;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _implementation)
+        }
+    }
+
+    /**
+     * @dev Delegate call to the current implementation contract.
+     */
+    function() external payable {
+        address _impl = implementation();
+        /* solium-disable-next-line */
+        assembly {
+            let ptr := mload(0x40)
+            calldatacopy(ptr, 0, calldatasize)
+            let result := delegatecall(gas, _impl, ptr, calldatasize, 0, 0)
+            let size := returndatasize
+            returndatacopy(ptr, 0, size)
+
+            switch result
+            case 0 { revert(ptr, size) }
+            default { return(ptr, size) }
+        }
+    }
+
+    /**
+     * @dev Upgrade current implementation.
+     * @param _implementation Address of the new implementation contract.
+     */
+    function upgradeTo(address _implementation) public onlyOwner {
+        address currentImplementation = implementation();
+        require(
+            _implementation != address(0),
+            "Implementation address can't be zero."
+        );
+        require(
+            _implementation != currentImplementation,
+            "Implementation address must be different from the current one."
+        );
+        setImplementation(_implementation);
+        emit Upgraded(_implementation);
     }
 }
