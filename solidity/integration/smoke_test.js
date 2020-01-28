@@ -39,8 +39,10 @@ module.exports = async function () {
         const keepFactoryAddress = await keepVendor.selectFactory()
         keepFactory = await ECDSAKeepFactory.at(keepFactoryAddress)
         await keepFactory.openKeep(
-            10,
-            5,
+            // TODO: Currently only single member keep is supported. We will be
+            // able to handle group of multiple members after TSS protocol implementation.
+            1,
+            1,
             keepOwner,
             { from: application }
         )
