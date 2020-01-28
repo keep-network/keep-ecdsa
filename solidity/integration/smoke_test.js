@@ -34,9 +34,10 @@ module.exports = async function () {
         const keepFactoryAddress = await keepVendor.selectFactory()
         keepFactory = await ECDSAKeepFactory.at(keepFactoryAddress)
         await keepFactory.openKeep(
-            10,
-            5,
+            10, // group size
+            5,  // threshold
             keepOwner,
+            1,  // bond
             { from: application }
         )
 

@@ -94,9 +94,10 @@ contract("ECDSAKeepFactory", async accounts => {
 
             try {
                 await keepFactory.openKeep(
-                    10, // _groupSize
-                    5, // _honestThreshold
-                    keepOwner // _owner
+                    10,        // _groupSize
+                    5,         // _honestThreshold
+                    keepOwner, // _owner
+                    1          // _bond
                 )
 
                 assert(false, 'Test call did not error as expected')
@@ -116,16 +117,18 @@ contract("ECDSAKeepFactory", async accounts => {
             let blockNumber = await web3.eth.getBlockNumber()
 
             let keepAddress = await keepFactory.openKeep.call(
-                3, // _groupSize
-                2, // _honestThreshold
+                3,         // _groupSize
+                2,         // _honestThreshold
                 keepOwner, // _owner
+                1,         // _bond
                 { from: application }
             )
 
             await keepFactory.openKeep(
-                3, // _groupSize
-                2, // _honestThreshold
-                keepOwner, // _owner
+                3,          // _groupSize
+                2,          // _honestThreshold
+                keepOwner,  // _owner
+                1,          // _bond
                 { from: application }
             )
 
