@@ -1,7 +1,6 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./api/IECDSAKeepVendor.sol";
 
 contract BondedECDSAKeepVendor is Ownable {
     // Storage position of the address of the current implementation
