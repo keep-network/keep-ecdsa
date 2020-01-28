@@ -3,22 +3,15 @@ const ECDSAKeepFactory = artifacts.require("./ECDSAKeepFactory.sol");
 const ECDSAKeepVendor = artifacts.require("./ECDSAKeepVendor.sol");
 const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 
-const SortitionPoolFactoryStub = artifacts.require("./SortitionPoolFactoryStub");
-
-let { SortitionPoolFactoryAddress } = require('./externals')
+const deploySortitionPoolFactory = require('@keep-network/sortition-pools/migrations/scripts/deployContracts')
+const SortitionPoolFactory = artifacts.require("SortitionPoolFactory");
 
 module.exports = async function (deployer) {
     await deployer.deploy(KeepBonding)
 
-    // TODO: Temporarily we use stub of sortition pool factory until deployment
-    // process is implemented and address of SortitionPoolFactory is provided in
-    // `externals.js` file. Later we should use the stub for executing unit tests
-    // in the CI process.
-    // if (process.env.TEST = true) {
-    SortitionPoolFactoryAddress = (await deployer.deploy(SortitionPoolFactoryStub)).address
-    // }
+    await deploySortitionPoolFactory(artifacts, deployer)
 
-    await deployer.deploy(ECDSAKeepFactory, SortitionPoolFactoryAddress)
+    await deployer.deploy(ECDSAKeepFactory, SortitionPoolFactory.address)
     const ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
 
     const ecdsaKeepVendor = await deployer.deploy(ECDSAKeepVendor)
