@@ -3,7 +3,7 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./api/IECDSAKeepVendor.sol";
 
-contract ECDSAKeepVendor is Ownable {
+contract BondedECDSAKeepVendor is Ownable {
     // Storage position of the address of the current implementation
     bytes32 private constant implementationPosition = keccak256(
         "network.keep.bondedecdsavendor.proxy.implementation"

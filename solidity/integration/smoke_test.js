@@ -1,4 +1,5 @@
-const ECDSAKeepVendor = artifacts.require('./ECDSAKeepVendor.sol')
+const BondedECDSAKeepVendor = artifacts.require('./BondedECDSAKeepVendor.sol')
+const ECDSAKeepVendorImplV1 = artifacts.require('./ECDSAKeepVendorImplV1.sol')
 const ECDSAKeepFactory = artifacts.require('./ECDSAKeepFactory.sol')
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 
@@ -27,8 +28,9 @@ module.exports = async function () {
     }
 
     try {
-        console.log('open new keep...')
-        const keepVendor = await ECDSAKeepVendor.deployed()
+        const keepVendor = await ECDSAKeepVendorImplV1.at(
+            (await BondedECDSAKeepVendor.deployed()).address
+        )
         const keepFactoryAddress = await keepVendor.selectFactory()
         keepFactory = await ECDSAKeepFactory.at(keepFactoryAddress)
         await keepFactory.openKeep(
