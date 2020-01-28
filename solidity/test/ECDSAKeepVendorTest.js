@@ -1,4 +1,4 @@
-var ECDSAKeepVendor = artifacts.require('ECDSAKeepVendorStub')
+var ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
 var ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
 
 contract("ECDSAKeepVendor", async accounts => {
@@ -10,7 +10,7 @@ contract("ECDSAKeepVendor", async accounts => {
 
     describe("registerFactory", async () => {
         beforeEach(async () => {
-            keepVendor = await ECDSAKeepVendor.new()
+            keepVendor = await ECDSAKeepVendorStub.new()
         })
 
         it("registers one factory address", async () => {
@@ -74,7 +74,7 @@ contract("ECDSAKeepVendor", async accounts => {
 
     describe("selectFactory", async () => {
         before(async () => {
-            keepVendor = await ECDSAKeepVendor.new()
+            keepVendor = await ECDSAKeepVendorStub.new()
         })
 
         it("returns last factory from the list", async () => {
@@ -86,49 +86,6 @@ contract("ECDSAKeepVendor", async accounts => {
             let result = await keepVendor.selectFactoryPublic()
 
             assert.equal(result, expectedResult, "unexpected factory selected")
-        })
-    })
-
-    describe("openKeep", async () => {
-        before(async () => {
-            keepVendor = await ECDSAKeepVendor.new()
-        })
-
-        it("reverts if no factories registered", async () => {
-            try {
-                await keepVendor.openKeep(
-                    10, // _groupSize
-                    5, // _honestThreshold
-                    "0xbc4862697a1099074168d54A555c4A60169c18BD", // _owner
-                )
-
-                assert(false, 'Test call did not error as expected')
-            } catch (e) {
-                assert.include(e.message, 'No factories registered')
-            }
-        })
-
-        it("calls selected factory", async () => {
-            let factoryStub = await ECDSAKeepFactoryStub.new()
-            await keepVendor.registerFactory(factoryStub.address)
-
-            let selectedFactory = await ECDSAKeepFactoryStub.at(
-                await keepVendor.selectFactoryPublic.call()
-            )
-
-            let expectedResult = await selectedFactory.calculateKeepAddress.call()
-
-            const result = await keepVendor.openKeep.call(
-                10, // _groupSize
-                5, // _honestThreshold
-                "0xbc4862697a1099074168d54A555c4A60169c18BD", // _owner
-            )
-
-            assert.equal(result, expectedResult, "unexpected opened keep address")
-        })
-
-        it.skip("transfers value to factory", async () => {
-            // TODO: Write test
         })
     })
 })

@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/keep-ecdsa",
-  "version": "0.1.2",
+  "version": "0.1.8",
   "description": "Smart contracts for ECDSA Keep",
   "repository": {
     "type": "git",
@@ -16,7 +16,7 @@
     "truffle": "truffle",
     "clean": "rm -rf build/",
     "build": "truffle compile",
-    "test": "truffle test"
+    "test": "TEST=true truffle test"
   },
   "author": "Jakub Nowakowski <jakub.nowakowski@keep.network>",
   "license": "MIT",
@@ -25,7 +25,9 @@
   },
   "homepage": "https://github.com/keep-network/keep-tecdsa",
   "dependencies": {
-    "openzeppelin-solidity": "^2.3.0"
+    "@keep-network/sortition-pools": "0.1.1-pre.2",
+    "openzeppelin-solidity": "2.3.0",
+    "solidity-bytes-utils": "0.0.7"
   },
   "devDependencies": {
     "@babel/cli": "^7.4.4",
@@ -34,6 +36,7 @@
     "@babel/polyfill": "^7.4.4",
     "@babel/preset-env": "^7.4.5",
     "@babel/register": "^7.4.4",
+    "bn-chai": "^1.0.1",
     "chai": "^4.2.0",
     "openzeppelin-test-helpers": "^0.4.3",
     "solc": "^0.5.8",

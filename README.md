@@ -63,6 +63,7 @@ Sample configuration can be found in [config.toml.SAMPLE](configs/config.toml.SA
 - `ECDSAKeepFactory` contract address provided in `config.toml`
 - ethereum account `KeyFile` path provided in `config.toml` and password to the
   key file provided as `KEEP_ETHEREUM_PASSWORD` environment variable
+- [addresses of application](https://github.com/keep-network/keep-tecdsa/blob/69768219221e6adef7dbcaf0035237846f3523a5/solidity/integration/smoke_test.js#L27) provided in `config.toml` in `SanctionedApplications` list
 - off-chain [client](#Client) running
 
 To run a smoke test execute:
@@ -86,5 +87,3 @@ To start a client from source code execute:
 ```sh
 LOG_LEVEL="debug" KEEP_ETHEREUM_PASSWORD="password" go run . start
 ```
-
----

@@ -30,13 +30,13 @@ spec:
     spec:
       containers:
       - name: keep-tecdsa
-        image: gcr.io/keep-dev-fe24/keep-tecdsa
+        image: gcr.io/keep-test-f3e0/keep-tecdsa
         env:
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: eth-account-passphrase
-                key: account-passphrase
+                key: eth-account-passphrase
           - name: LOG_LEVEL
             value: debug
         volumeMounts:
@@ -62,13 +62,13 @@ spec:
           claimName: keep-tecdsa-data
       initContainers:
       - name: initcontainer-provision-keep-tecdsa
-        image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-tecdsa
+        image: gcr.io/keep-test-f3e0/initcontainer-provision-keep-tecdsa
         env:
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: eth-account-passphrase
-                key: account-passphrase
+                key: eth-account-passphrase
           - name: KEEP_TECDSA_ETH_KEYFILE
             value: /mnt/keep-tecdsa/eth/eth_account_keyfile
           - name: KEEP_DATA_DIR
@@ -83,6 +83,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: keep-tecdsa-config
+  namespace: tbtc
 spec:
   accessModes:
     - ReadWriteOnce

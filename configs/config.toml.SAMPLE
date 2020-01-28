@@ -11,5 +11,10 @@
 [ethereum.ContractAddresses]
      ECDSAKeepFactory = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
+# Addresses of applications approved by the operator.
+[SanctionedApplications]
+Addresses = ["0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+             "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"]
+
 [Storage]
     DataDir = "/my/secure/location"

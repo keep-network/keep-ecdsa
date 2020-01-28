@@ -19,10 +19,10 @@ type Handle interface {
 
 // ECDSAKeepFactory is an interface that provides ability to interact with
 // ECDSAKeepFactory ethereum contracts.
-type ECDSAKeepFactory interface {
+type ECDSAKeepFactory interface { // TODO: Rename to BondedECDSAKeepFactory
 	// RegisterAsMemberCandidate registers client as a candidate to be selected
 	// to a keep.
-	RegisterAsMemberCandidate() error
+	RegisterAsMemberCandidate(application common.Address) error
 
 	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
 	// notification of a new ECDSA keep creation is seen.
@@ -33,7 +33,7 @@ type ECDSAKeepFactory interface {
 
 // ECDSAKeep is an interface that provides ability to interact with ECDSAKeep
 // ethereum contracts.
-type ECDSAKeep interface {
+type ECDSAKeep interface { // TODO: Rename to BondedECDSAKeep
 	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new signing request for a given keep is seen.
 	OnSignatureRequested(

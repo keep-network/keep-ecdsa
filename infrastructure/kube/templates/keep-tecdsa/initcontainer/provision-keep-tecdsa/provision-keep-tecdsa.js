@@ -117,7 +117,7 @@ async function createKeepTecdsaConfig(operator) {
     let parsedConfigFile = toml.parse(data);
 
     parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
-    parsedConfigFile.ethereum.account.KeyFile = '/mnt/keep-tecdsa/config/eth_account_keyfile';
+    parsedConfigFile.ethereum.account.KeyFile = process.env.KEEP_TECDSA_ETH_KEYFILE
     parsedConfigFile.ethereum.ContractAddresses.ECDSAKeepFactory = ecdsaKeepFactoryContractAddress;
     parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 

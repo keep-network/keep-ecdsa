@@ -16,10 +16,13 @@ import (
 var logger = log.Logger("keep-tecdsa")
 
 // Initialize initializes the ECDSA client with rules related to events handling.
+// Expects a slice of sanctioned applications selected by the operator for which
+// operator will be registered as a member candidate.
 func Initialize(
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
 	persistence persistence.Handle,
+	sanctionedApplications []common.Address,
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
@@ -86,11 +89,24 @@ func Initialize(
 	})
 
 	// Register client as a candidate member for keep.
-	if err := ethereumChain.RegisterAsMemberCandidate(); err != nil {
-		logger.Errorf("failed to register member: [%v]", err)
+	for _, application := range sanctionedApplications {
+		// TODO: Validate if client is already registered and can be registered.
+		// If can register but it is not registered, it is registering. If can't
+		// be registered yet (stake maturation period), waits some time and tries again
+		if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
+			logger.Errorf(
+				"failed to register member for application [%s]: [%v]",
+				application.String(),
+				err,
+			)
+		}
+		logger.Debugf(
+			"client registered as member candidate for application: [%s]",
+			application.String(),
+		)
 	}
 
-	logger.Infof("client registered as member candidate in keep factory")
+	logger.Infof("client initialized")
 }
 
 // registerForSignEvents registers for signature requested events emitted by
