@@ -63,6 +63,8 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
+        // TODO: Check if enough operators are registered in the pool.
+
         address[] memory selected = SortitionPool(pool).selectGroup(
             _groupSize,
             groupSelectionSeed
