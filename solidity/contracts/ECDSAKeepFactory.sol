@@ -68,24 +68,68 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
             groupSelectionSeed
         );
 
+        uint256 latestSelectionIteration = _groupSize;
+
         address payable[] memory members = new address payable[](_groupSize);
-        for (uint i = 0; i < _groupSize; i++) {
+        for (uint256 i = 0; i < _groupSize; i++) {
+            // TODO: This is a temporary solution until client is able to handle
+            // multiple members for one operator.
+            (members[i], latestSelectionIteration) = ensureMemberUniqueness(
+                SortitionPool(pool),
+                members,
+                address(uint160(selected[i])),
+                latestSelectionIteration++
+            );
+
           // TODO: for each selected member, validate staking weight and create,
           // bond. If validation failed or bond could not be created, remove
           // operator from pool and try again.
-          members[i] = address(uint160(selected[i]));
+
         }
 
-        ECDSAKeep keep = new ECDSAKeep(
-            _owner,
-            members,
-            _honestThreshold
-        );
+        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold);
 
         keepAddress = address(keep);
 
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
 
         // TODO: as beacon for new entry and update groupSelectionSeed in callback
+
+    }
+
+    /// @notice Ensures a new member is unique for the current members array.
+    /// @dev If the member is already included in the current members array it
+    /// selects a new member in a loop until a unique member is obtained. The pool's
+    /// `selectGroup` function ensures that the same set of members is selected
+    /// for given group size and seed, hence we need to modify the group size
+    /// to get new selection results until we hit a unique one.
+    /// @param _pool Sortition Pool to use for group selection.
+    /// @param _currentMembers Currently selected unique members.
+    /// @param _newMember Address of a member to validate uniqueness.
+    /// @param _currentIteration Track iteration for group selection in the sortition
+    /// pool.
+    /// @return Unique member for the current members array.
+    function ensureMemberUniqueness(
+        SortitionPool _pool,
+        address payable[] memory _currentMembers,
+        address payable _newMember,
+        uint256 _currentIteration
+    ) internal returns (address payable, uint256) {
+        if (_currentMembers.contains(_newMember)) {
+            address replacement = _pool.selectGroup(
+                _currentIteration,
+                groupSelectionSeed
+            )[_currentIteration - 1];
+
+            return
+                ensureMemberUniqueness(
+                    _pool,
+                    _currentMembers,
+                    address(uint160(replacement)),
+                    _currentIteration + 1
+                );
+        } else {
+            return (_newMember, _currentIteration);
+        }
     }
 }
