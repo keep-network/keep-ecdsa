@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
-import "./api/IECDSAKeepFactory.sol";
+import "./api/IBondedECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
@@ -9,7 +9,7 @@ import "@keep-network/sortition-pools/contracts/SortitionPoolFactory.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
-contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAKeepFactory
+contract ECDSAKeepFactory is IBondedECDSAKeepFactory { // TODO: Rename to BondedECDSAKeepFactory
     using AddressArrayUtils for address payable[];
     using SafeMath for uint256;
 

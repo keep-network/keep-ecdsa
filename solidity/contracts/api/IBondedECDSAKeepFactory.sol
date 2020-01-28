@@ -2,7 +2,7 @@ pragma solidity ^0.5.4;
 
 /// @title Bonded ECDSA Keep Factory
 /// @notice Factory for Bonded ECDSA Keeps.
-contract IECDSAKeepFactory { // TODO: Rename to IBondedECDSAKeepFactory
+contract IBondedECDSAKeepFactory {
     /// @notice Open a new ECDSA Keep.
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
