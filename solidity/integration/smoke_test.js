@@ -1,4 +1,3 @@
-const KeepRegistry = artifacts.require('./KeepRegistry.sol')
 const ECDSAKeepVendor = artifacts.require('./ECDSAKeepVendor.sol')
 const ECDSAKeepFactory = artifacts.require('./ECDSAKeepFactory.sol')
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
@@ -10,8 +9,6 @@ const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 // To execute this smoke test run:
 // truffle exec integration/smoke_test.js
 module.exports = async function () {
-    let keepRegistry
-    let keepFactory
     let keepOwner
     let application
     let startBlockNumber
@@ -19,12 +16,9 @@ module.exports = async function () {
     let keepPublicKey
 
     try {
-        keepRegistry = await KeepRegistry.deployed()
-        keepFactory = await ECDSAKeepFactory.deployed()
-
         const accounts = await web3.eth.getAccounts();
         keepOwner = accounts[1]
-        application = "0x2AA420Af8CB62888ACBD8C7fAd6B4DdcDD89BC82"
+        application = "0x72e81c70670F0F89c1e3E8a29409157BC321B107"
 
         startBlockNumber = await web3.eth.getBlock('latest').number
     } catch (err) {
@@ -34,8 +28,7 @@ module.exports = async function () {
 
     try {
         console.log('open new keep...')
-        const keepVendorAddress = await keepRegistry.getVendor.call("ECDSAKeep")
-        const keepVendor = await ECDSAKeepVendor.at(keepVendorAddress)
+        const keepVendor = await ECDSAKeepVendor.deployed()
         const keepFactoryAddress = await keepVendor.selectFactory()
         keepFactory = await ECDSAKeepFactory.at(keepFactoryAddress)
         await keepFactory.openKeep(
