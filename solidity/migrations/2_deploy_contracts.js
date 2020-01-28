@@ -1,7 +1,7 @@
 const KeepBonding = artifacts.require("./KeepBonding.sol");
 const ECDSAKeepFactory = artifacts.require("./ECDSAKeepFactory.sol");
 const BondedECDSAKeepVendor = artifacts.require("./BondedECDSAKeepVendor.sol");
-const BondedECDSAKeepVendorImplV1 = artifacts.require("./ECDSAKeepVendorImplV1.sol");
+const BondedECDSAKeepVendorImplV1 = artifacts.require("./BondedECDSAKeepVendorImplV1.sol");
 
 const deploySortitionPoolFactory = require('@keep-network/sortition-pools/migrations/scripts/deployContracts')
 const SortitionPoolFactory = artifacts.require("SortitionPoolFactory");
