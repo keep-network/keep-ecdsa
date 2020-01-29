@@ -70,28 +70,19 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
             "Not enough member candidates registered in the pool"
         );
 
-        address[] memory selected = SortitionPool(pool).selectGroup(
+        // TODO: This is a temporary solution until client is able to handle
+        // multiple members for one operator, then we can move to `selectGroup`.
+        address[] memory selected = SortitionPool(pool).selectSetGroup(
             _groupSize,
             groupSelectionSeed
         );
 
-        uint256 latestSelectionIteration = _groupSize;
-
         address payable[] memory members = new address payable[](_groupSize);
         for (uint256 i = 0; i < _groupSize; i++) {
-            // TODO: This is a temporary solution until client is able to handle
-            // multiple members for one operator.
-            (members[i], latestSelectionIteration) = ensureMemberUniqueness(
-                SortitionPool(pool),
-                members,
-                address(uint160(selected[i])),
-                latestSelectionIteration++
-            );
-
-          // TODO: for each selected member, validate staking weight and create,
-          // bond. If validation failed or bond could not be created, remove
-          // operator from pool and try again.
-
+            // TODO: for each selected member, validate staking weight and create,
+            // bond. If validation failed or bond could not be created, remove
+            // operator from pool and try again.
+            members[i] = address(uint160(selected[i]));
         }
 
         ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold);
