@@ -124,8 +124,7 @@ contract("ECDSAKeepFactory", async accounts => {
 
                 assert(false, 'Test call did not error as expected')
             } catch (e) {
-                // TODO: It is expected that this case will be verified by contract in require statement with appropriate error message
-                assert.include(e.message, "revert")
+                assert.include(e.message, "Not enough member candidates registered in the pool")
             }
         })
 
