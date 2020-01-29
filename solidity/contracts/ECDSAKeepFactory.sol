@@ -63,29 +63,26 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
-        address[] memory selected = SortitionPool(pool).selectGroup(
+        address[] memory selected = SortitionPool(pool).selectSetGroup(
             _groupSize,
             groupSelectionSeed
         );
 
         address payable[] memory members = new address payable[](_groupSize);
-        for (uint i = 0; i < _groupSize; i++) {
-          // TODO: for each selected member, validate staking weight and create,
-          // bond. If validation failed or bond could not be created, remove
-          // operator from pool and try again.
-          members[i] = address(uint160(selected[i]));
+        for (uint256 i = 0; i < _groupSize; i++) {
+            // TODO: for each selected member, validate staking weight and create,
+            // bond. If validation failed or bond could not be created, remove
+            // operator from pool and try again.
+            members[i] = address(uint160(selected[i]));
         }
 
-        ECDSAKeep keep = new ECDSAKeep(
-            _owner,
-            members,
-            _honestThreshold
-        );
+        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold);
 
         keepAddress = address(keep);
 
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
 
         // TODO: as beacon for new entry and update groupSelectionSeed in callback
+
     }
 }
