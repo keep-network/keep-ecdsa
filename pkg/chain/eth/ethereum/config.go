@@ -28,7 +28,10 @@ type Account struct {
 	// imported keys in your local Ethereum server. It can normally be found in
 	// a directory <some-path>/data/keystore/ and starts with its creation date
 	// "UTC--.*".
-	KeyFile string
+	// TODO: This should be reverted when we've got network unicast implemented.
+	// As a temporary solution to support multiple operators on one client
+	// we changed it to a slice.
+	KeyFile []string
 
 	// KeyFilePassword is the password used to unlock the account specified in
 	// KeyFile.
