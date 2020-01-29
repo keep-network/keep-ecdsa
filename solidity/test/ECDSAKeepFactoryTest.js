@@ -124,7 +124,7 @@ contract("ECDSAKeepFactory", async accounts => {
 
                 assert(false, 'Test call did not error as expected')
             } catch (e) {
-                assert.include(e.message, "Not enough member candidates registered in the pool")
+                assert.include(e.message, "Not enough operators in pool")
             }
         })
 
