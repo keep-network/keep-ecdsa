@@ -7,7 +7,8 @@ contract IBondedECDSAKeepFactory {
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Address of the keep owner.
-    /// @param _bond value of ETH bond required from the keep.
+    /// @param _bond Value of ETH bond required from the keep.
+    /// @return Address of the opened keep.
     function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
