@@ -28,6 +28,8 @@ module.exports = async function () {
     }
 
     try {
+        console.log('opening a new keep...');
+
         const keepVendor = await BondedECDSAKeepVendorImplV1.at(
             (await BondedECDSAKeepVendor.deployed()).address
         )
