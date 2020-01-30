@@ -49,10 +49,9 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 	// Key generation.
 	signersMutex := sync.Mutex{}
-	signers := make(map[MemberID]*ThresholdSigner)
+	signers := make(map[string]*ThresholdSigner)
 
 	keyGenDone := make(chan interface{})
-	KeyGenSync.Add(groupSize) // TODO: Temp Sync
 
 	go func() {
 		var keyGenWait sync.WaitGroup
@@ -60,19 +59,8 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 		for i, memberID := range groupMemberIDs {
 			go func(memberID MemberID) {
-				keygenErrChan := make(chan error)
-				go func() {
-					for {
-						select {
-						case err := <-keygenErrChan:
-							errChan <- err
-							return
-						}
-					}
-				}()
-
-				network := newTestNetProvider(memberID, groupMembersKeys, keygenErrChan)
-				networkProviders.Store(memberID, network)
+				network := newTestNetProvider(groupMembersKeys[memberID.String()])
+				networkProviders.Store(memberID.String(), network)
 
 				preParams := testData[i].LocalPreParams
 
@@ -85,11 +73,11 @@ func TestGenerateKeyAndSign(t *testing.T) {
 					&preParams,
 				)
 				if err != nil {
-					keygenErrChan <- fmt.Errorf("failed to generate signer: [%v]", err)
+					errChan <- fmt.Errorf("failed to generate signer: [%v]", err)
 				}
 
 				signersMutex.Lock()
-				signers[memberID] = signer
+				signers[memberID.String()] = signer
 				signersMutex.Unlock()
 
 				keyGenWait.Done()
@@ -108,7 +96,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Fatal(ctx.Err())
 	}
 
-	firstSigner := signers[groupMemberIDs[0]]
+	firstSigner := signers[groupMemberIDs[0].String()]
 	firstPublicKey := firstSigner.PublicKey()
 	curve := secp256k1.S256()
 
@@ -132,31 +120,19 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	digest := sha256.Sum256(message)
 
 	signatureMutex := sync.Mutex{}
-	signatures := make(map[MemberID]*ecdsa.Signature)
+	signatures := make(map[string]*ecdsa.Signature)
 
 	signingDone := make(chan interface{})
-
-	SigningSync.Add(groupSize) // TODO: Temp Sync
 
 	go func() {
 		var signingWait sync.WaitGroup
 		signingWait.Add(groupSize)
 
-		for memberID, signer := range signers {
+		for memberIDHex, signer := range signers {
+			memberID, _ := MemberIDFromHex(memberIDHex)
+
 			go func(memberID MemberID, signer *ThresholdSigner) {
-				signingErrChan := make(chan error)
-
-				go func() {
-					for {
-						select {
-						case err := <-signingErrChan:
-							errChan <- err
-							return
-						}
-					}
-				}()
-
-				value, loaded := networkProviders.Load(memberID)
+				value, loaded := networkProviders.Load(memberID.String())
 				if !loaded {
 					errChan <- fmt.Errorf("failed to load network provider")
 					return
@@ -173,7 +149,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				}
 
 				signatureMutex.Lock()
-				signatures[memberID] = signature
+				signatures[memberID.String()] = signature
 				signatureMutex.Unlock()
 
 				signingWait.Done()
@@ -196,7 +172,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Errorf("invalid number of signatures\nexpected: %d\nactual:   %d", groupSize, len(signatures))
 	}
 
-	firstSignature := signatures[groupMemberIDs[0]]
+	firstSignature := signatures[groupMemberIDs[0].String()]
 	for _, signature := range signatures {
 		if !reflect.DeepEqual(firstSignature, signature) {
 			t.Errorf(
@@ -219,9 +195,9 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	testutils.VerifyEthereumSignature(t, digest[:], firstSignature, firstPublicKey)
 }
 
-func generateMemberKeys(groupSize int) ([]MemberID, map[MemberID]*key.NetworkPublic, error) {
+func generateMemberKeys(groupSize int) ([]MemberID, map[string]*key.NetworkPublic, error) {
 	memberIDs := []MemberID{}
-	groupMembersKeys := make(map[MemberID]*key.NetworkPublic, groupSize)
+	groupMembersKeys := make(map[string]*key.NetworkPublic, groupSize)
 
 	for i := 0; i < groupSize; i++ {
 		_, publicKey, err := key.GenerateStaticNetworkKey()
@@ -229,23 +205,18 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[MemberID]*key.NetworkPub
 			return nil, nil, fmt.Errorf("failed to generate network key: [%v]", err)
 		}
 
-		memberID := MemberID(string(key.Marshal(publicKey)))
+		memberID, err := MemberIDFromHex(key.NetworkPubKeyToEthAddress(publicKey))
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to convert address to member ID: [%v]", err)
+		}
 
 		memberIDs = append(memberIDs, memberID)
-		groupMembersKeys[memberID] = publicKey
+		groupMembersKeys[memberID.String()] = publicKey
 	}
 
 	return memberIDs, groupMembersKeys, nil
 }
 
-func newTestNetProvider(
-	memberID MemberID,
-	membersNetworkKeys map[MemberID]*key.NetworkPublic,
-	errChan chan error,
-) net.Provider {
-	return local.LocalProvider(
-		memberID.bigInt().String(),
-		membersNetworkKeys[memberID],
-		errChan,
-	)
+func newTestNetProvider(memberNetworkKey *key.NetworkPublic) net.Provider {
+	return local.LocalProvider(memberNetworkKey)
 }

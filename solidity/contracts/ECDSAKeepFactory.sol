@@ -9,7 +9,9 @@ import "@keep-network/sortition-pools/contracts/SortitionPoolFactory.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
-contract ECDSAKeepFactory is IBondedECDSAKeepFactory { // TODO: Rename to BondedECDSAKeepFactory
+contract ECDSAKeepFactory is
+    IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
+{
     using AddressArrayUtils for address payable[];
     using SafeMath for uint256;
 
@@ -39,11 +41,18 @@ contract ECDSAKeepFactory is IBondedECDSAKeepFactory { // TODO: Rename to Bonded
         if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
-            candidatesPools[_application] = sortitionPoolFactory.createSortitionPool();
+            candidatesPools[_application] = sortitionPoolFactory
+                .createSortitionPool();
         }
 
-        SortitionPool candidatesPool = SortitionPool(candidatesPools[_application]);
-        candidatesPool.insertOperator(msg.sender, 500); // TODO: take weight from staking contract
+        SortitionPool candidatesPool = SortitionPool(
+            candidatesPools[_application]
+        );
+
+        address operator = msg.sender;
+        if (!candidatesPool.isOperatorRegistered(operator)) {
+            candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
+        }
     }
 
     /// @notice Open a new ECDSA keep.
@@ -67,29 +76,26 @@ contract ECDSAKeepFactory is IBondedECDSAKeepFactory { // TODO: Rename to Bonded
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
-        address[] memory selected = SortitionPool(pool).selectGroup(
+        address[] memory selected = SortitionPool(pool).selectSetGroup(
             _groupSize,
             groupSelectionSeed
         );
 
         address payable[] memory members = new address payable[](_groupSize);
-        for (uint i = 0; i < _groupSize; i++) {
-          // TODO: for each selected member, validate staking weight and create,
-          // bond. If validation failed or bond could not be created, remove
-          // operator from pool and try again.
-          members[i] = address(uint160(selected[i]));
+        for (uint256 i = 0; i < _groupSize; i++) {
+            // TODO: for each selected member, validate staking weight and create,
+            // bond. If validation failed or bond could not be created, remove
+            // operator from pool and try again.
+            members[i] = address(uint160(selected[i]));
         }
 
-        ECDSAKeep keep = new ECDSAKeep(
-            _owner,
-            members,
-            _honestThreshold
-        );
+        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold);
 
         keepAddress = address(keep);
 
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
 
         // TODO: as beacon for new entry and update groupSelectionSeed in callback
+
     }
 }

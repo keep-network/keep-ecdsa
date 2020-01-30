@@ -3,10 +3,11 @@ package local
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
-func (c *localChain) createKeep(keepAddress eth.KeepAddress) error {
+func (c *localChain) createKeep(keepAddress common.Address) error {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
