@@ -42,8 +42,14 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
             candidatesPools[_application] = sortitionPoolFactory.createSortitionPool();
         }
 
-        SortitionPool candidatesPool = SortitionPool(candidatesPools[_application]);
-        candidatesPool.insertOperator(msg.sender, 500); // TODO: take weight from staking contract
+        SortitionPool candidatesPool = SortitionPool(
+            candidatesPools[_application]
+        );
+
+        address operator = msg.sender;
+        if (!candidatesPool.isOperatorRegistered(operator)) {
+            candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
+        }
     }
 
     /// @notice Open a new ECDSA keep.
