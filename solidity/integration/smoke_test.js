@@ -56,7 +56,7 @@ module.exports = async function () {
         const keepAddress = eventList[0].returnValues.keepAddress
         keep = await ECDSAKeep.at(keepAddress)
 
-        console.log(`new keep opened with address: [${keepAddress}]`)
+        console.log(`new keep opened with address: [${keepAddress}] and members: [${eventList[0].returnValues.members}]`)
     } catch (err) {
         console.error(`failed to open new keep: [${err}]`)
         process.exit(1)
