@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: keep-tecdsa
-        image: gcr.io/keep-dev-fe24/keep-tecdsa
+        image: gcr.io/keep-dev-fe24/keep-tecdsa:v0.6.0
         env:
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
@@ -52,8 +52,8 @@ spec:
         configMap:
           name: keep-tecdsa
           items:
-            - key: eth_account_keyfile
-              path: eth_account_keyfile
+            - key: eth_account_keyfile_1
+              path: eth_account_keyfile_1
       - name: keep-tecdsa-config
         persistentVolumeClaim:
           claimName: keep-tecdsa-config
@@ -70,7 +70,7 @@ spec:
                 name: eth-account-passphrase
                 key: account-passphrase
           - name: KEEP_TECDSA_ETH_KEYFILE
-            value: /mnt/keep-tecdsa/eth/eth_account_keyfile
+            value: /mnt/keep-tecdsa/eth/eth_account_keyfile_1
           - name: KEEP_DATA_DIR
             value: /mnt/keep-tecdsa/data
         volumeMounts:
