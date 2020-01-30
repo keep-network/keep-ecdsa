@@ -50,6 +50,29 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
+        it("doesn't insert an operator to the pool if he is already in it", async () => {
+            const member1 = accounts[1]
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+            const signerPoolAddress = await keepFactory.getSignerPool(application)
+
+            const signerPool = await SortitionPoolStub.at(signerPoolAddress)
+
+            assert.deepEqual(
+                await signerPool.getOperators(),
+                [member1],
+                "incorrect registered operators",
+            )
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.deepEqual(
+                await signerPool.getOperators(),
+                [member1],
+                "incorrect registered operators after re-registration",
+            )
+        })
+
         it("inserts operators to different pools", async () => {
             const member1 = accounts[1]
             const member2 = accounts[2]
