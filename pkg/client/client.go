@@ -99,6 +99,7 @@ func Initialize(
 				application.String(),
 				err,
 			)
+			continue
 		}
 		logger.Debugf(
 			"client registered as member candidate for application: [%s]",
