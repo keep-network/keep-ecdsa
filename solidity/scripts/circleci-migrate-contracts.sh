@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ -z $GOOGLE_PROJECT_NAME || -z $GOOGLE_PROJECT_ID || -z $BUILD_TAG || -z $GOOGLE_REGION || -z $GOOGLE_COMPUTE_ZONE_A || -z $TRUFFLE_NETWORK ]]; then
+if [[ -z $GOOGLE_PROJECT_NAME || -z $GOOGLE_PROJECT_ID || -z $BUILD_TAG || -z $GOOGLE_REGION || -z $GOOGLE_COMPUTE_ZONE_A || -z $TRUFFLE_NETWORK || -z $GITHUB_TOKEN ]]; then
   echo "one or more required variables are undefined"
   exit 1
 fi
@@ -53,6 +53,9 @@ ssh utilitybox << EOF
 
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/solidity
+
+  # We configure GITHUB_TOKEN to access private GitHub repos (sortition-pools).
+  git config --global url."https://${GITHUB_TOKEN}:@github.com/".insteadOf "https://github.com/"
 
   npm install
 
