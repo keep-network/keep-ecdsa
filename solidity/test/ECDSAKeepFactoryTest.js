@@ -50,7 +50,7 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
-        it("doesn't insert an operator to the pool if he is already in it", async () => {
+        it("does not add an operator to the pool if he is already there", async () => {
             const member1 = accounts[1]
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
@@ -129,6 +129,49 @@ contract("ECDSAKeepFactory", async accounts => {
             } catch (e) {
                 assert.include(e.message, "No signer pool for this application")
             }
+        })
+
+        it("opens keep with multiple members", async () => {
+            const application = accounts[1]
+            const member1 = accounts[2]
+            const member2 = accounts[3]
+            const member3 = accounts[4]
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+            await keepFactory.registerMemberCandidate(application, { from: member2 })
+            await keepFactory.registerMemberCandidate(application, { from: member3 })
+
+            let blockNumber = await web3.eth.getBlockNumber()
+
+            await keepFactory.openKeep(
+                3, // _groupSize
+                3, // _honestThreshold
+                keepOwner, // _owner
+                { from: application },
+            )
+
+            let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+
+            assert.equal(eventList.length, 1, "incorrect number of emitted events")
+
+            assert.include(
+                eventList[0].returnValues.members,
+                member1,
+                "array doesn't include member1",
+            )
+            assert.include(
+                eventList[0].returnValues.members,
+                member2,
+                "array doesn't include member2",
+            )
+            assert.include(
+                eventList[0].returnValues.members,
+                member3,
+                "array doesn't include member3",
+            )
         })
 
         it("reverts if not enough member candidates are registered", async () => {

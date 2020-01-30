@@ -3,6 +3,7 @@ package local
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
@@ -12,7 +13,7 @@ type localKeep struct {
 	signatureRequestedHandlers map[int]func(event *eth.SignatureRequestedEvent)
 }
 
-func (c *localChain) requestSignature(keepAddress eth.KeepAddress, digest [32]byte) error {
+func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byte) error {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 

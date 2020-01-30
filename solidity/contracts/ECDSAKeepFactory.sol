@@ -9,7 +9,9 @@ import "@keep-network/sortition-pools/contracts/SortitionPoolFactory.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
-contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAKeepFactory
+contract ECDSAKeepFactory is
+    IECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
+{
     using AddressArrayUtils for address payable[];
     using SafeMath for uint256;
 
@@ -39,7 +41,8 @@ contract ECDSAKeepFactory is IECDSAKeepFactory { // TODO: Rename to BondedECDSAK
         if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
-            candidatesPools[_application] = sortitionPoolFactory.createSortitionPool();
+            candidatesPools[_application] = sortitionPoolFactory
+                .createSortitionPool();
         }
 
         SortitionPool candidatesPool = SortitionPool(

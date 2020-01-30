@@ -8,12 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 )
 
 func TestRequestSignatureNonexistentKeep(t *testing.T) {
 	chain := initializeLocalChain()
-	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 	expectedError := fmt.Errorf("failed to find keep with address: [0x0000000000000000000000000000000000000001]")
 
@@ -30,7 +31,7 @@ func TestRequestSignatureNonexistentKeep(t *testing.T) {
 
 func TestRequestSignatureNoHandler(t *testing.T) {
 	chain := initializeLocalChain()
-	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
 	err := chain.createKeep(keepAddress)
@@ -49,7 +50,7 @@ func TestRequestSignature(t *testing.T) {
 	defer cancel()
 
 	chain := initializeLocalChain()
-	keepAddress := eth.KeepAddress([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 	eventEmitted := make(chan *eth.SignatureRequestedEvent)
 	handler := func(event *eth.SignatureRequestedEvent) {
