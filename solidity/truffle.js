@@ -45,6 +45,7 @@ module.exports = {
       return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD, "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5")
       },
       gas: 6721975,
+      // ETH_NETWORK_ID is set in a Circle context.
       network_id: process.env.ETH_NETWORK_ID
     },
   // Configure your compilers
