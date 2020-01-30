@@ -68,7 +68,7 @@ contract ECDSAKeepFactory is
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
-        address[] memory selected = SortitionPool(pool).selectGroup(
+        address[] memory selected = SortitionPool(pool).selectSetGroup(
             _groupSize,
             groupSelectionSeed
         );
