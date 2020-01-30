@@ -43,6 +43,13 @@ module.exports = {
       network_id: "*",
       from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB",
     },
+    ropsten: {
+      provider: function() {
+        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD, "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5")
+      },
+      gas: 6721975,
+      network_id: 3
+    }
   },
 
   // Configure your compilers
