@@ -1,8 +1,10 @@
-import { 
+import {
   getETHBalancesFromList,
   getERC20BalancesFromList,
   addToBalances
 } from './helpers/listBalanceUtils'
+
+import { mineBlocks } from "./helpers/mineBlocks";
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -33,7 +35,7 @@ contract('ECDSAKeep', (accounts) => {
     const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
     let keep
 
-    before(async () => {
+    beforeEach(async () => {
       keep = await ECDSAKeep.new(owner, members, honestThreshold)
     })
 
@@ -62,6 +64,25 @@ contract('ECDSAKeep', (accounts) => {
       } catch (e) {
         assert.include(e.message, 'Ownable: caller is not the owner.')
       }
+    })
+
+    it('cannot be requested if already in progress', async () => {
+      await keep.sign(digest, { from: owner })
+      try {
+        await keep.sign('0x02', { from: owner })
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, 'Signer is busy')
+      }
+    })
+
+    it('can be requested again after timeout passed', async () => {
+      await keep.sign(digest, { from: owner })
+
+      const signingTimeout = await keep.signingTimeout.call()
+      mineBlocks(signingTimeout)
+
+      await keep.sign(digest, { from: owner })
     })
   })
 
@@ -130,15 +151,15 @@ contract('ECDSAKeep', (accounts) => {
 
     let keep
 
-    before(async () => {
+    beforeEach(async () => {
       keep = await ECDSAKeep.new(owner, members, honestThreshold)
 
       await keep.setPublicKey(publicKey, { from: members[0] })
+      await keep.sign(digest, { from: owner })
     })
 
     it('emits an event', async () => {
       let res = await keep.submitSignature(
-        digest,
         signatureR,
         signatureS,
         signatureRecoveryID,
@@ -153,11 +174,51 @@ contract('ECDSAKeep', (accounts) => {
       })
     })
 
+    it('clears signing lock after submission', async () => {
+      await keep.submitSignature(
+        signatureR,
+        signatureS,
+        signatureRecoveryID,
+        { from: members[0] }
+      )
+
+      await keep.sign(digest, { from: owner })
+    })
+
+    it('cannot be submitted if signing was not requested', async () => {
+      keep = await ECDSAKeep.new(owner, members, honestThreshold)
+
+      await keep.setPublicKey(publicKey, { from: members[0] })
+
+      try {
+        await keep.submitSignature(
+          signatureR,
+          signatureS,
+          signatureRecoveryID,
+          { from: members[0] }
+        )
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, "Not awaiting a signature")
+      }
+    })
+
+    it('accepts signature after timeout', async () => {
+      const signingTimeout = await keep.signingTimeout.call()
+      mineBlocks(signingTimeout)
+
+      await keep.submitSignature(
+        signatureR,
+        signatureS,
+        signatureRecoveryID,
+        { from: members[0] }
+      )
+    })
+
     describe('validates signature', async () => {
       it('rejects recovery ID out of allowed range', async () => {
         try {
           await keep.submitSignature(
-            digest,
             signatureR,
             signatureS,
             4,
@@ -172,7 +233,6 @@ contract('ECDSAKeep', (accounts) => {
       it('rejects invalid signature', async () => {
         try {
           await keep.submitSignature(
-            digest,
             signatureR,
             signatureS,
             1,
@@ -188,7 +248,6 @@ contract('ECDSAKeep', (accounts) => {
     it('cannot be called by non-member', async () => {
       try {
         await keep.submitSignature(
-          digest,
           signatureR,
           signatureS,
           signatureRecoveryID
@@ -202,7 +261,6 @@ contract('ECDSAKeep', (accounts) => {
     it('cannot be called by non-member owner', async () => {
       try {
         await keep.submitSignature(
-          digest,
           signatureR,
           signatureS,
           signatureRecoveryID,
@@ -226,7 +284,7 @@ contract('ECDSAKeep', (accounts) => {
     it('correctly distributes ETH', async () => {
       const initialBalances = await getETHBalancesFromList(members)
 
-      await keep.distributeETHToMembers({ value: ethValue})
+      await keep.distributeETHToMembers({ value: ethValue })
 
       const newBalances = await getETHBalancesFromList(members)
       const check = addToBalances(initialBalances, ethValue / members.length)
@@ -284,7 +342,7 @@ contract('ECDSAKeep', (accounts) => {
 
       assert.equal(newBalances.toString(), check.toString())
     })
-  
+
     it('correctly handles unused remainder', async () => {
       const valueWithRemainder = members.length + 1
       const initialKeepBalance = await token.balanceOf(keep.address)
@@ -296,7 +354,7 @@ contract('ECDSAKeep', (accounts) => {
       const finalKeepBalance = await token.balanceOf(keep.address)
       const expectedRemainder = 0
       const keepBalanceCheck = initialKeepBalance - finalKeepBalance
- 
+
       assert.equal(keepBalanceCheck, expectedRemainder)
     })
 
@@ -304,7 +362,7 @@ contract('ECDSAKeep', (accounts) => {
       await expectRevert(
         keep.distributeERC20ToMembers(token.address, erc20Value),
         "SafeMath: subtraction overflow"
-      )      
+      )
     })
 
     it('fails with zero value', async () => {
@@ -312,12 +370,12 @@ contract('ECDSAKeep', (accounts) => {
       await expectRevert(
         keep.distributeERC20ToMembers(token.address, 0),
         "dividend value must be non-zero"
-      )      
+      )
     })
 
     it('reverts with zero dividend', async () => {
-      const value = members.length -1
-      await token.mint(accounts[0],  value)
+      const value = members.length - 1
+      await token.mint(accounts[0], value)
       await token.approve(keep.address, erc20Value)
       await expectRevert(
         keep.distributeERC20ToMembers(token.address, value),

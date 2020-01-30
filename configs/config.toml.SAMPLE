@@ -1,26 +1,26 @@
 # This is a TOML configuration file.
 
-# Connection details of a Electrum Server.
-[electrum]
-    ServerHost  = "testnet.hsmiths.com"
-    ServerPort  = "53012"
-
-# Connection details for Block Cypher API.
-[blockcypher]
-    Token   = "d195ca15455f42b7842abd7c691191c9"
-    Coin    = "btc"
-    Chain   = "test3"
-
 # Connection details of ethereum blockchain.
 [ethereum]
-    URL = "ws://127.0.0.1:8545"
-    
+  URL = "ws://127.0.0.1:8545"
+
 [ethereum.account]
-	KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
+	# A list here is a temporary solution to support multiple operators run on a single client.
+  KeyFile = [
+    "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA",
+    "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB8BBBBBBBBB"
+  ]
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
-     ECDSAKeepFactory = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  ECDSAKeepFactory = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+
+# Addresses of applications approved by the operator.
+[SanctionedApplications]
+  Addresses = [
+    "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+    "0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
+  ]
 
 [Storage]
-    DataDir = "/my/secure/location"
+  DataDir = "/my/secure/location"

@@ -34,12 +34,18 @@ async function provisionKeepTecdsa() {
 
 async function createKeepTecdsaConfig() {
 
-  fs.createReadStream('/tmp/keep-tecdsa-template.toml', 'utf8').pipe(concat(function(data) {
+  fs.createReadStream('/tmp/keep-tecdsa-template.toml', 'utf8').pipe(concat(function (data) {
     let parsedConfigFile = toml.parse(data);
 
     parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
-    parsedConfigFile.ethereum.account.KeyFile = process.env.KEEP_TECDSA_ETH_KEYFILE
+
+    parsedConfigFile.ethereum.account.KeyFile = [
+      process.env.KEEP_TECDSA_ETH_KEYFILE_1,
+      process.env.KEEP_TECDSA_ETH_KEYFILE_2,
+      process.env.KEEP_TECDSA_ETH_KEYFILE_3
+    ]
     parsedConfigFile.ethereum.ContractAddresses.ECDSAKeepFactory = ecdsaKeepFactoryContractAddress;
+
     parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
     fs.writeFile('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', tomlify.toToml(parsedConfigFile), (error) => {

@@ -26,7 +26,7 @@ RUN apk add --update --no-cache \
 	rm -rf /usr/share/man
 
 # Install Solidity compiler.
-COPY --from=ethereum/solc:0.5.8 /usr/bin/solc /usr/bin/solc
+COPY --from=ethereum/solc:0.5.15 /usr/bin/solc /usr/bin/solc
 
 # Configure GitHub token to be able to get private repositories.
 ARG GITHUB_TOKEN
@@ -57,7 +57,6 @@ RUN cd $APP_DIR/solidity && npm install
 
 # Generate code.
 COPY ./pkg/chain/eth/gen $APP_DIR/pkg/chain/eth/gen
-COPY ./pkg/registry/gen $APP_DIR/pkg/registry/gen
 COPY ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
 RUN go generate ./.../gen
 

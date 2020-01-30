@@ -13,9 +13,13 @@ module.exports = async function () {
     let keepRegistry
     let keepFactory
     let keepOwner
+    let application
     let startBlockNumber
     let keep
     let keepPublicKey
+
+    const groupSize = 3
+    const threshold = 3
 
     try {
         keepRegistry = await KeepRegistry.deployed()
@@ -23,6 +27,7 @@ module.exports = async function () {
 
         const accounts = await web3.eth.getAccounts();
         keepOwner = accounts[1]
+        application = "0x2AA420Af8CB62888ACBD8C7fAd6B4DdcDD89BC82"
 
         startBlockNumber = await web3.eth.getBlock('latest').number
     } catch (err) {
@@ -34,10 +39,13 @@ module.exports = async function () {
         console.log('open new keep...')
         const keepVendorAddress = await keepRegistry.getVendor.call("ECDSAKeep")
         const keepVendor = await ECDSAKeepVendor.at(keepVendorAddress)
-        await keepVendor.openKeep(
-            10,
-            5,
-            keepOwner
+        const keepFactoryAddress = await keepVendor.selectFactory()
+        keepFactory = await ECDSAKeepFactory.at(keepFactoryAddress)
+        await keepFactory.openKeep(
+            groupSize,
+            threshold,
+            keepOwner,
+            { from: application }
         )
 
         const eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
@@ -48,7 +56,7 @@ module.exports = async function () {
         const keepAddress = eventList[0].returnValues.keepAddress
         keep = await ECDSAKeep.at(keepAddress)
 
-        console.log(`new keep opened with address: [${keepAddress}]`)
+        console.log(`new keep opened with address: [${keepAddress}] and members: [${eventList[0].returnValues.members}]`)
     } catch (err) {
         console.error(`failed to open new keep: [${err}]`)
         process.exit(1)
@@ -56,12 +64,9 @@ module.exports = async function () {
 
     try {
         console.log('get public key...')
-        const eventList = await keep.getPastEvents('PublicKeyPublished', {
-            fromBlock: startBlockNumber,
-            toBlock: 'latest',
-        })
+        const publicKeyPublishedEvent = await watchPublicKeyPublished(keep)
 
-        keepPublicKey = eventList[0].returnValues.publicKey
+        keepPublicKey = publicKeyPublishedEvent.returnValues.publicKey
 
         console.log(`public key generated for keep: [${keepPublicKey}]`)
     } catch (err) {
@@ -74,7 +79,12 @@ module.exports = async function () {
         const digest = web3.eth.accounts.hashMessage("hello")
         const signatureSubmittedEvent = watchSignatureSubmittedEvent(keep)
 
-        await keep.sign(digest, { from: keepOwner })
+        setTimeout(
+            async () => {
+                await keep.sign(digest, { from: keepOwner })
+            },
+            2000
+        )
 
         const signature = (await signatureSubmittedEvent).returnValues
 
@@ -111,6 +121,15 @@ module.exports = async function () {
     }
 
     process.exit()
+}
+
+function watchPublicKeyPublished(keep) {
+    return new Promise(async (resolve) => {
+        keep.PublicKeyPublished()
+            .on('data', event => {
+                resolve(event)
+            })
+    })
 }
 
 function watchSignatureSubmittedEvent(keep) {

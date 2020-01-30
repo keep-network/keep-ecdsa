@@ -6,11 +6,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 )
 
 type storage interface {
-	save(keepAddress common.Address, signer *ecdsa.Signer) error
+	save(keepAddress common.Address, signer *tss.ThresholdSigner) error
 	readAll() (<-chan *keepSigner, <-chan error)
 	archive(keepAddress string) error
 }
@@ -25,7 +25,7 @@ func newStorage(persistence persistence.Handle) storage {
 	}
 }
 
-func (ps *persistentStorage) save(keepAddress common.Address, signer *ecdsa.Signer) error {
+func (ps *persistentStorage) save(keepAddress common.Address, signer *tss.ThresholdSigner) error {
 	signerBytes, err := signer.Marshal()
 	if err != nil {
 		return fmt.Errorf("failed to marshal signer: [%v]", err)
@@ -36,13 +36,13 @@ func (ps *persistentStorage) save(keepAddress common.Address, signer *ecdsa.Sign
 		keepAddress.String(),
 		// TODO: Currently we support only single signer, we should use
 		// different signer IDs when multi-party group is available.
-		"/signer_0",
+		fmt.Sprintf("/membership_%s", signer.MemberID().String()),
 	)
 }
 
 type keepSigner struct {
 	keepAddress common.Address
-	signer      *ecdsa.Signer
+	signer      *tss.ThresholdSigner
 }
 
 func (ps *persistentStorage) readAll() (<-chan *keepSigner, <-chan error) {
@@ -104,7 +104,7 @@ func (ps *persistentStorage) readAll() (<-chan *keepSigner, <-chan error) {
 			}
 			keepAddress := common.HexToAddress(descriptor.Directory())
 
-			signer := &ecdsa.Signer{}
+			signer := &tss.ThresholdSigner{}
 			err = signer.Unmarshal(content)
 			if err != nil {
 				outputErrors <- fmt.Errorf(
