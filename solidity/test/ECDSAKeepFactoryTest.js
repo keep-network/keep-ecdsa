@@ -50,7 +50,7 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
-        it("doesn't insert an operator to the pool if he is already in it", async () => {
+        it("does not add an operator to the pool if he is already there", async () => {
             const member1 = accounts[1]
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
