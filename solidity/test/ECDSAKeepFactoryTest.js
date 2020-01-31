@@ -148,6 +148,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 3, // _groupSize
                 3, // _honestThreshold
                 keepOwner, // _owner
+                1,         // _bond
                 { from: application },
             )
 
@@ -186,6 +187,7 @@ contract("ECDSAKeepFactory", async accounts => {
                     2, // _groupSize
                     2, // _honestThreshold
                     keepOwner, // _owner
+                    1,         // _bond
                     { from: application }
                 )
 
