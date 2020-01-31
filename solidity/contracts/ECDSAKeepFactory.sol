@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
+import "./external/ITokenStaking.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
@@ -30,9 +31,11 @@ contract ECDSAKeepFactory is
     bytes32 groupSelectionSeed;
 
     SortitionPoolFactory sortitionPoolFactory;
+    ITokenStaking tokenStaking;
 
-    constructor(address _sortitionPoolFactory) public {
+    constructor(address _sortitionPoolFactory, address _tokenStaking) public {
         sortitionPoolFactory = SortitionPoolFactory(_sortitionPoolFactory);
+        tokenStaking = ITokenStaking(_tokenStaking);
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
