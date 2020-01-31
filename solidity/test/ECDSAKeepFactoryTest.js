@@ -254,7 +254,50 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("opens bonds for keep", async () => {
-            const expectedSingleBond = bond.div(groupSize)
+            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
+
+            let blockNumber = await web3.eth.getBlockNumber()
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application },
+            )
+
+            let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+
+            const keepAddress = eventList[0].returnValues.keepAddress
+
+            expect(
+                await keepBonding.getLockedBonds(keepAddress, member1, keepAddress)
+            ).to.eq.BN(singleBond, 'invalid bond value for member1')
+
+            expect(
+                await keepBonding.getLockedBonds(keepAddress, member2, keepAddress)
+            ).to.eq.BN(singleBond, 'invalid bond value for member2')
+
+            expect(
+                await keepBonding.getLockedBonds(keepAddress, member3, keepAddress)
+            ).to.eq.BN(singleBond, 'invalid bond value for member3')
+        })
+
+        // This test checks that if the requested bond value divided by the group
+        // size has a reminder the reminder is not bonded, e.g.:
+        // requested bond = 11 & group size = 3 => bond per member ≈ 3,66
+        // but `11.div(3) = 3` so in current implementation we bond only 9 and
+        // the rest remains unbonded.
+        // TODO: Check if such case is acceptable.
+        it("forgets about the reminder", async () => {
+            const groupSize = 3
+            const singleBond = new BN(3)
+            const bond = new BN(11)
 
             await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
             await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
@@ -279,15 +322,15 @@ contract("ECDSAKeepFactory", async accounts => {
 
             expect(
                 await keepBonding.getLockedBonds(keepAddress, member1, keepAddress)
-            ).to.eq.BN(expectedSingleBond, 'invalid bond value for member1')
+            ).to.eq.BN(singleBond, 'invalid bond value for member1')
 
             expect(
                 await keepBonding.getLockedBonds(keepAddress, member2, keepAddress)
-            ).to.eq.BN(expectedSingleBond, 'invalid bond value for member2')
+            ).to.eq.BN(singleBond, 'invalid bond value for member2')
 
             expect(
                 await keepBonding.getLockedBonds(keepAddress, member3, keepAddress)
-            ).to.eq.BN(expectedSingleBond, 'invalid bond value for member3')
+            ).to.eq.BN(singleBond, 'invalid bond value for member3')
         })
 
         it("reverts if not enough member candidates are registered", async () => {
