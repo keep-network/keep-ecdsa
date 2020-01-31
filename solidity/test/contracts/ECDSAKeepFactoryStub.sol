@@ -5,9 +5,13 @@ import "../../contracts/ECDSAKeepFactory.sol";
 /// @title ECDSA Keep Factory Stub
 /// @dev This contract is for testing purposes only.
 contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
-    constructor(address sortitionPoolFactory, address tokenStaking)
+    constructor(
+        address sortitionPoolFactory,
+        address tokenStaking,
+        address keepBonding
+    )
         public
-        ECDSAKeepFactory(sortitionPoolFactory, tokenStaking)
+        ECDSAKeepFactory(sortitionPoolFactory, tokenStaking, keepBonding)
     {}
 
     // @dev Returns address of registered signer pool.

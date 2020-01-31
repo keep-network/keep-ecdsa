@@ -13,11 +13,11 @@ module.exports = async function (deployer) {
 
     await deploySortitionPoolFactory(artifacts, deployer)
 
-    await deployer.deploy(ECDSAKeepFactory, SortitionPoolFactory.address, TokenStakingAddress)
+    await deployer.deploy(ECDSAKeepFactory, SortitionPoolFactory.address, TokenStakingAddress, KeepBonding.address)
 
     await deployer.deploy(BondedECDSAKeepVendorImplV1)
     await deployer.deploy(BondedECDSAKeepVendor, BondedECDSAKeepVendorImplV1.address)
 
-    const vendor = await BondedECDSAKeepVendorImplV1.at(BondedECDSAKeepVendor.address);
+    const vendor = await BondedECDSAKeepVendorImplV1.at(BondedECDSAKeepVendor.address)
     await vendor.registerFactory(ECDSAKeepFactory.address)
 }
