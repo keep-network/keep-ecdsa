@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
+import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -29,9 +30,11 @@ contract ECDSAKeepFactory is
     bytes32 groupSelectionSeed;
 
     SortitionPoolFactory sortitionPoolFactory;
+    KeepBonding keepBonding;
 
-    constructor(address _sortitionPoolFactory) public {
+    constructor(address _sortitionPoolFactory, address _keepBonding) public {
         sortitionPoolFactory = SortitionPoolFactory(_sortitionPoolFactory);
+        keepBonding = KeepBonding(_keepBonding);
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
