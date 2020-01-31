@@ -1,11 +1,19 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
+const { expectRevert } = require('openzeppelin-test-helpers');
+
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBondingStub = artifacts.require('KeepBondingStub');
 const SortitionPoolFactoryStub = artifacts.require('SortitionPoolFactoryStub');
 const SortitionPoolStub = artifacts.require('SortitionPoolStub');
 const SortitionPoolFactory = artifacts.require('SortitionPoolFactory');
+
+const BN = web3.utils.BN
+
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
+const expect = chai.expect
 
 contract("ECDSAKeepFactory", async accounts => {
     let keepFactory
@@ -45,7 +53,16 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("registers transferred value in bonding contract", async () => {
+            const value = new BN(100)
 
+            await keepFactory.registerMemberCandidate(application, { from: member1, value: value })
+
+            expect(
+                await keepBonding.availableBondingValue(member1)
+            ).to.eq.BN(value, 'invalid available bonding value')
+        })
+
+        it("inserts operators to the same pool", async () => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
 
@@ -158,6 +175,60 @@ contract("ECDSAKeepFactory", async accounts => {
             await keepFactory.registerMemberCandidate(application, { from: member2 })
             await keepFactory.registerMemberCandidate(application, { from: member3 })
 
+            await expectRevert(
+                keepFactory.openKeep(
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond
+                ),
+                "No signer pool for this application"
+            )
+        })
+
+        it("reverts if bond equals zero", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
+
+            let bond = 0
+
+            await expectRevert(
+                keepFactory.openKeep(
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
+                    { from: application },
+                ),
+                "Bond per member equals zero"
+            )
+        })
+
+        it("reverts if bond per member equals zero", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
+
+            let bond = new BN(2)
+
+            await expectRevert(
+                keepFactory.openKeep(
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
+                    { from: application },
+                ),
+                "Bond per member equals zero"
+            )
+        })
+
+        it("opens keep with multiple members", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
+
             let blockNumber = await web3.eth.getBlockNumber()
 
             await keepFactory.openKeep(
@@ -175,48 +246,91 @@ contract("ECDSAKeepFactory", async accounts => {
 
             assert.equal(eventList.length, 1, "incorrect number of emitted events")
 
-            assert.include(
+            assert.sameMembers(
                 eventList[0].returnValues.members,
-                member1,
-                "array doesn't include member1",
+                [member1, member2, member3],
+                "incorrect keep member in emitted event",
             )
-            assert.include(
-                eventList[0].returnValues.members,
-                member2,
-                "array doesn't include member2",
+        })
+
+        it("opens bonds for keep", async () => {
+            const expectedSingleBond = bond.div(groupSize)
+
+            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
+
+            let blockNumber = await web3.eth.getBlockNumber()
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application },
             )
-            assert.include(
-                eventList[0].returnValues.members,
-                member3,
-                "array doesn't include member3",
-            )
+
+            let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+
+            const keepAddress = eventList[0].returnValues.keepAddress
+
+            expect(
+                await keepBonding.getLockedBonds(keepAddress, member1, keepAddress)
+            ).to.eq.BN(expectedSingleBond, 'invalid bond value for member1')
+
+            expect(
+                await keepBonding.getLockedBonds(keepAddress, member2, keepAddress)
+            ).to.eq.BN(expectedSingleBond, 'invalid bond value for member2')
+
+            expect(
+                await keepBonding.getLockedBonds(keepAddress, member3, keepAddress)
+            ).to.eq.BN(expectedSingleBond, 'invalid bond value for member3')
         })
 
         it("reverts if not enough member candidates are registered", async () => {
             let groupSize = 2
             let threshold = 2
 
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
+            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
 
-            try {
-                await keepFactory.openKeep(
+            await expectRevert(
+                keepFactory.openKeep(
                     groupSize,
                     threshold,
                     keepOwner,
                     bond,
                     { from: application }
-                )
+                ),
+                "Not enough operators in pool"
+            )
+        })
 
-                assert(false, 'Test call did not error as expected')
-            } catch (e) {
-                assert.include(e.message, "Not enough operators in pool")
-            }
+        // TODO: This is temporary, we don't expect a group to be formed if a member
+        // doesn't have sufficient unbonded value.
+        it("reverts if one member has insufficient unbonded value", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond.sub(new BN(1)) })
+
+            await expectRevert(
+                keepFactory.openKeep(
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
+                    { from: application }
+                ),
+                "Insufficient unbonded value"
+            )
         })
 
         it("opens keep with multiple members and emits an event", async () => {
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
-            await keepFactory.registerMemberCandidate(application, { from: member2 })
-            await keepFactory.registerMemberCandidate(application, { from: member3 })
+            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
 
             let blockNumber = await web3.eth.getBlockNumber()
 
