@@ -1,5 +1,6 @@
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
+const KeepBondingStub = artifacts.require('KeepBondingStub');
 const SortitionPoolFactoryStub = artifacts.require('SortitionPoolFactoryStub');
 const SortitionPoolStub = artifacts.require('SortitionPoolStub');
 const SortitionPoolFactory = artifacts.require('SortitionPoolFactory');
@@ -7,13 +8,15 @@ const SortitionPoolFactory = artifacts.require('SortitionPoolFactory');
 contract("ECDSAKeepFactory", async accounts => {
     let keepFactory
     let sortitionPoolFactory
+    let keepBonding
 
     const application = '0x0000000000000000000000000000000000000001'
 
     describe("registerMemberCandidate", async () => {
         beforeEach(async () => {
             sortitionPoolFactory = await SortitionPoolFactoryStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(sortitionPoolFactory.address)
+            keepBonding = await KeepBondingStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(sortitionPoolFactory.address, keepBonding.address)
         })
 
         it("creates a signer pool", async () => {
@@ -112,7 +115,8 @@ contract("ECDSAKeepFactory", async accounts => {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
             sortitionPoolFactory = await SortitionPoolFactory.new()
-            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address)
+            keepBonding = await KeepBondingStub.new()
+            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address, keepBonding.address)
         })
 
         it("reverts if no member candidates are registered", async () => {
