@@ -1,6 +1,6 @@
 // Configuration for addresses of externally deployed smart contracts
-const SortitionPoolFactoryAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+const TokenStakingAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
 module.exports = {
-  SortitionPoolFactoryAddress,
+  TokenStakingAddress,
 }
