@@ -1,3 +1,5 @@
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
+
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBondingStub = artifacts.require('KeepBondingStub');
@@ -16,10 +18,18 @@ contract("ECDSAKeepFactory", async accounts => {
     const member3 = accounts[4]
 
     describe("registerMemberCandidate", async () => {
-        beforeEach(async () => {
+        before(async () => {
             sortitionPoolFactory = await SortitionPoolFactoryStub.new()
             keepBonding = await KeepBondingStub.new()
             keepFactory = await ECDSAKeepFactoryStub.new(sortitionPoolFactory.address, keepBonding.address)
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
         })
 
         it("creates a signer pool", async () => {
@@ -116,6 +126,14 @@ contract("ECDSAKeepFactory", async accounts => {
             sortitionPoolFactory = await SortitionPoolFactory.new()
             keepBonding = await KeepBondingStub.new()
             keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address, keepBonding.address)
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
         })
 
         it("reverts if no member candidates are registered", async () => {
