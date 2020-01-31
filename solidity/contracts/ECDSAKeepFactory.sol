@@ -78,11 +78,12 @@ contract ECDSAKeepFactory is
         address _owner,
         uint256 _bond
     ) external payable returns (address keepAddress) {
-        _bond; // TODO: assign bond for created keep
-
         address application = msg.sender;
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
+
+        uint256 memberBond = _bond.div(_groupSize);
+        require(memberBond > 0, "Bond per member equals zero");
 
         address[] memory selected = SortitionPool(pool).selectSetGroup(
             _groupSize,
