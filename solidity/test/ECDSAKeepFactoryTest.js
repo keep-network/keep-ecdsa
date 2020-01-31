@@ -3,17 +3,25 @@ const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const SortitionPoolFactoryStub = artifacts.require('SortitionPoolFactoryStub');
 const SortitionPoolStub = artifacts.require('SortitionPoolStub');
 const SortitionPoolFactory = artifacts.require('SortitionPoolFactory');
+const TokenStakingStub = artifacts.require("TokenStakingStub")
+
+const BN = web3.utils.BN
+const expect = require('chai').expect
 
 contract("ECDSAKeepFactory", async accounts => {
     let keepFactory
     let sortitionPoolFactory
+    let tokenStaking
 
     const application = '0x0000000000000000000000000000000000000001'
+
+    const member1 = accounts[1]
 
     describe("registerMemberCandidate", async () => {
         beforeEach(async () => {
             sortitionPoolFactory = await SortitionPoolFactoryStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(sortitionPoolFactory.address)
+            tokenStaking = await TokenStakingStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(sortitionPoolFactory.address, tokenStaking.address)
         })
 
         it("creates a signer pool", async () => {
@@ -28,6 +36,20 @@ contract("ECDSAKeepFactory", async accounts => {
                 "0x0000000000000000000000000000000000000000",
                 "incorrect registered signer pool",
             )
+        })
+
+        it("registers staking weight in the pool", async () => {
+            const stakingWeight = new BN(199)
+            await tokenStaking.setBalance(stakingWeight)
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            const signerPoolAddress = await keepFactory.getSignerPool(application)
+            const signerPool = await SortitionPoolStub.at(signerPoolAddress)
+
+            expect(
+                await signerPool.operatorWeights.call(member1)
+            ).to.eq.BN(stakingWeight, 'invalid staking weight')
         })
 
         it("inserts operators to the same pool", async () => {
@@ -112,11 +134,12 @@ contract("ECDSAKeepFactory", async accounts => {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
             sortitionPoolFactory = await SortitionPoolFactory.new()
-            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address)
+            tokenStaking = await TokenStakingStub.new()
+            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address, tokenStaking.address)
         })
 
         it("reverts if no member candidates are registered", async () => {
-            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address)
+            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address, tokenStaking.address)
 
             try {
                 await keepFactory.openKeep(
