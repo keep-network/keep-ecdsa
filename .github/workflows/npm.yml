@@ -6,6 +6,8 @@ on:
       - master
     paths:
       - "solidity/contracts/**"
+      - "package.json"
+      - "package-lock.json"
 
 jobs:
   publish-contracts:
