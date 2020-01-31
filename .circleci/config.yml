@@ -136,6 +136,11 @@ jobs:
             echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
       - run:
+          name: Provision External Contract Addresses
+          command: |
+            export TOKEN_STAKING_CONTRACT_DATA="TokenStaking.json"
+            solidity/scripts/circleci-provision-external-contracts.sh
+      - run:
           name: Migrate Contracts
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
