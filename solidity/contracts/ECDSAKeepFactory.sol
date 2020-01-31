@@ -102,6 +102,20 @@ contract ECDSAKeepFactory is
 
         keepAddress = address(keep);
 
+        for (uint256 i = 0; i < _groupSize; i++) {
+            keepBonding.createBond(
+                members[i],
+                uint256(keepAddress),
+                memberBond
+            );
+            keepBonding.reassignBond(
+                members[i],
+                uint256(keepAddress),
+                keepAddress,
+                uint256(keepAddress)
+            );
+        }
+
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
 
         // TODO: as beacon for new entry and update groupSelectionSeed in callback
