@@ -12,7 +12,7 @@ function fetch_token_staking_address() {
 }
 
 function set_token_staking_address() {
-  sed -i -e "/TokenStakingAddress/s/0x[a-fA-F0-9]\{0,40\}/${TOKEN_STAKING_ADDRESS}/" ./solidiity/migrations/externals.js
+  sed -i -e "/TokenStakingAddress/s/0x[a-fA-F0-9]\{0,40\}/${TOKEN_STAKING_ADDRESS}/" ./solidity/migrations/externals.js
 }
 
 fetch_token_staking_address
