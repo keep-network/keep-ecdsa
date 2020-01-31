@@ -154,8 +154,6 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if no member candidates are registered", async () => {
-            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address)
-
             try {
                 await keepFactory.openKeep(
                     groupSize,
