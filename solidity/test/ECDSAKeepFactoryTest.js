@@ -10,7 +10,10 @@ contract("ECDSAKeepFactory", async accounts => {
     let sortitionPoolFactory
     let keepBonding
 
-    const application = '0x0000000000000000000000000000000000000001'
+    const application = accounts[1]
+    const member1 = accounts[2]
+    const member2 = accounts[3]
+    const member3 = accounts[4]
 
     describe("registerMemberCandidate", async () => {
         beforeEach(async () => {
@@ -20,9 +23,7 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("creates a signer pool", async () => {
-            const member = accounts[1]
-
-            await keepFactory.registerMemberCandidate(application, { from: member })
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
 
             const signerPoolAddress = await keepFactory.getSignerPool(application)
 
@@ -33,9 +34,7 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
-        it("inserts operators to the same pool", async () => {
-            const member1 = accounts[1]
-            const member2 = accounts[2]
+        it("registers transferred value in bonding contract", async () => {
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
@@ -54,8 +53,6 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("does not add an operator to the pool if he is already there", async () => {
-            const member1 = accounts[1]
-
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             const signerPoolAddress = await keepFactory.getSignerPool(application)
 
@@ -77,9 +74,6 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("inserts operators to different pools", async () => {
-            const member1 = accounts[1]
-            const member2 = accounts[2]
-
             const application1 = '0x0000000000000000000000000000000000000001'
             const application2 = '0x0000000000000000000000000000000000000002'
 
@@ -110,8 +104,13 @@ contract("ECDSAKeepFactory", async accounts => {
 
     describe("openKeep", async () => {
         const keepOwner = "0xbc4862697a1099074168d54A555c4A60169c18BD"
+        const groupSize = new BN(3)
+        const threshold = new BN(3)
 
-        beforeEach(async () => {
+        const singleBond = new BN(1)
+        const bond = singleBond.mul(groupSize)
+
+        before(async () => {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
             sortitionPoolFactory = await SortitionPoolFactory.new()
@@ -124,10 +123,10 @@ contract("ECDSAKeepFactory", async accounts => {
 
             try {
                 await keepFactory.openKeep(
-                    10,        // _groupSize
-                    5,         // _honestThreshold
-                    keepOwner, // _owner
-                    1          // _bond
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
                 )
 
                 assert(false, 'Test call did not error as expected')
@@ -137,11 +136,6 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("opens keep with multiple members", async () => {
-            const application = accounts[1]
-            const member1 = accounts[2]
-            const member2 = accounts[3]
-            const member3 = accounts[4]
-
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
             await keepFactory.registerMemberCandidate(application, { from: member3 })
@@ -149,10 +143,10 @@ contract("ECDSAKeepFactory", async accounts => {
             let blockNumber = await web3.eth.getBlockNumber()
 
             await keepFactory.openKeep(
-                3, // _groupSize
-                3, // _honestThreshold
-                keepOwner, // _owner
-                1,         // _bond
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
                 { from: application },
             )
 
@@ -181,17 +175,17 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if not enough member candidates are registered", async () => {
-            const application = accounts[1]
-            const member1 = accounts[2]
+            let groupSize = 2
+            let threshold = 2
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
             try {
                 await keepFactory.openKeep(
-                    2, // _groupSize
-                    2, // _honestThreshold
-                    keepOwner, // _owner
-                    1,         // _bond
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
                     { from: application }
                 )
 
@@ -202,11 +196,6 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("opens keep with multiple members and emits an event", async () => {
-            const application = accounts[1]
-            const member1 = accounts[2]
-            const member2 = accounts[3]
-            const member3 = accounts[4]
-
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
             await keepFactory.registerMemberCandidate(application, { from: member3 })
@@ -214,18 +203,18 @@ contract("ECDSAKeepFactory", async accounts => {
             let blockNumber = await web3.eth.getBlockNumber()
 
             let keepAddress = await keepFactory.openKeep.call(
-                3,         // _groupSize
-                2,         // _honestThreshold
-                keepOwner, // _owner
-                1,         // _bond
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
                 { from: application }
             )
 
             await keepFactory.openKeep(
-                3,          // _groupSize
-                2,          // _honestThreshold
-                keepOwner,  // _owner
-                1,          // _bond
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
                 { from: application }
             )
 
