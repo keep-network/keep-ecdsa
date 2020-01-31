@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
-import "./api/IECDSAKeepFactory.sol";
+import "./api/IBondedECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
@@ -10,7 +10,7 @@ import "@keep-network/sortition-pools/contracts/SortitionPoolFactory.sol";
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
 contract ECDSAKeepFactory is
-    IECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
+    IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
 {
     using AddressArrayUtils for address payable[];
     using SafeMath for uint256;
@@ -62,12 +62,16 @@ contract ECDSAKeepFactory is
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Address of the keep owner.
+    /// @param _bond Value of ETH bond required from the keep.
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
-        address _owner
+        address _owner,
+        uint256 _bond
     ) external payable returns (address keepAddress) {
+        _bond; // TODO: assign bond for created keep
+
         address application = msg.sender;
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");

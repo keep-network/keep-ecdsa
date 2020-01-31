@@ -12,11 +12,13 @@ module.exports = async function () {
         let groupSize = 1;
         let honestThreshold = 1;
         let keepOwner = accounts[1];
+        let bond = 1;
 
         let openKeepTx = await factory.openKeep(
             groupSize,
             honestThreshold,
-            keepOwner
+            keepOwner,
+            bond
         ).catch(err => {
             console.error(`failed keep creation: [${err}]`)
             process.exit(1)
