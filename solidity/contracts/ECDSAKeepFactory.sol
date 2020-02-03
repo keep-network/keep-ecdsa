@@ -55,7 +55,10 @@ contract ECDSAKeepFactory is
 
         address operator = msg.sender;
         if (!candidatesPool.isOperatorRegistered(operator)) {
-            uint256 stakingWeight = tokenStaking.balanceOf(operator);
+            uint256 stakingWeight = tokenStaking.eligibleStake(
+                operator,
+                address(this)
+            );
             candidatesPool.insertOperator(operator, stakingWeight);
         }
     }
