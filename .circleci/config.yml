@@ -136,9 +136,10 @@ jobs:
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
       - run:
-          name: Provision External Contract Addresses
+          name: Fetch external contracts artifacts
           command: |
             export TOKEN_STAKING_CONTRACT_DATA="TokenStaking.json"
+            export REGISTRY_CONTRACT_DATA="Registry.json"
             solidity/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Set Gcloud Auth for jumphost SSH
