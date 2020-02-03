@@ -12,11 +12,7 @@ contract IBondedECDSAKeep {
     /// @notice Returns the amount of the keep's ETH bond in wei.
     /// @return The amount of the keep's ETH bond in wei.
     function checkBondAmount(address _keepAddress) external view returns (uint256); 
-    
-    /// @notice Returns the amount of the Keep's ETH bond in wei.
-    /// @return The amount of the Keep's ETH bond in wei.
-    function checkBondAmount(address _keepAddress) external view returns (uint256);      
-    
+        
     /// @notice Calculates a signature over provided digest by the keep. Note that
     ///         signatures from the keep not explicitly requested by calling `sign`
     ///         will be provable as fraud via `submitSignatureFraud`.
