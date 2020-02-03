@@ -168,22 +168,6 @@ contract("ECDSAKeepFactory", async accounts => {
             }
         })
 
-        it("opens keep with multiple members", async () => {
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
-            await keepFactory.registerMemberCandidate(application, { from: member2 })
-            await keepFactory.registerMemberCandidate(application, { from: member3 })
-
-            await expectRevert(
-                keepFactory.openKeep(
-                    groupSize,
-                    threshold,
-                    keepOwner,
-                    bond
-                ),
-                "No signer pool for this application"
-            )
-        })
-
         it("reverts if bond equals zero", async () => {
             await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
             await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
