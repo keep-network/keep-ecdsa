@@ -24,8 +24,8 @@ type BroadcastChannel = coreNet.BroadcastChannel
 type Provider interface {
 	BroadcastChannelFor(name string) (BroadcastChannel, error)
 
-	UnicastChannelWith(remotePeer net.TransportIdentifier) (UnicastChannel, error)
-	OnUnicastChannelOpened(ctx context.Context, handler func(remote UnicastChannel))
+	UnicastChannelWith(peerID TransportIdentifier) (UnicastChannel, error)
+	OnUnicastChannelOpened(handler func(channel UnicastChannel))
 }
 
 // UnicastChannel represents a point-to-point channel to a peer. It allows

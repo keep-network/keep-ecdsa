@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"encoding/hex"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -24,9 +25,10 @@ type localProvider struct {
 func LocalProvider(
 	publicKey *key.NetworkPublic, // node's public key
 ) net.Provider {
+	publicKeyBytes, _ := publicKey.Bytes()
 	return &localProvider{
 		broadcastProvider: brdcLocal.ConnectWithKey(publicKey),
-		unicastProvider:   unicastConnectWithKey(publicKey),
+		unicastProvider:   unicastConnectWithKey(publicKeyBytes),
 	}
 }
 
@@ -34,8 +36,17 @@ func (p *localProvider) BroadcastChannelFor(name string) (net.BroadcastChannel, 
 	return p.broadcastProvider.ChannelFor(name)
 }
 
-func (p *localProvider) UnicastChannelWith(name string) (net.UnicastChannel, error) {
-	return p.unicastProvider.UnicastChannelWith(name)
+func (p *localProvider) UnicastChannelWith(peerID net.TransportIdentifier) (
+	net.UnicastChannel,
+	error,
+) {
+	return p.unicastProvider.UnicastChannelWith(peerID)
+}
+
+func (p *localProvider) OnUnicastChannelOpened(
+	handler func(channel net.UnicastChannel),
+) {
+	p.unicastProvider.OnUnicastChannelOpened(context.Background(), handler)
 }
 
 type localIdentifier string
