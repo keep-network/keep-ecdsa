@@ -38,7 +38,7 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
-        it("registers staking weight in the pool", async () => {
+        it("inserts operator with the correct staking weight in the pool", async () => {
             const stakingWeight = new BN(199)
             await tokenStaking.setBalance(stakingWeight)
 
