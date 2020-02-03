@@ -13,7 +13,11 @@ contract TokenStakingStub is ITokenStaking {
     }
 
     /// @dev Returns balance variable value.
-    function balanceOf(address _address) public view returns (uint256) {
+    function eligibleStake(address _address, address)
+        public
+        view
+        returns (uint256)
+    {
         return balance;
     }
 }
