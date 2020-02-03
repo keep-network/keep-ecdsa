@@ -8,8 +8,14 @@ contract IBondedECDSAKeep {
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
     function getPublicKey() external view returns (bytes memory);
-
-    /// @notice Calculates a signature over provided digest by the keep.
+    
+    /// @notice Returns the amount of the keep's ETH bond in wei.
+    /// @return The amount of the keep's ETH bond in wei.
+    function checkBondAmount(address _keepAddress) external view returns (uint256); 
+        
+    /// @notice Calculates a signature over provided digest by the keep. Note that
+    ///         signatures from the keep not explicitly requested by calling `sign`
+    ///         will be provable as fraud via `submitSignatureFraud`.
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external;
 
@@ -26,4 +32,25 @@ contract IBondedECDSAKeep {
     /// @param _tokenAddress Address of the ERC20 token to distribute.
     /// @param _value Amount of ERC20 token to distribute.
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value) external;
+
+    // @notice Seizes the signer's ETH bond.
+    function seizeSignerBonds(address _keepAddress) external returns (bool);
+    // onlyKeepOwner
+    // msg.sender.transfer(bondAmount)
+
+    // @notice Submits a fraud proof for a valid signature from this keep that was
+    //         not first approved via a call to sign.
+    // @return Error if not fraud, true if fraud.
+    function submitSignatureFraud(
+        address _keepAddress,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s,
+        bytes32 _signedDigest,
+        bytes calldata _preimage
+    ) external returns (bool _isFraud);
+    // Expected behavior:
+    // Error if not fraud
+    // Return true if fraud
+    // This means if the signature is valid, but was not approved via sign.
 }
