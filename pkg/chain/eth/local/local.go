@@ -42,7 +42,7 @@ func (lc *localChain) Address() common.Address {
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
-func (lc *localChain) RegisterAsMemberCandidate() error {
+func (lc *localChain) RegisterAsMemberCandidate(application common.Address) error {
 	return nil
 }
 

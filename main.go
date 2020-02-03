@@ -15,13 +15,11 @@ import (
 var logger = log.Logger("keep-main")
 
 const (
-	defaultConfigPath   = "./configs/config.toml"
-	defaultBroadcastAPI = "blockcypher"
+	defaultConfigPath = "./configs/config.toml"
 )
 
 var (
-	configPath   string
-	broadcastAPI string
+	configPath string
 )
 
 func main() {
@@ -47,16 +45,9 @@ func main() {
 			Destination: &configPath,
 			Usage:       "full path to the configuration file",
 		},
-		cli.StringFlag{
-			Name:        "broadcast-api",
-			Value:       defaultBroadcastAPI,
-			Destination: &broadcastAPI,
-			Usage:       "external service used to communicate with the blockchain",
-		},
 	}
 	app.Commands = []cli.Command{
 		cmd.StartCommand,
-		cmd.StartLocalCommand,
 	}
 
 	err = app.Run(os.Args)

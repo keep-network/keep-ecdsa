@@ -41,13 +41,21 @@ async function provisionKeepTecdsa() {
     console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
 
     let operatorEthAccountPassword = process.env.KEEP_ETHEREUM_PASSWORD;
-    let operatorAccount = await createOperatorEthAccount('operator');
-    var operator = operatorAccount['address'];
 
-    await createOperatorEthAccountKeyfile(operatorAccount['privateKey'], operatorEthAccountPassword);
+    // TODO: This should be reverted when we've got network unicast implemented.
+    let operators = []
 
-    // We wallet add to make the local account available to web3 functions in the script.
-    await web3.eth.accounts.wallet.add(operatorAccount['privateKey']);
+    for (let i = 1; i <= 3; i++) {
+      let operatorAccount = await createOperatorEthAccount('operator1');
+      var operator = operatorAccount['address'];
+
+      await createOperatorEthAccountKeyfile(operatorAccount['privateKey'], operatorEthAccountPassword, i);
+
+      // We wallet add to make the local account available to web3 functions in the script.
+      await web3.eth.accounts.wallet.add(operatorAccount['privateKey']);
+
+      operators.push(operator)
+    }
 
     // Eth account that contracts are migrated against.
     let contractOwner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
@@ -57,11 +65,13 @@ async function provisionKeepTecdsa() {
     console.log('\n<<<<<<<<<<<< Unlocking Contract Owner Account ' + contractOwner + ' >>>>>>>>>>>>');
     await unlockEthAccount(contractOwner, process.env.KEEP_ETHEREUM_PASSWORD);
 
-    console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
-    await fundOperatorAccount(operator, purse, '1');
+    for (let i = 0; i < operators.length; i++) {
+      console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operators[i] + ' >>>>>>>>>>>>');
+      await fundOperatorAccount(operators[i], purse, '1');
+    }
 
     console.log('\n<<<<<<<<<<<< Creating keep-tecdsa Config File >>>>>>>>>>>>');
-    await createKeepTecdsaConfig(operator);
+    await createKeepTecdsaConfig(operators);
 
     console.log("\n########### keep-tecdsa Provisioning Complete! ###########");
   }
@@ -79,20 +89,20 @@ async function createOperatorEthAccount(accountName) {
   fs.writeFile('/mnt/keep-tecdsa/config/eth_account_address', ethAccount['address'], (error) => {
     if (error) throw error;
   });
-  console.log(accountName + ' Account '  + ethAccount['address'] + ' Created!');
+  console.log(accountName + ' Account ' + ethAccount['address'] + ' Created!');
   return ethAccount;
 };
 
 // We are creating a local account.  We must manually generate a keyfile for use by the keep-tecdsa
-async function createOperatorEthAccountKeyfile(ethAccountPrivateKey, ethAccountPassword) {
+async function createOperatorEthAccountKeyfile(ethAccountPrivateKey, ethAccountPassword, i) {
 
   let ethAccountKeyfile = await web3.eth.accounts.encrypt(ethAccountPrivateKey, ethAccountPassword);
 
   // We write to a file for later passage to the keep-tecdsa container
-  fs.writeFile('/mnt/keep-tecdsa/config/eth_account_keyfile', JSON.stringify(ethAccountKeyfile), (error) => {
+  fs.writeFile(`/mnt/keep-tecdsa/config/eth_account_keyfile_${i}`, JSON.stringify(ethAccountKeyfile), (error) => {
     if (error) throw error;
   });
-  console.log('Keyfile generated!');
+  console.log(`Keyfile ${i} generated!`);
 };
 
 async function unlockEthAccount(ethAccount, ethAccountPassword) {
@@ -111,14 +121,19 @@ async function fundOperatorAccount(operator, purse, etherToTransfer) {
   console.log("Account " + operator + " funded!");
 }
 
-async function createKeepTecdsaConfig(operator) {
+async function createKeepTecdsaConfig() {
 
-  fs.createReadStream('/tmp/keep-tecdsa-template.toml', 'utf8').pipe(concat(function(data) {
+  fs.createReadStream('/tmp/keep-tecdsa-template.toml', 'utf8').pipe(concat(function (data) {
     let parsedConfigFile = toml.parse(data);
 
     parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
-    parsedConfigFile.ethereum.account.KeyFile = '/mnt/keep-tecdsa/config/eth_account_keyfile';
+    parsedConfigFile.ethereum.account.KeyFile = [
+      process.env.KEEP_TECDSA_ETH_KEYFILE_1,
+      process.env.KEEP_TECDSA_ETH_KEYFILE_2,
+      process.env.KEEP_TECDSA_ETH_KEYFILE_3
+    ]
     parsedConfigFile.ethereum.ContractAddresses.ECDSAKeepFactory = ecdsaKeepFactoryContractAddress;
+
     parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
     fs.writeFile('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', tomlify.toToml(parsedConfigFile), (error) => {

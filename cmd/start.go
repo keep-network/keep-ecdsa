@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/ipfs/go-log"
 	"github.com/urfave/cli"
@@ -42,43 +43,63 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("failed while reading config file: [%v]", err)
 	}
 
-	ethereumKey, err := ethutil.DecryptKeyFile(
-		config.Ethereum.Account.KeyFile,
-		config.Ethereum.Account.KeyFilePassword,
-	)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to read key file [%s]: [%v]", config.Ethereum.Account.KeyFile, err,
-		)
-	}
-
-	ethereumChain, err := ethereum.Connect(ethereumKey.PrivateKey, &config.Ethereum)
-	if err != nil {
-		return fmt.Errorf("failed to connect to ethereum node: [%v]", err)
-	}
-
-	operatorPrivateKey, operatorPublicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
-
-	_, networkPublicKey := key.OperatorKeyToNetworkKey(
-		operatorPrivateKey, operatorPublicKey,
-	)
-
-	networkProvider := local.LocalProvider(
-		networkPublicKey,
-	)
-
-	persistence := persistence.NewEncryptedPersistence(
-		persistence.NewDiskHandle(config.Storage.DataDir),
-		config.Ethereum.Account.KeyFilePassword,
-	)
-
 	ctx := context.Background()
 
-	client.Initialize(
-		ethereumChain,
-		networkProvider,
-		persistence,
-	)
+	// TODO: This should be reverted when we've got network unicast implemented.
+	// As a temporary solution to support multiple operators on one client we loop
+	// over configured keys.
+	for i, keyFile := range config.Ethereum.Account.KeyFile {
+		ethereumKey, err := ethutil.DecryptKeyFile(
+			keyFile,
+			config.Ethereum.Account.KeyFilePassword,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to read key file [%s]: [%v]", keyFile, err,
+			)
+		}
+
+		ethereumChain, err := ethereum.Connect(ethereumKey.PrivateKey, &config.Ethereum)
+		if err != nil {
+			return fmt.Errorf("failed to connect to ethereum node: [%v]", err)
+		}
+
+		operatorPrivateKey, operatorPublicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
+
+		_, networkPublicKey := key.OperatorKeyToNetworkKey(
+			operatorPrivateKey, operatorPublicKey,
+		)
+
+		networkProvider := local.LocalProvider(
+			networkPublicKey,
+		)
+
+		dirPath := fmt.Sprintf("%s/membership_%d", config.Storage.DataDir, i)
+		if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+			err = os.Mkdir(dirPath, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("error occurred while creating a dir: [%v]", err)
+			}
+		}
+
+		persistence := persistence.NewEncryptedPersistence(
+			persistence.NewDiskHandle(dirPath),
+			config.Ethereum.Account.KeyFilePassword,
+		)
+
+		sanctionedApplications, err := config.SanctionedApplications.Addresses()
+		if err != nil {
+			return fmt.Errorf("failed to get sanctioned applications addresses: [%v]", err)
+		}
+
+		client.Initialize(
+			ethereumChain,
+			networkProvider,
+			persistence,
+			sanctionedApplications,
+		)
+		logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
+	}
 
 	logger.Info("client started")
 

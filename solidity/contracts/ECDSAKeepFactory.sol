@@ -1,89 +1,101 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
+import "./api/IBondedECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPoolFactory.sol";
 
 /// @title ECDSA Keep Factory
-/// @notice Contract creating ECDSA keeps.
-/// @dev TODO: This is a stub contract - needs to be implemented.
-contract ECDSAKeepFactory {
+/// @notice Contract creating bonded ECDSA keeps.
+contract ECDSAKeepFactory is
+    IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
+{
     using AddressArrayUtils for address payable[];
-
-    // List of keeps.
-    ECDSAKeep[] keeps;
-
-    // List of candidates to be selected as keep members. Once the candidate is
-    // registered it remains on the list forever.
-    // TODO: It's a temporary solution until we implement proper candidate
-    // registration and member selection.
-    address payable[] memberCandidates;
+    using SafeMath for uint256;
 
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
-        address payable[] members
+        address payable[] members,
+        address owner,
+        address application
     );
 
-    /// @notice Register caller as a candidate to be selected as keep member.
+    // Mapping of pools with registered member candidates for each application.
+    mapping(address => address) candidatesPools; // application -> candidates pool
+
+    bytes32 groupSelectionSeed;
+
+    SortitionPoolFactory sortitionPoolFactory;
+
+    constructor(address _sortitionPoolFactory) public {
+        sortitionPoolFactory = SortitionPoolFactory(_sortitionPoolFactory);
+    }
+
+    /// @notice Register caller as a candidate to be selected as keep member
+    /// for the provided customer application
     /// @dev If caller is already registered it returns without any changes.
-    /// TODO: This is a simplified solution until we have proper registration
-    /// and group selection.
-    function registerMemberCandidate() external {
-        if (!memberCandidates.contains(msg.sender)) {
-            memberCandidates.push(msg.sender);
+    function registerMemberCandidate(address _application) external {
+        if (candidatesPools[_application] == address(0)) {
+            // This is the first time someone registers as signer for this
+            // application so let's create a signer pool for it.
+            candidatesPools[_application] = sortitionPoolFactory
+                .createSortitionPool();
+        }
+
+        SortitionPool candidatesPool = SortitionPool(
+            candidatesPools[_application]
+        );
+
+        address operator = msg.sender;
+        if (!candidatesPool.isOperatorRegistered(operator)) {
+            candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
         }
     }
 
     /// @notice Open a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
+    /// A caller of this function is expected to be an application for which
+    /// member candidates were registered in a pool.
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Address of the keep owner.
+    /// @param _bond Value of ETH bond required from the keep.
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
-        address _owner
+        address _owner,
+        uint256 _bond
     ) external payable returns (address keepAddress) {
-        address payable[] memory _members = selectECDSAKeepMembers(_groupSize);
+        _bond; // TODO: assign bond for created keep
 
-        ECDSAKeep keep = new ECDSAKeep(
-            _owner,
-            _members,
-            _honestThreshold
+        address application = msg.sender;
+        address pool = candidatesPools[application];
+        require(pool != address(0), "No signer pool for this application");
+
+        address[] memory selected = SortitionPool(pool).selectSetGroup(
+            _groupSize,
+            groupSelectionSeed
         );
-        keeps.push(keep);
+
+        address payable[] memory members = new address payable[](_groupSize);
+        for (uint256 i = 0; i < _groupSize; i++) {
+            // TODO: for each selected member, validate staking weight and create,
+            // bond. If validation failed or bond could not be created, remove
+            // operator from pool and try again.
+            members[i] = address(uint160(selected[i]));
+        }
+
+        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold);
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepCreated(keepAddress, _members);
-    }
+        emit ECDSAKeepCreated(keepAddress, members, _owner, application);
 
-    /// @notice Runs member selection for an ECDSA keep.
-    /// @dev Stub implementations generates a group with only one member. Member
-    /// is randomly selected from registered member candidates.
-    /// @param _groupSize Number of members to be selected.
-    /// @return List of selected members addresses.
-    function selectECDSAKeepMembers(
-        uint256 _groupSize
-    ) internal view returns (address payable[] memory members){
-        require(
-            memberCandidates.length >= _groupSize,
-            'not enough member candidates registered to form a group'
-        );
+        // TODO: as beacon for new entry and update groupSelectionSeed in callback
 
-         members = new address payable[](_groupSize);
-
-        // TODO: Use the random beacon for randomness.
-        uint firstIndex = uint256(keccak256(abi.encodePacked(block.timestamp)))
-            % memberCandidates.length;
-
-        // TODO: Temporary solution until group selection protocol is implemented.
-        uint nextIndex = firstIndex;
-        for (uint i = 0; i < _groupSize; i++) {
-            members[i] = memberCandidates[nextIndex];
-            nextIndex++;
-            nextIndex = nextIndex % memberCandidates.length;
-        }
     }
 }
