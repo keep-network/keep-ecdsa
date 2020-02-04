@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
+import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -29,15 +30,20 @@ contract ECDSAKeepFactory is
     bytes32 groupSelectionSeed;
 
     SortitionPoolFactory sortitionPoolFactory;
+    KeepBonding keepBonding;
 
-    constructor(address _sortitionPoolFactory) public {
+    constructor(address _sortitionPoolFactory, address _keepBonding) public {
         sortitionPoolFactory = SortitionPoolFactory(_sortitionPoolFactory);
+        keepBonding = KeepBonding(_keepBonding);
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
-    /// for the provided customer application
+    /// for the provided customer application. Caller can pass ether with this
+    /// function call and the value will be registered as available for bonding.
+    /// Operator can deposit a value for bonding also by calling the bonding
+    /// contract directly.
     /// @dev If caller is already registered it returns without any changes.
-    function registerMemberCandidate(address _application) external {
+    function registerMemberCandidate(address _application) external payable {
         if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
@@ -53,6 +59,8 @@ contract ECDSAKeepFactory is
         if (!candidatesPool.isOperatorRegistered(operator)) {
             candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
         }
+
+        keepBonding.deposit.value(msg.value)(msg.sender);
     }
 
     /// @notice Open a new ECDSA keep.
@@ -62,7 +70,7 @@ contract ECDSAKeepFactory is
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Address of the keep owner.
-    /// @param _bond Value of ETH bond required from the keep.
+    /// @param _bond Value of ETH bond required from the keep (wei).
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
@@ -70,11 +78,13 @@ contract ECDSAKeepFactory is
         address _owner,
         uint256 _bond
     ) external payable returns (address keepAddress) {
-        _bond; // TODO: assign bond for created keep
-
         address application = msg.sender;
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
+
+        // TODO: The reminder will not be bonded. What should we do with it?
+        uint256 memberBond = _bond.div(_groupSize);
+        require(memberBond > 0, "Bond per member equals zero");
 
         address[] memory selected = SortitionPool(pool).selectSetGroup(
             _groupSize,
@@ -92,6 +102,20 @@ contract ECDSAKeepFactory is
         ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold);
 
         keepAddress = address(keep);
+
+        for (uint256 i = 0; i < _groupSize; i++) {
+            keepBonding.createBond(
+                members[i],
+                uint256(keepAddress),
+                memberBond
+            );
+            keepBonding.reassignBond(
+                members[i],
+                uint256(keepAddress),
+                keepAddress,
+                uint256(keepAddress)
+            );
+        }
 
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
 
