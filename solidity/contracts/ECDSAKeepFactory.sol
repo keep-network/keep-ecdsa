@@ -60,7 +60,7 @@ contract ECDSAKeepFactory is
             candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
         }
 
-        keepBonding.deposit.value(msg.value)(msg.sender);
+        keepBonding.deposit.value(msg.value)(operator);
     }
 
     /// @notice Open a new ECDSA keep.
