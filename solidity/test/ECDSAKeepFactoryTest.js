@@ -6,9 +6,9 @@ const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const TokenStakingStub = artifacts.require("TokenStakingStub")
 const KeepBondingStub = artifacts.require('KeepBondingStub');
-const SortitionPoolFactoryStub = artifacts.require('SortitionPoolFactoryStub');
-const SortitionPoolStub = artifacts.require('SortitionPoolStub');
-const SortitionPoolFactory = artifacts.require('SortitionPoolFactory');
+const SortitionPoolFactoryStub = artifacts.require('BondedSortitionPoolFactoryStub');
+const SortitionPoolStub = artifacts.require('BondedSortitionPoolStub');
+const SortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
 
 const BN = web3.utils.BN
 const expect = require('chai').expect

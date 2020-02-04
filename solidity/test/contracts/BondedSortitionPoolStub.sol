@@ -1,6 +1,6 @@
 pragma solidity ^0.5.10;
 
-contract SortitionPoolStub {
+contract BondedSortitionPoolStub {
     address payable[] operators;
     mapping(address => uint256) public operatorWeights;
 
