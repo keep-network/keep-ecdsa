@@ -21,12 +21,12 @@ jobs:
           node-version: "11.x"
           registry-url: "https://npm.pkg.github.com"
       - name: Publish package
-        working-directory: solidity
+        working-directory: ./solidity
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Bump version
-        working-directory: solidity
+        working-directory: ./solidity
         run: |
           PACKAGE_VERSION=$(npm version prerelease --preid=pre)
           echo "::set-env name=PACKAGE_VERSION::$PACKAGE_VERSION"
@@ -36,7 +36,7 @@ jobs:
           git config user.email "thesis-heimdall@users.noreply.github.com"
           git config user.name "Heimdall"
       - name: Commit
-        working-directory: solidity
+        working-directory: ./solidity
         env:
           PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
         run: |
