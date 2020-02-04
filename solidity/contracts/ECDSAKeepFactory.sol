@@ -6,8 +6,10 @@ import "./api/IBondedECDSAKeepFactory.sol";
 import "./external/ITokenStaking.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
-import "@keep-network/sortition-pools/contracts/SortitionPoolFactory.sol";
+import {
+    BondedSortitionPool
+} from "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
+import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
@@ -30,16 +32,18 @@ contract ECDSAKeepFactory is
 
     bytes32 groupSelectionSeed;
 
-    SortitionPoolFactory sortitionPoolFactory;
+    BondedSortitionPoolFactory bondedSortitionPoolFactory;
     ITokenStaking tokenStaking;
     KeepBonding keepBonding;
 
     constructor(
-        address _sortitionPoolFactory,
+        address _bondedSortitionPoolFactory,
         address _tokenStaking,
         address _keepBonding
     ) public {
-        sortitionPoolFactory = SortitionPoolFactory(_sortitionPoolFactory);
+        bondedSortitionPoolFactory = BondedSortitionPoolFactory(
+            _bondedSortitionPoolFactory
+        );
         tokenStaking = ITokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
     }
@@ -54,11 +58,11 @@ contract ECDSAKeepFactory is
         if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
-            candidatesPools[_application] = sortitionPoolFactory
+            candidatesPools[_application] = bondedSortitionPoolFactory
                 .createSortitionPool();
         }
 
-        SortitionPool candidatesPool = SortitionPool(
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
             candidatesPools[_application]
         );
 
@@ -94,9 +98,11 @@ contract ECDSAKeepFactory is
         uint256 memberBond = _bond.div(_groupSize);
         require(memberBond > 0, "Bond per member equals zero");
 
-        address[] memory selected = SortitionPool(pool).selectSetGroup(
+        address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
-            groupSelectionSeed
+            groupSelectionSeed,
+            memberBond,
+            this
         );
 
         address payable[] memory members = new address payable[](_groupSize);
