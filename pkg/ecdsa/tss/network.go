@@ -18,7 +18,7 @@ type networkBridge struct {
 
 	channelsMutex    *sync.Mutex
 	broadcastChannel net.BroadcastChannel
-	unicastChannels  map[string]net.UnicastChannel
+	unicastChannels  map[net.TransportIdentifier]net.UnicastChannel
 
 	tssMessageHandlersMutex *sync.Mutex
 	tssMessageHandlers      []tssMessageHandler
@@ -36,7 +36,7 @@ func newNetworkBridge(
 		groupInfo:       groupInfo,
 
 		channelsMutex:   &sync.Mutex{},
-		unicastChannels: make(map[string]net.UnicastChannel),
+		unicastChannels: make(map[net.TransportIdentifier]net.UnicastChannel),
 
 		tssMessageHandlersMutex: &sync.Mutex{},
 		tssMessageHandlers:      []tssMessageHandler{},
@@ -111,7 +111,8 @@ func (b *networkBridge) initializeChannels(
 			continue
 		}
 
-		unicastChannel, err := b.getUnicastChannelWith(peerMemberID.String())
+		peerTransportID := b.networkProvider.CreateTransportIdentifier(peerMemberID)
+		unicastChannel, err := b.getUnicastChannelWith(peerTransportID)
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}
@@ -146,16 +147,18 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 	return broadcastChannel, nil
 }
 
-func (b *networkBridge) getUnicastChannelWith(remotePeerID string) (net.UnicastChannel, error) {
+func (b *networkBridge) getUnicastChannelWith(
+	peerTransportID net.TransportIdentifier,
+) (net.UnicastChannel, error) {
 	b.channelsMutex.Lock()
 	defer b.channelsMutex.Unlock()
 
-	unicastChannel, exists := b.unicastChannels[remotePeerID]
+	unicastChannel, exists := b.unicastChannels[peerTransportID]
 	if exists {
 		return unicastChannel, nil
 	}
 
-	unicastChannel, err := b.networkProvider.UnicastChannelWith(remotePeerID)
+	unicastChannel, err := b.networkProvider.UnicastChannelWith(peerTransportID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get unicast channel: [%v]", err)
 	}
@@ -164,7 +167,7 @@ func (b *networkBridge) getUnicastChannelWith(remotePeerID string) (net.UnicastC
 		return &TSSProtocolMessage{}
 	})
 
-	b.unicastChannels[remotePeerID] = unicastChannel
+	b.unicastChannels[peerTransportID] = unicastChannel
 
 	return unicastChannel, nil
 }
@@ -186,7 +189,13 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 		b.broadcast(protocolMessage)
 	} else {
 		for _, destination := range routing.To {
-			b.sendTo(destination.GetId(), protocolMessage)
+			destinationMemberID, err := MemberIDFromHex(destination.GetId())
+			if err != nil {
+				logger.Errorf("failed to get destination member id: [%v]", err)
+				return
+			}
+			destinationTransportID := b.networkProvider.CreateTransportIdentifier(destinationMemberID)
+			b.sendTo(destinationTransportID, protocolMessage)
 		}
 	}
 }
@@ -205,19 +214,22 @@ func (b *networkBridge) broadcast(msg *TSSProtocolMessage) error {
 	return nil
 }
 
-func (b *networkBridge) sendTo(receiverID string, msg *TSSProtocolMessage) error {
-	unicastChannel, err := b.getUnicastChannelWith(receiverID)
+func (b *networkBridge) sendTo(
+	receiverTransportID net.TransportIdentifier,
+	message *TSSProtocolMessage,
+) error {
+	unicastChannel, err := b.getUnicastChannelWith(receiverTransportID)
 	if err != nil {
 		return fmt.Errorf(
 			"[m:%x]: failed to find unicast channel for [%v]: [%v]",
 			b.groupInfo.memberID,
-			receiverID,
+			receiverTransportID,
 			err,
 		)
 
 	}
 
-	if err := unicastChannel.Send(msg); err != nil {
+	if err := unicastChannel.Send(message); err != nil {
 		return fmt.Errorf(
 			"[m:%x]: failed to send unicast message: [%v]",
 			b.groupInfo.memberID,

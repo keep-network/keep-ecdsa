@@ -22,7 +22,7 @@ import (
 )
 
 func TestGenerateKeyAndSign(t *testing.T) {
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
 
 	groupSize := 5
 	dishonestThreshold := uint(groupSize - 1)
@@ -57,10 +57,21 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		var keyGenWait sync.WaitGroup
 		keyGenWait.Add(groupSize)
 
+		var providersInitializedWg sync.WaitGroup
+		providersInitializedWg.Add(groupSize)
+		providersInitialized := make(chan struct{})
+
+		go func() {
+			providersInitializedWg.Wait()
+			close(providersInitialized)
+		}()
+
 		for i, memberID := range groupMemberIDs {
 			go func(memberID MemberID) {
 				network := newTestNetProvider(groupMembersKeys[memberID.String()])
 				networkProviders.Store(memberID.String(), network)
+				providersInitializedWg.Done()
+				<-providersInitialized
 
 				preParams := testData[i].LocalPreParams
 

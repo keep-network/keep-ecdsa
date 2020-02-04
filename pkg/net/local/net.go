@@ -3,8 +3,6 @@ package local
 import (
 	"context"
 	"encoding/hex"
-
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -23,12 +21,13 @@ type localProvider struct {
 // LocalProvider returns local implementation of net.Provider which can be used
 // for testing.
 func LocalProvider(
-	publicKey *key.NetworkPublic, // node's public key
+	networkPublicKey *key.NetworkPublic, // node's public key
 ) net.Provider {
-	publicKeyBytes, _ := publicKey.Bytes()
+	publicKey, _ := hex.DecodeString(key.NetworkPubKeyToEthAddress(networkPublicKey)[2:])
+
 	return &localProvider{
-		broadcastProvider: brdcLocal.ConnectWithKey(publicKey),
-		unicastProvider:   unicastConnectWithKey(publicKeyBytes),
+		broadcastProvider: brdcLocal.ConnectWithKey(networkPublicKey),
+		unicastProvider:   unicastConnectWithKey(publicKey),
 	}
 }
 
@@ -49,13 +48,16 @@ func (p *localProvider) OnUnicastChannelOpened(
 	p.unicastProvider.OnUnicastChannelOpened(context.Background(), handler)
 }
 
+func (p *localProvider) CreateTransportIdentifier(publicKey []byte) net.TransportIdentifier {
+	return createTransportIdentifier(publicKey)
+}
+
 type localIdentifier string
+
+func createTransportIdentifier(publicKey []byte) net.TransportIdentifier {
+	return localIdentifier(hex.EncodeToString(publicKey))
+}
 
 func (li localIdentifier) String() string {
 	return string(li)
-}
-
-func localIdentifierFromNetworkKey(publicKey *key.NetworkPublic) localIdentifier {
-	ethereumAddress := key.NetworkPubKeyToEthAddress(publicKey)
-	return localIdentifier(hex.EncodeToString(common.FromHex(ethereumAddress)))
 }

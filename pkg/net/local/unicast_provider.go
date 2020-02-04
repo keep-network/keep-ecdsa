@@ -2,7 +2,6 @@ package local
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -33,7 +32,7 @@ func unicastConnectWithKey(
 	providersMutex.Lock()
 	defer providersMutex.Unlock()
 
-	transportID := transportIDFromPublicKey(publicKey)
+	transportID := createTransportIdentifier(publicKey)
 
 	existingProvider, ok := providers[transportID.String()]
 	if ok {
@@ -51,14 +50,6 @@ func unicastConnectWithKey(
 	providers[transportID.String()] = provider
 
 	return provider
-}
-
-func transportIDFromPublicKey(publicKey []byte) net.TransportIdentifier {
-	return localIdentifier(hex.EncodeToString(publicKey))
-}
-
-func (up *unicastProvider) TransportIDFromPublicKey(publicKey []byte) net.TransportIdentifier {
-	return transportIDFromPublicKey(publicKey)
 }
 
 // UnicastChannelWith creates a unicast channel with the given remote peer.

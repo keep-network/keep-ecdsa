@@ -28,7 +28,7 @@ func TestNewChannelNotification(t *testing.T) {
 		peer2NewChannelNotificationCount++
 	})
 
-	remotePeerID := peer1Provider.TransportIDFromPublicKey(peer2PubKey)
+	remotePeerID := createTransportIdentifier(peer2PubKey)
 	peer1Provider.UnicastChannelWith(remotePeerID)
 
 	<-ctx.Done() // give some time for notifications...
@@ -62,7 +62,7 @@ func TestExistingChannelNotification(t *testing.T) {
 		newChannelNotificationCount++
 	})
 
-	remotePeerID := peer1Provider.TransportIDFromPublicKey(peer2PubKey)
+	remotePeerID := createTransportIdentifier(peer2PubKey)
 	peer1Provider.UnicastChannelWith(remotePeerID)
 	peer1Provider.UnicastChannelWith(remotePeerID)
 
@@ -89,8 +89,8 @@ func TestSendAndReceive(t *testing.T) {
 	peer1Provider := unicastConnectWithKey(peer1PubKey)
 	peer2Provider := unicastConnectWithKey(peer2PubKey)
 
-	remotePeer1ID := peer2Provider.TransportIDFromPublicKey(peer1PubKey)
-	remotePeer2ID := peer1Provider.TransportIDFromPublicKey(peer2PubKey)
+	remotePeer1ID := createTransportIdentifier(peer1PubKey)
+	remotePeer2ID := createTransportIdentifier(peer2PubKey)
 
 	channel1, err := peer1Provider.UnicastChannelWith(remotePeer2ID)
 	if err != nil {
@@ -192,7 +192,7 @@ func TestTalkToSelf(t *testing.T) {
 	peerPubKey := []byte("0x177171")
 	peerProvider := unicastConnectWithKey(peerPubKey)
 
-	peerTransportID := peerProvider.TransportIDFromPublicKey(peerPubKey)
+	peerTransportID := createTransportIdentifier(peerPubKey)
 
 	channel1, err := peerProvider.UnicastChannelWith(peerTransportID)
 	if err != nil {
