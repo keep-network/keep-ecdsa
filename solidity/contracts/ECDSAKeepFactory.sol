@@ -7,6 +7,7 @@ import "./external/ITokenStaking.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {
+    BondingContract,
     BondedSortitionPool
 } from "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
@@ -14,7 +15,9 @@ import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
 contract ECDSAKeepFactory is
-    IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
+    // TODO: Rename to BondedECDSAKeepFactory
+    IBondedECDSAKeepFactory,
+    BondingContract
 {
     using AddressArrayUtils for address payable[];
     using SafeMath for uint256;
@@ -133,7 +136,37 @@ contract ECDSAKeepFactory is
 
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
 
-        // TODO: as beacon for new entry and update groupSelectionSeed in callback
+        // TODO: ask beacon for new entry and update groupSelectionSeed in callback
 
+    }
+
+    /// @notice Checks if operator fulfills all requirements to be selected as a
+    /// keep member.
+    /// @dev This is a callback function which will be called by sortition pool
+    /// group selection to check if the member can be selected to the group. If
+    /// not the given operator will be removed from the pool and next one will
+    /// be selected.
+    /// @param _operator Address of an operator to check.
+    /// @param _stakingWeight Value of KEEP token stake required from the operator.
+    /// @param _memberBond Value of ETH bond required from the operator (wei).
+    /// @return True if operator is eligible to join the group, else false.
+    function isEligible(
+        address _operator,
+        uint256 _stakingWeight,
+        uint256 _memberBond
+    ) external returns (bool) {
+        uint256 currentStakingWeight = tokenStaking.balanceOf(_operator);
+        if (currentStakingWeight < _stakingWeight) {
+            return false;
+        }
+
+        uint256 currentUnbondedValue = keepBonding.availableBondingValue(
+            _operator
+        );
+        if (currentUnbondedValue < _memberBond) {
+            return false;
+        }
+
+        return true;
     }
 }
