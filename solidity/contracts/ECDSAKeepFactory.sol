@@ -106,14 +106,9 @@ contract ECDSAKeepFactory is
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
                 members[i],
+                keepAddress,
                 uint256(keepAddress),
                 memberBond
-            );
-            keepBonding.reassignBond(
-                members[i],
-                uint256(keepAddress),
-                keepAddress,
-                uint256(keepAddress)
             );
         }
 
