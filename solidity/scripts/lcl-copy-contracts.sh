@@ -5,7 +5,7 @@
 #
 # Example:
 #   KEEP_CORE_ARTIFACTS=~/go/src/github.com/keep-network/keep-core/contracts/solidity/build/contracts \
-#     ./solidity/scripts/dev-copy-contracts.sh
+#     ./solidity/scripts/lcl-copy-contracts.sh
 
 set -e
 

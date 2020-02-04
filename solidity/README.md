@@ -26,7 +26,7 @@ from local source (for development) after running migrations in `keep-core` proj
 To copy required artifacts from `keep-core` project execute command:
 ```sh
 KEEP_CORE_ARTIFACTS=~/go/src/github.com/keep-network/keep-core/contracts/solidity/build/contracts \
-   ./scripts/dev-copy-contracts.sh
+   ./scripts/lcl-copy-contracts.sh
 ```
 Remember to update `KEEP_CORE_ARTIFACTS` with path where migrations artifacts are
 stored on your machine.
@@ -44,7 +44,7 @@ Keeps creation depends on operator's KEEP token staking. To initialize the opera
 2. Authorize token staking for ECDSA keep factory.
     ```sh
     # Run from `keep-tecdsa/solidity` directory
-    truffle exec scripts/dev-initialize.js`
+    truffle exec scripts/lcl-initialize.js`
     ```
 
 ## Usage
