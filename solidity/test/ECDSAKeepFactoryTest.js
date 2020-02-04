@@ -137,12 +137,20 @@ contract("ECDSAKeepFactory", async accounts => {
         const singleBond = new BN(1)
         const bond = singleBond.mul(groupSize)
 
-        before(async () => {
+        async function initializeNewFactory() {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
             sortitionPoolFactory = await SortitionPoolFactory.new()
             keepBonding = await KeepBondingStub.new()
             keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address, keepBonding.address)
+        }
+
+        before(async () => {
+            await initializeNewFactory()
+
+            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
+            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
         })
 
         beforeEach(async () => {
@@ -169,10 +177,6 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if bond equals zero", async () => {
-            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
-
             let bond = 0
 
             await expectRevert(
@@ -188,10 +192,6 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if bond per member equals zero", async () => {
-            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
-
             let bond = new BN(2)
 
             await expectRevert(
@@ -207,10 +207,6 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("opens keep with multiple members", async () => {
-            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
-
             let blockNumber = await web3.eth.getBlockNumber()
 
             await keepFactory.openKeep(
@@ -236,10 +232,6 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("opens bonds for keep", async () => {
-            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
-
             let blockNumber = await web3.eth.getBlockNumber()
 
             await keepFactory.openKeep(
@@ -277,6 +269,8 @@ contract("ECDSAKeepFactory", async accounts => {
         // the rest remains unbonded.
         // TODO: Check if such case is acceptable.
         it("forgets about the remainder", async () => {
+            await initializeNewFactory()
+
             const groupSize = 3
             const singleBond = new BN(3)
             const bond = new BN(11)
@@ -316,6 +310,8 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if not enough member candidates are registered", async () => {
+            await initializeNewFactory()
+
             let groupSize = 2
             let threshold = 2
 
@@ -336,6 +332,8 @@ contract("ECDSAKeepFactory", async accounts => {
         // TODO: This is temporary, we don't expect a group to be formed if a member
         // doesn't have sufficient unbonded value.
         it("reverts if one member has insufficient unbonded value", async () => {
+            await initializeNewFactory()
+
             await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
             await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
             await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond.sub(new BN(1)) })
@@ -353,6 +351,8 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("opens keep with multiple members and emits an event", async () => {
+            await initializeNewFactory()
+
             await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
             await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
             await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
