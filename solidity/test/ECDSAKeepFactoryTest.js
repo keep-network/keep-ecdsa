@@ -271,12 +271,12 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         // This test checks that if the requested bond value divided by the group
-        // size has a reminder the reminder is not bonded, e.g.:
+        // size has a remainder which is not bonded, e.g.:
         // requested bond = 11 & group size = 3 => bond per member ≈ 3,66
         // but `11.div(3) = 3` so in current implementation we bond only 9 and
         // the rest remains unbonded.
         // TODO: Check if such case is acceptable.
-        it("forgets about the reminder", async () => {
+        it("forgets about the remainder", async () => {
             const groupSize = 3
             const singleBond = new BN(3)
             const bond = new BN(11)

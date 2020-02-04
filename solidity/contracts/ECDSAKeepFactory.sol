@@ -82,7 +82,7 @@ contract ECDSAKeepFactory is
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
-        // TODO: The reminder will not be bonded. What should we do with it?
+        // TODO: The remainder will not be bonded. What should we do with it?
         uint256 memberBond = _bond.div(_groupSize);
         require(memberBond > 0, "Bond per member equals zero");
 
