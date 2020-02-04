@@ -3,17 +3,22 @@ const ECDSAKeepFactory = artifacts.require("./ECDSAKeepFactory.sol");
 const BondedECDSAKeepVendor = artifacts.require("./BondedECDSAKeepVendor.sol");
 const BondedECDSAKeepVendorImplV1 = artifacts.require("./BondedECDSAKeepVendorImplV1.sol");
 
-const deploySortitionPoolFactory = require('@keep-network/sortition-pools/migrations/scripts/deployContracts')
-const SortitionPoolFactory = artifacts.require("SortitionPoolFactory");
+const { deployBondedSortitionPoolFactory } = require('@keep-network/sortition-pools/migrations/scripts/deployContracts')
+const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory");
 
 const { TokenStakingAddress } = require("./externals")
 
 module.exports = async function (deployer) {
     await deployer.deploy(KeepBonding)
 
-    await deploySortitionPoolFactory(artifacts, deployer)
+    await deployBondedSortitionPoolFactory(artifacts, deployer)
 
-    await deployer.deploy(ECDSAKeepFactory, SortitionPoolFactory.address, TokenStakingAddress, KeepBonding.address)
+    await deployer.deploy(
+        ECDSAKeepFactory,
+        BondedSortitionPoolFactory.address,
+        TokenStakingAddress,
+        KeepBonding.address
+    )
 
     await deployer.deploy(BondedECDSAKeepVendorImplV1)
     await deployer.deploy(BondedECDSAKeepVendor, BondedECDSAKeepVendorImplV1.address)
