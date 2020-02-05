@@ -3,8 +3,9 @@ package tss
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/net"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/net"
 )
 
 // protocolJoinTimeout defines a period within which the member sends and receives

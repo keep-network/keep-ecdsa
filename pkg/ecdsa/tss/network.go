@@ -3,11 +3,11 @@ package tss
 import (
 	"context"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-core/pkg/net"
 	"sync"
 
 	"github.com/binance-chain/tss-lib/tss"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-core/pkg/net"
 )
 
 // networkBridge translates TSS library network interface to unicast and
