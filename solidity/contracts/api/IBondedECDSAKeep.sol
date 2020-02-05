@@ -38,9 +38,9 @@ contract IBondedECDSAKeep {
     // onlyKeepOwner
     // msg.sender.transfer(bondAmount)
 
-    // @notice Submits a fraud proof for a valid signature from this keep that was
-    //         not first approved via a call to sign.
-    // @return Error if not fraud, true if fraud.
+    /// @notice Submits a fraud proof for a valid signature from this keep that was
+    ///         not first approved via a call to sign.
+    /// @return Error if not fraud, true if fraud.
     function submitSignatureFraud(
         uint8 _v,
         bytes32 _r,
@@ -48,8 +48,4 @@ contract IBondedECDSAKeep {
         bytes32 _signedDigest,
         bytes calldata _preimage
     ) external returns (bool _isFraud);
-    // Expected behavior:
-    // Error if not fraud
-    // Return true if fraud
-    // This means if the signature is valid, but was not approved via sign.
 }

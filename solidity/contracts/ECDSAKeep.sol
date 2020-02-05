@@ -83,6 +83,30 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         // TODO: Implement
     }
 
+    /// @notice Submits a fraud proof for a valid signature from this keep that was
+    ///         not first approved via a call to sign.
+    /// @return True if fraud, error otherwise.
+    function submitSignatureFraud(
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s,
+        bytes32 _signedDigest,
+        bytes calldata _preimage
+    ) external returns (bool _isFraud) {
+
+        // We add 27 to the _v to align it with ethereum and bitcoin
+        // protocols where 27 is added to recovery ID to indicate usage of
+        // uncompressed public keys.
+        bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(digest, _v + 27, _r, _s);
+
+        bool isSignedDigestValid = _signedDigest == digest;
+
+        // returning error if the signature and digest are valid.
+        require(!(isSignatureValid && isSignedDigestValid), "Signature is not fraudulent");
+
+        return true;
+    }
+
     /// @notice Calculates a signature over provided digest by the keep.
     /// @dev Only one signing process can be in progress at a time.
     /// @param _digest Digest to be signed.
@@ -189,27 +213,5 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         }
     }
 
-    // @notice Seizes the signer's ETH bond.
-    function seizeSignerBonds() external returns (bool) {
-        // TODO: Implement
-        // onlyKeepOwner
-        // msg.sender.transfer(bondAmount)
-    }
-
-    // @notice Submits a fraud proof for a valid signature from this keep that was
-    //         not first approved via a call to sign.
-    // @return Error if not fraud, true if fraud.
-    function submitSignatureFraud(
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s,
-        bytes32 _signedDigest,
-        bytes calldata _preimage
-    ) external returns (bool _isFraud) {
-        // TODO: Implement
-        // Expected behavior:
-        // Error if not fraud
-        // Return true if fraud
-        // This means if the signature is valid, but was not approved via sign.
-    }
+    
 }
