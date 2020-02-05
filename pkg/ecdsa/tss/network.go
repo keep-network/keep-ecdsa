@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-core/pkg/net"
 	"sync"
 
 	"github.com/binance-chain/tss-lib/tss"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
 // networkBridge translates TSS library network interface to unicast and
@@ -66,10 +66,6 @@ func (b *networkBridge) connect(
 			case msg := <-netInChan:
 				go b.handleTSSProtocolMessage(msg)
 			case <-ctx.Done():
-				if err := b.unregisterRecvs(); err != nil {
-					logger.Errorf("failed to unregister receivers: [%v]", err)
-				}
-
 				return
 			}
 		}
@@ -97,14 +93,12 @@ func (b *networkBridge) initializeChannels(
 		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	if err := broadcastChannel.Recv(net.HandleMessageFunc{
-		Type: b.groupInfo.groupID,
-		Handler: func(msg net.Message) error {
+	broadcastChannel.Recv(
+		ctx,
+		func(msg net.Message) {
 			handleFn(msg)
-			return nil
-		}}); err != nil {
-		return fmt.Errorf("failed to register receive handler for broadcast channel: [%v]", err)
-	}
+		},
+	)
 
 	// Initialize unicast channels.
 	for _, peerMemberID := range b.groupInfo.groupMemberIDs {
@@ -219,7 +213,7 @@ func (b *networkBridge) broadcast(msg *TSSProtocolMessage) error {
 
 	}
 
-	if broadcastChannel.Send(msg); err != nil {
+	if broadcastChannel.Send(context.Background(), msg); err != nil {
 		return fmt.Errorf("failed to send broadcast message: [%v]", err)
 	}
 
@@ -291,15 +285,4 @@ func (b *networkBridge) handleTSSProtocolMessage(protocolMessage *TSSProtocolMes
 			logger.Errorf("failed to handle protocol message: [%v]", err)
 		}
 	}
-}
-
-func (b *networkBridge) unregisterRecvs() error {
-	if err := b.broadcastChannel.UnregisterRecv(b.groupInfo.groupID); err != nil {
-		return fmt.Errorf(
-			"failed to unregister receive handler for broadcast channel: [%v]",
-			err,
-		)
-	}
-
-	return nil
 }

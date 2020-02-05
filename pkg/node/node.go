@@ -3,13 +3,13 @@ package node
 
 import (
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/net"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
 var logger = log.Logger("keep-tecdsa")

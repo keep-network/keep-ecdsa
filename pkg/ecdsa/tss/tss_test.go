@@ -5,6 +5,8 @@ import (
 	cecdsa "crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/local"
 	"math/rand"
 	"reflect"
 	"sync"
@@ -16,8 +18,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
-	"github.com/keep-network/keep-tecdsa/pkg/net/local"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/testutils"
 )
 
@@ -229,5 +229,5 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[string]*key.NetworkPubli
 }
 
 func newTestNetProvider(memberNetworkKey *key.NetworkPublic) net.Provider {
-	return local.LocalProvider(memberNetworkKey)
+	return local.ConnectWithKey(memberNetworkKey)
 }
