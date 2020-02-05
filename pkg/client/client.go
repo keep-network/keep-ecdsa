@@ -142,7 +142,7 @@ func registerAsMemberCandidate(ethereumChain eth.Handle, application common.Addr
 	currentStake, err := ethereumChain.EligibleStake()
 	if err != nil {
 		return fmt.Errorf(
-			"failed to register member for application [%s]: [%v]",
+			"failed to get eligible stake [%s]: [%v]",
 			application.String(),
 			err,
 		)
