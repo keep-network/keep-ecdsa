@@ -55,17 +55,22 @@ contract ECDSAKeepFactory is
 
         address operator = msg.sender;
         if (!candidatesPool.isOperatorRegistered(operator)) {
-            uint256 stakingWeight = tokenStaking.eligibleStake(
-                operator,
-                address(this)
-            );
-            candidatesPool.insertOperator(operator, stakingWeight);
+            candidatesPool.insertOperator(operator, eligibleStake(operator));
         }
+    }
+
+    /// @notice Gets the eligible stake balance of the operator.
+    /// @dev Calls Token Staking contract to get eligible stake of the operator
+    /// for this contract.
+    /// @param _operator Operator's address.
+    /// @return Eligible stake balance.
+    function eligibleStake(address _operator) public view returns (uint256) {
+        return tokenStaking.eligibleStake(_operator, address(this));
     }
 
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
-    function openKeepFeeEstimate() external returns (uint256){
+    function openKeepFeeEstimate() external returns (uint256) {
         return feeEstimate;
     }
 
