@@ -102,6 +102,7 @@ func Start(c *cli.Context) error {
 			networkProvider,
 			persistence,
 			sanctionedApplications,
+			registrationTicker,
 		)
 		logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 	}

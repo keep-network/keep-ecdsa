@@ -2,6 +2,9 @@
 package client
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
@@ -23,6 +26,7 @@ func Initialize(
 	networkProvider net.Provider,
 	persistence persistence.Handle,
 	sanctionedApplications []common.Address,
+	registrationRetryTicker time.Duration,
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
@@ -88,26 +92,77 @@ func Initialize(
 		}
 	})
 
-	// Register client as a candidate member for keep.
+	// Register client as a candidate member for keep. Validates if the client
+	// is already registered. If not checks client's stake and retries registration
+	// until the stake allows to complete it.
 	for _, application := range sanctionedApplications {
-		// TODO: Validate if client is already registered and can be registered.
-		// If can register but it is not registered, it is registering. If can't
-		// be registered yet (stake maturation period), waits some time and tries again
-		if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
-			logger.Errorf(
-				"failed to register member for application [%s]: [%v]",
-				application.String(),
-				err,
-			)
-			continue
-		}
-		logger.Debugf(
-			"client registered as member candidate for application: [%s]",
+		go func(application common.Address) {
+			isRegistered, err := ethereumChain.IsRegistered(application)
+			if err != nil {
+				logger.Errorf(
+					"failed to check if member is registered for application [%s]: [%v]",
+					application.String(),
+					err,
+				)
+				return
+			}
+
+			if !isRegistered {
+				ticker := time.NewTicker(registrationRetryTicker)
+				defer ticker.Stop()
+
+				// This loop allows us to run first execution immediately and all
+				// subsequent executions are executed in intervals according to
+				// the ticker.
+				for ; true; <-ticker.C {
+					if err := registerAsMemberCandidate(ethereumChain, application); err != nil {
+						logger.Warningf("failed to register as member candidate: [%v]", err)
+						continue
+					}
+					return
+				}
+
+				logger.Debugf(
+					"client registered as member candidate for application: [%s]",
+					application.String(),
+				)
+			} else {
+				logger.Debugf(
+					"client is already registered as member candidate for application: [%s]",
+					application.String(),
+				)
+			}
+		}(application)
+	}
+}
+
+// registerAsMemberCandidate checks current operator's stake balance and if it's
+// positive registers the operator as a member candidate for the given application.
+func registerAsMemberCandidate(ethereumChain eth.Handle, application common.Address) error {
+	currentStake, err := ethereumChain.EligibleStake()
+	if err != nil {
+		return fmt.Errorf(
+			"failed to register member for application [%s]: [%v]",
 			application.String(),
+			err,
+		)
+
+	}
+
+	// TODO: We probably need to valide if stake is greater than some minimal required stake.
+	if currentStake.Sign() <= 0 {
+		return fmt.Errorf("operator doesn't have enough stake")
+	}
+
+	if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
+		return fmt.Errorf(
+			"failed to register member for application [%s]: [%v]",
+			application.String(),
+			err,
 		)
 	}
 
-	logger.Infof("client initialized")
+	return nil
 }
 
 // registerForSignEvents registers for signature requested events emitted by
