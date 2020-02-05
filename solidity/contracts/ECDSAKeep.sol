@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "./api/IBondedECDSAKeep.sol";
 import "./utils/AddressArrayUtils.sol";
+import "./KeepBonding.sol";
 
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
@@ -52,14 +53,18 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         uint8   recoveryID
     );
 
+    KeepBonding keepBonding;
+
     constructor(
         address _owner,
         address payable[] memory _members,
-        uint256 _honestThreshold
+        uint256 _honestThreshold,
+        address _keepBonding
     ) public {
         transferOwnership(_owner);
         members = _members;
         honestThreshold = _honestThreshold;
+        keepBonding = KeepBonding(_keepBonding);
     }
 
     /// @notice Set a signer's public key for the keep.
@@ -81,6 +86,13 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @return The amount of the keep's ETH bond in wei.
     function checkBondAmount() external view returns (uint256) {
         // TODO: Implement
+    }
+
+     // @notice Seizes the signer's ETH bond.
+    function seizeSignerBonds() external returns (bool) {
+        // TODO: Implement
+        // onlyKeepOwner
+        // msg.sender.transfer(bondAmount)
     }
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was

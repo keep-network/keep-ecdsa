@@ -99,7 +99,7 @@ contract ECDSAKeepFactory is
             members[i] = address(uint160(selected[i]));
         }
 
-        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold);
+        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold, address(keepBonding));
 
         keepAddress = address(keep);
 
