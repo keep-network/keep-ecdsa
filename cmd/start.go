@@ -104,7 +104,6 @@ func Start(c *cli.Context) error {
 			sanctionedApplications,
 			registrationTicker,
 		)
-		logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 	}
 
 	logger.Info("client started")
