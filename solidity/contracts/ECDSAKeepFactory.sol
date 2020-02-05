@@ -80,6 +80,7 @@ contract ECDSAKeepFactory is
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application.
     /// @dev If caller is already registered it returns without any changes.
+    /// @param _application Customer application address.
     function registerMemberCandidate(address _application) external {
         if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
