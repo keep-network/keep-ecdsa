@@ -3,6 +3,7 @@ package ethereum
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
@@ -18,6 +19,25 @@ var logger = log.Logger("keep-chain-eth-ethereum")
 // Address returns client's ethereum address.
 func (ec *EthereumChain) Address() common.Address {
 	return ec.transactorOptions.From
+}
+
+// IsRegistered checks if client is already registered as a member candidate in
+// the factory for the given application.
+func (ec *EthereumChain) IsRegistered(application common.Address) (bool, error) {
+	return ec.ecdsaKeepFactoryContract.ECDSAKeepFactoryCaller.IsOperatorRegistered(
+		ec.callerOptions,
+		ec.Address(),
+		application,
+	)
+}
+
+// EligibleStake returns client's current value of token stake balance for the
+// factory.
+func (ec *EthereumChain) EligibleStake() (*big.Int, error) {
+	return ec.ecdsaKeepFactoryContract.ECDSAKeepFactoryCaller.EligibleStake(
+		ec.callerOptions,
+		ec.Address(),
+	)
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
