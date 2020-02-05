@@ -59,6 +59,28 @@ contract ECDSAKeepFactory is
         }
     }
 
+    /// @notice Checks if operator is registered as a candidate for the given
+    /// customer application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    /// @return True if operator is already registered in the candidates pool,
+    /// else false.
+    function isOperatorRegistered(address _operator, address _application)
+        public
+        view
+        returns (bool)
+    {
+        if (candidatesPools[_application] == address(0)) {
+            return false;
+        }
+
+        SortitionPool candidatesPool = SortitionPool(
+            candidatesPools[_application]
+        );
+
+        return candidatesPool.isOperatorRegistered(_operator);
+    }
+
     /// @notice Gets the eligible stake balance of the operator.
     /// @dev Calls Token Staking contract to get eligible stake of the operator
     /// for this contract.
