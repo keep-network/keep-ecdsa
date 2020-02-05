@@ -16,6 +16,16 @@ contract KeepBonding {
       return unbondedValue[operator];
    }
 
+   /// @notice Returns value of ether bonded for the operator.
+   /// @param operator Address of the operator to bond.
+   /// @param holder Address of the holder of the bond.
+   /// @param referenceID Reference ID used to track the bond by holder.
+   function bondAmount(address operator, uint256 holder, uint256 referenceID) public returns (uint256) {
+        bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
+
+        return lockedBonds[bondID];
+   }
+
    /// @notice Add ether to operator's value available for bonding.
    /// @param operator Address of the operator.
    function deposit(address operator) external payable {
