@@ -60,7 +60,7 @@ contract ECDSAKeepFactory is
             candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
         }
 
-        keepBonding.deposit.value(msg.value)(msg.sender);
+        keepBonding.deposit.value(msg.value)(operator);
     }
 
     /// @notice Open a new ECDSA keep.
@@ -82,7 +82,7 @@ contract ECDSAKeepFactory is
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
-        // TODO: The reminder will not be bonded. What should we do with it?
+        // TODO: The remainder will not be bonded. What should we do with it?
         uint256 memberBond = _bond.div(_groupSize);
         require(memberBond > 0, "Bond per member equals zero");
 
@@ -106,14 +106,9 @@ contract ECDSAKeepFactory is
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
                 members[i],
+                keepAddress,
                 uint256(keepAddress),
                 memberBond
-            );
-            keepBonding.reassignBond(
-                members[i],
-                uint256(keepAddress),
-                keepAddress,
-                uint256(keepAddress)
             );
         }
 
