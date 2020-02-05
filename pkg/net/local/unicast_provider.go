@@ -3,6 +3,7 @@ package local
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	"sync"
 
 	"github.com/keep-network/keep-tecdsa/pkg/net"
@@ -15,7 +16,7 @@ type unicastProvider struct {
 	structMutex *sync.RWMutex
 
 	transportID net.TransportIdentifier
-	publicKey   []byte
+	staticKey   *key.NetworkPublic
 
 	channelManager          *unicastChannelManager
 	onChannelOpenedHandlers []*onChannelOpenedHandler
@@ -27,12 +28,12 @@ type onChannelOpenedHandler struct {
 }
 
 func unicastConnectWithKey(
-	publicKey []byte,
+	staticKey *key.NetworkPublic,
 ) *unicastProvider {
 	providersMutex.Lock()
 	defer providersMutex.Unlock()
 
-	transportID := createTransportIdentifier(publicKey)
+	transportID := createLocalIdentifier(staticKey)
 
 	existingProvider, ok := providers[transportID.String()]
 	if ok {
@@ -42,7 +43,7 @@ func unicastConnectWithKey(
 	provider := &unicastProvider{
 		structMutex:    &sync.RWMutex{},
 		transportID:    transportID,
-		publicKey:      publicKey,
+		staticKey:      staticKey,
 		channelManager: newUnicastChannelManager(),
 	}
 
@@ -98,7 +99,7 @@ func (up *unicastProvider) createChannelWith(
 		return channel
 	}
 
-	channel = newUnicastChannel(up.transportID, up.publicKey, peer)
+	channel = newUnicastChannel(up.transportID, up.staticKey, peer)
 	up.channelManager.addChannel(channel)
 
 	if notify {

@@ -3,6 +3,7 @@ package tss
 import (
 	"context"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"sync"
 
 	"github.com/binance-chain/tss-lib/tss"
@@ -111,7 +112,12 @@ func (b *networkBridge) initializeChannels(
 			continue
 		}
 
-		peerTransportID := b.networkProvider.CreateTransportIdentifier(peerMemberID)
+		peerTransportID, err := b.networkProvider.GetTransportIdentifier(
+			common.BytesToAddress(peerMemberID),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to get transport identifier: [%v]", err)
+		}
 		unicastChannel, err := b.getUnicastChannelWith(peerTransportID)
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
@@ -194,7 +200,13 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 				logger.Errorf("failed to get destination member id: [%v]", err)
 				return
 			}
-			destinationTransportID := b.networkProvider.CreateTransportIdentifier(destinationMemberID)
+			destinationTransportID, err := b.networkProvider.GetTransportIdentifier(
+				common.BytesToAddress(destinationMemberID),
+			)
+			if err != nil {
+				logger.Errorf("failed to get transport identifier: [%v]", err)
+				return
+			}
 			b.sendTo(destinationTransportID, protocolMessage)
 		}
 	}

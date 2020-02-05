@@ -3,6 +3,8 @@ package local
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -21,13 +23,11 @@ type localProvider struct {
 // LocalProvider returns local implementation of net.Provider which can be used
 // for testing.
 func LocalProvider(
-	networkPublicKey *key.NetworkPublic, // node's public key
+	staticKey *key.NetworkPublic, // node's public key
 ) net.Provider {
-	publicKey, _ := hex.DecodeString(key.NetworkPubKeyToEthAddress(networkPublicKey)[2:])
-
 	return &localProvider{
-		broadcastProvider: brdcLocal.ConnectWithKey(networkPublicKey),
-		unicastProvider:   unicastConnectWithKey(publicKey),
+		broadcastProvider: brdcLocal.ConnectWithKey(staticKey),
+		unicastProvider:   unicastConnectWithKey(staticKey),
 	}
 }
 
@@ -48,14 +48,25 @@ func (p *localProvider) OnUnicastChannelOpened(
 	p.unicastProvider.OnUnicastChannelOpened(context.Background(), handler)
 }
 
-func (p *localProvider) CreateTransportIdentifier(publicKey []byte) net.TransportIdentifier {
-	return createTransportIdentifier(publicKey)
+func (p *localProvider) GetTransportIdentifier(address common.Address) (net.TransportIdentifier, error) {
+	providersMutex.RLock()
+	defer providersMutex.RUnlock()
+
+	addressHex := address.Hex()
+
+	for transportIdentifier, provider := range providers {
+		if key.NetworkPubKeyToEthAddress(provider.staticKey) == addressHex {
+			return localIdentifier(transportIdentifier), nil
+		}
+	}
+
+	return nil, fmt.Errorf("transport identifier not found for address: [%v]", addressHex)
 }
 
 type localIdentifier string
 
-func createTransportIdentifier(publicKey []byte) net.TransportIdentifier {
-	return localIdentifier(hex.EncodeToString(publicKey))
+func createLocalIdentifier(staticKey *key.NetworkPublic) localIdentifier {
+	return localIdentifier(hex.EncodeToString(key.Marshal(staticKey)))
 }
 
 func (li localIdentifier) String() string {

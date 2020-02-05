@@ -2,6 +2,7 @@ package net
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	coreNet "github.com/keep-network/keep-core/pkg/net"
@@ -27,7 +28,7 @@ type Provider interface {
 	UnicastChannelWith(peerID TransportIdentifier) (UnicastChannel, error)
 	OnUnicastChannelOpened(handler func(channel UnicastChannel))
 
-	CreateTransportIdentifier(publicKey []byte) net.TransportIdentifier
+	GetTransportIdentifier(address common.Address) (net.TransportIdentifier, error)
 }
 
 // UnicastChannel represents a point-to-point channel to a peer. It allows

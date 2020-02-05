@@ -2,11 +2,11 @@ package local
 
 import (
 	"context"
+	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-tecdsa/pkg/net"
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/keep-network/keep-tecdsa/pkg/net"
 )
 
 func TestReceiveUnicastMessage(t *testing.T) {
@@ -17,11 +17,11 @@ func TestReceiveUnicastMessage(t *testing.T) {
 	defer cancel2()
 
 	peer1ID := localIdentifier("peer-0x1231AA")
-	peer1PubKey := []byte("0x1231AA")
+	_, peer1StaticKey, _ := key.GenerateStaticNetworkKey()
 
 	peer2ID := localIdentifier("peer-0xAEA712")
 
-	unicastChannel := newUnicastChannel(peer1ID, peer1PubKey, peer2ID)
+	unicastChannel := newUnicastChannel(peer1ID, peer1StaticKey, peer2ID)
 	unicastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &mockMessage{}
 	})
@@ -79,11 +79,11 @@ func TestTimedOutHandlerNotReceiveUnicastMessage(t *testing.T) {
 	defer cancel2()
 
 	peer1ID := localIdentifier("peer-0xAAEF12")
-	peer1PubKey := []byte("0xAAEF12")
+	_, peer1StaticKey, _ := key.GenerateStaticNetworkKey()
 
 	peer2ID := localIdentifier("peer-0x121211")
 
-	unicastChannel := newUnicastChannel(peer1ID, peer1PubKey, peer2ID)
+	unicastChannel := newUnicastChannel(peer1ID, peer1StaticKey, peer2ID)
 	unicastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &mockMessage{}
 	})
