@@ -1,3 +1,5 @@
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
+
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const SortitionPoolFactoryStub = artifacts.require('SortitionPoolFactoryStub');
@@ -16,6 +18,7 @@ contract("ECDSAKeepFactory", async accounts => {
     const application = '0x0000000000000000000000000000000000000001'
 
     const member1 = accounts[1]
+    const member2 = accounts[2]
 
     describe("registerMemberCandidate", async () => {
         beforeEach(async () => {
@@ -40,7 +43,8 @@ contract("ECDSAKeepFactory", async accounts => {
 
         it("inserts operator with the correct staking weight in the pool", async () => {
             const stakingWeight = new BN(199)
-            await tokenStaking.setBalance(stakingWeight)
+
+            await tokenStaking.setBalance(member1, keepFactory.address, stakingWeight)
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
@@ -127,8 +131,88 @@ contract("ECDSAKeepFactory", async accounts => {
         })
     })
 
+    describe("isOperatorRegistered", async () => {
+        before(async () => {
+            sortitionPoolFactory = await SortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address, tokenStaking.address)
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("returns true if the operator is registered for the application", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.isTrue(await keepFactory.isOperatorRegistered(member1, application))
+        })
+
+        it("returns false if the operator is registered for another application", async () => {
+            const application2 = '0x0000000000000000000000000000000000000002'
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.isFalse(await keepFactory.isOperatorRegistered(member1, application2))
+        })
+
+        it("returns false if the operator is not registered for any application", async () => {
+            assert.isFalse(await keepFactory.isOperatorRegistered(member1, application))
+        })
+    })
+
+    describe("eligibleStake", async () => {
+        const balance = new BN(88)
+        const ZERO = new BN(0)
+
+        before(async () => {
+            sortitionPoolFactory = await SortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address, tokenStaking.address)
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("returns correct eligible stake value", async () => {
+            await tokenStaking.setBalance(member1, keepFactory.address, balance)
+
+            const stake = await keepFactory.eligibleStake(member1)
+
+            expect(stake).to.eq.BN(balance, 'incorrect eligible stake value')
+        })
+
+        it("returns zero if incorrect operator", async () => {
+            await tokenStaking.setBalance(member1, keepFactory.address, balance)
+
+            const stake = await keepFactory.eligibleStake(member2)
+
+            expect(stake).to.eq.BN(ZERO, 'incorrect eligible stake value')
+        })
+
+        it("returns zero if incorrect operator contract", async () => {
+            const operatorContract = '0x1000000000000000000000000000000000000011'
+
+            await tokenStaking.setBalance(member1, operatorContract, balance)
+
+            const stake = await keepFactory.eligibleStake(member1)
+
+            expect(stake).to.eq.BN(ZERO, 'incorrect eligible stake value')
+        })
+    })
+
     describe("openKeep", async () => {
         const keepOwner = "0xbc4862697a1099074168d54A555c4A60169c18BD"
+        const stakingWeight = new BN(100)
 
         beforeEach(async () => {
             // Tests are executed with real implementation of sortition pools.
@@ -160,6 +244,10 @@ contract("ECDSAKeepFactory", async accounts => {
             const member1 = accounts[2]
             const member2 = accounts[3]
             const member3 = accounts[4]
+
+            await tokenStaking.setBalance(member1, keepFactory.address, stakingWeight)
+            await tokenStaking.setBalance(member2, keepFactory.address, stakingWeight)
+            await tokenStaking.setBalance(member3, keepFactory.address, stakingWeight)
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
@@ -225,6 +313,11 @@ contract("ECDSAKeepFactory", async accounts => {
             const member1 = accounts[2]
             const member2 = accounts[3]
             const member3 = accounts[4]
+
+
+            await tokenStaking.setBalance(member1, keepFactory.address, stakingWeight)
+            await tokenStaking.setBalance(member2, keepFactory.address, stakingWeight)
+            await tokenStaking.setBalance(member3, keepFactory.address, stakingWeight)
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
