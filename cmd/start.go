@@ -92,6 +92,11 @@ func Start(c *cli.Context) error {
 			return fmt.Errorf("failed to get sanctioned applications addresses: [%v]", err)
 		}
 
+		registrationTicker, err := config.RegistrationTicker()
+		if err != nil {
+			return fmt.Errorf("failed to get registration ticker: [%v]", err)
+		}
+
 		client.Initialize(
 			ethereumChain,
 			networkProvider,
