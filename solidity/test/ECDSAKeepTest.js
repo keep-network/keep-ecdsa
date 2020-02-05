@@ -15,7 +15,7 @@ const truffleAssert = require('truffle-assertions')
 
 const BN = web3.utils.BN
 
-contract.only('ECDSAKeep', (accounts) => {
+contract('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
   const members = [accounts[2], accounts[3]]
   const honestThreshold = 1
@@ -148,6 +148,27 @@ contract.only('ECDSAKeep', (accounts) => {
         }
       })
     })
+  })
+
+  describe('checkBondAmount', () =>  {
+    const operator = accounts[1]
+    const value0 = new BN(30)
+    const value1 = new BN(70)
+
+    it('should return bond amount', async () => {
+      let keep = await ECDSAKeep.new(operator, members, honestThreshold, keepBonding.address)
+      let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
+      
+      await keepBonding.deposit(members[0], { value: value0 })
+      await keepBonding.deposit(members[1], { value: value1 })
+      await keepBonding.createBond(members[0], keep.address, referenceID, value0)
+      await keepBonding.createBond(members[1], keep.address, referenceID, value1)
+
+      let actual = await keep.checkBondAmount.call()
+      let expected = value0.add(value1);
+
+      assert.equal(actual.eq(expected), true, "Should return total bond amount.");
+    })  
   })
 
   describe('submitSignatureFraud', () =>  {
