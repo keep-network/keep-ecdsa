@@ -14,6 +14,7 @@ type EthereumChain struct {
 	config                   *Config
 	client                   *ethclient.Client
 	transactorOptions        *bind.TransactOpts
+	callerOptions            *bind.CallOpts
 	ecdsaKeepFactoryContract *abi.ECDSAKeepFactory
 }
 
@@ -26,6 +27,7 @@ func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) 
 	}
 
 	transactorOptions := bind.NewKeyedTransactor(privateKey)
+	callerOptions := &bind.CallOpts{From: transactorOptions.From}
 
 	ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ECDSAKeepFactoryContractName)
 	if err != nil {
@@ -43,6 +45,7 @@ func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) 
 		config:                   config,
 		client:                   client,
 		transactorOptions:        transactorOptions,
+		callerOptions:            callerOptions,
 		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
 	}, nil
 }
