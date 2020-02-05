@@ -3,6 +3,8 @@
 package eth
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -20,6 +22,14 @@ type Handle interface {
 // ECDSAKeepFactory is an interface that provides ability to interact with
 // ECDSAKeepFactory ethereum contracts.
 type ECDSAKeepFactory interface { // TODO: Rename to BondedECDSAKeepFactory
+	// IsRegistered checks if client is already registered as a member candidate
+	// in the factory for the given application.
+	IsRegistered(application common.Address) (bool, error)
+
+	// EligibleStake returns client's current value of token stake balance for
+	// the factory.
+	EligibleStake() (*big.Int, error)
+
 	// RegisterAsMemberCandidate registers client as a candidate to be selected
 	// to a keep.
 	RegisterAsMemberCandidate(application common.Address) error
