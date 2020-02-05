@@ -56,7 +56,10 @@ contract ECDSAKeepFactory is
 
         address operator = msg.sender;
         if (!candidatesPool.isOperatorRegistered(operator)) {
-            candidatesPool.insertOperator(operator, eligibleStake(operator));
+            uint256 stake = eligibleStake(operator);
+            // TODO: Validate stake in correct range?
+
+            candidatesPool.insertOperator(operator, stake);
         }
     }
 
