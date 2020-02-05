@@ -119,7 +119,7 @@ func Initialize(
 						logger.Warningf("failed to register as member candidate: [%v]", err)
 						continue
 					}
-					return
+					break
 				}
 
 				logger.Debugf(
