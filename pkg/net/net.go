@@ -28,7 +28,7 @@ type Provider interface {
 	UnicastChannelWith(peerID TransportIdentifier) (UnicastChannel, error)
 	OnUnicastChannelOpened(handler func(channel UnicastChannel))
 
-	GetTransportIdentifier(address common.Address) (net.TransportIdentifier, error)
+	SeekTransportIdentifier(address common.Address) (net.TransportIdentifier, error)
 }
 
 // UnicastChannel represents a point-to-point channel to a peer. It allows

@@ -48,7 +48,7 @@ func (p *localProvider) OnUnicastChannelOpened(
 	p.unicastProvider.OnUnicastChannelOpened(context.Background(), handler)
 }
 
-func (p *localProvider) GetTransportIdentifier(address common.Address) (net.TransportIdentifier, error) {
+func (p *localProvider) SeekTransportIdentifier(address common.Address) (net.TransportIdentifier, error) {
 	providersMutex.RLock()
 	defer providersMutex.RUnlock()
 

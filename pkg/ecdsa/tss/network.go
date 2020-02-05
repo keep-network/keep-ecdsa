@@ -112,7 +112,7 @@ func (b *networkBridge) initializeChannels(
 			continue
 		}
 
-		peerTransportID, err := b.networkProvider.GetTransportIdentifier(
+		peerTransportID, err := b.networkProvider.SeekTransportIdentifier(
 			common.BytesToAddress(peerMemberID),
 		)
 		if err != nil {
@@ -200,7 +200,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 				logger.Errorf("failed to get destination member id: [%v]", err)
 				return
 			}
-			destinationTransportID, err := b.networkProvider.GetTransportIdentifier(
+			destinationTransportID, err := b.networkProvider.SeekTransportIdentifier(
 				common.BytesToAddress(destinationMemberID),
 			)
 			if err != nil {
