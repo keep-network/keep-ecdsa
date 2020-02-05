@@ -1,4 +1,4 @@
-var ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
+var BondedECDSAKeepVendorStub = artifacts.require('BondedECDSAKeepVendorStub')
 var ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
 
 contract("ECDSAKeepVendor", async accounts => {
@@ -10,7 +10,7 @@ contract("ECDSAKeepVendor", async accounts => {
 
     describe("registerFactory", async () => {
         beforeEach(async () => {
-            keepVendor = await ECDSAKeepVendorStub.new()
+            keepVendor = await BondedECDSAKeepVendorStub.new()
         })
 
         it("registers one factory address", async () => {
@@ -74,7 +74,7 @@ contract("ECDSAKeepVendor", async accounts => {
 
     describe("selectFactory", async () => {
         before(async () => {
-            keepVendor = await ECDSAKeepVendorStub.new()
+            keepVendor = await BondedECDSAKeepVendorStub.new()
         })
 
         it("returns last factory from the list", async () => {

@@ -17,11 +17,13 @@ contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
     function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
-        address _owner
+        address _owner,
+        uint256 _bond
     ) public payable returns (address) {
         _groupSize;
         _honestThreshold;
         _owner;
+        _bond;
 
         return calculateKeepAddress();
     }
