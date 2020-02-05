@@ -84,15 +84,21 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     /// @notice Returns the amount of the keep's ETH bond in wei.
     /// @return The amount of the keep's ETH bond in wei.
-    function checkBondAmount() external view returns (uint256) {
-        // TODO: Implement
+    function checkBondAmount() external returns (uint256) {
+        uint256 sumBondAmount = 0;
+        for (uint256 i = 0; i < members.length; i++) {
+            sumBondAmount += keepBonding.bondAmount(members[i], address(this), uint256(address(this)));
+        }
+
+        return sumBondAmount;
     }
 
-     // @notice Seizes the signer's ETH bond.
-    function seizeSignerBonds() external returns (bool) {
-        // TODO: Implement
-        // onlyKeepOwner
-        // msg.sender.transfer(bondAmount)
+    /// @notice Seizes the signer's ETH bond.
+    function seizeSignerBonds() external onlyOwner {
+        for (uint256 i = 0; i < members.length; i++) {
+            uint256 amount = keepBonding.bondAmount(members[i], address(this), uint256(address(this)));
+            keepBonding.seizeBond(members[i], uint256(address(this)), amount);
+        }
     }
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was

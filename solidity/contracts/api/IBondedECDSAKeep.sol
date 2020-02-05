@@ -8,11 +8,11 @@ contract IBondedECDSAKeep {
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
     function getPublicKey() external view returns (bytes memory);
-    
+
     /// @notice Returns the amount of the keep's ETH bond in wei.
     /// @return The amount of the keep's ETH bond in wei.
-    function checkBondAmount() external view returns (uint256); 
-        
+    function checkBondAmount() external returns (uint256);
+
     /// @notice Calculates a signature over provided digest by the keep. Note that
     ///         signatures from the keep not explicitly requested by calling `sign`
     ///         will be provable as fraud via `submitSignatureFraud`.
@@ -33,10 +33,8 @@ contract IBondedECDSAKeep {
     /// @param _value Amount of ERC20 token to distribute.
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value) external;
 
-    // @notice Seizes the signer's ETH bond.
-    function seizeSignerBonds() external returns (bool);
-    // onlyKeepOwner
-    // msg.sender.transfer(bondAmount)
+    /// @notice Seizes the signer's ETH bond.
+    function seizeSignerBonds() external;
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
     ///         not first approved via a call to sign.
