@@ -98,6 +98,7 @@ func Start(c *cli.Context) error {
 		}
 
 		client.Initialize(
+			ctx,
 			ethereumChain,
 			networkProvider,
 			persistence,

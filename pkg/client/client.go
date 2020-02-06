@@ -2,7 +2,7 @@
 package client
 
 import (
-	"fmt"
+	"context"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -22,6 +22,7 @@ var logger = log.Logger("keep-tecdsa")
 // Expects a slice of sanctioned applications selected by the operator for which
 // operator will be registered as a member candidate.
 func Initialize(
+	ctx context.Context,
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
 	persistence persistence.Handle,
@@ -108,19 +109,7 @@ func Initialize(
 			}
 
 			if !isRegistered {
-				ticker := time.NewTicker(registrationRetryTicker)
-				defer ticker.Stop()
-
-				// This loop allows us to run first execution immediately and all
-				// subsequent executions are executed in intervals according to
-				// the ticker.
-				for ; true; <-ticker.C {
-					if err := registerAsMemberCandidate(ethereumChain, application); err != nil {
-						logger.Warningf("failed to register as member candidate: [%v]", err)
-						continue
-					}
-					break
-				}
+				registerAsMemberCandidate(ctx, ethereumChain, application)
 
 				logger.Debugf(
 					"client registered as member candidate for application: [%s]",
@@ -138,31 +127,46 @@ func Initialize(
 
 // registerAsMemberCandidate checks current operator's stake balance and if it's
 // positive registers the operator as a member candidate for the given application.
-func registerAsMemberCandidate(ethereumChain eth.Handle, application common.Address) error {
-	currentStake, err := ethereumChain.EligibleStake()
-	if err != nil {
-		return fmt.Errorf(
-			"failed to get eligible stake [%s]: [%v]",
-			application.String(),
-			err,
-		)
+// It retries the operation after each new mined block until the operator is
+// successfully registered.
+func registerAsMemberCandidate(parentCtx context.Context, ethereumChain eth.Handle, application common.Address) {
+	ctx, cancel := context.WithCancel(parentCtx)
+	defer cancel()
 
+	newBlockChan := ethereumChain.WatchBlocks(ctx)
+
+	for {
+		select {
+		case <-newBlockChan:
+			currentStake, err := ethereumChain.EligibleStake()
+			if err != nil {
+				logger.Warningf(
+					"failed to get eligible stake [%s]: [%v]",
+					application.String(),
+					err,
+				)
+				continue
+			}
+
+			// TODO: Valide if stake is greater than minimum required stake.
+			if currentStake.Sign() <= 0 {
+				logger.Warningf("operator doesn't have enough stake")
+				continue
+			}
+
+			if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
+				logger.Warningf(
+					"failed to register member for application [%s]: [%v]",
+					application.String(),
+					err,
+				)
+				continue
+			}
+			cancel()
+		case <-ctx.Done():
+			return
+		}
 	}
-
-	// TODO: We probably need to valide if stake is greater than some minimal required stake.
-	if currentStake.Sign() <= 0 {
-		return fmt.Errorf("operator doesn't have enough stake")
-	}
-
-	if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
-		return fmt.Errorf(
-			"failed to register member for application [%s]: [%v]",
-			application.String(),
-			err,
-		)
-	}
-
-	return nil
 }
 
 // registerForSignEvents registers for signature requested events emitted by
