@@ -66,6 +66,7 @@ spec:
       initContainers:
         - name: initcontainer-provision-keep-tecdsa
           image: gcr.io/keep-test-f3e0/initcontainer-provision-keep-tecdsa
+          imagePullPolicy: Always
           env:
             - name: ETH_NETWORK_ID
               value: "3"
@@ -74,12 +75,8 @@ spec:
                 secretKeyRef:
                   name: eth-account-passphrase
                   key: eth-account-passphrase
-            - name: KEEP_TECDSA_ETH_KEYFILE_1
+            - name: KEEP_TECDSA_ETH_KEYFILE
               value: /mnt/keep-tecdsa/eth/eth_account_keyfile_1
-            - name: KEEP_TECDSA_ETH_KEYFILE_2
-              value: /mnt/keep-tecdsa/eth/eth_account_keyfile_2
-            - name: KEEP_TECDSA_ETH_KEYFILE_3
-              value: /mnt/keep-tecdsa/eth/eth_account_keyfile_3
             - name: KEEP_DATA_DIR
               value: /mnt/keep-tecdsa/data
           volumeMounts:
