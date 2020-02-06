@@ -41,6 +41,7 @@
     "openzeppelin-test-helpers": "^0.4.3",
     "solc": "^0.5.8",
     "truffle": "^5.0.18",
-    "truffle-assertions": "^0.9.1"
+    "truffle-assertions": "^0.9.1",
+    "@truffle/hdwallet-provider": "^1.0.25"
   }
 }
