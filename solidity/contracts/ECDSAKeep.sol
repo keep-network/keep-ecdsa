@@ -21,8 +21,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
     bytes publicKey;
-    // Digest requested to be signed. Used to validate submitted signature.
-    bytes32 digest;
+    // Array of digests requested to be signed. Used to validate submitted signature.
+    bytes32[] digests;
     // Timeout in blocks for a signature to appear on the chain. Blocks are
     // counted from the moment sign request occurred.
     uint256 public signingTimeout = 10;
@@ -111,13 +111,20 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         bytes32 _signedDigest,
         bytes calldata _preimage // TODO: remove _preimage
     ) external returns (bool _isFraud) {
+        bytes32 latestDigest = digests[digests.length-1];
 
-        // We add 27 to the _v to align it with ethereum and bitcoin
+        // We add 27 to the _recoveryID to align it with ethereum and bitcoin
         // protocols where 27 is added to recovery ID to indicate usage of
         // uncompressed public keys.
-        bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(digest, _recoveryID + 27, _r, _s);
+        bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(latestDigest, _recoveryID + 27, _r, _s);
 
-        bool isSignedDigestValid = _signedDigest == digest;
+        bool isSignedDigestValid = false;
+        for (uint256 i = 0; i < digests.length; i++) {
+            if (_signedDigest == digests[i]) {
+                isSignedDigestValid = true;
+                break;
+            }
+        }
 
         // returning error if the signature and digest are valid.
         require(!(isSignatureValid && isSignedDigestValid), "Signature is not fraudulent");
@@ -132,7 +139,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         require(!isSigningInProgress() || hasSigningTimedOut(), "Signer is busy");
 
         currentSigningStartBlock = block.number;
-        digest = _digest;
+        digests.push(_digest);
 
         emit SignatureRequested(_digest);
     }
@@ -156,15 +163,16 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         // uncompressed public keys.
         uint8 _v = 27 + _recoveryID;
 
+        bytes32 latestDigest = digests[digests.length-1];
         // Validate signature.
         require(
-            publicKeyToAddress(publicKey) == ecrecover(digest, _v, _r, _s),
+            publicKeyToAddress(publicKey) == ecrecover(latestDigest, _v, _r, _s),
             "Invalid signature"
         );
 
         currentSigningStartBlock = 0;
 
-        emit SignatureSubmitted(digest, _r, _s, _recoveryID);
+        emit SignatureSubmitted(latestDigest, _r, _s, _recoveryID);
     }
 
     /// @notice Returns true if signing of a digest is currently in progress.
