@@ -24,7 +24,7 @@ contract KeepBonding {
    /// @param operator Address of the operator to bond.
    /// @param holder Address of the holder of the bond.
    /// @param referenceID Reference ID used to track the bond by holder.
-   function bondAmount(address operator, address holder, uint256 referenceID) public returns (uint256) {
+   function bondAmount(address operator, address holder, uint256 referenceID) public view returns (uint256) {
         bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
 
         return lockedBonds[bondID];

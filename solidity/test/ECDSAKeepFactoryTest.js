@@ -4,7 +4,7 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
-const KeepBondingStub = artifacts.require('KeepBondingStub');
+const KeepBonding = artifacts.require('KeepBonding');
 const SortitionPoolFactoryStub = artifacts.require('SortitionPoolFactoryStub');
 const SortitionPoolStub = artifacts.require('SortitionPoolStub');
 const SortitionPoolFactory = artifacts.require('SortitionPoolFactory');
@@ -28,7 +28,7 @@ contract("ECDSAKeepFactory", async accounts => {
     describe("registerMemberCandidate", async () => {
         before(async () => {
             sortitionPoolFactory = await SortitionPoolFactoryStub.new()
-            keepBonding = await KeepBondingStub.new()
+            keepBonding = await KeepBonding.new()
             keepFactory = await ECDSAKeepFactoryStub.new(sortitionPoolFactory.address, keepBonding.address)
         })
 
@@ -141,7 +141,7 @@ contract("ECDSAKeepFactory", async accounts => {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
             sortitionPoolFactory = await SortitionPoolFactory.new()
-            keepBonding = await KeepBondingStub.new()
+            keepBonding = await KeepBonding.new()
             keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address, keepBonding.address)
         }
 
@@ -250,15 +250,15 @@ contract("ECDSAKeepFactory", async accounts => {
             const keepAddress = eventList[0].returnValues.keepAddress
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member1, keepAddress)
+                await keepBonding.bondAmount(member1, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member1')
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member2, keepAddress)
+                await keepBonding.bondAmount(member2, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member2')
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member3, keepAddress)
+                await keepBonding.bondAmount(member3, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member3')
         })
 
@@ -297,15 +297,15 @@ contract("ECDSAKeepFactory", async accounts => {
             const keepAddress = eventList[0].returnValues.keepAddress
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member1, keepAddress)
+                await keepBonding.bondAmount(member1, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member1')
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member2, keepAddress)
+                await keepBonding.bondAmount(member2, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member2')
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member3, keepAddress)
+                await keepBonding.bondAmount(member3, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member3')
         })
 
