@@ -40,7 +40,7 @@ contract IBondedECDSAKeep {
     ///         not first approved via a call to sign.
     /// @return Error if not fraud, true if fraud.
     function submitSignatureFraud(
-        uint8 _v,
+        uint8 _recoveryID,
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
