@@ -109,7 +109,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes calldata _preimage
+        bytes calldata _preimage // TODO: remove _preimage
     ) external returns (bool _isFraud) {
 
         // We add 27 to the _v to align it with ethereum and bitcoin
