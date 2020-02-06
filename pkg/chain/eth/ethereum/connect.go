@@ -15,6 +15,7 @@ type EthereumChain struct {
 	client                   *ethclient.Client
 	transactorOptions        *bind.TransactOpts
 	ecdsaKeepFactoryContract *abi.ECDSAKeepFactory
+	publicKey                *cecdsa.PublicKey
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -44,5 +45,6 @@ func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) 
 		client:                   client,
 		transactorOptions:        transactorOptions,
 		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
+		publicKey:                &privateKey.PublicKey,
 	}, nil
 }

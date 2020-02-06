@@ -1,13 +1,15 @@
 package eth
 
 import (
+	cecdsa "crypto/ecdsa"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 // ECDSAKeepCreatedEvent is an event emitted on a new keep creation.
 type ECDSAKeepCreatedEvent struct {
-	KeepAddress common.Address   // keep contract address
-	Members     []common.Address // keep members addresses
+	KeepAddress       common.Address   // keep contract address
+	Members           []common.Address // keep members addresses
+	MembersPublicKeys []cecdsa.PublicKey
 }
 
 // IsMember checks if list of members contains the given address.

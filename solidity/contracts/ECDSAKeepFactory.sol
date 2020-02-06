@@ -19,12 +19,18 @@ contract ECDSAKeepFactory is
     event ECDSAKeepCreated(
         address keepAddress,
         address payable[] members,
+        bytes32[] membersPublicKeysHighBytes,
+        bytes32[] membersPublicKeysLowBytes,
         address owner,
         address application
     );
 
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
+
+    // Mapping of operators with their public keys
+    mapping(address => bytes32) operatorsPublicKeysHighBytes; // operator -> public key 32 high bytes
+    mapping(address => bytes32) operatorsPublicKeysLowBytes; // operator -> public key 32 low bytes
 
     uint256 feeEstimate;
     bytes32 groupSelectionSeed;
@@ -38,7 +44,11 @@ contract ECDSAKeepFactory is
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application
     /// @dev If caller is already registered it returns without any changes.
-    function registerMemberCandidate(address _application) external {
+    function registerMemberCandidate(
+        address _application,
+        bytes32 _operatorPublicKeyHighBytes,
+        bytes32 _operatorPublicKeyLowBytes
+    ) external {
         if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
@@ -51,8 +61,17 @@ contract ECDSAKeepFactory is
         );
 
         address operator = msg.sender;
+
+        // TODO: check if operator public key match the sender address.
+        // require(
+        //     operator == address(bytes20(keccak256(abi.encodePacked(_operatorPublicKeyHighBytes, _operatorPublicKeyLowBytes)))),
+        //     "Wrong operator public key"
+        // );
+
         if (!candidatesPool.isOperatorRegistered(operator)) {
             candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
+            operatorsPublicKeysHighBytes[operator] = _operatorPublicKeyHighBytes;
+            operatorsPublicKeysLowBytes[operator] = _operatorPublicKeyLowBytes;
         }
     }
 
@@ -89,18 +108,29 @@ contract ECDSAKeepFactory is
         );
 
         address payable[] memory members = new address payable[](_groupSize);
+        bytes32[] memory membersPublicKeysHighBytes = new bytes32[](_groupSize);
+        bytes32[] memory membersPublicKeysLowBytes = new bytes32[](_groupSize);
         for (uint256 i = 0; i < _groupSize; i++) {
             // TODO: for each selected member, validate staking weight and create,
             // bond. If validation failed or bond could not be created, remove
             // operator from pool and try again.
             members[i] = address(uint160(selected[i]));
+            membersPublicKeysHighBytes[i] = operatorsPublicKeysHighBytes[members[i]];
+            membersPublicKeysLowBytes[i] = operatorsPublicKeysLowBytes[members[i]];
         }
 
         ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold);
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepCreated(keepAddress, members, _owner, application);
+        emit ECDSAKeepCreated(
+            keepAddress,
+            members,
+            membersPublicKeysHighBytes,
+            membersPublicKeysLowBytes,
+            _owner,
+            application
+        );
 
         // TODO: as beacon for new entry and update groupSelectionSeed in callback
 

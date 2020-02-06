@@ -6,8 +6,9 @@ import (
 	"sync"
 
 	"github.com/binance-chain/tss-lib/tss"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 // networkBridge translates TSS library network interface to unicast and
@@ -106,12 +107,11 @@ func (b *networkBridge) initializeChannels(
 			continue
 		}
 
-		peerTransportID, err := b.networkProvider.SeekTransportIdentifier(
-			common.BytesToAddress(peerMemberID),
-		)
+		peerTransportID, err := b.getTransportIdentifier(peerMemberID)
 		if err != nil {
 			return fmt.Errorf("failed to get transport identifier: [%v]", err)
 		}
+
 		unicastChannel, err := b.getUnicastChannelWith(peerTransportID)
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
@@ -121,6 +121,12 @@ func (b *networkBridge) initializeChannels(
 	}
 
 	return nil
+}
+
+func (b *networkBridge) getTransportIdentifier(member MemberID) (net.TransportIdentifier, error) {
+	peerPublicKey := key.NetworkPublic(b.groupInfo.groupMemberPublicKeys[member.String()])
+	// TODO: consider moving this to keep-core because it introduces a direct dependency to go-libp2p-core.
+	return peer.IDFromPublicKey(&peerPublicKey)
 }
 
 func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
@@ -194,12 +200,9 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 				logger.Errorf("failed to get destination member id: [%v]", err)
 				return
 			}
-			destinationTransportID, err := b.networkProvider.SeekTransportIdentifier(
-				common.BytesToAddress(destinationMemberID),
-			)
+			destinationTransportID, err := b.getTransportIdentifier(destinationMemberID)
 			if err != nil {
 				logger.Errorf("failed to get transport identifier: [%v]", err)
-				return
 			}
 			b.sendTo(destinationTransportID, protocolMessage)
 		}

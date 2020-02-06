@@ -79,6 +79,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 					groupID,
 					memberID,
 					groupMemberIDs,
+					make(map[string]cecdsa.PublicKey), // TODO: pass something here.
 					dishonestThreshold,
 					network,
 					&preParams,

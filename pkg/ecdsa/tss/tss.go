@@ -8,6 +8,7 @@ package tss
 
 import (
 	"context"
+	cecdsa "crypto/ecdsa"
 	"fmt"
 	"time"
 
@@ -43,6 +44,7 @@ func GenerateThresholdSigner(
 	groupID string,
 	memberID MemberID,
 	groupMemberIDs []MemberID,
+	groupMemberPublicKeys map[string]cecdsa.PublicKey,
 	dishonestThreshold uint,
 	networkProvider net.Provider,
 	tssPreParams *keygen.LocalPreParams,
@@ -63,10 +65,11 @@ func GenerateThresholdSigner(
 	}
 
 	group := &groupInfo{
-		groupID:            groupID,
-		memberID:           memberID,
-		groupMemberIDs:     groupMemberIDs,
-		dishonestThreshold: int(dishonestThreshold),
+		groupID:               groupID,
+		memberID:              memberID,
+		groupMemberIDs:        groupMemberIDs,
+		groupMemberPublicKeys: groupMemberPublicKeys,
+		dishonestThreshold:    int(dishonestThreshold),
 	}
 
 	if tssPreParams == nil {

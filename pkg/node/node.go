@@ -2,6 +2,7 @@
 package node
 
 import (
+	cecdsa "crypto/ecdsa"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -41,13 +42,18 @@ func NewNode(
 func (n *Node) GenerateSignerForKeep(
 	keepAddress common.Address,
 	keepMembers []common.Address,
+	keepMembersPublicKeys []cecdsa.PublicKey,
 ) (*tss.ThresholdSigner, error) {
 	groupMemberIDs := []tss.MemberID{}
-	for _, memberAddress := range keepMembers {
+	groupMemberPublicKeys := make(map[string]cecdsa.PublicKey)
+
+	for i, memberAddress := range keepMembers {
 		memberID, err := tss.MemberIDFromHex(memberAddress.Hex())
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert member address to member ID: [%v]", err)
 		}
+
+		groupMemberPublicKeys[memberID.String()] = keepMembersPublicKeys[i]
 
 		groupMemberIDs = append(
 			groupMemberIDs,
@@ -64,6 +70,7 @@ func (n *Node) GenerateSignerForKeep(
 		keepAddress.Hex(),
 		memberID,
 		groupMemberIDs,
+		groupMemberPublicKeys,
 		uint(len(keepMembers)-1),
 		n.networkProvider,
 		n.tssParamsPool.get(),
