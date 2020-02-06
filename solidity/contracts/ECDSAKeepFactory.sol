@@ -58,7 +58,7 @@ contract ECDSAKeepFactory is
 
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
-    function openKeepFeeEstimate() external returns (uint256){
+    function openKeepFeeEstimate() external view returns (uint256){
         return feeEstimate;
     }
 
