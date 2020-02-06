@@ -94,6 +94,21 @@ contract ECDSAKeepFactory is
         return tokenStaking.eligibleStake(_operator, address(this));
     }
 
+    /// @notice Invokes update of operator's stake in the member candidates pool
+    /// for the given application
+    /// @param _application Customer application address.
+    function updateStake(address _application) public {
+        if (candidatesPools[_application] == address(0)) {
+            return;
+        }
+
+        SortitionPool candidatesPool = SortitionPool(
+            candidatesPools[_application]
+        );
+
+        candidatesPool.updateOperatorWeight(msg.sender);
+    }
+
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
     function openKeepFeeEstimate() external returns (uint256) {
