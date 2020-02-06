@@ -1,6 +1,7 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const KeepBonding = artifacts.require('./KeepBondingStub.sol')
+const EtherReceiver = artifacts.require('./EtherReceiver.sol')
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -12,9 +13,11 @@ const expect = chai.expect
 
 contract('KeepBonding', (accounts) => {
     let keepBonding
+    let etherReceiver
 
     before(async () => {
         keepBonding = await KeepBonding.new()
+        etherReceiver = await EtherReceiver.new()
     })
 
     beforeEach(async () => {
@@ -43,7 +46,7 @@ contract('KeepBonding', (accounts) => {
     describe('withdraw', async () => {
         const operator = accounts[1]
         const destination = accounts[2]
-        const value = new BN(100)
+        const value = new BN(1000)
 
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: value })
@@ -68,6 +71,15 @@ contract('KeepBonding', (accounts) => {
             await expectRevert(
                 keepBonding.withdraw(invalidValue, destination, { from: operator }),
                 "Insufficient unbonded value"
+            )
+        })
+
+        it('reverts if transfer fails', async () => {
+            const invalidValue = await etherReceiver.invalidValue.call()
+
+            await expectRevert(
+                keepBonding.withdraw(invalidValue, etherReceiver.address, { from: operator }),
+                "Transfer failed"
             )
         })
     })
@@ -267,7 +279,7 @@ contract('KeepBonding', (accounts) => {
     describe('seizeBond', async () => {
         const operator = accounts[1]
         const holder = accounts[2]
-        const bondValue = new BN(100)
+        const bondValue = new BN(1000)
         const reference = 777
 
         beforeEach(async () => {
@@ -310,7 +322,7 @@ contract('KeepBonding', (accounts) => {
             expect(lockedBonds).to.eq.BN(remainingBond, 'unexpected remaining bond value')
         })
 
-        it('fails if seized amount equals zero', async () => {
+        it('reverts if seized amount equals zero', async () => {
             const amount = new BN(0)
             await expectRevert(
                 keepBonding.seizeBond(operator, reference, amount, { from: holder }),
@@ -318,12 +330,28 @@ contract('KeepBonding', (accounts) => {
             )
         })
 
-        it('fails if seized amount is greater than bond value', async () => {
+        it('reverts if seized amount is greater than bond value', async () => {
             const amount = bondValue.add(new BN(1))
             await expectRevert(
                 keepBonding.seizeBond(operator, reference, amount, { from: holder }),
                 "Requested amount is greater than the bond"
             )
+        })
+
+        it('reverts if transfer fails', async () => {
+            const invalidValue = await etherReceiver.invalidValue.call()
+            const destination = etherReceiver.address
+
+            await expectRevert(
+                keepBonding.seizeBond(operator, reference, invalidValue, destination, { from: holder }),
+                "Transfer failed"
+            )
+
+            const destinationBalance = await web3.eth.getBalance(destination)
+            expect(destinationBalance).to.eq.BN(0, 'invalid destination account balance')
+
+            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            expect(lockedBonds).to.eq.BN(bondValue, 'unexpected bond value')
         })
     })
 })
