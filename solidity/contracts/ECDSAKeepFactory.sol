@@ -8,6 +8,9 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
+// TODO: This is temp.
+import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
+
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
 contract ECDSAKeepFactory is
@@ -30,7 +33,11 @@ contract ECDSAKeepFactory is
     bytes32 groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
+    IStaking tokenStaking = IStaking(address(666)); // TODO: Take from constructor
     KeepBonding keepBonding;
+
+    uint256 minimumStake = 1; // TODO: Take from setter
+    uint256 minimumBond = 1; // TODO: Take from setter
 
     constructor(address _sortitionPoolFactory, address _keepBonding) public {
         sortitionPoolFactory = BondedSortitionPoolFactory(
@@ -50,7 +57,12 @@ contract ECDSAKeepFactory is
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
             candidatesPools[_application] = sortitionPoolFactory
-                .createSortitionPool();
+                .createSortitionPool(
+                tokenStaking,
+                keepBonding,
+                minimumStake,
+                minimumBond
+            );
         }
 
         BondedSortitionPool candidatesPool = BondedSortitionPool(
@@ -58,8 +70,8 @@ contract ECDSAKeepFactory is
         );
 
         address operator = msg.sender;
-        if (!candidatesPool.isOperatorRegistered(operator)) {
-            candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
+        if (!candidatesPool.isOperatorInPool(operator)) {
+            candidatesPool.joinPool(operator);
         }
 
         keepBonding.deposit.value(msg.value)(operator);
@@ -90,7 +102,8 @@ contract ECDSAKeepFactory is
 
         address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
-            groupSelectionSeed
+            groupSelectionSeed,
+            memberBond
         );
 
         address payable[] memory members = new address payable[](_groupSize);
