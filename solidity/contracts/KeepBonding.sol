@@ -102,17 +102,28 @@ contract KeepBonding {
    /// @param operator Address of the bonded operator.
    /// @param referenceID Reference ID of the bond.
    /// @param amount Amount to be seized.
-   function seizeBond(address operator, uint256 referenceID, uint256 amount) public {
+   /// @param destination Address to send the amount to.
+    function seizeBond(
+        address operator,
+        uint256 referenceID,
+        uint256 amount,
+        address destination
+    ) public {
       require(amount > 0, "Requested amount should be greater than zero");
 
       address payable holder = msg.sender;
-      bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
+        bytes32 bondID = keccak256(
+            abi.encodePacked(operator, holder, referenceID)
+        );
 
-      require(lockedBonds[bondID] >= amount, "Requested amount is greater than the bond");
+        require(
+            lockedBonds[bondID] >= amount,
+            "Requested amount is greater than the bond"
+        );
 
       lockedBonds[bondID] -= amount;
 
-      (bool success, ) = holder.call.value(amount)("");
+      (bool success, ) = destination.call.value(amount)("");
       require(success, "Transfer failed");
    }
 
