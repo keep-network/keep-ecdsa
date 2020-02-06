@@ -279,6 +279,7 @@ contract('KeepBonding', (accounts) => {
     describe('seizeBond', async () => {
         const operator = accounts[1]
         const holder = accounts[2]
+        const destination = accounts[3]
         const bondValue = new BN(1000)
         const reference = 777
 
@@ -287,36 +288,28 @@ contract('KeepBonding', (accounts) => {
             await keepBonding.createBond(operator, reference, bondValue, { from: holder })
         })
 
-        it('transfers whole bond amount to holder\'s account', async () => {
+        it('transfers whole bond amount to destination account', async () => {
             const amount = bondValue
-            let expectedBalance = web3.utils.toBN(await web3.eth.getBalance(holder)).add(amount)
+            let expectedBalance = web3.utils.toBN(await web3.eth.getBalance(destination)).add(amount)
 
-            const tx = await keepBonding.seizeBond(operator, reference, amount, { from: holder })
+            await keepBonding.seizeBond(operator, reference, amount, destination, { from: holder })
 
-            const gasPrice = web3.utils.toBN(await web3.eth.getGasPrice())
-            const txCost = gasPrice.mul(web3.utils.toBN(tx.receipt.gasUsed))
-            expectedBalance = expectedBalance.sub(txCost)
-
-            const actualBalance = await web3.eth.getBalance(holder)
-            expect(actualBalance).to.eq.BN(expectedBalance, 'invalid holder\'s account balance')
+            const actualBalance = await web3.eth.getBalance(destination)
+            expect(actualBalance).to.eq.BN(expectedBalance, 'invalid destination account balance')
 
             const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
             expect(lockedBonds).to.eq.BN(0, 'unexpected remaining bond value')
         })
 
-        it('transfers less than bond amount to holder\'s account', async () => {
+        it('transfers less than bond amount to destination account', async () => {
             const remainingBond = new BN(1)
             const amount = bondValue.sub(remainingBond)
-            let expectedBalance = web3.utils.toBN(await web3.eth.getBalance(holder)).add(amount)
+            let expectedBalance = web3.utils.toBN(await web3.eth.getBalance(destination)).add(amount)
 
-            const tx = await keepBonding.seizeBond(operator, reference, amount, { from: holder })
+            await keepBonding.seizeBond(operator, reference, amount, destination, { from: holder })
 
-            const gasPrice = web3.utils.toBN(await web3.eth.getGasPrice())
-            const txCost = gasPrice.mul(web3.utils.toBN(tx.receipt.gasUsed))
-            expectedBalance = expectedBalance.sub(txCost)
-
-            const actualBalance = await web3.eth.getBalance(holder)
-            expect(actualBalance).to.eq.BN(expectedBalance, 'invalid holder\'s account balance')
+            const actualBalance = await web3.eth.getBalance(destination)
+            expect(actualBalance).to.eq.BN(expectedBalance, 'invalid destination account balance')
 
             const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
             expect(lockedBonds).to.eq.BN(remainingBond, 'unexpected remaining bond value')
@@ -325,7 +318,7 @@ contract('KeepBonding', (accounts) => {
         it('reverts if seized amount equals zero', async () => {
             const amount = new BN(0)
             await expectRevert(
-                keepBonding.seizeBond(operator, reference, amount, { from: holder }),
+                keepBonding.seizeBond(operator, reference, amount, destination, { from: holder }),
                 "Requested amount should be greater than zero"
             )
         })
@@ -333,7 +326,7 @@ contract('KeepBonding', (accounts) => {
         it('reverts if seized amount is greater than bond value', async () => {
             const amount = bondValue.add(new BN(1))
             await expectRevert(
-                keepBonding.seizeBond(operator, reference, amount, { from: holder }),
+                keepBonding.seizeBond(operator, reference, amount, destination, { from: holder }),
                 "Requested amount is greater than the bond"
             )
         })
