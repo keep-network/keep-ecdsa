@@ -5,9 +5,9 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBondingStub = artifacts.require('KeepBondingStub');
-const SortitionPoolFactoryStub = artifacts.require('SortitionPoolFactoryStub');
-const SortitionPoolStub = artifacts.require('SortitionPoolStub');
-const SortitionPoolFactory = artifacts.require('SortitionPoolFactory');
+const BondedSortitionPoolFactoryStub = artifacts.require('BondedSortitionPoolFactoryStub');
+const BondedSortitionPoolStub = artifacts.require('BondedSortitionPoolStub');
+const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
 
 const BN = web3.utils.BN
 
@@ -17,7 +17,7 @@ const expect = chai.expect
 
 contract("ECDSAKeepFactory", async accounts => {
     let keepFactory
-    let sortitionPoolFactory
+    let bondedSortitionPoolFactory
     let keepBonding
 
     const application = accounts[1]
@@ -27,9 +27,9 @@ contract("ECDSAKeepFactory", async accounts => {
 
     describe("registerMemberCandidate", async () => {
         before(async () => {
-            sortitionPoolFactory = await SortitionPoolFactoryStub.new()
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactoryStub.new()
             keepBonding = await KeepBondingStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(sortitionPoolFactory.address, keepBonding.address)
+            keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, keepBonding.address)
         })
 
         beforeEach(async () => {
@@ -68,7 +68,7 @@ contract("ECDSAKeepFactory", async accounts => {
 
             const signerPoolAddress = await keepFactory.getSignerPool(application)
 
-            const signerPool = await SortitionPoolStub.at(signerPoolAddress)
+            const signerPool = await BondedSortitionPoolStub.at(signerPoolAddress)
 
             const operators = await signerPool.getOperators.call()
 
@@ -83,7 +83,7 @@ contract("ECDSAKeepFactory", async accounts => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             const signerPoolAddress = await keepFactory.getSignerPool(application)
 
-            const signerPool = await SortitionPoolStub.at(signerPoolAddress)
+            const signerPool = await BondedSortitionPoolStub.at(signerPoolAddress)
 
             assert.deepEqual(
                 await signerPool.getOperators(),
@@ -108,7 +108,7 @@ contract("ECDSAKeepFactory", async accounts => {
             await keepFactory.registerMemberCandidate(application2, { from: member2 })
 
             const signerPool1Address = await keepFactory.getSignerPool(application1)
-            const signerPool1 = await SortitionPoolStub.at(signerPool1Address)
+            const signerPool1 = await BondedSortitionPoolStub.at(signerPool1Address)
             const operators1 = await signerPool1.getOperators.call()
 
             assert.deepEqual(
@@ -118,7 +118,7 @@ contract("ECDSAKeepFactory", async accounts => {
             )
 
             const signerPool2Address = await keepFactory.getSignerPool(application2)
-            const signerPool2 = await SortitionPoolStub.at(signerPool2Address)
+            const signerPool2 = await BondedSortitionPoolStub.at(signerPool2Address)
             const operators2 = await signerPool2.getOperators.call()
 
             assert.deepEqual(
@@ -140,9 +140,9 @@ contract("ECDSAKeepFactory", async accounts => {
         async function initializeNewFactory() {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
-            sortitionPoolFactory = await SortitionPoolFactory.new()
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             keepBonding = await KeepBondingStub.new()
-            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address, keepBonding.address)
+            keepFactory = await ECDSAKeepFactory.new(bondedSortitionPoolFactory.address, keepBonding.address)
         }
 
         before(async () => {
