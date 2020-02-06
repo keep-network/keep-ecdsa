@@ -282,6 +282,9 @@ Additionally, privileged customer applications
 that wish to have the authority to cause operators' bonds to be seized
 should be identified to the bonding contract
 and authorized by an operator's authorizer.
+This is done by authorizing the _sortition pool_
+associated with the privileged customer.
+
 However, seizing a bond based on input from a privileged customer application
 is actually performed by the holder of the bond,
 so this authorization is absolutely non-enforceable
@@ -291,10 +294,10 @@ to play nice and honor this sanity check,
 and operators' authorizers are expected
 to not authorize operator contracts that do not respect the sanity check.
 
-Authorized operator contracts and authorized privileged customers
+Authorized operator contracts and authorized sortition pools
 are recorded in the bonding contract
 as `authorizedOperatorContracts[authorizer]`
-and `privilegedCustomers[authorizer]` respectively.
+and `authorizedSortitionPools[authorizer]` respectively.
 As with the staking contract,
 all operators using `authorizer` as their authorizer
 share the authorizations.
@@ -306,16 +309,18 @@ positive authorizations can be cached in the bonding contract.
 Similarly to the staking contract,
 the bonding contract provides a single function
 operator contracts can use to determine whether a bond can be created.
-`availableUnbondedValue(operator, privilegedCustomer)`
+`availableBondingValue(operator, bondCreator, authorizedSortitionPool)`
 performs all the applicable authorization checks 
 and returns the amount of ETH that can be bonded
-from the `operator`, to the caller `msg.sender`,
-and trusting the `privilegedCustomer` if present.
+from the `operator`, by the `bondCreator`,
+trusting the privileged customer associated with the `authorizedSortitionPool`
+(or none, if the authorized pool is the default pool of `bondCreator`
+and not associated with any privileged customer).
 
 To actually create a bond,
 an operator contract calls
-`createBond(operator, amount, reference, privilegedCustomer)`.
-This performs the same checks as `availableUnbondedValue()`
+`createBond(operator, reference, amount)`.
+This checks that `msg.sender` is allowed to create the bond,
 and if the amount available for the requested bond
 is equal or greater than the requested `amount`,
 the bond `amount` is subtracted from the `unbondedValue` of the operator
@@ -325,9 +330,9 @@ The `reference` is additionally recorded at
 If the amount available is less than requested,
 `createBond()` returns an error.
 
-`availableUnbondedValue(address operator, address optional privilegedCustomer)`
+`availableBondingValue(address operator, address bondCreator, address authorizedSortitionPool)`
 
-`createBond(address operator, uint amount, uint reference, address optional privilegedCustomer)`.
+`createBond(address operator, uint amount, uint reference)`.
 
 `mapping(address operator, address holder, uint reference => uint) lockedBonds`
 
