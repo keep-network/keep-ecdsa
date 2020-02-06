@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	cecdsa "crypto/ecdsa"
+	"fmt"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -11,6 +12,8 @@ import (
 
 // EthereumChain is an implementation of ethereum blockchain interface.
 type EthereumChain struct {
+	*ethereumBlockCounter
+
 	config                   *Config
 	client                   *ethclient.Client
 	transactorOptions        *bind.TransactOpts
@@ -41,11 +44,20 @@ func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) 
 		return nil, err
 	}
 
+	blockCounter, err := createBlockCounter(client)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create Ethereum blockcounter: [%v]",
+			err,
+		)
+	}
+
 	return &EthereumChain{
 		config:                   config,
 		client:                   client,
 		transactorOptions:        transactorOptions,
 		callerOptions:            callerOptions,
 		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
+		ethereumBlockCounter:     blockCounter,
 	}, nil
 }
