@@ -146,52 +146,19 @@ A weight of `0` means the child node is empty.
 
 A leaf node consists of `{uint16 weight; address operator}`.
 
-===== Version B: up to 131,072 virtual stakers
-
-If the minimum stake to participate
-is at least 7,630 KEEP (more than 1/131,072 of the total supply)
-the height of the tree can be reduced to 5
-by using `uint8` for the children of level 4 branches,
-with the width of level 5 being 131,072.
-Operators with more than 255 times the minimum stake
-would be held in leaves of level 4 or less.
-Because there can be at most 512 such operators,
-level 4 is wide enough to hold them.
-
-A branch on levels 1 to 3 consists of `{uint16[16] children}`,
-while a branch on level 4 consists of `{uint8[32] children}`.
-
-A leaf consists of `{0x0000; uint16 weight; address operator}`.
-
-To make the magic number `0x0000` useful
-at distinguishing leaves from branches,
-it is necessary to enforce the invariant
-that the first child of a branch may not be empty.
-If the first child of a branch is deleted,
-another child must be moved into the first position.
-
-===== Version C: up to 65,536 virtual stakers
-
-If the minimum stake is at least 15,260 KEEP
-(at most 65,536 virtual stakers),
-a tree of height 5 can be used without the special cases of _version B_.
-Branches and leaves are as in _version A_.
-
 ==== Metadata
 
 ===== Empty node locations
 
 To help insert operators into the tree,
 there should be lists for levels 2 to 5 (_version A_)
-or 2 to 4 (_version B & C_)
 containing the branches with empty children on that level.
 
 ===== Operators' tree positions?
 
 In addition to the weighted tree,
-a sortition pool may have a `mapping(address operator => uint) treePosition`
-to help locate operators in the tree.
-However, because of the lazy updates this is not strictly necessary.
+a sortition pool must have a `mapping(address operator => uint) treePosition`
+to help locate operators in the tree and prevent duplicate insertions.
 
 ==== Operations
 
