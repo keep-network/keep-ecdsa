@@ -325,8 +325,6 @@ and if the amount available for the requested bond
 is equal or greater than the requested `amount`,
 the bond `amount` is subtracted from the `unbondedValue` of the operator
 and the bond is created at `lockedBonds[operator, msg.sender, reference]`.
-The `reference` is additionally recorded at
-`bondAssignments[operator, msg.sender]`.
 If the amount available is less than requested,
 `createBond()` returns an error.
 
@@ -335,8 +333,6 @@ If the amount available is less than requested,
 `createBond(address operator, uint amount, uint reference)`.
 
 `mapping(address operator, address holder, uint reference => uint) lockedBonds`
-
-`mapping(address operator, address holder => uint[]) bondAssignments`
 
 ==== Assigned bonds
 
@@ -347,9 +343,7 @@ The created bond is identified by the address of the `operator`,
 the address of the operator contract that is the `holder` of the bond,
 and the `reference` identifier of the specific bond.
 
-The specific bond is recorded in `lockedBonds`,
-and the `reference` is added to the list of `bondAssignments`
-corresponding to the `operator, holder` pair.
+The specific bond is recorded in `lockedBonds`.
 
 The `holder` of a bond can reassign it
 to a different holder and/or reference
