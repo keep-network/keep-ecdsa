@@ -1,13 +1,30 @@
 pragma solidity ^0.5.4;
 
+import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
+
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
-contract KeepBonding {
+contract KeepBonding is IBonding {
     // Unassigned ether values deposited by operators.
     mapping(address => uint256) internal unbondedValue;
     // References to created bonds. Bond identifier is built from operator's
     // address, holder's address and reference ID assigned on bond creation.
     mapping(bytes32 => uint256) internal lockedBonds;
+
+    // TODO: Update KeepBonding contract implementation to new requirements based
+    // on the spec.
+    // Gives the amount of ETH
+    // the `operator` has made available for bonding by the `bondCreator`.
+    // If the operator doesn't exist,
+    // or the bond creator isn't authorized,
+    // returns 0.
+    function availableUnbondedValue(
+        address operator,
+        address bondCreator,
+        address authorizedSortitionPool
+    ) external view returns (uint256) {
+        return 100;
+    }
 
     /// @notice Returns value of ether available for bonding for the operator.
     /// @param operator Address of the operator.
