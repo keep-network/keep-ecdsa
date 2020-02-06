@@ -151,12 +151,12 @@ contract('ECDSAKeep', (accounts) => {
   })
 
   describe('checkBondAmount', () =>  {
-    const operator = accounts[1]
+    const owner = accounts[1]
     const value0 = new BN(30)
     const value1 = new BN(70)
 
     it('should return bond amount', async () => {
-      let keep = await ECDSAKeep.new(operator, members, honestThreshold, keepBonding.address)
+      let keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
       let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
       
       await keepBonding.deposit(members[0], { value: value0 })
@@ -168,6 +168,31 @@ contract('ECDSAKeep', (accounts) => {
       let expected = value0.add(value1);
 
       assert.equal(actual.eq(expected), true, "Should return total bond amount.");
+    })  
+  })
+
+  describe.only('seizeSignerBonds', () =>  {
+    const owner = accounts[1]
+    const value0 = new BN(30)
+    const value1 = new BN(70)
+
+    it('should seize signer bond', async () => {
+      let keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
+      let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
+      
+      await keepBonding.deposit(members[0], { value: value0 })
+      await keepBonding.deposit(members[1], { value: value1 })
+      await keepBonding.createBond(members[0], keep.address, referenceID, value0)
+      await keepBonding.createBond(members[1], keep.address, referenceID, value1)
+
+      let bondsBeforeSeizure = await keep.checkBondAmount.call()
+      let expected = value0.add(value1);
+      assert.equal(bondsBeforeSeizure.eq(expected), true, "Should return total bond amount.");
+
+      await keep.seizeSignerBonds({from: owner})
+
+      let bondsAfterSeizure = await keep.checkBondAmount.call({from: owner})
+      assert.equal(bondsAfterSeizure.eq(new BN(0)), true, "Should zero all the bonds.");
     })  
   })
 
