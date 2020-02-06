@@ -43,6 +43,9 @@ type ECDSAKeepFactory interface { // TODO: Rename to BondedECDSAKeepFactory
 	// the factory.
 	EligibleStake() (*big.Int, error)
 
+	// UpdateStake calls factory to update client's eligible stake.
+	UpdateStake(application common.Address) error
+
 	// RegisterAsMemberCandidate registers client as a candidate to be selected
 	// to a keep.
 	RegisterAsMemberCandidate(application common.Address) error
