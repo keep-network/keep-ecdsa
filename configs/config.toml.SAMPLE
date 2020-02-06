@@ -20,3 +20,6 @@
 
 [Storage]
   DataDir = "/my/secure/location"
+
+[LibP2P]
+  Port = 3919

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/urfave/cli"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/net/key"
-	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/keep-network/keep-tecdsa/internal/config"
@@ -62,13 +63,20 @@ func Start(c *cli.Context) error {
 
 	operatorPrivateKey, operatorPublicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
 
-	_, networkPublicKey := key.OperatorKeyToNetworkKey(
+	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
 		operatorPrivateKey, operatorPublicKey,
 	)
 
-	networkProvider := local.ConnectWithKey(
-		networkPublicKey,
+	networkProvider, err := libp2p.Connect(
+		ctx,
+		config.LibP2P,
+		networkPrivateKey,
+		ethereum.NewEthereumStakeMonitor(),
+		retransmission.NewTicker(make(chan uint64)),
 	)
+	if err != nil {
+		return err
+	}
 
 	persistence := persistence.NewEncryptedPersistence(
 		persistence.NewDiskHandle(config.Storage.DataDir),

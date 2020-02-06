@@ -6,6 +6,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 )
 
@@ -16,6 +17,7 @@ type Config struct {
 	Ethereum               ethereum.Config
 	SanctionedApplications SanctionedApplications
 	Storage                Storage
+	LibP2P                 libp2p.Config
 }
 
 // SanctionedApplications contains addresses of applications approved by the
