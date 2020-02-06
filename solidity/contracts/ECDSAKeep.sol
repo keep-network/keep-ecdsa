@@ -111,12 +111,10 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         bytes32 _signedDigest,
         bytes calldata _preimage // TODO: remove _preimage
     ) external returns (bool _isFraud) {
-        bytes32 latestDigest = digests[digests.length-1];
-
         // We add 27 to the _recoveryID to align it with ethereum and bitcoin
         // protocols where 27 is added to recovery ID to indicate usage of
         // uncompressed public keys.
-        bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(latestDigest, _recoveryID + 27, _r, _s);
+        bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(_signedDigest, _recoveryID + 27, _r, _s);
 
         bool isSignedDigestValid = false;
         for (uint256 i = 0; i < digests.length; i++) {

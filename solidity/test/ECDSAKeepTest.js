@@ -15,7 +15,7 @@ const truffleAssert = require('truffle-assertions')
 
 const BN = web3.utils.BN
 
-contract('ECDSAKeep', (accounts) => {
+contract.only('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
   const members = [accounts[2], accounts[3]]
   const honestThreshold = 1
@@ -199,10 +199,12 @@ contract('ECDSAKeep', (accounts) => {
   describe('submitSignatureFraud', () =>  {
     const digest1 = '0x14a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
     const digest2 = '0x54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
+    const digest3 = '0x24a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
     const recoveryID = 0
     const signatureR = '0x9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
     const signatureS = '0x90838891021e1c7d0d1336613f24ecab703dee5ff1b6c8881bccc2c011606a35'
     const publicKey = '0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051'
+    const signingTimeout = await keep.signingTimeout.call()
     
     let keep
     
@@ -210,12 +212,12 @@ contract('ECDSAKeep', (accounts) => {
       keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
       
       await keep.setPublicKey(publicKey, { from: members[0] })
+      
       await keep.sign(digest1, { from: owner })
-
-      const signingTimeout = await keep.signingTimeout.call()
       mineBlocks(signingTimeout)
-
       await keep.sign(digest2, { from: owner })
+      mineBlocks(signingTimeout)
+      await keep.sign(digest3, { from: owner })
     })
     
     it('should return true when signature is invalid', async () => {
@@ -258,22 +260,7 @@ contract('ECDSAKeep', (accounts) => {
       assert.isTrue(res, 'Signature should be invalid because of the bad digest and R part')
     })
 
-    it('should return error when signature and digest1 are both valid', async () => {
-      try {
-        await keep.submitSignatureFraud.call(
-          recoveryID,
-          signatureR,
-          signatureS,
-          digest1, 
-          '0x000'
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, "Signature is not fraudulent")
-      }
-    })
-
-    it('should return error when signature and digest2 are both valid', async () => {
+    it('should return error when signature and digest are both valid', async () => {
       try {
         await keep.submitSignatureFraud.call(
           recoveryID,
