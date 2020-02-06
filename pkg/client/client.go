@@ -121,6 +121,9 @@ func Initialize(
 					application.String(),
 				)
 			}
+
+			// When the operator is registered monitor it's stake.
+			go monitorStake(ctx, ethereumChain, application)
 		}(application)
 	}
 }
@@ -198,4 +201,49 @@ func registerForSignEvents(
 			}()
 		},
 	)
+}
+
+// monitorStake tracks operator's stake and in case it's changed calls keep factory
+// contract to update the stake for given application.
+func monitorStake(
+	ctx context.Context,
+	ethereumChain eth.Handle,
+	application common.Address,
+) {
+	newBlockChan := ethereumChain.WatchBlocks(ctx)
+
+	previousStake, err := ethereumChain.EligibleStake()
+	if err != nil {
+		logger.Warningf("failed to get initial eligible stake: [%v]", err)
+	}
+
+	for {
+		select {
+		case <-newBlockChan:
+			logger.Debugf("received new block notification")
+
+			currentStake, err := ethereumChain.EligibleStake()
+			if err != nil {
+				logger.Warningf("failed to get eligible stake: [%v]", err)
+				continue
+			}
+
+			if currentStake.Cmp(previousStake) != 0 {
+				logger.Debugf("updating stake for application [%s]", application.String())
+
+				if err := ethereumChain.UpdateStake(application); err != nil {
+					logger.Warningf(
+						"failed to update stake for application [%s]: [%v]",
+						application.String(),
+						err,
+					)
+					continue
+				}
+
+				previousStake = currentStake
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
 }
