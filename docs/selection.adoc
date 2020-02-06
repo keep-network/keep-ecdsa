@@ -27,7 +27,7 @@ Not 4 members, nor 2 excepting that we then proceed to select a third member.
 
 Efficiency::
 We need to select members for every ECDSA keep,
-as just reusing the same 3 every time would be bad^[citation needed]^.
+as just reusing the same 3 every time would be bad.
 This means we pay the price of member selection every time.
 By the theorem of money is nice to have,
 we would like to avoid
@@ -104,12 +104,7 @@ it may cause unhappiness among customers
 who aren't accustomed to applying the security mindset.
 Because such individuals make up the vast majority
 of posts on Twitter and Hacker News,
-we can't tell them to just git gud{blank}footnote:willnotjust[
-As per the theorem of _People Will Not Just_;
-there is not a single instance in recorded history
-of people having just,
-and they certainly aren't going to start now
-]
+we can't tell them to just git gud
 and need to consider the optics of our member selection scheme.
 
 In the actual reality
