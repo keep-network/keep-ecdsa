@@ -5,8 +5,8 @@ import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
-import "@keep-network/sortition-pools/contracts/SortitionPoolFactory.sol";
+import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
+import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
@@ -29,11 +29,13 @@ contract ECDSAKeepFactory is
 
     bytes32 groupSelectionSeed;
 
-    SortitionPoolFactory sortitionPoolFactory;
+    BondedSortitionPoolFactory sortitionPoolFactory;
     KeepBonding keepBonding;
 
     constructor(address _sortitionPoolFactory, address _keepBonding) public {
-        sortitionPoolFactory = SortitionPoolFactory(_sortitionPoolFactory);
+        sortitionPoolFactory = BondedSortitionPoolFactory(
+            _sortitionPoolFactory
+        );
         keepBonding = KeepBonding(_keepBonding);
     }
 
@@ -51,7 +53,7 @@ contract ECDSAKeepFactory is
                 .createSortitionPool();
         }
 
-        SortitionPool candidatesPool = SortitionPool(
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
             candidatesPools[_application]
         );
 
@@ -86,7 +88,7 @@ contract ECDSAKeepFactory is
         uint256 memberBond = _bond.div(_groupSize);
         require(memberBond > 0, "Bond per member equals zero");
 
-        address[] memory selected = SortitionPool(pool).selectSetGroup(
+        address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
             groupSelectionSeed
         );

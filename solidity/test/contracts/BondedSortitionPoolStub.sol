@@ -1,9 +1,14 @@
 pragma solidity ^0.5.10;
 
-contract SortitionPoolStub {
+import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
+import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
+
+contract BondedSortitionPoolStub {
     address payable[] operators;
 
-    function isOperatorRegistered(address operator) public view returns (bool) {
+    constructor(IStaking, IBonding, uint256, uint256, address) public {}
+
+    function isOperatorInPool(address operator) public view returns (bool) {
         for (uint256 i = 0; i < operators.length; i++) {
             if (operators[i] == operator) {
                 return true;
@@ -12,9 +17,7 @@ contract SortitionPoolStub {
         return false;
     }
 
-    function insertOperator(address payable operator, uint256 weight) public {
-        weight;
-
+    function joinPool(address payable operator) public {
         operators.push(operator);
     }
 
