@@ -3,6 +3,7 @@
 package eth
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -15,8 +16,20 @@ type Handle interface {
 	// Address returns client's ethereum address.
 	Address() common.Address
 
+	BlockCounter
+
 	ECDSAKeepFactory
 	ECDSAKeep
+}
+
+// TODO: This duplicates BlockCounter from keep-core, we need to merge them.
+type BlockCounter interface {
+	// WatchBlocks returns a channel that will emit new block numbers as they
+	// are mined. When the context provided as the parameter ends, new blocks
+	// are no longer pushed to the channel and the channel is closed. If there
+	// is no reader for the channel or reader is too slow, block updates can be
+	// dropped.
+	WatchBlocks(ctx context.Context) <-chan uint64
 }
 
 // ECDSAKeepFactory is an interface that provides ability to interact with
