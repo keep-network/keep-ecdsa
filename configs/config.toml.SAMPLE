@@ -22,4 +22,5 @@
   DataDir = "/my/secure/location"
 
 [LibP2P]
-  Port = 3919
+  Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmFRJtCWfdXhZEZHWb4tUpH1QMMgzH1oiamCfUuK6NgqWX"]
+  Port = 3920
