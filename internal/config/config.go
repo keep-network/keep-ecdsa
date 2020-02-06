@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,16 +13,9 @@ const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
 // Config is the top level config structure.
 type Config struct {
-	Ethereum                 ethereum.Config
-	SanctionedApplications   SanctionedApplications
-	RegistrationTickerString string `toml:"RegistrationTicker"`
-	Storage                  Storage
-}
-
-// RegistrationTicker returns duration of intervals between retries of client
-// registration in the keep factory contract.
-func (c *Config) RegistrationTicker() (time.Duration, error) {
-	return time.ParseDuration(c.RegistrationTickerString)
+	Ethereum               ethereum.Config
+	SanctionedApplications SanctionedApplications
+	Storage                Storage
 }
 
 // SanctionedApplications contains addresses of applications approved by the
