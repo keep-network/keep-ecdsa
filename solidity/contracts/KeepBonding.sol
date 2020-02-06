@@ -29,7 +29,9 @@ contract KeepBonding {
       require(availableBondingValue(msg.sender) >= amount, "Insufficient unbonded value");
 
       unbondedValue[msg.sender] -= amount;
-      destination.transfer(amount);
+
+      (bool success, ) = destination.call.value(amount)("");
+      require(success, "Transfer failed");
    }
 
    /// @notice Create bond for given operator, reference and amount.
@@ -109,7 +111,9 @@ contract KeepBonding {
       require(lockedBonds[bondID] >= amount, "Requested amount is greater than the bond");
 
       lockedBonds[bondID] -= amount;
-      holder.transfer(amount);
+
+      (bool success, ) = holder.call.value(amount)("");
+      require(success, "Transfer failed");
    }
 
    /// @notice Checks if the caller is an authorized contract.

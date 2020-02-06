@@ -162,9 +162,12 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for(uint16 i = 0; i < memberCount; i++){
-            // Using send over transfer to prevent potential fallback revert
-            members[i].send(dividend);
+        for (uint16 i = 0; i < memberCount; i++) {
+            // We don't want to revert the whole execution in case of single
+            // transfer failure, hence we don't validate it's result.
+            // TODO: What should we do with the dividend which was not transferred
+            // successfully?
+            members[i].call.value(dividend)("");
         }
     }
 
