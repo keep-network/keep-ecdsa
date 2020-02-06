@@ -125,6 +125,47 @@ contract ECDSAKeepFactory is
         return candidatesPool.isOperatorRegistered(_operator);
     }
 
+    /// @notice Checks if operator's details in the member candidates pool are
+    /// up to date for the given application. If not update operator status
+    /// function should be called by the one who is monitoring the status.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    function isOperatorUpToDate(address _operator, address _application)
+        external
+        view
+        returns (bool)
+    {
+        require(
+            isOperatorRegistered(_operator, _application),
+            "Operator not registered for the application"
+        );
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        return candidatesPool.isOperatorUpToDate(_operator);
+    }
+
+    /// @notice Invokes update of operator's details in the member candidates pool
+    /// for the given application
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    function updateOperatorStatus(address _operator, address _application)
+        external
+    {
+        require(
+            isOperatorRegistered(_operator, _application),
+            "Operator not registered for the application"
+        );
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        candidatesPool.updateOperatorStatus(_operator);
+    }
+
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
     function openKeepFeeEstimate() public view returns (uint256) {
