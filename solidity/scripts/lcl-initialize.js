@@ -16,7 +16,7 @@ module.exports = async function () {
     }
 
     try {
-        const bondingDepositForOperator = async (operator) => {
+        const depositUnbondedValue = async (operator) => {
             try {
                 await keepBonding.deposit(operator, { value: bondingValue })
             } catch (err) {
@@ -29,7 +29,7 @@ module.exports = async function () {
         }
 
         for (let i = 0; i < operators.length; i++) {
-            await bondingDepositForOperator(operators[i])
+            await depositUnbondedValue(operators[i])
         }
     } catch (err) {
         console.error('failed to initialize operators bonding', err)
