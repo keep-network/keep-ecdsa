@@ -231,53 +231,44 @@ contract.only('ECDSAKeep', (accounts) => {
 
     it('should return an error when signature is invalid and was requested', async () => {
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
-      try {
-        await keep.submitSignatureFraud.call(
+      await expectRevert(
+        keep.submitSignatureFraud.call(
           recoveryID,
           badSignatureR,
           signatureS,
           digest1, 
           '0x000'
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, "Signature is not fraudulent")
-      }
+        ),
+        'Signature is not fraudulent'
+      )
     })
-      
         
     it('should return an error when signature is invalid and was not requested', async () => {
       const badDigest = '0x11a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
-      
-      try {
-        await keep.submitSignatureFraud.call(
+      await expectRevert(
+        keep.submitSignatureFraud.call(
           recoveryID,
           badSignatureR,
           signatureS,
           badDigest, 
           '0x000'
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, "Signature is not fraudulent")
-      }
-
+        ),
+        'Signature is not fraudulent'
+      )
     })
 
     it('should return an error when signature is valid and was requested', async () => {
-      try {
-        await keep.submitSignatureFraud.call(
+      await expectRevert(
+        keep.submitSignatureFraud.call(
           recoveryID,
           signatureR,
           signatureS,
           digest1, 
           '0x000'
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, "Signature is not fraudulent")
-      }
+        ),
+        'Signature is not fraudulent'
+      )
     })
   })
 
