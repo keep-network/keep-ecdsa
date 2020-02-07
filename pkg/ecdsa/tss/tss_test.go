@@ -68,7 +68,8 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 		for i, memberID := range groupMemberIDs {
 			go func(memberID MemberID) {
-				network := newTestNetProvider(groupMembersKeys[memberID.String()])
+				networkPublicKey := key.NetworkPublic(groupMembersKeys[memberID.String()])
+				network := newTestNetProvider(&networkPublicKey)
 				networkProviders.Store(memberID.String(), network)
 				providersInitializedWg.Done()
 				<-providersInitialized
@@ -79,7 +80,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 					groupID,
 					memberID,
 					groupMemberIDs,
-					make(map[string]cecdsa.PublicKey), // TODO: pass something here.
+					groupMembersKeys,
 					dishonestThreshold,
 					network,
 					&preParams,
@@ -207,9 +208,9 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	testutils.VerifyEthereumSignature(t, digest[:], firstSignature, firstPublicKey)
 }
 
-func generateMemberKeys(groupSize int) ([]MemberID, map[string]*key.NetworkPublic, error) {
+func generateMemberKeys(groupSize int) ([]MemberID, map[string]cecdsa.PublicKey, error) {
 	memberIDs := []MemberID{}
-	groupMembersKeys := make(map[string]*key.NetworkPublic, groupSize)
+	groupMembersKeys := make(map[string]cecdsa.PublicKey, groupSize)
 
 	for i := 0; i < groupSize; i++ {
 		_, publicKey, err := key.GenerateStaticNetworkKey()
@@ -223,7 +224,7 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[string]*key.NetworkPubli
 		}
 
 		memberIDs = append(memberIDs, memberID)
-		groupMembersKeys[memberID.String()] = publicKey
+		groupMembersKeys[memberID.String()] = *(*cecdsa.PublicKey)(publicKey)
 	}
 
 	return memberIDs, groupMembersKeys, nil

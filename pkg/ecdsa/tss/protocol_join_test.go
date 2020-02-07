@@ -33,8 +33,9 @@ func TestJoinNotifier(t *testing.T) {
 	mutex := &sync.RWMutex{}
 	joinedCount := 0
 
-	for memberIDstring, memberNetworkKey := range groupMembersKeys {
+	for memberIDstring, memberPublicKey := range groupMembersKeys {
 		memberID, _ := MemberIDFromHex(memberIDstring)
+		memberNetworkKey := key.NetworkPublic(memberPublicKey)
 
 		go func(memberID MemberID, memberNetworkKey *key.NetworkPublic) {
 			groupInfo := &groupInfo{
@@ -55,7 +56,7 @@ func TestJoinNotifier(t *testing.T) {
 			mutex.Lock()
 			joinedCount++
 			mutex.Unlock()
-		}(memberID, memberNetworkKey)
+		}(memberID, &memberNetworkKey)
 	}
 
 	go func() {
