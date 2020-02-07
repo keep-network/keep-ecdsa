@@ -116,16 +116,16 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         // uncompressed public keys.
         bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(_signedDigest, _recoveryID + 27, _r, _s);
 
-        bool isSignedDigestValid = false;
+        bool wasDigestRequested = false;
         for (uint256 i = 0; i < digests.length; i++) {
             if (_signedDigest == digests[i]) {
-                isSignedDigestValid = true;
+                wasDigestRequested = true;
                 break;
             }
         }
 
         // returning error if the signature and digest are valid.
-        require(!(isSignatureValid && isSignedDigestValid), "Signature is not fraudulent");
+        require(!(isSignatureValid && wasDigestRequested), "Signature is not fraudulent");
 
         return true;
     }
