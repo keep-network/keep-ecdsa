@@ -62,11 +62,10 @@ contract ECDSAKeepFactory is
 
         address operator = msg.sender;
 
-        // TODO: check if operator public key match the sender address.
-        // require(
-        //     operator == address(bytes20(keccak256(abi.encodePacked(_operatorPublicKeyHighBytes, _operatorPublicKeyLowBytes)))),
-        //     "Wrong operator public key"
-        // );
+        require(
+            operator == address(uint160(uint256(keccak256(abi.encodePacked(_operatorPublicKeyHighBytes, _operatorPublicKeyLowBytes))))),
+            "Wrong operator public key"
+        );
 
         if (!candidatesPool.isOperatorRegistered(operator)) {
             candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
