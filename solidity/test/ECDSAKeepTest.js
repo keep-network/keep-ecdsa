@@ -10,7 +10,7 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
-const EtherReceiver = artifacts.require('./EtherReceiver.sol')
+const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
 
 const truffleAssert = require('truffle-assertions')
 
@@ -282,7 +282,7 @@ contract('ECDSAKeep', (accounts) => {
 
     beforeEach(async () => {
       keep = await ECDSAKeep.new(owner, members, honestThreshold)
-      etherReceiver = await EtherReceiver.new()
+      etherReceiver = await TestEtherReceiver.new()
     })
 
     it('correctly distributes ETH', async () => {

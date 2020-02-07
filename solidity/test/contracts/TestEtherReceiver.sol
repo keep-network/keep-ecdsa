@@ -2,7 +2,7 @@ pragma solidity ^0.5.4;
 
 /// @title Ether Transfer Receiver.
 /// @dev This contract is for testing purposes only.
-contract EtherReceiver {
+contract TestEtherReceiver {
     uint256 public invalidValue = 666;
 
     /// @notice Rejects ether transfers sent to this contract if the value equals

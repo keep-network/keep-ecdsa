@@ -1,7 +1,7 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const KeepBonding = artifacts.require('./KeepBondingStub.sol')
-const EtherReceiver = artifacts.require('./EtherReceiver.sol')
+const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -17,7 +17,7 @@ contract('KeepBonding', (accounts) => {
 
     before(async () => {
         keepBonding = await KeepBonding.new()
-        etherReceiver = await EtherReceiver.new()
+        etherReceiver = await TestEtherReceiver.new()
     })
 
     beforeEach(async () => {
