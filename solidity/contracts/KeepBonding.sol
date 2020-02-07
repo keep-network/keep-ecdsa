@@ -1,10 +1,15 @@
 pragma solidity ^0.5.4;
 
-import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
+// TODO: This contract is expected to implement functions defined by IBonding
+// interface defined in @keep-network/sortition-pools. After merging the
+// repositories we need to move IBonding definition to sit closer to KeepBonding
+// contract so that sortition pools import it for own needs. It is the bonding
+// module which should define an interface, and sortition pool module should be
+// just importing it.
 
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
-contract KeepBonding is IBonding {
+contract KeepBonding {
     // Unassigned ether values deposited by operators.
     mapping(address => uint256) internal unbondedValue;
     // References to created bonds. Bond identifier is built from operator's
