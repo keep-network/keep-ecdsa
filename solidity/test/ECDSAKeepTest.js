@@ -15,7 +15,11 @@ const truffleAssert = require('truffle-assertions')
 
 const BN = web3.utils.BN
 
-contract('ECDSAKeep', (accounts) => {
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
+const expect = chai.expect
+
+contract.only('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
   const members = [accounts[2], accounts[3]]
   const honestThreshold = 1
@@ -166,7 +170,7 @@ contract('ECDSAKeep', (accounts) => {
       let actual = await keep.checkBondAmount.call()
       let expected = value0.add(value1);
 
-      assert.equal(actual.eq(expected), true, "Should return total bond amount.");
+      expect(actual).to.eq.BN(expected, "Should return total bond amount.");
     })  
   })
 
@@ -185,12 +189,12 @@ contract('ECDSAKeep', (accounts) => {
 
       let bondsBeforeSeizure = await keep.checkBondAmount.call()
       let expected = value0.add(value1);
-      assert.equal(bondsBeforeSeizure.eq(expected), true, "Should return total bond amount.");
-
+      expect(bondsBeforeSeizure).to.eq.BN(expected, "Should return total bond amount.");
+      
       await keep.seizeSignerBonds({from: owner})
-
+      
       let bondsAfterSeizure = await keep.checkBondAmount.call({from: owner})
-      assert.equal(bondsAfterSeizure.eq(new BN(0)), true, "Should zero all the bonds.");
+      expect(bondsAfterSeizure).to.eq.BN(expected, "Should zero all the bonds.");
     })  
   })
 
