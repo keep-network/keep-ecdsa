@@ -174,7 +174,7 @@ contract('ECDSAKeep', (accounts) => {
     })  
   })
 
-  describe.only('seizeSignerBonds', () =>  {
+  describe('seizeSignerBonds', () =>  {
     const value0 = new BN(30)
     const value1 = new BN(70)
 
