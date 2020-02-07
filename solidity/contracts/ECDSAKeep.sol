@@ -124,8 +124,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             }
         }
 
-        // returning error if the signature and digest are valid.
-        require(!(isSignatureValid && wasDigestRequested), "Signature is not fraudulent");
+        // when the signature is valid but was not requested
+        require(isSignatureValid && !wasDigestRequested, "Signature is not fraudulent");
 
         return true;
     }

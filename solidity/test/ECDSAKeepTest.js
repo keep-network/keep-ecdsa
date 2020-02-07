@@ -204,69 +204,74 @@ contract.only('ECDSAKeep', (accounts) => {
     const signatureR = '0x9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
     const signatureS = '0x90838891021e1c7d0d1336613f24ecab703dee5ff1b6c8881bccc2c011606a35'
     const publicKey = '0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051'
-    const signingTimeout = await keep.signingTimeout.call()
-    
     let keep
     
     beforeEach(async () => {
       keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
+      const signingTimeout = await keep.signingTimeout.call()
       
       await keep.setPublicKey(publicKey, { from: members[0] })
       
       await keep.sign(digest1, { from: owner })
       mineBlocks(signingTimeout)
-      await keep.sign(digest2, { from: owner })
-      mineBlocks(signingTimeout)
       await keep.sign(digest3, { from: owner })
     })
     
-    it('should return true when signature is invalid', async () => {
-      const badDignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
-      let res = await keep.submitSignatureFraud.call(
-        recoveryID,
-        badDignatureR,
-        signatureS,
-        digest1, 
-        '0x000'
-        )
-      
-      assert.isTrue(res, 'Signature should be invalid because of the bad R part')
-    })
-      
-    it('should return true when digest is invalid', async () => {
-      const badDigest = '0x11a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
+    it('should return true when signature is valid but was not requested', async () => {
       let res = await keep.submitSignatureFraud.call(
         recoveryID,
         signatureR,
         signatureS,
-        badDigest, 
-        '0x000'
-        )
-        
-        assert.isTrue(res, 'Signature should be invalid because of the bad digest')
-      })
-        
-    it('should return true when signature and digest are both invalid', async () => {
-      const badDigest = '0x11a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
-      const badDignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
-      let res = await keep.submitSignatureFraud.call(
-        recoveryID,
-        badDignatureR,
-        signatureS,
-        badDigest, 
+        digest2, 
         '0x000'
       )
-
-      assert.isTrue(res, 'Signature should be invalid because of the bad digest and R part')
+        
+      assert.isTrue(res, 'Signature is fraudulent because is valid but was not requested.')
     })
 
-    it('should return error when signature and digest are both valid', async () => {
+    it('should return an error when signature is invalid and was requested', async () => {
+      const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
+      try {
+        await keep.submitSignatureFraud.call(
+          recoveryID,
+          badSignatureR,
+          signatureS,
+          digest1, 
+          '0x000'
+        )
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, "Signature is not fraudulent")
+      }
+    })
+      
+        
+    it('should return an error when signature is invalid and was not requested', async () => {
+      const badDigest = '0x11a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
+      const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
+      
+      try {
+        await keep.submitSignatureFraud.call(
+          recoveryID,
+          badSignatureR,
+          signatureS,
+          badDigest, 
+          '0x000'
+        )
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, "Signature is not fraudulent")
+      }
+
+    })
+
+    it('should return an error when signature is valid and was requested', async () => {
       try {
         await keep.submitSignatureFraud.call(
           recoveryID,
           signatureR,
           signatureS,
-          digest2, 
+          digest1, 
           '0x000'
         )
         assert(false, 'Test call did not error as expected')
