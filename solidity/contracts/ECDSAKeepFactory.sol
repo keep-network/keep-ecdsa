@@ -75,7 +75,7 @@ contract ECDSAKeepFactory is
 
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
-    function openKeepFeeEstimate() external returns (uint256){
+    function openKeepFeeEstimate() external returns (uint256) {
         return feeEstimate;
     }
 
@@ -110,9 +110,8 @@ contract ECDSAKeepFactory is
 
         address payable[] memory members = new address payable[](_groupSize);
         for (uint256 i = 0; i < _groupSize; i++) {
-            // TODO: for each selected member, validate staking weight and create,
-            // bond. If validation failed or bond could not be created, remove
-            // operator from pool and try again.
+            // TODO: Modify ECDSAKeep to not keep members as payable and do the
+            // required casting in distributeERC20ToMembers and distributeETHToMembers.
             members[i] = address(uint160(selected[i]));
         }
 
