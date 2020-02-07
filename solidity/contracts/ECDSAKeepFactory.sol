@@ -30,6 +30,7 @@ contract ECDSAKeepFactory is
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
 
+    uint256 feeEstimate;
     bytes32 groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
@@ -70,6 +71,12 @@ contract ECDSAKeepFactory is
         if (!candidatesPool.isOperatorInPool(operator)) {
             candidatesPool.joinPool(operator);
         }
+    }
+
+    /// @notice Gets a fee estimate for opening a new keep.
+    /// @return Uint256 estimate.
+    function openKeepFeeEstimate() external returns (uint256){
+        return feeEstimate;
     }
 
     /// @notice Open a new ECDSA keep.
