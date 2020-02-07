@@ -47,12 +47,9 @@ contract ECDSAKeepFactory is
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
-    /// for the provided customer application. Caller can pass ether with this
-    /// function call and the value will be registered as available for bonding.
-    /// Operator can deposit a value for bonding also by calling the bonding
-    /// contract directly.
+    /// for the provided customer application.
     /// @dev If caller is already registered it returns without any changes.
-    function registerMemberCandidate(address _application) external payable {
+    function registerMemberCandidate(address _application) external {
         if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
@@ -73,8 +70,6 @@ contract ECDSAKeepFactory is
         if (!candidatesPool.isOperatorInPool(operator)) {
             candidatesPool.joinPool(operator);
         }
-
-        keepBonding.deposit.value(msg.value)(operator);
     }
 
     /// @notice Open a new ECDSA keep.
