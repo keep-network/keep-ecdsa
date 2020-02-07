@@ -106,6 +106,7 @@ func (b *networkBridge) initializeChannels(
 			continue
 		}
 
+		// TODO: Usage of SeekTransportIdentifier is temporary. It will be changed in next PR.
 		peerTransportID, err := b.networkProvider.SeekTransportIdentifier(
 			common.BytesToAddress(peerMemberID),
 		)
@@ -194,6 +195,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 				logger.Errorf("failed to get destination member id: [%v]", err)
 				return
 			}
+			// TODO: Usage of SeekTransportIdentifier is temporary. It will be changed in next PR.
 			destinationTransportID, err := b.networkProvider.SeekTransportIdentifier(
 				common.BytesToAddress(destinationMemberID),
 			)
