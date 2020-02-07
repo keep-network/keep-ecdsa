@@ -4,12 +4,13 @@ import "./ECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
-
-// TODO: This is temp.
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
+import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
+
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
@@ -34,7 +35,7 @@ contract ECDSAKeepFactory is
     bytes32 groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
-    IStaking tokenStaking = IStaking(address(666)); // TODO: Take from constructor
+    address tokenStaking = address(666); // TODO: Take from constructor
     KeepBonding keepBonding;
 
     uint256 minimumStake = 1; // TODO: Take from setter
@@ -56,13 +57,12 @@ contract ECDSAKeepFactory is
             // application so let's create a signer pool for it.
             candidatesPools[_application] = sortitionPoolFactory
                 .createSortitionPool(
-                tokenStaking,
-                keepBonding,
+                IStaking(tokenStaking),
+                IBonding(address(keepBonding)),
                 minimumStake,
                 minimumBond
             );
         }
-
         BondedSortitionPool candidatesPool = BondedSortitionPool(
             candidatesPools[_application]
         );
