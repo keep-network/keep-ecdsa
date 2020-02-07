@@ -187,11 +187,11 @@ contract("ECDSAKeepFactory", async accounts => {
                     bond,
                     { from: application },
                 ),
-                "Bond per member equals zero"
+                "Bond per member must be greater than zero"
             )
         })
 
-        it("reverts if bond per member equals zero", async () => {
+        it("reverts if Bond per member must be greater than zero", async () => {
             let bond = new BN(2)
 
             await expectRevert(
@@ -202,7 +202,7 @@ contract("ECDSAKeepFactory", async accounts => {
                     bond,
                     { from: application },
                 ),
-                "Bond per member equals zero"
+                "Bond per member must be greater than zero"
             )
         })
 

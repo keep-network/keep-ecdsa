@@ -98,7 +98,7 @@ contract ECDSAKeepFactory is
 
         // TODO: The remainder will not be bonded. What should we do with it?
         uint256 memberBond = _bond.div(_groupSize);
-        require(memberBond > 0, "Bond per member equals zero");
+        require(memberBond > 0, "Bond per member must be greater than zero");
 
         address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
