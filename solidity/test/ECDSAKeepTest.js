@@ -324,7 +324,7 @@ contract('ECDSAKeep', (accounts) => {
       )
     })
 
-    it('doesn\'t revert in case of transfer failure', async () => {
+    it('does not revert in case of transfer failure', async () => {
       const member1 = accounts[2]
       const member2 = etherReceiver.address // a receiver which we expect to reject the transfer
       const member3 = accounts[3]
