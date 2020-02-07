@@ -190,6 +190,9 @@ github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e h1:iGKW
 github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
 github.com/keep-network/keep-core v0.8.1-0.20200205134025-678711a7dd3a h1:BS2DNtrDPo91oJ5KlK0EfW+JDwDgK8geChAuWXuSHCw=
 github.com/keep-network/keep-core v0.8.1-0.20200205134025-678711a7dd3a/go.mod h1:r1Lyqf9yv3kbsZGn7wTGJ1Fkt81qEjba/pQGcCgs2tY=
+github.com/keep-network/keep-core v0.8.1-0.20200207075427-3d1cb5588ac9 h1:YpMs59RHYJ7/yStSk57X67alAQVBgt6YvJrA2Y8t4y4=
+github.com/keep-network/keep-core v0.8.1-0.20200207075427-3d1cb5588ac9/go.mod h1:r1Lyqf9yv3kbsZGn7wTGJ1Fkt81qEjba/pQGcCgs2tY=
+github.com/keep-network/keep-core v0.9.0 h1:S/pLnIhsrirB+9CaEWrWvQDktUvTu5+jUSG96mWacGA=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=

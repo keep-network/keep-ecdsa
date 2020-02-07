@@ -7,8 +7,6 @@ import (
 
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
-	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 // networkBridge translates TSS library network interface to unicast and
@@ -124,9 +122,8 @@ func (b *networkBridge) initializeChannels(
 }
 
 func (b *networkBridge) getTransportIdentifier(member MemberID) (net.TransportIdentifier, error) {
-	peerPublicKey := key.NetworkPublic(b.groupInfo.groupMemberPublicKeys[member.String()])
-	// TODO: consider moving this to keep-core because it introduces a direct dependency to go-libp2p-core.
-	return peer.IDFromPublicKey(&peerPublicKey)
+	publicKey := b.groupInfo.groupMemberPublicKeys[member.String()]
+	return b.networkProvider.CreateTransportIdentifier(publicKey)
 }
 
 func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
