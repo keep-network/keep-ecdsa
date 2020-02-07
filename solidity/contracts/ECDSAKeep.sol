@@ -84,7 +84,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     /// @notice Returns the amount of the keep's ETH bond in wei.
     /// @return The amount of the keep's ETH bond in wei.
-    function checkBondAmount() external returns (uint256) {
+    function checkBondAmount() external view returns (uint256) {
         uint256 sumBondAmount = 0;
         for (uint256 i = 0; i < members.length; i++) {
             sumBondAmount += keepBonding.bondAmount(members[i], address(this), uint256(address(this)));
@@ -111,10 +111,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         bytes32 _signedDigest,
         bytes calldata _preimage // TODO: remove _preimage
     ) external returns (bool _isFraud) {
-        // We add 27 to the _v to align it with ethereum and bitcoin
-        // protocols where 27 is added to recovery ID to indicate usage of
-        // uncompressed public keys.
-        bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(_signedDigest, _v + 27, _r, _s);
+        bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(_signedDigest, _v, _r, _s);
 
         bool wasDigestRequested = false;
         for (uint256 i = 0; i < digests.length; i++) {

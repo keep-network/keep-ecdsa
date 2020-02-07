@@ -11,11 +11,11 @@ contract IBondedECDSAKeep {
 
     /// @notice Returns the amount of the keep's ETH bond in wei.
     /// @return The amount of the keep's ETH bond in wei.
-    function checkBondAmount() external returns (uint256);
+    function checkBondAmount() external view returns (uint256);
 
     /// @notice Calculates a signature over provided digest by the keep. Note that
-    ///         signatures from the keep not explicitly requested by calling `sign`
-    ///         will be provable as fraud via `submitSignatureFraud`.
+    /// signatures from the keep not explicitly requested by calling `sign`
+    /// will be provable as fraud via `submitSignatureFraud`.
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external;
 
@@ -37,10 +37,10 @@ contract IBondedECDSAKeep {
     function seizeSignerBonds() external;
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
-    ///         not first approved via a call to sign.
+    /// not first approved via a call to sign.
     /// @return Error if not fraud, true if fraud.
     function submitSignatureFraud(
-        uint8 _recoveryID,
+        uint8 _v,
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,

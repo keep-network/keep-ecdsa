@@ -19,7 +19,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract.only('ECDSAKeep', (accounts) => {
+contract('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
   const members = [accounts[2], accounts[3]]
   const honestThreshold = 1
@@ -170,11 +170,11 @@ contract.only('ECDSAKeep', (accounts) => {
       let actual = await keep.checkBondAmount.call()
       let expected = value0.add(value1);
 
-      expect(actual).to.eq.BN(expected, "Should return total bond amount.");
+      expect(actual).to.eq.BN(expected, "incorrect bond amount.");
     })  
   })
 
-  describe('seizeSignerBonds', () =>  {
+  describe.only('seizeSignerBonds', () =>  {
     const value0 = new BN(30)
     const value1 = new BN(70)
 
@@ -187,14 +187,14 @@ contract.only('ECDSAKeep', (accounts) => {
       await keepBonding.createBond(members[0], keep.address, referenceID, value0)
       await keepBonding.createBond(members[1], keep.address, referenceID, value1)
 
-      let bondsBeforeSeizure = await keep.checkBondAmount.call()
+      let bondsBeforeSeizure = await keep.checkBondAmount()
       let expected = value0.add(value1);
-      expect(bondsBeforeSeizure).to.eq.BN(expected, "Should return total bond amount.");
+      expect(bondsBeforeSeizure).to.eq.BN(expected, "incorrect bond amount before seizure.");
       
       await keep.seizeSignerBonds({from: owner})
       
-      let bondsAfterSeizure = await keep.checkBondAmount.call({from: owner})
-      expect(bondsAfterSeizure).to.eq.BN(expected, "Should zero all the bonds.");
+      let bondsAfterSeizure = await keep.checkBondAmount()
+      expect(bondsAfterSeizure).to.eq.BN(0, "should zero all the bonds.");
     })  
   })
 
@@ -202,7 +202,7 @@ contract.only('ECDSAKeep', (accounts) => {
     const digest1 = '0x14a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
     const digest2 = '0x54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
     const digest3 = '0x24a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
-    const signatureV = 0
+    const signatureV = 27
     const signatureR = '0x9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
     const signatureS = '0x90838891021e1c7d0d1336613f24ecab703dee5ff1b6c8881bccc2c011606a35'
     const publicKey = '0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051'
