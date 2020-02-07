@@ -15,7 +15,7 @@ const truffleAssert = require('truffle-assertions')
 
 const BN = web3.utils.BN
 
-contract.only('ECDSAKeep', (accounts) => {
+contract('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
   const members = [accounts[2], accounts[3]]
   const honestThreshold = 1
@@ -151,7 +151,6 @@ contract.only('ECDSAKeep', (accounts) => {
   })
 
   describe('checkBondAmount', () =>  {
-    const owner = accounts[1]
     const value0 = new BN(30)
     const value1 = new BN(70)
 
@@ -172,7 +171,6 @@ contract.only('ECDSAKeep', (accounts) => {
   })
 
   describe('seizeSignerBonds', () =>  {
-    const owner = accounts[1]
     const value0 = new BN(30)
     const value1 = new BN(70)
 
