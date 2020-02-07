@@ -102,7 +102,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
-    ///         not first approved via a call to sign.
+    /// not first approved via a call to sign.
     /// @return True if fraud, error otherwise.
     function submitSignatureFraud(
         uint8 _v,
