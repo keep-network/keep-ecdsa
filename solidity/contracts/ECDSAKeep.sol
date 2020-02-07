@@ -105,16 +105,16 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     ///         not first approved via a call to sign.
     /// @return True if fraud, error otherwise.
     function submitSignatureFraud(
-        uint8 _recoveryID,
+        uint8 _v,
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
         bytes calldata _preimage // TODO: remove _preimage
     ) external returns (bool _isFraud) {
-        // We add 27 to the _recoveryID to align it with ethereum and bitcoin
+        // We add 27 to the _v to align it with ethereum and bitcoin
         // protocols where 27 is added to recovery ID to indicate usage of
         // uncompressed public keys.
-        bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(_signedDigest, _recoveryID + 27, _r, _s);
+        bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(_signedDigest, _v + 27, _r, _s);
 
         bool wasDigestRequested = false;
         for (uint256 i = 0; i < digests.length; i++) {
