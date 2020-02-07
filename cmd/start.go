@@ -61,6 +61,20 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("failed to connect to ethereum node: [%v]", err)
 	}
 
+	stakeMonitor, err := ethereumChain.StakeMonitor()
+	if err != nil {
+		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
+	}
+	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
+		ethereumKey.Address.Hex(),
+	)
+	if err != nil {
+		return fmt.Errorf("could not check the stake [%v]", err)
+	}
+	if !hasMinimumStake {
+		return fmt.Errorf("stake is below the required minimum")
+	}
+
 	operatorPrivateKey, operatorPublicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
 
 	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
@@ -71,7 +85,7 @@ func Start(c *cli.Context) error {
 		ctx,
 		config.LibP2P,
 		networkPrivateKey,
-		ethereum.NewEthereumStakeMonitor(),
+		stakeMonitor,
 		retransmission.NewTicker(make(chan uint64)),
 	)
 	if err != nil {

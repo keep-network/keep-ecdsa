@@ -10,6 +10,7 @@
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
   ECDSAKeepFactory = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+  KeepRandomBeaconOperator = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 
 # Addresses of applications approved by the operator.
 [SanctionedApplications]

@@ -5,6 +5,7 @@ import (
 	cecdsa "crypto/ecdsa"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log"
@@ -180,4 +181,11 @@ func (ec *EthereumChain) SubmitSignature(
 	logger.Debugf("submitted SubmitSignature transaction with hash: [%x]", transaction.Hash())
 
 	return nil
+}
+
+// HasMinimumStake returns true if the specified address is staked.  False will
+// be returned if not staked.  If err != nil then it was not possible to determine
+// if the address is staked or not.
+func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
+	return ec.keepRandomBeaconOperatorContract.HasMinimumStake(&bind.CallOpts{}, address)
 }
