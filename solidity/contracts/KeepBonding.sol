@@ -9,6 +9,8 @@ pragma solidity ^0.5.4;
 
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
+// TODO: Update KeepBonding contract implementation to new requirements based
+// on the spec.
 contract KeepBonding {
     // Unassigned ether values deposited by operators.
     mapping(address => uint256) internal unbondedValue;
@@ -16,13 +18,14 @@ contract KeepBonding {
     // address, holder's address and reference ID assigned on bond creation.
     mapping(bytes32 => uint256) internal lockedBonds;
 
-    // TODO: Update KeepBonding contract implementation to new requirements based
-    // on the spec.
-    // Gives the amount of ETH
-    // the `operator` has made available for bonding by the `bondCreator`.
-    // If the operator doesn't exist,
-    // or the bond creator isn't authorized,
-    // returns 0.
+    /// @notice Returns the amount of ether the operator has made available for
+    /// bonding by the bond creator. If the operator doesn't exists or the operator
+    /// doesn't exists returns zero.
+    /// @dev Implements function expected by sortition pools' IBonding interface.
+    /// @param operator Address of the operator.
+    /// @param bondCreator Address authorized to create a bond.
+    /// @param authorizedSortitionPool Address of authorized sortition pool.
+    /// @return Amount of deposited ether available for bonding.
     function availableUnbondedValue(
         address operator,
         address bondCreator,
@@ -34,6 +37,7 @@ contract KeepBonding {
     /// @notice Returns value of ether available for bonding for the operator.
     /// @param operator Address of the operator.
     /// @return Value of deposited ether available for bonding.
+    /// TODO: Should be replaced by availableUnbondedValue.
     function availableBondingValue(address operator)
         public
         view
