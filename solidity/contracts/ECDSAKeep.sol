@@ -66,7 +66,10 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @dev Stub implementations.
     /// @param _publicKey Signer's public key.
     function setPublicKey(bytes calldata _publicKey) external onlyMember {
+        require(publicKey.length == 0, "Public key has already been set");
+
         require(_publicKey.length == 64, "Public key must be 64 bytes long");
+
         publicKey = _publicKey;
         emit PublicKeyPublished(_publicKey);
     }
@@ -106,7 +109,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         bytes32 _s,
         uint8 _recoveryID
     ) external onlyMember {
-        require(isSigningInProgress(), "Not awaiting a signature");
+        require(isSigningInProgress(), "Not awaiting a signature"); // tu juz sprawdza czy jest podpisany
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // We add 27 to the recovery ID to align it with ethereum and bitcoin

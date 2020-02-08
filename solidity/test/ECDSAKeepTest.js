@@ -116,28 +116,42 @@ contract('ECDSAKeep', (accounts) => {
     describe('setPublicKey', async () => {
       it('emits an event', async () => {
         let res = await keep.setPublicKey(expectedPublicKey, { from: members[0] })
-
+        
         truffleAssert.eventEmitted(res, 'PublicKeyPublished', (ev) => {
           return ev.publicKey == expectedPublicKey
         })
       })
-
+      
       it('cannot be called by non-member', async () => {
-        try {
-          await keep.setPublicKey(expectedPublicKey)
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Caller is not the keep member')
-        }
+        await expectRevert(
+          keep.setPublicKey(expectedPublicKey),
+          'Caller is not the keep member'
+        )
       })
 
       it('cannot be called by non-member owner', async () => {
-        try {
-          await keep.setPublicKey(expectedPublicKey, { from: owner })
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Caller is not the keep member')
-        }
+        await expectRevert(
+          keep.setPublicKey(expectedPublicKey, { from: owner }),
+          'Caller is not the keep member'
+        )
+      })
+
+      it('cannot be different than 64 bytes', async () => {
+        let badPublicKey = '0x9b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
+
+        await expectRevert(
+          keep.setPublicKey(badPublicKey, { from: members[0] }),
+          'Public key must be 64 bytes long'
+        )
+      })
+
+      it('cannot set public key more more than once', async () => {
+        keep = await ECDSAKeep.new(owner, members, honestThreshold);
+        await keep.setPublicKey(expectedPublicKey, { from: members[0] }),
+        await expectRevert(
+          keep.setPublicKey(expectedPublicKey, { from: members[0] }),
+          'Public key has already been set'
+        )
       })
     })
   })
