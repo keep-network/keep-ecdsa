@@ -109,7 +109,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         bytes32 _s,
         uint8 _recoveryID
     ) external onlyMember {
-        require(isSigningInProgress(), "Not awaiting a signature"); // tu juz sprawdza czy jest podpisany
+        require(isSigningInProgress(), "Not awaiting a signature");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // We add 27 to the recovery ID to align it with ethereum and bitcoin
