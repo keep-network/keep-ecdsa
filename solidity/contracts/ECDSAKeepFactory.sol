@@ -57,6 +57,10 @@ contract ECDSAKeepFactory is
     uint256 minimumStake = 1; // TODO: Take from setter
     uint256 minimumBond = 1; // TODO: Take from setter
 
+    // Gas required for a callback from the random beacon.
+    // TODO: Calculate the value. Take from setter/constructor?
+    uint256 callbackGas;
+
     constructor(
         address _sortitionPoolFactory,
         address _tokenStaking,
@@ -99,7 +103,7 @@ contract ECDSAKeepFactory is
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
     function openKeepFeeEstimate() external returns (uint256) {
-        return feeEstimate;
+        return randomBeacon.entryFeeEstimate(callbackGas);
     }
 
     /// @notice Open a new ECDSA keep.
