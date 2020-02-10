@@ -35,16 +35,21 @@ contract ECDSAKeepFactory is
     bytes32 groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
-    address tokenStaking = address(666); // TODO: Take from constructor
+    address tokenStaking;
     KeepBonding keepBonding;
 
     uint256 minimumStake = 1; // TODO: Take from setter
     uint256 minimumBond = 1; // TODO: Take from setter
 
-    constructor(address _sortitionPoolFactory, address _keepBonding) public {
+    constructor(
+        address _sortitionPoolFactory,
+        address _tokenStaking,
+        address _keepBonding
+    ) public {
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
         );
+        tokenStaking = _tokenStaking;
         keepBonding = KeepBonding(_keepBonding);
     }
 
