@@ -31,9 +31,10 @@ KEEP_CORE_ARTIFACTS=~/go/src/github.com/keep-network/keep-core/contracts/solidit
 Remember to update `KEEP_CORE_ARTIFACTS` with path where migrations artifacts are
 stored on your machine.
 
-### Staking
+### Staking and bonding
 
-Keeps creation depends on operator's KEEP token staking. To initialize the operator:
+Keeps creation depends on operator's KEEP token staking and available bonding 
+value. To initialize the operator:
 
 1. Initialize token staking in keep-core:
     ```sh
@@ -41,7 +42,7 @@ Keeps creation depends on operator's KEEP token staking. To initialize the opera
     truffle exec ./scripts/demo.js --network local
     ```
 
-2. Authorize token staking for ECDSA keep factory.
+2. Initialize operator for Bonded ECDSA keep factory.
     ```sh
     # Run from `keep-tecdsa/solidity` directory
     truffle exec scripts/lcl-initialize.js`
