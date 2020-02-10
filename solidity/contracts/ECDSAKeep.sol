@@ -69,9 +69,6 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         keepBonding = KeepBonding(_keepBonding);
     }
 
-    /// @notice fallback function.
-    function() external payable {}
-
     /// @notice Set a signer's public key for the keep.
     /// @dev Stub implementations.
     /// @param _publicKey Signer's public key.
