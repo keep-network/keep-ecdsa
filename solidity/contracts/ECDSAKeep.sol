@@ -113,6 +113,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         bytes32 _signedDigest,
         bytes calldata _preimage
     ) external returns (bool _isFraud) {
+        require(digest == abi.encodePacked(sha256(abi.encodePacked(sha256(_preimage)))).toBytes32(), "Incorrect preimage")
+        
         bool isSignatureValid = publicKeyToAddress(publicKey) == ecrecover(_signedDigest, _v, _r, _s);
 
         // when the signature is valid but was not requested
