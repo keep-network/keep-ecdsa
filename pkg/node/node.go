@@ -84,24 +84,23 @@ func (n *Node) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
-	// TODO: Publisher Selection: Temp solution only the first member in the group
-	// publishes. We need to replace it with proper publisher selection.
-	if signer.PublisherIndex() == 0 {
-		err = n.ethereumChain.SubmitKeepPublicKey(
-			keepAddress,
-			serializedPublicKey,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to submit public key: [%v]", err)
-
+	err = n.ethereumChain.SubmitKeepPublicKey(
+		keepAddress,
+		serializedPublicKey,
+	)
+	if err != nil {
+		if err.Error() == "Public key has already been set" {
+			return nil, fmt.Errorf("Public key has been set by other member: [%v]", err)
 		}
 
-		logger.Debugf(
-			"submitted public key to the keep [%s]: [%x]",
-			keepAddress.String(),
-			serializedPublicKey,
-		)
+		return nil, fmt.Errorf("failed to submit public key: [%v]", err)
 	}
+
+	logger.Debugf(
+		"submitted public key to the keep [%s]: [%x]",
+		keepAddress.String(),
+		serializedPublicKey,
+	)
 
 	return signer, nil
 }
@@ -128,6 +127,9 @@ func (n *Node) CalculateSignature(
 
 	// TODO: Publisher Selection: Temp solution only the first member in the group
 	// publishes. We need to replace it with proper publisher selection.
+
+	// wypieprzyc if'a.
+	// error obsluzyc tak jak w poprzednim na gorzee ^ "Not awaiting a signature"
 	if signer.PublisherIndex() == 0 {
 		err = n.ethereumChain.SubmitSignature(keepAddress, signature)
 		if err != nil {
