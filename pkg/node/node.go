@@ -125,13 +125,12 @@ func (n *Node) CalculateSignature(
 
 	keepAddress := common.HexToAddress(signer.GroupID())
 
-	// TODO: Publisher Selection: Temp solution only the first member in the group
-	// publishes. We need to replace it with proper publisher selection.
-
-	// wypieprzyc if'a.
-	// error obsluzyc tak jak w poprzednim na gorzee ^ "Not awaiting a signature"
 	err = n.ethereumChain.SubmitSignature(keepAddress, signature)
 	if err != nil {
+		if err.Error() == "Not awaiting a signature" {
+			return fmt.Errorf("Signing is currenlty in progress: [%v]", err)
+		}
+
 		return fmt.Errorf("failed to submit signature: [%v]", err)
 	}
 
