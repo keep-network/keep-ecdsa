@@ -18,9 +18,9 @@ and instead of password use the token.
 
 ### keep-core contracts
 
-This project depends on contracts migrated by `keep-core` project and expects it's 
+This project depends on contracts migrated by `keep-core` project and expects its 
 migration artifacts to be provided in `build/contracts` directory.
-The contracts can be fetched from Google Cloud Bucker (for CI) or copied over
+The contracts can be fetched from Google Cloud Bucket (for CI) or copied over
 from local source (for development) after running migrations in `keep-core` project.
 
 To copy required artifacts from `keep-core` project execute command:
