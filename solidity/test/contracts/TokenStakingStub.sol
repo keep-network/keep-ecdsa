@@ -1,10 +1,10 @@
 pragma solidity ^0.5.4;
 
-import "../../contracts/external/ITokenStaking.sol";
+import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 
 /// @title Token Staking Stub
 /// @dev This contract is for testing purposes only.
-contract TokenStakingStub is ITokenStaking {
+contract TokenStakingStub is IStaking {
     uint256 balance = 1;
 
     /// @dev Sets balance variable value.

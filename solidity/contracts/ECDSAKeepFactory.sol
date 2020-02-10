@@ -3,8 +3,9 @@ pragma solidity ^0.5.4;
 import "./ECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
-import "./external/ITokenStaking.sol";
 import "./utils/AddressPayableArrayUtils.sol";
+
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
@@ -36,7 +37,7 @@ contract ECDSAKeepFactory is
     bytes32 groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
-    ITokenStaking tokenStaking;
+    TokenStaking tokenStaking;
     KeepBonding keepBonding;
 
     uint256 minimumStake = 1; // TODO: Take from setter
@@ -50,7 +51,7 @@ contract ECDSAKeepFactory is
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
         );
-        tokenStaking = ITokenStaking(_tokenStaking);
+        tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
     }
 
@@ -63,7 +64,7 @@ contract ECDSAKeepFactory is
             // application so let's create a signer pool for it.
             candidatesPools[_application] = sortitionPoolFactory
                 .createSortitionPool(
-                IStaking(tokenStaking),
+                IStaking(address(tokenStaking)),
                 IBonding(address(keepBonding)),
                 minimumStake,
                 minimumBond
