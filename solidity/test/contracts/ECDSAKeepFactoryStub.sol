@@ -8,10 +8,16 @@ contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
     constructor(
         address sortitionPoolFactory,
         address tokenStaking,
-        address keepBonding
+        address keepBonding,
+        address randomBeacon
     )
         public
-        ECDSAKeepFactory(sortitionPoolFactory, tokenStaking, keepBonding)
+        ECDSAKeepFactory(
+            sortitionPoolFactory,
+            tokenStaking,
+            keepBonding,
+            randomBeacon
+        )
     {}
 
     // @dev Returns address of registered signer pool.

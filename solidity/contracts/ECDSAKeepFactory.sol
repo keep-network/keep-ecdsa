@@ -44,7 +44,8 @@ contract ECDSAKeepFactory is
     constructor(
         address _sortitionPoolFactory,
         address _tokenStaking,
-        address _keepBonding
+        address _keepBonding,
+        address _randomBeacon
     ) public {
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
