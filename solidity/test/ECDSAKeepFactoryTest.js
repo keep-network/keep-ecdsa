@@ -2,12 +2,13 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
-const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
+const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactoryExposed');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const TokenStakingStub = artifacts.require("TokenStakingStub")
 const KeepBondingStub = artifacts.require('KeepBondingStub');
 const BondedSortitionPool = artifacts.require('BondedSortitionPool');
 const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
+const RandomBeaconServiceStub = artifacts.require('RandomBeaconServiceStub')
 
 const BN = web3.utils.BN
 
@@ -20,6 +21,7 @@ contract("ECDSAKeepFactory", async accounts => {
     let bondedSortitionPoolFactory
     let tokenStaking
     let keepBonding
+    let randomBeacon
 
     const application = accounts[1]
     const member1 = accounts[2]
@@ -31,7 +33,13 @@ contract("ECDSAKeepFactory", async accounts => {
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBondingStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, tokenStaking.address, keepBonding.address)
+            randomBeacon = await RandomBeaconServiceStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
         })
 
         beforeEach(async () => {
@@ -113,7 +121,44 @@ contract("ECDSAKeepFactory", async accounts => {
 
             assert.isFalse(await signerPool2.isOperatorInPool(member1), "operator 1 is in the pool")
             assert.isTrue(await signerPool2.isOperatorInPool(member2), "operator 2 is not in the pool")
+        })
+    })
 
+    describe("registerMemberCandidate", async () => {
+        before(async () => {
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBondingStub.new()
+            randomBeacon = await RandomBeaconServiceStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, tokenStaking.address, keepBonding.address, randomBeacon.address)
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("inserts operators to different pools", async () => {
+            const application1 = '0x0000000000000000000000000000000000000001'
+            const application2 = '0x0000000000000000000000000000000000000002'
+
+            await keepFactory.registerMemberCandidate(application1, { from: member1 })
+            await keepFactory.registerMemberCandidate(application2, { from: member2 })
+
+            const signerPool1Address = await keepFactory.getSignerPool(application1)
+            const signerPool1 = await BondedSortitionPool.at(signerPool1Address)
+
+            assert.isTrue(await signerPool1.isOperatorInPool(member1), "operator 1 is not in the pool")
+            assert.isFalse(await signerPool1.isOperatorInPool(member2), "operator 2 is in the pool")
+
+            const signerPool2Address = await keepFactory.getSignerPool(application2)
+            const signerPool2 = await BondedSortitionPool.at(signerPool2Address)
+
+            assert.isFalse(await signerPool2.isOperatorInPool(member1), "operator 1 is in the pool")
+            assert.isTrue(await signerPool2.isOperatorInPool(member2), "operator 2 is not in the pool")
         })
     })
 
@@ -131,10 +176,16 @@ contract("ECDSAKeepFactory", async accounts => {
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBondingStub.new()
-            keepFactory = await ECDSAKeepFactory.new(bondedSortitionPoolFactory.address, tokenStaking.address, keepBonding.address)
+            randomBeacon = await RandomBeaconServiceStub.new()
+            keepFactory = await ECDSAKeepFactory.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
         }
 
-        before(async () => {
+        beforeEach(async () => {
             await initializeNewFactory()
 
             await keepBonding.deposit(member1, { value: singleBond })
@@ -144,9 +195,7 @@ contract("ECDSAKeepFactory", async accounts => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
             await keepFactory.registerMemberCandidate(application, { from: member3 })
-        })
 
-        beforeEach(async () => {
             await createSnapshot()
         })
 
@@ -354,16 +403,6 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("opens keep with multiple members and emits an event", async () => {
-            await initializeNewFactory()
-
-            await keepBonding.deposit(member1, { value: singleBond })
-            await keepBonding.deposit(member2, { value: singleBond })
-            await keepBonding.deposit(member3, { value: singleBond })
-
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
-            await keepFactory.registerMemberCandidate(application, { from: member2 })
-            await keepFactory.registerMemberCandidate(application, { from: member3 })
-
             let blockNumber = await web3.eth.getBlockNumber()
 
             let keepAddress = await keepFactory.openKeep.call(
@@ -410,6 +449,114 @@ contract("ECDSAKeepFactory", async accounts => {
                 eventList[0].returnValues.owner,
                 keepOwner,
                 "incorrect keep owner in emitted event",
+            )
+        })
+
+        it("requests new random group selection seed from random beacon", async () => {
+            const expectedNewEntry = new BN(789)
+
+            await randomBeacon.setEntry(expectedNewEntry)
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application }
+            )
+
+            assert.equal(
+                await randomBeacon.calledTimes.call(),
+                1,
+                "incorrect number of beacon calls",
+            )
+
+            expect(
+                await keepFactory.getGroupSelectionSeed()
+            ).to.eq.BN(expectedNewEntry, "incorrect new group selection seed")
+        })
+
+        it("calculates new group selection seed", async () => {
+            // Set entry to `0` so the beacon stub won't execute the callback.
+            await randomBeacon.setEntry(0)
+
+            const groupSelectionSeed = new BN(12)
+            await keepFactory.initialGroupSelectionSeed(groupSelectionSeed)
+
+            const expectedNewGroupSelectionSeed = web3.utils.toBN(
+                web3.utils.soliditySha3(groupSelectionSeed, keepFactory.address)
+            )
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application }
+            )
+
+            expect(
+                await keepFactory.getGroupSelectionSeed()
+            ).to.eq.BN(
+                expectedNewGroupSelectionSeed,
+                "incorrect new group selection seed"
+            )
+        })
+
+        it("forwards value to random beacon", async () => {
+            const value = new BN(150)
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: value }
+            )
+
+            expect(
+                await web3.eth.getBalance(randomBeacon.address)
+            ).to.eq.BN(
+                value,
+                "incorrect random beacon balance"
+            )
+        })
+    })
+
+    describe("setGroupSelectionSeed", async () => {
+        const newGroupSelectionSeed = new BN(2345675)
+
+        before(async () => {
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBondingStub.new()
+            randomBeacon = accounts[1]
+            keepFactory = await ECDSAKeepFactory.new(bondedSortitionPoolFactory.address, tokenStaking.address, keepBonding.address, randomBeacon)
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("sets group selection seed", async () => {
+            await keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, { from: randomBeacon })
+
+            expect(
+                await keepFactory.getGroupSelectionSeed()
+            ).to.eq.BN(
+                newGroupSelectionSeed,
+                "incorrect new group selection seed"
+            )
+        })
+
+        it("reverts if called not by the random beacon", async () => {
+            await expectRevert(
+                keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, { from: accounts[2] }),
+                "Caller is not the random beacon"
             )
         })
     })
