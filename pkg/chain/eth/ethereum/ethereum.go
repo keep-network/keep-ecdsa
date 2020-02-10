@@ -2,11 +2,10 @@
 package ethereum
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
@@ -95,7 +94,7 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return err
 	}
 
-	chainPublicKey, err := keepContract.GetPublicKey(ec.callerOptions);
+	chainPublicKey, err := keepContract.GetPublicKey(ec.callerOptions)
 	if err != nil {
 		return err
 	}
@@ -105,7 +104,7 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		logger.Info("Public key has been already set by other member.")
 		return nil
 	}
-	
+
 	transaction, err := keepContract.SetPublicKey(ec.transactorOptions, publicKey[:])
 	if err != nil {
 		return err
