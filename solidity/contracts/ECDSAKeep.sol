@@ -67,6 +67,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         keepBonding = KeepBonding(_keepBonding);
     }
 
+    /// @notice fallback function.
+    function() external payable {}
+
     /// @notice Set a signer's public key for the keep.
     /// @dev Stub implementations.
     /// @param _publicKey Signer's public key.
@@ -95,9 +98,10 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     /// @notice Seizes the signer's ETH bond.
     function seizeSignerBonds() external onlyOwner {
+        address payable self = address(this);
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(members[i], address(this), uint256(address(this)));
-            keepBonding.seizeBond(members[i], uint256(address(this)), amount);
+            keepBonding.seizeBond(members[i], uint256(address(this)), amount, self);
         }
     }
 

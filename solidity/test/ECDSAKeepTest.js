@@ -193,7 +193,11 @@ contract('ECDSAKeep', (accounts) => {
       let expected = value0.add(value1);
       expect(bondsBeforeSeizure).to.eq.BN(expected, "incorrect bond amount before seizure.");
       
+      let keepBalanceBefore = await web3.eth.getBalance(keep.address)
       await keep.seizeSignerBonds({from: owner})
+      let keepBalanceDiff = await web3.eth.getBalance(keep.address) - keepBalanceBefore;
+
+      expect(keepBalanceDiff).to.eq.BN(value0.add(value1), "should zero all the bonds.");
       
       let bondsAfterSeizure = await keep.checkBondAmount()
       expect(bondsAfterSeizure).to.eq.BN(0, "should zero all the bonds.");
@@ -456,7 +460,7 @@ contract('ECDSAKeep', (accounts) => {
       )
     })
 
-    it('doesn\'t revert in case of transfer failure', async () => {
+    it('does not revert in case of transfer failure', async () => {
       const member1 = accounts[2]
       const member2 = etherReceiver.address // a receiver which we expect to reject the transfer
       const member3 = accounts[3]
@@ -472,7 +476,7 @@ contract('ECDSAKeep', (accounts) => {
         new BN(await web3.eth.getBalance(member3)).add(singleValue),
       ]
 
-      const keep = await ECDSAKeep.new(owner, members, honestThreshold)
+      const keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
 
       await keep.distributeETHToMembers({ value: msgValue })
 

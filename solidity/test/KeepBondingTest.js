@@ -343,7 +343,7 @@ contract('KeepBonding', (accounts) => {
             const destinationBalance = await web3.eth.getBalance(destination)
             expect(destinationBalance).to.eq.BN(0, 'invalid destination account balance')
 
-            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            const lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(bondValue, 'unexpected bond value')
         })
     })

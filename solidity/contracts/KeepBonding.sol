@@ -164,25 +164,25 @@ contract KeepBonding {
       address operator,
       uint256 referenceID,
       uint256 amount,
-      address destination
+      address payable destination
    ) public {
-   require(amount > 0, "Requested amount should be greater than zero");
+      require(amount > 0, "Requested amount should be greater than zero");
 
-   address payable holder = msg.sender;
-      bytes32 bondID = keccak256(
-         abi.encodePacked(operator, holder, referenceID)
-      );
+      address payable holder = msg.sender;
+         bytes32 bondID = keccak256(
+            abi.encodePacked(operator, holder, referenceID)
+         );
 
-      require(
-         lockedBonds[bondID] >= amount,
-         "Requested amount is greater than the bond"
-      );
+         require(
+            lockedBonds[bondID] >= amount,
+            "Requested amount is greater than the bond"
+         );
 
-   lockedBonds[bondID] -= amount;
+      lockedBonds[bondID] -= amount;
 
-   (bool success, ) = destination.call.value(amount)("");
-   require(success, "Transfer failed");
-}
+      (bool success, ) = destination.call.value(amount)("");
+      require(success, "Transfer failed");
+   }
 
    /// @notice Checks if the caller is an authorized contract.
    /// @dev Throws an error if called by any account other than one of the authorized
