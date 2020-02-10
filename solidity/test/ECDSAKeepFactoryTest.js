@@ -4,6 +4,7 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
+const TokenStakingStub = artifacts.require("TokenStakingStub")
 const KeepBondingStub = artifacts.require('KeepBondingStub');
 const BondedSortitionPool = artifacts.require('BondedSortitionPool');
 const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
@@ -17,6 +18,7 @@ const expect = chai.expect
 contract("ECDSAKeepFactory", async accounts => {
     let keepFactory
     let bondedSortitionPoolFactory
+    let tokenStaking
     let keepBonding
 
     const application = accounts[1]
@@ -27,8 +29,9 @@ contract("ECDSAKeepFactory", async accounts => {
     describe("registerMemberCandidate", async () => {
         before(async () => {
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBondingStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, keepBonding.address)
+            keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, tokenStaking.address, keepBonding.address)
         })
 
         beforeEach(async () => {
@@ -49,6 +52,22 @@ contract("ECDSAKeepFactory", async accounts => {
                 "0x0000000000000000000000000000000000000000",
                 "incorrect registered signer pool",
             )
+        })
+
+        it("inserts operator with the correct staking weight in the pool", async () => {
+            const stakingWeight = new BN(199)
+            await tokenStaking.setBalance(stakingWeight)
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            const signerPoolAddress = await keepFactory.getSignerPool(application)
+            const signerPool = await BondedSortitionPool.at(signerPoolAddress)
+
+            // TODO: Update result verification when sortition-pools interfaces
+            // and implementation are ready.
+            // expect(
+            //     await signerPool.getPoolWeight.call(member1)
+            // ).to.eq.BN(stakingWeight, 'invalid staking weight')
         })
 
         it("inserts operators to the same pool", async () => {
@@ -110,8 +129,9 @@ contract("ECDSAKeepFactory", async accounts => {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBondingStub.new()
-            keepFactory = await ECDSAKeepFactory.new(bondedSortitionPoolFactory.address, keepBonding.address)
+            keepFactory = await ECDSAKeepFactory.new(bondedSortitionPoolFactory.address, tokenStaking.address, keepBonding.address)
         }
 
         before(async () => {
