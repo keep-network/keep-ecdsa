@@ -52,6 +52,7 @@ contract ECDSAKeepFactory is
     BondedSortitionPoolFactory sortitionPoolFactory;
     address tokenStaking;
     KeepBonding keepBonding;
+    IRandomBeaconService randomBeacon;
 
     uint256 minimumStake = 1; // TODO: Take from setter
     uint256 minimumBond = 1; // TODO: Take from setter
@@ -67,6 +68,7 @@ contract ECDSAKeepFactory is
         );
         tokenStaking = _tokenStaking;
         keepBonding = KeepBonding(_keepBonding);
+        randomBeacon = IRandomBeaconService(_randomBeacon);
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
