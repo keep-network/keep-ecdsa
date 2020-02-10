@@ -55,9 +55,6 @@ module.exports = async function () {
             }
         }
 
-        await registry.approveOperatorContract(ecdsaKeepFactory.address)
-        console.log(`approved operator contract [${ecdsaKeepFactory.address}] in registry`)
-
         for (let i = 0; i < operators.length; i++) {
             await authorizeOperator(operators[i])
 
