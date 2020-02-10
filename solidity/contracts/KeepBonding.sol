@@ -62,7 +62,9 @@ contract KeepBonding {
         );
 
         unbondedValue[msg.sender] -= amount;
-        destination.transfer(amount);
+
+        (bool success, ) = destination.call.value(amount)("");
+        require(success, "Transfer failed");
     }
 
     /// @notice Create bond for given operator, holder, reference and amount.
@@ -155,9 +157,13 @@ contract KeepBonding {
     /// @param operator Address of the bonded operator.
     /// @param referenceID Reference ID of the bond.
     /// @param amount Amount to be seized.
-    function seizeBond(address operator, uint256 referenceID, uint256 amount)
-        public
-    {
+    /// @param destination Address to send the amount to.
+    function seizeBond(
+        address operator,
+        uint256 referenceID,
+        uint256 amount,
+        address payable destination
+    ) public {
         require(amount > 0, "Requested amount should be greater than zero");
 
         address payable holder = msg.sender;
@@ -171,7 +177,9 @@ contract KeepBonding {
         );
 
         lockedBonds[bondID] -= amount;
-        holder.transfer(amount);
+
+        (bool success, ) = destination.call.value(amount)("");
+        require(success, "Transfer failed");
     }
 
     /// @notice Checks if the caller is an authorized contract.
