@@ -26,6 +26,7 @@
   "homepage": "https://github.com/keep-network/keep-tecdsa",
   "dependencies": {
     "@keep-network/sortition-pools": "0.1.1-pre.12",
+    "@keep-network/keep-core": "0.1.0",
     "openzeppelin-solidity": "2.3.0",
     "solidity-bytes-utils": "0.0.7"
   },
