@@ -2,14 +2,14 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./api/IBondedECDSAKeepVendor.sol";
-import "./utils/AddressArrayUtils.sol";
+import "./utils/AddressPayableArrayUtils.sol";
 
 /// @title Bonded ECDSA Keep Vendor
 /// @notice The contract can be used to obtain a new Bonded ECDSA keep.
 /// @dev Interacts with ECDSA keep factory to obtain a new instance of the ECDSA
 /// keep. Several versions of ECDSA keep factories can be registered for the vendor.
 contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
-    using AddressArrayUtils for address payable[];
+    using AddressPayableArrayUtils for address payable[];
 
     // List of ECDSA keep factories.
     address payable[] public factories;
@@ -19,7 +19,10 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     /// cannot be zero and cannot be already registered.
     /// @param _factory ECDSA keep factory address.
     function registerFactory(address payable _factory) external onlyOwner {
-        require(!factories.contains(_factory), "Factory address already registered");
+        require(
+            !factories.contains(_factory),
+            "Factory address already registered"
+        );
 
         factories.push(_factory);
     }

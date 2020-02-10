@@ -4,7 +4,7 @@ import "./ECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./external/ITokenStaking.sol";
-import "./utils/AddressArrayUtils.sol";
+import "./utils/AddressPayableArrayUtils.sol";
 
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
@@ -18,7 +18,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract ECDSAKeepFactory is
     IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
 {
-    using AddressArrayUtils for address payable[];
+    using AddressPayableArrayUtils for address payable[];
     using SafeMath for uint256;
 
     // Notification that a new keep has been created.
