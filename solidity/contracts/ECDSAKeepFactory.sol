@@ -1,11 +1,16 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
+import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
+
+import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
+import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
+import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
+import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
+
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
-import "@keep-network/sortition-pools/contracts/SortitionPoolFactory.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
@@ -29,36 +34,53 @@ contract ECDSAKeepFactory is
     uint256 feeEstimate;
     bytes32 groupSelectionSeed;
 
-    SortitionPoolFactory sortitionPoolFactory;
+    BondedSortitionPoolFactory sortitionPoolFactory;
+    address tokenStaking;
+    KeepBonding keepBonding;
 
-    constructor(address _sortitionPoolFactory) public {
-        sortitionPoolFactory = SortitionPoolFactory(_sortitionPoolFactory);
+    uint256 minimumStake = 1; // TODO: Take from setter
+    uint256 minimumBond = 1; // TODO: Take from setter
+
+    constructor(
+        address _sortitionPoolFactory,
+        address _tokenStaking,
+        address _keepBonding
+    ) public {
+        sortitionPoolFactory = BondedSortitionPoolFactory(
+            _sortitionPoolFactory
+        );
+        tokenStaking = _tokenStaking;
+        keepBonding = KeepBonding(_keepBonding);
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
-    /// for the provided customer application
+    /// for the provided customer application.
     /// @dev If caller is already registered it returns without any changes.
     function registerMemberCandidate(address _application) external {
         if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
             candidatesPools[_application] = sortitionPoolFactory
-                .createSortitionPool();
+                .createSortitionPool(
+                IStaking(tokenStaking),
+                IBonding(address(keepBonding)),
+                minimumStake,
+                minimumBond
+            );
         }
-
-        SortitionPool candidatesPool = SortitionPool(
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
             candidatesPools[_application]
         );
 
         address operator = msg.sender;
-        if (!candidatesPool.isOperatorRegistered(operator)) {
-            candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
+        if (!candidatesPool.isOperatorInPool(operator)) {
+            candidatesPool.joinPool(operator);
         }
     }
 
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
-    function openKeepFeeEstimate() external returns (uint256){
+    function openKeepFeeEstimate() external returns (uint256) {
         return feeEstimate;
     }
 
@@ -69,7 +91,7 @@ contract ECDSAKeepFactory is
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Address of the keep owner.
-    /// @param _bond Value of ETH bond required from the keep.
+    /// @param _bond Value of ETH bond required from the keep (wei).
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
@@ -77,28 +99,39 @@ contract ECDSAKeepFactory is
         address _owner,
         uint256 _bond
     ) external payable returns (address keepAddress) {
-        _bond; // TODO: assign bond for created keep
-
         address application = msg.sender;
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
-        address[] memory selected = SortitionPool(pool).selectSetGroup(
+        // TODO: The remainder will not be bonded. What should we do with it?
+        uint256 memberBond = _bond.div(_groupSize);
+        require(memberBond > 0, "Bond per member must be greater than zero");
+
+        address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
-            groupSelectionSeed
+            groupSelectionSeed,
+            memberBond
         );
 
         address payable[] memory members = new address payable[](_groupSize);
         for (uint256 i = 0; i < _groupSize; i++) {
-            // TODO: for each selected member, validate staking weight and create,
-            // bond. If validation failed or bond could not be created, remove
-            // operator from pool and try again.
+            // TODO: Modify ECDSAKeep to not keep members as payable and do the
+            // required casting in distributeERC20ToMembers and distributeETHToMembers.
             members[i] = address(uint160(selected[i]));
         }
 
         ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold);
 
         keepAddress = address(keep);
+
+        for (uint256 i = 0; i < _groupSize; i++) {
+            keepBonding.createBond(
+                members[i],
+                keepAddress,
+                uint256(keepAddress),
+                memberBond
+            );
+        }
 
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
 

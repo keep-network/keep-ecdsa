@@ -10,6 +10,8 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
+const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
+
 const truffleAssert = require('truffle-assertions')
 
 const BN = web3.utils.BN
@@ -276,9 +278,11 @@ contract('ECDSAKeep', (accounts) => {
   describe('#distributeETHToMembers', async () => {
     const ethValue = 100000
     let keep
+    let etherReceiver
 
     beforeEach(async () => {
       keep = await ECDSAKeep.new(owner, members, honestThreshold)
+      etherReceiver = await TestEtherReceiver.new()
     })
 
     it('correctly distributes ETH', async () => {
@@ -318,6 +322,35 @@ contract('ECDSAKeep', (accounts) => {
         keep.distributeETHToMembers({ value: msgValue }),
         'dividend value must be non-zero'
       )
+    })
+
+    it('does not revert in case of transfer failure', async () => {
+      const member1 = accounts[2]
+      const member2 = etherReceiver.address // a receiver which we expect to reject the transfer
+      const member3 = accounts[3]
+
+      const members = [member1, member2, member3]
+
+      const singleValue = new BN(await etherReceiver.invalidValue.call())
+      const msgValue = singleValue.mul(new BN(members.length))
+
+      const expectedBalances = [
+        new BN(await web3.eth.getBalance(member1)).add(singleValue),
+        new BN(await web3.eth.getBalance(member2)),
+        new BN(await web3.eth.getBalance(member3)).add(singleValue),
+      ]
+
+      const keep = await ECDSAKeep.new(owner, members, honestThreshold)
+
+      await keep.distributeETHToMembers({ value: msgValue })
+
+      // Check balances of all keep members' accounts.
+      const newBalances = await getETHBalancesFromList(members)
+      assert.deepEqual(newBalances, expectedBalances)
+
+      // Check that value which failed transfer remained in the keep contract.
+      assert.equal(await web3.eth.getBalance(keep.address), new BN(singleValue))
+
     })
   })
 
