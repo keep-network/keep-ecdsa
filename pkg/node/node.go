@@ -130,14 +130,12 @@ func (n *Node) CalculateSignature(
 
 	// wypieprzyc if'a.
 	// error obsluzyc tak jak w poprzednim na gorzee ^ "Not awaiting a signature"
-	if signer.PublisherIndex() == 0 {
-		err = n.ethereumChain.SubmitSignature(keepAddress, signature)
-		if err != nil {
-			return fmt.Errorf("failed to submit signature: [%v]", err)
-		}
-
-		logger.Infof("submitted signature for digest: [%+x]", digest)
+	err = n.ethereumChain.SubmitSignature(keepAddress, signature)
+	if err != nil {
+		return fmt.Errorf("failed to submit signature: [%v]", err)
 	}
+
+	logger.Infof("submitted signature for digest: [%+x]", digest)
 
 	return nil
 }
