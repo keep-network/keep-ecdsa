@@ -112,7 +112,7 @@ contract('KeepBonding', (accounts) => {
 
             const expectedUnbonded = 0
 
-            await keepBonding.createBond(operator, reference, value, { from: holder })
+            await keepBonding.createBond(operator, holder, reference, value)
 
             const unbonded = await keepBonding.availableBondingValue(operator)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
@@ -130,8 +130,8 @@ contract('KeepBonding', (accounts) => {
 
             await keepBonding.deposit(operator2, { value: value })
 
-            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
-            await keepBonding.createBond(operator2, reference, bondValue, { from: holder })
+            await keepBonding.createBond(operator, holder, reference, bondValue)
+            await keepBonding.createBond(operator2, holder, reference, bondValue)
 
             const unbonded1 = await keepBonding.availableBondingValue(operator)
             expect(unbonded1).to.eq.BN(expectedUnbonded, 'invalid unbonded value 1')
@@ -150,10 +150,10 @@ contract('KeepBonding', (accounts) => {
             const bondValue = new BN(10)
             const reference = 777
 
-            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
+            await keepBonding.createBond(operator, holder, reference, bondValue)
 
             await expectRevert(
-                keepBonding.createBond(operator, reference, bondValue, { from: holder }),
+                keepBonding.createBond(operator, holder, reference, bondValue),
                 "Reference ID not unique for holder and operator"
             )
         })
@@ -162,7 +162,7 @@ contract('KeepBonding', (accounts) => {
             const bondValue = value.add(new BN(1))
 
             await expectRevert(
-                keepBonding.createBond(operator, 0, bondValue),
+                keepBonding.createBond(operator, holder, 0, bondValue),
                 "Insufficient unbonded value"
             )
         })
@@ -178,7 +178,7 @@ contract('KeepBonding', (accounts) => {
 
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: bondValue })
-            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
+            await keepBonding.createBond(operator, holder, reference, bondValue)
         })
 
         it('reassigns bond to a new holder and a new reference', async () => {
@@ -226,7 +226,7 @@ contract('KeepBonding', (accounts) => {
 
         it('fails if reassigned to the same holder and the same reference', async () => {
             await keepBonding.deposit(operator, { value: bondValue })
-            await keepBonding.createBond(operator, newReference, bondValue, { from: holder })
+            await keepBonding.createBond(operator, holder, newReference, bondValue)
 
             await expectRevert(
                 keepBonding.reassignBond(operator, reference, holder, newReference, { from: holder }),
@@ -243,7 +243,7 @@ contract('KeepBonding', (accounts) => {
 
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: bondValue })
-            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
+            await keepBonding.createBond(operator, holder, reference, bondValue)
         })
 
         it('releases bond amount to operator\'s available bonding value', async () => {
@@ -272,7 +272,7 @@ contract('KeepBonding', (accounts) => {
 
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: bondValue })
-            await keepBonding.createBond(operator, reference, bondValue, { from: holder })
+            await keepBonding.createBond(operator, holder, reference, bondValue)
         })
 
         it('transfers whole bond amount to holder\'s account', async () => {

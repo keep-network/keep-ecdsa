@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/keep-ecdsa",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "description": "Smart contracts for ECDSA Keep",
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/keep-network/keep-tecdsa",
   "dependencies": {
-    "@keep-network/sortition-pools": "git+https://github.com/keep-network/sortition-pools.git#915ac518ee31fc3c53a5dec50d5d84262553046e",
+    "@keep-network/sortition-pools": "0.1.1-pre.12",
     "openzeppelin-solidity": "2.3.0",
     "solidity-bytes-utils": "0.0.7"
   },
