@@ -34,9 +34,10 @@ contract KeepBonding {
         return 100;
     }
 
-    /// @notice Returns value of ether available for bonding for the operator.
+   /// @notice Returns value of ether available for bonding for the operator.
    /// @param operator Address of the operator.
    /// @return Value of deposited ether available for bonding.
+   /// TODO: Should be replaced by availableUnbondedValue.
    function availableBondingValue(address operator) public view returns (uint256) {
       return unbondedValue[operator];
    }
