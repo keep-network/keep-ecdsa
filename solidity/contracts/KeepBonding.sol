@@ -53,10 +53,10 @@ contract KeepBonding {
     function withdraw(uint256 amount, address payable destination) public {
       require(availableBondingValue(msg.sender) >= amount, "Insufficient unbonded value");
 
-      unbondedValue[msg.sender] -= amount;
+        unbondedValue[msg.sender] -= amount;
 
-      (bool success, ) = destination.call.value(amount)("");
-      require(success, "Transfer failed");
+        (bool success, ) = destination.call.value(amount)("");
+        require(success, "Transfer failed");
     }
 
     /// @notice Create bond for given operator, holder, reference and amount.
@@ -152,24 +152,24 @@ contract KeepBonding {
         unbondedValue[operator] = amount;
     }
 
-   /// @notice Seizes the bond by moving some or all of a locked bond to holder's
-   /// account.
-   /// @dev Function requires that a caller is the holder of the bond which is
-   /// being seized.
-   /// @param operator Address of the bonded operator.
-   /// @param referenceID Reference ID of the bond.
-   /// @param amount Amount to be seized.
-   /// @param destination Address to send the amount to.
-   function seizeBond(
-      address operator,
-      uint256 referenceID,
-      uint256 amount,
-      address payable destination
-   ) public {
-      require(amount > 0, "Requested amount should be greater than zero");
+    /// @notice Seizes the bond by moving some or all of a locked bond to holder's
+    /// account.
+    /// @dev Function requires that a caller is the holder of the bond which is
+    /// being seized.
+    /// @param operator Address of the bonded operator.
+    /// @param referenceID Reference ID of the bond.
+    /// @param amount Amount to be seized.
+    /// @param destination Address to send the amount to.
+    function seizeBond(
+        address operator,
+        uint256 referenceID,
+        uint256 amount,
+        address payable destination
+    ) public {
+        require(amount > 0, "Requested amount should be greater than zero");
 
-      address payable holder = msg.sender;
-         bytes32 bondID = keccak256(
+        address payable holder = msg.sender;
+        bytes32 bondID = keccak256(
             abi.encodePacked(operator, holder, referenceID)
          );
 
@@ -178,11 +178,11 @@ contract KeepBonding {
             "Requested amount is greater than the bond"
          );
 
-      lockedBonds[bondID] -= amount;
+        lockedBonds[bondID] -= amount;
 
-      (bool success, ) = destination.call.value(amount)("");
-      require(success, "Transfer failed");
-   }
+        (bool success, ) = destination.call.value(amount)("");
+        require(success, "Transfer failed");
+    }
 
    /// @notice Checks if the caller is an authorized contract.
    /// @dev Throws an error if called by any account other than one of the authorized
