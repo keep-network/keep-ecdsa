@@ -5,8 +5,6 @@ import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./utils/AddressPayableArrayUtils.sol";
 
-import "@keep-network/keep-core/contracts/TokenStaking.sol";
-
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
@@ -37,7 +35,7 @@ contract ECDSAKeepFactory is
     bytes32 groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
-    TokenStaking tokenStaking;
+    address tokenStaking;
     KeepBonding keepBonding;
 
     uint256 minimumStake = 1; // TODO: Take from setter
@@ -51,7 +49,7 @@ contract ECDSAKeepFactory is
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
         );
-        tokenStaking = TokenStaking(_tokenStaking);
+        tokenStaking = _tokenStaking;
         keepBonding = KeepBonding(_keepBonding);
     }
 
@@ -64,7 +62,7 @@ contract ECDSAKeepFactory is
             // application so let's create a signer pool for it.
             candidatesPools[_application] = sortitionPoolFactory
                 .createSortitionPool(
-                IStaking(address(tokenStaking)),
+                IStaking(tokenStaking),
                 IBonding(address(keepBonding)),
                 minimumStake,
                 minimumBond
