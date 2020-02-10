@@ -35,16 +35,11 @@ contract KeepBonding {
     }
 
     /// @notice Returns value of ether available for bonding for the operator.
-    /// @param operator Address of the operator.
-    /// @return Value of deposited ether available for bonding.
-    /// TODO: Should be replaced by availableUnbondedValue.
-    function availableBondingValue(address operator)
-        public
-        view
-        returns (uint256)
-    {
-        return unbondedValue[operator];
-    }
+   /// @param operator Address of the operator.
+   /// @return Value of deposited ether available for bonding.
+   function availableBondingValue(address operator) public view returns (uint256) {
+      return unbondedValue[operator];
+   }
 
     /// @notice Add ether to operator's value available for bonding.
     /// @param operator Address of the operator.
@@ -56,13 +51,12 @@ contract KeepBonding {
     /// @param amount Value to withdraw.
     /// @param destination Address to send the amount to.
     function withdraw(uint256 amount, address payable destination) public {
-        require(
-            availableBondingValue(msg.sender) >= amount,
-            "Insufficient unbonded value"
-        );
+      require(availableBondingValue(msg.sender) >= amount, "Insufficient unbonded value");
 
-        unbondedValue[msg.sender] -= amount;
-        destination.transfer(amount);
+      unbondedValue[msg.sender] -= amount;
+
+      (bool success, ) = destination.call.value(amount)("");
+      require(success, "Transfer failed");
     }
 
     /// @notice Create bond for given operator, holder, reference and amount.
@@ -96,39 +90,6 @@ contract KeepBonding {
         lockedBonds[bondID] += amount;
     }
 
-    /// @notice Reassigns a bond to a new holder under a new reference.
-    /// @dev Function requires that a caller is the holder of the bond which is
-    /// being reassigned.
-    /// @param operator Address of the bonded operator.
-    /// @param referenceID Reference ID of the bond.
-    /// @param newHolder Address of the new holder of the bond.
-    /// @param newReferenceID New reference ID to register the bond.
-    function reassignBond(
-        address operator,
-        uint256 referenceID,
-        address newHolder,
-        uint256 newReferenceID
-    ) public {
-        address holder = msg.sender;
-        bytes32 bondID = keccak256(
-            abi.encodePacked(operator, holder, referenceID)
-        );
-
-        require(lockedBonds[bondID] > 0, "Bond not found");
-
-        bytes32 newBondID = keccak256(
-            abi.encodePacked(operator, newHolder, newReferenceID)
-        );
-
-        require(
-            lockedBonds[newBondID] == 0,
-            "Reference ID not unique for holder and operator"
-        );
-
-        lockedBonds[newBondID] = lockedBonds[bondID];
-        lockedBonds[bondID] = 0;
-    }
-
    /// @notice Returns value of ether bonded for the operator.
    /// @param operator Address of the operator to bond.
    /// @param holder Address of the holder of the bond.
@@ -137,6 +98,39 @@ contract KeepBonding {
         bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
 
         return lockedBonds[bondID];
+   }
+
+   /// @notice Reassigns a bond to a new holder under a new reference.
+   /// @dev Function requires that a caller is the holder of the bond which is
+   /// being reassigned.
+   /// @param operator Address of the bonded operator.
+   /// @param referenceID Reference ID of the bond.
+   /// @param newHolder Address of the new holder of the bond.
+   /// @param newReferenceID New reference ID to register the bond.
+   function reassignBond(
+      address operator,
+      uint256 referenceID,
+      address newHolder,
+      uint256 newReferenceID
+   ) public {
+      address holder = msg.sender;
+      bytes32 bondID = keccak256(
+         abi.encodePacked(operator, holder, referenceID)
+      );
+
+      require(lockedBonds[bondID] > 0, "Bond not found");
+
+      bytes32 newBondID = keccak256(
+         abi.encodePacked(operator, newHolder, newReferenceID)
+      );
+
+      require(
+         lockedBonds[newBondID] == 0,
+         "Reference ID not unique for holder and operator"
+      );
+
+      lockedBonds[newBondID] = lockedBonds[bondID];
+      lockedBonds[bondID] = 0;
    }
 
     /// @notice Releases the bond and moves the bond value to the operator's
@@ -158,37 +152,43 @@ contract KeepBonding {
         unbondedValue[operator] = amount;
     }
 
-    /// @notice Seizes the bond by moving some or all of a locked bond to holder's
-    /// account.
-    /// @dev Function requires that a caller is the holder of the bond which is
-    /// being seized.
-    /// @param operator Address of the bonded operator.
-    /// @param referenceID Reference ID of the bond.
-    /// @param amount Amount to be seized.
-    function seizeBond(address operator, uint256 referenceID, uint256 amount)
-        public
-    {
-        require(amount > 0, "Requested amount should be greater than zero");
+   /// @notice Seizes the bond by moving some or all of a locked bond to holder's
+   /// account.
+   /// @dev Function requires that a caller is the holder of the bond which is
+   /// being seized.
+   /// @param operator Address of the bonded operator.
+   /// @param referenceID Reference ID of the bond.
+   /// @param amount Amount to be seized.
+   /// @param destination Address to send the amount to.
+   function seizeBond(
+      address operator,
+      uint256 referenceID,
+      uint256 amount,
+      address destination
+   ) public {
+   require(amount > 0, "Requested amount should be greater than zero");
 
-        address payable holder = msg.sender;
-        bytes32 bondID = keccak256(
-            abi.encodePacked(operator, holder, referenceID)
-        );
+   address payable holder = msg.sender;
+      bytes32 bondID = keccak256(
+         abi.encodePacked(operator, holder, referenceID)
+      );
 
-        require(
-            lockedBonds[bondID] >= amount,
-            "Requested amount is greater than the bond"
-        );
+      require(
+         lockedBonds[bondID] >= amount,
+         "Requested amount is greater than the bond"
+      );
 
-        lockedBonds[bondID] -= amount;
-        holder.transfer(amount);
-    }
+   lockedBonds[bondID] -= amount;
 
-    /// @notice Checks if the caller is an authorized contract.
-    /// @dev Throws an error if called by any account other than one of the authorized
-    /// contracts.
-    modifier onlyAuthorized() {
-        // TODO: Add authorization checks.
-        _;
-    }
+   (bool success, ) = destination.call.value(amount)("");
+   require(success, "Transfer failed");
+}
+
+   /// @notice Checks if the caller is an authorized contract.
+   /// @dev Throws an error if called by any account other than one of the authorized
+   /// contracts.
+   modifier onlyAuthorized() {
+      // TODO: Add authorization checks.
+      _;
+   }
 }
