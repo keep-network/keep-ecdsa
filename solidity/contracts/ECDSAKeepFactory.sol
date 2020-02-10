@@ -135,6 +135,8 @@ contract ECDSAKeepFactory is
             memberBond
         );
 
+        newGroupSelectionSeed();
+
         address payable[] memory members = new address payable[](_groupSize);
         for (uint256 i = 0; i < _groupSize; i++) {
             // TODO: Modify ECDSAKeep to not keep members as payable and do the
@@ -156,8 +158,48 @@ contract ECDSAKeepFactory is
         }
 
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
+    }
 
-        // TODO: as beacon for new entry and update groupSelectionSeed in callback
+    /// @notice Updates group selection seed.
+    /// @dev The main goal of this function is to request the random beacon to
+    /// generate a new random number. The beacon generates the number asynchronously
+    /// and will call a callback function when the number is ready. In the meantime
+    /// we update current group selection seed to a new value using a hash function.
+    function newGroupSelectionSeed() internal {
+        // Calculate new group selection seed based on the current seed.
+        // We added address of the factory as a key to calculate value different
+        // than sortition pool RNG will, so we don't end up selecting almost
+        // identical group.
+        groupSelectionSeed = uint256(
+            keccak256(abi.encodePacked(groupSelectionSeed, address(this)))
+        );
 
+        // Call the random beacon to get a random group selection seed.
+        randomBeacon.requestRelayEntry.value(msg.value)(
+            address(this),
+            "setGroupSelectionSeed(uint256)",
+            callbackGas
+        );
+    }
+
+    /// @notice Sets a new group selection seed value.
+    /// @dev The function is expected to be called in a callback by the random
+    /// beacon.
+    /// @param _groupSelectionSeed New value of group selection seed.
+    function setGroupSelectionSeed(uint256 _groupSelectionSeed)
+        external
+        onlyRandomBeacon
+    {
+        groupSelectionSeed = _groupSelectionSeed;
+    }
+
+    /// @notice Checks if the caller is the random beacon.
+    /// @dev Throws an error if called by any account other than the random beacon.
+    modifier onlyRandomBeacon() {
+        require(
+            address(randomBeacon) == msg.sender,
+            "Caller is not the random beacon"
+        );
+        _;
     }
 }
