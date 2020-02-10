@@ -12,6 +12,21 @@ import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+// TODO: This is an interface which is expected to be defined in keep-core and imported
+// to use for the integration.
+contract IRandomBeaconService {
+    function entryFeeEstimate(uint256 callbackGas)
+        public
+        view
+        returns (uint256);
+
+    function requestRelayEntry(
+        address callbackContract,
+        string memory callbackMethod,
+        uint256 callbackGas
+    ) public payable returns (uint256);
+}
+
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
 contract ECDSAKeepFactory is
