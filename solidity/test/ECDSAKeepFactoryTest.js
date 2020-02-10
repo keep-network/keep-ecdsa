@@ -5,9 +5,8 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBonding = artifacts.require('KeepBonding');
-const SortitionPoolFactoryStub = artifacts.require('SortitionPoolFactoryStub');
-const SortitionPoolStub = artifacts.require('SortitionPoolStub');
-const SortitionPoolFactory = artifacts.require('SortitionPoolFactory');
+const BondedSortitionPool = artifacts.require('BondedSortitionPool');
+const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
 
 const BN = web3.utils.BN
 
@@ -17,7 +16,7 @@ const expect = chai.expect
 
 contract("ECDSAKeepFactory", async accounts => {
     let keepFactory
-    let sortitionPoolFactory
+    let bondedSortitionPoolFactory
     let keepBonding
 
     const application = accounts[1]
@@ -27,9 +26,9 @@ contract("ECDSAKeepFactory", async accounts => {
 
     describe("registerMemberCandidate", async () => {
         before(async () => {
-            sortitionPoolFactory = await SortitionPoolFactoryStub.new()
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             keepBonding = await KeepBonding.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(sortitionPoolFactory.address, keepBonding.address)
+            keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, keepBonding.address)
         })
 
         beforeEach(async () => {
@@ -52,52 +51,29 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
-        it("registers transferred value in bonding contract", async () => {
-            const value = new BN(100)
-
-            await keepFactory.registerMemberCandidate(application, { from: member1, value: value })
-
-            expect(
-                await keepBonding.availableBondingValue(member1)
-            ).to.eq.BN(value, 'invalid available bonding value')
-        })
-
         it("inserts operators to the same pool", async () => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
 
             const signerPoolAddress = await keepFactory.getSignerPool(application)
 
-            const signerPool = await SortitionPoolStub.at(signerPoolAddress)
+            const signerPool = await BondedSortitionPool.at(signerPoolAddress)
 
-            const operators = await signerPool.getOperators.call()
-
-            assert.deepEqual(
-                operators,
-                [member1, member2],
-                "incorrect registered operators",
-            )
+            assert.isTrue(await signerPool.isOperatorInPool(member1), "operator 1 is not in the pool")
+            assert.isTrue(await signerPool.isOperatorInPool(member2), "operator 2 is not in the pool")
         })
 
         it("does not add an operator to the pool if he is already there", async () => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             const signerPoolAddress = await keepFactory.getSignerPool(application)
 
-            const signerPool = await SortitionPoolStub.at(signerPoolAddress)
+            const signerPool = await BondedSortitionPool.at(signerPoolAddress)
 
-            assert.deepEqual(
-                await signerPool.getOperators(),
-                [member1],
-                "incorrect registered operators",
-            )
+            assert.isTrue(await signerPool.isOperatorInPool(member1), "operator is not in the pool")
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
-            assert.deepEqual(
-                await signerPool.getOperators(),
-                [member1],
-                "incorrect registered operators after re-registration",
-            )
+            assert.isTrue(await signerPool.isOperatorInPool(member1), "operator is not in the pool")
         })
 
         it("inserts operators to different pools", async () => {
@@ -108,24 +84,17 @@ contract("ECDSAKeepFactory", async accounts => {
             await keepFactory.registerMemberCandidate(application2, { from: member2 })
 
             const signerPool1Address = await keepFactory.getSignerPool(application1)
-            const signerPool1 = await SortitionPoolStub.at(signerPool1Address)
-            const operators1 = await signerPool1.getOperators.call()
+            const signerPool1 = await BondedSortitionPool.at(signerPool1Address)
 
-            assert.deepEqual(
-                operators1,
-                [member1],
-                "incorrect registered operators for application 1",
-            )
+            assert.isTrue(await signerPool1.isOperatorInPool(member1), "operator 1 is not in the pool")
+            assert.isFalse(await signerPool1.isOperatorInPool(member2), "operator 2 is in the pool")
 
             const signerPool2Address = await keepFactory.getSignerPool(application2)
-            const signerPool2 = await SortitionPoolStub.at(signerPool2Address)
-            const operators2 = await signerPool2.getOperators.call()
+            const signerPool2 = await BondedSortitionPool.at(signerPool2Address)
 
-            assert.deepEqual(
-                operators2,
-                [member2],
-                "incorrect registered operators for application 2",
-            )
+            assert.isFalse(await signerPool2.isOperatorInPool(member1), "operator 1 is in the pool")
+            assert.isTrue(await signerPool2.isOperatorInPool(member2), "operator 2 is not in the pool")
+
         })
     })
 
@@ -140,17 +109,21 @@ contract("ECDSAKeepFactory", async accounts => {
         async function initializeNewFactory() {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
-            sortitionPoolFactory = await SortitionPoolFactory.new()
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             keepBonding = await KeepBonding.new()
-            keepFactory = await ECDSAKeepFactory.new(sortitionPoolFactory.address, keepBonding.address)
+            keepFactory = await ECDSAKeepFactory.new(bondedSortitionPoolFactory.address, keepBonding.address)
         }
 
         before(async () => {
             await initializeNewFactory()
 
-            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
+            await keepBonding.deposit(member1, { value: singleBond })
+            await keepBonding.deposit(member2, { value: singleBond })
+            await keepBonding.deposit(member3, { value: singleBond })
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+            await keepFactory.registerMemberCandidate(application, { from: member2 })
+            await keepFactory.registerMemberCandidate(application, { from: member3 })
         })
 
         beforeEach(async () => {
@@ -187,11 +160,11 @@ contract("ECDSAKeepFactory", async accounts => {
                     bond,
                     { from: application },
                 ),
-                "Bond per member equals zero"
+                "Bond per member must be greater than zero"
             )
         })
 
-        it("reverts if bond per member equals zero", async () => {
+        it("reverts if Bond per member must be greater than zero", async () => {
             let bond = new BN(2)
 
             await expectRevert(
@@ -202,7 +175,7 @@ contract("ECDSAKeepFactory", async accounts => {
                     bond,
                     { from: application },
                 ),
-                "Bond per member equals zero"
+                "Bond per member must be greater than zero"
             )
         })
 
@@ -275,9 +248,13 @@ contract("ECDSAKeepFactory", async accounts => {
             const singleBond = new BN(3)
             const bond = new BN(11)
 
-            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
+            await keepBonding.deposit(member1, { value: singleBond })
+            await keepBonding.deposit(member2, { value: singleBond })
+            await keepBonding.deposit(member3, { value: singleBond })
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+            await keepFactory.registerMemberCandidate(application, { from: member2 })
+            await keepFactory.registerMemberCandidate(application, { from: member3 })
 
             let blockNumber = await web3.eth.getBlockNumber()
 
@@ -315,7 +292,9 @@ contract("ECDSAKeepFactory", async accounts => {
             let groupSize = 2
             let threshold = 2
 
-            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
+            await keepBonding.deposit(member1, { value: singleBond })
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
 
             await expectRevert(
                 keepFactory.openKeep(
@@ -334,9 +313,13 @@ contract("ECDSAKeepFactory", async accounts => {
         it("reverts if one member has insufficient unbonded value", async () => {
             await initializeNewFactory()
 
-            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond.sub(new BN(1)) })
+            await keepBonding.deposit(member1, { value: singleBond })
+            await keepBonding.deposit(member2, { value: singleBond })
+            await keepBonding.deposit(member3, { value: singleBond.sub(new BN(1)) })
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+            await keepFactory.registerMemberCandidate(application, { from: member2 })
+            await keepFactory.registerMemberCandidate(application, { from: member3 })
 
             await expectRevert(
                 keepFactory.openKeep(
@@ -353,9 +336,13 @@ contract("ECDSAKeepFactory", async accounts => {
         it("opens keep with multiple members and emits an event", async () => {
             await initializeNewFactory()
 
-            await keepFactory.registerMemberCandidate(application, { from: member1, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member2, value: singleBond })
-            await keepFactory.registerMemberCandidate(application, { from: member3, value: singleBond })
+            await keepBonding.deposit(member1, { value: singleBond })
+            await keepBonding.deposit(member2, { value: singleBond })
+            await keepBonding.deposit(member3, { value: singleBond })
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+            await keepFactory.registerMemberCandidate(application, { from: member2 })
+            await keepFactory.registerMemberCandidate(application, { from: member3 })
 
             let blockNumber = await web3.eth.getBlockNumber()
 

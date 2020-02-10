@@ -4,9 +4,13 @@ import "./ECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./utils/AddressArrayUtils.sol";
+
+import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
+import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
+import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
+import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
+
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
-import "@keep-network/sortition-pools/contracts/SortitionPoolFactory.sol";
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
@@ -30,43 +34,48 @@ contract ECDSAKeepFactory is
     uint256 feeEstimate;
     bytes32 groupSelectionSeed;
 
-    SortitionPoolFactory sortitionPoolFactory;
+    BondedSortitionPoolFactory sortitionPoolFactory;
+    address tokenStaking = address(666); // TODO: Take from constructor
     KeepBonding keepBonding;
 
+    uint256 minimumStake = 1; // TODO: Take from setter
+    uint256 minimumBond = 1; // TODO: Take from setter
+
     constructor(address _sortitionPoolFactory, address _keepBonding) public {
-        sortitionPoolFactory = SortitionPoolFactory(_sortitionPoolFactory);
+        sortitionPoolFactory = BondedSortitionPoolFactory(
+            _sortitionPoolFactory
+        );
         keepBonding = KeepBonding(_keepBonding);
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
-    /// for the provided customer application. Caller can pass ether with this
-    /// function call and the value will be registered as available for bonding.
-    /// Operator can deposit a value for bonding also by calling the bonding
-    /// contract directly.
+    /// for the provided customer application.
     /// @dev If caller is already registered it returns without any changes.
-    function registerMemberCandidate(address _application) external payable {
+    function registerMemberCandidate(address _application) external {
         if (candidatesPools[_application] == address(0)) {
             // This is the first time someone registers as signer for this
             // application so let's create a signer pool for it.
             candidatesPools[_application] = sortitionPoolFactory
-                .createSortitionPool();
+                .createSortitionPool(
+                IStaking(tokenStaking),
+                IBonding(address(keepBonding)),
+                minimumStake,
+                minimumBond
+            );
         }
-
-        SortitionPool candidatesPool = SortitionPool(
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
             candidatesPools[_application]
         );
 
         address operator = msg.sender;
-        if (!candidatesPool.isOperatorRegistered(operator)) {
-            candidatesPool.insertOperator(operator, 500); // TODO: take weight from staking contract
+        if (!candidatesPool.isOperatorInPool(operator)) {
+            candidatesPool.joinPool(operator);
         }
-
-        keepBonding.deposit.value(msg.value)(operator);
     }
 
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
-    function openKeepFeeEstimate() external returns (uint256){
+    function openKeepFeeEstimate() external returns (uint256) {
         return feeEstimate;
     }
 
@@ -91,18 +100,18 @@ contract ECDSAKeepFactory is
 
         // TODO: The remainder will not be bonded. What should we do with it?
         uint256 memberBond = _bond.div(_groupSize);
-        require(memberBond > 0, "Bond per member equals zero");
+        require(memberBond > 0, "Bond per member must be greater than zero");
 
-        address[] memory selected = SortitionPool(pool).selectSetGroup(
+        address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
-            groupSelectionSeed
+            groupSelectionSeed,
+            memberBond
         );
 
         address payable[] memory members = new address payable[](_groupSize);
         for (uint256 i = 0; i < _groupSize; i++) {
-            // TODO: for each selected member, validate staking weight and create,
-            // bond. If validation failed or bond could not be created, remove
-            // operator from pool and try again.
+            // TODO: Modify ECDSAKeep to not keep members as payable and do the
+            // required casting in distributeERC20ToMembers and distributeETHToMembers.
             members[i] = address(uint160(selected[i]));
         }
 
