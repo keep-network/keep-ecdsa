@@ -100,10 +100,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     /// @notice Seizes the signer's ETH bond.
     function seizeSignerBonds() external onlyOwner {
-        address payable self = address(this);
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(members[i], address(this), uint256(address(this)));
-            keepBonding.seizeBond(members[i], uint256(address(this)), amount, self);
+            keepBonding.seizeBond(members[i], uint256(address(this)), amount, owner());
         }
     }
 

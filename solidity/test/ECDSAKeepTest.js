@@ -193,11 +193,16 @@ contract('ECDSAKeep', (accounts) => {
       let expected = value0.add(value1);
       expect(bondsBeforeSeizure).to.eq.BN(expected, "incorrect bond amount before seizure.");
       
-      let keepBalanceBefore = await web3.eth.getBalance(keep.address)
-      await keep.seizeSignerBonds({from: owner})
-      let keepBalanceDiff = await web3.eth.getBalance(keep.address) - keepBalanceBefore;
+      let gasPrice = await web3.eth.getGasPrice()
 
-      expect(keepBalanceDiff).to.eq.BN(value0.add(value1), "should zero all the bonds.");
+      let ownerBalanceBefore = await web3.eth.getBalance(owner);
+      let txHash = await keep.seizeSignerBonds({from: owner})
+
+      let seizedSignerBondsFee = new BN(txHash.receipt.gasUsed).mul(new BN(gasPrice))
+      let ownerBalanceDiff = new BN(await web3.eth.getBalance(owner))
+          .add(seizedSignerBondsFee).sub(new BN(ownerBalanceBefore));
+
+      expect(ownerBalanceDiff).to.eq.BN(value0.add(value1), "incorrect owner balance.");
       
       let bondsAfterSeizure = await keep.checkBondAmount()
       expect(bondsAfterSeizure).to.eq.BN(0, "should zero all the bonds.");
