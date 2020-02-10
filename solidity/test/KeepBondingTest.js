@@ -7,7 +7,7 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 const BN = web3.utils.BN
 
 const chai = require('chai')
-chai.use(require('bn-chai')(BN)) // We initialize `use` just once across all test files.
+chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 contract('KeepBonding', (accounts) => {

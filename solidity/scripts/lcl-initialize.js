@@ -1,7 +1,7 @@
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory')
 
-// Following artifacts are expected to be copied over from previous keep-core 
-// migrations.
+// `Registry` and `TokenStaking` are expected to be copied over from previous 
+// keep-core migrations.
 const Registry = artifacts.require('Registry')
 const TokenStaking = artifacts.require('TokenStaking')
 const KeepBonding = artifacts.require('KeepBonding')
@@ -46,9 +46,6 @@ module.exports = async function () {
             try {
                 await keepBonding.deposit(operator, { value: bondingValue })
                 console.log(`deposited bonding value for operator [${operator}]`)
-
-
-
             } catch (err) {
                 console.error(err)
                 process.exit(1)
