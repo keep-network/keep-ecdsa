@@ -47,7 +47,7 @@ contract ECDSAKeepFactory is
     mapping(address => address) candidatesPools; // application -> candidates pool
 
     uint256 feeEstimate;
-    bytes32 groupSelectionSeed;
+    uint256 groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
     address tokenStaking;
@@ -127,7 +127,7 @@ contract ECDSAKeepFactory is
 
         address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
-            groupSelectionSeed,
+            bytes32(groupSelectionSeed),
             memberBond
         );
 
