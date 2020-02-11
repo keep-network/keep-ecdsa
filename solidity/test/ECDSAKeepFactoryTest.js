@@ -8,7 +8,7 @@ const TokenStakingStub = artifacts.require("TokenStakingStub")
 const KeepBondingStub = artifacts.require('KeepBondingStub');
 const BondedSortitionPool = artifacts.require('BondedSortitionPool');
 const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
-const RandomBeaconServiceStub = artifacts.require('RandomBeaconServiceStub')
+const RandomBeaconStub = artifacts.require('RandomBeaconStub')
 
 const BN = web3.utils.BN
 
@@ -33,7 +33,7 @@ contract("ECDSAKeepFactory", async accounts => {
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBondingStub.new()
-            randomBeacon = await RandomBeaconServiceStub.new()
+            randomBeacon = await RandomBeaconStub.new()
             keepFactory = await ECDSAKeepFactoryStub.new(
                 bondedSortitionPoolFactory.address,
                 tokenStaking.address,
@@ -129,7 +129,7 @@ contract("ECDSAKeepFactory", async accounts => {
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBondingStub.new()
-            randomBeacon = await RandomBeaconServiceStub.new()
+            randomBeacon = await RandomBeaconStub.new()
             keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, tokenStaking.address, keepBonding.address, randomBeacon.address)
         })
 
@@ -178,7 +178,7 @@ contract("ECDSAKeepFactory", async accounts => {
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBondingStub.new()
-            randomBeacon = await RandomBeaconServiceStub.new()
+            randomBeacon = await RandomBeaconStub.new()
             keepFactory = await ECDSAKeepFactory.new(
                 bondedSortitionPoolFactory.address,
                 tokenStaking.address,

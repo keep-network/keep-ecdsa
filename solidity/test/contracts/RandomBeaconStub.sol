@@ -4,7 +4,7 @@ import {IRandomBeaconService} from "../../contracts/ECDSAKeepFactory.sol";
 
 /// @title Random Beacon Service Stub
 /// @dev This contract is for testing purposes only.
-contract RandomBeaconServiceStub is IRandomBeaconService {
+contract RandomBeaconStub is IRandomBeaconService {
     uint256 feeEstimate = 58;
     uint256 entry = 0;
     uint256 public calledTimes = 0;
