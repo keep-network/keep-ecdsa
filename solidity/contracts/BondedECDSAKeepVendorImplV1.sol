@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "@keep-network/keep-core/contracts/Registry.sol";
 import "./api/IBondedECDSAKeepVendor.sol";
 import "./utils/AddressArrayUtils.sol";
 
@@ -14,15 +15,24 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     // Mapping to store new implementation versions that inherit from this contract.
     mapping (string => bool) internal _initialized;
 
+    // Registry contract with a list of approved factories (operator contracts) and upgraders.
+    Registry internal registry;
+
     // List of ECDSA keep factories.
     address payable[] public factories;
 
     /**
      * @dev Initialize Keep Vendor contract implementation.
+     * @param registryAddress Keep registry contract linked to this contract.
      */
-    function initialize() public {
+    function initialize(
+        uint256 registryAddress
+    )
+        public
+    {
         require(!initialized(), "Contract is already initialized.");
         _initialized["BondedECDSAKeepVendorImplV1"] = true;
+        registry = Registry(registryAddress);
     }
 
     /**
