@@ -57,9 +57,10 @@ contract ECDSAKeepFactory is
     uint256 minimumStake = 1; // TODO: Take from setter
     uint256 minimumBond = 1; // TODO: Take from setter
 
-    // Gas required for a callback from the random beacon. Value was determined
-    // by calling `setGroupSelectionSeed` function and reading gas used for
-    // the transaction.
+    // Gas required for a callback from the random beacon. The value specifies
+    // gas required to call `setGroupSelectionSeed` function in the worst-case
+    // scenario with all the checks and maximum allowed uint256 relay entry as
+    // a callback parameter.
     uint256 callbackGas = 41830;
 
     constructor(
