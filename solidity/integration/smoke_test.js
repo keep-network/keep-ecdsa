@@ -10,8 +10,9 @@ const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 // To execute this smoke test run:
 // truffle exec integration/smoke_test.js
 module.exports = async function () {
+    const application = "0x2AA420Af8CB62888ACBD8C7fAd6B4DdcDD89BC82"
+
     let keepOwner
-    let application
     let startBlockNumber
     let keep
     let keepPublicKey
@@ -23,7 +24,6 @@ module.exports = async function () {
     try {
         const accounts = await web3.eth.getAccounts();
         keepOwner = accounts[1]
-        application = "0x72e81c70670F0F89c1e3E8a29409157BC321B107"
 
         startBlockNumber = await web3.eth.getBlock('latest').number
     } catch (err) {
