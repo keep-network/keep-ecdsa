@@ -11,8 +11,26 @@ import "./utils/AddressArrayUtils.sol";
 contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     using AddressArrayUtils for address payable[];
 
+    // Mapping to store new implementation versions that inherit from this contract.
+    mapping (string => bool) internal _initialized;
+
     // List of ECDSA keep factories.
     address payable[] public factories;
+
+    /**
+     * @dev Initialize Keep Vendor contract implementation.
+     */
+    function initialize() public {
+        require(!initialized(), "Contract is already initialized.");
+        _initialized["BondedECDSAKeepVendorImplV1"] = true;
+    }
+
+    /**
+     * @dev Checks if this contract is initialized.
+     */
+    function initialized() public view returns (bool) {
+        return _initialized["BondedECDSAKeepVendorImplV1"];
+    }
 
     /// @notice Register new ECDSA keep factory.
     /// @dev Adds a factory address to the list of registered factories. Address
