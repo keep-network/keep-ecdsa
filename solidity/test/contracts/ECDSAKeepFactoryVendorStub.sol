@@ -2,9 +2,9 @@ pragma solidity ^0.5.4;
 
 import "../../contracts/ECDSAKeepFactory.sol";
 
-/// @title ECDSA Keep Factory Stub
+/// @title ECDSA Keep Factory Stub for vendor testing
 /// @dev This contract is for testing purposes only.
-contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
+contract ECDSAKeepFactoryVendorStub is ECDSAKeepFactory {
     constructor(
         address sortitionPoolFactory,
         address tokenStaking,
