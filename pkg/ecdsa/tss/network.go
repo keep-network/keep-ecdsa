@@ -134,14 +134,14 @@ func (b *networkBridge) getUnicastChannel(
 
 	for i := 0; i < retryCount+1; i++ {
 		unicastChannel, err := b.getUnicastChannelWith(peerTransportID)
-		if err == nil {
+		if unicastChannel != nil && err == nil {
 			return unicastChannel, nil
 		}
 
 		time.Sleep(retryWaitTime)
 	}
 
-	return nil, err
+	return nil, fmt.Errorf("could not get unicast channel: [%v]", err)
 }
 
 func (b *networkBridge) getTransportIdentifier(member MemberID) (net.TransportIdentifier, error) {
