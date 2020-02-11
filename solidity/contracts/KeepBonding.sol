@@ -198,6 +198,10 @@ contract KeepBonding {
     /// contracts.
     modifier onlyAuthorized() {
         // TODO: Add authorization checks.
+        require(
+            registry.isApprovedOperatorContract(msg.sender),
+            "Factory contract is not approved"
+        );
         _;
     }
 }
