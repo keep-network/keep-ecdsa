@@ -18,6 +18,7 @@ module.exports = async function () {
 
     const groupSize = 3
     const threshold = 3
+    const bond = 10
 
     try {
         const accounts = await web3.eth.getAccounts();
@@ -42,8 +43,7 @@ module.exports = async function () {
             groupSize,
             threshold,
             keepOwner,
-            1,  // bond
-            { from: application }
+            bond,
         )
 
         const eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
