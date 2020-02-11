@@ -130,7 +130,12 @@ contract("ECDSAKeepFactory", async accounts => {
             tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBondingStub.new()
             randomBeacon = await RandomBeaconStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, tokenStaking.address, keepBonding.address, randomBeacon.address)
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
         })
 
         beforeEach(async () => {
@@ -253,7 +258,7 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
-        it("reverts if value is less than required fee estimate", async () => {
+        it("reverts if value is less than the required fee estimate", async () => {
             const insufficientFee = feeEstimate.sub(new BN(1))
 
             await expectRevert(
@@ -537,7 +542,7 @@ contract("ECDSAKeepFactory", async accounts => {
             // TODO: Add verification of what we will do in case of the failure.
         })
 
-        it("forwards value to random beacon", async () => {
+        it("forwards payment to random beacon", async () => {
             const value = new BN(150)
 
             await keepFactory.openKeep(
