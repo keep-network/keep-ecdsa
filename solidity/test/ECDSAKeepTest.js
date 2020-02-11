@@ -209,76 +209,105 @@ contract('ECDSAKeep', (accounts) => {
     })  
   })
 
-  describe('submitSignatureFraud', () =>  {
-    const digest1 = '0x14a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
-    const digest2 = '0x54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
-    const digest3 = '0x24a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
-    const signatureV = 27
-    const signatureR = '0x9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
-    const signatureS = '0x90838891021e1c7d0d1336613f24ecab703dee5ff1b6c8881bccc2c011606a35'
-    const publicKey = '0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051'
-    let keep
-    
+  describe('submitSignatureFraud', () => {
+    // public key:
+    // curve - 0xc000098300
+    // X - 0x9A0544440CC47779235CCB76D669590C2CD20C7E431F97E17A1093FAF03291C4
+    // Y - 0x73E661A208A8A565CA1E384059BD2FF7FF6886DF081FF1229250099D388C83DF
+    // private key:
+    // 0x937FFE93CFC943D1A8FC0CB8BAD44A978090A4623DA81EEFDFF5380D0A290B41
+
+    const preImageBytes = web3.utils.hexToBytes('0x4c65636820506f7a6e616e') // Lech Poznan
+    const badPreImageBytes = web3.utils.hexToBytes('0x1111636820506f7a6e616e')
+    // signedDigest = sha256(abi.encodePacked(sha256(preImageBytes)))
+    const signedDigest = '0x8bacaa8f02ef807f2f61ae8e00a5bfa4528148e0ae73b2bd54b71b8abe61268e'
+    // random signed digest
+    const signedDigest1 = '0x14a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
+
+    const signatureR = '0xedc074a86380cc7e2e4702eaf1bec87843bc0eb7ebd490f5bdd7f02493149170'
+    const signatureS = '0x3f5005a26eb6f065ea9faea543e5ddb657d13892db2656499a43dfebd6e12efc'
+    const signatureV = 28
+
+    // Serialized public key takes X and Y coordinates of a signer's public key and concatenates it to a 64-byte long array.
+    const publicKey = '0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df'
+
+    let keep, signingTimeout
+
     beforeEach(async () => {
       keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
-      const signingTimeout = await keep.signingTimeout.call()
+      signingTimeout = await keep.signingTimeout.call()
       
       await keep.setPublicKey(publicKey, { from: members[0] })
-      
-      await keep.sign(digest1, { from: owner })
-      mineBlocks(signingTimeout)
-      await keep.sign(digest3, { from: owner })
+      await keep.sign(signedDigest1, { from: owner })
     })
-    
+
     it('should return true when signature is valid but was not requested', async () => {
       let res = await keep.submitSignatureFraud.call(
         signatureV,
         signatureR,
         signatureS,
-        digest2, 
-        '0x000'
+        signedDigest, 
+        preImageBytes
       )
         
       assert.isTrue(res, 'Signature is fraudulent because is valid but was not requested.')
     })
 
+    it('should return an error when preImage is incorrect', async () => {
+      await expectRevert(
+        keep.submitSignatureFraud.call(
+          signatureV,
+          signatureR,
+          signatureS,
+          signedDigest, 
+          badPreImageBytes
+        ),
+        'Incorrect preimage'
+      )
+    })
+
     it('should return an error when signature is invalid and was requested', async () => {
+      mineBlocks(signingTimeout)
+      await keep.sign(signedDigest, { from: owner })
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
+
       await expectRevert(
         keep.submitSignatureFraud.call(
           signatureV,
           badSignatureR,
           signatureS,
-          digest1, 
-          '0x000'
+          signedDigest, 
+          preImageBytes
         ),
         'Signature is not fraudulent'
       )
     })
-        
+
     it('should return an error when signature is invalid and was not requested', async () => {
-      const badDigest = '0x11a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
       await expectRevert(
         keep.submitSignatureFraud.call(
           signatureV,
           badSignatureR,
           signatureS,
-          badDigest, 
-          '0x000'
+          signedDigest, 
+          preImageBytes
         ),
         'Signature is not fraudulent'
       )
     })
 
     it('should return an error when signature is valid and was requested', async () => {
+      mineBlocks(signingTimeout)
+      await keep.sign(signedDigest, { from: owner })
+
       await expectRevert(
         keep.submitSignatureFraud.call(
           signatureV,
           signatureR,
           signatureS,
-          digest1, 
-          '0x000'
+          signedDigest, 
+          preImageBytes
         ),
         'Signature is not fraudulent'
       )
