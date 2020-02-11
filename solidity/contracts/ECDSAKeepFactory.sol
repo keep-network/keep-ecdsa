@@ -134,6 +134,11 @@ contract ECDSAKeepFactory is
         uint256 memberBond = _bond.div(_groupSize);
         require(memberBond > 0, "Bond per member must be greater than zero");
 
+        require(
+            msg.value >= openKeepFeeEstimate(),
+            "Insufficient payment for opening a new keep"
+        );
+
         address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
             bytes32(groupSelectionSeed),
