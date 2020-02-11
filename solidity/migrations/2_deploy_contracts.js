@@ -22,5 +22,9 @@ module.exports = async function (deployer) {
     await vendor.initialize(Registry.address)
     const registry = await Registry.deployed();
     await registry.approveOperatorContract(ECDSAKeepFactory.address);
+
+    // Set service contract owner as operator contract upgrader by default
+    const operatorContractUpgrader = await vendor.owner()
+    await registry.setOperatorContractUpgrader(vendor.address, operatorContractUpgrader);
     await vendor.registerFactory(ECDSAKeepFactory.address)
 }

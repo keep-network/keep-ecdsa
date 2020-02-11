@@ -22,6 +22,15 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     address payable[] public factories;
 
     /**
+     * @dev Throws if called by any account other than the operator contract upgrader authorized for this service contract.
+     */
+    modifier onlyOperatorContractUpgrader() {
+        address operatorContractUpgrader = registry.operatorContractUpgraderFor(address(this));
+        require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
+        _;
+    }
+
+    /**
      * @dev Initialize Keep Vendor contract implementation.
      * @param registryAddress Keep registry contract linked to this contract.
      */
@@ -46,7 +55,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     /// @dev Adds a factory address to the list of registered factories. Address
     /// cannot be zero and cannot be already registered.
     /// @param _factory ECDSA keep factory address.
-    function registerFactory(address payable _factory) external onlyOwner {
+    function registerFactory(address payable _factory) external onlyOperatorContractUpgrader {
         require(!factories.contains(_factory), "Factory address already registered");
         require(
             registry.isApprovedOperatorContract(_factory),

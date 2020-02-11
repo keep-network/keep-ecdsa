@@ -14,6 +14,7 @@ contract("ECDSAKeepVendor", async accounts => {
             registry = await Registry.new()
             keepVendor = await BondedECDSAKeepVendorStub.new()
             keepVendor.initialize(registry.address)
+            await registry.setOperatorContractUpgrader(keepVendor.address, accounts[0])
             registry.approveOperatorContract(address0)
             registry.approveOperatorContract(address1)
             registry.approveOperatorContract(address2)
@@ -66,7 +67,7 @@ contract("ECDSAKeepVendor", async accounts => {
                 await keepVendor.registerFactory(address1, { from: accounts[1] })
                 assert(false, 'Test call did not error as expected')
             } catch (e) {
-                assert.include(e.message, 'Ownable: caller is not the owner')
+                assert.include(e.message, 'Caller is not operator contract upgrader')
             }
 
             assertFactories(expectedResult)
@@ -82,6 +83,7 @@ contract("ECDSAKeepVendor", async accounts => {
         before(async () => {
             keepVendor = await BondedECDSAKeepVendorStub.new()
             keepVendor.initialize(registry.address)
+            await registry.setOperatorContractUpgrader(keepVendor.address, accounts[0])
             registry.approveOperatorContract(address1)
             registry.approveOperatorContract(address2)
         })
