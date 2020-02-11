@@ -170,6 +170,8 @@ contract("ECDSAKeepFactory", async accounts => {
         const singleBond = new BN(1)
         const bond = singleBond.mul(groupSize)
 
+        let feeEstimate
+
         async function initializeNewFactory() {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
@@ -183,6 +185,8 @@ contract("ECDSAKeepFactory", async accounts => {
                 keepBonding.address,
                 randomBeacon.address
             )
+
+            feeEstimate = await keepFactory.openKeepFeeEstimate()
         }
 
         beforeEach(async () => {
@@ -210,6 +214,7 @@ contract("ECDSAKeepFactory", async accounts => {
                     threshold,
                     keepOwner,
                     bond,
+                    { value: feeEstimate }
                 )
 
                 assert(false, 'Test call did not error as expected')
@@ -227,13 +232,13 @@ contract("ECDSAKeepFactory", async accounts => {
                     threshold,
                     keepOwner,
                     bond,
-                    { from: application },
+                    { from: application, value: feeEstimate },
                 ),
                 "Bond per member must be greater than zero"
             )
         })
 
-        it("reverts if Bond per member must be greater than zero", async () => {
+        it("reverts if bond per member equals zero", async () => {
             let bond = new BN(2)
 
             await expectRevert(
@@ -242,7 +247,7 @@ contract("ECDSAKeepFactory", async accounts => {
                     threshold,
                     keepOwner,
                     bond,
-                    { from: application },
+                    { from: application, value: feeEstimate },
                 ),
                 "Bond per member must be greater than zero"
             )
@@ -271,7 +276,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 threshold,
                 keepOwner,
                 bond,
-                { from: application },
+                { from: application, value: feeEstimate },
             )
 
             let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
@@ -296,7 +301,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 threshold,
                 keepOwner,
                 bond,
-                { from: application },
+                { from: application, value: feeEstimate },
             )
 
             let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
@@ -347,7 +352,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 threshold,
                 keepOwner,
                 bond,
-                { from: application },
+                { from: application, value: feeEstimate },
             )
 
             let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
@@ -386,7 +391,7 @@ contract("ECDSAKeepFactory", async accounts => {
                     threshold,
                     keepOwner,
                     bond,
-                    { from: application }
+                    { from: application, value: feeEstimate }
                 ),
                 "Not enough operators in pool"
             )
@@ -411,7 +416,7 @@ contract("ECDSAKeepFactory", async accounts => {
                     threshold,
                     keepOwner,
                     bond,
-                    { from: application }
+                    { from: application, value: feeEstimate }
                 ),
                 "Insufficient unbonded value"
             )
@@ -425,7 +430,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 threshold,
                 keepOwner,
                 bond,
-                { from: application }
+                { from: application, value: feeEstimate }
             )
 
             await keepFactory.openKeep(
@@ -433,7 +438,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 threshold,
                 keepOwner,
                 bond,
-                { from: application }
+                { from: application, value: feeEstimate }
             )
 
             let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
@@ -477,7 +482,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 threshold,
                 keepOwner,
                 bond,
-                { from: application }
+                { from: application, value: feeEstimate }
             )
 
             assert.equal(
@@ -507,7 +512,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 threshold,
                 keepOwner,
                 bond,
-                { from: application }
+                { from: application, value: feeEstimate }
             )
 
             expect(
