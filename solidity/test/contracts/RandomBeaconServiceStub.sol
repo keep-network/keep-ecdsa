@@ -8,6 +8,7 @@ contract RandomBeaconServiceStub is IRandomBeaconService {
     uint256 feeEstimate = 58;
     uint256 entry = 0;
     uint256 public calledTimes = 0;
+    bool shouldFail;
 
     /// @dev Get the entry fee estimate in wei for relay entry request.
     /// @param callbackGas Gas required for the callback.
@@ -26,6 +27,10 @@ contract RandomBeaconServiceStub is IRandomBeaconService {
     ) public payable returns (uint256) {
         calledTimes++;
 
+        if (shouldFail) {
+            revert("request relay entry failed");
+        }
+
         if (entry != 0) {
             callbackContract.call(
                 abi.encodeWithSignature(callbackMethod, entry)
@@ -37,4 +42,7 @@ contract RandomBeaconServiceStub is IRandomBeaconService {
         entry = newEntry;
     }
 
+    function setShouldFail(bool value) public {
+        shouldFail = value;
+    }
 }
