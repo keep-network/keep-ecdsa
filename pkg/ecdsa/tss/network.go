@@ -130,18 +130,32 @@ func (b *networkBridge) getUnicastChannel(
 	retryCount int,
 	retryWaitTime time.Duration,
 ) (net.UnicastChannel, error) {
-	var err error
+	var (
+		unicastChannel net.UnicastChannel
+		err            error
+	)
 
 	for i := 0; i < retryCount+1; i++ {
-		unicastChannel, err := b.getUnicastChannelWith(peerTransportID)
+		unicastChannel, err = b.getUnicastChannelWith(peerTransportID)
 		if unicastChannel != nil && err == nil {
 			return unicastChannel, nil
 		}
 
+		logger.Warningf(
+			"failed to get unicast channel with peer [%v] "+
+				"because of: [%v]; will retry after wait time",
+			peerTransportID.String(),
+			err,
+		)
+
 		time.Sleep(retryWaitTime)
 	}
 
-	return nil, fmt.Errorf("could not get unicast channel: [%v]", err)
+	if err == nil {
+		err = fmt.Errorf("unknown error")
+	}
+
+	return nil, err
 }
 
 func (b *networkBridge) getTransportIdentifier(member MemberID) (net.TransportIdentifier, error) {
