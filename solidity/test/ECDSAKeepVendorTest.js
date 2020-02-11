@@ -1,3 +1,4 @@
+var Registry = artifacts.require('Registry')
 var BondedECDSAKeepVendorStub = artifacts.require('BondedECDSAKeepVendorStub')
 var ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
 
@@ -6,11 +7,16 @@ contract("ECDSAKeepVendor", async accounts => {
     const address1 = "0xF2D3Af2495E286C7820643B963FB9D34418c871d"
     const address2 = "0x4566716c07617c5854fe7dA9aE5a1219B19CCd27"
 
-    let keepVendor
+    let registry, keepVendor
 
     describe("registerFactory", async () => {
         beforeEach(async () => {
+            registry = await Registry.new()
             keepVendor = await BondedECDSAKeepVendorStub.new()
+            keepVendor.initialize(registry.address)
+            registry.approveOperatorContract(address0)
+            registry.approveOperatorContract(address1)
+            registry.approveOperatorContract(address2)
         })
 
         it("registers one factory address", async () => {
@@ -75,6 +81,9 @@ contract("ECDSAKeepVendor", async accounts => {
     describe("selectFactory", async () => {
         before(async () => {
             keepVendor = await BondedECDSAKeepVendorStub.new()
+            keepVendor.initialize(registry.address)
+            registry.approveOperatorContract(address1)
+            registry.approveOperatorContract(address2)
         })
 
         it("returns last factory from the list", async () => {

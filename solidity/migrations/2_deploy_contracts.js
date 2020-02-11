@@ -20,5 +20,7 @@ module.exports = async function (deployer) {
 
     const vendor = await BondedECDSAKeepVendorImplV1.at(BondedECDSAKeepVendor.address)
     await vendor.initialize(Registry.address)
+    const registry = await Registry.deployed();
+    await registry.approveOperatorContract(ECDSAKeepFactory.address);
     await vendor.registerFactory(ECDSAKeepFactory.address)
 }

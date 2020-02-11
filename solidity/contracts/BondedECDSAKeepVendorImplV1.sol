@@ -48,7 +48,10 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     /// @param _factory ECDSA keep factory address.
     function registerFactory(address payable _factory) external onlyOwner {
         require(!factories.contains(_factory), "Factory address already registered");
-
+        require(
+            registry.isApprovedOperatorContract(_factory),
+            "Factory contract is not approved"
+        );
         factories.push(_factory);
     }
 
