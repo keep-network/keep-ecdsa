@@ -92,9 +92,10 @@ contract KeepBonding {
     }
 
    /// @notice Returns value of ether bonded for the operator.
-   /// @param operator Address of the operator to bond.
+   /// @param operator Address of the operator.
    /// @param holder Address of the holder of the bond.
    /// @param referenceID Reference ID used to track the bond by holder.
+   /// @return Operator's bonded ether.
    function bondAmount(address operator, address holder, uint256 referenceID) public view returns (uint256) {
         bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
 
@@ -172,12 +173,12 @@ contract KeepBonding {
         address payable holder = msg.sender;
         bytes32 bondID = keccak256(
             abi.encodePacked(operator, holder, referenceID)
-         );
+        );
 
-         require(
+        require(
             lockedBonds[bondID] >= amount,
             "Requested amount is greater than the bond"
-         );
+        );
 
         lockedBonds[bondID] -= amount;
 
@@ -185,11 +186,11 @@ contract KeepBonding {
         require(success, "Transfer failed");
     }
 
-   /// @notice Checks if the caller is an authorized contract.
-   /// @dev Throws an error if called by any account other than one of the authorized
-   /// contracts.
-   modifier onlyAuthorized() {
-      // TODO: Add authorization checks.
-      _;
-   }
+    /// @notice Checks if the caller is an authorized contract.
+    /// @dev Throws an error if called by any account other than one of the authorized
+    /// contracts.
+    modifier onlyAuthorized() {
+        // TODO: Add authorization checks.
+        _;
+    }
 }

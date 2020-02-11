@@ -38,6 +38,11 @@ contract IBondedECDSAKeep {
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
     /// not first approved via a call to sign.
+    /// @param _v Header byte: 27 + recovery ID (one of {0, 1, 2, 3}).
+    /// @param _r R part of ECDSA signature.
+    /// @param _s S part of ECDSA signature.
+    /// @param _signedDigest Hash256 value of preimage.
+    /// @param _preimage Preimage to be hashed.
     /// @return Error if not fraud, true if fraud.
     function submitSignatureFraud(
         uint8 _v,
