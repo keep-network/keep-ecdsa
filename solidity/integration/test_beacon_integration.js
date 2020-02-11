@@ -1,6 +1,6 @@
 const ECDSAKeepFactoryExposed = artifacts.require('ECDSAKeepFactoryExposed')
 const RandomBeaconService = artifacts.require('KeepRandomBeaconServiceImplV1')
-const { RandomBeaconServiceAddress } = require('../migrations/externals')
+const { RandomBeaconAddress } = require('../migrations/externals')
 
 // This scripts validates integration with the random beacon service.
 // It checks that the beacon executes the callback function and sets a new
@@ -33,7 +33,7 @@ module.exports = async function () {
 
     try {
         keepFactory = await ECDSAKeepFactoryExposed.deployed()
-        randomBeacon = await RandomBeaconService.at(RandomBeaconServiceAddress)
+        randomBeacon = await RandomBeaconService.at(RandomBeaconAddress)
     } catch (err) {
         console.error(`factory deployment failed: [${err}]`)
         process.exit(1)

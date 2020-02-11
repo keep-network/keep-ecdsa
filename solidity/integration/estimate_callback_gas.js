@@ -1,7 +1,7 @@
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory')
 const RandomBeaconService = artifacts.require('IRandomBeaconService')
 
-const { RandomBeaconServiceAddress } = require('../migrations/externals')
+const { RandomBeaconAddress } = require('../migrations/externals')
 
 const BN = web3.utils.BN
 const maxUINT256 = new BN('2').pow(new BN('256')).sub(new BN('1'))
@@ -22,7 +22,7 @@ module.exports = async function () {
     try {
         accounts = await web3.eth.getAccounts();
 
-        randomBeaconService = await RandomBeaconService.at(RandomBeaconServiceAddress)
+        randomBeaconService = await RandomBeaconService.at(RandomBeaconAddress)
         keepFactory = await ECDSAKeepFactory.deployed()
     } catch (err) {
         console.error(`initialization failed: [${err}]`)

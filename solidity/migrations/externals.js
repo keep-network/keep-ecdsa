@@ -1,6 +1,6 @@
 // Addresses of externally deployed smart contracts
-const RandomBeaconServiceAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+const RandomBeaconAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
 module.exports = {
-  RandomBeaconServiceAddress,
+  RandomBeaconAddress,
 }
