@@ -75,6 +75,10 @@ contract ECDSAKeepFactory is
         randomBeacon = IRandomBeaconService(_randomBeacon);
     }
 
+    // Fallback function to receive ether from the beacon.
+    // TODO: Implement proper surplus handling.
+    function() external payable {}
+
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application.
     /// @dev If caller is already registered it returns without any changes.
