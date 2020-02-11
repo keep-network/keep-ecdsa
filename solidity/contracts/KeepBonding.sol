@@ -1,5 +1,7 @@
 pragma solidity ^0.5.4;
 
+import "@keep-network/keep-core/contracts/Registry.sol";
+
 // TODO: This contract is expected to implement functions defined by IBonding
 // interface defined in @keep-network/sortition-pools. After merging the
 // repositories we need to move IBonding definition to sit closer to KeepBonding
@@ -12,11 +14,20 @@ pragma solidity ^0.5.4;
 // TODO: Update KeepBonding contract implementation to new requirements based
 // on the spec.
 contract KeepBonding {
+    // Registry contract with a list of approved factories (operator contracts) and upgraders.
+    Registry internal registry;
+
     // Unassigned ether values deposited by operators.
     mapping(address => uint256) internal unbondedValue;
     // References to created bonds. Bond identifier is built from operator's
     // address, holder's address and reference ID assigned on bond creation.
     mapping(bytes32 => uint256) internal lockedBonds;
+
+    /// @dev Initialize Keep Bonding contract.
+    /// @param registryAddress Keep registry contract linked to this contract.
+    constructor(address registryAddress) public {
+        registry = Registry(registryAddress);
+    }
 
     /// @notice Returns the amount of ether the operator has made available for
     /// bonding by the bond creator. If the operator doesn't exists or the operator

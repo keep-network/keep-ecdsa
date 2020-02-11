@@ -9,7 +9,7 @@ const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory
 
 module.exports = async function (deployer) {
     await deployer.deploy(Registry)
-    await deployer.deploy(KeepBonding)
+    await deployer.deploy(KeepBonding, Registry.address)
 
     await deployBondedSortitionPoolFactory(artifacts, deployer)
 

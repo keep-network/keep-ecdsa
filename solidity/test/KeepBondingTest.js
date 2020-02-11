@@ -1,5 +1,6 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
+const Registry = artifacts.require('./Registry.sol')
 const KeepBonding = artifacts.require('./KeepBondingStub.sol')
 const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
 
@@ -12,11 +13,13 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 contract('KeepBonding', (accounts) => {
+    let registry
     let keepBonding
     let etherReceiver
 
     before(async () => {
-        keepBonding = await KeepBonding.new()
+        registry = await Registry.new()
+        keepBonding = await KeepBonding.new(registry.address)
         etherReceiver = await TestEtherReceiver.new()
     })
 

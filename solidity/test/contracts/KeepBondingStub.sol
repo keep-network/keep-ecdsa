@@ -5,6 +5,7 @@ import "../../contracts/KeepBonding.sol";
 /// @title Keep Bonding Stub
 /// @dev This contract is for testing purposes only.
 contract KeepBondingStub is KeepBonding {
+    constructor(address registryAddress) KeepBonding(registryAddress) public {}
 
     /// @notice Get registered locked bonds.
     /// @dev This is a stub implementation to validate bonds mapping.

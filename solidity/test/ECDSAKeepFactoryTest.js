@@ -2,6 +2,7 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
+const Registry = artifacts.require('Registry');
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBondingStub = artifacts.require('KeepBondingStub');
@@ -15,6 +16,7 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 contract("ECDSAKeepFactory", async accounts => {
+    let registry
     let keepFactory
     let bondedSortitionPoolFactory
     let keepBonding
@@ -26,8 +28,9 @@ contract("ECDSAKeepFactory", async accounts => {
 
     describe("registerMemberCandidate", async () => {
         before(async () => {
+            registry = await Registry.new()
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-            keepBonding = await KeepBondingStub.new()
+            keepBonding = await KeepBondingStub.new(registry.address)
             keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, keepBonding.address)
         })
 
@@ -110,7 +113,7 @@ contract("ECDSAKeepFactory", async accounts => {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-            keepBonding = await KeepBondingStub.new()
+            keepBonding = await KeepBondingStub.new(registry.address)
             keepFactory = await ECDSAKeepFactory.new(bondedSortitionPoolFactory.address, keepBonding.address)
         }
 
