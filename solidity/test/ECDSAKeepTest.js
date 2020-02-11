@@ -5,6 +5,7 @@ import {
 } from './helpers/listBalanceUtils'
 
 import { mineBlocks } from "./helpers/mineBlocks";
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -26,10 +27,19 @@ contract('ECDSAKeep', (accounts) => {
   const members = [accounts[2], accounts[3]]
   const honestThreshold = 1
 
-  let keepBonding;
+  let keepBonding, keep;
 
   before(async () => {
     keepBonding = await KeepBonding.new()
+    keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
+  })
+
+  beforeEach(async () => {
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+      await restoreSnapshot()
   })
 
   describe('#constructor', async () => {
@@ -47,11 +57,6 @@ contract('ECDSAKeep', (accounts) => {
 
   describe('#sign', async () => {
     const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
-    let keep
-
-    beforeEach(async () => {
-      keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
-    })
 
     it('emits event', async () => {
       const digest = '0xbb0b57005f01018b19c278c55273a60118ffdd3e5790ccc8a48cad03907fa521'
@@ -102,12 +107,6 @@ contract('ECDSAKeep', (accounts) => {
 
   describe('public key', () => {
     const expectedPublicKey = '0xa899b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
-
-    let keep
-
-    beforeEach(async () => {
-      keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address);
-    })
 
     it('get public key before it is set', async () => {
       let publicKey = await keep.getPublicKey.call()
@@ -161,7 +160,6 @@ contract('ECDSAKeep', (accounts) => {
     const value1 = new BN(70)
 
     it('should return bond amount', async () => {
-      let keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
       let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
       
       await keepBonding.deposit(members[0], { value: value0 })
@@ -172,7 +170,7 @@ contract('ECDSAKeep', (accounts) => {
       let actual = await keep.checkBondAmount.call()
       let expected = value0.add(value1);
 
-      expect(actual).to.eq.BN(expected, "incorrect bond amount.");
+      expect(actual).to.eq.BN(expected, "incorrect bond amount");
     })  
   })
 
@@ -181,7 +179,6 @@ contract('ECDSAKeep', (accounts) => {
     const value1 = new BN(70)
 
     it('should seize signer bond', async () => {
-      let keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
       let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
       
       await keepBonding.deposit(members[0], { value: value0 })
@@ -191,7 +188,7 @@ contract('ECDSAKeep', (accounts) => {
 
       let bondsBeforeSeizure = await keep.checkBondAmount()
       let expected = value0.add(value1);
-      expect(bondsBeforeSeizure).to.eq.BN(expected, "incorrect bond amount before seizure.");
+      expect(bondsBeforeSeizure).to.eq.BN(expected, "incorrect bond amount before seizure");
       
       let gasPrice = await web3.eth.getGasPrice()
 
@@ -202,10 +199,10 @@ contract('ECDSAKeep', (accounts) => {
       let ownerBalanceDiff = new BN(await web3.eth.getBalance(owner))
           .add(seizedSignerBondsFee).sub(new BN(ownerBalanceBefore));
 
-      expect(ownerBalanceDiff).to.eq.BN(value0.add(value1), "incorrect owner balance.");
+      expect(ownerBalanceDiff).to.eq.BN(value0.add(value1), "incorrect owner balance");
       
       let bondsAfterSeizure = await keep.checkBondAmount()
-      expect(bondsAfterSeizure).to.eq.BN(0, "should zero all the bonds.");
+      expect(bondsAfterSeizure).to.eq.BN(0, "should zero all the bonds");
     })  
   })
 
@@ -231,10 +228,9 @@ contract('ECDSAKeep', (accounts) => {
     // Serialized public key takes X and Y coordinates of a signer's public key and concatenates it to a 64-byte long array.
     const publicKey = '0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df'
 
-    let keep, signingTimeout
+    let signingTimeout
 
     beforeEach(async () => {
-      keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
       signingTimeout = await keep.signingTimeout.call()
       
       await keep.setPublicKey(publicKey, { from: members[0] })
@@ -262,7 +258,7 @@ contract('ECDSAKeep', (accounts) => {
           signedDigest, 
           badPreImageBytes
         ),
-        'Incorrect preimage'
+        'Signed digest does not match double sha256 hash of the preimage'
       )
     })
 
@@ -321,11 +317,7 @@ contract('ECDSAKeep', (accounts) => {
     const signatureS = '0x90838891021e1c7d0d1336613f24ecab703dee5ff1b6c8881bccc2c011606a35'
     const signatureRecoveryID = 0
 
-    let keep
-
     beforeEach(async () => {
-      keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
-
       await keep.setPublicKey(publicKey, { from: members[0] })
       await keep.sign(digest, { from: owner })
     })
@@ -358,7 +350,7 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('cannot be submitted if signing was not requested', async () => {
-      keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
+      let keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
 
       await keep.setPublicKey(publicKey, { from: members[0] })
 
@@ -447,11 +439,9 @@ contract('ECDSAKeep', (accounts) => {
 
   describe('#distributeETHToMembers', async () => {
     const ethValue = 100000
-    let keep
     let etherReceiver
 
     beforeEach(async () => {
-      keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
       etherReceiver = await TestEtherReceiver.new()
     })
 
@@ -526,11 +516,9 @@ contract('ECDSAKeep', (accounts) => {
 
   describe('#distributeERC20ToMembers', async () => {
     const erc20Value = 1000000
-    let keep
     let token
 
     beforeEach(async () => {
-      keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
       token = await TestToken.new()
     })
 
