@@ -523,6 +523,20 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
+        it("ignores beacon request relay entry failure", async () => {
+            await randomBeacon.setShouldFail(true)
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate }
+            )
+
+            // TODO: Add verification of what we will do in case of the failure.
+        })
+
         it("forwards value to random beacon", async () => {
             const value = new BN(150)
 
