@@ -39,11 +39,19 @@ module.exports = async function () {
         )
         const keepFactoryAddress = await keepVendor.selectFactory()
         keepFactory = await ECDSAKeepFactory.at(keepFactoryAddress)
+
+        const fee = await keepFactory.openKeepFeeEstimate.call()
+        console.log(`open new keep fee: [${fee}]`)
+
         await keepFactory.openKeep(
             groupSize,
             threshold,
             keepOwner,
             bond,
+            {
+                from: application,
+                value: fee
+            }
         )
 
         const eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
