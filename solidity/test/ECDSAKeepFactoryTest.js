@@ -2,7 +2,6 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
-const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactoryExposed');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const TokenStakingStub = artifacts.require("TokenStakingStub")
 const KeepBondingStub = artifacts.require('KeepBondingStub');
@@ -184,7 +183,7 @@ contract("ECDSAKeepFactory", async accounts => {
             tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBondingStub.new()
             randomBeacon = await RandomBeaconStub.new()
-            keepFactory = await ECDSAKeepFactory.new(
+            keepFactory = await ECDSAKeepFactoryStub.new(
                 bondedSortitionPoolFactory.address,
                 tokenStaking.address,
                 keepBonding.address,
@@ -570,7 +569,12 @@ contract("ECDSAKeepFactory", async accounts => {
             tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBondingStub.new()
             randomBeacon = accounts[1]
-            keepFactory = await ECDSAKeepFactory.new(bondedSortitionPoolFactory.address, tokenStaking.address, keepBonding.address, randomBeacon)
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon
+            )
         })
 
         beforeEach(async () => {

@@ -1,4 +1,4 @@
-const ECDSAKeepFactoryExposed = artifacts.require('ECDSAKeepFactoryExposed')
+const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
 const RandomBeaconService = artifacts.require('KeepRandomBeaconServiceImplV1')
 const { RandomBeaconAddress } = require('../migrations/externals')
 
@@ -6,7 +6,7 @@ const { RandomBeaconAddress } = require('../migrations/externals')
 // It checks that the beacon executes the callback function and sets a new
 // group selection seed on the factory contract.
 //
-// It requires usage of `ECDSAKeepFactoryExposed` contract which exposes function
+// It requires usage of `ECDSAKeepFactoryStub` contract which exposes function
 // to get internal `groupSelectionSeed`. To do that the contract has to be deployed
 // instead of regular `ECDSAKeepFactory` contract.
 // 
@@ -32,7 +32,7 @@ module.exports = async function () {
 
 
     try {
-        keepFactory = await ECDSAKeepFactoryExposed.deployed()
+        keepFactory = await ECDSAKeepFactoryStub.deployed()
         randomBeacon = await RandomBeaconService.at(RandomBeaconAddress)
     } catch (err) {
         console.error(`factory deployment failed: [${err}]`)

@@ -4,7 +4,7 @@ import "../../contracts/ECDSAKeepFactory.sol";
 
 /// @title ECDSA Keep Factory Stub
 /// @dev This contract is for testing purposes only.
-contract ECDSAKeepFactoryExposed is ECDSAKeepFactory {
+contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
     constructor(
         address sortitionPoolFactory,
         address tokenStaking,
