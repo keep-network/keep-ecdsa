@@ -7,7 +7,7 @@ import {IRandomBeaconService} from "../../contracts/ECDSAKeepFactory.sol";
 contract RandomBeaconStub is IRandomBeaconService {
     uint256 feeEstimate = 58;
     uint256 entry = 0;
-    uint256 public calledTimes = 0;
+    uint256 public requestCount = 0;
     bool shouldFail;
 
     /// @dev Get the entry fee estimate in wei for relay entry request.
@@ -25,7 +25,7 @@ contract RandomBeaconStub is IRandomBeaconService {
         string memory callbackMethod,
         uint256 callbackGas
     ) public payable returns (uint256) {
-        calledTimes++;
+        requestCount++;
 
         if (shouldFail) {
             revert("request relay entry failed");

@@ -486,7 +486,7 @@ contract("ECDSAKeepFactory", async accounts => {
             )
 
             assert.equal(
-                await randomBeacon.calledTimes.call(),
+                await randomBeacon.requestCount.call(),
                 1,
                 "incorrect number of beacon calls",
             )
