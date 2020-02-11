@@ -175,6 +175,8 @@ contract ECDSAKeepFactory is
     /// generate a new random number. The beacon generates the number asynchronously
     /// and will call a callback function when the number is ready. In the meantime
     /// we update current group selection seed to a new value using a hash function.
+    /// In case of the random beacon request failure this function won't revert
+    /// but .....// TODO: Update when we decide what to do
     function newGroupSelectionSeed() internal {
         // Calculate new group selection seed based on the current seed.
         // We added address of the factory as a key to calculate value different
@@ -185,11 +187,21 @@ contract ECDSAKeepFactory is
         );
 
         // Call the random beacon to get a random group selection seed.
-        randomBeacon.requestRelayEntry.value(msg.value)(
-            address(this),
-            "setGroupSelectionSeed(uint256)",
-            callbackGas
+        // TODO: Replace with try/catch after we upgrade to solidity >= 0.6.0
+        (bool success, bytes memory returnData) = address(randomBeacon)
+            .call
+            .value(msg.value)(
+            abi.encodeWithSelector(
+                randomBeacon.requestRelayEntry.selector,
+                address(this),
+                "setGroupSelectionSeed(uint256)",
+                callbackGas
+            )
         );
+        if (!success) {
+            // TODO: What should we do in case of `requestRelayEntry` failure?
+            // Forward `msg.value` to the keep members?
+        }
     }
 
     /// @notice Sets a new group selection seed value.
