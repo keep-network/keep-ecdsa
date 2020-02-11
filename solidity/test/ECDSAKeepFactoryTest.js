@@ -248,6 +248,21 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
+        it("reverts if value is less than required fee estimate", async () => {
+            const insufficientFee = feeEstimate.sub(new BN(1))
+
+            await expectRevert(
+                keepFactory.openKeep(
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
+                    { from: application, fee: insufficientFee },
+                ),
+                "Insufficient payment for opening a new keep"
+            )
+        })
+
         it("opens keep with multiple members", async () => {
             let blockNumber = await web3.eth.getBlockNumber()
 
