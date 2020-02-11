@@ -3,19 +3,23 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/net/libp2p"
-	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/urfave/cli"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
+
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/client"
+
+	"github.com/urfave/cli"
 )
 
 var logger = log.Logger("keep-cmd")
@@ -73,6 +77,8 @@ func Start(c *cli.Context) error {
 		networkPrivateKey,
 		ethereum.NewEthereumStakeMonitor(),
 		retransmission.NewTicker(make(chan uint64)),
+		libp2p.WithRoutingTableRefreshPeriod(5*time.Minute),
+		libp2p.WithBootstrapMinPeerThreshold(10),
 	)
 	if err != nil {
 		return err
