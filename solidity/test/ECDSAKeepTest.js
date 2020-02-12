@@ -94,15 +94,6 @@ contract('ECDSAKeep', (accounts) => {
         assert.include(e.message, 'Signer is busy')
       }
     })
-
-    it('can be requested again after timeout passed', async () => {
-      await keep.sign(digest, { from: owner })
-
-      const signingTimeout = await keep.signingTimeout.call()
-      mineBlocks(signingTimeout)
-
-      await keep.sign(digest, { from: owner })
-    })
   })
 
   describe('public key', () => {
@@ -229,11 +220,7 @@ contract('ECDSAKeep', (accounts) => {
     const hash256Digest2 = '0x14a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
     const preimage2 = '0x1111636820506f7a6e616e'
 
-    let signingTimeout
-
-    beforeEach(async () => {
-      signingTimeout = await keep.signingTimeout.call()
-      
+    beforeEach(async () => {      
       await keep.setPublicKey(publicKey1, { from: members[0] })
       await keep.sign(hash256Digest2, { from: owner })
     })
@@ -264,7 +251,6 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('should return an error when signature is invalid and was requested', async () => {
-      mineBlocks(signingTimeout)
       await keep.sign(hash256Digest1, { from: owner })
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
 
@@ -295,7 +281,6 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('should return an error when signature is valid and was requested', async () => {
-      mineBlocks(signingTimeout)
       await keep.sign(hash256Digest1, { from: owner })
 
       await expectRevert(
@@ -366,18 +351,6 @@ contract('ECDSAKeep', (accounts) => {
       } catch (e) {
         assert.include(e.message, "Not awaiting a signature")
       }
-    })
-
-    it('accepts signature after timeout', async () => {
-      const signingTimeout = await keep.signingTimeout.call()
-      mineBlocks(signingTimeout)
-
-      await keep.submitSignature(
-        signatureR,
-        signatureS,
-        signatureRecoveryID,
-        { from: members[0] }
-      )
     })
 
     describe('validates signature', async () => {

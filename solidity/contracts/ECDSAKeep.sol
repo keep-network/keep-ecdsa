@@ -15,21 +15,23 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     // List of keep members' addresses.
     address payable[] internal members;
+
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
+
     // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
     bytes publicKey;
+
     // Latest digest requested to be signed. Used to validate submitted signature.
     bytes32 digest;
+
     // Map of all digests requested to be signed. Used to validate submitted signature.
     mapping(bytes32 => bool) digests;
-    // Timeout in blocks for a signature to appear on the chain. Blocks are
-    // counted from the moment sign request occurred.
-    uint256 public signingTimeout = 10;
-    // Number of block when signing process was started. Used to track if signing
-    // is in progress. Value `0` indicates that there is no signing process in progress.
-    uint256 internal currentSigningStartBlock;
+
+    // Indicates whether keep is currently signing some digest. No concurrent
+    // signing operations are allowed.
+    bool isSigningInProgress;
 
     // Notification that a signer's public key was published for the keep.
     event PublicKeyPublished(bytes publicKey);
@@ -152,12 +154,10 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @dev Only one signing process can be in progress at a time.
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external onlyOwner {
-        require(
-            !isSigningInProgress() || hasSigningTimedOut(),
-            "Signer is busy"
-        );
+        require(!isSigningInProgress, "Signer is busy");
 
-        currentSigningStartBlock = block.number;
+        isSigningInProgress = true;
+
         digests[_digest] = true;
         digest = _digest;
 
@@ -174,7 +174,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         external
         onlyMember
     {
-        require(isSigningInProgress(), "Not awaiting a signature");
+        require(isSigningInProgress, "Not awaiting a signature");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // We add 27 to the recovery ID to align it with ethereum and bitcoin
@@ -188,23 +188,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             "Invalid signature"
         );
 
-        currentSigningStartBlock = 0;
+        isSigningInProgress = false;
 
         emit SignatureSubmitted(digest, _r, _s, _recoveryID);
-    }
-
-    /// @notice Returns true if signing of a digest is currently in progress.
-    function isSigningInProgress() internal view returns (bool) {
-        return currentSigningStartBlock != 0;
-    }
-
-    /// @notice Returns true if the currently ongoing signing process timed out.
-    /// @dev There is a certain timeout for a signature to be produced, see
-    /// `signingTimeout` value.
-    function hasSigningTimedOut() internal view returns (bool) {
-        return
-            currentSigningStartBlock != 0 &&
-            block.number > currentSigningStartBlock + signingTimeout;
     }
 
     /// @notice Checks if the caller is a keep member.
