@@ -240,19 +240,16 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if no member candidates are registered", async () => {
-            try {
-                await keepFactory.openKeep(
+            await expectThrowWithMessage(
+                keepFactory.openKeep(
                     groupSize,
                     threshold,
                     keepOwner,
                     bond,
                     { value: feeEstimate }
-                )
-
-                assert(false, 'Test call did not error as expected')
-            } catch (e) {
-                assert.include(e.message, "No signer pool for this application")
-            }
+                ),
+                "No signer pool for this application"
+            )
         })
 
         it("reverts if bond equals zero", async () => {
