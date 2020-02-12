@@ -4,13 +4,13 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "./api/IBondedECDSAKeep.sol";
-import "./utils/AddressArrayUtils.sol";
+import "./utils/AddressPayableArrayUtils.sol";
 import "./KeepBonding.sol";
 
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
 contract ECDSAKeep is IBondedECDSAKeep, Ownable {
-    using AddressArrayUtils for address payable[];
+    using AddressPayableArrayUtils for address payable[];
     using SafeMath for uint256;
 
     // List of keep members' addresses.
