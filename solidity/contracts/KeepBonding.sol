@@ -98,6 +98,23 @@ contract KeepBonding {
         lockedBonds[bondID] += amount;
     }
 
+    /// @notice Returns value of ether bonded for the operator.
+    /// @param operator Address of the operator.
+    /// @param holder Address of the holder of the bond.
+    /// @param referenceID Reference ID used to track the bond by holder.
+    /// @return Operator's bonded ether.
+    function bondAmount(address operator, address holder, uint256 referenceID)
+        public
+        view
+        returns (uint256)
+    {
+        bytes32 bondID = keccak256(
+            abi.encodePacked(operator, holder, referenceID)
+        );
+
+        return lockedBonds[bondID];
+    }
+
     /// @notice Reassigns a bond to a new holder under a new reference.
     /// @dev Function requires that a caller is the holder of the bond which is
     /// being reassigned.

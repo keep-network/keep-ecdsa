@@ -3,8 +3,8 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 const { expectRevert } = require('openzeppelin-test-helpers');
 
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
+const KeepBonding = artifacts.require('KeepBonding');
 const TokenStakingStub = artifacts.require("TokenStakingStub")
-const KeepBondingStub = artifacts.require('KeepBondingStub');
 const BondedSortitionPool = artifacts.require('BondedSortitionPool');
 const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
 const RandomBeaconStub = artifacts.require('RandomBeaconStub')
@@ -31,7 +31,7 @@ contract("ECDSAKeepFactory", async accounts => {
         before(async () => {
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBondingStub.new()
+            keepBonding = await KeepBonding.new()
             randomBeacon = await RandomBeaconStub.new()
             keepFactory = await ECDSAKeepFactoryStub.new(
                 bondedSortitionPoolFactory.address,
@@ -127,7 +127,7 @@ contract("ECDSAKeepFactory", async accounts => {
         before(async () => {
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBondingStub.new()
+            keepBonding = await KeepBonding.new()
             randomBeacon = await RandomBeaconStub.new()
             keepFactory = await ECDSAKeepFactoryStub.new(
                 bondedSortitionPoolFactory.address,
@@ -181,7 +181,7 @@ contract("ECDSAKeepFactory", async accounts => {
             // We don't use stub to ensure that keep members selection works correctly.
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBondingStub.new()
+            keepBonding = await KeepBonding.new()
             randomBeacon = await RandomBeaconStub.new()
             keepFactory = await ECDSAKeepFactoryStub.new(
                 bondedSortitionPoolFactory.address,
@@ -316,15 +316,15 @@ contract("ECDSAKeepFactory", async accounts => {
             const keepAddress = eventList[0].returnValues.keepAddress
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member1, keepAddress)
+                await keepBonding.bondAmount(member1, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member1')
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member2, keepAddress)
+                await keepBonding.bondAmount(member2, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member2')
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member3, keepAddress)
+                await keepBonding.bondAmount(member3, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member3')
         })
 
@@ -367,15 +367,15 @@ contract("ECDSAKeepFactory", async accounts => {
             const keepAddress = eventList[0].returnValues.keepAddress
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member1, keepAddress)
+                await keepBonding.bondAmount(member1, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member1')
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member2, keepAddress)
+                await keepBonding.bondAmount(member2, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member2')
 
             expect(
-                await keepBonding.getLockedBonds(keepAddress, member3, keepAddress)
+                await keepBonding.bondAmount(member3, keepAddress, keepAddress)
             ).to.eq.BN(singleBond, 'invalid bond value for member3')
         })
 
@@ -567,7 +567,7 @@ contract("ECDSAKeepFactory", async accounts => {
         before(async () => {
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBondingStub.new()
+            keepBonding = await KeepBonding.new()
             randomBeacon = accounts[1]
             keepFactory = await ECDSAKeepFactoryStub.new(
                 bondedSortitionPoolFactory.address,
