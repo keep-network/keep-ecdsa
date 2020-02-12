@@ -3,9 +3,15 @@ const BondedECDSAKeepVendorImplV1 = artifacts.require('./BondedECDSAKeepVendorIm
 const ECDSAKeepFactory = artifacts.require('./ECDSAKeepFactory.sol')
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 
+const RandomBeaconService = artifacts.require('IRandomBeacon')
+const { RandomBeaconAddress } = require('../migrations/externals')
+
 // This test validates integration between on-chain contracts and off-chain client.
+// It also validates integration with the random beacon by verifying update of
+// the group selection seed by random beacon with a callback.
 // It requires contracts to be deployed before running the test and the client
-// to be configured with `ECDSAKeepFactory` address.
+// to be configured with `ECDSAKeepFactory` address. It also requires random
+// beacon to be running.
 // 
 // To execute this smoke test run:
 // truffle exec integration/smoke_test.js
@@ -16,6 +22,7 @@ module.exports = async function () {
     let startBlockNumber
     let keep
     let keepPublicKey
+    let relayEntryGeneratedWatcher
 
     const groupSize = 3
     const threshold = 3
@@ -26,22 +33,34 @@ module.exports = async function () {
         keepOwner = accounts[1]
 
         startBlockNumber = await web3.eth.getBlock('latest').number
+
+        randomBeacon = await RandomBeaconService.at(RandomBeaconAddress)
     } catch (err) {
         console.error(`initialization failed: [${err}]`)
         process.exit(1)
     }
 
     try {
-        console.log('opening a new keep...');
+        console.log('selecting a keep factory...');
 
         const keepVendor = await BondedECDSAKeepVendorImplV1.at(
             (await BondedECDSAKeepVendor.deployed()).address
         )
         const keepFactoryAddress = await keepVendor.selectFactory()
         keepFactory = await ECDSAKeepFactory.at(keepFactoryAddress)
+    } catch (err) {
+        console.error(`failed to select a factory: [${err}]`)
+        process.exit(1)
+    }
+
+    try {
+        console.log('opening a new keep...');
 
         const fee = await keepFactory.openKeepFeeEstimate.call()
         console.log(`open new keep fee: [${fee}]`)
+
+        // Initialize relay entry generated watcher.
+        relayEntryGeneratedWatcher = watchRelayEntryGenerated(randomBeacon)
 
         await keepFactory.openKeep(
             groupSize,
@@ -126,6 +145,29 @@ module.exports = async function () {
         process.exit(1)
     }
 
+    try {
+        console.log('wait for new relay entry generation...')
+
+        const event = await relayEntryGeneratedWatcher
+        const newRelayEntry = web3.utils.toBN(event.returnValues.entry)
+
+        console.log('get current group selection seed...')
+        const currentSeed = web3.utils.toBN(await keepFactory.groupSelectionSeed.call())
+
+        if (currentSeed.cmp(newRelayEntry) != 0) {
+            throw Error(
+                'current seed does not equal new relay entry\n' +
+                `actual:   ${currentSeed}\n` +
+                `expected: ${newRelayEntry}`
+            )
+        }
+
+        console.log('group selection seed was successfully updated by the random beacon')
+    } catch (err) {
+        console.error(`random beacon callback failed: [${err}]`)
+        process.exit(1)
+    }
+
     process.exit()
 }
 
@@ -141,6 +183,15 @@ function watchPublicKeyPublished(keep) {
 function watchSignatureSubmittedEvent(keep) {
     return new Promise(async (resolve) => {
         keep.SignatureSubmitted()
+            .on('data', event => {
+                resolve(event)
+            })
+    })
+}
+
+function watchRelayEntryGenerated(randomBeacon) {
+    return new Promise(async (resolve) => {
+        randomBeacon.RelayEntryGenerated()
             .on('data', event => {
                 resolve(event)
             })
