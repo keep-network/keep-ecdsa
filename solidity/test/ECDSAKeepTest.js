@@ -39,7 +39,7 @@ contract('ECDSAKeep', (accounts) => {
   })
 
   afterEach(async () => {
-      await restoreSnapshot()
+    await restoreSnapshot()
   })
 
   describe('#constructor', async () => {
@@ -223,13 +223,13 @@ contract('ECDSAKeep', (accounts) => {
     })
   })
 
-  describe('checkBondAmount', () =>  {
+  describe('checkBondAmount', () => {
     const value0 = new BN(30)
     const value1 = new BN(70)
 
     it('should return bond amount', async () => {
       let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
-      
+
       await keepBonding.deposit(members[0], { value: value0 })
       await keepBonding.deposit(members[1], { value: value1 })
       await keepBonding.createBond(members[0], keep.address, referenceID, value0)
@@ -239,17 +239,17 @@ contract('ECDSAKeep', (accounts) => {
       let expected = value0.add(value1);
 
       expect(actual).to.eq.BN(expected, "incorrect bond amount");
-    })  
+    })
   })
 
-  describe('seizeSignerBonds', () =>  {
+  describe('seizeSignerBonds', () => {
     const value0 = new BN(30)
     const value1 = new BN(70)
     const value2 = new BN(10)
 
     it('should seize signer bond', async () => {
       let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
-      
+
       await keepBonding.deposit(members[0], { value: value0 })
       await keepBonding.deposit(members[1], { value: value1 })
       await keepBonding.deposit(members[2], { value: value2 })
@@ -260,21 +260,21 @@ contract('ECDSAKeep', (accounts) => {
       let bondsBeforeSeizure = await keep.checkBondAmount()
       let expected = value0.add(value1).add(value2);
       expect(bondsBeforeSeizure).to.eq.BN(expected, "incorrect bond amount before seizure");
-      
+
       let gasPrice = await web3.eth.getGasPrice()
 
       let ownerBalanceBefore = await web3.eth.getBalance(owner);
-      let txHash = await keep.seizeSignerBonds({from: owner})
+      let txHash = await keep.seizeSignerBonds({ from: owner })
 
       let seizedSignerBondsFee = new BN(txHash.receipt.gasUsed).mul(new BN(gasPrice))
       let ownerBalanceDiff = new BN(await web3.eth.getBalance(owner))
-          .add(seizedSignerBondsFee).sub(new BN(ownerBalanceBefore));
+        .add(seizedSignerBondsFee).sub(new BN(ownerBalanceBefore));
 
       expect(ownerBalanceDiff).to.eq.BN(value0.add(value1).add(value2), "incorrect owner balance");
       
       let bondsAfterSeizure = await keep.checkBondAmount()
       expect(bondsAfterSeizure).to.eq.BN(0, "should zero all the bonds");
-    })  
+    })
   })
 
   describe('submitSignatureFraud', () => {
@@ -283,20 +283,20 @@ contract('ECDSAKeep', (accounts) => {
     //  Curve: secp256k1
     //  X: 0x9A0544440CC47779235CCB76D669590C2CD20C7E431F97E17A1093FAF03291C4
     //  Y: 0x73E661A208A8A565CA1E384059BD2FF7FF6886DF081FF1229250099D388C83DF
-    
+
     // TODO: Extract test data to a test data file and use them consistently across other tests.
 
     const publicKey1 = '0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df'
     const preimage1 = '0x4c65636820506f7a6e616e' // Lech Poznan
     // hash256Digest1 = sha256(abi.encodePacked(sha256(preimage1)))
     const hash256Digest1 = '0x8bacaa8f02ef807f2f61ae8e00a5bfa4528148e0ae73b2bd54b71b8abe61268e'
-    
+
     const signature1 = {
       R: '0xedc074a86380cc7e2e4702eaf1bec87843bc0eb7ebd490f5bdd7f02493149170',
       S: '0x3f5005a26eb6f065ea9faea543e5ddb657d13892db2656499a43dfebd6e12efc',
       V: 28
     }
-    
+
     const hash256Digest2 = '0x14a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
     const preimage2 = '0x1111636820506f7a6e616e'
 
@@ -314,10 +314,10 @@ contract('ECDSAKeep', (accounts) => {
         signature1.V,
         signature1.R,
         signature1.S,
-        hash256Digest1, 
+        hash256Digest1,
         preimage1
       )
-        
+
       assert.isTrue(res, 'Signature is fraudulent because is valid but was not requested.')
     })
 
@@ -327,7 +327,7 @@ contract('ECDSAKeep', (accounts) => {
           signature1.V,
           signature1.R,
           signature1.S,
-          hash256Digest1, 
+          hash256Digest1,
           preimage2
         ),
         'Signed digest does not match double sha256 hash of the preimage'
@@ -344,7 +344,7 @@ contract('ECDSAKeep', (accounts) => {
           signature1.V,
           badSignatureR,
           signature1.S,
-          hash256Digest1, 
+          hash256Digest1,
           preimage1
         ),
         'Signature is not fraudulent'
@@ -358,7 +358,7 @@ contract('ECDSAKeep', (accounts) => {
           signature1.V,
           badSignatureR,
           signature1.S,
-          hash256Digest1, 
+          hash256Digest1,
           preimage1
         ),
         'Signature is not fraudulent'
@@ -374,7 +374,7 @@ contract('ECDSAKeep', (accounts) => {
           signature1.V,
           signature1.R,
           signature1.S,
-          hash256Digest1, 
+          hash256Digest1,
           preimage1
         ),
         'Signature is not fraudulent'
@@ -386,8 +386,16 @@ contract('ECDSAKeep', (accounts) => {
     const digest = '0x54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
     const publicKey = '0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051'
     const signatureR = '0x9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
-    const signatureS = '0x90838891021e1c7d0d1336613f24ecab703dee5ff1b6c8881bccc2c011606a35'
-    const signatureRecoveryID = 0
+    const signatureS = '0x6f7c776efde1e382f2ecc99ec0db13534a70ee86bd91d7b3a4059bccbed5d70c'
+    const signatureRecoveryID = 1
+
+    // This malleable signature details corresponds to the signature above but
+    // it's calculated that `S` is in the higher half of curve's order. We use
+    // this to check malleability.
+    // `malleableS = secp256k1.N - signatureS`
+    // To read more see [EIP-2](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2.md).
+    const malleableS = '0x90838891021e1c7d0d1336613f24ecab703dee5ff1b6c8881bccc2c011606a35'
+    const malleableRecoveryID = 0
 
     beforeEach(async () => {
       await submitMembersPublicKey(publicKey)
@@ -471,12 +479,26 @@ contract('ECDSAKeep', (accounts) => {
           await keep.submitSignature(
             signatureR,
             signatureS,
-            1,
+            0,
             { from: members[0] }
           )
           assert(false, 'Test call did not error as expected')
         } catch (e) {
           assert.include(e.message, "Invalid signature")
+        }
+      })
+
+      it('rejects malleable signature', async () => {
+        try {
+          await keep.submitSignature(
+            signatureR,
+            malleableS,
+            malleableRecoveryID,
+            { from: members[0] }
+          )
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, "Malleable signature - s should be in the low half of secp256k1 curve's order")
         }
       })
     })

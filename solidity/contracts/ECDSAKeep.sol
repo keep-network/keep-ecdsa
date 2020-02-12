@@ -190,6 +190,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @notice Submits a signature calculated for the given digest.
     /// @dev Fails if signature has not been requested or a signature has already
     /// been submitted.
+    /// Validates s value to ensure it's in the lower half of the secp256k1 curve's
+    /// order.
     /// @param _r Calculated signature's R value.
     /// @param _s Calculated signature's S value.
     /// @param _recoveryID Calculated signature's recovery ID (one of {0, 1, 2, 3}).
@@ -199,6 +201,15 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     {
         require(isSigningInProgress(), "Not awaiting a signature");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
+
+        // Validate `s` value for a malleability concern described in EIP-2.
+        // Only signatures with `s` value in the lower half of the secp256k1
+        // curve's order are considered valid.
+        require(
+            uint256(_s) <=
+                0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0,
+            "Malleable signature - s should be in the low half of secp256k1 curve's order"
+        );
 
         // We add 27 to the recovery ID to align it with ethereum and bitcoin
         // protocols where 27 is added to recovery ID to indicate usage of
