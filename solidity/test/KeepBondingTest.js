@@ -1,6 +1,7 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const Registry = artifacts.require('./Registry.sol')
+const TokenStaking = artifacts.require('./TokenStakingStub.sol')
 const KeepBonding = artifacts.require('./KeepBondingStub.sol')
 const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
 
@@ -14,13 +15,15 @@ const expect = chai.expect
 
 contract('KeepBonding', (accounts) => {
     let registry
+    let stakingContract
     let bondCreator
     let keepBonding
     let etherReceiver
 
     before(async () => {
         registry = await Registry.new()
-        keepBonding = await KeepBonding.new(registry.address)
+        stakingContract = await TokenStaking.new()
+        keepBonding = await KeepBonding.new(registry.address, stakingContract.address)
         etherReceiver = await TestEtherReceiver.new()
         bondCreator = accounts[4]
         await registry.approveOperatorContract(bondCreator)

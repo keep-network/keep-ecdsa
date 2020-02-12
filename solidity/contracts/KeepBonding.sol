@@ -2,6 +2,10 @@ pragma solidity ^0.5.4;
 
 import "@keep-network/keep-core/contracts/Registry.sol";
 
+interface TokenStaking {
+    function isAuthorizedForOperator(address operator, address operatorContract) external view returns (bool);
+}
+
 // TODO: This contract is expected to implement functions defined by IBonding
 // interface defined in @keep-network/sortition-pools. After merging the
 // repositories we need to move IBonding definition to sit closer to KeepBonding
@@ -17,6 +21,9 @@ contract KeepBonding {
     // Registry contract with a list of approved factories (operator contracts) and upgraders.
     Registry internal registry;
 
+    // Staking contract linked to this contract.
+    TokenStaking internal stakingContract;
+
     // Unassigned ether values deposited by operators.
     mapping(address => uint256) internal unbondedValue;
     // References to created bonds. Bond identifier is built from operator's
@@ -25,8 +32,10 @@ contract KeepBonding {
 
     /// @dev Initialize Keep Bonding contract.
     /// @param registryAddress Keep registry contract linked to this contract.
-    constructor(address registryAddress) public {
+    /// @param stakingContractAddress Keep Token staking contract linked to this contract.
+    constructor(address registryAddress, address stakingContractAddress) public {
         registry = Registry(registryAddress);
+        stakingContract = TokenStaking(stakingContractAddress);
     }
 
     /// @notice Returns the amount of ether the operator has made available for

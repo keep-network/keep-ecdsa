@@ -9,7 +9,7 @@ const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory
 
 module.exports = async function (deployer) {
     await deployer.deploy(Registry)
-    await deployer.deploy(KeepBonding, Registry.address)
+    await deployer.deploy(KeepBonding, Registry.address, "0x0000000000000000000000000000000000000000") // TODO: get keep-core contracts deployed addresses
 
     await deployBondedSortitionPoolFactory(artifacts, deployer)
 

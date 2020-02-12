@@ -3,6 +3,7 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 const { expectRevert } = require('openzeppelin-test-helpers');
 
 const Registry = artifacts.require('Registry');
+const TokenStaking = artifacts.require('TokenStakingStub');
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBondingStub = artifacts.require('KeepBondingStub');
@@ -17,6 +18,7 @@ const expect = chai.expect
 
 contract("ECDSAKeepFactory", async accounts => {
     let registry
+    let tokenStaking
     let keepFactory
     let bondedSortitionPoolFactory
     let keepBonding
@@ -29,8 +31,9 @@ contract("ECDSAKeepFactory", async accounts => {
     describe("registerMemberCandidate", async () => {
         before(async () => {
             registry = await Registry.new()
+            tokenStaking = await TokenStaking.new()
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-            keepBonding = await KeepBondingStub.new(registry.address)
+            keepBonding = await KeepBondingStub.new(registry.address, tokenStaking.address)
             keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, keepBonding.address)
             await registry.approveOperatorContract(keepFactory.address)
         })
@@ -114,7 +117,7 @@ contract("ECDSAKeepFactory", async accounts => {
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-            keepBonding = await KeepBondingStub.new(registry.address)
+            keepBonding = await KeepBondingStub.new(registry.address, tokenStaking.address)
             keepFactory = await ECDSAKeepFactory.new(bondedSortitionPoolFactory.address, keepBonding.address)
             await registry.approveOperatorContract(keepFactory.address)
         }
