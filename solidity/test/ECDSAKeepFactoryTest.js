@@ -27,7 +27,7 @@ contract("ECDSAKeepFactory", async accounts => {
     const member2 = accounts[3]
     const member3 = accounts[4]
     
-    const stakeBalance = 10;
+    const stakeBalance = web3.utils.toWei("1000000", "ether");
 
     describe("registerMemberCandidate", async () => {
         before(async () => {
@@ -71,19 +71,19 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("inserts operator with the correct staking weight in the pool", async () => {
-            const stakingWeight = new BN(199)
-            await tokenStaking.setBalance(stakingWeight)
+            // setting this vlaue to 10x minimum stake
+            const stakeBalance = web3.utils.toWei("2000000", "ether"); 
+            await tokenStaking.setBalance(stakeBalance)
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
             const signerPoolAddress = await keepFactory.getSignerPool(application)
             const signerPool = await BondedSortitionPool.at(signerPoolAddress)
 
-            // TODO: Update result verification when sortition-pools interfaces
-            // and implementation are ready.
-            //expect(
-             //    await signerPool.getPoolWeight.call(member1)
-            //).to.eq.BN(stakingWeight, 'invalid staking weight')
+            const actualWeight = await signerPool.getPoolWeight.call(member1);
+            const expectedWeight = new BN("10") // 20000000 / 2000000 = 10
+
+            expect(actualWeight).to.eq.BN(expectedWeight, 'invalid staking weight')
         })
 
         it("inserts operators to the same pool", async () => {
@@ -144,6 +144,12 @@ contract("ECDSAKeepFactory", async accounts => {
                 keepBonding.address,
                 randomBeacon.address
             )
+
+            await tokenStaking.setBalance(stakeBalance);
+
+            const bondingValue = new BN(100)
+            await keepBonding.deposit(member1, { value: bondingValue })
+            await keepBonding.deposit(member2, { value: bondingValue })
         })
 
         beforeEach(async () => {
