@@ -5,6 +5,7 @@ import {
 } from './helpers/listBalanceUtils'
 
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
+import { duration, increaseTime } from './helpers/increaseTime';
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -334,6 +335,36 @@ contract('ECDSAKeep', (accounts) => {
       )
 
       await keep.sign(digest, { from: owner })
+    })
+
+    it('can be called just before the timeout', async () => {
+      const signingTimeout = await keep.signingTimeout.call()
+
+      await increaseTime(duration.seconds(signingTimeout - 1));
+
+     
+      await  keep.submitSignature(
+          signatureR,
+          signatureS,
+          signatureRecoveryID,
+          { from: members[0] }
+        )
+    })
+  
+    it('cannot be called after the timeout passed', async () => {
+      const signingTimeout = await keep.signingTimeout.call()
+
+      await increaseTime(duration.seconds(signingTimeout));
+
+      await expectRevert(
+        keep.submitSignature(
+          signatureR,
+          signatureS,
+          signatureRecoveryID,
+          { from: members[0] }
+        ),
+        "Signing timeout elapsed"
+      )
     })
 
     it('cannot be submitted if signing was not requested', async () => {

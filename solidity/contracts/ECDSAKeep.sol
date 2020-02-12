@@ -29,9 +29,14 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // Map of all digests requested to be signed. Used to validate submitted signature.
     mapping(bytes32 => bool) digests;
 
-    // Indicates whether keep is currently signing some digest. No concurrent
-    // signing operations are allowed.
-    bool isSigningInProgress;
+    // Timeout in blocks for a signature to appear on the chain. Blocks are
+    // counted from the moment signing request occurred.
+    uint256 public signingTimeout = 90 * 60;  // [seconds]
+
+    // The timestamp at which signing process started. Used also to track if
+    // signing is in progress. When set to `0` indicates there is no
+    // signing process in progress.
+    uint256 internal signingStartTimestamp;
 
     // Notification that a signer's public key was published for the keep.
     event PublicKeyPublished(bytes publicKey);
@@ -154,9 +159,10 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @dev Only one signing process can be in progress at a time.
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external onlyOwner {
-        require(!isSigningInProgress, "Signer is busy");
+        require(!isSigningInProgress(), "Signer is busy");
 
-        isSigningInProgress = true;
+        /* solium-disable-next-line */
+        signingStartTimestamp = block.timestamp;
 
         digests[_digest] = true;
         digest = _digest;
@@ -174,7 +180,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         external
         onlyMember
     {
-        require(isSigningInProgress, "Not awaiting a signature");
+        require(isSigningInProgress(), "Not awaiting a signature");
+        require(!hasSigningTimedOut(), "Signing timeout elapsed");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // We add 27 to the recovery ID to align it with ethereum and bitcoin
@@ -188,9 +195,24 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             "Invalid signature"
         );
 
-        isSigningInProgress = false;
+        signingStartTimestamp = 0;
 
         emit SignatureSubmitted(digest, _r, _s, _recoveryID);
+    }
+
+    /// @notice Returns true if signing of a digest is currently in progress.
+    function isSigningInProgress() internal view returns (bool) {
+        return signingStartTimestamp != 0;
+    }
+
+    /// @notice Returns true if the ongoing signing process timed out.
+    /// @dev There is a certain timeout for a signature to be produced, see
+    /// `signingTimeout`.
+    function hasSigningTimedOut() internal view returns (bool) {
+        return
+            signingStartTimestamp != 0 &&
+            /* solium-disable-next-line */
+            block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
     /// @notice Checks if the caller is a keep member.
