@@ -131,7 +131,18 @@ jobs:
       - attach_workspace:
           at: solidity
       - run:
-          name: Set Gcloud Auth
+          name: Set Gcloud Auth for bucket access
+          command: |
+            echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+      - run:
+          name: Fetch external contracts artifacts
+          command: |
+            export TOKEN_STAKING_CONTRACT_DATA="TokenStaking.json"
+            export REGISTRY_CONTRACT_DATA="Registry.json"
+            solidity/scripts/circleci-provision-external-contracts.sh
+      - run:
+          name: Set Gcloud Auth for jumphost SSH
           command: |
             echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json

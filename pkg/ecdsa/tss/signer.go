@@ -10,14 +10,39 @@ import (
 type ThresholdSigner struct {
 	*groupInfo
 
-	// keygenData contains output of key generation stage. This data should be
-	// persisted to local storage.
-	keygenData keygen.LocalPartySaveData
+	// thresholdKey contains a signer's key generated for a threshold signing
+	// scheme. This data should be persisted to a local storage.
+	thresholdKey ThresholdKey
 }
 
-// PublicKey returns Signer's ECDSA public key.
+// ThresholdKey contains data of signer's threshold key.
+type ThresholdKey keygen.LocalPartySaveData
+
+// MemberID returns member's unique identifer.
+func (s *ThresholdSigner) MemberID() MemberID {
+	return s.memberID
+}
+
+// GroupID return signing group unique identifer.
+func (s *ThresholdSigner) GroupID() string {
+	return s.groupID
+}
+
+// PublisherIndex is an index value of the signer in a signing group.
+func (s *ThresholdSigner) PublisherIndex() int {
+	for i, memberID := range s.groupMemberIDs {
+		if memberID.Equal(s.MemberID()) {
+			return i
+		}
+	}
+
+	return -1
+}
+
+// PublicKey returns signer's ECDSA public key which is also the signing group's
+// public key.
 func (s *ThresholdSigner) PublicKey() *ecdsa.PublicKey {
-	pkX, pkY := s.keygenData.ECDSAPub.X(), s.keygenData.ECDSAPub.Y()
+	pkX, pkY := s.thresholdKey.ECDSAPub.X(), s.thresholdKey.ECDSAPub.Y()
 
 	curve := tssLib.EC()
 	publicKey := ecdsa.PublicKey{

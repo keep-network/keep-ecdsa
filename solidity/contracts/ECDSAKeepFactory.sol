@@ -1,315 +1,216 @@
 pragma solidity ^0.5.4;
 
 import "./ECDSAKeep.sol";
-import "./utils/AddressArrayUtils.sol";
+import "./KeepBonding.sol";
+import "./api/IBondedECDSAKeepFactory.sol";
+import "./utils/AddressPayableArrayUtils.sol";
+
+import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
+import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
+import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
+import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
+
+import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
+
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title ECDSA Keep Factory
-/// @notice Contract creating ECDSA keeps.
-/// @dev TODO: This is a stub contract - needs to be implemented.
-contract ECDSAKeepFactory {
-    using AddressArrayUtils for address payable[];
+/// @notice Contract creating bonded ECDSA keeps.
+contract ECDSAKeepFactory is
+    IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
+{
+    using AddressPayableArrayUtils for address payable[];
     using SafeMath for uint256;
-
-    // List of keeps.
-    ECDSAKeep[] keeps;
-
-    // Tickets submitted by member candidates during the signing group selection
-    // execution and accepted by the protocol for consideration.
-    uint64[] tickets;
-
-    // Map simulates a sorted linked list of ticket values by their indexes.
-    // key -> value represent indices from the tickets[] array.
-    // 'key' index holds an index of a ticket and 'value' holds an index
-    // of the next ticket. Tickets are sorted by their value in
-    // descending order starting from the tail.
-    // Ex. tickets = [151, 42, 175, 7]
-    // tail: 2 because tickets[2] = 175
-    // previousTicketIndex[0] -> 1
-    // previousTicketIndex[1] -> 3
-    // previousTicketIndex[2] -> 0
-    // previousTicketIndex[3] -> 3 note: index that holds a lowest
-    // value points to itself because there is no `nil` in Solidity.
-    // Traversing from tail: [2]->[0]->[1]->[3] result in 175->151->42->7
-    mapping(uint256 => uint256) previousTicketIndex;
-
-    // Pseudorandom seed value used as an input for the pool selection.
-    // TODO: call random beacon for a new seed. This is hardcoded for now.
-    uint256 seed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
-
-    // Tail represents an index of a ticket in a tickets[] array which holds
-    // the highest ticket value. It is a tail of the linked list defined by
-    // `previousTicketIndex`.
-    uint256 tail;
-
-    // Number of block at which the pool selection started and from which
-    // ticket submissions are accepted.
-    uint256 ticketSubmissionStartBlock = block.number;
-
-    // Timeout in blocks after which the ticket submission is finished.
-    uint256 ticketSubmissionTimeout = 12;
-
-    // Ticket's size pool.
-    uint256 public poolSize = 60;
-
-    // List of candidates to be selected as keep members. Once the candidate is
-    // registered it remains on the list forever.
-    // TODO: It's a temporary solution until we implement proper candidate
-    // registration and member selection.
-    address payable[] memberCandidates;
-
-    // Information about ticket submitters.
-    mapping(uint256 => address payable) candidates;
 
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
-        address payable[] members
+        address payable[] members,
+        address owner,
+        address application
     );
 
-    /// @notice Register caller as a candidate to be selected as keep member.
-    /// @dev If caller is already registered it returns without any changes.
-    /// TODO: This is a simplified solution until we have proper registration
-    /// and pool selection.
-    function registerMemberCandidate() external {
-        if (!memberCandidates.contains(msg.sender)) {
-            memberCandidates.push(msg.sender);
-        }
-    }
+    // Mapping of pools with registered member candidates for each application.
+    mapping(address => address) candidatesPools; // application -> candidates pool
 
-    /**
-     * @dev Submits ticket to request to participate in a keep.
-     * @param ticket Bytes representation of a ticket that holds the following:
-     * - ticketValue: first 8 bytes of a result of keccak256 cryptography hash
-     *   function on the combination of the pool selection seed, staker-specific
-     *   value (address) and virtual staker index.
-     * - stakerValue: a staker-specific value which is the address of the staker.
-     * - virtualStakerIndex: 4-bytes number within a range of 1 to staker's weight;
-     *   has to be unique for all tickets submitted by the given staker for the
-     *   current candidate pool selection.
-     */
-    function submitTicket(bytes32 ticket) public {
-        uint64 ticketValue;
-        uint160 stakerValue;
-        uint32 virtualStakerIndex;
+    uint256 feeEstimate;
+    uint256 public groupSelectionSeed;
 
-        bytes memory ticketBytes = abi.encodePacked(ticket);
-        /* solium-disable-next-line */
-        assembly {
-            // ticket value is 8 bytes long
-            ticketValue := mload(add(ticketBytes, 8))
-            // staker value is 20 bytes long
-            stakerValue := mload(add(ticketBytes, 28))
-            // virtual staker index is 4 bytes long
-            virtualStakerIndex := mload(add(ticketBytes, 32))
-        }
+    BondedSortitionPoolFactory sortitionPoolFactory;
+    address tokenStaking;
+    KeepBonding keepBonding;
+    IRandomBeacon randomBeacon;
 
-        uint256 stakingWeight = 10000; // TODO: hardcoded, need to implement getting the right value.
+    uint256 public minimumStake = 200000 * 1e18;
+    uint256 minimumBond = 1; // TODO: Take from setter
 
-        if (block.number > ticketSubmissionStartBlock.add(ticketSubmissionTimeout)) {
-            revert("Ticket submission is over");
-        }
+    // Gas required for a callback from the random beacon. The value specifies
+    // gas required to call `setGroupSelectionSeed` function in the worst-case
+    // scenario with all the checks and maximum allowed uint256 relay entry as
+    // a callback parameter.
+    uint256 callbackGas = 41830;
 
-        if (candidates[ticketValue] != address(0)) {
-            revert("Duplicate ticket");
-        }
-
-        if (isTicketValid(
-            ticketValue,
-            stakerValue,
-            virtualStakerIndex,
-            stakingWeight,
-            seed
-        )) {
-            addTicket(ticketValue);
-        } else {
-            revert("Invalid ticket");
-        }
-    }
-
-    function isTicketValid(
-        uint64 ticketValue,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex,
-        uint256 stakingWeight,
-        uint256 selectionSeed
-    ) internal view returns(bool) {
-        uint64 ticketValueExpected;
-        bytes memory ticketBytes = abi.encodePacked(
-            keccak256(
-                abi.encodePacked(
-                    selectionSeed,
-                    stakerValue,
-                    virtualStakerIndex
-                )
-            )
+    constructor(
+        address _sortitionPoolFactory,
+        address _tokenStaking,
+        address _keepBonding,
+        address _randomBeacon
+    ) public {
+        sortitionPoolFactory = BondedSortitionPoolFactory(
+            _sortitionPoolFactory
         );
-        // use first 8 bytes to compare ticket values
-        /* solium-disable-next-line */
-        assembly {
-            ticketValueExpected := mload(add(ticketBytes, 8))
-        }
-
-        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
-        bool isStakerValueValid = stakerValue == uint256(msg.sender);
-        bool isTicketValueValid = ticketValue == ticketValueExpected;
-
-        return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
+        tokenStaking = _tokenStaking;
+        keepBonding = KeepBonding(_keepBonding);
+        randomBeacon = IRandomBeacon(_randomBeacon);
     }
 
-     /**
-     * @dev Adds a new, verified ticket. Ticket is accepted when it is lower
-     * than the currently highest ticket or when the number of tickets is still
-     * below the pool size.
-     */
-    function addTicket(uint64 newTicketValue) internal {
-        uint256[] memory ordered = getTicketValueOrderedIndices();
+    // Fallback function to receive ether from the beacon.
+    // TODO: Implement proper surplus handling.
+    function() external payable {}
 
-        // any ticket goes when the tickets array size is lower than the pool size
-        if (tickets.length < poolSize) {
-            // no tickets
-            if (tickets.length == 0) {
-                tickets.push(newTicketValue);
-            // higher than the current highest
-            } else if (newTicketValue > tickets[tail]) {
-                tickets.push(newTicketValue);
-                uint256 oldTail = tail;
-                tail = tickets.length-1;
-                previousTicketIndex[tail] = oldTail;
-            // lower than the current lowest
-            } else if (newTicketValue < tickets[ordered[0]]) {
-                tickets.push(newTicketValue);
-                // last element points to itself
-                previousTicketIndex[tickets.length - 1] = tickets.length - 1;
-                // previous lowest ticket points to the new lowest
-                previousTicketIndex[ordered[0]] = tickets.length - 1;
-            // higher than the lowest ticket value and lower than the highest ticket value
-            } else {
-                tickets.push(newTicketValue);
-                uint256 j = findReplacementIndex(newTicketValue, ordered);
-                previousTicketIndex[tickets.length - 1] = previousTicketIndex[j];
-                previousTicketIndex[j] = tickets.length - 1;
-            }
-            candidates[newTicketValue] = msg.sender;
-        } else if (newTicketValue < tickets[tail]) {
-            uint256 ticketToRemove = tickets[tail];
-            // new ticket is lower than currently lowest
-            if (newTicketValue < tickets[ordered[0]]) {
-                // replacing highest ticket with the new lowest
-                tickets[tail] = newTicketValue;
-                uint256 newTail = previousTicketIndex[tail];
-                previousTicketIndex[ordered[0]] = tail;
-                previousTicketIndex[tail] = tail;
-                tail = newTail;
-            } else { // new ticket is between lowest and highest
-                uint256 j = findReplacementIndex(newTicketValue, ordered);
-                tickets[tail] = newTicketValue;
-                // do not change the order if a new ticket is still highest
-                if (j != tail) {
-                    uint newTail = previousTicketIndex[tail];
-                    previousTicketIndex[tail] = previousTicketIndex[j];
-                    previousTicketIndex[j] = tail;
-                    tail = newTail;
-                }
-            }
-            // we are replacing tickets so we also need to replace information
-            // about the submitter
-            delete candidates[ticketToRemove];
-            candidates[newTicketValue] = msg.sender;
+    /// @notice Register caller as a candidate to be selected as keep member
+    /// for the provided customer application.
+    /// @dev If caller is already registered it returns without any changes.
+    function registerMemberCandidate(address _application) external {
+        if (candidatesPools[_application] == address(0)) {
+            // This is the first time someone registers as signer for this
+            // application so let's create a signer pool for it.
+            candidatesPools[_application] = sortitionPoolFactory
+                .createSortitionPool(
+                IStaking(tokenStaking),
+                IBonding(address(keepBonding)),
+                minimumStake,
+                minimumBond
+            );
+        }
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        address operator = msg.sender;
+        if (!candidatesPool.isOperatorInPool(operator)) {
+            candidatesPool.joinPool(operator);
         }
     }
 
-    /**
-     * @dev Use binary search to find an index for a new ticket in the tickets[] array
-     */
-    function findReplacementIndex(
-        uint64 newTicketValue,
-        uint256[] memory ordered
-    ) internal view returns (uint256) {
-        uint256 lo = 0;
-        uint256 hi = ordered.length - 1;
-        uint256 mid = 0;
-        while (lo <= hi) {
-            mid = (lo + hi) >> 1;
-            if (newTicketValue < tickets[ordered[mid]]) {
-                hi = mid - 1;
-            } else if (newTicketValue > tickets[ordered[mid]]) {
-                lo = mid + 1;
-            } else {
-                return ordered[mid];
-            }
-        }
-
-        return ordered[lo];
-    }
-
-    /**
-     * @dev Creates an array of ticket indexes based on their values in the ascending order:
-     *
-     * ordered[n-1] = tail
-     * ordered[n-2] = previousTicketIndex[tail]
-     * ordered[n-3] = previousTicketIndex[ordered[n-2]]
-     */
-    function getTicketValueOrderedIndices() internal view returns (uint256[] memory) {
-        uint256[] memory ordered = new uint256[](tickets.length);
-        if (ordered.length > 0) {
-            ordered[tickets.length-1] = tail;
-            if (ordered.length > 1) {
-                for (uint256 i = tickets.length - 1; i > 0; i--) {
-                    ordered[i-1] = previousTicketIndex[ordered[i]];
-                }
-            }
-        }
-
-        return ordered;
+    /// @notice Gets a fee estimate for opening a new keep.
+    /// @return Uint256 estimate.
+    function openKeepFeeEstimate() public view returns (uint256) {
+        return randomBeacon.entryFeeEstimate(callbackGas);
     }
 
     /// @notice Open a new ECDSA keep.
     /// @dev Selects a list of members for the keep based on provided parameters.
+    /// A caller of this function is expected to be an application for which
+    /// member candidates were registered in a pool.
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Address of the keep owner.
+    /// @param _bond Value of ETH bond required from the keep (wei).
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
-        address _owner
+        address _owner,
+        uint256 _bond
     ) external payable returns (address keepAddress) {
-        address payable[] memory _members = selectECDSAKeepMembers(_groupSize);
+        address application = msg.sender;
+        address pool = candidatesPools[application];
+        require(pool != address(0), "No signer pool for this application");
 
-        ECDSAKeep keep = new ECDSAKeep(
-            _owner,
-            _members,
-            _honestThreshold
+        // TODO: The remainder will not be bonded. What should we do with it?
+        uint256 memberBond = _bond.div(_groupSize);
+        require(memberBond > 0, "Bond per member must be greater than zero");
+
+        require(
+            msg.value >= openKeepFeeEstimate(),
+            "Insufficient payment for opening a new keep"
         );
-        keeps.push(keep);
+
+        address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
+            _groupSize,
+            bytes32(groupSelectionSeed),
+            memberBond
+        );
+
+        newGroupSelectionSeed();
+
+        address payable[] memory members = new address payable[](_groupSize);
+        for (uint256 i = 0; i < _groupSize; i++) {
+            // TODO: Modify ECDSAKeep to not keep members as payable and do the
+            // required casting in distributeERC20ToMembers and distributeETHToMembers.
+            members[i] = address(uint160(selected[i]));
+        }
+
+        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold, address(keepBonding));
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepCreated(keepAddress, _members);
+        for (uint256 i = 0; i < _groupSize; i++) {
+            keepBonding.createBond(
+                members[i],
+                keepAddress,
+                uint256(keepAddress),
+                memberBond
+            );
+        }
+
+        emit ECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
+    /// @notice Updates group selection seed.
+    /// @dev The main goal of this function is to request the random beacon to
+    /// generate a new random number. The beacon generates the number asynchronously
+    /// and will call a callback function when the number is ready. In the meantime
+    /// we update current group selection seed to a new value using a hash function.
+    /// In case of the random beacon request failure this function won't revert
+    /// but .....// TODO: Update when we decide what to do
+    function newGroupSelectionSeed() internal {
+        // Calculate new group selection seed based on the current seed.
+        // We added address of the factory as a key to calculate value different
+        // than sortition pool RNG will, so we don't end up selecting almost
+        // identical group.
+        groupSelectionSeed = uint256(
+            keccak256(abi.encodePacked(groupSelectionSeed, address(this)))
+        );
 
-    // TODO: Selection of ECDSA Keep members will be rewritten.
+        // Call the random beacon to get a random group selection seed.
+        // TODO: Replace with try/catch after we upgrade to solidity >= 0.6.0
+        (bool success, bytes memory returnData) = address(randomBeacon)
+            .call
+            .value(msg.value)(
+            abi.encodeWithSignature(
+                "requestRelayEntry(address,string,uint256)",
+                address(this),
+                "setGroupSelectionSeed(uint256)",
+                callbackGas
+            )
+        );
+        if (!success) {
+            // revert(string(returnData));
+            // TODO: What should we do in case of `requestRelayEntry` failure?
+            // Forward `msg.value` to the keep members?
+        }
+    }
 
-    /// @notice Runs member selection for an ECDSA keep.
-    /// @dev Stub implementations generates a group with only one member. Member
-    /// is randomly selected from registered member candidates.
-    /// @param _groupSize Number of members to be selected.
-    /// @return List of selected members addresses.
-    function selectECDSAKeepMembers(
-        uint256 _groupSize
-    ) internal view returns (address payable[] memory members){
-        require(memberCandidates.length > 0, 'keep member candidates list is empty');
+    /// @notice Sets a new group selection seed value.
+    /// @dev The function is expected to be called in a callback by the random
+    /// beacon.
+    /// @param _groupSelectionSeed New value of group selection seed.
+    function setGroupSelectionSeed(uint256 _groupSelectionSeed)
+        external
+        onlyRandomBeacon
+    {
+        groupSelectionSeed = _groupSelectionSeed;
+    }
 
-        _groupSize;
-
-        members = new address payable[](1);
-
-        // TODO: Use the random beacon for randomness.
-        uint memberIndex = uint256(keccak256(abi.encodePacked(block.timestamp)))
-            % memberCandidates.length;
-
-        members[0] = memberCandidates[memberIndex];
+    /// @notice Checks if the caller is the random beacon.
+    /// @dev Throws an error if called by any account other than the random beacon.
+    modifier onlyRandomBeacon() {
+        require(
+            address(randomBeacon) == msg.sender,
+            "Caller is not the random beacon"
+        );
+        _;
     }
 }

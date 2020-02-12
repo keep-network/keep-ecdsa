@@ -1,6 +1,7 @@
 package tss
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -9,7 +10,9 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 )
 
-const preParamsGenerationTimeout = 90 * time.Second
+const (
+	preParamsGenerationTimeout = 90 * time.Second
+)
 
 // GenerateTSSPreParams calculates parameters required by TSS key generation.
 // It times out after 90 seconds if the required parameters could not be generated.
@@ -35,11 +38,13 @@ func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
 // TSS protocol requires pre-parameters such as safe primes to be generated for
 // execution. The parameters should be generated prior to initializing the signer.
 func initializeKeyGeneration(
+	ctx context.Context,
 	group *groupInfo,
 	tssPreParams *keygen.LocalPreParams,
 	network *networkBridge,
 ) (*member, error) {
-	keyGenParty, endChan, errChan, err := initializeKeyGenerationParty(
+	keyGenParty, endChan, err := initializeKeyGenerationParty(
+		ctx,
 		group,
 		tssPreParams,
 		network,
@@ -53,7 +58,6 @@ func initializeKeyGeneration(
 		groupInfo:     group,
 		keygenParty:   keyGenParty,
 		keygenEndChan: endChan,
-		keygenErrChan: errChan,
 		networkBridge: network,
 	}, nil
 }
@@ -63,21 +67,20 @@ func initializeKeyGeneration(
 type member struct {
 	*groupInfo
 
-	networkBridge *networkBridge // network bridge used for messages transport
-
+	// Network bridge used for messages transport.
+	networkBridge *networkBridge
+	// Party for TSS protocol execution.
 	keygenParty tss.Party
-	// Channels where results of the key generation protocol execution will be written to.
-	keygenEndChan <-chan keygen.LocalPartySaveData // data from a successful execution
-	keygenErrChan chan error                       // error from a failed execution
+	// Channel where a result of the key generation protocol execution will be
+	// written to.
+	keygenEndChan <-chan keygen.LocalPartySaveData
 }
 
 // generateKey executes the protocol to generate a signing key. This function
 // needs to be executed only after all members finished the initialization stage.
 // As a result it will return a Signer who has completed key generation, or error
 // if the key generation failed.
-func (s *member) generateKey() (*ThresholdSigner, error) {
-	defer s.networkBridge.close()
-
+func (s *member) generateKey(ctx context.Context) (*ThresholdSigner, error) {
 	if err := s.keygenParty.Start(); err != nil {
 		return nil, fmt.Errorf(
 			"failed to start key generation: [%v]",
@@ -89,16 +92,21 @@ func (s *member) generateKey() (*ThresholdSigner, error) {
 		select {
 		case keygenData := <-s.keygenEndChan:
 			signer := &ThresholdSigner{
-				groupInfo:  s.groupInfo,
-				keygenData: keygenData,
+				groupInfo:    s.groupInfo,
+				thresholdKey: ThresholdKey(keygenData),
 			}
 
 			return signer, nil
-		case err := <-s.keygenErrChan:
-			return nil, fmt.Errorf(
-				"failed to generate signer key: [%v]",
-				s.keygenParty.WrapError(err),
-			)
+		case <-ctx.Done():
+			memberIDs := []MemberID{}
+
+			if s.keygenParty.WaitingFor() != nil {
+				for _, partyID := range s.keygenParty.WaitingFor() {
+					memberIDs = append(memberIDs, MemberID(partyID.GetId()))
+				}
+			}
+
+			return nil, timeoutError{keyGenerationTimeout, "key generation", memberIDs}
 		}
 	}
 }
@@ -120,12 +128,12 @@ func generatePartiesIDs(
 		}
 
 		newPartyID := tss.NewPartyID(
-			string(memberID),  // id - unique string representing this party in the network
+			memberID.String(), // id - unique string representing this party in the network
 			"",                // moniker - can be anything (even left blank)
 			memberID.bigInt(), // key - unique identifying key
 		)
 
-		if thisMemberID == memberID {
+		if thisMemberID.Equal(memberID) {
 			thisPartyID = newPartyID
 		}
 
@@ -136,25 +144,24 @@ func generatePartiesIDs(
 }
 
 func initializeKeyGenerationParty(
+	ctx context.Context,
 	groupInfo *groupInfo,
 	tssPreParams *keygen.LocalPreParams,
 	bridge *networkBridge,
 ) (
 	tss.Party,
 	<-chan keygen.LocalPartySaveData,
-	chan error,
 	error,
 ) {
 	tssMessageChan := make(chan tss.Message, len(groupInfo.groupMemberIDs))
 	endChan := make(chan keygen.LocalPartySaveData)
-	errChan := make(chan error)
 
 	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(
 		groupInfo.memberID,
 		groupInfo.groupMemberIDs,
 	)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
+		return nil, nil, fmt.Errorf("failed to generate parties IDs: [%v]", err)
 	}
 
 	params := tss.NewParameters(
@@ -167,14 +174,13 @@ func initializeKeyGenerationParty(
 	party := keygen.NewLocalParty(params, tssMessageChan, endChan, *tssPreParams)
 
 	if err := bridge.connect(
-		groupInfo.groupID,
-		party,
-		params,
+		ctx,
 		tssMessageChan,
-		errChan,
+		party,
+		params.Parties().IDs(),
 	); err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
+		return nil, nil, fmt.Errorf("failed to connect bridge network: [%v]", err)
 	}
 
-	return party, endChan, errChan, nil
+	return party, endChan, nil
 }

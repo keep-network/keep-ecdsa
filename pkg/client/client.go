@@ -7,34 +7,46 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-tecdsa/pkg/net"
+	"github.com/keep-network/keep-tecdsa/pkg/node"
 	"github.com/keep-network/keep-tecdsa/pkg/registry"
-	"github.com/keep-network/keep-tecdsa/pkg/tecdsa"
 )
 
 var logger = log.Logger("keep-tecdsa")
 
-// Initialize initializes the tECDSA client with rules related to events handling.
+// Initialize initializes the ECDSA client with rules related to events handling.
+// Expects a slice of sanctioned applications selected by the operator for which
+// operator will be registered as a member candidate.
 func Initialize(
 	ethereumChain eth.Handle,
+	networkProvider net.Provider,
 	persistence persistence.Handle,
+	sanctionedApplications []common.Address,
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
-	tecdsa := &tecdsa.TECDSA{
-		EthereumChain: ethereumChain,
-	}
+	tssNode := node.NewNode(ethereumChain, networkProvider)
+
+	tssNode.InitializeTSSPreParamsPool()
 
 	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
 
 	keepsRegistry.ForEachKeep(
-		func(keepAddress common.Address, signer *ecdsa.Signer) {
-			tecdsa.RegisterForSignEvents(keepAddress, signer)
-			logger.Debugf(
-				"signer registered for events from keep: [%s]",
-				keepAddress.String(),
-			)
+		func(keepAddress common.Address, signer []*tss.ThresholdSigner) {
+			for _, signer := range signer {
+				registerForSignEvents(
+					ethereumChain,
+					tssNode,
+					keepAddress,
+					signer,
+				)
+				logger.Debugf(
+					"signer registered for events from keep: [%s]",
+					keepAddress.String(),
+				)
+			}
 		},
 	)
 
@@ -47,27 +59,84 @@ func Initialize(
 		)
 
 		if event.IsMember(ethereumChain.Address()) {
-			go func(keepAddress common.Address) {
-				signer, err := tecdsa.GenerateSignerForKeep(event.KeepAddress)
-				if err != nil {
-					logger.Errorf("signer generation failed: [%v]", err)
-					return
-				}
+			signer, err := tssNode.GenerateSignerForKeep(
+				event.KeepAddress,
+				event.Members,
+			)
+			if err != nil {
+				logger.Errorf("signer generation failed: [%v]", err)
+				return
+			}
 
-				logger.Infof("initialized signer for keep [%s]", keepAddress.String())
+			logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
 
-				// Store the signer in a map, with the keep address as a key.
-				keepsRegistry.RegisterSigner(keepAddress, signer)
+			err = keepsRegistry.RegisterSigner(event.KeepAddress, signer)
+			if err != nil {
+				logger.Errorf(
+					"failed to register threshold signer for keep [%s]: [%v]",
+					event.KeepAddress.String(),
+					err,
+				)
+			}
 
-				tecdsa.RegisterForSignEvents(keepAddress, signer)
-			}(event.KeepAddress)
+			registerForSignEvents(
+				ethereumChain,
+				tssNode,
+				event.KeepAddress,
+				signer,
+			)
 		}
 	})
 
 	// Register client as a candidate member for keep.
-	if err := ethereumChain.RegisterAsMemberCandidate(); err != nil {
-		logger.Errorf("failed to register member: [%v]", err)
+	for _, application := range sanctionedApplications {
+		// TODO: Validate if client is already registered and can be registered.
+		// If can register but it is not registered, it is registering. If can't
+		// be registered yet (stake maturation period), waits some time and tries again
+		if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
+			logger.Errorf(
+				"failed to register member for application [%s]: [%v]",
+				application.String(),
+				err,
+			)
+			continue
+		}
+		logger.Debugf(
+			"client registered as member candidate for application: [%s]",
+			application.String(),
+		)
 	}
 
-	logger.Infof("client registered as member candidate in keep factory")
+	logger.Infof("client initialized")
+}
+
+// registerForSignEvents registers for signature requested events emitted by
+// specific keep contract.
+func registerForSignEvents(
+	ethereumChain eth.Handle,
+	tssNode *node.Node,
+	keepAddress common.Address,
+	signer *tss.ThresholdSigner,
+) {
+	ethereumChain.OnSignatureRequested(
+		keepAddress,
+		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
+			logger.Infof(
+				"new signature requested from keep [%s] for digest: [%+x]",
+				keepAddress.String(),
+				signatureRequestedEvent.Digest,
+			)
+
+			go func() {
+				err := tssNode.CalculateSignature(
+					signer,
+					signatureRequestedEvent.Digest,
+				)
+
+				if err != nil {
+					logger.Errorf("signature calculation failed: [%v]", err)
+				}
+			}()
+		},
+	)
 }
