@@ -2,7 +2,6 @@
 package ethereum
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -92,17 +91,6 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
 		return err
-	}
-
-	chainPublicKey, err := keepContract.GetPublicKey(ec.callerOptions)
-	if err != nil {
-		return err
-	}
-
-	arePublicKeysEqual := bytes.Compare(publicKey[:], chainPublicKey)
-	if arePublicKeysEqual == 0 {
-		logger.Info("Public key has been already set by other member.")
-		return nil
 	}
 
 	transaction, err := keepContract.SubmitPublicKey(ec.transactorOptions, publicKey[:])

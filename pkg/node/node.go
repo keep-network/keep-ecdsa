@@ -89,10 +89,6 @@ func (n *Node) GenerateSignerForKeep(
 		serializedPublicKey,
 	)
 	if err != nil {
-		if err.Error() == "Public key has already been set" {
-			return nil, fmt.Errorf("Public key has been set by other member: [%v]", err)
-		}
-
 		return nil, fmt.Errorf("failed to submit public key: [%v]", err)
 	}
 
