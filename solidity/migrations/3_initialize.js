@@ -3,7 +3,7 @@ const truffleContract = require("@truffle/contract")
 
 let { RegistryAddress } = require('./externals')
 
-module.exports = async function (deployer, network, accounts) {
+module.exports = async function (deployer, network) {
     await ECDSAKeepFactory.deployed()
 
     let registry
@@ -21,7 +21,7 @@ module.exports = async function (deployer, network, accounts) {
 
     await registry.approveOperatorContract(
         ECDSAKeepFactory.address,
-        { from: accounts[0] }
+        { from: deployer.networks[network].from }
     )
 
     console.log(`approved operator contract [${ECDSAKeepFactory.address}] in registry`)
