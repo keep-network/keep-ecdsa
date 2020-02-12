@@ -1,10 +1,9 @@
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory')
-
-// `Registry` and `TokenStaking` are expected to be copied over from previous 
-// keep-core migrations.
-const Registry = artifacts.require('Registry')
-const TokenStaking = artifacts.require('TokenStaking')
 const KeepBonding = artifacts.require('KeepBonding')
+
+const TokenStaking = artifacts.require('@keep-network/keep-core/build/truffle/TokenStaking')
+
+let { TokenStakingAddress } = require('./externals')
 
 module.exports = async function () {
     const bondingValue = 100;
@@ -13,14 +12,12 @@ module.exports = async function () {
     const operators = [accounts[1], accounts[2], accounts[3]]
 
     let ecdsaKeepFactory
-    let registry
     let tokenStaking
     let keepBonding
 
     try {
         ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
-        registry = await Registry.deployed()
-        tokenStaking = await TokenStaking.deployed()
+        tokenStaking = await TokenStaking.at(TokenStakingAddress)
         keepBonding = await KeepBonding.deployed()
     } catch (err) {
         console.error('failed to get deployed contracts', err)
