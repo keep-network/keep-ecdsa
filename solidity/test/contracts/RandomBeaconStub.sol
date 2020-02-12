@@ -38,6 +38,10 @@ contract RandomBeaconStub is IRandomBeacon {
         }
     }
 
+    function requestRelayEntry() external payable returns (uint256) {
+        return requestRelayEntry(address(0), "", 0);
+    }
+
     function setEntry(uint256 newEntry) public {
         entry = newEntry;
     }
