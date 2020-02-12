@@ -160,7 +160,7 @@ contract ECDSAKeepFactory is
         ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold, address(keepBonding));
 
         keepAddress = address(keep);
-/*
+
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
                 members[i],
@@ -169,7 +169,7 @@ contract ECDSAKeepFactory is
                 memberBond
             );
         }
-*/
+
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 

@@ -26,6 +26,8 @@ contract("ECDSAKeepFactory", async accounts => {
     const member1 = accounts[2]
     const member2 = accounts[3]
     const member3 = accounts[4]
+    
+    const stakeBalance = 10;
 
     describe("registerMemberCandidate", async () => {
         before(async () => {
@@ -39,6 +41,13 @@ contract("ECDSAKeepFactory", async accounts => {
                 keepBonding.address,
                 randomBeacon.address
             )
+
+            await tokenStaking.setBalance(stakeBalance);
+
+            const bondingValue = new BN(100)
+            await keepBonding.deposit(member1, { value: bondingValue })
+            await keepBonding.deposit(member2, { value: bondingValue })
+            await keepBonding.deposit(member3, { value: bondingValue })
         })
 
         beforeEach(async () => {
@@ -72,9 +81,9 @@ contract("ECDSAKeepFactory", async accounts => {
 
             // TODO: Update result verification when sortition-pools interfaces
             // and implementation are ready.
-            // expect(
-            //     await signerPool.getPoolWeight.call(member1)
-            // ).to.eq.BN(stakingWeight, 'invalid staking weight')
+            //expect(
+             //    await signerPool.getPoolWeight.call(member1)
+            //).to.eq.BN(stakingWeight, 'invalid staking weight')
         })
 
         it("inserts operators to the same pool", async () => {
@@ -196,6 +205,7 @@ contract("ECDSAKeepFactory", async accounts => {
         beforeEach(async () => {
             await initializeNewFactory()
 
+            await tokenStaking.setBalance(stakeBalance)
             await keepBonding.deposit(member1, { value: singleBond })
             await keepBonding.deposit(member2, { value: singleBond })
             await keepBonding.deposit(member3, { value: singleBond })
@@ -341,6 +351,7 @@ contract("ECDSAKeepFactory", async accounts => {
             const singleBond = new BN(3)
             const bond = new BN(11)
 
+            await tokenStaking.setBalance(stakeBalance)
             await keepBonding.deposit(member1, { value: singleBond })
             await keepBonding.deposit(member2, { value: singleBond })
             await keepBonding.deposit(member3, { value: singleBond })
@@ -385,6 +396,7 @@ contract("ECDSAKeepFactory", async accounts => {
             let groupSize = 2
             let threshold = 2
 
+            await tokenStaking.setBalance(stakeBalance)
             await keepBonding.deposit(member1, { value: singleBond })
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
@@ -406,6 +418,7 @@ contract("ECDSAKeepFactory", async accounts => {
         it("reverts if one member has insufficient unbonded value", async () => {
             await initializeNewFactory()
 
+            await tokenStaking.setBalance(stakeBalance)
             await keepBonding.deposit(member1, { value: singleBond })
             await keepBonding.deposit(member2, { value: singleBond })
             await keepBonding.deposit(member3, { value: singleBond.sub(new BN(1)) })
