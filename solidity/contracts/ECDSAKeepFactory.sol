@@ -14,17 +14,17 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 // TODO: This is an interface which is expected to be defined in keep-core and imported
 // to use for the integration.
-contract IRandomBeaconService {
+interface IRandomBeacon {
     function entryFeeEstimate(uint256 callbackGas)
-        public
+        external
         view
         returns (uint256);
 
     function requestRelayEntry(
         address callbackContract,
-        string memory callbackMethod,
+        string calldata callbackMethod,
         uint256 callbackGas
-    ) public payable returns (uint256);
+    ) external payable returns (uint256);
 }
 
 /// @title ECDSA Keep Factory
@@ -52,7 +52,7 @@ contract ECDSAKeepFactory is
     BondedSortitionPoolFactory sortitionPoolFactory;
     address tokenStaking;
     KeepBonding keepBonding;
-    IRandomBeaconService randomBeacon;
+    IRandomBeacon randomBeacon;
 
     uint256 minimumStake = 1; // TODO: Take from setter
     uint256 minimumBond = 1; // TODO: Take from setter
@@ -74,7 +74,7 @@ contract ECDSAKeepFactory is
         );
         tokenStaking = _tokenStaking;
         keepBonding = KeepBonding(_keepBonding);
-        randomBeacon = IRandomBeaconService(_randomBeacon);
+        randomBeacon = IRandomBeacon(_randomBeacon);
     }
 
     // Fallback function to receive ether from the beacon.

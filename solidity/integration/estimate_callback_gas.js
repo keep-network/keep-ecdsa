@@ -1,5 +1,5 @@
 const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory')
-const RandomBeaconService = artifacts.require('IRandomBeaconService')
+const RandomBeaconService = artifacts.require('IRandomBeacon')
 
 const { RandomBeaconAddress } = require('../migrations/externals')
 
