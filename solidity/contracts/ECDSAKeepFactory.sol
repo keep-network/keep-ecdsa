@@ -3,7 +3,7 @@ pragma solidity ^0.5.4;
 import "./ECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
-import "./utils/AddressArrayUtils.sol";
+import "./utils/AddressPayableArrayUtils.sol";
 
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
@@ -12,12 +12,29 @@ import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+// TODO: This is an interface which is expected to be defined in keep-core and imported
+// to use for the integration.
+interface IRandomBeacon {
+    event RelayEntryGenerated(uint256 requestId, uint256 entry);
+
+    function entryFeeEstimate(uint256 callbackGas)
+        external
+        view
+        returns (uint256);
+
+    function requestRelayEntry(
+        address callbackContract,
+        string calldata callbackMethod,
+        uint256 callbackGas
+    ) external payable returns (uint256);
+}
+
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
 contract ECDSAKeepFactory is
     IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
 {
-    using AddressArrayUtils for address payable[];
+    using AddressPayableArrayUtils for address payable[];
     using SafeMath for uint256;
 
     // Notification that a new keep has been created.
@@ -32,21 +49,39 @@ contract ECDSAKeepFactory is
     mapping(address => address) candidatesPools; // application -> candidates pool
 
     uint256 feeEstimate;
-    bytes32 groupSelectionSeed;
+    uint256 public groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
-    address tokenStaking = address(666); // TODO: Take from constructor
+    address tokenStaking;
     KeepBonding keepBonding;
+    IRandomBeacon randomBeacon;
 
     uint256 minimumStake = 1; // TODO: Take from setter
     uint256 minimumBond = 1; // TODO: Take from setter
 
-    constructor(address _sortitionPoolFactory, address _keepBonding) public {
+    // Gas required for a callback from the random beacon. The value specifies
+    // gas required to call `setGroupSelectionSeed` function in the worst-case
+    // scenario with all the checks and maximum allowed uint256 relay entry as
+    // a callback parameter.
+    uint256 callbackGas = 41830;
+
+    constructor(
+        address _sortitionPoolFactory,
+        address _tokenStaking,
+        address _keepBonding,
+        address _randomBeacon
+    ) public {
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
         );
+        tokenStaking = _tokenStaking;
         keepBonding = KeepBonding(_keepBonding);
+        randomBeacon = IRandomBeacon(_randomBeacon);
     }
+
+    // Fallback function to receive ether from the beacon.
+    // TODO: Implement proper surplus handling.
+    function() external payable {}
 
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application.
@@ -75,8 +110,8 @@ contract ECDSAKeepFactory is
 
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
-    function openKeepFeeEstimate() external returns (uint256) {
-        return feeEstimate;
+    function openKeepFeeEstimate() public view returns (uint256) {
+        return randomBeacon.entryFeeEstimate(callbackGas);
     }
 
     /// @notice Open a new ECDSA keep.
@@ -102,11 +137,18 @@ contract ECDSAKeepFactory is
         uint256 memberBond = _bond.div(_groupSize);
         require(memberBond > 0, "Bond per member must be greater than zero");
 
+        require(
+            msg.value >= openKeepFeeEstimate(),
+            "Insufficient payment for opening a new keep"
+        );
+
         address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
-            groupSelectionSeed,
+            bytes32(groupSelectionSeed),
             memberBond
         );
+
+        newGroupSelectionSeed();
 
         address payable[] memory members = new address payable[](_groupSize);
         for (uint256 i = 0; i < _groupSize; i++) {
@@ -115,7 +157,7 @@ contract ECDSAKeepFactory is
             members[i] = address(uint160(selected[i]));
         }
 
-        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold);
+        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold, address(keepBonding));
 
         keepAddress = address(keep);
 
@@ -129,8 +171,61 @@ contract ECDSAKeepFactory is
         }
 
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
+    }
 
-        // TODO: as beacon for new entry and update groupSelectionSeed in callback
+    /// @notice Updates group selection seed.
+    /// @dev The main goal of this function is to request the random beacon to
+    /// generate a new random number. The beacon generates the number asynchronously
+    /// and will call a callback function when the number is ready. In the meantime
+    /// we update current group selection seed to a new value using a hash function.
+    /// In case of the random beacon request failure this function won't revert
+    /// but .....// TODO: Update when we decide what to do
+    function newGroupSelectionSeed() internal {
+        // Calculate new group selection seed based on the current seed.
+        // We added address of the factory as a key to calculate value different
+        // than sortition pool RNG will, so we don't end up selecting almost
+        // identical group.
+        groupSelectionSeed = uint256(
+            keccak256(abi.encodePacked(groupSelectionSeed, address(this)))
+        );
 
+        // Call the random beacon to get a random group selection seed.
+        // TODO: Replace with try/catch after we upgrade to solidity >= 0.6.0
+        (bool success, bytes memory returnData) = address(randomBeacon)
+            .call
+            .value(msg.value)(
+            abi.encodeWithSelector(
+                randomBeacon.requestRelayEntry.selector,
+                address(this),
+                "setGroupSelectionSeed(uint256)",
+                callbackGas
+            )
+        );
+        if (!success) {
+            // revert(string(returnData));
+            // TODO: What should we do in case of `requestRelayEntry` failure?
+            // Forward `msg.value` to the keep members?
+        }
+    }
+
+    /// @notice Sets a new group selection seed value.
+    /// @dev The function is expected to be called in a callback by the random
+    /// beacon.
+    /// @param _groupSelectionSeed New value of group selection seed.
+    function setGroupSelectionSeed(uint256 _groupSelectionSeed)
+        external
+        onlyRandomBeacon
+    {
+        groupSelectionSeed = _groupSelectionSeed;
+    }
+
+    /// @notice Checks if the caller is the random beacon.
+    /// @dev Throws an error if called by any account other than the random beacon.
+    modifier onlyRandomBeacon() {
+        require(
+            address(randomBeacon) == msg.sender,
+            "Caller is not the random beacon"
+        );
+        _;
     }
 }
