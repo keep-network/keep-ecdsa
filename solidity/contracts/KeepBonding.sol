@@ -50,8 +50,13 @@ contract KeepBonding {
         address operator,
         address bondCreator,
         address authorizedSortitionPool
-    ) external view returns (uint256) {
-        return 100;
+    ) public view returns (uint256) {
+        if (registry.isApprovedOperatorContract(bondCreator) &&
+            stakingContract.isAuthorizedForOperator(bondCreator, operator)) {
+            return unbondedValue[operator];
+        } else {
+            return 0;
+        }
     }
 
     /// @notice Returns value of ether available for bonding for the operator.
@@ -101,7 +106,8 @@ contract KeepBonding {
         uint256 amount
     ) public onlyAuthorized {
         require(
-            availableBondingValue(operator) >= amount,
+            // TODO: Provide authorized sortition pool address
+            availableUnbondedValue(operator, msg.sender, address(0)) >= amount,
             "Insufficient unbonded value"
         );
 

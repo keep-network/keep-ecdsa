@@ -36,6 +36,7 @@ contract("ECDSAKeepFactory", async accounts => {
             keepBonding = await KeepBondingStub.new(registry.address, tokenStaking.address)
             keepFactory = await ECDSAKeepFactoryStub.new(bondedSortitionPoolFactory.address, keepBonding.address)
             await registry.approveOperatorContract(keepFactory.address)
+            await registry.approveOperatorContract(keepBonding.address)
         })
 
         beforeEach(async () => {
@@ -120,6 +121,7 @@ contract("ECDSAKeepFactory", async accounts => {
             keepBonding = await KeepBondingStub.new(registry.address, tokenStaking.address)
             keepFactory = await ECDSAKeepFactory.new(bondedSortitionPoolFactory.address, keepBonding.address)
             await registry.approveOperatorContract(keepFactory.address)
+            await registry.approveOperatorContract(keepBonding.address)
         }
 
         before(async () => {
