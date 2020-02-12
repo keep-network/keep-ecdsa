@@ -32,7 +32,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     uint256 internal currentSigningStartBlock;
     // Map stores public key by member addresses. All members should submit the
     // same public key.
-    mapping(address => bytes) publicKeys;
+    mapping(address => bytes) submittedPublicKeys;
     // Notification that a signer's public key was published for the keep.
     event PublicKeyPublished(bytes publicKey);
 
@@ -73,10 +73,10 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         require(publicKey.length == 0, "Public key has already been set");
         require(_publicKey.length == 64, "Public key must be 64 bytes long");
 
-        publicKeys[msg.sender] = _publicKey;
+        submittedPublicKeys[msg.sender] = _publicKey;
 
         for (uint256 i = 0; i < members.length; i++) {
-            if (sha256(publicKeys[members[i]]) != sha256(_publicKey)) {
+            if (sha256(submittedPublicKeys[members[i]]) != sha256(_publicKey)) {
                 break;
             } else if (i == members.length - 1) {
                 publicKey = _publicKey;
