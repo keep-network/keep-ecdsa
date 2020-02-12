@@ -1,5 +1,6 @@
 const ECDSAKeepFactory = artifacts.require("ECDSAKeepFactory");
 
+let { RegistryAddress } = require('./externals')
 module.exports = async function (deployer) {
     await ECDSAKeepFactory.deployed()
 
@@ -9,7 +10,7 @@ module.exports = async function (deployer) {
         registry = await RegistryStub.new()
     } else {
         Registry = artifacts.require("Registry")
-        registry = await Registry.deployed()
+        registry = await Registry.at(RegistryAddress)
     }
 
     await registry.approveOperatorContract(ECDSAKeepFactory.address)
