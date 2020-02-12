@@ -10,7 +10,7 @@ const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory
 // migrations.
 let TokenStaking;
 
-const { RandomBeaconAddress } = require('./externals')
+let { RandomBeaconAddress } = require('./externals')
 
 module.exports = async function (deployer) {
     await deployer.deploy(KeepBonding)
@@ -20,6 +20,9 @@ module.exports = async function (deployer) {
     if (process.env.TEST) {
         TokenStakingStub = artifacts.require("TokenStakingStub")
         TokenStaking = await TokenStakingStub.new()
+
+        RandomBeaconStub = artifacts.require("RandomBeaconStub")
+        RandomBeaconAddress = (await RandomBeaconStub.new()).address
     } else {
         TokenStaking = artifacts.require("TokenStaking")
     }
