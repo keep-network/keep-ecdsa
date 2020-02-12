@@ -1,6 +1,6 @@
 pragma solidity ^0.5.4;
 
-import {IRandomBeacon} from "../../contracts/ECDSAKeepFactory.sol";
+import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
 
 /// @title Random Beacon Service Stub
 /// @dev This contract is for testing purposes only.
@@ -36,6 +36,10 @@ contract RandomBeaconStub is IRandomBeacon {
                 abi.encodeWithSignature(callbackMethod, entry)
             );
         }
+    }
+
+    function requestRelayEntry() external payable returns (uint256) {
+        return requestRelayEntry(address(0), "", 0);
     }
 
     function setEntry(uint256 newEntry) public {
