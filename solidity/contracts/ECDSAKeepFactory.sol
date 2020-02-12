@@ -47,7 +47,7 @@ contract ECDSAKeepFactory is
     mapping(address => address) candidatesPools; // application -> candidates pool
 
     uint256 feeEstimate;
-    uint256 groupSelectionSeed;
+    uint256 public groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
     address tokenStaking;
