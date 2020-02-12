@@ -6,11 +6,7 @@ const BondedECDSAKeepVendorImplV1 = artifacts.require("./BondedECDSAKeepVendorIm
 const { deployBondedSortitionPoolFactory } = require('@keep-network/sortition-pools/migrations/scripts/deployContracts')
 const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory");
 
-// TokenStaking artifact is expected to be copied over from previous keep-core
-// migrations.
-let TokenStaking;
-
-let { RandomBeaconAddress } = require('./externals')
+let { RandomBeaconAddress, TokenStakingAddress } = require('./externals')
 
 module.exports = async function (deployer) {
     await deployer.deploy(KeepBonding)
@@ -19,18 +15,16 @@ module.exports = async function (deployer) {
 
     if (process.env.TEST) {
         TokenStakingStub = artifacts.require("TokenStakingStub")
-        TokenStaking = await TokenStakingStub.new()
+        TokenStakingAddress = (await TokenStakingStub.new()).address
 
         RandomBeaconStub = artifacts.require("RandomBeaconStub")
         RandomBeaconAddress = (await RandomBeaconStub.new()).address
-    } else {
-        TokenStaking = artifacts.require("TokenStaking")
     }
 
     await deployer.deploy(
         ECDSAKeepFactory,
         BondedSortitionPoolFactory.address,
-        TokenStaking.address,
+        TokenStakingAddress,
         KeepBonding.address,
         RandomBeaconAddress
     )
