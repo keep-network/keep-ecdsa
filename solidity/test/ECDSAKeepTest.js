@@ -222,10 +222,10 @@ contract('ECDSAKeep', (accounts) => {
 
     beforeEach(async () => {      
       await keep.setPublicKey(publicKey1, { from: members[0] })
-      await keep.sign(hash256Digest2, { from: owner })
     })
 
     it('should return true when signature is valid but was not requested', async () => {
+      await keep.sign(hash256Digest2, { from: owner })
       let res = await keep.submitSignatureFraud.call(
         signature1.V,
         signature1.R,
@@ -238,6 +238,7 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('should return an error when preimage does not match digest', async () => {
+      await keep.sign(hash256Digest2, { from: owner })
       await expectRevert(
         keep.submitSignatureFraud.call(
           signature1.V,
@@ -267,6 +268,7 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('should return an error when signature is invalid and was not requested', async () => {
+      await keep.sign(hash256Digest2, { from: owner })
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
       await expectRevert(
         keep.submitSignatureFraud.call(
