@@ -2,7 +2,7 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const Registry = artifacts.require('./Registry.sol')
 const TokenStaking = artifacts.require('./TokenStakingStub.sol')
-const KeepBonding = artifacts.require('./KeepBondingStub.sol')
+const KeepBonding = artifacts.require('./KeepBonding.sol')
 const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
 
 const { expectRevert } = require('openzeppelin-test-helpers');
@@ -138,7 +138,7 @@ contract('KeepBonding', (accounts) => {
             const unbonded = await keepBonding.availableBondingValue(operator)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
 
-            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            const lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(value, 'unexpected bond value')
         })
 
@@ -160,10 +160,10 @@ contract('KeepBonding', (accounts) => {
             const unbonded2 = await keepBonding.availableBondingValue(operator2)
             expect(unbonded2).to.eq.BN(expectedUnbonded, 'invalid unbonded value 2')
 
-            const lockedBonds1 = await keepBonding.getLockedBonds(holder, operator, reference)
+            const lockedBonds1 = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds1).to.eq.BN(bondValue, 'unexpected bond value 1')
 
-            const lockedBonds2 = await keepBonding.getLockedBonds(holder, operator2, reference)
+            const lockedBonds2 = await keepBonding.bondAmount(operator2, holder, reference)
             expect(lockedBonds2).to.eq.BN(bondValue, 'unexpected bond value 2')
         })
 
@@ -205,36 +205,36 @@ contract('KeepBonding', (accounts) => {
         it('reassigns bond to a new holder and a new reference', async () => {
             await keepBonding.reassignBond(operator, reference, newHolder, newReference, { from: holder })
 
-            let lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            let lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
 
-            lockedBonds = await keepBonding.getLockedBonds(holder, operator, newReference)
+            lockedBonds = await keepBonding.bondAmount(operator, holder, newReference)
             expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
 
-            lockedBonds = await keepBonding.getLockedBonds(newHolder, operator, reference)
+            lockedBonds = await keepBonding.bondAmount(operator, newHolder, reference)
             expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
 
-            lockedBonds = await keepBonding.getLockedBonds(newHolder, operator, newReference)
+            lockedBonds = await keepBonding.bondAmount(operator, newHolder, newReference)
             expect(lockedBonds).to.eq.BN(bondValue, 'invalid locked bonds')
         })
 
         it('reassigns bond to the same holder and a new reference', async () => {
             await keepBonding.reassignBond(operator, reference, holder, newReference, { from: holder })
 
-            let lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            let lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
 
-            lockedBonds = await keepBonding.getLockedBonds(holder, operator, newReference)
+            lockedBonds = await keepBonding.bondAmount(operator, holder, newReference)
             expect(lockedBonds).to.eq.BN(bondValue, 'invalid locked bonds')
         })
 
         it('reassigns bond to a new holder and the same reference', async () => {
             await keepBonding.reassignBond(operator, reference, newHolder, reference, { from: holder })
 
-            let lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            let lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(0, 'invalid locked bonds')
 
-            lockedBonds = await keepBonding.getLockedBonds(newHolder, operator, reference)
+            lockedBonds = await keepBonding.bondAmount(operator, newHolder, reference)
             expect(lockedBonds).to.eq.BN(bondValue, 'invalid locked bonds')
         })
 
@@ -270,7 +270,7 @@ contract('KeepBonding', (accounts) => {
         it('releases bond amount to operator\'s available bonding value', async () => {
             await keepBonding.freeBond(operator, reference, { from: holder })
 
-            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            const lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(0, 'unexpected remaining locked bonds')
 
             const unbondedValue = await keepBonding.availableBondingValue(operator)
@@ -306,7 +306,7 @@ contract('KeepBonding', (accounts) => {
             const actualBalance = await web3.eth.getBalance(destination)
             expect(actualBalance).to.eq.BN(expectedBalance, 'invalid destination account balance')
 
-            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            const lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(0, 'unexpected remaining bond value')
         })
 
@@ -320,7 +320,7 @@ contract('KeepBonding', (accounts) => {
             const actualBalance = await web3.eth.getBalance(destination)
             expect(actualBalance).to.eq.BN(expectedBalance, 'invalid destination account balance')
 
-            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            const lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(remainingBond, 'unexpected remaining bond value')
         })
 
@@ -352,7 +352,7 @@ contract('KeepBonding', (accounts) => {
             const destinationBalance = await web3.eth.getBalance(destination)
             expect(destinationBalance).to.eq.BN(0, 'invalid destination account balance')
 
-            const lockedBonds = await keepBonding.getLockedBonds(holder, operator, reference)
+            const lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(bondValue, 'unexpected bond value')
         })
     })

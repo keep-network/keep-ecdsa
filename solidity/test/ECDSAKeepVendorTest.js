@@ -1,6 +1,6 @@
 var Registry = artifacts.require('Registry')
 var BondedECDSAKeepVendorStub = artifacts.require('BondedECDSAKeepVendorStub')
-var ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
+var ECDSAKeepFactoryVendorStub = artifacts.require('ECDSAKeepFactoryVendorStub')
 
 contract("ECDSAKeepVendor", async accounts => {
     const address0 = "0x0000000000000000000000000000000000000000"

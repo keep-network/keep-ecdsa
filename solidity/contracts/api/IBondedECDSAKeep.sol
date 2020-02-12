@@ -4,18 +4,17 @@ pragma solidity ^0.5.4;
 /// @notice Contract reflecting an ECDSA keep.
 /// @dev TODO: This is a stub contract - needs to be implemented.
 contract IBondedECDSAKeep {
-
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
     function getPublicKey() external view returns (bytes memory);
-    
+
     /// @notice Returns the amount of the keep's ETH bond in wei.
     /// @return The amount of the keep's ETH bond in wei.
-    function checkBondAmount() external view returns (uint256); 
-        
+    function checkBondAmount() external view returns (uint256);
+
     /// @notice Calculates a signature over provided digest by the keep. Note that
-    ///         signatures from the keep not explicitly requested by calling `sign`
-    ///         will be provable as fraud via `submitSignatureFraud`.
+    /// signatures from the keep not explicitly requested by calling `sign`
+    /// will be provable as fraud via `submitSignatureFraud`.
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external;
 
@@ -31,16 +30,23 @@ contract IBondedECDSAKeep {
     /// subtraction overflow is enough protection.
     /// @param _tokenAddress Address of the ERC20 token to distribute.
     /// @param _value Amount of ERC20 token to distribute.
-    function distributeERC20ToMembers(address _tokenAddress, uint256 _value) external;
+    function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
+        external;
 
-    // @notice Seizes the signer's ETH bond.
-    function seizeSignerBonds() external returns (bool);
-    // onlyKeepOwner
-    // msg.sender.transfer(bondAmount)
+    /// @notice Seizes the signer's ETH bond.
+    function seizeSignerBonds() external;
 
-    // @notice Submits a fraud proof for a valid signature from this keep that was
-    //         not first approved via a call to sign.
-    // @return Error if not fraud, true if fraud.
+    /// @notice Submits a fraud proof for a valid signature from this keep that was
+    /// not first approved via a call to sign.
+    /// @dev The function expects the signed digest to be calculated as a double
+    /// sha256 hash (hash256) of the preimage: `sha256(sha256(_preimage))`.
+    /// @param _v Signature's header byte: `27 + recoveryID`.
+    /// @param _r R part of ECDSA signature.
+    /// @param _s S part of ECDSA signature.
+    /// @param _signedDigest Digest for the provided signature. Result of hashing
+    /// the preimage.
+    /// @param _preimage Preimage of the hashed message.
+    /// @return True if fraud, error otherwise.
     function submitSignatureFraud(
         uint8 _v,
         bytes32 _r,
@@ -48,8 +54,4 @@ contract IBondedECDSAKeep {
         bytes32 _signedDigest,
         bytes calldata _preimage
     ) external returns (bool _isFraud);
-    // Expected behavior:
-    // Error if not fraud
-    // Return true if fraud
-    // This means if the signature is valid, but was not approved via sign.
 }

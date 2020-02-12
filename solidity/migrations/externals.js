@@ -1,6 +1,6 @@
-// Configuration for addresses of externally deployed smart contracts
-const SortitionPoolFactoryAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+// Addresses of externally deployed smart contracts
+const RandomBeaconAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
 module.exports = {
-  SortitionPoolFactoryAddress,
+  RandomBeaconAddress,
 }
