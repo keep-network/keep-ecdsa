@@ -179,8 +179,8 @@ contract ECDSAKeepFactory is
         (bool success, bytes memory returnData) = address(randomBeacon)
             .call
             .value(msg.value)(
-            abi.encodeWithSelector(
-                randomBeacon.requestRelayEntry.selector,
+            abi.encodeWithSignature(
+                "requestRelayEntry(address,string,uint256)",
                 address(this),
                 "setGroupSelectionSeed(uint256)",
                 callbackGas
