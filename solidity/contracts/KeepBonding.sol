@@ -179,7 +179,7 @@ contract KeepBonding {
         address operator,
         uint256 referenceID,
         uint256 amount,
-        address destination
+        address payable destination
     ) public {
         require(amount > 0, "Requested amount should be greater than zero");
 
