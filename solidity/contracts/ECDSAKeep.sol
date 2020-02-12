@@ -81,7 +81,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         for (uint256 i = 1; i <= members.length; i++) {
             if (sha256(submittedPublicKeys[members[i - 1]]) != sha256(_publicKey)) {
-                ConflictingPublicKeySubmitted(msg.sender, _publicKey)
+                emit ConflictingPublicKeySubmitted(msg.sender, _publicKey);
                 return;
             }
         }
