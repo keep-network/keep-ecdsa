@@ -128,31 +128,21 @@ contract('ECDSAKeep', (accounts) => {
 
     describe('submitPublicKey', async () => {
       beforeEach(async () => {
-        await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
-        await keep.submitPublicKey(expectedPublicKey, { from: members[2] })
+        await keep.submitPublicKey(expectedPublicKey, { from: members[0] })
       })
-
+      
       it('emits an event', async () => {
-        let res = await keep.submitPublicKey(expectedPublicKey, { from: members[0] })
+        await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
+        let res = await keep.submitPublicKey(expectedPublicKey, { from: members[2] })
         
         truffleAssert.eventEmitted(res, 'PublicKeyPublished', (ev) => {
           return ev.publicKey == expectedPublicKey
         })
       })
 
-      it('does not emit an event when key submitted by the same member', async () => {
+      it('does not emit an event nor sets the key when keys were not submitted by all members', async () => {
         let res = await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
-
         truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
-      })
-
-      it('does not set a public key when key was not submitted by all members', async () => {
-        let publicKey = await keep.getPublicKey.call()
-        assert.equal(publicKey, null, 'incorrect public key')
-      })
-
-      it('does not set a public key when key was submitted by the same member', async () => {
-        await keep.submitPublicKey(expectedPublicKey, { from: members[2] })
 
         let publicKey = await keep.getPublicKey.call()
         assert.equal(publicKey, null, 'incorrect public key')
@@ -174,17 +164,18 @@ contract('ECDSAKeep', (accounts) => {
 
       it('cannot be different than 64 bytes', async () => {
         let badPublicKey = '0x9b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
-
+        await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
         await expectRevert(
-          keep.submitPublicKey(badPublicKey, { from: members[0] }),
+          keep.submitPublicKey(badPublicKey, { from: members[2] }),
           'Public key must be 64 bytes long'
         )
       })
 
       it('cannot set public key more more than once', async () => {
-        await keep.submitPublicKey(expectedPublicKey, { from: members[0] }),
+        await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
+        await keep.submitPublicKey(expectedPublicKey, { from: members[2] }),
         await expectRevert(
-          keep.submitPublicKey(expectedPublicKey, { from: members[0] }),
+          keep.submitPublicKey(expectedPublicKey, { from: members[2] }),
           'Public key has already been set'
         )
       })
