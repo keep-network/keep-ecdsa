@@ -15,6 +15,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 // TODO: This is an interface which is expected to be defined in keep-core and imported
 // to use for the integration.
 interface IRandomBeacon {
+    event RelayEntryGenerated(uint256 requestId, uint256 entry);
+
     function entryFeeEstimate(uint256 callbackGas)
         external
         view
@@ -200,6 +202,7 @@ contract ECDSAKeepFactory is
             )
         );
         if (!success) {
+            // revert(string(returnData));
             // TODO: What should we do in case of `requestRelayEntry` failure?
             // Forward `msg.value` to the keep members?
         }
