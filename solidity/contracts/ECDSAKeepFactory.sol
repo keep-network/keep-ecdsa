@@ -56,7 +56,7 @@ contract ECDSAKeepFactory is
     KeepBonding keepBonding;
     IRandomBeacon randomBeacon;
 
-    uint256 minimumStake = 1; // TODO: Take from setter
+    uint256 public minimumStake = 200000 * 1e18;
     uint256 minimumBond = 1; // TODO: Take from setter
 
     // Gas required for a callback from the random beacon. The value specifies
@@ -160,7 +160,7 @@ contract ECDSAKeepFactory is
         ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold, address(keepBonding));
 
         keepAddress = address(keep);
-
+/*
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
                 members[i],
@@ -169,7 +169,7 @@ contract ECDSAKeepFactory is
                 memberBond
             );
         }
-
+*/
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
