@@ -147,6 +147,47 @@ contract('ECDSAKeep', (accounts) => {
         let publicKey = await keep.getPublicKey.call()
         assert.equal(publicKey, null, 'incorrect public key')
       })
+
+      it('emits event and set a key when 3 latest keys are the same', async () => {
+        let publicKey = '0x999999539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
+
+        await keep.submitPublicKey(publicKey, { from: members[2] })
+        
+        let res = await keep.submitPublicKey(publicKey, { from: members[1] })
+        truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
+        let actualPublicKey = await keep.getPublicKey.call()
+        assert.equal(actualPublicKey, null, 'incorrect public key')
+
+        res = await keep.submitPublicKey(publicKey, { from: members[0] })
+
+        truffleAssert.eventEmitted(res, 'PublicKeyPublished')
+
+        actualPublicKey = await keep.getPublicKey.call()
+        assert.equal(actualPublicKey, publicKey, 'incorrect public key')
+      })
+
+      it('emits event and set a key when having the same 3 keys after different submission combination', async () => {
+        let publicKey = '0x999999539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
+
+        await keep.submitPublicKey(expectedPublicKey, { from: members[2] })
+        
+        let res = await keep.submitPublicKey(publicKey, { from: members[1] })
+        truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
+        let actualPublicKey = await keep.getPublicKey.call()
+        assert.equal(actualPublicKey, null, 'incorrect public key')
+
+        res = await keep.submitPublicKey(publicKey, { from: members[2] })
+        truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
+
+        res = await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
+        truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
+
+        res = await keep.submitPublicKey(expectedPublicKey, { from: members[2] })
+        truffleAssert.eventEmitted(res, 'PublicKeyPublished')
+
+        actualPublicKey = await keep.getPublicKey.call()
+        assert.equal(actualPublicKey, expectedPublicKey, 'incorrect public key')
+      })
       
       it('cannot be called by non-member', async () => {
         await expectRevert(
@@ -171,7 +212,7 @@ contract('ECDSAKeep', (accounts) => {
         )
       })
 
-      it('cannot set public key more more than once', async () => {
+      it('cannot set public key more than once', async () => {
         await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
         await keep.submitPublicKey(expectedPublicKey, { from: members[2] }),
         await expectRevert(

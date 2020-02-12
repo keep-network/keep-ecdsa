@@ -75,14 +75,14 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         submittedPublicKeys[msg.sender] = _publicKey;
 
-        for (uint256 i = 0; i < members.length; i++) {
-            if (sha256(submittedPublicKeys[members[i]]) != sha256(_publicKey)) {
-                break;
-            } else if (i == members.length - 1) {
-                publicKey = _publicKey;
-                emit PublicKeyPublished(_publicKey);
+        for (uint256 i = 1; i <= members.length; i++) {
+            if (sha256(submittedPublicKeys[members[i - 1]]) != sha256(_publicKey)) {
+                return;
             }
         }
+
+        publicKey = _publicKey;
+        emit PublicKeyPublished(_publicKey);
     }
 
     /// @notice Returns the keep signer's public key.
