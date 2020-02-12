@@ -56,7 +56,7 @@ contract ECDSAKeepFactory is
     KeepBonding keepBonding;
     IRandomBeacon randomBeacon;
 
-    uint256 minimumStake = 1; // TODO: Take from setter
+    uint256 public minimumStake = 200000 * 1e18;
     uint256 minimumBond = 1; // TODO: Take from setter
 
     // Gas required for a callback from the random beacon. The value specifies

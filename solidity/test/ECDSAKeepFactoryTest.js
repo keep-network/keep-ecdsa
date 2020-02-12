@@ -1,4 +1,5 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
+import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -39,6 +40,14 @@ contract("ECDSAKeepFactory", async accounts => {
                 keepBonding.address,
                 randomBeacon.address
             )
+
+            const stakeBalance = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(stakeBalance);
+
+            const bondingValue = new BN(100)
+            await keepBonding.deposit(member1, { value: bondingValue })
+            await keepBonding.deposit(member2, { value: bondingValue })
+            await keepBonding.deposit(member3, { value: bondingValue })
         })
 
         beforeEach(async () => {
@@ -62,19 +71,19 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("inserts operator with the correct staking weight in the pool", async () => {
-            const stakingWeight = new BN(199)
-            await tokenStaking.setBalance(stakingWeight)
+            const minimumStake = await keepFactory.minimumStake.call()
+            const minimumStakeMultiplier = new BN("10")
+            await tokenStaking.setBalance(minimumStake.mul(minimumStakeMultiplier))
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
             const signerPoolAddress = await keepFactory.getSignerPool(application)
             const signerPool = await BondedSortitionPool.at(signerPoolAddress)
 
-            // TODO: Update result verification when sortition-pools interfaces
-            // and implementation are ready.
-            // expect(
-            //     await signerPool.getPoolWeight.call(member1)
-            // ).to.eq.BN(stakingWeight, 'invalid staking weight')
+            const actualWeight = await signerPool.getPoolWeight.call(member1)
+            const expectedWeight = minimumStakeMultiplier
+
+            expect(actualWeight).to.eq.BN(expectedWeight, 'invalid staking weight')
         })
 
         it("inserts operators to the same pool", async () => {
@@ -89,7 +98,7 @@ contract("ECDSAKeepFactory", async accounts => {
             assert.isTrue(await signerPool.isOperatorInPool(member2), "operator 2 is not in the pool")
         })
 
-        it("does not add an operator to the pool if he is already there", async () => {
+        it("does not add an operator to the pool if it is already there", async () => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             const signerPoolAddress = await keepFactory.getSignerPool(application)
 
@@ -100,6 +109,15 @@ contract("ECDSAKeepFactory", async accounts => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
             assert.isTrue(await signerPool.isOperatorInPool(member1), "operator is not in the pool")
+        })
+
+        it("does not add an operator to the pool if it does not have a minimum stake", async() => {
+            await tokenStaking.setBalance(new BN("1"))
+
+            await expectThrowWithMessage(
+                keepFactory.registerMemberCandidate(application, { from: member1 }),
+                "Operator not eligible"
+            )
         })
 
         it("inserts operators to different pools", async () => {
@@ -135,6 +153,13 @@ contract("ECDSAKeepFactory", async accounts => {
                 keepBonding.address,
                 randomBeacon.address
             )
+
+            const stakeBalance = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(stakeBalance);
+
+            const bondingValue = new BN(100)
+            await keepBonding.deposit(member1, { value: bondingValue })
+            await keepBonding.deposit(member2, { value: bondingValue })
         })
 
         beforeEach(async () => {
@@ -196,6 +221,9 @@ contract("ECDSAKeepFactory", async accounts => {
         beforeEach(async () => {
             await initializeNewFactory()
 
+            const stakeBalance = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(stakeBalance)
+
             await keepBonding.deposit(member1, { value: singleBond })
             await keepBonding.deposit(member2, { value: singleBond })
             await keepBonding.deposit(member3, { value: singleBond })
@@ -212,19 +240,16 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if no member candidates are registered", async () => {
-            try {
-                await keepFactory.openKeep(
+            await expectThrowWithMessage(
+                keepFactory.openKeep(
                     groupSize,
                     threshold,
                     keepOwner,
                     bond,
                     { value: feeEstimate }
-                )
-
-                assert(false, 'Test call did not error as expected')
-            } catch (e) {
-                assert.include(e.message, "No signer pool for this application")
-            }
+                ),
+                "No signer pool for this application"
+            )
         })
 
         it("reverts if bond equals zero", async () => {
@@ -341,6 +366,9 @@ contract("ECDSAKeepFactory", async accounts => {
             const singleBond = new BN(3)
             const bond = new BN(11)
 
+            const stakeBalance = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(stakeBalance)
+
             await keepBonding.deposit(member1, { value: singleBond })
             await keepBonding.deposit(member2, { value: singleBond })
             await keepBonding.deposit(member3, { value: singleBond })
@@ -385,6 +413,9 @@ contract("ECDSAKeepFactory", async accounts => {
             let groupSize = 2
             let threshold = 2
 
+            const stakeBalance = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(stakeBalance)
+
             await keepBonding.deposit(member1, { value: singleBond })
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
@@ -405,6 +436,9 @@ contract("ECDSAKeepFactory", async accounts => {
         // doesn't have sufficient unbonded value.
         it("reverts if one member has insufficient unbonded value", async () => {
             await initializeNewFactory()
+
+            const stakeBalance = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(stakeBalance)
 
             await keepBonding.deposit(member1, { value: singleBond })
             await keepBonding.deposit(member2, { value: singleBond })
