@@ -408,7 +408,7 @@ contract('ECDSAKeep', (accounts) => {
           await keep.submitSignature(
             signatureR,
             signatureS,
-            malleableRecoveryID,
+            0,
             { from: members[0] }
           )
           assert(false, 'Test call did not error as expected')
