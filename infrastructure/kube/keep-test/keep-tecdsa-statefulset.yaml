@@ -89,6 +89,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: keep-tecdsa-config
+  namspace: tbtc
 spec:
   accessModes:
     - ReadWriteOnce
