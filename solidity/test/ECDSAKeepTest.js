@@ -68,31 +68,25 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('cannot be called by non-owner', async () => {
-      try {
-        await keep.sign(digest)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Ownable: caller is not the owner.')
-      }
+      await expectRevert(
+        keep.sign(digest),
+        'Ownable: caller is not the owner.'
+      )
     })
 
     it('cannot be called by non-owner member', async () => {
-      try {
-        await keep.sign(digest, { from: members[0] })
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Ownable: caller is not the owner.')
-      }
+      await expectRevert(
+        keep.sign(digest, { from: members[0] }),
+        'Ownable: caller is not the owner.'
+      )
     })
 
     it('cannot be requested if already in progress', async () => {
       await keep.sign(digest, { from: owner })
-      try {
-        await keep.sign('0x02', { from: owner })
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Signer is busy')
-      }
+      await expectRevert(
+        keep.sign('0x02', { from: owner }),
+        'Signer is busy'
+      )
     })
   })
 
@@ -372,74 +366,64 @@ contract('ECDSAKeep', (accounts) => {
 
       await keep.setPublicKey(publicKey, { from: members[0] })
 
-      try {
-        await keep.submitSignature(
+      await expectRevert(
+        keep.submitSignature(
           signatureR,
           signatureS,
           signatureRecoveryID,
           { from: members[0] }
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, "Not awaiting a signature")
-      }
+        ),
+        "Not awaiting a signature"
+      )
     })
 
     describe('validates signature', async () => {
       it('rejects recovery ID out of allowed range', async () => {
-        try {
-          await keep.submitSignature(
+        await expectRevert(
+          keep.submitSignature(
             signatureR,
             signatureS,
             4,
             { from: members[0] }
-          )
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, "Recovery ID must be one of {0, 1, 2, 3}")
-        }
+          ),
+          "Recovery ID must be one of {0, 1, 2, 3}"
+        )
       })
 
       it('rejects invalid signature', async () => {
-        try {
-          await keep.submitSignature(
+        await expectRevert(
+          keep.submitSignature(
             signatureR,
             signatureS,
             1,
             { from: members[0] }
-          )
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, "Invalid signature")
-        }
+          ),
+          "Invalid signature"
+        )
       })
     })
 
     it('cannot be called by non-member', async () => {
-      try {
-        await keep.submitSignature(
+      await expectRevert(
+        keep.submitSignature(
           signatureR,
           signatureS,
           signatureRecoveryID
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Caller is not the keep member')
-      }
+        ),
+        'Caller is not the keep member'
+      )
     })
 
     it('cannot be called by non-member owner', async () => {
-      try {
-        await keep.submitSignature(
+      await expectRevert(
+        keep.submitSignature(
           signatureR,
           signatureS,
           signatureRecoveryID,
           { from: owner }
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Caller is not the keep member')
-      }
+        ),
+        'Caller is not the keep member'
+      )
     })
   })
 
