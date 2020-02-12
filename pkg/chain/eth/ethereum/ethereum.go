@@ -105,12 +105,12 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return nil
 	}
 
-	transaction, err := keepContract.SetPublicKey(ec.transactorOptions, publicKey[:])
+	transaction, err := keepContract.SubmitPublicKey(ec.transactorOptions, publicKey[:])
 	if err != nil {
 		return err
 	}
 
-	logger.Debugf("submitted SetPublicKey transaction with hash: [%x]", transaction.Hash())
+	logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
 
 	return nil
 }
