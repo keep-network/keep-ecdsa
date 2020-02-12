@@ -123,11 +123,6 @@ func (n *Node) CalculateSignature(
 
 	err = n.ethereumChain.SubmitSignature(keepAddress, signature)
 	if err != nil {
-		if err.Error() == "Not awaiting a signature" {
-			logger.Warning("Signature has already been published")
-			return nil
-		}
-
 		return fmt.Errorf("failed to submit signature: [%v]", err)
 	}
 

@@ -140,6 +140,11 @@ func (ec *EthereumChain) SubmitSignature(
 		uint8(signature.RecoveryID),
 	)
 	if err != nil {
+		digest, _ := keepContract.GetDigest(ec.callerOptions);
+		if len(digest) != 0 {
+			logger.Info("Signature has already been published")
+			return nil
+		}
 		return err
 	}
 
