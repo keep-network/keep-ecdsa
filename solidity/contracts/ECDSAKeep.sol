@@ -53,7 +53,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     KeepBonding keepBonding;
 
     constructor(
-        address _owner,
+        address _owner, // TODO: Change type to `address payable`
         address payable[] memory _members,
         uint256 _honestThreshold,
         address _keepBonding
@@ -97,8 +97,18 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @notice Seizes the signer's ETH bond.
     function seizeSignerBonds() external onlyOwner {
         for (uint256 i = 0; i < members.length; i++) {
-            uint256 amount = keepBonding.bondAmount(members[i], address(this), uint256(address(this)));
-            keepBonding.seizeBond(members[i], uint256(address(this)), amount, owner());
+            uint256 amount = keepBonding.bondAmount(
+                members[i],
+                address(this),
+                uint256(address(this))
+            );
+
+            keepBonding.seizeBond(
+                members[i],
+                uint256(address(this)),
+                amount,
+                address(uint160(owner()))
+            );
         }
     }
 
