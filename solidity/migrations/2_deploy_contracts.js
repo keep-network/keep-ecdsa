@@ -43,7 +43,6 @@ module.exports = async function (deployer) {
     const vendor = await BondedECDSAKeepVendorImplV1.at(BondedECDSAKeepVendor.address)
     await vendor.initialize(Registry.address)
     const registry = await Registry.deployed();
-    await registry.approveOperatorContract(ECDSAKeepFactory.address);
 
     // Set service contract owner as operator contract upgrader by default
     const operatorContractUpgrader = await vendor.owner()
