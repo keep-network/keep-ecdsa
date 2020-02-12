@@ -4,7 +4,6 @@ import {
   addToBalances
 } from './helpers/listBalanceUtils'
 
-import { mineBlocks } from "./helpers/mineBlocks";
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const { expectRevert } = require('openzeppelin-test-helpers');
