@@ -24,7 +24,7 @@ const expect = chai.expect
 
 contract('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
-  const members = [accounts[2], accounts[3]]
+  const members = [accounts[2], accounts[3], accounts[4]]
   const honestThreshold = 1
 
   let keepBonding, keep;
@@ -114,8 +114,8 @@ contract('ECDSAKeep', (accounts) => {
       assert.equal(publicKey, undefined, 'public key should not be set')
     })
 
-    it('set public key and get it', async () => {
-      await keep.setPublicKey(expectedPublicKey, { from: members[0] })
+    it('submit public key by all members and get it', async () => {
+      await submitMembersPublicKey(expectedPublicKey)
 
       let publicKey = await keep.getPublicKey.call()
 
@@ -126,25 +126,48 @@ contract('ECDSAKeep', (accounts) => {
       )
     })
 
-    describe('setPublicKey', async () => {
+    describe('submitPublicKey', async () => {
+      beforeEach(async () => {
+        await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
+        await keep.submitPublicKey(expectedPublicKey, { from: members[2] })
+      })
+
       it('emits an event', async () => {
-        let res = await keep.setPublicKey(expectedPublicKey, { from: members[0] })
+        let res = await keep.submitPublicKey(expectedPublicKey, { from: members[0] })
         
         truffleAssert.eventEmitted(res, 'PublicKeyPublished', (ev) => {
           return ev.publicKey == expectedPublicKey
         })
       })
+
+      it('does not emit an event when key submitted by the same member', async () => {
+        let res = await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
+
+        truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
+      })
+
+      it('does not set a public key when key was not submitted by all members', async () => {
+        let publicKey = await keep.getPublicKey.call()
+        assert.equal(publicKey, null, 'incorrect public key')
+      })
+
+      it('does not set a public key when key was submitted by the same member', async () => {
+        await keep.submitPublicKey(expectedPublicKey, { from: members[2] })
+
+        let publicKey = await keep.getPublicKey.call()
+        assert.equal(publicKey, null, 'incorrect public key')
+      })
       
       it('cannot be called by non-member', async () => {
         await expectRevert(
-          keep.setPublicKey(expectedPublicKey),
+          keep.submitPublicKey(expectedPublicKey),
           'Caller is not the keep member'
         )
       })
 
       it('cannot be called by non-member owner', async () => {
         await expectRevert(
-          keep.setPublicKey(expectedPublicKey, { from: owner }),
+          keep.submitPublicKey(expectedPublicKey, { from: owner }),
           'Caller is not the keep member'
         )
       })
@@ -153,16 +176,15 @@ contract('ECDSAKeep', (accounts) => {
         let badPublicKey = '0x9b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
 
         await expectRevert(
-          keep.setPublicKey(badPublicKey, { from: members[0] }),
+          keep.submitPublicKey(badPublicKey, { from: members[0] }),
           'Public key must be 64 bytes long'
         )
       })
 
       it('cannot set public key more more than once', async () => {
-        keep = await ECDSAKeep.new(owner, members, honestThreshold);
-        await keep.setPublicKey(expectedPublicKey, { from: members[0] }),
+        await keep.submitPublicKey(expectedPublicKey, { from: members[0] }),
         await expectRevert(
-          keep.setPublicKey(expectedPublicKey, { from: members[0] }),
+          keep.submitPublicKey(expectedPublicKey, { from: members[0] }),
           'Public key has already been set'
         )
       })
@@ -191,17 +213,20 @@ contract('ECDSAKeep', (accounts) => {
   describe('seizeSignerBonds', () =>  {
     const value0 = new BN(30)
     const value1 = new BN(70)
+    const value2 = new BN(10)
 
     it('should seize signer bond', async () => {
       let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
       
       await keepBonding.deposit(members[0], { value: value0 })
       await keepBonding.deposit(members[1], { value: value1 })
+      await keepBonding.deposit(members[2], { value: value2 })
       await keepBonding.createBond(members[0], keep.address, referenceID, value0)
       await keepBonding.createBond(members[1], keep.address, referenceID, value1)
+      await keepBonding.createBond(members[2], keep.address, referenceID, value2)
 
       let bondsBeforeSeizure = await keep.checkBondAmount()
-      let expected = value0.add(value1);
+      let expected = value0.add(value1).add(value2);
       expect(bondsBeforeSeizure).to.eq.BN(expected, "incorrect bond amount before seizure");
       
       let gasPrice = await web3.eth.getGasPrice()
@@ -213,7 +238,7 @@ contract('ECDSAKeep', (accounts) => {
       let ownerBalanceDiff = new BN(await web3.eth.getBalance(owner))
           .add(seizedSignerBondsFee).sub(new BN(ownerBalanceBefore));
 
-      expect(ownerBalanceDiff).to.eq.BN(value0.add(value1), "incorrect owner balance");
+      expect(ownerBalanceDiff).to.eq.BN(value0.add(value1).add(value2), "incorrect owner balance");
       
       let bondsAfterSeizure = await keep.checkBondAmount()
       expect(bondsAfterSeizure).to.eq.BN(0, "should zero all the bonds");
@@ -248,7 +273,7 @@ contract('ECDSAKeep', (accounts) => {
     beforeEach(async () => {
       signingTimeout = await keep.signingTimeout.call()
       
-      await keep.setPublicKey(publicKey1, { from: members[0] })
+      await submitMembersPublicKey(publicKey1)
       await keep.sign(hash256Digest2, { from: owner })
     })
 
@@ -333,7 +358,7 @@ contract('ECDSAKeep', (accounts) => {
     const signatureRecoveryID = 0
 
     beforeEach(async () => {
-      await keep.setPublicKey(publicKey, { from: members[0] })
+      await submitMembersPublicKey(publicKey)
       await keep.sign(digest, { from: owner })
     })
 
@@ -367,7 +392,7 @@ contract('ECDSAKeep', (accounts) => {
     it('cannot be submitted if signing was not requested', async () => {
       let keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
 
-      await keep.setPublicKey(publicKey, { from: members[0] })
+      await keep.submitPublicKey(publicKey, { from: members[0] })
 
       try {
         await keep.submitSignature(
@@ -589,4 +614,10 @@ contract('ECDSAKeep', (accounts) => {
       )
     })
   })
+
+  async function submitMembersPublicKey(publicKey) {
+    await keep.submitPublicKey(publicKey, { from: members[0] })
+    await keep.submitPublicKey(publicKey, { from: members[1] })
+    await keep.submitPublicKey(publicKey, { from: members[2] })
+  };
 })

@@ -30,7 +30,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // Number of block when signing process was started. Used to track if signing
     // is in progress. Value `0` indicates that there is no signing process in progress.
     uint256 internal currentSigningStartBlock;
-
+    // Map stores public key by member addresses. All members should submit the
+    // same public key.
+    mapping(address => bytes) publicKeys;
     // Notification that a signer's public key was published for the keep.
     event PublicKeyPublished(bytes publicKey);
 
@@ -64,16 +66,23 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         keepBonding = KeepBonding(_keepBonding);
     }
 
-    /// @notice Set a signer's public key for the keep.
-    /// @dev Stub implementations.
-    /// @param _publicKey Signer's public key.
-    function setPublicKey(bytes calldata _publicKey) external onlyMember {
-        require(publicKey.length == 0, "Public key has already been set");
 
+    /// @notice Public key is set when all members submit the same key.
+    /// @param _publicKey Signer's public key.
+    function submitPublicKey(bytes calldata _publicKey) external onlyMember {
+        require(publicKey.length == 0, "Public key has already been set");
         require(_publicKey.length == 64, "Public key must be 64 bytes long");
 
-        publicKey = _publicKey;
-        emit PublicKeyPublished(_publicKey);
+        publicKeys[msg.sender] = _publicKey;
+
+        for (uint256 i = 0; i < members.length; i++) {
+            if (sha256(publicKeys[members[i]]) != sha256(_publicKey)) {
+                break;
+            } else if (i == members.length - 1) {
+                publicKey = _publicKey;
+                emit PublicKeyPublished(_publicKey);
+            }
+        }
     }
 
     /// @notice Returns the keep signer's public key.
