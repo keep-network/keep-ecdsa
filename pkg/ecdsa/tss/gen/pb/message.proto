@@ -1,16 +1,14 @@
 syntax = "proto3";
 
 option go_package = "pb";
-package registry;
+package tss;
 
-message ThresholdSigner {
-  message GroupInfo {
-    string groupID = 1;
-    string memberID = 2;
-    repeated string groupMemberIDs = 3;
-    int32 dishonestThreshold = 4;
-  }
+message TSSProtocolMessage {
+  bytes senderID = 1;
+  bytes payload = 2;
+  bool isBroadcast = 3;
+}
 
-  GroupInfo groupInfo = 1;
-  bytes thresholdKey = 2;
+message JoinMessage {
+  bytes senderID = 1;
 }

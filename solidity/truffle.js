@@ -30,7 +30,7 @@ module.exports = {
       host: "127.0.0.1",     // Localhost (default: none)
       port: 8545,            // Standard Ethereum port (default: none)
       network_id: "*",       // Any network (default: none)
-      websockets: false,      // Enable EventEmitter interface for web3 (default: false)
+      websockets: true,      // Enable EventEmitter interface for web3 (default: false)
     },
     keep_dev: {
       provider: function() {
@@ -50,7 +50,7 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.5.4",    // Fetch exact version from solc-bin (default: truffle's version)
+      version: "0.5.15",    // Fetch exact version from solc-bin (default: truffle's version)
     }
   }
 }
