@@ -1,10 +1,10 @@
-const KeepBonding = artifacts.require("./KeepBonding.sol");
-const ECDSAKeepFactory = artifacts.require("./ECDSAKeepFactory.sol");
-const BondedECDSAKeepVendor = artifacts.require("./BondedECDSAKeepVendor.sol");
-const BondedECDSAKeepVendorImplV1 = artifacts.require("./BondedECDSAKeepVendorImplV1.sol");
+const KeepBonding = artifacts.require("KeepBonding")
+const ECDSAKeepFactory = artifacts.require("ECDSAKeepFactory")
+const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
+const BondedECDSAKeepVendorImplV1 = artifacts.require("BondedECDSAKeepVendorImplV1")
 
 const { deployBondedSortitionPoolFactory } = require('@keep-network/sortition-pools/migrations/scripts/deployContracts')
-const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory");
+const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory")
 
 let { RandomBeaconAddress, TokenStakingAddress } = require('./externals')
 
