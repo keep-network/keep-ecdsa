@@ -15,8 +15,6 @@ let { RandomBeaconAddress } = require('./externals')
 
 module.exports = async function (deployer) {
     await deployer.deploy(Registry)
-    await deployer.deploy(KeepBonding, Registry.address, "0x0000000000000000000000000000000000000000") // TODO: get keep-core contracts deployed addresses
-
     await deployBondedSortitionPoolFactory(artifacts, deployer)
 
     if (process.env.TEST) {
@@ -28,6 +26,8 @@ module.exports = async function (deployer) {
     } else {
         TokenStaking = artifacts.require("TokenStaking")
     }
+
+    await deployer.deploy(KeepBonding, Registry.address, TokenStaking.address)
 
     await deployer.deploy(
         ECDSAKeepFactory,
