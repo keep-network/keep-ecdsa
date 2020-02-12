@@ -26,8 +26,6 @@ contract("ECDSAKeepFactory", async accounts => {
     const member1 = accounts[2]
     const member2 = accounts[3]
     const member3 = accounts[4]
-    
-    const stakeBalance = web3.utils.toWei("1000000", "ether");
 
     describe("registerMemberCandidate", async () => {
         before(async () => {
@@ -42,6 +40,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 randomBeacon.address
             )
 
+            const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance);
 
             const bondingValue = new BN(100)
@@ -71,17 +70,17 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("inserts operator with the correct staking weight in the pool", async () => {
-            // setting this vlaue to 10x minimum stake
-            const stakeBalance = web3.utils.toWei("2000000", "ether"); 
-            await tokenStaking.setBalance(stakeBalance)
+            const minimumStake = await keepFactory.minimumStake.call()
+            const minimumStakeMultiplier = new BN("10")
+            await tokenStaking.setBalance(minimumStake.mul(minimumStakeMultiplier))
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
             const signerPoolAddress = await keepFactory.getSignerPool(application)
             const signerPool = await BondedSortitionPool.at(signerPoolAddress)
 
-            const actualWeight = await signerPool.getPoolWeight.call(member1);
-            const expectedWeight = new BN("10") // 20000000 / 2000000 = 10
+            const actualWeight = await signerPool.getPoolWeight.call(member1)
+            const expectedWeight = minimumStakeMultiplier
 
             expect(actualWeight).to.eq.BN(expectedWeight, 'invalid staking weight')
         })
@@ -145,6 +144,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 randomBeacon.address
             )
 
+            const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance);
 
             const bondingValue = new BN(100)
@@ -211,7 +211,9 @@ contract("ECDSAKeepFactory", async accounts => {
         beforeEach(async () => {
             await initializeNewFactory()
 
+            const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance)
+
             await keepBonding.deposit(member1, { value: singleBond })
             await keepBonding.deposit(member2, { value: singleBond })
             await keepBonding.deposit(member3, { value: singleBond })
@@ -357,7 +359,9 @@ contract("ECDSAKeepFactory", async accounts => {
             const singleBond = new BN(3)
             const bond = new BN(11)
 
+            const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance)
+
             await keepBonding.deposit(member1, { value: singleBond })
             await keepBonding.deposit(member2, { value: singleBond })
             await keepBonding.deposit(member3, { value: singleBond })
@@ -402,7 +406,9 @@ contract("ECDSAKeepFactory", async accounts => {
             let groupSize = 2
             let threshold = 2
 
+            const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance)
+
             await keepBonding.deposit(member1, { value: singleBond })
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
@@ -424,7 +430,9 @@ contract("ECDSAKeepFactory", async accounts => {
         it("reverts if one member has insufficient unbonded value", async () => {
             await initializeNewFactory()
 
+            const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance)
+
             await keepBonding.deposit(member1, { value: singleBond })
             await keepBonding.deposit(member2, { value: singleBond })
             await keepBonding.deposit(member3, { value: singleBond.sub(new BN(1)) })
