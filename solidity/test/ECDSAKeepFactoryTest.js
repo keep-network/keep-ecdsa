@@ -1,4 +1,5 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
+import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -97,7 +98,7 @@ contract("ECDSAKeepFactory", async accounts => {
             assert.isTrue(await signerPool.isOperatorInPool(member2), "operator 2 is not in the pool")
         })
 
-        it("does not add an operator to the pool if he is already there", async () => {
+        it("does not add an operator to the pool if it is already there", async () => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             const signerPoolAddress = await keepFactory.getSignerPool(application)
 
@@ -108,6 +109,15 @@ contract("ECDSAKeepFactory", async accounts => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
             assert.isTrue(await signerPool.isOperatorInPool(member1), "operator is not in the pool")
+        })
+
+        it("does not add an operator to the pool if it does not have a minimum stake", async() => {
+            await tokenStaking.setBalance(new BN("1"))
+
+            await expectThrowWithMessage(
+                keepFactory.registerMemberCandidate(application, { from: member1 }),
+                "Operator not eligible"
+            )
         })
 
         it("inserts operators to different pools", async () => {
