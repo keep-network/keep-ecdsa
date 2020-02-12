@@ -1,6 +1,6 @@
 pragma solidity ^0.5.4;
 
-import {IRandomBeacon} from "../../contracts/ECDSAKeepFactory.sol";
+import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
 
 /// @title Random Beacon Service Stub
 /// @dev This contract is for testing purposes only.

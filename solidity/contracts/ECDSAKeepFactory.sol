@@ -10,24 +10,9 @@ import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
 
+import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
+
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-
-// TODO: This is an interface which is expected to be defined in keep-core and imported
-// to use for the integration.
-interface IRandomBeacon {
-    event RelayEntryGenerated(uint256 requestId, uint256 entry);
-
-    function entryFeeEstimate(uint256 callbackGas)
-        external
-        view
-        returns (uint256);
-
-    function requestRelayEntry(
-        address callbackContract,
-        string calldata callbackMethod,
-        uint256 callbackGas
-    ) external payable returns (uint256);
-}
 
 /// @title ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
