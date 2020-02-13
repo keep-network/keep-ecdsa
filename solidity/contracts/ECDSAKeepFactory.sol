@@ -154,14 +154,6 @@ contract ECDSAKeepFactory is
 
         keepAddress = address(keep);
 
-        // If subsidy pool is non-empty, distribute the value to signers but
-        // never distribute more than the payment for opening a keep.
-        uint256 signerSubsidy = subsidyPool < msg.value ? subsidyPool : msg.value;
-        if (signerSubsidy > 0) {
-            subsidyPool -= signerSubsidy;
-            keep.distributeETHToMembers.value(signerSubsidy)();
-        }
-
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
                 members[i],
@@ -169,6 +161,14 @@ contract ECDSAKeepFactory is
                 uint256(keepAddress),
                 memberBond
             );
+        }
+
+        // If subsidy pool is non-empty, distribute the value to signers but
+        // never distribute more than the payment for opening a keep.
+        uint256 signerSubsidy = subsidyPool < msg.value ? subsidyPool : msg.value;
+        if (signerSubsidy > 0) {
+            subsidyPool -= signerSubsidy;
+            keep.distributeETHToMembers.value(signerSubsidy)();
         }
 
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
