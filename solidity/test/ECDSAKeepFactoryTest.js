@@ -230,13 +230,8 @@ contract("ECDSAKeepFactory", async accounts => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
             await keepFactory.registerMemberCandidate(application, { from: member3 })
-
-            await createSnapshot()
         })
 
-        afterEach(async () => {
-            await restoreSnapshot()
-        })
 
         it("reverts if no member candidates are registered", async () => {
             await expectRevert(
@@ -253,21 +248,6 @@ contract("ECDSAKeepFactory", async accounts => {
 
         it("reverts if bond equals zero", async () => {
             let bond = 0
-
-            await expectRevert(
-                keepFactory.openKeep(
-                    groupSize,
-                    threshold,
-                    keepOwner,
-                    bond,
-                    { from: application, value: feeEstimate },
-                ),
-                "Bond per member must be greater than zero"
-            )
-        })
-
-        it("reverts if bond per member equals zero", async () => {
-            let bond = new BN(2)
 
             await expectRevert(
                 keepFactory.openKeep(
@@ -352,58 +332,102 @@ contract("ECDSAKeepFactory", async accounts => {
             ).to.eq.BN(singleBond, 'invalid bond value for member3')
         })
 
-        // This test checks that if the requested bond value divided by the group
-        // size has a remainder which is not bonded, e.g.:
-        // requested bond = 11 & group size = 3 => bond per member ≈ 3,66
-        // but `11.div(3) = 3` so in current implementation we bond only 9 and
-        // the rest remains unbonded.
-        // TODO: Check if such case is acceptable.
-        it("forgets about the remainder", async () => {
-            await initializeNewFactory()
+        // This tests cases are to check roundings for member bonds.
+        // Ex. requested bond = 11 & group size = 3 => bond per member ≈ 3,66 but 
+        // `11.div(3) = 3` so in the current implementation we round the bond up to 4
+        describe("member bonds rounding", async () => {
+            let blockNumber
 
-            const groupSize = 3
-            const singleBond = new BN(3)
-            const bond = new BN(11)
-
-            const stakeBalance = await keepFactory.minimumStake.call()
-            await tokenStaking.setBalance(stakeBalance)
-
-            await keepBonding.deposit(member1, { value: singleBond })
-            await keepBonding.deposit(member2, { value: singleBond })
-            await keepBonding.deposit(member3, { value: singleBond })
-
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
-            await keepFactory.registerMemberCandidate(application, { from: member2 })
-            await keepFactory.registerMemberCandidate(application, { from: member3 })
-
-            let blockNumber = await web3.eth.getBlockNumber()
-
-            await keepFactory.openKeep(
-                groupSize,
-                threshold,
-                keepOwner,
-                bond,
-                { from: application, value: feeEstimate },
-            )
-
-            let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
-                fromBlock: blockNumber,
-                toBlock: 'latest'
+            beforeEach(async () => {
+                await initializeNewFactory()
+                const stakeBalance = await keepFactory.minimumStake.call()
+                await tokenStaking.setBalance(stakeBalance)
+                blockNumber = await web3.eth.getBlockNumber()
             })
 
-            const keepAddress = eventList[0].returnValues.keepAddress
+            it("rounds up a member bond with smaller values", async () => {
+                const bond = new BN(16)
+                const unbondedAmount = new BN(40)
+                // without rounding, bond.div(groupSize): 16/3=5.3333
+                // expected member bond with rounding up is 6 
+                const expectedMemberBond = new BN(6)
+    
+                await depositAndRegisterMembers(unbondedAmount)
+    
+                await keepFactory.openKeep(
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
+                    { from: application, value: feeEstimate },
+                )
+    
+                let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+                    fromBlock: blockNumber,
+                    toBlock: 'latest'
+                })
+    
+                const keepAddress = eventList[0].returnValues.keepAddress
+    
+                expect(
+                    await keepBonding.bondAmount(member1, keepAddress, keepAddress)
+                ).to.eq.BN(expectedMemberBond, 'invalid bond value for member1')
+    
+                expect(
+                    await keepBonding.bondAmount(member2, keepAddress, keepAddress)
+                ).to.eq.BN(expectedMemberBond, 'invalid bond value for member2')
+    
+                expect(
+                    await keepBonding.bondAmount(member3, keepAddress, keepAddress)
+                ).to.eq.BN(expectedMemberBond, 'invalid bond value for member3')
+            })
 
-            expect(
-                await keepBonding.bondAmount(member1, keepAddress, keepAddress)
-            ).to.eq.BN(singleBond, 'invalid bond value for member1')
+            it("rounds up a member bond with higher values", async () => {
+                const bond = new BN(11003431)
+                const unbondedAmount = new BN(4200500)
+                // without rounding, bond.div(groupSize): 11003431/3=3667810,3333333
+                // expected member bond with rounding up is 3667811 
+                const expectedMemberBond = new BN(3667811)
 
-            expect(
-                await keepBonding.bondAmount(member2, keepAddress, keepAddress)
-            ).to.eq.BN(singleBond, 'invalid bond value for member2')
+                await depositAndRegisterMembers(unbondedAmount)
+    
+                await keepFactory.openKeep(
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
+                    { from: application, value: feeEstimate },
+                )
+    
+                let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+                    fromBlock: blockNumber,
+                    toBlock: 'latest'
+                })
+    
+                const keepAddress = eventList[0].returnValues.keepAddress
+    
+                expect(
+                    await keepBonding.bondAmount(member1, keepAddress, keepAddress)
+                ).to.eq.BN(expectedMemberBond, 'invalid bond value for member1')
+    
+                expect(
+                    await keepBonding.bondAmount(member2, keepAddress, keepAddress)
+                ).to.eq.BN(expectedMemberBond, 'invalid bond value for member2')
+    
+                expect(
+                    await keepBonding.bondAmount(member3, keepAddress, keepAddress)
+                ).to.eq.BN(expectedMemberBond, 'invalid bond value for member3')
+            })
 
-            expect(
-                await keepBonding.bondAmount(member3, keepAddress, keepAddress)
-            ).to.eq.BN(singleBond, 'invalid bond value for member3')
+            async function depositAndRegisterMembers(unbondedAmount) {
+                await keepBonding.deposit(member1, { value: unbondedAmount })
+                await keepBonding.deposit(member2, { value: unbondedAmount })
+                await keepBonding.deposit(member3, { value: unbondedAmount })
+    
+                await keepFactory.registerMemberCandidate(application, { from: member1 })
+                await keepFactory.registerMemberCandidate(application, { from: member2 })
+                await keepFactory.registerMemberCandidate(application, { from: member3 })
+            }
         })
 
         it("reverts if not enough member candidates are registered", async () => {
@@ -445,17 +469,10 @@ contract("ECDSAKeepFactory", async accounts => {
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
-            await keepFactory.registerMemberCandidate(application, { from: member3 })
-
+            
             await expectRevert(
-                keepFactory.openKeep(
-                    groupSize,
-                    threshold,
-                    keepOwner,
-                    bond,
-                    { from: application, value: feeEstimate }
-                ),
-                "Insufficient unbonded value"
+                keepFactory.registerMemberCandidate(application, { from: member3 }),
+                "Operator not eligible."
             )
         })
 
