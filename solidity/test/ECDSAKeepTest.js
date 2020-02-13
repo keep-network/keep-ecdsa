@@ -9,6 +9,7 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 import { duration, increaseTime } from './helpers/increaseTime';
 
 const { expectRevert } = require('openzeppelin-test-helpers');
+const { ZERO_ADDRESS } = require('openzeppelin-test-helpers').constants;
 
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
@@ -726,15 +727,15 @@ contract('ECDSAKeep', (accounts) => {
       ).to.eq.BN(0, "incorrect bond amount for keep")
 
       expect(
-        await keepBonding.availableBondingValue(members[0])
+        await keepBonding.availableUnbondedValue(members[0], ZERO_ADDRESS, ZERO_ADDRESS)
       ).to.eq.BN(bondValue0, "incorrect unbonded amount for member 0")
 
       expect(
-        await keepBonding.availableBondingValue(members[1])
+        await keepBonding.availableUnbondedValue(members[1], ZERO_ADDRESS, ZERO_ADDRESS)
       ).to.eq.BN(bondValue1, "incorrect unbonded amount for member 1")
 
       expect(
-        await keepBonding.availableBondingValue(members[2])
+        await keepBonding.availableUnbondedValue(members[2], ZERO_ADDRESS, ZERO_ADDRESS)
       ).to.eq.BN(bondValue2, "incorrect unbonded amount for member 2")
     })
 
