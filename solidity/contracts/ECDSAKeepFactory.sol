@@ -148,8 +148,8 @@ contract ECDSAKeepFactory is
             _owner,
             members,
             _honestThreshold,
-            address(keepBonding),
-            tokenStaking
+            tokenStaking,
+            address(keepBonding)
         );
 
         keepAddress = address(keep);
@@ -165,7 +165,9 @@ contract ECDSAKeepFactory is
 
         // If subsidy pool is non-empty, distribute the value to signers but
         // never distribute more than the payment for opening a keep.
-        uint256 signerSubsidy = subsidyPool < msg.value ? subsidyPool : msg.value;
+        uint256 signerSubsidy = subsidyPool < msg.value
+            ? subsidyPool
+            : msg.value;
         if (signerSubsidy > 0) {
             subsidyPool -= signerSubsidy;
             keep.distributeETHToMembers.value(signerSubsidy)();
@@ -191,9 +193,7 @@ contract ECDSAKeepFactory is
         );
 
         // Call the random beacon to get a random group selection seed.
-        (bool success,) = address(randomBeacon)
-            .call
-            .value(msg.value)(
+        (bool success, ) = address(randomBeacon).call.value(msg.value)(
             abi.encodeWithSignature(
                 "requestRelayEntry(address,string,uint256)",
                 address(this),

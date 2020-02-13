@@ -39,16 +39,29 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // signing process in progress.
     uint256 internal signingStartTimestamp;
 
+    // Map stores public key by member addresses. All members should submit the
+    // same public key.
+    mapping(address => bytes) submittedPublicKeys;
+
+    // Notification that a signer's public key was published for the keep.
+    event PublicKeyPublished(bytes publicKey);
+
     // Flag to monitor current keep state. If the keep is active members monitor
     // it and support requests for the keep owner. If the owner decides to close
     // the keep the flag is set to false.
     bool internal isActive;
 
-    // Notification that a signer's public key was published for the keep.
-    event PublicKeyPublished(bytes publicKey);
-
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(bytes32 digest);
+
+    // Notification that the submitted public key does not match a key submitted
+    // by other member. The event contains address of the member who tried to
+    // submit a public key and a conflicting public key submitted already by other
+    // member.
+    event ConflictingPublicKeySubmitted(
+        address submittingMember,
+        bytes conflictingPublicKey
+    );
 
     // Notification that the keep was closed by the owner. Members no longer need
     // to support it.
@@ -67,32 +80,79 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         uint8 recoveryID
     );
 
-    KeepBonding keepBonding;
-
     TokenStaking tokenStaking;
+    KeepBonding keepBonding;
 
     constructor(
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
-        address _keepBonding,
-        address _tokenStaking
+        address _tokenStaking,
+        address _keepBonding
     ) public {
         transferOwnership(_owner);
         members = _members;
         honestThreshold = _honestThreshold;
-        keepBonding = KeepBonding(_keepBonding);
         tokenStaking = TokenStaking(_tokenStaking);
+        keepBonding = KeepBonding(_keepBonding);
         isActive = true;
     }
 
-    /// @notice Set a signer's public key for the keep.
-    /// @dev Stub implementations.
+    /// @notice Submits a public key to the keep.
+    /// @dev Public key is published successfully if all members submit the same
+    /// value. In case of conflicts with others members submissions it will emit
+    /// an `ConflictingPublicKeySubmitted` event. When all submitted keys match
+    /// it will store the key as keep's public key and emit a `PublicKeyPublished`
+    /// event.
     /// @param _publicKey Signer's public key.
-    function setPublicKey(bytes calldata _publicKey) external onlyMember {
+    function submitPublicKey(bytes calldata _publicKey) external onlyMember {
+        require(
+            !hasMemberSubmittedPublicKey(msg.sender),
+            "Member already submitted a public key"
+        );
+
         require(_publicKey.length == 64, "Public key must be 64 bytes long");
+
+        submittedPublicKeys[msg.sender] = _publicKey;
+
+        // Check if public keys submitted by all keep members are the same as
+        // the currently submitted one.
+        uint256 matchingPublicKeysCount = 0;
+        for (uint256 i = 0; i < members.length; i++) {
+            if (
+                keccak256(submittedPublicKeys[members[i]]) !=
+                keccak256(_publicKey)
+            ) {
+                // Emit an event only if compared member already submitted a value.
+                if (hasMemberSubmittedPublicKey(members[i])) {
+                    emit ConflictingPublicKeySubmitted(
+                        msg.sender,
+                        submittedPublicKeys[members[i]]
+                    );
+                }
+            } else {
+                matchingPublicKeysCount++;
+            }
+        }
+
+        if (matchingPublicKeysCount != members.length) {
+            return;
+        }
+
+        // All submitted signatures match.
         publicKey = _publicKey;
         emit PublicKeyPublished(_publicKey);
+    }
+
+    /// @notice Checks if the member already submitted a public key.
+    /// @param _member Address of the member.
+    /// @return True if member already submitted a public key, else false.
+    function hasMemberSubmittedPublicKey(address _member)
+        internal
+        view
+        returns (bool)
+    {
+        return submittedPublicKeys[_member].length != 0;
     }
 
     /// @notice Returns the keep signer's public key.
@@ -155,6 +215,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         bytes32 _signedDigest,
         bytes calldata _preimage
     ) external returns (bool _isFraud) {
+        require(publicKey.length != 0, "Public key was not set yet");
+
         bytes32 calculatedDigest = sha256(abi.encodePacked(sha256(_preimage)));
         require(
             _signedDigest == calculatedDigest,
@@ -177,6 +239,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @dev Only one signing process can be in progress at a time.
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external onlyOwner onlyWhenActive {
+        require(publicKey.length != 0, "Public key was not set yet");
         require(!isSigningInProgress(), "Signer is busy");
 
         /* solium-disable-next-line */
@@ -186,6 +249,15 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         digest = _digest;
 
         emit SignatureRequested(_digest);
+    }
+
+    /// @notice Checks if keep is currently awaiting a signature for the given digest.
+    /// @dev Validates if the signing is currently in progress and compares provided
+    /// digest with the one for which the latest signature was requested.
+    /// @param _digest Digest for which to check if signature is being awaited.
+    /// @return True if the digest is currently expected to be signed, else false.
+    function isAwaitingSignature(bytes32 _digest) external view returns (bool) {
+        return isSigningInProgress() && digest == _digest;
     }
 
     /// @notice Submits a signature calculated for the given digest.

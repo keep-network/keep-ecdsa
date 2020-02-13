@@ -4,6 +4,7 @@ package ethereum
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -93,12 +94,17 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return err
 	}
 
-	transaction, err := keepContract.SetPublicKey(ec.transactorOptions, publicKey[:])
+	// TODO: this is absolutely enough for a group of 3 members but should we
+	// support 50 or 100?
+	transactorOptions := bind.TransactOpts(*ec.transactorOptions)
+	transactorOptions.GasLimit = 200000
+
+	transaction, err := keepContract.SubmitPublicKey(&transactorOptions, publicKey[:])
 	if err != nil {
 		return err
 	}
 
-	logger.Debugf("submitted SetPublicKey transaction with hash: [%x]", transaction.Hash())
+	logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
 
 	return nil
 }
@@ -146,4 +152,18 @@ func (ec *EthereumChain) SubmitSignature(
 	logger.Debugf("submitted SubmitSignature transaction with hash: [%x]", transaction.Hash())
 
 	return nil
+}
+
+// IsAwaitingSignature checks if the keep is waiting for a signature to be
+// calculated for the given digest.
+func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	return keepContract.IsAwaitingSignature(
+		ec.callerOptions,
+		digest,
+	)
 }
