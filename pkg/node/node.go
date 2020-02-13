@@ -127,11 +127,11 @@ func (n *Node) CalculateSignature(
 	if err := n.ethereumChain.SubmitSignature(keepAddress, signature); err != nil {
 		isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(keepAddress, digest)
 		if err != nil {
-			return fmt.Errorf("failed to verify if keep is awaiting signature: [%v]", err)
+			return fmt.Errorf("failed to verify if keep is still awaiting signature: [%v]", err)
 		}
 
 		if !isAwaitingSignature {
-			logger.Infof("keep is not awaiting a signature for digest: [%+x]", digest)
+			logger.Infof("signature submitted by another member: [%+x]", digest)
 
 			return nil
 		}
