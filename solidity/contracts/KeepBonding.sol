@@ -1,11 +1,8 @@
 pragma solidity ^0.5.4;
 
 import "@keep-network/keep-core/contracts/Registry.sol";
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
-interface TokenStaking {
-    function isAuthorizedForOperator(address operator, address operatorContract) external view returns (bool);
-    function authorizerOf(address operator) external view returns (address);
-}
 
 // TODO: This contract is expected to implement functions defined by IBonding
 // interface defined in @keep-network/sortition-pools. After merging the
