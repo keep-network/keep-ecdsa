@@ -113,6 +113,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Seizes the signer's ETH bond.
+    // TODO: Rename to `seizeMembersBonds` for consistency.
     function seizeSignerBonds() external onlyOwner {
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(
@@ -237,7 +238,12 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
-
+    /// @notice Returns bonds to the keep members.
+    function freeMembersBonds() internal {
+        for (uint256 i = 0; i < members.length; i++) {
+            keepBonding.freeBond(members[i], uint256(address(this)));
+        }
+    }
 
     /// @notice Coverts a public key to an ethereum address.
     /// @param _publicKey Public key provided as 64-bytes concatenation of
