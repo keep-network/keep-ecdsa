@@ -15,6 +15,8 @@ contract('KeepBonding', (accounts) => {
     let keepBonding
     let etherReceiver
 
+    const address0 = "0x0000000000000000000000000000000000000000"
+
     before(async () => {
         keepBonding = await KeepBonding.new()
         etherReceiver = await TestEtherReceiver.new()
@@ -37,7 +39,7 @@ contract('KeepBonding', (accounts) => {
 
             await keepBonding.deposit(operator, { value: value })
 
-            const unbonded = await keepBonding.availableBondingValue(operator)
+            const unbonded = await keepBonding.availableUnbondedValue(operator, address0, address0)
 
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
@@ -58,7 +60,7 @@ contract('KeepBonding', (accounts) => {
 
             await keepBonding.withdraw(value, destination, { from: operator })
 
-            const unbonded = await keepBonding.availableBondingValue(operator)
+            const unbonded = await keepBonding.availableUnbondedValue(operator, address0, address0)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
 
             const destinationBalance = await web3.eth.getBalance(destination)
@@ -96,7 +98,7 @@ contract('KeepBonding', (accounts) => {
             const unbondedOperator = "0x0000000000000000000000000000000000000001"
             const expectedUnbonded = 0
 
-            const unbondedValue = await keepBonding.availableBondingValue(unbondedOperator)
+            const unbondedValue = await keepBonding.availableUnbondedValue(unbondedOperator, address0, address0)
 
             expect(unbondedValue).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
@@ -104,7 +106,7 @@ contract('KeepBonding', (accounts) => {
         it('returns value of operators deposit', async () => {
             const expectedUnbonded = value
 
-            const unbonded = await keepBonding.availableBondingValue(operator)
+            const unbonded = await keepBonding.availableUnbondedValue(operator, address0, address0)
 
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
@@ -126,7 +128,7 @@ contract('KeepBonding', (accounts) => {
 
             await keepBonding.createBond(operator, holder, reference, value)
 
-            const unbonded = await keepBonding.availableBondingValue(operator)
+            const unbonded = await keepBonding.availableUnbondedValue(operator, address0, address0)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
 
             const lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
@@ -145,10 +147,10 @@ contract('KeepBonding', (accounts) => {
             await keepBonding.createBond(operator, holder, reference, bondValue)
             await keepBonding.createBond(operator2, holder, reference, bondValue)
 
-            const unbonded1 = await keepBonding.availableBondingValue(operator)
+            const unbonded1 = await keepBonding.availableUnbondedValue(operator, address0, address0)
             expect(unbonded1).to.eq.BN(expectedUnbonded, 'invalid unbonded value 1')
 
-            const unbonded2 = await keepBonding.availableBondingValue(operator2)
+            const unbonded2 = await keepBonding.availableUnbondedValue(operator2, address0, address0)
             expect(unbonded2).to.eq.BN(expectedUnbonded, 'invalid unbonded value 2')
 
             const lockedBonds1 = await keepBonding.bondAmount(operator, holder, reference)
@@ -264,7 +266,7 @@ contract('KeepBonding', (accounts) => {
             const lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(0, 'unexpected remaining locked bonds')
 
-            const unbondedValue = await keepBonding.availableBondingValue(operator)
+            const unbondedValue = await keepBonding.availableUnbondedValue(operator, address0, address0)
             expect(unbondedValue).to.eq.BN(bondValue, 'unexpected unbonded value')
         })
 
