@@ -31,7 +31,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     /// @dev Initialize Keep Vendor contract implementation.
     /// @param registryAddress Keep registry contract linked to this contract.
     function initialize(
-        uint256 registryAddress
+        address registryAddress
     )
         public
     {
