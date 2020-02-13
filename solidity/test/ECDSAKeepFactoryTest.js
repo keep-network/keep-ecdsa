@@ -149,9 +149,10 @@ contract("ECDSAKeepFactory", async accounts => {
 
     describe("registerMemberCandidate", async () => {
         before(async () => {
+            registry = await Registry.new()
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBonding.new()
+            keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
             randomBeacon = await RandomBeaconStub.new()
             keepFactory = await ECDSAKeepFactoryStub.new(
                 bondedSortitionPoolFactory.address,
@@ -159,6 +160,9 @@ contract("ECDSAKeepFactory", async accounts => {
                 keepBonding.address,
                 randomBeacon.address
             )
+            
+            await registry.approveOperatorContract(keepFactory.address)
+            await registry.approveOperatorContract(keepBonding.address)
 
             const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance);
@@ -208,6 +212,7 @@ contract("ECDSAKeepFactory", async accounts => {
         let feeEstimate
 
         async function initializeNewFactory() {
+            registry = await Registry.new()
             // Tests are executed with real implementation of sortition pools.
             // We don't use stub to ensure that keep members selection works correctly.
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
@@ -607,9 +612,10 @@ contract("ECDSAKeepFactory", async accounts => {
         const newGroupSelectionSeed = new BN(2345675)
 
         before(async () => {
+            registry = await Registry.new()
             bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
             tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBonding.new()
+            keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
             randomBeacon = accounts[1]
             keepFactory = await ECDSAKeepFactoryStub.new(
                 bondedSortitionPoolFactory.address,

@@ -9,6 +9,8 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
+const Registry = artifacts.require('Registry')
+const TokenStakingStub = artifacts.require("TokenStakingStub")
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
 const KeepBonding = artifacts.require('./KeepBonding.sol')
@@ -27,11 +29,15 @@ contract('ECDSAKeep', (accounts) => {
   const members = [accounts[2], accounts[3]]
   const honestThreshold = 1
 
-  let keepBonding, keep;
+  let registry, tokenStaking, keepBonding, keep;
 
   before(async () => {
-    keepBonding = await KeepBonding.new()
+    registry = await Registry.new()
+    tokenStaking = await TokenStakingStub.new()
+    keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
     keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
+
+    await registry.approveOperatorContract(accounts[0])
   })
 
   beforeEach(async () => {
