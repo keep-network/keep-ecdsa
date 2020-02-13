@@ -237,6 +237,27 @@ contract('ECDSAKeep', (accounts) => {
         assert.equal(await keep.getPublicKey(), publicKey1, 'incorrect public key')
       })
 
+      it('does not emit conflict event for first all zero key ', async () => {
+        const publicKey0 = '0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+
+        // Event should not be emitted as other keys are not yet submitted.
+        let res = await keep.submitPublicKey(publicKey0, { from: members[2] })
+        truffleAssert.eventNotEmitted(res, 'ConflictingPublicKeySubmitted')
+
+        // One event should be emitted as just one other key is submitted.
+        let startBlock = await web3.eth.getBlockNumber()
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
+        assert.lengthOf(
+          await keep.getPastEvents('ConflictingPublicKeySubmitted', {
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          }),
+          1,
+          "unexpected events"
+        )
+        await mineBlocks(1)
+      })
+
       it('emits conflict events for submitted values', async () => {
         const publicKey3 = "0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051"
         const publicKey4 = "0x74147666d05a0aa7cb310915dad49c32787d195ac7e2ba100f98978264d39e013e5c5632961072bea2d3dda117915bb55c5823e44665af70fcd2961b796a244b"
