@@ -246,7 +246,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             // transfer failure, hence we don't validate it's result.
             // TODO: What should we do with the dividend which was not transferred
             // successfully?
-            members[i].call.value(dividend)("");
+            tokenStaking.magpieOf(members[i]).call.value(dividend)("");
         }
     }
 
@@ -269,7 +269,11 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         require(dividend > 0, "dividend value must be non-zero");
 
         for (uint16 i = 0; i < memberCount; i++) {
-            token.transferFrom(msg.sender, members[i], dividend);
+            token.transferFrom(
+                msg.sender,
+                tokenStaking.magpieOf(members[i]),
+                dividend
+            );
         }
     }
 

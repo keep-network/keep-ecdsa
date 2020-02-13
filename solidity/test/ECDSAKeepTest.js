@@ -455,11 +455,6 @@ contract('ECDSAKeep', (accounts) => {
 
   describe('#distributeETHToMembers', async () => {
     const ethValue = 100000
-    let etherReceiver
-
-    beforeEach(async () => {
-      etherReceiver = await TestEtherReceiver.new()
-    })
 
     it('correctly distributes ETH', async () => {
       const initialBalances = await getETHBalancesFromList(members)
@@ -501,6 +496,8 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('does not revert in case of transfer failure', async () => {
+      let etherReceiver = await TestEtherReceiver.new()
+
       const member1 = accounts[2]
       const member2 = etherReceiver.address // a receiver which we expect to reject the transfer
       const member3 = accounts[3]
@@ -532,7 +529,38 @@ contract('ECDSAKeep', (accounts) => {
 
       // Check that value which failed transfer remained in the keep contract.
       assert.equal(await web3.eth.getBalance(keep.address), new BN(singleValue))
+    })
 
+    it('sends ETH to beneficiary', async () => {
+      const member1 = accounts[1]
+      const member2 = accounts[2]
+      const beneficiary = accounts[3]
+
+      const members = [member1, member2]
+      const accountsInTest = [member1, member2, beneficiary] 
+
+      const expectedBalances = [
+        new BN(await web3.eth.getBalance(member1)),
+        new BN(await web3.eth.getBalance(member2)),
+        new BN(await web3.eth.getBalance(beneficiary)).addn(ethValue),
+      ]
+
+      const keep = await ECDSAKeep.new(
+        owner, 
+        members, 
+        honestThreshold, 
+        keepBonding.address, 
+        tokenStaking.address
+      )
+
+      await tokenStaking.setMagpie(member1, beneficiary)
+      await tokenStaking.setMagpie(member2, beneficiary)
+
+      await keep.distributeETHToMembers({ value: ethValue })
+
+      // Check balances of all keep members' and beneficiary.
+      const newBalances = await getETHBalancesFromList(accountsInTest)
+      assert.deepEqual(newBalances, expectedBalances)
     })
   })
 
@@ -595,5 +623,38 @@ contract('ECDSAKeep', (accounts) => {
         'dividend value must be non-zero'
       )
     })
+
+    it('sends ERC20 to beneficiary', async () => {
+      const member1 = accounts[1]
+      const member2 = accounts[2]
+      const beneficiary = accounts[3]
+
+      const members = [member1, member2]
+      const accountsInTest = [member1, member2, beneficiary] 
+
+      const expectedBalances = [
+        new BN(await token.balanceOf(member1)),
+        new BN(await token.balanceOf(member2)),
+        new BN(await token.balanceOf(beneficiary)).addn(erc20Value),
+      ]
+      const keep = await ECDSAKeep.new(
+        owner, 
+        members, 
+        honestThreshold, 
+        keepBonding.address, 
+        tokenStaking.address
+      )
+
+      await tokenStaking.setMagpie(member1, beneficiary)
+      await tokenStaking.setMagpie(member2, beneficiary)
+
+      await token.mint(accounts[0], erc20Value)
+      await token.approve(keep.address, erc20Value)
+      await keep.distributeERC20ToMembers(token.address, erc20Value)
+
+      // Check balances of all keep members' and beneficiary.
+      const newBalances = await getERC20BalancesFromList(accountsInTest, token)
+      assert.equal(newBalances.toString(), expectedBalances.toString())
+    });
   })
 })
