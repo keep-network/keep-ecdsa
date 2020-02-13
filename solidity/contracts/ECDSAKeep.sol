@@ -85,7 +85,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @param _publicKey Signer's public key.
     function submitPublicKey(bytes calldata _publicKey) external onlyMember {
         require(
-            !wasPublicKeyAlreadySubmittedByMember(msg.sender),
+            !hasMemberSubmittedPublicKey(msg.sender),
             "Member already submitted a public key"
         );
 
@@ -102,7 +102,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
                 keccak256(_publicKey)
             ) {
                 // Emit an event only if compared member already submitted a value.
-                if (wasPublicKeyAlreadySubmittedByMember(members[i])) {
+                if (hasMemberSubmittedPublicKey(members[i])) {
                     emit ConflictingPublicKeySubmitted(
                         msg.sender,
                         submittedPublicKeys[members[i]]
@@ -125,7 +125,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @notice Checks if the member already submitted a public key.
     /// @param _member Address of the member.
     /// @return True if member already submitted a public key, else false.
-    function wasPublicKeyAlreadySubmittedByMember(address _member)
+    function hasMemberSubmittedPublicKey(address _member)
         internal
         view
         returns (bool)
