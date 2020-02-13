@@ -129,7 +129,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         view
         returns (bool)
     {
-        return keccak256(submittedPublicKeys[_member]) != keccak256("");
+        return submittedPublicKeys[_member].length != 0;
     }
 
     /// @notice Returns the keep signer's public key.
