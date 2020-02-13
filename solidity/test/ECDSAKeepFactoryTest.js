@@ -3,6 +3,8 @@ import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
+import { getETHBalancesFromList, addToBalances } from './helpers/listBalanceUtils'
+
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBonding = artifacts.require('KeepBonding');
 const TokenStakingStub = artifacts.require("TokenStakingStub")
@@ -592,6 +594,60 @@ contract("ECDSAKeepFactory", async accounts => {
                 value,
                 "incorrect random beacon balance"
             )
+        })
+
+        it("splits subsidy pool between selected signers", async () => {
+            const members = [ member1, member2, member3 ];
+            const subsidyPool = 50; // [wei]
+
+            // pump subsidy pool
+            web3.eth.sendTransaction({
+                value: subsidyPool, 
+                from: accounts[0],
+                to: keepFactory.address
+            });
+
+            const initialBalances = await getETHBalancesFromList(members)
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
+
+            const newBalances = await getETHBalancesFromList(members)
+            const check = addToBalances(initialBalances, subsidyPool / members.length)
+
+            assert.equal(newBalances.toString(), check.toString())
+        })
+
+        it("does not transfer more from subsidy pool than entry fee", async () => {
+            const members = [ member1, member2, member3 ];
+            const subsidyPool = feeEstimate * 10; // [wei]
+
+            // pump subsidy pool
+            web3.eth.sendTransaction({
+                value: subsidyPool, 
+                from: accounts[0],
+                to: keepFactory.address
+            });
+
+            const initialBalances = await getETHBalancesFromList(members)
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
+
+            const newBalances = await getETHBalancesFromList(members)
+            const check = addToBalances(initialBalances, feeEstimate / members.length)
+
+            assert.equal(newBalances.toString(), check.toString()) 
         })
     })
 
