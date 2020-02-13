@@ -317,7 +317,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Closes keep when owner decides that they no longer need it.
-    /// releases bonds to the keep members. Keep can be closed only when
+    /// Releases bonds to the keep members. Keep can be closed only when
     /// there is no signing in progress or requested signing process has timed out.
     /// @dev The function can be called by the owner of the keep and only is the
     /// keep has not been closed already.
