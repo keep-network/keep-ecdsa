@@ -23,4 +23,8 @@ contract TokenStakingStub is IStaking {
     function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {
         return true;
     }
+
+    function authorizerOf(address _operator) public view returns (address) {
+        return _operator;
+    }
 }
