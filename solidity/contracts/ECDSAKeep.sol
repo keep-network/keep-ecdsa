@@ -40,8 +40,13 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     event SignatureRequested(bytes32 digest);
 
     // Notification that the submitted public key does not match a key submitted
-    // by other member.
-    event ConflictingPublicKeySubmitted(address member, bytes publicKey);
+    // by other member. The event contains address of the member who tried to
+    // submit a public key and a conflicting public key submitted already by other
+    // member.
+    event ConflictingPublicKeySubmitted(
+        address submittingMember,
+        bytes conflictingPublicKey
+    );
 
     // Notification that the signature has been calculated. Contains a digest which
     // was used for signature calculation and a signature in a form of r, s and
