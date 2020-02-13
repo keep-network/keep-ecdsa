@@ -231,12 +231,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
-    /// @notice Checks if the caller is a keep member.
-    /// @dev Throws an error if called by any account other than one of the members.
-    modifier onlyMember() {
-        require(members.contains(msg.sender), "Caller is not the keep member");
-        _;
-    }
+
 
     /// @notice Coverts a public key to an ethereum address.
     /// @param _publicKey Public key provided as 64-bytes concatenation of
@@ -296,6 +291,13 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
                 dividend
             );
         }
+    }
+
+    /// @notice Checks if the caller is a keep member.
+    /// @dev Throws an error if called by any account other than one of the members.
+    modifier onlyMember() {
+        require(members.contains(msg.sender), "Caller is not the keep member");
+        _;
     }
 
 }
