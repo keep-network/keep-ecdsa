@@ -34,10 +34,10 @@ contract('ECDSAKeep', (accounts) => {
     keepBonding = await KeepBonding.new()
     tokenStaking = await TokenStakingStub.new()
     keep = await ECDSAKeep.new(
-      owner, 
-      members, 
-      honestThreshold, 
-      keepBonding.address, 
+      owner,
+      members,
+      honestThreshold,
+      keepBonding.address,
       tokenStaking.address
     )
   })
@@ -68,12 +68,24 @@ contract('ECDSAKeep', (accounts) => {
     const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
 
     it('emits event', async () => {
-      const digest = '0xbb0b57005f01018b19c278c55273a60118ffdd3e5790ccc8a48cad03907fa521'
-
       let res = await keep.sign(digest, { from: owner })
       truffleAssert.eventEmitted(res, 'SignatureRequested', (ev) => {
         return ev.digest == digest
       })
+    })
+
+    it('cannot be requested if keep is closed', async () => {
+      let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
+      await keepBonding.deposit(members[0], { value: 10 })
+      await keepBonding.deposit(members[1], { value: 20 })
+      await keepBonding.createBond(members[0], keep.address, referenceID, 10)
+      await keepBonding.createBond(members[1], keep.address, referenceID, 20)
+      keep.closeKeep({ from: owner })
+
+      await expectRevert(
+        keep.sign(digest),
+        'Keep is not active'
+      )
     })
 
     it('cannot be called by non-owner', async () => {
@@ -223,7 +235,7 @@ contract('ECDSAKeep', (accounts) => {
     const hash256Digest2 = '0x14a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
     const preimage2 = '0x1111636820506f7a6e616e'
 
-    beforeEach(async () => {      
+    beforeEach(async () => {
       await keep.setPublicKey(publicKey1, { from: members[0] })
     })
 
@@ -353,14 +365,14 @@ contract('ECDSAKeep', (accounts) => {
 
       await increaseTime(duration.seconds(signingTimeout - 1));
 
-      await  keep.submitSignature(
-          signatureR,
-          signatureS,
-          signatureRecoveryID,
-          { from: members[0] }
-        )
+      await keep.submitSignature(
+        signatureR,
+        signatureS,
+        signatureRecoveryID,
+        { from: members[0] }
+      )
     })
-  
+
     it('cannot be called after the timeout passed', async () => {
       const signingTimeout = await keep.signingTimeout.call()
 
@@ -379,10 +391,10 @@ contract('ECDSAKeep', (accounts) => {
 
     it('cannot be submitted if signing was not requested', async () => {
       let keep = await ECDSAKeep.new(
-        owner, 
-        members, 
-        honestThreshold, 
-        keepBonding.address,       
+        owner,
+        members,
+        honestThreshold,
+        keepBonding.address,
         tokenStaking.address
       )
 
@@ -463,6 +475,98 @@ contract('ECDSAKeep', (accounts) => {
     })
   })
 
+  describe.only('closeKeep', () => {
+    const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
+    const publicKey = '0xa899b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
+
+    const bondValue0 = new BN(10)
+    const bondValue1 = new BN(20)
+
+    beforeEach(async () => {
+      let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
+
+      await keepBonding.deposit(members[0], { value: bondValue0 })
+      await keepBonding.deposit(members[1], { value: bondValue1 })
+      await keepBonding.createBond(members[0], keep.address, referenceID, bondValue0)
+      await keepBonding.createBond(members[1], keep.address, referenceID, bondValue1)
+    })
+
+    it('emits an event', async () => {
+      truffleAssert.eventEmitted(
+        await keep.closeKeep({ from: owner }),
+        'KeepClosed'
+      )
+    })
+
+    it('frees members bonds', async () => {
+      await keep.closeKeep({ from: owner })
+
+      expect(
+        await keep.checkBondAmount()
+      ).to.eq.BN(0, "incorrect bond amount for keep")
+
+      expect(
+        await keepBonding.availableBondingValue(members[0])
+      ).to.eq.BN(bondValue0, "incorrect unbonded amount for member 0")
+
+      expect(
+        await keepBonding.availableBondingValue(members[1])
+      ).to.eq.BN(bondValue1, "incorrect unbonded amount for member 1")
+    })
+
+    it('reverts when signing is in progress', async () => {
+      await keep.setPublicKey(publicKey, { from: members[0] })
+
+      keep.sign(digest, { from: owner })
+
+      await expectRevert(
+        keep.closeKeep({ from: owner }),
+        'Requested signing has not timed out yet'
+      )
+    })
+
+    it('reverts when signing was requested but have not timed out yet', async () => {
+      await keep.setPublicKey(publicKey, { from: members[0] })
+
+      keep.sign(digest, { from: owner })
+
+      const signingTimeout = await keep.signingTimeout.call()
+      await increaseTime(duration.seconds(signingTimeout - 1));
+
+      await expectRevert(
+        keep.closeKeep({ from: owner }),
+        'Requested signing has not timed out yet'
+      )
+    })
+
+    it('succeeds when signing was requested but timed out', async () => {
+      await keep.setPublicKey(publicKey, { from: members[0] })
+
+      keep.sign(digest, { from: owner })
+
+      const signingTimeout = await keep.signingTimeout.call()
+      await increaseTime(duration.seconds(signingTimeout));
+
+      await keep.closeKeep({ from: owner })
+    })
+
+    it('cannot be called by non-owner', async () => {
+      await expectRevert(
+        keep.closeKeep(),
+        'Ownable: caller is not the owner'
+      )
+    })
+
+    it('reverts closing when already closed', async () => {
+      await keep.closeKeep({ from: owner })
+
+      await expectRevert(
+        keep.closeKeep({ from: owner }),
+        'Keep is not active'
+      )
+    })
+  })
+
   describe('#distributeETHToMembers', async () => {
     const ethValue = 100000
 
@@ -524,10 +628,10 @@ contract('ECDSAKeep', (accounts) => {
       ]
 
       const keep = await ECDSAKeep.new(
-        owner, 
-        members, 
-        honestThreshold, 
-        keepBonding.address, 
+        owner,
+        members,
+        honestThreshold,
+        keepBonding.address,
         tokenStaking.address
       )
 
@@ -547,7 +651,7 @@ contract('ECDSAKeep', (accounts) => {
       const beneficiary = accounts[3]
 
       const members = [member1, member2]
-      const accountsInTest = [member1, member2, beneficiary] 
+      const accountsInTest = [member1, member2, beneficiary]
 
       const expectedBalances = [
         new BN(await web3.eth.getBalance(member1)),
@@ -556,10 +660,10 @@ contract('ECDSAKeep', (accounts) => {
       ]
 
       const keep = await ECDSAKeep.new(
-        owner, 
-        members, 
-        honestThreshold, 
-        keepBonding.address, 
+        owner,
+        members,
+        honestThreshold,
+        keepBonding.address,
         tokenStaking.address
       )
 
@@ -640,7 +744,7 @@ contract('ECDSAKeep', (accounts) => {
       const beneficiary = accounts[3]
 
       const members = [member1, member2]
-      const accountsInTest = [member1, member2, beneficiary] 
+      const accountsInTest = [member1, member2, beneficiary]
 
       const expectedBalances = [
         new BN(await token.balanceOf(member1)),
@@ -648,10 +752,10 @@ contract('ECDSAKeep', (accounts) => {
         new BN(await token.balanceOf(beneficiary)).addn(erc20Value),
       ]
       const keep = await ECDSAKeep.new(
-        owner, 
-        members, 
-        honestThreshold, 
-        keepBonding.address, 
+        owner,
+        members,
+        honestThreshold,
+        keepBonding.address,
         tokenStaking.address
       )
 
