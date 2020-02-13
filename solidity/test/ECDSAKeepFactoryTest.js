@@ -1,7 +1,8 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
-import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 
 const { expectRevert } = require('openzeppelin-test-helpers');
+
+import { getETHBalancesFromList, addToBalances } from './helpers/listBalanceUtils'
 
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBonding = artifacts.require('KeepBonding');
@@ -114,7 +115,7 @@ contract("ECDSAKeepFactory", async accounts => {
         it("does not add an operator to the pool if it does not have a minimum stake", async() => {
             await tokenStaking.setBalance(new BN("1"))
 
-            await expectThrowWithMessage(
+            await expectRevert(
                 keepFactory.registerMemberCandidate(application, { from: member1 }),
                 "Operator not eligible"
             )
@@ -240,7 +241,7 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if no member candidates are registered", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 keepFactory.openKeep(
                     groupSize,
                     threshold,
@@ -591,6 +592,70 @@ contract("ECDSAKeepFactory", async accounts => {
             ).to.eq.BN(
                 value,
                 "incorrect random beacon balance"
+            )
+        })
+
+        it("splits subsidy pool between selected signers", async () => {
+            const members = [ member1, member2, member3 ];
+            const subsidyPool = 50; // [wei]
+
+            // pump subsidy pool
+            web3.eth.sendTransaction({
+                value: subsidyPool, 
+                from: accounts[0],
+                to: keepFactory.address
+            });
+
+            const initialBalances = await getETHBalancesFromList(members)
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
+
+            const newBalances = await getETHBalancesFromList(members)
+            const expectedBalances = addToBalances(initialBalances, subsidyPool / members.length)
+
+            assert.equal(newBalances.toString(), expectedBalances.toString())
+
+            expect(await keepFactory.subsidyPool()).to.eq.BN(
+                0,
+                "subsidy pool should go down to 0"
+            )
+        })
+
+        it("does not transfer more from subsidy pool than entry fee", async () => {
+            const members = [ member1, member2, member3 ];
+            const subsidyPool = feeEstimate * 10; // [wei]
+
+            // pump subsidy pool
+            web3.eth.sendTransaction({
+                value: subsidyPool, 
+                from: accounts[0],
+                to: keepFactory.address
+            });
+
+            const initialBalances = await getETHBalancesFromList(members)
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
+
+            const newBalances = await getETHBalancesFromList(members)
+            const expectedBalances = addToBalances(initialBalances, feeEstimate / members.length)
+
+            assert.equal(newBalances.toString(), expectedBalances.toString()) 
+
+            expect(await keepFactory.subsidyPool()).to.eq.BN(
+                subsidyPool - feeEstimate,
+                "unexpected subsidy pool balance"
             )
         })
     })

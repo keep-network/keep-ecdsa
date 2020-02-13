@@ -22,14 +22,14 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
             assertFactory(expectedResult)
         })
 
-        it("registers factory with zero address", async () => {
+        it("does not register factory with zero address", async () => {
             await expectRevert(
                 keepVendor.registerFactory(address0),
                 "Incorrect factory address"
             )
         })
 
-        it("registers two factory addresses", async () => {
+        it("replaces previous factory address", async () => {
             await keepVendor.registerFactory(address1)
             await keepVendor.registerFactory(address2)
 
