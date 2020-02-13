@@ -238,6 +238,25 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
+    /// @notice Closes keep when owner decides that they no longer need it.
+    /// releases bonds to the keep members. Keep can be closed only when
+    /// there is no signing in progress or requested signing process has timed out.
+    /// @dev The function can be called by the owner of the keep and only is the
+    /// keep has not been closed already.
+    function closeKeep() external onlyOwner onlyWhenActive {
+        require(
+            !isSigningInProgress() ||
+                (isSigningInProgress() && hasSigningTimedOut()),
+            "Requested signing has not timed out yet"
+        );
+
+        isActive = false;
+
+        freeMembersBonds();
+
+        emit KeepClosed();
+    }
+
     /// @notice Returns bonds to the keep members.
     function freeMembersBonds() internal {
         for (uint256 i = 0; i < members.length; i++) {
