@@ -207,7 +207,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         external
         onlyMember
     {
-        require(isSigningInProgress(), "Not awaiting a signature");
+        require(isSigningInProgress(), "Signing is currently not in progress");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // Validate `s` value for a malleability concern described in EIP-2.
