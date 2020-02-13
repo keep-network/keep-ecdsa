@@ -97,9 +97,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
                 keccak256(_publicKey)
             ) {
                 // Emit an event only if compared member already submitted a value.
-                if (
-                    keccak256(submittedPublicKeys[members[i]]) != keccak256("")
-                ) {
+                if (wasPublicKeyAlreadySubmittedByMember(members[i])) {
                     emit ConflictingPublicKeySubmitted(
                         msg.sender,
                         submittedPublicKeys[members[i]]
@@ -117,6 +115,17 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         // All submitted signatures match.
         publicKey = _publicKey;
         emit PublicKeyPublished(_publicKey);
+    }
+
+    /// @notice Checks if the member already submitted a public key.
+    /// @param _member Address of the member.
+    /// @return True if member already submitted a public key, else false.
+    function wasPublicKeyAlreadySubmittedByMember(address _member)
+        internal
+        view
+        returns (bool)
+    {
+        return keccak256(submittedPublicKeys[_member]) != keccak256("");
     }
 
     /// @notice Returns the keep signer's public key.
