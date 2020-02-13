@@ -234,6 +234,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Distributes ETH evenly across all keep members.
+    /// ETH is sent to the beneficiary of each member.
     /// @dev Only the value passed to this function will be distributed.
     function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
@@ -251,6 +252,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Distributes ERC20 token evenly across all keep members.
+    /// The token is sent to the beneficiary of each member.
     /// @dev This works with any ERC20 token that implements a transferFrom
     /// function similar to the interface imported here from
     /// openZeppelin. This function only has authority over pre-approved
