@@ -4,6 +4,7 @@ import "@keep-network/keep-core/contracts/Registry.sol";
 
 interface TokenStaking {
     function isAuthorizedForOperator(address operator, address operatorContract) external view returns (bool);
+    function authorizerOf(address operator) external view returns (address);
 }
 
 // TODO: This contract is expected to implement functions defined by IBonding
@@ -30,6 +31,9 @@ contract KeepBonding {
     // address, holder's address and reference ID assigned on bond creation.
     mapping(bytes32 => uint256) internal lockedBonds;
 
+    // Sortition pools authorized by operator authorizer.
+    mapping(address => mapping (address => bool)) internal authorizedPools;
+
     /// @dev Initialize Keep Bonding contract.
     /// @param registryAddress Keep registry contract linked to this contract.
     /// @param stakingContractAddress Keep Token staking contract linked to this contract.
@@ -52,7 +56,9 @@ contract KeepBonding {
         address authorizedSortitionPool
     ) public view returns (uint256) {
         if (registry.isApprovedOperatorContract(bondCreator) &&
-            stakingContract.isAuthorizedForOperator(bondCreator, operator)) {
+            stakingContract.isAuthorizedForOperator(bondCreator, operator) &&
+            hasSecondaryAuthorization(operator, authorizedSortitionPool)
+        ) {
             return unbondedValue[operator];
         } else {
             return 0;
@@ -235,5 +241,22 @@ contract KeepBonding {
             "Factory contract is not approved"
         );
         _;
+    }
+
+
+    /// @dev Authorizes sortition pool for provided operator
+    /// @dev Only operator authorizer can call this function
+    function authorizeSortitionPoolContract(address _operator, address _poolAddress) public {
+        require(
+            stakingContract.authorizerOf(_operator) == msg.sender,
+            "Not authorized"
+        );
+        authorizedPools[msg.sender][_poolAddress] = true;
+    }
+
+    /// @notice Checks if the sortition pool has been authorized for provided operator by its authorizer.
+    function hasSecondaryAuthorization(address _operator, address _poolAddress) public view returns (bool) {
+        address authorizer = stakingContract.authorizerOf(_operator);
+        return authorizedPools[authorizer][_poolAddress];
     }
 }
