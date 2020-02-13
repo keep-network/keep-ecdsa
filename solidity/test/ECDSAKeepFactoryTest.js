@@ -621,6 +621,11 @@ contract("ECDSAKeepFactory", async accounts => {
             const expectedBalances = addToBalances(initialBalances, subsidyPool / members.length)
 
             assert.equal(newBalances.toString(), expectedBalances.toString())
+
+            expect(await keepFactory.subsidyPool()).to.eq.BN(
+                0,
+                "subsidy pool should go down to 0"
+            )
         })
 
         it("does not transfer more from subsidy pool than entry fee", async () => {

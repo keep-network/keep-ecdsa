@@ -158,6 +158,7 @@ contract ECDSAKeepFactory is
         // never distribute more than the payment for opening a keep.
         uint256 signerSubsidy = subsidyPool < msg.value ? subsidyPool : msg.value;
         if (signerSubsidy > 0) {
+            subsidyPool -= signerSubsidy;
             keep.distributeETHToMembers.value(signerSubsidy)();
         }
 
