@@ -101,12 +101,6 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         return publicKey;
     }
 
-    /// @notice Returns digest.
-    /// @return Digest.
-    function getDigest() external view returns (bytes32) {
-        return digest;
-    }
-
     /// @notice Returns the amount of the keep's ETH bond in wei.
     /// @return The amount of the keep's ETH bond in wei.
     function checkBondAmount() external view returns (uint256) {
