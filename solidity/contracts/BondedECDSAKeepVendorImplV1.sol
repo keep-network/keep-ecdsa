@@ -2,14 +2,12 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./api/IBondedECDSAKeepVendor.sol";
-import "./utils/AddressPayableArrayUtils.sol";
 
 /// @title Bonded ECDSA Keep Vendor.
 /// @notice The contract can be used to obtain a new Bonded ECDSA keep.
 /// @dev Interacts with ECDSA keep factory to obtain a new instance of the ECDSA
 /// keep. The latest version of ECDSA keep factory can be registered for a vendor.
 contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
-    using AddressPayableArrayUtils for address payable[];
 
     // Address of ECDSA keep factory.
     address payable keepFactory;
