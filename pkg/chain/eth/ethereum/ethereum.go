@@ -152,3 +152,17 @@ func (ec *EthereumChain) SubmitSignature(
 
 	return nil
 }
+
+// IsAwaitingSignature checks if the keep is waiting for a signature to be
+// calculated for the given digest.
+func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	return keepContract.IsAwaitingSignature(
+		ec.callerOptions,
+		digest,
+	)
+}
