@@ -46,6 +46,11 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // Notification that a signer's public key was published for the keep.
     event PublicKeyPublished(bytes publicKey);
 
+    // Flag to monitor current keep state. If the keep is active members monitor
+    // it and support requests for the keep owner. If the owner decides to close
+    // the keep the flag is set to false.
+    bool internal isActive;
+
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(bytes32 digest);
 
@@ -57,6 +62,10 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         address submittingMember,
         bytes conflictingPublicKey
     );
+
+    // Notification that the keep was closed by the owner. Members no longer need
+    // to support it.
+    event KeepClosed();
 
     // Notification that the signature has been calculated. Contains a digest which
     // was used for signature calculation and a signature in a form of r, s and
@@ -86,6 +95,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         honestThreshold = _honestThreshold;
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
+        isActive = true;
     }
 
     /// @notice Submits a public key to the keep.
@@ -167,6 +177,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Seizes the signer's ETH bond.
+    // TODO: Add modifier to be able to run this function only when keep was
+    // closed before.
+    // TODO: Rename to `seizeMembersBonds` for consistency.
     function seizeSignerBonds() external onlyOwner {
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(
@@ -225,7 +238,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @notice Calculates a signature over provided digest by the keep.
     /// @dev Only one signing process can be in progress at a time.
     /// @param _digest Digest to be signed.
-    function sign(bytes32 _digest) external onlyOwner {
+    function sign(bytes32 _digest) external onlyOwner onlyWhenActive {
         require(publicKey.length != 0, "Public key was not set yet");
         require(!isSigningInProgress(), "Signer is busy");
 
@@ -303,11 +316,29 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
-    /// @notice Checks if the caller is a keep member.
-    /// @dev Throws an error if called by any account other than one of the members.
-    modifier onlyMember() {
-        require(members.contains(msg.sender), "Caller is not the keep member");
-        _;
+    /// @notice Closes keep when owner decides that they no longer need it.
+    /// Releases bonds to the keep members. Keep can be closed only when
+    /// there is no signing in progress or requested signing process has timed out.
+    /// @dev The function can be called by the owner of the keep and only is the
+    /// keep has not been closed already.
+    function closeKeep() external onlyOwner onlyWhenActive {
+        require(
+            !isSigningInProgress() || hasSigningTimedOut(),
+            "Requested signing has not timed out yet"
+        );
+
+        isActive = false;
+
+        freeMembersBonds();
+
+        emit KeepClosed();
+    }
+
+    /// @notice Returns bonds to the keep members.
+    function freeMembersBonds() internal {
+        for (uint256 i = 0; i < members.length; i++) {
+            keepBonding.freeBond(members[i], uint256(address(this)));
+        }
     }
 
     /// @notice Coverts a public key to an ethereum address.
@@ -370,4 +401,17 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         }
     }
 
+    /// @notice Checks if the caller is a keep member.
+    /// @dev Throws an error if called by any account other than one of the members.
+    modifier onlyMember() {
+        require(members.contains(msg.sender), "Caller is not the keep member");
+        _;
+    }
+
+    /// @notice Checks if the keep is currently active.
+    /// @dev Throws an error if called when the keep has been already closed.
+    modifier onlyWhenActive() {
+        require(isActive, "Keep is not active");
+        _;
+    }
 }
