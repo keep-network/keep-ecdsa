@@ -50,7 +50,6 @@ contract("ECDSAKeepFactory", async accounts => {
             )
 
             await registry.approveOperatorContract(keepFactory.address)
-            await registry.approveOperatorContract(keepBonding.address)
 
             await keepFactory.createSortitionPool(application)
             signerPool = await keepFactory.getSignerPool(application)
@@ -177,7 +176,6 @@ contract("ECDSAKeepFactory", async accounts => {
             )
             
             await registry.approveOperatorContract(keepFactory.address)
-            await registry.approveOperatorContract(keepBonding.address)
 
             const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance);
@@ -248,7 +246,6 @@ contract("ECDSAKeepFactory", async accounts => {
                 randomBeacon.address
             )
             await registry.approveOperatorContract(keepFactory.address)
-            await registry.approveOperatorContract(keepBonding.address)
 
             await keepFactory.createSortitionPool(application)
             const signerPoolAddress = await keepFactory.getSignerPool(application)
