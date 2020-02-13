@@ -323,8 +323,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// keep has not been closed already.
     function closeKeep() external onlyOwner onlyWhenActive {
         require(
-            !isSigningInProgress() ||
-                (isSigningInProgress() && hasSigningTimedOut()),
+            !isSigningInProgress() || hasSigningTimedOut(),
             "Requested signing has not timed out yet"
         );
 
