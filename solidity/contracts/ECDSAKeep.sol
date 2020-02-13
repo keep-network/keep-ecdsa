@@ -3,33 +3,42 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
+import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 import "./api/IBondedECDSAKeep.sol";
-import "./utils/AddressPayableArrayUtils.sol";
 import "./KeepBonding.sol";
 
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
 contract ECDSAKeep is IBondedECDSAKeep, Ownable {
-    using AddressPayableArrayUtils for address payable[];
+    using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
     // List of keep members' addresses.
-    address payable[] internal members;
+    address[] internal members;
+
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
+
     // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
     bytes publicKey;
+
     // Latest digest requested to be signed. Used to validate submitted signature.
     bytes32 digest;
+
     // Map of all digests requested to be signed. Used to validate submitted signature.
     mapping(bytes32 => bool) digests;
+
     // Timeout in blocks for a signature to appear on the chain. Blocks are
-    // counted from the moment sign request occurred.
-    uint256 public signingTimeout = 10;
-    // Number of block when signing process was started. Used to track if signing
-    // is in progress. Value `0` indicates that there is no signing process in progress.
-    uint256 internal currentSigningStartBlock;
+    // counted from the moment signing request occurred.
+    uint256 public signingTimeout = 90 * 60; // [seconds]
+
+    // The timestamp at which signing process started. Used also to track if
+    // signing is in progress. When set to `0` indicates there is no
+    // signing process in progress.
+    uint256 internal signingStartTimestamp;
+
     // Map stores public key by member addresses. All members should submit the
     // same public key.
     mapping(address => bytes) submittedPublicKeys;
@@ -64,16 +73,20 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     KeepBonding keepBonding;
 
+    TokenStaking tokenStaking;
+
     constructor(
-        address _owner, // TODO: Change type to `address payable`
-        address payable[] memory _members,
+        address _owner,
+        address[] memory _members,
         uint256 _honestThreshold,
-        address _keepBonding
+        address _keepBonding,
+        address _tokenStaking
     ) public {
         transferOwnership(_owner);
         members = _members;
         honestThreshold = _honestThreshold;
         keepBonding = KeepBonding(_keepBonding);
+        tokenStaking = TokenStaking(_tokenStaking);
     }
 
     /// @notice Submits a public key to the keep.
@@ -215,12 +228,11 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external onlyOwner {
         require(publicKey.length != 0, "Public key was not set yet");
-        require(
-            !isSigningInProgress() || hasSigningTimedOut(),
-            "Signer is busy"
-        );
+        require(!isSigningInProgress(), "Signer is busy");
 
-        currentSigningStartBlock = block.number;
+        /* solium-disable-next-line */
+        signingStartTimestamp = block.timestamp;
+
         digests[_digest] = true;
         digest = _digest;
 
@@ -248,7 +260,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         external
         onlyMember
     {
-        require(isSigningInProgress(), "Signing is currently not in progress");
+        require(isSigningInProgress(), "Not awaiting a signature");
+        require(!hasSigningTimedOut(), "Signing timeout elapsed");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // Validate `s` value for a malleability concern described in EIP-2.
@@ -271,23 +284,24 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             "Invalid signature"
         );
 
-        currentSigningStartBlock = 0;
+        signingStartTimestamp = 0;
 
         emit SignatureSubmitted(digest, _r, _s, _recoveryID);
     }
 
     /// @notice Returns true if signing of a digest is currently in progress.
     function isSigningInProgress() internal view returns (bool) {
-        return currentSigningStartBlock != 0;
+        return signingStartTimestamp != 0;
     }
 
-    /// @notice Returns true if the currently ongoing signing process timed out.
+    /// @notice Returns true if the ongoing signing process timed out.
     /// @dev There is a certain timeout for a signature to be produced, see
-    /// `signingTimeout` value.
+    /// `signingTimeout`.
     function hasSigningTimedOut() internal view returns (bool) {
         return
-            currentSigningStartBlock != 0 &&
-            block.number > currentSigningStartBlock + signingTimeout;
+            signingStartTimestamp != 0 &&
+            /* solium-disable-next-line */
+            block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
     /// @notice Checks if the caller is a keep member.
@@ -312,6 +326,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Distributes ETH evenly across all keep members.
+    /// ETH is sent to the beneficiary of each member.
     /// @dev Only the value passed to this function will be distributed.
     function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
@@ -324,11 +339,12 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             // transfer failure, hence we don't validate it's result.
             // TODO: What should we do with the dividend which was not transferred
             // successfully?
-            members[i].call.value(dividend)("");
+            tokenStaking.magpieOf(members[i]).call.value(dividend)("");
         }
     }
 
     /// @notice Distributes ERC20 token evenly across all keep members.
+    /// The token is sent to the beneficiary of each member.
     /// @dev This works with any ERC20 token that implements a transferFrom
     /// function similar to the interface imported here from
     /// openZeppelin. This function only has authority over pre-approved
@@ -347,7 +363,11 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         require(dividend > 0, "dividend value must be non-zero");
 
         for (uint16 i = 0; i < memberCount; i++) {
-            token.transferFrom(msg.sender, members[i], dividend);
+            token.transferFrom(
+                msg.sender,
+                tokenStaking.magpieOf(members[i]),
+                dividend
+            );
         }
     }
 
