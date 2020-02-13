@@ -4,6 +4,7 @@ package ethereum
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -93,7 +94,12 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return err
 	}
 
-	transaction, err := keepContract.SubmitPublicKey(ec.transactorOptions, publicKey[:])
+	// TODO: this is absolutely enough for a group of 3 members but should we
+	// support 50 or 100?
+	transactorOptions := bind.TransactOpts(*ec.transactorOptions)
+	transactorOptions.GasLimit = 200000
+
+	transaction, err := keepContract.SubmitPublicKey(&transactorOptions, publicKey[:])
 	if err != nil {
 		return err
 	}
