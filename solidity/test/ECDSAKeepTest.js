@@ -56,10 +56,18 @@ contract('ECDSAKeep', (accounts) => {
   })
 
   describe('#sign', async () => {
+    const publicKey = '0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051'
     const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
 
+    it('reverts if public key was not set', async () => {
+      await expectRevert(
+        keep.sign(digest, { from: owner }),
+        'Public key was not set yet'
+      )
+    })
+
     it('emits event', async () => {
-      const digest = '0xbb0b57005f01018b19c278c55273a60118ffdd3e5790ccc8a48cad03907fa521'
+      await submitMembersPublicKeys(publicKey)
 
       let res = await keep.sign(digest, { from: owner })
       truffleAssert.eventEmitted(res, 'SignatureRequested', (ev) => {
@@ -68,34 +76,33 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('cannot be called by non-owner', async () => {
-      try {
-        await keep.sign(digest)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Ownable: caller is not the owner.')
-      }
+      await expectRevert(
+        keep.sign(digest),
+        'Ownable: caller is not the owner.'
+      )
     })
 
     it('cannot be called by non-owner member', async () => {
-      try {
-        await keep.sign(digest, { from: members[0] })
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Ownable: caller is not the owner.')
-      }
+      await expectRevert(
+        keep.sign(digest, { from: members[0] }),
+        'Ownable: caller is not the owner.'
+      )
     })
 
     it('cannot be requested if already in progress', async () => {
+      await submitMembersPublicKeys(publicKey)
+
       await keep.sign(digest, { from: owner })
-      try {
-        await keep.sign('0x02', { from: owner })
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Signer is busy')
-      }
+
+      await expectRevert(
+        keep.sign('0x02', { from: owner }),
+        'Signer is busy'
+      )
     })
 
     it('can be requested again after timeout passed', async () => {
+      await submitMembersPublicKeys(publicKey)
+
       await keep.sign(digest, { from: owner })
 
       const signingTimeout = await keep.signingTimeout.call()
@@ -113,6 +120,11 @@ contract('ECDSAKeep', (accounts) => {
     const signatureRecoveryID = 1
 
     const digest2 = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
+
+
+    beforeEach(async () => {
+      await submitMembersPublicKeys(publicKey)
+    })
 
     it('returns false if signing was not requested', async () => {
       assert.isFalse(await keep.isAwaitingSignature(digest1))
@@ -132,7 +144,7 @@ contract('ECDSAKeep', (accounts) => {
 
     it('returns false if valid signature has been already submitted', async () => {
       await keep.sign(digest1, { from: owner })
-      await submitMembersPublicKeys(publicKey)
+
       await keep.submitSignature(
         signatureR,
         signatureS,
@@ -145,7 +157,7 @@ contract('ECDSAKeep', (accounts) => {
 
     it('returns true if invalid signature was submitted before', async () => {
       await keep.sign(digest1, { from: owner })
-      await submitMembersPublicKeys(publicKey)
+
       await expectRevert(
         keep.submitSignature(
           signatureR,
@@ -435,12 +447,25 @@ contract('ECDSAKeep', (accounts) => {
 
     beforeEach(async () => {
       signingTimeout = await keep.signingTimeout.call()
+    })
 
-      await submitMembersPublicKeys(publicKey1)
-      await keep.sign(hash256Digest2, { from: owner })
+    it('reverts if public key was not set', async () => {
+      await expectRevert(
+        keep.submitSignatureFraud.call(
+          signature1.V,
+          signature1.R,
+          signature1.S,
+          hash256Digest1,
+          preimage1
+        ),
+        'Public key was not set yet'
+      )
     })
 
     it('should return true when signature is valid but was not requested', async () => {
+      await submitMembersPublicKeys(publicKey1)
+      await keep.sign(hash256Digest2, { from: owner })
+
       let res = await keep.submitSignatureFraud.call(
         signature1.V,
         signature1.R,
@@ -453,6 +478,9 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('should return an error when preimage does not match digest', async () => {
+      await submitMembersPublicKeys(publicKey1)
+      await keep.sign(hash256Digest2, { from: owner })
+
       await expectRevert(
         keep.submitSignatureFraud.call(
           signature1.V,
@@ -467,8 +495,13 @@ contract('ECDSAKeep', (accounts) => {
 
     it('should return an error when signature is invalid and was requested', async () => {
       mineBlocks(signingTimeout)
+
+      await submitMembersPublicKeys(publicKey1)
       await keep.sign(hash256Digest1, { from: owner })
+
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
+
+
 
       await expectRevert(
         keep.submitSignatureFraud.call(
@@ -483,6 +516,9 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('should return an error when signature is invalid and was not requested', async () => {
+      await submitMembersPublicKeys(publicKey1)
+
+      await keep.sign(hash256Digest2, { from: owner })
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
       await expectRevert(
         keep.submitSignatureFraud.call(
@@ -497,7 +533,8 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('should return an error when signature is valid and was requested', async () => {
-      mineBlocks(signingTimeout)
+      await submitMembersPublicKeys(publicKey1)
+
       await keep.sign(hash256Digest1, { from: owner })
 
       await expectRevert(
@@ -561,21 +598,24 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('cannot be submitted if signing was not requested', async () => {
-      let keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
+      let keep = await ECDSAKeep.new(
+        owner,
+        members,
+        honestThreshold,
+        keepBonding.address
+      )
 
       await keep.submitPublicKey(publicKey, { from: members[0] })
 
-      try {
-        await keep.submitSignature(
+      await expectRevert(
+        keep.submitSignature(
           signatureR,
           signatureS,
           signatureRecoveryID,
           { from: members[0] }
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, "Signing is currently not in progres")
-      }
+        ),
+        "Signing is currently not in progress"
+      )
     })
 
     it('accepts signature after timeout', async () => {
@@ -592,31 +632,27 @@ contract('ECDSAKeep', (accounts) => {
 
     describe('validates signature', async () => {
       it('rejects recovery ID out of allowed range', async () => {
-        try {
-          await keep.submitSignature(
+        await expectRevert(
+          keep.submitSignature(
             signatureR,
             signatureS,
             4,
             { from: members[0] }
-          )
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, "Recovery ID must be one of {0, 1, 2, 3}")
-        }
+          ),
+          "Recovery ID must be one of {0, 1, 2, 3}"
+        )
       })
 
       it('rejects invalid signature', async () => {
-        try {
-          await keep.submitSignature(
+        await expectRevert(
+          keep.submitSignature(
             signatureR,
             signatureS,
             0,
             { from: members[0] }
-          )
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, "Invalid signature")
-        }
+          ),
+          "Invalid signature"
+        )
       })
 
       it('rejects malleable signature', async () => {
@@ -635,30 +671,26 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('cannot be called by non-member', async () => {
-      try {
-        await keep.submitSignature(
+      await expectRevert(
+        keep.submitSignature(
           signatureR,
           signatureS,
           signatureRecoveryID
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Caller is not the keep member')
-      }
+        ),
+        'Caller is not the keep member'
+      )
     })
 
     it('cannot be called by non-member owner', async () => {
-      try {
-        await keep.submitSignature(
+      await expectRevert(
+        keep.submitSignature(
           signatureR,
           signatureS,
           signatureRecoveryID,
           { from: owner }
-        )
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Caller is not the keep member')
-      }
+        ),
+        'Caller is not the keep member'
+      )
     })
   })
 
