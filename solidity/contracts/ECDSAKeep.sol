@@ -75,8 +75,12 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         keepBonding = KeepBonding(_keepBonding);
     }
 
-
-    /// @notice Public key is set when all members submit the same key.
+    /// @notice Submits a public key to the keep.
+    /// @dev Public key is published successfully if all members submit the same
+    /// value. In case of conflicts with others members submissions it will emit
+    /// an `ConflictingPublicKeySubmitted` event. When all submitted keys match
+    /// it will store the key as keep's public key and emit a `PublicKeyPublished`
+    /// event.
     /// @param _publicKey Signer's public key.
     function submitPublicKey(bytes calldata _publicKey) external onlyMember {
         require(publicKey.length == 0, "Public key has already been set");
@@ -84,13 +88,33 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         submittedPublicKeys[msg.sender] = _publicKey;
 
-        for (uint256 i = 1; i <= members.length; i++) {
-            if (sha256(submittedPublicKeys[members[i - 1]]) != sha256(_publicKey)) {
-                emit ConflictingPublicKeySubmitted(msg.sender, _publicKey);
-                return;
+        // Check if public keys submitted by all keep members are the same as
+        // the currently submitted one.
+        uint256 validPublicKeysCount = 0;
+        for (uint256 i = 0; i < members.length; i++) {
+            if (
+                keccak256(submittedPublicKeys[members[i]]) !=
+                keccak256(_publicKey)
+            ) {
+                // Emit an event only if compared member already submitted a value.
+                if (
+                    keccak256(submittedPublicKeys[members[i]]) != keccak256("")
+                ) {
+                    emit ConflictingPublicKeySubmitted(
+                        msg.sender,
+                        submittedPublicKeys[members[i]]
+                    );
+                }
+            } else {
+                validPublicKeysCount++;
             }
         }
 
+        if (validPublicKeysCount != members.length) {
+            return;
+        }
+
+        // All submitted signatures match.
         publicKey = _publicKey;
         emit PublicKeyPublished(_publicKey);
     }
