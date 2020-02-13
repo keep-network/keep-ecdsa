@@ -72,17 +72,11 @@ contract ECDSAKeepFactory is
     /// for the provided customer application.
     /// @dev If caller is already registered it returns without any changes.
     function registerMemberCandidate(address _application) external {
-        if (candidatesPools[_application] == address(0)) {
-            // This is the first time someone registers as signer for this
-            // application so let's create a signer pool for it.
-            candidatesPools[_application] = sortitionPoolFactory
-                .createSortitionPool(
-                IStaking(tokenStaking),
-                IBonding(address(keepBonding)),
-                minimumStake,
-                minimumBond
-            );
-        }
+        require(
+            candidatesPools[_application] != address(0),
+            "No pool found for the application"
+        );
+
         BondedSortitionPool candidatesPool = BondedSortitionPool(
             candidatesPools[_application]
         );
@@ -90,6 +84,19 @@ contract ECDSAKeepFactory is
         address operator = msg.sender;
         if (!candidatesPool.isOperatorInPool(operator)) {
             candidatesPool.joinPool(operator);
+        }
+    }
+
+    /// @notice Creates new sortition pool for the application.
+    function createSortitionPool(address _application) external {
+        if (candidatesPools[_application] == address(0)) {
+            candidatesPools[_application] = sortitionPoolFactory
+                .createSortitionPool(
+                IStaking(tokenStaking),
+                IBonding(address(keepBonding)),
+                minimumStake,
+                minimumBond
+            );
         }
     }
 
