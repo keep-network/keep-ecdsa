@@ -105,8 +105,64 @@ contract('ECDSAKeep', (accounts) => {
     })
   })
 
+  describe('isAwaitingSignature', async () => {
+    const digest1 = '0x54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
+    const publicKey = '0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051'
+    const signatureR = '0x9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
+    const signatureS = '0x6f7c776efde1e382f2ecc99ec0db13534a70ee86bd91d7b3a4059bccbed5d70c'
+    const signatureRecoveryID = 1
+
+    const digest2 = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
+
+    it('returns false if signing was not requested', async () => {
+      assert.isFalse(await keep.isAwaitingSignature(digest1))
+    })
+
+    it('returns true if signing was requested for the digest', async () => {
+      await keep.sign(digest1, { from: owner })
+
+      assert.isTrue(await keep.isAwaitingSignature(digest1))
+    })
+
+    it('returns false if signing was requested for other digest', async () => {
+      await keep.sign(digest2, { from: owner })
+
+      assert.isFalse(await keep.isAwaitingSignature(digest1))
+    })
+
+    it('returns false if valid signature has been already submitted', async () => {
+      await keep.sign(digest1, { from: owner })
+      await submitMembersPublicKey(publicKey)
+      await keep.submitSignature(
+        signatureR,
+        signatureS,
+        signatureRecoveryID,
+        { from: members[0] }
+      )
+
+      assert.isFalse(await keep.isAwaitingSignature(digest1))
+    })
+
+    it('returns true if invalid signature was submitted before', async () => {
+      await keep.sign(digest1, { from: owner })
+      await submitMembersPublicKey(publicKey)
+      await expectRevert(
+        keep.submitSignature(
+          signatureR,
+          signatureS,
+          0,
+          { from: members[0] }
+        ),
+        "Invalid signature",
+      )
+
+      assert.isTrue(await keep.isAwaitingSignature(digest1))
+    })
+  })
+
   describe('public key', () => {
-    const expectedPublicKey = '0xa899b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
+    const publicKey1 = '0xa899b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
+    const publicKey2 = '0x999999539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
 
     it('get public key before it is set', async () => {
       let publicKey = await keep.getPublicKey.call()
@@ -115,112 +171,181 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('submit public key by all members and get it', async () => {
-      await submitMembersPublicKey(expectedPublicKey)
+      await submitMembersPublicKey(publicKey1)
 
       let publicKey = await keep.getPublicKey.call()
 
       assert.equal(
         publicKey,
-        expectedPublicKey,
+        publicKey1,
         'incorrect public key'
       )
     })
 
-    describe('submitPublicKey', async () => {
-      beforeEach(async () => {
-        await keep.submitPublicKey(expectedPublicKey, { from: members[0] })
-      })
-      
-      it('emits an event', async () => {
-        await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
-        let res = await keep.submitPublicKey(expectedPublicKey, { from: members[2] })
-        
-        truffleAssert.eventEmitted(res, 'PublicKeyPublished', (ev) => {
-          return ev.publicKey == expectedPublicKey
-        })
-      })
-
+    describe.only('submitPublicKey', async () => {
       it('does not emit an event nor sets the key when keys were not submitted by all members', async () => {
-        let res = await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
+        let res = await keep.submitPublicKey(publicKey1, { from: members[1] })
         truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
 
         let publicKey = await keep.getPublicKey.call()
         assert.equal(publicKey, null, 'incorrect public key')
       })
 
-      it('emits event and set a key when 3 latest keys are the same', async () => {
-        let publicKey = '0x999999539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
+      it('does not emit an event nor sets the key when inconsistent keys were submitted by all members', async () => {
+        let startBlock = await web3.eth.getBlockNumber()
 
-        await keep.submitPublicKey(publicKey, { from: members[2] })
-        
-        let res = await keep.submitPublicKey(publicKey, { from: members[1] })
-        truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
-        let actualPublicKey = await keep.getPublicKey.call()
-        assert.equal(actualPublicKey, null, 'incorrect public key')
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
+        await keep.submitPublicKey(publicKey2, { from: members[1] })
+        await keep.submitPublicKey(publicKey1, { from: members[2] })
 
-        res = await keep.submitPublicKey(publicKey, { from: members[0] })
+        assert.isNull(await keep.getPublicKey(), 'incorrect public key')
 
-        truffleAssert.eventEmitted(res, 'PublicKeyPublished')
-
-        actualPublicKey = await keep.getPublicKey.call()
-        assert.equal(actualPublicKey, publicKey, 'incorrect public key')
+        assert.isEmpty(
+          await keep.getPastEvents('PublicKeyPublished', {
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          }),
+          "unexpected events emitted"
+        )
       })
 
-      it('emits event and set a key when having the same 3 keys after different submission combination', async () => {
-        let publicKey = '0x999999539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
-
-        await keep.submitPublicKey(expectedPublicKey, { from: members[2] })
-        
-        let res = await keep.submitPublicKey(publicKey, { from: members[1] })
-        truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
-        let actualPublicKey = await keep.getPublicKey.call()
-        assert.equal(actualPublicKey, null, 'incorrect public key')
-
-        res = await keep.submitPublicKey(publicKey, { from: members[2] })
+      it('emits event and sets a key when all submitted keys are the same', async () => {
+        let res = await keep.submitPublicKey(publicKey1, { from: members[2] })
         truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
 
-        res = await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
         truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
 
-        res = await keep.submitPublicKey(expectedPublicKey, { from: members[2] })
-        truffleAssert.eventEmitted(res, 'PublicKeyPublished')
+        let actualPublicKey = await keep.getPublicKey()
+        assert.isNull(actualPublicKey, 'incorrect public key')
 
-        actualPublicKey = await keep.getPublicKey.call()
-        assert.equal(actualPublicKey, expectedPublicKey, 'incorrect public key')
+        res = await keep.submitPublicKey(publicKey1, { from: members[1] })
+        truffleAssert.eventEmitted(res, 'PublicKeyPublished', { publicKey: publicKey1 })
+
+        assert.equal(await keep.getPublicKey(), publicKey1, 'incorrect public key')
       })
-      
+
+      it('allows submitting public key more than once', async () => {
+        await keep.submitPublicKey(publicKey2, { from: members[0] })
+        await keep.submitPublicKey(publicKey1, { from: members[1] })
+        await keep.submitPublicKey(publicKey1, { from: members[2] })
+
+        assert.isNull(await keep.getPublicKey(), 'incorrect public key')
+
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
+
+        assert.equal(await keep.getPublicKey(), publicKey1, 'incorrect public key')
+      })
+
+      it('emits conflict events for submitted values', async () => {
+        const publicKey3 = "0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051"
+        const publicKey4 = "0x74147666d05a0aa7cb310915dad49c32787d195ac7e2ba100f98978264d39e013e5c5632961072bea2d3dda117915bb55c5823e44665af70fcd2961b796a244b"
+
+        // In this test it's important that members don't submit in the same order
+        // as they are registered in the keep.
+
+        // First member submits a public key, there are not conflicts.
+        let startBlock = await web3.eth.getBlockNumber()
+        await keep.submitPublicKey(publicKey1, { from: members[2] })
+        assert.lengthOf(
+          await keep.getPastEvents('ConflictingPublicKeySubmitted', {
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          }),
+          0,
+          "unexpected events for test 1"
+        )
+        await mineBlocks(1)
+
+        // Second member submits another public key, there is one conflict.
+        startBlock = await web3.eth.getBlockNumber()
+        await keep.submitPublicKey(publicKey2, { from: members[1] })
+        assert.lengthOf(
+          await keep.getPastEvents('ConflictingPublicKeySubmitted', {
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          }),
+          1,
+          "unexpected events for test 2"
+        )
+        await mineBlocks(1)
+
+        // Third member submits yet another public key, there are two conflicts.
+        startBlock = await web3.eth.getBlockNumber()
+        await keep.submitPublicKey(publicKey3, { from: members[0] })
+        assert.lengthOf(
+          await keep.getPastEvents('ConflictingPublicKeySubmitted', {
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          }),
+          2,
+          "unexpected events for test 3"
+        )
+        await mineBlocks(1)
+
+        // One of the members updates public key to yet another value, there are
+        // still two conflicts.
+        startBlock = await web3.eth.getBlockNumber()
+        await keep.submitPublicKey(publicKey4, { from: members[1] })
+        assert.lengthOf(
+          await keep.getPastEvents('ConflictingPublicKeySubmitted', {
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          }),
+          2,
+          "unexpected events for test 4"
+        )
+        await mineBlocks(1)
+
+        // Another member updates public key to the same value as the previous one,
+        // number of conflicts drops to one.
+        startBlock = await web3.eth.getBlockNumber()
+        await keep.submitPublicKey(publicKey4, { from: members[0] })
+        assert.lengthOf(
+          await keep.getPastEvents('ConflictingPublicKeySubmitted', {
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          }),
+          1,
+          "unexpected events for test 5"
+        )
+
+        assert.isNull(await keep.getPublicKey(), 'incorrect public key')
+      })
+
+      it('reverts when public key already set', async () => {
+        await submitMembersPublicKey(publicKey1)
+
+        await expectRevert(
+          keep.submitPublicKey(publicKey1, { from: members[0] }),
+          'Public key has already been set'
+        )
+      })
+
       it('cannot be called by non-member', async () => {
         await expectRevert(
-          keep.submitPublicKey(expectedPublicKey),
+          keep.submitPublicKey(publicKey1),
           'Caller is not the keep member'
         )
       })
 
       it('cannot be called by non-member owner', async () => {
         await expectRevert(
-          keep.submitPublicKey(expectedPublicKey, { from: owner }),
+          keep.submitPublicKey(publicKey1, { from: owner }),
           'Caller is not the keep member'
         )
       })
 
       it('cannot be different than 64 bytes', async () => {
         let badPublicKey = '0x9b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
-        await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
+        await keep.submitPublicKey(publicKey1, { from: members[1] })
         await expectRevert(
           keep.submitPublicKey(badPublicKey, { from: members[2] }),
           'Public key must be 64 bytes long'
         )
       })
-
-      it('cannot set public key more than once', async () => {
-        await keep.submitPublicKey(expectedPublicKey, { from: members[1] })
-        await keep.submitPublicKey(expectedPublicKey, { from: members[2] }),
-        await expectRevert(
-          keep.submitPublicKey(expectedPublicKey, { from: members[2] }),
-          'Public key has already been set'
-        )
-      })
     })
+
   })
 
   describe('checkBondAmount', () => {
@@ -271,7 +396,7 @@ contract('ECDSAKeep', (accounts) => {
         .add(seizedSignerBondsFee).sub(new BN(ownerBalanceBefore));
 
       expect(ownerBalanceDiff).to.eq.BN(value0.add(value1).add(value2), "incorrect owner balance");
-      
+
       let bondsAfterSeizure = await keep.checkBondAmount()
       expect(bondsAfterSeizure).to.eq.BN(0, "should zero all the bonds");
     })
@@ -304,7 +429,7 @@ contract('ECDSAKeep', (accounts) => {
 
     beforeEach(async () => {
       signingTimeout = await keep.signingTimeout.call()
-      
+
       await submitMembersPublicKey(publicKey1)
       await keep.sign(hash256Digest2, { from: owner })
     })
@@ -443,7 +568,7 @@ contract('ECDSAKeep', (accounts) => {
         )
         assert(false, 'Test call did not error as expected')
       } catch (e) {
-        assert.include(e.message, "Not awaiting a signature")
+        assert.include(e.message, "Signing is not currently in progress")
       }
     })
 
