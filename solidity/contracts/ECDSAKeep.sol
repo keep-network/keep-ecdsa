@@ -117,6 +117,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Seizes the signer's ETH bond.
+    // TODO: Add modifier to be able to run this function only when keep was
+    // closed before.
     // TODO: Rename to `seizeMembersBonds` for consistency.
     function seizeSignerBonds() external onlyOwner {
         for (uint256 i = 0; i < members.length; i++) {
@@ -174,7 +176,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @notice Calculates a signature over provided digest by the keep.
     /// @dev Only one signing process can be in progress at a time.
     /// @param _digest Digest to be signed.
-    function sign(bytes32 _digest) external onlyOwner {
+    function sign(bytes32 _digest) external onlyOwner onlyWhenActive {
         require(!isSigningInProgress(), "Signer is busy");
 
         /* solium-disable-next-line */
