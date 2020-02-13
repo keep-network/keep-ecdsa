@@ -1,3 +1,5 @@
+const Registry = artifacts.require('Registry')
+const BondedECDSAKeepVendor = artifacts.require('BondedECDSAKeepVendor')
 const BondedECDSAKeepVendorImplV1 = artifacts.require('BondedECDSAKeepVendorImplV1')
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -6,10 +8,20 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
     const address1 = "0xF2D3Af2495E286C7820643B963FB9D34418c871d"
     const address2 = "0x4566716c07617c5854fe7dA9aE5a1219B19CCd27"
 
-    let keepVendor
+    let registry, keepVendor
 
     beforeEach(async () => {
-        keepVendor = await BondedECDSAKeepVendorImplV1.new()
+        registry = await Registry.new()
+
+        const bondedECDSAKeepVendorImplV1 = await BondedECDSAKeepVendorImplV1.new()
+        const bondedECDSAKeepVendorProxy = await BondedECDSAKeepVendor.new(bondedECDSAKeepVendorImplV1.address)
+        keepVendor = await BondedECDSAKeepVendorImplV1.at(bondedECDSAKeepVendorProxy.address)
+
+        await keepVendor.initialize(registry.address)
+        await registry.setOperatorContractUpgrader(keepVendor.address, accounts[0])
+        registry.approveOperatorContract(address0)
+        registry.approveOperatorContract(address1)
+        registry.approveOperatorContract(address2)
     })
 
     describe("keep factory registration", async () => {
@@ -39,7 +51,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         it("cannot be called by non-owner", async () => {
             await expectRevert(
                 keepVendor.registerFactory(address1, { from: accounts[1] }),
-                "caller is not the owner"
+                "Caller is not operator contract upgrader"
             )
         })
 
