@@ -136,7 +136,7 @@ contract ECDSAKeepFactory is
             "Insufficient payment for opening a new keep"
         );
 
-        address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
+        address[] memory members = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
             bytes32(groupSelectionSeed),
             memberBond
@@ -146,7 +146,7 @@ contract ECDSAKeepFactory is
 
         ECDSAKeep keep = new ECDSAKeep(
             _owner,
-            selected,
+            members,
             _honestThreshold,
             address(keepBonding),
             tokenStaking
@@ -163,14 +163,14 @@ contract ECDSAKeepFactory is
 
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
-                selected[i],
+                members[i],
                 keepAddress,
                 uint256(keepAddress),
                 memberBond
             );
         }
 
-        emit ECDSAKeepCreated(keepAddress, selected, _owner, application);
+        emit ECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
     /// @notice Updates group selection seed.
