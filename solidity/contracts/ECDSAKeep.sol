@@ -3,18 +3,19 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
+import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 import "./api/IBondedECDSAKeep.sol";
-import "./utils/AddressPayableArrayUtils.sol";
 import "./KeepBonding.sol";
 
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
 contract ECDSAKeep is IBondedECDSAKeep, Ownable {
-    using AddressPayableArrayUtils for address payable[];
+    using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
     // List of keep members' addresses.
-    address payable[] internal members;
+    address[] internal members;
 
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
@@ -59,16 +60,20 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     KeepBonding keepBonding;
 
+    TokenStaking tokenStaking;
+
     constructor(
-        address _owner, // TODO: Change type to `address payable`
-        address payable[] memory _members,
+        address _owner,
+        address[] memory _members,
         uint256 _honestThreshold,
-        address _keepBonding
+        address _keepBonding,
+        address _tokenStaking
     ) public {
         transferOwnership(_owner);
         members = _members;
         honestThreshold = _honestThreshold;
         keepBonding = KeepBonding(_keepBonding);
+        tokenStaking = TokenStaking(_tokenStaking);
     }
 
     /// @notice Set a signer's public key for the keep.
@@ -248,6 +253,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Distributes ETH evenly across all keep members.
+    /// ETH is sent to the beneficiary of each member.
     /// @dev Only the value passed to this function will be distributed.
     function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
@@ -260,11 +266,12 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             // transfer failure, hence we don't validate it's result.
             // TODO: What should we do with the dividend which was not transferred
             // successfully?
-            members[i].call.value(dividend)("");
+            tokenStaking.magpieOf(members[i]).call.value(dividend)("");
         }
     }
 
     /// @notice Distributes ERC20 token evenly across all keep members.
+    /// The token is sent to the beneficiary of each member.
     /// @dev This works with any ERC20 token that implements a transferFrom
     /// function similar to the interface imported here from
     /// openZeppelin. This function only has authority over pre-approved
@@ -283,7 +290,11 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         require(dividend > 0, "dividend value must be non-zero");
 
         for (uint16 i = 0; i < memberCount; i++) {
-            token.transferFrom(msg.sender, members[i], dividend);
+            token.transferFrom(
+                msg.sender,
+                tokenStaking.magpieOf(members[i]),
+                dividend
+            );
         }
     }
 
