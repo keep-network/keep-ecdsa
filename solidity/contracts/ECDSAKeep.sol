@@ -39,6 +39,11 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // signing process in progress.
     uint256 internal signingStartTimestamp;
 
+    // Flag to monitor current keep state. If the keep is active members monitor
+    // it and support requests for the keep owner. If the owner decides to close
+    // the keep the flag is set to false.
+    bool internal isActive;
+
     // Notification that a signer's public key was published for the keep.
     event PublicKeyPublished(bytes publicKey);
 
@@ -74,6 +79,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         honestThreshold = _honestThreshold;
         keepBonding = KeepBonding(_keepBonding);
         tokenStaking = TokenStaking(_tokenStaking);
+        isActive = true;
     }
 
     /// @notice Set a signer's public key for the keep.
