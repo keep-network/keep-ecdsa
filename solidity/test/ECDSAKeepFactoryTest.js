@@ -618,9 +618,9 @@ contract("ECDSAKeepFactory", async accounts => {
             )
 
             const newBalances = await getETHBalancesFromList(members)
-            const check = addToBalances(initialBalances, subsidyPool / members.length)
+            const expectedBalances = addToBalances(initialBalances, subsidyPool / members.length)
 
-            assert.equal(newBalances.toString(), check.toString())
+            assert.equal(newBalances.toString(), expectedBalances.toString())
         })
 
         it("does not transfer more from subsidy pool than entry fee", async () => {
@@ -645,9 +645,9 @@ contract("ECDSAKeepFactory", async accounts => {
             )
 
             const newBalances = await getETHBalancesFromList(members)
-            const check = addToBalances(initialBalances, feeEstimate / members.length)
+            const expectedBalances = addToBalances(initialBalances, feeEstimate / members.length)
 
-            assert.equal(newBalances.toString(), check.toString()) 
+            assert.equal(newBalances.toString(), expectedBalances.toString()) 
         })
     })
 
