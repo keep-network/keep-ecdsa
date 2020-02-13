@@ -24,11 +24,15 @@ contract("ECDSAKeepFactory", async accounts => {
     let bondedSortitionPoolFactory
     let keepBonding
     let randomBeacon
+    let signerPool
 
     const application = accounts[1]
     const member1 = accounts[2]
     const member2 = accounts[3]
     const member3 = accounts[4]
+    const authorizer1 = accounts[2]
+    const authorizer2 = accounts[3]
+    const authorizer3 = accounts[4]
 
     describe("registerMemberCandidate", async () => {
         before(async () => {
@@ -46,6 +50,13 @@ contract("ECDSAKeepFactory", async accounts => {
 
             await registry.approveOperatorContract(keepFactory.address)
             await registry.approveOperatorContract(keepBonding.address)
+
+            await keepFactory.createSortitionPool(application)
+            signerPool = await keepFactory.getSignerPool(application)
+
+            await keepBonding.authorizeSortitionPoolContract(member1, signerPool, {from: authorizer1})
+            await keepBonding.authorizeSortitionPoolContract(member2, signerPool, {from: authorizer2})
+            await keepBonding.authorizeSortitionPoolContract(member3, signerPool, {from: authorizer3})
 
             const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance);
@@ -65,12 +76,8 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("creates a signer pool", async () => {
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
-
-            const signerPoolAddress = await keepFactory.getSignerPool(application)
-
             assert.notEqual(
-                signerPoolAddress,
+                await keepFactory.getSignerPool(application),
                 "0x0000000000000000000000000000000000000000",
                 "incorrect registered signer pool",
             )
@@ -130,16 +137,23 @@ contract("ECDSAKeepFactory", async accounts => {
             const application1 = '0x0000000000000000000000000000000000000001'
             const application2 = '0x0000000000000000000000000000000000000002'
 
+            await keepFactory.createSortitionPool(application1)
+            await keepFactory.createSortitionPool(application2)
+
+            const signerPool1Address = await keepFactory.getSignerPool(application1)
+            const signerPool2Address = await keepFactory.getSignerPool(application2)
+
+            await keepBonding.authorizeSortitionPoolContract(member1, signerPool1Address, {from: authorizer1})
+            await keepBonding.authorizeSortitionPoolContract(member2, signerPool2Address, {from: authorizer2})
+
             await keepFactory.registerMemberCandidate(application1, { from: member1 })
             await keepFactory.registerMemberCandidate(application2, { from: member2 })
 
-            const signerPool1Address = await keepFactory.getSignerPool(application1)
             const signerPool1 = await BondedSortitionPool.at(signerPool1Address)
 
             assert.isTrue(await signerPool1.isOperatorInPool(member1), "operator 1 is not in the pool")
             assert.isFalse(await signerPool1.isOperatorInPool(member2), "operator 2 is in the pool")
 
-            const signerPool2Address = await keepFactory.getSignerPool(application2)
             const signerPool2 = await BondedSortitionPool.at(signerPool2Address)
 
             assert.isFalse(await signerPool2.isOperatorInPool(member1), "operator 1 is in the pool")
@@ -184,16 +198,23 @@ contract("ECDSAKeepFactory", async accounts => {
             const application1 = '0x0000000000000000000000000000000000000001'
             const application2 = '0x0000000000000000000000000000000000000002'
 
+            await keepFactory.createSortitionPool(application1)
+            await keepFactory.createSortitionPool(application2)
+
+            const signerPool1Address = await keepFactory.getSignerPool(application1)
+            const signerPool2Address = await keepFactory.getSignerPool(application2)
+
+            await keepBonding.authorizeSortitionPoolContract(member1, signerPool1Address, {from: authorizer1})
+            await keepBonding.authorizeSortitionPoolContract(member2, signerPool2Address, {from: authorizer2})
+
             await keepFactory.registerMemberCandidate(application1, { from: member1 })
             await keepFactory.registerMemberCandidate(application2, { from: member2 })
 
-            const signerPool1Address = await keepFactory.getSignerPool(application1)
             const signerPool1 = await BondedSortitionPool.at(signerPool1Address)
 
             assert.isTrue(await signerPool1.isOperatorInPool(member1), "operator 1 is not in the pool")
             assert.isFalse(await signerPool1.isOperatorInPool(member2), "operator 2 is in the pool")
 
-            const signerPool2Address = await keepFactory.getSignerPool(application2)
             const signerPool2 = await BondedSortitionPool.at(signerPool2Address)
 
             assert.isFalse(await signerPool2.isOperatorInPool(member1), "operator 1 is in the pool")
@@ -227,6 +248,13 @@ contract("ECDSAKeepFactory", async accounts => {
             )
             await registry.approveOperatorContract(keepFactory.address)
             await registry.approveOperatorContract(keepBonding.address)
+
+            await keepFactory.createSortitionPool(application)
+            const signerPoolAddress = await keepFactory.getSignerPool(application)
+
+            await keepBonding.authorizeSortitionPoolContract(member1, signerPoolAddress, {from: authorizer1})
+            await keepBonding.authorizeSortitionPoolContract(member2, signerPoolAddress, {from: authorizer2})
+            await keepBonding.authorizeSortitionPoolContract(member3, signerPoolAddress, {from: authorizer3})
 
             feeEstimate = await keepFactory.openKeepFeeEstimate()
         }
@@ -459,7 +487,10 @@ contract("ECDSAKeepFactory", async accounts => {
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
             await keepFactory.registerMemberCandidate(application, { from: member2 })
-            await keepFactory.registerMemberCandidate(application, { from: member3 })
+            await expectRevert(
+                keepFactory.registerMemberCandidate(application, { from: member3 }),
+                "Operator not eligible"
+            )
 
             await expectRevert(
                 keepFactory.openKeep(
@@ -469,7 +500,7 @@ contract("ECDSAKeepFactory", async accounts => {
                     bond,
                     { from: application, value: feeEstimate }
                 ),
-                "Insufficient unbonded value"
+                "Not enough operators in pool"
             )
         })
 

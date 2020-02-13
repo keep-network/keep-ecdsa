@@ -25,8 +25,11 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 contract('ECDSAKeep', (accounts) => {
+  const bondCreator = accounts[0]
   const owner = accounts[1]
   const members = [accounts[2], accounts[3]]
+  const authorizers = [accounts[2], accounts[3]]
+  const signingPool = accounts[4]
   const honestThreshold = 1
 
   let registry, tokenStaking, keepBonding, keep;
@@ -37,7 +40,9 @@ contract('ECDSAKeep', (accounts) => {
     keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
     keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
 
-    await registry.approveOperatorContract(accounts[0])
+    await registry.approveOperatorContract(bondCreator)
+    await keepBonding.authorizeSortitionPoolContract(members[0], signingPool, {from: authorizers[0]})
+    await keepBonding.authorizeSortitionPoolContract(members[1], signingPool, {from: authorizers[1]})
   })
 
   beforeEach(async () => {
@@ -170,8 +175,8 @@ contract('ECDSAKeep', (accounts) => {
       
       await keepBonding.deposit(members[0], { value: value0 })
       await keepBonding.deposit(members[1], { value: value1 })
-      await keepBonding.createBond(members[0], keep.address, referenceID, value0)
-      await keepBonding.createBond(members[1], keep.address, referenceID, value1)
+      await keepBonding.createBond(members[0], keep.address, referenceID, value0, signingPool)
+      await keepBonding.createBond(members[1], keep.address, referenceID, value1, signingPool)
 
       let actual = await keep.checkBondAmount.call()
       let expected = value0.add(value1);
@@ -189,8 +194,8 @@ contract('ECDSAKeep', (accounts) => {
       
       await keepBonding.deposit(members[0], { value: value0 })
       await keepBonding.deposit(members[1], { value: value1 })
-      await keepBonding.createBond(members[0], keep.address, referenceID, value0)
-      await keepBonding.createBond(members[1], keep.address, referenceID, value1)
+      await keepBonding.createBond(members[0], keep.address, referenceID, value0, signingPool)
+      await keepBonding.createBond(members[1], keep.address, referenceID, value1, signingPool)
 
       let bondsBeforeSeizure = await keep.checkBondAmount()
       let expected = value0.add(value1);
