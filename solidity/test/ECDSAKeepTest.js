@@ -13,6 +13,7 @@ const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
 const KeepBonding = artifacts.require('./KeepBonding.sol')
 const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
+const TokenStakingStub = artifacts.require("./TokenStakingStub.sol")
 
 const truffleAssert = require('truffle-assertions')
 
@@ -27,11 +28,18 @@ contract('ECDSAKeep', (accounts) => {
   const members = [accounts[2], accounts[3]]
   const honestThreshold = 1
 
-  let keepBonding, keep;
+  let keepBonding, tokenStaking, keep;
 
   before(async () => {
     keepBonding = await KeepBonding.new()
-    keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
+    tokenStaking = await TokenStakingStub.new()
+    keep = await ECDSAKeep.new(
+      owner, 
+      members, 
+      honestThreshold, 
+      keepBonding.address, 
+      tokenStaking.address
+    )
   })
 
   beforeEach(async () => {
@@ -48,7 +56,8 @@ contract('ECDSAKeep', (accounts) => {
         owner,
         members,
         honestThreshold,
-        keepBonding.address
+        keepBonding.address,
+        tokenStaking.address
       )
 
       assert(web3.utils.isAddress(keep.address), 'invalid keep address')
@@ -351,7 +360,13 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('cannot be submitted if signing was not requested', async () => {
-      let keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
+      let keep = await ECDSAKeep.new(
+        owner, 
+        members, 
+        honestThreshold, 
+        keepBonding.address, 
+        tokenStaking.address
+      )
 
       await keep.setPublicKey(publicKey, { from: members[0] })
 
@@ -501,7 +516,13 @@ contract('ECDSAKeep', (accounts) => {
         new BN(await web3.eth.getBalance(member3)).add(singleValue),
       ]
 
-      const keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
+      const keep = await ECDSAKeep.new(
+        owner, 
+        members, 
+        honestThreshold, 
+        keepBonding.address, 
+        tokenStaking.address
+      )
 
       await keep.distributeETHToMembers({ value: msgValue })
 

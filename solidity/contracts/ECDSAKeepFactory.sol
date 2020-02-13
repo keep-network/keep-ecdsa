@@ -3,8 +3,8 @@ pragma solidity ^0.5.4;
 import "./ECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
-import "./utils/AddressPayableArrayUtils.sol";
 
+import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
@@ -19,13 +19,13 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract ECDSAKeepFactory is
     IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
 {
-    using AddressPayableArrayUtils for address payable[];
+    using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
-        address payable[] members,
+        address[] members,
         address owner,
         address application
     );
@@ -144,12 +144,13 @@ contract ECDSAKeepFactory is
 
         newGroupSelectionSeed();
 
-        address payable[] memory members = new address payable[](_groupSize);
-        for (uint256 i = 0; i < _groupSize; i++) {
-            members[i] = address(uint160(selected[i]));
-        }
-
-        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold, address(keepBonding));
+        ECDSAKeep keep = new ECDSAKeep(
+            _owner,
+            selected,
+            _honestThreshold,
+            address(keepBonding),
+            tokenStaking
+        );
 
         keepAddress = address(keep);
 
@@ -162,14 +163,14 @@ contract ECDSAKeepFactory is
 
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
-                members[i],
+                selected[i],
                 keepAddress,
                 uint256(keepAddress),
                 memberBond
             );
         }
 
-        emit ECDSAKeepCreated(keepAddress, members, _owner, application);
+        emit ECDSAKeepCreated(keepAddress, selected, _owner, application);
     }
 
     /// @notice Updates group selection seed.

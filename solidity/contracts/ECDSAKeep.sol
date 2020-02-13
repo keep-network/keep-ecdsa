@@ -4,18 +4,18 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
+import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 import "./api/IBondedECDSAKeep.sol";
-import "./utils/AddressPayableArrayUtils.sol";
 import "./KeepBonding.sol";
 
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
 contract ECDSAKeep is IBondedECDSAKeep, Ownable {
-    using AddressPayableArrayUtils for address payable[];
+    using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
     // List of keep members' addresses.
-    address payable[] internal members;
+    address[] internal members;
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
     // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
@@ -53,16 +53,20 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     KeepBonding keepBonding;
 
+    TokenStaking tokenStaking;
+
     constructor(
-        address _owner, // TODO: Change type to `address payable`
-        address payable[] memory _members,
+        address _owner,
+        address[] memory _members,
         uint256 _honestThreshold,
-        address _keepBonding
+        address _keepBonding,
+        address _tokenStaking
     ) public {
         transferOwnership(_owner);
         members = _members;
         honestThreshold = _honestThreshold;
         keepBonding = KeepBonding(_keepBonding);
+        tokenStaking = TokenStaking(_tokenStaking);
     }
 
     /// @notice Set a signer's public key for the keep.
