@@ -42,7 +42,7 @@ contract ECDSAKeepFactory is
     IRandomBeacon randomBeacon;
 
     uint256 public minimumStake = 200000 * 1e18;
-    uint256 minimumBond = 1; // TODO: Take from setter
+    uint256 public minimumBond = 1; // TODO: Define economics
 
     // Gas required for a callback from the random beacon. The value specifies
     // gas required to call `setGroupSelectionSeed` function in the worst-case
