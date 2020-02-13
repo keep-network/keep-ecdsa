@@ -151,7 +151,8 @@ contract ECDSAKeepFactory is
                 members[i],
                 keepAddress,
                 uint256(keepAddress),
-                memberBond
+                memberBond,
+                pool
             );
         }
 

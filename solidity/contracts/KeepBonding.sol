@@ -105,15 +105,16 @@ contract KeepBonding {
     /// @param holder Address of the holder of the bond.
     /// @param referenceID Reference ID used to track the bond by holder.
     /// @param amount Value to bond.
+    /// @param authorizedSortitionPool Address of authorized sortition pool.
     function createBond(
         address operator,
         address holder,
         uint256 referenceID,
-        uint256 amount
+        uint256 amount,
+        address authorizedSortitionPool
     ) public onlyAuthorized {
         require(
-            // TODO: Provide authorized sortition pool address
-            availableUnbondedValue(operator, msg.sender, address(0)) >= amount,
+            availableUnbondedValue(operator, msg.sender, authorizedSortitionPool) >= amount,
             "Insufficient unbonded value"
         );
 
