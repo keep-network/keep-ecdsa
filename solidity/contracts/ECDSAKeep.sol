@@ -306,4 +306,10 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         _;
     }
 
+    /// @notice Checks if the keep is currently active.
+    /// @dev Throws an error if called when the keep has been already closed.
+    modifier onlyWhenActive() {
+        require(isActive, "Keep is not active");
+        _;
+    }
 }
