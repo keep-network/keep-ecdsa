@@ -121,6 +121,18 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
+        it("does not add an operator to the pool if it does not have a minimum bond", async () => {
+            const minimumBond = await keepFactory.minimumBond.call()
+            const availableUnbonded = await keepBonding.availableUnbondedValue(member1, ZERO_ADDRESS, ZERO_ADDRESS)
+            const withdrawValue = availableUnbonded.sub(minimumBond).add(new BN(1))
+            await keepBonding.withdraw(withdrawValue, member1, { from: member1 })
+
+            await expectRevert(
+                keepFactory.registerMemberCandidate(application, { from: member1 }),
+                "Operator not eligible"
+            )
+        })
+
         it("inserts operators to different pools", async () => {
             const application1 = '0x0000000000000000000000000000000000000001'
             const application2 = '0x0000000000000000000000000000000000000002'
@@ -457,24 +469,21 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
-        // TODO: This is temporary, we don't expect a group to be formed if a member
-        // doesn't have sufficient unbonded value.
         it("reverts if one member has insufficient unbonded value", async () => {
-            await initializeNewFactory()
+            const minimumBond = await keepFactory.minimumBond.call()
+            const availableUnbonded = await keepBonding.availableUnbondedValue(member3, ZERO_ADDRESS, ZERO_ADDRESS)
+            const withdrawValue = availableUnbonded.sub(minimumBond).add(new BN(1))
+            await keepBonding.withdraw(withdrawValue, member3, { from: member3 })
 
-            const stakeBalance = await keepFactory.minimumStake.call()
-            await tokenStaking.setBalance(stakeBalance)
-
-            await keepBonding.deposit(member1, { value: singleBond })
-            await keepBonding.deposit(member2, { value: singleBond })
-            await keepBonding.deposit(member3, { value: singleBond.sub(new BN(1)) })
-
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
-            await keepFactory.registerMemberCandidate(application, { from: member2 })
-            
             await expectRevert(
-                keepFactory.registerMemberCandidate(application, { from: member3 }),
-                "Operator not eligible."
+                keepFactory.openKeep(
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
+                    { from: application, value: feeEstimate }
+                ),
+                "Not enough operators in pool"
             )
         })
 
