@@ -33,6 +33,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // Map stores public key by member addresses. All members should submit the
     // same public key.
     mapping(address => bytes) submittedPublicKeys;
+
     // Notification that a signer's public key was published for the keep.
     event PublicKeyPublished(bytes publicKey);
 
@@ -189,6 +190,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         bytes32 _signedDigest,
         bytes calldata _preimage
     ) external returns (bool _isFraud) {
+        require(publicKey.length != 0, "Public key was not set yet");
+
         bytes32 calculatedDigest = sha256(abi.encodePacked(sha256(_preimage)));
         require(
             _signedDigest == calculatedDigest,
@@ -211,6 +214,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @dev Only one signing process can be in progress at a time.
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external onlyOwner {
+        require(publicKey.length != 0, "Public key was not set yet");
         require(
             !isSigningInProgress() || hasSigningTimedOut(),
             "Signer is busy"
