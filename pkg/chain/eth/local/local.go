@@ -129,3 +129,12 @@ func (lc *localChain) SubmitSignature(
 ) error {
 	return nil
 }
+
+// IsAwaitingSignature checks if the keep is waiting for a signature to be
+// calculated for the given digest.
+func (lc *localChain) IsAwaitingSignature(
+	keepAddress common.Address,
+	digest [32]byte,
+) (bool, error) {
+	panic("implement")
+}
