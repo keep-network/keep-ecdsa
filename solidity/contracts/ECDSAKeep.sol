@@ -95,7 +95,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         // Check if public keys submitted by all keep members are the same as
         // the currently submitted one.
-        uint256 validPublicKeysCount = 0;
+        uint256 matchingPublicKeysCount = 0;
         for (uint256 i = 0; i < members.length; i++) {
             if (
                 keccak256(submittedPublicKeys[members[i]]) !=
@@ -109,11 +109,11 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
                     );
                 }
             } else {
-                validPublicKeysCount++;
+                matchingPublicKeysCount++;
             }
         }
 
-        if (validPublicKeysCount != members.length) {
+        if (matchingPublicKeysCount != members.length) {
             return;
         }
 
