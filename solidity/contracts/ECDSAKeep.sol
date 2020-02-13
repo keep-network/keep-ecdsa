@@ -71,22 +71,21 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         uint8 recoveryID
     );
 
-    KeepBonding keepBonding;
-
     TokenStaking tokenStaking;
+    KeepBonding keepBonding;
 
     constructor(
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
-        address _keepBonding,
-        address _tokenStaking
+        address _tokenStaking,
+        address _keepBonding
     ) public {
         transferOwnership(_owner);
         members = _members;
         honestThreshold = _honestThreshold;
-        keepBonding = KeepBonding(_keepBonding);
         tokenStaking = TokenStaking(_tokenStaking);
+        keepBonding = KeepBonding(_keepBonding);
     }
 
     /// @notice Submits a public key to the keep.

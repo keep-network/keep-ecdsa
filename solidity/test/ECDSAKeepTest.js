@@ -38,8 +38,8 @@ contract('ECDSAKeep', (accounts) => {
       owner,
       members,
       honestThreshold,
-      keepBonding.address,
-      tokenStaking.address
+      tokenStaking.address,
+      keepBonding.address
     )
   })
 
@@ -57,8 +57,8 @@ contract('ECDSAKeep', (accounts) => {
         owner,
         members,
         honestThreshold,
-        keepBonding.address,
-        tokenStaking.address
+        tokenStaking.address,
+        keepBonding.address
       )
 
       assert(web3.utils.isAddress(keep.address), 'invalid keep address')
@@ -768,8 +768,8 @@ contract('ECDSAKeep', (accounts) => {
         owner,
         members,
         honestThreshold,
-        keepBonding.address,
-        tokenStaking.address
+        tokenStaking.address,
+        keepBonding.address
       )
 
       await keep.distributeETHToMembers({ value: msgValue })
@@ -800,8 +800,8 @@ contract('ECDSAKeep', (accounts) => {
         owner,
         members,
         honestThreshold,
-        keepBonding.address,
-        tokenStaking.address
+        tokenStaking.address,
+        keepBonding.address
       )
 
       await tokenStaking.setMagpie(member1, beneficiary)
@@ -892,8 +892,8 @@ contract('ECDSAKeep', (accounts) => {
         owner,
         members,
         honestThreshold,
-        keepBonding.address,
-        tokenStaking.address
+        tokenStaking.address,
+        keepBonding.address
       )
 
       await tokenStaking.setMagpie(member1, beneficiary)
