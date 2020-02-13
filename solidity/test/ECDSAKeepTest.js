@@ -24,7 +24,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract('ECDSAKeep', (accounts) => {
+contract.only('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
   const members = [accounts[2], accounts[3], accounts[4]]
   const honestThreshold = 1
@@ -86,15 +86,12 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('cannot be requested if keep is closed', async () => {
-      let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
-      await keepBonding.deposit(members[0], { value: 10 })
-      await keepBonding.deposit(members[1], { value: 20 })
-      await keepBonding.createBond(members[0], keep.address, referenceID, 10)
-      await keepBonding.createBond(members[1], keep.address, referenceID, 20)
-      keep.closeKeep({ from: owner })
+      await createMembersBonds(keep)
+
+      await keep.closeKeep({ from: owner })
 
       await expectRevert(
-        keep.sign(digest),
+        keep.sign(digest, { from: owner }),
         'Keep is not active'
       )
     })
@@ -379,56 +376,37 @@ contract('ECDSAKeep', (accounts) => {
   })
 
   describe('checkBondAmount', () => {
-    const value0 = new BN(30)
-    const value1 = new BN(70)
-
     it('should return bond amount', async () => {
-      let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
+      const expectedBondsSum = await createMembersBonds(keep)
 
-      await keepBonding.deposit(members[0], { value: value0 })
-      await keepBonding.deposit(members[1], { value: value1 })
-      await keepBonding.createBond(members[0], keep.address, referenceID, value0)
-      await keepBonding.createBond(members[1], keep.address, referenceID, value1)
+      const actual = await keep.checkBondAmount.call()
 
-      let actual = await keep.checkBondAmount.call()
-      let expected = value0.add(value1);
-
-      expect(actual).to.eq.BN(expected, "incorrect bond amount");
+      expect(actual).to.eq.BN(expectedBondsSum, "incorrect bond amount");
     })
   })
 
   describe('seizeSignerBonds', () => {
-    const value0 = new BN(30)
-    const value1 = new BN(70)
-    const value2 = new BN(10)
-
     it('should seize signer bond', async () => {
-      let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
+      const expectedBondsSum = await createMembersBonds(keep)
+      const ownerBalanceBefore = await web3.eth.getBalance(owner)
 
-      await keepBonding.deposit(members[0], { value: value0 })
-      await keepBonding.deposit(members[1], { value: value1 })
-      await keepBonding.deposit(members[2], { value: value2 })
-      await keepBonding.createBond(members[0], keep.address, referenceID, value0)
-      await keepBonding.createBond(members[1], keep.address, referenceID, value1)
-      await keepBonding.createBond(members[2], keep.address, referenceID, value2)
-
-      let bondsBeforeSeizure = await keep.checkBondAmount()
-      let expected = value0.add(value1).add(value2);
-      expect(bondsBeforeSeizure).to.eq.BN(expected, "incorrect bond amount before seizure");
+      expect(
+        await keep.checkBondAmount()
+      ).to.eq.BN(expectedBondsSum, "incorrect bond amount before seizure");
 
       let gasPrice = await web3.eth.getGasPrice()
 
-      let ownerBalanceBefore = await web3.eth.getBalance(owner);
-      let txHash = await keep.seizeSignerBonds({ from: owner })
 
+      let txHash = await keep.seizeSignerBonds({ from: owner })
       let seizedSignerBondsFee = new BN(txHash.receipt.gasUsed).mul(new BN(gasPrice))
       let ownerBalanceDiff = new BN(await web3.eth.getBalance(owner))
         .add(seizedSignerBondsFee).sub(new BN(ownerBalanceBefore));
 
-      expect(ownerBalanceDiff).to.eq.BN(value0.add(value1).add(value2), "incorrect owner balance");
+      expect(ownerBalanceDiff).to.eq.BN(expectedBondsSum, "incorrect owner balance");
 
-      let bondsAfterSeizure = await keep.checkBondAmount()
-      expect(bondsAfterSeizure).to.eq.BN(0, "should zero all the bonds");
+      expect(
+        await keep.checkBondAmount()
+      ).to.eq.BN(0, "should zero all the bonds");
     })
   })
 
@@ -455,10 +433,6 @@ contract('ECDSAKeep', (accounts) => {
     const hash256Digest2 = '0x14a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
     const preimage2 = '0x1111636820506f7a6e616e'
 
-    beforeEach(async () => {
-      await keep.setPublicKey(publicKey1, { from: members[0] })
-    })
-
     it('reverts if public key was not set', async () => {
       await expectRevert(
         keep.submitSignatureFraud.call(
@@ -474,6 +448,7 @@ contract('ECDSAKeep', (accounts) => {
 
     it('should return true when signature is valid but was not requested', async () => {
       await submitMembersPublicKeys(publicKey1)
+
       await keep.sign(hash256Digest2, { from: owner })
 
       let res = await keep.submitSignatureFraud.call(
@@ -489,6 +464,7 @@ contract('ECDSAKeep', (accounts) => {
 
     it('should return an error when preimage does not match digest', async () => {
       await submitMembersPublicKeys(publicKey1)
+
       await keep.sign(hash256Digest2, { from: owner })
 
       await expectRevert(
@@ -722,20 +698,17 @@ contract('ECDSAKeep', (accounts) => {
     })
   })
 
-  describe.only('closeKeep', () => {
+  describe('closeKeep', () => {
     const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
     const publicKey = '0xa899b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
 
     const bondValue0 = new BN(10)
     const bondValue1 = new BN(20)
+    const bondValue2 = new BN(20)
 
     beforeEach(async () => {
-      let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
-
-      await keepBonding.deposit(members[0], { value: bondValue0 })
-      await keepBonding.deposit(members[1], { value: bondValue1 })
-      await keepBonding.createBond(members[0], keep.address, referenceID, bondValue0)
-      await keepBonding.createBond(members[1], keep.address, referenceID, bondValue1)
+      await createMembersBonds(keep, bondValue0, bondValue1, bondValue2)
+      await submitMembersPublicKeys(publicKey)
     })
 
     it('emits an event', async () => {
@@ -759,11 +732,13 @@ contract('ECDSAKeep', (accounts) => {
       expect(
         await keepBonding.availableBondingValue(members[1])
       ).to.eq.BN(bondValue1, "incorrect unbonded amount for member 1")
+
+      expect(
+        await keepBonding.availableBondingValue(members[2])
+      ).to.eq.BN(bondValue2, "incorrect unbonded amount for member 2")
     })
 
     it('reverts when signing is in progress', async () => {
-      await keep.setPublicKey(publicKey, { from: members[0] })
-
       keep.sign(digest, { from: owner })
 
       await expectRevert(
@@ -773,8 +748,6 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('reverts when signing was requested but have not timed out yet', async () => {
-      await keep.setPublicKey(publicKey, { from: members[0] })
-
       keep.sign(digest, { from: owner })
 
       const signingTimeout = await keep.signingTimeout.call()
@@ -787,8 +760,6 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('succeeds when signing was requested but timed out', async () => {
-      await keep.setPublicKey(publicKey, { from: members[0] })
-
       keep.sign(digest, { from: owner })
 
       const signingTimeout = await keep.signingTimeout.call()
@@ -1016,12 +987,29 @@ contract('ECDSAKeep', (accounts) => {
       // Check balances of all keep members' and beneficiary.
       const newBalances = await getERC20BalancesFromList(accountsInTest, token)
       assert.equal(newBalances.toString(), expectedBalances.toString())
-    });
+    })
   })
 
   async function submitMembersPublicKeys(publicKey) {
     await keep.submitPublicKey(publicKey, { from: members[0] })
     await keep.submitPublicKey(publicKey, { from: members[1] })
     await keep.submitPublicKey(publicKey, { from: members[2] })
-  };
+  }
+
+  async function createMembersBonds(keep, bond1, bond2, bond3) {
+    const bondValue1 = bond1 || new BN(100)
+    const bondValue2 = bond2 || new BN(200)
+    const bondValue3 = bond3 || new BN(300)
+
+    let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
+
+    await keepBonding.deposit(members[0], { value: bondValue1 })
+    await keepBonding.deposit(members[1], { value: bondValue2 })
+    await keepBonding.deposit(members[2], { value: bondValue3 })
+    await keepBonding.createBond(members[0], keep.address, referenceID, bondValue1)
+    await keepBonding.createBond(members[1], keep.address, referenceID, bondValue2)
+    await keepBonding.createBond(members[2], keep.address, referenceID, bondValue3)
+
+    return bondValue1.add(bondValue2).add(bondValue3)
+  }
 })
