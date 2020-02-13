@@ -1,5 +1,4 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
-import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -116,7 +115,7 @@ contract("ECDSAKeepFactory", async accounts => {
         it("does not add an operator to the pool if it does not have a minimum stake", async() => {
             await tokenStaking.setBalance(new BN("1"))
 
-            await expectThrowWithMessage(
+            await expectRevert(
                 keepFactory.registerMemberCandidate(application, { from: member1 }),
                 "Operator not eligible"
             )
@@ -242,7 +241,7 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if no member candidates are registered", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 keepFactory.openKeep(
                     groupSize,
                     threshold,
