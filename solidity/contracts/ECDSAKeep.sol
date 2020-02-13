@@ -83,7 +83,11 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// event.
     /// @param _publicKey Signer's public key.
     function submitPublicKey(bytes calldata _publicKey) external onlyMember {
-        require(publicKey.length == 0, "Public key has already been set");
+        require(
+            !wasPublicKeyAlreadySubmittedByMember(msg.sender),
+            "Member already submitted a public key"
+        );
+
         require(_publicKey.length == 64, "Public key must be 64 bytes long");
 
         submittedPublicKeys[msg.sender] = _publicKey;
