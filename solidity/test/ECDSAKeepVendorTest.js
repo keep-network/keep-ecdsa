@@ -1,91 +1,51 @@
-var BondedECDSAKeepVendorStub = artifacts.require('BondedECDSAKeepVendorStub')
-var ECDSAKeepFactoryVendorStub = artifacts.require('ECDSAKeepFactoryVendorStub')
+const BondedECDSAKeepVendorImplV1 = artifacts.require('BondedECDSAKeepVendorImplV1')
+const { expectRevert } = require('openzeppelin-test-helpers');
 
-contract("ECDSAKeepVendor", async accounts => {
+contract("BondedECDSAKeepVendorImplV1", async accounts => {
     const address0 = "0x0000000000000000000000000000000000000000"
     const address1 = "0xF2D3Af2495E286C7820643B963FB9D34418c871d"
     const address2 = "0x4566716c07617c5854fe7dA9aE5a1219B19CCd27"
 
     let keepVendor
 
-    describe("registerFactory", async () => {
-        beforeEach(async () => {
-            keepVendor = await BondedECDSAKeepVendorStub.new()
-        })
+    beforeEach(async () => {
+        keepVendor = await BondedECDSAKeepVendorImplV1.new()
+    })
+
+    describe("keep factory registration", async () => {
 
         it("registers one factory address", async () => {
-            let expectedResult = [address1]
+            let expectedResult = address1
 
             await keepVendor.registerFactory(address1)
 
-            assertFactories(expectedResult)
+            assertFactory(expectedResult)
         })
 
         it("registers factory with zero address", async () => {
-            let expectedResult = [address0]
-
-            await keepVendor.registerFactory(address0)
-
-            assertFactories(expectedResult)
+            await expectRevert(
+                keepVendor.registerFactory(address0),
+                "Incorrect factory address"
+            )
         })
 
         it("registers two factory addresses", async () => {
-            let expectedResult = [address1, address2]
-
             await keepVendor.registerFactory(address1)
             await keepVendor.registerFactory(address2)
 
-            assertFactories(expectedResult)
-        })
-
-        it("fails if address already exists", async () => {
-            let expectedResult = [address1]
-
-            await keepVendor.registerFactory(address1)
-
-            try {
-                await keepVendor.registerFactory(address1)
-                assert(false, 'Test call did not error as expected')
-            } catch (e) {
-                assert.include(e.message, 'Factory address already registered')
-            }
-
-            assertFactories(expectedResult)
+            assertFactory(address2)
         })
 
         it("cannot be called by non-owner", async () => {
-            let expectedResult = []
-
-            try {
-                await keepVendor.registerFactory(address1, { from: accounts[1] })
-                assert(false, 'Test call did not error as expected')
-            } catch (e) {
-                assert.include(e.message, 'Ownable: caller is not the owner')
-            }
-
-            assertFactories(expectedResult)
+            await expectRevert(
+                keepVendor.registerFactory(address1, { from: accounts[1] }),
+                "caller is not the owner"
+            )
         })
 
-        async function assertFactories(expectedFactories) {
-            let result = await keepVendor.getFactories.call()
-            assert.deepEqual(result, expectedFactories, "unexpected registered factories list")
+        async function assertFactory(expectedFactory) {
+            let actualFactory = await keepVendor.selectFactory.call()
+            assert.equal(actualFactory, expectedFactory, "unexpected registered factory")
         }
-    })
-
-    describe("selectFactory", async () => {
-        before(async () => {
-            keepVendor = await BondedECDSAKeepVendorStub.new()
-        })
-
-        it("returns last factory from the list", async () => {
-            await keepVendor.registerFactory(address1)
-            await keepVendor.registerFactory(address2)
-
-            let expectedResult = address2
-
-            let result = await keepVendor.selectFactoryPublic()
-
-            assert.equal(result, expectedResult, "unexpected factory selected")
-        })
     })
 })
