@@ -186,6 +186,15 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         emit SignatureRequested(_digest);
     }
 
+    /// @notice Checks if keep is currently awaiting a signature for the given digest.
+    /// @dev Validates if the signing is currently in progress and compares provided
+    /// digest with the one for which the latest signature was requested.
+    /// @param _digest Digest for which to check if signature is being awaited.
+    /// @return True if the digest is currently expected to be signed, else false.
+    function isAwaitingSignature(bytes32 _digest) external view returns (bool) {
+        return isSigningInProgress() && digest == _digest;
+    }
+
     /// @notice Submits a signature calculated for the given digest.
     /// @dev Fails if signature has not been requested or a signature has already
     /// been submitted.
