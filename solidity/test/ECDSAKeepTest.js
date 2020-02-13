@@ -132,7 +132,7 @@ contract('ECDSAKeep', (accounts) => {
 
     it('returns false if valid signature has been already submitted', async () => {
       await keep.sign(digest1, { from: owner })
-      await submitMembersPublicKey(publicKey)
+      await submitMembersPublicKeys(publicKey)
       await keep.submitSignature(
         signatureR,
         signatureS,
@@ -145,7 +145,7 @@ contract('ECDSAKeep', (accounts) => {
 
     it('returns true if invalid signature was submitted before', async () => {
       await keep.sign(digest1, { from: owner })
-      await submitMembersPublicKey(publicKey)
+      await submitMembersPublicKeys(publicKey)
       await expectRevert(
         keep.submitSignature(
           signatureR,
@@ -171,7 +171,7 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('submit public key by all members and get it', async () => {
-      await submitMembersPublicKey(publicKey1)
+      await submitMembersPublicKeys(publicKey1)
 
       let publicKey = await keep.getPublicKey.call()
 
@@ -335,7 +335,7 @@ contract('ECDSAKeep', (accounts) => {
       })
 
       it('reverts when public key already set', async () => {
-        await submitMembersPublicKey(publicKey1)
+        await submitMembersPublicKeys(publicKey1)
 
         await expectRevert(
           keep.submitPublicKey(publicKey1, { from: members[0] }),
@@ -451,7 +451,7 @@ contract('ECDSAKeep', (accounts) => {
     beforeEach(async () => {
       signingTimeout = await keep.signingTimeout.call()
 
-      await submitMembersPublicKey(publicKey1)
+      await submitMembersPublicKeys(publicKey1)
       await keep.sign(hash256Digest2, { from: owner })
     })
 
@@ -544,7 +544,7 @@ contract('ECDSAKeep', (accounts) => {
     const malleableRecoveryID = 0
 
     beforeEach(async () => {
-      await submitMembersPublicKey(publicKey)
+      await submitMembersPublicKeys(publicKey)
       await keep.sign(digest, { from: owner })
     })
 
@@ -815,7 +815,7 @@ contract('ECDSAKeep', (accounts) => {
     })
   })
 
-  async function submitMembersPublicKey(publicKey) {
+  async function submitMembersPublicKeys(publicKey) {
     await keep.submitPublicKey(publicKey, { from: members[0] })
     await keep.submitPublicKey(publicKey, { from: members[1] })
     await keep.submitPublicKey(publicKey, { from: members[2] })
