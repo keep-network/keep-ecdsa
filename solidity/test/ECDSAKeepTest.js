@@ -24,7 +24,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract.only('ECDSAKeep', (accounts) => {
+contract('ECDSAKeep', (accounts) => {
   const owner = accounts[1]
   const members = [accounts[2], accounts[3], accounts[4]]
   const honestThreshold = 1
