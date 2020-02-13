@@ -103,6 +103,9 @@ func (n *Node) GenerateSignerForKeep(
 
 // CalculateSignature calculates a signature over a digest with threshold
 // signer and publishes the result to the keep associated with the signer.
+// In case of failure on signature submission we need to check if the keep is
+// still waiting for the signature. It is possible that other member was faster
+// than the current one and submitted the signature first.
 func (n *Node) CalculateSignature(
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
@@ -121,8 +124,18 @@ func (n *Node) CalculateSignature(
 
 	keepAddress := common.HexToAddress(signer.GroupID())
 
-	err = n.ethereumChain.SubmitSignature(keepAddress, signature)
-	if err != nil {
+	if err := n.ethereumChain.SubmitSignature(keepAddress, signature); err != nil {
+		isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(keepAddress, digest)
+		if err != nil {
+			return fmt.Errorf("failed to verify if keep is awaiting signature: [%v]", err)
+		}
+
+		if !isAwaitingSignature {
+			logger.Infof("keep is not awaiting a signature for digest: [%+x]", digest)
+
+			return nil
+		}
+
 		return fmt.Errorf("failed to submit signature: [%v]", err)
 	}
 
