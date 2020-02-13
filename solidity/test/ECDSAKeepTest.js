@@ -574,7 +574,7 @@ contract('ECDSAKeep', (accounts) => {
         )
         assert(false, 'Test call did not error as expected')
       } catch (e) {
-        assert.include(e.message, "Signing is not currently in progress")
+        assert.include(e.message, "Signing is currently not in progres")
       }
     })
 
