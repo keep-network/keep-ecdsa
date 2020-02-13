@@ -14,8 +14,15 @@ let TokenStaking;
 let { RandomBeaconAddress } = require('./externals')
 
 module.exports = async function (deployer) {
-    await deployer.deploy(Registry)
     await deployBondedSortitionPoolFactory(artifacts, deployer)
+
+    let registry
+    // TODO: Update with PR206 changes once is merged
+    if (process.env.TEST) {
+        await deployer.deploy(Registry)
+    }
+
+    registry = await Registry.deployed()
 
     if (process.env.TEST) {
         TokenStakingStub = artifacts.require("TokenStakingStub")
@@ -27,7 +34,7 @@ module.exports = async function (deployer) {
         TokenStaking = artifacts.require("TokenStaking")
     }
 
-    await deployer.deploy(KeepBonding, Registry.address, TokenStaking.address)
+    await deployer.deploy(KeepBonding, registry.address, TokenStaking.address)
 
     await deployer.deploy(
         ECDSAKeepFactory,
@@ -41,8 +48,10 @@ module.exports = async function (deployer) {
     await deployer.deploy(BondedECDSAKeepVendor, BondedECDSAKeepVendorImplV1.address)
 
     const vendor = await BondedECDSAKeepVendorImplV1.at(BondedECDSAKeepVendor.address)
-    await vendor.initialize(Registry.address)
-    const registry = await Registry.deployed();
+    await vendor.initialize(registry.address)
+
+    await registry.approveOperatorContract(ECDSAKeepFactory.address)
+    console.log(`approved operator contract [${ECDSAKeepFactory.address}] in registry`)
 
     // Set service contract owner as operator contract upgrader by default
     const operatorContractUpgrader = await vendor.owner()
