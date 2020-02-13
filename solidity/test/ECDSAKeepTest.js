@@ -184,7 +184,7 @@ contract('ECDSAKeep', (accounts) => {
       )
     })
 
-    describe.only('submitPublicKey', async () => {
+    describe('submitPublicKey', async () => {
       it('does not emit an event nor sets the key when keys were not submitted by all members', async () => {
         let res = await keep.submitPublicKey(publicKey1, { from: members[1] })
         truffleAssert.eventNotEmitted(res, 'PublicKeyPublished')
