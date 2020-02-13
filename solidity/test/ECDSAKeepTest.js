@@ -378,7 +378,13 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('cannot be submitted if signing was not requested', async () => {
-      let keep = await ECDSAKeep.new(owner, members, honestThreshold, keepBonding.address)
+      let keep = await ECDSAKeep.new(
+        owner, 
+        members, 
+        honestThreshold, 
+        keepBonding.address,       
+        tokenStaking.address
+      )
 
       await keep.setPublicKey(publicKey, { from: members[0] })
 
