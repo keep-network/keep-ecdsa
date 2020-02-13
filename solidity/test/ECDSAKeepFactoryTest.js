@@ -652,6 +652,11 @@ contract("ECDSAKeepFactory", async accounts => {
             const expectedBalances = addToBalances(initialBalances, feeEstimate / members.length)
 
             assert.equal(newBalances.toString(), expectedBalances.toString()) 
+
+            expect(await keepFactory.subsidyPool()).to.eq.BN(
+                subsidyPool - feeEstimate,
+                "unexpected subsidy pool balance"
+            )
         })
     })
 
