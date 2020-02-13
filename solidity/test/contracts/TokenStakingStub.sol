@@ -6,6 +6,8 @@ import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 contract TokenStakingStub is IStaking {
     uint256 balance;
 
+    mapping(address => address payable) operatorToMagpie;
+
     /// @dev Sets balance variable value.
     function setBalance(uint256 _balance) public {
         balance = _balance;
@@ -18,6 +20,18 @@ contract TokenStakingStub is IStaking {
         returns (uint256)
     {
         return balance;
+    }
+
+    function setMagpie(address _operator, address payable _magpie) public {
+        operatorToMagpie[_operator] = _magpie;
+    }
+
+    function magpieOf(address _operator) public view returns (address payable) {
+        address payable magpie = operatorToMagpie[_operator];
+        if (magpie == address(0)) {
+            return address(uint160(_operator));
+        }
+        return magpie;
     }
 
     function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {

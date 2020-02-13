@@ -3,8 +3,8 @@ pragma solidity ^0.5.4;
 import "./ECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
-import "./utils/AddressPayableArrayUtils.sol";
 
+import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
@@ -19,13 +19,13 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract ECDSAKeepFactory is
     IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
 {
-    using AddressPayableArrayUtils for address payable[];
+    using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
-        address payable[] members,
+        address[] members,
         address owner,
         address application
     );
@@ -50,6 +50,14 @@ contract ECDSAKeepFactory is
     // a callback parameter.
     uint256 callbackGas = 41830;
 
+    // Random beacon sends back callback surplus to the requestor. It may also
+    // decide to send additional request subsidy fee. What's more, it may happen
+    // that the beacon is busy and we'll not refresh group selection seed from
+    // the beacon. We accumulate all funds received from the beacon in the
+    // subsidy pool and later distribute funds from this pull to selected
+    // signers.
+    uint256 public subsidyPool;
+
     constructor(
         address _sortitionPoolFactory,
         address _tokenStaking,
@@ -64,9 +72,10 @@ contract ECDSAKeepFactory is
         randomBeacon = IRandomBeacon(_randomBeacon);
     }
 
-    // Fallback function to receive ether from the beacon.
-    // TODO: Implement proper surplus handling.
-    function() external payable {}
+    /// @notice Adds any received funds to the factory subsidy pool.
+    function() external payable {
+        subsidyPool += msg.value;
+    }
 
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application.
@@ -134,7 +143,7 @@ contract ECDSAKeepFactory is
             "Insufficient payment for opening a new keep"
         );
 
-        address[] memory selected = BondedSortitionPool(pool).selectSetGroup(
+        address[] memory members = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
             bytes32(groupSelectionSeed),
             memberBond
@@ -142,14 +151,13 @@ contract ECDSAKeepFactory is
 
         newGroupSelectionSeed();
 
-        address payable[] memory members = new address payable[](_groupSize);
-        for (uint256 i = 0; i < _groupSize; i++) {
-            // TODO: Modify ECDSAKeep to not keep members as payable and do the
-            // required casting in distributeERC20ToMembers and distributeETHToMembers.
-            members[i] = address(uint160(selected[i]));
-        }
-
-        ECDSAKeep keep = new ECDSAKeep(_owner, members, _honestThreshold, address(keepBonding));
+        ECDSAKeep keep = new ECDSAKeep(
+            _owner,
+            members,
+            _honestThreshold,
+            tokenStaking,
+            address(keepBonding)
+        );
 
         keepAddress = address(keep);
 
@@ -163,6 +171,16 @@ contract ECDSAKeepFactory is
             );
         }
 
+        // If subsidy pool is non-empty, distribute the value to signers but
+        // never distribute more than the payment for opening a keep.
+        uint256 signerSubsidy = subsidyPool < msg.value
+            ? subsidyPool
+            : msg.value;
+        if (signerSubsidy > 0) {
+            subsidyPool -= signerSubsidy;
+            keep.distributeETHToMembers.value(signerSubsidy)();
+        }
+
         emit ECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
@@ -172,7 +190,7 @@ contract ECDSAKeepFactory is
     /// and will call a callback function when the number is ready. In the meantime
     /// we update current group selection seed to a new value using a hash function.
     /// In case of the random beacon request failure this function won't revert
-    /// but .....// TODO: Update when we decide what to do
+    /// but add beacon payment to factory's subsidy pool.
     function newGroupSelectionSeed() internal {
         // Calculate new group selection seed based on the current seed.
         // We added address of the factory as a key to calculate value different
@@ -183,10 +201,7 @@ contract ECDSAKeepFactory is
         );
 
         // Call the random beacon to get a random group selection seed.
-        // TODO: Replace with try/catch after we upgrade to solidity >= 0.6.0
-        (bool success, bytes memory returnData) = address(randomBeacon)
-            .call
-            .value(msg.value)(
+        (bool success, ) = address(randomBeacon).call.value(msg.value)(
             abi.encodeWithSignature(
                 "requestRelayEntry(address,string,uint256)",
                 address(this),
@@ -195,9 +210,7 @@ contract ECDSAKeepFactory is
             )
         );
         if (!success) {
-            // revert(string(returnData));
-            // TODO: What should we do in case of `requestRelayEntry` failure?
-            // Forward `msg.value` to the keep members?
+            subsidyPool += msg.value; // beacon is busy
         }
     }
 
