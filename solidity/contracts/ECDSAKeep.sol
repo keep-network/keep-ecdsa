@@ -32,7 +32,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     // Timeout in blocks for a signature to appear on the chain. Blocks are
     // counted from the moment signing request occurred.
-    uint256 public signingTimeout = 90 * 60;  // [seconds]
+    uint256 public signingTimeout = 90 * 60; // [seconds]
 
     // The timestamp at which signing process started. Used also to track if
     // signing is in progress. When set to `0` indicates there is no
@@ -49,6 +49,10 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(bytes32 digest);
+
+    // Notification that the keep was closed by the owner. Members no longer need
+    // to support it.
+    event KeepClosed();
 
     // Notification that the signature has been calculated. Contains a digest which
     // was used for signature calculation and a signature in a form of r, s and
