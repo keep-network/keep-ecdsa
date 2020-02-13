@@ -118,8 +118,12 @@ contract ECDSAKeepFactory is
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
-        // TODO: The remainder will not be bonded. What should we do with it?
-        uint256 memberBond = _bond.div(_groupSize);
+        // In Solidity, division rounds towards zero (down) and dividing
+        // '_bond' by '_groupSize' can leave a remainder. Even though, a remainder
+        // is very small, we want to avoid this from happening and memberBond is
+        // rounded up: (m+n-1)/n, where m: bond, n: groupSize.
+        // Ex. (100000000 + 3 - 1) / 3 = 333333334
+        uint256 memberBond = (_bond.add(_groupSize).sub(1)).div(_groupSize);
         require(memberBond > 0, "Bond per member must be greater than zero");
 
         require(
