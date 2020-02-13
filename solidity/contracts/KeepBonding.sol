@@ -109,7 +109,7 @@ contract KeepBonding {
         uint256 referenceID,
         uint256 amount,
         address authorizedSortitionPool
-    ) public onlyAuthorized {
+    ) public {
         require(
             availableUnbondedValue(operator, msg.sender, authorizedSortitionPool) >= amount,
             "Insufficient unbonded value"
@@ -228,19 +228,6 @@ contract KeepBonding {
         (bool success, ) = destination.call.value(amount)("");
         require(success, "Transfer failed");
     }
-
-    /// @notice Checks if the caller is an authorized contract.
-    /// @dev Throws an error if called by any account other than one of the authorized
-    /// contracts.
-    modifier onlyAuthorized() {
-        // TODO: Add authorization checks.
-        require(
-            registry.isApprovedOperatorContract(msg.sender),
-            "Factory contract is not approved"
-        );
-        _;
-    }
-
 
     /// @dev Authorizes sortition pool for provided operator
     /// @dev Only operator authorizer can call this function
