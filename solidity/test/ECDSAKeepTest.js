@@ -11,7 +11,6 @@ import { duration, increaseTime } from './helpers/increaseTime';
 const { expectRevert } = require('openzeppelin-test-helpers');
 
 const Registry = artifacts.require('Registry')
-const TokenStakingStub = artifacts.require("TokenStakingStub")
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
 const KeepBonding = artifacts.require('./KeepBonding.sol')
