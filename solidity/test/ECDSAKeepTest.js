@@ -449,7 +449,7 @@ contract('ECDSAKeep', (accounts) => {
 
     const publicKey1 = '0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df'
     const preimage1 = '0xfdaf2feee2e37c24f2f8d15ad5814b49ba04b450e67b859976cbf25c13ea90d8'
-    // hash256Digest1 = sha256(abi.encodePacked(sha256(preimage1)))
+    // hash256Digest1 = sha256(preimage1)
     const hash256Digest1 = '0x8bacaa8f02ef807f2f61ae8e00a5bfa4528148e0ae73b2bd54b71b8abe61268e'
 
     const signature1 = {
