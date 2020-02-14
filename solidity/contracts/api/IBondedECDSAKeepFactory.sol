@@ -2,7 +2,7 @@ pragma solidity ^0.5.4;
 
 /// @title Bonded ECDSA Keep Factory
 /// @notice Factory for Bonded ECDSA Keeps.
-contract IBondedECDSAKeepFactory {
+interface IBondedECDSAKeepFactory {
     /// @notice Open a new ECDSA Keep.
     /// @param _groupSize Number of members in the keep.
     /// @param _honestThreshold Minimum number of honest keep members.
@@ -16,8 +16,7 @@ contract IBondedECDSAKeepFactory {
         uint256 _bond
     ) external payable returns (address keepAddress);
 
-
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
-    function openKeepFeeEstimate() external returns (uint256);
+    function openKeepFeeEstimate() external view returns (uint256);
 }

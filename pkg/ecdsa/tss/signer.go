@@ -28,17 +28,6 @@ func (s *ThresholdSigner) GroupID() string {
 	return s.groupID
 }
 
-// PublisherIndex is an index value of the signer in a signing group.
-func (s *ThresholdSigner) PublisherIndex() int {
-	for i, memberID := range s.groupMemberIDs {
-		if memberID.Equal(s.MemberID()) {
-			return i
-		}
-	}
-
-	return -1
-}
-
 // PublicKey returns signer's ECDSA public key which is also the signing group's
 // public key.
 func (s *ThresholdSigner) PublicKey() *ecdsa.PublicKey {

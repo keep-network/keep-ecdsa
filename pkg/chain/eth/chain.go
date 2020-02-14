@@ -77,4 +77,8 @@ type ECDSAKeep interface { // TODO: Rename to BondedECDSAKeep
 		keepAddress common.Address,
 		signature *ecdsa.Signature,
 	) error // TODO: Add promise *async.SignatureSubmissionPromise
+
+	// IsAwaitingSignature checks if the keep is waiting for a signature to be
+	// calculated for the given digest.
+	IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error)
 }
