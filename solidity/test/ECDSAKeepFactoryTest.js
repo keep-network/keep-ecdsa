@@ -3,7 +3,7 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 const { expectRevert } = require('openzeppelin-test-helpers');
 const { ZERO_ADDRESS } = require('openzeppelin-test-helpers').constants;
 
-import { getETHBalancesFromList, addToBalances } from './helpers/listBalanceUtils'
+import { getETHBalancesFromList, getETHBalancesMap, addToBalances, addToBalancesMap } from './helpers/listBalanceUtils'
 
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBonding = artifacts.require('KeepBonding');
@@ -532,17 +532,23 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("splits subsidy pool between selected signers", async () => {
-            const members = [member1, member2, member3];
-            const subsidyPool = 50; // [wei]
+            const members = [member1, member2, member3]
+            const subsidyPool = feeEstimate.sub(new BN(10)) // [wei]
+            const remainder = subsidyPool.mod(new BN(members.length))
 
             // pump subsidy pool
             web3.eth.sendTransaction({
                 value: subsidyPool,
                 from: accounts[0],
                 to: keepFactory.address
-            });
+            })
 
             const initialBalances = await getETHBalancesFromList(members)
+            const expectedBalances = addToBalances(initialBalances, subsidyPool / members.length)
+
+            const lastMemberIndex = members.length - 1
+            expectedBalances[lastMemberIndex] = expectedBalances[lastMemberIndex].add(remainder)
+
 
             await keepFactory.openKeep(
                 groupSize,
@@ -553,7 +559,7 @@ contract("ECDSAKeepFactory", async accounts => {
             )
 
             const newBalances = await getETHBalancesFromList(members)
-            const expectedBalances = addToBalances(initialBalances, subsidyPool / members.length)
+
 
             assert.equal(newBalances.toString(), expectedBalances.toString())
 
@@ -564,17 +570,21 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("does not transfer more from subsidy pool than entry fee", async () => {
-            const members = [member1, member2, member3];
-            const subsidyPool = feeEstimate * 10; // [wei]
+            const members = [member1, member2, member3]
+            const subsidyPool = new BN(feeEstimate).mul(new BN(10)) // [wei]
+            const remainder = feeEstimate.mod(new BN(members.length))
 
             // pump subsidy pool
             web3.eth.sendTransaction({
                 value: subsidyPool,
                 from: accounts[0],
                 to: keepFactory.address
-            });
+            })
 
-            const initialBalances = await getETHBalancesFromList(members)
+            const initialBalances = await getETHBalancesMap(members)
+            const expectedBalances = addToBalancesMap(initialBalances, feeEstimate / members.length)
+
+            let blockNumber = await web3.eth.getBlockNumber()
 
             await keepFactory.openKeep(
                 groupSize,
@@ -584,10 +594,17 @@ contract("ECDSAKeepFactory", async accounts => {
                 { from: application, value: feeEstimate },
             )
 
-            const newBalances = await getETHBalancesFromList(members)
-            const expectedBalances = addToBalances(initialBalances, feeEstimate / members.length)
+            let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+            const selectedMembers = eventList[0].returnValues.members
 
-            assert.equal(newBalances.toString(), expectedBalances.toString())
+            const newBalances = await getETHBalancesMap(members)
+            const lastMember = selectedMembers[groupSize - 1]
+            expectedBalances[lastMember] = expectedBalances[lastMember].add(remainder)
+
+            assert.deepEqual(newBalances, expectedBalances)
 
             expect(await keepFactory.subsidyPool()).to.eq.BN(
                 subsidyPool - feeEstimate,
