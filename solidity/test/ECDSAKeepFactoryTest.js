@@ -318,20 +318,10 @@ contract("ECDSAKeepFactory", async accounts => {
             ).to.eq.BN(singleBond, 'invalid bond value for member3')
         })
 
-
-
-
-
-
-
-
-
         it("rounds up members bonds", async () => {
-            const requestedBond = bond.sub(new BN(1))
+            const requestedBond = bond.add(new BN(1))
             const unbondedAmount = singleBond.add(new BN(1))
-            // memberBond = (bond + groupSize - 1 ) / groupSize
-            // bond = 3 * memberBond - groupSize + 1
-            const expectedMemberBond = groupSize.mul(singleBond).sub(groupSize).add(new BN(1))
+            const expectedMemberBond = singleBond.add(new BN(1))
 
             await depositAndRegisterMembers(unbondedAmount)
 
@@ -352,16 +342,58 @@ contract("ECDSAKeepFactory", async accounts => {
             const keepAddress = eventList[0].returnValues.keepAddress
 
             expect(
-                await keepBonding.bondAmount(member1, keepAddress, keepAddress)
-            ).to.eq.BN(expectedMemberBond, 'invalid bond value for member1')
+                await keepBonding.bondAmount(member1, keepAddress, keepAddress),
+                'invalid bond value for member1'
+            ).to.eq.BN(expectedMemberBond)
 
             expect(
-                await keepBonding.bondAmount(member2, keepAddress, keepAddress)
-            ).to.eq.BN(expectedMemberBond, 'invalid bond value for member2')
+                await keepBonding.bondAmount(member2, keepAddress, keepAddress),
+                'invalid bond value for member2'
+            ).to.eq.BN(expectedMemberBond)
 
             expect(
-                await keepBonding.bondAmount(member3, keepAddress, keepAddress)
-            ).to.eq.BN(expectedMemberBond, 'invalid bond value for member3')
+                await keepBonding.bondAmount(member3, keepAddress, keepAddress),
+                'invalid bond value for member3'
+            ).to.eq.BN(expectedMemberBond)
+        })
+
+        it("rounds up members bonds when calculated bond per member equals zero", async () => {
+            const requestedBond = new BN(groupSize).sub(new BN(1))
+            const unbondedAmount = new BN(1)
+            const expectedMemberBond = new BN(1)
+
+            await depositAndRegisterMembers(unbondedAmount)
+
+            const blockNumber = await web3.eth.getBlockNumber()
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                requestedBond,
+                { from: application, value: feeEstimate },
+            )
+
+            let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+
+            const keepAddress = eventList[0].returnValues.keepAddress
+
+            expect(
+                await keepBonding.bondAmount(member1, keepAddress, keepAddress),
+                'invalid bond value for member1'
+            ).to.eq.BN(expectedMemberBond)
+
+            expect(
+                await keepBonding.bondAmount(member2, keepAddress, keepAddress),
+                'invalid bond value for member2'
+            ).to.eq.BN(expectedMemberBond)
+
+            expect(
+                await keepBonding.bondAmount(member3, keepAddress, keepAddress),
+                'invalid bond value for member3'
+            ).to.eq.BN(expectedMemberBond)
         })
 
         it("reverts if not enough member candidates are registered", async () => {
