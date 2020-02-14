@@ -387,7 +387,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount; i++) {
+        for (uint16 i = 0; i < memberCount-1; i++) {
             // We don't want to revert the whole execution in case of single
             // transfer failure, hence we don't validate it's result.
             // TODO: What should we do with the dividend which was not transferred
@@ -396,15 +396,13 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             tokenStaking.magpieOf(members[i]).call.value(dividend)("");
         }
 
-        // Check if value has a remainder after dividing it across members.
-        // If so send the remainder to the last member.
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
         uint256 remainder = msg.value.mod(memberCount);
-        if (remainder > 0) {
-            /* solium-disable-next-line security/no-call-value */
-            tokenStaking.magpieOf(members[memberCount - 1]).call.value(
-                remainder
-            )("");
-        }
+        /* solium-disable-next-line security/no-call-value */
+        tokenStaking.magpieOf(members[memberCount - 1]).call.value(
+            dividend.add(remainder)
+        )("");
     }
 
     /// @notice Distributes ERC20 token evenly across all keep members.
@@ -428,7 +426,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount; i++) {
+        for (uint16 i = 0; i < memberCount-1; i++) {
             token.transferFrom(
                 msg.sender,
                 tokenStaking.magpieOf(members[i]),
@@ -436,16 +434,14 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             );
         }
 
-        // Check if value has a remainder after dividing it across members.
-        // If so send the remainder to the last member.
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
         uint256 remainder = _value.mod(memberCount);
-        if (remainder > 0) {
-            token.transferFrom(
-                msg.sender,
-                tokenStaking.magpieOf(members[memberCount - 1]),
-                remainder
-            );
-        }
+        token.transferFrom(
+            msg.sender,
+            tokenStaking.magpieOf(members[memberCount - 1]),
+            dividend.add(remainder)
+        );
 
     }
 
