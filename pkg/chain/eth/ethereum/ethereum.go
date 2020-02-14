@@ -2,11 +2,9 @@
 package ethereum
 
 import (
-	cecdsa "crypto/ecdsa"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
@@ -25,13 +23,9 @@ func (ec *EthereumChain) Address() common.Address {
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
 func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) error {
-	publicKeyHighBytes, publicKeyLowBytes := splitPublicKey(ec.publicKey)
-
 	transaction, err := ec.ecdsaKeepFactoryContract.RegisterMemberCandidate(
 		ec.transactorOptions,
 		application,
-		publicKeyHighBytes,
-		publicKeyLowBytes,
 	)
 	if err != nil {
 		return err
@@ -40,17 +34,6 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 	logger.Debugf("submitted RegisterMemberCandidate transaction with hash: [%x]", transaction.Hash())
 
 	return nil
-}
-
-func splitPublicKey(publicKey *cecdsa.PublicKey) ([32]byte, [32]byte) {
-	publicKeyBytes := crypto.FromECDSAPub(publicKey)[1:] // remove the first 0x04 byte
-
-	// split the key to two 32 bytes buckets
-	var publicKeyHighBytes, publicKeyLowBytes [32]byte
-	copy(publicKeyHighBytes[:], publicKeyBytes[:32])
-	copy(publicKeyLowBytes[:], publicKeyBytes[32:])
-
-	return publicKeyHighBytes, publicKeyLowBytes
 }
 
 // OnECDSAKeepCreated is a callback that is invoked when an on-chain
@@ -63,31 +46,14 @@ func (ec *EthereumChain) OnECDSAKeepCreated(
 			chainEvent *abi.ECDSAKeepFactoryECDSAKeepCreated,
 		) {
 			handler(&eth.ECDSAKeepCreatedEvent{
-				KeepAddress:       chainEvent.KeepAddress,
-				Members:           chainEvent.Members,
-				MembersPublicKeys: getMembersPublicKeys(chainEvent),
+				KeepAddress: chainEvent.KeepAddress,
+				Members:     chainEvent.Members,
 			})
 		},
 		func(err error) error {
 			return fmt.Errorf("keep created callback failed: [%v]", err)
 		},
 	)
-}
-
-func getMembersPublicKeys(chainEvent *abi.ECDSAKeepFactoryECDSAKeepCreated) []cecdsa.PublicKey {
-	membersPublicKeys := make([]cecdsa.PublicKey, len(chainEvent.Members))
-
-	for i := range membersPublicKeys {
-		publicKeyBytes := make([]byte, 0)
-		publicKeyBytes = append(publicKeyBytes, uint8(4)) // add the first 0x04 byte
-		publicKeyBytes = append(publicKeyBytes, chainEvent.MembersPublicKeysHighBytes[i][:]...)
-		publicKeyBytes = append(publicKeyBytes, chainEvent.MembersPublicKeysLowBytes[i][:]...)
-
-		publicKey, _ := crypto.UnmarshalPubkey(publicKeyBytes)
-		membersPublicKeys[i] = *publicKey
-	}
-
-	return membersPublicKeys
 }
 
 // OnSignatureRequested is a callback that is invoked on-chain
