@@ -193,8 +193,6 @@ contract("ECDSAKeepFactory", async accounts => {
 
             const bondingValue = new BN(100)
             await keepBonding.deposit(member1, { value: bondingValue })
-            await keepBonding.deposit(member2, { value: bondingValue })
-            await keepBonding.deposit(member3, { value: bondingValue })
         })
 
         beforeEach(async () => {
