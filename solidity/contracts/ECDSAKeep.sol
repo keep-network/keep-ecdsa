@@ -378,8 +378,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     /// @notice Distributes ETH evenly across all keep members.
     /// ETH is sent to the beneficiary of each member. If the value cannot be
-    /// divided evenly across the members submits the remainder to the last keep
-    /// member.
+    /// divided evenly across the members, it submits the remainder to the last
+    /// keep member.
     /// @dev Only the value passed to this function will be distributed.
     function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
@@ -414,8 +414,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// openZeppelin. This function only has authority over pre-approved
     /// token amount. We don't explicitly check for allowance, SafeMath
     /// subtraction overflow is enough protection. If the value cannot be
-    /// divided evenly across the members submits the remainder to the last keep
-    /// member.
+    /// divided evenly across the members, it submits the remainder to the last
+    /// keep member.
     /// @param _tokenAddress Address of the ERC20 token to distribute.
     /// @param _value Amount of ERC20 token to distribute.
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
