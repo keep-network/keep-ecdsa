@@ -75,14 +75,6 @@ contract("ECDSAKeepFactory", async accounts => {
             await restoreSnapshot()
         })
 
-        it("creates a signer pool", async () => {
-            assert.notEqual(
-                await keepFactory.getSignerPool(application),
-                "0x0000000000000000000000000000000000000000",
-                "incorrect registered signer pool",
-            )
-        })
-
         it("inserts operator with the correct staking weight in the pool", async () => {
             const minimumStake = await keepFactory.minimumStake.call()
             const minimumStakeMultiplier = new BN("10")
