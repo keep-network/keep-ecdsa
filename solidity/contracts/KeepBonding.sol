@@ -16,7 +16,7 @@ import "@keep-network/keep-core/contracts/TokenStaking.sol";
 // TODO: Update KeepBonding contract implementation to new requirements based
 // on the spec.
 contract KeepBonding {
-    // Registry contract with a list of approved factories (operator contracts) and upgraders.
+    // Registry contract with a list of approved factories (operator contracts).
     Registry internal registry;
 
     // Staking contract linked to this contract.
@@ -40,8 +40,10 @@ contract KeepBonding {
     }
 
     /// @notice Returns the amount of ether the operator has made available for
-    /// bonding by the bond creator. If the operator doesn't exists or the operator
-    /// doesn't exists returns zero.
+    /// bonding and that is still unbounded. If the operator doesn't exists or
+    /// bond creator is not authorized as an operator contract or it is not
+    /// authorized by the operator or there is no secondary authorization for
+    /// the provided sortition pool, function returns 0.
     /// @dev Implements function expected by sortition pools' IBonding interface.
     /// @param operator Address of the operator.
     /// @param bondCreator Address authorized to create a bond.
