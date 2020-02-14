@@ -108,7 +108,7 @@ contract ECDSAKeepFactory is
     /// @param _operator Operator's address.
     /// @param _application Customer application address.
     /// @return True if operator is already registered in the candidates pool,
-    /// false otherwise.
+    /// else false.
     function isOperatorRegistered(address _operator, address _application)
         public
         view
@@ -126,7 +126,7 @@ contract ECDSAKeepFactory is
     }
 
     /// @notice Checks if operator's details in the member candidates pool are
-    /// up to date for the given application. If not, update operator status
+    /// up to date for the given application. If not update operator status
     /// function should be called by the one who is monitoring the status.
     /// @param _operator Operator's address.
     /// @param _application Customer application address.
@@ -135,13 +135,9 @@ contract ECDSAKeepFactory is
         view
         returns (bool)
     {
-        require(
-            isOperatorRegistered(_operator, _application),
-            "Operator not registered for the application"
-        );
-
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
+        BondedSortitionPool candidatesPool = getSortitionPoolForOperator(
+            _operator,
+            _application
         );
 
         return candidatesPool.isOperatorUpToDate(_operator);
@@ -154,16 +150,30 @@ contract ECDSAKeepFactory is
     function updateOperatorStatus(address _operator, address _application)
         external
     {
+        BondedSortitionPool candidatesPool = getSortitionPoolForOperator(
+            _operator,
+            _application
+        );
+
+        candidatesPool.updateOperatorStatus(_operator);
+    }
+
+    /// @notice Gets bonded sortition pool of specific application for the
+    /// operator.
+    /// @dev Reverts if the operator is not registered for the application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    /// @return Bonded sortition pool.
+    function getSortitionPoolForOperator(
+        address _operator,
+        address _application
+    ) internal view returns (BondedSortitionPool) {
         require(
             isOperatorRegistered(_operator, _application),
             "Operator not registered for the application"
         );
 
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
-        );
-
-        candidatesPool.updateOperatorStatus(_operator);
+        return BondedSortitionPool(candidatesPools[_application]);
     }
 
     /// @notice Gets a fee estimate for opening a new keep.
@@ -191,8 +201,12 @@ contract ECDSAKeepFactory is
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
-        // TODO: The remainder will not be bonded. What should we do with it?
-        uint256 memberBond = _bond.div(_groupSize);
+        // In Solidity, division rounds towards zero (down) and dividing
+        // '_bond' by '_groupSize' can leave a remainder. Even though, a remainder
+        // is very small, we want to avoid this from happening and memberBond is
+        // rounded up by: `(bond + groupSize - 1 ) / groupSize`
+        // Ex. (100 + 3 - 1) / 3 = 34
+        uint256 memberBond = (_bond.add(_groupSize).sub(1)).div(_groupSize);
         require(memberBond > 0, "Bond per member must be greater than zero");
 
         require(

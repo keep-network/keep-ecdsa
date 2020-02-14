@@ -220,13 +220,13 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
     /// not first approved via a call to sign.
-    /// @dev The function expects the signed digest to be calculated as a double
-    /// sha256 hash (hash256) of the preimage: `sha256(sha256(_preimage))`.
+    /// @dev The function expects the signed digest to be calculated as a sha256 hash
+    /// of the preimage: `sha256(_preimage))`.
     /// @param _v Signature's header byte: `27 + recoveryID`.
     /// @param _r R part of ECDSA signature.
     /// @param _s S part of ECDSA signature.
     /// @param _signedDigest Digest for the provided signature. Result of hashing
-    /// the preimage.
+    /// the preimage with sha256.
     /// @param _preimage Preimage of the hashed message.
     /// @return True if fraud, error otherwise.
     function submitSignatureFraud(
@@ -238,7 +238,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     ) external returns (bool _isFraud) {
         require(publicKey.length != 0, "Public key was not set yet");
 
-        bytes32 calculatedDigest = sha256(abi.encodePacked(sha256(_preimage)));
+        bytes32 calculatedDigest = sha256(_preimage);
         require(
             _signedDigest == calculatedDigest,
             "Signed digest does not match double sha256 hash of the preimage"
@@ -377,7 +377,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Distributes ETH evenly across all keep members.
-    /// ETH is sent to the beneficiary of each member.
+    /// ETH is sent to the beneficiary of each member. If the value cannot be
+    /// divided evenly across the members, it submits the remainder to the last
+    /// keep member.
     /// @dev Only the value passed to this function will be distributed.
     function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
@@ -385,13 +387,22 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount; i++) {
+        for (uint16 i = 0; i < memberCount-1; i++) {
             // We don't want to revert the whole execution in case of single
             // transfer failure, hence we don't validate it's result.
             // TODO: What should we do with the dividend which was not transferred
             // successfully?
+            /* solium-disable-next-line security/no-call-value */
             tokenStaking.magpieOf(members[i]).call.value(dividend)("");
         }
+
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
+        uint256 remainder = msg.value.mod(memberCount);
+        /* solium-disable-next-line security/no-call-value */
+        tokenStaking.magpieOf(members[memberCount - 1]).call.value(
+            dividend.add(remainder)
+        )("");
     }
 
     /// @notice Distributes ERC20 token evenly across all keep members.
@@ -400,7 +411,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// function similar to the interface imported here from
     /// openZeppelin. This function only has authority over pre-approved
     /// token amount. We don't explicitly check for allowance, SafeMath
-    /// subtraction overflow is enough protection.
+    /// subtraction overflow is enough protection. If the value cannot be
+    /// divided evenly across the members, it submits the remainder to the last
+    /// keep member.
     /// @param _tokenAddress Address of the ERC20 token to distribute.
     /// @param _value Amount of ERC20 token to distribute.
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
@@ -413,13 +426,23 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount; i++) {
+        for (uint16 i = 0; i < memberCount-1; i++) {
             token.transferFrom(
                 msg.sender,
                 tokenStaking.magpieOf(members[i]),
                 dividend
             );
         }
+
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
+        uint256 remainder = _value.mod(memberCount);
+        token.transferFrom(
+            msg.sender,
+            tokenStaking.magpieOf(members[memberCount - 1]),
+            dividend.add(remainder)
+        );
+
     }
 
     /// @notice Checks if the caller is a keep member.
