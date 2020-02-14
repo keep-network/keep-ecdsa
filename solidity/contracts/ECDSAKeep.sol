@@ -356,7 +356,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Distributes ETH evenly across all keep members.
-    /// ETH is sent to the beneficiary of each member.
+    /// ETH is sent to the beneficiary of each member. If the value cannot be
+    /// divided evenly across the members submits the remainder to the last keep
+    /// member.
     /// @dev Only the value passed to this function will be distributed.
     function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
@@ -369,7 +371,18 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             // transfer failure, hence we don't validate it's result.
             // TODO: What should we do with the dividend which was not transferred
             // successfully?
+            /* solium-disable-next-line security/no-call-value */
             tokenStaking.magpieOf(members[i]).call.value(dividend)("");
+        }
+
+        // Check if value has a remainder after dividing it across members.
+        // If so send the remainder to the last member.
+        uint256 remainder = msg.value.mod(memberCount);
+        if (remainder > 0) {
+            /* solium-disable-next-line security/no-call-value */
+            tokenStaking.magpieOf(members[memberCount - 1]).call.value(
+                remainder
+            )("");
         }
     }
 
@@ -379,7 +392,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// function similar to the interface imported here from
     /// openZeppelin. This function only has authority over pre-approved
     /// token amount. We don't explicitly check for allowance, SafeMath
-    /// subtraction overflow is enough protection.
+    /// subtraction overflow is enough protection. If the value cannot be
+    /// divided evenly across the members submits the remainder to the last keep
+    /// member.
     /// @param _tokenAddress Address of the ERC20 token to distribute.
     /// @param _value Amount of ERC20 token to distribute.
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
@@ -399,6 +414,18 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
                 dividend
             );
         }
+
+        // Check if value has a remainder after dividing it across members.
+        // If so send the remainder to the last member.
+        uint256 remainder = _value.mod(memberCount);
+        if (remainder > 0) {
+            token.transferFrom(
+                msg.sender,
+                tokenStaking.magpieOf(members[memberCount - 1]),
+                remainder
+            );
+        }
+
     }
 
     /// @notice Checks if the caller is a keep member.
