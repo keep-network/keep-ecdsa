@@ -131,7 +131,7 @@ contract ECDSAKeepFactory is
         // '_bond' by '_groupSize' can leave a remainder. Even though, a remainder
         // is very small, we want to avoid this from happening and memberBond is
         // rounded up by: `(bond + groupSize - 1 ) / groupSize`
-        // Ex. (100 + 3 - 1) / 3 = 333333334
+        // Ex. (100 + 3 - 1) / 3 = 34
         uint256 memberBond = (_bond.add(_groupSize).sub(1)).div(_groupSize);
         require(memberBond > 0, "Bond per member must be greater than zero");
 
