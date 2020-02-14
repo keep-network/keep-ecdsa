@@ -3,35 +3,28 @@ const KeepBonding = artifacts.require('KeepBonding')
 
 const TokenStaking = artifacts.require('@keep-network/keep-core/build/truffle/TokenStaking')
 
-let { TokenStakingAddress } = require('./external-contracts')
+let { TokenStakingAddress, TBTCSystemAddress } = require('../migrations/external-contracts')
 
 module.exports = async function () {
-    const bondingValue = 100;
-
-    const accounts = await web3.eth.getAccounts()
-    const operators = [accounts[1], accounts[2], accounts[3]]
-
-    let ecdsaKeepFactory
-    let tokenStaking
-    let keepBonding
-
     try {
-        ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
-        tokenStaking = await TokenStaking.at(TokenStakingAddress)
-        keepBonding = await KeepBonding.deployed()
-    } catch (err) {
-        console.error('failed to get deployed contracts', err)
-        process.exit(1)
-    }
+        const bondingValue = 1000
 
-    try {
-        const operatorContract = ecdsaKeepFactory.address
+        const accounts = await web3.eth.getAccounts()
+        const owner = accounts[0]
+        const operators = [accounts[1], accounts[2], accounts[3]]
+        const application = TBTCSystemAddress
+
+        let sortitionPoolAddress
+        let ecdsaKeepFactory
+        let tokenStaking
+        let keepBonding
+        let operatorContract
 
         const authorizeOperator = async (operator) => {
-            const authorizer = operator
-
             try {
-                await tokenStaking.authorizeOperatorContract(operator, operatorContract, { from: authorizer })
+                await tokenStaking.authorizeOperatorContract(operator, operatorContract, { from: operator })
+
+                await keepBonding.authorizeSortitionPoolContract(operator, sortitionPoolAddress, { from: operator }) // this function should be called by authorizer but it's currently set to operator in demo.js
             } catch (err) {
                 console.error(err)
                 process.exit(1)
@@ -49,17 +42,30 @@ module.exports = async function () {
             }
         }
 
-        for (let i = 0; i < operators.length; i++) {
-            await authorizeOperator(operators[i])
+        try {
+            ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
+            tokenStaking = await TokenStaking.at(TokenStakingAddress)
+            keepBonding = await KeepBonding.deployed()
 
-            const res = await tokenStaking.eligibleStake(operators[i], operatorContract)
-            console.log("res", res.toString())
-
-            await depositUnbondedValue(operators[i])
-            // TODO: Check available bonding value for factory.
+            operatorContract = ecdsaKeepFactory.address
+            sortitionPoolAddress = await ecdsaKeepFactory.getSortitionPool(application)
+        } catch (err) {
+            console.error('failed to get deployed contracts', err)
+            process.exit(1)
         }
+
+        try {
+            for (let i = 0; i < operators.length; i++) {
+                await authorizeOperator(operators[i])
+                await depositUnbondedValue(operators[i])
+            }
+        } catch (err) {
+            console.error('failed to initialize operators', err)
+            process.exit(1)
+        }
+
     } catch (err) {
-        console.error('failed to initialize operators', err)
+        console.error(err)
         process.exit(1)
     }
 
