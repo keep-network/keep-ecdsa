@@ -3,7 +3,7 @@ const KeepBonding = artifacts.require('KeepBonding')
 
 const TokenStaking = artifacts.require('@keep-network/keep-core/build/truffle/TokenStaking')
 
-let { TokenStakingAddress } = require('./externals')
+let { TokenStakingAddress } = require('./external-contracts')
 
 module.exports = async function () {
     const bondingValue = 100;

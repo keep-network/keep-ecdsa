@@ -1,7 +1,7 @@
 const ECDSAKeepFactory = artifacts.require("ECDSAKeepFactory")
 const truffleContract = require("@truffle/contract")
 
-let { RegistryAddress } = require('./externals')
+let { RegistryAddress } = require('./external-contracts')
 
 module.exports = async function (deployer, network) {
     await ECDSAKeepFactory.deployed()

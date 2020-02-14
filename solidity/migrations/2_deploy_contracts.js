@@ -6,7 +6,7 @@ const BondedECDSAKeepVendorImplV1 = artifacts.require("BondedECDSAKeepVendorImpl
 const { deployBondedSortitionPoolFactory } = require('@keep-network/sortition-pools/migrations/scripts/deployContracts')
 const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory")
 
-let { RandomBeaconAddress, TokenStakingAddress } = require('./externals')
+let { RandomBeaconAddress, TokenStakingAddress } = require('./external-contracts')
 
 module.exports = async function (deployer) {
     await deployer.deploy(KeepBonding)

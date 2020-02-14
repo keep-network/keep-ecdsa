@@ -23,7 +23,7 @@ RANDOM_BEACON_PROPERTY="RandomBeaconAddress"
 # Query to get address of the deployed contract for the first network on the list.
 JSON_QUERY="[.networks[].address][0]"
 
-DESTINATION_FILE=$(realpath $(dirname $0)/../migrations/externals.js)
+DESTINATION_FILE=$(realpath $(dirname $0)/../migrations/external-contracts.js)
 
 function fetch_registry_contract_address() {
   local contractDataPath=$(realpath $KEEP_CORE_ARTIFACTS/$REGISTRY_CONTRACT_DATA)

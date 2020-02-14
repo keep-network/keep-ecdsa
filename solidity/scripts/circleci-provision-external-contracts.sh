@@ -17,7 +17,7 @@ RANDOM_BEACON_PROPERTY="RandomBeaconAddress"
 # Query to get address of the deployed contract for the specific network.
 JSON_QUERY=".networks[\"${ETH_NETWORK_ID}\"].address"
 
-DESTINATION_FILE=$(realpath $(dirname $0)/../migrations/externals.js)
+DESTINATION_FILE=$(realpath $(dirname $0)/../migrations/external-contracts.js)
 
 function fetch_registry_contract_address() {
   gsutil -q cp gs://${CONTRACT_DATA_BUCKET}/keep-core/${REGISTRY_CONTRACT_DATA} .

@@ -4,7 +4,7 @@ const ECDSAKeepFactory = artifacts.require('./ECDSAKeepFactory.sol')
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 
 const RandomBeaconService = artifacts.require('IRandomBeacon')
-const { RandomBeaconAddress } = require('../migrations/externals')
+const { RandomBeaconAddress } = require('../migrations/external-contracts')
 
 // This test validates integration between on-chain contracts and off-chain client.
 // It also validates integration with the random beacon by verifying update of
