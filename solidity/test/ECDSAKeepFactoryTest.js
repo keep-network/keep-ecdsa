@@ -1,8 +1,9 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
 const { expectRevert } = require('openzeppelin-test-helpers');
+const { ZERO_ADDRESS } = require('openzeppelin-test-helpers').constants;
 
-import { getETHBalancesFromList, addToBalances } from './helpers/listBalanceUtils'
+import { getETHBalancesFromList, getETHBalancesMap, addToBalances, addToBalancesMap } from './helpers/listBalanceUtils'
 
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBonding = artifacts.require('KeepBonding');
@@ -112,8 +113,20 @@ contract("ECDSAKeepFactory", async accounts => {
             assert.isTrue(await signerPool.isOperatorInPool(member1), "operator is not in the pool")
         })
 
-        it("does not add an operator to the pool if it does not have a minimum stake", async() => {
+        it("does not add an operator to the pool if it does not have a minimum stake", async () => {
             await tokenStaking.setBalance(new BN("1"))
+
+            await expectRevert(
+                keepFactory.registerMemberCandidate(application, { from: member1 }),
+                "Operator not eligible"
+            )
+        })
+
+        it("does not add an operator to the pool if it does not have a minimum bond", async () => {
+            const minimumBond = await keepFactory.minimumBond.call()
+            const availableUnbonded = await keepBonding.availableUnbondedValue(member1, ZERO_ADDRESS, ZERO_ADDRESS)
+            const withdrawValue = availableUnbonded.sub(minimumBond).add(new BN(1))
+            await keepBonding.withdraw(withdrawValue, member1, { from: member1 })
 
             await expectRevert(
                 keepFactory.registerMemberCandidate(application, { from: member1 }),
@@ -139,36 +152,6 @@ contract("ECDSAKeepFactory", async accounts => {
 
             assert.isFalse(await signerPool2.isOperatorInPool(member1), "operator 1 is in the pool")
             assert.isTrue(await signerPool2.isOperatorInPool(member2), "operator 2 is not in the pool")
-        })
-    })
-
-    describe("registerMemberCandidate", async () => {
-        before(async () => {
-            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-            tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBonding.new()
-            randomBeacon = await RandomBeaconStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(
-                bondedSortitionPoolFactory.address,
-                tokenStaking.address,
-                keepBonding.address,
-                randomBeacon.address
-            )
-
-            const stakeBalance = await keepFactory.minimumStake.call()
-            await tokenStaking.setBalance(stakeBalance);
-
-            const bondingValue = new BN(100)
-            await keepBonding.deposit(member1, { value: bondingValue })
-            await keepBonding.deposit(member2, { value: bondingValue })
-        })
-
-        beforeEach(async () => {
-            await createSnapshot()
-        })
-
-        afterEach(async () => {
-            await restoreSnapshot()
         })
 
         it("inserts operators to different pools", async () => {
@@ -219,20 +202,16 @@ contract("ECDSAKeepFactory", async accounts => {
             feeEstimate = await keepFactory.openKeepFeeEstimate()
         }
 
-        beforeEach(async () => {
+        before(async () => {
             await initializeNewFactory()
 
             const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance)
 
-            await keepBonding.deposit(member1, { value: singleBond })
-            await keepBonding.deposit(member2, { value: singleBond })
-            await keepBonding.deposit(member3, { value: singleBond })
+            await depositAndRegisterMembers(singleBond)
+        })
 
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
-            await keepFactory.registerMemberCandidate(application, { from: member2 })
-            await keepFactory.registerMemberCandidate(application, { from: member3 })
-
+        beforeEach(async () => {
             await createSnapshot()
         })
 
@@ -255,21 +234,6 @@ contract("ECDSAKeepFactory", async accounts => {
 
         it("reverts if bond equals zero", async () => {
             let bond = 0
-
-            await expectRevert(
-                keepFactory.openKeep(
-                    groupSize,
-                    threshold,
-                    keepOwner,
-                    bond,
-                    { from: application, value: feeEstimate },
-                ),
-                "Bond per member must be greater than zero"
-            )
-        })
-
-        it("reverts if bond per member equals zero", async () => {
-            let bond = new BN(2)
 
             await expectRevert(
                 keepFactory.openKeep(
@@ -354,37 +318,19 @@ contract("ECDSAKeepFactory", async accounts => {
             ).to.eq.BN(singleBond, 'invalid bond value for member3')
         })
 
-        // This test checks that if the requested bond value divided by the group
-        // size has a remainder which is not bonded, e.g.:
-        // requested bond = 11 & group size = 3 => bond per member ≈ 3,66
-        // but `11.div(3) = 3` so in current implementation we bond only 9 and
-        // the rest remains unbonded.
-        // TODO: Check if such case is acceptable.
-        it("forgets about the remainder", async () => {
-            await initializeNewFactory()
+        it("rounds up members bonds", async () => {
+            const requestedBond = bond.add(new BN(1))
+            const unbondedAmount = singleBond.add(new BN(1))
+            const expectedMemberBond = singleBond.add(new BN(1))
 
-            const groupSize = 3
-            const singleBond = new BN(3)
-            const bond = new BN(11)
+            await depositAndRegisterMembers(unbondedAmount)
 
-            const stakeBalance = await keepFactory.minimumStake.call()
-            await tokenStaking.setBalance(stakeBalance)
-
-            await keepBonding.deposit(member1, { value: singleBond })
-            await keepBonding.deposit(member2, { value: singleBond })
-            await keepBonding.deposit(member3, { value: singleBond })
-
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
-            await keepFactory.registerMemberCandidate(application, { from: member2 })
-            await keepFactory.registerMemberCandidate(application, { from: member3 })
-
-            let blockNumber = await web3.eth.getBlockNumber()
-
+            const blockNumber = await web3.eth.getBlockNumber()
             await keepFactory.openKeep(
                 groupSize,
                 threshold,
                 keepOwner,
-                bond,
+                requestedBond,
                 { from: application, value: feeEstimate },
             )
 
@@ -396,30 +342,80 @@ contract("ECDSAKeepFactory", async accounts => {
             const keepAddress = eventList[0].returnValues.keepAddress
 
             expect(
-                await keepBonding.bondAmount(member1, keepAddress, keepAddress)
-            ).to.eq.BN(singleBond, 'invalid bond value for member1')
+                await keepBonding.bondAmount(member1, keepAddress, keepAddress),
+                'invalid bond value for member1'
+            ).to.eq.BN(expectedMemberBond)
 
             expect(
-                await keepBonding.bondAmount(member2, keepAddress, keepAddress)
-            ).to.eq.BN(singleBond, 'invalid bond value for member2')
+                await keepBonding.bondAmount(member2, keepAddress, keepAddress),
+                'invalid bond value for member2'
+            ).to.eq.BN(expectedMemberBond)
 
             expect(
-                await keepBonding.bondAmount(member3, keepAddress, keepAddress)
-            ).to.eq.BN(singleBond, 'invalid bond value for member3')
+                await keepBonding.bondAmount(member3, keepAddress, keepAddress),
+                'invalid bond value for member3'
+            ).to.eq.BN(expectedMemberBond)
+        })
+
+        it("rounds up members bonds when calculated bond per member equals zero", async () => {
+            const requestedBond = new BN(groupSize).sub(new BN(1))
+            const unbondedAmount = new BN(1)
+            const expectedMemberBond = new BN(1)
+
+            await depositAndRegisterMembers(unbondedAmount)
+
+            const blockNumber = await web3.eth.getBlockNumber()
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                requestedBond,
+                { from: application, value: feeEstimate },
+            )
+
+            let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+
+            const keepAddress = eventList[0].returnValues.keepAddress
+
+            expect(
+                await keepBonding.bondAmount(member1, keepAddress, keepAddress),
+                'invalid bond value for member1'
+            ).to.eq.BN(expectedMemberBond)
+
+            expect(
+                await keepBonding.bondAmount(member2, keepAddress, keepAddress),
+                'invalid bond value for member2'
+            ).to.eq.BN(expectedMemberBond)
+
+            expect(
+                await keepBonding.bondAmount(member3, keepAddress, keepAddress),
+                'invalid bond value for member3'
+            ).to.eq.BN(expectedMemberBond)
         })
 
         it("reverts if not enough member candidates are registered", async () => {
-            await initializeNewFactory()
+            let requestedGroupSize = groupSize + 1
 
-            let groupSize = 2
-            let threshold = 2
+            await expectRevert(
+                keepFactory.openKeep(
+                    requestedGroupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
+                    { from: application, value: feeEstimate }
+                ),
+                "Not enough operators in pool"
+            )
+        })
 
-            const stakeBalance = await keepFactory.minimumStake.call()
-            await tokenStaking.setBalance(stakeBalance)
-
-            await keepBonding.deposit(member1, { value: singleBond })
-
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
+        it("reverts if one member has insufficient unbonded value", async () => {
+            const minimumBond = await keepFactory.minimumBond.call()
+            const availableUnbonded = await keepBonding.availableUnbondedValue(member3, ZERO_ADDRESS, ZERO_ADDRESS)
+            const withdrawValue = availableUnbonded.sub(minimumBond).add(new BN(1))
+            await keepBonding.withdraw(withdrawValue, member3, { from: member3 })
 
             await expectRevert(
                 keepFactory.openKeep(
@@ -430,34 +426,6 @@ contract("ECDSAKeepFactory", async accounts => {
                     { from: application, value: feeEstimate }
                 ),
                 "Not enough operators in pool"
-            )
-        })
-
-        // TODO: This is temporary, we don't expect a group to be formed if a member
-        // doesn't have sufficient unbonded value.
-        it("reverts if one member has insufficient unbonded value", async () => {
-            await initializeNewFactory()
-
-            const stakeBalance = await keepFactory.minimumStake.call()
-            await tokenStaking.setBalance(stakeBalance)
-
-            await keepBonding.deposit(member1, { value: singleBond })
-            await keepBonding.deposit(member2, { value: singleBond })
-            await keepBonding.deposit(member3, { value: singleBond.sub(new BN(1)) })
-
-            await keepFactory.registerMemberCandidate(application, { from: member1 })
-            await keepFactory.registerMemberCandidate(application, { from: member2 })
-            await keepFactory.registerMemberCandidate(application, { from: member3 })
-
-            await expectRevert(
-                keepFactory.openKeep(
-                    groupSize,
-                    threshold,
-                    keepOwner,
-                    bond,
-                    { from: application, value: feeEstimate }
-                ),
-                "Insufficient unbonded value"
             )
         })
 
@@ -596,17 +564,23 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("splits subsidy pool between selected signers", async () => {
-            const members = [ member1, member2, member3 ];
-            const subsidyPool = 50; // [wei]
+            const members = [member1, member2, member3]
+            const subsidyPool = feeEstimate.sub(new BN(10)) // [wei]
+            const remainder = subsidyPool.mod(new BN(members.length))
 
             // pump subsidy pool
             web3.eth.sendTransaction({
-                value: subsidyPool, 
+                value: subsidyPool,
                 from: accounts[0],
                 to: keepFactory.address
-            });
+            })
 
             const initialBalances = await getETHBalancesFromList(members)
+            const expectedBalances = addToBalances(initialBalances, subsidyPool / members.length)
+
+            const lastMemberIndex = members.length - 1
+            expectedBalances[lastMemberIndex] = expectedBalances[lastMemberIndex].add(remainder)
+
 
             await keepFactory.openKeep(
                 groupSize,
@@ -617,7 +591,7 @@ contract("ECDSAKeepFactory", async accounts => {
             )
 
             const newBalances = await getETHBalancesFromList(members)
-            const expectedBalances = addToBalances(initialBalances, subsidyPool / members.length)
+
 
             assert.equal(newBalances.toString(), expectedBalances.toString())
 
@@ -628,17 +602,21 @@ contract("ECDSAKeepFactory", async accounts => {
         })
 
         it("does not transfer more from subsidy pool than entry fee", async () => {
-            const members = [ member1, member2, member3 ];
-            const subsidyPool = feeEstimate * 10; // [wei]
+            const members = [member1, member2, member3]
+            const subsidyPool = new BN(feeEstimate).mul(new BN(10)) // [wei]
+            const remainder = feeEstimate.mod(new BN(members.length))
 
             // pump subsidy pool
             web3.eth.sendTransaction({
-                value: subsidyPool, 
+                value: subsidyPool,
                 from: accounts[0],
                 to: keepFactory.address
-            });
+            })
 
-            const initialBalances = await getETHBalancesFromList(members)
+            const initialBalances = await getETHBalancesMap(members)
+            const expectedBalances = addToBalancesMap(initialBalances, feeEstimate / members.length)
+
+            let blockNumber = await web3.eth.getBlockNumber()
 
             await keepFactory.openKeep(
                 groupSize,
@@ -648,16 +626,33 @@ contract("ECDSAKeepFactory", async accounts => {
                 { from: application, value: feeEstimate },
             )
 
-            const newBalances = await getETHBalancesFromList(members)
-            const expectedBalances = addToBalances(initialBalances, feeEstimate / members.length)
+            let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+            const selectedMembers = eventList[0].returnValues.members
 
-            assert.equal(newBalances.toString(), expectedBalances.toString()) 
+            const newBalances = await getETHBalancesMap(members)
+            const lastMember = selectedMembers[groupSize - 1]
+            expectedBalances[lastMember] = expectedBalances[lastMember].add(remainder)
+
+            assert.deepEqual(newBalances, expectedBalances)
 
             expect(await keepFactory.subsidyPool()).to.eq.BN(
                 subsidyPool - feeEstimate,
                 "unexpected subsidy pool balance"
             )
         })
+
+        async function depositAndRegisterMembers(unbondedAmount) {
+            await keepBonding.deposit(member1, { value: unbondedAmount })
+            await keepBonding.deposit(member2, { value: unbondedAmount })
+            await keepBonding.deposit(member3, { value: unbondedAmount })
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+            await keepFactory.registerMemberCandidate(application, { from: member2 })
+            await keepFactory.registerMemberCandidate(application, { from: member3 })
+        }
     })
 
     describe("setGroupSelectionSeed", async () => {

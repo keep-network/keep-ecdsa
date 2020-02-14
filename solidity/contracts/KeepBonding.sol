@@ -31,18 +31,6 @@ contract KeepBonding {
         address bondCreator,
         address authorizedSortitionPool
     ) external view returns (uint256) {
-        return 100;
-    }
-
-    /// @notice Returns value of ether available for bonding for the operator.
-    /// @param operator Address of the operator.
-    /// @return Value of deposited ether available for bonding.
-    /// TODO: Should be replaced by availableUnbondedValue.
-    function availableBondingValue(address operator)
-        public
-        view
-        returns (uint256)
-    {
         return unbondedValue[operator];
     }
 
@@ -57,7 +45,7 @@ contract KeepBonding {
     /// @param destination Address to send the amount to.
     function withdraw(uint256 amount, address payable destination) public {
         require(
-            availableBondingValue(msg.sender) >= amount,
+            unbondedValue[msg.sender] >= amount,
             "Insufficient unbonded value"
         );
 
@@ -81,7 +69,7 @@ contract KeepBonding {
         uint256 amount
     ) public onlyAuthorized {
         require(
-            availableBondingValue(operator) >= amount,
+            unbondedValue[operator] >= amount,
             "Insufficient unbonded value"
         );
 

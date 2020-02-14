@@ -42,7 +42,7 @@ contract ECDSAKeepFactory is
     IRandomBeacon randomBeacon;
 
     uint256 public minimumStake = 200000 * 1e18;
-    uint256 minimumBond = 1; // TODO: Take from setter
+    uint256 public minimumBond = 1; // TODO: Define economics
 
     // Gas required for a callback from the random beacon. The value specifies
     // gas required to call `setGroupSelectionSeed` function in the worst-case
@@ -127,8 +127,12 @@ contract ECDSAKeepFactory is
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
-        // TODO: The remainder will not be bonded. What should we do with it?
-        uint256 memberBond = _bond.div(_groupSize);
+        // In Solidity, division rounds towards zero (down) and dividing
+        // '_bond' by '_groupSize' can leave a remainder. Even though, a remainder
+        // is very small, we want to avoid this from happening and memberBond is
+        // rounded up by: `(bond + groupSize - 1 ) / groupSize`
+        // Ex. (100 + 3 - 1) / 3 = 34
+        uint256 memberBond = (_bond.add(_groupSize).sub(1)).div(_groupSize);
         require(memberBond > 0, "Bond per member must be greater than zero");
 
         require(

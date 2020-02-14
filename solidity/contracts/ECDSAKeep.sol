@@ -377,7 +377,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Distributes ETH evenly across all keep members.
-    /// ETH is sent to the beneficiary of each member.
+    /// ETH is sent to the beneficiary of each member. If the value cannot be
+    /// divided evenly across the members, it submits the remainder to the last
+    /// keep member.
     /// @dev Only the value passed to this function will be distributed.
     function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
@@ -385,13 +387,22 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount; i++) {
+        for (uint16 i = 0; i < memberCount-1; i++) {
             // We don't want to revert the whole execution in case of single
             // transfer failure, hence we don't validate it's result.
             // TODO: What should we do with the dividend which was not transferred
             // successfully?
+            /* solium-disable-next-line security/no-call-value */
             tokenStaking.magpieOf(members[i]).call.value(dividend)("");
         }
+
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
+        uint256 remainder = msg.value.mod(memberCount);
+        /* solium-disable-next-line security/no-call-value */
+        tokenStaking.magpieOf(members[memberCount - 1]).call.value(
+            dividend.add(remainder)
+        )("");
     }
 
     /// @notice Distributes ERC20 token evenly across all keep members.
@@ -400,7 +411,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// function similar to the interface imported here from
     /// openZeppelin. This function only has authority over pre-approved
     /// token amount. We don't explicitly check for allowance, SafeMath
-    /// subtraction overflow is enough protection.
+    /// subtraction overflow is enough protection. If the value cannot be
+    /// divided evenly across the members, it submits the remainder to the last
+    /// keep member.
     /// @param _tokenAddress Address of the ERC20 token to distribute.
     /// @param _value Amount of ERC20 token to distribute.
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
@@ -413,13 +426,23 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount; i++) {
+        for (uint16 i = 0; i < memberCount-1; i++) {
             token.transferFrom(
                 msg.sender,
                 tokenStaking.magpieOf(members[i]),
                 dividend
             );
         }
+
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
+        uint256 remainder = _value.mod(memberCount);
+        token.transferFrom(
+            msg.sender,
+            tokenStaking.magpieOf(members[memberCount - 1]),
+            dividend.add(remainder)
+        );
+
     }
 
     /// @notice Checks if the caller is a keep member.
