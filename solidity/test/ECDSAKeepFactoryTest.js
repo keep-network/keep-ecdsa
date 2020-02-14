@@ -175,6 +175,500 @@ contract("ECDSAKeepFactory", async accounts => {
         })
     })
 
+    describe("isOperatorRegistered", async () => {
+        before(async () => {
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBonding.new()
+            randomBeacon = await RandomBeaconStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
+
+            const stakeBalance = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(stakeBalance);
+
+            const bondingValue = new BN(100)
+            await keepBonding.deposit(member1, { value: bondingValue })
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("returns true if the operator is registered for the application", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.isTrue(await keepFactory.isOperatorRegistered(member1, application))
+        })
+
+        it("returns false if the operator is registered for another application", async () => {
+            const application2 = '0x0000000000000000000000000000000000000002'
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.isFalse(await keepFactory.isOperatorRegistered(member1, application2))
+        })
+
+        it("returns false if the operator is not registered for any application", async () => {
+            assert.isFalse(await keepFactory.isOperatorRegistered(member1, application))
+        })
+    })
+
+    describe("isOperatorUpToDate", async () => {
+        let minimumStake
+        let minimumBondingValue
+
+        before(async () => {
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBonding.new()
+            randomBeacon = await RandomBeaconStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
+
+            minimumStake = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(minimumStake);
+
+            minimumBondingValue = await keepFactory.minimumBond.call()
+            await keepBonding.deposit(member1, { value: minimumBondingValue })
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("returns true if the operator is up to date for the application", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.isTrue(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+        it("returns false if the operator stake is below minimum", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            tokenStaking.setBalance(minimumStake.sub(new BN(1)))
+
+            assert.isFalse(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+        it("returns true if the operator stake changed insufficiently", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            // We multiply minimumStake as sortition pools expect multiplies of the
+            // minimum stake to calculate stakers weight for eligibility.
+            // We subtract 1 to get the same staking weight which is calculated as
+            // `weight = floor(stakingBalance / minimumStake)`.
+            tokenStaking.setBalance(minimumStake.mul(new BN(2)).sub(new BN(1)))
+
+            assert.isTrue(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+        it("returns false if the operator stake is above minimum", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            // We multiply minimumStake as sortition pools expect multiplies of the
+            // minimum stake to calculate stakers weight for eligibility.
+            tokenStaking.setBalance(minimumStake.mul(new BN(2)))
+
+            assert.isFalse(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+        it("returns false if the operator bonding value is below minimum", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            keepBonding.withdraw(new BN(1), member1, { from: member1 })
+
+            assert.isFalse(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+        it("returns true if the operator bonding value is above minimum", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            keepBonding.deposit(member1, { value: new BN(1) })
+
+            assert.isTrue(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+
+        it("reverts if the operator is not registered for the application", async () => {
+            await expectRevert(
+                keepFactory.isOperatorUpToDate(member2, application),
+                "Operator not registered for the application"
+            )
+        })
+    })
+
+    describe("updateOperatorStatus", async () => {
+        let minimumStake
+        let minimumBondingValue
+
+        before(async () => {
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBonding.new()
+            randomBeacon = await RandomBeaconStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
+
+            minimumStake = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(minimumStake);
+
+            minimumBondingValue = await keepFactory.minimumBond.call()
+            await keepBonding.deposit(member1, { value: minimumBondingValue })
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("revers if operator is up to date", async () => {
+            await expectRevert(
+                keepFactory.updateOperatorStatus(member1, application),
+                "Operator already up to date"
+            )
+        })
+
+        it("removes operator if stake has changed below minimum", async () => {
+            tokenStaking.setBalance(minimumStake.sub(new BN(1)))
+            assert.isFalse(
+                await keepFactory.isOperatorUpToDate(member1, application),
+                "unexpected status of the operator after stake change"
+            )
+
+            await keepFactory.updateOperatorStatus(member1, application)
+
+            await expectRevert(
+                keepFactory.isOperatorUpToDate(member1, application),
+                "Operator not registered for the application"
+            )
+        })
+
+        it("updates operator if stake has changed above minimum", async () => {
+            // We multiply minimumStake as sortition pools expect multiplies of the
+            // minimum stake to calculate stakers weight for eligibility.
+            tokenStaking.setBalance(minimumStake.mul(new BN(2)))
+            assert.isFalse(
+                await keepFactory.isOperatorUpToDate(member1, application),
+                "unexpected status of the operator after stake change"
+            )
+
+            await keepFactory.updateOperatorStatus(member1, application)
+
+            assert.isTrue(
+                await keepFactory.isOperatorUpToDate(member1, application),
+                "unexpected status of the operator after status update"
+            )
+        })
+
+        it("removes operator if bonding value has changed below minimum", async () => {
+            keepBonding.withdraw(new BN(1), member1, { from: member1 })
+            assert.isFalse(
+                await keepFactory.isOperatorUpToDate(member1, application),
+                "unexpected status of the operator after bonding value change"
+            )
+
+            await keepFactory.updateOperatorStatus(member1, application)
+
+            await expectRevert(
+                keepFactory.isOperatorUpToDate(member1, application),
+                "Operator not registered for the application"
+            )
+        })
+
+        it("updates operator if bonding value has changed above minimum", async () => {
+            keepBonding.deposit(member1, { value: new BN(1) })
+            assert.isTrue(
+                await keepFactory.isOperatorUpToDate(member1, application),
+                "unexpected status of the operator after bonding value change"
+            )
+
+            await expectRevert(
+                keepFactory.updateOperatorStatus(member1, application),
+                "Operator already up to date"
+            )
+        })
+
+        it("reverts if the operator is not registered for the application", async () => {
+            await expectRevert(
+                keepFactory.updateOperatorStatus(member2, application),
+                "Operator not registered for the application"
+            )
+        })
+    })
+
+    describe("isOperatorRegistered", async () => {
+        before(async () => {
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBonding.new()
+            randomBeacon = await RandomBeaconStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
+
+            const stakeBalance = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(stakeBalance);
+
+            const bondingValue = new BN(100)
+            await keepBonding.deposit(member1, { value: bondingValue })
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("returns true if the operator is registered for the application", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.isTrue(await keepFactory.isOperatorRegistered(member1, application))
+        })
+
+        it("returns false if the operator is registered for another application", async () => {
+            const application2 = '0x0000000000000000000000000000000000000002'
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.isFalse(await keepFactory.isOperatorRegistered(member1, application2))
+        })
+
+        it("returns false if the operator is not registered for any application", async () => {
+            assert.isFalse(await keepFactory.isOperatorRegistered(member1, application))
+        })
+    })
+
+    describe("isOperatorUpToDate", async () => {
+        let minimumStake
+        let minimumBondingValue
+
+        before(async () => {
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBonding.new()
+            randomBeacon = await RandomBeaconStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
+
+            minimumStake = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(minimumStake);
+
+            minimumBondingValue = await keepFactory.minimumBond.call()
+            await keepBonding.deposit(member1, { value: minimumBondingValue })
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("returns true if the operator is up to date for the application", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.isTrue(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+        it("returns false if the operator stake is below minimum", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            tokenStaking.setBalance(minimumStake.sub(new BN(1)))
+
+            assert.isFalse(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+        it("returns true if the operator stake changed insignificantly", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            // We multiply minimumStake as sortition pools expect multiplies of the
+            // minimum stake to calculate stakers weight for eligibility.
+            // We subtract 1 to get the same staking weight which is calculated as
+            // `weight = floor(stakingBalance / minimumStake)`.
+            tokenStaking.setBalance(minimumStake.mul(new BN(2)).sub(new BN(1)))
+
+            assert.isTrue(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+        it("returns false if the operator stake is above minimum", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            // We multiply minimumStake as sortition pools expect multiplies of the
+            // minimum stake to calculate stakers weight for eligibility.
+            tokenStaking.setBalance(minimumStake.mul(new BN(2)))
+
+            assert.isFalse(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+        it("returns false if the operator bonding value is below minimum", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            keepBonding.withdraw(new BN(1), member1, { from: member1 })
+
+            assert.isFalse(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+        it("returns true if the operator bonding value is above minimum", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            keepBonding.deposit(member1, { value: new BN(1) })
+
+            assert.isTrue(await keepFactory.isOperatorUpToDate(member1, application))
+        })
+
+
+        it("reverts if the operator is not registered for the application", async () => {
+            await expectRevert(
+                keepFactory.isOperatorUpToDate(member2, application),
+                "Operator not registered for the application"
+            )
+        })
+    })
+
+    describe("updateOperatorStatus", async () => {
+        let minimumStake
+        let minimumBondingValue
+
+        before(async () => {
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBonding.new()
+            randomBeacon = await RandomBeaconStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
+
+            minimumStake = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(minimumStake);
+
+            minimumBondingValue = await keepFactory.minimumBond.call()
+            await keepBonding.deposit(member1, { value: minimumBondingValue })
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("revers if operator is up to date", async () => {
+            await expectRevert(
+                keepFactory.updateOperatorStatus(member1, application),
+                "Operator already up to date"
+            )
+        })
+
+        it("removes operator if stake has changed below minimum", async () => {
+            tokenStaking.setBalance(minimumStake.sub(new BN(1)))
+            assert.isFalse(
+                await keepFactory.isOperatorUpToDate(member1, application),
+                "unexpected status of the operator after stake change"
+            )
+
+            await keepFactory.updateOperatorStatus(member1, application)
+
+            await expectRevert(
+                keepFactory.isOperatorUpToDate(member1, application),
+                "Operator not registered for the application"
+            )
+        })
+
+        it("updates operator if stake has changed above minimum", async () => {
+            // We multiply minimumStake as sortition pools expect multiplies of the
+            // minimum stake to calculate stakers weight for eligibility.
+            tokenStaking.setBalance(minimumStake.mul(new BN(2)))
+            assert.isFalse(
+                await keepFactory.isOperatorUpToDate(member1, application),
+                "unexpected status of the operator after stake change"
+            )
+
+            await keepFactory.updateOperatorStatus(member1, application)
+
+            assert.isTrue(
+                await keepFactory.isOperatorUpToDate(member1, application),
+                "unexpected status of the operator after status update"
+            )
+        })
+
+        it("removes operator if bonding value has changed below minimum", async () => {
+            keepBonding.withdraw(new BN(1), member1, { from: member1 })
+            assert.isFalse(
+                await keepFactory.isOperatorUpToDate(member1, application),
+                "unexpected status of the operator after bonding value change"
+            )
+
+            await keepFactory.updateOperatorStatus(member1, application)
+
+            await expectRevert(
+                keepFactory.isOperatorUpToDate(member1, application),
+                "Operator not registered for the application"
+            )
+        })
+
+        it("updates operator if bonding value has changed above minimum", async () => {
+            keepBonding.deposit(member1, { value: new BN(1) })
+            assert.isTrue(
+                await keepFactory.isOperatorUpToDate(member1, application),
+                "unexpected status of the operator after bonding value change"
+            )
+
+            await expectRevert(
+                keepFactory.updateOperatorStatus(member1, application),
+                "Operator already up to date"
+            )
+        })
+
+        it("reverts if the operator is not registered for the application", async () => {
+            await expectRevert(
+                keepFactory.updateOperatorStatus(member2, application),
+                "Operator not registered for the application"
+            )
+        })
+    })
+
     describe("openKeep", async () => {
         const keepOwner = "0xbc4862697a1099074168d54A555c4A60169c18BD"
         const groupSize = new BN(3)
