@@ -46,7 +46,7 @@ contract('KeepBonding', (accounts) => {
 
             await keepBonding.deposit(operator, { value: value })
 
-            const unbonded = await keepBonding.availableBondingValue(operator)
+            const unbonded = await keepBonding.availableUnbondedValue(operator, bondCreator, signingPool)
 
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
@@ -67,7 +67,7 @@ contract('KeepBonding', (accounts) => {
 
             await keepBonding.withdraw(value, destination, { from: operator })
 
-            const unbonded = await keepBonding.availableBondingValue(operator)
+            const unbonded = await keepBonding.availableUnbondedValue(operator, bondCreator, signingPool)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
 
             const destinationBalance = await web3.eth.getBalance(destination)
@@ -96,16 +96,18 @@ contract('KeepBonding', (accounts) => {
     describe('availableBondingValue', async () => {
         const operator = accounts[1]
         const value = new BN(100)
+        const signingPool = accounts[4]
 
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: value })
+            await keepBonding.authorizeSortitionPoolContract(operator, signingPool, {from: authorizer})
         })
 
         it('returns zero for not deposited operator', async () => {
             const unbondedOperator = "0x0000000000000000000000000000000000000001"
             const expectedUnbonded = 0
 
-            const unbondedValue = await keepBonding.availableBondingValue(unbondedOperator)
+            const unbondedValue = await keepBonding.availableUnbondedValue(unbondedOperator, bondCreator, signingPool)
 
             expect(unbondedValue).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
@@ -113,7 +115,7 @@ contract('KeepBonding', (accounts) => {
         it('returns value of operators deposit', async () => {
             const expectedUnbonded = value
 
-            const unbonded = await keepBonding.availableBondingValue(operator)
+            const unbonded = await keepBonding.availableUnbondedValue(operator, bondCreator, signingPool)
 
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
@@ -138,7 +140,7 @@ contract('KeepBonding', (accounts) => {
 
             await keepBonding.createBond(operator, holder, reference, value, signingPool, {from: bondCreator})
 
-            const unbonded = await keepBonding.availableBondingValue(operator)
+            const unbonded = await keepBonding.availableUnbondedValue(operator, bondCreator, signingPool)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
 
             const lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
@@ -159,10 +161,10 @@ contract('KeepBonding', (accounts) => {
             await keepBonding.createBond(operator, holder, reference, bondValue, signingPool, {from: bondCreator})
             await keepBonding.createBond(operator2, holder, reference, bondValue, signingPool, {from: bondCreator})
 
-            const unbonded1 = await keepBonding.availableBondingValue(operator)
+            const unbonded1 = await keepBonding.availableUnbondedValue(operator, bondCreator, signingPool)
             expect(unbonded1).to.eq.BN(expectedUnbonded, 'invalid unbonded value 1')
 
-            const unbonded2 = await keepBonding.availableBondingValue(operator2)
+            const unbonded2 = await keepBonding.availableUnbondedValue(operator2, bondCreator, signingPool)
             expect(unbonded2).to.eq.BN(expectedUnbonded, 'invalid unbonded value 2')
 
             const lockedBonds1 = await keepBonding.bondAmount(operator, holder, reference)
@@ -284,7 +286,7 @@ contract('KeepBonding', (accounts) => {
             const lockedBonds = await keepBonding.bondAmount(operator, holder, reference)
             expect(lockedBonds).to.eq.BN(0, 'unexpected remaining locked bonds')
 
-            const unbondedValue = await keepBonding.availableBondingValue(operator)
+            const unbondedValue = await keepBonding.availableUnbondedValue(operator, bondCreator, signingPool)
             expect(unbondedValue).to.eq.BN(bondValue, 'unexpected unbonded value')
         })
 

@@ -1,17 +1,13 @@
-const Registry = artifacts.require('./Registry.sol')
-const KeepBonding = artifacts.require("./KeepBonding.sol");
-const ECDSAKeepFactory = artifacts.require("./ECDSAKeepFactory.sol");
-const BondedECDSAKeepVendor = artifacts.require("./BondedECDSAKeepVendor.sol");
-const BondedECDSAKeepVendorImplV1 = artifacts.require("./BondedECDSAKeepVendorImplV1.sol");
+const Registry = artifacts.require('Registry')
+const KeepBonding = artifacts.require("KeepBonding")
+const ECDSAKeepFactory = artifacts.require("ECDSAKeepFactory")
+const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
+const BondedECDSAKeepVendorImplV1 = artifacts.require("BondedECDSAKeepVendorImplV1")
 
 const { deployBondedSortitionPoolFactory } = require('@keep-network/sortition-pools/migrations/scripts/deployContracts')
-const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory");
+const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory")
 
-// TokenStaking artifact is expected to be copied over from previous keep-core
-// migrations.
-let TokenStaking;
-
-let { RandomBeaconAddress } = require('./externals')
+let { RandomBeaconAddress, TokenStakingAddress } = require('./external-contracts')
 
 module.exports = async function (deployer) {
     await deployBondedSortitionPoolFactory(artifacts, deployer)
@@ -26,20 +22,18 @@ module.exports = async function (deployer) {
 
     if (process.env.TEST) {
         TokenStakingStub = artifacts.require("TokenStakingStub")
-        TokenStaking = await TokenStakingStub.new()
+        TokenStakingAddress = (await TokenStakingStub.new()).address
 
         RandomBeaconStub = artifacts.require("RandomBeaconStub")
         RandomBeaconAddress = (await RandomBeaconStub.new()).address
-    } else {
-        TokenStaking = artifacts.require("TokenStaking")
     }
 
-    await deployer.deploy(KeepBonding, registry.address, TokenStaking.address)
+    await deployer.deploy(KeepBonding, registry.address, TokenStakingAddress)
 
     await deployer.deploy(
         ECDSAKeepFactory,
         BondedSortitionPoolFactory.address,
-        TokenStaking.address,
+        TokenStakingAddress,
         KeepBonding.address,
         RandomBeaconAddress
     )

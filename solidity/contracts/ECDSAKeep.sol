@@ -30,9 +30,17 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // Map of all digests requested to be signed. Used to validate submitted signature.
     mapping(bytes32 => bool) digests;
 
-    // Timeout in blocks for a signature to appear on the chain. Blocks are
-    // counted from the moment signing request occurred.
-    uint256 public signingTimeout = 90 * 60; // [seconds]
+    // Timeout for the keep public key to appear on the chain. Time is counted
+    // from the moment keep has been created.
+    uint256 public keyGenerationTimeout = 150 * 60; // 2.5h in seconds
+
+    // The timestamp at which keep has been created and key generation process
+    // started.
+    uint256 keyGenerationStartTimestamp;
+
+    // Timeout for a signature to appear on the chain. Time is counted from the
+    // moment signing request occurred.
+    uint256 public signingTimeout = 90 * 60; // 1.5h in seconds
 
     // The timestamp at which signing process started. Used also to track if
     // signing is in progress. When set to `0` indicates there is no
@@ -96,6 +104,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         isActive = true;
+
+        /* solium-disable-next-line */
+        keyGenerationStartTimestamp = block.timestamp;
     }
 
     /// @notice Submits a public key to the keep.
@@ -106,6 +117,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// event.
     /// @param _publicKey Signer's public key.
     function submitPublicKey(bytes calldata _publicKey) external onlyMember {
+        require(!hasKeyGenerationTimedOut(), "Key generation timeout elapsed");
+
         require(
             !hasMemberSubmittedPublicKey(msg.sender),
             "Member already submitted a public key"
@@ -142,6 +155,14 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         // All submitted signatures match.
         publicKey = _publicKey;
         emit PublicKeyPublished(_publicKey);
+    }
+
+    /// @notice Returns true if the ongoing key generation process timed out.
+    /// @dev There is a certain timeout for keep public key to be produced and
+    /// appear on the chain, see `keyGenerationTimeout`.
+    function hasKeyGenerationTimedOut() internal view returns (bool) {
+        /* solium-disable-next-line */
+        return block.timestamp > keyGenerationStartTimestamp + keyGenerationTimeout;
     }
 
     /// @notice Checks if the member already submitted a public key.
@@ -199,13 +220,13 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
     /// not first approved via a call to sign.
-    /// @dev The function expects the signed digest to be calculated as a double
-    /// sha256 hash (hash256) of the preimage: `sha256(sha256(_preimage))`.
+    /// @dev The function expects the signed digest to be calculated as a sha256 hash
+    /// of the preimage: `sha256(_preimage))`.
     /// @param _v Signature's header byte: `27 + recoveryID`.
     /// @param _r R part of ECDSA signature.
     /// @param _s S part of ECDSA signature.
     /// @param _signedDigest Digest for the provided signature. Result of hashing
-    /// the preimage.
+    /// the preimage with sha256.
     /// @param _preimage Preimage of the hashed message.
     /// @return True if fraud, error otherwise.
     function submitSignatureFraud(
@@ -217,7 +238,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     ) external returns (bool _isFraud) {
         require(publicKey.length != 0, "Public key was not set yet");
 
-        bytes32 calculatedDigest = sha256(abi.encodePacked(sha256(_preimage)));
+        bytes32 calculatedDigest = sha256(_preimage);
         require(
             _signedDigest == calculatedDigest,
             "Signed digest does not match double sha256 hash of the preimage"
@@ -356,7 +377,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     }
 
     /// @notice Distributes ETH evenly across all keep members.
-    /// ETH is sent to the beneficiary of each member.
+    /// ETH is sent to the beneficiary of each member. If the value cannot be
+    /// divided evenly across the members, it submits the remainder to the last
+    /// keep member.
     /// @dev Only the value passed to this function will be distributed.
     function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
@@ -364,13 +387,22 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount; i++) {
+        for (uint16 i = 0; i < memberCount-1; i++) {
             // We don't want to revert the whole execution in case of single
             // transfer failure, hence we don't validate it's result.
             // TODO: What should we do with the dividend which was not transferred
             // successfully?
+            /* solium-disable-next-line security/no-call-value */
             tokenStaking.magpieOf(members[i]).call.value(dividend)("");
         }
+
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
+        uint256 remainder = msg.value.mod(memberCount);
+        /* solium-disable-next-line security/no-call-value */
+        tokenStaking.magpieOf(members[memberCount - 1]).call.value(
+            dividend.add(remainder)
+        )("");
     }
 
     /// @notice Distributes ERC20 token evenly across all keep members.
@@ -379,7 +411,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// function similar to the interface imported here from
     /// openZeppelin. This function only has authority over pre-approved
     /// token amount. We don't explicitly check for allowance, SafeMath
-    /// subtraction overflow is enough protection.
+    /// subtraction overflow is enough protection. If the value cannot be
+    /// divided evenly across the members, it submits the remainder to the last
+    /// keep member.
     /// @param _tokenAddress Address of the ERC20 token to distribute.
     /// @param _value Amount of ERC20 token to distribute.
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
@@ -392,13 +426,23 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
         require(dividend > 0, "dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount; i++) {
+        for (uint16 i = 0; i < memberCount-1; i++) {
             token.transferFrom(
                 msg.sender,
                 tokenStaking.magpieOf(members[i]),
                 dividend
             );
         }
+
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
+        uint256 remainder = _value.mod(memberCount);
+        token.transferFrom(
+            msg.sender,
+            tokenStaking.magpieOf(members[memberCount - 1]),
+            dividend.add(remainder)
+        );
+
     }
 
     /// @notice Checks if the caller is a keep member.

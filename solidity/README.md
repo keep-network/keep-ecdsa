@@ -23,10 +23,10 @@ migration artifacts to be provided in `build/contracts` directory.
 The contracts can be fetched from Google Cloud Bucket (for CI) or copied over
 from local source (for development) after running migrations in `keep-core` project.
 
-To copy required artifacts from `keep-core` project execute command:
+To fetch required contracts addresses from `keep-core` project execute command:
 ```sh
 KEEP_CORE_ARTIFACTS=~/go/src/github.com/keep-network/keep-core/contracts/solidity/build/contracts \
-   ./scripts/lcl-copy-contracts.sh
+   ./scripts/lcl-provision-external-contracts.sh
 ```
 Remember to update `KEEP_CORE_ARTIFACTS` with path where migrations artifacts are
 stored on your machine.

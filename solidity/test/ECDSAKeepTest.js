@@ -39,13 +39,6 @@ contract('ECDSAKeep', (accounts) => {
     registry = await Registry.new()
     tokenStaking = await TokenStakingStub.new()
     keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
-    keep = await ECDSAKeep.new(
-      owner,
-      members,
-      honestThreshold,
-      tokenStaking.address,
-      keepBonding.address
-    )
 
     await registry.approveOperatorContract(bondCreator)
     await keepBonding.authorizeSortitionPoolContract(members[0], signingPool, {from: authorizers[0]})
@@ -54,6 +47,14 @@ contract('ECDSAKeep', (accounts) => {
   })
 
   beforeEach(async () => {
+    keep = await ECDSAKeep.new(
+      owner,
+      members,
+      honestThreshold,
+      tokenStaking.address,
+      keepBonding.address
+    )
+
     await createSnapshot()
   })
 
@@ -381,6 +382,34 @@ contract('ECDSAKeep', (accounts) => {
           'Public key must be 64 bytes long'
         )
       })
+
+      it('can be called just before the timeout', async () => {
+        const keyGenerationTimeout = await keep.keyGenerationTimeout.call()
+
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
+        await keep.submitPublicKey(publicKey1, { from: members[1] })
+
+        // 5 seconds before the timeout
+        await increaseTime(duration.seconds(keyGenerationTimeout - 5));
+
+        await keep.submitPublicKey(publicKey1, { from: members[2] })
+
+        assert.equal(await keep.getPublicKey(), publicKey1, 'incorrect public key')
+      })
+
+      it('cannot be called after timeout', async () => {
+        const keyGenerationTimeout = await keep.keyGenerationTimeout.call()
+
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
+        await keep.submitPublicKey(publicKey1, { from: members[1] })
+
+        await increaseTime(duration.seconds(keyGenerationTimeout));
+
+        await expectRevert(
+          keep.submitPublicKey(publicKey1, { from: members[2] }),
+          "Key generation timeout elapsed"
+        )
+      })
     })
 
   })
@@ -430,8 +459,8 @@ contract('ECDSAKeep', (accounts) => {
     // TODO: Extract test data to a test data file and use them consistently across other tests.
 
     const publicKey1 = '0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df'
-    const preimage1 = '0x4c65636820506f7a6e616e' // Lech Poznan
-    // hash256Digest1 = sha256(abi.encodePacked(sha256(preimage1)))
+    const preimage1 = '0xfdaf2feee2e37c24f2f8d15ad5814b49ba04b450e67b859976cbf25c13ea90d8'
+    // hash256Digest1 = sha256(preimage1)
     const hash256Digest1 = '0x8bacaa8f02ef807f2f61ae8e00a5bfa4528148e0ae73b2bd54b71b8abe61268e'
 
     const signature1 = {
@@ -736,15 +765,15 @@ contract('ECDSAKeep', (accounts) => {
       ).to.eq.BN(0, "incorrect bond amount for keep")
 
       expect(
-        await keepBonding.availableBondingValue(members[0])
+        await keepBonding.availableUnbondedValue(members[0], bondCreator, signingPool)
       ).to.eq.BN(bondValue0, "incorrect unbonded amount for member 0")
 
       expect(
-        await keepBonding.availableBondingValue(members[1])
+        await keepBonding.availableUnbondedValue(members[1], bondCreator, signingPool)
       ).to.eq.BN(bondValue1, "incorrect unbonded amount for member 1")
 
       expect(
-        await keepBonding.availableBondingValue(members[2])
+        await keepBonding.availableUnbondedValue(members[2], bondCreator, signingPool)
       ).to.eq.BN(bondValue2, "incorrect unbonded amount for member 2")
     })
 
@@ -796,7 +825,7 @@ contract('ECDSAKeep', (accounts) => {
   })
 
   describe('#distributeETHToMembers', async () => {
-    const ethValue = 100000
+    const ethValue = new BN(1000).mul(new BN(members.length))
 
     it('correctly distributes ETH', async () => {
       const initialBalances = await getETHBalancesFromList(members)
@@ -804,22 +833,32 @@ contract('ECDSAKeep', (accounts) => {
       await keep.distributeETHToMembers({ value: ethValue })
 
       const newBalances = await getETHBalancesFromList(members)
-      const check = addToBalances(initialBalances, ethValue / members.length)
+      const expectedBalances = addToBalances(initialBalances, ethValue / members.length)
 
-      assert.equal(newBalances.toString(), check.toString())
+      assert.deepEqual(newBalances, expectedBalances)
     })
 
     it('correctly handles unused remainder', async () => {
-      const expectedRemainder = 1
-      const valueWithRemainder = members.length + expectedRemainder
+      const expectedRemainder = new BN(members.length - 1)
+      const valueWithRemainder = ethValue.add(expectedRemainder)
+
       const initialKeepBalance = await web3.eth.getBalance(keep.address)
+
+      const initialBalances = await getETHBalancesFromList(members)
+      const expectedBalances = addToBalances(initialBalances, ethValue / members.length)
+
+      const lastMemberIndex = members.length - 1
+      expectedBalances[lastMemberIndex] = expectedBalances[lastMemberIndex].add(expectedRemainder)
 
       await keep.distributeETHToMembers({ value: valueWithRemainder })
 
-      const finalKeepBalance = await web3.eth.getBalance(keep.address)
-      const keepBalanceCheck = finalKeepBalance - initialKeepBalance
+      const newBalances = await getETHBalancesFromList(members)
 
-      assert.equal(keepBalanceCheck, new BN(expectedRemainder))
+      assert.deepEqual(newBalances, expectedBalances)
+
+      expect(
+        await web3.eth.getBalance(keep.address)
+      ).to.eq.BN(initialKeepBalance, "incorrect keep balance")
     })
 
     it('reverts with zero value', async () => {
@@ -874,22 +913,24 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('sends ETH to beneficiary', async () => {
-      const member1 = accounts[1]
-      const member2 = accounts[2]
-      const beneficiary = accounts[3]
+      const valueWithRemainder = ethValue.add(new BN(1))
 
-      const members = [member1, member2]
+      const member1 = accounts[2]
+      const member2 = accounts[3]
+      const beneficiary = accounts[4]
+
+      const testMembers = [member1, member2]
+
       const accountsInTest = [member1, member2, beneficiary]
-
       const expectedBalances = [
         new BN(await web3.eth.getBalance(member1)),
         new BN(await web3.eth.getBalance(member2)),
-        new BN(await web3.eth.getBalance(beneficiary)).addn(ethValue),
+        new BN(await web3.eth.getBalance(beneficiary)).add(valueWithRemainder),
       ]
 
       const keep = await ECDSAKeep.new(
         owner,
-        members,
+        testMembers,
         honestThreshold,
         tokenStaking.address,
         keepBonding.address
@@ -898,7 +939,7 @@ contract('ECDSAKeep', (accounts) => {
       await tokenStaking.setMagpie(member1, beneficiary)
       await tokenStaking.setMagpie(member2, beneficiary)
 
-      await keep.distributeETHToMembers({ value: ethValue })
+      await keep.distributeETHToMembers({ value: valueWithRemainder })
 
       // Check balances of all keep members' and beneficiary.
       const newBalances = await getETHBalancesFromList(accountsInTest)
@@ -907,7 +948,7 @@ contract('ECDSAKeep', (accounts) => {
   })
 
   describe('#distributeERC20ToMembers', async () => {
-    const erc20Value = 1000000
+    const erc20Value = new BN(2000).mul(new BN(members.length))
     let token
 
     beforeEach(async () => {
@@ -915,31 +956,45 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('correctly distributes ERC20', async () => {
-      const initialBalances = await getERC20BalancesFromList(members, token)
-      await token.mint(accounts[0], erc20Value)
-      await token.approve(keep.address, erc20Value)
+      await initializeTokens(token, keep, accounts[0], erc20Value)
+
+      const expectedBalances = addToBalances(
+        await getERC20BalancesFromList(members, token),
+        erc20Value / members.length
+      )
+
       await keep.distributeERC20ToMembers(token.address, erc20Value)
 
       const newBalances = await getERC20BalancesFromList(members, token)
-      const check = addToBalances(initialBalances, erc20Value / members.length)
 
-      assert.equal(newBalances.toString(), check.toString())
+      assert.equal(newBalances.toString(), expectedBalances.toString())
     })
 
     it('correctly handles unused remainder', async () => {
-      const valueWithRemainder = members.length + 1
-      const initialKeepBalance = await token.balanceOf(keep.address)
+      const expectedRemainder = new BN(members.length - 1)
+      const valueWithRemainder = erc20Value.add(expectedRemainder)
 
-      await token.mint(accounts[0], valueWithRemainder)
-      await token.approve(keep.address, valueWithRemainder)
+      await initializeTokens(token, keep, accounts[0], valueWithRemainder)
+
+      const expectedBalances = addToBalances(
+        await getERC20BalancesFromList(members, token),
+        erc20Value / members.length
+      )
+
+      const lastMemberIndex = members.length - 1
+      expectedBalances[lastMemberIndex] = expectedBalances[lastMemberIndex].add(expectedRemainder)
+
       await keep.distributeERC20ToMembers(token.address, valueWithRemainder)
 
-      const finalKeepBalance = await token.balanceOf(keep.address)
-      const expectedRemainder = 0
-      const keepBalanceCheck = initialKeepBalance - finalKeepBalance
+      const newBalances = await getERC20BalancesFromList(members, token)
 
-      assert.equal(keepBalanceCheck, expectedRemainder)
+      assert.equal(newBalances.toString(), expectedBalances.toString())
+
+      expect(
+        await token.balanceOf(keep.address)
+      ).to.eq.BN(0, "incorrect keep balance")
     })
+
 
     it('fails with insufficient approval', async () => {
       await expectRevert(
@@ -949,7 +1004,6 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('fails with zero value', async () => {
-      await token.mint(accounts[0], erc20Value)
       await expectRevert(
         keep.distributeERC20ToMembers(token.address, 0),
         "dividend value must be non-zero"
@@ -958,8 +1012,9 @@ contract('ECDSAKeep', (accounts) => {
 
     it('reverts with zero dividend', async () => {
       const value = members.length - 1
-      await token.mint(accounts[0], value)
-      await token.approve(keep.address, erc20Value)
+
+      await initializeTokens(token, keep, accounts[0], value)
+
       await expectRevert(
         keep.distributeERC20ToMembers(token.address, value),
         'dividend value must be non-zero'
@@ -967,37 +1022,46 @@ contract('ECDSAKeep', (accounts) => {
     })
 
     it('sends ERC20 to beneficiary', async () => {
-      const member1 = accounts[1]
-      const member2 = accounts[2]
-      const beneficiary = accounts[3]
+      const valueWithRemainder = erc20Value.add(new BN(1))
 
-      const members = [member1, member2]
+      const member1 = accounts[2]
+      const member2 = accounts[3]
+      const beneficiary = accounts[4]
+
+      const testMembers = [member1, member2]
+
       const accountsInTest = [member1, member2, beneficiary]
-
       const expectedBalances = [
         new BN(await token.balanceOf(member1)),
         new BN(await token.balanceOf(member2)),
-        new BN(await token.balanceOf(beneficiary)).addn(erc20Value),
+        new BN(await token.balanceOf(beneficiary)).add(valueWithRemainder),
       ]
-      const keep = await ECDSAKeep.new(
+
+      keep = await ECDSAKeep.new(
         owner,
-        members,
+        testMembers,
         honestThreshold,
         tokenStaking.address,
         keepBonding.address
       )
 
+      await initializeTokens(token, keep, accounts[0], valueWithRemainder)
+
       await tokenStaking.setMagpie(member1, beneficiary)
       await tokenStaking.setMagpie(member2, beneficiary)
 
-      await token.mint(accounts[0], erc20Value)
-      await token.approve(keep.address, erc20Value)
-      await keep.distributeERC20ToMembers(token.address, erc20Value)
+
+      await keep.distributeERC20ToMembers(token.address, valueWithRemainder)
 
       // Check balances of all keep members' and beneficiary.
       const newBalances = await getERC20BalancesFromList(accountsInTest, token)
       assert.equal(newBalances.toString(), expectedBalances.toString())
     })
+
+    async function initializeTokens(token, keep, account, amount) {
+      await token.mint(account, amount)
+      await token.approve(keep.address, amount)
+    }
   })
 
   async function submitMembersPublicKeys(publicKey) {
