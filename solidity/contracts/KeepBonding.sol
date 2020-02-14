@@ -28,7 +28,8 @@ contract KeepBonding {
     // address, holder's address and reference ID assigned on bond creation.
     mapping(bytes32 => uint256) internal lockedBonds;
 
-    // Sortition pools authorized by operator authorizer.
+    // Sortition pools authorized by operator's authorizer.
+    // operator -> pool -> boolean
     mapping(address => mapping (address => bool)) internal authorizedPools;
 
     /// @dev Initialize Keep Bonding contract.
@@ -233,17 +234,22 @@ contract KeepBonding {
 
     /// @dev Authorizes sortition pool for provided operator
     /// @dev Only operator authorizer can call this function
-    function authorizeSortitionPoolContract(address _operator, address _poolAddress) public {
+    function authorizeSortitionPoolContract(
+        address _operator,
+        address _poolAddress
+    ) public {
         require(
             stakingContract.authorizerOf(_operator) == msg.sender,
             "Not authorized"
         );
-        authorizedPools[msg.sender][_poolAddress] = true;
+        authorizedPools[_operator][_poolAddress] = true;
     }
 
     /// @notice Checks if the sortition pool has been authorized for provided operator by its authorizer.
-    function hasSecondaryAuthorization(address _operator, address _poolAddress) public view returns (bool) {
-        address authorizer = stakingContract.authorizerOf(_operator);
-        return authorizedPools[authorizer][_poolAddress];
+    function hasSecondaryAuthorization(
+        address _operator,
+        address _poolAddress
+    ) public view returns (bool) {
+        return authorizedPools[_operator][_poolAddress];
     }
 }
