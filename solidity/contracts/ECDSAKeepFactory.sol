@@ -108,7 +108,7 @@ contract ECDSAKeepFactory is
     /// @param _operator Operator's address.
     /// @param _application Customer application address.
     /// @return True if operator is already registered in the candidates pool,
-    /// else false.
+    /// false otherwise.
     function isOperatorRegistered(address _operator, address _application)
         public
         view
