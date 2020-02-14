@@ -175,6 +175,55 @@ contract("ECDSAKeepFactory", async accounts => {
         })
     })
 
+    describe("isOperatorRegistered", async () => {
+        before(async () => {
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBonding.new()
+            randomBeacon = await RandomBeaconStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
+
+            const stakeBalance = await keepFactory.minimumStake.call()
+            await tokenStaking.setBalance(stakeBalance);
+
+            const bondingValue = new BN(100)
+            await keepBonding.deposit(member1, { value: bondingValue })
+            await keepBonding.deposit(member2, { value: bondingValue })
+            await keepBonding.deposit(member3, { value: bondingValue })
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("returns true if the operator is registered for the application", async () => {
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.isTrue(await keepFactory.isOperatorRegistered(member1, application))
+        })
+
+        it("returns false if the operator is registered for another application", async () => {
+            const application2 = '0x0000000000000000000000000000000000000002'
+
+            await keepFactory.registerMemberCandidate(application, { from: member1 })
+
+            assert.isFalse(await keepFactory.isOperatorRegistered(member1, application2))
+        })
+
+        it("returns false if the operator is not registered for any application", async () => {
+            assert.isFalse(await keepFactory.isOperatorRegistered(member1, application))
+        })
+    })
+
     describe("openKeep", async () => {
         const keepOwner = "0xbc4862697a1099074168d54A555c4A60169c18BD"
         const groupSize = new BN(3)
