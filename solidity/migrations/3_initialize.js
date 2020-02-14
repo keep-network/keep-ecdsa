@@ -1,6 +1,9 @@
-const ECDSAKeepFactory = artifacts.require("ECDSAKeepFactory");
+const ECDSAKeepFactory = artifacts.require("ECDSAKeepFactory")
+const truffleContract = require("@truffle/contract")
 
-module.exports = async function (deployer) {
+let { RegistryAddress } = require('./external-contracts')
+
+module.exports = async function (deployer, network) {
     await ECDSAKeepFactory.deployed()
 
     let registry
@@ -8,10 +11,18 @@ module.exports = async function (deployer) {
         RegistryStub = artifacts.require("RegistryStub")
         registry = await RegistryStub.new()
     } else {
-        Registry = artifacts.require("Registry")
-        registry = await Registry.deployed()
+        // Read compiled contract artifact from 
+        const registryJSON = require('@keep-network/keep-core/build/truffle/Registry.json')
+        const Registry = truffleContract(registryJSON)
+        Registry.setProvider(web3.currentProvider);
+
+        registry = await Registry.at(RegistryAddress)
     }
 
-    await registry.approveOperatorContract(ECDSAKeepFactory.address)
+    await registry.approveOperatorContract(
+        ECDSAKeepFactory.address,
+        { from: deployer.networks[network].from }
+    )
+
     console.log(`approved operator contract [${ECDSAKeepFactory.address}] in registry`)
-};
+}

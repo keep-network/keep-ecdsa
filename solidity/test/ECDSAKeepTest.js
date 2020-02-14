@@ -372,6 +372,34 @@ contract('ECDSAKeep', (accounts) => {
           'Public key must be 64 bytes long'
         )
       })
+
+      it('can be called just before the timeout', async () => {
+        const keyGenerationTimeout = await keep.keyGenerationTimeout.call()
+
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
+        await keep.submitPublicKey(publicKey1, { from: members[1] })
+
+        // 5 seconds before the timeout
+        await increaseTime(duration.seconds(keyGenerationTimeout - 5));
+
+        await keep.submitPublicKey(publicKey1, { from: members[2] })
+
+        assert.equal(await keep.getPublicKey(), publicKey1, 'incorrect public key')
+      })
+
+      it('cannot be called after timeout', async () => {
+        const keyGenerationTimeout = await keep.keyGenerationTimeout.call()
+
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
+        await keep.submitPublicKey(publicKey1, { from: members[1] })
+
+        await increaseTime(duration.seconds(keyGenerationTimeout));
+
+        await expectRevert(
+          keep.submitPublicKey(publicKey1, { from: members[2] }),
+          "Key generation timeout elapsed"
+        )
+      })
     })
 
   })

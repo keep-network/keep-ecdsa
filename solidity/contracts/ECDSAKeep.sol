@@ -30,9 +30,17 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // Map of all digests requested to be signed. Used to validate submitted signature.
     mapping(bytes32 => bool) digests;
 
-    // Timeout in blocks for a signature to appear on the chain. Blocks are
-    // counted from the moment signing request occurred.
-    uint256 public signingTimeout = 90 * 60; // [seconds]
+    // Timeout for the keep public key to appear on the chain. Time is counted
+    // from the moment keep has been created.
+    uint256 public keyGenerationTimeout = 150 * 60; // 2.5h in seconds
+
+    // The timestamp at which keep has been created and key generation process
+    // started.
+    uint256 keyGenerationStartTimestamp;
+
+    // Timeout for a signature to appear on the chain. Time is counted from the
+    // moment signing request occurred.
+    uint256 public signingTimeout = 90 * 60; // 1.5h in seconds
 
     // The timestamp at which signing process started. Used also to track if
     // signing is in progress. When set to `0` indicates there is no
@@ -96,6 +104,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         isActive = true;
+
+        /* solium-disable-next-line */
+        keyGenerationStartTimestamp = block.timestamp;
     }
 
     /// @notice Submits a public key to the keep.
@@ -106,6 +117,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// event.
     /// @param _publicKey Signer's public key.
     function submitPublicKey(bytes calldata _publicKey) external onlyMember {
+        require(!hasKeyGenerationTimedOut(), "Key generation timeout elapsed");
+
         require(
             !hasMemberSubmittedPublicKey(msg.sender),
             "Member already submitted a public key"
@@ -142,6 +155,14 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         // All submitted signatures match.
         publicKey = _publicKey;
         emit PublicKeyPublished(_publicKey);
+    }
+
+    /// @notice Returns true if the ongoing key generation process timed out.
+    /// @dev There is a certain timeout for keep public key to be produced and
+    /// appear on the chain, see `keyGenerationTimeout`.
+    function hasKeyGenerationTimedOut() internal view returns (bool) {
+        /* solium-disable-next-line */
+        return block.timestamp > keyGenerationStartTimestamp + keyGenerationTimeout;
     }
 
     /// @notice Checks if the member already submitted a public key.
