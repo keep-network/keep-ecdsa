@@ -35,6 +35,9 @@ contract('ECDSAKeep', (accounts) => {
   before(async () => {
     keepBonding = await KeepBonding.new()
     tokenStaking = await TokenStakingStub.new()
+  })
+
+  beforeEach(async () => {
     keep = await ECDSAKeep.new(
       owner,
       members,
@@ -42,9 +45,7 @@ contract('ECDSAKeep', (accounts) => {
       tokenStaking.address,
       keepBonding.address
     )
-  })
 
-  beforeEach(async () => {
     await createSnapshot()
   })
 
