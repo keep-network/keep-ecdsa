@@ -220,13 +220,13 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
     /// not first approved via a call to sign.
-    /// @dev The function expects the signed digest to be calculated as a double
-    /// sha256 hash (hash256) of the preimage: `sha256(sha256(_preimage))`.
+    /// @dev The function expects the signed digest to be calculated as a sha256 hash
+    /// of the preimage: `sha256(_preimage))`.
     /// @param _v Signature's header byte: `27 + recoveryID`.
     /// @param _r R part of ECDSA signature.
     /// @param _s S part of ECDSA signature.
     /// @param _signedDigest Digest for the provided signature. Result of hashing
-    /// the preimage.
+    /// the preimage with sha256.
     /// @param _preimage Preimage of the hashed message.
     /// @return True if fraud, error otherwise.
     function submitSignatureFraud(
@@ -238,7 +238,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     ) external returns (bool _isFraud) {
         require(publicKey.length != 0, "Public key was not set yet");
 
-        bytes32 calculatedDigest = sha256(abi.encodePacked(sha256(_preimage)));
+        bytes32 calculatedDigest = sha256(_preimage);
         require(
             _signedDigest == calculatedDigest,
             "Signed digest does not match double sha256 hash of the preimage"
