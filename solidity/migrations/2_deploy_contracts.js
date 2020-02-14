@@ -7,18 +7,10 @@ const BondedECDSAKeepVendorImplV1 = artifacts.require("BondedECDSAKeepVendorImpl
 const { deployBondedSortitionPoolFactory } = require('@keep-network/sortition-pools/migrations/scripts/deployContracts')
 const BondedSortitionPoolFactory = artifacts.require("BondedSortitionPoolFactory")
 
-let { RandomBeaconAddress, TokenStakingAddress } = require('./external-contracts')
+let { RandomBeaconAddress, TokenStakingAddress, RegistryAddress } = require('./external-contracts')
 
 module.exports = async function (deployer) {
     await deployBondedSortitionPoolFactory(artifacts, deployer)
-
-    let registry
-    // TODO: Update with PR206 changes once is merged
-    if (process.env.TEST) {
-        await deployer.deploy(Registry)
-    }
-
-    registry = await Registry.deployed()
 
     if (process.env.TEST) {
         TokenStakingStub = artifacts.require("TokenStakingStub")
@@ -26,9 +18,17 @@ module.exports = async function (deployer) {
 
         RandomBeaconStub = artifacts.require("RandomBeaconStub")
         RandomBeaconAddress = (await RandomBeaconStub.new()).address
+
+        RegistryAddress = (await deployer.deploy(Registry)).address
+    } else {
+        RegistryAddress = (await Registry.at(RegistryAddress)).address
     }
 
-    await deployer.deploy(KeepBonding, registry.address, TokenStakingAddress)
+    await deployer.deploy(
+        KeepBonding,
+        RegistryAddress,
+        TokenStakingAddress
+    )
 
     await deployer.deploy(
         ECDSAKeepFactory,
@@ -40,15 +40,4 @@ module.exports = async function (deployer) {
 
     await deployer.deploy(BondedECDSAKeepVendorImplV1)
     await deployer.deploy(BondedECDSAKeepVendor, BondedECDSAKeepVendorImplV1.address)
-
-    const vendor = await BondedECDSAKeepVendorImplV1.at(BondedECDSAKeepVendor.address)
-    await vendor.initialize(registry.address)
-
-    await registry.approveOperatorContract(ECDSAKeepFactory.address)
-    console.log(`approved operator contract [${ECDSAKeepFactory.address}] in registry`)
-
-    // Set service contract owner as operator contract upgrader by default
-    const operatorContractUpgrader = await vendor.owner()
-    await registry.setOperatorContractUpgrader(vendor.address, operatorContractUpgrader);
-    await vendor.registerFactory(ECDSAKeepFactory.address)
 }
