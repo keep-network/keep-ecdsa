@@ -2,8 +2,8 @@
 set -ex
 
 # Fetch addresses of contacts migrated from keep-network/keep-core project.
-# CONTRACT_DATA_BUCKET and ETH_NETWORK_ID are configured in Circle CI config to
-# values specific to given environment.
+# CONTRACT_DATA_BUCKET and ETH_NETWORK_ID are configured in Circle CI Context 
+# config to values specific to given environment.
 
 REGISTRY_CONTRACT_DATA="Registry.json"
 REGISTRY_PROPERTY="RegistryAddress"
