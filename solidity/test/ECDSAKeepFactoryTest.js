@@ -284,7 +284,7 @@ contract("ECDSAKeepFactory", async accounts => {
             assert.isFalse(await keepFactory.isOperatorUpToDate(member1, application))
         })
 
-        it("returns true if the operator stake changed insufficiently", async () => {
+        it("returns true if the operator stake changed insignificantly", async () => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
             // We multiply minimumStake as sortition pools expect multiplies of the
