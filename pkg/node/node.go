@@ -72,17 +72,17 @@ func (n *Node) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to generate threshold signer: [%v]", err)
 	}
 
-	logger.Debugf(
-		"generated threshold signer with public key: [%x]",
-		signer.PublicKey().Marshal(),
-	)
-
 	// Publish signer's public key on ethereum blockchain in a specific keep
 	// contract.
 	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
+
+	logger.Debugf(
+		"generated threshold signer with public key: [%x]",
+		serializedPublicKey,
+	)
 
 	err = n.ethereumChain.SubmitKeepPublicKey(
 		keepAddress,

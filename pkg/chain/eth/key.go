@@ -1,7 +1,7 @@
 package eth
 
 import (
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"crypto/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
 )
 
