@@ -238,7 +238,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     ) external returns (bool _isFraud) {
         require(publicKey.length != 0, "Public key was not set yet");
 
-        bytes32 calculatedDigest = sha256(abi.encodePacked(sha256(_preimage)));
+        bytes32 calculatedDigest = sha256(_preimage);
         require(
             _signedDigest == calculatedDigest,
             "Signed digest does not match double sha256 hash of the preimage"
