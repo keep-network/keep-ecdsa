@@ -103,7 +103,6 @@ jobs:
       - run:
           name: Build keep-tecdsa-initcontainer image
           command: |
-            cp /tmp/keep-tecdsa/contracts/* infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
             cd infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
             docker build \
               --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
@@ -154,23 +153,21 @@ jobs:
       - run:
           name: Load Docker images
           command: |
-            docker load -i /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar
             docker load -i /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar
       - run:
           name: Tag Docker images
           command: |
-            docker tag keep-tecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
             docker tag initcontainer-provision-keep-tecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-tecdsa
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
           # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
           gcloud-service-key: GCLOUD_SERVICE_KEY
-      - gcp-gcr/push-image:
-          google-project-id: GOOGLE_PROJECT_ID
-          registry-url: $GCR_REGISTRY_URL
-          image: keep-tecdsa
-          tag: latest
+      # - gcp-gcr/push-image:
+      #     google-project-id: GOOGLE_PROJECT_ID
+      #     registry-url: $GCR_REGISTRY_URL
+      #     image: keep-tecdsa
+      #     tag: latest
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
@@ -244,64 +241,65 @@ workflows:
     jobs:
       - keep_test_approval:
           type: approval
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+      #     filters:
+      #       tags:
+      #         only: /^v.*/
+      #       branches:
+      #         ignore: /.*/
       - setup_github_package_registry:
           context: github-package-registry
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+          # filters:
+          #   tags:
+          #     only: /^v.*/
+          #   branches:
+          #     ignore: /.*/
           requires:
             - keep_test_approval
-      - build_client_and_test_go:
-          context: github-package-registry
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-          requires:
-            - setup_github_package_registry
-      - migrate_contracts:
-          context: keep-test
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-          requires:
-            - build_client_and_test_go
+      # - build_client_and_test_go:
+      #     context: github-package-registry
+      # filters:
+      #   tags:
+      #     only: /^v.*/
+      #   branches:
+      #     ignore: /.*/
+      # requires:
+      #   - setup_github_package_registry
+      # - migrate_contracts:
+      #     context: keep-test
+      #     filters:
+      #       tags:
+      #         only: /^v.*/
+      #       branches:
+      #         ignore: /.*/
+      #     requires:
+      #       - build_client_and_test_go
       - build_initcontainer:
           context: keep-test
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+          # filters:
+          #   tags:
+          #     only: /^v.*/
+          #   branches:
+          #     ignore: /.*/
           requires:
-            - migrate_contracts
+            - setup_github_package_registry
+          #   - migrate_contracts
       - publish_client:
           context: keep-test
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+          # filters:
+          #   tags:
+          #     only: /^v.*/
+          #   branches:
+          #     ignore: /.*/
           requires:
-            - build_client_and_test_go
+            # - build_client_and_test_go
             - build_initcontainer
-            - migrate_contracts
-      - publish_contract_data:
-          context: keep-test
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-          requires:
-            - migrate_contracts
+            # - migrate_contracts
+      # - publish_contract_data:
+      #     context: keep-test
+      #     filters:
+      #       tags:
+      #         only: /^v.*/
+      #       branches:
+      #         ignore: /.*/
+      #     requires:
+      #       - migrate_contracts
