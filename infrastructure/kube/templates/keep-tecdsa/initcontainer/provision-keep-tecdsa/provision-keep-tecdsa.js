@@ -14,9 +14,10 @@ Each <contract.json> file is sourced directly from the InitContainer.  Files are
 Truffle during contract migration and copied to the InitContainer image via Circle.
 */
 
-const ecdsaKeepFactoryJsonFile = '/tmp/ECDSAKeepFactory.json';
-const ecdsaKeepFactoryParsed = JSON.parse(fs.readFileSync(ecdsaKeepFactoryJsonFile));
-const ecdsaKeepFactoryContractAddress = ecdsaKeepFactoryParsed.networks[ethNetworkId].address;
+// const ecdsaKeepFactoryJsonFile = '/tmp/ECDSAKeepFactory.json';
+// const ecdsaKeepFactoryParsed = JSON.parse(fs.readFileSync(ecdsaKeepFactoryJsonFile));
+// const ecdsaKeepFactoryContractAddress = ecdsaKeepFactoryParsed.networks[ethNetworkId].address;
+const ecdsaKeepFactoryContractAddress = "0x7b20cac2F36F0b8c731e288917b654bB2048D8cc"
 
 async function provisionKeepTecdsa() {
 
