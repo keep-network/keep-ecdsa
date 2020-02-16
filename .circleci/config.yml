@@ -114,6 +114,7 @@ jobs:
       - run:
           name: Save keep-tecdsa-initcontainer image
           command: |
+            mkdir -p /tmp/keep-tecdsa/docker-images
             docker save \
               --output /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar \
               initcontainer-provision-keep-tecdsa
