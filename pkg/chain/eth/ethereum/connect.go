@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+"fmt"
 	cecdsa "crypto/ecdsa"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -26,6 +27,7 @@ func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) 
 	}
 
 	transactorOptions := bind.NewKeyedTransactor(privateKey)
+fmt.Println(transactorOptions.From.String())
 
 	ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ECDSAKeepFactoryContractName)
 	if err != nil {

@@ -3,7 +3,9 @@ package ethereum
 
 import (
 	"fmt"
+	"math/big"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -90,7 +92,11 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return err
 	}
 
-	transaction, err := keepContract.SetPublicKey(ec.transactorOptions, publicKey[:])
+transactorOptions := bind.TransactOpts(*ec.transactorOptions)
+transactorOptions.GasLimit = 300000 // yolo
+transactorOptions.GasPrice = big.NewInt(20000000000)
+
+	transaction, err := keepContract.SetPublicKey(&transactorOptions, publicKey[:])
 	if err != nil {
 		return err
 	}
