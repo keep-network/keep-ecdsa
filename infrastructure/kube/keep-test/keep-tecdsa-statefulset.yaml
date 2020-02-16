@@ -64,6 +64,8 @@ spec:
       - name: initcontainer-provision-keep-tecdsa
         image: gcr.io/keep-test-f3e0/initcontainer-provision-keep-tecdsa
         env:
+          - name: ETH_URL
+              value: wss://ropsten.infura.io/ws/v3/59fb36a36fa4474b890c13dd30038be5
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
               secretKeyRef:
