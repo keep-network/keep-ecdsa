@@ -41,11 +41,7 @@ async function createKeepTecdsaConfig() {
 
     parsedConfigFile.ethereum.URL = ethURL;
 
-    parsedConfigFile.ethereum.account.KeyFile = [
-      process.env.KEEP_TECDSA_ETH_KEYFILE_1,
-      process.env.KEEP_TECDSA_ETH_KEYFILE_2,
-      process.env.KEEP_TECDSA_ETH_KEYFILE_3
-    ]
+    parsedConfigFile.ethereum.account.KeyFile = process.env.KEEP_TECDSA_ETH_KEYFILE
     parsedConfigFile.ethereum.ContractAddresses.ECDSAKeepFactory = ecdsaKeepFactoryContractAddress;
 
     parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
