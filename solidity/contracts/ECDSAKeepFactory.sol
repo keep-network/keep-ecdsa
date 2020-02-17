@@ -142,6 +142,79 @@ contract ECDSAKeepFactory is
         return candidatesPools[_application];
     }
 
+    /// @notice Checks if operator is registered as a candidate for the given
+    /// customer application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    /// @return True if operator is already registered in the candidates pool,
+    /// false otherwise.
+    function isOperatorRegistered(address _operator, address _application)
+        public
+        view
+        returns (bool)
+    {
+        if (candidatesPools[_application] == address(0)) {
+            return false;
+        }
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        return candidatesPool.isOperatorRegistered(_operator);
+    }
+
+    /// @notice Checks if operator's details in the member candidates pool are
+    /// up to date for the given application. If not update operator status
+    /// function should be called by the one who is monitoring the status.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    function isOperatorUpToDate(address _operator, address _application)
+        external
+        view
+        returns (bool)
+    {
+        BondedSortitionPool candidatesPool = getSortitionPoolForOperator(
+            _operator,
+            _application
+        );
+
+        return candidatesPool.isOperatorUpToDate(_operator);
+    }
+
+    /// @notice Invokes update of operator's details in the member candidates pool
+    /// for the given application
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    function updateOperatorStatus(address _operator, address _application)
+        external
+    {
+        BondedSortitionPool candidatesPool = getSortitionPoolForOperator(
+            _operator,
+            _application
+        );
+
+        candidatesPool.updateOperatorStatus(_operator);
+    }
+
+    /// @notice Gets bonded sortition pool of specific application for the
+    /// operator.
+    /// @dev Reverts if the operator is not registered for the application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    /// @return Bonded sortition pool.
+    function getSortitionPoolForOperator(
+        address _operator,
+        address _application
+    ) internal view returns (BondedSortitionPool) {
+        require(
+            isOperatorRegistered(_operator, _application),
+            "Operator not registered for the application"
+        );
+
+        return BondedSortitionPool(candidatesPools[_application]);
+    }
+
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
     function openKeepFeeEstimate() public view returns (uint256) {
