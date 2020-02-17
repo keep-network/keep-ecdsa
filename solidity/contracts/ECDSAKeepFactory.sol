@@ -83,6 +83,7 @@ contract ECDSAKeepFactory is
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application.
     /// @dev If caller is already registered it returns without any changes.
+    /// @param _application Address of the application.
     function registerMemberCandidate(address _application) external {
         require(
             candidatesPools[_application] != address(0),
