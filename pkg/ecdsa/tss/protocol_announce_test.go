@@ -11,8 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
-// TODO: This test doesn't work
-// TODO: Test with real clients
 func TestAnnounceProtocol(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 
