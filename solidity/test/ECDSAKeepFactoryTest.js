@@ -11,6 +11,7 @@ const TokenStakingStub = artifacts.require("TokenStakingStub")
 const BondedSortitionPool = artifacts.require('BondedSortitionPool');
 const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
 const RandomBeaconStub = artifacts.require('RandomBeaconStub')
+const ECDSAKeep = artifacts.require('ECDSAKeep')
 
 const BN = web3.utils.BN
 
@@ -1070,11 +1071,15 @@ contract("ECDSAKeepFactory", async accounts => {
             })
 
             const initialBalances = await getETHBalancesFromList(members)
-            const expectedBalances = addToBalances(initialBalances, subsidyPool / members.length)
+            const expectedSingleBalance = new BN(subsidyPool / members.length)
 
-            const lastMemberIndex = members.length - 1
-            expectedBalances[lastMemberIndex] = expectedBalances[lastMemberIndex].add(remainder)
-
+            const keepAddress = await keepFactory.openKeep.call(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
 
             await keepFactory.openKeep(
                 groupSize,
@@ -1083,16 +1088,30 @@ contract("ECDSAKeepFactory", async accounts => {
                 bond,
                 { from: application, value: feeEstimate },
             )
+            const keep = await ECDSAKeep.at(keepAddress)
 
             const newBalances = await getETHBalancesFromList(members)
+            assert.deepEqual(newBalances, initialBalances)
 
-
-            assert.equal(newBalances.toString(), expectedBalances.toString())
-
-            expect(await keepFactory.subsidyPool()).to.eq.BN(
-                0,
+            expect(
+                await keepFactory.subsidyPool(),
                 "subsidy pool should go down to 0"
-            )
+            ).to.eq.BN(0)
+
+            expect(
+                await keep.getBalance(member1),
+                "incorrect member 1 balance"
+            ).to.eq.BN(expectedSingleBalance)
+
+            expect(
+                await keep.getBalance(member2),
+                "incorrect member 2 balance"
+            ).to.eq.BN(expectedSingleBalance)
+
+            expect(
+                await keep.getBalance(member3),
+                "incorrect member 3 balance"
+            ).to.eq.BN(expectedSingleBalance.add(remainder))
         })
 
         it("does not transfer more from subsidy pool than entry fee", async () => {
@@ -1108,9 +1127,17 @@ contract("ECDSAKeepFactory", async accounts => {
             })
 
             const initialBalances = await getETHBalancesMap(members)
-            const expectedBalances = addToBalancesMap(initialBalances, feeEstimate / members.length)
+            const expectedSingleBalance = new BN(feeEstimate / members.length)
 
             let blockNumber = await web3.eth.getBlockNumber()
+
+            const keepAddress = await keepFactory.openKeep.call(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
 
             await keepFactory.openKeep(
                 groupSize,
@@ -1119,6 +1146,7 @@ contract("ECDSAKeepFactory", async accounts => {
                 bond,
                 { from: application, value: feeEstimate },
             )
+            const keep = await ECDSAKeep.at(keepAddress)
 
             let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
                 fromBlock: blockNumber,
@@ -1127,15 +1155,27 @@ contract("ECDSAKeepFactory", async accounts => {
             const selectedMembers = eventList[0].returnValues.members
 
             const newBalances = await getETHBalancesMap(members)
-            const lastMember = selectedMembers[groupSize - 1]
-            expectedBalances[lastMember] = expectedBalances[lastMember].add(remainder)
-
-            assert.deepEqual(newBalances, expectedBalances)
+            assert.deepEqual(newBalances, initialBalances)
 
             expect(await keepFactory.subsidyPool()).to.eq.BN(
                 subsidyPool - feeEstimate,
                 "unexpected subsidy pool balance"
             )
+
+            expect(
+                await keep.getBalance(selectedMembers[0]),
+                "incorrect member 1 balance"
+            ).to.eq.BN(expectedSingleBalance)
+
+            expect(
+                await keep.getBalance(selectedMembers[1]),
+                "incorrect member 2 balance"
+            ).to.eq.BN(expectedSingleBalance)
+
+            expect(
+                await keep.getBalance(selectedMembers[2]),
+                "incorrect member 3 balance"
+            ).to.eq.BN(expectedSingleBalance.add(remainder))
         })
 
         async function depositAndRegisterMembers(unbondedAmount) {
