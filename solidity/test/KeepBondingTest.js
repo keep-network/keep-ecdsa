@@ -337,7 +337,7 @@ contract('KeepBonding', (accounts) => {
             const destination = etherReceiver.address
 
             await expectRevert(
-                keepBonding.seizeBond(operator, reference, value, destination, { from: holder }),
+                keepBonding.seizeBond(operator, reference, bondValue, destination, { from: holder }),
                 "Transfer failed"
             )
 
