@@ -444,7 +444,26 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             tokenStaking.magpieOf(members[memberCount - 1]),
             dividend.add(remainder)
         );
+    }
 
+    /// @notice Gets current amount of ether hold in the keep for the member.
+    /// @param _member Keep member address.
+    /// @return Current balance.
+    function getBalance(address _member) external view returns (uint256) {
+        return membersBalances[_member];
+    }
+
+    /// @notice Withdraws amount of ether hold in the keep for the member.
+    /// The value is sent to the beneficiary of the specific member.
+    /// @param _member Keep member address.
+    function withdraw(address _member) external {
+        uint256 value = membersBalances[_member];
+        membersBalances[_member] = 0;
+
+        /* solium-disable-next-line security/no-call-value */
+        (bool success, ) = tokenStaking.magpieOf(_member).call.value(value)("");
+
+        require(success, "Transfer failed");
     }
 
     /// @notice Checks if the caller is a keep member.
