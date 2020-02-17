@@ -76,10 +76,10 @@ contract('KeepBonding', (accounts) => {
         })
 
         it('reverts if transfer fails', async () => {
-            const invalidValue = await etherReceiver.invalidValue.call()
+            await etherReceiver.setShouldFail(true)
 
             await expectRevert(
-                keepBonding.withdraw(invalidValue, etherReceiver.address, { from: operator }),
+                keepBonding.withdraw(value, etherReceiver.address, { from: operator }),
                 "Transfer failed"
             )
         })
@@ -333,11 +333,11 @@ contract('KeepBonding', (accounts) => {
         })
 
         it('reverts if transfer fails', async () => {
-            const invalidValue = await etherReceiver.invalidValue.call()
+            await etherReceiver.setShouldFail(true)
             const destination = etherReceiver.address
 
             await expectRevert(
-                keepBonding.seizeBond(operator, reference, invalidValue, destination, { from: holder }),
+                keepBonding.seizeBond(operator, reference, value, destination, { from: holder }),
                 "Transfer failed"
             )
 
