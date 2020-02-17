@@ -108,19 +108,22 @@ contract ECDSAKeepFactory is
         external
         returns (address)
     {
-        if (candidatesPools[_application] == address(0)) {
-            address sortitionPoolAddress = sortitionPoolFactory
-                .createSortitionPool(
-                IStaking(tokenStaking),
-                IBonding(address(keepBonding)),
-                minimumStake,
-                minimumBond
-            );
+        require(
+            candidatesPools[_application] == address(0),
+            "Sortition pool already exists"
+        );
 
-            candidatesPools[_application] = sortitionPoolAddress;
+        address sortitionPoolAddress = sortitionPoolFactory
+            .createSortitionPool(
+            IStaking(tokenStaking),
+            IBonding(address(keepBonding)),
+            minimumStake,
+            minimumBond
+        );
 
-            emit SortitionPoolCreated(_application, sortitionPoolAddress);
-        }
+        candidatesPools[_application] = sortitionPoolAddress;
+
+        emit SortitionPoolCreated(_application, sortitionPoolAddress);
 
         return candidatesPools[_application];
     }

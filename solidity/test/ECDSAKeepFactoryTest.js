@@ -195,21 +195,12 @@ contract("ECDSAKeepFactory", async accounts => {
             )
         })
 
-        it("creates new sortition pool and emits an event", async () => {
-            const existingSortitionPoolAddress = await keepFactory.createSortitionPool.call(application)
+        it("reverts when sortition pool already exists", async () => {
             await keepFactory.createSortitionPool(application)
 
-            const newSortitionPoolAddress = await keepFactory.createSortitionPool.call(application)
-            assert.equal(
-                newSortitionPoolAddress,
-                existingSortitionPoolAddress,
-                'invalid address of existing sortition pool'
-            )
-
-            const res = await keepFactory.createSortitionPool(application)
-            truffleAssert.eventNotEmitted(
-                res,
-                'SortitionPoolCreated'
+            await expectRevert(
+                keepFactory.createSortitionPool(application),
+                'Sortition pool already exists'
             )
         })
     })
