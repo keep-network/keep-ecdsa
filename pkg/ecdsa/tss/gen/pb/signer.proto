@@ -7,8 +7,9 @@ message ThresholdSigner {
   message GroupInfo {
     string groupID = 1;
     bytes memberID = 2;
-    repeated bytes groupMemberIDs = 3;
-    int32 dishonestThreshold = 4;
+    bytes memberPublicKey = 3;
+    repeated bytes groupMemberIDs = 4;
+    int32 dishonestThreshold = 5;
   }
 
   GroupInfo groupInfo = 1;

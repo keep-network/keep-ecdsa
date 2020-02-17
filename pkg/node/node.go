@@ -64,6 +64,7 @@ func (n *Node) GenerateSignerForKeep(
 	signer, err := tss.GenerateThresholdSigner(
 		keepAddress.Hex(),
 		memberID,
+		n.ethereumChain.PublicKey(),
 		groupMemberIDs,
 		uint(len(keepMembers)-1),
 		n.networkProvider,
