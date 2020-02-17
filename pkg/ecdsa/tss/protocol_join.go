@@ -32,7 +32,11 @@ func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider n
 		return &JoinMessage{}
 	})
 
-	// TODO: register group member filter
+	if err := broadcastChannel.SetFilter(
+		createGroupMemberFilter(group.groupMemberIDs),
+	); err != nil {
+		return fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
+	}
 
 	joinInChan := make(chan *JoinMessage, len(group.groupMemberIDs))
 	handleJoinMessage := func(netMsg net.Message) {

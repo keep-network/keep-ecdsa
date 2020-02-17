@@ -34,7 +34,11 @@ func announceProtocol(
 		return &AnnounceMessage{}
 	})
 
-	// TODO: register group member filter
+	if err := broadcastChannel.SetFilter(
+		createGroupMemberFilter(group.groupMemberIDs),
+	); err != nil {
+		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
+	}
 
 	announceInChan := make(chan *AnnounceMessage, len(group.groupMemberIDs))
 	handleAnnounceMessage := func(netMsg net.Message) {
