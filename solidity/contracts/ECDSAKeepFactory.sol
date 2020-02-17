@@ -45,7 +45,20 @@ contract ECDSAKeepFactory is
     IRandomBeacon randomBeacon;
 
     uint256 public minimumStake = 200000 * 1e18;
-    uint256 public minimumBond = 1; // TODO: Define economics
+
+    // Sortition pool is created with a minimum bond of 1 to avoid
+    // griefing.
+    //
+    // Anyone can create a sortition pool for an application. If a pool is
+    // created with a ridiculously high bond, nobody can join it and
+    // updating bond is not possible because trying to select a group
+    // with an empty pool reverts.
+    //
+    // We set the minimum bond value to 1 to prevent from this situation and
+    // to allow the pool adjust the minimum bond during the first signer
+    // selection.
+    uint256 public constant minimumBond = 1;
+
 
     // Gas required for a callback from the random beacon. The value specifies
     // gas required to call `setGroupSelectionSeed` function in the worst-case
