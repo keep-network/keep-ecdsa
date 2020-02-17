@@ -37,21 +37,24 @@ contract("ECDSAKeepFactory", async accounts => {
     const authorizer2 = accounts[3]
     const authorizer3 = accounts[4]
 
+    async function initializeNewFactory() {
+        registry = await Registry.new()
+        bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+        tokenStaking = await TokenStakingStub.new()
+        keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+        randomBeacon = await RandomBeaconStub.new()
+        keepFactory = await ECDSAKeepFactoryStub.new(
+            bondedSortitionPoolFactory.address,
+            tokenStaking.address,
+            keepBonding.address,
+            randomBeacon.address
+        )
+        await registry.approveOperatorContract(keepFactory.address)
+    }
+
     describe("registerMemberCandidate", async () => {
         before(async () => {
-            registry = await Registry.new()
-            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-            tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
-            randomBeacon = await RandomBeaconStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(
-                bondedSortitionPoolFactory.address,
-                tokenStaking.address,
-                keepBonding.address,
-                randomBeacon.address
-            )
-
-            await registry.approveOperatorContract(keepFactory.address)
+            await initializeNewFactory()
 
             await keepFactory.createSortitionPool(application)
             signerPool = await keepFactory.getSignerPool(application)
@@ -167,25 +170,7 @@ contract("ECDSAKeepFactory", async accounts => {
         })
     })
 
-    describe("createSortitionPool", async () => {
-        // TODO: Extract common initialization part to be reused by other tests.
-        async function initializeNewFactory() {
-            registry = await Registry.new()
-            // Tests are executed with real implementation of sortition pools.
-            // We don't use stub to ensure that keep members selection works correctly.
-            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-            tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
-            randomBeacon = await RandomBeaconStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(
-                bondedSortitionPoolFactory.address,
-                tokenStaking.address,
-                keepBonding.address,
-                randomBeacon.address
-            )
-            await registry.approveOperatorContract(keepFactory.address)
-        }
-
+    describe("createSortitionPool", async () => {        
         before(async () => {
             await initializeNewFactory()
         })
@@ -229,24 +214,6 @@ contract("ECDSAKeepFactory", async accounts => {
     })
 
     describe("getSortitionPool", async () => {
-        // TODO: Extract common initialization part to be reused by other tests.
-        async function initializeNewFactory() {
-            registry = await Registry.new()
-            // Tests are executed with real implementation of sortition pools.
-            // We don't use stub to ensure that keep members selection works correctly.
-            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-            tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
-            randomBeacon = await RandomBeaconStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(
-                bondedSortitionPoolFactory.address,
-                tokenStaking.address,
-                keepBonding.address,
-                randomBeacon.address
-            )
-            await registry.approveOperatorContract(keepFactory.address)
-        }
-
         before(async () => {
             await initializeNewFactory()
         })
@@ -285,34 +252,17 @@ contract("ECDSAKeepFactory", async accounts => {
 
         let feeEstimate
 
-        async function initializeNewFactory() {
-            registry = await Registry.new()
-            // Tests are executed with real implementation of sortition pools.
-            // We don't use stub to ensure that keep members selection works correctly.
-            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-            tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
-            randomBeacon = await RandomBeaconStub.new()
-            keepFactory = await ECDSAKeepFactoryStub.new(
-                bondedSortitionPoolFactory.address,
-                tokenStaking.address,
-                keepBonding.address,
-                randomBeacon.address
-            )
-            await registry.approveOperatorContract(keepFactory.address)
+        before(async () => {
+            await initializeNewFactory()
 
             await keepFactory.createSortitionPool(application)
             signerPool = await keepFactory.getSignerPool(application)
 
-            await keepBonding.authorizeSortitionPoolContract(member1, signerPoolAddress, {from: authorizer1})
-            await keepBonding.authorizeSortitionPoolContract(member2, signerPoolAddress, {from: authorizer2})
-            await keepBonding.authorizeSortitionPoolContract(member3, signerPoolAddress, {from: authorizer3})
+            await keepBonding.authorizeSortitionPoolContract(member1, signerPool, {from: authorizer1})
+            await keepBonding.authorizeSortitionPoolContract(member2, signerPool, {from: authorizer2})
+            await keepBonding.authorizeSortitionPoolContract(member3, signerPool, {from: authorizer3})
 
             feeEstimate = await keepFactory.openKeepFeeEstimate()
-        }
-
-        before(async () => {
-            await initializeNewFactory()
 
             const stakeBalance = await keepFactory.minimumStake.call()
             await tokenStaking.setBalance(stakeBalance)
