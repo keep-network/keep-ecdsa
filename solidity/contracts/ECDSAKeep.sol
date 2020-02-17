@@ -426,9 +426,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         uint256 memberCount = members.length;
         uint256 dividend = _value.div(memberCount);
 
-        require(dividend > 0, "dividend value must be non-zero");
+        require(dividend > 0, "Dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount-1; i++) {
+        for (uint16 i = 0; i < memberCount - 1; i++) {
             token.transferFrom(
                 msg.sender,
                 tokenStaking.magpieOf(members[i]),
