@@ -71,13 +71,29 @@ func TestAnnounceProtocol(t *testing.T) {
 	case <-ctx.Done():
 		if len(result) != groupSize {
 			t.Errorf(
-				"invalid number of announcements\nexpected: [%d]\nactual:  [%d]",
+				"invalid number of results\nexpected: [%d]\nactual:  [%d]",
 				groupSize,
 				len(result),
 			)
 		}
+
+		for memberID, _ := range groupMembersKeys {
+			if memberResult, ok := result[memberID]; ok {
+				for otherMemberID, _ := range groupMembersKeys {
+					if _, ok := memberResult[otherMemberID]; !ok {
+						t.Errorf(
+							"result of member [%v] doesn't contain "+
+								"key for other member [%v]",
+							memberID,
+							otherMemberID,
+						)
+					}
+				}
+			} else {
+				t.Errorf("missing result for member [%v]", memberID)
+			}
+		}
 	case err := <-errChan:
 		t.Fatal(err)
 	}
-
 }
