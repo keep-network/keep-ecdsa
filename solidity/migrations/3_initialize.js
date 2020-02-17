@@ -5,7 +5,7 @@ const Registry = artifacts.require("Registry")
 
 let { RegistryAddress, TBTCSystemAddress } = require('./external-contracts')
 
-module.exports = async function () {
+module.exports = async function (deployer) {
     const ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
 
     let registry
