@@ -4,6 +4,8 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 
 import { getETHBalancesFromList, getETHBalancesMap, addToBalances, addToBalancesMap } from './helpers/listBalanceUtils'
 
+const truffleAssert = require('truffle-assertions')
+
 const Registry = artifacts.require('Registry');
 const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub');
 const KeepBonding = artifacts.require('KeepBonding');
@@ -162,6 +164,114 @@ contract("ECDSAKeepFactory", async accounts => {
 
             assert.isFalse(await signerPool2.isOperatorInPool(member1), "operator 1 is in the pool")
             assert.isTrue(await signerPool2.isOperatorInPool(member2), "operator 2 is not in the pool")
+        })
+    })
+
+    describe("createSortitionPool", async () => {
+        // TODO: Extract common initialization part to be reused by other tests.
+        async function initializeNewFactory() {
+            registry = await Registry.new()
+            // Tests are executed with real implementation of sortition pools.
+            // We don't use stub to ensure that keep members selection works correctly.
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+            randomBeacon = await RandomBeaconStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
+            await registry.approveOperatorContract(keepFactory.address)
+        }
+
+        before(async () => {
+            await initializeNewFactory()
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("creates new sortition pool and emits an event", async () => {
+            const sortitionPoolAddress = await keepFactory.createSortitionPool.call(application)
+
+            const res = await keepFactory.createSortitionPool(application)
+            truffleAssert.eventEmitted(
+                res,
+                'SortitionPoolCreated',
+                { application: application, sortitionPool: sortitionPoolAddress }
+            )
+        })
+
+        it("creates new sortition pool and emits an event", async () => {
+            const existingSortitionPoolAddress = await keepFactory.createSortitionPool.call(application)
+            await keepFactory.createSortitionPool(application)
+
+            const newSortitionPoolAddress = await keepFactory.createSortitionPool.call(application)
+            assert.equal(
+                newSortitionPoolAddress,
+                existingSortitionPoolAddress,
+                'invalid address of existing sortition pool'
+            )
+
+            const res = await keepFactory.createSortitionPool(application)
+            truffleAssert.eventNotEmitted(
+                res,
+                'SortitionPoolCreated'
+            )
+        })
+    })
+
+    describe("getSortitionPool", async () => {
+        // TODO: Extract common initialization part to be reused by other tests.
+        async function initializeNewFactory() {
+            registry = await Registry.new()
+            // Tests are executed with real implementation of sortition pools.
+            // We don't use stub to ensure that keep members selection works correctly.
+            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+            tokenStaking = await TokenStakingStub.new()
+            keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+            randomBeacon = await RandomBeaconStub.new()
+            keepFactory = await ECDSAKeepFactoryStub.new(
+                bondedSortitionPoolFactory.address,
+                tokenStaking.address,
+                keepBonding.address,
+                randomBeacon.address
+            )
+            await registry.approveOperatorContract(keepFactory.address)
+        }
+
+        before(async () => {
+            await initializeNewFactory()
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("returns address of sortition pool", async () => {
+            const sortitionPoolAddress = await keepFactory.createSortitionPool.call(application)
+            await keepFactory.createSortitionPool(application)
+
+            const result = await keepFactory.getSortitionPool(application)
+            assert.equal(result, sortitionPoolAddress, 'incorrect sortition pool address')
+        })
+
+        it("reverts if sortition pool does not exist", async () => {
+            expectRevert(
+                keepFactory.getSortitionPool(application),
+                'No pool found for the application'
+            )
         })
     })
 
