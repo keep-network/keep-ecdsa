@@ -43,8 +43,8 @@ var logger = log.Logger("keep-tss")
 func GenerateThresholdSigner(
 	groupID string,
 	memberID MemberID,
+	memberPublicKey *cecdsa.PublicKey,
 	groupMemberIDs []MemberID,
-	groupMemberPublicKeys map[string]cecdsa.PublicKey,
 	dishonestThreshold uint,
 	networkProvider net.Provider,
 	tssPreParams *keygen.LocalPreParams,
@@ -65,11 +65,11 @@ func GenerateThresholdSigner(
 	}
 
 	group := &groupInfo{
-		groupID:               groupID,
-		memberID:              memberID,
-		groupMemberIDs:        groupMemberIDs,
-		groupMemberPublicKeys: groupMemberPublicKeys,
-		dishonestThreshold:    int(dishonestThreshold),
+		groupID:            groupID,
+		memberID:           memberID,
+		memberPublicKey:    *memberPublicKey,
+		groupMemberIDs:     groupMemberIDs,
+		dishonestThreshold: int(dishonestThreshold),
 	}
 
 	if tssPreParams == nil {
@@ -88,6 +88,12 @@ func GenerateThresholdSigner(
 
 	ctx, cancel := context.WithTimeout(context.Background(), keyGenerationTimeout)
 	defer cancel()
+
+	if groupMemberPublicKeys, err := announceProtocol(ctx, group, networkProvider); err != nil {
+		return nil, fmt.Errorf("failed to perform announce protocol: [%v]", err)
+	} else {
+		group.groupMemberPublicKeys = groupMemberPublicKeys
+	}
 
 	keyGenSigner, err := initializeKeyGeneration(
 		ctx,
@@ -129,6 +135,12 @@ func (s *ThresholdSigner) CalculateSignature(
 
 	ctx, cancel := context.WithTimeout(context.Background(), signingTimeout)
 	defer cancel()
+
+	if groupMemberPublicKeys, err := announceProtocol(ctx, s.groupInfo, networkProvider); err != nil {
+		return nil, fmt.Errorf("failed to perform announce protocol: [%v]", err)
+	} else {
+		s.groupInfo.groupMemberPublicKeys = groupMemberPublicKeys
+	}
 
 	signingSigner, err := s.initializeSigning(ctx, digest[:], netBridge)
 	if err != nil {

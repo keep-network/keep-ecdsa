@@ -1,6 +1,7 @@
 package local
 
 import (
+	cecdsa "crypto/ecdsa"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -38,6 +39,11 @@ func Connect() eth.Handle {
 // Address returns client's ethereum address.
 func (lc *localChain) Address() common.Address {
 	return lc.clientAddress
+}
+
+// PublicKey returns client's ethereum public key.
+func (lc *localChain) PublicKey() *cecdsa.PublicKey {
+	return nil // not implemented.
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected

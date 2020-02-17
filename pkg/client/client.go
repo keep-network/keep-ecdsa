@@ -62,7 +62,6 @@ func Initialize(
 			signer, err := tssNode.GenerateSignerForKeep(
 				event.KeepAddress,
 				event.Members,
-				event.MembersPublicKeys,
 			)
 			if err != nil {
 				logger.Errorf("signer generation failed: [%v]", err)

@@ -234,6 +234,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 			destinationTransportID, err := b.getTransportIdentifier(destinationMemberID)
 			if err != nil {
 				logger.Errorf("failed to get transport identifier: [%v]", err)
+				return
 			}
 			b.sendTo(destinationTransportID, protocolMessage)
 		}

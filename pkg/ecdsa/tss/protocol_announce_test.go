@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
-func TestJoinNotifier(t *testing.T) {
+func TestAnnounceProtocol(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 
 	err := log.SetLogLevel("*", "INFO")
@@ -19,7 +19,7 @@ func TestJoinNotifier(t *testing.T) {
 		t.Fatalf("logger initialization failed: [%v]", err)
 	}
 
-	groupSize := 5
+	groupSize := 3
 
 	groupMembers, groupMembersKeys, err := generateMemberKeys(groupSize)
 	if err != nil {
@@ -32,16 +32,17 @@ func TestJoinNotifier(t *testing.T) {
 	waitGroup.Add(groupSize)
 
 	mutex := &sync.RWMutex{}
-	joinedCount := 0
+	result := make(map[string]map[string]cecdsa.PublicKey)
 
 	for memberIDstring, memberPublicKey := range groupMembersKeys {
 		memberID, _ := MemberIDFromHex(memberIDstring)
 
 		go func(memberID MemberID, memberPublicKey cecdsa.PublicKey) {
 			groupInfo := &groupInfo{
-				groupID:        "test-group-1",
-				memberID:       memberID,
-				groupMemberIDs: groupMembers,
+				groupID:         "test-group-1",
+				memberID:        memberID,
+				memberPublicKey: memberPublicKey,
+				groupMemberIDs:  groupMembers,
 			}
 
 			memberNetworkKey := key.NetworkPublic(memberPublicKey)
@@ -49,13 +50,14 @@ func TestJoinNotifier(t *testing.T) {
 
 			defer waitGroup.Done()
 
-			if err := joinProtocol(ctx, groupInfo, networkProvider); err != nil {
+			groupMemberPublicKeys, err := announceProtocol(ctx, groupInfo, networkProvider)
+			if err != nil {
 				errChan <- err
 				return
 			}
 
 			mutex.Lock()
-			joinedCount++
+			result[memberID.String()] = groupMemberPublicKeys
 			mutex.Unlock()
 		}(memberID, memberPublicKey)
 	}
@@ -67,15 +69,31 @@ func TestJoinNotifier(t *testing.T) {
 
 	select {
 	case <-ctx.Done():
-		if joinedCount != groupSize {
+		if len(result) != groupSize {
 			t.Errorf(
-				"invalid number of received notifications\nexpected: [%d]\nactual:  [%d]",
+				"invalid number of results\nexpected: [%d]\nactual:  [%d]",
 				groupSize,
-				joinedCount,
+				len(result),
 			)
+		}
+
+		for memberID, _ := range groupMembersKeys {
+			if memberResult, ok := result[memberID]; ok {
+				for otherMemberID, _ := range groupMembersKeys {
+					if _, ok := memberResult[otherMemberID]; !ok {
+						t.Errorf(
+							"result of member [%v] doesn't contain "+
+								"key for other member [%v]",
+							memberID,
+							otherMemberID,
+						)
+					}
+				}
+			} else {
+				t.Errorf("missing result for member [%v]", memberID)
+			}
 		}
 	case err := <-errChan:
 		t.Fatal(err)
 	}
-
 }
