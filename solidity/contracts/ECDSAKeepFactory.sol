@@ -125,6 +125,23 @@ contract ECDSAKeepFactory is
         return candidatesPools[_application];
     }
 
+    /// @notice Gets the sortition pool address for the given application.
+    /// @dev Reverts if sortition does not exits for the application.
+    /// @param _application Address of the application.
+    /// @return Address of the sortition pool contract.
+    function getSortitionPool(address _application)
+        external
+        view
+        returns (address)
+    {
+        require(
+            candidatesPools[_application] != address(0),
+            "No pool found for the application"
+        );
+
+        return candidatesPools[_application];
+    }
+
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
     function openKeepFeeEstimate() public view returns (uint256) {
