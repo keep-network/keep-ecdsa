@@ -51,7 +51,7 @@ contract KeepBonding {
 
         unbondedValue[msg.sender] -= amount;
 
-        (bool success, ) = destination.call.value(amount)("");
+        (bool success, ) = destination.call.gas(3000).value(amount)("");
         require(success, "Transfer failed");
     }
 
@@ -183,7 +183,7 @@ contract KeepBonding {
 
         lockedBonds[bondID] -= amount;
 
-        (bool success, ) = destination.call.value(amount)("");
+        (bool success, ) = destination.call.gas(3000).value(amount)("");
         require(success, "Transfer failed");
     }
 

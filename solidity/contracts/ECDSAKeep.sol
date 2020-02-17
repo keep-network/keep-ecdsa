@@ -393,14 +393,14 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             // TODO: What should we do with the dividend which was not transferred
             // successfully?
             /* solium-disable-next-line security/no-call-value */
-            tokenStaking.magpieOf(members[i]).call.value(dividend)("");
+            tokenStaking.magpieOf(members[i]).call.gas(3000).value(dividend)("");
         }
 
         // Transfer of dividend for the last member. Remainder might be equal to
         // zero in case of even distribution or some small number.
         uint256 remainder = msg.value.mod(memberCount);
         /* solium-disable-next-line security/no-call-value */
-        tokenStaking.magpieOf(members[memberCount - 1]).call.value(
+        tokenStaking.magpieOf(members[memberCount - 1]).call.gas(3000).value(
             dividend.add(remainder)
         )("");
     }
