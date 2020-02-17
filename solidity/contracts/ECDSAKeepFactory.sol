@@ -22,6 +22,9 @@ contract ECDSAKeepFactory is
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
+    // Notification that a new sortition pool has been created.
+    event SortitionPoolCreated(address application, address sortitionPool);
+
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
@@ -97,16 +100,28 @@ contract ECDSAKeepFactory is
     }
 
     /// @notice Creates new sortition pool for the application.
-    function createSortitionPool(address _application) external {
+    /// @dev Emits an event after sortition pool creation.
+    /// @param _application Address of the application.
+    /// @return Address of the created sortition pool contract.
+    function createSortitionPool(address _application)
+        external
+        returns (address)
+    {
         if (candidatesPools[_application] == address(0)) {
-            candidatesPools[_application] = sortitionPoolFactory
+            address sortitionPoolAddress = sortitionPoolFactory
                 .createSortitionPool(
                 IStaking(tokenStaking),
                 IBonding(address(keepBonding)),
                 minimumStake,
                 minimumBond
             );
+
+            candidatesPools[_application] = sortitionPoolAddress;
+
+            emit SortitionPoolCreated(_application, sortitionPoolAddress);
         }
+
+        return candidatesPools[_application];
     }
 
     /// @notice Gets a fee estimate for opening a new keep.
