@@ -100,12 +100,7 @@ contract ECDSAKeepFactory is
 
         keepAddress = address(keep);
 
-        emit ECDSAKeepCreated(
-            keepAddress,
-            members,
-            _owner,
-            application
-        );
+        emit ECDSAKeepCreated(keepAddress, members, _owner, application);
 
         // TODO: as beacon for new entry and update groupSelectionSeed in callback
 
