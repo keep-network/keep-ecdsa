@@ -271,6 +271,7 @@ contract ECDSAKeepFactory is
         );
 
         // Call the random beacon to get a random group selection seed.
+        // Limiting the gas to prevent malicious behavior.
         (bool success, ) = address(randomBeacon).call.gas(30000).value(msg.value)(
             abi.encodeWithSignature(
                 "requestRelayEntry(address,string,uint256)",

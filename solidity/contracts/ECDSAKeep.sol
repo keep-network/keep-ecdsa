@@ -392,6 +392,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             // transfer failure, hence we don't validate it's result.
             // TODO: What should we do with the dividend which was not transferred
             // successfully?
+            // Gas limit of 3k should be enough to emit a log, but insufficient
+            // to make a reentrant call.
             /* solium-disable-next-line security/no-call-value */
             tokenStaking.magpieOf(members[i]).call.gas(3000).value(dividend)("");
         }

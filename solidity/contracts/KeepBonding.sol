@@ -51,6 +51,8 @@ contract KeepBonding {
 
         unbondedValue[msg.sender] -= amount;
 
+        // Gas limit of 3k should be enough to emit a log, but insufficient
+        // to make a reentrant call.
         (bool success, ) = destination.call.gas(3000).value(amount)("");
         require(success, "Transfer failed");
     }
@@ -183,6 +185,8 @@ contract KeepBonding {
 
         lockedBonds[bondID] -= amount;
 
+        // Gas limit of 3k should be enough to emit a log, but insufficient
+        // to make a reentrant call.
         (bool success, ) = destination.call.gas(3000).value(amount)("");
         require(success, "Transfer failed");
     }
