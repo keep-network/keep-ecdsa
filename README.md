@@ -16,7 +16,8 @@ To quickly install and start a single client use the installation script.
 To run the script some manual preparation is needed:
 
 - [set up local ethereum chain](https://github.com/keep-network/keep-core/blob/master/docs/development/local-keep-network.adoc#setting-up-local-ethereum-client),
-- [config file for the single client](#Configuration) (default name: `config.toml`).
+- [config file for the single client](#Configuration) (default name: `config.toml`),
+- [npm authorized to access private packages in GitHub's Package Registry](./solidity/README.md#NPM-dependencies).
 
 Please note that the client config file doesn't have to be pre-configured with contracts
 addresses as they will be populated during installation.
