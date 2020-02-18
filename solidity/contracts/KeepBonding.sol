@@ -56,7 +56,7 @@ contract KeepBonding {
         address authorizedSortitionPool
     ) public view returns (uint256) {
         if (registry.isApprovedOperatorContract(bondCreator) &&
-            stakingContract.isAuthorizedForOperator(bondCreator, operator) &&
+            stakingContract.isAuthorizedForOperator(operator, bondCreator) &&
             hasSecondaryAuthorization(operator, authorizedSortitionPool)
         ) {
             return unbondedValue[operator];

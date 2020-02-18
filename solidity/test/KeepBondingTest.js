@@ -37,6 +37,8 @@ contract('KeepBonding', (accounts) => {
 
         await registry.approveOperatorContract(bondCreator)
         await keepBonding.authorizeSortitionPoolContract(operator, sortitionPool, {from: authorizer})
+
+        await stakingContract.authorizeOperatorContract(operator, bondCreator)
     })
 
     beforeEach(async () => {
@@ -158,6 +160,7 @@ contract('KeepBonding', (accounts) => {
 
             await keepBonding.deposit(operator2, { value: value })
 
+            await stakingContract.authorizeOperatorContract(operator2, bondCreator)
             await keepBonding.authorizeSortitionPoolContract(operator2, sortitionPool, {from: authorizer2})
             await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, {from: bondCreator})
             await keepBonding.createBond(operator2, holder, reference, bondValue, sortitionPool, {from: bondCreator})

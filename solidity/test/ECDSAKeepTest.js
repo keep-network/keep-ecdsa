@@ -1080,6 +1080,12 @@ contract('ECDSAKeep', (accounts) => {
     await keepBonding.deposit(members[0], { value: bondValue1 })
     await keepBonding.deposit(members[1], { value: bondValue2 })
     await keepBonding.deposit(members[2], { value: bondValue3 })
+
+    const bondCreator = accounts[0]
+    await tokenStaking.authorizeOperatorContract(members[0], bondCreator)
+    await tokenStaking.authorizeOperatorContract(members[1], bondCreator)
+    await tokenStaking.authorizeOperatorContract(members[2], bondCreator)
+
     await keepBonding.createBond(members[0], keep.address, referenceID, bondValue1, signingPool)
     await keepBonding.createBond(members[1], keep.address, referenceID, bondValue2, signingPool)
     await keepBonding.createBond(members[2], keep.address, referenceID, bondValue3, signingPool)

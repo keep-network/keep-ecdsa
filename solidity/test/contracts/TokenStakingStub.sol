@@ -8,6 +8,9 @@ contract TokenStakingStub is IStaking {
 
     mapping(address => address payable) operatorToMagpie;
 
+    // Authorized operator contracts.
+    mapping(address => mapping (address => bool)) internal authorizations;
+
     /// @dev Sets balance variable value.
     function setBalance(uint256 _balance) public {
         balance = _balance;
@@ -34,8 +37,18 @@ contract TokenStakingStub is IStaking {
         return magpie;
     }
 
-    function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {
-        return true;
+    function authorizeOperatorContract(
+        address _operator,
+        address _operatorContract
+    ) public {
+        authorizations[_operatorContract][_operator] = true;
+    }
+
+    function isAuthorizedForOperator(
+        address _operator,
+        address _operatorContract
+    ) public view returns (bool) {
+        return authorizations[_operatorContract][_operator];
     }
 
     function authorizerOf(address _operator) public view returns (address) {

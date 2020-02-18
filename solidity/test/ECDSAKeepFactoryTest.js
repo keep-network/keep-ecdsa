@@ -53,7 +53,11 @@ contract("ECDSAKeepFactory", async accounts => {
         await registry.approveOperatorContract(keepFactory.address)
 
         const stakeBalance = await keepFactory.minimumStake.call()
-        await tokenStaking.setBalance(stakeBalance);
+        await tokenStaking.setBalance(stakeBalance)
+
+        await tokenStaking.authorizeOperatorContract(member1, keepFactory.address)
+        await tokenStaking.authorizeOperatorContract(member2, keepFactory.address)
+        await tokenStaking.authorizeOperatorContract(member3, keepFactory.address)
     }
 
     describe("registerMemberCandidate", async () => {
