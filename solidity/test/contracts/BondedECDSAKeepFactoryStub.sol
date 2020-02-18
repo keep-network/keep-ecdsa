@@ -1,10 +1,10 @@
 pragma solidity ^0.5.4;
 
-import "../../contracts/ECDSAKeepFactory.sol";
+import "../../contracts/BondedECDSAKeepFactory.sol";
 
-/// @title ECDSA Keep Factory Stub
+/// @title Bonded ECDSA Keep Factory Stub
 /// @dev This contract is for testing purposes only.
-contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
+contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
     constructor(
         address sortitionPoolFactory,
         address tokenStaking,
@@ -12,7 +12,7 @@ contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
         address randomBeacon
     )
         public
-        ECDSAKeepFactory(
+        BondedECDSAKeepFactory(
             sortitionPoolFactory,
             tokenStaking,
             keepBonding,

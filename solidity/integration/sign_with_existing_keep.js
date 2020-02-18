@@ -1,4 +1,4 @@
-const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
+const BondedECDSAKeep = artifacts.require('./BondedECDSAKeep.sol')
 
 // This test validates integration between on-chain contracts and off-chain client.
 // It requires contracts to be deployed before running the test. It requests
@@ -20,7 +20,7 @@ module.exports = async function () {
             keepOwner = accounts[1]
         }
 
-        keep = await ECDSAKeep.at(keepAddress)
+        keep = await BondedECDSAKeep.at(keepAddress)
 
         startBlockNumber = await web3.eth.getBlock('latest').number
     } catch (err) {

@@ -5,16 +5,17 @@
 
 ### NPM dependencies
 
+The project uses [GitHub Package Registry](https://github.com/orgs/keep-network/packages)
+for keep-network dependencies. It requires `npm login --registry=https://npm.pkg.github.com
+to be executed to authenticate with GitHub account in order to access private
+packages. You can login with GitHub access token by providing your username and
+instead of password use the token.
+
 Install the project dependencies:
 
 ```sh
 npm install
 ```
-
-The project uses [GitHub Package Registry](https://github.com/orgs/keep-network/packages)
-for dependencies. It requires `npm login` to be executed to authenticate with 
-GitHub account. You can login with GitHub access token by providing your username
-and instead of password use the token.
 
 ### keep-core contracts
 
@@ -107,7 +108,7 @@ for each contract and copy-paste it to [config.toml](../configs/config.toml) fil
 Unit tests use Truffle's test framework, and redeploy contracts for a clean environment every test. An example:
 
 ```sh
-truffle test test/ECDSAKeepTest.js
+truffle test test/BondedECDSAKeepTest.js
 ```
 
 #### Scenarios

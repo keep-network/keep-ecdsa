@@ -26,21 +26,21 @@ module.exports = {
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
     //
-    development: {
+    local: {
       host: "127.0.0.1",     // Localhost (default: none)
       port: 8545,            // Standard Ethereum port (default: none)
       network_id: "*",       // Any network (default: none)
       websockets: true,      // Enable EventEmitter interface for web3 (default: false)
     },
     keep_dev: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "http://localhost:8545")
       },
       gas: 6721975,
       network_id: 1101
     },
     ropsten: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "http://eth-tx-ropsten.test.keep.network:8545")
       },
       gas: 6721975,

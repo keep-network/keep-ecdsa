@@ -11,7 +11,7 @@ import { duration, increaseTime } from './helpers/increaseTime';
 const { expectRevert } = require('openzeppelin-test-helpers');
 
 const Registry = artifacts.require('Registry')
-const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
+const BondedECDSAKeep = artifacts.require('./BondedECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
 const KeepBonding = artifacts.require('./KeepBonding.sol')
 const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
@@ -25,7 +25,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract('ECDSAKeep', (accounts) => {
+contract('BondedECDSAKeep', (accounts) => {
   const bondCreator = accounts[0]
   const owner = accounts[1]
   const members = [accounts[2], accounts[3], accounts[4]]
@@ -41,13 +41,13 @@ contract('ECDSAKeep', (accounts) => {
     keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
 
     await registry.approveOperatorContract(bondCreator)
-    await keepBonding.authorizeSortitionPoolContract(members[0], signingPool, {from: authorizers[0]})
-    await keepBonding.authorizeSortitionPoolContract(members[1], signingPool, {from: authorizers[1]})
-    await keepBonding.authorizeSortitionPoolContract(members[2], signingPool, {from: authorizers[2]})
+    await keepBonding.authorizeSortitionPoolContract(members[0], signingPool, { from: authorizers[0] })
+    await keepBonding.authorizeSortitionPoolContract(members[1], signingPool, { from: authorizers[1] })
+    await keepBonding.authorizeSortitionPoolContract(members[2], signingPool, { from: authorizers[2] })
   })
 
   beforeEach(async () => {
-    keep = await ECDSAKeep.new(
+    keep = await BondedECDSAKeep.new(
       owner,
       members,
       honestThreshold,
@@ -64,7 +64,7 @@ contract('ECDSAKeep', (accounts) => {
 
   describe('#constructor', async () => {
     it('succeeds', async () => {
-      let keep = await ECDSAKeep.new(
+      let keep = await BondedECDSAKeep.new(
         owner,
         members,
         honestThreshold,
@@ -940,7 +940,7 @@ contract('ECDSAKeep', (accounts) => {
         new BN(await web3.eth.getBalance(beneficiary)).add(valueWithRemainder),
       ]
 
-      const keep = await ECDSAKeep.new(
+      const keep = await BondedECDSAKeep.new(
         owner,
         testMembers,
         honestThreshold,
@@ -972,7 +972,7 @@ contract('ECDSAKeep', (accounts) => {
 
       const member = etherReceiver.address // a receiver which we expect to reject the transfer
 
-      const keep = await ECDSAKeep.new(
+      const keep = await BondedECDSAKeep.new(
         owner,
         [member],
         honestThreshold,
@@ -1092,7 +1092,7 @@ contract('ECDSAKeep', (accounts) => {
         new BN(await token.balanceOf(beneficiary)).add(valueWithRemainder),
       ]
 
-      keep = await ECDSAKeep.new(
+      keep = await BondedECDSAKeep.new(
         owner,
         testMembers,
         honestThreshold,
