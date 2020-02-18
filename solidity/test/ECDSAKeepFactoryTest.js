@@ -1073,6 +1073,8 @@ contract("ECDSAKeepFactory", async accounts => {
             const initialBalances = await getETHBalancesFromList(members)
             const expectedSingleBalance = new BN(subsidyPool / members.length)
 
+            let blockNumber = await web3.eth.getBlockNumber()
+
             const keepAddress = await keepFactory.openKeep.call(
                 groupSize,
                 threshold,
@@ -1090,6 +1092,12 @@ contract("ECDSAKeepFactory", async accounts => {
             )
             const keep = await ECDSAKeep.at(keepAddress)
 
+            let eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+            const selectedMembers = eventList[0].returnValues.members
+
             const newBalances = await getETHBalancesFromList(members)
             assert.deepEqual(newBalances, initialBalances)
 
@@ -1099,17 +1107,17 @@ contract("ECDSAKeepFactory", async accounts => {
             ).to.eq.BN(0)
 
             expect(
-                await keep.getMemberETHBalance(member1),
+                await keep.getMemberETHBalance(selectedMembers[0]),
                 "incorrect member 1 balance"
             ).to.eq.BN(expectedSingleBalance)
 
             expect(
-                await keep.getMemberETHBalance(member2),
+                await keep.getMemberETHBalance(selectedMembers[1]),
                 "incorrect member 2 balance"
             ).to.eq.BN(expectedSingleBalance)
 
             expect(
-                await keep.getMemberETHBalance(member3),
+                await keep.getMemberETHBalance(selectedMembers[2]),
                 "incorrect member 3 balance"
             ).to.eq.BN(expectedSingleBalance.add(remainder))
         })
