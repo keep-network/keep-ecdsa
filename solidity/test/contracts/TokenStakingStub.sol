@@ -1,5 +1,4 @@
 pragma solidity ^0.5.4;
-
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 
 /// @title Token Staking Stub
@@ -8,6 +7,9 @@ contract TokenStakingStub is IStaking {
     uint256 balance;
 
     mapping(address => address payable) operatorToMagpie;
+
+    // Authorized operator contracts.
+    mapping(address => mapping (address => bool)) internal authorizations;
 
     /// @dev Sets balance variable value.
     function setBalance(uint256 _balance) public {
@@ -33,5 +35,23 @@ contract TokenStakingStub is IStaking {
             return address(uint160(_operator));
         }
         return magpie;
+    }
+
+    function authorizeOperatorContract(
+        address _operator,
+        address _operatorContract
+    ) public {
+        authorizations[_operatorContract][_operator] = true;
+    }
+
+    function isAuthorizedForOperator(
+        address _operator,
+        address _operatorContract
+    ) public view returns (bool) {
+        return authorizations[_operatorContract][_operator];
+    }
+
+    function authorizerOf(address _operator) public view returns (address) {
+        return _operator;
     }
 }

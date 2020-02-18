@@ -22,6 +22,9 @@ contract ECDSAKeepFactory is
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
+    // Notification that a new sortition pool has been created.
+    event SortitionPoolCreated(address application, address sortitionPool);
+
     // Notification that a new keep has been created.
     event ECDSAKeepCreated(
         address keepAddress,
@@ -42,7 +45,20 @@ contract ECDSAKeepFactory is
     IRandomBeacon randomBeacon;
 
     uint256 public minimumStake = 200000 * 1e18;
-    uint256 public minimumBond = 1; // TODO: Define economics
+
+    // Sortition pool is created with a minimum bond of 1 to avoid
+    // griefing.
+    //
+    // Anyone can create a sortition pool for an application. If a pool is
+    // created with a ridiculously high bond, nobody can join it and
+    // updating bond is not possible because trying to select a group
+    // with an empty pool reverts.
+    //
+    // We set the minimum bond value to 1 to prevent from this situation and
+    // to allow the pool adjust the minimum bond during the first signer
+    // selection.
+    uint256 public constant minimumBond = 1;
+
 
     // Gas required for a callback from the random beacon. The value specifies
     // gas required to call `setGroupSelectionSeed` function in the worst-case
@@ -80,19 +96,13 @@ contract ECDSAKeepFactory is
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application.
     /// @dev If caller is already registered it returns without any changes.
-    /// @param _application Customer application address.
+    /// @param _application Address of the application.
     function registerMemberCandidate(address _application) external {
-        if (candidatesPools[_application] == address(0)) {
-            // This is the first time someone registers as signer for this
-            // application so let's create a signer pool for it.
-            candidatesPools[_application] = sortitionPoolFactory
-                .createSortitionPool(
-                IStaking(tokenStaking),
-                IBonding(address(keepBonding)),
-                minimumStake,
-                minimumBond
-            );
-        }
+        require(
+            candidatesPools[_application] != address(0),
+            "No pool found for the application"
+        );
+
         BondedSortitionPool candidatesPool = BondedSortitionPool(
             candidatesPools[_application]
         );
@@ -101,6 +111,51 @@ contract ECDSAKeepFactory is
         if (!candidatesPool.isOperatorInPool(operator)) {
             candidatesPool.joinPool(operator);
         }
+    }
+
+    /// @notice Creates new sortition pool for the application.
+    /// @dev Emits an event after sortition pool creation.
+    /// @param _application Address of the application.
+    /// @return Address of the created sortition pool contract.
+    function createSortitionPool(address _application)
+        external
+        returns (address)
+    {
+        require(
+            candidatesPools[_application] == address(0),
+            "Sortition pool already exists"
+        );
+
+        address sortitionPoolAddress = sortitionPoolFactory
+            .createSortitionPool(
+            IStaking(tokenStaking),
+            IBonding(address(keepBonding)),
+            minimumStake,
+            minimumBond
+        );
+
+        candidatesPools[_application] = sortitionPoolAddress;
+
+        emit SortitionPoolCreated(_application, sortitionPoolAddress);
+
+        return candidatesPools[_application];
+    }
+
+    /// @notice Gets the sortition pool address for the given application.
+    /// @dev Reverts if sortition does not exits for the application.
+    /// @param _application Address of the application.
+    /// @return Address of the sortition pool contract.
+    function getSortitionPool(address _application)
+        external
+        view
+        returns (address)
+    {
+        require(
+            candidatesPools[_application] != address(0),
+            "No pool found for the application"
+        );
+
+        return candidatesPools[_application];
     }
 
     /// @notice Checks if operator is registered as a candidate for the given
@@ -237,7 +292,8 @@ contract ECDSAKeepFactory is
                 members[i],
                 keepAddress,
                 uint256(keepAddress),
-                memberBond
+                memberBond,
+                pool
             );
         }
 

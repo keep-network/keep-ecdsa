@@ -9,8 +9,8 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 import { duration, increaseTime } from './helpers/increaseTime';
 
 const { expectRevert } = require('openzeppelin-test-helpers');
-const { ZERO_ADDRESS } = require('openzeppelin-test-helpers').constants;
 
+const Registry = artifacts.require('Registry')
 const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
 const KeepBonding = artifacts.require('./KeepBonding.sol')
@@ -26,15 +26,24 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 contract('ECDSAKeep', (accounts) => {
+  const bondCreator = accounts[0]
   const owner = accounts[1]
   const members = [accounts[2], accounts[3], accounts[4]]
+  const authorizers = [accounts[2], accounts[3], accounts[4]]
+  const signingPool = accounts[5]
   const honestThreshold = 1
 
-  let keepBonding, tokenStaking, keep;
+  let registry, keepBonding, tokenStaking, keep;
 
   before(async () => {
-    keepBonding = await KeepBonding.new()
+    registry = await Registry.new()
     tokenStaking = await TokenStakingStub.new()
+    keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+
+    await registry.approveOperatorContract(bondCreator)
+    await keepBonding.authorizeSortitionPoolContract(members[0], signingPool, {from: authorizers[0]})
+    await keepBonding.authorizeSortitionPoolContract(members[1], signingPool, {from: authorizers[1]})
+    await keepBonding.authorizeSortitionPoolContract(members[2], signingPool, {from: authorizers[2]})
   })
 
   beforeEach(async () => {
@@ -756,15 +765,15 @@ contract('ECDSAKeep', (accounts) => {
       ).to.eq.BN(0, "incorrect bond amount for keep")
 
       expect(
-        await keepBonding.availableUnbondedValue(members[0], ZERO_ADDRESS, ZERO_ADDRESS)
+        await keepBonding.availableUnbondedValue(members[0], bondCreator, signingPool)
       ).to.eq.BN(bondValue0, "incorrect unbonded amount for member 0")
 
       expect(
-        await keepBonding.availableUnbondedValue(members[1], ZERO_ADDRESS, ZERO_ADDRESS)
+        await keepBonding.availableUnbondedValue(members[1], bondCreator, signingPool)
       ).to.eq.BN(bondValue1, "incorrect unbonded amount for member 1")
 
       expect(
-        await keepBonding.availableUnbondedValue(members[2], ZERO_ADDRESS, ZERO_ADDRESS)
+        await keepBonding.availableUnbondedValue(members[2], bondCreator, signingPool)
       ).to.eq.BN(bondValue2, "incorrect unbonded amount for member 2")
     })
 
@@ -1126,9 +1135,15 @@ contract('ECDSAKeep', (accounts) => {
     await keepBonding.deposit(members[0], { value: bondValue1 })
     await keepBonding.deposit(members[1], { value: bondValue2 })
     await keepBonding.deposit(members[2], { value: bondValue3 })
-    await keepBonding.createBond(members[0], keep.address, referenceID, bondValue1)
-    await keepBonding.createBond(members[1], keep.address, referenceID, bondValue2)
-    await keepBonding.createBond(members[2], keep.address, referenceID, bondValue3)
+
+    const bondCreator = accounts[0]
+    await tokenStaking.authorizeOperatorContract(members[0], bondCreator)
+    await tokenStaking.authorizeOperatorContract(members[1], bondCreator)
+    await tokenStaking.authorizeOperatorContract(members[2], bondCreator)
+
+    await keepBonding.createBond(members[0], keep.address, referenceID, bondValue1, signingPool)
+    await keepBonding.createBond(members[1], keep.address, referenceID, bondValue2, signingPool)
+    await keepBonding.createBond(members[2], keep.address, referenceID, bondValue3, signingPool)
 
     return bondValue1.add(bondValue2).add(bondValue3)
   }

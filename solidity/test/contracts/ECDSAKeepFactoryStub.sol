@@ -20,11 +20,6 @@ contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
         )
     {}
 
-    // @dev Returns address of registered signer pool.
-    function getSignerPool(address application) public view returns (address) {
-        return candidatesPools[application];
-    }
-
     function initialGroupSelectionSeed(uint256 _groupSelectionSeed) public {
         groupSelectionSeed = _groupSelectionSeed;
     }
