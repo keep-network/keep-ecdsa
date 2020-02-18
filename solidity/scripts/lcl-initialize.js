@@ -48,9 +48,18 @@ module.exports = async function () {
             keepBonding = await KeepBonding.deployed()
 
             operatorContract = ecdsaKeepFactory.address
-            sortitionPoolAddress = await ecdsaKeepFactory.getSortitionPool(application)
         } catch (err) {
             console.error('failed to get deployed contracts', err)
+            process.exit(1)
+        }
+
+        try {
+            await ecdsaKeepFactory.createSortitionPool(application)
+            console.log(`created sortition pool for application: [${application}]`)
+
+            sortitionPoolAddress = await ecdsaKeepFactory.getSortitionPool(application)
+        } catch (err) {
+            console.error('failed to create sortition pool', err)
             process.exit(1)
         }
 
