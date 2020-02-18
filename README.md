@@ -8,6 +8,16 @@ See [solidity](./solidity/) directory.
 
 ---
 
+## Developer's environment setup
+
+To set up developers environment on MacOS execute:
+
+```
+./scripts/lcl-macos-setup.sh
+```
+
+---
+
 ## Quick installation
 
 To quickly install and start a single client use the installation script.
