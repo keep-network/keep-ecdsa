@@ -51,8 +51,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // same public key.
     mapping(address => bytes) submittedPublicKeys;
 
-    // Notification that a signer's public key was published for the keep.
-    event PublicKeyPublished(bytes publicKey);
+    // Map stores amount of ether stored in the contract for each member address.
+    mapping(address => uint256) memberETHBalances;
 
     // Flag to monitor current keep state. If the keep is active members monitor
     // it and support requests for the keep owner. If the owner decides to close
@@ -70,6 +70,12 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         address submittingMember,
         bytes conflictingPublicKey
     );
+
+    // Notification that a signer's public key was published for the keep.
+    event PublicKeyPublished(bytes publicKey);
+
+    // Notification that members received ether transfer.
+    event ETHDistributedToMembers();
 
     // Notification that the keep was closed by the owner. Members no longer need
     // to support it.
@@ -162,7 +168,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// appear on the chain, see `keyGenerationTimeout`.
     function hasKeyGenerationTimedOut() internal view returns (bool) {
         /* solium-disable-next-line */
-        return block.timestamp > keyGenerationStartTimestamp + keyGenerationTimeout;
+        return
+            block.timestamp >
+            keyGenerationStartTimestamp + keyGenerationTimeout;
     }
 
     /// @notice Checks if the member already submitted a public key.
@@ -376,33 +384,29 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         return address(uint160(uint256(keccak256(_publicKey))));
     }
 
-    /// @notice Distributes ETH evenly across all keep members.
-    /// ETH is sent to the beneficiary of each member. If the value cannot be
-    /// divided evenly across the members, it submits the remainder to the last
-    /// keep member.
-    /// @dev Only the value passed to this function will be distributed.
+    /// @notice Distributes ETH evenly across all keep members. If the value
+    /// cannot be divided evenly across the members, it submits the remainder to
+    /// the last keep member.
+    /// @dev Only the value passed to this function will be distributed. This
+    /// function does not transfer the value to the members' accounts, instead
+    /// it holds the value in the contract until withdraw function is called for
+    /// the specific member.
     function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
         uint256 dividend = msg.value.div(memberCount);
 
-        require(dividend > 0, "dividend value must be non-zero");
+        require(dividend > 0, "Dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount-1; i++) {
-            // We don't want to revert the whole execution in case of single
-            // transfer failure, hence we don't validate it's result.
-            // TODO: What should we do with the dividend which was not transferred
-            // successfully?
-            /* solium-disable-next-line security/no-call-value */
-            tokenStaking.magpieOf(members[i]).call.value(dividend)("");
+        for (uint16 i = 0; i < memberCount - 1; i++) {
+            memberETHBalances[members[i]] += dividend;
         }
 
         // Transfer of dividend for the last member. Remainder might be equal to
         // zero in case of even distribution or some small number.
         uint256 remainder = msg.value.mod(memberCount);
-        /* solium-disable-next-line security/no-call-value */
-        tokenStaking.magpieOf(members[memberCount - 1]).call.value(
-            dividend.add(remainder)
-        )("");
+        memberETHBalances[members[memberCount - 1]] += dividend.add(remainder);
+
+        emit ETHDistributedToMembers();
     }
 
     /// @notice Distributes ERC20 token evenly across all keep members.
@@ -424,9 +428,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         uint256 memberCount = members.length;
         uint256 dividend = _value.div(memberCount);
 
-        require(dividend > 0, "dividend value must be non-zero");
+        require(dividend > 0, "Dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount-1; i++) {
+        for (uint16 i = 0; i < memberCount - 1; i++) {
             token.transferFrom(
                 msg.sender,
                 tokenStaking.magpieOf(members[i]),
@@ -442,7 +446,30 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             tokenStaking.magpieOf(members[memberCount - 1]),
             dividend.add(remainder)
         );
+    }
 
+    /// @notice Gets current amount of ether hold in the keep for the member.
+    /// @param _member Keep member address.
+    /// @return Current balance.
+    function getMemberETHBalance(address _member)
+        external
+        view
+        returns (uint256)
+    {
+        return memberETHBalances[_member];
+    }
+
+    /// @notice Withdraws amount of ether hold in the keep for the member.
+    /// The value is sent to the beneficiary of the specific member.
+    /// @param _member Keep member address.
+    function withdraw(address _member) external {
+        uint256 value = memberETHBalances[_member];
+        memberETHBalances[_member] = 0;
+
+        /* solium-disable-next-line security/no-call-value */
+        (bool success, ) = tokenStaking.magpieOf(_member).call.value(value)("");
+
+        require(success, "Transfer failed");
     }
 
     /// @notice Checks if the caller is a keep member.
