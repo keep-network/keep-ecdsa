@@ -4,14 +4,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// ECDSAKeepCreatedEvent is an event emitted on a new keep creation.
-type ECDSAKeepCreatedEvent struct {
+// BondedECDSAKeepCreatedEvent is an event emitted on a new keep creation.
+type BondedECDSAKeepCreatedEvent struct {
 	KeepAddress common.Address   // keep contract address
 	Members     []common.Address // keep members addresses
 }
 
 // IsMember checks if list of members contains the given address.
-func (e *ECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
+func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
 	for _, member := range e.Members {
 		if member == address {
 			return true
