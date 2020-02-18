@@ -3,7 +3,7 @@ const BondedECDSAKeepVendorImplV1 = artifacts.require("BondedECDSAKeepVendorImpl
 const ECDSAKeepFactory = artifacts.require("ECDSAKeepFactory")
 const Registry = artifacts.require("Registry")
 
-let { RegistryAddress, TBTCSystemAddress } = require('./external-contracts')
+let { RegistryAddress } = require('./external-contracts')
 
 module.exports = async function (deployer) {
     const ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
@@ -28,7 +28,4 @@ module.exports = async function (deployer) {
 
     // Register keep factory
     await vendor.registerFactory(ECDSAKeepFactory.address)
-
-    await ecdsaKeepFactory.createSortitionPool(TBTCSystemAddress)
-    console.log(`created sortition pool for application: [${TBTCSystemAddress}]`)
 }
