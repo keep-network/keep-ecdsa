@@ -73,7 +73,7 @@ module.exports = async function () {
             }
         )
 
-        const eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+        const eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
             fromBlock: startBlockNumber,
             toBlock: 'latest',
         })
