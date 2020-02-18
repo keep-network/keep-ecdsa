@@ -1,5 +1,9 @@
 pragma solidity ^0.5.4;
 
+import "@keep-network/keep-core/contracts/Registry.sol";
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
+
+
 // TODO: This contract is expected to implement functions defined by IBonding
 // interface defined in @keep-network/sortition-pools. After merging the
 // repositories we need to move IBonding definition to sit closer to KeepBonding
@@ -12,15 +16,35 @@ pragma solidity ^0.5.4;
 // TODO: Update KeepBonding contract implementation to new requirements based
 // on the spec.
 contract KeepBonding {
+    // Registry contract with a list of approved factories (operator contracts).
+    Registry internal registry;
+
+    // Staking contract linked to this contract.
+    TokenStaking internal stakingContract;
+
     // Unassigned ether values deposited by operators.
     mapping(address => uint256) internal unbondedValue;
     // References to created bonds. Bond identifier is built from operator's
     // address, holder's address and reference ID assigned on bond creation.
     mapping(bytes32 => uint256) internal lockedBonds;
 
+    // Sortition pools authorized by operator's authorizer.
+    // operator -> pool -> boolean
+    mapping(address => mapping (address => bool)) internal authorizedPools;
+
+    /// @dev Initialize Keep Bonding contract.
+    /// @param registryAddress Keep registry contract linked to this contract.
+    /// @param stakingContractAddress Keep Token staking contract linked to this contract.
+    constructor(address registryAddress, address stakingContractAddress) public {
+        registry = Registry(registryAddress);
+        stakingContract = TokenStaking(stakingContractAddress);
+    }
+
     /// @notice Returns the amount of ether the operator has made available for
-    /// bonding by the bond creator. If the operator doesn't exists or the operator
-    /// doesn't exists returns zero.
+    /// bonding and that is still unbounded. If the operator doesn't exists or
+    /// bond creator is not authorized as an operator contract or it is not
+    /// authorized by the operator or there is no secondary authorization for
+    /// the provided sortition pool, function returns 0.
     /// @dev Implements function expected by sortition pools' IBonding interface.
     /// @param operator Address of the operator.
     /// @param bondCreator Address authorized to create a bond.
@@ -30,8 +54,15 @@ contract KeepBonding {
         address operator,
         address bondCreator,
         address authorizedSortitionPool
-    ) external view returns (uint256) {
-        return unbondedValue[operator];
+    ) public view returns (uint256) {
+        if (registry.isApprovedOperatorContract(bondCreator) &&
+            stakingContract.isAuthorizedForOperator(operator, bondCreator) &&
+            hasSecondaryAuthorization(operator, authorizedSortitionPool)
+        ) {
+            return unbondedValue[operator];
+        } else {
+            return 0;
+        }
     }
 
     /// @notice Add ether to operator's value available for bonding.
@@ -64,14 +95,16 @@ contract KeepBonding {
     /// @param holder Address of the holder of the bond.
     /// @param referenceID Reference ID used to track the bond by holder.
     /// @param amount Value to bond.
+    /// @param authorizedSortitionPool Address of authorized sortition pool.
     function createBond(
         address operator,
         address holder,
         uint256 referenceID,
-        uint256 amount
-    ) public onlyAuthorized {
+        uint256 amount,
+        address authorizedSortitionPool
+    ) public {
         require(
-            unbondedValue[operator] >= amount,
+            availableUnbondedValue(operator, msg.sender, authorizedSortitionPool) >= amount,
             "Insufficient unbonded value"
         );
 
@@ -191,11 +224,24 @@ contract KeepBonding {
         require(success, "Transfer failed");
     }
 
-    /// @notice Checks if the caller is an authorized contract.
-    /// @dev Throws an error if called by any account other than one of the authorized
-    /// contracts.
-    modifier onlyAuthorized() {
-        // TODO: Add authorization checks.
-        _;
+    /// @dev Authorizes sortition pool for provided operator
+    /// @dev Only operator authorizer can call this function
+    function authorizeSortitionPoolContract(
+        address _operator,
+        address _poolAddress
+    ) public {
+        require(
+            stakingContract.authorizerOf(_operator) == msg.sender,
+            "Not authorized"
+        );
+        authorizedPools[_operator][_poolAddress] = true;
+    }
+
+    /// @notice Checks if the sortition pool has been authorized for provided operator by its authorizer.
+    function hasSecondaryAuthorization(
+        address _operator,
+        address _poolAddress
+    ) public view returns (bool) {
+        return authorizedPools[_operator][_poolAddress];
     }
 }

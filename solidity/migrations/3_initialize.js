@@ -1,28 +1,34 @@
+const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
+const BondedECDSAKeepVendorImplV1 = artifacts.require("BondedECDSAKeepVendorImplV1")
 const ECDSAKeepFactory = artifacts.require("ECDSAKeepFactory")
-const truffleContract = require("@truffle/contract")
+const Registry = artifacts.require("Registry")
 
-let { RegistryAddress } = require('./external-contracts')
+let { RegistryAddress, TBTCSystemAddress } = require('./external-contracts')
 
-module.exports = async function (deployer, network) {
-    await ECDSAKeepFactory.deployed()
+module.exports = async function (deployer) {
+    const ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
 
     let registry
     if (process.env.TEST) {
-        RegistryStub = artifacts.require("RegistryStub")
-        registry = await RegistryStub.new()
+        registry = await Registry.deployed()
     } else {
-        // Read compiled contract artifact from 
-        const registryJSON = require('@keep-network/keep-core/build/truffle/Registry.json')
-        const Registry = truffleContract(registryJSON)
-        Registry.setProvider(web3.currentProvider);
-
         registry = await Registry.at(RegistryAddress)
     }
 
-    await registry.approveOperatorContract(
-        ECDSAKeepFactory.address,
-        { from: deployer.networks[network].from }
-    )
+    const vendor = await BondedECDSAKeepVendorImplV1.at(BondedECDSAKeepVendor.address)
+    await vendor.initialize(registry.address)
 
+    // Configure registry
+    await registry.approveOperatorContract(ECDSAKeepFactory.address)
     console.log(`approved operator contract [${ECDSAKeepFactory.address}] in registry`)
+
+    // Set service contract owner as operator contract upgrader by default
+    const operatorContractUpgrader = await vendor.owner()
+    await registry.setOperatorContractUpgrader(vendor.address, operatorContractUpgrader)
+
+    // Register keep factory
+    await vendor.registerFactory(ECDSAKeepFactory.address)
+
+    await ecdsaKeepFactory.createSortitionPool(TBTCSystemAddress)
+    console.log(`created sortition pool for application: [${TBTCSystemAddress}]`)
 }
