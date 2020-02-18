@@ -1099,17 +1099,17 @@ contract("ECDSAKeepFactory", async accounts => {
             ).to.eq.BN(0)
 
             expect(
-                await keep.getBalance(member1),
+                await keep.getMemberETHBalance(member1),
                 "incorrect member 1 balance"
             ).to.eq.BN(expectedSingleBalance)
 
             expect(
-                await keep.getBalance(member2),
+                await keep.getMemberETHBalance(member2),
                 "incorrect member 2 balance"
             ).to.eq.BN(expectedSingleBalance)
 
             expect(
-                await keep.getBalance(member3),
+                await keep.getMemberETHBalance(member3),
                 "incorrect member 3 balance"
             ).to.eq.BN(expectedSingleBalance.add(remainder))
         })
@@ -1163,17 +1163,17 @@ contract("ECDSAKeepFactory", async accounts => {
             )
 
             expect(
-                await keep.getBalance(selectedMembers[0]),
+                await keep.getMemberETHBalance(selectedMembers[0]),
                 "incorrect member 1 balance"
             ).to.eq.BN(expectedSingleBalance)
 
             expect(
-                await keep.getBalance(selectedMembers[1]),
+                await keep.getMemberETHBalance(selectedMembers[1]),
                 "incorrect member 2 balance"
             ).to.eq.BN(expectedSingleBalance)
 
             expect(
-                await keep.getBalance(selectedMembers[2]),
+                await keep.getMemberETHBalance(selectedMembers[2]),
                 "incorrect member 3 balance"
             ).to.eq.BN(expectedSingleBalance.add(remainder))
         })

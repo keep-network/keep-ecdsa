@@ -52,7 +52,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     mapping(address => bytes) submittedPublicKeys;
 
     // Map stores amount of ether stored in the contract for each member address.
-    mapping(address => uint256) membersBalances;
+    mapping(address => uint256) memberETHBalances;
 
     // Flag to monitor current keep state. If the keep is active members monitor
     // it and support requests for the keep owner. If the owner decides to close
@@ -168,7 +168,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// appear on the chain, see `keyGenerationTimeout`.
     function hasKeyGenerationTimedOut() internal view returns (bool) {
         /* solium-disable-next-line */
-        return block.timestamp > keyGenerationStartTimestamp + keyGenerationTimeout;
+        return
+            block.timestamp >
+            keyGenerationStartTimestamp + keyGenerationTimeout;
     }
 
     /// @notice Checks if the member already submitted a public key.
@@ -396,13 +398,13 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         require(dividend > 0, "Dividend value must be non-zero");
 
         for (uint16 i = 0; i < memberCount - 1; i++) {
-            membersBalances[members[i]] += dividend;
+            memberETHBalances[members[i]] += dividend;
         }
 
         // Transfer of dividend for the last member. Remainder might be equal to
         // zero in case of even distribution or some small number.
         uint256 remainder = msg.value.mod(memberCount);
-        membersBalances[members[memberCount - 1]] += dividend.add(remainder);
+        memberETHBalances[members[memberCount - 1]] += dividend.add(remainder);
 
         emit ETHTransferArrived();
     }
@@ -449,16 +451,20 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @notice Gets current amount of ether hold in the keep for the member.
     /// @param _member Keep member address.
     /// @return Current balance.
-    function getBalance(address _member) external view returns (uint256) {
-        return membersBalances[_member];
+    function getMemberETHBalance(address _member)
+        external
+        view
+        returns (uint256)
+    {
+        return memberETHBalances[_member];
     }
 
     /// @notice Withdraws amount of ether hold in the keep for the member.
     /// The value is sent to the beneficiary of the specific member.
     /// @param _member Keep member address.
     function withdraw(address _member) external {
-        uint256 value = membersBalances[_member];
-        membersBalances[_member] = 0;
+        uint256 value = memberETHBalances[_member];
+        memberETHBalances[_member] = 0;
 
         /* solium-disable-next-line security/no-call-value */
         (bool success, ) = tokenStaking.magpieOf(_member).call.value(value)("");

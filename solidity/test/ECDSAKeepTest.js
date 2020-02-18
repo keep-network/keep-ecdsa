@@ -847,13 +847,13 @@ contract('ECDSAKeep', (accounts) => {
       expect(await web3.eth.getBalance(keep.address), 'incorrect keep balance')
         .to.eq.BN(ethValue)
 
-      expect(await keep.getBalance(members[0]), 'incorrect member 0 balance')
+      expect(await keep.getMemberETHBalance(members[0]), 'incorrect member 0 balance')
         .to.eq.BN(singleValue)
 
-      expect(await keep.getBalance(members[1]), 'incorrect member 1 balance')
+      expect(await keep.getMemberETHBalance(members[1]), 'incorrect member 1 balance')
         .to.eq.BN(singleValue)
 
-      expect(await keep.getBalance(members[2]), 'incorrect member 2 balance')
+      expect(await keep.getMemberETHBalance(members[2]), 'incorrect member 2 balance')
         .to.eq.BN(singleValue)
     })
 
@@ -866,13 +866,13 @@ contract('ECDSAKeep', (accounts) => {
       expect(await web3.eth.getBalance(keep.address), 'incorrect keep balance')
         .to.eq.BN(valueWithRemainder)
 
-      expect(await keep.getBalance(members[0]), 'incorrect member 0 balance')
+      expect(await keep.getMemberETHBalance(members[0]), 'incorrect member 0 balance')
         .to.eq.BN(singleValue)
 
-      expect(await keep.getBalance(members[1]), 'incorrect member 1 balance')
+      expect(await keep.getMemberETHBalance(members[1]), 'incorrect member 1 balance')
         .to.eq.BN(singleValue)
 
-      expect(await keep.getBalance(members[2]), 'incorrect member 2 balance')
+      expect(await keep.getMemberETHBalance(members[2]), 'incorrect member 2 balance')
         .to.eq.BN(singleValue.add(expectedRemainder))
     })
 
@@ -908,7 +908,7 @@ contract('ECDSAKeep', (accounts) => {
       expect(await web3.eth.getBalance(keep.address), 'incorrect keep balance')
         .to.eq.BN(ethValue.sub(singleValue))
 
-      expect(await keep.getBalance(members[0]), 'incorrect member balance')
+      expect(await keep.getMemberETHBalance(members[0]), 'incorrect member balance')
         .to.eq.BN(0)
 
       expect(await web3.eth.getBalance(members[0]), 'incorrect member account balance')
@@ -945,11 +945,11 @@ contract('ECDSAKeep', (accounts) => {
       await keep.distributeETHToMembers({ value: valueWithRemainder })
 
       await keep.withdraw(member1)
-      expect(await keep.getBalance(member1), 'incorrect member 1 balance')
+      expect(await keep.getMemberETHBalance(member1), 'incorrect member 1 balance')
         .to.eq.BN(0)
 
       await keep.withdraw(member2)
-      expect(await keep.getBalance(member2), 'incorrect member 2 balance')
+      expect(await keep.getMemberETHBalance(member2), 'incorrect member 2 balance')
         .to.eq.BN(0)
 
       // Check balances of all keep members' and beneficiary.
