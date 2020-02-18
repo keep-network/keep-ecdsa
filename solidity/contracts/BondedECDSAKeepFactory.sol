@@ -1,24 +1,22 @@
 pragma solidity ^0.5.4;
 
-import "./ECDSAKeep.sol";
+import "./BondedECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 
-import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
-import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
-import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
+import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
+import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
 import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
+import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-/// @title ECDSA Keep Factory
+/// @title Bonded ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
-contract ECDSAKeepFactory is
-    IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
-{
+contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
@@ -26,7 +24,7 @@ contract ECDSAKeepFactory is
     event SortitionPoolCreated(address application, address sortitionPool);
 
     // Notification that a new keep has been created.
-    event ECDSAKeepCreated(
+    event BondedECDSAKeepCreated(
         address keepAddress,
         address[] members,
         address owner,
@@ -58,7 +56,6 @@ contract ECDSAKeepFactory is
     // to allow the pool adjust the minimum bond during the first signer
     // selection.
     uint256 public constant minimumBond = 1;
-
 
     // Gas required for a callback from the random beacon. The value specifies
     // gas required to call `setGroupSelectionSeed` function in the worst-case
@@ -126,8 +123,7 @@ contract ECDSAKeepFactory is
             "Sortition pool already exists"
         );
 
-        address sortitionPoolAddress = sortitionPoolFactory
-            .createSortitionPool(
+        address sortitionPoolAddress = sortitionPoolFactory.createSortitionPool(
             IStaking(tokenStaking),
             IBonding(address(keepBonding)),
             minimumStake,
@@ -277,7 +273,7 @@ contract ECDSAKeepFactory is
 
         newGroupSelectionSeed();
 
-        ECDSAKeep keep = new ECDSAKeep(
+        BondedECDSAKeep keep = new BondedECDSAKeep(
             _owner,
             members,
             _honestThreshold,
@@ -307,7 +303,7 @@ contract ECDSAKeepFactory is
             keep.distributeETHToMembers.value(signerSubsidy)();
         }
 
-        emit ECDSAKeepCreated(keepAddress, members, _owner, application);
+        emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
     /// @notice Updates group selection seed.
