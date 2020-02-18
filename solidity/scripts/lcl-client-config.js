@@ -36,7 +36,7 @@ module.exports = async function () {
 
             fileContent.SanctionedApplications.Addresses = [sanctionedApp]
 
-            fs.writeFileSync(configFilePath, tomlify.toToml(fileContent), (err) => {
+            fs.writeFileSync(configFilePath, tomlify.toToml(fileContent, { space: 2 }), (err) => {
                 if (err) throw err
             })
 
