@@ -327,8 +327,12 @@ contract ECDSAKeepFactory is
         );
 
         // Call the random beacon to get a random group selection seed.
-        // Limiting forwarded gas to prevent malicious behavior.
-        (bool success, ) = address(randomBeacon).call.gas(300000).value(msg.value)(
+        //
+        // Limiting forwarded gas to prevent malicious behavior in case the
+        // beacon service contract gets compromised. Relay request should not
+        // consume more than 360k of gas. We set the limit to 400k to have
+        // a safety margin for future updates.
+        (bool success, ) = address(randomBeacon).call.gas(400000).value(msg.value)(
             abi.encodeWithSignature(
                 "requestRelayEntry(address,string,uint256)",
                 address(this),
