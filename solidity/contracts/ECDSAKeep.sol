@@ -467,7 +467,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         memberETHBalances[_member] = 0;
 
         /* solium-disable-next-line security/no-call-value */
-        (bool success, ) = tokenStaking.magpieOf(_member).call.value(value)("");
+        (bool success, ) = tokenStaking.magpieOf(_member).call.gas(3000).value(value)("");
 
         require(success, "Transfer failed");
     }
