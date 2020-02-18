@@ -45,7 +45,7 @@ func TestIsMember(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			event := &ECDSAKeepCreatedEvent{Members: test.members}
+			event := &BondedECDSAKeepCreatedEvent{Members: test.members}
 
 			result := event.IsMember(test.address)
 

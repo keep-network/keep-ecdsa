@@ -13,9 +13,9 @@ Each <contract.json> file is sourced directly from the InitContainer.  Files are
 Truffle during contract migration and copied to the InitContainer image via Circle.
 */
 
-const ecdsaKeepFactoryJsonFile = '/tmp/ECDSAKeepFactory.json';
-const ecdsaKeepFactoryParsed = JSON.parse(fs.readFileSync(ecdsaKeepFactoryJsonFile));
-const ecdsaKeepFactoryContractAddress = ecdsaKeepFactoryParsed.networks[ethNetworkId].address;
+const bondedECDSAKeepFactoryJsonFile = '/tmp/BondedECDSAKeepFactory.json';
+const bondedECDSAKeepFactoryParsed = JSON.parse(fs.readFileSync(bondedECDSAKeepFactoryJsonFile));
+const bondedECDSAKeepFactoryContractAddress = bondedECDSAKeepFactoryParsed.networks[ethNetworkId].address;
 
 async function provisionKeepTecdsa() {
 
@@ -27,7 +27,7 @@ async function provisionKeepTecdsa() {
 
     console.log("\n########### keep-tecdsa Provisioning Complete! ###########");
   }
-  catch(error) {
+  catch (error) {
     console.error(error.message);
     throw error;
   }
@@ -44,7 +44,7 @@ async function createKeepTecdsaConfig() {
       process.env.KEEP_TECDSA_ETH_KEYFILE_2,
       process.env.KEEP_TECDSA_ETH_KEYFILE_3
     ]
-    parsedConfigFile.ethereum.ContractAddresses.ECDSAKeepFactory = ecdsaKeepFactoryContractAddress;
+    parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactoryContractAddress;
 
     parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
@@ -60,4 +60,3 @@ provisionKeepTecdsa().catch(error => {
   console.error(error);
   process.exit(1);
 });
-

@@ -11,7 +11,7 @@ const fs = require('fs')
 const toml = require('toml')
 const tomlify = require('tomlify-j0.4')
 
-const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory')
+const BondedECDSAKeepFactory = artifacts.require('BondedECDSAKeepFactory')
 
 module.exports = async function () {
     try {
@@ -20,7 +20,7 @@ module.exports = async function () {
 
         let keepFactoryAddress
         try {
-            const keepFactory = await ECDSAKeepFactory.deployed()
+            const keepFactory = await BondedECDSAKeepFactory.deployed()
             keepFactoryAddress = keepFactory.address
         } catch (err) {
             console.error('failed to get deployed contracts', err)
@@ -32,7 +32,7 @@ module.exports = async function () {
 
             fileContent.ethereum.URL = web3.currentProvider.connection._url
 
-            fileContent.ethereum.ContractAddresses.ECDSAKeepFactory = keepFactoryAddress
+            fileContent.ethereum.ContractAddresses.BondedECDSAKeepFactory = keepFactoryAddress
 
             fileContent.SanctionedApplications.Addresses = [sanctionedApp]
 

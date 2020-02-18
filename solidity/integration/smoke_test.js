@@ -1,7 +1,7 @@
 const BondedECDSAKeepVendor = artifacts.require('./BondedECDSAKeepVendor.sol')
 const BondedECDSAKeepVendorImplV1 = artifacts.require('./BondedECDSAKeepVendorImplV1.sol')
-const ECDSAKeepFactory = artifacts.require('./ECDSAKeepFactory.sol')
-const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
+const BondedECDSAKeepFactory = artifacts.require('./BondedECDSAKeepFactory.sol')
+const BondedECDSAKeep = artifacts.require('./BondedECDSAKeep.sol')
 
 const RandomBeaconService = artifacts.require('IRandomBeacon')
 const { RandomBeaconAddress } = require('../migrations/external-contracts')
@@ -10,7 +10,7 @@ const { RandomBeaconAddress } = require('../migrations/external-contracts')
 // It also validates integration with the random beacon by verifying update of
 // the group selection seed by random beacon with a callback.
 // It requires contracts to be deployed before running the test and the client
-// to be configured with `ECDSAKeepFactory` address. It also requires random
+// to be configured with `BondedECDSAKeepFactory` address. It also requires random
 // beacon to be running.
 // 
 // To execute this smoke test run:
@@ -47,7 +47,7 @@ module.exports = async function () {
             (await BondedECDSAKeepVendor.deployed()).address
         )
         const keepFactoryAddress = await keepVendor.selectFactory()
-        keepFactory = await ECDSAKeepFactory.at(keepFactoryAddress)
+        keepFactory = await BondedECDSAKeepFactory.at(keepFactoryAddress)
     } catch (err) {
         console.error(`failed to select a factory: [${err}]`)
         process.exit(1)
@@ -73,13 +73,13 @@ module.exports = async function () {
             }
         )
 
-        const eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+        const eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
             fromBlock: startBlockNumber,
             toBlock: 'latest',
         })
 
         const keepAddress = eventList[0].returnValues.keepAddress
-        keep = await ECDSAKeep.at(keepAddress)
+        keep = await BondedECDSAKeep.at(keepAddress)
 
         console.log(`new keep opened with address: [${keepAddress}] and members: [${eventList[0].returnValues.members}]`)
     } catch (err) {

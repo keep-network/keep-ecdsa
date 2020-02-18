@@ -9,7 +9,7 @@
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
-  ECDSAKeepFactory = "Set by Kube"
+  BondedECDSAKeepFactory = "Set by Kube"
 
 [Storage]
     DataDir = "Set by Kube"

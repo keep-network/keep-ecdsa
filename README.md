@@ -139,7 +139,7 @@ Where `<hash>` is a message to sign.
 
 **Prerequisites**
 - contracts deployed: `truffle migrate --reset`
-- `ECDSAKeepFactory` contract address provided in `config.toml`
+- `BondedECDSAKeepFactory` contract address provided in `config.toml`
 - ethereum account `KeyFile` path provided in `config.toml` and password to the
   key file provided as `KEEP_ETHEREUM_PASSWORD` environment variable
 - [addresses of application](https://github.com/keep-network/keep-tecdsa/blob/69768219221e6adef7dbcaf0035237846f3523a5/solidity/integration/smoke_test.js#L27) provided in `config.toml` in `SanctionedApplications` list

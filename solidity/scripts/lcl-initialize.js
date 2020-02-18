@@ -1,4 +1,4 @@
-const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory')
+const BondedECDSAKeepFactory = artifacts.require('BondedECDSAKeepFactory')
 const KeepBonding = artifacts.require('KeepBonding')
 
 const TokenStaking = artifacts.require('@keep-network/keep-core/build/truffle/TokenStaking')
@@ -15,7 +15,7 @@ module.exports = async function () {
         const application = TBTCSystemAddress
 
         let sortitionPoolAddress
-        let ecdsaKeepFactory
+        let bondedECDSAKeepFactory
         let tokenStaking
         let keepBonding
         let operatorContract
@@ -43,21 +43,21 @@ module.exports = async function () {
         }
 
         try {
-            ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
+            bondedECDSAKeepFactory = await BondedECDSAKeepFactory.deployed()
             tokenStaking = await TokenStaking.at(TokenStakingAddress)
             keepBonding = await KeepBonding.deployed()
 
-            operatorContract = ecdsaKeepFactory.address
+            operatorContract = bondedECDSAKeepFactory.address
         } catch (err) {
             console.error('failed to get deployed contracts', err)
             process.exit(1)
         }
 
         try {
-            await ecdsaKeepFactory.createSortitionPool(application)
+            await bondedECDSAKeepFactory.createSortitionPool(application)
             console.log(`created sortition pool for application: [${application}]`)
 
-            sortitionPoolAddress = await ecdsaKeepFactory.getSortitionPool(application)
+            sortitionPoolAddress = await bondedECDSAKeepFactory.getSortitionPool(application)
         } catch (err) {
             console.error('failed to create sortition pool', err)
             process.exit(1)

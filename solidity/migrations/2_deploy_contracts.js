@@ -1,6 +1,6 @@
 const Registry = artifacts.require('Registry')
 const KeepBonding = artifacts.require("KeepBonding")
-const ECDSAKeepFactory = artifacts.require("ECDSAKeepFactory")
+const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
 const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
 const BondedECDSAKeepVendorImplV1 = artifacts.require("BondedECDSAKeepVendorImplV1")
 
@@ -31,7 +31,7 @@ module.exports = async function (deployer) {
     )
 
     await deployer.deploy(
-        ECDSAKeepFactory,
+        BondedECDSAKeepFactory,
         BondedSortitionPoolFactory.address,
         TokenStakingAddress,
         KeepBonding.address,

@@ -8,9 +8,9 @@ import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 import "./api/IBondedECDSAKeep.sol";
 import "./KeepBonding.sol";
 
-/// @title ECDSA Keep
-/// @notice Contract reflecting an ECDSA keep.
-contract ECDSAKeep is IBondedECDSAKeep, Ownable {
+/// @title Bonded ECDSA Keep
+/// @notice Contract reflecting a bonded ECDSA keep.
+contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
