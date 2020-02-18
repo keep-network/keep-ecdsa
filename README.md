@@ -23,26 +23,37 @@ Please note that the client config file doesn't have to be pre-configured with c
 addresses as they will be populated during installation.
 
 ### Install script
+
 The `install.sh` script will:
 
+- fetch external contracts addresses,
 - migrate contracts,
-- initialize contracts 
-- update client contracts configuration
 - build client.
 
-The script will ask you for the password to previously created ethereum accounts and
-the client config file path. 
+The script will ask you for the password to previously created ethereum accounts.
 
-It also requires an external client application address which is an address of an 
-external contract that will be requesting keeps creation. For local smoke test
-execution this address should be the same as the account you will use in the smoke
-test to request keep opening.
 
 
 To start the installation execute:
 ```
 ./scripts/install.sh
 ```
+
+### Initialize script
+
+The `initialize.sh` script should be called after external customer application
+contract (i.e. `TBTCSystem`) using keep-ecdsa is known. The script will:
+
+- set address to the customer application,
+- initialize contracts,
+- update client contracts configuration.
+
+The script will ask for the client config file path.
+
+It also requires an external client application address which is an address of an 
+external contract that will be requesting keeps creation. For local smoke test
+execution this address should be the same as the account you will use in the smoke
+test to request keep opening.
 
 ### Start client
 
