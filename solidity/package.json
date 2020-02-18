@@ -16,7 +16,7 @@
     "truffle": "truffle",
     "clean": "rm -rf build/",
     "build": "truffle compile",
-    "test": "TEST=true truffle test"
+    "test": "TEST=true truffle test --network=local"
   },
   "author": "Jakub Nowakowski <jakub.nowakowski@keep.network>",
   "license": "MIT",
