@@ -5,6 +5,7 @@ set -e
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
 KEEP_CORE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../../keep-core)
 CLIENT_APP_ADDRESS_DEFAULT="0x2AA420Af8CB62888ACBD8C7fAd6B4DdcDD89BC82"
+CONFIG_FILE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs/config.toml)
 
 # Read user inputs.
 read -p "Enter ethereum accounts password [$KEEP_ETHEREUM_PASSWORD_DEFAULT]: " ethereum_password
@@ -12,6 +13,9 @@ KEEP_ETHEREUM_PASSWORD=${ethereum_password:-$KEEP_ETHEREUM_PASSWORD_DEFAULT}
 
 read -p "Enter path to the keep-core project [$KEEP_CORE_PATH_DEFAULT]: " keep_core_path
 KEEP_CORE_PATH=$(realpath ${keep_core_path:-$KEEP_CORE_PATH_DEFAULT})
+
+read -p "Enter path to keep-ecdsa client config [$CONFIG_FILE_PATH_DEFAULT]: " config_file_path
+CONFIG_FILE_PATH=${config_file_path:-$CONFIG_FILE_PATH_DEFAULT}
 
 read -p "Enter client application address [$CLIENT_APP_ADDRESS_DEFAULT]: " client_app_address
 CLIENT_APP_ADDRESS=${client_app_address:-$CLIENT_APP_ADDRESS_DEFAULT}
@@ -22,7 +26,7 @@ LOG_END='\n\e[0m' # new line + reset color
 
 printf "${LOG_START}Starting installation...${LOG_END}"
 KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
-KEEP_ECDSA_CONFIG_FILE_PATH=$(realpath $KEEP_ECDSA_PATH/configs/config.toml)
+KEEP_ECDSA_CONFIG_FILE_PATH=$(realpath $CONFIG_FILE_PATH)
 KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 KEEP_CORE_SOL_PATH=$(realpath $KEEP_CORE_PATH/contracts/solidity)
 KEEP_CORE_SOL_ARTIFACTS_PATH=$(realpath $KEEP_CORE_SOL_PATH/build/contracts)
