@@ -75,7 +75,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     event PublicKeyPublished(bytes publicKey);
 
     // Notification that members received ether transfer.
-    event ETHTransferArrived();
+    event ETHDistributedToMembers();
 
     // Notification that the keep was closed by the owner. Members no longer need
     // to support it.
@@ -406,7 +406,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         uint256 remainder = msg.value.mod(memberCount);
         memberETHBalances[members[memberCount - 1]] += dividend.add(remainder);
 
-        emit ETHTransferArrived();
+        emit ETHDistributedToMembers();
     }
 
     /// @notice Distributes ERC20 token evenly across all keep members.

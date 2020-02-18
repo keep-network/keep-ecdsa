@@ -823,10 +823,10 @@ contract('ECDSAKeep', (accounts) => {
       let startBlock = await web3.eth.getBlockNumber()
 
       let res = await keep.distributeETHToMembers({ value: ethValue })
-      truffleAssert.eventEmitted(res, 'ETHTransferArrived')
+      truffleAssert.eventEmitted(res, 'ETHDistributedToMembers')
 
       assert.lengthOf(
-        await keep.getPastEvents('ETHTransferArrived', {
+        await keep.getPastEvents('ETHDistributedToMembers', {
           fromBlock: startBlock,
           toBlock: 'latest'
         }),
