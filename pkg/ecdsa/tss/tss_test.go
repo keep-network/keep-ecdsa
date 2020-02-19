@@ -22,7 +22,7 @@ import (
 )
 
 func TestGenerateKeyAndSign(t *testing.T) {
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
 
 	groupSize := 5
 	dishonestThreshold := uint(groupSize - 1)

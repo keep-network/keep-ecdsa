@@ -143,17 +143,14 @@ Where `<hash>` is a message to sign.
 ## Smoke test
 
 **Prerequisites**
-- contracts deployed: `truffle migrate --reset`
-- `BondedECDSAKeepFactory` contract address provided in `config.toml`
-- ethereum account `KeyFile` path provided in `config.toml` and password to the
-  key file provided as `KEEP_ETHEREUM_PASSWORD` environment variable
-- [addresses of application](https://github.com/keep-network/keep-tecdsa/blob/69768219221e6adef7dbcaf0035237846f3523a5/solidity/integration/smoke_test.js#L27) provided in `config.toml` in `SanctionedApplications` list
-- off-chain [client](#Client) running
+- system configured and running as per [quick installation instruction](#Quick-installation),
+- sortition pool's registration period (_10 blocks_) passed since operators'
+  registration.
 
 To run a smoke test execute:
 ```sh
 cd solidity/
-truffle exec integration/smoke_test.js
+truffle exec integration/smoke_test.js --network local
 ```
 
 ---

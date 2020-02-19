@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -e pipefail
 
 # Dafault inputs.
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
@@ -35,7 +35,8 @@ KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
 
 printf "${LOG_START}Finding current ethereum network ID...${LOG_END}"
 
-NETWORKID=$(truffle exec ./scripts/get-network-id.js --network local | tail -1)
+output=$(truffle exec ./scripts/get-network-id.js --network local)
+NETWORKID=$(echo "$output" | tail -1)
 printf "Current network ID: ${NETWORKID}\n"
 
 printf "${LOG_START}Fetching external contracts addresses...${LOG_END}"

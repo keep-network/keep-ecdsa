@@ -1,7 +1,8 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
-const { expectRevert } = require('openzeppelin-test-helpers');
+const { expectRevert } = require('openzeppelin-test-helpers')
 
+import { mineBlocks } from './helpers/mineBlocks'
 import { getETHBalancesFromList, getETHBalancesMap, addToBalances, addToBalancesMap } from './helpers/listBalanceUtils'
 
 const truffleAssert = require('truffle-assertions')
@@ -719,6 +720,10 @@ contract("BondedECDSAKeepFactory", async accounts => {
             feeEstimate = await keepFactory.openKeepFeeEstimate()
 
             await depositAndRegisterMembers(singleBond)
+
+            const pool = await BondedSortitionPool.at(signerPool)
+            const initBlocks = await pool.operatorInitBlocks()
+            await mineBlocks(initBlocks.add(new BN(1)))
         })
 
         beforeEach(async () => {

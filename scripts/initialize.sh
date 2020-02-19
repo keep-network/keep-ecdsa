@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -e pipefail
 
 # Dafault config file path.
 CONFIG_FILE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs/config.toml)
@@ -15,7 +15,8 @@ KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 cd $KEEP_ECDSA_SOL_PATH
 
 # Dafault app address.
-CLIENT_APP_ADDRESS_DEFAULT=$(truffle exec scripts/get-default-application-account.js --network local | tail -1)
+output=$(truffle exec scripts/get-default-application-account.js --network local)
+CLIENT_APP_ADDRESS_DEFAULT=$(echo "$output" | tail -1)
 
 # Read user app address.
 read -p "Enter client application address [$CLIENT_APP_ADDRESS_DEFAULT]: " client_app_address

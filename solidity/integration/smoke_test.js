@@ -20,6 +20,7 @@ module.exports = async function () {
 
     // It assumes that account[0] is contracts deployer for migrations and
     // accounts[1-3] are configured as keep members.
+    const members = [accounts[1], accounts[2], accounts[3]]
     const keepOwner = accounts[4]
     const application = accounts[5]
 
@@ -55,6 +56,17 @@ module.exports = async function () {
     }
 
     try {
+        console.log('validate registered member candidates...');
+        for (let i = 0; i < members.length; i++) {
+            const isRegistered = await keepFactory.isOperatorRegistered(members[i], application)
+
+            if (isRegistered) {
+                console.log(`operator [${members[i]}] is registered for application [${application}]`)
+            } else {
+                console.log(`operator [${members[i]}] is NOT registered for application [${application}]`)
+            }
+        }
+
         console.log('opening a new keep...');
 
         const fee = await keepFactory.openKeepFeeEstimate.call()

@@ -34,7 +34,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: solidity
-      - run: npm install ganache-cli@6.4.2
+      - run: npm install ganache-cli@6.9.1
       - run:
           name: Running testrpc
           command: |
