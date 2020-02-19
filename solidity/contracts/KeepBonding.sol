@@ -12,17 +12,16 @@ import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
-// TODO: Update KeepBonding contract implementation to new requirements based
-// on the spec.
 contract KeepBonding {
     // Registry contract with a list of approved factories (operator contracts).
     Registry internal registry;
 
-    // Staking contract linked to this contract.
+    // KEEP token staking contract.
     TokenStaking internal stakingContract;
 
-    // Unassigned ether values deposited by operators.
+    // Unassigned value in wei deposited by operators.
     mapping(address => uint256) internal unbondedValue;
+
     // References to created bonds. Bond identifier is built from operator's
     // address, holder's address and reference ID assigned on bond creation.
     mapping(bytes32 => uint256) internal lockedBonds;
@@ -31,15 +30,15 @@ contract KeepBonding {
     // operator -> pool -> boolean
     mapping(address => mapping (address => bool)) internal authorizedPools;
 
-    /// @dev Initialize Keep Bonding contract.
-    /// @param registryAddress Keep registry contract linked to this contract.
-    /// @param stakingContractAddress Keep Token staking contract linked to this contract.
+    /// @notice Initializes Keep Bonding contract.
+    /// @param registryAddress Keep registry contract address.
+    /// @param stakingContractAddress KEEP Token staking contract address.
     constructor(address registryAddress, address stakingContractAddress) public {
         registry = Registry(registryAddress);
         stakingContract = TokenStaking(stakingContractAddress);
     }
 
-    /// @notice Returns the amount of ether the operator has made available for
+    /// @notice Returns the amount of wei the operator has made available for
     /// bonding and that is still unbounded. If the operator doesn't exist or
     /// bond creator is not authorized as an operator contract or it is not
     /// authorized by the operator or there is no secondary authorization for
@@ -48,7 +47,7 @@ contract KeepBonding {
     /// @param operator Address of the operator.
     /// @param bondCreator Address authorized to create a bond.
     /// @param authorizedSortitionPool Address of authorized sortition pool.
-    /// @return Amount of deposited ether available for bonding.
+    /// @return Amount of deposited wei available for bonding.
     function availableUnbondedValue(
         address operator,
         address bondCreator,
@@ -67,14 +66,14 @@ contract KeepBonding {
         return 0;
     }
 
-    /// @notice Add ether to operator's value available for bonding.
+    /// @notice Add the provided value to operator's pool available for bonding.
     /// @param operator Address of the operator.
     function deposit(address operator) external payable {
         unbondedValue[operator] += msg.value;
     }
 
-    /// @notice Draw amount from sender's value available for bonding.
-    /// @param amount Value to withdraw.
+    /// @notice Withdraws amount from sender's value available for bonding.
+    /// @param amount Value to withdraw in wei.
     /// @param destination Address to send the amount to.
     function withdraw(uint256 amount, address payable destination) public {
         require(
@@ -88,13 +87,13 @@ contract KeepBonding {
         require(success, "Transfer failed");
     }
 
-    /// @notice Create bond for given operator, holder, reference and amount.
+    /// @notice Create bond for the given operator, holder, reference and amount.
     /// @dev Function can be executed only by authorized contract. Reference ID
     /// should be unique for holder and operator.
     /// @param operator Address of the operator to bond.
     /// @param holder Address of the holder of the bond.
     /// @param referenceID Reference ID used to track the bond by holder.
-    /// @param amount Value to bond.
+    /// @param amount Value to bond in wei.
     /// @param authorizedSortitionPool Address of authorized sortition pool.
     function createBond(
         address operator,
@@ -121,11 +120,11 @@ contract KeepBonding {
         lockedBonds[bondID] += amount;
     }
 
-    /// @notice Returns value of ether bonded for the operator.
+    /// @notice Returns value of wei bonded for the operator.
     /// @param operator Address of the operator.
     /// @param holder Address of the holder of the bond.
-    /// @param referenceID Reference ID used to track the bond by holder.
-    /// @return Operator's bonded ether.
+    /// @param referenceID Reference ID of the bond.
+    /// @return Amount of wei in the selected bond.
     function bondAmount(address operator, address holder, uint256 referenceID)
         public
         view
@@ -139,8 +138,8 @@ contract KeepBonding {
     }
 
     /// @notice Reassigns a bond to a new holder under a new reference.
-    /// @dev Function requires that a caller is the holder of the bond which is
-    /// being reassigned.
+    /// @dev Function requires that a caller is the current holder of the bond
+    /// which is being reassigned.
     /// @param operator Address of the bonded operator.
     /// @param referenceID Reference ID of the bond.
     /// @param newHolder Address of the new holder of the bond.
@@ -173,7 +172,7 @@ contract KeepBonding {
 
     /// @notice Releases the bond and moves the bond value to the operator's
     /// unbounded value pool.
-    /// @dev Function requires that a caller is the holder of the bond which is
+    /// @dev Function requires that caller is the holder of the bond which is
     /// being released.
     /// @param operator Address of the bonded operator.
     /// @param referenceID Reference ID of the bond.
@@ -190,8 +189,8 @@ contract KeepBonding {
         unbondedValue[operator] = amount;
     }
 
-    /// @notice Seizes the bond by moving some or all of a locked bond to holder's
-    /// account.
+    /// @notice Seizes the bond by moving some or all of the locked bond to the
+    /// provided destination address.
     /// @dev Function requires that a caller is the holder of the bond which is
     /// being seized.
     /// @param operator Address of the bonded operator.
@@ -222,8 +221,11 @@ contract KeepBonding {
         require(success, "Transfer failed");
     }
 
-    /// @dev Authorizes sortition pool for provided operator
-    /// @dev Only operator authorizer can call this function
+    /// @notice Authorizes sortition pool for the provided operator.
+    /// Operator's authorizers need to authorize individual sortition pools
+    /// per application since they may be interested in participating only in
+    /// a subset of keep types used by the given appliction.
+    /// @dev Only operator's authorizer can call this function.
     function authorizeSortitionPoolContract(
         address _operator,
         address _poolAddress
@@ -235,7 +237,9 @@ contract KeepBonding {
         authorizedPools[_operator][_poolAddress] = true;
     }
 
-    /// @notice Checks if the sortition pool has been authorized for provided operator by its authorizer.
+    /// @notice Checks if the sortition pool has been authorized for the
+    /// provided operator by its authorizer.
+    /// @dev See authorizeSortitionPoolContract.
     function hasSecondaryAuthorization(
         address _operator,
         address _poolAddress

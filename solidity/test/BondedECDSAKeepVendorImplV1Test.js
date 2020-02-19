@@ -20,9 +20,9 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
 
         await keepVendor.initialize(registry.address)
         await registry.setOperatorContractUpgrader(keepVendor.address, accounts[0])
-        registry.approveOperatorContract(address0)
-        registry.approveOperatorContract(address1)
-        registry.approveOperatorContract(address2)
+        await registry.approveOperatorContract(address0)
+        await registry.approveOperatorContract(address1)
+        await registry.approveOperatorContract(address2)
     })
 
     describe("keep factory registration", async () => {
@@ -42,7 +42,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
             )
         })
 
-        it("does not register factory not approved in registry", async() => {
+        it("does not register factory not approved in registry", async () => {
             await expectRevert(
                 keepVendor.registerFactory(address3),
                 "Factory contract is not approved"

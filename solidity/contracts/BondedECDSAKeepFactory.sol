@@ -43,7 +43,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
 
-    uint256 feeEstimate;
     uint256 public groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
@@ -244,14 +243,14 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         return randomBeacon.entryFeeEstimate(callbackGas);
     }
 
-    /// @notice Open a new ECDSA keep.
-    /// @dev Selects a list of members for the keep based on provided parameters.
+    /// @notice Opens a new ECDSA keep.
+    /// @dev Selects a list of signers for the keep based on provided parameters.
     /// A caller of this function is expected to be an application for which
     /// member candidates were registered in a pool.
-    /// @param _groupSize Number of members in the keep.
-    /// @param _honestThreshold Minimum number of honest keep members.
+    /// @param _groupSize Number of signers in the keep.
+    /// @param _honestThreshold Minimum number of honest keep signers.
     /// @param _owner Address of the keep owner.
-    /// @param _bond Value of ETH bond required from the keep (wei).
+    /// @param _bond Value of ETH bond required from the keep in wei.
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,

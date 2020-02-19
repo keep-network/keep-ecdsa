@@ -2,7 +2,6 @@ pragma solidity ^0.5.4;
 
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
-/// @dev TODO: This is a stub contract - needs to be implemented.
 contract IBondedECDSAKeep {
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
@@ -33,7 +32,7 @@ contract IBondedECDSAKeep {
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
         external;
 
-    /// @notice Seizes the signer's ETH bond.
+    /// @notice Seizes the signers' ETH bond.
     function seizeSignerBonds() external;
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
