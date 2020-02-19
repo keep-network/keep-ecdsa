@@ -44,7 +44,9 @@ contract("BondedECDSAKeepFactory", async accounts => {
         tokenStaking = await TokenStakingStub.new()
         keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
         randomBeacon = await RandomBeaconStub.new()
+        const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
         keepFactory = await BondedECDSAKeepFactoryStub.new(
+            bondedECDSAKeepMasterContract.address,
             bondedSortitionPoolFactory.address,
             tokenStaking.address,
             keepBonding.address,
@@ -1224,7 +1226,9 @@ contract("BondedECDSAKeepFactory", async accounts => {
             tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
             randomBeacon = accounts[1]
+            const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
             keepFactory = await BondedECDSAKeepFactoryStub.new(
+                bondedECDSAKeepMasterContract.address,
                 bondedSortitionPoolFactory.address,
                 tokenStaking.address,
                 keepBonding.address,
