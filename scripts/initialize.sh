@@ -15,7 +15,7 @@ KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 cd $KEEP_ECDSA_SOL_PATH
 
 # Dafault app address.
-CLIENT_APP_ADDRESS_DEFAULT=$(truffle exec scripts/get-first-account.js --network local | tail -1)
+CLIENT_APP_ADDRESS_DEFAULT=$(truffle exec scripts/get-default-application-account.js --network local | tail -1)
 
 # Read user app address.
 read -p "Enter client application address [$CLIENT_APP_ADDRESS_DEFAULT]: " client_app_address

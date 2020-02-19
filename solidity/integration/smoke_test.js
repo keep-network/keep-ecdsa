@@ -18,9 +18,10 @@ const { RandomBeaconAddress } = require('../migrations/external-contracts')
 module.exports = async function () {
     const accounts = await web3.eth.getAccounts();
 
-    const application = accounts[0]
+    // accounts 1, 2 and 3 correspond to three members.
+    const keepOwner = accounts[4]
+    const application = accounts[5]
 
-    let keepOwner
     let startBlockNumber
     let keep
     let keepPublicKey
@@ -31,8 +32,6 @@ module.exports = async function () {
     const bond = 10
 
     try {
-        keepOwner = accounts[1]
-
         startBlockNumber = await web3.eth.getBlock('latest').number
 
         randomBeacon = await RandomBeaconService.at(RandomBeaconAddress)
