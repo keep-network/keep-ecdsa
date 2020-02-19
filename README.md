@@ -65,6 +65,11 @@ external contract that will be requesting keeps creation. For local smoke test
 execution this address should be the same as the account you will use in the smoke
 test to request keep opening.
 
+To start the initialization execute:
+```
+./scripts/initialize.sh
+```
+
 ### Start client
 
 To start the client execute:
