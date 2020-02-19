@@ -16,7 +16,9 @@ const { RandomBeaconAddress } = require('../migrations/external-contracts')
 // To execute this smoke test run:
 // truffle exec integration/smoke_test.js
 module.exports = async function () {
-    const application = "0x2AA420Af8CB62888ACBD8C7fAd6B4DdcDD89BC82"
+    const accounts = await web3.eth.getAccounts();
+
+    const application = accounts[0]
 
     let keepOwner
     let startBlockNumber
@@ -29,7 +31,6 @@ module.exports = async function () {
     const bond = 10
 
     try {
-        const accounts = await web3.eth.getAccounts();
         keepOwner = accounts[1]
 
         startBlockNumber = await web3.eth.getBlock('latest').number
