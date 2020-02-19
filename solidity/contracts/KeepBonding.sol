@@ -12,8 +12,6 @@ import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
-// TODO: Update KeepBonding contract implementation to new requirements based
-// on the spec.
 contract KeepBonding {
     // Registry contract with a list of approved factories (operator contracts).
     Registry internal registry;

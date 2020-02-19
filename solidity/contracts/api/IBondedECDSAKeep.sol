@@ -2,7 +2,6 @@ pragma solidity ^0.5.4;
 
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
-/// @dev TODO: This is a stub contract - needs to be implemented.
 contract IBondedECDSAKeep {
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
