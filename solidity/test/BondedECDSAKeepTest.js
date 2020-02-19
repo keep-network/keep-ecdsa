@@ -35,6 +35,25 @@ contract('BondedECDSAKeep', (accounts) => {
 
   let registry, keepBonding, tokenStaking, keep;
 
+  async function newKeep(
+    owner,
+    members,
+    honestThreshold,
+    tokenStaking,
+    keepBonding
+  ) {
+    keep = await BondedECDSAKeep.new()
+    await keep.initialize(
+      owner,
+      members,
+      honestThreshold,
+      tokenStaking,
+      keepBonding
+    )
+
+    return keep
+  }
+
   before(async () => {
     registry = await Registry.new()
     tokenStaking = await TokenStakingStub.new()
@@ -47,7 +66,7 @@ contract('BondedECDSAKeep', (accounts) => {
   })
 
   beforeEach(async () => {
-    keep = await BondedECDSAKeep.new(
+    keep = await newKeep(
       owner,
       members,
       honestThreshold,
@@ -62,17 +81,30 @@ contract('BondedECDSAKeep', (accounts) => {
     await restoreSnapshot()
   })
 
-  describe('#constructor', async () => {
+  describe('initialize', async () => {
     it('succeeds', async () => {
-      let keep = await BondedECDSAKeep.new(
+      keep = await BondedECDSAKeep.new()
+      await keep.initialize(
         owner,
         members,
         honestThreshold,
         tokenStaking.address,
         keepBonding.address
       )
+    })
 
-      assert(web3.utils.isAddress(keep.address), 'invalid keep address')
+    it('reverts if called for the second time', async () => {
+      // first call was a part of beforeEach
+      await expectRevert(
+        keep.initialize(
+          owner,
+          members,
+          honestThreshold,
+          tokenStaking.address,
+          keepBonding.address
+        ),
+        'Contract already initialized'
+      )
     })
   })
 
@@ -110,14 +142,14 @@ contract('BondedECDSAKeep', (accounts) => {
     it('cannot be called by non-owner', async () => {
       await expectRevert(
         keep.sign(digest),
-        'Ownable: caller is not the owner.'
+        'Caller is not the keep owner'
       )
     })
 
     it('cannot be called by non-owner member', async () => {
       await expectRevert(
         keep.sign(digest, { from: members[0] }),
-        'Ownable: caller is not the owner.'
+        'Caller is not the keep owner'
       )
     })
 
@@ -810,7 +842,7 @@ contract('BondedECDSAKeep', (accounts) => {
     it('cannot be called by non-owner', async () => {
       await expectRevert(
         keep.closeKeep(),
-        'Ownable: caller is not the owner'
+        'Caller is not the keep owner'
       )
     })
 
@@ -940,7 +972,7 @@ contract('BondedECDSAKeep', (accounts) => {
         new BN(await web3.eth.getBalance(beneficiary)).add(valueWithRemainder),
       ]
 
-      const keep = await BondedECDSAKeep.new(
+      const keep = await newKeep(
         owner,
         testMembers,
         honestThreshold,
@@ -972,7 +1004,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
       const member = etherReceiver.address // a receiver which we expect to reject the transfer
 
-      const keep = await BondedECDSAKeep.new(
+      const keep = await newKeep(
         owner,
         [member],
         honestThreshold,
@@ -1092,7 +1124,7 @@ contract('BondedECDSAKeep', (accounts) => {
         new BN(await token.balanceOf(beneficiary)).add(valueWithRemainder),
       ]
 
-      keep = await BondedECDSAKeep.new(
+      keep = await newKeep(
         owner,
         testMembers,
         honestThreshold,
