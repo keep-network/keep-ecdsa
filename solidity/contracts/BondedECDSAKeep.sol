@@ -251,7 +251,10 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @notice Submits a fraud proof for a valid signature from this keep that was
     /// not first approved via a call to sign.
     /// @dev The function expects the signed digest to be calculated as a sha256 hash
-    /// of the preimage: `sha256(_preimage))`.
+    /// of the preimage: `sha256(_preimage))`. The digest is verified against the
+    /// preimage to ensure the security of the ECDSA protocol. Verifying just the
+    /// signature and the digest is not enough and leaves the possibility of the
+    /// the existential forgery.
     /// @param _v Signature's header byte: `27 + recoveryID`.
     /// @param _r R part of ECDSA signature.
     /// @param _s S part of ECDSA signature.
