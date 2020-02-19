@@ -907,7 +907,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if not enough member candidates are registered", async () => {
-            let requestedGroupSize = groupSize + 1
+            let requestedGroupSize = groupSize.addn(1)
 
             await expectRevert(
                 keepFactory.openKeep(
@@ -1200,6 +1200,107 @@ contract("BondedECDSAKeepFactory", async accounts => {
                 "incorrect member 3 balance"
             ).to.eq.BN(expectedSingleBalance.add(remainder))
         })
+
+        it("reverts when honest threshold is greater than the group size", async () => {
+            let honestThreshold = 4
+            let groupSize = 3
+
+            await expectRevert(
+                keepFactory.openKeep(
+                    groupSize,
+                    honestThreshold,
+                    keepOwner,
+                    bond,
+                    { from: application, value: feeEstimate },
+                ),
+                "Honest threshold must be less or equal the group size"
+            )
+        })
+
+        it("works when honest threshold is equal to the group size", async () => {
+            let honestThreshold = 3
+            let groupSize = honestThreshold
+  
+            let blockNumber = await web3.eth.getBlockNumber()
+
+            await keepFactory.openKeep(
+                groupSize,
+                honestThreshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
+
+            let eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+
+            assert.equal(eventList.length, 1, "incorrect number of emitted events")
+        })
+
+        it("allows to use a group of 16 signers", async () => {
+            let groupSize = 16
+
+            // create and authorize enough operators to perform the test;
+            // we need more than the default 10 accounts
+            await createDepositAndRegisterMembers(groupSize, singleBond)
+
+            let blockNumber = await web3.eth.getBlockNumber()
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
+
+            let eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+
+            assert.equal(eventList.length, 1, "incorrect number of emitted events")
+            assert.equal(
+                eventList[0].returnValues.members.length, 
+                groupSize, 
+                "incorrect number of members"
+            )
+        })
+
+        it("reverts when trying to use a group of 17 signers", async () => {
+            let groupSize = 17
+
+            await expectRevert(
+                keepFactory.openKeep(
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
+                    { from: application, value: feeEstimate },
+                ),
+                "Maximum signing group size is 16"
+            )
+        })
+
+        async function createDepositAndRegisterMembers(memberCount, unbondedAmount) {
+            for (let i = 0; i < memberCount; i++) {
+                const operator = await web3.eth.personal.newAccount("pass")
+                await web3.eth.personal.unlockAccount(operator, "pass", 5000) // 5 sec unlock
+
+                web3.eth.sendTransaction({
+                    from: accounts[0],
+                    to: operator, 
+                    value: web3.utils.toWei('1', 'ether')
+                });
+
+                await tokenStaking.authorizeOperatorContract(operator, keepFactory.address)
+                await keepBonding.authorizeSortitionPoolContract(operator, signerPool, { from: operator })
+                await keepBonding.deposit(operator, { value: unbondedAmount })
+                await keepFactory.registerMemberCandidate(application, { from: operator })
+            }
+        }
 
         async function depositAndRegisterMembers(unbondedAmount) {
             await keepBonding.deposit(member1, { value: unbondedAmount })
