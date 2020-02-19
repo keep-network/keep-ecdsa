@@ -104,6 +104,15 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     TokenStaking tokenStaking;
     KeepBonding keepBonding;
 
+    /// @notice Initialization function.
+    /// @dev We use clone factory to create new keep. That is why this contract
+    /// doesn't have a constructor. We provide keep parameters for each instance
+    /// function after cloning instances from the master contract.
+    /// @param _owner Address of the keep owner.
+    /// @param _members Addresses of the keep members.
+    /// @param _honestThreshold Minimum number of honest keep members.
+    /// @param _tokenStaking Address of the TokenStaking contract.
+    /// @param _keepBonding Address of the KeepBonding contract.
     function initialize(
         address _owner,
         address[] memory _members,
