@@ -174,7 +174,7 @@ func (ec *EthereumChain) OnETHDistributedToMembers(
 ) (subscription.EventSubscription, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+		return nil, err
 	}
 
 	return ec.watchETHDistributedToMembers(
