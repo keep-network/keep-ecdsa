@@ -18,7 +18,8 @@ const { RandomBeaconAddress } = require('../migrations/external-contracts')
 module.exports = async function () {
     const accounts = await web3.eth.getAccounts();
 
-    // accounts 1, 2 and 3 correspond to three members.
+    // It assumes that account[0] is contracts deployer for migrations and
+    // accounts[1-3] are configured as keep members.
     const keepOwner = accounts[4]
     const application = accounts[5]
 
