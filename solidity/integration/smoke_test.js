@@ -16,9 +16,13 @@ const { RandomBeaconAddress } = require('../migrations/external-contracts')
 // To execute this smoke test run:
 // truffle exec integration/smoke_test.js
 module.exports = async function () {
-    const application = "0x2AA420Af8CB62888ACBD8C7fAd6B4DdcDD89BC82"
+    const accounts = await web3.eth.getAccounts();
 
-    let keepOwner
+    // It assumes that account[0] is contracts deployer for migrations and
+    // accounts[1-3] are configured as keep members.
+    const keepOwner = accounts[4]
+    const application = accounts[5]
+
     let startBlockNumber
     let keep
     let keepPublicKey
@@ -29,9 +33,6 @@ module.exports = async function () {
     const bond = 10
 
     try {
-        const accounts = await web3.eth.getAccounts();
-        keepOwner = accounts[1]
-
         startBlockNumber = await web3.eth.getBlock('latest').number
 
         randomBeacon = await RandomBeaconService.at(RandomBeaconAddress)
