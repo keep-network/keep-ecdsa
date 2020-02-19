@@ -6,6 +6,7 @@ import "../../contracts/BondedECDSAKeepFactory.sol";
 /// @dev This contract is for testing purposes only.
 contract BondedECDSAKeepFactoryVendorStub is BondedECDSAKeepFactory {
     constructor(
+        address masterBondedECDSAKeepAddress,
         address sortitionPoolFactory,
         address tokenStaking,
         address keepBonding,
@@ -13,6 +14,7 @@ contract BondedECDSAKeepFactoryVendorStub is BondedECDSAKeepFactory {
     )
         public
         BondedECDSAKeepFactory(
+            masterBondedECDSAKeepAddress,
             sortitionPoolFactory,
             tokenStaking,
             keepBonding,
