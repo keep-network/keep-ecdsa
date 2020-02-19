@@ -33,8 +33,14 @@ printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
 KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
     truffle exec scripts/unlock-eth-accounts.js --network local
 
+printf "${LOG_START}Finding current ethereum network ID...${LOG_END}"
+
+NETWORKID=$(truffle exec ./scripts/get-network-id.js --network local | tail -1)
+printf "Current network ID: ${NETWORKID}\n"
+
 printf "${LOG_START}Fetching external contracts addresses...${LOG_END}"
 KEEP_CORE_SOL_ARTIFACTS_PATH=$KEEP_CORE_SOL_ARTIFACTS_PATH \
+NETWORKID=$NETWORKID \
     ./scripts/lcl-provision-external-contracts.sh
 
 printf "${LOG_START}Migrating contracts...${LOG_END}"
