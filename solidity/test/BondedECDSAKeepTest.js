@@ -16,6 +16,7 @@ const TestToken = artifacts.require('./TestToken.sol')
 const KeepBonding = artifacts.require('./KeepBonding.sol')
 const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
 const TokenStakingStub = artifacts.require("./TokenStakingStub.sol")
+const BondedECDSAKeepCloneFactory = artifacts.require("BondedECDSAKeepCloneFactory")
 
 const truffleAssert = require('truffle-assertions')
 
@@ -33,7 +34,7 @@ contract('BondedECDSAKeep', (accounts) => {
   const signingPool = accounts[5]
   const honestThreshold = 1
 
-  let registry, keepBonding, tokenStaking, keep;
+  let registry, keepBonding, tokenStaking, keep, factoryStub
 
   async function newKeep(
     owner,
@@ -42,8 +43,9 @@ contract('BondedECDSAKeep', (accounts) => {
     tokenStaking,
     keepBonding
   ) {
-    keep = await BondedECDSAKeep.new()
-    await keep.initialize(
+    const startBlock = await web3.eth.getBlockNumber()
+
+    await factoryStub.newKeep(
       owner,
       members,
       honestThreshold,
@@ -51,13 +53,21 @@ contract('BondedECDSAKeep', (accounts) => {
       keepBonding
     )
 
-    return keep
+    const events = await factoryStub.getPastEvents(
+      'BondedECDSAKeepCreated',
+      { fromBlock: startBlock, toBlock: 'latest' }
+    )
+    assert.lengthOf(events, 1, 'unexpected length of BondedECDSAKeepCreated events')
+    const keepAddress = events[0].returnValues.keepAddress
+
+    return await BondedECDSAKeep.at(keepAddress)
   }
 
   before(async () => {
     registry = await Registry.new()
     tokenStaking = await TokenStakingStub.new()
     keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+    factoryStub = await BondedECDSAKeepCloneFactory.new(BondedECDSAKeep.address)
 
     await registry.approveOperatorContract(bondCreator)
     await keepBonding.authorizeSortitionPoolContract(members[0], signingPool, { from: authorizers[0] })
@@ -66,6 +76,8 @@ contract('BondedECDSAKeep', (accounts) => {
   })
 
   beforeEach(async () => {
+    await createSnapshot()
+
     keep = await newKeep(
       owner,
       members,
@@ -73,9 +85,8 @@ contract('BondedECDSAKeep', (accounts) => {
       tokenStaking.address,
       keepBonding.address
     )
-
-    await createSnapshot()
   })
+
 
   afterEach(async () => {
     await restoreSnapshot()
@@ -83,6 +94,9 @@ contract('BondedECDSAKeep', (accounts) => {
 
   describe('initialize', async () => {
     it('succeeds', async () => {
+      const expectedKeyGenerationTimeout = new BN(9000) // 9000 = 150*60 = 2.5h in seconds
+      const expectedSigningTimeout = new BN(5400) // 5400 = 90 * 60 = 1.5h in seconds
+
       keep = await BondedECDSAKeep.new()
       await keep.initialize(
         owner,
@@ -91,6 +105,11 @@ contract('BondedECDSAKeep', (accounts) => {
         tokenStaking.address,
         keepBonding.address
       )
+
+      expect(await keep.keyGenerationTimeout(), 'incorrect key generation timeout')
+        .to.eq.BN(expectedKeyGenerationTimeout)
+      expect(await keep.signingTimeout(), 'incorrect signing timeout')
+        .to.eq.BN(expectedSigningTimeout)
     })
 
     it('reverts if called for the second time', async () => {
@@ -443,7 +462,6 @@ contract('BondedECDSAKeep', (accounts) => {
         )
       })
     })
-
   })
 
   describe('checkBondAmount', () => {
