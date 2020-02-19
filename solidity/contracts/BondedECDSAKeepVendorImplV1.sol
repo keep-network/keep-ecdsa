@@ -20,13 +20,6 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     // Address of ECDSA keep factory.
     address payable keepFactory;
 
-    /// @dev Throws if called by any account other than the operator contract upgrader authorized for this service contract.
-    modifier onlyOperatorContractUpgrader() {
-        address operatorContractUpgrader = registry.operatorContractUpgraderFor(address(this));
-        require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
-        _;
-    }
-
     /// @dev Initialize Keep Vendor contract implementation.
     /// @param registryAddress Keep registry contract linked to this contract.
     function initialize(
@@ -62,5 +55,12 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     function selectFactory() public view returns (address payable) {
         require(keepFactory != address(0), "Keep factory is not registered");
         return keepFactory;
+    }
+
+    /// @dev Throws if called by any account other than the operator contract upgrader authorized for this service contract.
+    modifier onlyOperatorContractUpgrader() {
+        address operatorContractUpgrader = registry.operatorContractUpgraderFor(address(this));
+        require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
+        _;
     }
 }
