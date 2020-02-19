@@ -1,18 +1,28 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "./KeepBonding.sol";
+import "./api/IBondedECDSAKeep.sol";
+
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
-import "./api/IBondedECDSAKeep.sol";
-import "./KeepBonding.sol";
+
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 /// @title Bonded ECDSA Keep
 /// @notice Contract reflecting a bonded ECDSA keep.
-contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
+/// @dev This contract is used as a master contract for clone factory in
+/// BondedECDSAKeepFactory as per EIP-1167. It should never be removed after
+/// initial deployment as this will break functionality for all created clones.
+contract BondedECDSAKeep is IBondedECDSAKeep {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
+
+    // Flags execution of contract initialization.
+    bool isInitialized;
+
+    // Address of the keep's owner.
+    address private owner;
 
     // List of keep members' addresses.
     address[] internal members;
@@ -32,15 +42,15 @@ contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
 
     // Timeout for the keep public key to appear on the chain. Time is counted
     // from the moment keep has been created.
-    uint256 public keyGenerationTimeout = 150 * 60; // 2.5h in seconds
+    uint256 public constant keyGenerationTimeout = 150 * 60; // 2.5h in seconds
 
     // The timestamp at which keep has been created and key generation process
     // started.
-    uint256 keyGenerationStartTimestamp;
+    uint256 internal keyGenerationStartTimestamp;
 
     // Timeout for a signature to appear on the chain. Time is counted from the
     // moment signing request occurred.
-    uint256 public signingTimeout = 90 * 60; // 1.5h in seconds
+    uint256 public constant signingTimeout = 90 * 60; // 1.5h in seconds
 
     // The timestamp at which signing process started. Used also to track if
     // signing is in progress. When set to `0` indicates there is no
@@ -97,21 +107,33 @@ contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
     TokenStaking tokenStaking;
     KeepBonding keepBonding;
 
-    constructor(
+    /// @notice Initialization function.
+    /// @dev We use clone factory to create new keep. That is why this contract
+    /// doesn't have a constructor. We provide keep parameters for each instance
+    /// function after cloning instances from the master contract.
+    /// @param _owner Address of the keep owner.
+    /// @param _members Addresses of the keep members.
+    /// @param _honestThreshold Minimum number of honest keep members.
+    /// @param _tokenStaking Address of the TokenStaking contract.
+    /// @param _keepBonding Address of the KeepBonding contract.
+    function initialize(
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
         address _tokenStaking,
         address _keepBonding
     ) public {
-        transferOwnership(_owner);
+        require(!isInitialized, "Contract already initialized");
+
+        owner = _owner;
         members = _members;
         honestThreshold = _honestThreshold;
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         isActive = true;
+        isInitialized = true;
 
-        /* solium-disable-next-line */
+        /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
     }
 
@@ -221,7 +243,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
                 members[i],
                 uint256(address(this)),
                 amount,
-                address(uint160(owner()))
+                address(uint160(owner))
             );
         }
     }
@@ -470,6 +492,13 @@ contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
         (bool success, ) = tokenStaking.magpieOf(_member).call.value(value)("");
 
         require(success, "Transfer failed");
+    }
+
+    /// @notice Checks if the caller is the keep's owner.
+    /// @dev Throws an error if called by any account other than owner.
+    modifier onlyOwner() {
+        require(owner == msg.sender, "Caller is not the keep owner");
+        _;
     }
 
     /// @notice Checks if the caller is a keep member.

@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "./BondedECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
+import "./CloneFactory.sol";
 
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
@@ -16,7 +17,11 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title Bonded ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
-contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory {
+/// @dev We avoid redeployment of bonded ECDSA keep contract by using the clone factory.
+/// Proxy delegates calls to sortition pool and therefore does not affect contract's
+/// state. This means that we only need to deploy the bonded ECDSA keep contract
+/// once. The factory provides clean state for every new bonded ECDSA keep clone.
+contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
@@ -30,6 +35,10 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory {
         address owner,
         address application
     );
+
+    // Holds the address of the bonded ECDSA keep contract that will be used as a
+    // master contract for cloning.
+    address public masterBondedECDSAKeepAddress;
 
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
@@ -72,11 +81,13 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory {
     uint256 public subsidyPool;
 
     constructor(
+        address _masterBondedECDSAKeepAddress,
         address _sortitionPoolFactory,
         address _tokenStaking,
         address _keepBonding,
         address _randomBeacon
     ) public {
+        masterBondedECDSAKeepAddress = _masterBondedECDSAKeepAddress;
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
         );
@@ -273,15 +284,15 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory {
 
         newGroupSelectionSeed();
 
-        BondedECDSAKeep keep = new BondedECDSAKeep(
+        keepAddress = createClone(masterBondedECDSAKeepAddress);
+        BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
+        keep.initialize(
             _owner,
             members,
             _honestThreshold,
             tokenStaking,
             address(keepBonding)
         );
-
-        keepAddress = address(keep);
 
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
