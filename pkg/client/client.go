@@ -42,14 +42,13 @@ func Initialize(
 					keepAddress,
 					signer,
 				)
-
-				registerForETHDistributedEvents(ethereumChain, keepAddress)
-
 				logger.Debugf(
 					"signer registered for events from keep: [%s]",
 					keepAddress.String(),
 				)
 			}
+
+			registerForETHDistributedEvents(ethereumChain, keepAddress)
 		},
 	)
 
