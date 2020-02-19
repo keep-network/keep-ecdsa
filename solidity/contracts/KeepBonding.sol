@@ -54,14 +54,17 @@ contract KeepBonding {
         address bondCreator,
         address authorizedSortitionPool
     ) public view returns (uint256) {
-        require(
+        // Sortition pools check this condition and skips operators that
+        // are no longer eligible. We cannot revert here.
+        if (
             registry.isApprovedOperatorContract(bondCreator) &&
             stakingContract.isAuthorizedForOperator(operator, bondCreator) &&
-            hasSecondaryAuthorization(operator, authorizedSortitionPool),
-            "Approval or authorization failed for getting unbonded ether"
-        );
+            hasSecondaryAuthorization(operator, authorizedSortitionPool)
+        ) {
+          return unbondedValue[operator];
+        }
 
-        return unbondedValue[operator];
+        return 0;
     }
 
     /// @notice Add ether to operator's value available for bonding.

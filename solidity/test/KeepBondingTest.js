@@ -110,31 +110,28 @@ contract('KeepBonding', (accounts) => {
             await keepBonding.deposit(operator, { value: value })            
         })
 
-        it('Reverts with an error message when bond creator is not authorized for operator', async () => {
+        it('returns zero for operator with no deposit', async () => {
             const unbondedOperator = "0x0000000000000000000000000000000000000001"
+            const expectedUnbonded = 0
 
-            await expectRevert(
-                keepBonding.availableUnbondedValue(unbondedOperator, bondCreator, sortitionPool),
-                "Approval or authorization failed for getting unbonded ether"
-            )
+            const unbondedValue = await keepBonding.availableUnbondedValue(unbondedOperator, bondCreator, sortitionPool)
+            expect(unbondedValue).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
 
-        it('Reverts with an error message when bond creator is not approved by operator', async () => {
+        it('return zero when bond creator is not approved by operator', async () => {
             const notApprovedBondCreator = "0x0000000000000000000000000000000000000001"
+            const expectedUnbonded = 0
 
-            await expectRevert(
-                keepBonding.availableUnbondedValue(operator, notApprovedBondCreator, sortitionPool),
-                "Approval or authorization failed for getting unbonded ether"
-            )
+            const unbondedValue = await keepBonding.availableUnbondedValue(operator, notApprovedBondCreator, sortitionPool)
+            expect(unbondedValue).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
 
-        it('Reverts with an error message when sortition pool is not authorized', async () => {
+        it('returns zero when sortition pool is not authorized', async () => {
             const notAuthorizedSortitionPool = "0x0000000000000000000000000000000000000001"
+            const expectedUnbonded = 0
 
-            await expectRevert(
-                keepBonding.availableUnbondedValue(operator, bondCreator, notAuthorizedSortitionPool),
-                "Approval or authorization failed for getting unbonded ether"
-            )
+            const unbondedValue = await keepBonding.availableUnbondedValue(operator, bondCreator, notAuthorizedSortitionPool)
+            expect(unbondedValue).to.eq.BN(expectedUnbonded, 'invalid unbonded value') 
         })
 
         it('returns value of operators deposit', async () => {
