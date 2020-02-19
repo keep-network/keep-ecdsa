@@ -382,4 +382,24 @@ contract('KeepBonding', (accounts) => {
             expect(lockedBonds).to.eq.BN(bondValue, 'unexpected bond value')
         })
     })
+
+    describe("authorizeSortitionPoolContract", async () => {
+        it("reverts when operator is not an authorizer", async () => {
+            let authorizer1 = accounts[2]
+
+            await expectRevert(
+                keepBonding.authorizeSortitionPoolContract(operator, sortitionPool, { from: authorizer1 }),
+                'Not authorized'
+            )
+        })
+
+        it("should authorize sortition pool for provided operator", async () => {
+            await keepBonding.authorizeSortitionPoolContract(operator, sortitionPool, { from: authorizer })
+            
+            assert.isTrue(
+                await keepBonding.hasSecondaryAuthorization(operator, sortitionPool), 
+                "Sortition pool has not beeen authorized for provided operator"
+            )
+        })
+    })
 })
