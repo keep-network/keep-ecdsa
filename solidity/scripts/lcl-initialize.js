@@ -7,7 +7,7 @@ let { TokenStakingAddress, TBTCSystemAddress } = require('../migrations/external
 
 module.exports = async function () {
     try {
-        const bondingValue = 1000
+        const bondingValue = web3.utils.toBN(100000000000)
 
         const accounts = await web3.eth.getAccounts()
         const owner = accounts[0]
@@ -35,7 +35,7 @@ module.exports = async function () {
         const depositUnbondedValue = async (operator) => {
             try {
                 await keepBonding.deposit(operator, { value: bondingValue })
-                console.log(`deposited bonding value for operator [${operator}]`)
+                console.log(`deposited ${web3.utils.fromWei(bondingValue)} ETH bonding value for operator [${operator}]`)
             } catch (err) {
                 console.error(err)
                 process.exit(1)
