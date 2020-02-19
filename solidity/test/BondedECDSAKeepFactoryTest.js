@@ -9,7 +9,6 @@ const truffleAssert = require('truffle-assertions')
 const Registry = artifacts.require('Registry');
 const BondedECDSAKeepFactoryStub = artifacts.require('BondedECDSAKeepFactoryStub');
 const KeepBonding = artifacts.require('KeepBonding');
-const KeepBondingStub = artifacts.require('KeepBondingStub');
 const TokenStakingStub = artifacts.require("TokenStakingStub")
 const BondedSortitionPool = artifacts.require('BondedSortitionPool');
 const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
@@ -911,7 +910,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if not enough member candidates are registered", async () => {
-            let requestedGroupSize = groupSize + 1
+            let requestedGroupSize = groupSize.addn(1)
 
             await expectRevert(
                 keepFactory.openKeep(
@@ -1205,6 +1204,73 @@ contract("BondedECDSAKeepFactory", async accounts => {
             ).to.eq.BN(expectedSingleBalance.add(remainder))
         })
 
+        it("allows to use a group of 16 signers", async () => {
+            let groupSize = 16
+
+            // create and authorize enough operators to perform the test;
+            // we need more than the default 10 accounts
+            await createDepositAndRegisterMembers(groupSize, singleBond)
+
+            let blockNumber = await web3.eth.getBlockNumber()
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
+
+            let eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+
+            assert.equal(eventList.length, 1, "incorrect number of emitted events")
+            assert.equal(
+                eventList[0].returnValues.members.length, 
+                groupSize, 
+                "incorrect number of members"
+            )
+        })
+
+        it("reverts when trying to use a group of 17 signers", async () => {
+            let groupSize = 17
+
+            // create and authorize enough operators to perform the test;
+            // we need more than the default 10 accounts
+            await createDepositAndRegisterMembers(groupSize, singleBond)
+
+            await expectRevert(
+                keepFactory.openKeep(
+                    groupSize,
+                    threshold,
+                    keepOwner,
+                    bond,
+                    { from: application, value: feeEstimate },
+                ),
+                "Maximum signing group size is 16"
+            )
+        })
+
+        async function createDepositAndRegisterMembers(memberCount, unbondedAmount) {
+            for (let i = 0; i < memberCount; i++) {
+                const operator = await web3.eth.personal.newAccount("pass")
+                await web3.eth.personal.unlockAccount(operator, "pass", 5000) // 5 sec unlock
+
+                web3.eth.sendTransaction({
+                    from: accounts[0],
+                    to: operator, 
+                    value: web3.utils.toWei('1', 'ether')
+                });
+
+                await tokenStaking.authorizeOperatorContract(operator, keepFactory.address)
+                await keepBonding.authorizeSortitionPoolContract(operator, signerPool, { from: operator })
+                await keepBonding.deposit(operator, { value: unbondedAmount })
+                await keepFactory.registerMemberCandidate(application, { from: operator })
+            }
+        }
+
         async function depositAndRegisterMembers(unbondedAmount) {
             await keepBonding.deposit(member1, { value: unbondedAmount })
             await keepBonding.deposit(member2, { value: unbondedAmount })
@@ -1256,90 +1322,6 @@ contract("BondedECDSAKeepFactory", async accounts => {
             await expectRevert(
                 keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, { from: accounts[2] }),
                 "Caller is not the random beacon"
-            )
-        })
-    })
-
-    describe("openKeepWithMaxGroupSize", async () => {
-        const keepOwner = "0xbc4862697a1099074168d54A555c4A60169c18BD"
-        const groupSize = new BN(16)
-        const threshold = new BN(3)
-
-        const singleBond = new BN(1)
-        const bond = singleBond.mul(groupSize)
-
-        let feeEstimate
-        let members
-
-        before(async () => {
-            registry = await Registry.new()
-            bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-            tokenStaking = await TokenStakingStub.new()
-            keepBonding = await KeepBondingStub.new(registry.address, tokenStaking.address)
-            randomBeacon = await RandomBeaconStub.new()
-            keepFactory = await BondedECDSAKeepFactoryStub.new(
-                bondedSortitionPoolFactory.address,
-                tokenStaking.address,
-                keepBonding.address,
-                randomBeacon.address
-            )
-
-            await registry.approveOperatorContract(keepFactory.address)
-
-            const stakeBalance = await keepFactory.minimumStake.call()
-            await tokenStaking.setBalance(stakeBalance)
-
-            signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-
-            feeEstimate = await keepFactory.openKeepFeeEstimate()
-
-            // generate random addresses
-            members = []
-            for (let i = 0; i < groupSize; i++) {
-                const account = await web3.eth.accounts.create()
-                members.push(account.address)
-            }
-
-            for (let i = 0; i < members.length; i++) {
-                const member = members[i]
-                await tokenStaking.authorizeOperatorContract(member, keepFactory.address)
-                await keepBonding.authorizeSortitionPoolContractStub(member, signerPool)
-                await keepBonding.deposit(member, { value: singleBond })
-                await keepFactory.registerMemberCandidateStub(application, member)
-            }
-        })
-
-        beforeEach(async () => {
-            await createSnapshot()
-        })
-
-        afterEach(async () => {
-            await restoreSnapshot()
-        })
-
-        it.only("opens keep with 16 signers", async () => {
-            let blockNumber = await web3.eth.getBlockNumber()
-
-            await keepFactory.openKeep(
-                groupSize,
-                threshold,
-                keepOwner,
-                bond,
-                { from: application, value: feeEstimate },
-            )
-
-            let eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
-                fromBlock: blockNumber,
-                toBlock: 'latest'
-            })
-
-            assert.equal(eventList.length, 1, "incorrect number of emitted events")
-
-            assert.sameMembers(
-                eventList[0].returnValues.members,
-                members,
-                "incorrect keep member in emitted event",
             )
         })
     })

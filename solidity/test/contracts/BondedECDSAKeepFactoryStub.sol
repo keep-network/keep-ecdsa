@@ -27,20 +27,4 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
     function getGroupSelectionSeed() public view returns (uint256) {
         return groupSelectionSeed;
     }
-
-    function registerMemberCandidateStub(address _application, address _operator) external {
-        require(
-            candidatesPools[_application] != address(0),
-            "No pool found for the application"
-        );
-
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
-        );
-
-        address operator = _operator;
-        if (!candidatesPool.isOperatorInPool(operator)) {
-            candidatesPool.joinPool(operator);
-        }
-    }
 }
