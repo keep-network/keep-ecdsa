@@ -13,8 +13,10 @@ read -p "Enter path to the keep-core project [$KEEP_CORE_PATH_DEFAULT]: " keep_c
 KEEP_CORE_PATH=$(realpath ${keep_core_path:-$KEEP_CORE_PATH_DEFAULT})
 
 # Run script.
-LOG_START='\n\e[1;36m' # new line + bold + color
-LOG_END='\n\e[0m' # new line + reset color
+LOG_START='\n\e[1;36m'  # new line + bold + cyan
+LOG_END='\n\e[0m'       # new line + reset
+DONE_START='\n\e[1;32m' # new line + bold + green
+DONE_END='\n\n\e[0m'    # new line + reset
 
 printf "${LOG_START}Starting installation...${LOG_END}"
 KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
@@ -43,3 +45,5 @@ printf "${LOG_START}Building keep-ecdsa client...${LOG_END}"
 cd $KEEP_ECDSA_PATH
 go generate ./...
 go build -a -o keep-ecdsa .
+
+printf "${DONE_START}Installation completed!${DONE_END}"

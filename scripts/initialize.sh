@@ -22,8 +22,10 @@ read -p "Enter client application address [$CLIENT_APP_ADDRESS_DEFAULT]: " clien
 CLIENT_APP_ADDRESS=${client_app_address:-$CLIENT_APP_ADDRESS_DEFAULT}
 
 # Run script.
-LOG_START='\n\e[1;36m' # new line + bold + color
-LOG_END='\n\e[0m' # new line + reset color
+LOG_START='\n\e[1;36m'  # new line + bold + cyan
+LOG_END='\n\e[0m'       # new line + reset
+DONE_START='\n\e[1;32m' # new line + bold + green
+DONE_END='\n\n\e[0m'    # new line + reset
 
 printf "${LOG_START}Starting initialization...${LOG_END}"
 
@@ -38,3 +40,5 @@ printf "${LOG_START}Updating keep-ecdsa client config...${LOG_END}"
 KEEP_ECDSA_CONFIG_FILE_PATH=$KEEP_ECDSA_CONFIG_FILE_PATH \
     CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
     truffle exec scripts/lcl-client-config.js --network local
+
+printf "${DONE_START}Initialization completed!${DONE_END}"
