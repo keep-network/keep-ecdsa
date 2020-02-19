@@ -11,6 +11,9 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 /// @title Bonded ECDSA Keep
 /// @notice Contract reflecting a bonded ECDSA keep.
+/// @dev This contract is used as a master contract for clone factory in
+/// BondedECDSAKeepFactory as per EIP-1167. It should never be removed after
+/// initial deployment as this will break functionality for all created clones.
 contract BondedECDSAKeep is IBondedECDSAKeep {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
@@ -39,15 +42,15 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
     // Timeout for the keep public key to appear on the chain. Time is counted
     // from the moment keep has been created.
-    uint256 public keyGenerationTimeout = 150 * 60; // 2.5h in seconds
+    uint256 public constant keyGenerationTimeout = 150 * 60; // 2.5h in seconds
 
     // The timestamp at which keep has been created and key generation process
     // started.
-    uint256 keyGenerationStartTimestamp;
+    uint256 internal keyGenerationStartTimestamp;
 
     // Timeout for a signature to appear on the chain. Time is counted from the
     // moment signing request occurred.
-    uint256 public signingTimeout = 90 * 60; // 1.5h in seconds
+    uint256 public constant signingTimeout = 90 * 60; // 1.5h in seconds
 
     // The timestamp at which signing process started. Used also to track if
     // signing is in progress. When set to `0` indicates there is no
