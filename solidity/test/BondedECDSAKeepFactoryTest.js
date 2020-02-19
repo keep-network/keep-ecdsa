@@ -34,9 +34,9 @@ contract("BondedECDSAKeepFactory", async accounts => {
     const member1 = accounts[2]
     const member2 = accounts[3]
     const member3 = accounts[4]
-    const authorizer1 = accounts[2]
-    const authorizer2 = accounts[3]
-    const authorizer3 = accounts[4]
+    const authorizer1 = member1
+    const authorizer2 = member2
+    const authorizer3 = member3
 
     async function initializeNewFactory() {
         registry = await Registry.new()
