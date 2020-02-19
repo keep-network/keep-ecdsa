@@ -34,9 +34,9 @@ contract("BondedECDSAKeepFactory", async accounts => {
     const member1 = accounts[2]
     const member2 = accounts[3]
     const member3 = accounts[4]
-    const authorizer1 = accounts[2]
-    const authorizer2 = accounts[3]
-    const authorizer3 = accounts[4]
+    const authorizer1 = member1
+    const authorizer2 = member2
+    const authorizer3 = member3
 
     async function initializeNewFactory() {
         registry = await Registry.new()
@@ -44,7 +44,9 @@ contract("BondedECDSAKeepFactory", async accounts => {
         tokenStaking = await TokenStakingStub.new()
         keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
         randomBeacon = await RandomBeaconStub.new()
+        const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
         keepFactory = await BondedECDSAKeepFactoryStub.new(
+            bondedECDSAKeepMasterContract.address,
             bondedSortitionPoolFactory.address,
             tokenStaking.address,
             keepBonding.address,
@@ -90,11 +92,6 @@ contract("BondedECDSAKeepFactory", async accounts => {
             const minimumStake = await keepFactory.minimumStake.call()
             const minimumStakeMultiplier = new BN("10")
             await tokenStaking.setBalance(minimumStake.mul(minimumStakeMultiplier))
-
-            const application = '0x0000000000000000000000000000000000000001'
-            let signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-            await keepBonding.authorizeSortitionPoolContract(member1, signerPool, { from: authorizer1 })
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
@@ -1291,7 +1288,9 @@ contract("BondedECDSAKeepFactory", async accounts => {
             tokenStaking = await TokenStakingStub.new()
             keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
             randomBeacon = accounts[1]
+            const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
             keepFactory = await BondedECDSAKeepFactoryStub.new(
+                bondedECDSAKeepMasterContract.address,
                 bondedSortitionPoolFactory.address,
                 tokenStaking.address,
                 keepBonding.address,
