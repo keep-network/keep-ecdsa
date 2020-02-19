@@ -1201,6 +1201,44 @@ contract("BondedECDSAKeepFactory", async accounts => {
             ).to.eq.BN(expectedSingleBalance.add(remainder))
         })
 
+        it("reverts when honest threshold is greater than the group size", async () => {
+            let honestThreshold = 4
+            let groupSize = 3
+
+            await expectRevert(
+                keepFactory.openKeep(
+                    groupSize,
+                    honestThreshold,
+                    keepOwner,
+                    bond,
+                    { from: application, value: feeEstimate },
+                ),
+                "Honest threshold must be less or equal the group size"
+            )
+        })
+
+        it("works when honest threshold is equal to the group size", async () => {
+            let honestThreshold = 3
+            let groupSize = honestThreshold
+  
+            let blockNumber = await web3.eth.getBlockNumber()
+
+            await keepFactory.openKeep(
+                groupSize,
+                honestThreshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
+
+            let eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
+                fromBlock: blockNumber,
+                toBlock: 'latest'
+            })
+
+            assert.equal(eventList.length, 1, "incorrect number of emitted events")
+        })
+
         it("allows to use a group of 16 signers", async () => {
             let groupSize = 16
 

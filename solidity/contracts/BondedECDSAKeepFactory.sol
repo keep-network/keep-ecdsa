@@ -260,6 +260,10 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         uint256 _bond
     ) external payable returns (address keepAddress) {
         require(_groupSize <= 16, "Maximum signing group size is 16");
+        require(
+            _honestThreshold <= _groupSize,
+            "Honest threshold must be less or equal the group size"
+        );
 
         address application = msg.sender;
         address pool = candidatesPools[application];
