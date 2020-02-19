@@ -14,6 +14,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
+    // Flags execution of contract initialization.
+    bool isInitialized;
+
     // List of keep members' addresses.
     address[] internal members;
 
@@ -97,19 +100,22 @@ contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
     TokenStaking tokenStaking;
     KeepBonding keepBonding;
 
-    constructor(
+    function initialize(
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
         address _tokenStaking,
         address _keepBonding
-    ) public {
+    ) public onlyOwner {
+        require(!isInitialized, "Contract already initialized");
+
         transferOwnership(_owner);
         members = _members;
         honestThreshold = _honestThreshold;
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         isActive = true;
+        isInitialized = true;
 
         /* solium-disable-next-line */
         keyGenerationStartTimestamp = block.timestamp;
