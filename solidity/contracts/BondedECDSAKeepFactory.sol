@@ -101,26 +101,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         subsidyPool += msg.value;
     }
 
-    /// @notice Register caller as a candidate to be selected as keep member
-    /// for the provided customer application.
-    /// @dev If caller is already registered it returns without any changes.
-    /// @param _application Address of the application.
-    function registerMemberCandidate(address _application) external {
-        require(
-            candidatesPools[_application] != address(0),
-            "No pool found for the application"
-        );
-
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
-        );
-
-        address operator = msg.sender;
-        if (!candidatesPool.isOperatorInPool(operator)) {
-            candidatesPool.joinPool(operator);
-        }
-    }
-
     /// @notice Creates new sortition pool for the application.
     /// @dev Emits an event after sortition pool creation.
     /// @param _application Address of the application.
@@ -163,6 +143,26 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         );
 
         return candidatesPools[_application];
+    }
+
+    /// @notice Register caller as a candidate to be selected as keep member
+    /// for the provided customer application.
+    /// @dev If caller is already registered it returns without any changes.
+    /// @param _application Address of the application.
+    function registerMemberCandidate(address _application) external {
+        require(
+            candidatesPools[_application] != address(0),
+            "No pool found for the application"
+        );
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        address operator = msg.sender;
+        if (!candidatesPool.isOperatorInPool(operator)) {
+            candidatesPool.joinPool(operator);
+        }
     }
 
     /// @notice Checks if operator is registered as a candidate for the given

@@ -34,9 +34,9 @@ contract("BondedECDSAKeepFactory", async accounts => {
     const member1 = accounts[2]
     const member2 = accounts[3]
     const member3 = accounts[4]
-    const authorizer1 = accounts[2]
-    const authorizer2 = accounts[3]
-    const authorizer3 = accounts[4]
+    const authorizer1 = member1
+    const authorizer2 = member2
+    const authorizer3 = member3
 
     async function initializeNewFactory() {
         registry = await Registry.new()
@@ -92,11 +92,6 @@ contract("BondedECDSAKeepFactory", async accounts => {
             const minimumStake = await keepFactory.minimumStake.call()
             const minimumStakeMultiplier = new BN("10")
             await tokenStaking.setBalance(minimumStake.mul(minimumStakeMultiplier))
-
-            const application = '0x0000000000000000000000000000000000000001'
-            let signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-            await keepBonding.authorizeSortitionPoolContract(member1, signerPool, { from: authorizer1 })
 
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
