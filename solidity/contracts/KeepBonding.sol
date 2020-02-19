@@ -3,7 +3,6 @@ pragma solidity ^0.5.4;
 import "@keep-network/keep-core/contracts/Registry.sol";
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
-
 // TODO: This contract is expected to implement functions defined by IBonding
 // interface defined in @keep-network/sortition-pools. After merging the
 // repositories we need to move IBonding definition to sit closer to KeepBonding
@@ -41,7 +40,7 @@ contract KeepBonding {
     }
 
     /// @notice Returns the amount of ether the operator has made available for
-    /// bonding and that is still unbounded. If the operator doesn't exists or
+    /// bonding and that is still unbounded. If the operator doesn't exist or
     /// bond creator is not authorized as an operator contract or it is not
     /// authorized by the operator or there is no secondary authorization for
     /// the provided sortition pool, function returns 0.
@@ -55,14 +54,14 @@ contract KeepBonding {
         address bondCreator,
         address authorizedSortitionPool
     ) public view returns (uint256) {
-        if (registry.isApprovedOperatorContract(bondCreator) &&
+        require(
+            registry.isApprovedOperatorContract(bondCreator) &&
             stakingContract.isAuthorizedForOperator(operator, bondCreator) &&
-            hasSecondaryAuthorization(operator, authorizedSortitionPool)
-        ) {
-            return unbondedValue[operator];
-        } else {
-            return 0;
-        }
+            hasSecondaryAuthorization(operator, authorizedSortitionPool),
+            "Approval or authorization failed for getting unbonded ether"
+        );
+
+        return unbondedValue[operator];
     }
 
     /// @notice Add ether to operator's value available for bonding.
