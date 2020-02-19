@@ -1,21 +1,25 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "./KeepBonding.sol";
+import "./api/IBondedECDSAKeep.sol";
+
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
-import "./api/IBondedECDSAKeep.sol";
-import "./KeepBonding.sol";
+
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 /// @title Bonded ECDSA Keep
 /// @notice Contract reflecting a bonded ECDSA keep.
-contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
+contract BondedECDSAKeep is IBondedECDSAKeep {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
     // Flags execution of contract initialization.
     bool isInitialized;
+
+    // Address of the keep's owner.
+    address private owner;
 
     // List of keep members' addresses.
     address[] internal members;
@@ -106,10 +110,10 @@ contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
         uint256 _honestThreshold,
         address _tokenStaking,
         address _keepBonding
-    ) public onlyOwner {
+    ) public {
         require(!isInitialized, "Contract already initialized");
 
-        transferOwnership(_owner);
+        owner = _owner;
         members = _members;
         honestThreshold = _honestThreshold;
         tokenStaking = TokenStaking(_tokenStaking);
@@ -227,7 +231,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
                 members[i],
                 uint256(address(this)),
                 amount,
-                address(uint160(owner()))
+                address(uint160(owner))
             );
         }
     }
@@ -476,6 +480,13 @@ contract BondedECDSAKeep is IBondedECDSAKeep, Ownable {
         (bool success, ) = tokenStaking.magpieOf(_member).call.value(value)("");
 
         require(success, "Transfer failed");
+    }
+
+    /// @notice Checks if the caller is the keep's owner.
+    /// @dev Throws an error if called by any account other than owner.
+    modifier onlyOwner() {
+        require(owner == msg.sender, "Caller is not the keep owner");
+        _;
     }
 
     /// @notice Checks if the caller is a keep member.
