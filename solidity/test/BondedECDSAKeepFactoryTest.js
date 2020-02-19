@@ -1272,10 +1272,6 @@ contract("BondedECDSAKeepFactory", async accounts => {
         it("reverts when trying to use a group of 17 signers", async () => {
             let groupSize = 17
 
-            // create and authorize enough operators to perform the test;
-            // we need more than the default 10 accounts
-            await createDepositAndRegisterMembers(groupSize, singleBond)
-
             await expectRevert(
                 keepFactory.openKeep(
                     groupSize,
