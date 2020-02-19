@@ -145,6 +145,8 @@ func registerForSignEvents(
 	)
 }
 
+// registerForETHDistributedEvents registers for ETH distributed events emitted
+// by specific keep contract.
 func registerForETHDistributedEvents(
 	ethereumChain eth.Handle,
 	keepAddress common.Address,
