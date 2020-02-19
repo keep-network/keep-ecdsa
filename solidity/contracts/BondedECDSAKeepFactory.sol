@@ -43,7 +43,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
 
-    uint256 feeEstimate;
     uint256 public groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
