@@ -248,6 +248,8 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory {
         address _owner,
         uint256 _bond
     ) external payable returns (address keepAddress) {
+        require(_groupSize <= 16, "Maximum signing group size is 16");
+
         address application = msg.sender;
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");

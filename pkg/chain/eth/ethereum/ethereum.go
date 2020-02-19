@@ -94,10 +94,8 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return err
 	}
 
-	// TODO: this is absolutely enough for a group of 3 members but should we
-	// support 50 or 100?
 	transactorOptions := bind.TransactOpts(*ec.transactorOptions)
-	transactorOptions.GasLimit = 200000
+	transactorOptions.GasLimit = 3000000 // enough for a group size of 16
 
 	transaction, err := keepContract.SubmitPublicKey(&transactorOptions, publicKey[:])
 	if err != nil {
