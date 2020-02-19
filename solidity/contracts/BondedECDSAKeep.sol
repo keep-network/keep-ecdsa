@@ -133,7 +133,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         isActive = true;
         isInitialized = true;
 
-        /* solium-disable-next-line */
+        /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
     }
 
