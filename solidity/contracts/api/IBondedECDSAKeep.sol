@@ -32,7 +32,7 @@ contract IBondedECDSAKeep {
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
         external;
 
-    /// @notice Seizes the signer's ETH bond.
+    /// @notice Seizes the signers' ETH bond.
     function seizeSignerBonds() external;
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
