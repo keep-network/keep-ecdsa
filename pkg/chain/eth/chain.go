@@ -55,4 +55,14 @@ type BondedECDSAKeep interface {
 	// IsAwaitingSignature checks if the keep is waiting for a signature to be
 	// calculated for the given digest.
 	IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error)
+
+	// OnETHDistributedToMembers is a callback that is invoked when a new
+	// ETH distributed to members event is seen.
+	OnETHDistributedToMembers(
+		keepAddress common.Address,
+		handler func(),
+	) (subscription.EventSubscription, error)
+
+	// Withdraw withdraws the amount of ether hold in the keep for the member.
+	Withdraw(keepAddress common.Address) error
 }

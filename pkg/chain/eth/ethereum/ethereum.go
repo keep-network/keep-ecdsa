@@ -167,3 +167,42 @@ func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest 
 		digest,
 	)
 }
+
+func (ec *EthereumChain) OnETHDistributedToMembers(
+	keepAddress common.Address,
+	handler func(),
+) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+
+	return ec.watchETHDistributedToMembers(
+		keepContract,
+		func(chainEvent *abi.BondedECDSAKeepETHDistributedToMembers) {
+			handler()
+		},
+		func(err error) error {
+			return fmt.Errorf("keep ETH distributed to members callback failed: [%v]", err)
+		},
+	)
+}
+
+func (ec *EthereumChain) Withdraw(keepAddress common.Address) error {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := keepContract.Withdraw(
+		ec.transactorOptions,
+		ec.Address(),
+	)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf("submitted Withdraw transaction with hash: [%x]", transaction.Hash())
+
+	return nil
+}

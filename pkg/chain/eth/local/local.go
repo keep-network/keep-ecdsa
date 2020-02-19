@@ -138,3 +138,14 @@ func (lc *localChain) IsAwaitingSignature(
 ) (bool, error) {
 	panic("implement")
 }
+
+func (lc *localChain) OnETHDistributedToMembers(
+	keepAddress common.Address,
+	handler func(),
+) (subscription.EventSubscription, error) {
+	panic("implement")
+}
+
+func (lc *localChain) Withdraw(keepAddress common.Address) error {
+	panic("implement")
+}

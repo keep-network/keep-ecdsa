@@ -42,6 +42,9 @@ func Initialize(
 					keepAddress,
 					signer,
 				)
+
+				registerForETHDistributedEvents(ethereumChain, keepAddress)
+
 				logger.Debugf(
 					"signer registered for events from keep: [%s]",
 					keepAddress.String(),
@@ -85,6 +88,8 @@ func Initialize(
 				event.KeepAddress,
 				signer,
 			)
+
+			registerForETHDistributedEvents(ethereumChain, event.KeepAddress)
 		}
 	})
 
@@ -135,6 +140,28 @@ func registerForSignEvents(
 
 				if err != nil {
 					logger.Errorf("signature calculation failed: [%v]", err)
+				}
+			}()
+		},
+	)
+}
+
+func registerForETHDistributedEvents(
+	ethereumChain eth.Handle,
+	keepAddress common.Address,
+) {
+	ethereumChain.OnETHDistributedToMembers(
+		keepAddress,
+		func() {
+			logger.Infof(
+				"ETH distributed to members from keep [%s]",
+				keepAddress.String(),
+			)
+
+			go func() {
+				err := ethereumChain.Withdraw(keepAddress)
+				if err != nil {
+					logger.Errorf("withdraw failed: [%v]", err)
 				}
 			}()
 		},
