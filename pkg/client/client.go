@@ -155,7 +155,7 @@ func registerForETHDistributedEvents(
 		keepAddress,
 		func() {
 			logger.Infof(
-				"ETH distributed to members from keep [%s]",
+				"ETH distributed to members of keep [%s]",
 				keepAddress.String(),
 			)
 
