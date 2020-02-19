@@ -10,7 +10,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 /// @title Bonded ECDSA Keep
-/// @notice Contract reflecting a bonded ECDSA keep.
+/// @notice ECDSA keep with additional signer bond requirement.
 /// @dev This contract is used as a master contract for clone factory in
 /// BondedECDSAKeepFactory as per EIP-1167. It should never be removed after
 /// initial deployment as this will break functionality for all created clones.
@@ -30,7 +30,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
 
-    // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
+    // Keep's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
     bytes publicKey;
 
@@ -61,7 +61,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // same public key.
     mapping(address => bytes) submittedPublicKeys;
 
-    // Map stores amount of ether stored in the contract for each member address.
+    // Map stores amount of wei stored in the contract for each member address.
     mapping(address => uint256) memberETHBalances;
 
     // Flag to monitor current keep state. If the keep is active members monitor
@@ -81,7 +81,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         bytes conflictingPublicKey
     );
 
-    // Notification that a signer's public key was published for the keep.
+    // Notification that keep's ECDSA public key has been successfully established.
     event PublicKeyPublished(bytes publicKey);
 
     // Notification that members received ether transfer.
@@ -140,7 +140,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @notice Submits a public key to the keep.
     /// @dev Public key is published successfully if all members submit the same
     /// value. In case of conflicts with others members submissions it will emit
-    /// an `ConflictingPublicKeySubmitted` event. When all submitted keys match
+    /// `ConflictingPublicKeySubmitted` event. When all submitted keys match
     /// it will store the key as keep's public key and emit a `PublicKeyPublished`
     /// event.
     /// @param _publicKey Signer's public key.
@@ -206,8 +206,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return submittedPublicKeys[_member].length != 0;
     }
 
-    /// @notice Returns the keep signer's public key.
-    /// @return Signer's public key.
+    /// @notice Returns keep's ECDSA public key.
+    /// @return Keep's ECDSA public key.
     function getPublicKey() external view returns (bytes memory) {
         return publicKey;
     }
@@ -473,9 +473,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         );
     }
 
-    /// @notice Gets current amount of ether hold in the keep for the member.
+    /// @notice Gets current amount of ETH hold in the keep for the member.
     /// @param _member Keep member address.
-    /// @return Current balance.
+    /// @return Current balance in wei.
     function getMemberETHBalance(address _member)
         external
         view
