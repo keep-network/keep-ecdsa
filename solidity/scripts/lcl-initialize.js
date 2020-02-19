@@ -7,7 +7,11 @@ let { TokenStakingAddress, TBTCSystemAddress } = require('../migrations/external
 
 module.exports = async function () {
     try {
-        const bondingValue = web3.utils.toBN(100000000000)
+        // Assuming BTC/ETH rate = 50 to cover a keep bond of 1 BTC we need to have
+        // 50 ETH / 3 members = 16,67 ETH of unbonded value for each member.
+        // Here we set the bonding value to bigger value so members can handle
+        // multiple keeps.
+        const bondingValue = web3.utils.toWei("50", "ether")
 
         const accounts = await web3.eth.getAccounts()
         const owner = accounts[0]
