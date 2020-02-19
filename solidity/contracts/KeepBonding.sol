@@ -54,8 +54,8 @@ contract KeepBonding {
         address bondCreator,
         address authorizedSortitionPool
     ) public view returns (uint256) {
-        // sortition pools check this condition and skips operators that
-        // are no longer eligible; we cannot revert here
+        // Sortition pools check this condition and skips operators that
+        // are no longer eligible. We cannot revert here.
         if (
             registry.isApprovedOperatorContract(bondCreator) &&
             stakingContract.isAuthorizedForOperator(operator, bondCreator) &&
