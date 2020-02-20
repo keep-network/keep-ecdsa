@@ -1,11 +1,11 @@
 package testutils
 
 import (
-	"testing"
-
+	"crypto/ecdsa"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	cecdsa "github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
+	"testing"
 )
 
 // VerifyEthereumSignature validates that signature in form (r, s, recoveryID)
@@ -15,7 +15,7 @@ import (
 func VerifyEthereumSignature(
 	t *testing.T,
 	hash []byte,
-	signature *ecdsa.Signature,
+	signature *cecdsa.Signature,
 	expectedPublicKey *ecdsa.PublicKey,
 ) {
 
@@ -39,7 +39,7 @@ func VerifyEthereumSignature(
 	}
 }
 
-func serializeSignature(signature *ecdsa.Signature) ([]byte, error) {
+func serializeSignature(signature *cecdsa.Signature) ([]byte, error) {
 	var serializedBytes []byte
 
 	r, err := byteutils.LeftPadTo32Bytes(signature.R.Bytes())
