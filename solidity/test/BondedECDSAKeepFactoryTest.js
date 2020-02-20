@@ -311,7 +311,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         it("returns false if the operator stake is below minimum", async () => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
-            tokenStaking.setBalance(minimumStake.sub(new BN(1)))
+            await tokenStaking.setBalance(minimumStake.sub(new BN(1)))
 
             assert.isFalse(await keepFactory.isOperatorUpToDate(member1, application))
         })
@@ -323,7 +323,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
             // minimum stake to calculate stakers weight for eligibility.
             // We subtract 1 to get the same staking weight which is calculated as
             // `weight = floor(stakingBalance / minimumStake)`.
-            tokenStaking.setBalance(minimumStake.mul(new BN(2)).sub(new BN(1)))
+            await tokenStaking.setBalance(minimumStake.mul(new BN(2)).sub(new BN(1)))
 
             assert.isTrue(await keepFactory.isOperatorUpToDate(member1, application))
         })
@@ -333,7 +333,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
             // We multiply minimumStake as sortition pools expect multiplies of the
             // minimum stake to calculate stakers weight for eligibility.
-            tokenStaking.setBalance(minimumStake.mul(new BN(2)))
+            await tokenStaking.setBalance(minimumStake.mul(new BN(2)))
 
             assert.isFalse(await keepFactory.isOperatorUpToDate(member1, application))
         })
@@ -341,7 +341,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         it("returns false if the operator bonding value is below minimum", async () => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
-            keepBonding.withdraw(new BN(1), member1, { from: member1 })
+            await keepBonding.withdraw(new BN(1), member1, { from: member1 })
 
             assert.isFalse(await keepFactory.isOperatorUpToDate(member1, application))
         })
@@ -349,7 +349,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         it("returns true if the operator bonding value is above minimum", async () => {
             await keepFactory.registerMemberCandidate(application, { from: member1 })
 
-            keepBonding.deposit(member1, { value: new BN(1) })
+            await keepBonding.deposit(member1, { value: new BN(1) })
 
             assert.isTrue(await keepFactory.isOperatorUpToDate(member1, application))
         })
