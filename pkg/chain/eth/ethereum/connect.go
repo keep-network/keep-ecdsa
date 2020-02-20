@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	cecdsa "crypto/ecdsa"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
