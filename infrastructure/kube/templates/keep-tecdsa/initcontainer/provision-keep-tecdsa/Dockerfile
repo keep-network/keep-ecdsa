@@ -23,6 +23,7 @@ ARG ETH_NETWORK_ID
 ENV ETH_NETWORK_ID=$ETH_NETWORK_ID
 
 COPY ./BondedECDSAKeepFactory.json /tmp/BondedECDSAKeepFactory.json
+COPY ./TBTCSystem.json /tmp/TBTCSystem.json
 
 COPY ./keep-tecdsa-template.toml /tmp/keep-tecdsa-template.toml
 
