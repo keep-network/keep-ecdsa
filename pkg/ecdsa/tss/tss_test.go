@@ -13,11 +13,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
-	"github.com/keep-network/keep-tecdsa/pkg/net/local"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/testutils"
 )
 
@@ -229,5 +229,5 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[string]*key.NetworkPubli
 }
 
 func newTestNetProvider(memberNetworkKey *key.NetworkPublic) net.Provider {
-	return local.LocalProvider(memberNetworkKey)
+	return local.ConnectWithKey(memberNetworkKey)
 }
