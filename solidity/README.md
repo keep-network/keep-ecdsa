@@ -3,16 +3,51 @@
 
 ## Configure Development Environment
 
+### NPM dependencies
+
+The project uses [GitHub Package Registry](https://github.com/orgs/keep-network/packages)
+for keep-network dependencies. It requires `npm login --registry=https://npm.pkg.github.com
+to be executed to authenticate with GitHub account in order to access private
+packages. You can login with GitHub access token by providing your username and
+instead of password use the token.
+
 Install the project dependencies:
 
 ```sh
 npm install
 ```
 
-The project uses [GitHub Package Registry](https://github.com/orgs/keep-network/packages)
-for dependencies. It requires `npm login` to be executed to authenticate with 
-GitHub account. You can login with GitHub access token by providing your username
-and instead of password use the token.
+### keep-core contracts
+
+This project depends on contracts migrated by `keep-core` project and expects its 
+migration artifacts to be provided in `build/contracts` directory.
+The contracts can be fetched from Google Cloud Bucket (for CI) or copied over
+from local source (for development) after running migrations in `keep-core` project.
+
+To fetch required contracts addresses from `keep-core` project execute command:
+```sh
+KEEP_CORE_ARTIFACTS=~/go/src/github.com/keep-network/keep-core/contracts/solidity/build/contracts \
+   ./scripts/lcl-provision-external-contracts.sh
+```
+Remember to update `KEEP_CORE_ARTIFACTS` with path where migrations artifacts are
+stored on your machine.
+
+### Staking and bonding
+
+Keeps creation depends on operator's KEEP token staking and available bonding 
+value. To initialize the operator:
+
+1. Initialize token staking in keep-core:
+    ```sh
+    # Run from `keep-core/contracts/solidity` directory
+    truffle exec ./scripts/demo.js --network local
+    ```
+
+2. Initialize operator for Bonded ECDSA keep factory.
+    ```sh
+    # Run from `keep-tecdsa/solidity` directory
+    truffle exec scripts/lcl-initialize.js`
+    ```
 
 ## Usage
 
@@ -73,7 +108,7 @@ for each contract and copy-paste it to [config.toml](../configs/config.toml) fil
 Unit tests use Truffle's test framework, and redeploy contracts for a clean environment every test. An example:
 
 ```sh
-truffle test test/ECDSAKeepTest.js
+truffle test test/BondedECDSAKeepTest.js
 ```
 
 #### Scenarios

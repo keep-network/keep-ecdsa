@@ -59,6 +59,7 @@ func (id MemberID) Equal(memberID MemberID) bool {
 type groupInfo struct {
 	groupID               string // globally unique group identifier
 	memberID              MemberID
+	memberPublicKey       cecdsa.PublicKey
 	groupMemberIDs        []MemberID
 	groupMemberPublicKeys map[string]cecdsa.PublicKey
 	// Dishonest threshold `t` defines a maximum number of signers controlled by the
