@@ -84,30 +84,28 @@ func (n *Node) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
-	// TODO: Publisher Selection: Temp solution only the first member in the group
-	// publishes. We need to replace it with proper publisher selection.
-	if signer.PublisherIndex() == 0 {
-		err = n.ethereumChain.SubmitKeepPublicKey(
-			keepAddress,
-			serializedPublicKey,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to submit public key: [%v]", err)
-
-		}
-
-		logger.Debugf(
-			"submitted public key to the keep [%s]: [%x]",
-			keepAddress.String(),
-			serializedPublicKey,
-		)
+	err = n.ethereumChain.SubmitKeepPublicKey(
+		keepAddress,
+		serializedPublicKey,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to submit public key: [%v]", err)
 	}
+
+	logger.Debugf(
+		"submitted public key to the keep [%s]: [%x]",
+		keepAddress.String(),
+		serializedPublicKey,
+	)
 
 	return signer, nil
 }
 
 // CalculateSignature calculates a signature over a digest with threshold
 // signer and publishes the result to the keep associated with the signer.
+// In case of failure on signature submission we need to check if the keep is
+// still waiting for the signature. It is possible that other member was faster
+// than the current one and submitted the signature first.
 func (n *Node) CalculateSignature(
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
@@ -126,16 +124,22 @@ func (n *Node) CalculateSignature(
 
 	keepAddress := common.HexToAddress(signer.GroupID())
 
-	// TODO: Publisher Selection: Temp solution only the first member in the group
-	// publishes. We need to replace it with proper publisher selection.
-	if signer.PublisherIndex() == 0 {
-		err = n.ethereumChain.SubmitSignature(keepAddress, signature)
+	if err := n.ethereumChain.SubmitSignature(keepAddress, signature); err != nil {
+		isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(keepAddress, digest)
 		if err != nil {
-			return fmt.Errorf("failed to submit signature: [%v]", err)
+			return fmt.Errorf("failed to verify if keep is still awaiting signature: [%v]", err)
 		}
 
-		logger.Infof("submitted signature for digest: [%+x]", digest)
+		if !isAwaitingSignature {
+			logger.Infof("signature submitted by another member: [%+x]", digest)
+
+			return nil
+		}
+
+		return fmt.Errorf("failed to submit signature: [%v]", err)
 	}
+
+	logger.Infof("submitted signature for digest: [%+x]", digest)
 
 	return nil
 }

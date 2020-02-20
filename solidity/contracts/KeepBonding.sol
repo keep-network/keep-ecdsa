@@ -1,122 +1,249 @@
 pragma solidity ^0.5.4;
 
+import "@keep-network/keep-core/contracts/Registry.sol";
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
+
+// TODO: This contract is expected to implement functions defined by IBonding
+// interface defined in @keep-network/sortition-pools. After merging the
+// repositories we need to move IBonding definition to sit closer to KeepBonding
+// contract so that sortition pools import it for own needs. It is the bonding
+// module which should define an interface, and sortition pool module should be
+// just importing it.
+
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
 contract KeepBonding {
-   // Unassigned ether values deposited by operators.
-   mapping(address => uint256) internal unbondedValue;
-   // References to created bonds. Bond identifier is built from operator's
-   // address, holder's address and reference ID assigned on bond creation.
-   mapping(bytes32 => uint256) internal lockedBonds;
+    // Registry contract with a list of approved factories (operator contracts).
+    Registry internal registry;
 
-   /// @notice Returns value of ether available for bonding for the operator.
-   /// @param operator Address of the operator.
-   /// @return Value of deposited ether available for bonding.
-   function availableBondingValue(address operator) public view returns (uint256) {
-      return unbondedValue[operator];
-   }
+    // KEEP token staking contract.
+    TokenStaking internal stakingContract;
 
-   /// @notice Add ether to operator's value available for bonding.
-   /// @param operator Address of the operator.
-   function deposit(address operator) external payable {
-      unbondedValue[operator] += msg.value;
-   }
+    // Unassigned value in wei deposited by operators.
+    mapping(address => uint256) internal unbondedValue;
 
-   /// @notice Draw amount from sender's value available for bonding.
-   /// @param amount Value to withdraw.
-   /// @param destination Address to send the amount to.
-   function withdraw(uint256 amount, address payable destination) public {
-      require(availableBondingValue(msg.sender) >= amount, "Insufficient unbonded value");
+    // References to created bonds. Bond identifier is built from operator's
+    // address, holder's address and reference ID assigned on bond creation.
+    mapping(bytes32 => uint256) internal lockedBonds;
 
-      unbondedValue[msg.sender] -= amount;
-      destination.transfer(amount);
-   }
+    // Sortition pools authorized by operator's authorizer.
+    // operator -> pool -> boolean
+    mapping(address => mapping (address => bool)) internal authorizedPools;
 
-   /// @notice Create bond for given operator, reference and amount.
-   /// @dev Function can be executed only by authorized contract which will become
-   /// bond's holder. Reference ID should be unique for holder and operator.
-   /// @param operator Address of the operator to bond.
-   /// @param referenceID Reference ID used to track the bond by holder.
-   /// @param amount Value to bond.
-   function createBond(address operator, uint256 referenceID, uint256 amount) public onlyAuthorized {
-      require(availableBondingValue(operator) >= amount, "Insufficient unbonded value");
+    /// @notice Initializes Keep Bonding contract.
+    /// @param registryAddress Keep registry contract address.
+    /// @param stakingContractAddress KEEP Token staking contract address.
+    constructor(address registryAddress, address stakingContractAddress) public {
+        registry = Registry(registryAddress);
+        stakingContract = TokenStaking(stakingContractAddress);
+    }
 
-      address holder = msg.sender;
-      bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
+    /// @notice Returns the amount of wei the operator has made available for
+    /// bonding and that is still unbounded. If the operator doesn't exist or
+    /// bond creator is not authorized as an operator contract or it is not
+    /// authorized by the operator or there is no secondary authorization for
+    /// the provided sortition pool, function returns 0.
+    /// @dev Implements function expected by sortition pools' IBonding interface.
+    /// @param operator Address of the operator.
+    /// @param bondCreator Address authorized to create a bond.
+    /// @param authorizedSortitionPool Address of authorized sortition pool.
+    /// @return Amount of deposited wei available for bonding.
+    function availableUnbondedValue(
+        address operator,
+        address bondCreator,
+        address authorizedSortitionPool
+    ) public view returns (uint256) {
+        // Sortition pools check this condition and skips operators that
+        // are no longer eligible. We cannot revert here.
+        if (
+            registry.isApprovedOperatorContract(bondCreator) &&
+            stakingContract.isAuthorizedForOperator(operator, bondCreator) &&
+            hasSecondaryAuthorization(operator, authorizedSortitionPool)
+        ) {
+          return unbondedValue[operator];
+        }
 
-      require(lockedBonds[bondID] == 0, "Reference ID not unique for holder and operator");
+        return 0;
+    }
 
-      unbondedValue[operator] -= amount;
-      lockedBonds[bondID] += amount;
-   }
+    /// @notice Add the provided value to operator's pool available for bonding.
+    /// @param operator Address of the operator.
+    function deposit(address operator) external payable {
+        unbondedValue[operator] += msg.value;
+    }
 
-   /// @notice Reassigns a bond to a new holder under a new reference.
-   /// @dev Function requires that a caller is the holder of the bond which is
-   /// being reassigned.
-   /// @param operator Address of the bonded operator.
-   /// @param referenceID Reference ID of the bond.
-   /// @param newHolder Address of the new holder of the bond.
-   /// @param newReferenceID New reference ID to register the bond.
-   function reassignBond(
-      address operator,
-      uint256 referenceID,
-      address newHolder,
-      uint256 newReferenceID
-   ) public {
-      address holder = msg.sender;
-      bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
+    /// @notice Withdraws amount from sender's value available for bonding.
+    /// @param amount Value to withdraw in wei.
+    /// @param destination Address to send the amount to.
+    function withdraw(uint256 amount, address payable destination) public {
+        require(
+            unbondedValue[msg.sender] >= amount,
+            "Insufficient unbonded value"
+        );
 
-      require(lockedBonds[bondID] > 0, "Bond not found");
+        unbondedValue[msg.sender] -= amount;
 
-      bytes32 newBondID = keccak256(abi.encodePacked(operator, newHolder, newReferenceID));
+        (bool success, ) = destination.call.value(amount)("");
+        require(success, "Transfer failed");
+    }
 
-      require(lockedBonds[newBondID] == 0,  "Reference ID not unique for holder and operator");
+    /// @notice Create bond for the given operator, holder, reference and amount.
+    /// @dev Function can be executed only by authorized contract. Reference ID
+    /// should be unique for holder and operator.
+    /// @param operator Address of the operator to bond.
+    /// @param holder Address of the holder of the bond.
+    /// @param referenceID Reference ID used to track the bond by holder.
+    /// @param amount Value to bond in wei.
+    /// @param authorizedSortitionPool Address of authorized sortition pool.
+    function createBond(
+        address operator,
+        address holder,
+        uint256 referenceID,
+        uint256 amount,
+        address authorizedSortitionPool
+    ) public {
+        require(
+            availableUnbondedValue(operator, msg.sender, authorizedSortitionPool) >= amount,
+            "Insufficient unbonded value"
+        );
 
-      lockedBonds[newBondID] = lockedBonds[bondID];
-      lockedBonds[bondID] = 0;
-   }
+        bytes32 bondID = keccak256(
+            abi.encodePacked(operator, holder, referenceID)
+        );
 
-   /// @notice Releases the bond and moves the bond value to the operator's
-   /// unbounded value pool.
-   /// @dev Function requires that a caller is the holder of the bond which is
-   /// being released.
-   /// @param operator Address of the bonded operator.
-   /// @param referenceID Reference ID of the bond.
-   function freeBond(address operator, uint256 referenceID) public {
-      address holder = msg.sender;
-      bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
+        require(
+            lockedBonds[bondID] == 0,
+            "Reference ID not unique for holder and operator"
+        );
 
-      require(lockedBonds[bondID] > 0, "Bond not found");
+        unbondedValue[operator] -= amount;
+        lockedBonds[bondID] += amount;
+    }
 
-      uint256 amount = lockedBonds[bondID];
-      lockedBonds[bondID] = 0;
-      unbondedValue[operator] = amount;
-   }
+    /// @notice Returns value of wei bonded for the operator.
+    /// @param operator Address of the operator.
+    /// @param holder Address of the holder of the bond.
+    /// @param referenceID Reference ID of the bond.
+    /// @return Amount of wei in the selected bond.
+    function bondAmount(address operator, address holder, uint256 referenceID)
+        public
+        view
+        returns (uint256)
+    {
+        bytes32 bondID = keccak256(
+            abi.encodePacked(operator, holder, referenceID)
+        );
 
-   /// @notice Seizes the bond by moving some or all of a locked bond to holder's
-   /// account.
-   /// @dev Function requires that a caller is the holder of the bond which is
-   /// being seized.
-   /// @param operator Address of the bonded operator.
-   /// @param referenceID Reference ID of the bond.
-   /// @param amount Amount to be seized.
-   function seizeBond(address operator, uint256 referenceID, uint256 amount) public {
-      require(amount > 0, "Requested amount should be greater than zero");
+        return lockedBonds[bondID];
+    }
 
-      address payable holder = msg.sender;
-      bytes32 bondID = keccak256(abi.encodePacked(operator, holder, referenceID));
+    /// @notice Reassigns a bond to a new holder under a new reference.
+    /// @dev Function requires that a caller is the current holder of the bond
+    /// which is being reassigned.
+    /// @param operator Address of the bonded operator.
+    /// @param referenceID Reference ID of the bond.
+    /// @param newHolder Address of the new holder of the bond.
+    /// @param newReferenceID New reference ID to register the bond.
+    function reassignBond(
+        address operator,
+        uint256 referenceID,
+        address newHolder,
+        uint256 newReferenceID
+    ) public {
+        address holder = msg.sender;
+        bytes32 bondID = keccak256(
+            abi.encodePacked(operator, holder, referenceID)
+        );
 
-      require(lockedBonds[bondID] >= amount, "Requested amount is greater than the bond");
+        require(lockedBonds[bondID] > 0, "Bond not found");
 
-      lockedBonds[bondID] -= amount;
-      holder.transfer(amount);
-   }
+        bytes32 newBondID = keccak256(
+            abi.encodePacked(operator, newHolder, newReferenceID)
+        );
 
-   /// @notice Checks if the caller is an authorized contract.
-   /// @dev Throws an error if called by any account other than one of the authorized
-   /// contracts.
-   modifier onlyAuthorized() {
-      // TODO: Add authorization checks.
-      _;
-   }
+        require(
+            lockedBonds[newBondID] == 0,
+            "Reference ID not unique for holder and operator"
+        );
+
+        lockedBonds[newBondID] = lockedBonds[bondID];
+        lockedBonds[bondID] = 0;
+    }
+
+    /// @notice Releases the bond and moves the bond value to the operator's
+    /// unbounded value pool.
+    /// @dev Function requires that caller is the holder of the bond which is
+    /// being released.
+    /// @param operator Address of the bonded operator.
+    /// @param referenceID Reference ID of the bond.
+    function freeBond(address operator, uint256 referenceID) public {
+        address holder = msg.sender;
+        bytes32 bondID = keccak256(
+            abi.encodePacked(operator, holder, referenceID)
+        );
+
+        require(lockedBonds[bondID] > 0, "Bond not found");
+
+        uint256 amount = lockedBonds[bondID];
+        lockedBonds[bondID] = 0;
+        unbondedValue[operator] = amount;
+    }
+
+    /// @notice Seizes the bond by moving some or all of the locked bond to the
+    /// provided destination address.
+    /// @dev Function requires that a caller is the holder of the bond which is
+    /// being seized.
+    /// @param operator Address of the bonded operator.
+    /// @param referenceID Reference ID of the bond.
+    /// @param amount Amount to be seized.
+    /// @param destination Address to send the amount to.
+    function seizeBond(
+        address operator,
+        uint256 referenceID,
+        uint256 amount,
+        address payable destination
+    ) public {
+        require(amount > 0, "Requested amount should be greater than zero");
+
+        address payable holder = msg.sender;
+        bytes32 bondID = keccak256(
+            abi.encodePacked(operator, holder, referenceID)
+        );
+
+        require(
+            lockedBonds[bondID] >= amount,
+            "Requested amount is greater than the bond"
+        );
+
+        lockedBonds[bondID] -= amount;
+
+        (bool success, ) = destination.call.value(amount)("");
+        require(success, "Transfer failed");
+    }
+
+    /// @notice Authorizes sortition pool for the provided operator.
+    /// Operator's authorizers need to authorize individual sortition pools
+    /// per application since they may be interested in participating only in
+    /// a subset of keep types used by the given appliction.
+    /// @dev Only operator's authorizer can call this function.
+    function authorizeSortitionPoolContract(
+        address _operator,
+        address _poolAddress
+    ) public {
+        require(
+            stakingContract.authorizerOf(_operator) == msg.sender,
+            "Not authorized"
+        );
+        authorizedPools[_operator][_poolAddress] = true;
+    }
+
+    /// @notice Checks if the sortition pool has been authorized for the
+    /// provided operator by its authorizer.
+    /// @dev See authorizeSortitionPoolContract.
+    function hasSecondaryAuthorization(
+        address _operator,
+        address _poolAddress
+    ) public view returns (bool) {
+        return authorizedPools[_operator][_poolAddress];
+    }
 }

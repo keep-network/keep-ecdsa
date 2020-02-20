@@ -24,12 +24,12 @@ func (c *localChain) createKeep(keepAddress common.Address) error {
 	}
 	c.keeps[keepAddress] = localKeep
 
-	keepCreatedEvent := &eth.ECDSAKeepCreatedEvent{
+	keepCreatedEvent := &eth.BondedECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
 	}
 
 	for _, handler := range c.keepCreatedHandlers {
-		go func(handler func(event *eth.ECDSAKeepCreatedEvent), keepCreatedEvent *eth.ECDSAKeepCreatedEvent) {
+		go func(handler func(event *eth.BondedECDSAKeepCreatedEvent), keepCreatedEvent *eth.BondedECDSAKeepCreatedEvent) {
 			handler(keepCreatedEvent)
 		}(handler, keepCreatedEvent)
 	}
