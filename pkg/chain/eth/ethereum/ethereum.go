@@ -176,5 +176,5 @@ func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest 
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.
 func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
-	return true, nil // TODO Implementation
+	return ec.bondedECDSAKeepFactoryContract.HasMinimumStake(ec.callerOptions, address)
 }
