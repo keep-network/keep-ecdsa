@@ -34,7 +34,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: solidity
-      - run: npm install ganache-cli@6.4.2
+      - run: npm install ganache-cli@6.9.1
       - run:
           name: Running testrpc
           command: |
@@ -131,7 +131,16 @@ jobs:
       - attach_workspace:
           at: solidity
       - run:
-          name: Set Gcloud Auth
+          name: Set Gcloud Auth for bucket access
+          command: |
+            echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+      - run:
+          name: Fetch external contracts artifacts
+          command: |
+            solidity/scripts/circleci-provision-external-contracts.sh
+      - run:
+          name: Set Gcloud Auth for jumphost SSH
           command: |
             echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json

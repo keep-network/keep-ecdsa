@@ -1,37 +1,66 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "@keep-network/keep-core/contracts/Registry.sol";
 import "./api/IBondedECDSAKeepVendor.sol";
-import "./utils/AddressArrayUtils.sol";
 
 /// @title Bonded ECDSA Keep Vendor
-/// @notice The contract can be used to obtain a new Bonded ECDSA keep.
-/// @dev Interacts with ECDSA keep factory to obtain a new instance of the ECDSA
-/// keep. Several versions of ECDSA keep factories can be registered for the vendor.
+/// @notice The contract is used to obtain a new Bonded ECDSA keep factory.
 contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
-    using AddressArrayUtils for address payable[];
 
-    // List of ECDSA keep factories.
-    address payable[] public factories;
+    // Mapping to store new implementation versions that inherit from
+    // this contract.
+    mapping (string => bool) internal _initialized;
 
-    /// @notice Register new ECDSA keep factory.
-    /// @dev Adds a factory address to the list of registered factories. Address
-    /// cannot be zero and cannot be already registered.
-    /// @param _factory ECDSA keep factory address.
-    function registerFactory(address payable _factory) external onlyOwner {
-        require(!factories.contains(_factory), "Factory address already registered");
+    // Registry contract with a list of approved factories (operator contracts)
+    // and upgraders.
+    Registry internal registry;
 
-        factories.push(_factory);
+    // Address of ECDSA keep factory.
+    address payable keepFactory;
+
+    /// @notice Initializes Keep Vendor contract implementation.
+    /// @param registryAddress Keep registry contract linked to this contract.
+    function initialize(
+        address registryAddress
+    )
+        public
+    {
+        require(!initialized(), "Contract is already initialized.");
+        _initialized["BondedECDSAKeepVendorImplV1"] = true;
+        registry = Registry(registryAddress);
     }
 
-    /// @notice Select a recommended ECDSA keep factory from all registered
-    /// ECDSA keep factories.
-    /// @dev This is a stub implementation returning first factory on the list.
-    /// @return Selected ECDSA keep factory address.
-    function selectFactory() public view returns (address payable) {
-        require(factories.length > 0, "No factories registered");
+    /// @notice Checks if this contract is initialized.
+    function initialized() public view returns (bool) {
+        return _initialized["BondedECDSAKeepVendorImplV1"];
+    }
 
-        // TODO: Implement factory selection mechanism.
-        return factories[factories.length - 1];
+    /// @notice Registers a new ECDSA keep factory.
+    /// @dev Registers a new ECDSA keep factory. Address cannot be zero
+    /// and replaces the old one if it was registered.
+    /// @param _factory ECDSA keep factory address.
+    function registerFactory(address payable _factory) external onlyOperatorContractUpgrader {
+        require(_factory != address(0), "Incorrect factory address");
+        require(
+            registry.isApprovedOperatorContract(_factory),
+            "Factory contract is not approved"
+        );
+        keepFactory = _factory;
+    }
+
+    /// @notice Selects the latest ECDSA keep factory.
+    /// @return ECDSA keep factory address.
+    function selectFactory() public view returns (address payable) {
+        require(keepFactory != address(0), "Keep factory is not registered");
+        return keepFactory;
+    }
+
+    /// @dev Throws if called by any account other than the operator contract
+    /// upgrader authorized for this service contract.
+    modifier onlyOperatorContractUpgrader() {
+        address operatorContractUpgrader = registry.operatorContractUpgraderFor(address(this));
+        require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
+        _;
     }
 }

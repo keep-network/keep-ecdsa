@@ -1,6 +1,6 @@
 module github.com/keep-network/keep-tecdsa
 
-go 1.12
+go 1.13
 
 replace (
 	github.com/BurntSushi/toml => github.com/keep-network/toml v0.3.0
@@ -12,6 +12,8 @@ replace (
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/VictoriaMetrics/fastcache v1.5.7 // indirect
+	github.com/aristanetworks/goarista v0.0.0-20200211191935-58c705f5cf52 // indirect
 	github.com/binance-chain/tss-lib v1.1.1
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/ethereum/go-ethereum v1.9.10
@@ -22,4 +24,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
+	golang.org/x/crypto v0.0.0-20200210222208-86ce3cb69678 // indirect
+	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 )
