@@ -11,5 +11,9 @@
 [ethereum.ContractAddresses]
   BondedECDSAKeepFactory = "Set by Kube"
 
+# Addresses of applications approved by the operator.
+[SanctionedApplications]
+  Addresses = ["Set by Kube"]
+
 [Storage]
     DataDir = "Set by Kube"
