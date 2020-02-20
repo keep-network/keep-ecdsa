@@ -28,6 +28,7 @@ type Provider interface {
 	UnicastChannelWith(peerID TransportIdentifier) (UnicastChannel, error)
 	OnUnicastChannelOpened(handler func(channel UnicastChannel))
 
+	// FIXME: temporary function; we should announce the public key in the protocol
 	SeekTransportIdentifier(address common.Address) (net.TransportIdentifier, error)
 }
 
