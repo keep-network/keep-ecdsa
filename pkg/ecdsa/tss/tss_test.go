@@ -68,7 +68,8 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 		for i, memberID := range groupMemberIDs {
 			go func(memberID MemberID) {
-				networkPublicKey := key.NetworkPublic(groupMembersKeys[memberID.String()])
+				memberPublicKey := groupMembersKeys[memberID.String()]
+				networkPublicKey := key.NetworkPublic(memberPublicKey)
 				network := newTestNetProvider(&networkPublicKey)
 				networkProviders.Store(memberID.String(), network)
 				providersInitializedWg.Done()
@@ -79,8 +80,8 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				signer, err := GenerateThresholdSigner(
 					groupID,
 					memberID,
+					&memberPublicKey,
 					groupMemberIDs,
-					groupMembersKeys,
 					dishonestThreshold,
 					network,
 					&preParams,

@@ -8,8 +8,7 @@ import (
 
 // Definitions of contract names.
 const (
-	ECDSAKeepFactoryContractName         = "ECDSAKeepFactory"
-	KeepRandomBeaconOperatorContractName = "KeepRandomBeaconOperator"
+	BondedECDSAKeepFactoryContractName = "BondedECDSAKeepFactory"
 )
 
 // Config contains configuration of Ethereum chain.

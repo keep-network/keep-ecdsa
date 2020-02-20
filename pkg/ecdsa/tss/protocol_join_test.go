@@ -2,6 +2,7 @@ package tss
 
 import (
 	"context"
+	cecdsa "crypto/ecdsa"
 	"sync"
 	"testing"
 	"time"
@@ -35,16 +36,16 @@ func TestJoinNotifier(t *testing.T) {
 
 	for memberIDstring, memberPublicKey := range groupMembersKeys {
 		memberID, _ := MemberIDFromHex(memberIDstring)
-		memberNetworkKey := key.NetworkPublic(memberPublicKey)
 
-		go func(memberID MemberID, memberNetworkKey *key.NetworkPublic) {
+		go func(memberID MemberID, memberPublicKey cecdsa.PublicKey) {
 			groupInfo := &groupInfo{
 				groupID:        "test-group-1",
 				memberID:       memberID,
 				groupMemberIDs: groupMembers,
 			}
 
-			networkProvider := newTestNetProvider(memberNetworkKey)
+			memberNetworkKey := key.NetworkPublic(memberPublicKey)
+			networkProvider := newTestNetProvider(&memberNetworkKey)
 
 			defer waitGroup.Done()
 
@@ -56,7 +57,7 @@ func TestJoinNotifier(t *testing.T) {
 			mutex.Lock()
 			joinedCount++
 			mutex.Unlock()
-		}(memberID, &memberNetworkKey)
+		}(memberID, memberPublicKey)
 	}
 
 	go func() {
