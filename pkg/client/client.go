@@ -50,6 +50,15 @@ func Initialize(
 		},
 	)
 
+	ethereumChain.OnConflictingPublicKeySubmitted(
+		func(event *eth.ConflictingPublicKeySubmittedEvent) {
+			logger.Infof(
+				"member [%v] has submitted conflicting public key: [%v]\n",
+				event.SubmittingMember,
+				event.ConflictingPublicKey,
+			)
+	})
+
 	// Watch for new keeps creation.
 	ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(

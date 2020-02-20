@@ -41,6 +41,10 @@ type BondedECDSAKeep interface {
 		handler func(event *SignatureRequestedEvent),
 	) (subscription.EventSubscription, error)
 
+	OnConflictingPublicKeySubmitted(
+		handler func(event *ConflictingPublicKeySubmittedEvent),
+	) (subscription.EventSubscription, error)
+
 	// SubmitKeepPublicKey submits a 64-byte serialized public key to a keep
 	// contract deployed under a given address.
 	SubmitKeepPublicKey(keepAddress common.Address, publicKey [64]byte) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise

@@ -56,3 +56,51 @@ func (ec *EthereumChain) watchSignatureRequested(
 		close(eventChan)
 	}), nil
 }
+
+func (ec *EthereumChain) watchConflictingPublicKeySubmitted(
+	success func(event *abi.ECDSAKeepConflictingPublicKeySubmitted),
+	fail func(err error) error,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.ECDSAKeepConflictingPublicKeySubmitted)
+
+	eventSubscription, err := ec.bondedECDSAKeep.WatchConflictingPublicKeySubmitted(
+		nil,
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return nil, fmt.Errorf(
+			"failed to create watch for ConflictingPublicKeySubmitted event: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(event)
+				subscriptionMutex.Unlock()
+			case err := <-eventSubscription.Err():
+				fail(err)
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}), nil
+}

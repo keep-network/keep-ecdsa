@@ -25,3 +25,9 @@ func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
 type SignatureRequestedEvent struct {
 	Digest [32]byte
 }
+
+// TODO add desc here
+type ConflictingPublicKeySubmittedEvent struct {
+	SubmittingMember common.Address
+	ConflictingPublicKey []byte
+}

@@ -57,6 +57,26 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	)
 }
 
+// OnConflictingPublicKeySubmitted is a callback that is invoked when an on-chain
+// notification of a conflicting public key submission is seen.
+func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
+	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
+) (subscription.EventSubscription, error) {
+	return ec.watchConflictingPublicKeySubmitted(
+		func(
+			chainEvent *abi.ECDSAKeepConflictingPublicKeySubmitted,
+		) {
+			handler(&eth.ConflictingPublicKeySubmittedEvent{
+				SubmittingMember: chainEvent.SubmittingMember,
+				ConflictingPublicKey: chainEvent.ConflictingPublicKey,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep created callback failed: [%v]", err)
+		},
+	)
+}
+
 // OnSignatureRequested is a callback that is invoked on-chain
 // when a keep's signature is requested.
 func (ec *EthereumChain) OnSignatureRequested(
