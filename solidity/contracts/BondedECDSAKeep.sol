@@ -1,18 +1,28 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "./KeepBonding.sol";
+import "./api/IBondedECDSAKeep.sol";
+
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
-import "./api/IBondedECDSAKeep.sol";
-import "./KeepBonding.sol";
 
-/// @title ECDSA Keep
-/// @notice Contract reflecting an ECDSA keep.
-contract ECDSAKeep is IBondedECDSAKeep, Ownable {
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+
+/// @title Bonded ECDSA Keep
+/// @notice ECDSA keep with additional signer bond requirement.
+/// @dev This contract is used as a master contract for clone factory in
+/// BondedECDSAKeepFactory as per EIP-1167. It should never be removed after
+/// initial deployment as this will break functionality for all created clones.
+contract BondedECDSAKeep is IBondedECDSAKeep {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
+
+    // Flags execution of contract initialization.
+    bool isInitialized;
+
+    // Address of the keep's owner.
+    address private owner;
 
     // List of keep members' addresses.
     address[] internal members;
@@ -20,7 +30,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
 
-    // Signer's ECDSA public key serialized to 64-bytes, where X and Y coordinates
+    // Keep's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
     bytes publicKey;
 
@@ -32,15 +42,15 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
 
     // Timeout for the keep public key to appear on the chain. Time is counted
     // from the moment keep has been created.
-    uint256 public keyGenerationTimeout = 150 * 60; // 2.5h in seconds
+    uint256 public constant keyGenerationTimeout = 150 * 60; // 2.5h in seconds
 
     // The timestamp at which keep has been created and key generation process
     // started.
-    uint256 keyGenerationStartTimestamp;
+    uint256 internal keyGenerationStartTimestamp;
 
     // Timeout for a signature to appear on the chain. Time is counted from the
     // moment signing request occurred.
-    uint256 public signingTimeout = 90 * 60; // 1.5h in seconds
+    uint256 public constant signingTimeout = 90 * 60; // 1.5h in seconds
 
     // The timestamp at which signing process started. Used also to track if
     // signing is in progress. When set to `0` indicates there is no
@@ -51,8 +61,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     // same public key.
     mapping(address => bytes) submittedPublicKeys;
 
-    // Notification that a signer's public key was published for the keep.
-    event PublicKeyPublished(bytes publicKey);
+    // Map stores amount of wei stored in the contract for each member address.
+    mapping(address => uint256) memberETHBalances;
 
     // Flag to monitor current keep state. If the keep is active members monitor
     // it and support requests for the keep owner. If the owner decides to close
@@ -70,6 +80,12 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         address submittingMember,
         bytes conflictingPublicKey
     );
+
+    // Notification that keep's ECDSA public key has been successfully established.
+    event PublicKeyPublished(bytes publicKey);
+
+    // Notification that members received ether transfer.
+    event ETHDistributedToMembers();
 
     // Notification that the keep was closed by the owner. Members no longer need
     // to support it.
@@ -91,28 +107,40 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     TokenStaking tokenStaking;
     KeepBonding keepBonding;
 
-    constructor(
+    /// @notice Initialization function.
+    /// @dev We use clone factory to create new keep. That is why this contract
+    /// doesn't have a constructor. We provide keep parameters for each instance
+    /// function after cloning instances from the master contract.
+    /// @param _owner Address of the keep owner.
+    /// @param _members Addresses of the keep members.
+    /// @param _honestThreshold Minimum number of honest keep members.
+    /// @param _tokenStaking Address of the TokenStaking contract.
+    /// @param _keepBonding Address of the KeepBonding contract.
+    function initialize(
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
         address _tokenStaking,
         address _keepBonding
     ) public {
-        transferOwnership(_owner);
+        require(!isInitialized, "Contract already initialized");
+
+        owner = _owner;
         members = _members;
         honestThreshold = _honestThreshold;
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         isActive = true;
+        isInitialized = true;
 
-        /* solium-disable-next-line */
+        /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
     }
 
     /// @notice Submits a public key to the keep.
     /// @dev Public key is published successfully if all members submit the same
     /// value. In case of conflicts with others members submissions it will emit
-    /// an `ConflictingPublicKeySubmitted` event. When all submitted keys match
+    /// `ConflictingPublicKeySubmitted` event. When all submitted keys match
     /// it will store the key as keep's public key and emit a `PublicKeyPublished`
     /// event.
     /// @param _publicKey Signer's public key.
@@ -162,7 +190,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// appear on the chain, see `keyGenerationTimeout`.
     function hasKeyGenerationTimedOut() internal view returns (bool) {
         /* solium-disable-next-line */
-        return block.timestamp > keyGenerationStartTimestamp + keyGenerationTimeout;
+        return
+            block.timestamp >
+            keyGenerationStartTimestamp + keyGenerationTimeout;
     }
 
     /// @notice Checks if the member already submitted a public key.
@@ -176,8 +206,8 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         return submittedPublicKeys[_member].length != 0;
     }
 
-    /// @notice Returns the keep signer's public key.
-    /// @return Signer's public key.
+    /// @notice Returns keep's ECDSA public key.
+    /// @return Keep's ECDSA public key.
     function getPublicKey() external view returns (bytes memory) {
         return publicKey;
     }
@@ -213,7 +243,7 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
                 members[i],
                 uint256(address(this)),
                 amount,
-                address(uint160(owner()))
+                address(uint160(owner))
             );
         }
     }
@@ -221,7 +251,10 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
     /// @notice Submits a fraud proof for a valid signature from this keep that was
     /// not first approved via a call to sign.
     /// @dev The function expects the signed digest to be calculated as a sha256 hash
-    /// of the preimage: `sha256(_preimage))`.
+    /// of the preimage: `sha256(_preimage))`. The digest is verified against the
+    /// preimage to ensure the security of the ECDSA protocol. Verifying just the
+    /// signature and the digest is not enough and leaves the possibility of the
+    /// the existential forgery.
     /// @param _v Signature's header byte: `27 + recoveryID`.
     /// @param _r R part of ECDSA signature.
     /// @param _s S part of ECDSA signature.
@@ -376,33 +409,29 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         return address(uint160(uint256(keccak256(_publicKey))));
     }
 
-    /// @notice Distributes ETH evenly across all keep members.
-    /// ETH is sent to the beneficiary of each member. If the value cannot be
-    /// divided evenly across the members, it submits the remainder to the last
-    /// keep member.
-    /// @dev Only the value passed to this function will be distributed.
+    /// @notice Distributes ETH evenly across all keep members. If the value
+    /// cannot be divided evenly across the members, it submits the remainder to
+    /// the last keep member.
+    /// @dev Only the value passed to this function will be distributed. This
+    /// function does not transfer the value to the members' accounts, instead
+    /// it holds the value in the contract until withdraw function is called for
+    /// the specific member.
     function distributeETHToMembers() external payable {
         uint256 memberCount = members.length;
         uint256 dividend = msg.value.div(memberCount);
 
-        require(dividend > 0, "dividend value must be non-zero");
+        require(dividend > 0, "Dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount-1; i++) {
-            // We don't want to revert the whole execution in case of single
-            // transfer failure, hence we don't validate it's result.
-            // TODO: What should we do with the dividend which was not transferred
-            // successfully?
-            /* solium-disable-next-line security/no-call-value */
-            tokenStaking.magpieOf(members[i]).call.value(dividend)("");
+        for (uint16 i = 0; i < memberCount - 1; i++) {
+            memberETHBalances[members[i]] += dividend;
         }
 
         // Transfer of dividend for the last member. Remainder might be equal to
         // zero in case of even distribution or some small number.
         uint256 remainder = msg.value.mod(memberCount);
-        /* solium-disable-next-line security/no-call-value */
-        tokenStaking.magpieOf(members[memberCount - 1]).call.value(
-            dividend.add(remainder)
-        )("");
+        memberETHBalances[members[memberCount - 1]] += dividend.add(remainder);
+
+        emit ETHDistributedToMembers();
     }
 
     /// @notice Distributes ERC20 token evenly across all keep members.
@@ -424,9 +453,9 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
         uint256 memberCount = members.length;
         uint256 dividend = _value.div(memberCount);
 
-        require(dividend > 0, "dividend value must be non-zero");
+        require(dividend > 0, "Dividend value must be non-zero");
 
-        for (uint16 i = 0; i < memberCount-1; i++) {
+        for (uint16 i = 0; i < memberCount - 1; i++) {
             token.transferFrom(
                 msg.sender,
                 tokenStaking.magpieOf(members[i]),
@@ -442,7 +471,37 @@ contract ECDSAKeep is IBondedECDSAKeep, Ownable {
             tokenStaking.magpieOf(members[memberCount - 1]),
             dividend.add(remainder)
         );
+    }
 
+    /// @notice Gets current amount of ETH hold in the keep for the member.
+    /// @param _member Keep member address.
+    /// @return Current balance in wei.
+    function getMemberETHBalance(address _member)
+        external
+        view
+        returns (uint256)
+    {
+        return memberETHBalances[_member];
+    }
+
+    /// @notice Withdraws amount of ether hold in the keep for the member.
+    /// The value is sent to the beneficiary of the specific member.
+    /// @param _member Keep member address.
+    function withdraw(address _member) external {
+        uint256 value = memberETHBalances[_member];
+        memberETHBalances[_member] = 0;
+
+        /* solium-disable-next-line security/no-call-value */
+        (bool success, ) = tokenStaking.magpieOf(_member).call.value(value)("");
+
+        require(success, "Transfer failed");
+    }
+
+    /// @notice Checks if the caller is the keep's owner.
+    /// @dev Throws an error if called by any account other than owner.
+    modifier onlyOwner() {
+        require(owner == msg.sender, "Caller is not the keep owner");
+        _;
     }
 
     /// @notice Checks if the caller is a keep member.

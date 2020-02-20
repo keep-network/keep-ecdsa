@@ -11,11 +11,11 @@ import (
 
 // EthereumChain is an implementation of ethereum blockchain interface.
 type EthereumChain struct {
-	config                   *Config
-	client                   *ethclient.Client
-	transactorOptions        *bind.TransactOpts
-	callerOptions            *bind.CallOpts
-	ecdsaKeepFactoryContract *abi.ECDSAKeepFactory
+	config                         *Config
+	client                         *ethclient.Client
+	transactorOptions              *bind.TransactOpts
+	callerOptions                  *bind.CallOpts
+	bondedECDSAKeepFactoryContract *abi.BondedECDSAKeepFactory
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -29,12 +29,12 @@ func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) 
 	transactorOptions := bind.NewKeyedTransactor(privateKey)
 	callerOptions := &bind.CallOpts{From: transactorOptions.From}
 
-	ecdsaKeepFactoryContractAddress, err := config.ContractAddress(ECDSAKeepFactoryContractName)
+	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(BondedECDSAKeepFactoryContractName)
 	if err != nil {
 		return nil, err
 	}
-	ecdsaKeepFactoryContract, err := abi.NewECDSAKeepFactory(
-		ecdsaKeepFactoryContractAddress,
+	bondedECDSAKeepFactoryContract, err := abi.NewBondedECDSAKeepFactory(
+		bondedECDSAKeepFactoryContractAddress,
 		client,
 	)
 	if err != nil {
@@ -42,10 +42,10 @@ func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) 
 	}
 
 	return &EthereumChain{
-		config:                   config,
-		client:                   client,
-		transactorOptions:        transactorOptions,
-		callerOptions:            callerOptions,
-		ecdsaKeepFactoryContract: ecdsaKeepFactoryContract,
+		config:                         config,
+		client:                         client,
+		transactorOptions:              transactorOptions,
+		callerOptions:                  callerOptions,
+		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 	}, nil
 }

@@ -9,13 +9,14 @@ import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 import { duration, increaseTime } from './helpers/increaseTime';
 
 const { expectRevert } = require('openzeppelin-test-helpers');
-const { ZERO_ADDRESS } = require('openzeppelin-test-helpers').constants;
 
-const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
+const Registry = artifacts.require('Registry')
+const BondedECDSAKeep = artifacts.require('./BondedECDSAKeep.sol')
 const TestToken = artifacts.require('./TestToken.sol')
 const KeepBonding = artifacts.require('./KeepBonding.sol')
 const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
 const TokenStakingStub = artifacts.require("./TokenStakingStub.sol")
+const BondedECDSAKeepCloneFactory = artifacts.require("BondedECDSAKeepCloneFactory")
 
 const truffleAssert = require('truffle-assertions')
 
@@ -25,37 +26,79 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract('ECDSAKeep', (accounts) => {
+contract('BondedECDSAKeep', (accounts) => {
+  const bondCreator = accounts[0]
   const owner = accounts[1]
   const members = [accounts[2], accounts[3], accounts[4]]
+  const authorizers = [accounts[2], accounts[3], accounts[4]]
+  const signingPool = accounts[5]
   const honestThreshold = 1
 
-  let keepBonding, tokenStaking, keep;
+  let registry, keepBonding, tokenStaking, keep, factoryStub
+
+  async function newKeep(
+    owner,
+    members,
+    honestThreshold,
+    tokenStaking,
+    keepBonding
+  ) {
+    const startBlock = await web3.eth.getBlockNumber()
+
+    await factoryStub.newKeep(
+      owner,
+      members,
+      honestThreshold,
+      tokenStaking,
+      keepBonding
+    )
+
+    const events = await factoryStub.getPastEvents(
+      'BondedECDSAKeepCreated',
+      { fromBlock: startBlock, toBlock: 'latest' }
+    )
+    assert.lengthOf(events, 1, 'unexpected length of BondedECDSAKeepCreated events')
+    const keepAddress = events[0].returnValues.keepAddress
+
+    return await BondedECDSAKeep.at(keepAddress)
+  }
 
   before(async () => {
-    keepBonding = await KeepBonding.new()
+    registry = await Registry.new()
     tokenStaking = await TokenStakingStub.new()
+    keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+    factoryStub = await BondedECDSAKeepCloneFactory.new(BondedECDSAKeep.address)
+
+    await registry.approveOperatorContract(bondCreator)
+    await keepBonding.authorizeSortitionPoolContract(members[0], signingPool, { from: authorizers[0] })
+    await keepBonding.authorizeSortitionPoolContract(members[1], signingPool, { from: authorizers[1] })
+    await keepBonding.authorizeSortitionPoolContract(members[2], signingPool, { from: authorizers[2] })
   })
 
   beforeEach(async () => {
-    keep = await ECDSAKeep.new(
+    await createSnapshot()
+
+    keep = await newKeep(
       owner,
       members,
       honestThreshold,
       tokenStaking.address,
       keepBonding.address
     )
-
-    await createSnapshot()
   })
+
 
   afterEach(async () => {
     await restoreSnapshot()
   })
 
-  describe('#constructor', async () => {
+  describe('initialize', async () => {
     it('succeeds', async () => {
-      let keep = await ECDSAKeep.new(
+      const expectedKeyGenerationTimeout = new BN(9000) // 9000 = 150*60 = 2.5h in seconds
+      const expectedSigningTimeout = new BN(5400) // 5400 = 90 * 60 = 1.5h in seconds
+
+      keep = await BondedECDSAKeep.new()
+      await keep.initialize(
         owner,
         members,
         honestThreshold,
@@ -63,7 +106,24 @@ contract('ECDSAKeep', (accounts) => {
         keepBonding.address
       )
 
-      assert(web3.utils.isAddress(keep.address), 'invalid keep address')
+      expect(await keep.keyGenerationTimeout(), 'incorrect key generation timeout')
+        .to.eq.BN(expectedKeyGenerationTimeout)
+      expect(await keep.signingTimeout(), 'incorrect signing timeout')
+        .to.eq.BN(expectedSigningTimeout)
+    })
+
+    it('reverts if called for the second time', async () => {
+      // first call was a part of beforeEach
+      await expectRevert(
+        keep.initialize(
+          owner,
+          members,
+          honestThreshold,
+          tokenStaking.address,
+          keepBonding.address
+        ),
+        'Contract already initialized'
+      )
     })
   })
 
@@ -101,14 +161,14 @@ contract('ECDSAKeep', (accounts) => {
     it('cannot be called by non-owner', async () => {
       await expectRevert(
         keep.sign(digest),
-        'Ownable: caller is not the owner.'
+        'Caller is not the keep owner'
       )
     })
 
     it('cannot be called by non-owner member', async () => {
       await expectRevert(
         keep.sign(digest, { from: members[0] }),
-        'Ownable: caller is not the owner.'
+        'Caller is not the keep owner'
       )
     })
 
@@ -402,7 +462,6 @@ contract('ECDSAKeep', (accounts) => {
         )
       })
     })
-
   })
 
   describe('checkBondAmount', () => {
@@ -756,15 +815,15 @@ contract('ECDSAKeep', (accounts) => {
       ).to.eq.BN(0, "incorrect bond amount for keep")
 
       expect(
-        await keepBonding.availableUnbondedValue(members[0], ZERO_ADDRESS, ZERO_ADDRESS)
+        await keepBonding.availableUnbondedValue(members[0], bondCreator, signingPool)
       ).to.eq.BN(bondValue0, "incorrect unbonded amount for member 0")
 
       expect(
-        await keepBonding.availableUnbondedValue(members[1], ZERO_ADDRESS, ZERO_ADDRESS)
+        await keepBonding.availableUnbondedValue(members[1], bondCreator, signingPool)
       ).to.eq.BN(bondValue1, "incorrect unbonded amount for member 1")
 
       expect(
-        await keepBonding.availableUnbondedValue(members[2], ZERO_ADDRESS, ZERO_ADDRESS)
+        await keepBonding.availableUnbondedValue(members[2], bondCreator, signingPool)
       ).to.eq.BN(bondValue2, "incorrect unbonded amount for member 2")
     })
 
@@ -801,7 +860,7 @@ contract('ECDSAKeep', (accounts) => {
     it('cannot be called by non-owner', async () => {
       await expectRevert(
         keep.closeKeep(),
-        'Ownable: caller is not the owner'
+        'Caller is not the keep owner'
       )
     })
 
@@ -815,8 +874,25 @@ contract('ECDSAKeep', (accounts) => {
     })
   })
 
-  describe('#distributeETHToMembers', async () => {
-    const ethValue = new BN(1000).mul(new BN(members.length))
+  describe('distributeETHToMembers', async () => {
+    const singleValue = new BN(1000)
+    const ethValue = singleValue.mul(new BN(members.length))
+
+    it('emits event', async () => {
+      let startBlock = await web3.eth.getBlockNumber()
+
+      let res = await keep.distributeETHToMembers({ value: ethValue })
+      truffleAssert.eventEmitted(res, 'ETHDistributedToMembers')
+
+      assert.lengthOf(
+        await keep.getPastEvents('ETHDistributedToMembers', {
+          fromBlock: startBlock,
+          toBlock: 'latest'
+        }),
+        1,
+        "unexpected events emitted"
+      )
+    })
 
     it('correctly distributes ETH', async () => {
       const initialBalances = await getETHBalancesFromList(members)
@@ -824,38 +900,45 @@ contract('ECDSAKeep', (accounts) => {
       await keep.distributeETHToMembers({ value: ethValue })
 
       const newBalances = await getETHBalancesFromList(members)
-      const expectedBalances = addToBalances(initialBalances, ethValue / members.length)
 
-      assert.deepEqual(newBalances, expectedBalances)
+      assert.deepEqual(newBalances, initialBalances)
+
+      expect(await web3.eth.getBalance(keep.address), 'incorrect keep balance')
+        .to.eq.BN(ethValue)
+
+      expect(await keep.getMemberETHBalance(members[0]), 'incorrect member 0 balance')
+        .to.eq.BN(singleValue)
+
+      expect(await keep.getMemberETHBalance(members[1]), 'incorrect member 1 balance')
+        .to.eq.BN(singleValue)
+
+      expect(await keep.getMemberETHBalance(members[2]), 'incorrect member 2 balance')
+        .to.eq.BN(singleValue)
     })
 
     it('correctly handles unused remainder', async () => {
       const expectedRemainder = new BN(members.length - 1)
       const valueWithRemainder = ethValue.add(expectedRemainder)
 
-      const initialKeepBalance = await web3.eth.getBalance(keep.address)
-
-      const initialBalances = await getETHBalancesFromList(members)
-      const expectedBalances = addToBalances(initialBalances, ethValue / members.length)
-
-      const lastMemberIndex = members.length - 1
-      expectedBalances[lastMemberIndex] = expectedBalances[lastMemberIndex].add(expectedRemainder)
-
       await keep.distributeETHToMembers({ value: valueWithRemainder })
 
-      const newBalances = await getETHBalancesFromList(members)
+      expect(await web3.eth.getBalance(keep.address), 'incorrect keep balance')
+        .to.eq.BN(valueWithRemainder)
 
-      assert.deepEqual(newBalances, expectedBalances)
+      expect(await keep.getMemberETHBalance(members[0]), 'incorrect member 0 balance')
+        .to.eq.BN(singleValue)
 
-      expect(
-        await web3.eth.getBalance(keep.address)
-      ).to.eq.BN(initialKeepBalance, "incorrect keep balance")
+      expect(await keep.getMemberETHBalance(members[1]), 'incorrect member 1 balance')
+        .to.eq.BN(singleValue)
+
+      expect(await keep.getMemberETHBalance(members[2]), 'incorrect member 2 balance')
+        .to.eq.BN(singleValue.add(expectedRemainder))
     })
 
     it('reverts with zero value', async () => {
       await expectRevert(
         keep.distributeETHToMembers(),
-        'dividend value must be non-zero'
+        'Dividend value must be non-zero'
       )
     })
 
@@ -863,44 +946,32 @@ contract('ECDSAKeep', (accounts) => {
       const msgValue = members.length - 1
       await expectRevert(
         keep.distributeETHToMembers({ value: msgValue }),
-        'dividend value must be non-zero'
+        'Dividend value must be non-zero'
       )
     })
+  })
 
-    it('does not revert in case of transfer failure', async () => {
-      let etherReceiver = await TestEtherReceiver.new()
+  describe('withdraw', async () => {
+    const singleValue = new BN(1000)
+    const ethValue = singleValue.mul(new BN(members.length))
 
-      const member1 = accounts[2]
-      const member2 = etherReceiver.address // a receiver which we expect to reject the transfer
-      const member3 = accounts[3]
+    beforeEach(async () => {
+      await keep.distributeETHToMembers({ value: ethValue })
+    })
 
-      const members = [member1, member2, member3]
+    it('correctly transfers value', async () => {
+      const initialMemberBalance = new BN(await web3.eth.getBalance(members[0]))
 
-      const singleValue = new BN(await etherReceiver.invalidValue.call())
-      const msgValue = singleValue.mul(new BN(members.length))
+      await keep.withdraw(members[0])
 
-      const expectedBalances = [
-        new BN(await web3.eth.getBalance(member1)).add(singleValue),
-        new BN(await web3.eth.getBalance(member2)),
-        new BN(await web3.eth.getBalance(member3)).add(singleValue),
-      ]
+      expect(await web3.eth.getBalance(keep.address), 'incorrect keep balance')
+        .to.eq.BN(ethValue.sub(singleValue))
 
-      const keep = await ECDSAKeep.new(
-        owner,
-        members,
-        honestThreshold,
-        tokenStaking.address,
-        keepBonding.address
-      )
+      expect(await keep.getMemberETHBalance(members[0]), 'incorrect member balance')
+        .to.eq.BN(0)
 
-      await keep.distributeETHToMembers({ value: msgValue })
-
-      // Check balances of all keep members' accounts.
-      const newBalances = await getETHBalancesFromList(members)
-      assert.deepEqual(newBalances, expectedBalances)
-
-      // Check that value which failed transfer remained in the keep contract.
-      assert.equal(await web3.eth.getBalance(keep.address), new BN(singleValue))
+      expect(await web3.eth.getBalance(members[0]), 'incorrect member account balance')
+        .to.eq.BN(initialMemberBalance.add(singleValue))
     })
 
     it('sends ETH to beneficiary', async () => {
@@ -919,7 +990,7 @@ contract('ECDSAKeep', (accounts) => {
         new BN(await web3.eth.getBalance(beneficiary)).add(valueWithRemainder),
       ]
 
-      const keep = await ECDSAKeep.new(
+      const keep = await newKeep(
         owner,
         testMembers,
         honestThreshold,
@@ -932,10 +1003,53 @@ contract('ECDSAKeep', (accounts) => {
 
       await keep.distributeETHToMembers({ value: valueWithRemainder })
 
+      await keep.withdraw(member1)
+      expect(await keep.getMemberETHBalance(member1), 'incorrect member 1 balance')
+        .to.eq.BN(0)
+
+      await keep.withdraw(member2)
+      expect(await keep.getMemberETHBalance(member2), 'incorrect member 2 balance')
+        .to.eq.BN(0)
+
       // Check balances of all keep members' and beneficiary.
       const newBalances = await getETHBalancesFromList(accountsInTest)
       assert.deepEqual(newBalances, expectedBalances)
     })
+
+    it('reverts in case of transfer failure', async () => {
+      let etherReceiver = await TestEtherReceiver.new()
+      await etherReceiver.setShouldFail(true)
+
+      const member = etherReceiver.address // a receiver which we expect to reject the transfer
+
+      const keep = await newKeep(
+        owner,
+        [member],
+        honestThreshold,
+        tokenStaking.address,
+        keepBonding.address
+      )
+
+      await keep.distributeETHToMembers({ value: ethValue })
+
+      expectRevert(
+        keep.withdraw(member),
+        'Transfer failed'
+      )
+
+      // Check balances of keep member's account.
+      expect(
+        await web3.eth.getBalance(member),
+        "incorrect member's account balance"
+      ).to.eq.BN(0)
+
+      // Check that value which failed transfer remained in the keep contract.
+      expect(
+        await web3.eth.getBalance(keep.address),
+        "incorrect keep's account balance"
+      ).to.eq.BN(ethValue)
+    })
+
   })
 
   describe('#distributeERC20ToMembers', async () => {
@@ -997,7 +1111,7 @@ contract('ECDSAKeep', (accounts) => {
     it('fails with zero value', async () => {
       await expectRevert(
         keep.distributeERC20ToMembers(token.address, 0),
-        "dividend value must be non-zero"
+        "Dividend value must be non-zero"
       )
     })
 
@@ -1008,7 +1122,7 @@ contract('ECDSAKeep', (accounts) => {
 
       await expectRevert(
         keep.distributeERC20ToMembers(token.address, value),
-        'dividend value must be non-zero'
+        'Dividend value must be non-zero'
       )
     })
 
@@ -1028,7 +1142,7 @@ contract('ECDSAKeep', (accounts) => {
         new BN(await token.balanceOf(beneficiary)).add(valueWithRemainder),
       ]
 
-      keep = await ECDSAKeep.new(
+      keep = await newKeep(
         owner,
         testMembers,
         honestThreshold,
@@ -1071,9 +1185,15 @@ contract('ECDSAKeep', (accounts) => {
     await keepBonding.deposit(members[0], { value: bondValue1 })
     await keepBonding.deposit(members[1], { value: bondValue2 })
     await keepBonding.deposit(members[2], { value: bondValue3 })
-    await keepBonding.createBond(members[0], keep.address, referenceID, bondValue1)
-    await keepBonding.createBond(members[1], keep.address, referenceID, bondValue2)
-    await keepBonding.createBond(members[2], keep.address, referenceID, bondValue3)
+
+    const bondCreator = accounts[0]
+    await tokenStaking.authorizeOperatorContract(members[0], bondCreator)
+    await tokenStaking.authorizeOperatorContract(members[1], bondCreator)
+    await tokenStaking.authorizeOperatorContract(members[2], bondCreator)
+
+    await keepBonding.createBond(members[0], keep.address, referenceID, bondValue1, signingPool)
+    await keepBonding.createBond(members[1], keep.address, referenceID, bondValue2, signingPool)
+    await keepBonding.createBond(members[2], keep.address, referenceID, bondValue3, signingPool)
 
     return bondValue1.add(bondValue2).add(bondValue3)
   }

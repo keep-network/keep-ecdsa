@@ -1,7 +1,7 @@
 const BondedECDSAKeepVendor = artifacts.require('./BondedECDSAKeepVendor.sol')
 const BondedECDSAKeepVendorImplV1 = artifacts.require('./BondedECDSAKeepVendorImplV1.sol')
-const ECDSAKeepFactory = artifacts.require('./ECDSAKeepFactory.sol')
-const ECDSAKeep = artifacts.require('./ECDSAKeep.sol')
+const BondedECDSAKeepFactory = artifacts.require('./BondedECDSAKeepFactory.sol')
+const BondedECDSAKeep = artifacts.require('./BondedECDSAKeep.sol')
 
 const RandomBeaconService = artifacts.require('IRandomBeacon')
 const { RandomBeaconAddress } = require('../migrations/external-contracts')
@@ -10,15 +10,20 @@ const { RandomBeaconAddress } = require('../migrations/external-contracts')
 // It also validates integration with the random beacon by verifying update of
 // the group selection seed by random beacon with a callback.
 // It requires contracts to be deployed before running the test and the client
-// to be configured with `ECDSAKeepFactory` address. It also requires random
+// to be configured with `BondedECDSAKeepFactory` address. It also requires random
 // beacon to be running.
 // 
 // To execute this smoke test run:
 // truffle exec integration/smoke_test.js
 module.exports = async function () {
-    const application = "0x2AA420Af8CB62888ACBD8C7fAd6B4DdcDD89BC82"
+    const accounts = await web3.eth.getAccounts();
 
-    let keepOwner
+    // It assumes that account[0] is contracts deployer for migrations and
+    // accounts[1-3] are configured as keep members.
+    const members = [accounts[1], accounts[2], accounts[3]]
+    const keepOwner = accounts[4]
+    const application = accounts[5]
+
     let startBlockNumber
     let keep
     let keepPublicKey
@@ -29,9 +34,6 @@ module.exports = async function () {
     const bond = 10
 
     try {
-        const accounts = await web3.eth.getAccounts();
-        keepOwner = accounts[1]
-
         startBlockNumber = await web3.eth.getBlock('latest').number
 
         randomBeacon = await RandomBeaconService.at(RandomBeaconAddress)
@@ -47,13 +49,24 @@ module.exports = async function () {
             (await BondedECDSAKeepVendor.deployed()).address
         )
         const keepFactoryAddress = await keepVendor.selectFactory()
-        keepFactory = await ECDSAKeepFactory.at(keepFactoryAddress)
+        keepFactory = await BondedECDSAKeepFactory.at(keepFactoryAddress)
     } catch (err) {
         console.error(`failed to select a factory: [${err}]`)
         process.exit(1)
     }
 
     try {
+        console.log('validate registered member candidates...');
+        for (let i = 0; i < members.length; i++) {
+            const isRegistered = await keepFactory.isOperatorRegistered(members[i], application)
+
+            if (isRegistered) {
+                console.log(`operator [${members[i]}] is registered for application [${application}]`)
+            } else {
+                console.log(`operator [${members[i]}] is NOT registered for application [${application}]`)
+            }
+        }
+
         console.log('opening a new keep...');
 
         const fee = await keepFactory.openKeepFeeEstimate.call()
@@ -73,13 +86,13 @@ module.exports = async function () {
             }
         )
 
-        const eventList = await keepFactory.getPastEvents('ECDSAKeepCreated', {
+        const eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
             fromBlock: startBlockNumber,
             toBlock: 'latest',
         })
 
         const keepAddress = eventList[0].returnValues.keepAddress
-        keep = await ECDSAKeep.at(keepAddress)
+        keep = await BondedECDSAKeep.at(keepAddress)
 
         console.log(`new keep opened with address: [${keepAddress}] and members: [${eventList[0].returnValues.members}]`)
     } catch (err) {

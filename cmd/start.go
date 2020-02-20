@@ -11,12 +11,12 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/keep-network/keep-tecdsa/internal/config"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/client"
-	"github.com/keep-network/keep-tecdsa/pkg/net/local"
 )
 
 var logger = log.Logger("keep-cmd")
@@ -70,7 +70,7 @@ func Start(c *cli.Context) error {
 			operatorPrivateKey, operatorPublicKey,
 		)
 
-		networkProvider := local.LocalProvider(
+		networkProvider := local.ConnectWithKey(
 			networkPublicKey,
 		)
 

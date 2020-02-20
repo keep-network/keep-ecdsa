@@ -1,39 +1,48 @@
 pragma solidity ^0.5.4;
 
-import "./ECDSAKeep.sol";
+import "./BondedECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
+import "./CloneFactory.sol";
 
-import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
-import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
-import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
+import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
+import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
 import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
+import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-/// @title ECDSA Keep Factory
+/// @title Bonded ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
-contract ECDSAKeepFactory is
-    IBondedECDSAKeepFactory // TODO: Rename to BondedECDSAKeepFactory
-{
+/// @dev We avoid redeployment of bonded ECDSA keep contract by using the clone factory.
+/// Proxy delegates calls to sortition pool and therefore does not affect contract's
+/// state. This means that we only need to deploy the bonded ECDSA keep contract
+/// once. The factory provides clean state for every new bonded ECDSA keep clone.
+contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
+    // Notification that a new sortition pool has been created.
+    event SortitionPoolCreated(address application, address sortitionPool);
+
     // Notification that a new keep has been created.
-    event ECDSAKeepCreated(
+    event BondedECDSAKeepCreated(
         address keepAddress,
         address[] members,
         address owner,
         address application
     );
 
+    // Holds the address of the bonded ECDSA keep contract that will be used as a
+    // master contract for cloning.
+    address public masterBondedECDSAKeepAddress;
+
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
 
-    uint256 feeEstimate;
     uint256 public groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
@@ -42,7 +51,19 @@ contract ECDSAKeepFactory is
     IRandomBeacon randomBeacon;
 
     uint256 public minimumStake = 200000 * 1e18;
-    uint256 public minimumBond = 1; // TODO: Define economics
+
+    // Sortition pool is created with a minimum bond of 1 to avoid
+    // griefing.
+    //
+    // Anyone can create a sortition pool for an application. If a pool is
+    // created with a ridiculously high bond, nobody can join it and
+    // updating bond is not possible because trying to select a group
+    // with an empty pool reverts.
+    //
+    // We set the minimum bond value to 1 to prevent from this situation and
+    // to allow the pool adjust the minimum bond during the first signer
+    // selection.
+    uint256 public constant minimumBond = 1;
 
     // Gas required for a callback from the random beacon. The value specifies
     // gas required to call `setGroupSelectionSeed` function in the worst-case
@@ -59,11 +80,13 @@ contract ECDSAKeepFactory is
     uint256 public subsidyPool;
 
     constructor(
+        address _masterBondedECDSAKeepAddress,
         address _sortitionPoolFactory,
         address _tokenStaking,
         address _keepBonding,
         address _randomBeacon
     ) public {
+        masterBondedECDSAKeepAddress = _masterBondedECDSAKeepAddress;
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
         );
@@ -77,22 +100,60 @@ contract ECDSAKeepFactory is
         subsidyPool += msg.value;
     }
 
+    /// @notice Creates new sortition pool for the application.
+    /// @dev Emits an event after sortition pool creation.
+    /// @param _application Address of the application.
+    /// @return Address of the created sortition pool contract.
+    function createSortitionPool(address _application)
+        external
+        returns (address)
+    {
+        require(
+            candidatesPools[_application] == address(0),
+            "Sortition pool already exists"
+        );
+
+        address sortitionPoolAddress = sortitionPoolFactory.createSortitionPool(
+            IStaking(tokenStaking),
+            IBonding(address(keepBonding)),
+            minimumStake,
+            minimumBond
+        );
+
+        candidatesPools[_application] = sortitionPoolAddress;
+
+        emit SortitionPoolCreated(_application, sortitionPoolAddress);
+
+        return candidatesPools[_application];
+    }
+
+    /// @notice Gets the sortition pool address for the given application.
+    /// @dev Reverts if sortition does not exits for the application.
+    /// @param _application Address of the application.
+    /// @return Address of the sortition pool contract.
+    function getSortitionPool(address _application)
+        external
+        view
+        returns (address)
+    {
+        require(
+            candidatesPools[_application] != address(0),
+            "No pool found for the application"
+        );
+
+        return candidatesPools[_application];
+    }
+
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application.
     /// @dev If caller is already registered it returns without any changes.
-    /// @param _application Customer application address.
+    /// @param _application Address of the application.
     function registerMemberCandidate(address _application) external {
-        if (candidatesPools[_application] == address(0)) {
-            // This is the first time someone registers as signer for this
-            // application so let's create a signer pool for it.
-            candidatesPools[_application] = sortitionPoolFactory
-                .createSortitionPool(
-                IStaking(tokenStaking),
-                IBonding(address(keepBonding)),
-                minimumStake,
-                minimumBond
-            );
-        }
+        require(
+            candidatesPools[_application] != address(0),
+            "No pool found for the application"
+        );
+
         BondedSortitionPool candidatesPool = BondedSortitionPool(
             candidatesPools[_application]
         );
@@ -182,14 +243,14 @@ contract ECDSAKeepFactory is
         return randomBeacon.entryFeeEstimate(callbackGas);
     }
 
-    /// @notice Open a new ECDSA keep.
-    /// @dev Selects a list of members for the keep based on provided parameters.
+    /// @notice Opens a new ECDSA keep.
+    /// @dev Selects a list of signers for the keep based on provided parameters.
     /// A caller of this function is expected to be an application for which
     /// member candidates were registered in a pool.
-    /// @param _groupSize Number of members in the keep.
-    /// @param _honestThreshold Minimum number of honest keep members.
+    /// @param _groupSize Number of signers in the keep.
+    /// @param _honestThreshold Minimum number of honest keep signers.
     /// @param _owner Address of the keep owner.
-    /// @param _bond Value of ETH bond required from the keep (wei).
+    /// @param _bond Value of ETH bond required from the keep in wei.
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
@@ -197,6 +258,12 @@ contract ECDSAKeepFactory is
         address _owner,
         uint256 _bond
     ) external payable returns (address keepAddress) {
+        require(_groupSize <= 16, "Maximum signing group size is 16");
+        require(
+            _honestThreshold <= _groupSize,
+            "Honest threshold must be less or equal the group size"
+        );
+
         address application = msg.sender;
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
@@ -222,7 +289,9 @@ contract ECDSAKeepFactory is
 
         newGroupSelectionSeed();
 
-        ECDSAKeep keep = new ECDSAKeep(
+        keepAddress = createClone(masterBondedECDSAKeepAddress);
+        BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
+        keep.initialize(
             _owner,
             members,
             _honestThreshold,
@@ -230,14 +299,13 @@ contract ECDSAKeepFactory is
             address(keepBonding)
         );
 
-        keepAddress = address(keep);
-
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
                 members[i],
                 keepAddress,
                 uint256(keepAddress),
-                memberBond
+                memberBond,
+                pool
             );
         }
 
@@ -251,7 +319,7 @@ contract ECDSAKeepFactory is
             keep.distributeETHToMembers.value(signerSubsidy)();
         }
 
-        emit ECDSAKeepCreated(keepAddress, members, _owner, application);
+        emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
     /// @notice Updates group selection seed.
@@ -271,7 +339,12 @@ contract ECDSAKeepFactory is
         );
 
         // Call the random beacon to get a random group selection seed.
-        (bool success, ) = address(randomBeacon).call.value(msg.value)(
+        //
+        // Limiting forwarded gas to prevent malicious behavior in case the
+        // beacon service contract gets compromised. Relay request should not
+        // consume more than 360k of gas. We set the limit to 400k to have
+        // a safety margin for future updates.
+        (bool success, ) = address(randomBeacon).call.gas(400000).value(msg.value)(
             abi.encodeWithSignature(
                 "requestRelayEntry(address,string,uint256)",
                 address(this),
