@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -44,6 +45,10 @@ func (lc *localChain) Address() common.Address {
 // PublicKey returns client's ethereum public key.
 func (lc *localChain) PublicKey() *cecdsa.PublicKey {
 	return nil // not implemented.
+}
+
+func (lc *localChain) StakeMonitor() (chain.StakeMonitor, error) {
+	return nil, nil // not implemented.
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
