@@ -22,11 +22,10 @@ ENV ETH_WS_PORT=$ETH_WS_PORT
 ARG ETH_NETWORK_ID
 ENV ETH_NETWORK_ID=$ETH_NETWORK_ID
 
-COPY ./ECDSAKeepFactory.json /tmp/ECDSAKeepFactory.json
+COPY ./BondedECDSAKeepFactory.json /tmp/BondedECDSAKeepFactory.json
 
 COPY ./keep-tecdsa-template.toml /tmp/keep-tecdsa-template.toml
 
 COPY ./provision-keep-tecdsa.js /tmp/provision-keep-tecdsa.js
 
 ENTRYPOINT ["node", "./provision-keep-tecdsa.js"]
-

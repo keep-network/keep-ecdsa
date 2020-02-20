@@ -17,27 +17,27 @@ type Handle interface {
 	// PublicKey returns client's ethereum public key.
 	PublicKey() *cecdsa.PublicKey
 
-	ECDSAKeepFactory
-	ECDSAKeep
+	BondedECDSAKeepFactory
+	BondedECDSAKeep
 }
 
-// ECDSAKeepFactory is an interface that provides ability to interact with
-// ECDSAKeepFactory ethereum contracts.
-type ECDSAKeepFactory interface { // TODO: Rename to BondedECDSAKeepFactory
+// BondedECDSAKeepFactory is an interface that provides ability to interact with
+// BondedECDSAKeepFactory ethereum contracts.
+type BondedECDSAKeepFactory interface {
 	// RegisterAsMemberCandidate registers client as a candidate to be selected
 	// to a keep.
 	RegisterAsMemberCandidate(application common.Address) error
 
-	// OnECDSAKeepCreated is a callback that is invoked when an on-chain
-	// notification of a new ECDSA keep creation is seen.
-	OnECDSAKeepCreated(
-		handler func(event *ECDSAKeepCreatedEvent),
+	// OnBondedECDSAKeepCreated is a callback that is invoked when an on-chain
+	// notification of a new bonded ECDSA keep creation is seen.
+	OnBondedECDSAKeepCreated(
+		handler func(event *BondedECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
 }
 
-// ECDSAKeep is an interface that provides ability to interact with ECDSAKeep
+// BondedECDSAKeep is an interface that provides ability to interact with BondedECDSAKeep
 // ethereum contracts.
-type ECDSAKeep interface { // TODO: Rename to BondedECDSAKeep
+type BondedECDSAKeep interface {
 	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new signing request for a given keep is seen.
 	OnSignatureRequested(
@@ -55,4 +55,8 @@ type ECDSAKeep interface { // TODO: Rename to BondedECDSAKeep
 		keepAddress common.Address,
 		signature *ecdsa.Signature,
 	) error // TODO: Add promise *async.SignatureSubmissionPromise
+
+	// IsAwaitingSignature checks if the keep is waiting for a signature to be
+	// calculated for the given digest.
+	IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error)
 }

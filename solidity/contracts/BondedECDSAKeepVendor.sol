@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
+/// @title Proxy contract for Bonded ECDSA Keep vendor.
 contract BondedECDSAKeepVendor is Ownable {
     // Storage position of the address of the current implementation
     bytes32 private constant implementationPosition = keccak256(
@@ -15,10 +16,8 @@ contract BondedECDSAKeepVendor is Ownable {
         setImplementation(_implementation);
     }
 
-    /**
-     * @dev Gets the address of the current implementation.
-     * @return address of the current implementation.
-    */
+    /// @notice Gets the address of the current vendor implementation.
+    /// @return Address of the current implementation.
     function implementation() public view returns (address _implementation) {
         bytes32 position = implementationPosition;
         /* solium-disable-next-line */
@@ -27,10 +26,9 @@ contract BondedECDSAKeepVendor is Ownable {
         }
     }
 
-    /**
-     * @dev Sets the address of the current implementation.
-     * @param _implementation address representing the new implementation to be set.
-    */
+    /// @notice Sets the address of the current implementation.
+    /// @param _implementation Address representing the new implementation to
+    /// be set.
     function setImplementation(address _implementation) internal {
         bytes32 position = implementationPosition;
         /* solium-disable-next-line */
@@ -39,9 +37,7 @@ contract BondedECDSAKeepVendor is Ownable {
         }
     }
 
-    /**
-     * @dev Delegate call to the current implementation contract.
-     */
+    /// @notice Delegates call to the current implementation contract.
     function() external payable {
         address _impl = implementation();
         /* solium-disable-next-line */
@@ -58,10 +54,8 @@ contract BondedECDSAKeepVendor is Ownable {
         }
     }
 
-    /**
-     * @dev Upgrade current implementation.
-     * @param _implementation Address of the new implementation contract.
-     */
+    /// @notice Upgrades the current vendor implementation.
+    /// @param _implementation Address of the new vendor implementation contract.
     function upgradeTo(address _implementation) public onlyOwner {
         address currentImplementation = implementation();
         require(

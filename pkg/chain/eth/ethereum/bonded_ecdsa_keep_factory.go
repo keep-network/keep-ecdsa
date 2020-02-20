@@ -9,12 +9,12 @@ import (
 )
 
 func (ec *EthereumChain) watchECDSAKeepCreated(
-	success func(event *abi.ECDSAKeepFactoryECDSAKeepCreated),
+	success func(event *abi.BondedECDSAKeepFactoryBondedECDSAKeepCreated),
 	fail func(err error) error,
 ) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.ECDSAKeepFactoryECDSAKeepCreated)
+	eventChan := make(chan *abi.BondedECDSAKeepFactoryBondedECDSAKeepCreated)
 
-	eventSubscription, err := ec.ecdsaKeepFactoryContract.WatchECDSAKeepCreated(
+	eventSubscription, err := ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
 		nil,
 		eventChan,
 	)

@@ -21,7 +21,7 @@ type localChain struct {
 
 	keeps map[common.Address]*localKeep
 
-	keepCreatedHandlers map[int]func(event *eth.ECDSAKeepCreatedEvent)
+	keepCreatedHandlers map[int]func(event *eth.BondedECDSAKeepCreatedEvent)
 
 	clientAddress common.Address
 }
@@ -31,7 +31,7 @@ type localChain struct {
 func Connect() eth.Handle {
 	return &localChain{
 		keeps:               make(map[common.Address]*localKeep),
-		keepCreatedHandlers: make(map[int]func(event *eth.ECDSAKeepCreatedEvent)),
+		keepCreatedHandlers: make(map[int]func(event *eth.BondedECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
 	}
 }
@@ -52,10 +52,10 @@ func (lc *localChain) RegisterAsMemberCandidate(application common.Address) erro
 	return nil
 }
 
-// OnECDSAKeepCreated is a callback that is invoked when an on-chain
+// OnBondedECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
-func (lc *localChain) OnECDSAKeepCreated(
-	handler func(event *eth.ECDSAKeepCreatedEvent),
+func (lc *localChain) OnBondedECDSAKeepCreated(
+	handler func(event *eth.BondedECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
@@ -134,4 +134,13 @@ func (lc *localChain) SubmitSignature(
 	signature *ecdsa.Signature,
 ) error {
 	return nil
+}
+
+// IsAwaitingSignature checks if the keep is waiting for a signature to be
+// calculated for the given digest.
+func (lc *localChain) IsAwaitingSignature(
+	keepAddress common.Address,
+	digest [32]byte,
+) (bool, error) {
+	panic("implement")
 }
