@@ -21,8 +21,8 @@ gen_go:
 %.go: %.sol
 	solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ \
 		solidity-bytes-utils/=../node_modules/solidity-bytes-utils/ \
-		@keep-network/sortition-pools/=../node_modules/@keep-network/sortition-pools/  \
 		@keep-network/keep-core/=../node_modules/@keep-network/keep-core/  \
+		@keep-network/sortition-pools/=../node_modules/@keep-network/sortition-pools/  \
 		--allow-paths . --overwrite --abi -o . $<
 
 	abigen --abi $*.abi --pkg abi --type $* --out ${GEN_DIR}/$@

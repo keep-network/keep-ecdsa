@@ -1,23 +1,26 @@
 pragma solidity ^0.5.4;
 
-import "../../contracts/ECDSAKeepFactory.sol";
+import "../../contracts/BondedECDSAKeepFactory.sol";
 
-/// @title ECDSA Keep Factory Stub
+/// @title Bonded ECDSA Keep Factory Stub for vendor testing
 /// @dev This contract is for testing purposes only.
-contract ECDSAKeepFactoryStub is ECDSAKeepFactory {
+contract BondedECDSAKeepFactoryVendorStub is BondedECDSAKeepFactory {
     constructor(
+        address masterBondedECDSAKeepAddress,
         address sortitionPoolFactory,
         address tokenStaking,
-        address keepBonding
+        address keepBonding,
+        address randomBeacon
     )
         public
-        ECDSAKeepFactory(sortitionPoolFactory, tokenStaking, keepBonding)
+        BondedECDSAKeepFactory(
+            masterBondedECDSAKeepAddress,
+            sortitionPoolFactory,
+            tokenStaking,
+            keepBonding,
+            randomBeacon
+        )
     {}
-
-    // @dev Returns address of registered signer pool.
-    function getSignerPool(address application) public view returns (address) {
-        return candidatesPools[application];
-    }
 
     // @dev Returns calculated keep address.
     function openKeep(

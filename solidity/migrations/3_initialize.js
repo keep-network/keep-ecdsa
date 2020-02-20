@@ -1,17 +1,31 @@
-const ECDSAKeepFactory = artifacts.require("ECDSAKeepFactory");
+const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
+const BondedECDSAKeepVendorImplV1 = artifacts.require("BondedECDSAKeepVendorImplV1")
+const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
+const Registry = artifacts.require("Registry")
+
+let { RegistryAddress } = require('./external-contracts')
 
 module.exports = async function (deployer) {
-    await ECDSAKeepFactory.deployed()
+    await BondedECDSAKeepFactory.deployed()
 
     let registry
     if (process.env.TEST) {
-        RegistryStub = artifacts.require("RegistryStub")
-        registry = await RegistryStub.new()
-    } else {
-        Registry = artifacts.require("Registry")
         registry = await Registry.deployed()
+    } else {
+        registry = await Registry.at(RegistryAddress)
     }
 
-    await registry.approveOperatorContract(ECDSAKeepFactory.address)
-    console.log(`approved operator contract [${ECDSAKeepFactory.address}] in registry`)
-};
+    const vendor = await BondedECDSAKeepVendorImplV1.at(BondedECDSAKeepVendor.address)
+    await vendor.initialize(registry.address)
+
+    // Configure registry
+    await registry.approveOperatorContract(BondedECDSAKeepFactory.address)
+    console.log(`approved operator contract [${BondedECDSAKeepFactory.address}] in registry`)
+
+    // Set service contract owner as operator contract upgrader by default
+    const operatorContractUpgrader = await vendor.owner()
+    await registry.setOperatorContractUpgrader(vendor.address, operatorContractUpgrader)
+
+    // Register keep factory
+    await vendor.registerFactory(BondedECDSAKeepFactory.address)
+}

@@ -1,12 +1,12 @@
-const ECDSAKeepFactory = artifacts.require('./ECDSAKeepFactory.sol');
-const ECDSAKeep = artifacts.require('./ECDSAKeep.sol');
+const BondedECDSAKeepFactory = artifacts.require('./BondedECDSAKeepFactory.sol');
+const BondedECDSAKeep = artifacts.require('./BondedECDSAKeep.sol');
 
 // Creates a new keep, requests signature for a digest and gets the signature
 // submitted to the chain.
 module.exports = async function () {
     try {
         let accounts = await web3.eth.getAccounts();
-        let factory = await ECDSAKeepFactory.deployed();
+        let factory = await BondedECDSAKeepFactory.deployed();
 
         // Create new keep.
         let groupSize = 1;
@@ -28,7 +28,7 @@ module.exports = async function () {
 
         console.log("new keep created at address:", keepAddress)
 
-        const keep = await ECDSAKeep.at(keepAddress)
+        const keep = await BondedECDSAKeep.at(keepAddress)
 
         // Sign digest.
         const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'

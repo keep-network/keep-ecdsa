@@ -9,11 +9,11 @@ import (
 )
 
 func (ec *EthereumChain) watchSignatureRequested(
-	keepContract *abi.ECDSAKeep,
-	success func(event *abi.ECDSAKeepSignatureRequested),
+	keepContract *abi.BondedECDSAKeep,
+	success func(event *abi.BondedECDSAKeepSignatureRequested),
 	fail func(err error) error,
 ) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.ECDSAKeepSignatureRequested)
+	eventChan := make(chan *abi.BondedECDSAKeepSignatureRequested)
 
 	eventSubscription, err := keepContract.WatchSignatureRequested(
 		nil,
@@ -22,7 +22,7 @@ func (ec *EthereumChain) watchSignatureRequested(
 	if err != nil {
 		close(eventChan)
 		return nil, fmt.Errorf(
-			"failed to create watch for ECDSAKeepSignatureRequested event: [%v]",
+			"failed to create watch for BondedECDSAKeepSignatureRequested event: [%v]",
 			err,
 		)
 	}

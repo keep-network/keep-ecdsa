@@ -3,11 +3,15 @@ pragma solidity ^0.5.4;
 /// @title Ether Transfer Receiver.
 /// @dev This contract is for testing purposes only.
 contract TestEtherReceiver {
-    uint256 public invalidValue = 666;
+    bool shouldFail;
 
-    /// @notice Rejects ether transfers sent to this contract if the value equals
-    /// `invalidValue`.
+    function setShouldFail(bool _value) public {
+        shouldFail = _value;
+    }
+
+    /// @notice Rejects ether transfers sent to this contract if the shouldFail
+    /// flag is set to true.
     function() external payable {
-        require(msg.value != invalidValue, "Payment rejected");
+        require(!shouldFail, "Payment rejected");
     }
 }

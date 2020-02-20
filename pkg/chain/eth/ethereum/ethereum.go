@@ -4,6 +4,7 @@ package ethereum
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -23,7 +24,7 @@ func (ec *EthereumChain) Address() common.Address {
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
 func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) error {
-	transaction, err := ec.ecdsaKeepFactoryContract.RegisterMemberCandidate(
+	transaction, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidate(
 		ec.transactorOptions,
 		application,
 	)
@@ -36,16 +37,16 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 	return nil
 }
 
-// OnECDSAKeepCreated is a callback that is invoked when an on-chain
+// OnBondedECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
-func (ec *EthereumChain) OnECDSAKeepCreated(
-	handler func(event *eth.ECDSAKeepCreatedEvent),
+func (ec *EthereumChain) OnBondedECDSAKeepCreated(
+	handler func(event *eth.BondedECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	return ec.watchECDSAKeepCreated(
 		func(
-			chainEvent *abi.ECDSAKeepFactoryECDSAKeepCreated,
+			chainEvent *abi.BondedECDSAKeepFactoryBondedECDSAKeepCreated,
 		) {
-			handler(&eth.ECDSAKeepCreatedEvent{
+			handler(&eth.BondedECDSAKeepCreatedEvent{
 				KeepAddress: chainEvent.KeepAddress,
 				Members:     chainEvent.Members,
 			})
@@ -70,7 +71,7 @@ func (ec *EthereumChain) OnSignatureRequested(
 	return ec.watchSignatureRequested(
 		keepContract,
 		func(
-			chainEvent *abi.ECDSAKeepSignatureRequested,
+			chainEvent *abi.BondedECDSAKeepSignatureRequested,
 		) {
 			handler(&eth.SignatureRequestedEvent{
 				Digest: chainEvent.Digest,
@@ -93,23 +94,26 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return err
 	}
 
-	transaction, err := keepContract.SetPublicKey(ec.transactorOptions, publicKey[:])
+	transactorOptions := bind.TransactOpts(*ec.transactorOptions)
+	transactorOptions.GasLimit = 3000000 // enough for a group size of 16
+
+	transaction, err := keepContract.SubmitPublicKey(&transactorOptions, publicKey[:])
 	if err != nil {
 		return err
 	}
 
-	logger.Debugf("submitted SetPublicKey transaction with hash: [%x]", transaction.Hash())
+	logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
 
 	return nil
 }
 
-func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.ECDSAKeep, error) {
-	ecdsaKeepContract, err := abi.NewECDSAKeep(address, ec.client)
+func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.BondedECDSAKeep, error) {
+	bondedECDSAKeepContract, err := abi.NewBondedECDSAKeep(address, ec.client)
 	if err != nil {
 		return nil, err
 	}
 
-	return ecdsaKeepContract, nil
+	return bondedECDSAKeepContract, nil
 }
 
 // SubmitSignature submits a signature to a keep contract deployed under a
@@ -146,4 +150,18 @@ func (ec *EthereumChain) SubmitSignature(
 	logger.Debugf("submitted SubmitSignature transaction with hash: [%x]", transaction.Hash())
 
 	return nil
+}
+
+// IsAwaitingSignature checks if the keep is waiting for a signature to be
+// calculated for the given digest.
+func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	return keepContract.IsAwaitingSignature(
+		ec.callerOptions,
+		digest,
+	)
 }

@@ -1,40 +1,34 @@
-const ECDSAKeepFactory = artifacts.require('ECDSAKeepFactory')
-
-// `Registry` and `TokenStaking` are expected to be copied over from previous 
-// keep-core migrations.
-const Registry = artifacts.require('Registry')
-const TokenStaking = artifacts.require('TokenStaking')
+const BondedECDSAKeepFactory = artifacts.require('BondedECDSAKeepFactory')
 const KeepBonding = artifacts.require('KeepBonding')
 
+const TokenStaking = artifacts.require('@keep-network/keep-core/build/truffle/TokenStaking')
+
+let { TokenStakingAddress, TBTCSystemAddress } = require('../migrations/external-contracts')
+
 module.exports = async function () {
-    const bondingValue = 100;
-
-    const accounts = await web3.eth.getAccounts()
-    const operators = [accounts[1], accounts[2], accounts[3]]
-
-    let ecdsaKeepFactory
-    let registry
-    let tokenStaking
-    let keepBonding
-
     try {
-        ecdsaKeepFactory = await ECDSAKeepFactory.deployed()
-        registry = await Registry.deployed()
-        tokenStaking = await TokenStaking.deployed()
-        keepBonding = await KeepBonding.deployed()
-    } catch (err) {
-        console.error('failed to get deployed contracts', err)
-        process.exit(1)
-    }
+        // Assuming BTC/ETH rate = 50 to cover a keep bond of 1 BTC we need to have
+        // 50 ETH / 3 members = 16,67 ETH of unbonded value for each member.
+        // Here we set the bonding value to bigger value so members can handle
+        // multiple keeps.
+        const bondingValue = web3.utils.toWei("50", "ether")
 
-    try {
-        const operatorContract = ecdsaKeepFactory.address
+        const accounts = await web3.eth.getAccounts()
+        const owner = accounts[0]
+        const operators = [accounts[1], accounts[2], accounts[3]]
+        const application = TBTCSystemAddress
+
+        let sortitionPoolAddress
+        let bondedECDSAKeepFactory
+        let tokenStaking
+        let keepBonding
+        let operatorContract
 
         const authorizeOperator = async (operator) => {
-            const authorizer = operator
-
             try {
-                await tokenStaking.authorizeOperatorContract(operator, operatorContract, { from: authorizer })
+                await tokenStaking.authorizeOperatorContract(operator, operatorContract, { from: operator })
+
+                await keepBonding.authorizeSortitionPoolContract(operator, sortitionPoolAddress, { from: operator }) // this function should be called by authorizer but it's currently set to operator in demo.js
             } catch (err) {
                 console.error(err)
                 process.exit(1)
@@ -45,24 +39,46 @@ module.exports = async function () {
         const depositUnbondedValue = async (operator) => {
             try {
                 await keepBonding.deposit(operator, { value: bondingValue })
-                console.log(`deposited bonding value for operator [${operator}]`)
+                console.log(`deposited ${web3.utils.fromWei(bondingValue)} ETH bonding value for operator [${operator}]`)
             } catch (err) {
                 console.error(err)
                 process.exit(1)
             }
         }
 
-        for (let i = 0; i < operators.length; i++) {
-            await authorizeOperator(operators[i])
+        try {
+            bondedECDSAKeepFactory = await BondedECDSAKeepFactory.deployed()
+            tokenStaking = await TokenStaking.at(TokenStakingAddress)
+            keepBonding = await KeepBonding.deployed()
 
-            const res = await tokenStaking.eligibleStake(operators[i], operatorContract)
-            console.log("res", res.toString())
-
-            await depositUnbondedValue(operators[i])
-            // TODO: Check available bonding value for factory.
+            operatorContract = bondedECDSAKeepFactory.address
+        } catch (err) {
+            console.error('failed to get deployed contracts', err)
+            process.exit(1)
         }
+
+        try {
+            await bondedECDSAKeepFactory.createSortitionPool(application)
+            console.log(`created sortition pool for application: [${application}]`)
+
+            sortitionPoolAddress = await bondedECDSAKeepFactory.getSortitionPool(application)
+        } catch (err) {
+            console.error('failed to create sortition pool', err)
+            process.exit(1)
+        }
+
+        try {
+            for (let i = 0; i < operators.length; i++) {
+                await authorizeOperator(operators[i])
+                await depositUnbondedValue(operators[i])
+            }
+        } catch (err) {
+            console.error('failed to initialize operators', err)
+            process.exit(1)
+        }
+
     } catch (err) {
-        console.error('failed to initialize operators', err)
+        console.error(err)
         process.exit(1)
     }
 

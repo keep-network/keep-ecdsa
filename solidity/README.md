@@ -5,16 +5,17 @@
 
 ### NPM dependencies
 
+The project uses [GitHub Package Registry](https://github.com/orgs/keep-network/packages)
+for keep-network dependencies. It requires `npm login --registry=https://npm.pkg.github.com
+to be executed to authenticate with GitHub account in order to access private
+packages. You can login with GitHub access token by providing your username and
+instead of password use the token.
+
 Install the project dependencies:
 
 ```sh
 npm install
 ```
-
-The project uses [GitHub Package Registry](https://github.com/orgs/keep-network/packages)
-for dependencies. It requires `npm login` to be executed to authenticate with 
-GitHub account. You can login with GitHub access token by providing your username
-and instead of password use the token.
 
 ### keep-core contracts
 
@@ -23,10 +24,10 @@ migration artifacts to be provided in `build/contracts` directory.
 The contracts can be fetched from Google Cloud Bucket (for CI) or copied over
 from local source (for development) after running migrations in `keep-core` project.
 
-To copy required artifacts from `keep-core` project execute command:
+To fetch required contracts addresses from `keep-core` project execute command:
 ```sh
 KEEP_CORE_ARTIFACTS=~/go/src/github.com/keep-network/keep-core/contracts/solidity/build/contracts \
-   ./scripts/lcl-copy-contracts.sh
+   ./scripts/lcl-provision-external-contracts.sh
 ```
 Remember to update `KEEP_CORE_ARTIFACTS` with path where migrations artifacts are
 stored on your machine.
@@ -107,7 +108,7 @@ for each contract and copy-paste it to [config.toml](../configs/config.toml) fil
 Unit tests use Truffle's test framework, and redeploy contracts for a clean environment every test. An example:
 
 ```sh
-truffle test test/ECDSAKeepTest.js
+truffle test test/BondedECDSAKeepTest.js
 ```
 
 #### Scenarios
