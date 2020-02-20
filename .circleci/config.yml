@@ -101,10 +101,13 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
+          name: Fetch external contracts artifacts
+          working_directory: ~/project/infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
+          command: ./fetch-external-contracts.sh
+      - run:
           name: Build keep-tecdsa-initcontainer image
           command: |
             cp /tmp/keep-tecdsa/contracts/* infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
-            cd infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
             docker build \
               --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
               --build-arg ETH_WS_PORT=$ETH_WS_PORT \
