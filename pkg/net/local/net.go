@@ -1,8 +1,9 @@
 package local
 
 import (
+	"context"
 	"encoding/hex"
-
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
@@ -22,11 +23,11 @@ type localProvider struct {
 // LocalProvider returns local implementation of net.Provider which can be used
 // for testing.
 func LocalProvider(
-	publicKey *key.NetworkPublic, // node's public key
+	staticKey *key.NetworkPublic, // node's public key
 ) net.Provider {
 	return &localProvider{
-		broadcastProvider: brdcLocal.ConnectWithKey(publicKey),
-		unicastProvider:   unicastConnectWithKey(publicKey),
+		broadcastProvider: brdcLocal.ConnectWithKey(staticKey),
+		unicastProvider:   unicastConnectWithKey(staticKey),
 	}
 }
 
@@ -34,17 +35,40 @@ func (p *localProvider) BroadcastChannelFor(name string) (net.BroadcastChannel, 
 	return p.broadcastProvider.ChannelFor(name)
 }
 
-func (p *localProvider) UnicastChannelWith(name string) (net.UnicastChannel, error) {
-	return p.unicastProvider.ChannelFor(name)
+func (p *localProvider) UnicastChannelWith(peerID net.TransportIdentifier) (
+	net.UnicastChannel,
+	error,
+) {
+	return p.unicastProvider.UnicastChannelWith(peerID)
+}
+
+func (p *localProvider) OnUnicastChannelOpened(
+	handler func(channel net.UnicastChannel),
+) {
+	p.unicastProvider.OnUnicastChannelOpened(context.Background(), handler)
+}
+
+func (p *localProvider) SeekTransportIdentifier(address common.Address) (net.TransportIdentifier, error) {
+	providersMutex.RLock()
+	defer providersMutex.RUnlock()
+
+	addressHex := address.Hex()
+
+	for transportIdentifier, provider := range providers {
+		if key.NetworkPubKeyToEthAddress(provider.staticKey) == addressHex {
+			return localIdentifier(transportIdentifier), nil
+		}
+	}
+
+	return nil, fmt.Errorf("transport identifier not found for address: [%v]", addressHex)
 }
 
 type localIdentifier string
 
-func (li localIdentifier) String() string {
-	return string(li)
+func createLocalIdentifier(staticKey *key.NetworkPublic) localIdentifier {
+	return localIdentifier(hex.EncodeToString(key.Marshal(staticKey)))
 }
 
-func localIdentifierFromNetworkKey(publicKey *key.NetworkPublic) localIdentifier {
-	ethereumAddress := key.NetworkPubKeyToEthAddress(publicKey)
-	return localIdentifier(hex.EncodeToString(common.FromHex(ethereumAddress)))
+func (li localIdentifier) String() string {
+	return string(li)
 }

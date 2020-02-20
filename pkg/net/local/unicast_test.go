@@ -2,220 +2,277 @@ package local
 
 import (
 	"context"
-	"reflect"
-	"sort"
-	"sync"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-tecdsa/pkg/net"
-	"github.com/keep-network/keep-tecdsa/pkg/net/internal"
 )
 
-func TestRegisterAndFireHandler(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+func TestNewChannelNotification(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	_, publicKey1, _ := key.GenerateStaticNetworkKey()
-	_, publicKey2, _ := key.GenerateStaticNetworkKey()
+	peer1Provider, _ := initTestProvider()
+	peer2Provider, peer2StaticKey := initTestProvider()
 
-	transportID1 := localIdentifierFromNetworkKey(publicKey1)
-	transportID2 := localIdentifierFromNetworkKey(publicKey2)
+	peer1NewChannelNotificationCount := 0
+	peer1Provider.OnUnicastChannelOpened(ctx, func(channel net.UnicastChannel) {
+		peer1NewChannelNotificationCount++
+	})
 
-	netProvider1 := LocalProvider(publicKey1)
-	netProvider2 := LocalProvider(publicKey2)
+	peer2NewChannelNotificationCount := 0
+	peer2Provider.OnUnicastChannelOpened(ctx, func(channel net.UnicastChannel) {
+		peer2NewChannelNotificationCount++
+	})
 
-	localChannel1, err := netProvider1.UnicastChannelWith(transportID2.String())
+	remotePeerID := createLocalIdentifier(peer2StaticKey)
+	peer1Provider.UnicastChannelWith(remotePeerID)
+
+	<-ctx.Done() // give some time for notifications...
+
+	if peer1NewChannelNotificationCount != 0 {
+		t.Errorf(
+			"expected no notifications, has [%v]",
+			peer1NewChannelNotificationCount,
+		)
+	}
+	if peer2NewChannelNotificationCount != 1 {
+		t.Errorf(
+			"expected [1] notification, has [%v]",
+			peer2NewChannelNotificationCount,
+		)
+	}
+}
+
+func TestExistingChannelNotification(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	peer1Provider, _ := initTestProvider()
+	peer2Provider, peer2StaticKey := initTestProvider()
+
+	newChannelNotificationCount := 0
+	peer2Provider.OnUnicastChannelOpened(ctx, func(channel net.UnicastChannel) {
+		newChannelNotificationCount++
+	})
+
+	remotePeerID := createLocalIdentifier(peer2StaticKey)
+	peer1Provider.UnicastChannelWith(remotePeerID)
+	peer1Provider.UnicastChannelWith(remotePeerID)
+
+	<-ctx.Done() // give some time for notifications...
+
+	if newChannelNotificationCount != 1 {
+		t.Errorf(
+			"expected [1] notification, has [%v]",
+			newChannelNotificationCount,
+		)
+	}
+}
+
+func TestSendAndReceive(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	//
+	// Prepare communication channel between peer1 and peer2
+	//
+	peer1Provider, peer1StaticKey := initTestProvider()
+	peer2Provider, peer2StaticKey := initTestProvider()
+
+	remotePeer1ID := createLocalIdentifier(peer1StaticKey)
+	remotePeer2ID := createLocalIdentifier(peer2StaticKey)
+
+	channel1, err := peer1Provider.UnicastChannelWith(remotePeer2ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	localChannel2, err := netProvider2.UnicastChannelWith(transportID1.String())
+	channel2, err := peer2Provider.UnicastChannelWith(remotePeer1ID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := localChannel1.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	channel1.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &mockMessage{}
-	}); err != nil {
-		t.Fatalf("failed to register unmarshaler: [%v]", err)
-	}
-	if err := localChannel2.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	})
+	channel2.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &mockMessage{}
-	}); err != nil {
-		t.Fatalf("failed to register unmarshaler: [%v]", err)
-	}
+	})
 
-	msgToSend := &mockMessage{}
+	peer1Received := make(chan net.Message)
+	peer2Received := make(chan net.Message)
 
-	handlerType := msgToSend.Type()
+	channel1.Recv(ctx, func(msg net.Message) {
+		peer1Received <- msg
+	})
+	channel2.Recv(ctx, func(msg net.Message) {
+		peer2Received <- msg
+	})
 
-	deliveredMsgChan := make(chan net.Message)
-	handler := net.HandleMessageFunc{
-		Type: handlerType,
-		Handler: func(msg net.Message) error {
-			deliveredMsgChan <- msg
-			return nil
-		},
-	}
+	//
+	// peer1 sends a message to peer2
+	// make sure peer2 receives it
+	//
 
-	if err := localChannel2.Recv(handler); err != nil {
-		t.Fatalf("failed to register receive handler: [%v]", err)
-	}
-
-	expectedDeliveredMessage := internal.BasicMessage(
-		localIdentifier(transportID1),
-		msgToSend,
-		msgToSend.Type(),
-		key.Marshal(publicKey1),
-	)
-
-	if err := localChannel1.Send(msgToSend); err != nil {
-		t.Fatalf("failed to send message: [%v]", err)
+	channel1Message := &mockMessage{"yolo1"}
+	err = channel1.Send(channel1Message)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	select {
-	case deliveredMsg := <-deliveredMsgChan:
-		if !reflect.DeepEqual(deliveredMsg, expectedDeliveredMessage) {
-			t.Errorf("invalid delivered message\nexpected: %+v\nactual:   %+v\n", expectedDeliveredMessage, deliveredMsg)
-		}
-	case <-ctx.Done():
-		t.Errorf("expected handler not called")
-	}
-}
-
-func TestUnregisterHandler(t *testing.T) {
-	tests := map[string]struct {
-		handlersRegistered   []string
-		handlersUnregistered []string
-		handlersFired        []string
-	}{
-		"unregister the first registered handler": {
-			handlersRegistered:   []string{"a", "b", "c"},
-			handlersUnregistered: []string{"a"},
-			handlersFired:        []string{"b", "c"},
-		},
-		"unregister the last registered handler": {
-			handlersRegistered:   []string{"a", "b", "c"},
-			handlersUnregistered: []string{"c"},
-			handlersFired:        []string{"a", "b"},
-		},
-		"unregister handler registered in the middle": {
-			handlersRegistered:   []string{"a", "b", "c"},
-			handlersUnregistered: []string{"b"},
-			handlersFired:        []string{"a", "c"},
-		},
-		"unregister various handlers": {
-			handlersRegistered:   []string{"a", "b", "c", "d", "e", "f", "g"},
-			handlersUnregistered: []string{"a", "c", "f", "g"},
-			handlersFired:        []string{"b", "d", "e"},
-		},
-		"unregister all handlers": {
-			handlersRegistered:   []string{"a", "b", "c"},
-			handlersUnregistered: []string{"a", "b", "c"},
-			handlersFired:        []string{},
-		},
-		"unregister handler not previously registered": {
-			handlersRegistered:   []string{"a", "b", "c"},
-			handlersUnregistered: []string{"z"},
-			handlersFired:        []string{"a", "b", "c"},
-		},
-	}
-
-	for testName, test := range tests {
-		test := test
-		t.Run(testName, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-			defer cancel()
-
-			_, publicKey1, _ := key.GenerateStaticNetworkKey()
-			_, publicKey2, _ := key.GenerateStaticNetworkKey()
-
-			transportID1 := localIdentifierFromNetworkKey(publicKey1)
-			transportID2 := localIdentifierFromNetworkKey(publicKey2)
-
-			netProvider1 := LocalProvider(publicKey1)
-			netProvider2 := LocalProvider(publicKey2)
-
-			localChannel1, err := netProvider1.UnicastChannelWith(transportID2.String())
-			if err != nil {
-				t.Fatal(err)
-			}
-			if err := localChannel1.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-				return &mockMessage{}
-			}); err != nil {
-				t.Fatalf("failed to register unmarshaler: [%v]", err)
-			}
-
-			localChannel2, err := netProvider2.UnicastChannelWith(transportID1.String())
-			if err != nil {
-				t.Fatal(err)
-			}
-			if err := localChannel2.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-				return &mockMessage{}
-			}); err != nil {
-				t.Fatalf("failed to register unmarshaler: [%v]", err)
-			}
-
-			handlersFiredMutex := &sync.Mutex{}
-			handlersFired := []string{}
-
-			// Register all handlers. If the handler is called, append its
-			// type to `handlersFired` slice.
-			for _, handlerType := range test.handlersRegistered {
-				handlerType := handlerType
-				handler := net.HandleMessageFunc{
-					Type: handlerType,
-					Handler: func(msg net.Message) error {
-						handlersFiredMutex.Lock()
-						handlersFired = append(handlersFired, handlerType)
-						handlersFiredMutex.Unlock()
-						return nil
-					},
-				}
-
-				if err := localChannel2.Recv(handler); err != nil {
-					t.Fatalf("failed to register handler: [%v]", err)
-				}
-			}
-
-			// Unregister specified handlers.
-			for _, handlerType := range test.handlersUnregistered {
-				if err := localChannel2.UnregisterRecv(handlerType); err != nil {
-					t.Fatalf("failed to unregister handler: [%v]", err)
-				}
-			}
-
-			// Send a message, all handlers should be called.
-			if err := localChannel1.Send(&mockMessage{}); err != nil {
-				t.Fatalf("failed to send message: [%v]", err)
-			}
-
-			// Handlers are fired asynchronously; wait for them.
-			<-ctx.Done()
-
-			sort.Strings(handlersFired)
-			if !reflect.DeepEqual(test.handlersFired, handlersFired) {
-				t.Errorf(
-					"Unexpected handlers fired\nExpected: %v\nActual:   %v\n",
-					test.handlersFired,
-					handlersFired,
+	case msg := <-peer2Received:
+		switch message := msg.Payload().(type) {
+		case *mockMessage:
+			if message.content != channel1Message.content {
+				t.Fatalf(
+					"unexpected message content\nactual:   [%v]\nexpected: [%v]",
+					message.content,
+					channel1Message.content,
 				)
 			}
-		})
+		default:
+			t.Fatal("unexpected message type")
+		}
+
+	case <-peer1Received:
+		t.Fatal("peer 1 should not receive this message")
+	case <-ctx.Done():
+		t.Fatal("expected message not arrived to peer 2")
+	}
+
+	//
+	// peer2 sends a message to peer1
+	// make sure peer1 receives it
+	//
+
+	channel2Message := &mockMessage{"yolo2"}
+	err = channel2.Send(channel2Message)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case msg := <-peer1Received:
+		switch message := msg.Payload().(type) {
+		case *mockMessage:
+			if message.content != channel2Message.content {
+				t.Fatalf(
+					"unexpected message content\nactual:   [%v]\nexpected: [%v]",
+					message.content,
+					channel2Message.content,
+				)
+			}
+		default:
+			t.Fatal("unexpected message type")
+		}
+	case <-peer2Received:
+		t.Fatal("peer 2 should not receive this message")
+	case <-ctx.Done():
+		t.Fatal("expected message not arrived")
 	}
 }
 
-type mockMessage struct{}
+func TestTalkToSelf(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	//
+	// Prepare self-communication channel (e.g. two goroutines)
+	//
+	peerProvider, peerStaticKey := initTestProvider()
+
+	peerTransportID := createLocalIdentifier(peerStaticKey)
+
+	channel1, err := peerProvider.UnicastChannelWith(peerTransportID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	channel2, err := peerProvider.UnicastChannelWith(peerTransportID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	channel1.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &mockMessage{}
+	})
+
+	chan1Received := make(chan net.Message)
+	chan2Received := make(chan net.Message)
+
+	channel1.Recv(ctx, func(msg net.Message) {
+		chan1Received <- msg
+	})
+	channel2.Recv(ctx, func(msg net.Message) {
+		chan2Received <- msg
+	})
+
+	//
+	// send message to self via the first channel
+	// both handlers receive it
+	//
+
+	err = channel1.Send(&mockMessage{"yolo1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case <-chan1Received: // ok
+	case <-ctx.Done():
+		t.Fatal("expected message not arrived")
+	}
+
+	select {
+	case <-chan2Received: // ok
+	case <-ctx.Done():
+		t.Fatal("expected message not arrived")
+	}
+
+	//
+	// send message to self via the second channel
+	// again, both handlers should receive it
+	//
+
+	err = channel2.Send(&mockMessage{"yolo2"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case <-chan1Received: // ok
+	case <-ctx.Done():
+		t.Fatal("expected message not arrived")
+	}
+
+	select {
+	case <-chan2Received: // ok
+	case <-ctx.Done():
+		t.Fatal("expected message not arrived")
+	}
+}
+
+func initTestProvider() (*unicastProvider, *key.NetworkPublic) {
+	_, staticKey, _ := key.GenerateStaticNetworkKey()
+	provider := unicastConnectWithKey(staticKey)
+
+	return provider, staticKey
+}
+
+type mockMessage struct {
+	content string
+}
 
 func (mm *mockMessage) Type() string {
 	return "mock_message"
 }
 
 func (mm *mockMessage) Marshal() ([]byte, error) {
-	return []byte("some mocked bytes"), nil
+	return []byte(mm.content), nil
 }
 
 func (mm *mockMessage) Unmarshal(bytes []byte) error {
+	mm.content = string(bytes)
 	return nil
 }
