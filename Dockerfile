@@ -1,4 +1,4 @@
-FROM golang:1.12.5-alpine3.9 AS runtime
+FROM golang:1.13.8-alpine3.10 AS runtime
 
 ENV APP_NAME=keep-tecdsa \
 	BIN_PATH=/usr/local/bin
