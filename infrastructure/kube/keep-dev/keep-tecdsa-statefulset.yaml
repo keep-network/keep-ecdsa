@@ -39,7 +39,7 @@ spec:
                   name: eth-account-passphrase
                   key: account-passphrase
             - name: LOG_LEVEL
-              value: debug
+              value: "keep*=debug tss-lib=warning"
           volumeMounts:
             - name: keep-tecdsa-config
               mountPath: /mnt/keep-tecdsa/config
@@ -69,9 +69,9 @@ spec:
           image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-tecdsa
           env:
             - name: ETH_URL
-              value: ws://localhost:8545
+              value: ws://eth-tx-node.default.svc.cluster.local:8546
             - name: TBTC_SYSTEM_ADDRESS
-              value: "0x48f116820f44258A707803A0C45a4B0c3D751C1C"
+              value: "0xcA9b18ebeE7CE5CA481bE3B3C0bC8209d28C807A"
             - name: KEEP_ETHEREUM_PASSWORD
               valueFrom:
                 secretKeyRef:
