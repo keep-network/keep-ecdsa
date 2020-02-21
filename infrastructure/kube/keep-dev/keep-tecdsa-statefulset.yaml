@@ -70,6 +70,8 @@ spec:
           env:
             - name: ETH_URL
               value: ws://localhost:8545
+            - name: TBTC_SYSTEM_ADDRESS
+              value: "0x48f116820f44258A707803A0C45a4B0c3D751C1C"
             - name: KEEP_ETHEREUM_PASSWORD
               valueFrom:
                 secretKeyRef:
