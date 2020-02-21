@@ -3,6 +3,8 @@
 package eth
 
 import (
+	cecdsa "crypto/ecdsa"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -12,6 +14,8 @@ import (
 type Handle interface {
 	// Address returns client's ethereum address.
 	Address() common.Address
+	// PublicKey returns client's ethereum public key.
+	PublicKey() *cecdsa.PublicKey
 
 	BondedECDSAKeepFactory
 	BondedECDSAKeep

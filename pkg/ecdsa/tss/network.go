@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/binance-chain/tss-lib/tss"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -106,13 +105,11 @@ func (b *networkBridge) initializeChannels(
 			continue
 		}
 
-		// TODO: Usage of SeekTransportIdentifier is temporary. It will be changed in next PR.
-		peerTransportID, err := b.networkProvider.SeekTransportIdentifier(
-			common.BytesToAddress(peerMemberID),
-		)
+		peerTransportID, err := b.getTransportIdentifier(peerMemberID)
 		if err != nil {
 			return fmt.Errorf("failed to get transport identifier: [%v]", err)
 		}
+
 		unicastChannel, err := b.getUnicastChannelWith(peerTransportID)
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
@@ -122,6 +119,11 @@ func (b *networkBridge) initializeChannels(
 	}
 
 	return nil
+}
+
+func (b *networkBridge) getTransportIdentifier(member MemberID) (net.TransportIdentifier, error) {
+	publicKey := b.groupInfo.groupMemberPublicKeys[member.String()]
+	return b.networkProvider.CreateTransportIdentifier(publicKey)
 }
 
 func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
@@ -195,10 +197,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 				logger.Errorf("failed to get destination member id: [%v]", err)
 				return
 			}
-			// TODO: Usage of SeekTransportIdentifier is temporary. It will be changed in next PR.
-			destinationTransportID, err := b.networkProvider.SeekTransportIdentifier(
-				common.BytesToAddress(destinationMemberID),
-			)
+			destinationTransportID, err := b.getTransportIdentifier(destinationMemberID)
 			if err != nil {
 				logger.Errorf("failed to get transport identifier: [%v]", err)
 				return

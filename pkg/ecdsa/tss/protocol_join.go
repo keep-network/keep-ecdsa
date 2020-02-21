@@ -19,6 +19,8 @@ const protocolJoinTimeout = 120 * time.Second
 // error if messages were received from all peer members. If the timeout is
 // reached before receiving messages from all peer members the function returns
 // an error.
+//
+// TODO: consider renaming of `joinProtocol` to something related with readiness signaling.
 func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider net.Provider) error {
 	ctx, cancel := context.WithTimeout(parentCtx, protocolJoinTimeout)
 	defer cancel()
@@ -27,12 +29,12 @@ func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider n
 	if err != nil {
 		return fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
 	}
-	// TODO: We ignore the error for the case when the unmarshaler is already
-	// registered. We should rework the `RegisterUnmarshaler` to not return
-	// an error in such case.
+
 	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &JoinMessage{}
 	})
+
+	// TODO: register group member filter
 
 	joinInChan := make(chan *JoinMessage, len(group.groupMemberIDs))
 	handleJoinMessage := func(netMsg net.Message) {

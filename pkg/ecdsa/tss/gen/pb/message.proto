@@ -12,3 +12,8 @@ message TSSProtocolMessage {
 message JoinMessage {
   bytes senderID = 1;
 }
+
+message AnnounceMessage {
+  bytes senderID = 1;
+  bytes senderPublicKey = 2;
+}

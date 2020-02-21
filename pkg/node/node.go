@@ -43,6 +43,7 @@ func (n *Node) GenerateSignerForKeep(
 	keepMembers []common.Address,
 ) (*tss.ThresholdSigner, error) {
 	groupMemberIDs := []tss.MemberID{}
+
 	for _, memberAddress := range keepMembers {
 		memberID, err := tss.MemberIDFromHex(memberAddress.Hex())
 		if err != nil {
@@ -63,6 +64,7 @@ func (n *Node) GenerateSignerForKeep(
 	signer, err := tss.GenerateThresholdSigner(
 		keepAddress.Hex(),
 		memberID,
+		n.ethereumChain.PublicKey(),
 		groupMemberIDs,
 		uint(len(keepMembers)-1),
 		n.networkProvider,
