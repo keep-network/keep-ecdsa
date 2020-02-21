@@ -18,6 +18,10 @@ const bondedECDSAKeepFactoryJsonFile = '/tmp/BondedECDSAKeepFactory.json';
 const bondedECDSAKeepFactoryParsed = JSON.parse(fs.readFileSync(bondedECDSAKeepFactoryJsonFile));
 const bondedECDSAKeepFactoryContractAddress = bondedECDSAKeepFactoryParsed.networks[ethNetworkId].address;
 
+// Address of the external TBTCSystem contract which should be set for the InitContainer
+// execution.
+const tbtcSystemContractAddress = process.env.TBTC_SYSTEM_ADDRESS;
+
 async function provisionKeepTecdsa() {
 
   try {
@@ -47,6 +51,8 @@ async function createKeepTecdsaConfig() {
       process.env.KEEP_TECDSA_ETH_KEYFILE_3
     ]
     parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactoryContractAddress;
+
+    parsedConfigFile.SanctionedApplications.Addresses = [tbtcSystemContractAddress]
 
     parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
