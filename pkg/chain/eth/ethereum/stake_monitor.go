@@ -11,11 +11,11 @@ func NewEthereumStakeMonitor() *ethereumStakeMonitor {
 }
 
 func (esm *ethereumStakeMonitor) HasMinimumStake(address string) (bool, error) {
-	// TODO Implementation
+	// TODO Will be addressed in https://github.com/keep-network/keep-tecdsa/pull/192
 	return true, nil
 }
 
 func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error) {
-	// TODO Implementation
+	// TODO Will be addressed in https://github.com/keep-network/keep-tecdsa/pull/192
 	return nil, nil
 }
