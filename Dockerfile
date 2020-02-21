@@ -11,7 +11,8 @@ ENV GOPATH=/go \
 	APP_DIR=/go/src/github.com/keep-network/keep-tecdsa \
 	BIN_PATH=/usr/local/bin \
 	# GO111MODULE required to support go modules
-	GO111MODULE=on
+	GO111MODULE=on \
+	GOPRIVATE="github.com/keep-network/keep-core"
 
 RUN apk add --update --no-cache \
 	g++ \
