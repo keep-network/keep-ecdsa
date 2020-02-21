@@ -28,8 +28,8 @@ func (m *JoinMessage) Type() string {
 	return "ecdsa/join_message"
 }
 
-// AnnounceMessage is a network message used to notify peer members about
-// sender's public key.
+// AnnounceMessage is a network message used to announce peer's presence
+// and inform other group members about peer's public key.
 type AnnounceMessage struct {
 	SenderID        MemberID
 	SenderPublicKey *cecdsa.PublicKey
