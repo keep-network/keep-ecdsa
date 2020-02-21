@@ -135,6 +135,8 @@ func (b *networkBridge) getUnicastChannel(
 		err            error
 	)
 
+	// getUnicastChannelWith is retried several times in order to recover
+	// from temporary network problems.
 	for i := 0; i < retryCount+1; i++ {
 		unicastChannel, err = b.getUnicastChannelWith(peerTransportID)
 		if unicastChannel != nil && err == nil {
