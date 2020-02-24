@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/keep-network/keep-tecdsa/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net"
 )
 
 // protocolJoinTimeout defines a period within which the member sends and receives
@@ -34,21 +34,14 @@ func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider n
 		return &JoinMessage{}
 	})
 
-	handleType := fmt.Sprintf("%s-%s", group.groupID, time.Now())
 	joinInChan := make(chan *JoinMessage, len(group.groupMemberIDs))
-	handleJoinMessage := net.HandleMessageFunc{
-		Type: handleType,
-		Handler: func(netMsg net.Message) error {
-			switch msg := netMsg.Payload().(type) {
-			case *JoinMessage:
-				joinInChan <- msg
-			}
-
-			return nil
-		},
+	handleJoinMessage := func(netMsg net.Message) {
+		switch msg := netMsg.Payload().(type) {
+		case *JoinMessage:
+			joinInChan <- msg
+		}
 	}
-	broadcastChannel.Recv(handleJoinMessage)
-	defer broadcastChannel.UnregisterRecv(handleType)
+	broadcastChannel.Recv(ctx, handleJoinMessage)
 
 	go func() {
 		readyMembers := make(map[string]bool)
@@ -74,7 +67,7 @@ func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider n
 
 	go func() {
 		sendMessage := func() {
-			if err := broadcastChannel.Send(
+			if err := broadcastChannel.Send(ctx,
 				&JoinMessage{SenderID: group.memberID},
 			); err != nil {
 				logger.Errorf("failed to send readiness notification: [%v]", err)

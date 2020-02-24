@@ -13,11 +13,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-tecdsa/pkg/net"
-	"github.com/keep-network/keep-tecdsa/pkg/net/local"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/testutils"
 )
 
@@ -57,10 +57,21 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		var keyGenWait sync.WaitGroup
 		keyGenWait.Add(groupSize)
 
+		var providersInitializedWg sync.WaitGroup
+		providersInitializedWg.Add(groupSize)
+		providersInitialized := make(chan struct{})
+
+		go func() {
+			providersInitializedWg.Wait()
+			close(providersInitialized)
+		}()
+
 		for i, memberID := range groupMemberIDs {
 			go func(memberID MemberID) {
 				network := newTestNetProvider(groupMembersKeys[memberID.String()])
 				networkProviders.Store(memberID.String(), network)
+				providersInitializedWg.Done()
+				<-providersInitialized
 
 				preParams := testData[i].LocalPreParams
 
@@ -218,5 +229,5 @@ func generateMemberKeys(groupSize int) ([]MemberID, map[string]*key.NetworkPubli
 }
 
 func newTestNetProvider(memberNetworkKey *key.NetworkPublic) net.Provider {
-	return local.LocalProvider(memberNetworkKey)
+	return local.ConnectWithKey(memberNetworkKey)
 }
