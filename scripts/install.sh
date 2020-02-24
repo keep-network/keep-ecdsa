@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e pipefail
 
+GOPRIVATE="keep-network/keep-core"
+
 # Dafault inputs.
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
 KEEP_CORE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../../keep-core)
