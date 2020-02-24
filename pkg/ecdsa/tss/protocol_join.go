@@ -21,25 +21,13 @@ const protocolJoinTimeout = 120 * time.Second
 // an error.
 //
 // TODO: consider renaming of `joinProtocol` to something related with readiness signaling.
-func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider net.Provider) error {
+func joinProtocol(
+	parentCtx context.Context,
+	group *groupInfo,
+	broadcastChannel net.BroadcastChannel,
+) error {
 	ctx, cancel := context.WithTimeout(parentCtx, protocolJoinTimeout)
 	defer cancel()
-
-	broadcastChannel, err := networkProvider.BroadcastChannelFor(group.groupID)
-	if err != nil {
-		return fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
-	}
-
-	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &JoinMessage{}
-	})
-
-	// TODO: filter
-	//if err := broadcastChannel.SetFilter(
-	//	createGroupMemberFilter(group.groupMemberIDs),
-	//); err != nil {
-	//	return fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
-	//}
 
 	joinInChan := make(chan *JoinMessage, len(group.groupMemberIDs))
 	handleJoinMessage := func(netMsg net.Message) {

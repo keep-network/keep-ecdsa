@@ -2,6 +2,7 @@ package tss
 
 import (
 	"context"
+	"github.com/keep-network/keep-core/pkg/net"
 	"sync"
 	"testing"
 	"time"
@@ -50,9 +51,19 @@ func TestJoinNotifier(t *testing.T) {
 			memberNetworkKey := key.NetworkPublic(*memberPublicKey)
 			networkProvider := newTestNetProvider(&memberNetworkKey)
 
+			broadcastChannel, err := networkProvider.BroadcastChannelFor("test-group-1")
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+				return &JoinMessage{}
+			})
+
 			defer waitGroup.Done()
 
-			if err := joinProtocol(ctx, groupInfo, networkProvider); err != nil {
+			if err := joinProtocol(ctx, groupInfo, broadcastChannel); err != nil {
 				errChan <- err
 				return
 			}

@@ -2,6 +2,7 @@ package tss
 
 import (
 	"context"
+	cecdsa "crypto/ecdsa"
 	"fmt"
 	"sync"
 	"time"
@@ -189,16 +190,38 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
 	}
 
-	// TODO: filter
-	//if err := broadcastChannel.SetFilter(
-	//	createGroupMemberFilter(b.groupInfo.groupMemberIDs),
-	//); err != nil {
-	//	return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
-	//}
+	if err := broadcastChannel.SetFilter(
+		createMemberIDFilter(b.groupInfo.groupMemberIDs),
+	); err != nil {
+		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
+	}
 
 	b.broadcastChannel = broadcastChannel
 
 	return broadcastChannel, nil
+}
+
+func createMemberIDFilter(
+	members []MemberID,
+) net.BroadcastChannelFilter {
+	authorizations := make(map[string]bool, len(members))
+	for _, member := range members {
+		authorizations[member.String()] = true
+	}
+
+	return func(authorPublicKey *cecdsa.PublicKey) bool {
+		author := MemberIDFromPublicKey(authorPublicKey)
+		_, isAuthorized := authorizations[author.String()]
+
+		if !isAuthorized {
+			logger.Warningf(
+				"rejecting message from [%v]; author is not authorized",
+				author,
+			)
+		}
+
+		return isAuthorized
+	}
 }
 
 func (b *networkBridge) getUnicastChannelWith(
