@@ -17,6 +17,11 @@ var authorizer = contractOwnerAddress
 
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
+var operatorAddresses = [
+      process.env.KEEP_TECDSA_ETH_KEYFILE_1,
+      process.env.KEEP_TECDSA_ETH_KEYFILE_2,
+      process.env.KEEP_TECDSA_ETH_KEYFILE_3
+    ]
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 25 and 50 blocks respectively at default.  The result of this on small private testnets
@@ -201,11 +206,7 @@ async function createKeepTecdsaConfig() {
 
     parsedConfigFile.ethereum.URL = ethWSUrl;
 
-    parsedConfigFile.ethereum.account.KeyFile = [
-      process.env.KEEP_TECDSA_ETH_KEYFILE_1,
-      process.env.KEEP_TECDSA_ETH_KEYFILE_2,
-      process.env.KEEP_TECDSA_ETH_KEYFILE_3
-    ]
+    parsedConfigFile.ethereum.account.KeyFile = [operatorAddresses]
     parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactoryContractAddress;
 
     parsedConfigFile.SanctionedApplications.Addresses = [tbtcSystemContractAddress]
