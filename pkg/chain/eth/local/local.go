@@ -143,7 +143,7 @@ func (lc *localChain) IsAwaitingSignature(
 // members of a keep.
 func (lc *localChain) OnConflictingPublicKeySubmitted(
 	keepAddress common.Address,
-	handler func(),
-) (bool, error) {
+	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
+) (subscription.EventSubscription, error) {
 	panic("implement")
 }
