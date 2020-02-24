@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -270,9 +271,17 @@ func newTestSigner(memberIndex int) (*tss.ThresholdSigner, error) {
 
 	signer := &tss.ThresholdSigner{}
 
+	privateKey, err := crypto.GenerateKey()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate private key: [%v]", err)
+	}
+
+	publicKeyBytes := crypto.FromECDSAPub(&privateKey.PublicKey)
+
 	pbGroup := &pb.ThresholdSigner_GroupInfo{
 		GroupID:            "test-group-1",
 		MemberID:           groupMemberIDs[memberIndex],
+		MemberPublicKey:    publicKeyBytes,
 		GroupMemberIDs:     groupMemberIDs,
 		DishonestThreshold: 3,
 	}
