@@ -2,11 +2,6 @@ FROM node:11 AS runtime
 
 WORKDIR /tmp
 
-RUN npm install web3@1.0.0-beta.55
-RUN npm install concat-stream@2.0.0
-RUN npm install toml@3.0.0
-RUN npm install tomlify-j0.4@3.0.0
-
 ARG CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
 ENV CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
 
