@@ -154,6 +154,14 @@ async function createKeepTecdsaConfig() {
   console.log("keep-tecdsa config written to /mnt/keep-tecdsa/config/keep-tecdsa-config.toml");
 };
 
+/*
+\heimdall aliens numbers.  Really though, the approveAndCall function expects numbers
+in a particular format, this function facilitates that.
+*/
+function formatAmount(amount, decimals) {
+  return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
+};
+
 provisionKeepTecdsa().catch(error => {
   console.error(error);
   process.exit(1);
