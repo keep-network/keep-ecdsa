@@ -14,14 +14,12 @@ const ethNetworkId = process.env.ETH_NETWORK_ID;
 // Contract owner info
 var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 var authorizer = contractOwnerAddress
+var purse = contractOwnerAddress
 
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
-var operatorAddresses = [
-      process.env.KEEP_TECDSA_ETH_KEYFILE_1,
-      process.env.KEEP_TECDSA_ETH_KEYFILE_2,
-      process.env.KEEP_TECDSA_ETH_KEYFILE_3
-    ]
+var operatorAddresses = [ process.env.KEEP_TECDSA_ETH_KEYFILE_1, process.env.KEEP_TECDSA_ETH_KEYFILE_2, process.env.KEEP_TECDSA_ETH_KEYFILE_3 ]
+
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 25 and 50 blocks respectively at default.  The result of this on small private testnets
@@ -42,38 +40,43 @@ Each <contract.json> file is sourced directly from the InitContainer.  Files are
 Truffle during contract migration and copied to the InitContainer image via Circle.
 */
 
-const bondedECDSAKeepFactoryJsonFile = '/tmp/BondedECDSAKeepFactory.json';
+const bondedECDSAKeepFactoryJsonFile = './BondedECDSAKeepFactory.json';
 const bondedECDSAKeepFactoryParsed = JSON.parse(fs.readFileSync(bondedECDSAKeepFactoryJsonFile));
-const keepBondingContractAbi = bondedECDSAKeepFactoryParsed.abi;
+const bondedECDSAKeepFactoryContractAbi = bondedECDSAKeepFactoryParsed.abi;
 const bondedECDSAKeepFactoryContractAddress = bondedECDSAKeepFactoryParsed.networks[ethNetworkId].address;
-const bondedECDSAKeepFactory = new web3.eth.Contract(keepBondingContractAbi, bondedECDSAKeepFactoryContractAddress);
+const bondedECDSAKeepFactory = new web3.eth.Contract(bondedECDSAKeepFactoryContractAbi, bondedECDSAKeepFactoryContractAddress);
 
 // TokenStaking
-const keepBondingContractJsonFile = '/tmp/keepBonding.json';
+const keepBondingContractJsonFile = './KeepBonding.json';
 const keepBondingContractParsed = JSON.parse(fs.readFileSync(keepBondingContractJsonFile));
 const keepBondingContractAbi = keepBondingContractParsed.abi;
 const keepBondingContractAddress = keepBondingContractParsed.networks[ethNetworkId].address;
 const keepBondingContract = new web3.eth.Contract(keepBondingContractAbi, keepBondingContractAddress);
 
 // TokenStaking
-const tokenStakingContractJsonFile = '/tmp/TokenStaking.json';
+const tokenStakingContractJsonFile = './TokenStaking.json';
 const tokenStakingContractParsed = JSON.parse(fs.readFileSync(tokenStakingContractJsonFile));
 const tokenStakingContractAbi = tokenStakingContractParsed.abi;
 const tokenStakingContractAddress = tokenStakingContractParsed.networks[ethNetworkId].address;
 const tokenStakingContract = new web3.eth.Contract(tokenStakingContractAbi, tokenStakingContractAddress);
 
 // KeepToken
-const keepTokenContractJsonFile = '/tmp/KeepToken.json';
+const keepTokenContractJsonFile = './KeepToken.json';
 const keepTokenContractParsed = JSON.parse(fs.readFileSync(keepTokenContractJsonFile));
 const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[ethNetworkId].address;
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
+// KeepRandomBeaconOperator, only contract address for config file create
+const keepRandomBeaconOperatorJsonFile = './KeepRandomBeaconOperator.json';
+const keepRandomBeaconOperatorParsed = JSON.parse(fs.readFileSync(keepRandomBeaconOperatorJsonFile));
+const keepRandomBeaconOperatorContractAddress = keepRandomBeaconOperatorParsed.networks[ethNetworkId].address;
+
 // Address of the external TBTCSystem contract which should be set for the InitContainer
 // execution.
-const tbtcSystemContractAddress = process.env.TBTC_SYSTEM_ADDRESS;
+const tbtcSystemContractAddress = process.env.TBTC_SYSTEM_CONTRACT_ADDRESS;
 
-async function provisionKeepTecdsa() {
+async function provisionKeepTecdsa(operatorAddress) {
 
   try {
 
@@ -84,6 +87,9 @@ async function provisionKeepTecdsa() {
 
     console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
     await fundOperator(operatorAddress, purse, '10');
+
+    console.log(`\n<<<<<<<<<<<< Deposit to KeepBondingContract ${keepBondingContractAddress} >>>>>>>>>>>>`);
+    await depositUnbondedValue(operatorAddress, purse, '50');
 
     console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
     await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
@@ -98,6 +104,7 @@ async function provisionKeepTecdsa() {
     await createKeepTecdsaConfig();
 
     console.log("\n########### keep-tecdsa Provisioning Complete! ###########");
+    process.exit();
   }
   catch (error) {
     console.error(error.message);
@@ -134,6 +141,17 @@ async function fundOperator(operatorAddress, purse, etherToTransfer) {
     console.log(`Account ${operatorAddress} funded!`);
   }
 };
+
+async function depositUnbondedValue(operatorAddress, purse, etherToDeposit) {
+
+  let transferAmount = web3.utils.toWei(etherToDeposit, 'ether');
+
+  await keepBondingContract.methods.deposit(
+    operatorAddress,
+    {value: transferAmount, from: purse})
+
+  console.log(`deposited ${transferAmount} ETH bonding value for operatorAddress ${operatorAddress}`)
+}
 
 async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) {
 
@@ -180,40 +198,45 @@ async function authorizeKeepRandomBeaconOperatorContract(operatorAddress, author
 
 async function authorizeSortitionPoolContract(operatorAddress, authorizer) {
 
-  console.log(`Authorizing Sortition Pool Contract ${keepRandomBeaconOperatorContractAddress} for operator account ${operatorAddress}`);
+  console.log(`Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} for operator account ${operatorAddress}`);
 
-  await keepBonding.methods.authorizeSortitionPoolContract(
+  await keepBondingContract.methods.authorizeSortitionPoolContract(
     operatorAddress,
-    sortitionPoolContractAddress).send({from: authorizer});
+    sortitionPoolContractAddress)
 
   console.log(`Authorized!`);
 };
 
 async function createSortitionPool(contractOwnerAddress) {
 
-  await bondedECDSAKeepFactory.methods.createSortitionPool(
-    tbtcSystemContractAddress).send({from: contractOwnerAddress});
+  //await bondedECDSAKeepFactory.methods.createSortitionPool(
+  //  tbtcSystemContractAddress).send({from: contractOwnerAddress});
 
-  console.log(`created sortition pool for tbtcSystemContractAddress: [${tbtcSystemContractAddress}]`)
+  console.log(`created sortition pool for tbtcSystemContractAddress: ${tbtcSystemContractAddress}`);
 
-  var sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(
+  return sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(
                                        tbtcSystemContractAddress).call();
+
+  console.log(`sortition pool contract address: ${sortitionPoolContractAddress}`);
 };
 
 async function createKeepTecdsaConfig() {
 
-  toml.parse(fs.readFileSync('/tmp/keep-tecdsa-config-template.toml', 'utf8'));
+  let parsedConfigFile = toml.parse(fs.readFileSync('./keep-tecdsa-config-template.toml', 'utf8'));
 
     parsedConfigFile.ethereum.URL = ethWSUrl;
 
     parsedConfigFile.ethereum.account.KeyFile = [operatorAddresses]
+
     parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactoryContractAddress;
 
     parsedConfigFile.SanctionedApplications.Addresses = [tbtcSystemContractAddress]
 
     parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
-    fs.writeFileSync('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', formattedConfigFile)
+    let formattedConfigFile = tomlify.toToml(parsedConfigFile)
+
+    fs.writeFileSync('./keep-tecdsa-config.toml', formattedConfigFile)
     console.log('keep-tecdsa config written to /mnt/keep-tecdsa/config/keep-tecdsa-config.toml');
 };
 
@@ -225,7 +248,9 @@ function formatAmount(amount, decimals) {
   return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
 };
 
-provisionKeepTecdsa().catch(error => {
-  console.error(error);
-  process.exit(1);
+operatorAddresses.forEach(operatorAddress => {
+  provisionKeepTecdsa(operatorAddress).catch(error => {
+    console.error(error);
+    process.exit(1);
+  })
 });
