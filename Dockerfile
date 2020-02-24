@@ -58,7 +58,10 @@ RUN go generate ./.../gen
 # Build the application.
 COPY ./ $APP_DIR/
 
-RUN GOOS=linux go build -a -o $APP_NAME ./ && \
+# Configure private repositories for Go dependencies
+ARG GOPRIVATE
+
+RUN GOOS=linux GOPRIVATE=$GOPRIVATE go build -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
 
 # Configure runtime container.

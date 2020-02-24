@@ -19,7 +19,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e
-	github.com/keep-network/keep-core v0.9.2-0.20200220130757-ae3217793fff
+	github.com/keep-network/keep-core v0.9.2-0.20200221162942-550bec0a966c
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
