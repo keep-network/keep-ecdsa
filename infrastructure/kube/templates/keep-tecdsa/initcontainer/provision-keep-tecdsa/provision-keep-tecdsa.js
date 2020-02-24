@@ -48,6 +48,10 @@ async function provisionKeepTecdsa() {
   try {
 
     console.log('###########  Provisioning keep-tecdsa! ###########');
+
+    console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
+    await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
+
     console.log('\n<<<<<<<<<<<< Creating keep-tecdsa Config File >>>>>>>>>>>>');
     await createKeepTecdsaConfig();
 
@@ -57,6 +61,45 @@ async function provisionKeepTecdsa() {
     console.error(error.message);
     throw error;
   }
+};
+
+async function isStaked(operatorAddress) {
+
+  console.log('Checking if operator address is staked:');
+  let stakedAmount = await tokenStakingContract.methods.balanceOf(operatorAddress).call();
+  return stakedAmount != 0;
+};
+
+async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) {
+
+  let staked = await isStaked(operatorAddress);
+
+  /*
+  We need to stake only in cases where an operator account is not already staked.  If the account
+  is staked, or the client type is relay-requester we need to exit staking, albeit for different
+  reasons.  In the case where the account is already staked, additional staking will fail.
+  Clients of type relay-requester don't need to be staked to submit a request, they're acting more
+  as a consumer of the network, rather than an operator.
+  */
+  if (staked === true) {
+    console.log('Operator account already staked, exiting!');
+    return;
+  } else {
+    console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
+  };
+
+  let delegation = '0x' + Buffer.concat([
+    Buffer.from(contractOwnerAddress.substr(2), 'hex'),
+    Buffer.from(operatorAddress.substr(2), 'hex'),
+    Buffer.from(authorizer.substr(2), 'hex')
+  ]).toString('hex');
+
+  await keepTokenContract.methods.approveAndCall(
+    tokenStakingContract.address,
+    formatAmount(20000000, 18),
+    delegation).send({from: contractOwnerAddress})
+
+  console.log(`Staked!`);
 };
 
 async function createKeepTecdsaConfig() {
