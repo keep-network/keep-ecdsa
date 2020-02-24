@@ -79,7 +79,10 @@ async function provisionKeepTecdsa() {
     await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
 
     console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} >>>>>>>>>>>>`);
-    await authorizeOperatorContract(operatorAddress, authorizer);
+    await authorizeKeepRandomBeaconOperatorContract(operatorAddress, authorizer);
+
+    console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`);
+    await authorizeSortitionPoolContract(operatorAddress, authorizer);
 
     console.log('\n<<<<<<<<<<<< Creating keep-tecdsa Config File >>>>>>>>>>>>');
     await createKeepTecdsaConfig();
@@ -154,17 +157,24 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
   console.log(`Staked!`);
 };
 
-async function authorizeOperatorContract(operatorAddress, authorizer) {
+async function authorizeKeepRandomBeaconOperatorContract(operatorAddress, authorizer) {
 
-  if (process.env.KEEP_CLIENT_TYPE === 'relay-requester') {
-    console.log('Subtype relay-requester set. No authorization needed, exiting!');
-    return;
-  } else {
-    console.log(`Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} for operator account ${operatorAddress}`);
-  }
+  console.log(`Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} for operator account ${operatorAddress}`);
+
   await tokenStakingContract.methods.authorizeOperatorContract(
     operatorAddress,
     keepRandomBeaconOperatorContractAddress).send({from: authorizer});
+
+  console.log(`Authorized!`);
+};
+
+async function authorizeSortitionPoolContract(operatorAddress, authorizer) {
+
+  console.log(`Authorizing Sortition Pool Contract ${keepRandomBeaconOperatorContractAddress} for operator account ${operatorAddress}`);
+
+  await keepBonding.methods.authorizeSortitionPoolContract(
+    operatorAddress,
+    sortitionPoolContractAddress).send({from: authorizer});
 
   console.log(`Authorized!`);
 };
