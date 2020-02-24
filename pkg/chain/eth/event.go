@@ -26,7 +26,8 @@ type SignatureRequestedEvent struct {
 	Digest [32]byte
 }
 
-// TODO add desc here
+// ConflictingPublicKeySubmittedEvent is an event emitted when members of
+// a keep have submitted mismatched public keys.
 type ConflictingPublicKeySubmittedEvent struct {
 	SubmittingMember common.Address
 	ConflictingPublicKey []byte
