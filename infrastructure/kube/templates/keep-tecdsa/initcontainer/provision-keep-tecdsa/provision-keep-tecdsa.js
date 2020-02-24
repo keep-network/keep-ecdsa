@@ -191,13 +191,13 @@ async function authorizeSortitionPoolContract(operatorAddress, authorizer) {
 
 async function createSortitionPool(contractOwnerAddress) {
 
-    await bondedECDSAKeepFactory.methods.createSortitionPool(
-      tbtcSystemContractAddress).send({from: contractOwnerAddress});
+  await bondedECDSAKeepFactory.methods.createSortitionPool(
+    tbtcSystemContractAddress).send({from: contractOwnerAddress});
 
-    console.log(`created sortition pool for tbtcSystemContractAddress: [${tbtcSystemContractAddress}]`)
+  console.log(`created sortition pool for tbtcSystemContractAddress: [${tbtcSystemContractAddress}]`)
 
-    var sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(
-                                        tbtcSystemContractAddress).call();
+  var sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(
+                                       tbtcSystemContractAddress).call();
 };
 
 async function createKeepTecdsaConfig() {
