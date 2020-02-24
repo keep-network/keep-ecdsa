@@ -197,8 +197,7 @@ async function createSortitionPool(contractOwnerAddress) {
 
 async function createKeepTecdsaConfig() {
 
-  fs.createReadStream('/tmp/keep-tecdsa-template.toml', 'utf8').pipe(concat(function (data) {
-    let parsedConfigFile = toml.parse(data);
+  toml.parse(fs.readFileSync('/tmp/keep-tecdsa-config-template.toml', 'utf8'));
 
     parsedConfigFile.ethereum.URL = ethWSUrl;
 
@@ -213,12 +212,8 @@ async function createKeepTecdsaConfig() {
 
     parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
-    fs.writeFile('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
-      if (error) throw error;
-    });
-  }));
-
-  console.log("keep-tecdsa config written to /mnt/keep-tecdsa/config/keep-tecdsa-config.toml");
+    fs.writeFileSync('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', formattedConfigFile)
+    console.log('keep-tecdsa config written to /mnt/keep-tecdsa/config/keep-tecdsa-config.toml');
 };
 
 /*
