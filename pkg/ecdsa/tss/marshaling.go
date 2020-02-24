@@ -226,15 +226,15 @@ func (m *TSSProtocolMessage) Unmarshal(bytes []byte) error {
 }
 
 // Marshal converts this message to a byte array suitable for network communication.
-func (m *JoinMessage) Marshal() ([]byte, error) {
-	return (&pb.JoinMessage{
+func (m *ReadyMessage) Marshal() ([]byte, error) {
+	return (&pb.ReadyMessage{
 		SenderID: m.SenderID,
 	}).Marshal()
 }
 
 // Unmarshal converts a byte array produced by Marshal to a message.
-func (m *JoinMessage) Unmarshal(bytes []byte) error {
-	pbMsg := &pb.JoinMessage{}
+func (m *ReadyMessage) Unmarshal(bytes []byte) error {
+	pbMsg := &pb.ReadyMessage{}
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}

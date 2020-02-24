@@ -92,12 +92,12 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 	}
 }
 
-func TestJoinMessageMarshalling(t *testing.T) {
-	msg := &JoinMessage{
+func TestReadyMessageMarshalling(t *testing.T) {
+	msg := &ReadyMessage{
 		SenderID: MemberID([]byte("member-1")),
 	}
 
-	unmarshaled := &JoinMessage{}
+	unmarshaled := &ReadyMessage{}
 
 	if err := pbutils.RoundTrip(msg, unmarshaled); err != nil {
 		t.Fatal(err)

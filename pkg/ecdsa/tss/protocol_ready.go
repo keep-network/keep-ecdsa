@@ -8,35 +8,33 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// protocolJoinTimeout defines a period within which the member sends and receives
+// protocolReadyTimeout defines a period within which the member sends and receives
 // notifications from peer members about their readiness to begin the protocol
-// execution. If the time limit is reached the join protocol stage fails.
-const protocolJoinTimeout = 120 * time.Second
+// execution. If the time limit is reached the ready protocol stage fails.
+const protocolReadyTimeout = 120 * time.Second
 
-// joinProtocol exchanges messages with peer members about readiness to start
+// readyProtocol exchanges messages with peer members about readiness to start
 // the protocol execution. The member keeps sending the message in intervals
 // until they receive messages from all peer members. Function exits without an
 // error if messages were received from all peer members. If the timeout is
 // reached before receiving messages from all peer members the function returns
 // an error.
-//
-// TODO: consider renaming of `joinProtocol` to something related with readiness signaling.
-func joinProtocol(
+func readyProtocol(
 	parentCtx context.Context,
 	group *groupInfo,
 	broadcastChannel net.BroadcastChannel,
 ) error {
-	ctx, cancel := context.WithTimeout(parentCtx, protocolJoinTimeout)
+	ctx, cancel := context.WithTimeout(parentCtx, protocolReadyTimeout)
 	defer cancel()
 
-	joinInChan := make(chan *JoinMessage, len(group.groupMemberIDs))
-	handleJoinMessage := func(netMsg net.Message) {
+	readyInChan := make(chan *ReadyMessage, len(group.groupMemberIDs))
+	handleReadyMessage := func(netMsg net.Message) {
 		switch msg := netMsg.Payload().(type) {
-		case *JoinMessage:
-			joinInChan <- msg
+		case *ReadyMessage:
+			readyInChan <- msg
 		}
 	}
-	broadcastChannel.Recv(ctx, handleJoinMessage)
+	broadcastChannel.Recv(ctx, handleReadyMessage)
 
 	go func() {
 		readyMembers := make(map[string]bool)
@@ -45,7 +43,7 @@ func joinProtocol(
 			select {
 			case <-ctx.Done():
 				return
-			case msg := <-joinInChan:
+			case msg := <-readyInChan:
 				for _, memberID := range group.groupMemberIDs {
 					if msg.SenderID.Equal(memberID) {
 						readyMembers[msg.SenderID.String()] = true
@@ -63,7 +61,7 @@ func joinProtocol(
 	go func() {
 		sendMessage := func() {
 			if err := broadcastChannel.Send(ctx,
-				&JoinMessage{SenderID: group.memberID},
+				&ReadyMessage{SenderID: group.memberID},
 			); err != nil {
 				logger.Errorf("failed to send readiness notification: [%v]", err)
 			}
@@ -89,7 +87,7 @@ func joinProtocol(
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
 		return fmt.Errorf(
-			"waiting for notifications timed out after: [%v]", protocolJoinTimeout,
+			"waiting for readiness timed out after: [%v]", protocolReadyTimeout,
 		)
 	case context.Canceled:
 		return nil

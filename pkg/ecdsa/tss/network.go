@@ -185,7 +185,7 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 	}
 
 	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &JoinMessage{}
+		return &ReadyMessage{}
 	})
 	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &TSSProtocolMessage{}

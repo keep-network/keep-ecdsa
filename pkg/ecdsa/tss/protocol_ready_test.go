@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
-func TestJoinNotifier(t *testing.T) {
+func TestReadyProtocol(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 
 	err := log.SetLogLevel("*", "INFO")
@@ -32,7 +32,7 @@ func TestJoinNotifier(t *testing.T) {
 	waitGroup.Add(groupSize)
 
 	mutex := &sync.RWMutex{}
-	joinedCount := 0
+	readyCount := 0
 
 	for _, memberID := range groupMembers {
 		go func(memberID MemberID) {
@@ -58,18 +58,18 @@ func TestJoinNotifier(t *testing.T) {
 			}
 
 			broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-				return &JoinMessage{}
+				return &ReadyMessage{}
 			})
 
 			defer waitGroup.Done()
 
-			if err := joinProtocol(ctx, groupInfo, broadcastChannel); err != nil {
+			if err := readyProtocol(ctx, groupInfo, broadcastChannel); err != nil {
 				errChan <- err
 				return
 			}
 
 			mutex.Lock()
-			joinedCount++
+			readyCount++
 			mutex.Unlock()
 		}(memberID)
 	}
@@ -81,11 +81,11 @@ func TestJoinNotifier(t *testing.T) {
 
 	select {
 	case <-ctx.Done():
-		if joinedCount != groupSize {
+		if readyCount != groupSize {
 			t.Errorf(
 				"invalid number of received notifications\nexpected: [%d]\nactual:  [%d]",
 				groupSize,
-				joinedCount,
+				readyCount,
 			)
 		}
 	case err := <-errChan:
