@@ -3,10 +3,15 @@ package tss
 import (
 	"context"
 	"fmt"
-	"sync"
-
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/net"
+	"sync"
+	"time"
+)
+
+const (
+	unicastChannelRetryCount    = 2
+	unicastChannelRetryWaitTime = 30 * time.Second
 )
 
 // networkBridge translates TSS library network interface to unicast and
@@ -92,12 +97,7 @@ func (b *networkBridge) initializeChannels(
 		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	broadcastChannel.Recv(
-		ctx,
-		func(msg net.Message) {
-			handleFn(msg)
-		},
-	)
+	broadcastChannel.Recv(ctx, handleFn)
 
 	// Initialize unicast channels.
 	for _, peerMemberID := range b.groupInfo.groupMemberIDs {
@@ -110,7 +110,11 @@ func (b *networkBridge) initializeChannels(
 			return fmt.Errorf("failed to get transport identifier: [%v]", err)
 		}
 
-		unicastChannel, err := b.getUnicastChannelWith(peerTransportID)
+		unicastChannel, err := b.getUnicastChannel(
+			peerTransportID,
+			unicastChannelRetryCount,
+			unicastChannelRetryWaitTime,
+		)
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}
@@ -119,6 +123,41 @@ func (b *networkBridge) initializeChannels(
 	}
 
 	return nil
+}
+
+func (b *networkBridge) getUnicastChannel(
+	peerTransportID net.TransportIdentifier,
+	retryCount int,
+	retryWaitTime time.Duration,
+) (net.UnicastChannel, error) {
+	var (
+		unicastChannel net.UnicastChannel
+		err            error
+	)
+
+	// getUnicastChannelWith is retried several times in order to recover
+	// from temporary network problems.
+	for i := 0; i < retryCount+1; i++ {
+		unicastChannel, err = b.getUnicastChannelWith(peerTransportID)
+		if unicastChannel != nil && err == nil {
+			return unicastChannel, nil
+		}
+
+		logger.Warningf(
+			"failed to get unicast channel with peer [%v] "+
+				"because of: [%v]; will retry after wait time",
+			peerTransportID.String(),
+			err,
+		)
+
+		time.Sleep(retryWaitTime)
+	}
+
+	if err == nil {
+		err = fmt.Errorf("unknown error")
+	}
+
+	return nil, err
 }
 
 func (b *networkBridge) getTransportIdentifier(member MemberID) (net.TransportIdentifier, error) {
