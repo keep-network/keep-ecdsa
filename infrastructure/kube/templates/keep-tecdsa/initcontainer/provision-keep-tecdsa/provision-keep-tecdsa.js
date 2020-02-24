@@ -4,9 +4,9 @@ const tomlify = require('tomlify-j0.4');
 const concat = require('concat-stream');
 
 // ETH host info
-const ethHost = process.env.ETH_HOSTNAME;
-const ethWsPort = process.env.ETH_WS_PORT;
-const ethURL = process.env.ETH_URL || ethHost.replace('http://', 'ws://') + ':' + ethWsPort
+// ETH host info
+const ethRPCUrl = process.env.ETH_RPC_URL
+const ethWSUrl = process.env.ETH_WS_URL
 const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 // Contract owner info
@@ -155,7 +155,7 @@ async function createKeepTecdsaConfig() {
   fs.createReadStream('/tmp/keep-tecdsa-template.toml', 'utf8').pipe(concat(function (data) {
     let parsedConfigFile = toml.parse(data);
 
-    parsedConfigFile.ethereum.URL = ethURL;
+    parsedConfigFile.ethereum.URL = ethWSUrl;
 
     parsedConfigFile.ethereum.account.KeyFile = [
       process.env.KEEP_TECDSA_ETH_KEYFILE_1,
