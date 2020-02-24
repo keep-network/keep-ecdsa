@@ -2,7 +2,6 @@ package tss
 
 import (
 	"context"
-	cecdsa "crypto/ecdsa"
 	"sync"
 	"testing"
 	"time"
@@ -21,7 +20,7 @@ func TestJoinNotifier(t *testing.T) {
 
 	groupSize := 5
 
-	groupMembers, groupMembersKeys, err := generateMemberKeys(groupSize)
+	groupMembers, err := generateMemberKeys(groupSize)
 	if err != nil {
 		t.Fatalf("failed to generate members keys: [%v]", err)
 	}
@@ -34,17 +33,21 @@ func TestJoinNotifier(t *testing.T) {
 	mutex := &sync.RWMutex{}
 	joinedCount := 0
 
-	for memberIDstring, memberPublicKey := range groupMembersKeys {
-		memberID, _ := MemberIDFromHex(memberIDstring)
-
-		go func(memberID MemberID, memberPublicKey cecdsa.PublicKey) {
+	for _, memberID := range groupMembers {
+		go func(memberID MemberID) {
 			groupInfo := &groupInfo{
 				groupID:        "test-group-1",
 				memberID:       memberID,
 				groupMemberIDs: groupMembers,
 			}
 
-			memberNetworkKey := key.NetworkPublic(memberPublicKey)
+			memberPublicKey, err := memberID.PublicKey()
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			memberNetworkKey := key.NetworkPublic(*memberPublicKey)
 			networkProvider := newTestNetProvider(&memberNetworkKey)
 
 			defer waitGroup.Done()
@@ -57,7 +60,7 @@ func TestJoinNotifier(t *testing.T) {
 			mutex.Lock()
 			joinedCount++
 			mutex.Unlock()
-		}(memberID, memberPublicKey)
+		}(memberID)
 	}
 
 	go func() {

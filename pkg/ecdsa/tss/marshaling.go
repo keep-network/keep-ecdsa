@@ -8,7 +8,6 @@ import (
 	"github.com/binance-chain/tss-lib/crypto/paillier"
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
-	gcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
@@ -29,7 +28,6 @@ func (s *ThresholdSigner) Marshal() ([]byte, error) {
 	group := &pb.ThresholdSigner_GroupInfo{
 		GroupID:            s.groupID,
 		MemberID:           s.memberID,
-		MemberPublicKey:    gcrypto.FromECDSAPub(&s.memberPublicKey),
 		GroupMemberIDs:     groupMemberIDs,
 		DishonestThreshold: int32(s.dishonestThreshold),
 	}
@@ -60,18 +58,12 @@ func (s *ThresholdSigner) Unmarshal(bytes []byte) error {
 
 	groupMemberIDs := make([]MemberID, len(pbGroupInfo.GetGroupMemberIDs()))
 	for i, memberID := range pbGroupInfo.GetGroupMemberIDs() {
-		groupMemberIDs[i] = MemberID(memberID)
-	}
-
-	memberPublicKey, err := gcrypto.UnmarshalPubkey(pbGroupInfo.MemberPublicKey)
-	if err != nil {
-		return err
+		groupMemberIDs[i] = memberID
 	}
 
 	s.groupInfo = &groupInfo{
 		groupID:            pbGroupInfo.GetGroupID(),
-		memberID:           MemberID(pbGroupInfo.GetMemberID()),
-		memberPublicKey:    *memberPublicKey,
+		memberID:           pbGroupInfo.GetMemberID(),
 		groupMemberIDs:     groupMemberIDs,
 		dishonestThreshold: int(pbGroupInfo.GetDishonestThreshold()),
 	}
@@ -247,7 +239,7 @@ func (m *JoinMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	m.SenderID = MemberID(pbMsg.SenderID)
+	m.SenderID = pbMsg.SenderID
 
 	return nil
 }
@@ -255,8 +247,7 @@ func (m *JoinMessage) Unmarshal(bytes []byte) error {
 // Marshal converts this message to a byte array suitable for network communication.
 func (m *AnnounceMessage) Marshal() ([]byte, error) {
 	return (&pb.AnnounceMessage{
-		SenderID:        m.SenderID,
-		SenderPublicKey: gcrypto.FromECDSAPub(m.SenderPublicKey),
+		SenderID: m.SenderID,
 	}).Marshal()
 }
 
@@ -267,13 +258,7 @@ func (m *AnnounceMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	m.SenderID = memberIDFromBytes(pbMsg.SenderID)
-
-	senderPublicKey, err := gcrypto.UnmarshalPubkey(pbMsg.SenderPublicKey)
-	if err != nil {
-		return err
-	}
-	m.SenderPublicKey = senderPublicKey
+	m.SenderID = pbMsg.SenderID
 
 	return nil
 }

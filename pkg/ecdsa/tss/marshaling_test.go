@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-tecdsa/internal/testdata"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/pbutils"
 )
@@ -26,16 +25,10 @@ func TestSignerMarshalling(t *testing.T) {
 		groupMembersIDs[i] = MemberID([]byte(fmt.Sprintf("member-%d", i)))
 	}
 
-	privateKey, err := crypto.GenerateKey()
-	if err != nil {
-		t.Fatalf("failed to generate key pair: [%v]", err)
-	}
-
 	signer := &ThresholdSigner{
 		groupInfo: &groupInfo{
 			groupID:            "test-group-id-1",
 			memberID:           groupMembersIDs[signerIndex],
-			memberPublicKey:    privateKey.PublicKey,
 			groupMemberIDs:     groupMembersIDs,
 			dishonestThreshold: dishonestThreshold,
 		},
@@ -119,14 +112,8 @@ func TestJoinMessageMarshalling(t *testing.T) {
 }
 
 func TestAnnounceMessageMarshalling(t *testing.T) {
-	privateKey, err := crypto.GenerateKey()
-	if err != nil {
-		t.Fatalf("failed to generate key pair: [%v]", err)
-	}
-
 	msg := &AnnounceMessage{
-		SenderID:        MemberID([]byte("member-1")),
-		SenderPublicKey: &privateKey.PublicKey,
+		SenderID: MemberID([]byte("member-1")),
 	}
 
 	unmarshaled := &AnnounceMessage{}

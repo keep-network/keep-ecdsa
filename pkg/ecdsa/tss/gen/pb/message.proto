@@ -15,5 +15,4 @@ message JoinMessage {
 
 message AnnounceMessage {
   bytes senderID = 1;
-  bytes senderPublicKey = 2;
 }

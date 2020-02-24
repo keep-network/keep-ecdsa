@@ -34,11 +34,12 @@ func joinProtocol(parentCtx context.Context, group *groupInfo, networkProvider n
 		return &JoinMessage{}
 	})
 
-	if err := broadcastChannel.SetFilter(
-		createGroupMemberFilter(group.groupMemberIDs),
-	); err != nil {
-		return fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
-	}
+	// TODO: filter
+	//if err := broadcastChannel.SetFilter(
+	//	createGroupMemberFilter(group.groupMemberIDs),
+	//); err != nil {
+	//	return fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
+	//}
 
 	joinInChan := make(chan *JoinMessage, len(group.groupMemberIDs))
 	handleJoinMessage := func(netMsg net.Message) {
