@@ -184,11 +184,12 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	if err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &JoinMessage{}
+	})
+	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &TSSProtocolMessage{}
-	}); err != nil {
-		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
-	}
+	})
 
 	if err := broadcastChannel.SetFilter(
 		createMemberIDFilter(b.groupInfo.groupMemberIDs),
