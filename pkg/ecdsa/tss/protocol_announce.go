@@ -4,7 +4,6 @@ import (
 	"context"
 	cecdsa "crypto/ecdsa"
 	"fmt"
-	"github.com/ethereum/go-ethereum/crypto"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -59,7 +58,8 @@ func announceProtocol(
 				return
 			case msg := <-announceInChan:
 				for _, memberID := range group.groupMemberIDs {
-					if msg.SenderID.Equal(memberID) && isValidAnnouncement(msg) {
+					if msg.SenderID.Equal(memberID) {
+						// TODO: validate if `SenderID` corresponds to `SenderPublicKey`.
 						groupMemberPublicKeys[msg.SenderID.String()] = *msg.SenderPublicKey
 						break
 					}
@@ -113,9 +113,4 @@ func announceProtocol(
 	default:
 		return nil, fmt.Errorf("unexpected context error: [%v]", ctx.Err())
 	}
-}
-
-func isValidAnnouncement(message *AnnounceMessage) bool {
-	resolvedAddress := crypto.PubkeyToAddress(*message.SenderPublicKey).Bytes()
-	return memberIDFromBytes(resolvedAddress).Equal(message.SenderID)
 }
