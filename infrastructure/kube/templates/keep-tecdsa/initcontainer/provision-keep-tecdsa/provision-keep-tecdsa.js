@@ -49,6 +49,9 @@ async function provisionKeepTecdsa() {
 
     console.log('###########  Provisioning keep-tecdsa! ###########');
 
+    console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
+    await fundOperator(operatorAddress, purse, '10');
+
     console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
     await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
 
@@ -68,6 +71,29 @@ async function isStaked(operatorAddress) {
   console.log('Checking if operator address is staked:');
   let stakedAmount = await tokenStakingContract.methods.balanceOf(operatorAddress).call();
   return stakedAmount != 0;
+};
+
+async function isFunded(operatorAddress) {
+
+  console.log('Checking if operator address has ether:')
+  let fundedAmount = await web3.utils.fromWei(
+    await web3.eth.getBalance(operatorAddress), 'ether')
+  return fundedAmount >= 1;
+};
+
+async function fundOperator(operatorAddress, purse, etherToTransfer) {
+
+  let funded = await isFunded(operatorAddress);
+  let transferAmount = web3.utils.toWei(etherToTransfer, 'ether');
+
+  if (funded === true) {
+    console.log('Operator address is already funded, exiting!');
+    return;
+  } else {
+    console.log(`Funding account ${operatorAddress} with ${etherToTransfer} ether from purse ${purse}`);
+    await web3.eth.sendTransaction({from:purse, to:operatorAddress, value:transferAmount});
+    console.log(`Account ${operatorAddress} funded!`);
+  }
 };
 
 async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) {
