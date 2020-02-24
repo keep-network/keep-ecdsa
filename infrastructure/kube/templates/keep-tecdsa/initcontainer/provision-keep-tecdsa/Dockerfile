@@ -2,6 +2,11 @@ FROM node:11 AS runtime
 
 WORKDIR /tmp
 
+COPY ./package.json /tmp/package.json
+COPY ./package-lock.json /tmp/package-lock.json
+
+RUN npm install
+
 ARG CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
 ENV CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
 
