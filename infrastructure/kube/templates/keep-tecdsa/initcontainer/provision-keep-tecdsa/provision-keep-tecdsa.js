@@ -39,7 +39,9 @@ Truffle during contract migration and copied to the InitContainer image via Circ
 
 const bondedECDSAKeepFactoryJsonFile = '/tmp/BondedECDSAKeepFactory.json';
 const bondedECDSAKeepFactoryParsed = JSON.parse(fs.readFileSync(bondedECDSAKeepFactoryJsonFile));
+const keepBondingContractAbi = bondedECDSAKeepFactoryParsed.abi;
 const bondedECDSAKeepFactoryContractAddress = bondedECDSAKeepFactoryParsed.networks[ethNetworkId].address;
+const bondedECDSAKeepFactory = new web3.eth.Contract(keepBondingContractAbi, bondedECDSAKeepFactoryContractAddress);
 
 // TokenStaking
 const keepBondingContractJsonFile = '/tmp/keepBonding.json';
@@ -71,6 +73,9 @@ async function provisionKeepTecdsa() {
   try {
 
     console.log('###########  Provisioning keep-tecdsa! ###########');
+
+    console.log(`\n<<<<<<<<<<<< Create Sortition Pool for TBTCSystem: ${tbtcSystemContractAddress} >>>>>>>>>>>>`);
+    await createSortitionPool(contractOwnerAddress);
 
     console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
     await fundOperator(operatorAddress, purse, '10');
@@ -177,6 +182,17 @@ async function authorizeSortitionPoolContract(operatorAddress, authorizer) {
     sortitionPoolContractAddress).send({from: authorizer});
 
   console.log(`Authorized!`);
+};
+
+async function createSortitionPool(contractOwnerAddress) {
+
+    await bondedECDSAKeepFactory.methods.createSortitionPool(
+      tbtcSystemContractAddress).send({from: contractOwnerAddress});
+
+    console.log(`created sortition pool for tbtcSystemContractAddress: [${tbtcSystemContractAddress}]`)
+
+    var sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(
+                                        tbtcSystemContractAddress).call();
 };
 
 async function createKeepTecdsaConfig() {
