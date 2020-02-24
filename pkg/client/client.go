@@ -50,15 +50,6 @@ func Initialize(
 		},
 	)
 
-	ethereumChain.OnConflictingPublicKeySubmitted(
-		func(event *eth.ConflictingPublicKeySubmittedEvent) {
-			logger.Infof(
-				"member [%v] has submitted conflicting public key: [%v]\n",
-				event.SubmittingMember,
-				event.ConflictingPublicKey,
-			)
-	})
-
 	// Watch for new keeps creation.
 	ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(
@@ -94,6 +85,11 @@ func Initialize(
 				event.KeepAddress,
 				signer,
 			)
+
+			registerForPublicKeyConflictingEvents(
+				ethereumChain,
+				event.KeepAddress,
+			)
 		}
 	})
 
@@ -117,6 +113,23 @@ func Initialize(
 	}
 
 	logger.Infof("client initialized")
+}
+
+// registerForPublicKeyConflictingEvents registers for conflicting public keys
+// events submitted by keep members.
+func registerForPublicKeyConflictingEvents(
+	ethereumChain eth.Handle,
+	keepAddress common.Address,
+) {
+	ethereumChain.OnConflictingPublicKeySubmitted(
+		keepAddress,
+		func(event *eth.ConflictingPublicKeySubmittedEvent) {
+			logger.Errorf(
+				"member [%v] has submitted conflicting public key: [%v]",
+				event.SubmittingMember,
+				event.ConflictingPublicKey,
+			)
+	})
 }
 
 // registerForSignEvents registers for signature requested events emitted by

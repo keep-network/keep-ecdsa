@@ -58,19 +58,20 @@ func (ec *EthereumChain) watchSignatureRequested(
 }
 
 func (ec *EthereumChain) watchConflictingPublicKeySubmitted(
-	success func(event *abi.ECDSAKeepConflictingPublicKeySubmitted),
+	keepContract *abi.BondedECDSAKeep,
+	success func(event *abi.BondedECDSAKeepConflictingPublicKeySubmitted),
 	fail func(err error) error,
 ) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.ECDSAKeepConflictingPublicKeySubmitted)
+	eventChan := make(chan *abi.BondedECDSAKeepConflictingPublicKeySubmitted)
 
-	eventSubscription, err := ec.bondedECDSAKeep.WatchConflictingPublicKeySubmitted(
+	eventSubscription, err := keepContract.WatchConflictingPublicKeySubmitted(
 		nil,
 		eventChan,
 	)
 	if err != nil {
 		close(eventChan)
 		return nil, fmt.Errorf(
-			"failed to create watch for ConflictingPublicKeySubmitted event: [%v]",
+			"failed to create watch for BondedECDSAKeepConflictingPublicKeySubmitted event: [%v]",
 			err,
 		)
 	}

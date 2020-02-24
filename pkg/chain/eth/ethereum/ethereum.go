@@ -60,11 +60,18 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 // OnConflictingPublicKeySubmitted is a callback that is invoked when an on-chain
 // notification of a conflicting public key submission is seen.
 func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
+	keepAddress common.Address,
 	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
 ) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+
 	return ec.watchConflictingPublicKeySubmitted(
+		keepContract,
 		func(
-			chainEvent *abi.ECDSAKeepConflictingPublicKeySubmitted,
+			chainEvent *abi.BondedECDSAKeepConflictingPublicKeySubmitted,
 		) {
 			handler(&eth.ConflictingPublicKeySubmittedEvent{
 				SubmittingMember: chainEvent.SubmittingMember,

@@ -42,6 +42,7 @@ type BondedECDSAKeep interface {
 	) (subscription.EventSubscription, error)
 
 	OnConflictingPublicKeySubmitted(
+		keepAddress common.Address,
 		handler func(event *ConflictingPublicKeySubmittedEvent),
 	) (subscription.EventSubscription, error)
 

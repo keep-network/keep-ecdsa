@@ -16,7 +16,6 @@ type EthereumChain struct {
 	transactorOptions              *bind.TransactOpts
 	callerOptions                  *bind.CallOpts
 	bondedECDSAKeepFactoryContract *abi.BondedECDSAKeepFactory
-	bondedECDSAKeep				   *abi.ECDSAKeep
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -42,24 +41,11 @@ func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) 
 		return nil, err
 	}
 
-	bondedECDSAKeepContractAddress, err := config.ContractAddress(ECDSAKeepContractName)
-	if err != nil {
-		return nil, err
-	}
-	bondedECDSAKeepContract, err := abi.NewECDSAKeep(
-		bondedECDSAKeepContractAddress,
-		client,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	return &EthereumChain{
 		config:                         config,
 		client:                         client,
 		transactorOptions:              transactorOptions,
 		callerOptions:                  callerOptions,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
-		bondedECDSAKeep:				bondedECDSAKeepContract,
 	}, nil
 }
