@@ -24,6 +24,12 @@ ENV ETH_NETWORK_ID=$ETH_NETWORK_ID
 
 COPY ./BondedECDSAKeepFactory.json /tmp/BondedECDSAKeepFactory.json
 
+COPY ./KeepBonding.json /tmp/KeepBonding.json
+
+COPY ./TokenStaking.json /tmp/TokenStaking.json
+
+COPY ./KeepToken.json /tmp/KeepToken.json
+
 COPY ./keep-tecdsa-template.toml /tmp/keep-tecdsa-template.toml
 
 COPY ./provision-keep-tecdsa.js /tmp/provision-keep-tecdsa.js

@@ -18,6 +18,27 @@ const bondedECDSAKeepFactoryJsonFile = '/tmp/BondedECDSAKeepFactory.json';
 const bondedECDSAKeepFactoryParsed = JSON.parse(fs.readFileSync(bondedECDSAKeepFactoryJsonFile));
 const bondedECDSAKeepFactoryContractAddress = bondedECDSAKeepFactoryParsed.networks[ethNetworkId].address;
 
+// TokenStaking
+const keepBondingContractJsonFile = '/tmp/keepBonding.json';
+const keepBondingContractParsed = JSON.parse(fs.readFileSync(keepBondingContractJsonFile));
+const keepBondingContractAbi = keepBondingContractParsed.abi;
+const keepBondingContractAddress = keepBondingContractParsed.networks[ethNetworkId].address;
+const keepBondingContract = new web3.eth.Contract(keepBondingContractAbi, keepBondingContractAddress);
+
+// TokenStaking
+const tokenStakingContractJsonFile = '/tmp/TokenStaking.json';
+const tokenStakingContractParsed = JSON.parse(fs.readFileSync(tokenStakingContractJsonFile));
+const tokenStakingContractAbi = tokenStakingContractParsed.abi;
+const tokenStakingContractAddress = tokenStakingContractParsed.networks[ethNetworkId].address;
+const tokenStakingContract = new web3.eth.Contract(tokenStakingContractAbi, tokenStakingContractAddress);
+
+// KeepToken
+const keepTokenContractJsonFile = '/tmp/KeepToken.json';
+const keepTokenContractParsed = JSON.parse(fs.readFileSync(keepTokenContractJsonFile));
+const keepTokenContractAbi = keepTokenContractParsed.abi;
+const keepTokenContractAddress = keepTokenContractParsed.networks[ethNetworkId].address;
+const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
+
 // Address of the external TBTCSystem contract which should be set for the InitContainer
 // execution.
 const tbtcSystemContractAddress = process.env.TBTC_SYSTEM_ADDRESS;
