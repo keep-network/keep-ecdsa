@@ -25,7 +25,18 @@ var (
 		[]byte("member-2"),
 		[]byte("member-3"),
 	}
+
+	groupMemberPublicKeys = [][]byte{
+		generatePublicKey(),
+		generatePublicKey(),
+		generatePublicKey(),
+	}
 )
+
+func generatePublicKey() []byte {
+	privateKey, _ := crypto.GenerateKey()
+	return crypto.FromECDSAPub(&privateKey.PublicKey)
+}
 
 func TestRegisterSigner(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
@@ -271,17 +282,10 @@ func newTestSigner(memberIndex int) (*tss.ThresholdSigner, error) {
 
 	signer := &tss.ThresholdSigner{}
 
-	privateKey, err := crypto.GenerateKey()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate private key: [%v]", err)
-	}
-
-	publicKeyBytes := crypto.FromECDSAPub(&privateKey.PublicKey)
-
 	pbGroup := &pb.ThresholdSigner_GroupInfo{
 		GroupID:            "test-group-1",
 		MemberID:           groupMemberIDs[memberIndex],
-		MemberPublicKey:    publicKeyBytes,
+		MemberPublicKey:    groupMemberPublicKeys[memberIndex],
 		GroupMemberIDs:     groupMemberIDs,
 		DishonestThreshold: 3,
 	}
