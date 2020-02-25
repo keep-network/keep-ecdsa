@@ -109,8 +109,8 @@ jobs:
           name: Build keep-tecdsa-initcontainer image
           working_directory: ~/project/infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
           command: |
-            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/TokenStaking.json .
             gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/KeepToken.json .
+            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/TokenStaking.json .
             cp /tmp/keep-tecdsa/contracts/* .
             docker build \
               --tag initcontainer-provision-keep-tecdsa .
