@@ -105,13 +105,13 @@ func Start(c *cli.Context) error {
 
 	stakeMonitor, err := ethereumChain.StakeMonitor()
 	if err != nil {
-		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
+		return fmt.Errorf("error obtaining stake monitor handle: [%v]", err)
 	}
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
 		ethereumKey.Address.Hex(),
 	)
 	if err != nil {
-		return fmt.Errorf("could not check the stake [%v]", err)
+		return fmt.Errorf("could not check the stake: [%v]", err)
 	}
 	if !hasMinimumStake {
 		return fmt.Errorf("stake is below the required minimum")
