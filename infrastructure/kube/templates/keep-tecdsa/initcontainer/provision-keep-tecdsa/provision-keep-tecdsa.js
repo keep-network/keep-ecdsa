@@ -19,7 +19,6 @@ var purse = contractOwnerAddress
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
 var operatorKeyFiles = [process.env.KEEP_TECDSA_ETH_KEYFILE_1, process.env.KEEP_TECDSA_ETH_KEYFILE_2, process.env.KEEP_TECDSA_ETH_KEYFILE_3]
-const operatorKeyPassword = process.env.KEEP_ETHEREUM_PASSWORD
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -92,7 +91,7 @@ async function provisionKeepTecdsa() {
     await createKeepTecdsaConfig();
 
     console.log("\n########### keep-tecdsa Provisioning Complete! ###########");
-    process.exit();
+    process.exit()
   }
   catch (error) {
     console.error(error.message);
@@ -124,7 +123,6 @@ async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
 };
 
 async function depositUnbondedValue(operatorAddress, purse, etherToDeposit) {
-
   let transferAmount = web3.utils.toWei(etherToDeposit, 'ether');
 
   await keepBondingContract.methods.deposit(
@@ -144,7 +142,6 @@ async function isStaked(operatorAddress) {
 };
 
 async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) {
-
   let staked = await isStaked(operatorAddress);
 
   /*
@@ -177,7 +174,6 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
 };
 
 async function authorizeOperatorContract(operatorAddress, operatorContractAddress, authorizer) {
-
   console.log(`Authorizing Operator Contract ${operatorContractAddress} for operator account ${operatorAddress}`);
 
   await tokenStakingContract.methods.authorizeOperatorContract(operatorAddress, operatorContractAddress)
@@ -223,7 +219,6 @@ async function createSortitionPool(applicationAddress) {
 };
 
 async function createKeepTecdsaConfig() {
-
   let parsedConfigFile = toml.parse(fs.readFileSync('./keep-tecdsa-config-template.toml', 'utf8'));
 
   parsedConfigFile.ethereum.URL = ethWSUrl;
@@ -249,7 +244,6 @@ in a particular format, this function facilitates that.
 function formatAmount(amount, decimals) {
   return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
 };
-
 
 provisionKeepTecdsa().catch(error => {
   console.error(error);
