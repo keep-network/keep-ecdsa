@@ -14,6 +14,7 @@ const ethNetworkId = process.env.ETH_NETWORK_ID;
 // Contract owner info
 var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 var purse = contractOwnerAddress
+var authorizer = contractOwnerAddress
 
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
@@ -70,7 +71,6 @@ async function provisionKeepTecdsa() {
     for (let i = 0; i < operatorKeyFiles.length; i++) {
       console.log(`\n<<<<<<<<<<<< Read operator address from key file >>>>>>>>>>>>`);
       const operatorAddress = readAddressFromKeyFile(operatorKeyFiles[i])
-      const authorizer = operatorAddress
 
       console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
       await fundOperator(operatorAddress, purse, '10');
