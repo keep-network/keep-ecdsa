@@ -102,15 +102,10 @@ jobs:
       - checkout
       - run:
           name: Build keep-tecdsa-initcontainer image
+          working_directory: ~/project/infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
           command: |
-            cp /tmp/keep-tecdsa/contracts/* infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
-            cd infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
+            cp /tmp/keep-tecdsa/contracts/* .
             docker build \
-              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
-              --build-arg ETH_WS_PORT=$ETH_WS_PORT \
-              --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
-              --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
-              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
               --tag initcontainer-provision-keep-tecdsa .
       - run:
           name: Save keep-tecdsa-initcontainer image
