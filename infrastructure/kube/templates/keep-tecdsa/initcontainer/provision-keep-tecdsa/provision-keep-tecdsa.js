@@ -19,6 +19,7 @@ var purse = contractOwnerAddress
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
 var operatorKeyFiles = [process.env.KEEP_TECDSA_ETH_KEYFILE_1, process.env.KEEP_TECDSA_ETH_KEYFILE_2, process.env.KEEP_TECDSA_ETH_KEYFILE_3]
+const operatorKeyPassword = process.env.KEEP_ETHEREUM_PASSWORD
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
