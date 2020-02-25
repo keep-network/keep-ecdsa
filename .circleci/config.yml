@@ -93,7 +93,7 @@ jobs:
           paths:
             - docker-images
   build_initcontainer:
-    executor: docker-git
+    executor: docker-thesis-buildpack
     steps:
       - attach_workspace:
           at: /tmp/keep-tecdsa
@@ -101,9 +101,16 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
+          name: Set Gcloud Auth for bucket access
+          command: |
+            echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+      - run:
           name: Build keep-tecdsa-initcontainer image
           working_directory: ~/project/infrastructure/kube/templates/keep-tecdsa/initcontainer/provision-keep-tecdsa/
           command: |
+            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/TokenStaking.json .
+            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/KeepToken.json .
             cp /tmp/keep-tecdsa/contracts/* .
             docker build \
               --tag initcontainer-provision-keep-tecdsa .
