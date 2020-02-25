@@ -89,7 +89,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
     // Notification that the keep was closed by the owner. Members no longer need
     // to support it.
-    event KeepClosed();
+    event KeepClosed(address keepAddress);
 
     // Notification that the signature has been calculated. Contains a digest which
     // was used for signature calculation and a signature in a form of r, s and
@@ -385,7 +385,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
         freeMembersBonds();
 
-        emit KeepClosed();
+        emit KeepClosed(address(this));
     }
 
     /// @notice Returns bonds to the keep members.

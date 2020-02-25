@@ -10,6 +10,11 @@ type BondedECDSAKeepCreatedEvent struct {
 	Members     []common.Address // keep members addresses
 }
 
+// KeepClosedEvent is an event emitted on a closing keep.
+type KeepClosedEvent struct {
+	KeepAddress common.Address   // keep contract address
+}
+
 // IsMember checks if list of members contains the given address.
 func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
 	for _, member := range e.Members {

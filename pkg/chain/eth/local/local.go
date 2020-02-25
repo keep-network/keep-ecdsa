@@ -138,3 +138,11 @@ func (lc *localChain) IsAwaitingSignature(
 ) (bool, error) {
 	panic("implement")
 }
+
+// OnKeepClosed archives key shares and unsubscibes from events.
+func (lc *localChain) OnKeepClosed(
+	keepAddress common.Address,
+	handler func(event *eth.KeepClosedEvent),
+) (subscription.EventSubscription, error) {
+	panic("implement")
+} 

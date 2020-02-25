@@ -52,6 +52,11 @@ type BondedECDSAKeep interface {
 		signature *ecdsa.Signature,
 	) error // TODO: Add promise *async.SignatureSubmissionPromise
 
+	OnKeepClosed(
+		keepAddress common.Address,
+		handler func(event *KeepClosedEvent),
+	) (subscription.EventSubscription, error)
+
 	// IsAwaitingSignature checks if the keep is waiting for a signature to be
 	// calculated for the given digest.
 	IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error)

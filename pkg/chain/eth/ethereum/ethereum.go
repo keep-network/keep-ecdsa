@@ -57,6 +57,30 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	)
 }
 
+// OnKeepClosed is a callback that is invoked on-chain when keep is closed.
+func (ec *EthereumChain) OnKeepClosed(
+	keepAddress common.Address,
+	handler func(event *eth.KeepClosedEvent),
+) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+	return ec.watchKeepClosed(
+		keepContract,
+		func(
+			chainEvent *abi.BondedECDSAKeepKeepClosed,
+		) {
+			handler(&eth.KeepClosedEvent{
+				KeepAddress: chainEvent.KeepAddress,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep closed callback failed: [%v]", err)
+		},
+	)
+}
+
 // OnSignatureRequested is a callback that is invoked on-chain
 // when a keep's signature is requested.
 func (ec *EthereumChain) OnSignatureRequested(
