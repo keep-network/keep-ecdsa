@@ -13,8 +13,8 @@ const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 // Contract owner info
 var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-var purse = contractOwnerAddress
 var authorizer = contractOwnerAddress
+var purse = contractOwnerAddress
 
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
@@ -103,12 +103,7 @@ async function provisionKeepTecdsa() {
 function readAddressFromKeyFile(keyFilePath) {
   const keyFile = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'))
 
-  // We add the account to the web3 wallet so we are able to call contracts from
-  // this account used as an authorizer.
-  const account = web3.eth.accounts.decrypt(keyFile, operatorKeyPassword)
-  web3.eth.accounts.wallet.add(account)
-
-  return account.address
+  return keyFile.address
 }
 
 async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
