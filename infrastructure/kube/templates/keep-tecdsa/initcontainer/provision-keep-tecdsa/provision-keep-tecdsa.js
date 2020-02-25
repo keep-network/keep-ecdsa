@@ -231,7 +231,7 @@ async function createKeepTecdsaConfig() {
 
     parsedConfigFile.ethereum.URL = ethWSUrl;
 
-    parsedConfigFile.ethereum.account.KeyFile = [operatorAddresses]
+  parsedConfigFile.ethereum.account.KeyFile = operatorKeyFiles
 
     parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactoryContractAddress;
 
