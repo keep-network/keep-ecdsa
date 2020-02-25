@@ -43,8 +43,6 @@ const bondedECDSAKeepFactory = getWeb3Contract('BondedECDSAKeepFactory');
 const keepBondingContract = getWeb3Contract('KeepBonding');
 const tokenStakingContract = getWeb3Contract('TokenStaking');
 const keepTokenContract = getWeb3Contract('KeepToken');
-// KeepRandomBeaconOperator, only contract address for config file create
-const keepRandomBeaconOperatorContractAddress = getWeb3Contract('KeepRandomBeaconOperator').address;
 
 // Address of the external TBTCSystem contract which should be set for the InitContainer
 // execution.
@@ -82,8 +80,8 @@ async function provisionKeepTecdsa() {
       console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
       await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
 
-      console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} >>>>>>>>>>>>`);
-      await authorizeKeepRandomBeaconOperatorContract(operatorAddress, authorizer);
+      console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${bondedECDSAKeepFactory.address} >>>>>>>>>>>>`);
+      await authorizeOperatorContract(operatorAddress, bondedECDSAKeepFactory.address, authorizer);
 
       console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`);
       await authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer);
@@ -179,13 +177,12 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
   console.log(`Staked!`);
 };
 
-async function authorizeKeepRandomBeaconOperatorContract(operatorAddress, authorizer) {
+async function authorizeOperatorContract(operatorAddress, operatorContractAddress, authorizer) {
 
-  console.log(`Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} for operator account ${operatorAddress}`);
+  console.log(`Authorizing Operator Contract ${operatorContractAddress} for operator account ${operatorAddress}`);
 
-  await tokenStakingContract.methods.authorizeOperatorContract(
-    operatorAddress,
-    keepRandomBeaconOperatorContractAddress).send({from: authorizer});
+  await tokenStakingContract.methods.authorizeOperatorContract(operatorAddress, operatorContractAddress)
+    .send({ from: authorizer })
 
   console.log(`Authorized!`);
 };
