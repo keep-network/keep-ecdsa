@@ -13,7 +13,6 @@ const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 // Contract owner info
 var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-var authorizer = contractOwnerAddress
 var purse = contractOwnerAddress
 
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
@@ -66,11 +65,12 @@ async function provisionKeepTecdsa() {
     console.log('###########  Provisioning keep-tecdsa! ###########');
 
     console.log(`\n<<<<<<<<<<<< Create Sortition Pool for TBTCSystem: ${tbtcSystemContractAddress} >>>>>>>>>>>>`);
-    const sortitionPoolContractAddress = await createSortitionPool(contractOwnerAddress);
+    const sortitionPoolContractAddress = await createSortitionPool(tbtcSystemContractAddress);
 
     for (let i = 0; i < operatorKeyFiles.length; i++) {
       console.log(`\n<<<<<<<<<<<< Read operator address from key file >>>>>>>>>>>>`);
       const operatorAddress = readAddressFromKeyFile(operatorKeyFiles[i])
+      const authorizer = operatorAddress
 
       console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
       await fundOperator(operatorAddress, purse, '10');
@@ -189,13 +189,12 @@ async function authorizeOperatorContract(operatorAddress, operatorContractAddres
   console.log(`Authorized!`);
 };
 
-async function authorizeSortitionPoolContract(operatorAddress, authorizer) {
+async function authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer) {
 
   console.log(`Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} for operator account ${operatorAddress}`);
 
-  await keepBondingContract.methods.authorizeSortitionPoolContract(
-    operatorAddress,
-    sortitionPoolContractAddress)
+  await keepBondingContract.methods.authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress)
+    .send({ from: authorizer })
 
   console.log(`Authorized!`);
 };
