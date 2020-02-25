@@ -32,6 +32,11 @@ spec:
       containers:
         - name: keep-tecdsa
           image: gcr.io/keep-dev-fe24/keep-tecdsa
+          resources:
+            limits:
+              cpu: "3"
+            requests:
+              cpu: "2"
           env:
             - name: KEEP_ETHEREUM_PASSWORD
               valueFrom:
@@ -68,15 +73,33 @@ spec:
         - name: initcontainer-provision-keep-tecdsa
           image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-tecdsa
           env:
-            - name: ETH_URL
-              value: ws://eth-tx-node.default.svc.cluster.local:8546
-            - name: TBTC_SYSTEM_ADDRESS
-              value: "0xcA9b18ebeE7CE5CA481bE3B3C0bC8209d28C807A"
-            - name: KEEP_ETHEREUM_PASSWORD
+            - name: ETH_RPC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-internal
+                  key: rpc-url
+            - name: ETH_WS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-internal
+                  key: ws-url
+            - name: ETH_NETWORK_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-internal
+                  key: network-id
+            - name: CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-internal
+                  key: contract-owner-eth-account-address
+            - name: CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: eth-account-passphrase
-                  key: account-passphrase
+                  name: eth-network-internal
+                  key: contract-owner-eth-account-private-key
+            - name: TBTC_SYSTEM_ADDRESS
+              value: "0xcA9b18ebeE7CE5CA481bE3B3C0bC8209d28C807A"
             - name: KEEP_TECDSA_ETH_KEYFILE_1
               value: /mnt/keep-tecdsa/eth/eth_account_keyfile_1
             - name: KEEP_TECDSA_ETH_KEYFILE_2
@@ -89,6 +112,13 @@ spec:
             - name: keep-tecdsa-config
               mountPath: /mnt/keep-tecdsa/config
           command: ["node", "/tmp/provision-keep-tecdsa.js"]
+      nodeSelector:
+        pool-type: keep-tecdsa
+      tolerations:
+      - key: type
+        operator: Equal
+        value: tecdsa
+        effect: NoSchedule
 
 ---
 apiVersion: v1
