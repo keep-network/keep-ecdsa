@@ -51,7 +51,7 @@ const tbtcSystemContractAddress = process.env.TBTC_SYSTEM_CONTRACT_ADDRESS;
 // Returns a web3 contract object based on a truffle contract artifact JSON file.
 function getWeb3Contract(contractName) {
 
-  const filePath = `./${contractName}.json`;
+  const filePath = `/tmp/${contractName}.json`;
   const parsed = JSON.parse(fs.readFileSync(filePath));
   const abi = parsed.abi;
   const address = parsed.networks[ethNetworkId].address;
@@ -219,7 +219,7 @@ async function createSortitionPool(applicationAddress) {
 };
 
 async function createKeepTecdsaConfig() {
-  let parsedConfigFile = toml.parse(fs.readFileSync('./keep-tecdsa-config-template.toml', 'utf8'));
+  let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/keep-tecdsa-config-template.toml', 'utf8'));
 
   parsedConfigFile.ethereum.URL = ethWSUrl;
 
@@ -233,7 +233,7 @@ async function createKeepTecdsaConfig() {
 
   let formattedConfigFile = tomlify.toToml(parsedConfigFile)
 
-  fs.writeFileSync('./keep-tecdsa-config.toml', formattedConfigFile)
+  fs.writeFileSync('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', formattedConfigFile)
   console.log('keep-tecdsa config written to /mnt/keep-tecdsa/config/keep-tecdsa-config.toml');
 };
 
