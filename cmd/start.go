@@ -122,6 +122,8 @@ func Start(c *cli.Context) error {
 		return err
 	}
 
+	nodeHeader(networkProvider.AddrStrings(), config.LibP2P.Port)
+
 	persistence := persistence.NewEncryptedPersistence(
 		persistence.NewDiskHandle(config.Storage.DataDir),
 		config.Ethereum.Account.KeyFilePassword,
