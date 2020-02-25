@@ -90,6 +90,11 @@ func Initialize(
 				ethereumChain,
 				event.KeepAddress,
 			)
+
+			registerForPublicKeyPublishedEvent(
+				ethereumChain,
+				event.KeepAddress,
+			)
 		}
 	})
 
@@ -128,6 +133,22 @@ func registerForPublicKeyConflictingEvents(
 				"member [%v] has submitted conflicting public key: [%v]",
 				event.SubmittingMember,
 				event.ConflictingPublicKey,
+			)
+	})
+}
+
+// registerForPublicKeyPublishedEvents registers for published public key
+// event accepted by keep.
+func registerForPublicKeyPublishedEvent(
+	ethereumChain eth.Handle,
+	keepAddress common.Address,
+) {
+	ethereumChain.OnPublicKeyPublished(
+		keepAddress,
+		func(event *eth.PublicKeyPublishedEvent) {
+			logger.Errorf(
+				"public key [%v] has been accepted by keep",
+				event.PublicKey,
 			)
 	})
 }

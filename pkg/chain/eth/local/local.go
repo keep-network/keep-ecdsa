@@ -147,3 +147,11 @@ func (lc *localChain) OnConflictingPublicKeySubmitted(
 ) (subscription.EventSubscription, error) {
 	panic("implement")
 }
+
+// OnPublicKeyPublshed logs a public key that was accepted by keep.
+func (lc *localChain) OnPublicKeyPublished(
+	keepAddress common.Address,
+	handler func(event *eth.PublicKeyPublishedEvent),
+) (subscription.EventSubscription, error) {
+	panic("implement")
+}

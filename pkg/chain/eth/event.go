@@ -32,3 +32,9 @@ type ConflictingPublicKeySubmittedEvent struct {
 	SubmittingMember common.Address
 	ConflictingPublicKey []byte
 }
+
+// PublicKeyPublishedEvent is an event emitted once all the members have submitted
+// the same public key and it was accepted by keep as its public key.
+type PublicKeyPublishedEvent struct {
+	PublicKey []byte
+}
