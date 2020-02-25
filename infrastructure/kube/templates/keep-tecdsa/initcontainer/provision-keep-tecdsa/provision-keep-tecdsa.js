@@ -18,7 +18,7 @@ var purse = contractOwnerAddress
 
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
-var operatorAddresses = [ process.env.KEEP_TECDSA_ETH_KEYFILE_1, process.env.KEEP_TECDSA_ETH_KEYFILE_2, process.env.KEEP_TECDSA_ETH_KEYFILE_3 ]
+var operatorKeyFiles = [process.env.KEEP_TECDSA_ETH_KEYFILE_1, process.env.KEEP_TECDSA_ETH_KEYFILE_2, process.env.KEEP_TECDSA_ETH_KEYFILE_3]
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -60,7 +60,7 @@ function getWeb3Contract(contractName) {
   return new web3.eth.Contract(abi, address);
 }
 
-async function provisionKeepTecdsa(operatorAddress) {
+async function provisionKeepTecdsa() {
 
   try {
 
@@ -69,20 +69,25 @@ async function provisionKeepTecdsa(operatorAddress) {
     console.log(`\n<<<<<<<<<<<< Create Sortition Pool for TBTCSystem: ${tbtcSystemContractAddress} >>>>>>>>>>>>`);
     const sortitionPoolContractAddress = await createSortitionPool(contractOwnerAddress);
 
-    console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
-    await fundOperator(operatorAddress, purse, '10');
+    for (let i = 0; i < operatorKeyFiles.length; i++) {
+      console.log(`\n<<<<<<<<<<<< Read operator address from key file >>>>>>>>>>>>`);
+      const operatorAddress = readAddressFromKeyFile(operatorKeyFiles[i])
 
-    console.log(`\n<<<<<<<<<<<< Deposit to KeepBondingContract ${keepBondingContractAddress} >>>>>>>>>>>>`);
-    await depositUnbondedValue(operatorAddress, purse, '50');
+      console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
+      await fundOperator(operatorAddress, purse, '10');
 
-    console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
-    await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
+      console.log(`\n<<<<<<<<<<<< Deposit to KeepBondingContract ${keepBondingContract.address} >>>>>>>>>>>>`);
+      await depositUnbondedValue(operatorAddress, purse, '50');
 
-    console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} >>>>>>>>>>>>`);
-    await authorizeKeepRandomBeaconOperatorContract(operatorAddress, authorizer);
+      console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
+      await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
 
-    console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`);
-    await authorizeSortitionPoolContract(operatorAddress, authorizer);
+      console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} >>>>>>>>>>>>`);
+      await authorizeKeepRandomBeaconOperatorContract(operatorAddress, authorizer);
+
+      console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`);
+      await authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer);
+    }
 
     console.log('\n<<<<<<<<<<<< Creating keep-tecdsa Config File >>>>>>>>>>>>');
     await createKeepTecdsaConfig();
@@ -95,6 +100,11 @@ async function provisionKeepTecdsa(operatorAddress) {
     throw error;
   }
 };
+
+function readAddressFromKeyFile(keyFilePath) {
+  const keyFile = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'))
+  return keyFile.address
+}
 
 async function isStaked(operatorAddress) {
 
@@ -243,9 +253,8 @@ function formatAmount(amount, decimals) {
   return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
 };
 
-operatorAddresses.forEach(operatorAddress => {
-  provisionKeepTecdsa(operatorAddress).catch(error => {
-    console.error(error);
-    process.exit(1);
-  })
+
+provisionKeepTecdsa().catch(error => {
+  console.error(error);
+  process.exit(1);
 });
