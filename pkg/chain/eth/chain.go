@@ -3,8 +3,6 @@
 package eth
 
 import (
-	cecdsa "crypto/ecdsa"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -15,8 +13,6 @@ import (
 type Handle interface {
 	// Address returns client's ethereum address.
 	Address() common.Address
-	// PublicKey returns client's ethereum public key.
-	PublicKey() *cecdsa.PublicKey
 	// StakeMonitor returns a stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
 

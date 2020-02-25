@@ -8,7 +8,6 @@ package tss
 
 import (
 	"context"
-	cecdsa "crypto/ecdsa"
 	"fmt"
 	"time"
 
@@ -43,7 +42,6 @@ var logger = log.Logger("keep-tss")
 func GenerateThresholdSigner(
 	groupID string,
 	memberID MemberID,
-	memberPublicKey *cecdsa.PublicKey,
 	groupMemberIDs []MemberID,
 	dishonestThreshold uint,
 	networkProvider net.Provider,
@@ -67,7 +65,6 @@ func GenerateThresholdSigner(
 	group := &groupInfo{
 		groupID:            groupID,
 		memberID:           memberID,
-		memberPublicKey:    *memberPublicKey,
 		groupMemberIDs:     groupMemberIDs,
 		dishonestThreshold: int(dishonestThreshold),
 	}
@@ -89,12 +86,6 @@ func GenerateThresholdSigner(
 	ctx, cancel := context.WithTimeout(context.Background(), keyGenerationTimeout)
 	defer cancel()
 
-	if groupMemberPublicKeys, err := announceProtocol(ctx, group, networkProvider); err != nil {
-		return nil, fmt.Errorf("failed to perform announce protocol: [%v]", err)
-	} else {
-		group.groupMemberPublicKeys = groupMemberPublicKeys
-	}
-
 	keyGenSigner, err := initializeKeyGeneration(
 		ctx,
 		group,
@@ -106,8 +97,13 @@ func GenerateThresholdSigner(
 	}
 	logger.Infof("[party:%s]: initialized key generation", keyGenSigner.keygenParty.PartyID())
 
-	if err := joinProtocol(ctx, group, networkProvider); err != nil {
-		return nil, fmt.Errorf("failed to join the protocol: [%v]", err)
+	broadcastChannel, err := netBridge.getBroadcastChannel()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := readyProtocol(ctx, group, broadcastChannel); err != nil {
+		return nil, fmt.Errorf("readiness signaling protocol failed: [%v]", err)
 	}
 
 	logger.Infof("[party:%s]: starting key generation", keyGenSigner.keygenParty.PartyID())
@@ -136,19 +132,18 @@ func (s *ThresholdSigner) CalculateSignature(
 	ctx, cancel := context.WithTimeout(context.Background(), signingTimeout)
 	defer cancel()
 
-	if groupMemberPublicKeys, err := announceProtocol(ctx, s.groupInfo, networkProvider); err != nil {
-		return nil, fmt.Errorf("failed to perform announce protocol: [%v]", err)
-	} else {
-		s.groupInfo.groupMemberPublicKeys = groupMemberPublicKeys
-	}
-
 	signingSigner, err := s.initializeSigning(ctx, digest[:], netBridge)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize signing: [%v]", err)
 	}
 
-	if err := joinProtocol(ctx, s.groupInfo, networkProvider); err != nil {
-		return nil, fmt.Errorf("failed to join the protocol:: [%v]", err)
+	broadcastChannel, err := netBridge.getBroadcastChannel()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := readyProtocol(ctx, s.groupInfo, broadcastChannel); err != nil {
+		return nil, fmt.Errorf("readiness signaling protocol failed: [%v]", err)
 	}
 
 	signature, err := signingSigner.sign(ctx)

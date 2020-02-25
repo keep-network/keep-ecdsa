@@ -2,7 +2,6 @@
 package ethereum
 
 import (
-	cecdsa "crypto/ecdsa"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -20,11 +19,6 @@ var logger = log.Logger("keep-chain-eth-ethereum")
 // Address returns client's ethereum address.
 func (ec *EthereumChain) Address() common.Address {
 	return ec.transactorOptions.From
-}
-
-// PublicKey returns client's ethereum public key.
-func (ec *EthereumChain) PublicKey() *cecdsa.PublicKey {
-	return ec.publicKey
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected

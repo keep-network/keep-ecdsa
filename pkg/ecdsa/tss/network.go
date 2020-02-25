@@ -2,11 +2,18 @@ package tss
 
 import (
 	"context"
+	cecdsa "crypto/ecdsa"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-core/pkg/net"
+)
+
+const (
+	unicastChannelRetryCount    = 2
+	unicastChannelRetryWaitTime = 30 * time.Second
 )
 
 // networkBridge translates TSS library network interface to unicast and
@@ -92,12 +99,7 @@ func (b *networkBridge) initializeChannels(
 		return fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	broadcastChannel.Recv(
-		ctx,
-		func(msg net.Message) {
-			handleFn(msg)
-		},
-	)
+	broadcastChannel.Recv(ctx, handleFn)
 
 	// Initialize unicast channels.
 	for _, peerMemberID := range b.groupInfo.groupMemberIDs {
@@ -110,7 +112,11 @@ func (b *networkBridge) initializeChannels(
 			return fmt.Errorf("failed to get transport identifier: [%v]", err)
 		}
 
-		unicastChannel, err := b.getUnicastChannelWith(peerTransportID)
+		unicastChannel, err := b.getUnicastChannel(
+			peerTransportID,
+			unicastChannelRetryCount,
+			unicastChannelRetryWaitTime,
+		)
 		if err != nil {
 			return fmt.Errorf("failed to get unicast channel: [%v]", err)
 		}
@@ -121,9 +127,48 @@ func (b *networkBridge) initializeChannels(
 	return nil
 }
 
+func (b *networkBridge) getUnicastChannel(
+	peerTransportID net.TransportIdentifier,
+	retryCount int,
+	retryWaitTime time.Duration,
+) (net.UnicastChannel, error) {
+	var (
+		unicastChannel net.UnicastChannel
+		err            error
+	)
+
+	// getUnicastChannelWith is retried several times in order to recover
+	// from temporary network problems.
+	for i := 0; i < retryCount+1; i++ {
+		unicastChannel, err = b.getUnicastChannelWith(peerTransportID)
+		if unicastChannel != nil && err == nil {
+			return unicastChannel, nil
+		}
+
+		logger.Warningf(
+			"failed to get unicast channel with peer [%v] "+
+				"because of: [%v]; will retry after wait time",
+			peerTransportID.String(),
+			err,
+		)
+
+		time.Sleep(retryWaitTime)
+	}
+
+	if err == nil {
+		err = fmt.Errorf("unknown error")
+	}
+
+	return nil, err
+}
+
 func (b *networkBridge) getTransportIdentifier(member MemberID) (net.TransportIdentifier, error) {
-	publicKey := b.groupInfo.groupMemberPublicKeys[member.String()]
-	return b.networkProvider.CreateTransportIdentifier(publicKey)
+	publicKey, err := member.PublicKey()
+	if err != nil {
+		return nil, err
+	}
+
+	return b.networkProvider.CreateTransportIdentifier(*publicKey)
 }
 
 func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
@@ -139,15 +184,45 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	if err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &ReadyMessage{}
+	})
+	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &TSSProtocolMessage{}
-	}); err != nil {
-		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
+	})
+
+	if err := broadcastChannel.SetFilter(
+		createMemberIDFilter(b.groupInfo.groupMemberIDs),
+	); err != nil {
+		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
 	}
 
 	b.broadcastChannel = broadcastChannel
 
 	return broadcastChannel, nil
+}
+
+func createMemberIDFilter(
+	members []MemberID,
+) net.BroadcastChannelFilter {
+	authorizations := make(map[string]bool, len(members))
+	for _, member := range members {
+		authorizations[member.String()] = true
+	}
+
+	return func(authorPublicKey *cecdsa.PublicKey) bool {
+		author := MemberIDFromPublicKey(authorPublicKey)
+		_, isAuthorized := authorizations[author.String()]
+
+		if !isAuthorized {
+			logger.Warningf(
+				"rejecting message from [%v]; author is not authorized",
+				author,
+			)
+		}
+
+		return isAuthorized
+	}
 }
 
 func (b *networkBridge) getUnicastChannelWith(
@@ -183,7 +258,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 
 	protocolMessage := &TSSProtocolMessage{
-		SenderID:    memberIDFromBytes(routing.From.GetKey()),
+		SenderID:    routing.From.GetKey(),
 		Payload:     bytes,
 		IsBroadcast: routing.IsBroadcast,
 	}
@@ -192,7 +267,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 		b.broadcast(protocolMessage)
 	} else {
 		for _, destination := range routing.To {
-			destinationMemberID, err := MemberIDFromHex(destination.GetId())
+			destinationMemberID, err := MemberIDFromString(destination.GetId())
 			if err != nil {
 				logger.Errorf("failed to get destination member id: [%v]", err)
 				return

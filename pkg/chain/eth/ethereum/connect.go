@@ -16,7 +16,6 @@ type EthereumChain struct {
 	transactorOptions              *bind.TransactOpts
 	callerOptions                  *bind.CallOpts
 	bondedECDSAKeepFactoryContract *abi.BondedECDSAKeepFactory
-	publicKey                      *cecdsa.PublicKey
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -48,6 +47,5 @@ func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) 
 		transactorOptions:              transactorOptions,
 		callerOptions:                  callerOptions,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
-		publicKey:                      &privateKey.PublicKey,
 	}, nil
 }
