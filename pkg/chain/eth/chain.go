@@ -41,6 +41,8 @@ type BondedECDSAKeep interface {
 		handler func(event *SignatureRequestedEvent),
 	) (subscription.EventSubscription, error)
 
+	// OnConflictingPublicKeySubmitted is a callback that is invoked upon
+	// notification of mismatched public keys that were submitted by keep members.
 	OnConflictingPublicKeySubmitted(
 		keepAddress common.Address,
 		handler func(event *ConflictingPublicKeySubmittedEvent),
