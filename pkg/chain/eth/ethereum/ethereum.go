@@ -3,6 +3,7 @@ package ethereum
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -171,4 +172,9 @@ func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest 
 // if the address is staked or not.
 func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.bondedECDSAKeepFactoryContract.HasMinimumStake(ec.callerOptions, address)
+}
+
+// BalanceOf returns the stake balance of the specified address.
+func (ec *EthereumChain) BalanceOf(address common.Address) (*big.Int, error) {
+	return ec.bondedECDSAKeepFactoryContract.BalanceOf(ec.callerOptions, address)
 }

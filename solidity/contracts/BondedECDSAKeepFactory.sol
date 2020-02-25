@@ -395,4 +395,11 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             tokenStaking.activeStake(_operator, address(this)) >= minimumStake
         );
     }
+
+    /// @dev Gets the stake balance of the specified operator.
+    /// @param _operator The operator to query the balance of.
+    /// @return An uint256 representing the amount staked by the passed operator.
+    function balanceOf(address _operator) public view returns(uint256) {
+        return tokenStaking.balanceOf(_operator);
+    }
 }
