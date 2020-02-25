@@ -111,27 +111,21 @@ async function isStaked(operatorAddress) {
   return stakedAmount != 0;
 };
 
-async function isFunded(operatorAddress) {
+async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
+  let requiredBalance = web3.utils.toWei(requiredEtherBalance, 'ether');
 
-  console.log('Checking if operator address has ether:')
-  let fundedAmount = await web3.utils.fromWei(
-    await web3.eth.getBalance(operatorAddress), 'ether')
-  return fundedAmount >= 1;
-};
-
-async function fundOperator(operatorAddress, purse, etherToTransfer) {
-
-  let funded = await isFunded(operatorAddress);
-  let transferAmount = web3.utils.toWei(etherToTransfer, 'ether');
-
-  if (funded === true) {
+  const currentBalance = web3.utils.toBN(await web3.eth.getBalance(operatorAddress))
+  if (currentBalance.gte(requiredBalance)) {
     console.log('Operator address is already funded, exiting!');
     return;
-  } else {
-    console.log(`Funding account ${operatorAddress} with ${etherToTransfer} ether from purse ${purse}`);
-    await web3.eth.sendTransaction({from:purse, to:operatorAddress, value:transferAmount});
-    console.log(`Account ${operatorAddress} funded!`);
   }
+
+  const transferAmount = requiredBalance.sub(currentBalance)
+
+  console.log(`Funding account ${operatorAddress} with ${web3.utils.fromWei(transferAmount)} ether from purse ${purse}`);
+  await web3.eth.sendTransaction({ from: purse, to: operatorAddress, value: transferAmount });
+  console.log(`Account ${operatorAddress} funded!`);
+
 };
 
 async function depositUnbondedValue(operatorAddress, purse, etherToDeposit) {
