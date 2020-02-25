@@ -160,12 +160,12 @@ jobs:
           name: Load Docker images
           command: |
             docker load -i /tmp/keep-tecdsa/docker-images/keep-tecdsa.tar
-          # docker load -i /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar
+            docker load -i /tmp/keep-tecdsa/docker-images/initcontainer-provision-keep-tecdsa.tar
       - run:
           name: Tag Docker images
           command: |
             docker tag keep-tecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-tecdsa
-          # docker tag initcontainer-provision-keep-tecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-tecdsa
+            docker tag initcontainer-provision-keep-tecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-tecdsa
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -176,11 +176,11 @@ jobs:
           registry-url: $GCR_REGISTRY_URL
           image: keep-tecdsa
           tag: latest
-      # - gcp-gcr/push-image:
-      #     google-project-id: GOOGLE_PROJECT_ID
-      #     registry-url: $GCR_REGISTRY_URL
-      #     image: initcontainer-provision-keep-tecdsa
-      #     tag: latest
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_PROJECT_ID
+          registry-url: $GCR_REGISTRY_URL
+          image: initcontainer-provision-keep-tecdsa
+          tag: latest
   publish_contract_data:
     executor: gcp-cli/default
     steps:
@@ -216,16 +216,16 @@ workflows:
           requires:
             - setup_github_package_registry
       - migrate_contracts:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - build_client_and_test_go
       - build_initcontainer:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - migrate_contracts
@@ -239,9 +239,9 @@ workflows:
              - build_initcontainer
              - migrate_contracts
       - publish_contract_data:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - migrate_contracts
