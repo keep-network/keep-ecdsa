@@ -67,7 +67,7 @@ async function provisionKeepTecdsa(operatorAddress) {
     console.log('###########  Provisioning keep-tecdsa! ###########');
 
     console.log(`\n<<<<<<<<<<<< Create Sortition Pool for TBTCSystem: ${tbtcSystemContractAddress} >>>>>>>>>>>>`);
-    await createSortitionPool(contractOwnerAddress);
+    const sortitionPoolContractAddress = await createSortitionPool(contractOwnerAddress);
 
     console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
     await fundOperator(operatorAddress, purse, '10');
@@ -193,15 +193,26 @@ async function authorizeSortitionPoolContract(operatorAddress, authorizer) {
 
 async function createSortitionPool(contractOwnerAddress) {
 
-  //await bondedECDSAKeepFactory.methods.createSortitionPool(
-  //  tbtcSystemContractAddress).send({from: contractOwnerAddress});
+  let sortitionPoolContractAddress
 
-  console.log(`created sortition pool for tbtcSystemContractAddress: ${tbtcSystemContractAddress}`);
+  try {
+    sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(tbtcSystemContractAddress).call();
+    console.log(`sortition pool already exists for application: [${tbtcSystemContractAddress}]`)
+  } catch (err) {
+    if (err.message.includes('No pool found for the application')) {
+      await bondedECDSAKeepFactory.methods.createSortitionPool(tbtcSystemContractAddress).send({ from: contractOwnerAddress });
 
-  return sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(
-                                       tbtcSystemContractAddress).call();
+      console.log(`created sortition pool for application: [${tbtcSystemContractAddress}]`);
+
+      sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(tbtcSystemContractAddress).call();
+    } else {
+      console.error("unexpected error", err)
+      process.exit(1)
+    }
+  }
 
   console.log(`sortition pool contract address: ${sortitionPoolContractAddress}`);
+  return sortitionPoolContractAddress
 };
 
 async function createKeepTecdsaConfig() {
