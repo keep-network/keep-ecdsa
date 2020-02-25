@@ -61,7 +61,7 @@ func Initialize(
 		)
 
 		if event.IsMember(ethereumChain.Address()) {
-			memberIDs, err := tssNode.TriggerAnnounceProtocol(
+			memberIDs, err := tssNode.AnnounceSignerPresence(
 				operatorPublicKey,
 				event.KeepAddress,
 				event.Members,

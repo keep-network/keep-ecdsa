@@ -43,7 +43,7 @@ func AnnounceProtocol(
 			case <-ctx.Done():
 				return
 			case msg := <-announceInChan:
-				// Since broadcast channel has an address filter, one can
+				// Since broadcast channel has an address filter, we can
 				// assume each message come from a valid group member.
 				receivedMemberIDs[msg.SenderID.String()] = msg.SenderID
 

@@ -40,7 +40,9 @@ func NewNode(
 	}
 }
 
-func (n *Node) TriggerAnnounceProtocol(
+// AnnounceSignerPresence triggers the announce protocol in order to signal
+// signer presence and gather information about other signers.
+func (n *Node) AnnounceSignerPresence(
 	operatorPublicKey *operator.PublicKey,
 	keepAddress common.Address,
 	keepMembersAddresses []common.Address,
