@@ -11,6 +11,7 @@ import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
 import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -46,7 +47,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     uint256 public groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
-    address tokenStaking;
+    TokenStaking tokenStaking;
     KeepBonding keepBonding;
     IRandomBeacon randomBeacon;
 
@@ -90,7 +91,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
         );
-        tokenStaking = _tokenStaking;
+        tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         randomBeacon = IRandomBeacon(_randomBeacon);
     }
@@ -114,7 +115,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         );
 
         address sortitionPoolAddress = sortitionPoolFactory.createSortitionPool(
-            IStaking(tokenStaking),
+            IStaking(address(tokenStaking)),
             IBonding(address(keepBonding)),
             minimumStake,
             minimumBond
@@ -295,7 +296,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             _owner,
             members,
             _honestThreshold,
-            tokenStaking,
+            address(tokenStaking),
             address(keepBonding)
         );
 
@@ -391,7 +392,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// false otherwise.
     function hasMinimumStake(address _operator) public view returns(bool) {
         return (
-            IStaking(tokenStaking).activeStake(_operator, address(this)) >= minimumStake
+            tokenStaking.activeStake(_operator, address(this)) >= minimumStake
         );
     }
 }
