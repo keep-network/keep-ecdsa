@@ -27,11 +27,11 @@ We override transactionConfirmationBlocks and transactionBlockTimeout because th
 is long wait times for scripts to execute.
 */
 const web3_options = {
-    defaultBlock: 'latest',
-    defaultGas: 4712388,
-    transactionBlockTimeout: 25,
-    transactionConfirmationBlocks: 3,
-    transactionPollingTimeout: 480
+  defaultBlock: 'latest',
+  defaultGas: 4712388,
+  transactionBlockTimeout: 25,
+  transactionConfirmationBlocks: 3,
+  transactionPollingTimeout: 480
 };
 
 const web3 = new Web3(contractOwnerProvider, null, web3_options);
@@ -134,9 +134,10 @@ async function depositUnbondedValue(operatorAddress, purse, etherToDeposit) {
 
   await keepBondingContract.methods.deposit(
     operatorAddress,
-    {value: transferAmount, from: purse})
+    { value: transferAmount, from: purse }
+  )
 
-  console.log(`deposited ${transferAmount} ETH bonding value for operatorAddress ${operatorAddress}`)
+  console.log(`deposited ${etherToDeposit} ETH bonding value for operatorAddress ${operatorAddress}`)
 }
 
 
@@ -174,7 +175,8 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
     formatAmount(20000000, 18),
-    delegation).send({from: contractOwnerAddress})
+    delegation
+  ).send({ from: contractOwnerAddress })
 
   console.log(`Staked!`);
 };
@@ -229,20 +231,20 @@ async function createKeepTecdsaConfig() {
 
   let parsedConfigFile = toml.parse(fs.readFileSync('./keep-tecdsa-config-template.toml', 'utf8'));
 
-    parsedConfigFile.ethereum.URL = ethWSUrl;
+  parsedConfigFile.ethereum.URL = ethWSUrl;
 
   parsedConfigFile.ethereum.account.KeyFile = operatorKeyFiles
 
-    parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactoryContractAddress;
+  parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactory.address;
 
-    parsedConfigFile.SanctionedApplications.Addresses = [tbtcSystemContractAddress]
+  parsedConfigFile.SanctionedApplications.Addresses = [tbtcSystemContractAddress]
 
-    parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
+  parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
-    let formattedConfigFile = tomlify.toToml(parsedConfigFile)
+  let formattedConfigFile = tomlify.toToml(parsedConfigFile)
 
-    fs.writeFileSync('./keep-tecdsa-config.toml', formattedConfigFile)
-    console.log('keep-tecdsa config written to /mnt/keep-tecdsa/config/keep-tecdsa-config.toml');
+  fs.writeFileSync('./keep-tecdsa-config.toml', formattedConfigFile)
+  console.log('keep-tecdsa config written to /mnt/keep-tecdsa/config/keep-tecdsa-config.toml');
 };
 
 /*
