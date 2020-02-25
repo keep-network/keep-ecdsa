@@ -199,24 +199,26 @@ async function authorizeSortitionPoolContract(operatorAddress, sortitionPoolCont
   console.log(`Authorized!`);
 };
 
-async function createSortitionPool(contractOwnerAddress) {
+async function createSortitionPool(applicationAddress) {
+  const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000"
 
   let sortitionPoolContractAddress
 
-  try {
-    sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(tbtcSystemContractAddress).call();
-    console.log(`sortition pool already exists for application: [${tbtcSystemContractAddress}]`)
-  } catch (err) {
-    if (err.message.includes('No pool found for the application')) {
-      await bondedECDSAKeepFactory.methods.createSortitionPool(tbtcSystemContractAddress).send({ from: contractOwnerAddress });
+  const create = async () => {
+    await bondedECDSAKeepFactory.methods.createSortitionPool(applicationAddress).send({ from: contractOwnerAddress });
 
-      console.log(`created sortition pool for application: [${tbtcSystemContractAddress}]`);
+    console.log(`created sortition pool for application: [${applicationAddress}]`);
 
-      sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(tbtcSystemContractAddress).call();
-    } else {
-      console.error("unexpected error", err)
-      process.exit(1)
-    }
+    return await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call();
+  }
+
+  sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call();
+
+  if (!sortitionPoolContractAddress || sortitionPoolContractAddress == ADDRESS_ZERO) {
+    console.log("sortition pool does not exists yet")
+    sortitionPoolContractAddress = await create()
+  } else {
+    console.log(`sortition pool already exists for application: [${applicationAddress}]`)
   }
 
   console.log(`sortition pool contract address: ${sortitionPoolContractAddress}`);
