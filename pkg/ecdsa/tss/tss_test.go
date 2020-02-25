@@ -5,6 +5,7 @@ import (
 	cecdsa "crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"math/rand"
 	"reflect"
 	"sync"
@@ -35,7 +36,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 	errChan := make(chan error)
 
-	groupMemberIDs, groupMembersKeys, err := generateMemberKeys(groupSize)
+	groupMemberIDs, err := generateMemberKeys(groupSize)
 	if err != nil {
 		t.Fatalf("failed to generate members keys: [%v]", err)
 	}
@@ -68,8 +69,13 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 		for i, memberID := range groupMemberIDs {
 			go func(memberID MemberID) {
-				memberPublicKey := groupMembersKeys[memberID.String()]
-				networkPublicKey := key.NetworkPublic(memberPublicKey)
+				memberPublicKey, err := memberID.PublicKey()
+				if err != nil {
+					errChan <- err
+					return
+				}
+
+				networkPublicKey := key.NetworkPublic(*memberPublicKey)
 				network := newTestNetProvider(&networkPublicKey)
 				networkProviders.Store(memberID.String(), network)
 				providersInitializedWg.Done()
@@ -80,7 +86,6 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				signer, err := GenerateThresholdSigner(
 					groupID,
 					memberID,
-					&memberPublicKey,
 					groupMemberIDs,
 					dishonestThreshold,
 					network,
@@ -142,8 +147,8 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		var signingWait sync.WaitGroup
 		signingWait.Add(groupSize)
 
-		for memberIDHex, signer := range signers {
-			memberID, _ := MemberIDFromHex(memberIDHex)
+		for memberIDString, signer := range signers {
+			memberID, _ := MemberIDFromString(memberIDString)
 
 			go func(memberID MemberID, signer *ThresholdSigner) {
 				value, loaded := networkProviders.Load(memberID.String())
@@ -209,26 +214,19 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	testutils.VerifyEthereumSignature(t, digest[:], firstSignature, firstPublicKey)
 }
 
-func generateMemberKeys(groupSize int) ([]MemberID, map[string]cecdsa.PublicKey, error) {
+func generateMemberKeys(groupSize int) ([]MemberID, error) {
 	memberIDs := []MemberID{}
-	groupMembersKeys := make(map[string]cecdsa.PublicKey, groupSize)
 
 	for i := 0; i < groupSize; i++ {
-		_, publicKey, err := key.GenerateStaticNetworkKey()
+		_, publicKey, err := operator.GenerateKeyPair()
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to generate network key: [%v]", err)
+			return nil, fmt.Errorf("failed to generate operator key: [%v]", err)
 		}
 
-		memberID, err := MemberIDFromHex(key.NetworkPubKeyToEthAddress(publicKey))
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to convert address to member ID: [%v]", err)
-		}
-
-		memberIDs = append(memberIDs, memberID)
-		groupMembersKeys[memberID.String()] = *(*cecdsa.PublicKey)(publicKey)
+		memberIDs = append(memberIDs, MemberIDFromPublicKey(publicKey))
 	}
 
-	return memberIDs, groupMembersKeys, nil
+	return memberIDs, nil
 }
 
 func newTestNetProvider(memberNetworkKey *key.NetworkPublic) net.Provider {

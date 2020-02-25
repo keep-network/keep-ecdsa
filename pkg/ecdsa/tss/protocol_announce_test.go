@@ -2,7 +2,7 @@ package tss
 
 import (
 	"context"
-	cecdsa "crypto/ecdsa"
+	"github.com/keep-network/keep-core/pkg/net"
 	"sync"
 	"testing"
 	"time"
@@ -21,7 +21,7 @@ func TestAnnounceProtocol(t *testing.T) {
 
 	groupSize := 3
 
-	groupMembers, groupMembersKeys, err := generateMemberKeys(groupSize)
+	groupMembers, err := generateMemberKeys(groupSize)
 	if err != nil {
 		t.Fatalf("failed to generate members keys: [%v]", err)
 	}
@@ -32,34 +32,46 @@ func TestAnnounceProtocol(t *testing.T) {
 	waitGroup.Add(groupSize)
 
 	mutex := &sync.RWMutex{}
-	result := make(map[string]map[string]cecdsa.PublicKey)
+	result := make(map[string][]MemberID)
 
-	for memberIDstring, memberPublicKey := range groupMembersKeys {
-		memberID, _ := MemberIDFromHex(memberIDstring)
-
-		go func(memberID MemberID, memberPublicKey cecdsa.PublicKey) {
-			groupInfo := &groupInfo{
-				groupID:         "test-group-1",
-				memberID:        memberID,
-				memberPublicKey: memberPublicKey,
-				groupMemberIDs:  groupMembers,
+	for _, memberID := range groupMembers {
+		go func(memberID MemberID) {
+			memberPublicKey, err := memberID.PublicKey()
+			if err != nil {
+				errChan <- err
+				return
 			}
 
-			memberNetworkKey := key.NetworkPublic(memberPublicKey)
+			memberNetworkKey := key.NetworkPublic(*memberPublicKey)
 			networkProvider := newTestNetProvider(&memberNetworkKey)
+
+			broadcastChannel, err := networkProvider.BroadcastChannelFor("test-group-1")
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+				return &AnnounceMessage{}
+			})
 
 			defer waitGroup.Done()
 
-			groupMemberPublicKeys, err := announceProtocol(ctx, groupInfo, networkProvider)
+			memberIDs, err := AnnounceProtocol(
+				ctx,
+				memberPublicKey,
+				groupSize,
+				broadcastChannel,
+			)
 			if err != nil {
 				errChan <- err
 				return
 			}
 
 			mutex.Lock()
-			result[memberID.String()] = groupMemberPublicKeys
+			result[memberID.String()] = memberIDs
 			mutex.Unlock()
-		}(memberID, memberPublicKey)
+		}(memberID)
 	}
 
 	go func() {
@@ -77,10 +89,17 @@ func TestAnnounceProtocol(t *testing.T) {
 			)
 		}
 
-		for memberID, _ := range groupMembersKeys {
-			if memberResult, ok := result[memberID]; ok {
-				for otherMemberID, _ := range groupMembersKeys {
-					if _, ok := memberResult[otherMemberID]; !ok {
+		for _, memberID := range groupMembers {
+			if memberResult, ok := result[memberID.String()]; ok {
+				for _, otherMemberID := range groupMembers {
+					exists := false
+					for _, result := range memberResult {
+						if result.Equal(otherMemberID) {
+							exists = true
+							break
+						}
+					}
+					if !exists {
 						t.Errorf(
 							"result of member [%v] doesn't contain "+
 								"key for other member [%v]",

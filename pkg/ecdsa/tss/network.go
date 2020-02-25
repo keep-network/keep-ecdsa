@@ -3,13 +3,12 @@ package tss
 import (
 	"context"
 	cecdsa "crypto/ecdsa"
-	"encoding/hex"
 	"fmt"
-	"github.com/binance-chain/tss-lib/tss"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/keep-network/keep-core/pkg/net"
 	"sync"
 	"time"
+
+	"github.com/binance-chain/tss-lib/tss"
+	"github.com/keep-network/keep-core/pkg/net"
 )
 
 const (
@@ -164,8 +163,12 @@ func (b *networkBridge) getUnicastChannel(
 }
 
 func (b *networkBridge) getTransportIdentifier(member MemberID) (net.TransportIdentifier, error) {
-	publicKey := b.groupInfo.groupMemberPublicKeys[member.String()]
-	return b.networkProvider.CreateTransportIdentifier(publicKey)
+	publicKey, err := member.PublicKey()
+	if err != nil {
+		return nil, err
+	}
+
+	return b.networkProvider.CreateTransportIdentifier(*publicKey)
 }
 
 func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
@@ -181,14 +184,15 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 		return nil, fmt.Errorf("failed to get broadcast channel: [%v]", err)
 	}
 
-	if err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &ReadyMessage{}
+	})
+	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &TSSProtocolMessage{}
-	}); err != nil {
-		return nil, fmt.Errorf("failed to register unmarshaler for broadcast channel: [%v]", err)
-	}
+	})
 
 	if err := broadcastChannel.SetFilter(
-		createGroupMemberFilter(b.groupInfo.groupMemberIDs),
+		createMemberIDFilter(b.groupInfo.groupMemberIDs),
 	); err != nil {
 		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
 	}
@@ -198,7 +202,7 @@ func (b *networkBridge) getBroadcastChannel() (net.BroadcastChannel, error) {
 	return broadcastChannel, nil
 }
 
-func createGroupMemberFilter(
+func createMemberIDFilter(
 	members []MemberID,
 ) net.BroadcastChannelFilter {
 	authorizations := make(map[string]bool, len(members))
@@ -207,15 +211,13 @@ func createGroupMemberFilter(
 	}
 
 	return func(authorPublicKey *cecdsa.PublicKey) bool {
-		authorAddress := hex.EncodeToString(
-			crypto.PubkeyToAddress(*authorPublicKey).Bytes(),
-		)
-		_, isAuthorized := authorizations[authorAddress]
+		author := MemberIDFromPublicKey(authorPublicKey)
+		_, isAuthorized := authorizations[author.String()]
 
 		if !isAuthorized {
 			logger.Warningf(
-				"rejecting message from [%v]; author is not a member of the group",
-				authorAddress,
+				"rejecting message from [%v]; author is not authorized",
+				author,
 			)
 		}
 
@@ -256,7 +258,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 
 	protocolMessage := &TSSProtocolMessage{
-		SenderID:    memberIDFromBytes(routing.From.GetKey()),
+		SenderID:    routing.From.GetKey(),
 		Payload:     bytes,
 		IsBroadcast: routing.IsBroadcast,
 	}
@@ -265,7 +267,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 		b.broadcast(protocolMessage)
 	} else {
 		for _, destination := range routing.To {
-			destinationMemberID, err := MemberIDFromHex(destination.GetId())
+			destinationMemberID, err := MemberIDFromString(destination.GetId())
 			if err != nil {
 				logger.Errorf("failed to get destination member id: [%v]", err)
 				return

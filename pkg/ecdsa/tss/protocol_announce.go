@@ -2,21 +2,22 @@ package tss
 
 import (
 	"context"
-	cecdsa "crypto/ecdsa"
 	"fmt"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 const protocolAnnounceTimeout = 120 * time.Second
 
-func announceProtocol(
+func AnnounceProtocol(
 	parentCtx context.Context,
-	group *groupInfo,
-	networkProvider net.Provider,
+	publicKey *operator.PublicKey,
+	membersCount int,
+	broadcastChannel net.BroadcastChannel,
 ) (
-	map[string]cecdsa.PublicKey,
+	[]MemberID,
 	error,
 ) {
 	logger.Infof("starting announce protocol")
@@ -24,22 +25,7 @@ func announceProtocol(
 	ctx, cancel := context.WithTimeout(parentCtx, protocolAnnounceTimeout)
 	defer cancel()
 
-	broadcastChannel, err := networkProvider.BroadcastChannelFor(group.groupID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
-	}
-
-	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &AnnounceMessage{}
-	})
-
-	if err := broadcastChannel.SetFilter(
-		createGroupMemberFilter(group.groupMemberIDs),
-	); err != nil {
-		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
-	}
-
-	announceInChan := make(chan *AnnounceMessage, len(group.groupMemberIDs))
+	announceInChan := make(chan *AnnounceMessage, membersCount)
 	handleAnnounceMessage := func(netMsg net.Message) {
 		switch msg := netMsg.Payload().(type) {
 		case *AnnounceMessage:
@@ -48,7 +34,7 @@ func announceProtocol(
 	}
 	broadcastChannel.Recv(ctx, handleAnnounceMessage)
 
-	groupMemberPublicKeys := make(map[string]cecdsa.PublicKey)
+	receivedMemberIDs := make(map[string]MemberID)
 
 	go func() {
 
@@ -57,15 +43,11 @@ func announceProtocol(
 			case <-ctx.Done():
 				return
 			case msg := <-announceInChan:
-				for _, memberID := range group.groupMemberIDs {
-					if msg.SenderID.Equal(memberID) {
-						// TODO: validate if `SenderID` corresponds to `SenderPublicKey`.
-						groupMemberPublicKeys[msg.SenderID.String()] = *msg.SenderPublicKey
-						break
-					}
-				}
+				// Since broadcast channel has an address filter, we can
+				// assume each message come from a valid group member.
+				receivedMemberIDs[msg.SenderID.String()] = msg.SenderID
 
-				if len(groupMemberPublicKeys) == len(group.groupMemberIDs) {
+				if len(receivedMemberIDs) == membersCount {
 					cancel()
 				}
 			}
@@ -76,8 +58,7 @@ func announceProtocol(
 		sendMessage := func() {
 			if err := broadcastChannel.Send(ctx,
 				&AnnounceMessage{
-					SenderID:        group.memberID,
-					SenderPublicKey: &group.memberPublicKey,
+					SenderID: MemberIDFromPublicKey(publicKey),
 				},
 			); err != nil {
 				logger.Errorf("failed to send announcement: [%v]", err)
@@ -109,7 +90,13 @@ func announceProtocol(
 		)
 	case context.Canceled:
 		logger.Infof("announce protocol completed successfully")
-		return groupMemberPublicKeys, nil
+
+		memberIDs := make([]MemberID, 0)
+		for _, memberID := range receivedMemberIDs {
+			memberIDs = append(memberIDs, memberID)
+		}
+
+		return memberIDs, nil
 	default:
 		return nil, fmt.Errorf("unexpected context error: [%v]", ctx.Err())
 	}

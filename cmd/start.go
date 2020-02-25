@@ -133,6 +133,7 @@ func Start(c *cli.Context) error {
 	}
 
 	client.Initialize(
+		operatorPublicKey,
 		ethereumChain,
 		networkProvider,
 		persistence,

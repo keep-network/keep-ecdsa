@@ -9,11 +9,10 @@ message TSSProtocolMessage {
   bool isBroadcast = 3;
 }
 
-message JoinMessage {
+message ReadyMessage {
   bytes senderID = 1;
 }
 
 message AnnounceMessage {
   bytes senderID = 1;
-  bytes senderPublicKey = 2;
 }
