@@ -1,15 +1,15 @@
 #!/bin/bash
 set -e pipefail
 
-# Dafault config file path.
-CONFIG_FILE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs/config.toml)
+# Dafault config files directory.
+CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 
 # Read user config file path.
-read -p "Enter path to keep-ecdsa client config [$CONFIG_FILE_PATH_DEFAULT]: " config_file_path
-CONFIG_FILE_PATH=${config_file_path:-$CONFIG_FILE_PATH_DEFAULT}
+read -p "Enter path to keep-ecdsa config files directory [$CONFIG_DIR_PATH_DEFAULT]: " config_dir_path
+CONFIG_DIR_PATH=${config_dir_path:-$CONFIG_DIR_PATH_DEFAULT}
 
 KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
-KEEP_ECDSA_CONFIG_FILE_PATH=$(realpath $CONFIG_FILE_PATH)
+KEEP_ECDSA_CONFIG_DIR_PATH=$(realpath $CONFIG_DIR_PATH)
 KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 
 cd $KEEP_ECDSA_SOL_PATH
@@ -35,11 +35,14 @@ CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
     ./scripts/lcl-set-client-address.sh
 
 printf "${LOG_START}Initializing contracts...${LOG_END}"
-truffle exec scripts/lcl-initialize.js --network local
+#truffle exec scripts/lcl-initialize.js --network local
 
-printf "${LOG_START}Updating keep-ecdsa client config...${LOG_END}"
-KEEP_ECDSA_CONFIG_FILE_PATH=$KEEP_ECDSA_CONFIG_FILE_PATH \
+printf "${LOG_START}Updating keep-ecdsa config files...${LOG_END}"
+for CONFIG_FILE in $KEEP_ECDSA_CONFIG_DIR_PATH/*.toml
+do
+  KEEP_ECDSA_CONFIG_FILE_PATH=$CONFIG_FILE \
     CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
     truffle exec scripts/lcl-client-config.js --network local
+done
 
 printf "${DONE_START}Initialization completed!${DONE_END}"
