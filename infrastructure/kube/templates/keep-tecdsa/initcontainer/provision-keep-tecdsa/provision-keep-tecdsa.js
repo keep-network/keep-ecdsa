@@ -104,13 +104,6 @@ function readAddressFromKeyFile(keyFilePath) {
   return keyFile.address
 }
 
-async function isStaked(operatorAddress) {
-
-  console.log('Checking if operator address is staked:');
-  let stakedAmount = await tokenStakingContract.methods.balanceOf(operatorAddress).call();
-  return stakedAmount != 0;
-};
-
 async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
   let requiredBalance = web3.utils.toWei(requiredEtherBalance, 'ether');
 
@@ -138,6 +131,14 @@ async function depositUnbondedValue(operatorAddress, purse, etherToDeposit) {
 
   console.log(`deposited ${transferAmount} ETH bonding value for operatorAddress ${operatorAddress}`)
 }
+
+
+async function isStaked(operatorAddress) {
+
+  console.log('Checking if operator address is staked:');
+  let stakedAmount = await tokenStakingContract.methods.balanceOf(operatorAddress).call();
+  return stakedAmount != 0;
+};
 
 async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) {
 
