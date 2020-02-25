@@ -101,7 +101,13 @@ async function provisionKeepTecdsa() {
 
 function readAddressFromKeyFile(keyFilePath) {
   const keyFile = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'))
-  return keyFile.address
+
+  // We add the account to the web3 wallet so we are able to call contracts from
+  // this account used as an authorizer.
+  const account = web3.eth.accounts.decrypt(keyFile, operatorKeyPassword)
+  web3.eth.accounts.wallet.add(account)
+
+  return account.address
 }
 
 async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
