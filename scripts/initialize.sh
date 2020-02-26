@@ -35,7 +35,7 @@ CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
     ./scripts/lcl-set-client-address.sh
 
 printf "${LOG_START}Initializing contracts...${LOG_END}"
-#truffle exec scripts/lcl-initialize.js --network local
+truffle exec scripts/lcl-initialize.js --network local
 
 printf "${LOG_START}Updating keep-ecdsa config files...${LOG_END}"
 for CONFIG_FILE in $KEEP_ECDSA_CONFIG_DIR_PATH/*.toml
