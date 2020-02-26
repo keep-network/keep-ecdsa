@@ -147,54 +147,6 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		return err
 	}
 
-	publicKeyPublished := make(chan *eth.PublicKeyPublishedEvent)
-	conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
-
-	subscriptionPublicKeyPublished, err := ec.OnPublicKeyPublished(
-		keepAddress,
-		func(onChainEvent *eth.PublicKeyPublishedEvent) {
-			publicKeyPublished <- onChainEvent
-		},
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed on handling public key published event: [%v]",
-			err,
-		)
-	}
-
-	subscriptionConflictingPublicKey, err := ec.OnConflictingPublicKeySubmitted(
-		keepAddress,
-		func(onChainEvent *eth.ConflictingPublicKeySubmittedEvent) {
-			conflictingPublicKey <- onChainEvent
-		},
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed on handling conflicting public key event: [%v]",
-			err,
-		)
-	}
-
-	go func() {
-		for {
-			select {
-			case _, success := <- publicKeyPublished:
-				if !success {
-					return
-				}
-
-				subscriptionConflictingPublicKey.Unsubscribe()
-				close(conflictingPublicKey)
-
-				subscriptionPublicKeyPublished.Unsubscribe()
-				close(publicKeyPublished)
-
-				return
-			}
-		}
-	}()
-
 	transactorOptions := bind.TransactOpts(*ec.transactorOptions)
 	transactorOptions.GasLimit = 3000000 // enough for a group size of 16
 

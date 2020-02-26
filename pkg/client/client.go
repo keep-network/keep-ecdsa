@@ -146,7 +146,7 @@ func registerForPublicKeyPublishedEvent(
 	ethereumChain.OnPublicKeyPublished(
 		keepAddress,
 		func(event *eth.PublicKeyPublishedEvent) {
-			logger.Errorf(
+			logger.Infof(
 				"public key [%v] has been accepted by keep",
 				event.PublicKey,
 			)
