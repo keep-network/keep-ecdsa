@@ -102,7 +102,7 @@ async function provisionKeepTecdsa() {
 function readAddressFromKeyFile(keyFilePath) {
   const keyFile = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'))
 
-  return keyFile.address
+  return `0x${keyFile.address}`
 }
 
 async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
@@ -167,8 +167,7 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
     formatAmount(20000000, 18),
-    delegation
-  ).send({ from: contractOwnerAddress })
+    delegation).send({from: contractOwnerAddress})
 
   console.log(`Staked!`);
 };
