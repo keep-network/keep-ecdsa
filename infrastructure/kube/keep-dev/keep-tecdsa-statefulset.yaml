@@ -111,14 +111,16 @@ spec:
           volumeMounts:
             - name: keep-tecdsa-config
               mountPath: /mnt/keep-tecdsa/config
+            - name: eth-account-keyfile
+              mountPath: /mnt/keep-tecdsa/eth
           command: ["node", "/tmp/provision-keep-tecdsa.js"]
       nodeSelector:
         pool-type: keep-tecdsa
       tolerations:
-      - key: type
-        operator: Equal
-        value: tecdsa
-        effect: NoSchedule
+        - key: type
+          operator: Equal
+          value: tecdsa
+          effect: NoSchedule
 
 ---
 apiVersion: v1
