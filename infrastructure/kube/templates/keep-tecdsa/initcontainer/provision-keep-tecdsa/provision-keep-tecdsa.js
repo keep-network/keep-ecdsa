@@ -102,7 +102,7 @@ async function provisionKeepTecdsa() {
 function readAddressFromKeyFile(keyFilePath) {
   const keyFile = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'))
 
-  return `0x${keyFile.address}`
+  return web3.utils.toHex(keyFile.address)
 }
 
 async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
@@ -158,11 +158,11 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
     console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
   };
 
-  let delegation = '0x' + Buffer.concat([
-    Buffer.from(contractOwnerAddress.substr(2), 'hex'),
-    Buffer.from(operatorAddress.substr(2), 'hex'),
-    Buffer.from(authorizer.substr(2), 'hex')
-  ]).toString('hex');
+  let delegation = Buffer.concat([
+    Buffer.from(web3.utils.hexToBytes(contractOwnerAddress)),
+    Buffer.from(web3.utils.hexToBytes(operatorAddress)),
+    Buffer.from(web3.utils.hexToBytes(authorizer))
+  ])
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
@@ -241,7 +241,7 @@ async function createKeepTecdsaConfig() {
 in a particular format, this function facilitates that.
 */
 function formatAmount(amount, decimals) {
-  return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
+  return web3.utils.toHex(web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))))
 };
 
 provisionKeepTecdsa().catch(error => {
