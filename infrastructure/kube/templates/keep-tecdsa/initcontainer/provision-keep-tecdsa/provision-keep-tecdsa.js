@@ -46,7 +46,7 @@ const keepTokenContract = getWeb3Contract('KeepToken');
 
 // Address of the external TBTCSystem contract which should be set for the InitContainer
 // execution.
-const tbtcSystemContractAddress = process.env.TBTC_SYSTEM_CONTRACT_ADDRESS;
+const tbtcSystemContractAddress = process.env.TBTC_SYSTEM_ADDRESS;
 
 // Returns a web3 contract object based on a truffle contract artifact JSON file.
 function getWeb3Contract(contractName) {
