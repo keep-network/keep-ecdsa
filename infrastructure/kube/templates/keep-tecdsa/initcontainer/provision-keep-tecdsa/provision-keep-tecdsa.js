@@ -6,7 +6,6 @@ const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 // ETH host info
-// ETH host info
 const ethRPCUrl = process.env.ETH_RPC_URL
 const ethWSUrl = process.env.ETH_WS_URL
 const ethNetworkId = process.env.ETH_NETWORK_ID;
