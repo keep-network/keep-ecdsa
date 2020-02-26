@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	preParamsGenerationTimeout = 30 * time.Minute // TODO: Just temporarily super high value
+	preParamsGenerationTimeout = 120 * time.Second
 )
 
 // GenerateTSSPreParams calculates parameters required by TSS key generation.

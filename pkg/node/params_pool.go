@@ -15,7 +15,7 @@ type tssPreParamsPool struct {
 
 // InitializeTSSPreParamsPool generates TSS pre-parameters and stores them in a pool.
 func (n *Node) InitializeTSSPreParamsPool() {
-	poolSize := 50 // TODO: Just temporarily super high value
+	poolSize := 5
 
 	n.tssParamsPool = &tssPreParamsPool{
 		pool: make(chan *keygen.LocalPreParams, poolSize),
