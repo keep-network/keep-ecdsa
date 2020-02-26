@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
