@@ -114,8 +114,6 @@ func (n *Node) GenerateSignerForKeep(
 					return
 				}
 
-				logger.Info("watching publicKeyPublished Unsubscribe")
-
 				subscriptionConflictingPublicKey.Unsubscribe()
 				close(conflictingPublicKey)
 
@@ -127,8 +125,6 @@ func (n *Node) GenerateSignerForKeep(
 				if !success {
 					return
 				}
-
-				logger.Info("watching conflictingPublicKey Unsubscribe")
 
 				subscriptionConflictingPublicKey.Unsubscribe()
 				close(conflictingPublicKey)
