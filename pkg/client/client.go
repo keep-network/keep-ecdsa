@@ -89,6 +89,7 @@ func Initialize(
 			registerForKeepClosedEvents(
 				ethereumChain,
 				event.KeepAddress,
+				keepsRegistry,
 			)
 		}
 	})
@@ -120,14 +121,16 @@ func Initialize(
 func registerForKeepClosedEvents(
 	ethereumChain eth.Handle,
 	keepAddress common.Address,
+	keepsRegistry *registry.Keeps,
 ) {
 	ethereumChain.OnKeepClosed(
 		keepAddress,
 		func(event *eth.KeepClosedEvent) {
-			logger.Infof("keep is being closed [%v]", event.KeepAddress)
+			logger.Infof("keep [%v] is being closed", keepAddress)
 	
-			//TODO: add keepsRegistry.closeKeep(event.KeepAddress)
 		})
+
+	keepsRegistry.UnregisterKeep(keepAddress)
 }
 
 // registerForSignEvents registers for signature requested events emitted by

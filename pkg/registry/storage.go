@@ -128,6 +128,6 @@ func (ps *persistentStorage) readAll() (<-chan *keepSigner, <-chan error) {
 	return outputKeepSigner, outputErrors
 }
 
-func (ps *persistentStorage) archive(groupName string) error {
-	return ps.handle.Archive(groupName)
+func (ps *persistentStorage) archive(keepAddress string) error {
+	return ps.handle.Archive(keepAddress)
 }

@@ -69,6 +69,36 @@ func TestRegisterSigner(t *testing.T) {
 	}
 }
 
+func TestUnregisterSigner(t *testing.T) {
+	persistenceMock := &persistenceHandleMock{}
+	gr := NewKeepsRegistry(persistenceMock)
+
+	signer1, err := newTestSigner(0)
+	if err != nil {
+		t.Fatalf("failed to get signer: [%v]", err)
+	}
+
+	gr.RegisterSigner(keepAddress1, signer1)
+
+	gr.UnregisterKeep(keepAddress1)
+
+	if len(persistenceMock.persistedGroups) != 0 {
+		t.Errorf(
+			"unexpected number of persisted groups\nexpected: [%d]\nactual:   [%d]",
+			1,
+			len(persistenceMock.persistedGroups),
+		)
+	}
+
+	if len(persistenceMock.archivedGroups) != 1 {
+		t.Errorf(
+			"unexpected number of archived groups\nexpected: [%d]\nactual:   [%d]",
+			1,
+			len(persistenceMock.archivedGroups),
+		)
+	}
+}
+
 func TestGetGroup(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
 	gr := NewKeepsRegistry(persistenceMock)
@@ -221,6 +251,7 @@ func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, 
 
 func (phm *persistenceHandleMock) Archive(directory string) error {
 	phm.archivedGroups = append(phm.archivedGroups, directory)
+	phm.persistedGroups = phm.persistedGroups[:len(phm.archivedGroups)-1]
 
 	return nil
 }
