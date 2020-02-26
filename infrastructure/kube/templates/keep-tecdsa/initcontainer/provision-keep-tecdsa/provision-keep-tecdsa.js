@@ -126,8 +126,7 @@ async function depositUnbondedValue(operatorAddress, purse, etherToDeposit) {
 
   await keepBondingContract.methods.deposit(
     operatorAddress,
-    { value: transferAmount, from: purse }
-  )
+  ).send({ value: transferAmount, from: purse })
 
   console.log(`deposited ${etherToDeposit} ETH bonding value for operatorAddress ${operatorAddress}`)
 }
@@ -166,7 +165,7 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
     formatAmount(20000000, 18),
-    delegation).send({from: contractOwnerAddress})
+    delegation).send({ from: contractOwnerAddress })
 
   console.log(`Staked!`);
 };
