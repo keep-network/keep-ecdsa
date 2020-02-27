@@ -174,7 +174,7 @@ func Initialize(
 func registerForPublicKeyConflictingEvents(
 	ethereumChain eth.Handle,
 	keepAddress common.Address,
-	conflictingPublicKey chan *eth.ConflictingPublicKeySubmittedEvent,
+	conflictingPublicKey chan <- *eth.ConflictingPublicKeySubmittedEvent,
 ) (subscription.EventSubscription, error) {
 	return ethereumChain.OnConflictingPublicKeySubmitted(
 		keepAddress,
@@ -193,7 +193,7 @@ func registerForPublicKeyConflictingEvents(
 func registerForPublicKeyPublishedEvent(
 	ethereumChain eth.Handle,
 	keepAddress common.Address,
-	publicKeyPublished chan *eth.PublicKeyPublishedEvent,
+	publicKeyPublished chan <- *eth.PublicKeyPublishedEvent,
 ) (subscription.EventSubscription, error) {
 	return ethereumChain.OnPublicKeyPublished(
 		keepAddress,
