@@ -98,7 +98,7 @@ func Start(c *cli.Context) error {
 		)
 	}
 
-	ethereumChain, err := ethereum.Connect(ethereumKey.PrivateKey, &config.Ethereum)
+	ethereumChain, err := ethereum.Connect(ethereumKey, &config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("failed to connect to ethereum node: [%v]", err)
 	}
