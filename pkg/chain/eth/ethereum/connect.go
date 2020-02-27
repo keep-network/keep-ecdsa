@@ -5,13 +5,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
 )
 
 // EthereumChain is an implementation of ethereum blockchain interface.
 type EthereumChain struct {
-	config                         *Config
+	config                         *ethereum.Config
 	client                         *ethclient.Client
 	transactorOptions              *bind.TransactOpts
 	callerOptions                  *bind.CallOpts

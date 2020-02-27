@@ -6,8 +6,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 )
 
 const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
