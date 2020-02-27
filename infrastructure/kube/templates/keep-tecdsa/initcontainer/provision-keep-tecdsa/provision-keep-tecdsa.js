@@ -221,6 +221,7 @@ async function createKeepTecdsaConfig() {
   let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/keep-tecdsa-config-template.toml', 'utf8'))
 
   parsedConfigFile.ethereum.URL = ethWSUrl
+  parsedConfigFile.ethereum.URLRPC = ethRPCUrl
 
   parsedConfigFile.ethereum.account.KeyFile = operatorKeyFile
 
