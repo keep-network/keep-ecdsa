@@ -1,9 +1,8 @@
-const fs = require('fs');
-const toml = require('toml');
-const tomlify = require('tomlify-j0.4');
-const concat = require('concat-stream');
-const Web3 = require('web3');
-const HDWalletProvider = require("@truffle/hdwallet-provider");
+const fs = require('fs')
+const toml = require('toml')
+const tomlify = require('tomlify-j0.4')
+const Web3 = require('web3')
+const HDWalletProvider = require("@truffle/hdwallet-provider")
 
 // ETH host info
 const ethRPCUrl = process.env.ETH_RPC_URL
