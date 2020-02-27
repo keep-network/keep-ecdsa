@@ -16,5 +16,10 @@
 [SanctionedApplications]
   Addresses = ["Set by Kube"]
 
+[LibP2P]
+  Peers = []
+  Port = ""
+  AnnouncedAddresses = []
+
 [Storage]
     DataDir = "Set by Kube"

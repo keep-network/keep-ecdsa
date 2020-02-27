@@ -19,6 +19,11 @@ var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_
 
 var operatorKeyFile = process.env.KEEP_TECDSA_ETH_KEYFILE_PATH
 
+// LibP2P network info
+const libp2pPeers = [process.env.KEEP_TECDSA_PEERS]
+const libp2pPort = Number(process.env.KEEP_TECDSA_PORT)
+const libp2pAnnouncedAddresses = [process.env.KEEP_TECDSA_ANNOUNCED_ADDRESSES]
+
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 25 and 50 blocks respectively at default.  The result of this on small private testnets
@@ -224,9 +229,20 @@ async function createKeepTecdsaConfig() {
 
   parsedConfigFile.SanctionedApplications.Addresses = [tbtcSystemContractAddress]
 
-  parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
+  parsedConfigFile.LibP2P.Peers = libp2pPeers
+  parsedConfigFile.LibP2P.Port = libp2pPort
+  parsedConfigFile.LibP2P.AnnouncedAddresses = libp2pAnnouncedAddresses
 
-  let formattedConfigFile = tomlify.toToml(parsedConfigFile)
+  parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR
+
+  /*
+  tomlify.toToml() writes our Seed/Port values as a float.  The added precision renders our config
+  file unreadable by the keep-client as it interprets 3919.0 as a string when it expects an int.
+  Here we format the default rendering to write the config file with Seed/Port values as needed.
+  */
+  let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
+    replace: (key, value) => { return (key == 'Port') ? value.toFixed(0) : false }
+  })
 
   fs.writeFileSync('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', formattedConfigFile)
   console.log('keep-tecdsa config written to /mnt/keep-tecdsa/config/keep-tecdsa-config.toml');
