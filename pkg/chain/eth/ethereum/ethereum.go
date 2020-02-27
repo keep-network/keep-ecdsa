@@ -3,6 +3,7 @@ package ethereum
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -93,18 +94,31 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	if err != nil {
 		return err
 	}
-
 	transactorOptions := bind.TransactOpts(*ec.transactorOptions)
 	transactorOptions.GasLimit = 3000000 // enough for a group size of 16
 
-	transaction, err := keepContract.SubmitPublicKey(&transactorOptions, publicKey[:])
-	if err != nil {
-		return err
+	numberOfRetries := 4
+	delay := 250 * time.Millisecond
+	
+	// There might be a scenario, when a public key submission fails because of
+	// a new cloned contract has not been registered by the ethereum node. Common
+	// case is when Ethereum nodes are behind a load balancer and not fully synced
+	// with each other. To mitigate this issue, a client will retry submitting
+	// a public key up to 4 times with a 250ms interval.
+	for i := 1; ; i++ {
+		transaction, err := keepContract.SubmitPublicKey(&transactorOptions, publicKey[:])
+	
+		if err != nil {
+			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
+			if i == numberOfRetries {
+				return err
+			}
+			time.Sleep(delay)
+		} else {
+			logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
+			return nil
+		}
 	}
-
-	logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
-
-	return nil
 }
 
 func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.BondedECDSAKeep, error) {
