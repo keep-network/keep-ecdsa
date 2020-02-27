@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: keep-tecdsa
+  name: keep-tecdsa-1
   namespace: default
   labels:
     keel.sh/policy: all
@@ -14,7 +14,8 @@ spec:
     matchLabels:
       app: keep
       type: tecdsa
-  serviceName: keep-tecdsa
+      id: '1'
+  serviceName: keep-tecdsa-1
   volumeClaimTemplates:
     - metadata:
         name: keep-tecdsa-data
@@ -23,55 +24,57 @@ spec:
         resources:
           requests:
             storage: 512Mi
+    - metadata:
+        name: keep-tecdsa-config
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 5Mi
   template:
     metadata:
       labels:
         app: keep
         type: tecdsa
+        id: '1'
     spec:
       containers:
         - name: keep-tecdsa
           image: gcr.io/keep-dev-fe24/keep-tecdsa
+          imagePullPolicy: Always
           resources:
             limits:
-              cpu: "3"
+              cpu: '3'
             requests:
-              cpu: "2"
+              cpu: '2'
+          ports:
+            - containerPort: 3919
           env:
             - name: KEEP_ETHEREUM_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: eth-account-passphrase
-                  key: account-passphrase
+                  name: eth-account-passphrases
+                  key: account-1
             - name: LOG_LEVEL
-              value: "keep*=debug tss-lib=warning"
+              value: 'keep*=debug tss-lib=warning'
           volumeMounts:
             - name: keep-tecdsa-config
               mountPath: /mnt/keep-tecdsa/config
             - name: keep-tecdsa-data
               mountPath: /mnt/keep-tecdsa/data
             - name: eth-account-keyfile
-              mountPath: /mnt/keep-tecdsa/eth
+              mountPath: /mnt/keep-tecdsa/keyfile
           command:
             [
-              "keep-tecdsa",
-              "-config",
-              "/mnt/keep-tecdsa/config/keep-tecdsa-config.toml",
-              "start",
+              'keep-tecdsa',
+              '-config',
+              '/mnt/keep-tecdsa/config/keep-tecdsa-config.toml',
+              'start',
             ]
-      volumes:
-        - name: eth-account-keyfile
-          configMap:
-            name: keep-tecdsa
-        - name: keep-tecdsa-config
-          persistentVolumeClaim:
-            claimName: keep-tecdsa-config
-        - name: keep-tecdsa-data
-          persistentVolumeClaim:
-            claimName: keep-tecdsa-data
       initContainers:
         - name: initcontainer-provision-keep-tecdsa
           image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-tecdsa
+          imagePullPolicy: Always
           env:
             - name: ETH_RPC_URL
               valueFrom:
@@ -98,22 +101,37 @@ spec:
                 secretKeyRef:
                   name: eth-network-internal
                   key: contract-owner-eth-account-private-key
-            - name: TBTC_SYSTEM_ADDRESS
-              value: "0xcA9b18ebeE7CE5CA481bE3B3C0bC8209d28C807A"
-            - name: KEEP_TECDSA_ETH_KEYFILE_1
-              value: /mnt/keep-tecdsa/eth/eth_account_keyfile_1
-            - name: KEEP_TECDSA_ETH_KEYFILE_2
-              value: /mnt/keep-tecdsa/eth/eth_account_keyfile_2
-            - name: KEEP_TECDSA_ETH_KEYFILE_3
-              value: /mnt/keep-tecdsa/eth/eth_account_keyfile_3
+            - name: KEEP_TECDSA_ETH_KEYFILE_PATH
+              value: /mnt/keep-tecdsa/keyfile/account-1-keyfile
+            - name: KEEP_TECDSA_PEERS
+              value: /ip4/10.102.100.34/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
+            - name: KEEP_TECDSA_ANNOUNCED_ADDRESSES
+              value: ''
+            - name: KEEP_TECDSA_PORT
+              value: '3919'
             - name: KEEP_DATA_DIR
               value: /mnt/keep-tecdsa/data
+            - name: TBTC_SYSTEM_ADDRESS
+              value: '0xcA9b18ebeE7CE5CA481bE3B3C0bC8209d28C807A' # Shall we extract this property to a configmap?
           volumeMounts:
             - name: keep-tecdsa-config
               mountPath: /mnt/keep-tecdsa/config
             - name: eth-account-keyfile
-              mountPath: /mnt/keep-tecdsa/eth
-          command: ["node", "/tmp/provision-keep-tecdsa.js"]
+              mountPath: /mnt/keep-tecdsa/keyfile
+          command: ['node', '/tmp/provision-keep-tecdsa.js']
+      volumes:
+        - name: keep-tecdsa-config
+          persistentVolumeClaim:
+            claimName: keep-tecdsa-config
+        - name: keep-tecdsa-data
+          persistentVolumeClaim:
+            claimName: keep-tecdsa-data
+        - name: eth-account-keyfile
+          configMap:
+            name: eth-account-info
+            items:
+              - key: account-1-keyfile
+                path: account-1-keyfile
       nodeSelector:
         pool-type: keep-tecdsa
       tolerations:
@@ -121,15 +139,3 @@ spec:
           operator: Equal
           value: tecdsa
           effect: NoSchedule
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: keep-tecdsa-config
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Mi
