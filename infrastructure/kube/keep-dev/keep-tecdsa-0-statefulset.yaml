@@ -42,11 +42,6 @@ spec:
         - name: keep-tecdsa
           image: gcr.io/keep-dev-fe24/keep-tecdsa
           imagePullPolicy: Always
-          resources:
-            limits:
-              cpu: '3'
-            requests:
-              cpu: '2'
           ports:
             - containerPort: 3919
           env:
@@ -132,10 +127,4 @@ spec:
             items:
               - key: account-0-keyfile
                 path: account-0-keyfile
-      nodeSelector:
-        pool-type: keep-tecdsa
-      tolerations:
-        - key: type
-          operator: Equal
-          value: tecdsa
-          effect: NoSchedule
+
