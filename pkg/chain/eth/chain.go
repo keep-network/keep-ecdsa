@@ -49,7 +49,8 @@ type BondedECDSAKeep interface {
 	) (subscription.EventSubscription, error)
 
 	// OnPublicKeyPublished is a callback that is invoked upon
-	// notification of mismatched public keys that were submitted by keep members.
+	// notification of a published public key, which means that all members have
+	// submitted the same key.
 	OnPublicKeyPublished(
 		keepAddress common.Address,
 		handler func(event *PublicKeyPublishedEvent),
