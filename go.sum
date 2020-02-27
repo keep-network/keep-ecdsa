@@ -249,10 +249,15 @@ github.com/keep-network/keep-common v0.1.1-0.20200226162925-64dba6ecd055 h1:RmHx
 github.com/keep-network/keep-common v0.1.1-0.20200226162925-64dba6ecd055/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
 github.com/keep-network/keep-common v0.1.1-0.20200227080852-a3733b96703e h1:kxcXimM1dnXEsTPy4il60DmG9u2dN+4JSz8Qf1P1cyk=
 github.com/keep-network/keep-common v0.1.1-0.20200227080852-a3733b96703e/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
+github.com/keep-network/keep-common v0.1.1-0.20200227114730-4d4849a1bb12 h1:kwykxHxAQY6WetmDyTpUuzCBFP4LfPz77VpLTpURRKw=
+github.com/keep-network/keep-common v0.1.1-0.20200227114730-4d4849a1bb12/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
+github.com/keep-network/keep-core v0.7.0/go.mod h1:yO/rRZ4Jok7wpvkr2QzdOqmt4efYCW29dGoQfbmPDlY=
+github.com/keep-network/keep-core v0.9.1/go.mod h1:+bg+0mNutA7iBwL0Id90Cv4UycmmGEwC/z6/9GWYljo=
 github.com/keep-network/keep-core v0.9.2-0.20200220130757-ae3217793fff h1:31ddfaR1Ze+zp1L1lvgDjx5GKMgKfo0YZL+5qWtXTps=
 github.com/keep-network/keep-core v0.9.2-0.20200220130757-ae3217793fff/go.mod h1:+bg+0mNutA7iBwL0Id90Cv4UycmmGEwC/z6/9GWYljo=
 github.com/keep-network/keep-core v0.9.2-0.20200221162942-550bec0a966c h1:R7wNpsCsifhuXNEK98werTW+nTJO+0EYXsOBlxfCCFQ=
 github.com/keep-network/keep-core v0.9.2-0.20200221162942-550bec0a966c/go.mod h1:+bg+0mNutA7iBwL0Id90Cv4UycmmGEwC/z6/9GWYljo=
+github.com/keep-network/keep-tecdsa v0.8.0/go.mod h1:lGVO9noG4r1+GR/dPeiVqoZ5o6ol721cbIUW6nv6gzM=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
@@ -283,6 +288,7 @@ github.com/libp2p/go-eventbus v0.0.2/go.mod h1:Hr/yGlwxA/stuLnpMiu82lpNKpvRy3EaJ
 github.com/libp2p/go-eventbus v0.1.0 h1:mlawomSAjjkk97QnYiEmHsLu7E136+2oCWSHRUvMfzQ=
 github.com/libp2p/go-eventbus v0.1.0/go.mod h1:vROgu5cs5T7cv7POWlWxBaVLxfSegC5UGQf8A2eEmx4=
 github.com/libp2p/go-flow-metrics v0.0.1/go.mod h1:Iv1GH0sG8DtYN3SVJ2eG221wMiNpZxBdp967ls1g+k8=
+github.com/libp2p/go-flow-metrics v0.0.2/go.mod h1:HeoSNUrOJVK1jEpDqVEiUOIXqhbnS27omG0uWU5slZs=
 github.com/libp2p/go-flow-metrics v0.0.3 h1:8tAs/hSdNvUiLgtlSy3mxwxWP4I9y/jlkPFT7epKdeM=
 github.com/libp2p/go-flow-metrics v0.0.3/go.mod h1:HeoSNUrOJVK1jEpDqVEiUOIXqhbnS27omG0uWU5slZs=
 github.com/libp2p/go-libp2p v0.3.1/go.mod h1:e6bwxbdYH1HqWTz8faTChKGR0BjPc8p+6SyP8GTTR7Y=
@@ -306,6 +312,7 @@ github.com/libp2p/go-libp2p-core v0.0.6/go.mod h1:0d9xmaYAVY5qmbp/fcgxHT3ZJsLjYe
 github.com/libp2p/go-libp2p-core v0.2.0/go.mod h1:X0eyB0Gy93v0DZtSYbEM7RnMChm9Uv3j7yRXjO77xSI=
 github.com/libp2p/go-libp2p-core v0.2.2/go.mod h1:8fcwTbsG2B+lTgRJ1ICZtiM5GWCWZVoVrLaDRvIRng0=
 github.com/libp2p/go-libp2p-core v0.2.4/go.mod h1:STh4fdfa5vDYr0/SzYYeqnt+E6KfEV5VxfIrm0bcI0g=
+github.com/libp2p/go-libp2p-core v0.2.5/go.mod h1:6+5zJmKhsf7yHn1RbmYDu08qDUpIUxGdqHuEZckmZOA=
 github.com/libp2p/go-libp2p-core v0.3.0 h1:F7PqduvrztDtFsAa/bcheQ3azmNo+Nq7m8hQY5GiUW8=
 github.com/libp2p/go-libp2p-core v0.3.0/go.mod h1:ACp3DmS3/N64c2jDzcV429ukDpicbL6+TrrxANBjPGw=
 github.com/libp2p/go-libp2p-crypto v0.0.1/go.mod h1:yJkNyDmO341d5wwXxDUGO0LykUVT72ImHNUqh5D/dBE=
@@ -340,6 +347,7 @@ github.com/libp2p/go-libp2p-peerstore v0.1.0/go.mod h1:2CeHkQsr8svp4fZ+Oi9ykN1HB
 github.com/libp2p/go-libp2p-peerstore v0.1.3/go.mod h1:BJ9sHlm59/80oSkpWgr1MyY1ciXAXV397W6h1GH/uKI=
 github.com/libp2p/go-libp2p-peerstore v0.1.4 h1:d23fvq5oYMJ/lkkbO4oTwBp/JP+I/1m5gZJobNXCE/k=
 github.com/libp2p/go-libp2p-peerstore v0.1.4/go.mod h1:+4BDbDiiKf4PzpANZDAT+knVdLxvqh7hXOujessqdzs=
+github.com/libp2p/go-libp2p-pubsub v0.2.1/go.mod h1:Jscj3fk23R5mCrOwb625xjVs5ZEyTZcx/OlTwMDqU+g=
 github.com/libp2p/go-libp2p-pubsub v0.2.6-0.20200127182502-25c434f5f772 h1:u16t4PwsIqui9FzASxM4eDO8P8+uoc0IzLnUHgV8RUc=
 github.com/libp2p/go-libp2p-pubsub v0.2.6-0.20200127182502-25c434f5f772/go.mod h1:BCOicGpswT+5P6WB6jbnW0bcLUwmzskTg7HRwivwEXM=
 github.com/libp2p/go-libp2p-record v0.1.1 h1:ZJK2bHXYUBqObHX+rHLSNrM3M8fmJUlUHrodDPPATmY=
@@ -454,6 +462,7 @@ github.com/multiformats/go-multiaddr v0.0.2/go.mod h1:xKVEak1K9cS1VdmPZW3LSIb6lg
 github.com/multiformats/go-multiaddr v0.0.4/go.mod h1:xKVEak1K9cS1VdmPZW3LSIb6lgmoS58qz/pzqmAxV44=
 github.com/multiformats/go-multiaddr v0.1.0/go.mod h1:xKVEak1K9cS1VdmPZW3LSIb6lgmoS58qz/pzqmAxV44=
 github.com/multiformats/go-multiaddr v0.1.1/go.mod h1:aMKBKNEYmzmDmxfX88/vz+J5IU55txyt0p4aiWVohjo=
+github.com/multiformats/go-multiaddr v0.1.2/go.mod h1:0nO36NvPpyV4QzvTLi/lafl2y95ncPj0vFwVF6k6wJ4=
 github.com/multiformats/go-multiaddr v0.2.0 h1:lR52sFwcTCuQb6bTfnXF6zA2XfyYvyd+5a9qECv/J90=
 github.com/multiformats/go-multiaddr v0.2.0/go.mod h1:0nO36NvPpyV4QzvTLi/lafl2y95ncPj0vFwVF6k6wJ4=
 github.com/multiformats/go-multiaddr-dns v0.0.1/go.mod h1:9kWcqw/Pj6FwxAwW38n/9403szc57zJPs45fmnznu3Q=
@@ -473,6 +482,7 @@ github.com/multiformats/go-multibase v0.0.1/go.mod h1:bja2MqRZ3ggyXtZSEDKpl0uO/g
 github.com/multiformats/go-multihash v0.0.1/go.mod h1:w/5tugSrLEbWqlcgJabL3oHFKTwfvkofsjW2Qa1ct4U=
 github.com/multiformats/go-multihash v0.0.5/go.mod h1:lt/HCbqlQwlPBz7lv0sQCdtfcMtlJvakRUn/0Ual8po=
 github.com/multiformats/go-multihash v0.0.8/go.mod h1:YSLudS+Pi8NHE7o6tb3D8vrpKa63epEDmG8nTduyAew=
+github.com/multiformats/go-multihash v0.0.9/go.mod h1:YSLudS+Pi8NHE7o6tb3D8vrpKa63epEDmG8nTduyAew=
 github.com/multiformats/go-multihash v0.0.10 h1:lMoNbh2Ssd9PUF74Nz008KGzGPlfeV6wH3rit5IIGCM=
 github.com/multiformats/go-multihash v0.0.10/go.mod h1:YSLudS+Pi8NHE7o6tb3D8vrpKa63epEDmG8nTduyAew=
 github.com/multiformats/go-multistream v0.1.0 h1:UpO6jrsjqs46mqAK3n6wKRYFhugss9ArzbyUzU+4wkQ=
