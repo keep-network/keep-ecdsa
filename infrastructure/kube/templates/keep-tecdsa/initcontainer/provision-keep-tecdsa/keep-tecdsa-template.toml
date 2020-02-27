@@ -3,6 +3,7 @@
 # Connection details of ethereum blockchain.
 [ethereum]
   URL = "Set by Kube"
+  URLRPC = "Set by Kube"
 
 [ethereum.account]
   KeyFile = "Set by Kube"
