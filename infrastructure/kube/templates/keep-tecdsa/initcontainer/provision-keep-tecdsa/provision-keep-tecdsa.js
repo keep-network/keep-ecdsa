@@ -17,7 +17,7 @@ var purse = contractOwnerAddress
 
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
-var operatorKeyFiles = [process.env.KEEP_TECDSA_ETH_KEYFILE_1, process.env.KEEP_TECDSA_ETH_KEYFILE_2, process.env.KEEP_TECDSA_ETH_KEYFILE_3]
+var operatorKeyFile = process.env.KEEP_TECDSA_ETH_KEYFILE_PATH
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -66,25 +66,23 @@ async function provisionKeepTecdsa() {
     console.log(`\n<<<<<<<<<<<< Create Sortition Pool for TBTCSystem: ${tbtcSystemContractAddress} >>>>>>>>>>>>`);
     const sortitionPoolContractAddress = await createSortitionPool(tbtcSystemContractAddress);
 
-    for (let i = 0; i < operatorKeyFiles.length; i++) {
-      console.log(`\n<<<<<<<<<<<< Read operator address from key file >>>>>>>>>>>>`);
-      const operatorAddress = readAddressFromKeyFile(operatorKeyFiles[i])
+    console.log(`\n<<<<<<<<<<<< Read operator address from key file >>>>>>>>>>>>`)
+    const operatorAddress = readAddressFromKeyFile(operatorKeyFile)
 
-      console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
-      await fundOperator(operatorAddress, purse, '10');
+    console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`)
+    await fundOperator(operatorAddress, purse, '10')
 
-      console.log(`\n<<<<<<<<<<<< Deposit to KeepBondingContract ${keepBondingContract.address} >>>>>>>>>>>>`);
-      await depositUnbondedValue(operatorAddress, purse, '50');
+    console.log(`\n<<<<<<<<<<<< Deposit to KeepBondingContract ${keepBondingContract.address} >>>>>>>>>>>>`)
+    await depositUnbondedValue(operatorAddress, purse, '50')
 
-      console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
-      await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
+    console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`)
+    await stakeOperator(operatorAddress, contractOwnerAddress, authorizer)
 
-      console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${bondedECDSAKeepFactory.address} >>>>>>>>>>>>`);
-      await authorizeOperatorContract(operatorAddress, bondedECDSAKeepFactory.address, authorizer);
+    console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${bondedECDSAKeepFactory.address} >>>>>>>>>>>>`)
+    await authorizeOperatorContract(operatorAddress, bondedECDSAKeepFactory.address, authorizer)
 
-      console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`);
-      await authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer);
-    }
+    console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`)
+    await authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer)
 
     console.log('\n<<<<<<<<<<<< Creating keep-tecdsa Config File >>>>>>>>>>>>');
     await createKeepTecdsaConfig();
@@ -220,7 +218,7 @@ async function createKeepTecdsaConfig() {
 
   parsedConfigFile.ethereum.URL = ethWSUrl;
 
-  parsedConfigFile.ethereum.account.KeyFile = operatorKeyFiles
+  parsedConfigFile.ethereum.account.KeyFile = operatorKeyFile
 
   parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactory.address;
 
