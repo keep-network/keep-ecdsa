@@ -4,11 +4,6 @@
 solidity_dir=$(realpath ${SOLIDITY_DIR})
 solidity_files := $(wildcard ${solidity_dir}/contracts/*.sol)
 
-# Generated Go code contains references to files located in different packages under
-# the specific package path. We define a path to the main package where generated
-# code will reside.
-package=${GO_PACKAGE_PATH}
-
 # Bare Solidity filenames without .sol or Solidity directory prefix.
 contract_stems := $(notdir $(basename $(solidity_files)))
 # Go abigen bindings in abi/ subdirectory with .go suffix, alongside solc ABI
@@ -49,10 +44,10 @@ abi/%.go: abi/%.abi
 	abigen --abi $< --pkg abi --type $* --out $@
 
 contract/%.go cmd/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*.go cmd/$*.go ${package}
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*.go cmd/$*.go
 
 contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go: abi/BondedECDSAKeepFactory.abi abi/BondedECDSAKeepFactory.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go ${package}
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go 
 
 contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go: abi/BondedECDSAKeep.abi abi/BondedECDSAKeep.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go ${package}
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go
