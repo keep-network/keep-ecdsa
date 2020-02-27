@@ -77,65 +77,6 @@ func (n *Node) GenerateSignerForKeep(
 		signer.PublicKey().Marshal(),
 	)
 
-	publicKeyPublished := make(chan *eth.PublicKeyPublishedEvent)
-	conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
-
-	subscriptionPublicKeyPublished, err := n.ethereumChain.OnPublicKeyPublished(
-		keepAddress,
-		func(onChainEvent *eth.PublicKeyPublishedEvent) {
-			publicKeyPublished <- onChainEvent
-		},
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed on handling public key published event: [%v]",
-			err,
-		)
-	}
-
-	subscriptionConflictingPublicKey, err := n.ethereumChain.OnConflictingPublicKeySubmitted(
-		keepAddress,
-		func(onChainEvent *eth.ConflictingPublicKeySubmittedEvent) {
-			conflictingPublicKey <- onChainEvent
-		},
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed on handling conflicting public key event: [%v]",
-			err,
-		)
-	}
-
-	go func() {
-		for {
-			select {
-			case _, success := <- publicKeyPublished:
-				if !success {
-					return
-				}
-
-				subscriptionConflictingPublicKey.Unsubscribe()
-				close(conflictingPublicKey)
-
-				subscriptionPublicKeyPublished.Unsubscribe()
-				close(publicKeyPublished)
-
-				return
-			case _, success := <- conflictingPublicKey:
-				if !success {
-					return
-				}
-
-				subscriptionConflictingPublicKey.Unsubscribe()
-				close(conflictingPublicKey)
-
-				subscriptionPublicKeyPublished.Unsubscribe()
-				close(publicKeyPublished)
-
-				return
-			}
-		}
-	}()
 
 	// Publish signer's public key on ethereum blockchain in a specific keep
 	// contract.
