@@ -28,7 +28,7 @@ var (
 
 func TestRegisterSigner(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
-	gr := NewKeepsRegistry(persistenceMock)
+	kr := NewKeepsRegistry(persistenceMock)
 
 	signer1, err := newTestSigner(0)
 	if err != nil {
@@ -46,7 +46,7 @@ func TestRegisterSigner(t *testing.T) {
 		name:      fmt.Sprintf("/membership_%s", signer1.MemberID().String()),
 	}
 
-	gr.RegisterSigner(keepAddress1, signer1)
+	kr.RegisterSigner(keepAddress1, signer1)
 
 	// Verify persisted to storage.
 	if len(persistenceMock.persistedGroups) != 1 {
@@ -71,16 +71,16 @@ func TestRegisterSigner(t *testing.T) {
 
 func TestUnregisterSigner(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
-	gr := NewKeepsRegistry(persistenceMock)
+	kr := NewKeepsRegistry(persistenceMock)
 
 	signer1, err := newTestSigner(0)
 	if err != nil {
 		t.Fatalf("failed to get signer: [%v]", err)
 	}
 
-	gr.RegisterSigner(keepAddress1, signer1)
+	kr.RegisterSigner(keepAddress1, signer1)
 
-	gr.UnregisterKeep(keepAddress1)
+	kr.UnregisterKeep(keepAddress1)
 
 	if len(persistenceMock.persistedGroups) != 0 {
 		t.Errorf(
@@ -101,7 +101,7 @@ func TestUnregisterSigner(t *testing.T) {
 
 func TestGetGroup(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
-	gr := NewKeepsRegistry(persistenceMock)
+	kr := NewKeepsRegistry(persistenceMock)
 
 	signers, err := testSigners()
 	if err != nil {
@@ -112,9 +112,9 @@ func TestGetGroup(t *testing.T) {
 	signer2 := signers[1]
 	signer3 := signers[2]
 
-	gr.RegisterSigner(keepAddress1, signer1)
-	gr.RegisterSigner(keepAddress2, signer2)
-	gr.RegisterSigner(keepAddress2, signer3)
+	kr.RegisterSigner(keepAddress1, signer1)
+	kr.RegisterSigner(keepAddress2, signer2)
+	kr.RegisterSigner(keepAddress2, signer3)
 
 	var tests = map[string]struct {
 		keepAddress    common.Address
@@ -137,7 +137,7 @@ func TestGetGroup(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			signer, err := gr.GetSigners(test.keepAddress)
+			signer, err := kr.GetSigners(test.keepAddress)
 
 			if !reflect.DeepEqual(test.expectedSigner, signer) {
 				t.Errorf(
@@ -170,17 +170,17 @@ func TestLoadExistingGroups(t *testing.T) {
 	signer2 := signers[1]
 	signer3 := signers[2]
 
-	gr := NewKeepsRegistry(persistenceMock)
+	kr := NewKeepsRegistry(persistenceMock)
 
-	if len(gr.GetKeepsAddresses()) != 0 {
+	if len(kr.GetKeepsAddresses()) != 0 {
 		t.Fatal("unexpected keeps number at start")
 	}
 
-	gr.LoadExistingKeeps()
+	kr.LoadExistingKeeps()
 
 	signersCount := 0
 
-	if len(gr.GetKeepsAddresses()) != 2 {
+	if len(kr.GetKeepsAddresses()) != 2 {
 		t.Fatalf(
 			"unexpected number of keeps\nexpected: [%d]\nactual:   [%d]",
 			2,
@@ -189,7 +189,7 @@ func TestLoadExistingGroups(t *testing.T) {
 	}
 
 	expectedSigners1 := []*tss.ThresholdSigner{signer1}
-	actualSigners1, err := gr.GetSigners(keepAddress1)
+	actualSigners1, err := kr.GetSigners(keepAddress1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +198,7 @@ func TestLoadExistingGroups(t *testing.T) {
 	}
 
 	expectedSigners2 := []*tss.ThresholdSigner{signer2, signer3}
-	actualSigners2, err := gr.GetSigners(keepAddress2)
+	actualSigners2, err := kr.GetSigners(keepAddress2)
 	if err != nil {
 		t.Fatal(err)
 	}
