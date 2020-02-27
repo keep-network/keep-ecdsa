@@ -13,7 +13,7 @@ spec:
     - port: 3919
       targetPort: 3919
       name: tcp-3919
-selector:
-  app: keep
-  type: tecdsa
-  id: '4'
+  selector:
+    app: keep
+    type: tecdsa
+    id: '4'
