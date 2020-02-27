@@ -3,7 +3,7 @@ package ethereum
 import (
 	cecdsa "crypto/ecdsa"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
@@ -13,6 +13,7 @@ import (
 // EthereumChain is an implementation of ethereum blockchain interface.
 type EthereumChain struct {
 	config                         *ethereum.Config
+	accountKey                     *keystore.Key
 	client                         *ethclient.Client
 	transactorOptions              *bind.TransactOpts
 	callerOptions                  *bind.CallOpts
@@ -21,7 +22,7 @@ type EthereumChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) {
+func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
@@ -44,6 +45,7 @@ func Connect(privateKey *cecdsa.PrivateKey, config *Config) (eth.Handle, error) 
 
 	return &EthereumChain{
 		config:                         config,
+		accountKey:                     accountKey,
 		client:                         client,
 		transactorOptions:              transactorOptions,
 		callerOptions:                  callerOptions,
