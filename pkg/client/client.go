@@ -59,6 +59,12 @@ func Initialize(
 		)
 
 		if event.IsMember(ethereumChain.Address()) {
+			logger.Infof(
+				"member [%s] is starting signer generation for keep [%s]...",
+				ethereumChain.Address().String(),
+				event.KeepAddress.String(),
+			)
+
 			signer, err := tssNode.GenerateSignerForKeep(
 				event.KeepAddress,
 				event.Members,
