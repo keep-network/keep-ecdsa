@@ -25,7 +25,9 @@ module.exports = async function (deployer) {
     // Set service contract owner as operator contract upgrader by default
     const operatorContractUpgrader = await vendor.owner()
     await registry.setOperatorContractUpgrader(vendor.address, operatorContractUpgrader)
+    console.log(`set operator [${operatorContractUpgrader}] as [${vendor.address}] contract upgrader`)
 
     // Register keep factory
     await vendor.registerFactory(BondedECDSAKeepFactory.address)
+    console.log(`registered factory [${BondedECDSAKeepFactory.address}] in vendor contract`)
 }

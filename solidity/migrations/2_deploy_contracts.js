@@ -21,8 +21,6 @@ module.exports = async function (deployer) {
         RandomBeaconAddress = (await RandomBeaconStub.new()).address
 
         RegistryAddress = (await deployer.deploy(Registry)).address
-    } else {
-        RegistryAddress = (await Registry.at(RegistryAddress)).address
     }
 
     await deployer.deploy(
