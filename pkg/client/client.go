@@ -12,7 +12,6 @@ import (
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/node"
 	"github.com/keep-network/keep-tecdsa/pkg/registry"
-	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 var logger = log.Logger("keep-tecdsa")
@@ -95,64 +94,6 @@ func Initialize(
 				)
 			}
 
-			publicKeyPublished := make(chan *eth.PublicKeyPublishedEvent)
-			conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
-
-			subscriptionPublicKeyPublished, err := registerForPublicKeyPublishedEvent(
-				ethereumChain,
-				event.KeepAddress,
-				publicKeyPublished,
-			)
-			if err != nil {
-				logger.Errorf(
-					"failed on handling public key published event: [%v]",
-					err,
-				)
-			}
-
-			subscriptionConflictingPublicKey, err := registerForPublicKeyConflictingEvents(
-				ethereumChain,
-				event.KeepAddress,
-				conflictingPublicKey,
-			)
-			if err != nil {
-				logger.Errorf(
-					"failed on handling conflicting public key event: [%v]",
-					err,
-				)
-			}
-
-			go func() {
-				for {
-					select {
-					case _, success := <- publicKeyPublished:
-						if !success {
-							return
-						}
-
-						subscriptionConflictingPublicKey.Unsubscribe()
-						close(conflictingPublicKey)
-
-						subscriptionPublicKeyPublished.Unsubscribe()
-						close(publicKeyPublished)
-
-						return
-					case _, success := <- conflictingPublicKey:
-						if !success {
-							return
-						}
-
-						subscriptionConflictingPublicKey.Unsubscribe()
-						close(conflictingPublicKey)
-
-						subscriptionPublicKeyPublished.Unsubscribe()
-						close(publicKeyPublished)
-
-						return
-					}
-				}
-			}()
-
 			registerForSignEvents(
 				ethereumChain,
 				tssNode,
@@ -182,43 +123,6 @@ func Initialize(
 	}
 
 	logger.Infof("client initialized")
-}
-
-// registerForPublicKeyConflictingEvents registers for conflicting public keys
-// events submitted by keep members.
-func registerForPublicKeyConflictingEvents(
-	ethereumChain eth.Handle,
-	keepAddress common.Address,
-	conflictingPublicKey chan <- *eth.ConflictingPublicKeySubmittedEvent,
-) (subscription.EventSubscription, error) {
-	return ethereumChain.OnConflictingPublicKeySubmitted(
-		keepAddress,
-		func(event *eth.ConflictingPublicKeySubmittedEvent) {
-			conflictingPublicKey <- event
-			logger.Errorf(
-				"member [%v] has submitted conflicting public key: [%v]",
-				event.SubmittingMember,
-				event.ConflictingPublicKey,
-			)
-	})
-}
-
-// registerForPublicKeyPublishedEvents registers for published public key
-// event accepted by keep.
-func registerForPublicKeyPublishedEvent(
-	ethereumChain eth.Handle,
-	keepAddress common.Address,
-	publicKeyPublished chan <- *eth.PublicKeyPublishedEvent,
-) (subscription.EventSubscription, error) {
-	return ethereumChain.OnPublicKeyPublished(
-		keepAddress,
-		func(event *eth.PublicKeyPublishedEvent) {
-			publicKeyPublished <- event
-			logger.Infof(
-				"public key [%v] has been accepted by keep",
-				event.PublicKey,
-			)
-	})
 }
 
 // registerForSignEvents registers for signature requested events emitted by
