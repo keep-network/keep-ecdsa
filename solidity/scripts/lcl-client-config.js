@@ -36,7 +36,17 @@ module.exports = async function () {
 
             fileContent.SanctionedApplications.Addresses = [sanctionedApp]
 
-            fs.writeFileSync(configFilePath, tomlify.toToml(fileContent, { space: 2 }), (err) => {
+            /*
+            tomlify.toToml() writes our Seed/Port values as a float.  The added precision renders our config
+            file unreadable by the keep-client as it interprets 3919.0 as a string when it expects an int.
+            Here we format the default rendering to write the config file with Seed/Port values as needed.
+            */
+            let formattedConfigFile = tomlify.toToml(fileContent, {
+                space: 2,
+                replace: (key, value) => { return (key == 'Port') ? value.toFixed(0) : false }
+            });
+
+            fs.writeFileSync(configFilePath, formattedConfigFile, (err) => {
                 if (err) throw err
             })
 

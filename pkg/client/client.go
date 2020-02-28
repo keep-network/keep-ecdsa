@@ -7,6 +7,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/node"
@@ -20,6 +21,7 @@ var logger = log.Logger("keep-tecdsa")
 // Expects a slice of sanctioned applications selected by the operator for which
 // operator will be registered as a member candidate.
 func Initialize(
+	operatorPublicKey *operator.PublicKey,
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
 	persistence persistence.Handle,
@@ -60,9 +62,22 @@ func Initialize(
 		)
 
 		if event.IsMember(ethereumChain.Address()) {
-			signer, err := tssNode.GenerateSignerForKeep(
+			logger.Infof(
+				"member [%s] is starting signer generation for keep [%s]...",
+				ethereumChain.Address().String(),
+				event.KeepAddress.String(),
+			)
+
+			memberIDs, err := tssNode.AnnounceSignerPresence(
+				operatorPublicKey,
 				event.KeepAddress,
 				event.Members,
+			)
+
+			signer, err := tssNode.GenerateSignerForKeep(
+				operatorPublicKey,
+				event.KeepAddress,
+				memberIDs,
 			)
 			if err != nil {
 				logger.Errorf("signer generation failed: [%v]", err)

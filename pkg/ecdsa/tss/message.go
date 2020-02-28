@@ -15,13 +15,23 @@ func (m *TSSProtocolMessage) Type() string {
 	return "ecdsa/tss_message"
 }
 
-// JoinMessage is a network message used to notify peer members about readiness
-// to start protool execution.
-type JoinMessage struct {
+// ReadyMessage is a network message used to notify peer members about readiness
+// to start protocol execution.
+type ReadyMessage struct {
 	SenderID MemberID
 }
 
-// Type returns a string type of the `JoinMessage`.
-func (m *JoinMessage) Type() string {
-	return "ecdsa/join_message"
+// Type returns a string type of the `ReadyMessage`.
+func (m *ReadyMessage) Type() string {
+	return "ecdsa/ready_message"
+}
+
+// AnnounceMessage is a network message used to announce peer's presence.
+type AnnounceMessage struct {
+	SenderID MemberID
+}
+
+// Type returns a string type of the `AnnounceMessage`.
+func (m *AnnounceMessage) Type() string {
+	return "ecdsa/announce_message"
 }
