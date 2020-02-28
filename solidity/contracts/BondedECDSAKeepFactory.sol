@@ -220,6 +220,18 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         candidatesPool.updateOperatorStatus(_operator);
     }
 
+    /// @notice Checks if given operator is eligible for the given application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    function isOperatorEligible(address _operator, address _application) public view returns (bool) {
+        BondedSortitionPool candidatesPool = getSortitionPoolForOperator(
+            _operator,
+            _application
+        );
+
+        return candidatesPool.isOperatorEligible(_operator);
+    }
+
     /// @notice Gets bonded sortition pool of specific application for the
     /// operator.
     /// @dev Reverts if the operator is not registered for the application.

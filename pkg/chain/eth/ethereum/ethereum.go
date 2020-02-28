@@ -2,8 +2,10 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
@@ -183,4 +185,41 @@ func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
 // BalanceOf returns the stake balance of the specified address.
 func (ec *EthereumChain) BalanceOf(address common.Address) (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
+}
+
+// TODO: Implementation using real block counter.
+func (ec *EthereumChain) WatchBlocks(ctx context.Context) <-chan uint64 {
+	ticker := time.NewTicker(5 * time.Second)
+	channel := make(chan uint64)
+
+	go func() {
+		block := 1
+		for {
+			select {
+			case <-ticker.C:
+				channel <- uint64(block)
+				block++
+			case <-ctx.Done():
+				ticker.Stop()
+				close(channel)
+				return
+			}
+		}
+	}()
+
+	return channel
+}
+
+func (ec *EthereumChain) IsRegistered(application common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
+		ec.Address(),
+		application,
+	)
+}
+
+func (ec *EthereumChain) IsEligible(application common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorEligible(
+		ec.Address(),
+		application,
+	)
 }

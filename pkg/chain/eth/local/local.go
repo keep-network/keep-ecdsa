@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -141,5 +142,17 @@ func (lc *localChain) IsAwaitingSignature(
 	keepAddress common.Address,
 	digest [32]byte,
 ) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) WatchBlocks(ctx context.Context) <-chan uint64 {
+	panic("implement")
+}
+
+func (lc *localChain) IsRegistered(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) IsEligible(application common.Address) (bool, error) {
 	panic("implement")
 }

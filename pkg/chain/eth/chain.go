@@ -3,6 +3,7 @@
 package eth
 
 import (
+	"context"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -15,6 +16,12 @@ type Handle interface {
 	Address() common.Address
 	// StakeMonitor returns a stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
+	// WatchBlocks returns a channel that will emit new block numbers as they
+	// are mined. When the context provided as the parameter ends, new blocks
+	// are no longer pushed to the channel and the channel is closed. If there
+	// is no reader for the channel or reader is too slow, block updates can be
+	// dropped.
+	WatchBlocks(ctx context.Context) <-chan uint64
 
 	BondedECDSAKeepFactory
 	BondedECDSAKeep
@@ -32,6 +39,13 @@ type BondedECDSAKeepFactory interface {
 	OnBondedECDSAKeepCreated(
 		handler func(event *BondedECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
+
+	// IsRegistered checks if client is already registered as a member candidate
+	// in the factory for the given application.
+	IsRegistered(application common.Address) (bool, error)
+
+	// IsEligible checks if operator is eligible for the given application.
+	IsEligible(application common.Address) (bool, error)
 }
 
 // BondedECDSAKeep is an interface that provides ability to interact with BondedECDSAKeep
