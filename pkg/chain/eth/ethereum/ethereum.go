@@ -3,12 +3,12 @@ package ethereum
 
 import (
 	"fmt"
-	"math/big"
 	"time"
+	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/contract"
@@ -98,20 +98,40 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	if err != nil {
 		return err
 	}
-	transactorOptions := bind.TransactOpts(*ec.transactorOptions)
-	transactorOptions.GasLimit = 3000000 // enough for a group size of 16
-
-	numberOfRetries := 4
-	delay := 250 * time.Millisecond
-
+	
+	submitPubKey := func() error {
+		transaction, err := keepContract.SubmitPublicKey(
+			publicKey[:],
+			ethutil.TransactionOptions{
+				GasLimit: 3000000, // enough for a group size of 16
+			},
+		)
+		if err != nil {
+			return err
+		}
+		
+		logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
+		return nil
+	}
+	
 	// There might be a scenario, when a public key submission fails because of
 	// a new cloned contract has not been registered by the ethereum node. Common
 	// case is when Ethereum nodes are behind a load balancer and not fully synced
 	// with each other. To mitigate this issue, a client will retry submitting
 	// a public key up to 4 times with a 250ms interval.
-	for i := 1; ; i++ {
-		transaction, err := keepContract.SubmitPublicKey(&transactorOptions, publicKey[:])
+	if err := ec.withRetry(submitPubKey); err != nil {
+		return err
+	}
 
+	return nil
+}
+
+func (ec *EthereumChain) withRetry(fn func() error) error {
+	const numberOfRetries = 4
+	const delay = 250 * time.Millisecond
+
+	for i := 1; ; i++ {
+		err := fn()
 		if err != nil {
 			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
 			if i == numberOfRetries {
@@ -119,7 +139,6 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 			}
 			time.Sleep(delay)
 		} else {
-			logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
 			return nil
 		}
 	}
