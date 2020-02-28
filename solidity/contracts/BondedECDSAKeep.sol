@@ -379,8 +379,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @dev The function can be called by the owner of the keep and only if the
     /// keep has not been closed already.
     function closeKeep() external onlyOwner onlyWhenActive {
-        freeMembersBonds();
         markAsClosed();
+        freeMembersBonds();
     }
 
     /// @notice Marks the keep as closed. Keep can be marked as closed only
