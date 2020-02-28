@@ -3,14 +3,15 @@ package ethereum
 
 import (
 	"fmt"
+	"time"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/abi"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/contract"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
 )
@@ -19,14 +20,13 @@ var logger = log.Logger("keep-chain-eth-ethereum")
 
 // Address returns client's ethereum address.
 func (ec *EthereumChain) Address() common.Address {
-	return ec.transactorOptions.From
+	return ec.accountKey.Address
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
 func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) error {
 	transaction, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidate(
-		ec.transactorOptions,
 		application,
 	)
 	if err != nil {
@@ -43,17 +43,21 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
-	return ec.watchECDSAKeepCreated(
+	return ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
 		func(
-			chainEvent *abi.BondedECDSAKeepFactoryBondedECDSAKeepCreated,
+			KeepAddress common.Address,
+			Members []common.Address,
+			Owner common.Address,
+			Application common.Address,
+			blockNumber uint64,
 		) {
 			handler(&eth.BondedECDSAKeepCreatedEvent{
-				KeepAddress: chainEvent.KeepAddress,
-				Members:     chainEvent.Members,
+				KeepAddress: KeepAddress,
+				Members:     Members,
 			})
 		},
 		func(err error) error {
-			return fmt.Errorf("keep created callback failed: [%v]", err)
+			return fmt.Errorf("watch keep created failed: [%v]", err)
 		},
 	)
 }
@@ -69,13 +73,13 @@ func (ec *EthereumChain) OnSignatureRequested(
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
 
-	return ec.watchSignatureRequested(
-		keepContract,
+	return keepContract.WatchSignatureRequested(
 		func(
-			chainEvent *abi.BondedECDSAKeepSignatureRequested,
+			Digest [32]uint8,
+			blockNumber uint64,
 		) {
 			handler(&eth.SignatureRequestedEvent{
-				Digest: chainEvent.Digest,
+				Digest: Digest,
 			})
 		},
 		func(err error) error {
@@ -94,22 +98,59 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	if err != nil {
 		return err
 	}
-
-	transactorOptions := bind.TransactOpts(*ec.transactorOptions)
-	transactorOptions.GasLimit = 3000000 // enough for a group size of 16
-
-	transaction, err := keepContract.SubmitPublicKey(&transactorOptions, publicKey[:])
-	if err != nil {
+	
+	submitPubKey := func() error {
+		transaction, err := keepContract.SubmitPublicKey(
+			publicKey[:],
+			ethutil.TransactionOptions{
+				GasLimit: 3000000, // enough for a group size of 16
+			},
+		)
+		if err != nil {
+			return err
+		}
+		
+		logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
+		return nil
+	}
+	
+	// There might be a scenario, when a public key submission fails because of
+	// a new cloned contract has not been registered by the ethereum node. Common
+	// case is when Ethereum nodes are behind a load balancer and not fully synced
+	// with each other. To mitigate this issue, a client will retry submitting
+	// a public key up to 4 times with a 250ms interval.
+	if err := ec.withRetry(submitPubKey); err != nil {
 		return err
 	}
-
-	logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
 
 	return nil
 }
 
-func (ec *EthereumChain) getKeepContract(address common.Address) (*abi.BondedECDSAKeep, error) {
-	bondedECDSAKeepContract, err := abi.NewBondedECDSAKeep(address, ec.client)
+func (ec *EthereumChain) withRetry(fn func() error) error {
+	const numberOfRetries = 4
+	const delay = 250 * time.Millisecond
+
+	for i := 1; ; i++ {
+		err := fn()
+		if err != nil {
+			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
+			if i == numberOfRetries {
+				return err
+			}
+			time.Sleep(delay)
+		} else {
+			return nil
+		}
+	}
+}
+
+func (ec *EthereumChain) getKeepContract(address common.Address) (*contract.BondedECDSAKeep, error) {
+	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
+		address,
+		ec.accountKey,
+		ec.client,
+		ec.transactionMutex,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +180,6 @@ func (ec *EthereumChain) SubmitSignature(
 	}
 
 	transaction, err := keepContract.SubmitSignature(
-		ec.transactorOptions,
 		signatureR,
 		signatureS,
 		uint8(signature.RecoveryID),
@@ -161,20 +201,17 @@ func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest 
 		return false, err
 	}
 
-	return keepContract.IsAwaitingSignature(
-		ec.callerOptions,
-		digest,
-	)
+	return keepContract.IsAwaitingSignature(digest)
 }
 
 // HasMinimumStake returns true if the specified address is staked.  False will
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.
 func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
-	return ec.bondedECDSAKeepFactoryContract.HasMinimumStake(ec.callerOptions, address)
+	return ec.bondedECDSAKeepFactoryContract.HasMinimumStake(address)
 }
 
 // BalanceOf returns the stake balance of the specified address.
 func (ec *EthereumChain) BalanceOf(address common.Address) (*big.Int, error) {
-	return ec.bondedECDSAKeepFactoryContract.BalanceOf(ec.callerOptions, address)
+	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
 }

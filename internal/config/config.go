@@ -6,8 +6,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
 )
 
 const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
@@ -60,4 +60,21 @@ func ReadConfig(filePath string) (*Config, error) {
 	config.Ethereum.Account.KeyFilePassword = os.Getenv(passwordEnvVariable)
 
 	return config, nil
+}
+
+// ReadEthereumConfig reads in the configuration file at `filePath` and returns
+// its contained Ethereum config, or an error if something fails while reading
+// the file.
+//
+// This is the same as invoking ReadConfig and reading the Ethereum property
+// from the returned config, but is available for external functions that expect
+// to interact solely with Ethereum and are therefore independent of the rest of
+// the config structure.
+func ReadEthereumConfig(filePath string) (ethereum.Config, error) {
+	config, err := ReadConfig(filePath)
+	if err != nil {
+		return ethereum.Config{}, err
+	}
+
+	return config.Ethereum, nil
 }
