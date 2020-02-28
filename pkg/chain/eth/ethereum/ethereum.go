@@ -72,13 +72,13 @@ func (ec *EthereumChain) OnPublicKeyPublished(
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
 
-	return ec.watchPublicKeyPublished(
-		keepContract,
+	return keepContract.WatchPublicKeyPublished(
 		func(
-			chainEvent *abi.BondedECDSAKeepPublicKeyPublished,
+			PublicKey []byte,
+			blockNumber uint64,
 		) {
 			handler(&eth.PublicKeyPublishedEvent{
-				PublicKey: chainEvent.PublicKey,
+				PublicKey: PublicKey,
 			})
 		},
 		func(err error) error {
@@ -98,14 +98,15 @@ func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
 
-	return ec.watchConflictingPublicKeySubmitted(
-		keepContract,
+	return keepContract.WatchConflictingPublicKeySubmitted(
 		func(
-			chainEvent *abi.BondedECDSAKeepConflictingPublicKeySubmitted,
+			SubmittingMember common.Address,
+			ConflictingPublicKey []byte,
+			blockNumber uint64,
 		) {
 			handler(&eth.ConflictingPublicKeySubmittedEvent{
-				SubmittingMember: chainEvent.SubmittingMember,
-				ConflictingPublicKey: chainEvent.ConflictingPublicKey,
+				SubmittingMember:     SubmittingMember,
+				ConflictingPublicKey: ConflictingPublicKey,
 			})
 		},
 		func(err error) error {

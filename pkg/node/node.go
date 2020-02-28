@@ -122,7 +122,6 @@ func (n *Node) GenerateSignerForKeep(
 		signer.PublicKey().Marshal(),
 	)
 
-
 	// Publish signer's public key on ethereum blockchain in a specific keep
 	// contract.
 	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
