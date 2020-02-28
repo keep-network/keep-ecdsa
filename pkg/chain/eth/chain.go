@@ -4,7 +4,8 @@ package eth
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-common/pkg/subscription"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
@@ -12,6 +13,8 @@ import (
 type Handle interface {
 	// Address returns client's ethereum address.
 	Address() common.Address
+	// StakeMonitor returns a stake monitor.
+	StakeMonitor() (chain.StakeMonitor, error)
 
 	BondedECDSAKeepFactory
 	BondedECDSAKeep

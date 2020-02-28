@@ -97,8 +97,13 @@ func GenerateThresholdSigner(
 	}
 	logger.Infof("[party:%s]: initialized key generation", keyGenSigner.keygenParty.PartyID())
 
-	if err := joinProtocol(ctx, group, networkProvider); err != nil {
-		return nil, fmt.Errorf("failed to join the protocol: [%v]", err)
+	broadcastChannel, err := netBridge.getBroadcastChannel()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := readyProtocol(ctx, group, broadcastChannel); err != nil {
+		return nil, fmt.Errorf("readiness signaling protocol failed: [%v]", err)
 	}
 
 	logger.Infof("[party:%s]: starting key generation", keyGenSigner.keygenParty.PartyID())
@@ -132,8 +137,13 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, fmt.Errorf("failed to initialize signing: [%v]", err)
 	}
 
-	if err := joinProtocol(ctx, s.groupInfo, networkProvider); err != nil {
-		return nil, fmt.Errorf("failed to join the protocol:: [%v]", err)
+	broadcastChannel, err := netBridge.getBroadcastChannel()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := readyProtocol(ctx, s.groupInfo, broadcastChannel); err != nil {
+		return nil, fmt.Errorf("readiness signaling protocol failed: [%v]", err)
 	}
 
 	signature, err := signingSigner.sign(ctx)
