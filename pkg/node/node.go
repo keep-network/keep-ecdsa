@@ -129,7 +129,7 @@ func (n *Node) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
-	go n.monitorKeepPublicKeyPublication(keepAddress)
+	go n.monitorKeepPublicKeySubmission(keepAddress)
 
 	err = n.ethereumChain.SubmitKeepPublicKey(
 		keepAddress,
@@ -191,10 +191,10 @@ func (n *Node) CalculateSignature(
 	return nil
 }
 
-// monitorKeepPublicKeyPublication observes the chain until either the first
+// monitorKeepPublicKeySubmission observes the chain until either the first
 // conflicting public key is published or until keep established public key
 // or until key generation timed out.
-func (n *Node) monitorKeepPublicKeyPublication(keepAddress common.Address) {
+func (n *Node) monitorKeepPublicKeySubmission(keepAddress common.Address) {
 	ctx, cancel := context.WithTimeout(context.Background(), tss.KeyGenerationTimeout)
 	defer cancel()
 
