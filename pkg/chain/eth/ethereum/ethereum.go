@@ -3,6 +3,7 @@ package ethereum
 
 import (
 	"fmt"
+	"time"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -97,20 +98,50 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	if err != nil {
 		return err
 	}
-
-	transaction, err := keepContract.SubmitPublicKey(
-		publicKey[:],
-		ethutil.TransactionOptions{
-			GasLimit: 3000000, // enough for a group size of 16
-		},
-	)
-	if err != nil {
+	
+	submitPubKey := func() error {
+		transaction, err := keepContract.SubmitPublicKey(
+			publicKey[:],
+			ethutil.TransactionOptions{
+				GasLimit: 3000000, // enough for a group size of 16
+			},
+		)
+		if err != nil {
+			return err
+		}
+		
+		logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
+		return nil
+	}
+	
+	// There might be a scenario, when a public key submission fails because of
+	// a new cloned contract has not been registered by the ethereum node. Common
+	// case is when Ethereum nodes are behind a load balancer and not fully synced
+	// with each other. To mitigate this issue, a client will retry submitting
+	// a public key up to 4 times with a 250ms interval.
+	if err := ec.withRetry(submitPubKey); err != nil {
 		return err
 	}
 
-	logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
-
 	return nil
+}
+
+func (ec *EthereumChain) withRetry(fn func() error) error {
+	const numberOfRetries = 4
+	const delay = 250 * time.Millisecond
+
+	for i := 1; ; i++ {
+		err := fn()
+		if err != nil {
+			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
+			if i == numberOfRetries {
+				return err
+			}
+			time.Sleep(delay)
+		} else {
+			return nil
+		}
+	}
 }
 
 func (ec *EthereumChain) getKeepContract(address common.Address) (*contract.BondedECDSAKeep, error) {
