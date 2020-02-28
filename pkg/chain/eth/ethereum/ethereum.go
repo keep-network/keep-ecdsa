@@ -205,3 +205,27 @@ func (ec *EthereumChain) IsEligible(application common.Address) (bool, error) {
 		application,
 	)
 }
+
+func (ec *EthereumChain) IsUpToDate(application common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
+		ec.Address(),
+		application,
+	)
+}
+
+func (ec *EthereumChain) UpdateStatus(application common.Address) error {
+	transaction, err := ec.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
+		ec.Address(),
+		application,
+	)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf(
+		"submitted UpdateOperatorStatus transaction with hash: [%x]",
+		transaction.Hash(),
+	)
+
+	return nil
+}

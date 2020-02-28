@@ -155,3 +155,11 @@ func (lc *localChain) IsRegistered(application common.Address) (bool, error) {
 func (lc *localChain) IsEligible(application common.Address) (bool, error) {
 	panic("implement")
 }
+
+func (c *localChain) IsUpToDate(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (c *localChain) UpdateStatus(application common.Address) error {
+	panic("implement")
+}

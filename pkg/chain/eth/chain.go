@@ -41,6 +41,12 @@ type BondedECDSAKeepFactory interface {
 
 	// IsEligible checks if operator is eligible for the given application.
 	IsEligible(application common.Address) (bool, error)
+
+	// IsUpToDate checks operator's status for the given application.
+	IsUpToDate(application common.Address) (bool, error)
+
+	// UpdateStatus updates operator's status for the given application.
+	UpdateStatus(application common.Address) error
 }
 
 // BondedECDSAKeep is an interface that provides ability to interact with BondedECDSAKeep

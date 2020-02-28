@@ -147,9 +147,8 @@ func tryRegisterAsMemberCandidate(
 		)
 	}
 
-	// TODO: implementation of monitorStake
-	// When the operator is registered monitor it's stake.
-	// go monitorStake(ctx, ethereumChain, application)
+	// When the operator is registered monitor it's status.
+	go monitorStatus(ctx, ethereumChain, application)
 }
 
 // registerAsMemberCandidate checks current operator's stake balance and if it's
@@ -197,6 +196,49 @@ func registerAsMemberCandidate(
 			}
 
 			cancel()
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// monitorStatus tracks staker's weight and in case it's changed calls keep
+// factory contract to update the status for given application.
+func monitorStatus(
+	ctx context.Context,
+	ethereumChain eth.Handle,
+	application common.Address,
+) {
+	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
+
+	for {
+		select {
+		case <-newBlockChan:
+			isUpToDate, err := ethereumChain.IsUpToDate(application)
+			if err != nil {
+				logger.Warningf(
+					"failed to check status for application [%s]: [%v]",
+					application.String(),
+					err,
+				)
+				continue
+			}
+
+			if !isUpToDate {
+				logger.Debugf(
+					"updating status for application [%s]",
+					application.String(),
+				)
+
+				if err := ethereumChain.UpdateStatus(application); err != nil {
+					logger.Warningf(
+						"failed to update status for application [%s]: [%v]",
+						application.String(),
+						err,
+					)
+					continue
+				}
+			}
 		case <-ctx.Done():
 			return
 		}
