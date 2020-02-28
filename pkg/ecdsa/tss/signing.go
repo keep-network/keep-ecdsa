@@ -82,7 +82,7 @@ func (s *signingSigner) sign(ctx context.Context) (*ecdsa.Signature, error) {
 				}
 			}
 
-			return nil, timeoutError{signingTimeout, "signing", memberIDs}
+			return nil, timeoutError{SigningTimeout, "signing", memberIDs}
 		}
 	}
 }
