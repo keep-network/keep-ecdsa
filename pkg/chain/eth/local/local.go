@@ -143,3 +143,20 @@ func (lc *localChain) IsAwaitingSignature(
 ) (bool, error) {
 	panic("implement")
 }
+
+// OnConflictingPublicKeySubmitted logs mismatched public keys submitted by
+// members of a keep.
+func (lc *localChain) OnConflictingPublicKeySubmitted(
+	keepAddress common.Address,
+	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
+) (subscription.EventSubscription, error) {
+	panic("implement")
+}
+
+// OnPublicKeyPublshed logs a public key that was accepted by keep.
+func (lc *localChain) OnPublicKeyPublished(
+	keepAddress common.Address,
+	handler func(event *eth.PublicKeyPublishedEvent),
+) (subscription.EventSubscription, error) {
+	panic("implement")
+}

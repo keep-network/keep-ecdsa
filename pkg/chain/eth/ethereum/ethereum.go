@@ -62,6 +62,60 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	)
 }
 
+// OnPublicKeyPublished is a callback that is invoked when an on-chain
+// event of a published public key was emitted.
+func (ec *EthereumChain) OnPublicKeyPublished(
+	keepAddress common.Address,
+	handler func(event *eth.PublicKeyPublishedEvent),
+) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+
+	return keepContract.WatchPublicKeyPublished(
+		func(
+			PublicKey []byte,
+			blockNumber uint64,
+		) {
+			handler(&eth.PublicKeyPublishedEvent{
+				PublicKey: PublicKey,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep created callback failed: [%v]", err)
+		},
+	)
+}
+
+// OnConflictingPublicKeySubmitted is a callback that is invoked when an on-chain
+// notification of a conflicting public key submission is seen.
+func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
+	keepAddress common.Address,
+	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
+) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+
+	return keepContract.WatchConflictingPublicKeySubmitted(
+		func(
+			SubmittingMember common.Address,
+			ConflictingPublicKey []byte,
+			blockNumber uint64,
+		) {
+			handler(&eth.ConflictingPublicKeySubmittedEvent{
+				SubmittingMember:     SubmittingMember,
+				ConflictingPublicKey: ConflictingPublicKey,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep created callback failed: [%v]", err)
+		},
+	)
+}
+
 // OnSignatureRequested is a callback that is invoked on-chain
 // when a keep's signature is requested.
 func (ec *EthereumChain) OnSignatureRequested(
