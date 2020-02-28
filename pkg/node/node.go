@@ -2,7 +2,12 @@
 package node
 
 import (
+	"context"
+	cecdsa "crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
@@ -35,36 +40,76 @@ func NewNode(
 	}
 }
 
+// AnnounceSignerPresence triggers the announce protocol in order to signal
+// signer presence and gather information about other signers.
+func (n *Node) AnnounceSignerPresence(
+	operatorPublicKey *operator.PublicKey,
+	keepAddress common.Address,
+	keepMembersAddresses []common.Address,
+) ([]tss.MemberID, error) {
+	broadcastChannel, err := n.networkProvider.BroadcastChannelFor(keepAddress.Hex())
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
+	}
+
+	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &tss.AnnounceMessage{}
+	})
+
+	if err := broadcastChannel.SetFilter(
+		createAddressFilter(keepMembersAddresses),
+	); err != nil {
+		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
+	}
+
+	return tss.AnnounceProtocol(
+		context.Background(),
+		operatorPublicKey,
+		len(keepMembersAddresses),
+		broadcastChannel,
+	)
+}
+
+func createAddressFilter(
+	addresses []common.Address,
+) net.BroadcastChannelFilter {
+	authorizations := make(map[string]bool, len(addresses))
+	for _, address := range addresses {
+		authorizations[hex.EncodeToString(address.Bytes())] = true
+	}
+
+	return func(authorPublicKey *cecdsa.PublicKey) bool {
+		authorAddress := hex.EncodeToString(
+			crypto.PubkeyToAddress(*authorPublicKey).Bytes(),
+		)
+		_, isAuthorized := authorizations[authorAddress]
+
+		if !isAuthorized {
+			logger.Warningf(
+				"rejecting message from [%v]; author is not authorized",
+				authorAddress,
+			)
+		}
+
+		return isAuthorized
+	}
+}
+
 // GenerateSignerForKeep generates a new threshold signer with ECDSA key pair. The
 // public key is a public key of the signing group. It publishes the public key
 // to the keep. It uses keep address as unique signing group identifier.
 func (n *Node) GenerateSignerForKeep(
+	operatorPublicKey *operator.PublicKey,
 	keepAddress common.Address,
-	keepMembers []common.Address,
+	keepMembersIDs []tss.MemberID,
 ) (*tss.ThresholdSigner, error) {
-	groupMemberIDs := []tss.MemberID{}
-	for _, memberAddress := range keepMembers {
-		memberID, err := tss.MemberIDFromHex(memberAddress.Hex())
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert member address to member ID: [%v]", err)
-		}
-
-		groupMemberIDs = append(
-			groupMemberIDs,
-			memberID,
-		)
-	}
-
-	memberID, err := tss.MemberIDFromHex(n.ethereumChain.Address().String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert client's address to member ID: [%v]", err)
-	}
+	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
 
 	signer, err := tss.GenerateThresholdSigner(
 		keepAddress.Hex(),
 		memberID,
-		groupMemberIDs,
-		uint(len(keepMembers)-1),
+		keepMembersIDs,
+		uint(len(keepMembersIDs)-1),
 		n.networkProvider,
 		n.tssParamsPool.get(),
 	)

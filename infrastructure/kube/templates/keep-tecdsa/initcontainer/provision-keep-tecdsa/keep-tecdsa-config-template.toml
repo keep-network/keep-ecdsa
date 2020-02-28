@@ -3,6 +3,7 @@
 # Connection details of ethereum blockchain.
 [ethereum]
   URL = "Set by Kube"
+  URLRPC = "Set by Kube"
 
 [ethereum.account]
   KeyFile = "Set by Kube"
@@ -10,6 +11,10 @@
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
   BondedECDSAKeepFactory = "Set by Kube"
+
+# Addresses of applications approved by the operator.
+[SanctionedApplications]
+  Addresses = ["Set by Kube"]
 
 [Storage]
     DataDir = "Set by Kube"
