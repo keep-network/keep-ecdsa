@@ -53,4 +53,9 @@ contract IBondedECDSAKeep {
         bytes32 _signedDigest,
         bytes calldata _preimage
     ) external returns (bool _isFraud);
+
+    /// @notice Closes keep when owner decides that they no longer need it.
+    /// Releases bonds to the keep members. Keep can be closed only when
+    /// there is no signing in progress or requested signing process has timed out.
+    function closeKeep() external
 }
