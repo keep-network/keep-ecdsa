@@ -2,15 +2,16 @@
 package ethereum
 
 import (
-	"context"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/contract"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -187,27 +188,8 @@ func (ec *EthereumChain) BalanceOf(address common.Address) (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
 }
 
-// TODO: Implementation using real block counter.
-func (ec *EthereumChain) WatchBlocks(ctx context.Context) <-chan uint64 {
-	ticker := time.NewTicker(5 * time.Second)
-	channel := make(chan uint64)
-
-	go func() {
-		block := 1
-		for {
-			select {
-			case <-ticker.C:
-				channel <- uint64(block)
-				block++
-			case <-ctx.Done():
-				ticker.Stop()
-				close(channel)
-				return
-			}
-		}
-	}()
-
-	return channel
+func (ec *EthereumChain) BlockCounter() chain.BlockCounter {
+	return ec.blockCounter
 }
 
 func (ec *EthereumChain) IsRegistered(application common.Address) (bool, error) {

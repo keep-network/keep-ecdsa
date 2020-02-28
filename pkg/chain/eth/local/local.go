@@ -1,7 +1,6 @@
 package local
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -145,7 +144,7 @@ func (lc *localChain) IsAwaitingSignature(
 	panic("implement")
 }
 
-func (lc *localChain) WatchBlocks(ctx context.Context) <-chan uint64 {
+func (lc *localChain) BlockCounter() chain.BlockCounter {
 	panic("implement")
 }
 

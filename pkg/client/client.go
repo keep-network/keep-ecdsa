@@ -164,7 +164,7 @@ func registerAsMemberCandidate(
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	newBlockChan := ethereumChain.WatchBlocks(ctx)
+	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
 
 	for {
 		select {
