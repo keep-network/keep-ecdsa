@@ -70,13 +70,13 @@ func (ec *EthereumChain) OnKeepClosed(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
-	return ec.watchKeepClosed(
-		keepContract,
+	return keepContract.WatchKeepClosed(
 		func(
-			chainEvent *abi.BondedECDSAKeepKeepClosed,
+			KeepAddress common.Address,
+			blockNumber uint64,
 		) {
 			handler(&eth.KeepClosedEvent{
-				KeepAddress: chainEvent.KeepAddress,
+				KeepAddress: KeepAddress,
 			})
 		},
 		func(err error) error {
