@@ -476,8 +476,18 @@ contract('BondedECDSAKeep', (accounts) => {
   })
 
   describe('seizeSignerBonds', () => {
+    const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
+    const publicKey = '0xa899b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a'
+
+    let initialBondsSum
+
+    beforeEach(async () => {
+      await submitMembersPublicKeys(publicKey)
+      initialBondsSum = await createMembersBonds(keep)
+    })
+
     it('should seize signer bond', async () => {
-      const expectedBondsSum = await createMembersBonds(keep)
+      const expectedBondsSum = initialBondsSum
       const ownerBalanceBefore = await web3.eth.getBalance(owner)
 
       expect(
@@ -500,7 +510,6 @@ contract('BondedECDSAKeep', (accounts) => {
     })
 
     it('should close a keep', async () => {
-      await createMembersBonds(keep)
       await keep.seizeSignerBonds({ from: owner })
       assert.isFalse(await keep.isActive(), 'keep should not be active')
     })
@@ -510,6 +519,35 @@ contract('BondedECDSAKeep', (accounts) => {
         keep.seizeSignerBonds({ from: nonOwner }),
         'Caller is not the keep owner'
       )
+    })
+
+    it('reverts when signing is in progress', async () => {
+      keep.sign(digest, { from: owner })
+      await expectRevert(
+        keep.seizeSignerBonds({ from: owner }),
+        'Requested signing has not timed out yet'
+      )
+    })
+
+    it('reverts when signing was requested but has not timed out yet', async () => {
+      keep.sign(digest, { from: owner })
+
+      const signingTimeout = await keep.signingTimeout.call()
+      await increaseTime(duration.seconds(signingTimeout - 1))
+
+      await expectRevert(
+        keep.seizeSignerBonds({ from: owner }),
+        'Requested signing has not timed out yet'
+      )
+    })
+
+    it('succeeds when signing was requested but timed out', async () => {
+      keep.sign(digest, { from: owner })
+
+      const signingTimeout = await keep.signingTimeout.call()
+      await increaseTime(duration.seconds(signingTimeout))
+
+      await keep.seizeSignerBonds({ from: owner })
     })
   })
 
@@ -856,11 +894,11 @@ contract('BondedECDSAKeep', (accounts) => {
       )
     })
 
-    it('reverts when signing was requested but have not timed out yet', async () => {
+    it('reverts when signing was requested but has not timed out yet', async () => {
       keep.sign(digest, { from: owner })
 
       const signingTimeout = await keep.signingTimeout.call()
-      await increaseTime(duration.seconds(signingTimeout - 1));
+      await increaseTime(duration.seconds(signingTimeout - 1))
 
       await expectRevert(
         keep.closeKeep({ from: owner }),
@@ -872,7 +910,7 @@ contract('BondedECDSAKeep', (accounts) => {
       keep.sign(digest, { from: owner })
 
       const signingTimeout = await keep.signingTimeout.call()
-      await increaseTime(duration.seconds(signingTimeout));
+      await increaseTime(duration.seconds(signingTimeout))
 
       await keep.closeKeep({ from: owner })
     })
