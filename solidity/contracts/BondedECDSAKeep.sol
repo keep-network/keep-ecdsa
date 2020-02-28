@@ -227,11 +227,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return sumBondAmount;
     }
 
-    /// @notice Seizes the signer's ETH bond.
-    // TODO: Add modifier to be able to run this function only when keep was
-    // closed before.
+    /// @notice Seizes the signer's ETH bond. After seizing bonds keep is
+    /// closed so it will not respond to signing requests. Bonds can be seized
+    /// only when there is no signing in progress or requested signing process
+    /// has timed out.
     // TODO: Rename to `seizeMembersBonds` for consistency.
     function seizeSignerBonds() external onlyOwner {
+        markAsClosed();
+
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(
                 members[i],
@@ -373,18 +376,23 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @notice Closes keep when owner decides that they no longer need it.
     /// Releases bonds to the keep members. Keep can be closed only when
     /// there is no signing in progress or requested signing process has timed out.
-    /// @dev The function can be called by the owner of the keep and only is the
+    /// @dev The function can be called by the owner of the keep and only if the
     /// keep has not been closed already.
-    function closeKeep() external onlyOwner onlyWhenActive {
+    function closeKeep() public onlyOwner onlyWhenActive {
+        freeMembersBonds();
+        markAsClosed();
+    }
+
+    /// @notice Marks the keep as closed. Keep can be marked as closed only
+    /// when there is no signing in progress or the requested signing process
+    /// has timed out.
+    function markAsClosed() internal {
         require(
             !isSigningInProgress() || hasSigningTimedOut(),
             "Requested signing has not timed out yet"
         );
 
         isActive = false;
-
-        freeMembersBonds();
-
         emit KeepClosed();
     }
 

@@ -29,6 +29,7 @@ const expect = chai.expect
 contract('BondedECDSAKeep', (accounts) => {
   const bondCreator = accounts[0]
   const owner = accounts[1]
+  const nonOwner = accounts[2]
   const members = [accounts[2], accounts[3], accounts[4]]
   const authorizers = [accounts[2], accounts[3], accounts[4]]
   const signingPool = accounts[5]
@@ -481,7 +482,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
       expect(
         await keep.checkBondAmount()
-      ).to.eq.BN(expectedBondsSum, "incorrect bond amount before seizure");
+      ).to.eq.BN(expectedBondsSum, 'incorrect bond amount before seizure');
 
       let gasPrice = await web3.eth.getGasPrice()
 
@@ -491,11 +492,24 @@ contract('BondedECDSAKeep', (accounts) => {
       let ownerBalanceDiff = new BN(await web3.eth.getBalance(owner))
         .add(seizedSignerBondsFee).sub(new BN(ownerBalanceBefore));
 
-      expect(ownerBalanceDiff).to.eq.BN(expectedBondsSum, "incorrect owner balance");
+      expect(ownerBalanceDiff).to.eq.BN(expectedBondsSum, 'incorrect owner balance');
 
       expect(
         await keep.checkBondAmount()
-      ).to.eq.BN(0, "should zero all the bonds");
+      ).to.eq.BN(0, 'should zero all the bonds');
+    })
+
+    it('should close a keep', async () => {
+      await createMembersBonds(keep)
+      await keep.seizeSignerBonds({ from: owner })
+      assert.isFalse(await keep.isActive(), 'keep should not be active')
+    })
+
+    it('can be called only by owner', async () => {
+      await expectRevert(
+        keep.seizeSignerBonds({ from: nonOwner }),
+        'Caller is not the keep owner'
+      )
     })
   })
 
