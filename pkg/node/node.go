@@ -193,7 +193,7 @@ func (n *Node) CalculateSignature(
 
 // monitorKeepPublicKeyPublication observes the chain until either the first
 // conflicting public key is published or until keep established public key
-// successfully or until key generation times out.
+// or until key generation timed out.
 func (n *Node) monitorKeepPublicKeyPublication(keepAddress common.Address) {
 	ctx, cancel := context.WithTimeout(context.Background(), tss.KeyGenerationTimeout)
 	defer cancel()
