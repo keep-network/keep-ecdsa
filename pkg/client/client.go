@@ -3,6 +3,7 @@ package client
 
 import (
 	"context"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
@@ -111,8 +112,6 @@ func Initialize(
 	for _, application := range sanctionedApplications {
 		go tryRegisterAsMemberCandidate(ctx, ethereumChain, application)
 	}
-
-	logger.Infof("client initialized")
 }
 
 // tryRegisterAsMemberCandidate checks if current operator is registered
@@ -209,6 +208,11 @@ func monitorStatus(
 	ethereumChain eth.Handle,
 	application common.Address,
 ) {
+	logger.Debugf(
+		"starting monitoring status for application [%s]",
+		application.String(),
+	)
+
 	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
 
 	for {
