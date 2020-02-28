@@ -107,7 +107,7 @@ spec:
             - name: KEEP_DATA_DIR
               value: /mnt/keep-tecdsa/data
             - name: TBTC_SYSTEM_ADDRESS
-              value: '0x6a703fDBF0a09BA67E50ed67f6E08dC573AF551e' # Shall we extract this property to a configmap?
+              value: '0x6E4494F5083Cb46269E84A405857636F63Dd5D17' # Shall we extract this property to a configmap?
           volumeMounts:
             - name: keep-tecdsa-config
               mountPath: /mnt/keep-tecdsa/config
@@ -127,4 +127,3 @@ spec:
             items:
               - key: account-0-keyfile
                 path: account-0-keyfile
-
