@@ -807,6 +807,12 @@ contract('BondedECDSAKeep', (accounts) => {
       )
     })
 
+    it('makes the keep no longer active', async () => {
+      assert.isTrue(await keep.isActive(), 'keep should be active');
+      await keep.closeKeep({ from: owner })
+      assert.isFalse(await keep.isActive(), 'keep should no longer be active');
+    })
+
     it('frees members bonds', async () => {
       await keep.closeKeep({ from: owner })
 

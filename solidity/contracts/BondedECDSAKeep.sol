@@ -67,7 +67,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Flag to monitor current keep state. If the keep is active members monitor
     // it and support requests for the keep owner. If the owner decides to close
     // the keep the flag is set to false.
-    bool internal isActive;
+    bool public isActive;
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(bytes32 digest);
