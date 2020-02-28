@@ -224,9 +224,12 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @param _operator Operator's address.
     /// @param _application Customer application address.
     function isOperatorEligible(address _operator, address _application) public view returns (bool) {
-        BondedSortitionPool candidatesPool = getSortitionPoolForOperator(
-            _operator,
-            _application
+        if (candidatesPools[_application] == address(0)) {
+            return false;
+        }
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
         );
 
         return candidatesPool.isOperatorEligible(_operator);
