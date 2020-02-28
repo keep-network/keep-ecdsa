@@ -378,7 +378,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// there is no signing in progress or requested signing process has timed out.
     /// @dev The function can be called by the owner of the keep and only if the
     /// keep has not been closed already.
-    function closeKeep() public onlyOwner onlyWhenActive {
+    function closeKeep() external onlyOwner onlyWhenActive {
         freeMembersBonds();
         markAsClosed();
     }
