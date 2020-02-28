@@ -47,14 +47,14 @@ func (n *Node) AnnounceSignerPresence(
 	keepAddress common.Address,
 	keepMembersAddresses []common.Address,
 ) ([]tss.MemberID, error) {
-	broadcastChannel, err := n.networkProvider.BroadcastChannelFor(keepAddress.Hex())
+	broadcastChannel, err := n.networkProvider.BroadcastChannelFor(
+		"announce-" + keepAddress.Hex(),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
 	}
 
-	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tss.AnnounceMessage{}
-	})
+	tss.RegisterUnmarshalers(broadcastChannel)
 
 	if err := broadcastChannel.SetFilter(
 		createAddressFilter(keepMembersAddresses),

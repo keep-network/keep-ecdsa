@@ -20,7 +20,10 @@ func AnnounceProtocol(
 	[]MemberID,
 	error,
 ) {
-	logger.Infof("starting announce protocol")
+	logger.Infof(
+		"starting announce protocol using channel: [%v]",
+		broadcastChannel.Name(),
+	)
 
 	ctx, cancel := context.WithTimeout(parentCtx, protocolAnnounceTimeout)
 	defer cancel()
