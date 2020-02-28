@@ -107,8 +107,8 @@ func Initialize(
 	})
 
 	// Register client as a candidate member for keep. Validates if the client
-	// is already registered. If not checks client's stake and retries
-	// registration until the stake allows to complete it.
+	// is already registered. If not checks client's eligibility and retries
+	// registration until the client is eligible to complete it.
 	for _, application := range sanctionedApplications {
 		go tryRegisterAsMemberCandidate(ctx, ethereumChain, application)
 	}
