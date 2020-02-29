@@ -409,6 +409,26 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return address(uint160(uint256(keccak256(_publicKey))));
     }
 
+    /// @notice Returns partial signer ETH bonds to the pool as an unbounded
+    /// value. This function is called after bonds have been seized and processed
+    /// by the privileged application. The application may decide to return
+    /// partial bonds back to the pool.
+    function returnPartialSignerBonds() external payable {
+        uint256 memberCount = members.length;
+        uint256 bondPerMember = msg.value.div(memberCount);
+
+        require(bondPerMember > 0, "Partial signer bond must be non-zero");
+
+        for (uint16 i = 0; i < memberCount - 1; i++) {
+            keepBonding.deposit.value(bondPerMember)(members[i]);
+        }
+
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
+        uint256 remainder = msg.value.mod(memberCount);
+        keepBonding.deposit.value(bondPerMember.add(remainder))(members[memberCount - 1]);
+    }
+
     /// @notice Distributes ETH evenly across all keep members. If the value
     /// cannot be divided evenly across the members, it submits the remainder to
     /// the last keep member.

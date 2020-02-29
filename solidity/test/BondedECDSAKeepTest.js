@@ -874,6 +874,92 @@ contract('BondedECDSAKeep', (accounts) => {
     })
   })
 
+  describe('returnPartialSignerBonds', async () => {
+    const singleReturnedBondValue = new BN(2000)
+    const allReturnedBondsValue = singleReturnedBondValue.mul(new BN(members.length))
+
+    const member1Unbonded = new BN(100)
+    const member2Unbounded = new BN(200)
+    const member3Unbounded = new BN(700)
+
+    beforeEach(async () => {
+      await authorizeBondCreator()
+      await depositForBonding(member1Unbonded, member2Unbounded, member3Unbounded)
+    })
+
+    it('correctly distributes ETH', async () => {
+      await keep.returnPartialSignerBonds({value: allReturnedBondsValue})
+
+      const member1UnbondedAfter = await keepBonding.availableUnbondedValue(
+        members[0], bondCreator, signingPool
+      )
+      const member2UnbondedAfter = await keepBonding.availableUnbondedValue(
+        members[1], bondCreator, signingPool
+      )
+      const member3UnbondedAfter = await keepBonding.availableUnbondedValue(
+        members[2], bondCreator, signingPool
+      )
+
+      expect(
+        member1UnbondedAfter, 
+        "incorrect unbounded balance for member 1"
+      ).to.eq.BN(2100) // 2000 + 100
+      expect(
+        member2UnbondedAfter, 
+        "incorrect unbounded balance for member 2"
+      ).to.eq.BN(2200) // 2000 + 200
+      expect(
+        member3UnbondedAfter, 
+        "incorrect unbounded balance for member 3"
+      ).to.eq.BN(2700) // 2000 + 700
+    })
+
+    it('correctly handles remainder', async () => {
+      const remainder = new BN(2)
+
+      await keep.returnPartialSignerBonds({
+        value: allReturnedBondsValue.add(remainder)
+      }) 
+
+      const member1UnbondedAfter = await keepBonding.availableUnbondedValue(
+        members[0], bondCreator, signingPool
+      )
+      const member2UnbondedAfter = await keepBonding.availableUnbondedValue(
+        members[1], bondCreator, signingPool
+      )
+      const member3UnbondedAfter = await keepBonding.availableUnbondedValue(
+        members[2], bondCreator, signingPool
+      )
+
+      expect(
+        member1UnbondedAfter, 
+        "incorrect unbounded balance for member 1"
+      ).to.eq.BN(2100) // 2000 + 100
+      expect(
+        member2UnbondedAfter, 
+        "incorrect unbounded balance for member 2"
+      ).to.eq.BN(2200) // 2000 + 200
+      expect(
+        member3UnbondedAfter, 
+        "incorrect unbounded balance for member 3"
+      ).to.eq.BN(2702) // 2000 + 700 + 2
+    })
+
+    it('reverts with zero value', async () => {
+      await expectRevert(
+        keep.returnPartialSignerBonds({value: 0}),
+        "Partial signer bond must be non-zero"
+      )
+    })
+
+    it('reverts with zero value per member', async () => {
+      await expectRevert(
+        keep.returnPartialSignerBonds({value: members.length - 1}),
+        "Partial signer bond must be non-zero"
+      )
+    })
+  })
+
   describe('distributeETHToMembers', async () => {
     const singleValue = new BN(1000)
     const ethValue = singleValue.mul(new BN(members.length))
@@ -1075,7 +1161,7 @@ contract('BondedECDSAKeep', (accounts) => {
       assert.equal(newBalances.toString(), expectedBalances.toString())
     })
 
-    it('correctly handles unused remainder', async () => {
+    it('correctly handles remainder', async () => {
       const expectedRemainder = new BN(members.length - 1)
       const valueWithRemainder = erc20Value.add(expectedRemainder)
 
@@ -1175,21 +1261,28 @@ contract('BondedECDSAKeep', (accounts) => {
     await keep.submitPublicKey(publicKey, { from: members[2] })
   }
 
+  async function authorizeBondCreator() {
+    await tokenStaking.authorizeOperatorContract(members[0], bondCreator)
+    await tokenStaking.authorizeOperatorContract(members[1], bondCreator)
+    await tokenStaking.authorizeOperatorContract(members[2], bondCreator)
+  }
+
+  async function depositForBonding(member1Value, member2Value, member3Value) {
+    await keepBonding.deposit(members[0], { value: member1Value })
+    await keepBonding.deposit(members[1], { value: member2Value })
+    await keepBonding.deposit(members[2], { value: member3Value })
+  }
+  
   async function createMembersBonds(keep, bond1, bond2, bond3) {
+    await authorizeBondCreator()
+
     const bondValue1 = bond1 || new BN(100)
     const bondValue2 = bond2 || new BN(200)
     const bondValue3 = bond3 || new BN(300)
 
     let referenceID = web3.utils.toBN(web3.utils.padLeft(keep.address, 32))
 
-    await keepBonding.deposit(members[0], { value: bondValue1 })
-    await keepBonding.deposit(members[1], { value: bondValue2 })
-    await keepBonding.deposit(members[2], { value: bondValue3 })
-
-    const bondCreator = accounts[0]
-    await tokenStaking.authorizeOperatorContract(members[0], bondCreator)
-    await tokenStaking.authorizeOperatorContract(members[1], bondCreator)
-    await tokenStaking.authorizeOperatorContract(members[2], bondCreator)
+    await depositForBonding(bondValue1, bondValue2, bondValue3)
 
     await keepBonding.createBond(members[0], keep.address, referenceID, bondValue1, signingPool)
     await keepBonding.createBond(members[1], keep.address, referenceID, bondValue2, signingPool)

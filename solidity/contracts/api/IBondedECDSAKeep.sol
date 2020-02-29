@@ -17,6 +17,12 @@ contract IBondedECDSAKeep {
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external;
 
+    /// @notice Returns partial signer ETH bonds to the pool as an unbounded
+    /// value. This function is called after bonds have been seized and processed
+    /// by the privileged application. The application may decide to return
+    /// partial bonds back to the pool.
+    function returnPartialSignerBonds() external payable
+
     /// @notice Distributes ETH evenly across all keep members.
     /// @dev Only the value passed to this function will be distributed.
     function distributeETHToMembers() external payable;
