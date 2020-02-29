@@ -400,7 +400,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
 
         it("removes operator if stake has changed below minimum", async () => {
-            tokenStaking.setBalance(minimumStake.sub(new BN(1)))
+            await tokenStaking.setBalance(minimumStake.sub(new BN(1)))
             assert.isFalse(
                 await keepFactory.isOperatorUpToDate(member1, application),
                 "unexpected status of the operator after stake change"
@@ -630,7 +630,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
 
         it("removes operator if stake has changed below minimum", async () => {
-            tokenStaking.setBalance(minimumStake.sub(new BN(1)))
+            await tokenStaking.setBalance(minimumStake.sub(new BN(1)))
             assert.isFalse(
                 await keepFactory.isOperatorUpToDate(member1, application),
                 "unexpected status of the operator after stake change"
