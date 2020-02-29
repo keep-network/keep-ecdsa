@@ -960,14 +960,14 @@ contract('BondedECDSAKeep', (accounts) => {
     })
   })
 
-  describe('distributeETHToMembers', async () => {
+  describe('distributeETHReward', async () => {
     const singleValue = new BN(1000)
     const ethValue = singleValue.mul(new BN(members.length))
 
     it('emits event', async () => {
       let startBlock = await web3.eth.getBlockNumber()
 
-      let res = await keep.distributeETHToMembers({ value: ethValue })
+      let res = await keep.distributeETHReward({ value: ethValue })
       truffleAssert.eventEmitted(res, 'ETHDistributedToMembers')
 
       assert.lengthOf(
@@ -983,7 +983,7 @@ contract('BondedECDSAKeep', (accounts) => {
     it('correctly distributes ETH', async () => {
       const initialBalances = await getETHBalancesFromList(members)
 
-      await keep.distributeETHToMembers({ value: ethValue })
+      await keep.distributeETHReward({ value: ethValue })
 
       const newBalances = await getETHBalancesFromList(members)
 
@@ -1006,7 +1006,7 @@ contract('BondedECDSAKeep', (accounts) => {
       const expectedRemainder = new BN(members.length - 1)
       const valueWithRemainder = ethValue.add(expectedRemainder)
 
-      await keep.distributeETHToMembers({ value: valueWithRemainder })
+      await keep.distributeETHReward({ value: valueWithRemainder })
 
       expect(await web3.eth.getBalance(keep.address), 'incorrect keep balance')
         .to.eq.BN(valueWithRemainder)
@@ -1023,7 +1023,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
     it('reverts with zero value', async () => {
       await expectRevert(
-        keep.distributeETHToMembers(),
+        keep.distributeETHReward(),
         'Dividend value must be non-zero'
       )
     })
@@ -1031,7 +1031,7 @@ contract('BondedECDSAKeep', (accounts) => {
     it('reverts with zero dividend', async () => {
       const msgValue = members.length - 1
       await expectRevert(
-        keep.distributeETHToMembers({ value: msgValue }),
+        keep.distributeETHReward({ value: msgValue }),
         'Dividend value must be non-zero'
       )
     })
@@ -1042,7 +1042,7 @@ contract('BondedECDSAKeep', (accounts) => {
     const ethValue = singleValue.mul(new BN(members.length))
 
     beforeEach(async () => {
-      await keep.distributeETHToMembers({ value: ethValue })
+      await keep.distributeETHReward({ value: ethValue })
     })
 
     it('correctly transfers value', async () => {
@@ -1087,7 +1087,7 @@ contract('BondedECDSAKeep', (accounts) => {
       await tokenStaking.setMagpie(member1, beneficiary)
       await tokenStaking.setMagpie(member2, beneficiary)
 
-      await keep.distributeETHToMembers({ value: valueWithRemainder })
+      await keep.distributeETHReward({ value: valueWithRemainder })
 
       await keep.withdraw(member1)
       expect(await keep.getMemberETHBalance(member1), 'incorrect member 1 balance')
@@ -1116,7 +1116,7 @@ contract('BondedECDSAKeep', (accounts) => {
         keepBonding.address
       )
 
-      await keep.distributeETHToMembers({ value: ethValue })
+      await keep.distributeETHReward({ value: ethValue })
 
       expectRevert(
         keep.withdraw(member),

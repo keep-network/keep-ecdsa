@@ -21,11 +21,11 @@ contract IBondedECDSAKeep {
     /// value. This function is called after bonds have been seized and processed
     /// by the privileged application. The application may decide to return
     /// partial bonds back to the pool.
-    function returnPartialSignerBonds() external payable
+    function returnPartialSignerBonds() external payable;
 
-    /// @notice Distributes ETH evenly across all keep members.
-    /// @dev Only the value passed to this function will be distributed.
-    function distributeETHToMembers() external payable;
+    /// @notice Distributes ETH reward evenly across keep signer beneficiaries.
+    /// @dev Only the value passed to this function is distributed.
+    function distributeETHReward() external payable;
 
     /// @notice Distributes ERC20 token evenly across all keep members.
     /// @dev This works with any ERC20 token that implements a transferFrom

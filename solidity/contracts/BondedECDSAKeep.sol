@@ -230,7 +230,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @notice Seizes the signer's ETH bond.
     // TODO: Add modifier to be able to run this function only when keep was
     // closed before.
-    // TODO: Rename to `seizeMembersBonds` for consistency.
     function seizeSignerBonds() external onlyOwner {
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(
@@ -429,14 +428,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         keepBonding.deposit.value(bondPerMember.add(remainder))(members[memberCount - 1]);
     }
 
-    /// @notice Distributes ETH evenly across all keep members. If the value
-    /// cannot be divided evenly across the members, it submits the remainder to
-    /// the last keep member.
-    /// @dev Only the value passed to this function will be distributed. This
-    /// function does not transfer the value to the members' accounts, instead
+    /// @notice Distributes ETH reward evenly across all keep signer beneficiaries.
+    /// If the value cannot be divided evenly across all signers, it sends the
+    /// remainder to the last keep signer.
+    /// @dev Only the value passed to this function is distributed. This
+    /// function does not transfer the value to beneficiaries accounts; instead
     /// it holds the value in the contract until withdraw function is called for
-    /// the specific member.
-    function distributeETHToMembers() external payable {
+    /// the specific signer.
+    function distributeETHReward() external payable {
         uint256 memberCount = members.length;
         uint256 dividend = msg.value.div(memberCount);
 
@@ -446,7 +445,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             memberETHBalances[members[i]] += dividend;
         }
 
-        // Transfer of dividend for the last member. Remainder might be equal to
+        // Transfer dividend to the last signer. Remainder might be equal to
         // zero in case of even distribution or some small number.
         uint256 remainder = msg.value.mod(memberCount);
         memberETHBalances[members[memberCount - 1]] += dividend.add(remainder);

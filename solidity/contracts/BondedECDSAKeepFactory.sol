@@ -316,7 +316,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             : msg.value;
         if (signerSubsidy > 0) {
             subsidyPool -= signerSubsidy;
-            keep.distributeETHToMembers.value(signerSubsidy)();
+            keep.distributeETHReward.value(signerSubsidy)();
         }
 
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
