@@ -127,7 +127,7 @@ contract('BondedECDSAKeep', (accounts) => {
     })
   })
 
-  describe('#sign', async () => {
+  describe('sign', async () => {
     const publicKey = '0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051'
     const digest = '0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da'
 
@@ -1138,7 +1138,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
   })
 
-  describe('#distributeERC20ToMembers', async () => {
+  describe('distributeERC20Reward', async () => {
     const erc20Value = new BN(2000).mul(new BN(members.length))
     let token
 
@@ -1154,7 +1154,7 @@ contract('BondedECDSAKeep', (accounts) => {
         erc20Value / members.length
       )
 
-      await keep.distributeERC20ToMembers(token.address, erc20Value)
+      await keep.distributeERC20Reward(token.address, erc20Value)
 
       const newBalances = await getERC20BalancesFromList(members, token)
 
@@ -1175,7 +1175,7 @@ contract('BondedECDSAKeep', (accounts) => {
       const lastMemberIndex = members.length - 1
       expectedBalances[lastMemberIndex] = expectedBalances[lastMemberIndex].add(expectedRemainder)
 
-      await keep.distributeERC20ToMembers(token.address, valueWithRemainder)
+      await keep.distributeERC20Reward(token.address, valueWithRemainder)
 
       const newBalances = await getERC20BalancesFromList(members, token)
 
@@ -1189,14 +1189,14 @@ contract('BondedECDSAKeep', (accounts) => {
 
     it('fails with insufficient approval', async () => {
       await expectRevert(
-        keep.distributeERC20ToMembers(token.address, erc20Value),
+        keep.distributeERC20Reward(token.address, erc20Value),
         "SafeMath: subtraction overflow"
       )
     })
 
     it('fails with zero value', async () => {
       await expectRevert(
-        keep.distributeERC20ToMembers(token.address, 0),
+        keep.distributeERC20Reward(token.address, 0),
         "Dividend value must be non-zero"
       )
     })
@@ -1207,7 +1207,7 @@ contract('BondedECDSAKeep', (accounts) => {
       await initializeTokens(token, keep, accounts[0], value)
 
       await expectRevert(
-        keep.distributeERC20ToMembers(token.address, value),
+        keep.distributeERC20Reward(token.address, value),
         'Dividend value must be non-zero'
       )
     })
@@ -1242,7 +1242,7 @@ contract('BondedECDSAKeep', (accounts) => {
       await tokenStaking.setMagpie(member2, beneficiary)
 
 
-      await keep.distributeERC20ToMembers(token.address, valueWithRemainder)
+      await keep.distributeERC20Reward(token.address, valueWithRemainder)
 
       // Check balances of all keep members' and beneficiary.
       const newBalances = await getERC20BalancesFromList(accountsInTest, token)

@@ -453,18 +453,17 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         emit ETHDistributedToMembers();
     }
 
-    /// @notice Distributes ERC20 token evenly across all keep members.
-    /// The token is sent to the beneficiary of each member.
+    /// @notice Distributes ERC20 reward evenly across all keep signer beneficiaries.
     /// @dev This works with any ERC20 token that implements a transferFrom
     /// function similar to the interface imported here from
-    /// openZeppelin. This function only has authority over pre-approved
+    /// OpenZeppelin. This function only has authority over pre-approved
     /// token amount. We don't explicitly check for allowance, SafeMath
     /// subtraction overflow is enough protection. If the value cannot be
-    /// divided evenly across the members, it submits the remainder to the last
-    /// keep member.
+    /// divided evenly across the signers, it submits the remainder to the last
+    /// keep signer.
     /// @param _tokenAddress Address of the ERC20 token to distribute.
     /// @param _value Amount of ERC20 token to distribute.
-    function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
+    function distributeERC20Reward(address _tokenAddress, uint256 _value)
         external
     {
         IERC20 token = IERC20(_tokenAddress);

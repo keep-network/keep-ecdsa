@@ -27,7 +27,7 @@ contract IBondedECDSAKeep {
     /// @dev Only the value passed to this function is distributed.
     function distributeETHReward() external payable;
 
-    /// @notice Distributes ERC20 token evenly across all keep members.
+    /// @notice Distributes ERC20 reward evenly across keep signer beneficiaries.
     /// @dev This works with any ERC20 token that implements a transferFrom
     /// function.
     /// This function only has authority over pre-approved
@@ -35,7 +35,7 @@ contract IBondedECDSAKeep {
     /// subtraction overflow is enough protection.
     /// @param _tokenAddress Address of the ERC20 token to distribute.
     /// @param _value Amount of ERC20 token to distribute.
-    function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
+    function distributeERC20Reward(address _tokenAddress, uint256 _value)
         external;
 
     /// @notice Seizes the signers' ETH bond.
