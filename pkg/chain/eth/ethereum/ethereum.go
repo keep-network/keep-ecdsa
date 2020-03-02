@@ -67,22 +67,19 @@ func (ec *EthereumChain) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
-	}
-	return keepContract.WatchKeepClosed(
-		func(
-			KeepAddress common.Address,
-			blockNumber uint64,
-		) {
-			handler(&eth.KeepClosedEvent{
-				KeepAddress: KeepAddress,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf("keep closed callback failed: [%v]", err)
-		},
+		keepContract, err := ec.getKeepContract(keepAddress)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+		}
+		return keepContract.WatchKeepClosed(
+			func(
+				blockNumber uint64,
+			) {
+				handler(&eth.KeepClosedEvent{})
+			},
+			func(err error) error {
+				return fmt.Errorf("keep closed callback failed: [%v]", err)
+			},
 	)
 }
 		
