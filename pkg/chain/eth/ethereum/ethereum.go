@@ -3,6 +3,7 @@ package ethereum
 
 import (
 	"fmt"
+	"time"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -84,6 +85,61 @@ func (ec *EthereumChain) OnKeepClosed(
 		},
 	)
 }
+		
+
+// OnPublicKeyPublished is a callback that is invoked when an on-chain
+// event of a published public key was emitted.
+func (ec *EthereumChain) OnPublicKeyPublished(
+	keepAddress common.Address,
+	handler func(event *eth.PublicKeyPublishedEvent),
+) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+
+	return keepContract.WatchPublicKeyPublished(
+		func(
+			PublicKey []byte,
+			blockNumber uint64,
+		) {
+			handler(&eth.PublicKeyPublishedEvent{
+				PublicKey: PublicKey,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep created callback failed: [%v]", err)
+		},
+	)
+}
+
+// OnConflictingPublicKeySubmitted is a callback that is invoked when an on-chain
+// notification of a conflicting public key submission is seen.
+func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
+	keepAddress common.Address,
+	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
+) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+
+	return keepContract.WatchConflictingPublicKeySubmitted(
+		func(
+			SubmittingMember common.Address,
+			ConflictingPublicKey []byte,
+			blockNumber uint64,
+		) {
+			handler(&eth.ConflictingPublicKeySubmittedEvent{
+				SubmittingMember:     SubmittingMember,
+				ConflictingPublicKey: ConflictingPublicKey,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep created callback failed: [%v]", err)
+		},
+	)
+}
 
 // OnSignatureRequested is a callback that is invoked on-chain
 // when a keep's signature is requested.
@@ -121,20 +177,50 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	if err != nil {
 		return err
 	}
-
-	transaction, err := keepContract.SubmitPublicKey(
-		publicKey[:],
-		ethutil.TransactionOptions{
-			GasLimit: 3000000, // enough for a group size of 16
-		},
-	)
-	if err != nil {
+	
+	submitPubKey := func() error {
+		transaction, err := keepContract.SubmitPublicKey(
+			publicKey[:],
+			ethutil.TransactionOptions{
+				GasLimit: 3000000, // enough for a group size of 16
+			},
+		)
+		if err != nil {
+			return err
+		}
+		
+		logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
+		return nil
+	}
+	
+	// There might be a scenario, when a public key submission fails because of
+	// a new cloned contract has not been registered by the ethereum node. Common
+	// case is when Ethereum nodes are behind a load balancer and not fully synced
+	// with each other. To mitigate this issue, a client will retry submitting
+	// a public key up to 4 times with a 250ms interval.
+	if err := ec.withRetry(submitPubKey); err != nil {
 		return err
 	}
 
-	logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
-
 	return nil
+}
+
+func (ec *EthereumChain) withRetry(fn func() error) error {
+	const numberOfRetries = 4
+	const delay = 250 * time.Millisecond
+
+	for i := 1; ; i++ {
+		err := fn()
+		if err != nil {
+			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
+			if i == numberOfRetries {
+				return err
+			}
+			time.Sleep(delay)
+		} else {
+			return nil
+		}
+	}
 }
 
 func (ec *EthereumChain) getKeepContract(address common.Address) (*contract.BondedECDSAKeep, error) {
