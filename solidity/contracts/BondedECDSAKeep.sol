@@ -517,4 +517,16 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         require(isActive, "Keep is not active");
         _;
     }
+
+    /// @notice Gets the owner of the keep.
+    /// @return Address of the keep owner.
+    function getOwner() external view returns (address){
+        return owner;
+    }
+
+    /// @notice Gets the timestamp the keep was opened at.
+    /// @return timestamp the keep was opened at.
+    function getTimestamp() external view returns (uint256){
+        return keyGenerationStartTimestamp;
+    }
 }
