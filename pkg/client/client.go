@@ -181,7 +181,7 @@ func registerAsMemberCandidate(
 
 			if !isEligible {
 				logger.Warningf(
-					"operator isn't eligible for application [%s]",
+					"operator is not eligible for application [%s]",
 					application.String(),
 				)
 				continue
@@ -236,13 +236,13 @@ func monitorSignerPoolStatus(
 					application.String(),
 				)
 
-				if err := ethereumChain.UpdateStatusForApplication(application); err != nil {
+				err := ethereumChain.UpdateStatusForApplication(application)
+				if err != nil {
 					logger.Errorf(
 						"failed to update status for application [%s]: [%v]",
 						application.String(),
 						err,
 					)
-					continue
 				}
 			}
 		case <-ctx.Done():
