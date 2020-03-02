@@ -40,6 +40,13 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // master contract for cloning.
     address public masterBondedECDSAKeepAddress;
 
+    // List of all opened keeps
+    address[] public keeps;
+
+    // Maps creation timestamp to ecach keep address
+    mapping(address => uint256) creationTime;
+
+
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
 
