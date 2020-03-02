@@ -12,7 +12,6 @@ type BondedECDSAKeepCreatedEvent struct {
 
 // KeepClosedEvent is an event emitted on a closing keep.
 type KeepClosedEvent struct {
-	KeepAddress common.Address   // keep contract address
 }
 
 // IsMember checks if list of members contains the given address.
