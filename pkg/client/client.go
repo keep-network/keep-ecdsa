@@ -169,7 +169,7 @@ func registerAsMemberCandidate(
 		case <-newBlockChan:
 			isEligible, err := ethereumChain.IsEligibleForApplication(application)
 			if err != nil {
-				logger.Warningf(
+				logger.Errorf(
 					"failed to check operator eligibility for application [%s]: [%v]",
 					application.String(),
 					err,
@@ -186,7 +186,7 @@ func registerAsMemberCandidate(
 			}
 
 			if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
-				logger.Warningf(
+				logger.Errorf(
 					"failed to register member for application [%s]: [%v]",
 					application.String(),
 					err,
@@ -220,7 +220,7 @@ func monitorSignerPoolStatus(
 		case <-newBlockChan:
 			isUpToDate, err := ethereumChain.IsStatusUpToDateForApplication(application)
 			if err != nil {
-				logger.Warningf(
+				logger.Errorf(
 					"failed to check status for application [%s]: [%v]",
 					application.String(),
 					err,
@@ -229,13 +229,13 @@ func monitorSignerPoolStatus(
 			}
 
 			if !isUpToDate {
-				logger.Debugf(
+				logger.Infof(
 					"updating status for application [%s]",
 					application.String(),
 				)
 
 				if err := ethereumChain.UpdateStatusForApplication(application); err != nil {
-					logger.Warningf(
+					logger.Errorf(
 						"failed to update status for application [%s]: [%v]",
 						application.String(),
 						err,
