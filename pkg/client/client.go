@@ -44,6 +44,11 @@ func Initialize(
 					keepAddress,
 					signer,
 				)
+				registerForKeepClosedEvents(
+					ethereumChain,
+					keepAddress,
+					keepsRegistry,
+				)
 				logger.Debugf(
 					"signer registered for events from keep: [%s]",
 					keepAddress.String(),
@@ -142,10 +147,8 @@ func registerForKeepClosedEvents(
 		keepAddress,
 		func(event *eth.KeepClosedEvent) {
 			logger.Infof("keep [%v] is being closed", keepAddress)
-	
+			keepsRegistry.UnregisterKeep(keepAddress)
 		})
-
-	keepsRegistry.UnregisterKeep(keepAddress)
 }
 
 // registerForSignEvents registers for signature requested events emitted by
