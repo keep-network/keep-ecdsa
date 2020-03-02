@@ -24,10 +24,7 @@ func readyProtocol(
 	group *groupInfo,
 	broadcastChannel net.BroadcastChannel,
 ) error {
-	logger.Infof(
-		"starting ready protocol using channel: [%v]",
-		broadcastChannel.Name(),
-	)
+	logger.Infof("signalling readiness")
 
 	ctx, cancel := context.WithTimeout(parentCtx, protocolReadyTimeout)
 	defer cancel()
@@ -95,7 +92,7 @@ func readyProtocol(
 			"waiting for readiness timed out after: [%v]", protocolReadyTimeout,
 		)
 	case context.Canceled:
-		logger.Infof("ready protocol completed successfully")
+		logger.Infof("successfully signalled readiness")
 
 		return nil
 	default:
