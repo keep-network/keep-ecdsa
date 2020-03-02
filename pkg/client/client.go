@@ -109,15 +109,17 @@ func Initialize(
 	// Register client as a candidate member for keep. Validates if the client
 	// is already registered. If not checks client's eligibility and retries
 	// registration until the client is eligible to complete it.
+	// Also, triggers the monitoring process to keep the operator's status
+	// up to date in the pool.
 	for _, application := range sanctionedApplications {
-		go tryRegisterAsMemberCandidate(ctx, ethereumChain, application)
+		go checkStatusAndRegisterForApplication(ctx, ethereumChain, application)
 	}
 }
 
-// tryRegisterAsMemberCandidate checks if current operator is registered
-// as a member candidate for the given application. If not, it triggers
-// registration process.
-func tryRegisterAsMemberCandidate(
+// checkStatusAndRegisterForApplication checks if the current operator is
+// registered as a signer candidate for the given application. If not, it
+// triggers registration and status monitoring process.
+func checkStatusAndRegisterForApplication(
 	ctx context.Context,
 	ethereumChain eth.Handle,
 	application common.Address,
