@@ -192,28 +192,28 @@ func (ec *EthereumChain) BlockCounter() chain.BlockCounter {
 	return ec.blockCounter
 }
 
-func (ec *EthereumChain) IsRegistered(application common.Address) (bool, error) {
+func (ec *EthereumChain) IsRegisteredForApplication(application common.Address) (bool, error) {
 	return ec.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
 		ec.Address(),
 		application,
 	)
 }
 
-func (ec *EthereumChain) IsEligible(application common.Address) (bool, error) {
+func (ec *EthereumChain) IsEligibleForApplication(application common.Address) (bool, error) {
 	return ec.bondedECDSAKeepFactoryContract.IsOperatorEligible(
 		ec.Address(),
 		application,
 	)
 }
 
-func (ec *EthereumChain) IsUpToDate(application common.Address) (bool, error) {
+func (ec *EthereumChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
 	return ec.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
 		ec.Address(),
 		application,
 	)
 }
 
-func (ec *EthereumChain) UpdateStatus(application common.Address) error {
+func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) error {
 	transaction, err := ec.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
 		ec.Address(),
 		application,

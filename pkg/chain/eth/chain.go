@@ -35,22 +35,25 @@ type BondedECDSAKeepFactory interface {
 		handler func(event *BondedECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
 
-	// IsRegistered checks if client is already registered as a member candidate
-	// in the factory for the given application.
-	IsRegistered(application common.Address) (bool, error)
+	// IsRegisteredForApplication checks if the operator is registered
+	// as a signer candidate in the factory for the given application.
+	IsRegisteredForApplication(application common.Address) (bool, error)
 
-	// IsEligible checks if operator is eligible for the given application.
-	IsEligible(application common.Address) (bool, error)
+	// IsEligibleForApplication checks if the operator is eligible to register
+	// as a signer candidate for the given application.
+	IsEligibleForApplication(application common.Address) (bool, error)
 
-	// IsUpToDate checks operator's status for the given application.
-	IsUpToDate(application common.Address) (bool, error)
+	// IsStatusUpToDateForApplication checks if the operator's status
+	// is up to date in the signers' pool of the given application.
+	IsStatusUpToDateForApplication(application common.Address) (bool, error)
 
-	// UpdateStatus updates operator's status for the given application.
-	UpdateStatus(application common.Address) error
+	// UpdateStatusForApplication updates the operator's status in the signers'
+	// pool for the given application.
+	UpdateStatusForApplication(application common.Address) error
 }
 
-// BondedECDSAKeep is an interface that provides ability to interact with BondedECDSAKeep
-// ethereum contracts.
+// BondedECDSAKeep is an interface that provides ability to interact with
+// BondedECDSAKeep ethereum contracts.
 type BondedECDSAKeep interface {
 	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new signing request for a given keep is seen.

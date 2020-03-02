@@ -148,18 +148,18 @@ func (lc *localChain) BlockCounter() chain.BlockCounter {
 	panic("implement")
 }
 
-func (lc *localChain) IsRegistered(application common.Address) (bool, error) {
+func (lc *localChain) IsRegisteredForApplication(application common.Address) (bool, error) {
 	panic("implement")
 }
 
-func (lc *localChain) IsEligible(application common.Address) (bool, error) {
+func (lc *localChain) IsEligibleForApplication(application common.Address) (bool, error) {
 	panic("implement")
 }
 
-func (c *localChain) IsUpToDate(application common.Address) (bool, error) {
+func (lc *localChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
 	panic("implement")
 }
 
-func (c *localChain) UpdateStatus(application common.Address) error {
+func (lc *localChain) UpdateStatusForApplication(application common.Address) error {
 	panic("implement")
 }

@@ -122,7 +122,7 @@ func tryRegisterAsMemberCandidate(
 	ethereumChain eth.Handle,
 	application common.Address,
 ) {
-	isRegistered, err := ethereumChain.IsRegistered(application)
+	isRegistered, err := ethereumChain.IsRegisteredForApplication(application)
 	if err != nil {
 		logger.Errorf(
 			"failed to check if member is registered for application [%s]: [%v]",
@@ -167,7 +167,7 @@ func registerAsMemberCandidate(
 	for {
 		select {
 		case <-newBlockChan:
-			isEligible, err := ethereumChain.IsEligible(application)
+			isEligible, err := ethereumChain.IsEligibleForApplication(application)
 			if err != nil {
 				logger.Warningf(
 					"failed to check operator eligibility for application [%s]: [%v]",
@@ -218,7 +218,7 @@ func monitorStatus(
 	for {
 		select {
 		case <-newBlockChan:
-			isUpToDate, err := ethereumChain.IsUpToDate(application)
+			isUpToDate, err := ethereumChain.IsStatusUpToDateForApplication(application)
 			if err != nil {
 				logger.Warningf(
 					"failed to check status for application [%s]: [%v]",
@@ -234,7 +234,7 @@ func monitorStatus(
 					application.String(),
 				)
 
-				if err := ethereumChain.UpdateStatus(application); err != nil {
+				if err := ethereumChain.UpdateStatusForApplication(application); err != nil {
 					logger.Warningf(
 						"failed to update status for application [%s]: [%v]",
 						application.String(),
