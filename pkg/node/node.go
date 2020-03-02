@@ -52,9 +52,7 @@ func (n *Node) AnnounceSignerPresence(
 		return nil, fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
 	}
 
-	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tss.AnnounceMessage{}
-	})
+	tss.RegisterUnmarshalers(broadcastChannel)
 
 	if err := broadcastChannel.SetFilter(
 		createAddressFilter(keepMembersAddresses),
