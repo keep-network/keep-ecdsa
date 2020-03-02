@@ -32,7 +32,10 @@ contract IBondedECDSAKeep {
     function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
         external;
 
-    /// @notice Seizes the signers' ETH bond.
+    /// @notice Seizes the signers' ETH bond. After seizing bonds keep is
+    /// closed so it will not respond to signing requests. Bonds can be seized
+    /// only when there is no signing in progress or requested signing process
+    /// has timed out.
     function seizeSignerBonds() external;
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was

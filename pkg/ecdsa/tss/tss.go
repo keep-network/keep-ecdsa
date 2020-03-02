@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	keyGenerationTimeout = 150 * time.Minute
-	signingTimeout       = 90 * time.Minute
+	KeyGenerationTimeout = 150 * time.Minute
+	SigningTimeout       = 90 * time.Minute
 )
 
 var logger = log.Logger("keep-tss")
@@ -83,7 +83,7 @@ func GenerateThresholdSigner(
 		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), keyGenerationTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), KeyGenerationTimeout)
 	defer cancel()
 
 	keyGenSigner, err := initializeKeyGeneration(
@@ -97,8 +97,13 @@ func GenerateThresholdSigner(
 	}
 	logger.Infof("[party:%s]: initialized key generation", keyGenSigner.keygenParty.PartyID())
 
-	if err := joinProtocol(ctx, group, networkProvider); err != nil {
-		return nil, fmt.Errorf("failed to join the protocol: [%v]", err)
+	broadcastChannel, err := netBridge.getBroadcastChannel()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := readyProtocol(ctx, group, broadcastChannel); err != nil {
+		return nil, fmt.Errorf("readiness signaling protocol failed: [%v]", err)
 	}
 
 	logger.Infof("[party:%s]: starting key generation", keyGenSigner.keygenParty.PartyID())
@@ -124,7 +129,7 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), signingTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
 	defer cancel()
 
 	signingSigner, err := s.initializeSigning(ctx, digest[:], netBridge)
@@ -132,8 +137,13 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, fmt.Errorf("failed to initialize signing: [%v]", err)
 	}
 
-	if err := joinProtocol(ctx, s.groupInfo, networkProvider); err != nil {
-		return nil, fmt.Errorf("failed to join the protocol:: [%v]", err)
+	broadcastChannel, err := netBridge.getBroadcastChannel()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := readyProtocol(ctx, s.groupInfo, broadcastChannel); err != nil {
+		return nil, fmt.Errorf("readiness signaling protocol failed: [%v]", err)
 	}
 
 	signature, err := signingSigner.sign(ctx)

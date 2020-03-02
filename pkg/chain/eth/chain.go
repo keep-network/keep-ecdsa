@@ -4,7 +4,8 @@ package eth
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-common/pkg/subscription"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
 
@@ -12,6 +13,8 @@ import (
 type Handle interface {
 	// Address returns client's ethereum address.
 	Address() common.Address
+	// StakeMonitor returns a stake monitor.
+	StakeMonitor() (chain.StakeMonitor, error)
 
 	BondedECDSAKeepFactory
 	BondedECDSAKeep
@@ -39,6 +42,21 @@ type BondedECDSAKeep interface {
 	OnSignatureRequested(
 		keepAddress common.Address,
 		handler func(event *SignatureRequestedEvent),
+	) (subscription.EventSubscription, error)
+
+	// OnConflictingPublicKeySubmitted is a callback that is invoked upon
+	// notification of mismatched public keys that were submitted by keep members.
+	OnConflictingPublicKeySubmitted(
+		keepAddress common.Address,
+		handler func(event *ConflictingPublicKeySubmittedEvent),
+	) (subscription.EventSubscription, error)
+
+	// OnPublicKeyPublished is a callback that is invoked upon
+	// notification of a published public key, which means that all members have
+	// submitted the same key.
+	OnPublicKeyPublished(
+		keepAddress common.Address,
+		handler func(event *PublicKeyPublishedEvent),
 	) (subscription.EventSubscription, error)
 
 	// SubmitKeepPublicKey submits a 64-byte serialized public key to a keep
