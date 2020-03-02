@@ -70,6 +70,8 @@ type BondedECDSAKeep interface {
 		signature *ecdsa.Signature,
 	) error // TODO: Add promise *async.SignatureSubmissionPromise
 
+	// OnKeepClosed is a callback that is invoked when a notification is sent
+	// about the closed keep.
 	OnKeepClosed(
 		keepAddress common.Address,
 		handler func(event *KeepClosedEvent),
