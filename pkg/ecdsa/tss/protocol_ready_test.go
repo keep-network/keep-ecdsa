@@ -2,6 +2,7 @@ package tss
 
 import (
 	"context"
+	"github.com/keep-network/keep-core/pkg/net"
 	"sync"
 	"testing"
 	"time"
@@ -10,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
-func TestJoinNotifier(t *testing.T) {
+func TestReadyProtocol(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 
 	err := log.SetLogLevel("*", "INFO")
@@ -20,7 +21,7 @@ func TestJoinNotifier(t *testing.T) {
 
 	groupSize := 5
 
-	groupMembers, groupMembersKeys, err := generateMemberKeys(groupSize)
+	groupMembers, err := generateMemberKeys(groupSize)
 	if err != nil {
 		t.Fatalf("failed to generate members keys: [%v]", err)
 	}
@@ -31,31 +32,46 @@ func TestJoinNotifier(t *testing.T) {
 	waitGroup.Add(groupSize)
 
 	mutex := &sync.RWMutex{}
-	joinedCount := 0
+	readyCount := 0
 
-	for memberIDstring, memberNetworkKey := range groupMembersKeys {
-		memberID, _ := MemberIDFromHex(memberIDstring)
-
-		go func(memberID MemberID, memberNetworkKey *key.NetworkPublic) {
+	for _, memberID := range groupMembers {
+		go func(memberID MemberID) {
 			groupInfo := &groupInfo{
 				groupID:        "test-group-1",
 				memberID:       memberID,
 				groupMemberIDs: groupMembers,
 			}
 
-			networkProvider := newTestNetProvider(memberNetworkKey)
+			memberPublicKey, err := memberID.PublicKey()
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			memberNetworkKey := key.NetworkPublic(*memberPublicKey)
+			networkProvider := newTestNetProvider(&memberNetworkKey)
+
+			broadcastChannel, err := networkProvider.BroadcastChannelFor("test-group-1")
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+				return &ReadyMessage{}
+			})
 
 			defer waitGroup.Done()
 
-			if err := joinProtocol(ctx, groupInfo, networkProvider); err != nil {
+			if err := readyProtocol(ctx, groupInfo, broadcastChannel); err != nil {
 				errChan <- err
 				return
 			}
 
 			mutex.Lock()
-			joinedCount++
+			readyCount++
 			mutex.Unlock()
-		}(memberID, memberNetworkKey)
+		}(memberID)
 	}
 
 	go func() {
@@ -65,11 +81,11 @@ func TestJoinNotifier(t *testing.T) {
 
 	select {
 	case <-ctx.Done():
-		if joinedCount != groupSize {
+		if readyCount != groupSize {
 			t.Errorf(
 				"invalid number of received notifications\nexpected: [%d]\nactual:  [%d]",
 				groupSize,
-				joinedCount,
+				readyCount,
 			)
 		}
 	case err := <-errChan:

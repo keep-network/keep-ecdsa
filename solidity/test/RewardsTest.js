@@ -12,7 +12,7 @@ const RandomBeaconStub = artifacts.require('RandomBeaconStub')
 const BondedECDSAKeep = artifacts.require('BondedECDSAKeep');
 const ECDSAKeepRewards = artifacts.require('ECDSAKeepRewards');
 
-contract('ECDSAKeepRewards', (accounts) => {
+contract.only('ECDSAKeepRewards', (accounts) => {
     let masterKeep
     let factory 
     let registry

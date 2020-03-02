@@ -11,6 +11,7 @@ import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
 import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -53,7 +54,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     uint256 public groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
-    address tokenStaking;
+    TokenStaking tokenStaking;
     KeepBonding keepBonding;
     IRandomBeacon randomBeacon;
 
@@ -97,7 +98,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
         );
-        tokenStaking = _tokenStaking;
+        tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         randomBeacon = IRandomBeacon(_randomBeacon);
     }
@@ -121,7 +122,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         );
 
         address sortitionPoolAddress = sortitionPoolFactory.createSortitionPool(
-            IStaking(tokenStaking),
+            IStaking(address(tokenStaking)),
             IBonding(address(keepBonding)),
             minimumStake,
             minimumBond
@@ -302,7 +303,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             _owner,
             members,
             _honestThreshold,
-            tokenStaking,
+            address(tokenStaking),
             address(keepBonding)
         );
 
@@ -403,5 +404,29 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @return Timestamp the given keep was created at.
     function getCreationTime(address _keep) external view returns (uint256) {
         return creationTime[_keep];
+    }
+
+    /// @dev Checks if the specified account has enough active stake to become
+    /// network operator and that this contract has been authorized for potential
+    /// slashing.
+    ///
+    /// Having the required minimum of active stake makes the operator eligible
+    /// to join the network. If the active stake is not currently undelegating,
+    /// operator is also eligible for work selection.
+    ///
+    /// @param _operator operator's address
+    /// @return True if has enough active stake to participate in the network,
+    /// false otherwise.
+    function hasMinimumStake(address _operator) public view returns(bool) {
+        return (
+            tokenStaking.activeStake(_operator, address(this)) >= minimumStake
+        );
+    }
+
+    /// @dev Gets the stake balance of the specified operator.
+    /// @param _operator The operator to query the balance of.
+    /// @return An uint256 representing the amount staked by the passed operator.
+    function balanceOf(address _operator) public view returns(uint256) {
+        return tokenStaking.balanceOf(_operator);
     }
 }

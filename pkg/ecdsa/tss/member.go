@@ -3,30 +3,26 @@ package tss
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 )
 
 // MemberID is an unique identifier of a member across the network.
 type MemberID []byte
 
-// MemberIDFromHex converts hexadecimal string to MemberID.
-func MemberIDFromHex(id string) (MemberID, error) {
-	// Skip `0x` or `0X` prefix.
-	if len(id) >= 2 && (id[:2] == "0x" || id[:2] == "0X") {
-		id = id[2:]
-	}
+// MemberIDFromPublicKey creates a MemberID from a public key.
+func MemberIDFromPublicKey(publicKey *operator.PublicKey) MemberID {
+	return operator.Marshal(publicKey)
+}
 
-	if len(id) == 0 {
-		return nil, fmt.Errorf("empty string")
-	}
+// PublicKey returns the MemberID as a public key.
+func (id MemberID) PublicKey() (*operator.PublicKey, error) {
+	return operator.Unmarshal(id)
+}
 
-	memberID, err := hex.DecodeString(id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode string: [%v]", err)
-	}
-
-	return memberID, nil
+// MemberIDFromPublicKey creates a MemberID from a string.
+func MemberIDFromString(string string) (MemberID, error) {
+	return hex.DecodeString(string)
 }
 
 // String converts MemberID to string.
@@ -36,17 +32,7 @@ func (id MemberID) String() string {
 
 // bigInt converts MemberID to big.Int.
 func (id MemberID) bigInt() *big.Int {
-	return new(big.Int).SetBytes(id.bytes())
-}
-
-// bytes converts MemberID to bytes slice.
-func (id MemberID) bytes() []byte {
-	return []byte(id)
-}
-
-// memberIDFromBytes converts bytes slice to MemberID.
-func memberIDFromBytes(bytes []byte) MemberID {
-	return MemberID(bytes)
+	return new(big.Int).SetBytes(id)
 }
 
 // Equal checks if member IDs are equal.
