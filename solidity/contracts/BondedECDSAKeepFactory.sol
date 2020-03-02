@@ -384,4 +384,24 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         );
         _;
     }
+
+    /// @notice Gets how many keeps have been opened by this contract.
+    /// @dev    Checks the size of the keeps array.
+    /// @return The number of keeps opened so far.
+    function getKeepCount() external view returns (uint256){
+        return keeps.length;
+    }
+
+    /// @notice Gets a specific keep address at a given index.
+    /// @return The address of the keep at the given index.
+    function getKeepAtIndex(uint256 index) external view returns (address){
+        require(index < keeps.length, "Out of bounds.");
+        return keeps[index];
+    }
+
+    /// @notice Gets the creation timestamp of a given keep.
+    /// @return Timestamp the given keep was created at.
+    function getCreationTime(address _keep) external view returns (uint256) {
+        return creationTime[_keep];
+    }
 }
