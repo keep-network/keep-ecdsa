@@ -1,28 +1,53 @@
-# In .../github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen
+# Environment provides the solidity directory as a potentially-relative path,
+# which we resolve. Then we resolve the Solidity files in a contracts/ directory
+# at that path.
+solidity_dir=$(realpath ${SOLIDITY_DIR})
+solidity_files := $(wildcard ${solidity_dir}/contracts/*.sol)
 
-# Directory where the solidity contracts are.
-SOL_DIR=../../../../solidity/contracts
+# Bare Solidity filenames without .sol or Solidity directory prefix.
+contract_stems := $(notdir $(basename $(solidity_files)))
+# Go abigen bindings in abi/ subdirectory with .go suffix, alongside solc ABI
+# files with .abi suffix.
+abi_files := $(addprefix abi/,$(addsuffix .abi,$(contract_stems)))
+abigen_files := $(addprefix abi/,$(addsuffix .go,$(contract_stems)))
+# *ImplV1.go files will get generated into clean Keep contract bindings, the
+# corresponding contract filenames will drop the ImplV1, if it exists, and live
+# in the contract/ directory.
+clean_contract_stems := $(filter %ImplV1,$(contract_stems)) $(filter BondedECDSAKeepFactory, $(contract_stems)) $(filter BondedECDSAKeep, $(contract_stems))
+contract_files := $(addprefix contract/,$(addsuffix .go,$(subst ImplV1,,$(clean_contract_stems))))
+
+all: gen_contract_go gen_abi_go
+
+clean:
+	rm -r abi/*
+	rm -r contract/*
+	mkdir tmp && mv cmd/cmd*.go tmp
+	rm -r cmd/*
+	mv tmp/* cmd && rm -r tmp
+
+gen_abi_go: $(abigen_files)
+
+gen_contract_go: $(contract_files)
+
+abi/%.abi: ${solidity_dir}/contracts/%.sol
+	solc solidity-bytes-utils/=${solidity_dir}/node_modules/solidity-bytes-utils/ \
+		 openzeppelin-solidity/=${solidity_dir}/node_modules/openzeppelin-solidity/ \
+		 @keep-network/keep-core/=${solidity_dir}/node_modules/@keep-network/keep-core/  \
+		 @keep-network/sortition-pools/=${solidity_dir}/node_modules/@keep-network/sortition-pools/  \
+		 --allow-paths ${solidity_dir} \
+		 --overwrite \
+		 --abi \
+		 -o abi $<
 
 
-# Relative directory where the Go code needs to go. This is relative to the
-# ${SOL_DIR} directory.
-OP_DIR=../../pkg/chain/eth/gen
-GEN_DIR=../../pkg/chain/eth/gen/abi
+abi/%.go: abi/%.abi
+	abigen --abi $< --pkg abi --type $* --out $@
 
-generate_solidity_go:
-	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
+contract/%.go cmd/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*.go cmd/$*.go
 
-SOL=$(shell ls *.sol | sed -e 's/.sol/.go/' )
+contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go: abi/BondedECDSAKeepFactory.abi abi/BondedECDSAKeepFactory.go *.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go 
 
-gen_go:
-	mkdir -p ${GEN_DIR}
-	make -f ${OP_DIR}/Makefile ${SOL}
-
-%.go: %.sol
-	solc openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ \
-		solidity-bytes-utils/=../node_modules/solidity-bytes-utils/ \
-		@keep-network/keep-core/=../node_modules/@keep-network/keep-core/  \
-		@keep-network/sortition-pools/=../node_modules/@keep-network/sortition-pools/  \
-		--allow-paths . --overwrite --abi -o . $<
-
-	abigen --abi $*.abi --pkg abi --type $* --out ${GEN_DIR}/$@
+contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go: abi/BondedECDSAKeep.abi abi/BondedECDSAKeep.go *.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go

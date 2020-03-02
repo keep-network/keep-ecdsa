@@ -2,18 +2,24 @@
 
 # Connection details of ethereum blockchain.
 [ethereum]
-  URL = "Set by Kube"
+URL = ""
+URLRPC = ""
 
-[ethereum.account]
-  KeyFile = "Set by Kube"
+  [ethereum.account]
+  KeyFile = ""
 
-# Addresses of contracts deployed on ethereum blockchain.
-[ethereum.ContractAddresses]
-  BondedECDSAKeepFactory = "Set by Kube"
+  # Addresses of contracts deployed on ethereum blockchain.
+  [ethereum.ContractAddresses]
+  BondedECDSAKeepFactory = ""
 
 # Addresses of applications approved by the operator.
 [SanctionedApplications]
-  Addresses = ["Set by Kube"]
+Addresses = [""]
+
+[LibP2P]
+Peers = []
+Port = ""
+AnnouncedAddresses = []
 
 [Storage]
-    DataDir = "Set by Kube"
+DataDir = ""
