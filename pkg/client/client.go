@@ -147,7 +147,7 @@ func tryRegisterAsMemberCandidate(
 	}
 
 	// When the operator is registered monitor it's status.
-	go monitorStatus(ctx, ethereumChain, application)
+	go monitorSignerPoolStatus(ctx, ethereumChain, application)
 }
 
 // registerAsMemberCandidate checks current operator's stake balance and if it's
@@ -201,9 +201,9 @@ func registerAsMemberCandidate(
 	}
 }
 
-// monitorStatus tracks staker's weight and in case it's changed calls keep
-// factory contract to update the status for given application.
-func monitorStatus(
+// monitorSignerPoolStatus tracks operator's state in the signing pool
+// (staking weight, bonding) and updates the status when it gets out of date.
+func monitorSignerPoolStatus(
 	ctx context.Context,
 	ethereumChain eth.Handle,
 	application common.Address,
