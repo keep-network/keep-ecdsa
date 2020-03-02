@@ -52,9 +52,7 @@ func (n *Node) AnnounceSignerPresence(
 		return nil, fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
 	}
 
-	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &tss.AnnounceMessage{}
-	})
+	tss.RegisterUnmarshalers(broadcastChannel)
 
 	if err := broadcastChannel.SetFilter(
 		createAddressFilter(keepMembersAddresses),
@@ -129,6 +127,8 @@ func (n *Node) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
+	go n.monitorKeepPublicKeySubmission(keepAddress)
+
 	err = n.ethereumChain.SubmitKeepPublicKey(
 		keepAddress,
 		serializedPublicKey,
@@ -187,4 +187,59 @@ func (n *Node) CalculateSignature(
 	logger.Infof("submitted signature for digest: [%+x]", digest)
 
 	return nil
+}
+
+// monitorKeepPublicKeySubmission observes the chain until either the first
+// conflicting public key is published or until keep established public key
+// or until key generation timed out.
+func (n *Node) monitorKeepPublicKeySubmission(keepAddress common.Address) {
+	ctx, cancel := context.WithTimeout(context.Background(), tss.KeyGenerationTimeout)
+	defer cancel()
+
+	publicKeyPublished := make(chan *eth.PublicKeyPublishedEvent)
+	conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
+
+	subscriptionPublicKeyPublished, err := n.ethereumChain.OnPublicKeyPublished(
+		keepAddress,
+		func(event *eth.PublicKeyPublishedEvent) {
+			publicKeyPublished <- event
+		},
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed on watching public key published event: [%v]",
+			err,
+		)
+	}
+
+	subscriptionConflictingPublicKey, err := n.ethereumChain.OnConflictingPublicKeySubmitted(
+		keepAddress,
+		func(event *eth.ConflictingPublicKeySubmittedEvent) {
+			conflictingPublicKey <- event
+		},
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed on watching conflicting public key event: [%v]",
+			err,
+		)
+	}
+
+	defer subscriptionConflictingPublicKey.Unsubscribe()
+	defer subscriptionPublicKeyPublished.Unsubscribe()
+
+	select {
+	case event := <-publicKeyPublished:
+		logger.Infof(
+			"public key [%x] has been accepted by keep",
+			event.PublicKey,
+		)
+	case event := <-conflictingPublicKey:
+		logger.Errorf(
+			"member [%x] has submitted conflicting public key: [%x]",
+			event.SubmittingMember,
+			event.ConflictingPublicKey,
+		)
+	case <-ctx.Done():
+	}
 }

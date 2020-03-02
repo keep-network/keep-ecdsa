@@ -62,6 +62,21 @@ type BondedECDSAKeep interface {
 		handler func(event *SignatureRequestedEvent),
 	) (subscription.EventSubscription, error)
 
+	// OnConflictingPublicKeySubmitted is a callback that is invoked upon
+	// notification of mismatched public keys that were submitted by keep members.
+	OnConflictingPublicKeySubmitted(
+		keepAddress common.Address,
+		handler func(event *ConflictingPublicKeySubmittedEvent),
+	) (subscription.EventSubscription, error)
+
+	// OnPublicKeyPublished is a callback that is invoked upon
+	// notification of a published public key, which means that all members have
+	// submitted the same key.
+	OnPublicKeyPublished(
+		keepAddress common.Address,
+		handler func(event *PublicKeyPublishedEvent),
+	) (subscription.EventSubscription, error)
+
 	// SubmitKeepPublicKey submits a 64-byte serialized public key to a keep
 	// contract deployed under a given address.
 	SubmitKeepPublicKey(keepAddress common.Address, publicKey [64]byte) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
