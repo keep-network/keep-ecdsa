@@ -84,8 +84,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Notification that keep's ECDSA public key has been successfully established.
     event PublicKeyPublished(bytes publicKey);
 
-    // Notification that members received ether transfer.
-    event ETHDistributedToMembers();
+    // Notification that ETH reward has been distributed to keep members.
+    event ETHRewardDistributed();
 
     // Notification that the keep was closed by the owner. Members no longer need
     // to support it.
@@ -445,12 +445,12 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             memberETHBalances[members[i]] += dividend;
         }
 
-        // Transfer dividend to the last signer. Remainder might be equal to
+        // Give the dividend to the last signer. Remainder might be equal to
         // zero in case of even distribution or some small number.
         uint256 remainder = msg.value.mod(memberCount);
         memberETHBalances[members[memberCount - 1]] += dividend.add(remainder);
 
-        emit ETHDistributedToMembers();
+        emit ETHRewardDistributed();
     }
 
     /// @notice Distributes ERC20 reward evenly across all keep signer beneficiaries.
