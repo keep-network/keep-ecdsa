@@ -148,7 +148,8 @@ func registerForKeepClosedEvents(
 		func(event *eth.KeepClosedEvent) {
 			logger.Infof("keep [%v] is being closed", keepAddress)
 			keepsRegistry.UnregisterKeep(keepAddress)
-		})
+		},
+	)
 }
 
 // registerForSignEvents registers for signature requested events emitted by
