@@ -1161,6 +1161,24 @@ contract('BondedECDSAKeep', (accounts) => {
       assert.equal(newBalances.toString(), expectedBalances.toString())
     })
 
+    it('emits an event', async () => {
+      await initializeTokens(token, keep, accounts[0], erc20Value)
+      
+      let startBlock = await web3.eth.getBlockNumber()
+
+      let res = await keep.distributeERC20Reward(token.address, erc20Value)
+      truffleAssert.eventEmitted(res, 'ERC20RewardDistributed')
+
+      assert.lengthOf(
+        await keep.getPastEvents('ERC20RewardDistributed', {
+          fromBlock: startBlock,
+          toBlock: 'latest'
+        }),
+        1,
+        "unexpected events emitted"
+      )
+    })
+
     it('correctly handles remainder', async () => {
       const expectedRemainder = new BN(members.length - 1)
       const valueWithRemainder = erc20Value.add(expectedRemainder)

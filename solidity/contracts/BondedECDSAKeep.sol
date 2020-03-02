@@ -87,6 +87,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Notification that ETH reward has been distributed to keep members.
     event ETHRewardDistributed();
 
+    // Notification that ERC20 reward has been distributed to keep members.
+    event ERC20RewardDistributed();
+
     // Notification that the keep was closed by the owner. Members no longer need
     // to support it.
     event KeepClosed();
@@ -489,6 +492,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             tokenStaking.magpieOf(members[memberCount - 1]),
             dividend.add(remainder)
         );
+
+        emit ERC20RewardDistributed();
     }
 
     /// @notice Gets current amount of ETH hold in the keep for the member.
