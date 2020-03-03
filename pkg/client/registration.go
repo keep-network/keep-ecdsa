@@ -106,63 +106,41 @@ func registerAsMemberCandidate(
 }
 
 // waitUntilRegistered blocks until the operator is registered as a keep member
-// candidate for the given application. It executes the check in the predefined
-// interval, for each couple of blocks.
+// candidate for the given application.
 func waitUntilRegistered(
 	ctx context.Context,
 	ethereumChain eth.Handle,
 	application common.Address,
 ) {
-	checkIntervalBlocks := uint64(5)
+	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
 
 	for {
-		if ctx.Err() != nil {
-			// if the context is done, we return
-			return
-		}
+		select {
+		case <-newBlockChan:
+			isRegistered, err := ethereumChain.IsRegisteredForApplication(application)
+			if err != nil {
+				logger.Errorf(
+					"failed to check if member is registered for application [%s]: [%v]",
+					application.String(),
+					err,
+				)
+				continue
+			}
 
-		isRegistered, err := ethereumChain.IsRegisteredForApplication(application)
-		if err != nil {
-			logger.Errorf(
-				"failed to check if member is registered for application [%s]: [%v]",
-				application.String(),
-				err,
-			)
-			continue
-		}
+			if isRegistered {
+				logger.Infof(
+					"operator is registered for application [%s]",
+					application.String(),
+				)
+				return
+			}
 
-		if isRegistered {
-			// if the operator is registered, we return
 			logger.Infof(
-				"operator is registered for application [%s]",
+				"operator is not yet registered for application [%s], waiting...",
 				application.String(),
 			)
+		case <-ctx.Done():
 			return
-		}
-
-		// if the operator is not yet registered, we set the new check
-		// tick and we will execute the status check again
-		logger.Infof(
-			"operator is not yet registered for application [%s]",
-			application.String(),
-		)
-
-		blockCounter := ethereumChain.BlockCounter()
-
-		currentBlock, err := blockCounter.CurrentBlock()
-		if err != nil {
-			logger.Errorf("failed to check the current block: [%v]", err)
-		}
-
-		nextCheckBlock := currentBlock + checkIntervalBlocks
-
-		if err = blockCounter.WaitForBlockHeight(nextCheckBlock); err != nil {
-			logger.Errorf(
-				"failed waiting for block [%v]: [%v]",
-				nextCheckBlock,
-				err,
-			)
-			continue
 		}
 	}
 }
@@ -175,7 +153,7 @@ func monitorSignerPoolStatus(
 	application common.Address,
 ) {
 	logger.Debugf(
-		"starting monitoring status for application [%s]",
+		"starting monitoring operatator status for application [%s]",
 		application.String(),
 	)
 
