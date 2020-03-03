@@ -136,11 +136,6 @@ func checkStatusAndRegisterForApplication(
 
 	if !isRegistered {
 		registerAsMemberCandidate(ctx, ethereumChain, application)
-
-		logger.Debugf(
-			"client registered as member candidate for application: [%s]",
-			application.String(),
-		)
 	} else {
 		logger.Debugf(
 			"client is already registered as member candidate for application: [%s]",
@@ -187,9 +182,13 @@ func registerAsMemberCandidate(
 				continue
 			}
 
+			logger.Info(
+				"Registering member candidate for application [%s]",
+				application.String(),
+			)
 			if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
 				logger.Errorf(
-					"failed to register member for application [%s]: [%v]",
+					"failed to register member candidate for application [%s]: [%v]",
 					application.String(),
 					err,
 				)
@@ -223,23 +222,28 @@ func monitorSignerPoolStatus(
 			isUpToDate, err := ethereumChain.IsStatusUpToDateForApplication(application)
 			if err != nil {
 				logger.Errorf(
-					"failed to check status for application [%s]: [%v]",
+					"failed to check operator status for application [%s]: [%v]",
 					application.String(),
 					err,
 				)
 				continue
 			}
 
-			if !isUpToDate {
+			if isUpToDate {
+				logger.Debugf(
+					"operator status is up to date for application [%s]",
+					application.String(),
+				)
+			} else {
 				logger.Infof(
-					"updating status for application [%s]",
+					"updating operator status for application [%s]",
 					application.String(),
 				)
 
 				err := ethereumChain.UpdateStatusForApplication(application)
 				if err != nil {
 					logger.Errorf(
-						"failed to update status for application [%s]: [%v]",
+						"failed to update operator status for application [%s]: [%v]",
 						application.String(),
 						err,
 					)
