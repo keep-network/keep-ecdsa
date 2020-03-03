@@ -126,5 +126,15 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
             expect(index.toNumber()).to.equal(expectedIndex)
         })
+
+        it("returns the correct index when duplicates are present", async () => {
+            let timestamps = [1001, 1001, 1002, 1002]
+            await keepFactory.openSyntheticKeeps(timestamps)
+            let targetTimestamp = 1002
+            let expectedIndex = 2
+            let index = await rewards.findEndpoint(targetTimestamp)
+
+            expect(index.toNumber()).to.equal(expectedIndex)
+        })
     })
 })
