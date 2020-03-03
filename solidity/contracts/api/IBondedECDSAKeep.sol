@@ -17,12 +17,6 @@ contract IBondedECDSAKeep {
     /// @param _digest Digest to be signed.
     function sign(bytes32 _digest) external;
 
-    /// @notice Returns partial signer ETH bonds to the pool as an unbounded
-    /// value. This function is called after bonds have been seized and processed
-    /// by the privileged application. The application may decide to return
-    /// partial bonds back to the pool.
-    function returnPartialSignerBonds() external payable;
-
     /// @notice Distributes ETH reward evenly across keep signer beneficiaries.
     /// @dev Only the value passed to this function is distributed.
     function distributeETHReward() external payable;
@@ -38,11 +32,21 @@ contract IBondedECDSAKeep {
     function distributeERC20Reward(address _tokenAddress, uint256 _value)
         external;
 
-    /// @notice Seizes the signers' ETH bond. After seizing bonds keep is
-    /// closed so it will not respond to signing requests. Bonds can be seized
-    /// only when there is no signing in progress or requested signing process
-    /// has timed out.
+    /// @notice Seizes the signers' ETH bonds. After seizing bonds keep is
+    /// closed so it will no longer respond to signing requests. Bonds can be
+    /// seized only when there is no signing in progress or requested signing
+    /// process has timed out. This function seizes all of signers' bonds.
+    /// The application may decide to return part of bonds later after they are
+    /// processed using returnPartialSignerBonds function.
     function seizeSignerBonds() external;
+
+    /// @notice Returns partial signer's ETH bonds to the pool as an unbounded
+    /// value. This function is called after bonds have been seized and processed
+    /// by the privileged application after calling seizeSignerBonds function.
+    /// It is entirely up to the application if a part of signers' bonds is
+    /// returned. The application may decide for that but may also decide to
+    /// seize bonds and do not return anything.
+    function returnPartialSignerBonds() external payable;
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
     /// not first approved via a call to sign.
