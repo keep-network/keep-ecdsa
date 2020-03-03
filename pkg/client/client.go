@@ -44,7 +44,7 @@ func Initialize(
 					keepAddress,
 					signer,
 				)
-				go registerForKeepClosedEvents(
+				go monitorKeepClosedEvents(
 					ethereumChain,
 					keepAddress,
 					keepsRegistry,
@@ -106,7 +106,7 @@ func Initialize(
 				signer,
 			)
 
-			go registerForKeepClosedEvents(
+			go monitorKeepClosedEvents(
 				ethereumChain,
 				event.KeepAddress,
 				keepsRegistry,
@@ -167,8 +167,8 @@ func registerForSignEvents(
 	)
 }
 
-// registerForKeepClosedEvents registers for keep closing events.
-func registerForKeepClosedEvents(
+// monitorKeepClosedEvents subscribes and unsubscribes for keep closed events.
+func monitorKeepClosedEvents(
 	ethereumChain eth.Handle,
 	keepAddress common.Address,
 	keepsRegistry *registry.Keeps,
