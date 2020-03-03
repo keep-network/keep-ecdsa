@@ -78,7 +78,7 @@ contract ECDSAKeepRewards {
         if (totalSubmissions < minimumSubmissions){
             if(intervalEndpointsLength >= InitialTermWeights.length){
                 return newInterval;
-            }            
+            }
             InitialTermWeights[intervalEndpointsLength + 1] +=  InitialTermWeights[intervalEndpointsLength];
             InitialTermWeights[intervalEndpointsLength] = 0;
         }
@@ -88,6 +88,19 @@ contract ECDSAKeepRewards {
     function eligibleForReward(address _keep) public view returns (bool){
         // check that keep closed properly
         return true;
+    }
+
+    function findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
+        require(
+            intervalEndpoint <= currentTime(),
+            "interval hasn't ended yet"
+        );
+        uint256 start = 0;
+        uint256 end = factory.getKeepCount();
+        if (end == 0) {
+            return 0;
+        }
+        return find(start, end, intervalEndpoint);
     }
 
     function find(uint256 start, uint256 end, uint256 target) public view returns (uint256) {
@@ -102,10 +115,10 @@ contract ECDSAKeepRewards {
             _len = _end - _start;
             _mid = _start + _len / 2;
             timestamp = IBondedECDSAKeep(factory.getKeepAtIndex(_mid)).getTimestamp();
-            
+
             timestampNext = IBondedECDSAKeep(factory.getKeepAtIndex(_mid + 1)).getTimestamp(); // check bound
             if(timestamp <= target && timestampNext > target){
-                return _mid;
+                return _mid + 1;
             }
             else if(timestamp > target){
                 _end = _mid - 1;
@@ -119,6 +132,9 @@ contract ECDSAKeepRewards {
    function tt(uint256 ind) public view returns (uint256) {
     return factory.getKeepCount();
 }
+   function currentTime() public view returns (uint256) {
+       return block.timestamp;
+   }
 }
 
 

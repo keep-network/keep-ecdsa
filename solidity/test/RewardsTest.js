@@ -2,7 +2,7 @@ import { increaseTime } from './helpers/increaseTime';
 const { expectRevert } = require('openzeppelin-test-helpers');
 
 const Registry = artifacts.require('Registry');
-const BondedECDSAKeepFactoryStub = artifacts.require('BondedECDSAKeepFactoryStub');
+const RewardsFactoryStub = artifacts.require('RewardsFactoryStub');
 const KeepBonding = artifacts.require('KeepBonding');
 const TokenStakingStub = artifacts.require("TokenStakingStub")
 const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
@@ -14,7 +14,7 @@ const ECDSAKeepRewards = artifacts.require('ECDSAKeepRewards');
 
 contract.only('ECDSAKeepRewards', (accounts) => {
     let masterKeep
-    let factory 
+    let factory
     let registry
     let rewards
 
@@ -25,6 +25,26 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     let randomBeacon
     let signerPool
 
+    // defaultTimestamps[i] == 1000 + i
+    const defaultTimestamps = [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007,
+        1008,
+        1009,
+        1010,
+        1011,
+        1012,
+        1013,
+        1014,
+        1015,
+    ]
+
     async function initializeNewFactory() {
         registry = await Registry.new()
         bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
@@ -32,7 +52,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
         randomBeacon = await RandomBeaconStub.new()
         const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
-        keepFactory = await BondedECDSAKeepFactoryStub.new(
+        keepFactory = await RewardsFactoryStub.new(
             bondedECDSAKeepMasterContract.address,
             bondedSortitionPoolFactory.address,
             tokenStaking.address,
@@ -46,54 +66,56 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     rewards = await ECDSAKeepRewards.new(0, 0, accounts[0], 0, keepFactory.address)
     })
 
-  describe("find", async () => {
-    let block
-    let increment = 1000
-    let count = 15
-    let timestamps = []
-    before(async () => {
-    // creates 100 keeps
-    block = await web3.eth.getBlock("latest")
+    describe("findEndpoint", async () => {
+        let increment = 1000
 
-     for (let i=0;i<count;i++){
-        await keepFactory.stubOpenKeep(accounts[0])
-        const keepAddress = await keepFactory.getKeepAtIndex(i)
-        const keepContract = await BondedECDSAKeep.at(keepAddress)
-        const timestamp = await keepContract.getTimestamp.call()
-        timestamps.push(timestamp.toString())
-        increaseTime(increment)
-    }
+        it("returns 0 when no keeps have been created", async () => {
+            let targetTimestamp = await rewards.currentTime()
+            increaseTime(increment)
+
+            let index = await rewards.findEndpoint(targetTimestamp)
+            expect(index.toNumber()).to.equal(0)
+        })
+
+        it("reverts if the endpoint is in the future", async () => {
+            let recentTimestamp = await rewards.currentTime()
+            let targetTimestamp = recentTimestamp + increment
+            await expectRevert(
+                rewards.findEndpoint(targetTimestamp),
+                "interval hasn't ended yet"
+            )
+        })
+
+        it("returns the first index outside the interval", async () => {
+            let timestamps = defaultTimestamps
+            await keepFactory.openSyntheticKeeps(timestamps)
+            for (let i = 0; i < 16; i++) {
+                let expectedIndex = i
+                let targetTimestamp = timestamps[i]
+                let index = await rewards.findEndpoint(targetTimestamp)
+
+                expect(index).to.equal(expectedIndex)
+            }
+        })
+
+        it("returns the next keep's index when all current keeps were created in the interval", async () => {
+            let timestamps = defaultTimestamps
+            await keepFactory.openSyntheticKeeps(timestamps)
+            let targetTimestamp = 2000
+            let expectedIndex = 16
+            let index = await rewards.findEndpoint(targetTimestamp)
+
+            expect(index).to.equal(expectedIndex)
+        })
+
+        it("returns 0 when all current keeps were created after the interval", async () => {
+            let timestamps = defaultTimestamps
+            await keepFactory.openSyntheticKeeps(timestamps)
+            let targetTimestamp = 500
+            let expectedIndex = 0
+            let index = await rewards.findEndpoint(targetTimestamp)
+
+            expect(index).to.equal(expectedIndex)
+        })
     })
-
-    it("finds correct values - unbounded", async () => {
-      for(let i = 0; i < count - 1; i++){
-
-        let expectedIndex = i
-        let targetTimestamp = Number(timestamps[expectedIndex]) + 1
-        let index = await rewards.find(0, count, targetTimestamp)
-
-        expect(index.toNumber()).to.equal(expectedIndex)
-      } 
-    })
-
-    it("finds correct values - bounded", async () => {
-      const upperBound = 14
-      const lowerBound = 4
-      for(let i = lowerBound; i < upperBound - 1 ; i++){
-        let expectedIndex = i
-        let targetTimestamp = Number(timestamps[expectedIndex]) + 1
-        let index = await rewards.find(4, 14, targetTimestamp)
-        expect(index.toNumber()).to.equal(expectedIndex)
-      } 
-    })
-
-    it("reverts if out of bounds", async () => {
-      let badIndex = 9
-      let targetTimestamp = Number(timestamps[badIndex]) + 1
-      await expectRevert(
-        rewards.find(10, 14, targetTimestamp),
-        "could not find target"
-      )
-    })
-  })
 })
