@@ -3,8 +3,8 @@ pragma solidity ^0.5.4;
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
 contract IBondedECDSAKeep {
-    /// @notice Returns the keep signer's public key.
-    /// @return Signer's public key.
+    /// @notice Returns public key of this keep.
+    /// @return Keeps's public key.
     function getPublicKey() external view returns (bytes memory);
 
     /// @notice Returns the amount of the keep's ETH bond in wei.
@@ -57,8 +57,10 @@ contract IBondedECDSAKeep {
         bytes calldata _preimage
     ) external returns (bool _isFraud);
 
-    /// @notice Closes keep when owner decides that they no longer need it.
-    /// Releases bonds to the keep members. Keep can be closed only when
-    /// there is no signing in progress or requested signing process has timed out.
+    /// @notice Closes keep when no longer needed. Releases bonds to the keep
+    /// members. Keep can be closed only when there is no signing in progress or
+    /// requested signing process has timed out.
+    /// @dev The function can be called only by the owner of the keep and only
+    /// if the keep has not been already closed.
     function closeKeep() external;
 }
