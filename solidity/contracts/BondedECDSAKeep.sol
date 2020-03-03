@@ -419,6 +419,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         );
 
         isActive = false;
+
         emit KeepClosed();
     }
 

@@ -65,6 +65,28 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	)
 }
 
+// OnKeepClosed is a callback that is invoked on-chain when keep is closed.
+func (ec *EthereumChain) OnKeepClosed(
+	keepAddress common.Address,
+	handler func(event *eth.KeepClosedEvent),
+) (subscription.EventSubscription, error) {
+		keepContract, err := ec.getKeepContract(keepAddress)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+		}
+		return keepContract.WatchKeepClosed(
+			func(
+				blockNumber uint64,
+			) {
+				handler(&eth.KeepClosedEvent{})
+			},
+			func(err error) error {
+				return fmt.Errorf("keep closed callback failed: [%v]", err)
+			},
+	)
+}
+		
+
 // OnPublicKeyPublished is a callback that is invoked when an on-chain
 // event of a published public key was emitted.
 func (ec *EthereumChain) OnPublicKeyPublished(
