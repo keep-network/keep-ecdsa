@@ -136,22 +136,6 @@ func Initialize(
 	logger.Infof("client initialized")
 }
 
-
-// registerForKeepClosedEvents registers for keep closing events.
-func registerForKeepClosedEvents(
-	ethereumChain eth.Handle,
-	keepAddress common.Address,
-	keepsRegistry *registry.Keeps,
-) {
-	ethereumChain.OnKeepClosed(
-		keepAddress,
-		func(event *eth.KeepClosedEvent) {
-			logger.Infof("keep [%v] is being closed", keepAddress)
-			keepsRegistry.UnregisterKeep(keepAddress)
-		},
-	)
-}
-
 // registerForSignEvents registers for signature requested events emitted by
 // specific keep contract.
 func registerForSignEvents(
@@ -179,6 +163,21 @@ func registerForSignEvents(
 					logger.Errorf("signature calculation failed: [%v]", err)
 				}
 			}()
+		},
+	)
+}
+
+// registerForKeepClosedEvents registers for keep closing events.
+func registerForKeepClosedEvents(
+	ethereumChain eth.Handle,
+	keepAddress common.Address,
+	keepsRegistry *registry.Keeps,
+) {
+	ethereumChain.OnKeepClosed(
+		keepAddress,
+		func(event *eth.KeepClosedEvent) {
+			logger.Infof("keep [%v] is being closed", keepAddress)
+			keepsRegistry.UnregisterKeep(keepAddress)
 		},
 	)
 }
