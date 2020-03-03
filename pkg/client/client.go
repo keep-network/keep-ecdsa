@@ -192,11 +192,10 @@ func monitorKeepClosedEvents(
 
 	defer subscriptionOnKeepClosed.Unsubscribe()
 
-	select {
-	case _ = <- keepClosed:
-		logger.Debug(
-			"unsubscribing from KeepClosed event",
-		)
-	}
+	<- keepClosed
+
+	logger.Info(
+		"unsubscribing from KeepClosed event",
+	)
 
 }
