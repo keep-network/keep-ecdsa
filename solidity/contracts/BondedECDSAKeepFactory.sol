@@ -327,6 +327,10 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             keep.distributeETHToMembers.value(signerSubsidy)();
         }
 
+        keeps.push(address(keep));
+        /* solium-disable-next-line security/no-block-members*/
+        creationTime[address(keep)] = block.timestamp;
+
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 

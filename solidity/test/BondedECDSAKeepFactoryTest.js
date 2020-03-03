@@ -22,7 +22,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract("BondedECDSAKeepFactory", async accounts => {
+contract.only("BondedECDSAKeepFactory", async accounts => {
     let registry
     let tokenStaking
     let keepFactory
@@ -1286,6 +1286,43 @@ contract("BondedECDSAKeepFactory", async accounts => {
                     { from: application, value: feeEstimate },
                 ),
                 "Maximum signing group size is 16"
+            )
+        })
+
+        it("records the keep address and opening time", async () => {
+            let preKeepCount = await keepFactory.getKeepCount()
+
+            let keepAddress = await keepFactory.openKeep.call(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate }
+            )
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate }
+            )
+            let recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
+            let keep = await BondedECDSAKeep.at(keepAddress)
+            let keepCreationTime = await keep.getTimestamp()
+            let factoryCreationTime = await keepFactory.getCreationTime(keepAddress)
+
+            assert.equal(
+                recordedKeepAddress,
+                keepAddress,
+                "address recorded in factory differs from returned keep address",
+            );
+
+            expect(
+                factoryCreationTime
+            ).to.eq.BN(
+                keepCreationTime,
+                "creation time in factory differs from creation time in keep",
             )
         })
 
