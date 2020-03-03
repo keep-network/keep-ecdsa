@@ -185,7 +185,7 @@ func monitorKeepClosedEvents(
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed on watching keep closed event: [%v]",
+			"failed on registering for keep closed event: [%v]",
 			err,
 		)
 	}
@@ -193,9 +193,9 @@ func monitorKeepClosedEvents(
 	defer subscriptionOnKeepClosed.Unsubscribe()
 
 	select {
-	case _ = <-keepClosed:
+	case _ = <- keepClosed:
 		logger.Debug(
-			"Unsubscribing from KeepClosed event",
+			"unsubscribing from KeepClosed event",
 		)
 	}
 
