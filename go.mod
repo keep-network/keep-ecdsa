@@ -18,7 +18,7 @@ require (
 	github.com/ethereum/go-ethereum v1.9.10
 	github.com/gogo/protobuf v1.3.1
 	github.com/ipfs/go-log v0.0.1
-	github.com/keep-network/keep-common v0.1.1-0.20200227122327-256d85b3c14a // TODO: update to released version
+	github.com/keep-network/keep-common v0.1.1-0.20200228111656-16dd370ca897 // TODO: update to released version
 	github.com/keep-network/keep-core v0.9.2-0.20200221162942-550bec0a966c
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pkg/errors v0.9.1
