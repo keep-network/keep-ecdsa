@@ -66,9 +66,10 @@ contract ECDSAKeepRewards {
             "not due for new interval"
         );
         uint256 intervalEndpointsLength = intervalEndpoints.length;
-        uint256 newInterval = intervalEndpointsLength > 0 ?
-        find(0, factory.getKeepCount(), _timestamp):
-        find(intervalEndpoints[intervalEndpointsLength - 1], factory.getKeepCount(), _timestamp);
+        uint256 newInterval = findEndpoint(_timestamp);
+        // uint256 newInterval = intervalEndpointsLength > 0 ?
+        // find(0, factory.getKeepCount(), _timestamp):
+        // find(intervalEndpoints[intervalEndpointsLength - 1], factory.getKeepCount(), _timestamp);
 
         uint256 totalSubmissions = intervalEndpointsLength > 0 ?
         newInterval:
@@ -95,40 +96,64 @@ contract ECDSAKeepRewards {
             intervalEndpoint <= currentTime(),
             "interval hasn't ended yet"
         );
-        uint256 start = 0;
-        uint256 end = factory.getKeepCount();
-        if (end == 0) {
+        uint256 keepCount = factory.getKeepCount();
+        // no keeps created yet -> return 0
+        if (keepCount == 0) {
             return 0;
         }
-        return find(start, end, intervalEndpoint);
+
+        uint256 lb = 0; // lower bound, inclusive
+        uint256 timestampLB = factory.getCreationTime(factory.getKeepAtIndex(lb));
+        // all keeps created after the interval -> return 0
+        if (timestampLB >= intervalEndpoint) {
+            return 0;
+        }
+
+        uint256 ub = keepCount - 1; // upper bound, inclusive
+        uint256 timestampUB = factory.getCreationTime(factory.getKeepAtIndex(ub));
+        // all keeps created in or before the interval -> return next keep
+        if (timestampUB < intervalEndpoint) {
+            return keepCount;
+        }
+
+        // The above cases also cover the case
+        // where only 1 keep has been created;
+        // lb == ub
+        // if it was created after the interval, return 0
+        // otherwise, return 1
+
+        return _find(lb, timestampLB, ub, timestampUB, intervalEndpoint);
     }
 
-    function find(uint256 start, uint256 end, uint256 target) public view returns (uint256) {
-        uint256 _len;
-        uint256 _start = start;
-        uint256 _end = end;
-        uint256 _mid;
-        uint256 timestamp;
-        uint256 timestampNext;
+    // Invariants:
+    //   lb >= 0, lbTime < target
+    //   ub < keepCount, ubTime >= target
+    function _find(
+        uint256 lb,
+        uint256 lbTime,
+        uint256 ub,
+        uint256 ubTime,
+        uint256 target
+    ) internal view returns (uint256) {
+        uint256 len = ub - lb;
+        while (len > 1) {
+            // ub >= lb + 2
+            // mid > lb
+            uint256 mid = lb + (len / 2);
+            uint256 midTime = factory.getCreationTime(factory.getKeepAtIndex(mid));
 
-        while (_start <= _end){
-            _len = _end - _start;
-            _mid = _start + _len / 2;
-            timestamp = IBondedECDSAKeep(factory.getKeepAtIndex(_mid)).getTimestamp();
-
-            timestampNext = IBondedECDSAKeep(factory.getKeepAtIndex(_mid + 1)).getTimestamp(); // check bound
-            if(timestamp <= target && timestampNext > target){
-                return _mid + 1;
+            if (midTime >= target) {
+                ub = mid;
+                ubTime = midTime;
+            } else {
+                lb = mid;
+                lbTime = midTime;
             }
-            else if(timestamp > target){
-                _end = _mid - 1;
-            }
-            else{
-                _start = _mid + 1;
-            }
+            len = ub - lb;
         }
-        revert("could not find target");
-   }
+        return ub;
+    }
+
    function tt(uint256 ind) public view returns (uint256) {
     return factory.getKeepCount();
 }

@@ -1,3 +1,4 @@
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 import { increaseTime } from './helpers/increaseTime';
 const { expectRevert } = require('openzeppelin-test-helpers');
 
@@ -66,6 +67,14 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     rewards = await ECDSAKeepRewards.new(0, 0, accounts[0], 0, keepFactory.address)
     })
 
+    beforeEach(async () => {
+        await createSnapshot()
+    })
+
+    afterEach(async () => {
+        await restoreSnapshot()
+    })
+
     describe("findEndpoint", async () => {
         let increment = 1000
 
@@ -94,7 +103,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
                 let targetTimestamp = timestamps[i]
                 let index = await rewards.findEndpoint(targetTimestamp)
 
-                expect(index).to.equal(expectedIndex)
+                expect(index.toNumber()).to.equal(expectedIndex)
             }
         })
 
@@ -105,7 +114,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             let expectedIndex = 16
             let index = await rewards.findEndpoint(targetTimestamp)
 
-            expect(index).to.equal(expectedIndex)
+            expect(index.toNumber()).to.equal(expectedIndex)
         })
 
         it("returns 0 when all current keeps were created after the interval", async () => {
@@ -115,7 +124,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             let expectedIndex = 0
             let index = await rewards.findEndpoint(targetTimestamp)
 
-            expect(index).to.equal(expectedIndex)
+            expect(index.toNumber()).to.equal(expectedIndex)
         })
     })
 })
