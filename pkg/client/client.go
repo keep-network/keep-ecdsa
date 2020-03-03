@@ -44,7 +44,7 @@ func Initialize(
 					keepAddress,
 					signer,
 				)
-				registerForKeepClosedEvents(
+				go registerForKeepClosedEvents(
 					ethereumChain,
 					keepAddress,
 					keepsRegistry,
@@ -106,7 +106,7 @@ func Initialize(
 				signer,
 			)
 
-			registerForKeepClosedEvents(
+			go registerForKeepClosedEvents(
 				ethereumChain,
 				event.KeepAddress,
 				keepsRegistry,
@@ -173,11 +173,30 @@ func registerForKeepClosedEvents(
 	keepAddress common.Address,
 	keepsRegistry *registry.Keeps,
 ) {
-	ethereumChain.OnKeepClosed(
+	keepClosed := make(chan *eth.KeepClosedEvent)
+
+	subscriptionOnKeepClosed, err := ethereumChain.OnKeepClosed(
 		keepAddress,
 		func(event *eth.KeepClosedEvent) {
 			logger.Infof("keep [%v] is being closed", keepAddress)
 			keepsRegistry.UnregisterKeep(keepAddress)
+			keepClosed <- event
 		},
 	)
+	if err != nil {
+		logger.Errorf(
+			"failed on watching keep closed event: [%v]",
+			err,
+		)
+	}
+
+	defer subscriptionOnKeepClosed.Unsubscribe()
+
+	select {
+	case _ = <-keepClosed:
+		logger.Debug(
+			"Unsubscribing from KeepClosed event",
+		)
+	}
+
 }
