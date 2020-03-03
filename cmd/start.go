@@ -149,6 +149,7 @@ func Start(c *cli.Context) error {
 	}
 
 	client.Initialize(
+		ctx,
 		operatorPublicKey,
 		ethereumChain,
 		networkProvider,

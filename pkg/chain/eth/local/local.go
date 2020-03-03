@@ -144,6 +144,26 @@ func (lc *localChain) IsAwaitingSignature(
 	panic("implement")
 }
 
+func (lc *localChain) BlockCounter() chain.BlockCounter {
+	panic("implement")
+}
+
+func (lc *localChain) IsRegisteredForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) IsEligibleForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) UpdateStatusForApplication(application common.Address) error {
+	panic("implement")
+}
+
 // OnConflictingPublicKeySubmitted logs mismatched public keys submitted by
 // members of a keep.
 func (lc *localChain) OnConflictingPublicKeySubmitted(
