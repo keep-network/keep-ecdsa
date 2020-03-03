@@ -144,6 +144,26 @@ func (lc *localChain) IsAwaitingSignature(
 	panic("implement")
 }
 
+func (lc *localChain) BlockCounter() chain.BlockCounter {
+	panic("implement")
+}
+
+func (lc *localChain) IsRegisteredForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) IsEligibleForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) UpdateStatusForApplication(application common.Address) error {
+	panic("implement")
+}
+
 // OnKeepClosed archives key shares and unsubscibes from events.
 func (lc *localChain) OnKeepClosed(
 	keepAddress common.Address,

@@ -2,6 +2,8 @@
 package client
 
 import (
+	"context"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
@@ -20,6 +22,7 @@ var logger = log.Logger("keep-tecdsa")
 // Expects a slice of sanctioned applications selected by the operator for which
 // operator will be registered as a member candidate.
 func Initialize(
+	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
@@ -114,26 +117,9 @@ func Initialize(
 		}
 	})
 
-	// Register client as a candidate member for keep.
 	for _, application := range sanctionedApplications {
-		// TODO: Validate if client is already registered and can be registered.
-		// If can register but it is not registered, it is registering. If can't
-		// be registered yet (stake maturation period), waits some time and tries again
-		if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
-			logger.Errorf(
-				"failed to register member for application [%s]: [%v]",
-				application.String(),
-				err,
-			)
-			continue
-		}
-		logger.Debugf(
-			"client registered as member candidate for application: [%s]",
-			application.String(),
-		)
+		go checkStatusAndRegisterForApplication(ctx, ethereumChain, application)
 	}
-
-	logger.Infof("client initialized")
 }
 
 // registerForSignEvents registers for signature requested events emitted by

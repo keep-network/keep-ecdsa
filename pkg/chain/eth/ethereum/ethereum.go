@@ -7,9 +7,12 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/contract"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -290,4 +293,46 @@ func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
 // BalanceOf returns the stake balance of the specified address.
 func (ec *EthereumChain) BalanceOf(address common.Address) (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
+}
+
+func (ec *EthereumChain) BlockCounter() chain.BlockCounter {
+	return ec.blockCounter
+}
+
+func (ec *EthereumChain) IsRegisteredForApplication(application common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
+		ec.Address(),
+		application,
+	)
+}
+
+func (ec *EthereumChain) IsEligibleForApplication(application common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorEligible(
+		ec.Address(),
+		application,
+	)
+}
+
+func (ec *EthereumChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
+		ec.Address(),
+		application,
+	)
+}
+
+func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) error {
+	transaction, err := ec.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
+		ec.Address(),
+		application,
+	)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf(
+		"submitted UpdateOperatorStatus transaction with hash: [%x]",
+		transaction.Hash(),
+	)
+
+	return nil
 }
