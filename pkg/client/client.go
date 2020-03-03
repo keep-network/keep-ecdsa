@@ -164,7 +164,7 @@ func monitorKeepClosedEvents(
 	subscriptionOnKeepClosed, err := ethereumChain.OnKeepClosed(
 		keepAddress,
 		func(event *eth.KeepClosedEvent) {
-			logger.Infof("keep [%x] is being closed", keepAddress)
+			logger.Infof("keep [%s] is being closed", keepAddress.String())
 			keepsRegistry.UnregisterKeep(keepAddress)
 			keepClosed <- event
 		},
