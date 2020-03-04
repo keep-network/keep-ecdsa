@@ -33,6 +33,13 @@ contract ECDSAKeepRewards {
     // Mapping of interval to number of keeps created in/before the interval
     mapping(uint256 => uint256) keepsByInterval;
 
+    // Mapping of interval to number of keeps whose rewards have been paid out,
+    // or reallocated because the keep closed unhappily
+    mapping(uint256 => uint256) intervalKeepsProcessed;
+
+    // Rewards that haven't been allocated to finished intervals
+    uint256 unallocatedRewards;
+
     constructor (
         uint256 _termLength,
         uint256 _totalRewards,
@@ -44,6 +51,7 @@ contract ECDSAKeepRewards {
     public {
        keepToken = IERC20(_keepToken);
        totalRewards = _totalRewards;
+       unallocatedRewards = totalRewards;
        termLength = _termLength;
        initiated = _initiated;
        minimumSubmissions = _minimumSubmissions;
