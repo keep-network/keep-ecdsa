@@ -44,8 +44,8 @@ func (k *Keeps) RegisterSigner(
 
 // UnregisterKeep archives threeshold signer info for the given keep address.
 func (k *Keeps) UnregisterKeep(keepAddress common.Address) {
-	k.myKeepsMutex.Lock()
-	defer k.myKeepsMutex.Unlock()
+	k.myKeepsMutex.RLock()
+	defer k.myKeepsMutex.RUnlock()
 
 	err := k.storage.archive(keepAddress.String())
 	if err != nil {
