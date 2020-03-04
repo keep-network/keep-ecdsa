@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeep.sol";
+import "./BondedECDSAKeepFactory.sol";
 
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
@@ -111,6 +112,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
     TokenStaking tokenStaking;
     KeepBonding keepBonding;
+    BondedECDSAKeepFactory keepFactory;
 
     /// @notice Initialization function.
     /// @dev We use clone factory to create new keep. That is why this contract
@@ -121,12 +123,15 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _tokenStaking Address of the TokenStaking contract.
     /// @param _keepBonding Address of the KeepBonding contract.
+    /// @param _keepFactory Address of the BondedECDSAKeepFactory that created
+    /// this keep.
     function initialize(
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
         address _tokenStaking,
-        address _keepBonding
+        address _keepBonding,
+        address payable _keepFactory
     ) public {
         require(!isInitialized, "Contract already initialized");
 
@@ -135,6 +140,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         honestThreshold = _honestThreshold;
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
+        keepFactory = BondedECDSAKeepFactory(_keepFactory);
         isActive = true;
         isInitialized = true;
 
