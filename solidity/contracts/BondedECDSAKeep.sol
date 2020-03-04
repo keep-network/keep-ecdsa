@@ -18,6 +18,12 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
+    // Status of the keep.
+    // Active means the keep is active.
+    // Closed means the keep was closed happily.
+    // Terminated means the keep was closed due to misbehavior.
+    enum Status { Active, Closed, Terminated }
+
     // Flags execution of contract initialization.
     bool isInitialized;
 
@@ -68,6 +74,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // it and support requests for the keep owner. If the owner decides to close
     // the keep the flag is set to false.
     bool public isActive;
+    Status internal status;
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(bytes32 digest);
@@ -131,6 +138,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         isActive = true;
+        status = Status.Active;
         isInitialized = true;
 
         /* solium-disable-next-line security/no-block-members*/
@@ -233,7 +241,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// has timed out.
     // TODO: Rename to `seizeMembersBonds` for consistency.
     function seizeSignerBonds() external onlyOwner {
-        markAsClosed();
+        markAsTerminated();
 
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(
@@ -393,6 +401,21 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         );
 
         isActive = false;
+        status = Status.Closed;
+        emit KeepClosed();
+    }
+
+    /// @notice Marks the keep as terminated.
+    /// Keep can be marked as closed only when there is no signing in progress
+    /// or the requested signing process has timed out.
+    function markAsTerminated() internal {
+        require(
+            !isSigningInProgress() || hasSigningTimedOut(),
+            "Requested signing has not timed out yet"
+        );
+
+        isActive = false;
+        status = Status.Terminated;
         emit KeepClosed();
     }
 
