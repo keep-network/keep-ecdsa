@@ -1160,6 +1160,23 @@ contract('BondedECDSAKeep', (accounts) => {
       assert.deepEqual(newBalances, expectedBalances)
     })
 
+    it('reverts in case of zero balance', async () => {
+      const member = members[0]
+
+      const keep = await newKeep(
+        owner,
+        [member],
+        honestThreshold,
+        tokenStaking.address,
+        keepBonding.address
+      )
+
+      await expectRevert(
+        keep.withdraw(member),
+        'No funds to withdraw'
+      )
+    })
+
     it('reverts in case of transfer failure', async () => {
       let etherReceiver = await TestEtherReceiver.new()
       await etherReceiver.setShouldFail(true)
