@@ -1193,7 +1193,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
       await keep.distributeETHReward({ value: ethValue })
 
-      expectRevert(
+      await expectRevert(
         keep.withdraw(member),
         'Transfer failed'
       )

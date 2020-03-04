@@ -228,7 +228,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if sortition pool does not exist", async () => {
-            expectRevert(
+            await expectRevert(
                 keepFactory.getSortitionPool(application),
                 'No pool found for the application'
             )
