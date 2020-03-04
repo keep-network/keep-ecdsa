@@ -45,15 +45,15 @@ func Initialize(
 				isActive, err := ethereumChain.IsActive(keepAddress)
 				if err != nil {
 					logger.Errorf(
-						"failed to verify if keep is still active: [%v]. " + 
-						"Subscriptions for keep signing and closing events are skipped", 
+						"failed to verify if keep is still active: [%v]; " + 
+						"subscriptions for keep signing and closing events are skipped", 
 						err,
 					)
 					continue
 				}
 
 				if isActive {
-					subscriptionOnSignatureRequested, err := monitorSignatureEvents(
+					subscriptionOnSignatureRequested, err := monitorSigningRequests(
 						ethereumChain,
 						tssNode,
 						keepAddress,
@@ -61,10 +61,13 @@ func Initialize(
 					)
 					if err != nil {
 						logger.Errorf(
-							"failed on registering keep [%s] for requested signature event: [%v]",
+							"failed on registering for requested signature event for keep [%s]: [%v]",
 							keepAddress.String(),
 							err,
 						)
+						// In case of an error we want to avoid subscribing to keep
+						// closed events. Something is wrong and we should stop
+						// further processing.
 						continue
 					}
 					go monitorKeepClosedEvents(
@@ -72,10 +75,6 @@ func Initialize(
 						keepAddress,
 						keepsRegistry,
 						subscriptionOnSignatureRequested,
-					)
-					logger.Debugf(
-						"signer registered for events from keep: [%s]",
-						keepAddress.String(),
 					)
 				} else {
 					logger.Infof(
@@ -130,7 +129,7 @@ func Initialize(
 				)
 			}
 
-			subscriptionOnSignatureRequested, err := monitorSignatureEvents(
+			subscriptionOnSignatureRequested, err := monitorSigningRequests(
 				ethereumChain,
 				tssNode,
 				event.KeepAddress,
@@ -138,11 +137,14 @@ func Initialize(
 			)
 			if err != nil {
 				logger.Errorf(
-					"failed on registering keep [%s] for requested signature event: [%v]",
+					"failed on registering for requested signature event for keep [%s]: [%v]",
 					event.KeepAddress.String(),
 					err,
 				)
 
+				// In case of an error we want to avoid subscribing to keep
+				// closed events. Something is wrong and we should stop
+				// further processing.
 				return
 			}
 
@@ -160,9 +162,9 @@ func Initialize(
 	}
 }
 
-// monitorSignatureEvents registers for signature requested events emitted by
+// monitorSigningRequests registers for signature requested events emitted by
 // specific keep contract.
-func monitorSignatureEvents(
+func monitorSigningRequests(
 	ethereumChain eth.Handle,
 	tssNode *node.Node,
 	keepAddress common.Address,
