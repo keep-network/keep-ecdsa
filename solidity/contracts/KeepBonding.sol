@@ -47,7 +47,7 @@ contract KeepBonding {
     /// @param operator Address of the operator.
     /// @param bondCreator Address authorized to create a bond.
     /// @param authorizedSortitionPool Address of authorized sortition pool.
-    /// @return Amount of deposited wei available for bonding.
+    /// @return Amount of authorized wei deposit available for bonding.
     function availableUnbondedValue(
         address operator,
         address bondCreator,
