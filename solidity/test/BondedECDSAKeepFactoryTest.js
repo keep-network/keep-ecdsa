@@ -22,7 +22,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract.only("BondedECDSAKeepFactory", async accounts => {
+contract("BondedECDSAKeepFactory", async accounts => {
     let registry
     let tokenStaking
     let keepFactory
