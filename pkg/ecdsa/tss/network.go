@@ -68,7 +68,7 @@ func (b *networkBridge) connect(
 		for {
 			select {
 			case tssLibMsg := <-tssOutChan:
-				go b.sendTSSMessage(tssLibMsg)
+				go b.sendTSSMessage(ctx, tssLibMsg)
 			case msg := <-netInChan:
 				go b.handleTSSProtocolMessage(msg)
 			case <-ctx.Done():
@@ -245,7 +245,10 @@ func (b *networkBridge) getUnicastChannelWith(
 	return unicastChannel, nil
 }
 
-func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
+func (b *networkBridge) sendTSSMessage(
+	ctx context.Context,
+	tssLibMsg tss.Message,
+) {
 	bytes, routing, err := tssLibMsg.WireBytes()
 	if err != nil {
 		logger.Errorf("failed to encode message: [%v]", err)
@@ -260,7 +263,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 
 	if routing.To == nil {
-		b.broadcast(protocolMessage)
+		b.broadcast(ctx, protocolMessage)
 	} else {
 		for _, destination := range routing.To {
 			destinationMemberID, err := MemberIDFromString(destination.GetId())
@@ -278,14 +281,17 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 	}
 }
 
-func (b *networkBridge) broadcast(msg *TSSProtocolMessage) error {
+func (b *networkBridge) broadcast(
+	ctx context.Context,
+	msg *TSSProtocolMessage,
+) error {
 	broadcastChannel, err := b.getBroadcastChannel()
 	if err != nil {
 		return fmt.Errorf("failed to find broadcast channel: [%v]", err)
 
 	}
 
-	if broadcastChannel.Send(context.Background(), msg); err != nil {
+	if broadcastChannel.Send(ctx, msg); err != nil {
 		return fmt.Errorf("failed to send broadcast message: [%v]", err)
 	}
 
