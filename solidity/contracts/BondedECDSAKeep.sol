@@ -299,13 +299,13 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// the preimage with sha256.
     /// @param _preimage Preimage of the hashed message.
     /// @return True if fraud, error otherwise.
-    function submitSignatureFraud(
+    function checkSignatureFraud(
         uint8 _v,
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes calldata _preimage
-    ) external returns (bool _isFraud) {
+        bytes memory _preimage
+    ) public view returns (bool _isFraud) {
         require(publicKey.length != 0, "Public key was not set yet");
 
         bytes32 calculatedDigest = sha256(_preimage);
