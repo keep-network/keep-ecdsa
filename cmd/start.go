@@ -128,7 +128,7 @@ func Start(c *cli.Context) error {
 		config.LibP2P,
 		networkPrivateKey,
 		stakeMonitor,
-		retransmission.NewTicker(make(chan uint64)),
+		retransmission.NewTimeTicker(ctx, 1*time.Second),
 		libp2p.WithRoutingTableRefreshPeriod(routingTableRefreshPeriod),
 		libp2p.WithBootstrapMinPeerThreshold(bootstrapMinPeerThreshold),
 	)

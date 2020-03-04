@@ -37,7 +37,6 @@ func AnnounceProtocol(
 	receivedMemberIDs := make(map[string]MemberID)
 
 	go func() {
-
 		for {
 			select {
 			case <-ctx.Done():
@@ -65,23 +64,21 @@ func AnnounceProtocol(
 			}
 		}
 
-		for {
-			select {
-			case <-ctx.Done():
-				// Send the message once again as the member received messages
-				// from all peer members but not all peer members could receive
-				// the message from the member as some peer member could join
-				// the protocol after the member sent the last message.
-				sendMessage()
-				return
-			default:
-				sendMessage()
-				time.Sleep(1 * time.Second)
-			}
-		}
+		// Send the message first time. It will be periodically retransmitted
+		// by the broadcast channel for the entire lifetime of the context.
+		sendMessage()
+
+		<-ctx.Done()
+		// Send the message once again as the member received messages
+		// from all peer members but not all peer members could receive
+		// the message from the member as some peer member could join
+		// the protocol after the member sent the last message.
+		sendMessage()
+		return
 	}()
 
 	<-ctx.Done()
+
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
 		return nil, fmt.Errorf(
