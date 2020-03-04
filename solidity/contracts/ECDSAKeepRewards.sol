@@ -90,9 +90,6 @@ contract ECDSAKeepRewards {
         );
         uint256 intervalEndpointsLength = intervalEndpoints.length;
         uint256 newInterval = findEndpoint(_timestamp);
-        // uint256 newInterval = intervalEndpointsLength > 0 ?
-        // find(0, factory.getKeepCount(), _timestamp):
-        // find(intervalEndpoints[intervalEndpointsLength - 1], factory.getKeepCount(), _timestamp);
 
         uint256 totalSubmissions = intervalEndpointsLength > 0 ?
         newInterval:
@@ -181,9 +178,6 @@ contract ECDSAKeepRewards {
         return ub;
     }
 
-   function tt(uint256 ind) public view returns (uint256) {
-    return factory.getKeepCount();
-}
    function currentTime() public view returns (uint256) {
        return block.timestamp;
    }
