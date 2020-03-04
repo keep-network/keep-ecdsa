@@ -226,7 +226,11 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @notice Checks if given operator is eligible for the given application.
     /// @param _operator Operator's address.
     /// @param _application Customer application address.
-    function isOperatorEligible(address _operator, address _application) public view returns (bool) {
+    function isOperatorEligible(address _operator, address _application)
+        public
+        view
+        returns (bool)
+    {
         if (candidatesPools[_application] == address(0)) {
             return false;
         }
@@ -366,7 +370,9 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         // beacon service contract gets compromised. Relay request should not
         // consume more than 360k of gas. We set the limit to 400k to have
         // a safety margin for future updates.
-        (bool success, ) = address(randomBeacon).call.gas(400000).value(msg.value)(
+        (bool success, ) = address(randomBeacon).call.gas(400000).value(
+            msg.value
+        )(
             abi.encodeWithSignature(
                 "requestRelayEntry(address,string,uint256)",
                 address(this),
@@ -411,16 +417,15 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @param _operator operator's address
     /// @return True if has enough active stake to participate in the network,
     /// false otherwise.
-    function hasMinimumStake(address _operator) public view returns(bool) {
-        return (
-            tokenStaking.activeStake(_operator, address(this)) >= minimumStake
-        );
+    function hasMinimumStake(address _operator) public view returns (bool) {
+        return
+            tokenStaking.activeStake(_operator, address(this)) >= minimumStake;
     }
 
     /// @dev Gets the stake balance of the specified operator.
     /// @param _operator The operator to query the balance of.
     /// @return An uint256 representing the amount staked by the passed operator.
-    function balanceOf(address _operator) public view returns(uint256) {
+    function balanceOf(address _operator) public view returns (uint256) {
         return tokenStaking.balanceOf(_operator);
     }
 
