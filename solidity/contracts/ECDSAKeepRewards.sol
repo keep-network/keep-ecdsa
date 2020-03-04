@@ -222,6 +222,7 @@ contract ECDSAKeepRewards {
    /// otherwise the endpoint might still change.
    /// @dev Uses a locally cached result,
    /// and stores the result if it isn't cached yet.
+   /// All keeps created before the initiation fall in interval 0.
    /// @param interval The number of the interval.
    /// @return endpoint The number of keeps the factory had created
    /// before the end of the interval.
@@ -253,6 +254,14 @@ contract ECDSAKeepRewards {
            endpoint = maybeEndpoint;
        }
        return endpoint;
+   }
+
+   function getPreviousEndpoint(uint256 interval) public returns (uint256) {
+       if (interval == 0) {
+           return 0;
+       } else {
+           return getEndpoint(interval - 1);
+       }
    }
 }
 

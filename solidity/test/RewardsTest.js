@@ -210,8 +210,8 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             let targetTimestamp = recentTimestamp + termLength
             let targetInterval = await rewards.intervalOf(targetTimestamp)
             await expectRevert(
-                rewards.findEndpoint(targetTimestamp),
-                "interval hasn't ended yet"
+                rewards.getEndpoint(targetInterval),
+                "Interval hasn't ended yet"
             )
         })
 
