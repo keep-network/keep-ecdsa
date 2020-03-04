@@ -19,7 +19,8 @@ contract BondedECDSAKeepCloneFactory is CloneFactory {
         address[] calldata _members,
         uint256 _honestThreshold,
         address _tokenStaking,
-        address _keepBonding
+        address _keepBonding,
+        address payable _keepFactory
     ) external payable returns (address keepAddress) {
         keepAddress = createClone(masterBondedECDSAKeepAddress);
         assert(isClone(masterBondedECDSAKeepAddress, keepAddress));
@@ -30,7 +31,8 @@ contract BondedECDSAKeepCloneFactory is CloneFactory {
             _members,
             _honestThreshold,
             _tokenStaking,
-            _keepBonding
+            _keepBonding,
+            _keepFactory
         );
 
         emit BondedECDSAKeepCreated(keepAddress);

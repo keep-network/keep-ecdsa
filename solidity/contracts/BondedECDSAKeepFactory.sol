@@ -315,7 +315,8 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             members,
             _honestThreshold,
             address(tokenStaking),
-            address(keepBonding)
+            address(keepBonding),
+            address(this)
         );
 
         keeps[keepAddress] = true;
