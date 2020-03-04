@@ -145,8 +145,6 @@ func monitorSignatureEvents(
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
 ) (subscription.EventSubscription) {
-	signatureRequested := make(chan *eth.SignatureRequestedEvent)
-
 	subscriptionOnSignatureRequested, err := ethereumChain.OnSignatureRequested(
 		keepAddress,
 		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
@@ -155,7 +153,6 @@ func monitorSignatureEvents(
 				keepAddress.String(),
 				signatureRequestedEvent.Digest,
 			)
-			signatureRequested <- signatureRequestedEvent
 
 			go func() {
 				err := tssNode.CalculateSignature(
@@ -175,18 +172,6 @@ func monitorSignatureEvents(
 			err,
 		)
 	}
-
-	go func() {
-		for {
-			<- signatureRequested
-			subscriptionOnSignatureRequested.Unsubscribe()
-			logger.Info(
-				"unsubscribing from requested signature event",
-			)
-
-			return
-		}
-	}()
 
 	return subscriptionOnSignatureRequested
 }
