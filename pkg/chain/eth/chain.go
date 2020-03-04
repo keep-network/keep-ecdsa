@@ -99,6 +99,7 @@ type BondedECDSAKeep interface {
 	// calculated for the given digest.
 	IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error)
 
-	// IsActive checks for current state of a keep on-chain.
+	// IsActive checks if the keep with the given address is active and responds
+	// to signing request. This function returns false only for closed keeps.
 	IsActive(keepAddress common.Address) (bool, error)
 }
