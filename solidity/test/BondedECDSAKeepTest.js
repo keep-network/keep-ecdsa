@@ -556,7 +556,7 @@ contract('BondedECDSAKeep', (accounts) => {
     })
   })
 
-  describe('submitSignatureFraud', () => {
+  describe('checkSignatureFraud', () => {
     // Private key: 0x937FFE93CFC943D1A8FC0CB8BAD44A978090A4623DA81EEFDFF5380D0A290B41
     // Public key:
     //  Curve: secp256k1
@@ -581,7 +581,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
     it('reverts if public key was not set', async () => {
       await expectRevert(
-        keep.submitSignatureFraud.call(
+        keep.checkSignatureFraud.call(
           signature1.V,
           signature1.R,
           signature1.S,
@@ -597,7 +597,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
       await keep.sign(hash256Digest2, { from: owner })
 
-      let res = await keep.submitSignatureFraud.call(
+      let res = await keep.checkSignatureFraud.call(
         signature1.V,
         signature1.R,
         signature1.S,
@@ -614,7 +614,7 @@ contract('BondedECDSAKeep', (accounts) => {
       await keep.sign(hash256Digest2, { from: owner })
 
       await expectRevert(
-        keep.submitSignatureFraud.call(
+        keep.checkSignatureFraud.call(
           signature1.V,
           signature1.R,
           signature1.S,
@@ -631,7 +631,7 @@ contract('BondedECDSAKeep', (accounts) => {
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
 
       await expectRevert(
-        keep.submitSignatureFraud.call(
+        keep.checkSignatureFraud.call(
           signature1.V,
           badSignatureR,
           signature1.S,
@@ -648,7 +648,7 @@ contract('BondedECDSAKeep', (accounts) => {
       await keep.sign(hash256Digest2, { from: owner })
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
       await expectRevert(
-        keep.submitSignatureFraud.call(
+        keep.checkSignatureFraud.call(
           signature1.V,
           badSignatureR,
           signature1.S,
@@ -665,7 +665,7 @@ contract('BondedECDSAKeep', (accounts) => {
       await keep.sign(hash256Digest1, { from: owner })
 
       await expectRevert(
-        keep.submitSignatureFraud.call(
+        keep.checkSignatureFraud.call(
           signature1.V,
           signature1.R,
           signature1.S,
