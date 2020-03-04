@@ -142,6 +142,12 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         keyGenerationStartTimestamp = block.timestamp;
     }
 
+    /// @notice Returns members of the keep.
+    /// @return List of the keep members' addresses.
+    function getMembers() public view returns (address[] memory) {
+        return members;
+    }
+
     /// @notice Submits a public key to the keep.
     /// @dev Public key is published successfully if all members submit the same
     /// value. In case of conflicts with others members submissions it will emit
