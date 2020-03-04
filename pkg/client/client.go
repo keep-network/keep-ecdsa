@@ -174,7 +174,8 @@ func monitorSignatureEvents(
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed on registering for requested signature event: [%v]",
+			"failed on registering keep [%s] for requested signature event: [%v]",
+			keepAddress.String(),
 			err,
 		)
 	}
