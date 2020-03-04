@@ -285,7 +285,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         keepBonding.deposit.value(bondPerMember.add(remainder))(members[memberCount - 1]);
     }
 
-    /// @notice Submits a fraud proof for a valid signature from this keep that was
+    /// @notice Checks a fraud proof for a valid signature from this keep that was
     /// not first approved via a call to sign.
     /// @dev The function expects the signed digest to be calculated as a sha256 hash
     /// of the preimage: `sha256(_preimage))`. The digest is verified against the
@@ -324,6 +324,38 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         );
 
         return true;
+    }
+
+    /// @notice Submits a fraud proof for a valid signature from this keep that was
+    /// not first approved via a call to sign. If fraud is detected it slashes
+    /// members' KEEP tokens.
+    /// @param _v Signature's header byte: `27 + recoveryID`.
+    /// @param _r R part of ECDSA signature.
+    /// @param _s S part of ECDSA signature.
+    /// @param _signedDigest Digest for the provided signature. Result of hashing
+    /// the preimage with sha256.
+    /// @param _preimage Preimage of the hashed message.
+    /// @return True if fraud, error otherwise.
+    function submitSignatureFraud(
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s,
+        bytes32 _signedDigest,
+        bytes calldata _preimage
+    ) external returns (bool _isFraud) {
+        bool isFraud = checkSignatureFraud(
+            _v,
+            _r,
+            _s,
+            _signedDigest,
+            _preimage
+        );
+
+        if (isFraud == true) {
+            keepFactory.slashKeepMembers();
+        }
+
+        return isFraud;
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
