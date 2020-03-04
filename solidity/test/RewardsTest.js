@@ -214,5 +214,19 @@ contract.only('ECDSAKeepRewards', (accounts) => {
                 "interval hasn't ended yet"
             )
         })
+
+        it("returns the correct number of keeps for the interval", async () => {
+            let timestamps = defaultTimestamps
+            await createKeeps(timestamps)
+            let keepCount = await rewards.getEndpoint.call(0)
+            expect(keepCount.toNumber()).to.equal(timestamps.length)
+        })
+
+        it("returns 0 for intervals with no keeps", async () => {
+            let timestamps = [1200, 1201]
+            await createKeeps(timestamps)
+            let keepCount = await rewards.getEndpoint.call(1)
+            expect(keepCount.toNumber()).to.equal(0)
+        })
     })
 })
