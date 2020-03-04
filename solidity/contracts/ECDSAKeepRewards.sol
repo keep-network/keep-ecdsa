@@ -6,15 +6,28 @@ contract ECDSAKeepRewards {
 
     IERC20 keepToken;
     IBondedECDSAKeepFactory factory;
+
+    // Total number of keep tokens to distribute.
     uint256 totalRewards;
+    // Length of one interval.
     uint256 termLength;
+    // Timestamp of first interval beginning.
     uint256 initiated;
+    // Minimum number of keep submissions for each interval.
     uint256 minimumSubmissions;
+    // Array representing the percentage of total rewards available for each term.
     uint8[] InitialTermWeights = [8, 33, 21, 14, 9, 5, 3, 2, 2, 1, 1, 1]; // percent array
+
+    // Total number of intervals.
     uint256 termCount = InitialTermWeights.length;
 
+    // mapping of keeps to booleans. True if the keep has been used to calim a reward.
     mapping(address => bool) claimed;
+
+    // Number of submissions for each interval.
     mapping(uint256 => uint256) intervalSubmissions;
+
+    // Array of timestamps marking interval's end.
     uint256[] intervalEndpoints;
 
     constructor (
@@ -33,6 +46,8 @@ contract ECDSAKeepRewards {
        factory = IBondedECDSAKeepFactory(factoryAddress);
     }
 
+    /// @notice Sends the reward for a keep to the keep owner.
+    /// @param _keepAddress ECDSA keep factory address.
     function receiveReward(address _keepAddress) public {
         require(eligibleForReward(_keepAddress));
         require(!claimed[_keepAddress],"Reward already claimed.");
@@ -45,21 +60,29 @@ contract ECDSAKeepRewards {
         keepToken.transfer(_keep.getOwner(), intervalReward);
     }
 
+
+    /// @notice Get the rewards interval a given timestamp falls unnder.
+    /// @param _timestamp The timestamp to check.
+    /// @return The associated interval.
     function findInterval(uint256 _timestamp) public returns (uint256){
         // provide index/rewards interval and validate on-chain?
         // if interval exists, return it. else updateInterval()
         return updateInterval(_timestamp);
     }
 
+    /// @notice Get the reward dividend for each keep for a given reward interval.
+    /// @param term The term to check.
+    /// @return The reward dividend.
     function termReward(uint256 term) public view returns (uint256){
         uint256 _totalTermRewards = totalRewards * InitialTermWeights[term] / 100;
         return _totalTermRewards / intervalSubmissions[term];
     }
-    function getTermSubmissionCount(uint256 term) internal returns (uint256){
-        require(intervalEndpoints.length > term, "interval for given term not over yet");
-        return intervalSubmissions[term];
-    }
 
+    /// @notice Updates the latest interval.
+    /// @dev Interval should only be updated if the _timestamp provided
+    ///      does not belong to a pre-existing interval.
+    /// @param _timestamp The timestamp to update with.
+    /// @return the new interval.
     function updateInterval(uint256 _timestamp) internal returns (uint256){
         require(
             block.timestamp - initiated >= termLength * intervalEndpoints.length + termLength,
@@ -85,11 +108,22 @@ contract ECDSAKeepRewards {
         return newInterval;
     }
 
+    /// @notice Checks if a keep is eligible to receive rewards.
+    /// @dev Keeps that close dishonorably or early are not eligible for rewards.
+    /// @param _keep The keep to check.
+    /// @return True if the keep is eligible, false otherwise
     function eligibleForReward(address _keep) public view returns (bool){
         // check that keep closed properly
         return true;
     }
 
+    /// @notice Find the index of the keep with the largest timestamp smaller than
+    ///         _target from the `factory`
+    /// @dev   This is a binary search.
+    /// @param start Lower bound index for array traversal.
+    /// @param end Upper bound index for array traversal.
+    /// @param target Target timestamp to check against.
+    /// @return The ndex of the keep with the largest timestamp smaller than _target
     function find(uint256 start, uint256 end, uint256 target) public view returns (uint256) {
         uint256 _len;
         uint256 _start = start;
@@ -102,7 +136,6 @@ contract ECDSAKeepRewards {
             _len = _end - _start;
             _mid = _start + _len / 2;
             timestamp = IBondedECDSAKeep(factory.getKeepAtIndex(_mid)).getTimestamp();
-            
             timestampNext = IBondedECDSAKeep(factory.getKeepAtIndex(_mid + 1)).getTimestamp(); // check bound
             if(timestamp <= target && timestampNext > target){
                 return _mid;
@@ -116,12 +149,7 @@ contract ECDSAKeepRewards {
         }
         revert("could not find target");
    }
-   function tt(uint256 ind) public view returns (uint256) {
-    return factory.getKeepCount();
 }
-}
-
-
 
 interface IBondedECDSAKeep {
     function getOwner() external view returns (address);
