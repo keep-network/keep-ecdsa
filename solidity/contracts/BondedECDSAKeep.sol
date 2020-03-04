@@ -276,7 +276,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         // Transfer of dividend for the last member. Remainder might be equal to
         // zero in case of even distribution or some small number.
         uint256 remainder = msg.value.mod(memberCount);
-        keepBonding.deposit.value(bondPerMember.add(remainder))(members[memberCount - 1]);
+        keepBonding.deposit.value(bondPerMember.add(remainder))(
+            members[memberCount - 1]
+        );
     }
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
