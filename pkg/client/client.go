@@ -41,21 +41,28 @@ func Initialize(
 	keepsRegistry.ForEachKeep(
 		func(keepAddress common.Address, signer []*tss.ThresholdSigner) {
 			for _, signer := range signer {
-				registerForSignEvents(
-					ethereumChain,
-					tssNode,
-					keepAddress,
-					signer,
-				)
-				go monitorKeepClosedEvents(
-					ethereumChain,
-					keepAddress,
-					keepsRegistry,
-				)
-				logger.Debugf(
-					"signer registered for events from keep: [%s]",
-					keepAddress.String(),
-				)
+				isActive, err := ethereumChain.IsActive(keepAddress)
+				if err != nil {
+					logger.Errorf("failed to verify if keep is still active: [%v]", err)
+				}
+				
+				if isActive {
+					registerForSignEvents(
+						ethereumChain,
+						tssNode,
+						keepAddress,
+						signer,
+					)
+					go monitorKeepClosedEvents(
+						ethereumChain,
+						keepAddress,
+						keepsRegistry,
+					)
+					logger.Debugf(
+						"signer registered for events from keep: [%s]",
+						keepAddress.String(),
+					)
+				}
 			}
 		},
 	)

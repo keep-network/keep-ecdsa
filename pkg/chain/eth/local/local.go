@@ -144,6 +144,11 @@ func (lc *localChain) IsAwaitingSignature(
 	panic("implement")
 }
 
+// IsActive checks for current state of a keep on-chain.
+func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
+	panic("implement")
+}
+
 func (lc *localChain) BlockCounter() chain.BlockCounter {
 	panic("implement")
 }
