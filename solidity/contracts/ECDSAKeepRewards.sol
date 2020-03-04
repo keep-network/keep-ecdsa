@@ -30,6 +30,9 @@ contract ECDSAKeepRewards {
     // Array of timestamps marking interval's end.
     uint256[] intervalEndpoints;
 
+    // Mapping of interval to number of keeps created in/before the interval
+    mapping(uint256 => uint256) keepsByInterval;
+
     constructor (
         uint256 _termLength,
         uint256 _totalRewards,
@@ -201,6 +204,55 @@ contract ECDSAKeepRewards {
        uint256 interval = difference / _termLength;
 
        return interval;
+   }
+
+   /// @notice Return the timestamp corresponding to the start of the interval.
+   function startOf(uint256 interval) public view returns (uint256) {
+       return initiated + (interval * termLength);
+   }
+
+   /// @notice Return the timestamp corresponding to the end of the interval.
+   function endOf(uint256 interval) public view returns (uint256) {
+       return startOf(interval + 1);
+   }
+
+   /// @notice Return the endpoint index of the interval,
+   /// i.e. the number of keeps created in and before the interval.
+   /// The interval must have ended;
+   /// otherwise the endpoint might still change.
+   /// @dev Uses a locally cached result,
+   /// and stores the result if it isn't cached yet.
+   /// @param interval The number of the interval.
+   /// @return endpoint The number of keeps the factory had created
+   /// before the end of the interval.
+   function getEndpoint(uint256 interval) public returns (uint256 endpoint) {
+       uint256 intervalEnd = endOf(interval);
+       require(
+           block.timestamp >= intervalEnd,
+           "Interval hasn't ended yet"
+       );
+       // Get the endpoint from local cache;
+       // might not be recorded yet
+       uint256 maybeEndpoint = keepsByInterval[interval];
+
+       // Either the endpoint is zero
+       // (no keeps created by the end of the interval)
+       // or the endpoint isn't cached yet
+       if (maybeEndpoint == 0) {
+           // Check what the real endpoint is
+           // if the actual value is 0, this call short-circuits
+           // so we don't need to special-case the zero
+           uint256 realEndpoint = findEndpoint(endOf(interval));
+           // We didn't have the correct value cached,
+           // so store it
+           if (realEndpoint != 0) {
+               keepsByInterval[interval] = realEndpoint;
+           }
+           endpoint = realEndpoint;
+       } else {
+           endpoint = maybeEndpoint;
+       }
+       return endpoint;
    }
 }
 

@@ -119,6 +119,28 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         })
     })
 
+    describe("startOf", async () => {
+        it("returns the start of the interval", async () => {
+            let end0 = await rewards.startOf(0)
+            expect(end0.toNumber()).to.equal(1000)
+            let end1 = await rewards.startOf(1)
+            expect(end1.toNumber()).to.equal(1100)
+            let end9990 = await rewards.startOf(9990)
+            expect(end9990.toNumber()).to.equal(1000000)
+        })
+    })
+
+    describe("endOf", async () => {
+        it("returns the end of the interval", async () => {
+            let end0 = await rewards.endOf(0)
+            expect(end0.toNumber()).to.equal(1100)
+            let end1 = await rewards.endOf(1)
+            expect(end1.toNumber()).to.equal(1200)
+            let end9990 = await rewards.endOf(9990)
+            expect(end9990.toNumber()).to.equal(1000100)
+        })
+    })
+
     describe("findEndpoint", async () => {
         let increment = 1000
 
