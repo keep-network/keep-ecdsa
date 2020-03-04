@@ -46,6 +46,9 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         1015,
     ]
 
+    const initiationTime = 1000
+    const termLength = 100
+
     async function initializeNewFactory() {
         registry = await Registry.new()
         bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
@@ -74,7 +77,14 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     before(async () => {
         await initializeNewFactory()
 
-        rewards = await ECDSAKeepRewards.new(0, 0, accounts[0], 0, keepFactory.address)
+        rewards = await ECDSAKeepRewards.new(
+            termLength,
+            0,
+            accounts[0],
+            0,
+            keepFactory.address,
+            initiationTime
+        )
     })
 
     beforeEach(async () => {
@@ -83,6 +93,23 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
     afterEach(async () => {
         await restoreSnapshot()
+    })
+
+    describe("intervalOf", async () => {
+        it("returns the correct interval", async () => {
+            let interval1000 = await rewards.intervalOf(1000)
+            expect(interval1000.toNumber()).to.equal(0)
+            let interval1001 = await rewards.intervalOf(1001)
+            expect(interval1001.toNumber()).to.equal(0)
+            let interval1099 = await rewards.intervalOf(1099)
+            expect(interval1099.toNumber()).to.equal(0)
+            let interval1100 = await rewards.intervalOf(1100)
+            expect(interval1100.toNumber()).to.equal(1)
+            let interval1101 = await rewards.intervalOf(1101)
+            expect(interval1101.toNumber()).to.equal(1)
+            let interval1000000 = await rewards.intervalOf(1000000)
+            expect(interval1000000.toNumber()).to.equal(9990)
+        })
     })
 
     describe("findEndpoint", async () => {

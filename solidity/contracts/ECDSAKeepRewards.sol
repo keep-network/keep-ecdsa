@@ -35,13 +35,14 @@ contract ECDSAKeepRewards {
         uint256 _totalRewards,
         address _keepToken,
         uint256 _minimumSubmissions,
-        address factoryAddress
+        address factoryAddress,
+        uint256 _initiated
     )
     public {
        keepToken = IERC20(_keepToken);
        totalRewards = _totalRewards;
        termLength = _termLength;
-       initiated = block.timestamp;
+       initiated = _initiated;
        minimumSubmissions = _minimumSubmissions;
        factory = IBondedECDSAKeepFactory(factoryAddress);
     }
@@ -180,6 +181,26 @@ contract ECDSAKeepRewards {
 
    function currentTime() public view returns (uint256) {
        return block.timestamp;
+   }
+
+   /// @notice Return the interval number
+   /// the provided timestamp falls within.
+   /// @dev Reverts if the timestamp is before `initiated`.
+   /// @param timestamp The timestamp whose interval is queried.
+   /// @return The interval of the timestamp.
+   function intervalOf(uint256 timestamp) public view returns (uint256) {
+       uint256 _initiated = initiated;
+       uint256 _termLength = termLength;
+
+       require(
+           timestamp >= _initiated,
+           "Timestamp is before the first interval"
+       );
+
+       uint256 difference = timestamp - _initiated;
+       uint256 interval = difference / _termLength;
+
+       return interval;
    }
 }
 
