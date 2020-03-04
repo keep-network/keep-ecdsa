@@ -1266,7 +1266,7 @@ contract('BondedECDSAKeep', (accounts) => {
     it('fails with insufficient approval', async () => {
       await expectRevert(
         keep.distributeERC20Reward(token.address, erc20Value),
-        "SafeMath: subtraction overflow"
+        "SafeERC20: low-level call failed"
       )
     })
 

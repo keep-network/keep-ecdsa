@@ -8,6 +8,7 @@ import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
 /// @title Bonded ECDSA Keep
 /// @notice ECDSA keep with additional signer bond requirement.
@@ -17,6 +18,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 contract BondedECDSAKeep is IBondedECDSAKeep {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     // Flags execution of contract initialization.
     bool isInitialized;
@@ -490,7 +492,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         require(dividend > 0, "Dividend value must be non-zero");
 
         for (uint16 i = 0; i < memberCount - 1; i++) {
-            token.transferFrom(
+            token.safeTransferFrom(
                 msg.sender,
                 tokenStaking.magpieOf(members[i]),
                 dividend
@@ -500,7 +502,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         // Transfer of dividend for the last member. Remainder might be equal to
         // zero in case of even distribution or some small number.
         uint256 remainder = _value.mod(memberCount);
-        token.transferFrom(
+        token.safeTransferFrom(
             msg.sender,
             tokenStaking.magpieOf(members[memberCount - 1]),
             dividend.add(remainder)
