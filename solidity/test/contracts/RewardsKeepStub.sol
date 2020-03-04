@@ -6,4 +6,12 @@ contract RewardsKeepStub is BondedECDSAKeep {
     function setTimestamp(uint256 time) external {
         keyGenerationStartTimestamp = time;
     }
+
+    function close() external {
+        markAsClosed();
+    }
+
+    function terminate() external {
+        markAsTerminated();
+    }
 }
