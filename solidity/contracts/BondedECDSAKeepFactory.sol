@@ -80,6 +80,9 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // signers.
     uint256 public subsidyPool;
 
+    // Keeps created by this factory.
+    mapping(address => bool) keeps;
+
     constructor(
         address _masterBondedECDSAKeepAddress,
         address _sortitionPoolFactory,
@@ -314,6 +317,8 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             address(tokenStaking),
             address(keepBonding)
         );
+
+        keeps[keepAddress] = true;
 
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
