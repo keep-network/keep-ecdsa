@@ -10,7 +10,7 @@ const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory
 const RandomBeaconStub = artifacts.require('RandomBeaconStub')
 
 
-const BondedECDSAKeep = artifacts.require('BondedECDSAKeep');
+const RewardsKeepStub = artifacts.require('RewardsKeepStub');
 const ECDSAKeepRewards = artifacts.require('ECDSAKeepRewards');
 
 contract.only('ECDSAKeepRewards', (accounts) => {
@@ -52,7 +52,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         tokenStaking = await TokenStakingStub.new()
         keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
         randomBeacon = await RandomBeaconStub.new()
-        const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
+        const bondedECDSAKeepMasterContract = await RewardsKeepStub.new()
         keepFactory = await RewardsFactoryStub.new(
             bondedECDSAKeepMasterContract.address,
             bondedSortitionPoolFactory.address,
@@ -61,10 +61,20 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             randomBeacon.address
         )
     }
-  before(async () => {
-    await initializeNewFactory()
 
-    rewards = await ECDSAKeepRewards.new(0, 0, accounts[0], 0, keepFactory.address)
+    async function createKeeps(timestamps) {
+        await keepFactory.openSyntheticKeeps(timestamps)
+        for (let i = 0; i < timestamps.length; i++) {
+            let keepAddress = await keepFactory.getKeepAtIndex(i)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.setTimestamp(timestamps[i])
+        }
+    }
+
+    before(async () => {
+        await initializeNewFactory()
+
+        rewards = await ECDSAKeepRewards.new(0, 0, accounts[0], 0, keepFactory.address)
     })
 
     beforeEach(async () => {
@@ -97,7 +107,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
         it("returns the first index outside the interval", async () => {
             let timestamps = defaultTimestamps
-            await keepFactory.openSyntheticKeeps(timestamps)
+            await createKeeps(timestamps)
             for (let i = 0; i < 16; i++) {
                 let expectedIndex = i
                 let targetTimestamp = timestamps[i]
@@ -109,7 +119,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
         it("returns the next keep's index when all current keeps were created in the interval", async () => {
             let timestamps = defaultTimestamps
-            await keepFactory.openSyntheticKeeps(timestamps)
+            await createKeeps(timestamps)
             let targetTimestamp = 2000
             let expectedIndex = 16
             let index = await rewards.findEndpoint(targetTimestamp)
@@ -119,7 +129,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
         it("returns 0 when all current keeps were created after the interval", async () => {
             let timestamps = defaultTimestamps
-            await keepFactory.openSyntheticKeeps(timestamps)
+            await createKeeps(timestamps)
             let targetTimestamp = 500
             let expectedIndex = 0
             let index = await rewards.findEndpoint(targetTimestamp)
@@ -129,7 +139,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
         it("returns the correct index when duplicates are present", async () => {
             let timestamps = [1001, 1001, 1002, 1002]
-            await keepFactory.openSyntheticKeeps(timestamps)
+            await createKeeps(timestamps)
             let targetTimestamp = 1002
             let expectedIndex = 2
             let index = await rewards.findEndpoint(targetTimestamp)
