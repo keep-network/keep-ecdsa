@@ -53,12 +53,20 @@ func Initialize(
 				}
 
 				if isActive {
-					subscriptionOnSignatureRequested := monitorSignatureEvents(
+					subscriptionOnSignatureRequested, err := monitorSignatureEvents(
 						ethereumChain,
 						tssNode,
 						keepAddress,
 						signer,
 					)
+					if err != nil {
+						logger.Errorf(
+							"failed on registering keep [%s] for requested signature event: [%v]",
+							keepAddress.String(),
+							err,
+						)
+						continue
+					}
 					go monitorKeepClosedEvents(
 						ethereumChain,
 						keepAddress,
@@ -122,12 +130,21 @@ func Initialize(
 				)
 			}
 
-			subscriptionOnSignatureRequested := monitorSignatureEvents(
+			subscriptionOnSignatureRequested, err := monitorSignatureEvents(
 				ethereumChain,
 				tssNode,
 				event.KeepAddress,
 				signer,
 			)
+			if err != nil {
+				logger.Errorf(
+					"failed on registering keep [%s] for requested signature event: [%v]",
+					event.KeepAddress.String(),
+					err,
+				)
+
+				return
+			}
 
 			go monitorKeepClosedEvents(
 				ethereumChain,
@@ -150,8 +167,8 @@ func monitorSignatureEvents(
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
-) (subscription.EventSubscription) {
-	subscriptionOnSignatureRequested, err := ethereumChain.OnSignatureRequested(
+) (subscription.EventSubscription, error) {
+	return ethereumChain.OnSignatureRequested(
 		keepAddress,
 		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
 			logger.Infof(
@@ -172,15 +189,6 @@ func monitorSignatureEvents(
 			}()
 		},
 	)
-	if err != nil {
-		logger.Errorf(
-			"failed on registering keep [%s] for requested signature event: [%v]",
-			keepAddress.String(),
-			err,
-		)
-	}
-
-	return subscriptionOnSignatureRequested
 }
 
 // monitorKeepClosedEvents subscribes and unsubscribes for keep closed events.
@@ -205,6 +213,8 @@ func monitorKeepClosedEvents(
 			"failed on registering for keep closed event: [%v]",
 			err,
 		)
+
+		return
 	}
 
 	defer subscriptionOnKeepClosed.Unsubscribe()
