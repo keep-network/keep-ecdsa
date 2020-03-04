@@ -256,6 +256,7 @@ func (b *networkBridge) sendTSSMessage(tssLibMsg tss.Message) {
 		SenderID:    routing.From.GetKey(),
 		Payload:     bytes,
 		IsBroadcast: routing.IsBroadcast,
+		SessionID:   b.groupInfo.groupID,
 	}
 
 	if routing.To == nil {
@@ -323,6 +324,10 @@ func (b *networkBridge) registerProtocolMessageHandler(
 	sortedPartyIDs tss.SortedPartyIDs,
 ) {
 	handler := func(protocolMessage *TSSProtocolMessage) error {
+		if protocolMessage.SessionID != b.groupInfo.groupID {
+			return nil
+		}
+
 		senderPartyID := sortedPartyIDs.FindByKey(protocolMessage.SenderID.bigInt())
 
 		if senderPartyID == party.PartyID() {
