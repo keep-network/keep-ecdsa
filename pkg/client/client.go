@@ -66,8 +66,8 @@ func Initialize(
 						keepAddress.String(),
 					)
 				} else {
-					logger.Debugf(
-						"keep is no longer active: [%s]",
+					logger.Infof(
+						"keep [%s] is no longer active; archiving",
 						keepAddress.String(),
 					)
 					keepsRegistry.UnregisterKeep(keepAddress)
