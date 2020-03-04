@@ -124,7 +124,7 @@ contract ECDSAKeepRewards {
     /// @return True if the keep is eligible, false otherwise
     function eligibleForReward(address _keep) public view returns (bool){
         // check that keep closed properly
-        return true;
+        return IBondedECDSAKeep(_keep).isClosed();
     }
 
     function findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
@@ -276,6 +276,9 @@ contract ECDSAKeepRewards {
 interface IBondedECDSAKeep {
     function getOwner() external view returns (address);
     function getTimestamp() external view returns (uint256);
+    function isClosed() external view returns (bool);
+    function isTerminated() external view returns (bool);
+    function isActive() external view returns (bool);
 }
 
 interface IBondedECDSAKeepFactory {

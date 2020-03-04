@@ -95,6 +95,33 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         await restoreSnapshot()
     })
 
+    describe("eligibleForReward", async () => {
+        it("returns true for happily closed keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.close()
+            let eligible = await rewards.eligibleForReward(keepAddress)
+            expect(eligible).to.equal(true)
+        })
+
+        it("returns false for terminated keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.terminate()
+            let eligible = await rewards.eligibleForReward(keepAddress)
+            expect(eligible).to.equal(false)
+        })
+
+        it("returns false for active keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let eligible = await rewards.eligibleForReward(keepAddress)
+            expect(eligible).to.equal(false)
+        })
+    })
+
     describe("intervalOf", async () => {
         it("returns the correct interval", async () => {
             let interval1000 = await rewards.intervalOf(1000)
