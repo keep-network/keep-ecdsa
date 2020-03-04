@@ -20,7 +20,7 @@ contract KeepBonding {
     TokenStaking internal stakingContract;
 
     // Unassigned value in wei deposited by operators.
-    mapping(address => uint256) internal unbondedValue;
+    mapping(address => uint256) public unbondedValue;
 
     // References to created bonds. Bond identifier is built from operator's
     // address, holder's address and reference ID assigned on bond creation.
