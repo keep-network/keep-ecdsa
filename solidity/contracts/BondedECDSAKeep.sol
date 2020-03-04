@@ -70,10 +70,11 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Map stores amount of wei stored in the contract for each member address.
     mapping(address => uint256) memberETHBalances;
 
-    // Flag to monitor current keep state. If the keep is active members monitor
-    // it and support requests for the keep owner. If the owner decides to close
-    // the keep the flag is set to false.
-    bool public isActive;
+    // Flag to monitor current keep state.
+    // If the keep is Active members monitor it
+    // and support requests for the keep owner.
+    // If the owner decides to close the keep the flag is set to Closed.
+    // If the owner seizes member bonds the flag is set to Terminated.
     Status internal status;
 
     // Notification that the keep was requested to sign a digest.
@@ -137,12 +138,23 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         honestThreshold = _honestThreshold;
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
-        isActive = true;
         status = Status.Active;
         isInitialized = true;
 
         /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
+    }
+
+    function isActive() public view returns (bool) {
+        return status == Status.Active;
+    }
+
+    function isClosed() public view returns (bool) {
+        return status == Status.Closed;
+    }
+
+    function isTerminated() public view returns (bool) {
+        return status == Status.Terminated;
     }
 
     /// @notice Submits a public key to the keep.
@@ -400,7 +412,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             "Requested signing has not timed out yet"
         );
 
-        isActive = false;
         status = Status.Closed;
         emit KeepClosed();
     }
@@ -414,7 +425,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             "Requested signing has not timed out yet"
         );
 
-        isActive = false;
         status = Status.Terminated;
         emit KeepClosed();
     }
@@ -545,7 +555,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @notice Checks if the keep is currently active.
     /// @dev Throws an error if called when the keep has been already closed.
     modifier onlyWhenActive() {
-        require(isActive, "Keep is not active");
+        require(isActive(), "Keep is not active");
         _;
     }
 
