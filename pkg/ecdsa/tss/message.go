@@ -9,6 +9,7 @@ type TSSProtocolMessage struct {
 	SenderID    MemberID
 	Payload     []byte
 	IsBroadcast bool
+	SessionID   string
 }
 
 // Type returns a string type of the `TSSMessage` so that it conforms to

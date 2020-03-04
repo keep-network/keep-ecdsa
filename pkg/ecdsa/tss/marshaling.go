@@ -208,6 +208,7 @@ func (m *TSSProtocolMessage) Marshal() ([]byte, error) {
 		SenderID:    m.SenderID,
 		Payload:     m.Payload,
 		IsBroadcast: m.IsBroadcast,
+		SessionID:   m.SessionID,
 	}).Marshal()
 }
 
@@ -221,6 +222,7 @@ func (m *TSSProtocolMessage) Unmarshal(bytes []byte) error {
 	m.SenderID = MemberID(pbMsg.SenderID)
 	m.Payload = pbMsg.Payload
 	m.IsBroadcast = pbMsg.IsBroadcast
+	m.SessionID = pbMsg.SessionID
 
 	return nil
 }
