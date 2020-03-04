@@ -106,7 +106,7 @@ func (s *member) generateKey(ctx context.Context) (*ThresholdSigner, error) {
 				}
 			}
 
-			return nil, timeoutError{KeyGenerationTimeout, "key generation", memberIDs}
+			return nil, timeoutError{KeyGenerationSubTimeout, "key generation", memberIDs}
 		}
 	}
 }

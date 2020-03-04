@@ -43,6 +43,7 @@ func NewNode(
 // AnnounceSignerPresence triggers the announce protocol in order to signal
 // signer presence and gather information about other signers.
 func (n *Node) AnnounceSignerPresence(
+	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
 	keepAddress common.Address,
 	keepMembersAddresses []common.Address,
@@ -61,7 +62,7 @@ func (n *Node) AnnounceSignerPresence(
 	}
 
 	return tss.AnnounceProtocol(
-		context.Background(),
+		ctx,
 		operatorPublicKey,
 		len(keepMembersAddresses),
 		broadcastChannel,
@@ -97,13 +98,18 @@ func createAddressFilter(
 // public key is a public key of the signing group. It publishes the public key
 // to the keep. It uses keep address as unique signing group identifier.
 func (n *Node) GenerateSignerForKeep(
+	parentCtx context.Context,
 	operatorPublicKey *operator.PublicKey,
 	keepAddress common.Address,
 	keepMembersIDs []tss.MemberID,
 ) (*tss.ThresholdSigner, error) {
+	ctx, cancel := context.WithTimeout(parentCtx, tss.KeyGenerationSubTimeout)
+	defer cancel()
+
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
 
 	signer, err := tss.GenerateThresholdSigner(
+		ctx,
 		keepAddress.Hex(),
 		memberID,
 		keepMembersIDs,
@@ -127,7 +133,7 @@ func (n *Node) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
-	go n.monitorKeepPublicKeySubmission(keepAddress)
+	go n.monitorKeepPublicKeySubmission(ctx, keepAddress)
 
 	err = n.ethereumChain.SubmitKeepPublicKey(
 		keepAddress,
@@ -152,10 +158,14 @@ func (n *Node) GenerateSignerForKeep(
 // still waiting for the signature. It is possible that other member was faster
 // than the current one and submitted the signature first.
 func (n *Node) CalculateSignature(
+	parentCtx context.Context,
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) error {
-	signature, err := signer.CalculateSignature(digest[:], n.networkProvider)
+	ctx, cancel := context.WithTimeout(parentCtx, tss.SigningSubTimeout)
+	defer cancel()
+
+	signature, err := signer.CalculateSignature(ctx, digest[:], n.networkProvider)
 	if err != nil {
 		return fmt.Errorf("failed to calculate signature: [%v]", err)
 	}
@@ -192,10 +202,10 @@ func (n *Node) CalculateSignature(
 // monitorKeepPublicKeySubmission observes the chain until either the first
 // conflicting public key is published or until keep established public key
 // or until key generation timed out.
-func (n *Node) monitorKeepPublicKeySubmission(keepAddress common.Address) {
-	ctx, cancel := context.WithTimeout(context.Background(), tss.KeyGenerationTimeout)
-	defer cancel()
-
+func (n *Node) monitorKeepPublicKeySubmission(
+	ctx context.Context,
+	keepAddress common.Address,
+) {
 	publicKeyPublished := make(chan *eth.PublicKeyPublishedEvent)
 	conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
 

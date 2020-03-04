@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
-const protocolAnnounceTimeout = 120 * time.Second
+const protocolAnnounceTimeout = 2 * time.Minute
 
 func AnnounceProtocol(
 	parentCtx context.Context,

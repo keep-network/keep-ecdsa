@@ -3,6 +3,7 @@ package client
 
 import (
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
@@ -17,6 +18,11 @@ import (
 )
 
 var logger = log.Logger("keep-tecdsa")
+
+const (
+	KeyGenerationTimeout = 150 * time.Minute
+	SigningTimeout       = 90 * time.Minute
+)
 
 // Initialize initializes the ECDSA client with rules related to events handling.
 // Expects a slice of sanctioned applications selected by the operator for which
@@ -75,20 +81,41 @@ func Initialize(
 				event.KeepAddress.String(),
 			)
 
-			memberIDs, err := tssNode.AnnounceSignerPresence(
-				operatorPublicKey,
-				event.KeepAddress,
-				event.Members,
-			)
+			keygenCtx, cancel := context.WithTimeout(ctx, KeyGenerationTimeout)
+			defer cancel()
 
-			signer, err := tssNode.GenerateSignerForKeep(
-				operatorPublicKey,
-				event.KeepAddress,
-				memberIDs,
-			)
-			if err != nil {
-				logger.Errorf("signer generation failed: [%v]", err)
-				return
+			var signer *tss.ThresholdSigner
+			var err error
+
+			for {
+				if keygenCtx.Err() != nil {
+					logger.Errorf("key generation timeout exceeded")
+					return
+				}
+
+				memberIDs, err := tssNode.AnnounceSignerPresence(
+					keygenCtx,
+					operatorPublicKey,
+					event.KeepAddress,
+					event.Members,
+				)
+				if err != nil {
+					logger.Errorf("announce signer presence failed: [%v]", err)
+					continue
+				}
+
+				signer, err = tssNode.GenerateSignerForKeep(
+					keygenCtx,
+					operatorPublicKey,
+					event.KeepAddress,
+					memberIDs,
+				)
+				if err != nil {
+					logger.Errorf("signer generation failed: [%v]", err)
+					continue
+				}
+
+				break
 			}
 
 			logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
@@ -140,13 +167,26 @@ func registerForSignEvents(
 			)
 
 			go func() {
-				err := tssNode.CalculateSignature(
-					signer,
-					signatureRequestedEvent.Digest,
-				)
+				signingCtx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
+				defer cancel()
 
-				if err != nil {
-					logger.Errorf("signature calculation failed: [%v]", err)
+				for {
+					if signingCtx.Err() != nil {
+						logger.Errorf("signing timeout exceeded")
+						return
+					}
+
+					err := tssNode.CalculateSignature(
+						signingCtx,
+						signer,
+						signatureRequestedEvent.Digest,
+					)
+
+					if err != nil {
+						logger.Errorf("signature calculation failed: [%v]", err)
+					}
+
+					break
 				}
 			}()
 		},
@@ -178,7 +218,7 @@ func monitorKeepClosedEvents(
 
 	defer subscriptionOnKeepClosed.Unsubscribe()
 
-	<- keepClosed
+	<-keepClosed
 
 	logger.Info(
 		"unsubscribing from KeepClosed event",
