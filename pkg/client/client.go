@@ -45,6 +45,7 @@ func Initialize(
 				isActive, err := ethereumChain.IsActive(keepAddress)
 				if err != nil {
 					logger.Errorf("failed to verify if keep is still active: [%v]", err)
+					continue
 				}
 
 				if isActive {
@@ -69,6 +70,7 @@ func Initialize(
 						"keep is no longer active: [%s]",
 						keepAddress.String(),
 					)
+					keepsRegistry.UnregisterKeep(keepAddress)
 				}
 			}
 		},
