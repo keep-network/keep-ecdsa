@@ -424,6 +424,14 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         return tokenStaking.balanceOf(_operator);
     }
 
+    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
+    /// amount equal to the minimum stake configured for this factory.
+    function slashKeepMembers() public onlyKeep {
+        BondedECDSAKeep keep = BondedECDSAKeep(address(uint160(msg.sender)));
+
+        tokenStaking.slash(minimumStake, keep.getMembers());
+    }
+
     /// @notice Checks if the caller is a keep created by this factory.
     /// @dev Throws an error if called by any account other than a keep.
     modifier onlyKeep() {
