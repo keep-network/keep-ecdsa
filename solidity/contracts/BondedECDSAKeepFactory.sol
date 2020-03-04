@@ -423,4 +423,11 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     function balanceOf(address _operator) public view returns(uint256) {
         return tokenStaking.balanceOf(_operator);
     }
+
+    /// @notice Checks if the caller is a keep created by this factory.
+    /// @dev Throws an error if called by any account other than a keep.
+    modifier onlyKeep() {
+        require(keeps[msg.sender] == true, "Caller is not a keep");
+        _;
+    }
 }
