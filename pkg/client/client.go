@@ -44,7 +44,11 @@ func Initialize(
 			for _, signer := range signer {
 				isActive, err := ethereumChain.IsActive(keepAddress)
 				if err != nil {
-					logger.Errorf("failed to verify if keep is still active: [%v]", err)
+					logger.Errorf(
+						"failed to verify if keep is still active: [%v]. " + 
+						"Subscriptions for keep signing and closing events are skipped", 
+						err,
+					)
 					continue
 				}
 
