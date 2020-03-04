@@ -42,7 +42,8 @@ contract('BondedECDSAKeep', (accounts) => {
     members,
     honestThreshold,
     tokenStaking,
-    keepBonding
+    keepBonding,
+    keepFactory
   ) {
     const startBlock = await web3.eth.getBlockNumber()
 
@@ -51,7 +52,8 @@ contract('BondedECDSAKeep', (accounts) => {
       members,
       honestThreshold,
       tokenStaking,
-      keepBonding
+      keepBonding,
+      keepFactory
     )
 
     const events = await factoryStub.getPastEvents(
@@ -84,7 +86,8 @@ contract('BondedECDSAKeep', (accounts) => {
       members,
       honestThreshold,
       tokenStaking.address,
-      keepBonding.address
+      keepBonding.address,
+      factoryStub.address
     )
   })
 
@@ -104,7 +107,8 @@ contract('BondedECDSAKeep', (accounts) => {
         members,
         honestThreshold,
         tokenStaking.address,
-        keepBonding.address
+        keepBonding.address,
+        factoryStub.address
       )
 
       expect(await keep.keyGenerationTimeout(), 'incorrect key generation timeout')
@@ -121,7 +125,8 @@ contract('BondedECDSAKeep', (accounts) => {
           members,
           honestThreshold,
           tokenStaking.address,
-          keepBonding.address
+          keepBonding.address,
+          factoryStub.address
         ),
         'Contract already initialized'
       )
@@ -946,7 +951,7 @@ contract('BondedECDSAKeep', (accounts) => {
     })
 
     it('correctly distributes ETH', async () => {
-      await keep.returnPartialSignerBonds({value: allReturnedBondsValue})
+      await keep.returnPartialSignerBonds({ value: allReturnedBondsValue })
 
       const member1UnbondedAfter = await keepBonding.availableUnbondedValue(
         members[0], bondCreator, signingPool
@@ -959,15 +964,15 @@ contract('BondedECDSAKeep', (accounts) => {
       )
 
       expect(
-        member1UnbondedAfter, 
+        member1UnbondedAfter,
         "incorrect unbounded balance for member 1"
       ).to.eq.BN(2100) // 2000 + 100
       expect(
-        member2UnbondedAfter, 
+        member2UnbondedAfter,
         "incorrect unbounded balance for member 2"
       ).to.eq.BN(2200) // 2000 + 200
       expect(
-        member3UnbondedAfter, 
+        member3UnbondedAfter,
         "incorrect unbounded balance for member 3"
       ).to.eq.BN(2700) // 2000 + 700
     })
@@ -977,7 +982,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
       await keep.returnPartialSignerBonds({
         value: allReturnedBondsValue.add(remainder)
-      }) 
+      })
 
       const member1UnbondedAfter = await keepBonding.availableUnbondedValue(
         members[0], bondCreator, signingPool
@@ -990,29 +995,29 @@ contract('BondedECDSAKeep', (accounts) => {
       )
 
       expect(
-        member1UnbondedAfter, 
+        member1UnbondedAfter,
         "incorrect unbounded balance for member 1"
       ).to.eq.BN(2100) // 2000 + 100
       expect(
-        member2UnbondedAfter, 
+        member2UnbondedAfter,
         "incorrect unbounded balance for member 2"
       ).to.eq.BN(2200) // 2000 + 200
       expect(
-        member3UnbondedAfter, 
+        member3UnbondedAfter,
         "incorrect unbounded balance for member 3"
       ).to.eq.BN(2702) // 2000 + 700 + 2
     })
 
     it('reverts with zero value', async () => {
       await expectRevert(
-        keep.returnPartialSignerBonds({value: 0}),
+        keep.returnPartialSignerBonds({ value: 0 }),
         "Partial signer bond must be non-zero"
       )
     })
 
     it('reverts with zero value per member', async () => {
       await expectRevert(
-        keep.returnPartialSignerBonds({value: members.length - 1}),
+        keep.returnPartialSignerBonds({ value: members.length - 1 }),
         "Partial signer bond must be non-zero"
       )
     })
@@ -1139,7 +1144,8 @@ contract('BondedECDSAKeep', (accounts) => {
         testMembers,
         honestThreshold,
         tokenStaking.address,
-        keepBonding.address
+        keepBonding.address,
+        factoryStub.address
       )
 
       await tokenStaking.setMagpie(member1, beneficiary)
@@ -1171,7 +1177,8 @@ contract('BondedECDSAKeep', (accounts) => {
         [member],
         honestThreshold,
         tokenStaking.address,
-        keepBonding.address
+        keepBonding.address,
+        factoryStub.address
       )
 
       await keep.distributeETHReward({ value: ethValue })
@@ -1221,7 +1228,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
     it('emits an event', async () => {
       await initializeTokens(token, keep, accounts[0], erc20Value)
-      
+
       let startBlock = await web3.eth.getBlockNumber()
 
       let res = await keep.distributeERC20Reward(token.address, erc20Value)
@@ -1309,7 +1316,8 @@ contract('BondedECDSAKeep', (accounts) => {
         testMembers,
         honestThreshold,
         tokenStaking.address,
-        keepBonding.address
+        keepBonding.address,
+        factoryStub.address
       )
 
       await initializeTokens(token, keep, accounts[0], valueWithRemainder)
@@ -1348,7 +1356,7 @@ contract('BondedECDSAKeep', (accounts) => {
     await keepBonding.deposit(members[1], { value: member2Value })
     await keepBonding.deposit(members[2], { value: member3Value })
   }
-  
+
   async function createMembersBonds(keep, bond1, bond2, bond3) {
     await authorizeBondCreator()
 
