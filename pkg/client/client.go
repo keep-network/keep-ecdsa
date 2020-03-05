@@ -8,6 +8,7 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
@@ -38,27 +39,60 @@ func Initialize(
 	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
 
-	keepsRegistry.ForEachKeep(
-		func(keepAddress common.Address, signer []*tss.ThresholdSigner) {
-			for _, signer := range signer {
-				registerForSignEvents(
+	for _, keepAddress := range keepsRegistry.GetKeepsAddresses() {
+		isActive, err := ethereumChain.IsActive(keepAddress)
+		if err != nil {
+			logger.Errorf(
+				"failed to verify if keep is still active: [%v]; "+
+					"subscriptions for keep signing and closing events are skipped",
+				err,
+			)
+
+			// If there are no signers for loaded keep that something is clearly
+			// wrong. We don't want to continue processing for this keep.
+			continue
+		}
+
+		if isActive {
+			signers, err := keepsRegistry.GetSigners(keepAddress)
+			if err != nil {
+				logger.Errorf("no signers for keep [%s]", keepAddress.String())
+				continue
+			}
+
+			for _, signer := range signers {
+				subscriptionOnSignatureRequested, err := monitorSigningRequests(
 					ethereumChain,
 					tssNode,
 					keepAddress,
 					signer,
 				)
+				if err != nil {
+					logger.Errorf(
+						"failed registering for requested signature event for keep [%s]: [%v]",
+						keepAddress.String(),
+						err,
+					)
+					// In case of an error we want to avoid subscribing to keep
+					// closed events. Something is wrong and we should stop
+					// further processing.
+					continue
+				}
 				go monitorKeepClosedEvents(
 					ethereumChain,
 					keepAddress,
 					keepsRegistry,
-				)
-				logger.Debugf(
-					"signer registered for events from keep: [%s]",
-					keepAddress.String(),
+					subscriptionOnSignatureRequested,
 				)
 			}
-		},
-	)
+		} else {
+			logger.Infof(
+				"keep [%s] is no longer active; archiving",
+				keepAddress.String(),
+			)
+			keepsRegistry.UnregisterKeep(keepAddress)
+		}
+	}
 
 	// Watch for new keeps creation.
 	ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
@@ -102,17 +136,30 @@ func Initialize(
 				)
 			}
 
-			registerForSignEvents(
+			subscriptionOnSignatureRequested, err := monitorSigningRequests(
 				ethereumChain,
 				tssNode,
 				event.KeepAddress,
 				signer,
 			)
+			if err != nil {
+				logger.Errorf(
+					"failed on registering for requested signature event for keep [%s]: [%v]",
+					event.KeepAddress.String(),
+					err,
+				)
+
+				// In case of an error we want to avoid subscribing to keep
+				// closed events. Something is wrong and we should stop
+				// further processing.
+				return
+			}
 
 			go monitorKeepClosedEvents(
 				ethereumChain,
 				event.KeepAddress,
 				keepsRegistry,
+				subscriptionOnSignatureRequested,
 			)
 		}
 	})
@@ -122,15 +169,15 @@ func Initialize(
 	}
 }
 
-// registerForSignEvents registers for signature requested events emitted by
+// monitorSigningRequests registers for signature requested events emitted by
 // specific keep contract.
-func registerForSignEvents(
+func monitorSigningRequests(
 	ethereumChain eth.Handle,
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
-) {
-	ethereumChain.OnSignatureRequested(
+) (subscription.EventSubscription, error) {
+	return ethereumChain.OnSignatureRequested(
 		keepAddress,
 		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
 			logger.Infof(
@@ -158,6 +205,7 @@ func monitorKeepClosedEvents(
 	ethereumChain eth.Handle,
 	keepAddress common.Address,
 	keepsRegistry *registry.Keeps,
+	subscriptionOnSignatureRequested subscription.EventSubscription,
 ) {
 	keepClosed := make(chan *eth.KeepClosedEvent)
 
@@ -174,14 +222,17 @@ func monitorKeepClosedEvents(
 			"failed on registering for keep closed event: [%v]",
 			err,
 		)
+
+		return
 	}
 
 	defer subscriptionOnKeepClosed.Unsubscribe()
+	defer subscriptionOnSignatureRequested.Unsubscribe()
 
-	<- keepClosed
+	<-keepClosed
 
 	logger.Info(
-		"unsubscribing from KeepClosed event",
+		"unsubscribing from events on keep closure",
 	)
 
 }
