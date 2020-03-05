@@ -74,8 +74,8 @@ contract KeepBonding {
 
     /// @notice Withdraws amount from sender's value available for bonding.
     /// @param amount Value to withdraw in wei.
-    /// @param destination Address to send the amount to.
-    function withdraw(uint256 amount, address payable destination) public {
+    /// @param operator Address of the operator.
+    function withdraw(uint256 amount, address operator) public {
         require(
             unbondedValue[msg.sender] >= amount,
             "Insufficient unbonded value"
@@ -83,7 +83,7 @@ contract KeepBonding {
 
         unbondedValue[msg.sender] -= amount;
 
-        (bool success, ) = tokenStaking.magpieOf(destination).call.value(amount)("");
+        (bool success, ) = tokenStaking.magpieOf(operator).call.value(amount)("");
         require(success, "Transfer failed");
     }
 
