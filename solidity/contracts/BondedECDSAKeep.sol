@@ -579,6 +579,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @param _member Keep member address.
     function withdraw(address _member) external {
         uint256 value = memberETHBalances[_member];
+
+        require(value > 0, "No funds to withdraw");
+
         memberETHBalances[_member] = 0;
 
         /* solium-disable-next-line security/no-call-value */
