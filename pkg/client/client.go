@@ -126,7 +126,7 @@ func Initialize(
 				attemptCounter++
 
 				logger.Infof(
-					"signer generation for keep [%s] - attempt number [%v]",
+					"signer generation for keep [%s]; attempt [%v]",
 					event.KeepAddress.String(),
 					attemptCounter,
 				)
@@ -232,7 +232,7 @@ func monitorSigningRequests(
 					attemptCounter++
 
 					logger.Infof(
-						"calculate signature for keep [%s] - attempt number [%v]",
+						"calculate signature for keep [%s]; attempt [%v]",
 						keepAddress.String(),
 						attemptCounter,
 					)
