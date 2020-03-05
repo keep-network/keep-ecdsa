@@ -448,7 +448,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     modifier onlyKeep() {
         require(
             keeps[msg.sender],
-            "Caller is not a keep created by this factory"
+            "Caller is not an active keep created by this factory"
         );
         _;
     }
