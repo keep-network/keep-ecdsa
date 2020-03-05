@@ -15,6 +15,7 @@ const BondedSortitionPool = artifacts.require('BondedSortitionPool');
 const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
 const RandomBeaconStub = artifacts.require('RandomBeaconStub')
 const BondedECDSAKeep = artifacts.require('BondedECDSAKeep')
+const BondedECDSAKeepStub = artifacts.require('BondedECDSAKeepStub')
 
 const BN = web3.utils.BN
 
@@ -1367,6 +1368,65 @@ contract("BondedECDSAKeepFactory", async accounts => {
                 keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, { from: accounts[2] }),
                 "Caller is not the random beacon"
             )
+        })
+    })
+
+    describe("slashKeepMembers", async () => {
+        const keepOwner = "0xbc4862697a1099074168d54A555c4A60169c18BD"
+        let keep
+
+        before(async () => {
+            await initializeNewFactory()
+
+            keep = await BondedECDSAKeepStub.new()
+            await keep.initialize(
+                keepOwner,
+                members,
+                members.length,
+                tokenStaking.address,
+                keepBonding.address,
+                keepFactory.address
+            )
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("reverts if called not by keep", async () => {
+            await expectRevert(
+                keepFactory.slashKeepMembers(),
+                "Caller is not a keep"
+            )
+        })
+
+        it("reverts if called by not authorized keep", async () => {
+            // The keep is not added to the list of keeps created by the factory.
+            await expectRevert(
+                keep.exposedSlashSignerStakes(),
+                "Caller is not a keep"
+            )
+        })
+
+        it("slashes keep members stakes", async () => {
+            // Add keep to the list of keeps created by the factory.
+            await keepFactory.addKeep(keep.address)
+
+            const minimumStake = await keepFactory.minimumStake.call()
+            const remainingStake = new BN(10)
+            const stakeBalance = minimumStake.add(remainingStake)
+            await stakeOperators(members, stakeBalance)
+
+            await keep.exposedSlashSignerStakes()
+
+            for (let i = 0; i < members.length; i++) {
+                const actualStake = await tokenStaking.eligibleStake(members[0], keepFactory.address)
+                expect(actualStake).to.eq.BN(remainingStake, `incorrect stake for member ${i}`)
+            }
         })
     })
 })
