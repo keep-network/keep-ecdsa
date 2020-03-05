@@ -64,7 +64,6 @@ contract('KeepBonding', (accounts) => {
     })
 
     describe('withdraw', async () => {
-        const destination = accounts[2]
         const value = new BN(1000)
         const magpie = accounts[3]
 
@@ -74,10 +73,10 @@ contract('KeepBonding', (accounts) => {
     
         it('transfers unbonded value to magpie of operator', async () => {
             const expectedUnbonded = 0
-            await tokenStaking.setMagpie(destination, magpie)
+            await tokenStaking.setMagpie(operator, magpie)
             const expectedMagpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie)).add(value)
             
-            await keepBonding.withdraw(value, destination, { from: operator })
+            await keepBonding.withdraw(value, operator, { from: operator })
 
             const unbonded = await keepBonding.availableUnbondedValue(operator, bondCreator, sortitionPool)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
@@ -90,7 +89,7 @@ contract('KeepBonding', (accounts) => {
             const invalidValue = value.add(new BN(1))
 
             await expectRevert(
-                keepBonding.withdraw(invalidValue, destination, { from: operator }),
+                keepBonding.withdraw(invalidValue, operator, { from: operator }),
                 "Insufficient unbonded value"
             )
         })
