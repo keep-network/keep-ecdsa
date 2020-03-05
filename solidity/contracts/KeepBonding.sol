@@ -83,7 +83,7 @@ contract KeepBonding {
 
         unbondedValue[msg.sender] -= amount;
 
-        (bool success, ) = destination.call.value(amount)("");
+        (bool success, ) = tokenStaking.magpieOf(destination).call.value(amount)("");
         require(success, "Transfer failed");
     }
 
