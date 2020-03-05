@@ -13,7 +13,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract('KeepBonding', (accounts) => {
+contract.only('KeepBonding', (accounts) => {
     let registry
     let tokenStaking   
     let keepBonding
@@ -66,22 +66,24 @@ contract('KeepBonding', (accounts) => {
     describe('withdraw', async () => {
         const destination = accounts[2]
         const value = new BN(1000)
+        const magpie = accounts[3]
 
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: value })
         })
-
-        it('transfers unbonded value', async () => {
+        
+        it('transfers unbonded value to magpie of operator', async () => {
             const expectedUnbonded = 0
-            const expectedDestinationBalance = web3.utils.toBN(await web3.eth.getBalance(destination)).add(value)
-
+            await tokenStaking.setMagpie(destination, magpie)
+            const expectedMagpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie)).add(value)
+            
             await keepBonding.withdraw(value, destination, { from: operator })
 
             const unbonded = await keepBonding.availableUnbondedValue(operator, bondCreator, sortitionPool)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
 
-            const destinationBalance = await web3.eth.getBalance(destination)
-            expect(destinationBalance).to.eq.BN(expectedDestinationBalance, 'invalid destination balance')
+            const actualMagpieBalance = await web3.eth.getBalance(magpie)
+            expect(actualMagpieBalance).to.eq.BN(expectedMagpieBalance, 'invalid destination balance')
         })
 
         it('fails if insufficient unbonded value', async () => {
