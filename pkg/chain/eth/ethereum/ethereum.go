@@ -283,6 +283,16 @@ func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest 
 	return keepContract.IsAwaitingSignature(digest)
 }
 
+// IsActive checks for current state of a keep on-chain.
+func (ec *EthereumChain) IsActive(keepAddress common.Address) (bool, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	return keepContract.IsActive()
+}
+
 // HasMinimumStake returns true if the specified address is staked.  False will
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.
