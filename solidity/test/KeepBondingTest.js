@@ -71,12 +71,12 @@ contract('KeepBonding', (accounts) => {
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: value })
         })
-    
+
         it('transfers unbonded value to beneficiary of operator', async () => {
             const expectedUnbonded = 0
             await tokenStaking.setMagpie(operator, beneficiary)
             const expectedBeneficiaryBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary)).add(value)
-            
+
             await keepBonding.withdraw(value, operator, { from: operator })
 
             const unbonded = await keepBonding.availableUnbondedValue(operator, bondCreator, sortitionPool)
@@ -86,12 +86,18 @@ contract('KeepBonding', (accounts) => {
             expect(actualBeneficiaryBalance).to.eq.BN(expectedBeneficiaryBalance, 'invalid beneficiary balance')
         })
 
-        it('fails if insufficient unbonded value', async () => {
-            await tokenStaking.setOwner(operator, accounts[2])
+        it('succeeds when called by owner', async () => {
+            const owner = accounts[2]
+            await tokenStaking.setOwner(operator, owner)
+
+            await keepBonding.withdraw(value, operator, { from: owner })
+        })
+
+        it('reverts if insufficient unbonded value', async () => {
             const invalidValue = value.add(new BN(1))
 
             await expectRevert(
-                keepBonding.withdraw(invalidValue, operator, { from: accounts[2] }),
+                keepBonding.withdraw(invalidValue, operator, { from: operator }),
                 "Insufficient unbonded value"
             )
         })
@@ -106,11 +112,12 @@ contract('KeepBonding', (accounts) => {
             )
         })
 
-        it('fails if neither operator nor the owner is trying to withdraw bond', async () => {
-            await tokenStaking.setOwner(operator, accounts[1])
+        it('reverts if neither operator nor the owner is trying to withdraw bond', async () => {
+            const owner = accounts[2]
+            await tokenStaking.setOwner(operator, owner)
 
             await expectRevert(
-                keepBonding.withdraw(value, operator, { from: accounts[2] }),
+                keepBonding.withdraw(value, operator, { from: accounts[3] }),
                 "Only operator or the owner is allowed to withdraw bond"
             )
         })
