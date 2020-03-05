@@ -237,12 +237,7 @@ func monitorSigningRequests(
 				event.Digest,
 			)
 
-			go generateSignatureForKeep(
-				tssNode,
-				keepAddress,
-				signer,
-				event,
-			)
+			go generateSignatureForKeep(tssNode, keepAddress, signer, event)
 		},
 	)
 }
