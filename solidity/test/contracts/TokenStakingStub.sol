@@ -15,6 +15,9 @@ contract TokenStakingStub is IStaking {
     // Authorized operator contracts.
     mapping(address => mapping(address => bool)) internal authorizations;
 
+    // Map of operator -> owner.
+    mapping(address => address) owners;
+
     /// @dev Sets balance variable value.
     function setBalance(address _operator, uint256 _balance) public {
         stakes[_operator] = _balance;
@@ -66,5 +69,13 @@ contract TokenStakingStub is IStaking {
 
     function authorizerOf(address _operator) public view returns (address) {
         return _operator;
+    }
+
+    function setOwner(address _operator, address _owner) public {
+        owners[_operator] = _owner;
+    }
+
+    function ownerOf(address _operator) public view returns (address) {
+        return owners[_operator];
     }
 }

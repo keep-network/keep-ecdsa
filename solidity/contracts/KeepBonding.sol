@@ -21,7 +21,7 @@ contract KeepBonding {
     Registry internal registry;
 
     // KEEP token staking contract.
-    TokenStaking internal stakingContract;
+    TokenStaking internal tokenStaking;
 
     // Unassigned value in wei deposited by operators.
     mapping(address => uint256) public unbondedValue;
@@ -36,10 +36,10 @@ contract KeepBonding {
 
     /// @notice Initializes Keep Bonding contract.
     /// @param registryAddress Keep registry contract address.
-    /// @param stakingContractAddress KEEP Token staking contract address.
-    constructor(address registryAddress, address stakingContractAddress) public {
+    /// @param tokenStakingAddress KEEP Token staking contract address.
+    constructor(address registryAddress, address tokenStakingAddress) public {
         registry = Registry(registryAddress);
-        stakingContract = TokenStaking(stakingContractAddress);
+        tokenStaking = TokenStaking(tokenStakingAddress);
     }
 
     /// @notice Returns the amount of wei the operator has made available for
@@ -61,7 +61,7 @@ contract KeepBonding {
         // are no longer eligible. We cannot revert here.
         if (
             registry.isApprovedOperatorContract(bondCreator) &&
-            stakingContract.isAuthorizedForOperator(operator, bondCreator) &&
+            tokenStaking.isAuthorizedForOperator(operator, bondCreator) &&
             hasSecondaryAuthorization(operator, authorizedSortitionPool)
         ) {
           return unbondedValue[operator];
@@ -76,18 +76,24 @@ contract KeepBonding {
         unbondedValue[operator] = unbondedValue[operator].add(msg.value);
     }
 
-    /// @notice Withdraws amount from sender's value available for bonding.
+    /// @notice Withdraws amount from operator's value available for bonding.
+    /// Can be called only by the operator or by the stake owner.
     /// @param amount Value to withdraw in wei.
-    /// @param destination Address to send the amount to.
-    function withdraw(uint256 amount, address payable destination) public {
+    /// @param operator Address of the operator.
+    function withdraw(uint256 amount, address operator) public {
         require(
-            unbondedValue[msg.sender] >= amount,
+            msg.sender == operator || msg.sender == tokenStaking.ownerOf(operator),
+            "Only operator or the owner is allowed to withdraw bond"
+        );
+
+        require(
+            unbondedValue[operator] >= amount,
             "Insufficient unbonded value"
         );
 
-        unbondedValue[msg.sender] = unbondedValue[msg.sender].sub(amount);
+        unbondedValue[operator] = unbondedValue[operator].sub(amount);
 
-        (bool success, ) = destination.call.value(amount)("");
+        (bool success, ) = tokenStaking.magpieOf(operator).call.value(amount)("");
         require(success, "Transfer failed");
     }
 
@@ -235,7 +241,7 @@ contract KeepBonding {
         address _poolAddress
     ) public {
         require(
-            stakingContract.authorizerOf(_operator) == msg.sender,
+            tokenStaking.authorizerOf(_operator) == msg.sender,
             "Not authorized"
         );
         authorizedPools[_operator][_poolAddress] = true;
