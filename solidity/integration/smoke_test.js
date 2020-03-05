@@ -66,7 +66,7 @@ module.exports = async function () {
             }
         }
 
-        console.log('opening a new keep...');  
+        console.log(`opening a new keep for application [${application}]...`);  
       
         const fee = await keepFactory.openKeepFeeEstimate.call()
         console.log(`open new keep fee: [${fee}]`)
