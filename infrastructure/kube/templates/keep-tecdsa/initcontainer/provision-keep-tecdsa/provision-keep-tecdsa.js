@@ -106,11 +106,11 @@ function readAddressFromKeyFile(keyFilePath) {
 }
 
 async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
-  let requiredBalance = web3.utils.toWei(requiredEtherBalance, 'ether')
+  let requiredBalance = web3.utils.toBN(web3.utils.toWei(requiredEtherBalance, 'ether'))
 
   const currentBalance = web3.utils.toBN(await web3.eth.getBalance(operatorAddress))
   if (currentBalance.gte(requiredBalance)) {
-    console.log('Operator address is already funded, exiting!')
+    console.log(`Operator address is already funded, current balance: ${web3.utils.fromWei(currentBalance)}`)
     return
   }
 
