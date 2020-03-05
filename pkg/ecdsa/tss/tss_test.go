@@ -84,6 +84,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				preParams := testData[i].LocalPreParams
 
 				signer, err := GenerateThresholdSigner(
+					ctx,
 					groupID,
 					memberID,
 					groupMemberIDs,
@@ -159,6 +160,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				networkProvider := value.(net.Provider)
 
 				signature, err := signer.CalculateSignature(
+					ctx,
 					digest[:],
 					networkProvider,
 				)
