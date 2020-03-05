@@ -356,7 +356,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             _preimage
         );
 
-        require(isFraud == true, "Signature is not fraudulent");
+        require(isFraud, "Signature is not fraudulent");
 
         slashSignerStakes();
 
