@@ -7,6 +7,7 @@ import "../../contracts/CloneFactory.sol";
 /// @dev This contract is for testing purposes only.
 contract BondedECDSAKeepCloneFactory is CloneFactory {
     address public masterBondedECDSAKeepAddress;
+    bool public membersSlashed;
 
     constructor(address _masterBondedECDSAKeepAddress) public {
         masterBondedECDSAKeepAddress = _masterBondedECDSAKeepAddress;
@@ -36,5 +37,9 @@ contract BondedECDSAKeepCloneFactory is CloneFactory {
         );
 
         emit BondedECDSAKeepCreated(keepAddress);
+    }
+
+    function slashKeepMembers() public {
+        membersSlashed = true;
     }
 }

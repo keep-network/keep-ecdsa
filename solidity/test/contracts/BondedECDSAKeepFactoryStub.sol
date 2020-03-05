@@ -29,4 +29,8 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
     function getGroupSelectionSeed() public view returns (uint256) {
         return groupSelectionSeed;
     }
+
+    function addKeep(address keep) public {
+        keeps[keep] = true;
+    }
 }
