@@ -58,12 +58,12 @@ func (s *ThresholdSigner) Unmarshal(bytes []byte) error {
 
 	groupMemberIDs := make([]MemberID, len(pbGroupInfo.GetGroupMemberIDs()))
 	for i, memberID := range pbGroupInfo.GetGroupMemberIDs() {
-		groupMemberIDs[i] = MemberID(memberID)
+		groupMemberIDs[i] = memberID
 	}
 
 	s.groupInfo = &groupInfo{
 		groupID:            pbGroupInfo.GetGroupID(),
-		memberID:           MemberID(pbGroupInfo.GetMemberID()),
+		memberID:           pbGroupInfo.GetMemberID(),
 		groupMemberIDs:     groupMemberIDs,
 		dishonestThreshold: int(pbGroupInfo.GetDishonestThreshold()),
 	}
@@ -208,6 +208,7 @@ func (m *TSSProtocolMessage) Marshal() ([]byte, error) {
 		SenderID:    m.SenderID,
 		Payload:     m.Payload,
 		IsBroadcast: m.IsBroadcast,
+		SessionID:   m.SessionID,
 	}).Marshal()
 }
 
@@ -221,25 +222,45 @@ func (m *TSSProtocolMessage) Unmarshal(bytes []byte) error {
 	m.SenderID = MemberID(pbMsg.SenderID)
 	m.Payload = pbMsg.Payload
 	m.IsBroadcast = pbMsg.IsBroadcast
+	m.SessionID = pbMsg.SessionID
 
 	return nil
 }
 
 // Marshal converts this message to a byte array suitable for network communication.
-func (m *JoinMessage) Marshal() ([]byte, error) {
-	return (&pb.JoinMessage{
+func (m *ReadyMessage) Marshal() ([]byte, error) {
+	return (&pb.ReadyMessage{
 		SenderID: m.SenderID,
 	}).Marshal()
 }
 
 // Unmarshal converts a byte array produced by Marshal to a message.
-func (m *JoinMessage) Unmarshal(bytes []byte) error {
-	pbMsg := &pb.JoinMessage{}
+func (m *ReadyMessage) Unmarshal(bytes []byte) error {
+	pbMsg := &pb.ReadyMessage{}
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
-	m.SenderID = MemberID(pbMsg.SenderID)
+	m.SenderID = pbMsg.SenderID
+
+	return nil
+}
+
+// Marshal converts this message to a byte array suitable for network communication.
+func (m *AnnounceMessage) Marshal() ([]byte, error) {
+	return (&pb.AnnounceMessage{
+		SenderID: m.SenderID,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to a message.
+func (m *AnnounceMessage) Unmarshal(bytes []byte) error {
+	pbMsg := &pb.AnnounceMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	m.SenderID = pbMsg.SenderID
 
 	return nil
 }

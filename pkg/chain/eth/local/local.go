@@ -6,7 +6,8 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-common/pkg/subscription"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 )
@@ -38,6 +39,10 @@ func Connect() eth.Handle {
 // Address returns client's ethereum address.
 func (lc *localChain) Address() common.Address {
 	return lc.clientAddress
+}
+
+func (lc *localChain) StakeMonitor() (chain.StakeMonitor, error) {
+	return nil, nil // not implemented.
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
@@ -136,5 +141,55 @@ func (lc *localChain) IsAwaitingSignature(
 	keepAddress common.Address,
 	digest [32]byte,
 ) (bool, error) {
+	panic("implement")
+}
+
+// IsActive checks for current state of a keep on-chain.
+func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) BlockCounter() chain.BlockCounter {
+	panic("implement")
+}
+
+func (lc *localChain) IsRegisteredForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) IsEligibleForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) UpdateStatusForApplication(application common.Address) error {
+	panic("implement")
+}
+
+// OnKeepClosed archives key shares and unsubscibes from events.
+func (lc *localChain) OnKeepClosed(
+	keepAddress common.Address,
+	handler func(event *eth.KeepClosedEvent),
+) (subscription.EventSubscription, error) {
+	panic("implement")
+} 
+
+// OnConflictingPublicKeySubmitted logs mismatched public keys submitted by
+// members of a keep.
+func (lc *localChain) OnConflictingPublicKeySubmitted(
+	keepAddress common.Address,
+	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
+) (subscription.EventSubscription, error) {
+	panic("implement")
+}
+
+// OnPublicKeyPublshed logs a public key that was accepted by keep.
+func (lc *localChain) OnPublicKeyPublished(
+	keepAddress common.Address,
+	handler func(event *eth.PublicKeyPublishedEvent),
+) (subscription.EventSubscription, error) {
 	panic("implement")
 }

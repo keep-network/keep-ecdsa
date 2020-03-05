@@ -11,6 +11,7 @@ import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
 import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -46,7 +47,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     uint256 public groupSelectionSeed;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
-    address tokenStaking;
+    TokenStaking tokenStaking;
     KeepBonding keepBonding;
     IRandomBeacon randomBeacon;
 
@@ -90,7 +91,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
         );
-        tokenStaking = _tokenStaking;
+        tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         randomBeacon = IRandomBeacon(_randomBeacon);
     }
@@ -114,7 +115,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         );
 
         address sortitionPoolAddress = sortitionPoolFactory.createSortitionPool(
-            IStaking(tokenStaking),
+            IStaking(address(tokenStaking)),
             IBonding(address(keepBonding)),
             minimumStake,
             minimumBond
@@ -219,6 +220,21 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         candidatesPool.updateOperatorStatus(_operator);
     }
 
+    /// @notice Checks if given operator is eligible for the given application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    function isOperatorEligible(address _operator, address _application) public view returns (bool) {
+        if (candidatesPools[_application] == address(0)) {
+            return false;
+        }
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        return candidatesPool.isOperatorEligible(_operator);
+    }
+
     /// @notice Gets bonded sortition pool of specific application for the
     /// operator.
     /// @dev Reverts if the operator is not registered for the application.
@@ -295,7 +311,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             _owner,
             members,
             _honestThreshold,
-            tokenStaking,
+            address(tokenStaking),
             address(keepBonding)
         );
 
@@ -316,7 +332,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             : msg.value;
         if (signerSubsidy > 0) {
             subsidyPool -= signerSubsidy;
-            keep.distributeETHToMembers.value(signerSubsidy)();
+            keep.distributeETHReward.value(signerSubsidy)();
         }
 
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
@@ -376,5 +392,29 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             "Caller is not the random beacon"
         );
         _;
+    }
+
+    /// @dev Checks if the specified account has enough active stake to become
+    /// network operator and that this contract has been authorized for potential
+    /// slashing.
+    ///
+    /// Having the required minimum of active stake makes the operator eligible
+    /// to join the network. If the active stake is not currently undelegating,
+    /// operator is also eligible for work selection.
+    ///
+    /// @param _operator operator's address
+    /// @return True if has enough active stake to participate in the network,
+    /// false otherwise.
+    function hasMinimumStake(address _operator) public view returns(bool) {
+        return (
+            tokenStaking.activeStake(_operator, address(this)) >= minimumStake
+        );
+    }
+
+    /// @dev Gets the stake balance of the specified operator.
+    /// @param _operator The operator to query the balance of.
+    /// @return An uint256 representing the amount staked by the passed operator.
+    function balanceOf(address _operator) public view returns(uint256) {
+        return tokenStaking.balanceOf(_operator);
     }
 }

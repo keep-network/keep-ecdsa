@@ -8,6 +8,7 @@ import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
 /// @title Bonded ECDSA Keep
 /// @notice ECDSA keep with additional signer bond requirement.
@@ -17,6 +18,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 contract BondedECDSAKeep is IBondedECDSAKeep {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     // Flags execution of contract initialization.
     bool isInitialized;
@@ -67,7 +69,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Flag to monitor current keep state. If the keep is active members monitor
     // it and support requests for the keep owner. If the owner decides to close
     // the keep the flag is set to false.
-    bool internal isActive;
+    bool public isActive;
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(bytes32 digest);
@@ -84,8 +86,11 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Notification that keep's ECDSA public key has been successfully established.
     event PublicKeyPublished(bytes publicKey);
 
-    // Notification that members received ether transfer.
-    event ETHDistributedToMembers();
+    // Notification that ETH reward has been distributed to keep members.
+    event ETHRewardDistributed();
+
+    // Notification that ERC20 reward has been distributed to keep members.
+    event ERC20RewardDistributed();
 
     // Notification that the keep was closed by the owner. Members no longer need
     // to support it.
@@ -227,11 +232,15 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return sumBondAmount;
     }
 
-    /// @notice Seizes the signer's ETH bond.
-    // TODO: Add modifier to be able to run this function only when keep was
-    // closed before.
-    // TODO: Rename to `seizeMembersBonds` for consistency.
+    /// @notice Seizes the signers' ETH bonds. After seizing bonds keep is
+    /// closed so it will no longer respond to signing requests. Bonds can be
+    /// seized only when there is no signing in progress or requested signing
+    /// process has timed out. This function seizes all of signers' bonds.
+    /// The application may decide to return part of bonds later after they are
+    /// processed using returnPartialSignerBonds function.
     function seizeSignerBonds() external onlyOwner {
+        markAsClosed();
+
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(
                 members[i],
@@ -246,6 +255,30 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
                 address(uint160(owner))
             );
         }
+    }
+
+    /// @notice Returns partial signer's ETH bonds to the pool as an unbounded
+    /// value. This function is called after bonds have been seized and processed
+    /// by the privileged application after calling seizeSignerBonds function.
+    /// It is entirely up to the application if a part of signers' bonds is
+    /// returned. The application may decide for that but may also decide to
+    /// seize bonds and do not return anything.
+    function returnPartialSignerBonds() external payable {
+        uint256 memberCount = members.length;
+        uint256 bondPerMember = msg.value.div(memberCount);
+
+        require(bondPerMember > 0, "Partial signer bond must be non-zero");
+
+        for (uint16 i = 0; i < memberCount - 1; i++) {
+            keepBonding.deposit.value(bondPerMember)(members[i]);
+        }
+
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
+        uint256 remainder = msg.value.mod(memberCount);
+        keepBonding.deposit.value(bondPerMember.add(remainder))(
+            members[memberCount - 1]
+        );
     }
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
@@ -373,17 +406,23 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @notice Closes keep when owner decides that they no longer need it.
     /// Releases bonds to the keep members. Keep can be closed only when
     /// there is no signing in progress or requested signing process has timed out.
-    /// @dev The function can be called by the owner of the keep and only is the
-    /// keep has not been closed already.
+    /// @dev The function can be called only by the owner of the keep and only
+    /// if the keep has not been already closed.
     function closeKeep() external onlyOwner onlyWhenActive {
+        markAsClosed();
+        freeMembersBonds();
+    }
+
+    /// @notice Marks the keep as closed. Keep can be marked as closed only
+    /// when there is no signing in progress or the requested signing process
+    /// has timed out.
+    function markAsClosed() internal {
         require(
             !isSigningInProgress() || hasSigningTimedOut(),
             "Requested signing has not timed out yet"
         );
 
         isActive = false;
-
-        freeMembersBonds();
 
         emit KeepClosed();
     }
@@ -409,14 +448,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return address(uint160(uint256(keccak256(_publicKey))));
     }
 
-    /// @notice Distributes ETH evenly across all keep members. If the value
-    /// cannot be divided evenly across the members, it submits the remainder to
-    /// the last keep member.
-    /// @dev Only the value passed to this function will be distributed. This
-    /// function does not transfer the value to the members' accounts, instead
+    /// @notice Distributes ETH reward evenly across all keep signer beneficiaries.
+    /// If the value cannot be divided evenly across all signers, it sends the
+    /// remainder to the last keep signer.
+    /// @dev Only the value passed to this function is distributed. This
+    /// function does not transfer the value to beneficiaries accounts; instead
     /// it holds the value in the contract until withdraw function is called for
-    /// the specific member.
-    function distributeETHToMembers() external payable {
+    /// the specific signer.
+    function distributeETHReward() external payable {
         uint256 memberCount = members.length;
         uint256 dividend = msg.value.div(memberCount);
 
@@ -426,26 +465,25 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             memberETHBalances[members[i]] += dividend;
         }
 
-        // Transfer of dividend for the last member. Remainder might be equal to
+        // Give the dividend to the last signer. Remainder might be equal to
         // zero in case of even distribution or some small number.
         uint256 remainder = msg.value.mod(memberCount);
         memberETHBalances[members[memberCount - 1]] += dividend.add(remainder);
 
-        emit ETHDistributedToMembers();
+        emit ETHRewardDistributed();
     }
 
-    /// @notice Distributes ERC20 token evenly across all keep members.
-    /// The token is sent to the beneficiary of each member.
+    /// @notice Distributes ERC20 reward evenly across all keep signer beneficiaries.
     /// @dev This works with any ERC20 token that implements a transferFrom
     /// function similar to the interface imported here from
-    /// openZeppelin. This function only has authority over pre-approved
+    /// OpenZeppelin. This function only has authority over pre-approved
     /// token amount. We don't explicitly check for allowance, SafeMath
     /// subtraction overflow is enough protection. If the value cannot be
-    /// divided evenly across the members, it submits the remainder to the last
-    /// keep member.
+    /// divided evenly across the signers, it submits the remainder to the last
+    /// keep signer.
     /// @param _tokenAddress Address of the ERC20 token to distribute.
     /// @param _value Amount of ERC20 token to distribute.
-    function distributeERC20ToMembers(address _tokenAddress, uint256 _value)
+    function distributeERC20Reward(address _tokenAddress, uint256 _value)
         external
     {
         IERC20 token = IERC20(_tokenAddress);
@@ -456,7 +494,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         require(dividend > 0, "Dividend value must be non-zero");
 
         for (uint16 i = 0; i < memberCount - 1; i++) {
-            token.transferFrom(
+            token.safeTransferFrom(
                 msg.sender,
                 tokenStaking.magpieOf(members[i]),
                 dividend
@@ -466,11 +504,13 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         // Transfer of dividend for the last member. Remainder might be equal to
         // zero in case of even distribution or some small number.
         uint256 remainder = _value.mod(memberCount);
-        token.transferFrom(
+        token.safeTransferFrom(
             msg.sender,
             tokenStaking.magpieOf(members[memberCount - 1]),
             dividend.add(remainder)
         );
+
+        emit ERC20RewardDistributed();
     }
 
     /// @notice Gets current amount of ETH hold in the keep for the member.
@@ -489,6 +529,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @param _member Keep member address.
     function withdraw(address _member) external {
         uint256 value = memberETHBalances[_member];
+
+        require(value > 0, "No funds to withdraw");
+
         memberETHBalances[_member] = 0;
 
         /* solium-disable-next-line security/no-call-value */

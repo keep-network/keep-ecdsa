@@ -76,6 +76,7 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 		SenderID:    MemberID([]byte("member-1")),
 		Payload:     []byte("very important message"),
 		IsBroadcast: true,
+		SessionID:   "session-1",
 	}
 
 	unmarshaled := &TSSProtocolMessage{}
@@ -92,12 +93,31 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 	}
 }
 
-func TestJoinMessageMarshalling(t *testing.T) {
-	msg := &JoinMessage{
+func TestReadyMessageMarshalling(t *testing.T) {
+	msg := &ReadyMessage{
 		SenderID: MemberID([]byte("member-1")),
 	}
 
-	unmarshaled := &JoinMessage{}
+	unmarshaled := &ReadyMessage{}
+
+	if err := pbutils.RoundTrip(msg, unmarshaled); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf(
+			"unexpected content of unmarshaled message\nexpected: [%+v]\nactual:   [%+v]\n",
+			msg,
+			unmarshaled,
+		)
+	}
+}
+
+func TestAnnounceMessageMarshalling(t *testing.T) {
+	msg := &AnnounceMessage{
+		SenderID: MemberID([]byte("member-1")),
+	}
+
+	unmarshaled := &AnnounceMessage{}
 
 	if err := pbutils.RoundTrip(msg, unmarshaled); err != nil {
 		t.Fatal(err)

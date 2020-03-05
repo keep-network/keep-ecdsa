@@ -10,6 +10,10 @@ type BondedECDSAKeepCreatedEvent struct {
 	Members     []common.Address // keep members addresses
 }
 
+// KeepClosedEvent is an event emitted on a closing keep.
+type KeepClosedEvent struct {
+}
+
 // IsMember checks if list of members contains the given address.
 func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
 	for _, member := range e.Members {
@@ -24,4 +28,18 @@ func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
 // a digest to be signed.
 type SignatureRequestedEvent struct {
 	Digest [32]byte
+}
+
+// ConflictingPublicKeySubmittedEvent is an event emitted each time when one of
+// the members of a keep has submitted a key that does not match the keys submitted
+// so far by other members.
+type ConflictingPublicKeySubmittedEvent struct {
+	SubmittingMember common.Address
+	ConflictingPublicKey []byte
+}
+
+// PublicKeyPublishedEvent is an event emitted once all the members have submitted
+// the same public key and it was accepted by keep as its public key.
+type PublicKeyPublishedEvent struct {
+	PublicKey []byte
 }

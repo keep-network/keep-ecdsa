@@ -7,8 +7,13 @@ message TSSProtocolMessage {
   bytes senderID = 1;
   bytes payload = 2;
   bool isBroadcast = 3;
+  string sessionID = 4;
 }
 
-message JoinMessage {
+message ReadyMessage {
+  bytes senderID = 1;
+}
+
+message AnnounceMessage {
   bytes senderID = 1;
 }
