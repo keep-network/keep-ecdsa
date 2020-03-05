@@ -8,6 +8,7 @@ import "../../contracts/CloneFactory.sol";
 contract BondedECDSAKeepCloneFactory is CloneFactory {
     address public masterBondedECDSAKeepAddress;
     bool public membersSlashed;
+    bool public notifiedKeepClosed;
 
     constructor(address _masterBondedECDSAKeepAddress) public {
         masterBondedECDSAKeepAddress = _masterBondedECDSAKeepAddress;
@@ -41,5 +42,9 @@ contract BondedECDSAKeepCloneFactory is CloneFactory {
 
     function slashKeepMembers() public {
         membersSlashed = true;
+    }
+
+    function notifyKeepClosed() public {
+        notifiedKeepClosed = true;
     }
 }
