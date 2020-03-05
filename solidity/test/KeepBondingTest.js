@@ -15,7 +15,7 @@ const expect = chai.expect
 
 contract('KeepBonding', (accounts) => {
     let registry
-    let tokenStaking   
+    let tokenStaking
     let keepBonding
     let etherReceiver
 
@@ -29,7 +29,7 @@ contract('KeepBonding', (accounts) => {
         operator = accounts[1]
         authorizer = operator
         beneficiary = accounts[3]
-        bondCreator = accounts[4]   
+        bondCreator = accounts[4]
         sortitionPool = accounts[5]
 
         registry = await Registry.new()
@@ -38,7 +38,7 @@ contract('KeepBonding', (accounts) => {
         etherReceiver = await TestEtherReceiver.new()
 
         await registry.approveOperatorContract(bondCreator)
-        await keepBonding.authorizeSortitionPoolContract(operator, sortitionPool, {from: authorizer})
+        await keepBonding.authorizeSortitionPoolContract(operator, sortitionPool, { from: authorizer })
 
         await tokenStaking.authorizeOperatorContract(operator, bondCreator)
     })
@@ -127,7 +127,7 @@ contract('KeepBonding', (accounts) => {
         const value = new BN(100)
 
         beforeEach(async () => {
-            await keepBonding.deposit(operator, { value: value })            
+            await keepBonding.deposit(operator, { value: value })
         })
 
         it('returns zero for operator with no deposit', async () => {
@@ -151,7 +151,7 @@ contract('KeepBonding', (accounts) => {
             const expectedUnbonded = 0
 
             const unbondedValue = await keepBonding.availableUnbondedValue(operator, bondCreator, notAuthorizedSortitionPool)
-            expect(unbondedValue).to.eq.BN(expectedUnbonded, 'invalid unbonded value') 
+            expect(unbondedValue).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
         })
 
         it('returns value of operators deposit', async () => {
@@ -176,7 +176,7 @@ contract('KeepBonding', (accounts) => {
 
             const expectedUnbonded = 0
 
-            await keepBonding.createBond(operator, holder, reference, value, sortitionPool, {from: bondCreator})
+            await keepBonding.createBond(operator, holder, reference, value, sortitionPool, { from: bondCreator })
 
             const unbonded = await keepBonding.availableUnbondedValue(operator, bondCreator, sortitionPool)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
@@ -196,9 +196,9 @@ contract('KeepBonding', (accounts) => {
             await keepBonding.deposit(operator2, { value: value })
 
             await tokenStaking.authorizeOperatorContract(operator2, bondCreator)
-            await keepBonding.authorizeSortitionPoolContract(operator2, sortitionPool, {from: authorizer2})
-            await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, {from: bondCreator})
-            await keepBonding.createBond(operator2, holder, reference, bondValue, sortitionPool, {from: bondCreator})
+            await keepBonding.authorizeSortitionPoolContract(operator2, sortitionPool, { from: authorizer2 })
+            await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, { from: bondCreator })
+            await keepBonding.createBond(operator2, holder, reference, bondValue, sortitionPool, { from: bondCreator })
 
             const unbonded1 = await keepBonding.availableUnbondedValue(operator, bondCreator, sortitionPool)
             expect(unbonded1).to.eq.BN(expectedUnbonded, 'invalid unbonded value 1')
@@ -217,10 +217,10 @@ contract('KeepBonding', (accounts) => {
             const bondValue = new BN(10)
             const reference = 777
 
-            await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, {from: bondCreator})
+            await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, { from: bondCreator })
 
             await expectRevert(
-                keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, {from: bondCreator}),
+                keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, { from: bondCreator }),
                 "Reference ID not unique for holder and operator"
             )
         })
@@ -229,7 +229,7 @@ contract('KeepBonding', (accounts) => {
             const bondValue = value.add(new BN(1))
 
             await expectRevert(
-                keepBonding.createBond(operator, holder, 0, bondValue, sortitionPool, {from: bondCreator}),
+                keepBonding.createBond(operator, holder, 0, bondValue, sortitionPool, { from: bondCreator }),
                 "Insufficient unbonded value"
             )
         })
@@ -244,7 +244,7 @@ contract('KeepBonding', (accounts) => {
 
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: bondValue })
-            await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, {from: bondCreator})
+            await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, { from: bondCreator })
         })
 
         it('reassigns bond to a new holder and a new reference', async () => {
@@ -292,7 +292,7 @@ contract('KeepBonding', (accounts) => {
 
         it('fails if reassigned to the same holder and the same reference', async () => {
             await keepBonding.deposit(operator, { value: bondValue })
-            await keepBonding.createBond(operator, holder, newReference, bondValue, sortitionPool, {from: bondCreator})
+            await keepBonding.createBond(operator, holder, newReference, bondValue, sortitionPool, { from: bondCreator })
 
             await expectRevert(
                 keepBonding.reassignBond(operator, reference, holder, newReference, { from: holder }),
@@ -309,7 +309,7 @@ contract('KeepBonding', (accounts) => {
 
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: initialUnboundedValue })
-            await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, {from: bondCreator})
+            await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, { from: bondCreator })
         })
 
         it('releases bond amount to operator\'s available bonding value', async () => {
@@ -338,7 +338,7 @@ contract('KeepBonding', (accounts) => {
 
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: bondValue })
-            await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, {from: bondCreator})
+            await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, { from: bondCreator })
         })
 
         it('transfers whole bond amount to destination account', async () => {
@@ -413,9 +413,9 @@ contract('KeepBonding', (accounts) => {
 
         it("should authorize sortition pool for provided operator", async () => {
             await keepBonding.authorizeSortitionPoolContract(operator, sortitionPool, { from: authorizer })
-            
+
             assert.isTrue(
-                await keepBonding.hasSecondaryAuthorization(operator, sortitionPool), 
+                await keepBonding.hasSecondaryAuthorization(operator, sortitionPool),
                 "Sortition pool has not beeen authorized for provided operator"
             )
         })
