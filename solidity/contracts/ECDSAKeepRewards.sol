@@ -24,7 +24,7 @@ contract ECDSAKeepRewards {
     // available for each reward interval.
     uint256[] intervalWeights; // percent array
     // Mapping of interval number to tokens allocated for the interval.
-    mapping(uint256 => uint256) intervalAllocations;
+    uint256[] intervalAllocations;
 
     // Total number of intervals. (Implicit in intervalWeights)
     // uint256 termCount = intervalWeights.length;
@@ -326,6 +326,36 @@ contract ECDSAKeepRewards {
        // Adjusted allocation would be zero if keep count was zero
        assert(keepCount > 0);
        return _adjustedAllocation / keepCount;
+   }
+
+   function allocateRewards(uint256 interval) public {
+       uint256 allocatedIntervals = intervalAllocations.length;
+       require(
+           !(interval < allocatedIntervals),
+           "Interval already allocated"
+       );
+       require(
+           endOf(interval) < currentTime(),
+           "Interval is not finished"
+       );
+       // Allocate previous intervals first
+       if (interval > allocatedIntervals) {
+           allocateRewards(interval - 1);
+       }
+       uint256 keepCount = keepsInInterval(interval);
+       uint256 perKeepAllocation = rewardPerKeep(interval);
+       // Calculate like this so rewards divide equally among keeps
+       uint256 totalAllocation = keepCount * perKeepAllocation;
+       unallocatedRewards -= totalAllocation;
+       intervalAllocations.push(totalAllocation);
+   }
+
+   function getAllocatedRewards(uint256 interval) public view returns (uint256) {
+       require(
+           interval < intervalAllocations.length,
+           "Interval not allocated yet"
+       );
+       return intervalAllocations[interval];
    }
 }
 
