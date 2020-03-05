@@ -104,10 +104,10 @@ contract('KeepBonding', (accounts) => {
 
         it('reverts if transfer fails', async () => {
             await etherReceiver.setShouldFail(true)
-            await keepBonding.deposit(etherReceiver.address, { value: value })
+            await tokenStaking.setMagpie(operator, etherReceiver.address)
 
             await expectRevert(
-                keepBonding.withdraw(value, etherReceiver.address, { from: etherReceiver.address }),
+                keepBonding.withdraw(value, operator, { from: operator }),
                 "Transfer failed"
             )
         })
