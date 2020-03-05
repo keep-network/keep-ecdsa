@@ -678,6 +678,70 @@ contract('BondedECDSAKeep', (accounts) => {
     })
   })
 
+  describe('submitSignatureFraud', () => {
+    // Private key: 0x937FFE93CFC943D1A8FC0CB8BAD44A978090A4623DA81EEFDFF5380D0A290B41
+    // Public key:
+    //  Curve: secp256k1
+    //  X: 0x9A0544440CC47779235CCB76D669590C2CD20C7E431F97E17A1093FAF03291C4
+    //  Y: 0x73E661A208A8A565CA1E384059BD2FF7FF6886DF081FF1229250099D388C83DF
+
+    // TODO: Extract test data to a test data file and use them consistently across other tests.
+
+    const publicKey1 = '0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df'
+    const preimage1 = '0xfdaf2feee2e37c24f2f8d15ad5814b49ba04b450e67b859976cbf25c13ea90d8'
+    // hash256Digest1 = sha256(preimage1)
+    const hash256Digest1 = '0x8bacaa8f02ef807f2f61ae8e00a5bfa4528148e0ae73b2bd54b71b8abe61268e'
+
+    const signature1 = {
+      R: '0xedc074a86380cc7e2e4702eaf1bec87843bc0eb7ebd490f5bdd7f02493149170',
+      S: '0x3f5005a26eb6f065ea9faea543e5ddb657d13892db2656499a43dfebd6e12efc',
+      V: 28
+    }
+
+    it('should return true and slash members when the signature is a fraud', async () => {
+      await submitMembersPublicKeys(publicKey1)
+
+      let res = await keep.submitSignatureFraud.call(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      assert.isTrue(res, 'incorrect returned result')
+
+      assert.isTrue(await factoryStub.membersSlashed(), 'slash members not called')
+    })
+
+    it('should revert when the signature is not a fraud', async () => {
+      await submitMembersPublicKeys(publicKey1)
+
+      await keep.sign(hash256Digest1, { from: owner })
+
+      await expectRevert(
+        keep.submitSignatureFraud(
+          signature1.V,
+          signature1.R,
+          signature1.S,
+          hash256Digest1,
+          preimage1
+        ),
+        'Signature is not fraudulent'
+      )
+
+      assert.isFalse(await factoryStub.membersSlashed(), 'slash members called')
+    })
+  })
+
   describe('submitSignature', () => {
     const digest = '0x54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b'
     const publicKey = '0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051'
