@@ -299,14 +299,16 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// of the preimage: `sha256(_preimage))`. The digest is verified against the
     /// preimage to ensure the security of the ECDSA protocol. Verifying just the
     /// signature and the digest is not enough and leaves the possibility of the
-    /// the existential forgery.
+    /// the existential forgery. If digest and preimage verification fails the
+    /// function reverts.
+    /// Reverts if a public key has not been set for the keep yet.
     /// @param _v Signature's header byte: `27 + recoveryID`.
     /// @param _r R part of ECDSA signature.
     /// @param _s S part of ECDSA signature.
     /// @param _signedDigest Digest for the provided signature. Result of hashing
     /// the preimage with sha256.
     /// @param _preimage Preimage of the hashed message.
-    /// @return True if fraud, error otherwise.
+    /// @return True if fraud, false otherwise.
     function checkSignatureFraud(
         uint8 _v,
         bytes32 _r,
@@ -326,12 +328,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             ecrecover(_signedDigest, _v, _r, _s);
 
         // Check if the signature is valid but was not requested.
-        require(
-            isSignatureValid && !digests[_signedDigest],
-            "Signature is not fraudulent"
-        );
-
-        return true;
+        return isSignatureValid && !digests[_signedDigest];
     }
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
@@ -359,9 +356,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             _preimage
         );
 
-        if (isFraud == true) {
-            keepFactory.slashKeepMembers();
-        }
+        require(isFraud == true, "Signature is not fraudulent");
+
+        keepFactory.slashKeepMembers();
 
         return isFraud;
     }
