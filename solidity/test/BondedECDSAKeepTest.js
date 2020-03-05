@@ -42,7 +42,8 @@ contract('BondedECDSAKeep', (accounts) => {
     members,
     honestThreshold,
     tokenStaking,
-    keepBonding
+    keepBonding,
+    keepFactory
   ) {
     const startBlock = await web3.eth.getBlockNumber()
 
@@ -51,7 +52,8 @@ contract('BondedECDSAKeep', (accounts) => {
       members,
       honestThreshold,
       tokenStaking,
-      keepBonding
+      keepBonding,
+      keepFactory
     )
 
     const events = await factoryStub.getPastEvents(
@@ -84,7 +86,8 @@ contract('BondedECDSAKeep', (accounts) => {
       members,
       honestThreshold,
       tokenStaking.address,
-      keepBonding.address
+      keepBonding.address,
+      factoryStub.address
     )
   })
 
@@ -104,7 +107,8 @@ contract('BondedECDSAKeep', (accounts) => {
         members,
         honestThreshold,
         tokenStaking.address,
-        keepBonding.address
+        keepBonding.address,
+        factoryStub.address
       )
 
       expect(await keep.keyGenerationTimeout(), 'incorrect key generation timeout')
@@ -121,7 +125,8 @@ contract('BondedECDSAKeep', (accounts) => {
           members,
           honestThreshold,
           tokenStaking.address,
-          keepBonding.address
+          keepBonding.address,
+          factoryStub.address
         ),
         'Contract already initialized'
       )
@@ -551,7 +556,7 @@ contract('BondedECDSAKeep', (accounts) => {
     })
   })
 
-  describe('submitSignatureFraud', () => {
+  describe('checkSignatureFraud', () => {
     // Private key: 0x937FFE93CFC943D1A8FC0CB8BAD44A978090A4623DA81EEFDFF5380D0A290B41
     // Public key:
     //  Curve: secp256k1
@@ -576,7 +581,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
     it('reverts if public key was not set', async () => {
       await expectRevert(
-        keep.submitSignatureFraud.call(
+        keep.checkSignatureFraud.call(
           signature1.V,
           signature1.R,
           signature1.S,
@@ -592,7 +597,7 @@ contract('BondedECDSAKeep', (accounts) => {
 
       await keep.sign(hash256Digest2, { from: owner })
 
-      let res = await keep.submitSignatureFraud.call(
+      let res = await keep.checkSignatureFraud.call(
         signature1.V,
         signature1.R,
         signature1.S,
@@ -609,7 +614,7 @@ contract('BondedECDSAKeep', (accounts) => {
       await keep.sign(hash256Digest2, { from: owner })
 
       await expectRevert(
-        keep.submitSignatureFraud.call(
+        keep.checkSignatureFraud.call(
           signature1.V,
           signature1.R,
           signature1.S,
@@ -620,47 +625,110 @@ contract('BondedECDSAKeep', (accounts) => {
       )
     })
 
-    it('should return an error when signature is invalid and was requested', async () => {
+    it('should return false when signature is invalid and was requested', async () => {
       await submitMembersPublicKeys(publicKey1)
 
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
 
-      await expectRevert(
-        keep.submitSignatureFraud.call(
+      assert.isFalse(
+        await keep.checkSignatureFraud.call(
           signature1.V,
           badSignatureR,
           signature1.S,
           hash256Digest1,
           preimage1
         ),
-        'Signature is not fraudulent'
+        'signature is not fraudulent'
       )
     })
 
-    it('should return an error when signature is invalid and was not requested', async () => {
+    it('should return false when signature is invalid and was not requested', async () => {
       await submitMembersPublicKeys(publicKey1)
 
       await keep.sign(hash256Digest2, { from: owner })
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
-      await expectRevert(
-        keep.submitSignatureFraud.call(
+
+      assert.isFalse(
+        await keep.checkSignatureFraud.call(
           signature1.V,
           badSignatureR,
           signature1.S,
           hash256Digest1,
           preimage1
         ),
-        'Signature is not fraudulent'
+        'signature is not fraudulent'
       )
     })
 
-    it('should return an error when signature is valid and was requested', async () => {
+    it('should return false when signature is valid and was requested', async () => {
+      await submitMembersPublicKeys(publicKey1)
+
+      await keep.sign(hash256Digest1, { from: owner })
+
+      assert.isFalse(
+        await keep.checkSignatureFraud.call(
+          signature1.V,
+          signature1.R,
+          signature1.S,
+          hash256Digest1,
+          preimage1
+        ),
+        'signature is not fraudulent'
+      )
+    })
+  })
+
+  describe('submitSignatureFraud', () => {
+    // Private key: 0x937FFE93CFC943D1A8FC0CB8BAD44A978090A4623DA81EEFDFF5380D0A290B41
+    // Public key:
+    //  Curve: secp256k1
+    //  X: 0x9A0544440CC47779235CCB76D669590C2CD20C7E431F97E17A1093FAF03291C4
+    //  Y: 0x73E661A208A8A565CA1E384059BD2FF7FF6886DF081FF1229250099D388C83DF
+
+    // TODO: Extract test data to a test data file and use them consistently across other tests.
+
+    const publicKey1 = '0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df'
+    const preimage1 = '0xfdaf2feee2e37c24f2f8d15ad5814b49ba04b450e67b859976cbf25c13ea90d8'
+    // hash256Digest1 = sha256(preimage1)
+    const hash256Digest1 = '0x8bacaa8f02ef807f2f61ae8e00a5bfa4528148e0ae73b2bd54b71b8abe61268e'
+
+    const signature1 = {
+      R: '0xedc074a86380cc7e2e4702eaf1bec87843bc0eb7ebd490f5bdd7f02493149170',
+      S: '0x3f5005a26eb6f065ea9faea543e5ddb657d13892db2656499a43dfebd6e12efc',
+      V: 28
+    }
+
+    it('should return true and slash members when the signature is a fraud', async () => {
+      await submitMembersPublicKeys(publicKey1)
+
+      let res = await keep.submitSignatureFraud.call(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      assert.isTrue(res, 'incorrect returned result')
+
+      assert.isTrue(await factoryStub.membersSlashed(), 'slash members not called')
+    })
+
+    it('should revert when the signature is not a fraud', async () => {
       await submitMembersPublicKeys(publicKey1)
 
       await keep.sign(hash256Digest1, { from: owner })
 
       await expectRevert(
-        keep.submitSignatureFraud.call(
+        keep.submitSignatureFraud(
           signature1.V,
           signature1.R,
           signature1.S,
@@ -669,6 +737,8 @@ contract('BondedECDSAKeep', (accounts) => {
         ),
         'Signature is not fraudulent'
       )
+
+      assert.isFalse(await factoryStub.membersSlashed(), 'slash members called')
     })
   })
 
@@ -863,6 +933,12 @@ contract('BondedECDSAKeep', (accounts) => {
       assert.isTrue(await keep.isActive(), 'keep should be active');
       await keep.closeKeep({ from: owner })
       assert.isFalse(await keep.isActive(), 'keep should no longer be active');
+    })
+
+    it('notifies factory', async () => {
+      await keep.closeKeep({ from: owner })
+
+      assert.isTrue(await factoryStub.notifiedKeepClosed(), 'factory was not notified about keep closure');
     })
 
     it('frees members bonds', async () => {
@@ -1139,7 +1215,8 @@ contract('BondedECDSAKeep', (accounts) => {
         testMembers,
         honestThreshold,
         tokenStaking.address,
-        keepBonding.address
+        keepBonding.address,
+        factoryStub.address
       )
 
       await tokenStaking.setMagpie(member1, beneficiary)
@@ -1168,7 +1245,8 @@ contract('BondedECDSAKeep', (accounts) => {
         [member],
         honestThreshold,
         tokenStaking.address,
-        keepBonding.address
+        keepBonding.address,
+        factoryStub.address
       )
 
       await expectRevert(
@@ -1188,7 +1266,8 @@ contract('BondedECDSAKeep', (accounts) => {
         [member],
         honestThreshold,
         tokenStaking.address,
-        keepBonding.address
+        keepBonding.address,
+        factoryStub.address
       )
 
       await keep.distributeETHReward({ value: ethValue })
@@ -1326,7 +1405,8 @@ contract('BondedECDSAKeep', (accounts) => {
         testMembers,
         honestThreshold,
         tokenStaking.address,
-        keepBonding.address
+        keepBonding.address,
+        factoryStub.address
       )
 
       await initializeTokens(token, keep, accounts[0], valueWithRemainder)
