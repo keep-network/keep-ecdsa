@@ -8,6 +8,7 @@ const KeepBonding = artifacts.require('KeepBonding');
 const TokenStakingStub = artifacts.require("TokenStakingStub")
 const BondedSortitionPoolFactory = artifacts.require('BondedSortitionPoolFactory');
 const RandomBeaconStub = artifacts.require('RandomBeaconStub')
+const TestToken = artifacts.require('TestToken')
 
 
 const RewardsKeepStub = artifacts.require('RewardsKeepStub');
@@ -18,6 +19,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     let factory
     let registry
     let rewards
+    let token
 
     let tokenStaking
     let keepFactory
@@ -138,15 +140,19 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     before(async () => {
         await initializeNewFactory()
 
+        token = await TestToken.new()
+
         rewards = await ECDSAKeepRewards.new(
             termLength,
             totalRewards,
-            accounts[0],
+            token,
             minimumIntervalKeeps,
             keepFactory.address,
             initiationTime,
             intervalWeights
         )
+
+        token.mint(rewards.address, totalRewards)
     })
 
     beforeEach(async () => {
