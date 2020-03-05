@@ -91,6 +91,15 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         500000,
         1000000,
     ]
+    const inVacuumPerKeepRewards = [
+        66666,
+        125000,
+        125000,
+        250000,
+        0,
+        500000,
+        500000,
+    ]
 
     async function initializeNewFactory() {
         registry = await Registry.new()
@@ -363,6 +372,18 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             await createKeeps(timestamps)
             for (let i = 0; i < expectedAllocations.length; i++) {
                 let allocation = await rewards.adjustedAllocation.call(i)
+                expect(allocation.toNumber()).to.equal(expectedAllocations[i])
+            }
+        })
+    })
+
+    describe("rewardPerKeep", async () => {
+        it("returns the per keep allocation of the interval", async () => {
+            let timestamps = rewardTimestamps
+            let expectedAllocations = inVacuumPerKeepRewards
+            await createKeeps(timestamps)
+            for (let i = 0; i < expectedAllocations.length; i++) {
+                let allocation = await rewards.rewardPerKeep.call(i)
                 expect(allocation.toNumber()).to.equal(expectedAllocations[i])
             }
         })

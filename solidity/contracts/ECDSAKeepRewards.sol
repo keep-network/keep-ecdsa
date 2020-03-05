@@ -316,6 +316,17 @@ contract ECDSAKeepRewards {
        uint256 adjustmentPercentage = keepCountAdjustment(interval);
        return (_baseAllocation * adjustmentPercentage) / 100;
    }
+
+   function rewardPerKeep(uint256 interval) public returns (uint256) {
+       uint256 _adjustedAllocation = adjustedAllocation(interval);
+       if (_adjustedAllocation == 0) {
+           return 0;
+       }
+       uint256 keepCount = keepsInInterval(interval);
+       // Adjusted allocation would be zero if keep count was zero
+       assert(keepCount > 0);
+       return _adjustedAllocation / keepCount;
+   }
 }
 
 interface IBondedECDSAKeep {
