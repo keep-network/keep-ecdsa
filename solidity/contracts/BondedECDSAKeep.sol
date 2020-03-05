@@ -358,9 +358,16 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
         require(isFraud == true, "Signature is not fraudulent");
 
-        keepFactory.slashKeepMembers();
+        slashSignerStakes();
 
         return isFraud;
+    }
+
+    /// @notice Slashes signers' KEEP tokens.
+    /// @dev Keep contract is not authorized to slash tokens directly, so it calls
+    /// the factory to do it.
+    function slashSignerStakes() internal {
+        keepFactory.slashKeepMembers();
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
