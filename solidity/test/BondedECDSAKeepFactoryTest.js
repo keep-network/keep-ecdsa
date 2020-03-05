@@ -228,7 +228,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if sortition pool does not exist", async () => {
-            expectRevert(
+            await expectRevert(
                 keepFactory.getSortitionPool(application),
                 'No pool found for the application'
             )
@@ -1225,7 +1225,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         it("works when honest threshold is equal to the group size", async () => {
             let honestThreshold = 3
             let groupSize = honestThreshold
-  
+
             let blockNumber = await web3.eth.getBlockNumber()
 
             await keepFactory.openKeep(
@@ -1268,8 +1268,8 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
             assert.equal(eventList.length, 1, "incorrect number of emitted events")
             assert.equal(
-                eventList[0].returnValues.members.length, 
-                groupSize, 
+                eventList[0].returnValues.members.length,
+                groupSize,
                 "incorrect number of members"
             )
         })
@@ -1296,7 +1296,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
                 web3.eth.sendTransaction({
                     from: accounts[0],
-                    to: operator, 
+                    to: operator,
                     value: web3.utils.toWei('1', 'ether')
                 });
 
