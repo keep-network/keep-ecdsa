@@ -24,7 +24,6 @@ module.exports = async function () {
     const keepOwner = accounts[4]
     const application = accounts[5]
 
-    let startBlockNumber
     let keep
     let keepPublicKey
     let relayEntryGeneratedWatcher
@@ -67,13 +66,13 @@ module.exports = async function () {
             }
         }
 
-        console.log('opening a new keep...');
-
+        console.log('opening a new keep...');  
+      
         const fee = await keepFactory.openKeepFeeEstimate.call()
         console.log(`open new keep fee: [${fee}]`)
-
-        // Initialize relay entry generated watcher.
+    
         relayEntryGeneratedWatcher = watchRelayEntryGenerated(randomBeacon)
+        const keepCreatedWatcher = watchKeepCreated(keepFactory)
 
         await keepFactory.openKeep(
             groupSize,
@@ -86,15 +85,13 @@ module.exports = async function () {
             }
         )
 
-        const eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
-            fromBlock: startBlockNumber,
-            toBlock: 'latest',
-        })
+        const keepCreatedEvent = await keepCreatedWatcher
 
-        const keepAddress = eventList[0].returnValues.keepAddress
+        const keepAddress = keepCreatedEvent.returnValues.keepAddress
         keep = await BondedECDSAKeep.at(keepAddress)
 
-        console.log(`new keep opened with address: [${keepAddress}] and members: [${eventList[0].returnValues.members}]`)
+        const keepMembers = keepCreatedEvent.returnValues.members
+        console.log(`new keep opened with address: [${keepAddress}] and members: [${keepMembers}]`)
     } catch (err) {
         console.error(`failed to open new keep: [${err}]`)
         process.exit(1)
@@ -115,7 +112,7 @@ module.exports = async function () {
     try {
         console.log('request signature...')
         const digest = web3.eth.accounts.hashMessage("hello")
-        const signatureSubmittedEvent = watchSignatureSubmittedEvent(keep)
+        const signatureSubmittedEvent = watchSignatureSubmitted(keep)
 
         setTimeout(
             async () => {
@@ -184,6 +181,15 @@ module.exports = async function () {
     process.exit()
 }
 
+function watchKeepCreated(keepFactory) {
+    return new Promise(async (resolve) => {
+        keepFactory.BondedECDSAKeepCreated()
+          .on('data', event => {
+              resolve(event)
+          })
+    })
+}
+
 function watchPublicKeyPublished(keep) {
     return new Promise(async (resolve) => {
         keep.PublicKeyPublished()
@@ -193,7 +199,7 @@ function watchPublicKeyPublished(keep) {
     })
 }
 
-function watchSignatureSubmittedEvent(keep) {
+function watchSignatureSubmitted(keep) {
     return new Promise(async (resolve) => {
         keep.SignatureSubmitted()
             .on('data', event => {
