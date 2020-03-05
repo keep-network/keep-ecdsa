@@ -77,11 +77,16 @@ contract KeepBonding {
     /// @param operator Address of the operator.
     function withdraw(uint256 amount, address operator) public {
         require(
-            unbondedValue[msg.sender] >= amount,
+            msg.sender == operator || msg.sender == tokenStaking.ownerOf(operator),
+            "Only operator or the owner is allowed to withdraw bond"
+        );
+
+        require(
+            unbondedValue[operator] >= amount,
             "Insufficient unbonded value"
         );
 
-        unbondedValue[msg.sender] -= amount;
+        unbondedValue[operator] -= amount;
 
         (bool success, ) = tokenStaking.magpieOf(operator).call.value(amount)("");
         require(success, "Transfer failed");

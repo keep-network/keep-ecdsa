@@ -86,20 +86,31 @@ contract('KeepBonding', (accounts) => {
         })
 
         it('fails if insufficient unbonded value', async () => {
+            await tokenStaking.setOwner(operator, accounts[2])
             const invalidValue = value.add(new BN(1))
 
             await expectRevert(
-                keepBonding.withdraw(invalidValue, operator, { from: operator }),
+                keepBonding.withdraw(invalidValue, operator, { from: accounts[2] }),
                 "Insufficient unbonded value"
             )
         })
 
         it('reverts if transfer fails', async () => {
             await etherReceiver.setShouldFail(true)
+            await keepBonding.deposit(etherReceiver.address, { value: value })
 
             await expectRevert(
-                keepBonding.withdraw(value, etherReceiver.address, { from: operator }),
+                keepBonding.withdraw(value, etherReceiver.address, { from: etherReceiver.address }),
                 "Transfer failed"
+            )
+        })
+
+        it('fails if neither operator nor the owner is trying to withdraw bond', async () => {
+            await tokenStaking.setOwner(operator, accounts[1])
+
+            await expectRevert(
+                keepBonding.withdraw(value, operator, { from: accounts[2] }),
+                "Only operator or the owner is allowed to withdraw bond"
             )
         })
     })
