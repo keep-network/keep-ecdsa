@@ -19,7 +19,7 @@ import (
 
 const (
 	KeyGenerationSubTimeout = 8 * time.Minute
-	SigningSubTimeout       = 8 * time.Minute
+	SigningSubTimeout       = 10 * time.Minute
 )
 
 var logger = log.Logger("keep-tss")
