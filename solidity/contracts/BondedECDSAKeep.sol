@@ -472,6 +472,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
         isActive = false;
 
+        keepFactory.notifyKeepClosed();
+
         emit KeepClosed();
     }
 

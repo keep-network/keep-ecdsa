@@ -437,6 +437,12 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         tokenStaking.slash(minimumStake, keep.getMembers());
     }
 
+    /// @notice Notifies the factory that a keep has been closed.
+    /// @dev Function should be called by a keep which is being closed.
+    function notifyKeepClosed() public onlyKeep {
+        keeps[msg.sender] = false;
+    }
+
     /// @notice Checks if the caller is a keep created by this factory.
     /// @dev Throws an error if called by any account other than a keep.
     modifier onlyKeep() {
