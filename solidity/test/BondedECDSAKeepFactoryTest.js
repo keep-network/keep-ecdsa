@@ -38,6 +38,12 @@ contract("BondedECDSAKeepFactory", async accounts => {
     const authorizer2 = members[1]
     const authorizer3 = members[2]
 
+    const groupSize = new BN(members.length)
+    const threshold = groupSize
+
+    const singleBond = new BN(1)
+    const bond = singleBond.mul(groupSize)
+
     async function initializeNewFactory() {
         registry = await Registry.new()
         bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
@@ -705,11 +711,6 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
     describe("openKeep", async () => {
         const keepOwner = "0xbc4862697a1099074168d54A555c4A60169c18BD"
-        const groupSize = new BN(3)
-        const threshold = new BN(3)
-
-        const singleBond = new BN(1)
-        const bond = singleBond.mul(groupSize)
 
         let feeEstimate
 
@@ -1313,16 +1314,6 @@ contract("BondedECDSAKeepFactory", async accounts => {
                 await keepFactory.registerMemberCandidate(application, { from: operator })
             }
         }
-
-        async function depositAndRegisterMembers(unbondedAmount) {
-            await keepBonding.deposit(members[0], { value: unbondedAmount })
-            await keepBonding.deposit(members[1], { value: unbondedAmount })
-            await keepBonding.deposit(members[2], { value: unbondedAmount })
-
-            await keepFactory.registerMemberCandidate(application, { from: members[0] })
-            await keepFactory.registerMemberCandidate(application, { from: members[1] })
-            await keepFactory.registerMemberCandidate(application, { from: members[2] })
-        }
     })
 
     describe("setGroupSelectionSeed", async () => {
@@ -1437,15 +1428,38 @@ contract("BondedECDSAKeepFactory", async accounts => {
         before(async () => {
             await initializeNewFactory()
 
-            keep = await BondedECDSAKeepStub.new()
-            await keep.initialize(
+            signerPool = await keepFactory.createSortitionPool.call(application)
+            await keepFactory.createSortitionPool(application)
+
+            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool, { from: authorizer1 })
+            await keepBonding.authorizeSortitionPoolContract(members[1], signerPool, { from: authorizer2 })
+            await keepBonding.authorizeSortitionPoolContract(members[2], signerPool, { from: authorizer3 })
+
+            await depositAndRegisterMembers(singleBond)
+
+            const pool = await BondedSortitionPool.at(signerPool)
+            const initBlocks = await pool.operatorInitBlocks()
+            await mineBlocks(initBlocks.add(new BN(1)))
+
+            const feeEstimate = await keepFactory.openKeepFeeEstimate()
+
+            const keepAddress = await keepFactory.openKeep.call(
+                groupSize,
+                threshold,
                 keepOwner,
-                members,
-                members.length,
-                tokenStaking.address,
-                keepBonding.address,
-                keepFactory.address
+                bond,
+                { from: application, value: feeEstimate },
             )
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate },
+            )
+
+            keep = await BondedECDSAKeep.at(keepAddress)
         })
 
         beforeEach(async () => {
@@ -1463,8 +1477,11 @@ contract("BondedECDSAKeepFactory", async accounts => {
             )
         })
 
-        it("reverts if called by not authorized keep", async () => {
-            // The keep is not added to the list of keeps created by the factory.
+        it("reverts if called by not active keep", async () => {
+            // The keep is removed from the list of keeps created by the factory
+            // or it's already marked as inactive.
+            await keepFactory.removeKeep(keep.address)
+
             await expectRevert(
                 keep.closeKeep({ from: keepOwner }),
                 "Caller is not an active keep created by this factory"
@@ -1475,9 +1492,19 @@ contract("BondedECDSAKeepFactory", async accounts => {
             // Add keep to the list of keeps created by the factory.
             await keepFactory.addKeep(keep.address)
 
-            await keep.exposedCloseKeep({ from: keepOwner })
+            await keep.closeKeep({ from: keepOwner })
 
             assert.isFalse(await keepFactory.isKeep(keep.address))
         })
     })
+
+    async function depositAndRegisterMembers(unbondedAmount) {
+        await keepBonding.deposit(members[0], { value: unbondedAmount })
+        await keepBonding.deposit(members[1], { value: unbondedAmount })
+        await keepBonding.deposit(members[2], { value: unbondedAmount })
+
+        await keepFactory.registerMemberCandidate(application, { from: members[0] })
+        await keepFactory.registerMemberCandidate(application, { from: members[1] })
+        await keepFactory.registerMemberCandidate(application, { from: members[2] })
+    }
 })

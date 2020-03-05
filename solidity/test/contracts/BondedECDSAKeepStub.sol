@@ -8,8 +8,4 @@ contract BondedECDSAKeepStub is BondedECDSAKeep {
     function exposedSlashSignerStakes() public {
         slashSignerStakes();
     }
-
-    function exposedCloseKeep() public {
-        markAsClosed();
-    }
 }
