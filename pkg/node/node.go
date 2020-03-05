@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
@@ -18,6 +19,8 @@ import (
 )
 
 var logger = log.Logger("keep-tecdsa")
+
+const monitorKeepPublicKeySubmissionTimeout = 30 * time.Minute
 
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
@@ -130,10 +133,9 @@ func (n *Node) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
-	monitoringDeadline, _ := ctx.Deadline()
-	monitoringCtx, monitoringCancel := context.WithDeadline(
+	monitoringCtx, monitoringCancel := context.WithTimeout(
 		context.Background(),
-		monitoringDeadline,
+		monitorKeepPublicKeySubmissionTimeout,
 	)
 	go n.monitorKeepPublicKeySubmission(monitoringCtx, keepAddress)
 
@@ -251,5 +253,9 @@ func (n *Node) monitorKeepPublicKeySubmission(
 			event.ConflictingPublicKey,
 		)
 	case <-ctx.Done():
+		logger.Warningf(
+			"monitoring of public key submission for keep [%s] has been canceled",
+			keepAddress.String(),
+		)
 	}
 }
