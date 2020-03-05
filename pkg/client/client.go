@@ -86,8 +86,17 @@ func Initialize(
 
 			var signer *tss.ThresholdSigner
 			var err error
+			iterationNumber := 0
 
 			for {
+				iterationNumber++
+
+				logger.Infof(
+					"signer generation for keep [%s] - iteration number [%v]",
+					event.KeepAddress.String(),
+					iterationNumber,
+				)
+
 				if keygenCtx.Err() != nil {
 					logger.Errorf("key generation timeout exceeded")
 					return
@@ -170,7 +179,17 @@ func registerForSignEvents(
 				signingCtx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
 				defer cancel()
 
+				iterationNumber := 0
+
 				for {
+					iterationNumber++
+
+					logger.Infof(
+						"calculate signature for keep [%s] - iteration number [%v]",
+						keepAddress.String(),
+						iterationNumber,
+					)
+
 					if signingCtx.Err() != nil {
 						logger.Errorf("signing timeout exceeded")
 						return
