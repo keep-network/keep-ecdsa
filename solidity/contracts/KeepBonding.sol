@@ -24,7 +24,7 @@ contract KeepBonding {
     TokenStaking internal stakingContract;
 
     // Unassigned value in wei deposited by operators.
-    mapping(address => uint256) internal unbondedValue;
+    mapping(address => uint256) public unbondedValue;
 
     // References to created bonds. Bond identifier is built from operator's
     // address, holder's address and reference ID assigned on bond creation.
@@ -51,7 +51,7 @@ contract KeepBonding {
     /// @param operator Address of the operator.
     /// @param bondCreator Address authorized to create a bond.
     /// @param authorizedSortitionPool Address of authorized sortition pool.
-    /// @return Amount of deposited wei available for bonding.
+    /// @return Amount of authorized wei deposit available for bonding.
     function availableUnbondedValue(
         address operator,
         address bondCreator,
