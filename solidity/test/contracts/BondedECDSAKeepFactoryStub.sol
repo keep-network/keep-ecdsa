@@ -33,4 +33,8 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
     function addKeep(address keep) public {
         keeps[keep] = true;
     }
+
+    function isKeep(address _keepAddress) public view returns (bool) {
+        return keeps[_keepAddress];
+    }
 }

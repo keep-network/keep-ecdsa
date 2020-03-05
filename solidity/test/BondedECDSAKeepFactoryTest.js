@@ -1429,4 +1429,55 @@ contract("BondedECDSAKeepFactory", async accounts => {
             }
         })
     })
+
+    describe("notifyKeepClosed", async () => {
+        const keepOwner = accounts[5]
+        let keep
+
+        before(async () => {
+            await initializeNewFactory()
+
+            keep = await BondedECDSAKeepStub.new()
+            await keep.initialize(
+                keepOwner,
+                members,
+                members.length,
+                tokenStaking.address,
+                keepBonding.address,
+                keepFactory.address
+            )
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("reverts if called not by keep", async () => {
+            await expectRevert(
+                keepFactory.notifyKeepClosed(),
+                "Caller is not an active keep created by this factory"
+            )
+        })
+
+        it("reverts if called by not authorized keep", async () => {
+            // The keep is not added to the list of keeps created by the factory.
+            await expectRevert(
+                keep.closeKeep({ from: keepOwner }),
+                "Caller is not an active keep created by this factory"
+            )
+        })
+
+        it("marks keep closed", async () => {
+            // Add keep to the list of keeps created by the factory.
+            await keepFactory.addKeep(keep.address)
+
+            await keep.exposedCloseKeep({ from: keepOwner })
+
+            assert.isFalse(await keepFactory.isKeep(keep.address))
+        })
+    })
 })
