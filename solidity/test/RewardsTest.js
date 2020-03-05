@@ -289,6 +289,18 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         })
     })
 
+    describe("keepCountAdjustment", async () => {
+        it("returns the adjustment percentage of the interval", async () => {
+            let timestamps = rewardTimestamps
+            let expectedPercentages = [100, 100, 50, 100, 0, 50, 100, 0]
+            await createKeeps(timestamps)
+            for (let i = 0; i < expectedPercentages.length; i++) {
+                let keepCount = await rewards.keepCountAdjustment.call(i)
+                expect(keepCount.toNumber()).to.equal(expectedPercentages[i])
+            }
+        })
+    })
+
     describe("getIntervalWeight", async () => {
         it("returns the weight of a defined interval", async () => {
             let weight0 = await rewards.getIntervalWeight(0)

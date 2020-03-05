@@ -18,7 +18,7 @@ contract ECDSAKeepRewards {
     uint256 initiated;
 
     // Minimum number of keep submissions for each interval.
-    uint256 minimumSubmissions;
+    uint256 minimumKeepsPerInterval;
 
     // Array representing the percentage of unallocated rewards
     // available for each reward interval.
@@ -49,7 +49,7 @@ contract ECDSAKeepRewards {
         uint256 _termLength,
         uint256 _totalRewards,
         address _keepToken,
-        uint256 _minimumSubmissions,
+        uint256 _minimumKeepsPerInterval,
         address factoryAddress,
         uint256 _initiated,
         uint256[] memory _intervalWeights
@@ -60,7 +60,7 @@ contract ECDSAKeepRewards {
        unallocatedRewards = totalRewards;
        termLength = _termLength;
        initiated = _initiated;
-       minimumSubmissions = _minimumSubmissions;
+       minimumKeepsPerInterval = _minimumKeepsPerInterval;
        factory = IBondedECDSAKeepFactory(factoryAddress);
        intervalWeights = _intervalWeights;
     }
@@ -115,7 +115,7 @@ contract ECDSAKeepRewards {
         newInterval - intervalEndpoints[intervalEndpointsLength - 1];
 
         intervalSubmissions[intervalEndpointsLength] = totalSubmissions;
-        if (totalSubmissions < minimumSubmissions){
+        if (totalSubmissions < minimumKeepsPerInterval){
             if(intervalEndpointsLength >= intervalWeights.length){
                 return newInterval;
             }
@@ -281,6 +281,16 @@ contract ECDSAKeepRewards {
 
    function keepsInInterval(uint256 interval) public returns (uint256) {
        return (getEndpoint(interval) - getPreviousEndpoint(interval));
+   }
+
+   function keepCountAdjustment(uint256 interval) public returns (uint256) {
+       uint256 minimumKeeps = minimumKeepsPerInterval;
+       uint256 keepCount = keepsInInterval(interval);
+       if (keepCount >= minimumKeeps) {
+           return 100;
+       } else {
+           return 100 * keepCount / minimumKeeps;
+       }
    }
 
    function getIntervalWeight(uint256 interval) public view returns (uint256) {
