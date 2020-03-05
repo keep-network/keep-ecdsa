@@ -130,7 +130,11 @@ func (n *Node) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
 
-	monitoringCtx, monitoringCancel := context.WithCancel(ctx)
+	monitoringDeadline, _ := ctx.Deadline()
+	monitoringCtx, monitoringCancel := context.WithDeadline(
+		context.Background(),
+		monitoringDeadline,
+	)
 	go n.monitorKeepPublicKeySubmission(monitoringCtx, keepAddress)
 
 	err = n.ethereumChain.SubmitKeepPublicKey(
