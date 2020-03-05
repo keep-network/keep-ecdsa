@@ -2,10 +2,11 @@ const BondedECDSAKeep = artifacts.require('./BondedECDSAKeep.sol')
 
 // This test validates integration between on-chain contracts and off-chain client.
 // It requires contracts to be deployed before running the test. It requests
-// signature for a specific keep contract provided as a <KEEP_ADDRESS> argument.
+// signature for a specific keep contract provided as a <KEEP_ADDRESS> argument
+// using keep owner (privileged application) provided as a <KEEP_OWNER> argument.
 // 
 // To execute this test run:
-// truffle exec integration/sign_with_existing_keep.js <KEEP_ADDRESS>
+// truffle exec integration/sign_with_existing_keep.js <KEEP_ADDRESS> <KEEP_OWNER>
 module.exports = async function () {
     const keepAddress = process.argv[4]
     const keepOwnerArg = process.argv[5]
@@ -17,7 +18,9 @@ module.exports = async function () {
     try {
         if (!keepOwnerArg) {
             const accounts = await web3.eth.getAccounts();
-            keepOwner = accounts[1]
+            keepOwner = accounts[4] // keep owner address from smoke_test.js
+        } else {
+            keepOwner = keepOwnerArg
         }
 
         keep = await BondedECDSAKeep.at(keepAddress)
@@ -38,7 +41,7 @@ module.exports = async function () {
     }
 
     try {
-        console.log('request signature...')
+        console.log(`requesting signature with keep owner: ${keepOwner}`)
         const signatureSubmittedEvent = watchSignatureSubmittedEvent(keep)
 
         const digest = web3.eth.accounts.hashMessage("hello")
