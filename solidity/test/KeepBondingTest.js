@@ -23,10 +23,12 @@ contract('KeepBonding', (accounts) => {
     let authorizer
     let bondCreator
     let sortitionPool
+    let beneficiary
 
     before(async () => {
         operator = accounts[1]
         authorizer = operator
+        beneficiary = accounts[3]
         bondCreator = accounts[4]   
         sortitionPool = accounts[5]
 
@@ -65,24 +67,23 @@ contract('KeepBonding', (accounts) => {
 
     describe('withdraw', async () => {
         const value = new BN(1000)
-        const magpie = accounts[3]
 
         beforeEach(async () => {
             await keepBonding.deposit(operator, { value: value })
         })
     
-        it('transfers unbonded value to magpie of operator', async () => {
+        it('transfers unbonded value to beneficiary of operator', async () => {
             const expectedUnbonded = 0
-            await tokenStaking.setMagpie(operator, magpie)
-            const expectedMagpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie)).add(value)
+            await tokenStaking.setMagpie(operator, beneficiary)
+            const expectedBeneficiaryBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary)).add(value)
             
             await keepBonding.withdraw(value, operator, { from: operator })
 
             const unbonded = await keepBonding.availableUnbondedValue(operator, bondCreator, sortitionPool)
             expect(unbonded).to.eq.BN(expectedUnbonded, 'invalid unbonded value')
 
-            const actualMagpieBalance = await web3.eth.getBalance(magpie)
-            expect(actualMagpieBalance).to.eq.BN(expectedMagpieBalance, 'invalid magpie balance')
+            const actualBeneficiaryBalance = await web3.eth.getBalance(beneficiary)
+            expect(actualBeneficiaryBalance).to.eq.BN(expectedBeneficiaryBalance, 'invalid beneficiary balance')
         })
 
         it('fails if insufficient unbonded value', async () => {

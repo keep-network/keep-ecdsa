@@ -76,7 +76,8 @@ contract KeepBonding {
         unbondedValue[operator] = unbondedValue[operator].add(msg.value);
     }
 
-    /// @notice Withdraws amount from sender's value available for bonding.
+    /// @notice Withdraws amount from operator's value available for bonding.
+    /// Can be called only by the operator or by the stake owner.
     /// @param amount Value to withdraw in wei.
     /// @param operator Address of the operator.
     function withdraw(uint256 amount, address operator) public {
