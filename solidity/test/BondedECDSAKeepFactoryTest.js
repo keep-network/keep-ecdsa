@@ -1494,7 +1494,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
             await keep.closeKeep({ from: keepOwner })
 
-            assert.isFalse(await keepFactory.isKeep(keep.address))
+            assert.isFalse(await keepFactory.hasKeep(keep.address))
         })
     })
 
