@@ -106,11 +106,11 @@ function readAddressFromKeyFile(keyFilePath) {
 }
 
 async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
-  let requiredBalance = web3.utils.toWei(requiredEtherBalance, 'ether')
+  let requiredBalance = web3.utils.toBN(web3.utils.toWei(requiredEtherBalance, 'ether'))
 
   const currentBalance = web3.utils.toBN(await web3.eth.getBalance(operatorAddress))
   if (currentBalance.gte(requiredBalance)) {
-    console.log('Operator address is already funded, exiting!')
+    console.log(`Operator address is already funded, current balance: ${web3.utils.fromWei(currentBalance)}`)
     return
   }
 
@@ -123,11 +123,14 @@ async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
 }
 
 async function depositUnbondedValue(operatorAddress, purse, etherToDeposit) {
-  let requiredBalance = web3.utils.toWei(etherToDeposit, 'ether')
+  let requiredBalance = web3.utils.toBN(web3.utils.toWei(etherToDeposit, 'ether'))
 
-  const currentBalance = web3.utils.toBN(await keepBondingContract.unbondedValue(operatorAddress).call())
+  const currentBalance = web3.utils.toBN(
+    await keepBondingContract.methods.unbondedValue(operatorAddress).call()
+  )
+
   if (currentBalance.gte(requiredBalance)) {
-    console.log('Operator address has required unbonded value, exiting!')
+    console.log(`Operator has required unbonded value, current balance: ${web3.utils.fromWei(currentBalance)}`)
     return
   }
 
