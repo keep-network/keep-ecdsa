@@ -1415,7 +1415,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
             await keep.exposedSlashSignerStakes()
 
             for (let i = 0; i < members.length; i++) {
-                const actualStake = await tokenStaking.eligibleStake(members[0], keepFactory.address)
+                const actualStake = await tokenStaking.eligibleStake(members[i], keepFactory.address)
                 expect(actualStake).to.eq.BN(remainingStake, `incorrect stake for member ${i}`)
             }
         })
