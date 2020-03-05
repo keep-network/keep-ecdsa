@@ -197,7 +197,7 @@ func (n *Node) CalculateSignature(
 // conflicting public key is published or until keep established public key
 // or until key generation timed out.
 func (n *Node) monitorKeepPublicKeySubmission(keepAddress common.Address) {
-	ctx, cancel := context.WithTimeout(context.Background(), tss.KeyGenerationSubTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), tss.KeyGenerationProtocolTimeout)
 	defer cancel()
 
 	publicKeyPublished := make(chan *eth.PublicKeyPublishedEvent)

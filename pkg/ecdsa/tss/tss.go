@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	KeyGenerationSubTimeout = 8 * time.Minute
-	SigningSubTimeout       = 10 * time.Minute
+	KeyGenerationProtocolTimeout = 8 * time.Minute
+	SigningProtocolTimeout       = 10 * time.Minute
 )
 
 var logger = log.Logger("keep-tss")
@@ -84,7 +84,7 @@ func GenerateThresholdSigner(
 		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
 	}
 
-	ctx, cancel := context.WithTimeout(parentCtx, KeyGenerationSubTimeout)
+	ctx, cancel := context.WithTimeout(parentCtx, KeyGenerationProtocolTimeout)
 	defer cancel()
 
 	keyGenSigner, err := initializeKeyGeneration(
@@ -131,7 +131,7 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
 	}
 
-	ctx, cancel := context.WithTimeout(parentCtx, SigningSubTimeout)
+	ctx, cancel := context.WithTimeout(parentCtx, SigningProtocolTimeout)
 	defer cancel()
 
 	signingSigner, err := s.initializeSigning(ctx, digest[:], netBridge)
