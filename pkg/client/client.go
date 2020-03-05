@@ -120,15 +120,15 @@ func Initialize(
 
 			var signer *tss.ThresholdSigner
 			var err error
-			iterationNumber := 0
+			attemptCounter := 0
 
 			for {
-				iterationNumber++
+				attemptCounter++
 
 				logger.Infof(
-					"signer generation for keep [%s] - iteration number [%v]",
+					"signer generation for keep [%s] - attempt number [%v]",
 					event.KeepAddress.String(),
-					iterationNumber,
+					attemptCounter,
 				)
 
 				if keygenCtx.Err() != nil {
@@ -226,15 +226,15 @@ func monitorSigningRequests(
 				signingCtx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
 				defer cancel()
 
-				iterationNumber := 0
+				attemptCounter := 0
 
 				for {
-					iterationNumber++
+					attemptCounter++
 
 					logger.Infof(
-						"calculate signature for keep [%s] - iteration number [%v]",
+						"calculate signature for keep [%s] - attempt number [%v]",
 						keepAddress.String(),
-						iterationNumber,
+						attemptCounter,
 					)
 
 					if signingCtx.Err() != nil {
