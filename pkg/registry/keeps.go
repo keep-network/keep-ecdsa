@@ -116,18 +116,6 @@ func (k *Keeps) LoadExistingKeeps() {
 	k.printSigners()
 }
 
-// ForEachKeep executes callback function for every entry in keeps' registry.
-func (k *Keeps) ForEachKeep(
-	callback func(keepAddress common.Address, signer []*tss.ThresholdSigner),
-) {
-	k.myKeepsMutex.RLock()
-	defer k.myKeepsMutex.RUnlock()
-
-	for keepAddress, signers := range k.myKeeps {
-		callback(keepAddress, signers)
-	}
-}
-
 func (k *Keeps) printSigners() {
 	k.myKeepsMutex.RLock()
 	defer k.myKeepsMutex.RUnlock()
