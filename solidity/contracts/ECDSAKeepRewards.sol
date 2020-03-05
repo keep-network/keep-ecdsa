@@ -357,6 +357,71 @@ contract ECDSAKeepRewards {
        );
        return intervalAllocations[interval];
    }
+
+   function isAllocated(uint256 interval) public view returns (bool) {
+       uint256 allocatedIntervals = intervalAllocations.length;
+       return (interval < allocatedIntervals);
+   }
+
+   function claimRewards(address keepAddress) public {
+       require(
+           IBondedECDSAKeep(keepAddress).isClosed(),
+           "Keep is not closed"
+       );
+       require(
+           !claimed[keepAddress],
+           "Rewards already claimed"
+       );
+       uint256 creationTime = factory.getCreationTime(keepAddress);
+       require(
+           creationTime != 0,
+           "Keep address not recognized by factory"
+       );
+       uint256 interval = intervalOf(creationTime);
+       if (!isAllocated(interval)) {
+           allocateRewards(interval);
+       }
+       uint256 allocation = intervalAllocations[interval];
+       uint256 _keepsInInterval = keepsInInterval(interval);
+       uint256 perKeepReward = allocation / _keepsInInterval;
+       uint256 processedKeeps = intervalKeepsProcessed[interval];
+
+       // TODO: send rewards here
+
+       claimed[keepAddress] = true;
+       intervalKeepsProcessed[interval] = processedKeeps + 1;
+   }
+
+   function reportTermination(address keepAddress) public {
+       require(
+           IBondedECDSAKeep(keepAddress).isClosed(),
+           "Keep is not closed"
+       );
+       require(
+           !claimed[keepAddress],
+           "Rewards already claimed"
+       );
+       uint256 creationTime = factory.getCreationTime(keepAddress);
+       require(
+           creationTime != 0,
+           "Keep address not recognized by factory"
+       );
+       uint256 interval = intervalOf(creationTime);
+       if (!isAllocated(interval)) {
+           allocateRewards(interval);
+       }
+       uint256 allocation = intervalAllocations[interval];
+       uint256 _keepsInInterval = keepsInInterval(interval);
+       uint256 perKeepReward = allocation / _keepsInInterval;
+       uint256 processedKeeps = intervalKeepsProcessed[interval];
+       uint256 _unallocatedRewards = unallocatedRewards;
+
+       // Return the reward to the unallocated pool
+       unallocatedRewards = _unallocatedRewards + perKeepReward;
+
+       claimed[keepAddress] = true;
+       intervalKeepsProcessed[interval] = processedKeeps + 1;
+   }
 }
 
 interface IBondedECDSAKeep {
