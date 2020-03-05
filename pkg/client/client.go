@@ -184,6 +184,7 @@ func registerForSignEvents(
 
 					if err != nil {
 						logger.Errorf("signature calculation failed: [%v]", err)
+						continue
 					}
 
 					break
