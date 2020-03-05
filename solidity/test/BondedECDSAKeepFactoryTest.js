@@ -1400,7 +1400,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         it("reverts if called not by keep", async () => {
             await expectRevert(
                 keepFactory.slashKeepMembers(),
-                "Caller is not a keep"
+                "Caller is not a keep created by this factory"
             )
         })
 
@@ -1408,7 +1408,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
             // The keep is not added to the list of keeps created by the factory.
             await expectRevert(
                 keep.exposedSlashSignerStakes(),
-                "Caller is not a keep"
+                "Caller is not a keep created by this factory"
             )
         })
 
