@@ -409,5 +409,16 @@ contract.only('ECDSAKeepRewards', (accounts) => {
                 expect(allocation.toNumber()).to.equal(expectedAllocations[i])
             }
         })
+
+        it("allocates the rewards recursively", async () => {
+            let timestamps = rewardTimestamps
+            let expectedAllocations = actualAllocations
+            await createKeeps(timestamps)
+            await rewards.allocateRewards(expectedAllocations.length - 1)
+            for (let i = 0; i < expectedAllocations.length; i++) {
+                let allocation = await rewards.getAllocatedRewards(i)
+                expect(allocation.toNumber()).to.equal(expectedAllocations[i])
+            }
+        })
     })
 })
