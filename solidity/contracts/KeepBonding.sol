@@ -3,6 +3,8 @@ pragma solidity ^0.5.4;
 import "@keep-network/keep-core/contracts/Registry.sol";
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 // TODO: This contract is expected to implement functions defined by IBonding
 // interface defined in @keep-network/sortition-pools. After merging the
 // repositories we need to move IBonding definition to sit closer to KeepBonding
@@ -13,14 +15,16 @@ import "@keep-network/keep-core/contracts/TokenStaking.sol";
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
 contract KeepBonding {
+    using SafeMath for uint256;
+
     // Registry contract with a list of approved factories (operator contracts).
     Registry internal registry;
 
     // KEEP token staking contract.
-    TokenStaking internal stakingContract;
+    TokenStaking internal tokenStaking;
 
     // Unassigned value in wei deposited by operators.
-    mapping(address => uint256) internal unbondedValue;
+    mapping(address => uint256) public unbondedValue;
 
     // References to created bonds. Bond identifier is built from operator's
     // address, holder's address and reference ID assigned on bond creation.
@@ -32,10 +36,10 @@ contract KeepBonding {
 
     /// @notice Initializes Keep Bonding contract.
     /// @param registryAddress Keep registry contract address.
-    /// @param stakingContractAddress KEEP Token staking contract address.
-    constructor(address registryAddress, address stakingContractAddress) public {
+    /// @param tokenStakingAddress KEEP Token staking contract address.
+    constructor(address registryAddress, address tokenStakingAddress) public {
         registry = Registry(registryAddress);
-        stakingContract = TokenStaking(stakingContractAddress);
+        tokenStaking = TokenStaking(tokenStakingAddress);
     }
 
     /// @notice Returns the amount of wei the operator has made available for
@@ -47,7 +51,7 @@ contract KeepBonding {
     /// @param operator Address of the operator.
     /// @param bondCreator Address authorized to create a bond.
     /// @param authorizedSortitionPool Address of authorized sortition pool.
-    /// @return Amount of deposited wei available for bonding.
+    /// @return Amount of authorized wei deposit available for bonding.
     function availableUnbondedValue(
         address operator,
         address bondCreator,
@@ -57,7 +61,7 @@ contract KeepBonding {
         // are no longer eligible. We cannot revert here.
         if (
             registry.isApprovedOperatorContract(bondCreator) &&
-            stakingContract.isAuthorizedForOperator(operator, bondCreator) &&
+            tokenStaking.isAuthorizedForOperator(operator, bondCreator) &&
             hasSecondaryAuthorization(operator, authorizedSortitionPool)
         ) {
           return unbondedValue[operator];
@@ -69,21 +73,27 @@ contract KeepBonding {
     /// @notice Add the provided value to operator's pool available for bonding.
     /// @param operator Address of the operator.
     function deposit(address operator) external payable {
-        unbondedValue[operator] += msg.value;
+        unbondedValue[operator] = unbondedValue[operator].add(msg.value);
     }
 
-    /// @notice Withdraws amount from sender's value available for bonding.
+    /// @notice Withdraws amount from operator's value available for bonding.
+    /// Can be called only by the operator or by the stake owner.
     /// @param amount Value to withdraw in wei.
-    /// @param destination Address to send the amount to.
-    function withdraw(uint256 amount, address payable destination) public {
+    /// @param operator Address of the operator.
+    function withdraw(uint256 amount, address operator) public {
         require(
-            unbondedValue[msg.sender] >= amount,
+            msg.sender == operator || msg.sender == tokenStaking.ownerOf(operator),
+            "Only operator or the owner is allowed to withdraw bond"
+        );
+
+        require(
+            unbondedValue[operator] >= amount,
             "Insufficient unbonded value"
         );
 
-        unbondedValue[msg.sender] -= amount;
+        unbondedValue[operator] = unbondedValue[operator].sub(amount);
 
-        (bool success, ) = destination.call.value(amount)("");
+        (bool success, ) = tokenStaking.magpieOf(operator).call.value(amount)("");
         require(success, "Transfer failed");
     }
 
@@ -116,8 +126,8 @@ contract KeepBonding {
             "Reference ID not unique for holder and operator"
         );
 
-        unbondedValue[operator] -= amount;
-        lockedBonds[bondID] += amount;
+        unbondedValue[operator] = unbondedValue[operator].sub(amount);
+        lockedBonds[bondID] = lockedBonds[bondID].add(amount);
     }
 
     /// @notice Returns value of wei bonded for the operator.
@@ -186,7 +196,7 @@ contract KeepBonding {
 
         uint256 amount = lockedBonds[bondID];
         lockedBonds[bondID] = 0;
-        unbondedValue[operator] = amount;
+        unbondedValue[operator] = unbondedValue[operator].add(amount);
     }
 
     /// @notice Seizes the bond by moving some or all of the locked bond to the
@@ -215,7 +225,7 @@ contract KeepBonding {
             "Requested amount is greater than the bond"
         );
 
-        lockedBonds[bondID] -= amount;
+        lockedBonds[bondID] = lockedBonds[bondID].sub(amount);
 
         (bool success, ) = destination.call.value(amount)("");
         require(success, "Transfer failed");
@@ -231,7 +241,7 @@ contract KeepBonding {
         address _poolAddress
     ) public {
         require(
-            stakingContract.authorizerOf(_operator) == msg.sender,
+            tokenStaking.authorizerOf(_operator) == msg.sender,
             "Not authorized"
         );
         authorizedPools[_operator][_poolAddress] = true;

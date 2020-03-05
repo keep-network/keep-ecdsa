@@ -123,13 +123,21 @@ async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
 }
 
 async function depositUnbondedValue(operatorAddress, purse, etherToDeposit) {
-  let transferAmount = web3.utils.toWei(etherToDeposit, 'ether')
+  let requiredBalance = web3.utils.toWei(etherToDeposit, 'ether')
+
+  const currentBalance = web3.utils.toBN(await keepBondingContract.unbondedValue(operatorAddress).call())
+  if (currentBalance.gte(requiredBalance)) {
+    console.log('Operator address has required unbonded value, exiting!')
+    return
+  }
+
+  const transferAmount = requiredBalance.sub(currentBalance)
 
   await keepBondingContract.methods.deposit(
     operatorAddress,
   ).send({ value: transferAmount, from: purse })
 
-  console.log(`deposited ${etherToDeposit} ETH bonding value for operatorAddress ${operatorAddress}`)
+  console.log(`deposited ${web3.utils.fromWei(transferAmount)} ETH bonding value for operatorAddress ${operatorAddress}`)
 }
 
 

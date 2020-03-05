@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeep.sol";
+import "./BondedECDSAKeepFactory.sol";
 
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
@@ -111,6 +112,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
     TokenStaking tokenStaking;
     KeepBonding keepBonding;
+    BondedECDSAKeepFactory keepFactory;
 
     /// @notice Initialization function.
     /// @dev We use clone factory to create new keep. That is why this contract
@@ -121,12 +123,15 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _tokenStaking Address of the TokenStaking contract.
     /// @param _keepBonding Address of the KeepBonding contract.
+    /// @param _keepFactory Address of the BondedECDSAKeepFactory that created
+    /// this keep.
     function initialize(
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
         address _tokenStaking,
-        address _keepBonding
+        address _keepBonding,
+        address payable _keepFactory
     ) public {
         require(!isInitialized, "Contract already initialized");
 
@@ -135,11 +140,18 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         honestThreshold = _honestThreshold;
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
+        keepFactory = BondedECDSAKeepFactory(_keepFactory);
         isActive = true;
         isInitialized = true;
 
         /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
+    }
+
+    /// @notice Returns members of the keep.
+    /// @return List of the keep members' addresses.
+    function getMembers() public view returns (address[] memory) {
+        return members;
     }
 
     /// @notice Submits a public key to the keep.
@@ -281,13 +293,50 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         );
     }
 
-    /// @notice Submits a fraud proof for a valid signature from this keep that was
+    /// @notice Checks a fraud proof for a valid signature from this keep that was
     /// not first approved via a call to sign.
     /// @dev The function expects the signed digest to be calculated as a sha256 hash
     /// of the preimage: `sha256(_preimage))`. The digest is verified against the
     /// preimage to ensure the security of the ECDSA protocol. Verifying just the
     /// signature and the digest is not enough and leaves the possibility of the
-    /// the existential forgery.
+    /// the existential forgery. If digest and preimage verification fails the
+    /// function reverts.
+    /// Reverts if a public key has not been set for the keep yet.
+    /// @param _v Signature's header byte: `27 + recoveryID`.
+    /// @param _r R part of ECDSA signature.
+    /// @param _s S part of ECDSA signature.
+    /// @param _signedDigest Digest for the provided signature. Result of hashing
+    /// the preimage with sha256.
+    /// @param _preimage Preimage of the hashed message.
+    /// @return True if fraud, false otherwise.
+    function checkSignatureFraud(
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s,
+        bytes32 _signedDigest,
+        bytes memory _preimage
+    ) public view returns (bool _isFraud) {
+        require(publicKey.length != 0, "Public key was not set yet");
+
+        bytes32 calculatedDigest = sha256(_preimage);
+        require(
+            _signedDigest == calculatedDigest,
+            "Signed digest does not match double sha256 hash of the preimage"
+        );
+
+        bool isSignatureValid = publicKeyToAddress(publicKey) ==
+            ecrecover(_signedDigest, _v, _r, _s);
+
+        // Check if the signature is valid but was not requested.
+        return isSignatureValid && !digests[_signedDigest];
+    }
+
+    /// @notice Submits a fraud proof for a valid signature from this keep that was
+    /// not first approved via a call to sign. If fraud is detected it slashes
+    /// members' KEEP tokens.
+    /// @dev The function expects the signed digest to be calculated as a sha256
+    /// hash of the preimage: `sha256(_preimage))`. The function reverts if the
+    /// signature is not fraudulent.
     /// @param _v Signature's header byte: `27 + recoveryID`.
     /// @param _r R part of ECDSA signature.
     /// @param _s S part of ECDSA signature.
@@ -302,24 +351,26 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         bytes32 _signedDigest,
         bytes calldata _preimage
     ) external returns (bool _isFraud) {
-        require(publicKey.length != 0, "Public key was not set yet");
-
-        bytes32 calculatedDigest = sha256(_preimage);
-        require(
-            _signedDigest == calculatedDigest,
-            "Signed digest does not match double sha256 hash of the preimage"
+        bool isFraud = checkSignatureFraud(
+            _v,
+            _r,
+            _s,
+            _signedDigest,
+            _preimage
         );
 
-        bool isSignatureValid = publicKeyToAddress(publicKey) ==
-            ecrecover(_signedDigest, _v, _r, _s);
+        require(isFraud, "Signature is not fraudulent");
 
-        // Check if the signature is valid but was not requested.
-        require(
-            isSignatureValid && !digests[_signedDigest],
-            "Signature is not fraudulent"
-        );
+        slashSignerStakes();
 
-        return true;
+        return isFraud;
+    }
+
+    /// @notice Slashes signers' KEEP tokens.
+    /// @dev Keep contract is not authorized to slash tokens directly, so it calls
+    /// the factory to do it.
+    function slashSignerStakes() internal {
+        keepFactory.slashKeepMembers();
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
@@ -423,6 +474,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         );
 
         isActive = false;
+
+        keepFactory.notifyKeepClosed();
 
         emit KeepClosed();
     }

@@ -18,7 +18,7 @@
     "build": "truffle compile",
     "test": "TEST=true truffle test --network=local"
   },
-  "author": "Jakub Nowakowski <jakub.nowakowski@keep.network>",
+  "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/keep-network/keep-tecdsa/issues"
