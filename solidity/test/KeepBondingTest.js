@@ -295,11 +295,12 @@ contract('KeepBonding', (accounts) => {
 
     describe('freeBond', async () => {
         const holder = accounts[2]
+        const initialUnboundedValue = new BN(500)
         const bondValue = new BN(100)
         const reference = 777
 
         beforeEach(async () => {
-            await keepBonding.deposit(operator, { value: bondValue })
+            await keepBonding.deposit(operator, { value: initialUnboundedValue })
             await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, {from: bondCreator})
         })
 
@@ -310,7 +311,7 @@ contract('KeepBonding', (accounts) => {
             expect(lockedBonds).to.eq.BN(0, 'unexpected remaining locked bonds')
 
             const unbondedValue = await keepBonding.availableUnbondedValue(operator, bondCreator, sortitionPool)
-            expect(unbondedValue).to.eq.BN(bondValue, 'unexpected unbonded value')
+            expect(unbondedValue).to.eq.BN(initialUnboundedValue, 'unexpected unbonded value')
         })
 
         it('fails if sender is not the holder', async () => {
