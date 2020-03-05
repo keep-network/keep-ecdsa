@@ -15,7 +15,7 @@ const expect = chai.expect
 
 contract('KeepBonding', (accounts) => {
     let registry
-    let stakingContract   
+    let tokenStaking   
     let keepBonding
     let etherReceiver
 
@@ -31,14 +31,14 @@ contract('KeepBonding', (accounts) => {
         sortitionPool = accounts[5]
 
         registry = await Registry.new()
-        stakingContract = await TokenStaking.new()
-        keepBonding = await KeepBonding.new(registry.address, stakingContract.address)
+        tokenStaking = await TokenStaking.new()
+        keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
         etherReceiver = await TestEtherReceiver.new()
 
         await registry.approveOperatorContract(bondCreator)
         await keepBonding.authorizeSortitionPoolContract(operator, sortitionPool, {from: authorizer})
 
-        await stakingContract.authorizeOperatorContract(operator, bondCreator)
+        await tokenStaking.authorizeOperatorContract(operator, bondCreator)
     })
 
     beforeEach(async () => {
@@ -175,7 +175,7 @@ contract('KeepBonding', (accounts) => {
 
             await keepBonding.deposit(operator2, { value: value })
 
-            await stakingContract.authorizeOperatorContract(operator2, bondCreator)
+            await tokenStaking.authorizeOperatorContract(operator2, bondCreator)
             await keepBonding.authorizeSortitionPoolContract(operator2, sortitionPool, {from: authorizer2})
             await keepBonding.createBond(operator, holder, reference, bondValue, sortitionPool, {from: bondCreator})
             await keepBonding.createBond(operator2, holder, reference, bondValue, sortitionPool, {from: bondCreator})
