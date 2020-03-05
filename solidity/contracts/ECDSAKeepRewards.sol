@@ -310,6 +310,12 @@ contract ECDSAKeepRewards {
        uint256 weightPercentage = getIntervalWeight(interval);
        return (_unallocatedRewards * weightPercentage) / 100;
    }
+
+   function adjustedAllocation(uint256 interval) public returns (uint256) {
+       uint256 _baseAllocation = baseAllocation(interval);
+       uint256 adjustmentPercentage = keepCountAdjustment(interval);
+       return (_baseAllocation * adjustmentPercentage) / 100;
+   }
 }
 
 interface IBondedECDSAKeep {

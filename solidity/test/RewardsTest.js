@@ -59,6 +59,12 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         1500, // interval 5; 10
         1600, 1601, // interval 6; 11..12
     ]
+    const keepsInRewardIntervals = [
+        3, 4, 1, 2, 0, 1, 2, 0,
+    ]
+    const rewardIntervalAdjustments = [
+        100, 100, 50, 100, 0, 50, 100, 0,
+    ]
 
     const intervalWeights = [
         // percentage of unallocated rewards, allocated : remaining
@@ -66,6 +72,24 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         50, // 40:40
         25, // 10:30
         50, // 15:15
+    ]
+    const inVacuumBaseRewards = [
+        200000,
+        500000,
+        250000,
+        500000,
+        1000000,
+        1000000,
+        1000000,
+    ]
+    const inVacuumAdjustedRewards = [
+        200000,
+        500000,
+        125000,
+        500000,
+        0,
+        500000,
+        1000000,
     ]
 
     async function initializeNewFactory() {
@@ -280,7 +304,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     describe("keepsInInterval", async () => {
         it("returns the correct number of keeps for the interval", async () => {
             let timestamps = rewardTimestamps
-            let expectedCounts = [3, 4, 1, 2, 0, 1, 2, 0]
+            let expectedCounts = keepsInRewardIntervals
             await createKeeps(timestamps)
             for (let i = 0; i < expectedCounts.length; i++) {
                 let keepCount = await rewards.keepsInInterval.call(i)
@@ -292,7 +316,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     describe("keepCountAdjustment", async () => {
         it("returns the adjustment percentage of the interval", async () => {
             let timestamps = rewardTimestamps
-            let expectedPercentages = [100, 100, 50, 100, 0, 50, 100, 0]
+            let expectedPercentages = rewardIntervalAdjustments
             await createKeeps(timestamps)
             for (let i = 0; i < expectedPercentages.length; i++) {
                 let keepCount = await rewards.keepCountAdjustment.call(i)
@@ -324,12 +348,23 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
     describe("baseAllocation", async () => {
         it("returns the maximum reward of a defined interval", async () => {
-            let rewards0 = await rewards.baseAllocation(0)
-            expect(rewards0.toNumber()).to.equal(200000)
-            let rewards3 = await rewards.baseAllocation(3)
-            expect(rewards3.toNumber()).to.equal(500000)
-            let rewards4 = await rewards.baseAllocation(4)
-            expect(rewards4.toNumber()).to.equal(1000000)
+            let expectedAllocations = inVacuumBaseRewards
+            for (let i = 0; i < expectedAllocations.length; i++) {
+                let allocation = await rewards.baseAllocation(i)
+                expect(allocation.toNumber()).to.equal(expectedAllocations[i])
+            }
+        })
+    })
+
+    describe("adjustedAllocation", async () => {
+        it("returns the adjusted reward allocation of the interval", async () => {
+            let timestamps = rewardTimestamps
+            let expectedAllocations = inVacuumAdjustedRewards
+            await createKeeps(timestamps)
+            for (let i = 0; i < expectedAllocations.length; i++) {
+                let allocation = await rewards.adjustedAllocation.call(i)
+                expect(allocation.toNumber()).to.equal(expectedAllocations[i])
+            }
         })
     })
 })
