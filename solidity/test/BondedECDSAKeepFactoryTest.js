@@ -31,12 +31,13 @@ contract("BondedECDSAKeepFactory", async accounts => {
     let keepBonding
     let randomBeacon
     let signerPool
+    let minimumStake
 
     const application = accounts[1]
     const members = [accounts[2], accounts[3], accounts[4]]
-    const authorizer1 = members[0]
-    const authorizer2 = members[1]
-    const authorizer3 = members[2]
+    const authorizers = [members[0], members[1], members[2]]
+
+    const keepOwner = accounts[5]
 
     const groupSize = new BN(members.length)
     const threshold = groupSize
@@ -44,53 +45,10 @@ contract("BondedECDSAKeepFactory", async accounts => {
     const singleBond = new BN(1)
     const bond = singleBond.mul(groupSize)
 
-    async function initializeNewFactory() {
-        registry = await Registry.new()
-        bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-        tokenStaking = await TokenStakingStub.new()
-        keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
-        randomBeacon = await RandomBeaconStub.new()
-        const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
-        keepFactory = await BondedECDSAKeepFactoryStub.new(
-            bondedECDSAKeepMasterContract.address,
-            bondedSortitionPoolFactory.address,
-            tokenStaking.address,
-            keepBonding.address,
-            randomBeacon.address
-        )
-
-        await registry.approveOperatorContract(keepFactory.address)
-
-        const stakeBalance = await keepFactory.minimumStake.call()
-
-        await stakeOperators(members, stakeBalance)
-
-        await tokenStaking.authorizeOperatorContract(members[0], keepFactory.address)
-        await tokenStaking.authorizeOperatorContract(members[1], keepFactory.address)
-        await tokenStaking.authorizeOperatorContract(members[2], keepFactory.address)
-    }
-
-    async function stakeOperators(members, stakeBalance) {
-        for (let i = 0; i < members.length; i++) {
-            await tokenStaking.setBalance(members[i], stakeBalance)
-        }
-    }
-
     describe("registerMemberCandidate", async () => {
         before(async () => {
             await initializeNewFactory()
-
-            signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-
-            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool, { from: authorizer1 })
-            await keepBonding.authorizeSortitionPoolContract(members[1], signerPool, { from: authorizer2 })
-            await keepBonding.authorizeSortitionPoolContract(members[2], signerPool, { from: authorizer3 })
-
-            const bondingValue = new BN(100)
-            await keepBonding.deposit(members[0], { value: bondingValue })
-            await keepBonding.deposit(members[1], { value: bondingValue })
-            await keepBonding.deposit(members[2], { value: bondingValue })
+            await initializeMemberCandidates()
         })
 
         beforeEach(async () => {
@@ -102,7 +60,6 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
 
         it("inserts operator with the correct staking weight in the pool", async () => {
-            const minimumStake = await keepFactory.minimumStake.call()
             const minimumStakeMultiplier = new BN("10")
             await stakeOperators(members, minimumStake.mul(minimumStakeMultiplier))
 
@@ -166,8 +123,8 @@ contract("BondedECDSAKeepFactory", async accounts => {
             let signerPool2Address = await keepFactory.createSortitionPool.call(application2)
             await keepFactory.createSortitionPool(application2)
 
-            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool1Address, { from: authorizer1 })
-            await keepBonding.authorizeSortitionPoolContract(members[1], signerPool2Address, { from: authorizer2 })
+            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool1Address, { from: authorizers[0] })
+            await keepBonding.authorizeSortitionPoolContract(members[1], signerPool2Address, { from: authorizers[1] })
 
             await keepFactory.registerMemberCandidate(application1, { from: members[0] })
             await keepFactory.registerMemberCandidate(application2, { from: members[1] })
@@ -250,14 +207,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
     describe("isOperatorRegistered", async () => {
         before(async () => {
             await initializeNewFactory()
-
-            const bondingValue = new BN(100)
-            await keepBonding.deposit(members[0], { value: bondingValue })
-
-            signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-
-            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool, { from: authorizer1 })
+            await initializeMemberCandidates()
         })
 
         beforeEach(async () => {
@@ -288,22 +238,10 @@ contract("BondedECDSAKeepFactory", async accounts => {
     })
 
     describe("isOperatorUpToDate", async () => {
-        let minimumStake
-        let minimumBondingValue
-
         before(async () => {
             await initializeNewFactory()
-
-            minimumBondingValue = await keepFactory.minimumBond.call()
-            await keepBonding.deposit(members[0], { value: minimumBondingValue })
-
-            signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-
-            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool, { from: authorizer1 })
-            await keepBonding.authorizeSortitionPoolContract(members[1], signerPool, { from: authorizer2 })
-
-            minimumStake = await keepFactory.minimumStake.call()
+            await initializeMemberCandidates()
+            await registerMemberCandidates()
         })
 
         beforeEach(async () => {
@@ -323,7 +261,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         it("returns false if the operator stake is below minimum", async () => {
             await keepFactory.registerMemberCandidate(application, { from: members[0] })
 
-            await stakeOperators(members, minimumStake.sub(new BN(1)))
+            await stakeOperators(members, minimumStake.subn(1))
 
             assert.isFalse(await keepFactory.isOperatorUpToDate(members[0], application))
         })
@@ -368,32 +306,21 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
 
         it("reverts if the operator is not registered for the application", async () => {
+            await initializeNewFactory()
+            await initializeMemberCandidates()
+
             await expectRevert(
-                keepFactory.isOperatorUpToDate(members[1], application),
+                keepFactory.isOperatorUpToDate(members[0], application),
                 "Operator not registered for the application"
             )
         })
     })
 
     describe("updateOperatorStatus", async () => {
-        let minimumStake
-        let minimumBondingValue
-
         before(async () => {
             await initializeNewFactory()
-
-            minimumBondingValue = await keepFactory.minimumBond.call()
-            await keepBonding.deposit(members[0], { value: minimumBondingValue })
-
-            signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-
-            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool, { from: authorizer1 })
-            await keepBonding.authorizeSortitionPoolContract(members[1], signerPool, { from: authorizer2 })
-
-            await keepFactory.registerMemberCandidate(application, { from: members[0] })
-
-            minimumStake = await keepFactory.minimumStake.call()
+            await initializeMemberCandidates()
+            await registerMemberCandidates()
         })
 
         beforeEach(async () => {
@@ -472,8 +399,11 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if the operator is not registered for the application", async () => {
+            await initializeNewFactory()
+            await initializeMemberCandidates()
+
             await expectRevert(
-                keepFactory.updateOperatorStatus(members[1], application),
+                keepFactory.updateOperatorStatus(members[0], application),
                 "Operator not registered for the application"
             )
         })
@@ -482,14 +412,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
     describe("isOperatorRegistered", async () => {
         before(async () => {
             await initializeNewFactory()
-
-            const bondingValue = new BN(100)
-            await keepBonding.deposit(members[0], { value: bondingValue })
-
-            signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-
-            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool, { from: authorizer1 })
+            await initializeMemberCandidates()
         })
 
         beforeEach(async () => {
@@ -520,21 +443,10 @@ contract("BondedECDSAKeepFactory", async accounts => {
     })
 
     describe("isOperatorUpToDate", async () => {
-        let minimumStake
-        let minimumBondingValue
-
         before(async () => {
             await initializeNewFactory()
-
-            minimumBondingValue = await keepFactory.minimumBond.call()
-            await keepBonding.deposit(members[0], { value: minimumBondingValue })
-
-            signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-
-            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool, { from: authorizer1 })
-
-            minimumStake = await keepFactory.minimumStake.call()
+            await initializeMemberCandidates()
+            await registerMemberCandidates()
         })
 
         beforeEach(async () => {
@@ -599,31 +511,21 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
 
         it("reverts if the operator is not registered for the application", async () => {
+            await initializeNewFactory()
+            await initializeMemberCandidates()
+
             await expectRevert(
-                keepFactory.isOperatorUpToDate(members[1], application),
+                keepFactory.isOperatorUpToDate(members[0], application),
                 "Operator not registered for the application"
             )
         })
     })
 
     describe("updateOperatorStatus", async () => {
-        let minimumStake
-        let minimumBondingValue
-
         before(async () => {
             await initializeNewFactory()
-
-            minimumBondingValue = await keepFactory.minimumBond.call()
-            await keepBonding.deposit(members[0], { value: minimumBondingValue })
-
-            signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-
-            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool, { from: authorizer1 })
-
-            await keepFactory.registerMemberCandidate(application, { from: members[0] })
-
-            minimumStake = await keepFactory.minimumStake.call()
+            await initializeMemberCandidates()
+            await registerMemberCandidates()
         })
 
         beforeEach(async () => {
@@ -702,35 +604,25 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
 
         it("reverts if the operator is not registered for the application", async () => {
+            await initializeNewFactory()
+            await initializeMemberCandidates()
+
             await expectRevert(
-                keepFactory.updateOperatorStatus(members[1], application),
+                keepFactory.updateOperatorStatus(members[0], application),
                 "Operator not registered for the application"
             )
         })
     })
 
     describe("openKeep", async () => {
-        const keepOwner = "0xbc4862697a1099074168d54A555c4A60169c18BD"
-
         let feeEstimate
 
         before(async () => {
             await initializeNewFactory()
-
-            signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
-
-            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool, { from: authorizer1 })
-            await keepBonding.authorizeSortitionPoolContract(members[1], signerPool, { from: authorizer2 })
-            await keepBonding.authorizeSortitionPoolContract(members[2], signerPool, { from: authorizer3 })
+            await initializeMemberCandidates()
+            await registerMemberCandidates()
 
             feeEstimate = await keepFactory.openKeepFeeEstimate()
-
-            await depositAndRegisterMembers(singleBond)
-
-            const pool = await BondedSortitionPool.at(signerPool)
-            const initBlocks = await pool.operatorInitBlocks()
-            await mineBlocks(initBlocks.add(new BN(1)))
         })
 
         beforeEach(async () => {
@@ -845,7 +737,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
             const unbondedAmount = singleBond.add(new BN(1))
             const expectedMemberBond = singleBond.add(new BN(1))
 
-            await depositAndRegisterMembers(unbondedAmount)
+            await depositMemberCandidates(unbondedAmount)
 
             const blockNumber = await web3.eth.getBlockNumber()
             await keepFactory.openKeep(
@@ -884,7 +776,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
             const unbondedAmount = new BN(1)
             const expectedMemberBond = new BN(1)
 
-            await depositAndRegisterMembers(unbondedAmount)
+            await depositMemberCandidates(unbondedAmount)
 
             const blockNumber = await web3.eth.getBlockNumber()
             await keepFactory.openKeep(
@@ -954,21 +846,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         it("opens keep with multiple members and emits an event", async () => {
             let blockNumber = await web3.eth.getBlockNumber()
 
-            let keepAddress = await keepFactory.openKeep.call(
-                groupSize,
-                threshold,
-                keepOwner,
-                bond,
-                { from: application, value: feeEstimate }
-            )
-
-            await keepFactory.openKeep(
-                groupSize,
-                threshold,
-                keepOwner,
-                bond,
-                { from: application, value: feeEstimate }
-            )
+            const keep = await openKeep()
 
             let eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
                 fromBlock: blockNumber,
@@ -976,15 +854,15 @@ contract("BondedECDSAKeepFactory", async accounts => {
             })
 
             assert.isTrue(
-                web3.utils.isAddress(keepAddress),
-                `keep address ${keepAddress} is not a valid address`,
+                web3.utils.isAddress(keep.address),
+                `keep address ${keep.address} is not a valid address`,
             );
 
             assert.equal(eventList.length, 1, "incorrect number of emitted events")
 
             assert.equal(
                 eventList[0].returnValues.keepAddress,
-                keepAddress,
+                keep.address,
                 "incorrect keep address in emitted event",
             )
 
@@ -1101,22 +979,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
             let blockNumber = await web3.eth.getBlockNumber()
 
-            const keepAddress = await keepFactory.openKeep.call(
-                groupSize,
-                threshold,
-                keepOwner,
-                bond,
-                { from: application, value: feeEstimate },
-            )
-
-            await keepFactory.openKeep(
-                groupSize,
-                threshold,
-                keepOwner,
-                bond,
-                { from: application, value: feeEstimate },
-            )
-            const keep = await BondedECDSAKeep.at(keepAddress)
+            const keep = await openKeep()
 
             let eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
                 fromBlock: blockNumber,
@@ -1164,22 +1027,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
             let blockNumber = await web3.eth.getBlockNumber()
 
-            const keepAddress = await keepFactory.openKeep.call(
-                groupSize,
-                threshold,
-                keepOwner,
-                bond,
-                { from: application, value: feeEstimate },
-            )
-
-            await keepFactory.openKeep(
-                groupSize,
-                threshold,
-                keepOwner,
-                bond,
-                { from: application, value: feeEstimate },
-            )
-            const keep = await BondedECDSAKeep.at(keepAddress)
+            const keep = await openKeep()
 
             let eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
                 fromBlock: blockNumber,
@@ -1427,39 +1275,11 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
         before(async () => {
             await initializeNewFactory()
+            await initializeMemberCandidates()
+            await registerMemberCandidates()
 
-            signerPool = await keepFactory.createSortitionPool.call(application)
-            await keepFactory.createSortitionPool(application)
 
-            await keepBonding.authorizeSortitionPoolContract(members[0], signerPool, { from: authorizer1 })
-            await keepBonding.authorizeSortitionPoolContract(members[1], signerPool, { from: authorizer2 })
-            await keepBonding.authorizeSortitionPoolContract(members[2], signerPool, { from: authorizer3 })
-
-            await depositAndRegisterMembers(singleBond)
-
-            const pool = await BondedSortitionPool.at(signerPool)
-            const initBlocks = await pool.operatorInitBlocks()
-            await mineBlocks(initBlocks.add(new BN(1)))
-
-            const feeEstimate = await keepFactory.openKeepFeeEstimate()
-
-            const keepAddress = await keepFactory.openKeep.call(
-                groupSize,
-                threshold,
-                keepOwner,
-                bond,
-                { from: application, value: feeEstimate },
-            )
-
-            await keepFactory.openKeep(
-                groupSize,
-                threshold,
-                keepOwner,
-                bond,
-                { from: application, value: feeEstimate },
-            )
-
-            keep = await BondedECDSAKeep.at(keepAddress)
+            keep = await openKeep()
         })
 
         beforeEach(async () => {
@@ -1498,13 +1318,85 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
     })
 
-    async function depositAndRegisterMembers(unbondedAmount) {
-        await keepBonding.deposit(members[0], { value: unbondedAmount })
-        await keepBonding.deposit(members[1], { value: unbondedAmount })
-        await keepBonding.deposit(members[2], { value: unbondedAmount })
+    async function initializeNewFactory() {
+        registry = await Registry.new()
+        bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+        tokenStaking = await TokenStakingStub.new()
+        keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+        randomBeacon = await RandomBeaconStub.new()
+        const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
+        keepFactory = await BondedECDSAKeepFactoryStub.new(
+            bondedECDSAKeepMasterContract.address,
+            bondedSortitionPoolFactory.address,
+            tokenStaking.address,
+            keepBonding.address,
+            randomBeacon.address
+        )
 
-        await keepFactory.registerMemberCandidate(application, { from: members[0] })
-        await keepFactory.registerMemberCandidate(application, { from: members[1] })
-        await keepFactory.registerMemberCandidate(application, { from: members[2] })
+        await registry.approveOperatorContract(keepFactory.address)
+
+        minimumStake = await keepFactory.minimumStake.call()
+
+        await stakeOperators(members, minimumStake)
+    }
+
+    async function stakeOperators(members, stakeBalance) {
+        for (let i = 0; i < members.length; i++) {
+            await tokenStaking.setBalance(members[i], stakeBalance)
+        }
+    }
+
+    async function initializeMemberCandidates(unbondedValue) {
+        const minimumBond = await keepFactory.minimumBond.call()
+
+        signerPool = await keepFactory.createSortitionPool.call(application)
+        await keepFactory.createSortitionPool(application)
+
+        for (let i = 0; i < members.length; i++) {
+            await tokenStaking.authorizeOperatorContract(members[i], keepFactory.address)
+            await keepBonding.authorizeSortitionPoolContract(members[i], signerPool, { from: authorizers[i] })
+        }
+
+        const unbondedAmount = unbondedValue || minimumBond
+
+        await depositMemberCandidates(unbondedAmount)
+    }
+
+    async function depositMemberCandidates(unbondedAmount) {
+        for (let i = 0; i < members.length; i++) {
+            await keepBonding.deposit(members[i], { value: unbondedAmount })
+        }
+    }
+
+    async function registerMemberCandidates() {
+        for (let i = 0; i < members.length; i++) {
+            await keepFactory.registerMemberCandidate(application, { from: members[i] })
+        }
+
+        const pool = await BondedSortitionPool.at(signerPool)
+        const initBlocks = await pool.operatorInitBlocks()
+        await mineBlocks(initBlocks.add(new BN(1)))
+    }
+
+    async function openKeep() {
+        const feeEstimate = await keepFactory.openKeepFeeEstimate()
+
+        const keepAddress = await keepFactory.openKeep.call(
+            groupSize,
+            threshold,
+            keepOwner,
+            bond,
+            { from: application, value: feeEstimate },
+        )
+
+        await keepFactory.openKeep(
+            groupSize,
+            threshold,
+            keepOwner,
+            bond,
+            { from: application, value: feeEstimate },
+        )
+
+        return await BondedECDSAKeep.at(keepAddress)
     }
 })
