@@ -158,7 +158,7 @@ func Initialize(
 					continue
 				}
 
-				break
+				break // key generation succeeded.
 			}
 
 			logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
@@ -253,7 +253,7 @@ func monitorSigningRequests(
 						continue
 					}
 
-					break
+					break // signature generation succeeded.
 				}
 			}()
 		},
