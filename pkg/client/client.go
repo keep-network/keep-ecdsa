@@ -3,6 +3,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -115,50 +116,14 @@ func Initialize(
 				event.KeepAddress.String(),
 			)
 
-			keygenCtx, cancel := context.WithTimeout(ctx, KeyGenerationTimeout)
-			defer cancel()
-
-			var signer *tss.ThresholdSigner
-			var err error
-			attemptCounter := 0
-
-			for {
-				attemptCounter++
-
-				logger.Infof(
-					"signer generation for keep [%s]; attempt [%v]",
+			signer, err := generateSignerForKeep(ctx, event, operatorPublicKey, tssNode)
+			if err != nil {
+				logger.Errorf(
+					"failed to generate signer for keep [%s]: [%v]",
 					event.KeepAddress.String(),
-					attemptCounter,
+					err,
 				)
-
-				if keygenCtx.Err() != nil {
-					logger.Errorf("key generation timeout exceeded")
-					return
-				}
-
-				memberIDs, err := tssNode.AnnounceSignerPresence(
-					keygenCtx,
-					operatorPublicKey,
-					event.KeepAddress,
-					event.Members,
-				)
-				if err != nil {
-					logger.Errorf("announce signer presence failed: [%v]", err)
-					continue
-				}
-
-				signer, err = tssNode.GenerateSignerForKeep(
-					keygenCtx,
-					operatorPublicKey,
-					event.KeepAddress,
-					memberIDs,
-				)
-				if err != nil {
-					logger.Errorf("signer generation failed: [%v]", err)
-					continue
-				}
-
-				break // key generation succeeded.
+				return
 			}
 
 			logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
@@ -202,6 +167,56 @@ func Initialize(
 
 	for _, application := range sanctionedApplications {
 		go checkStatusAndRegisterForApplication(ctx, ethereumChain, application)
+	}
+}
+
+func generateSignerForKeep(
+	ctx context.Context,
+	event *eth.BondedECDSAKeepCreatedEvent,
+	operatorPublicKey *operator.PublicKey,
+	tssNode *node.Node,
+) (*tss.ThresholdSigner, error) {
+	keygenCtx, cancel := context.WithTimeout(ctx, KeyGenerationTimeout)
+	defer cancel()
+
+	attemptCounter := 0
+
+	for {
+		attemptCounter++
+
+		logger.Infof(
+			"signer generation for keep [%s]; attempt [%v]",
+			event.KeepAddress.String(),
+			attemptCounter,
+		)
+
+		if keygenCtx.Err() != nil {
+			return nil, fmt.Errorf("key generation timeout exceeded")
+		}
+
+		memberIDs, err := tssNode.AnnounceSignerPresence(
+			keygenCtx,
+			operatorPublicKey,
+			event.KeepAddress,
+			event.Members,
+		)
+		if err != nil {
+			logger.Errorf("announce signer presence failed: [%v]", err)
+			continue
+		}
+
+		signer, err := tssNode.GenerateSignerForKeep(
+			keygenCtx,
+			operatorPublicKey,
+			event.KeepAddress,
+			memberIDs,
+		)
+		if err != nil {
+			logger.Errorf("signer generation failed: [%v]", err)
+			continue
+		}
+
+		return signer, nil // key generation succeeded.
 	}
 }
 
