@@ -26,7 +26,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract.only('BondedECDSAKeep', (accounts) => {
+contract('BondedECDSAKeep', (accounts) => {
   const bondCreator = accounts[0]
   const owner = accounts[1]
   const nonOwner = accounts[2]

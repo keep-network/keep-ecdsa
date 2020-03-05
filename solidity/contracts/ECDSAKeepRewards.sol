@@ -9,17 +9,25 @@ contract ECDSAKeepRewards {
 
     // Total number of keep tokens to distribute.
     uint256 totalRewards;
+    // Rewards that haven't been allocated to finished intervals
+    uint256 unallocatedRewards;
+
     // Length of one interval.
     uint256 termLength;
     // Timestamp of first interval beginning.
     uint256 initiated;
+
     // Minimum number of keep submissions for each interval.
     uint256 minimumSubmissions;
-    // Array representing the percentage of total rewards available for each term.
-    uint8[] InitialTermWeights = [8, 33, 21, 14, 9, 5, 3, 2, 2, 1, 1, 1]; // percent array
 
-    // Total number of intervals.
-    uint256 termCount = InitialTermWeights.length;
+    // Array representing the percentage of unallocated rewards
+    // available for each reward interval.
+    uint256[] intervalWeights; // percent array
+    // Mapping of interval number to tokens allocated for the interval.
+    mapping(uint256 => uint256) intervalAllocations;
+
+    // Total number of intervals. (Implicit in intervalWeights)
+    // uint256 termCount = intervalWeights.length;
 
     // mapping of keeps to booleans. True if the keep has been used to calim a reward.
     mapping(address => bool) claimed;
@@ -37,16 +45,14 @@ contract ECDSAKeepRewards {
     // or reallocated because the keep closed unhappily
     mapping(uint256 => uint256) intervalKeepsProcessed;
 
-    // Rewards that haven't been allocated to finished intervals
-    uint256 unallocatedRewards;
-
     constructor (
         uint256 _termLength,
         uint256 _totalRewards,
         address _keepToken,
         uint256 _minimumSubmissions,
         address factoryAddress,
-        uint256 _initiated
+        uint256 _initiated,
+        uint256[] memory _intervalWeights
     )
     public {
        keepToken = IERC20(_keepToken);
@@ -56,6 +62,7 @@ contract ECDSAKeepRewards {
        initiated = _initiated;
        minimumSubmissions = _minimumSubmissions;
        factory = IBondedECDSAKeepFactory(factoryAddress);
+       intervalWeights = _intervalWeights;
     }
 
     /// @notice Sends the reward for a keep to the keep owner.
@@ -86,7 +93,7 @@ contract ECDSAKeepRewards {
     /// @param term The term to check.
     /// @return The reward dividend.
     function termReward(uint256 term) public view returns (uint256){
-        uint256 _totalTermRewards = totalRewards * InitialTermWeights[term] / 100;
+        uint256 _totalTermRewards = totalRewards * intervalWeights[term] / 100;
         return _totalTermRewards / intervalSubmissions[term];
     }
 
@@ -109,11 +116,11 @@ contract ECDSAKeepRewards {
 
         intervalSubmissions[intervalEndpointsLength] = totalSubmissions;
         if (totalSubmissions < minimumSubmissions){
-            if(intervalEndpointsLength >= InitialTermWeights.length){
+            if(intervalEndpointsLength >= intervalWeights.length){
                 return newInterval;
             }
-            InitialTermWeights[intervalEndpointsLength + 1] +=  InitialTermWeights[intervalEndpointsLength];
-            InitialTermWeights[intervalEndpointsLength] = 0;
+            intervalWeights[intervalEndpointsLength + 1] +=  intervalWeights[intervalEndpointsLength];
+            intervalWeights[intervalEndpointsLength] = 0;
         }
         return newInterval;
     }
@@ -270,6 +277,18 @@ contract ECDSAKeepRewards {
        } else {
            return getEndpoint(interval - 1);
        }
+   }
+
+   function getIntervalWeight(uint256 interval) public view returns (uint256) {
+       if (interval < getIntervalCount()) {
+           return intervalWeights[interval];
+       } else {
+           return 100;
+       }
+   }
+
+   function getIntervalCount() public view returns (uint256) {
+       return intervalWeights.length;
    }
 }
 

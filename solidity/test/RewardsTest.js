@@ -49,6 +49,14 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     const initiationTime = 1000
     const termLength = 100
 
+    const intervalWeights = [
+        // percentage of unallocated rewards, allocated : remaining
+        20, // 20:80
+        50, // 40:40
+        25, // 10:30
+        50, // 15:15
+    ]
+
     async function initializeNewFactory() {
         registry = await Registry.new()
         bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
@@ -83,7 +91,8 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             accounts[0],
             0,
             keepFactory.address,
-            initiationTime
+            initiationTime,
+            intervalWeights
         )
     })
 
@@ -254,6 +263,27 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             await createKeeps(timestamps)
             let keepCount = await rewards.getEndpoint.call(1)
             expect(keepCount.toNumber()).to.equal(0)
+        })
+    })
+
+    describe("getIntervalWeight", async () => {
+        it("returns the weight of a defined interval", async () => {
+            let weight0 = await rewards.getIntervalWeight(0)
+            expect(weight0.toNumber()).to.equal(20)
+            let weight3 = await rewards.getIntervalWeight(3)
+            expect(weight3.toNumber()).to.equal(50)
+        })
+
+        it("returns 100% after the defined intervals", async () => {
+            let weight4 = await rewards.getIntervalWeight(4)
+            expect(weight4.toNumber()).to.equal(100)
+        })
+    })
+
+    describe("getIntervalCount", async () => {
+        it("returns the number of defined intervals", async () => {
+            let intervalCount = await rewards.getIntervalCount()
+            expect(intervalCount.toNumber()).to.equal(4)
         })
     })
 })
