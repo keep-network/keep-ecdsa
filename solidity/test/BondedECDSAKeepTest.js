@@ -1245,7 +1245,8 @@ contract('BondedECDSAKeep', (accounts) => {
         [member],
         honestThreshold,
         tokenStaking.address,
-        keepBonding.address
+        keepBonding.address,
+        factoryStub.address
       )
 
       await expectRevert(
