@@ -186,7 +186,7 @@ contract KeepBonding {
 
         uint256 amount = lockedBonds[bondID];
         lockedBonds[bondID] = 0;
-        unbondedValue[operator] = amount;
+        unbondedValue[operator] += amount;
     }
 
     /// @notice Seizes the bond by moving some or all of the locked bond to the
