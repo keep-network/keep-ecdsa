@@ -98,14 +98,11 @@ func createAddressFilter(
 // public key is a public key of the signing group. It publishes the public key
 // to the keep. It uses keep address as unique signing group identifier.
 func (n *Node) GenerateSignerForKeep(
-	parentCtx context.Context,
+	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
 	keepAddress common.Address,
 	keepMembersIDs []tss.MemberID,
 ) (*tss.ThresholdSigner, error) {
-	ctx, cancel := context.WithTimeout(parentCtx, tss.KeyGenerationSubTimeout)
-	defer cancel()
-
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
 
 	signer, err := tss.GenerateThresholdSigner(
@@ -158,13 +155,10 @@ func (n *Node) GenerateSignerForKeep(
 // still waiting for the signature. It is possible that other member was faster
 // than the current one and submitted the signature first.
 func (n *Node) CalculateSignature(
-	parentCtx context.Context,
+	ctx context.Context,
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) error {
-	ctx, cancel := context.WithTimeout(parentCtx, tss.SigningSubTimeout)
-	defer cancel()
-
 	signature, err := signer.CalculateSignature(ctx, digest[:], n.networkProvider)
 	if err != nil {
 		return fmt.Errorf("failed to calculate signature: [%v]", err)
