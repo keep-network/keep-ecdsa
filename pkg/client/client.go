@@ -116,7 +116,7 @@ func Initialize(
 				event.KeepAddress.String(),
 			)
 
-			signer, err := generateSignerForKeep(ctx, event, operatorPublicKey, tssNode)
+			signer, err := generateSignerForKeep(ctx, tssNode, operatorPublicKey, event)
 			if err != nil {
 				logger.Errorf(
 					"failed to generate signer for keep [%s]: [%v]",
@@ -172,9 +172,9 @@ func Initialize(
 
 func generateSignerForKeep(
 	ctx context.Context,
-	event *eth.BondedECDSAKeepCreatedEvent,
-	operatorPublicKey *operator.PublicKey,
 	tssNode *node.Node,
+	operatorPublicKey *operator.PublicKey,
+	event *eth.BondedECDSAKeepCreatedEvent,
 ) (*tss.ThresholdSigner, error) {
 	keygenCtx, cancel := context.WithTimeout(ctx, KeyGenerationTimeout)
 	defer cancel()
@@ -230,49 +230,60 @@ func monitorSigningRequests(
 ) (subscription.EventSubscription, error) {
 	return ethereumChain.OnSignatureRequested(
 		keepAddress,
-		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
+		func(event *eth.SignatureRequestedEvent) {
 			logger.Infof(
 				"new signature requested from keep [%s] for digest: [%+x]",
 				keepAddress.String(),
-				signatureRequestedEvent.Digest,
+				event.Digest,
 			)
 
-			go func() {
-				signingCtx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
-				defer cancel()
-
-				attemptCounter := 0
-
-				for {
-					attemptCounter++
-
-					logger.Infof(
-						"calculate signature for keep [%s]; attempt [%v]",
-						keepAddress.String(),
-						attemptCounter,
-					)
-
-					if signingCtx.Err() != nil {
-						logger.Errorf("signing timeout exceeded")
-						return
-					}
-
-					err := tssNode.CalculateSignature(
-						signingCtx,
-						signer,
-						signatureRequestedEvent.Digest,
-					)
-
-					if err != nil {
-						logger.Errorf("signature calculation failed: [%v]", err)
-						continue
-					}
-
-					break // signature generation succeeded.
-				}
-			}()
+			go generateSignatureForKeep(
+				tssNode,
+				keepAddress,
+				signer,
+				event,
+			)
 		},
 	)
+}
+
+func generateSignatureForKeep(
+	tssNode *node.Node,
+	keepAddress common.Address,
+	signer *tss.ThresholdSigner,
+	event *eth.SignatureRequestedEvent,
+) {
+	signingCtx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
+	defer cancel()
+
+	attemptCounter := 0
+
+	for {
+		attemptCounter++
+
+		logger.Infof(
+			"calculate signature for keep [%s]; attempt [%v]",
+			keepAddress.String(),
+			attemptCounter,
+		)
+
+		if signingCtx.Err() != nil {
+			logger.Errorf("signing timeout exceeded")
+			return
+		}
+
+		err := tssNode.CalculateSignature(
+			signingCtx,
+			signer,
+			event.Digest,
+		)
+		if err != nil {
+			logger.Errorf("signature calculation failed: [%v]", err)
+			continue
+		}
+
+		return // signature generation succeeded.
+	}
 }
 
 // monitorKeepClosedEvents subscribes and unsubscribes for keep closed events.
