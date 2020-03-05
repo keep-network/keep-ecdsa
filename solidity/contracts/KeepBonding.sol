@@ -17,7 +17,7 @@ contract KeepBonding {
     Registry internal registry;
 
     // KEEP token staking contract.
-    TokenStaking internal stakingContract;
+    TokenStaking internal tokenStaking;
 
     // Unassigned value in wei deposited by operators.
     mapping(address => uint256) internal unbondedValue;
@@ -32,10 +32,10 @@ contract KeepBonding {
 
     /// @notice Initializes Keep Bonding contract.
     /// @param registryAddress Keep registry contract address.
-    /// @param stakingContractAddress KEEP Token staking contract address.
-    constructor(address registryAddress, address stakingContractAddress) public {
+    /// @param tokenStakingAddress KEEP Token staking contract address.
+    constructor(address registryAddress, address tokenStakingAddress) public {
         registry = Registry(registryAddress);
-        stakingContract = TokenStaking(stakingContractAddress);
+        tokenStaking = TokenStaking(tokenStakingAddress);
     }
 
     /// @notice Returns the amount of wei the operator has made available for
@@ -57,7 +57,7 @@ contract KeepBonding {
         // are no longer eligible. We cannot revert here.
         if (
             registry.isApprovedOperatorContract(bondCreator) &&
-            stakingContract.isAuthorizedForOperator(operator, bondCreator) &&
+            tokenStaking.isAuthorizedForOperator(operator, bondCreator) &&
             hasSecondaryAuthorization(operator, authorizedSortitionPool)
         ) {
           return unbondedValue[operator];
@@ -231,7 +231,7 @@ contract KeepBonding {
         address _poolAddress
     ) public {
         require(
-            stakingContract.authorizerOf(_operator) == msg.sender,
+            tokenStaking.authorizerOf(_operator) == msg.sender,
             "Not authorized"
         );
         authorizedPools[_operator][_poolAddress] = true;
