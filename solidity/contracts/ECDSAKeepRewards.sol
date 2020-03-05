@@ -279,6 +279,10 @@ contract ECDSAKeepRewards {
        }
    }
 
+   function keepsInInterval(uint256 interval) public returns (uint256) {
+       return (getEndpoint(interval) - getPreviousEndpoint(interval));
+   }
+
    function getIntervalWeight(uint256 interval) public view returns (uint256) {
        if (interval < getIntervalCount()) {
            return intervalWeights[interval];
@@ -289,6 +293,12 @@ contract ECDSAKeepRewards {
 
    function getIntervalCount() public view returns (uint256) {
        return intervalWeights.length;
+   }
+
+   function baseAllocation(uint256 interval) public view returns (uint256) {
+       uint256 _unallocatedRewards = unallocatedRewards;
+       uint256 weightPercentage = getIntervalWeight(interval);
+       return (_unallocatedRewards * weightPercentage) / 100;
    }
 }
 

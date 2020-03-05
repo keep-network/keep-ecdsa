@@ -48,6 +48,17 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
     const initiationTime = 1000
     const termLength = 100
+    const totalRewards = 1000000
+    const minimumIntervalKeeps = 2
+
+    const rewardTimestamps = [
+        1000, 1001, 1099, // interval 0; 0..2
+        1100, 1101, 1102, 1103, // interval 1; 3..6
+        1234, // interval 2; 7
+        1300, 1301, // interval 3; 8..9
+        1500, // interval 5; 10
+        1600, 1601, // interval 6; 11..12
+    ]
 
     const intervalWeights = [
         // percentage of unallocated rewards, allocated : remaining
@@ -87,9 +98,9 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
         rewards = await ECDSAKeepRewards.new(
             termLength,
-            0,
+            totalRewards,
             accounts[0],
-            0,
+            minimumIntervalKeeps,
             keepFactory.address,
             initiationTime,
             intervalWeights
@@ -266,6 +277,18 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         })
     })
 
+    describe("keepsInInterval", async () => {
+        it("returns the correct number of keeps for the interval", async () => {
+            let timestamps = rewardTimestamps
+            let expectedCounts = [3, 4, 1, 2, 0, 1, 2, 0]
+            await createKeeps(timestamps)
+            for (let i = 0; i < expectedCounts.length; i++) {
+                let keepCount = await rewards.keepsInInterval.call(i)
+                expect(keepCount.toNumber()).to.equal(expectedCounts[i])
+            }
+        })
+    })
+
     describe("getIntervalWeight", async () => {
         it("returns the weight of a defined interval", async () => {
             let weight0 = await rewards.getIntervalWeight(0)
@@ -284,6 +307,17 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         it("returns the number of defined intervals", async () => {
             let intervalCount = await rewards.getIntervalCount()
             expect(intervalCount.toNumber()).to.equal(4)
+        })
+    })
+
+    describe("baseAllocation", async () => {
+        it("returns the maximum reward of a defined interval", async () => {
+            let rewards0 = await rewards.baseAllocation(0)
+            expect(rewards0.toNumber()).to.equal(200000)
+            let rewards3 = await rewards.baseAllocation(3)
+            expect(rewards3.toNumber()).to.equal(500000)
+            let rewards4 = await rewards.baseAllocation(4)
+            expect(rewards4.toNumber()).to.equal(1000000)
         })
     })
 })
