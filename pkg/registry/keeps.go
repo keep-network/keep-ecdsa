@@ -44,8 +44,8 @@ func (k *Keeps) RegisterSigner(
 
 // UnregisterKeep archives threeshold signer info for the given keep address.
 func (k *Keeps) UnregisterKeep(keepAddress common.Address) {
-	k.myKeepsMutex.RLock()
-	defer k.myKeepsMutex.RUnlock()
+	k.myKeepsMutex.Lock()
+	defer k.myKeepsMutex.Unlock()
 
 	err := k.storage.archive(keepAddress.String())
 	if err != nil {
@@ -114,18 +114,6 @@ func (k *Keeps) LoadExistingKeeps() {
 	wg.Wait()
 
 	k.printSigners()
-}
-
-// ForEachKeep executes callback function for every entry in keeps' registry.
-func (k *Keeps) ForEachKeep(
-	callback func(keepAddress common.Address, signer []*tss.ThresholdSigner),
-) {
-	k.myKeepsMutex.RLock()
-	defer k.myKeepsMutex.RUnlock()
-
-	for keepAddress, signers := range k.myKeeps {
-		callback(keepAddress, signers)
-	}
 }
 
 func (k *Keeps) printSigners() {
