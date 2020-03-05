@@ -625,54 +625,55 @@ contract('BondedECDSAKeep', (accounts) => {
       )
     })
 
-    it('should return an error when signature is invalid and was requested', async () => {
+    it('should return false when signature is invalid and was requested', async () => {
       await submitMembersPublicKeys(publicKey1)
 
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
 
-      await expectRevert(
-        keep.checkSignatureFraud.call(
+      assert.isFalse(
+        await keep.checkSignatureFraud.call(
           signature1.V,
           badSignatureR,
           signature1.S,
           hash256Digest1,
           preimage1
         ),
-        'Signature is not fraudulent'
+        'signature is not fraudulent'
       )
     })
 
-    it('should return an error when signature is invalid and was not requested', async () => {
+    it('should return false when signature is invalid and was not requested', async () => {
       await submitMembersPublicKeys(publicKey1)
 
       await keep.sign(hash256Digest2, { from: owner })
       const badSignatureR = '0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2'
-      await expectRevert(
-        keep.checkSignatureFraud.call(
+
+      assert.isFalse(
+        await keep.checkSignatureFraud.call(
           signature1.V,
           badSignatureR,
           signature1.S,
           hash256Digest1,
           preimage1
         ),
-        'Signature is not fraudulent'
+        'signature is not fraudulent'
       )
     })
 
-    it('should return an error when signature is valid and was requested', async () => {
+    it('should return false when signature is valid and was requested', async () => {
       await submitMembersPublicKeys(publicKey1)
 
       await keep.sign(hash256Digest1, { from: owner })
 
-      await expectRevert(
-        keep.checkSignatureFraud.call(
+      assert.isFalse(
+        await keep.checkSignatureFraud.call(
           signature1.V,
           signature1.R,
           signature1.S,
           hash256Digest1,
           preimage1
         ),
-        'Signature is not fraudulent'
+        'signature is not fraudulent'
       )
     })
   })
