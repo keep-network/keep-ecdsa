@@ -102,7 +102,17 @@ func (s *member) generateKey(ctx context.Context) (*ThresholdSigner, error) {
 
 			if s.keygenParty.WaitingFor() != nil {
 				for _, partyID := range s.keygenParty.WaitingFor() {
-					memberIDs = append(memberIDs, MemberID(partyID.GetId()))
+					memberID, err := MemberIDFromString(partyID.GetId())
+					if err != nil {
+						logger.Errorf(
+							"cannot get member id from string [%v]: [%v]",
+							partyID.GetId(),
+							err,
+						)
+						continue
+					}
+
+					memberIDs = append(memberIDs, memberID)
 				}
 			}
 
