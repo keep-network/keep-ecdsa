@@ -134,6 +134,14 @@ contract ECDSAKeepRewards {
         return IBondedECDSAKeep(_keep).isClosed();
     }
 
+    /// @notice Checks if a keep is terminated
+    /// and thus its rewards can be returned to the unallocated pool.
+    /// @param _keep The keep to check.
+    /// @return True if the keep is terminated, false otherwise
+    function certainlyIneligible(address _keep) public view returns (bool) {
+        return IBondedECDSAKeep(_keep).isTerminated();
+    }
+
     function findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
         require(
             intervalEndpoint <= currentTime(),
@@ -241,12 +249,11 @@ contract ECDSAKeepRewards {
    /// @param interval The number of the interval.
    /// @return endpoint The number of keeps the factory had created
    /// before the end of the interval.
-   function getEndpoint(uint256 interval) public returns (uint256 endpoint) {
-       uint256 intervalEnd = endOf(interval);
-       require(
-           block.timestamp >= intervalEnd,
-           "Interval hasn't ended yet"
-       );
+   function getEndpoint(uint256 interval)
+       mustBeFinished(interval)
+       public
+       returns (uint256 endpoint)
+   {
        // Get the endpoint from local cache;
        // might not be recorded yet
        uint256 maybeEndpoint = keepsByInterval[interval];
@@ -328,15 +335,14 @@ contract ECDSAKeepRewards {
        return _adjustedAllocation / keepCount;
    }
 
-   function allocateRewards(uint256 interval) public {
+   function allocateRewards(uint256 interval)
+       mustBeFinished(interval)
+       public
+   {
        uint256 allocatedIntervals = intervalAllocations.length;
        require(
            !(interval < allocatedIntervals),
            "Interval already allocated"
-       );
-       require(
-           endOf(interval) < currentTime(),
-           "Interval is not finished"
        );
        // Allocate previous intervals first
        if (interval > allocatedIntervals) {
@@ -363,20 +369,13 @@ contract ECDSAKeepRewards {
        return (interval < allocatedIntervals);
    }
 
-   function claimRewards(address keepAddress) public {
-       require(
-           IBondedECDSAKeep(keepAddress).isClosed(),
-           "Keep is not closed"
-       );
-       require(
-           !claimed[keepAddress],
-           "Rewards already claimed"
-       );
+   function claimRewards(address keepAddress)
+       rewardsNotClaimed(keepAddress)
+       mustBeClosed(keepAddress)
+       factoryMustRecognize(keepAddress)
+       public
+   {
        uint256 creationTime = factory.getCreationTime(keepAddress);
-       require(
-           creationTime != 0,
-           "Keep address not recognized by factory"
-       );
        uint256 interval = intervalOf(creationTime);
        if (!isAllocated(interval)) {
            allocateRewards(interval);
@@ -392,20 +391,13 @@ contract ECDSAKeepRewards {
        intervalKeepsProcessed[interval] = processedKeeps + 1;
    }
 
-   function reportTermination(address keepAddress) public {
-       require(
-           IBondedECDSAKeep(keepAddress).isTerminated(),
-           "Keep is not terminated"
-       );
-       require(
-           !claimed[keepAddress],
-           "Rewards already claimed"
-       );
+   function reportTermination(address keepAddress)
+       rewardsNotClaimed(keepAddress)
+       mustBeClosed(keepAddress)
+       factoryMustRecognize(keepAddress)
+       public
+   {
        uint256 creationTime = factory.getCreationTime(keepAddress);
-       require(
-           creationTime != 0,
-           "Keep address not recognized by factory"
-       );
        uint256 interval = intervalOf(creationTime);
        if (!isAllocated(interval)) {
            allocateRewards(interval);
@@ -421,6 +413,41 @@ contract ECDSAKeepRewards {
 
        claimed[keepAddress] = true;
        intervalKeepsProcessed[interval] = processedKeeps + 1;
+   }
+
+   modifier rewardsNotClaimed(address _keep) {
+       require(
+           !claimed[_keep],
+           "Rewards already claimed");
+       _;
+   }
+
+   modifier mustBeFinished(uint256 interval) {
+       require(
+           currentTime() >= endOf(interval),
+           "Interval hasn't ended yet");
+       _;
+   }
+
+   modifier mustBeClosed(address _keep) {
+       require(
+           IBondedECDSAKeep(_keep).isClosed(),
+           "Keep is not closed");
+       _;
+   }
+
+   modifier mustBeTerminated(address _keep) {
+       require(
+           IBondedECDSAKeep(_keep).isTerminated(),
+           "Keep is not terminated");
+       _;
+   }
+
+   modifier factoryMustRecognize(address _keep) {
+       require(
+           factory.getCreationTime(_keep) != 0,
+           "Keep address not recognized by factory");
+       _;
    }
 }
 
