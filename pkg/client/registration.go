@@ -53,11 +53,53 @@ func registerAsMemberCandidate(
 	ethereumChain eth.Handle,
 	application common.Address,
 ) {
+	// If the operator is eligible right now for registering as a member
+	// candidate for the application, we register the operator.
+	isEligible, err := ethereumChain.IsEligibleForApplication(application)
+	if err != nil {
+		logger.Errorf(
+			"failed to check operator eligibility for application [%s]: [%v]",
+			application.String(),
+			err,
+		)
+	}
+	if isEligible {
+		logger.Infof(
+			"registering member candidate for application [%s]",
+			application.String(),
+		)
+		err := ethereumChain.RegisterAsMemberCandidate(application)
+		if err != nil {
+			logger.Errorf(
+				"failed to register member candidate for application [%s]: [%v]",
+				application.String(),
+				err,
+			)
+		} else {
+			return
+		}
+	}
+
+	// If the operator is not yet eligible to be registered as a member candidate
+	// for the application, we start monitoring eligibility each now block.
+	// We do the same in case the registration of eligible operator failed for
+	// some reason. As soon as the operator is eligible, we will proceed with
+	// the registration.
+	registerAsMemberCandidateWhenEligible(parentCtx, ethereumChain, application)
+}
+
+// registerAsMemberCandidateWhenEligible for each new block checks the operator's
+// eligibility to be registered as a keep member candidate for the application.
+// As soon as the operator becomes eligible, function triggers the registration.
+func registerAsMemberCandidateWhenEligible(
+	parentCtx context.Context,
+	ethereumChain eth.Handle,
+	application common.Address,
+) {
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
 	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
-
 	for {
 		select {
 		case <-newBlockChan:
