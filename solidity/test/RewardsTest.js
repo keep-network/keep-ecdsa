@@ -145,7 +145,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         rewards = await ECDSAKeepRewards.new(
             termLength,
             totalRewards,
-            token,
+            token.address,
             minimumIntervalKeeps,
             keepFactory.address,
             initiationTime,
