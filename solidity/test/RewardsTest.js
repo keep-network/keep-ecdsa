@@ -435,4 +435,32 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             }
         })
     })
+
+    describe("isAllocated", async () => {
+        it("returns false before allocation and true after allocation", async () => {
+            let timestamps = rewardTimestamps
+            let expectedAllocations = actualAllocations
+            await createKeeps(timestamps)
+            for (let i = 0; i < expectedAllocations.length; i++) {
+                let preAllocated = await rewards.isAllocated(i)
+                expect(preAllocated).to.equal(false)
+                await rewards.allocateRewards(i)
+                let postAllocated = await rewards.isAllocated(i)
+                expect(postAllocated).to.equal(true)
+            }
+        })
+    })
+
+    describe("claimRewards", async () => {
+        it("lets closed keeps claim the reward correctly", async () => {
+            let timestamps = rewardTimestamps
+            await createKeeps(timestamps)
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.close()
+            await rewards.claimRewards(keepAddress)
+            let aliceBalance = await token.balanceOf(aliceBeneficiary)
+            expect(aliceBalance.toNumber()).to.equal(33333)
+        })
+    })
 })

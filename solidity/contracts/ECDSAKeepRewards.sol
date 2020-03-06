@@ -386,6 +386,7 @@ contract ECDSAKeepRewards {
        uint256 processedKeeps = intervalKeepsProcessed[interval];
        claimed[keepAddress] = true;
 
+       keepToken.approve(keepAddress, perKeepReward);
        IBondedECDSAKeep(keepAddress).distributeERC20ToMembers(
            address(keepToken),
            perKeepReward
