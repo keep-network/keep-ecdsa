@@ -80,7 +80,7 @@ func (s *signingSigner) sign(ctx context.Context) (*ecdsa.Signature, error) {
 				for _, partyID := range s.signingParty.WaitingFor() {
 					memberID, err := MemberIDFromString(partyID.GetId())
 					if err != nil {
-						logger.Warningf(
+						logger.Errorf(
 							"cannot get member id from string [%v]: [%v]",
 							partyID.GetId(),
 							err,
