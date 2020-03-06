@@ -15,6 +15,11 @@ const RewardsKeepStub = artifacts.require('RewardsKeepStub');
 const ECDSAKeepRewards = artifacts.require('ECDSAKeepRewards');
 
 contract.only('ECDSAKeepRewards', (accounts) => {
+    const alice = accounts[0]
+    const bob = accounts[1]
+    const aliceBeneficiary = accounts[2]
+    const bobBeneficiary = accounts[3]
+
     let masterKeep
     let factory
     let registry
@@ -126,10 +131,13 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             keepBonding.address,
             randomBeacon.address
         )
+
+        await tokenStaking.setMagpie(alice, aliceBeneficiary)
+        await tokenStaking.setMagpie(bob, bobBeneficiary)
     }
 
     async function createKeeps(timestamps) {
-        await keepFactory.openSyntheticKeeps(timestamps)
+        await keepFactory.openSyntheticKeeps([alice, bob], timestamps)
         for (let i = 0; i < timestamps.length; i++) {
             let keepAddress = await keepFactory.getKeepAtIndex(i)
             let keep = await RewardsKeepStub.at(keepAddress)

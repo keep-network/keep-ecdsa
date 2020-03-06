@@ -384,10 +384,13 @@ contract ECDSAKeepRewards {
        uint256 _keepsInInterval = keepsInInterval(interval);
        uint256 perKeepReward = allocation / _keepsInInterval;
        uint256 processedKeeps = intervalKeepsProcessed[interval];
-
-       // TODO: send rewards here
-
        claimed[keepAddress] = true;
+
+       IBondedECDSAKeep(keepAddress).distributeERC20ToMembers(
+           address(keepToken),
+           perKeepReward
+       );
+
        intervalKeepsProcessed[interval] = processedKeeps + 1;
    }
 
@@ -457,6 +460,7 @@ interface IBondedECDSAKeep {
     function isClosed() external view returns (bool);
     function isTerminated() external view returns (bool);
     function isActive() external view returns (bool);
+    function distributeERC20ToMembers(address _erc20, uint256 amount) external;
 }
 
 interface IBondedECDSAKeepFactory {

@@ -24,7 +24,10 @@ contract RewardsFactoryStub is BondedECDSAKeepFactory {
 
     /// @notice Opens new keeps with the provided arbitrary timestamps.
     /// @param timestamps Arbitrary timestamps, in ascending order.
-    function openSyntheticKeeps(uint256[] calldata timestamps) external {
+    function openSyntheticKeeps(
+        address[] calldata members,
+        uint256[] calldata timestamps
+    ) external {
         for (uint256 i = 0; i < timestamps.length; i++) {
             require(
                 i == 0 || timestamps[i] >= timestamps[i-1],
@@ -32,6 +35,13 @@ contract RewardsFactoryStub is BondedECDSAKeepFactory {
             );
             address keepAddress = createClone(masterBondedECDSAKeepAddress);
             BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
+            keep.initialize(
+                msg.sender,
+                members,
+                members.length,
+                address(tokenStaking),
+                address(keepBonding)
+            );
             keeps.push(keepAddress);
             creationTime[keepAddress] = timestamps[i];
         }
