@@ -3,6 +3,8 @@ package client
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
@@ -18,6 +20,11 @@ import (
 )
 
 var logger = log.Logger("keep-tecdsa")
+
+const (
+	KeyGenerationTimeout = 150 * time.Minute
+	SigningTimeout       = 90 * time.Minute
+)
 
 // Initialize initializes the ECDSA client with rules related to events handling.
 // Expects a slice of sanctioned applications selected by the operator for which
@@ -109,19 +116,13 @@ func Initialize(
 				event.KeepAddress.String(),
 			)
 
-			memberIDs, err := tssNode.AnnounceSignerPresence(
-				operatorPublicKey,
-				event.KeepAddress,
-				event.Members,
-			)
-
-			signer, err := tssNode.GenerateSignerForKeep(
-				operatorPublicKey,
-				event.KeepAddress,
-				memberIDs,
-			)
+			signer, err := generateSignerForKeep(ctx, tssNode, operatorPublicKey, event)
 			if err != nil {
-				logger.Errorf("signer generation failed: [%v]", err)
+				logger.Errorf(
+					"failed to generate signer for keep [%s]: [%v]",
+					event.KeepAddress.String(),
+					err,
+				)
 				return
 			}
 
@@ -169,6 +170,56 @@ func Initialize(
 	}
 }
 
+func generateSignerForKeep(
+	ctx context.Context,
+	tssNode *node.Node,
+	operatorPublicKey *operator.PublicKey,
+	event *eth.BondedECDSAKeepCreatedEvent,
+) (*tss.ThresholdSigner, error) {
+	keygenCtx, cancel := context.WithTimeout(ctx, KeyGenerationTimeout)
+	defer cancel()
+
+	attemptCounter := 0
+
+	for {
+		attemptCounter++
+
+		logger.Infof(
+			"signer generation for keep [%s]; attempt [%v]",
+			event.KeepAddress.String(),
+			attemptCounter,
+		)
+
+		if keygenCtx.Err() != nil {
+			return nil, fmt.Errorf("key generation timeout exceeded")
+		}
+
+		memberIDs, err := tssNode.AnnounceSignerPresence(
+			keygenCtx,
+			operatorPublicKey,
+			event.KeepAddress,
+			event.Members,
+		)
+		if err != nil {
+			logger.Errorf("announce signer presence failed: [%v]", err)
+			continue
+		}
+
+		signer, err := tssNode.GenerateSignerForKeep(
+			keygenCtx,
+			operatorPublicKey,
+			event.KeepAddress,
+			memberIDs,
+		)
+		if err != nil {
+			logger.Errorf("signer generation failed: [%v]", err)
+			continue
+		}
+
+		return signer, nil // key generation succeeded.
+	}
+}
+
 // monitorSigningRequests registers for signature requested events emitted by
 // specific keep contract.
 func monitorSigningRequests(
@@ -179,25 +230,55 @@ func monitorSigningRequests(
 ) (subscription.EventSubscription, error) {
 	return ethereumChain.OnSignatureRequested(
 		keepAddress,
-		func(signatureRequestedEvent *eth.SignatureRequestedEvent) {
+		func(event *eth.SignatureRequestedEvent) {
 			logger.Infof(
 				"new signature requested from keep [%s] for digest: [%+x]",
 				keepAddress.String(),
-				signatureRequestedEvent.Digest,
+				event.Digest,
 			)
 
-			go func() {
-				err := tssNode.CalculateSignature(
-					signer,
-					signatureRequestedEvent.Digest,
-				)
-
-				if err != nil {
-					logger.Errorf("signature calculation failed: [%v]", err)
-				}
-			}()
+			go generateSignatureForKeep(tssNode, keepAddress, signer, event)
 		},
 	)
+}
+
+func generateSignatureForKeep(
+	tssNode *node.Node,
+	keepAddress common.Address,
+	signer *tss.ThresholdSigner,
+	event *eth.SignatureRequestedEvent,
+) {
+	signingCtx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
+	defer cancel()
+
+	attemptCounter := 0
+
+	for {
+		attemptCounter++
+
+		logger.Infof(
+			"calculate signature for keep [%s]; attempt [%v]",
+			keepAddress.String(),
+			attemptCounter,
+		)
+
+		if signingCtx.Err() != nil {
+			logger.Errorf("signing timeout exceeded")
+			return
+		}
+
+		err := tssNode.CalculateSignature(
+			signingCtx,
+			signer,
+			event.Digest,
+		)
+		if err != nil {
+			logger.Errorf("signature calculation failed: [%v]", err)
+			continue
+		}
+
+		return // signature generation succeeded.
+	}
 }
 
 // monitorKeepClosedEvents subscribes and unsubscribes for keep closed events.

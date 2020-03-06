@@ -11,7 +11,7 @@ import (
 // protocolReadyTimeout defines a period within which the member sends and receives
 // notifications from peer members about their readiness to begin the protocol
 // execution. If the time limit is reached the ready protocol stage fails.
-const protocolReadyTimeout = 120 * time.Second
+const protocolReadyTimeout = 2 * time.Minute
 
 // readyProtocol exchanges messages with peer members about readiness to start
 // the protocol execution. The member keeps sending the message in intervals
