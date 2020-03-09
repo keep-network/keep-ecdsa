@@ -144,6 +144,39 @@ func (lc *localChain) IsAwaitingSignature(
 	panic("implement")
 }
 
+// IsActive checks for current state of a keep on-chain.
+func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) BlockCounter() chain.BlockCounter {
+	panic("implement")
+}
+
+func (lc *localChain) IsRegisteredForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) IsEligibleForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
+	panic("implement")
+}
+
+func (lc *localChain) UpdateStatusForApplication(application common.Address) error {
+	panic("implement")
+}
+
+// OnKeepClosed archives key shares and unsubscibes from events.
+func (lc *localChain) OnKeepClosed(
+	keepAddress common.Address,
+	handler func(event *eth.KeepClosedEvent),
+) (subscription.EventSubscription, error) {
+	panic("implement")
+} 
+
 // OnConflictingPublicKeySubmitted logs mismatched public keys submitted by
 // members of a keep.
 func (lc *localChain) OnConflictingPublicKeySubmitted(

@@ -87,6 +87,9 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // signers.
     uint256 public subsidyPool;
 
+    // Keeps created by this factory.
+    mapping(address => bool) keeps;
+
     constructor(
         address _masterBondedECDSAKeepAddress,
         address _sortitionPoolFactory,
@@ -227,6 +230,25 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         candidatesPool.updateOperatorStatus(_operator);
     }
 
+    /// @notice Checks if given operator is eligible for the given application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    function isOperatorEligible(address _operator, address _application)
+        public
+        view
+        returns (bool)
+    {
+        if (candidatesPools[_application] == address(0)) {
+            return false;
+        }
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        return candidatesPool.isOperatorEligible(_operator);
+    }
+
     /// @notice Gets bonded sortition pool of specific application for the
     /// operator.
     /// @dev Reverts if the operator is not registered for the application.
@@ -304,8 +326,11 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             members,
             _honestThreshold,
             address(tokenStaking),
-            address(keepBonding)
+            address(keepBonding),
+            address(this)
         );
+
+        keeps[keepAddress] = true;
 
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
@@ -324,7 +349,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             : msg.value;
         if (signerSubsidy > 0) {
             subsidyPool -= signerSubsidy;
-            keep.distributeETHToMembers.value(signerSubsidy)();
+            keep.distributeETHReward.value(signerSubsidy)();
         }
 
         keeps.push(address(keep));
@@ -356,7 +381,9 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         // beacon service contract gets compromised. Relay request should not
         // consume more than 360k of gas. We set the limit to 400k to have
         // a safety margin for future updates.
-        (bool success, ) = address(randomBeacon).call.gas(400000).value(msg.value)(
+        (bool success, ) = address(randomBeacon).call.gas(400000).value(
+            msg.value
+        )(
             abi.encodeWithSignature(
                 "requestRelayEntry(address,string,uint256)",
                 address(this),
@@ -421,16 +448,39 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @param _operator operator's address
     /// @return True if has enough active stake to participate in the network,
     /// false otherwise.
-    function hasMinimumStake(address _operator) public view returns(bool) {
-        return (
-            tokenStaking.activeStake(_operator, address(this)) >= minimumStake
-        );
+    function hasMinimumStake(address _operator) public view returns (bool) {
+        return
+            tokenStaking.activeStake(_operator, address(this)) >= minimumStake;
     }
 
     /// @dev Gets the stake balance of the specified operator.
     /// @param _operator The operator to query the balance of.
     /// @return An uint256 representing the amount staked by the passed operator.
-    function balanceOf(address _operator) public view returns(uint256) {
+    function balanceOf(address _operator) public view returns (uint256) {
         return tokenStaking.balanceOf(_operator);
+    }
+
+    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
+    /// amount equal to the minimum stake configured for this factory.
+    function slashKeepMembers() public onlyKeep {
+        BondedECDSAKeep keep = BondedECDSAKeep(msg.sender);
+
+        tokenStaking.slash(minimumStake, keep.getMembers());
+    }
+
+    /// @notice Notifies the factory that a keep has been closed.
+    /// @dev Function should be called by a keep which is being closed.
+    function notifyKeepClosed() public onlyKeep {
+        keeps[msg.sender] = false;
+    }
+
+    /// @notice Checks if the caller is a keep created by this factory.
+    /// @dev Throws an error if called by any account other than a keep.
+    modifier onlyKeep() {
+        require(
+            keeps[msg.sender],
+            "Caller is not an active keep created by this factory"
+        );
+        _;
     }
 }

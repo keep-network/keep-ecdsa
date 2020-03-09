@@ -11,7 +11,7 @@ import (
 // protocolReadyTimeout defines a period within which the member sends and receives
 // notifications from peer members about their readiness to begin the protocol
 // execution. If the time limit is reached the ready protocol stage fails.
-const protocolReadyTimeout = 120 * time.Second
+const protocolReadyTimeout = 2 * time.Minute
 
 // readyProtocol exchanges messages with peer members about readiness to start
 // the protocol execution. The member keeps sending the message in intervals
@@ -69,23 +69,21 @@ func readyProtocol(
 			}
 		}
 
-		for {
-			select {
-			case <-ctx.Done():
-				// Send the message once again as the member received messages
-				// from all peer members but not all peer members could receive
-				// the message from the member as some peer member could join
-				// the protocol after the member sent the last message.
-				sendMessage()
-				return
-			default:
-				sendMessage()
-				time.Sleep(1 * time.Second)
-			}
-		}
+		// Send the message first time. It will be periodically retransmitted
+		// by the broadcast channel for the entire lifetime of the context.
+		sendMessage()
+
+		<-ctx.Done()
+		// Send the message once again as the member received messages
+		// from all peer members but not all peer members could receive
+		// the message from the member as some peer member could join
+		// the protocol after the member sent the last message.
+		sendMessage()
+		return
 	}()
 
 	<-ctx.Done()
+
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
 		return fmt.Errorf(

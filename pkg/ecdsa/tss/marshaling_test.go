@@ -76,6 +76,7 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 		SenderID:    MemberID([]byte("member-1")),
 		Payload:     []byte("very important message"),
 		IsBroadcast: true,
+		SessionID:   "session-1",
 	}
 
 	unmarshaled := &TSSProtocolMessage{}

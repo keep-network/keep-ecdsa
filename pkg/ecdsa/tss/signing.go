@@ -78,11 +78,21 @@ func (s *signingSigner) sign(ctx context.Context) (*ecdsa.Signature, error) {
 
 			if s.signingParty.WaitingFor() != nil {
 				for _, partyID := range s.signingParty.WaitingFor() {
-					memberIDs = append(memberIDs, MemberID(partyID.GetId()))
+					memberID, err := MemberIDFromString(partyID.GetId())
+					if err != nil {
+						logger.Errorf(
+							"cannot get member id from string [%v]: [%v]",
+							partyID.GetId(),
+							err,
+						)
+						continue
+					}
+
+					memberIDs = append(memberIDs, memberID)
 				}
 			}
 
-			return nil, timeoutError{SigningTimeout, "signing", memberIDs}
+			return nil, timeoutError{SigningProtocolTimeout, "signing", memberIDs}
 		}
 	}
 }

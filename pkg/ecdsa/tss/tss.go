@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	KeyGenerationTimeout = 150 * time.Minute
-	SigningTimeout       = 90 * time.Minute
+	KeyGenerationProtocolTimeout = 8 * time.Minute
+	SigningProtocolTimeout       = 10 * time.Minute
 )
 
 var logger = log.Logger("keep-tss")
@@ -40,6 +40,7 @@ var logger = log.Logger("keep-tss")
 //
 // As a result a signer will be returned or an error, if key generation failed.
 func GenerateThresholdSigner(
+	parentCtx context.Context,
 	groupID string,
 	memberID MemberID,
 	groupMemberIDs []MemberID,
@@ -83,7 +84,7 @@ func GenerateThresholdSigner(
 		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), KeyGenerationTimeout)
+	ctx, cancel := context.WithTimeout(parentCtx, KeyGenerationProtocolTimeout)
 	defer cancel()
 
 	keyGenSigner, err := initializeKeyGeneration(
@@ -121,6 +122,7 @@ func GenerateThresholdSigner(
 // protocol for the given digest. As a result the calculated ECDSA signature will
 // be returned or an error, if the signature generation failed.
 func (s *ThresholdSigner) CalculateSignature(
+	parentCtx context.Context,
 	digest []byte,
 	networkProvider net.Provider,
 ) (*ecdsa.Signature, error) {
@@ -129,7 +131,7 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, fmt.Errorf("failed to initialize network bridge: [%v]", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
+	ctx, cancel := context.WithTimeout(parentCtx, SigningProtocolTimeout)
 	defer cancel()
 
 	signingSigner, err := s.initializeSigning(ctx, digest[:], netBridge)

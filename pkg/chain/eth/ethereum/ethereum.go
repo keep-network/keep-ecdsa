@@ -7,9 +7,12 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/contract"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
@@ -61,6 +64,28 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 		},
 	)
 }
+
+// OnKeepClosed is a callback that is invoked on-chain when keep is closed.
+func (ec *EthereumChain) OnKeepClosed(
+	keepAddress common.Address,
+	handler func(event *eth.KeepClosedEvent),
+) (subscription.EventSubscription, error) {
+		keepContract, err := ec.getKeepContract(keepAddress)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+		}
+		return keepContract.WatchKeepClosed(
+			func(
+				blockNumber uint64,
+			) {
+				handler(&eth.KeepClosedEvent{})
+			},
+			func(err error) error {
+				return fmt.Errorf("keep closed callback failed: [%v]", err)
+			},
+	)
+}
+		
 
 // OnPublicKeyPublished is a callback that is invoked when an on-chain
 // event of a published public key was emitted.
@@ -258,6 +283,16 @@ func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest 
 	return keepContract.IsAwaitingSignature(digest)
 }
 
+// IsActive checks for current state of a keep on-chain.
+func (ec *EthereumChain) IsActive(keepAddress common.Address) (bool, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	return keepContract.IsActive()
+}
+
 // HasMinimumStake returns true if the specified address is staked.  False will
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.
@@ -268,4 +303,46 @@ func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
 // BalanceOf returns the stake balance of the specified address.
 func (ec *EthereumChain) BalanceOf(address common.Address) (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
+}
+
+func (ec *EthereumChain) BlockCounter() chain.BlockCounter {
+	return ec.blockCounter
+}
+
+func (ec *EthereumChain) IsRegisteredForApplication(application common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
+		ec.Address(),
+		application,
+	)
+}
+
+func (ec *EthereumChain) IsEligibleForApplication(application common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorEligible(
+		ec.Address(),
+		application,
+	)
+}
+
+func (ec *EthereumChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
+		ec.Address(),
+		application,
+	)
+}
+
+func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) error {
+	transaction, err := ec.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
+		ec.Address(),
+		application,
+	)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf(
+		"submitted UpdateOperatorStatus transaction with hash: [%x]",
+		transaction.Hash(),
+	)
+
+	return nil
 }

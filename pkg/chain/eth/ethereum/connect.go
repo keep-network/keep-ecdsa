@@ -1,11 +1,14 @@
 package ethereum
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/contract"
 )
@@ -16,6 +19,7 @@ type EthereumChain struct {
 	accountKey                     *keystore.Key
 	client                         *ethclient.Client
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
+	blockCounter                   *blockcounter.EthereumBlockCounter
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -56,11 +60,20 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		return nil, err
 	}
 
+	blockCounter, err := blockcounter.CreateBlockCounter(client)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create Ethereum blockcounter: [%v]",
+			err,
+		)
+	}
+
 	return &EthereumChain{
 		config:                         config,
 		accountKey:                     accountKey,
 		client:                         client,
 		transactionMutex:               transactionMutex,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
+		blockCounter:                   blockCounter,
 	}, nil
 }

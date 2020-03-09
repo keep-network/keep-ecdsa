@@ -30,23 +30,15 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
         return groupSelectionSeed;
     }
 
-    /// @notice Opens a new ECDSA keep.
-    /// @param _owner Address of the keep owner.
-    /// @return Created keep address.
-    function stubOpenKeep(
-        address _owner
-    ) external payable returns (address keepAddress) {
+    function addKeep(address keep) public {
+        keeps[keep] = true;
+    }
 
-        address[] memory members;
-        keepAddress = createClone(masterBondedECDSAKeepAddress);
-        BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
-        keep.initialize(
-            _owner,
-            members,
-            0,
-            address(0),
-            address(0)
-        );
-        keeps.push(keepAddress);
+    function removeKeep(address keep) public {
+        keeps[keep] = false;
+    }
+
+    function hasKeep(address _keepAddress) public view returns (bool) {
+        return keeps[_keepAddress];
     }
 }
