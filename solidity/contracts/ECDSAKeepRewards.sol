@@ -80,6 +80,23 @@ contract ECDSAKeepRewards {
         uint256 intervalReward = termReward(interval);
         keepToken.transfer(_keep.getOwner(), intervalReward);
     }
+    function claimRewards(address keepAddress)
+        rewardsNotClaimed(keepAddress)
+        mustBeClosed(keepAddress)
+        factoryMustRecognize(keepAddress)
+        public
+    {
+        _processKeep(true, keepAddress);
+    }
+
+    function reportTermination(address keepAddress)
+        rewardsNotClaimed(keepAddress)
+        mustBeTerminated(keepAddress)
+        factoryMustRecognize(keepAddress)
+        public
+    {
+        _processKeep(false, keepAddress);
+    }
 
 
     /// @notice Get the rewards interval a given timestamp falls unnder.
@@ -367,12 +384,10 @@ contract ECDSAKeepRewards {
        return (interval < allocatedIntervals);
    }
 
-   function claimRewards(address keepAddress)
-       rewardsNotClaimed(keepAddress)
-       mustBeClosed(keepAddress)
-       factoryMustRecognize(keepAddress)
-       public
-   {
+   function _processKeep(
+       bool eligible,
+       address keepAddress
+   ) internal {
        uint256 creationTime = factory.getCreationTime(keepAddress);
        uint256 interval = intervalOf(creationTime);
        if (!_isAllocated(interval)) {
@@ -383,38 +398,18 @@ contract ECDSAKeepRewards {
        uint256 perKeepReward = allocation.div(_keepsInInterval);
        uint256 processedKeeps = intervalKeepsProcessed[interval];
        claimed[keepAddress] = true;
-
-       keepToken.approve(keepAddress, perKeepReward);
-       IBondedECDSAKeep(keepAddress).distributeERC20ToMembers(
-           address(keepToken),
-           perKeepReward
-       );
-
        intervalKeepsProcessed[interval] = processedKeeps + 1;
-   }
 
-   function reportTermination(address keepAddress)
-       rewardsNotClaimed(keepAddress)
-       mustBeClosed(keepAddress)
-       factoryMustRecognize(keepAddress)
-       public
-   {
-       uint256 creationTime = factory.getCreationTime(keepAddress);
-       uint256 interval = intervalOf(creationTime);
-       if (!_isAllocated(interval)) {
-           _allocateRewards(interval);
+       if (eligible) {
+           keepToken.approve(keepAddress, perKeepReward);
+           IBondedECDSAKeep(keepAddress).distributeERC20ToMembers(
+               address(keepToken),
+               perKeepReward
+           );
+       } else {
+           // Return the reward to the unallocated pool
+           unallocatedRewards += perKeepReward;
        }
-       uint256 allocation = intervalAllocations[interval];
-       uint256 _keepsInInterval = _keepsInInterval(interval);
-       uint256 perKeepReward = allocation.div(_keepsInInterval);
-       uint256 processedKeeps = intervalKeepsProcessed[interval];
-       uint256 _unallocatedRewards = unallocatedRewards;
-
-       // Return the reward to the unallocated pool
-       unallocatedRewards = _unallocatedRewards + perKeepReward;
-
-       claimed[keepAddress] = true;
-       intervalKeepsProcessed[interval] = processedKeeps + 1;
    }
 
    modifier rewardsNotClaimed(address _keep) {
