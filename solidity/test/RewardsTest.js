@@ -12,7 +12,7 @@ const TestToken = artifacts.require('TestToken')
 
 
 const RewardsKeepStub = artifacts.require('RewardsKeepStub');
-const ECDSAKeepRewards = artifacts.require('ECDSAKeepRewards');
+const ECDSAKeepRewardsStub = artifacts.require('ECDSAKeepRewardsStub');
 
 contract.only('ECDSAKeepRewards', (accounts) => {
     const alice = accounts[0]
@@ -149,7 +149,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
         token = await TestToken.new()
 
-        rewards = await ECDSAKeepRewards.new(
+        rewards = await ECDSAKeepRewardsStub.new(
             termLength,
             totalRewards,
             token.address,

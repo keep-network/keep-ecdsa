@@ -110,7 +110,7 @@ contract ECDSAKeepRewards {
             "not due for new interval"
         );
         uint256 intervalEndpointsLength = intervalEndpoints.length;
-        uint256 newInterval = findEndpoint(_timestamp);
+        uint256 newInterval = _findEndpoint(_timestamp);
 
         uint256 totalSubmissions = intervalEndpointsLength > 0 ?
         newInterval:
@@ -144,9 +144,9 @@ contract ECDSAKeepRewards {
         return IBondedECDSAKeep(_keep).isTerminated();
     }
 
-    function findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
+    function _findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
         require(
-            intervalEndpoint <= currentTime(),
+            intervalEndpoint <= block.timestamp,
             "interval hasn't ended yet"
         );
         uint256 keepCount = factory.getKeepCount();
@@ -207,10 +207,6 @@ contract ECDSAKeepRewards {
         return ub;
     }
 
-   function currentTime() public view returns (uint256) {
-       return block.timestamp;
-   }
-
    /// @notice Return the interval number
    /// the provided timestamp falls within.
    /// @dev Reverts if the timestamp is before `initiated`.
@@ -251,9 +247,9 @@ contract ECDSAKeepRewards {
    /// @param interval The number of the interval.
    /// @return endpoint The number of keeps the factory had created
    /// before the end of the interval.
-   function getEndpoint(uint256 interval)
+   function _getEndpoint(uint256 interval)
        mustBeFinished(interval)
-       public
+       internal
        returns (uint256 endpoint)
    {
        // Get the endpoint from local cache;
@@ -267,7 +263,7 @@ contract ECDSAKeepRewards {
            // Check what the real endpoint is
            // if the actual value is 0, this call short-circuits
            // so we don't need to special-case the zero
-           uint256 realEndpoint = findEndpoint(endOf(interval));
+           uint256 realEndpoint = _findEndpoint(endOf(interval));
            // We didn't have the correct value cached,
            // so store it
            if (realEndpoint != 0) {
@@ -280,21 +276,21 @@ contract ECDSAKeepRewards {
        return endpoint;
    }
 
-   function getPreviousEndpoint(uint256 interval) public returns (uint256) {
+   function _getPreviousEndpoint(uint256 interval) internal returns (uint256) {
        if (interval == 0) {
            return 0;
        } else {
-           return getEndpoint(interval - 1);
+           return _getEndpoint(interval - 1);
        }
    }
 
-   function keepsInInterval(uint256 interval) public returns (uint256) {
-       return (getEndpoint(interval) - getPreviousEndpoint(interval));
+   function _keepsInInterval(uint256 interval) internal returns (uint256) {
+       return (_getEndpoint(interval) - _getPreviousEndpoint(interval));
    }
 
-   function keepCountAdjustment(uint256 interval) public returns (uint256) {
+   function _keepCountAdjustment(uint256 interval) internal returns (uint256) {
        uint256 minimumKeeps = minimumKeepsPerInterval;
-       uint256 keepCount = keepsInInterval(interval);
+       uint256 keepCount = _keepsInInterval(interval);
        if (keepCount >= minimumKeeps) {
            return 100;
        } else {
@@ -302,44 +298,44 @@ contract ECDSAKeepRewards {
        }
    }
 
-   function getIntervalWeight(uint256 interval) public view returns (uint256) {
-       if (interval < getIntervalCount()) {
+   function _getIntervalWeight(uint256 interval) internal view returns (uint256) {
+       if (interval < _getIntervalCount()) {
            return intervalWeights[interval];
        } else {
            return 100;
        }
    }
 
-   function getIntervalCount() public view returns (uint256) {
+   function _getIntervalCount() internal view returns (uint256) {
        return intervalWeights.length;
    }
 
-   function baseAllocation(uint256 interval) public view returns (uint256) {
+   function _baseAllocation(uint256 interval) internal view returns (uint256) {
        uint256 _unallocatedRewards = unallocatedRewards;
-       uint256 weightPercentage = getIntervalWeight(interval);
+       uint256 weightPercentage = _getIntervalWeight(interval);
        return _unallocatedRewards.mul(weightPercentage).div(100);
    }
 
-   function adjustedAllocation(uint256 interval) public returns (uint256) {
-       uint256 _baseAllocation = baseAllocation(interval);
-       uint256 adjustmentPercentage = keepCountAdjustment(interval);
+   function _adjustedAllocation(uint256 interval) internal returns (uint256) {
+       uint256 _baseAllocation = _baseAllocation(interval);
+       uint256 adjustmentPercentage = _keepCountAdjustment(interval);
        return _baseAllocation.mul(adjustmentPercentage).div(100);
    }
 
-   function rewardPerKeep(uint256 interval) public returns (uint256) {
-       uint256 _adjustedAllocation = adjustedAllocation(interval);
+   function _rewardPerKeep(uint256 interval) internal returns (uint256) {
+       uint256 _adjustedAllocation = _adjustedAllocation(interval);
        if (_adjustedAllocation == 0) {
            return 0;
        }
-       uint256 keepCount = keepsInInterval(interval);
+       uint256 keepCount = _keepsInInterval(interval);
        // Adjusted allocation would be zero if keep count was zero
        assert(keepCount > 0);
        return _adjustedAllocation.div(keepCount);
    }
 
-   function allocateRewards(uint256 interval)
+   function _allocateRewards(uint256 interval)
        mustBeFinished(interval)
-       public
+       internal
    {
        uint256 allocatedIntervals = intervalAllocations.length;
        require(
@@ -348,17 +344,17 @@ contract ECDSAKeepRewards {
        );
        // Allocate previous intervals first
        if (interval > allocatedIntervals) {
-           allocateRewards(interval - 1);
+           _allocateRewards(interval - 1);
        }
-       uint256 keepCount = keepsInInterval(interval);
-       uint256 perKeepAllocation = rewardPerKeep(interval);
+       uint256 keepCount = _keepsInInterval(interval);
+       uint256 perKeepAllocation = _rewardPerKeep(interval);
        // Calculate like this so rewards divide equally among keeps
        uint256 totalAllocation = keepCount * perKeepAllocation;
        unallocatedRewards -= totalAllocation;
        intervalAllocations.push(totalAllocation);
    }
 
-   function getAllocatedRewards(uint256 interval) public view returns (uint256) {
+   function _getAllocatedRewards(uint256 interval) internal view returns (uint256) {
        require(
            interval < intervalAllocations.length,
            "Interval not allocated yet"
@@ -366,7 +362,7 @@ contract ECDSAKeepRewards {
        return intervalAllocations[interval];
    }
 
-   function isAllocated(uint256 interval) public view returns (bool) {
+   function _isAllocated(uint256 interval) internal view returns (bool) {
        uint256 allocatedIntervals = intervalAllocations.length;
        return (interval < allocatedIntervals);
    }
@@ -379,11 +375,11 @@ contract ECDSAKeepRewards {
    {
        uint256 creationTime = factory.getCreationTime(keepAddress);
        uint256 interval = intervalOf(creationTime);
-       if (!isAllocated(interval)) {
-           allocateRewards(interval);
+       if (!_isAllocated(interval)) {
+           _allocateRewards(interval);
        }
        uint256 allocation = intervalAllocations[interval];
-       uint256 _keepsInInterval = keepsInInterval(interval);
+       uint256 _keepsInInterval = _keepsInInterval(interval);
        uint256 perKeepReward = allocation.div(_keepsInInterval);
        uint256 processedKeeps = intervalKeepsProcessed[interval];
        claimed[keepAddress] = true;
@@ -405,11 +401,11 @@ contract ECDSAKeepRewards {
    {
        uint256 creationTime = factory.getCreationTime(keepAddress);
        uint256 interval = intervalOf(creationTime);
-       if (!isAllocated(interval)) {
-           allocateRewards(interval);
+       if (!_isAllocated(interval)) {
+           _allocateRewards(interval);
        }
        uint256 allocation = intervalAllocations[interval];
-       uint256 _keepsInInterval = keepsInInterval(interval);
+       uint256 _keepsInInterval = _keepsInInterval(interval);
        uint256 perKeepReward = allocation.div(_keepsInInterval);
        uint256 processedKeeps = intervalKeepsProcessed[interval];
        uint256 _unallocatedRewards = unallocatedRewards;
@@ -430,7 +426,7 @@ contract ECDSAKeepRewards {
 
    modifier mustBeFinished(uint256 interval) {
        require(
-           currentTime() >= endOf(interval),
+           block.timestamp >= endOf(interval),
            "Interval hasn't ended yet");
        _;
    }
