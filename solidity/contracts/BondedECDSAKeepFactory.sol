@@ -74,11 +74,11 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
 
     // Random beacon sends back callback surplus to the requestor. It may also
     // decide to send additional request subsidy fee. What's more, it may happen
-    // that the beacon is busy and we'll not refresh group selection seed from
+    // that the beacon is busy and we will not refresh group selection seed from
     // the beacon. We accumulate all funds received from the beacon in the
-    // subsidy pool and later distribute funds from this pull to selected
-    // signers.
-    uint256 public subsidyPool;
+    // reseed pool and later use this pool to reseed using a public reseed
+    // function on a manual request at any moment.
+    uint256 public reseedPool;
 
     // Keeps created by this factory.
     mapping(address => bool) keeps;
@@ -99,9 +99,9 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         randomBeacon = IRandomBeacon(_randomBeacon);
     }
 
-    /// @notice Adds any received funds to the factory subsidy pool.
+    /// @notice Adds any received funds to the factory reseed pool.
     function() external payable {
-        subsidyPool += msg.value;
+        reseedPool += msg.value;
     }
 
     /// @notice Creates new sortition pool for the application.
@@ -335,16 +335,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             );
         }
 
-        // If subsidy pool is non-empty, distribute the value to signers but
-        // never distribute more than the payment for opening a keep.
-        uint256 signerSubsidy = subsidyPool < msg.value
-            ? subsidyPool
-            : msg.value;
-        if (signerSubsidy > 0) {
-            subsidyPool -= signerSubsidy;
-            keep.distributeETHReward.value(signerSubsidy)();
-        }
-
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
@@ -354,7 +344,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// and will call a callback function when the number is ready. In the meantime
     /// we update current group selection seed to a new value using a hash function.
     /// In case of the random beacon request failure this function won't revert
-    /// but add beacon payment to factory's subsidy pool.
+    /// but add beacon payment to factory's reseed pool.
     function newGroupSelectionSeed() internal {
         // Calculate new group selection seed based on the current seed.
         // We added address of the factory as a key to calculate value different
@@ -381,7 +371,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             )
         );
         if (!success) {
-            subsidyPool += msg.value; // beacon is busy
+            reseedPool += msg.value; // beacon is busy
         }
     }
 
