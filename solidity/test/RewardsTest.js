@@ -171,6 +171,13 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         await restoreSnapshot()
     })
 
+    describe("TestToken", async () => {
+        it("is set up correctly", async () => {
+            let rewardsTokens = await token.balanceOf(rewards.address)
+            expect(rewardsTokens.toNumber()).to.equal(totalRewards)
+        })
+    })
+
     describe("eligibleForReward", async () => {
         it("returns true for happily closed keeps", async () => {
             await createKeeps([1000])
