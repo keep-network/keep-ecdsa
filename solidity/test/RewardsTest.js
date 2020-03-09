@@ -20,7 +20,6 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     const aliceBeneficiary = accounts[2]
     const bobBeneficiary = accounts[3]
 
-    let masterKeep
     let factory
     let registry
     let rewards
@@ -159,8 +158,6 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             initiationTime,
             intervalWeights
         )
-
-        token.mint(rewards.address, totalRewards)
     })
 
     beforeEach(async () => {
@@ -173,6 +170,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
     describe("TestToken", async () => {
         it("is set up correctly", async () => {
+            token.mint(rewards.address, totalRewards)
             let rewardsTokens = await token.balanceOf(rewards.address)
             expect(rewardsTokens.toNumber()).to.equal(totalRewards)
         })
@@ -460,6 +458,8 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
     describe("claimRewards", async () => {
         it("lets closed keeps claim the reward correctly", async () => {
+            token.mint(rewards.address, totalRewards)
+
             let timestamps = rewardTimestamps
             await createKeeps(timestamps)
             let keepAddress = await keepFactory.getKeepAtIndex(0)
