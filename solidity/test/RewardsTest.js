@@ -456,7 +456,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
         })
     })
 
-    describe("claimRewards", async () => {
+    describe("receiveReward", async () => {
         it("lets closed keeps claim the reward correctly", async () => {
             token.mint(rewards.address, totalRewards)
 
@@ -465,7 +465,7 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             let keepAddress = await keepFactory.getKeepAtIndex(0)
             let keep = await RewardsKeepStub.at(keepAddress)
             await keep.close()
-            await rewards.claimRewards(keepAddress)
+            await rewards.receiveReward(keepAddress)
             let aliceBalance = await token.balanceOf(aliceBeneficiary)
             expect(aliceBalance.toNumber()).to.equal(33333)
         })

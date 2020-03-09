@@ -67,20 +67,9 @@ contract ECDSAKeepRewards {
        intervalWeights = _intervalWeights;
     }
 
-    /// @notice Sends the reward for a keep to the keep owner.
-    /// @param _keepAddress ECDSA keep factory address.
-    function receiveReward(address _keepAddress) public {
-        require(eligibleForReward(_keepAddress));
-        require(!claimed[_keepAddress],"Reward already claimed.");
-        claimed[_keepAddress] = true;
-
-        IBondedECDSAKeep _keep =  IBondedECDSAKeep(_keepAddress);
-        uint256 timestampOpened = _keep.getTimestamp();
-        uint256 interval = findInterval(timestampOpened);
-        uint256 intervalReward = termReward(interval);
-        keepToken.transfer(_keep.getOwner(), intervalReward);
-    }
-    function claimRewards(address keepAddress)
+    /// @notice Sends the reward for a keep to the keep members.
+    /// @param keepAddress ECDSA keep factory address.
+    function receiveReward(address keepAddress)
         rewardsNotClaimed(keepAddress)
         mustBeClosed(keepAddress)
         factoryMustRecognize(keepAddress)
@@ -149,16 +138,21 @@ contract ECDSAKeepRewards {
     /// @param _keep The keep to check.
     /// @return True if the keep is eligible, false otherwise
     function eligibleForReward(address _keep) public view returns (bool){
-        // check that keep closed properly
-        return IBondedECDSAKeep(_keep).isClosed();
+        bool claimed = _rewardClaimed(_keep);
+        bool closed = _isClosed(_keep);
+        bool recognized = _recognizedByFactory(_keep);
+        return !claimed && closed && recognized;
     }
 
     /// @notice Checks if a keep is terminated
     /// and thus its rewards can be returned to the unallocated pool.
     /// @param _keep The keep to check.
     /// @return True if the keep is terminated, false otherwise
-    function certainlyIneligible(address _keep) public view returns (bool) {
-        return IBondedECDSAKeep(_keep).isTerminated();
+    function eligibleButTerminated(address _keep) public view returns (bool) {
+        bool claimed = _rewardClaimed(_keep);
+        bool terminated = _isTerminated(_keep);
+        bool recognized = _recognizedByFactory(_keep);
+        return !claimed && terminated && recognized;
     }
 
     function _findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
@@ -412,37 +406,53 @@ contract ECDSAKeepRewards {
        }
    }
 
+   function _rewardClaimed(address _keep) internal view returns (bool) {
+       return claimed[_keep];
+   }
+   function _isClosed(address _keep) internal view returns (bool) {
+       return IBondedECDSAKeep(_keep).isClosed();
+   }
+   function _isTerminated(address _keep) internal view returns (bool) {
+       return IBondedECDSAKeep(_keep).isTerminated();
+   }
+   function _recognizedByFactory(address _keep) internal view returns (bool) {
+       return factory.getCreationTime(_keep) != 0;
+   }
+   function _isFinished(uint256 interval) internal view returns (bool) {
+       return block.timestamp >= endOf(interval);
+   }
+
    modifier rewardsNotClaimed(address _keep) {
        require(
-           !claimed[_keep],
+           !_rewardClaimed(_keep),
            "Rewards already claimed");
        _;
    }
 
    modifier mustBeFinished(uint256 interval) {
        require(
-           block.timestamp >= endOf(interval),
+           _isFinished(interval),
            "Interval hasn't ended yet");
        _;
    }
 
    modifier mustBeClosed(address _keep) {
        require(
-           IBondedECDSAKeep(_keep).isClosed(),
+           _isClosed(_keep),
            "Keep is not closed");
        _;
    }
 
    modifier mustBeTerminated(address _keep) {
        require(
-           IBondedECDSAKeep(_keep).isTerminated(),
+           _isTerminated(_keep),
            "Keep is not terminated");
        _;
    }
 
    modifier factoryMustRecognize(address _keep) {
        require(
-           factory.getCreationTime(_keep) != 0,
+           _recognizedByFactory(_keep),
            "Keep address not recognized by factory");
        _;
    }
