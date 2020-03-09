@@ -1,8 +1,10 @@
 pragma solidity ^0.5.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract ECDSAKeepRewards {
+    using SafeMath for uint256;
 
     IERC20 keepToken;
     IBondedECDSAKeepFactory factory;
@@ -296,7 +298,7 @@ contract ECDSAKeepRewards {
        if (keepCount >= minimumKeeps) {
            return 100;
        } else {
-           return 100 * keepCount / minimumKeeps;
+           return keepCount.mul(100).div(minimumKeeps);
        }
    }
 
@@ -315,13 +317,13 @@ contract ECDSAKeepRewards {
    function baseAllocation(uint256 interval) public view returns (uint256) {
        uint256 _unallocatedRewards = unallocatedRewards;
        uint256 weightPercentage = getIntervalWeight(interval);
-       return (_unallocatedRewards * weightPercentage) / 100;
+       return _unallocatedRewards.mul(weightPercentage).div(100);
    }
 
    function adjustedAllocation(uint256 interval) public returns (uint256) {
        uint256 _baseAllocation = baseAllocation(interval);
        uint256 adjustmentPercentage = keepCountAdjustment(interval);
-       return (_baseAllocation * adjustmentPercentage) / 100;
+       return _baseAllocation.mul(adjustmentPercentage).div(100);
    }
 
    function rewardPerKeep(uint256 interval) public returns (uint256) {
@@ -332,7 +334,7 @@ contract ECDSAKeepRewards {
        uint256 keepCount = keepsInInterval(interval);
        // Adjusted allocation would be zero if keep count was zero
        assert(keepCount > 0);
-       return _adjustedAllocation / keepCount;
+       return _adjustedAllocation.div(keepCount);
    }
 
    function allocateRewards(uint256 interval)
@@ -382,7 +384,7 @@ contract ECDSAKeepRewards {
        }
        uint256 allocation = intervalAllocations[interval];
        uint256 _keepsInInterval = keepsInInterval(interval);
-       uint256 perKeepReward = allocation / _keepsInInterval;
+       uint256 perKeepReward = allocation.div(_keepsInInterval);
        uint256 processedKeeps = intervalKeepsProcessed[interval];
        claimed[keepAddress] = true;
 
@@ -408,7 +410,7 @@ contract ECDSAKeepRewards {
        }
        uint256 allocation = intervalAllocations[interval];
        uint256 _keepsInInterval = keepsInInterval(interval);
-       uint256 perKeepReward = allocation / _keepsInInterval;
+       uint256 perKeepReward = allocation.div(_keepsInInterval);
        uint256 processedKeeps = intervalKeepsProcessed[interval];
        uint256 _unallocatedRewards = unallocatedRewards;
 
