@@ -205,6 +205,8 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
     describe("intervalOf", async () => {
         it("returns the correct interval", async () => {
+            let interval999 = await rewards.intervalOf(999)
+            expect(interval999.toNumber()).to.equal(0)
             let interval1000 = await rewards.intervalOf(1000)
             expect(interval1000.toNumber()).to.equal(0)
             let interval1001 = await rewards.intervalOf(1001)
@@ -217,13 +219,6 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             expect(interval1101.toNumber()).to.equal(1)
             let interval1000000 = await rewards.intervalOf(1000000)
             expect(interval1000000.toNumber()).to.equal(9990)
-        })
-
-        it("reverts on timestamps before initiation", async () => {
-            await expectRevert(
-                rewards.intervalOf(999),
-                "Timestamp is before the first interval"
-            )
         })
     })
 

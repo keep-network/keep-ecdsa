@@ -106,35 +106,35 @@ contract ECDSAKeepRewards {
         return !claimed && terminated && recognized;
     }
 
-   /// @notice Return the interval number
-   /// the provided timestamp falls within.
-   /// @dev Reverts if the timestamp is before `initiated`.
-   /// @param timestamp The timestamp whose interval is queried.
-   /// @return The interval of the timestamp.
-   function intervalOf(uint256 timestamp) public view returns (uint256) {
-       uint256 _initiated = initiated;
-       uint256 _termLength = termLength;
+    /// @notice Return the interval number
+    /// the provided timestamp falls within.
+    /// @dev If the timestamp is before `initiated`,
+    /// the interval is 0.
+    /// @param timestamp The timestamp whose interval is queried.
+    /// @return The interval of the timestamp.
+    function intervalOf(uint256 timestamp) public view returns (uint256) {
+        uint256 _initiated = initiated;
+        uint256 _termLength = termLength;
 
-       require(
-           timestamp >= _initiated,
-           "Timestamp is before the first interval"
-       );
+        if (timestamp < _initiated) {
+            return 0;
+        }
 
-       uint256 difference = timestamp - _initiated;
-       uint256 interval = difference / _termLength;
+        uint256 difference = timestamp - _initiated;
+        uint256 interval = difference / _termLength;
 
-       return interval;
-   }
+        return interval;
+    }
 
-   /// @notice Return the timestamp corresponding to the start of the interval.
-   function startOf(uint256 interval) public view returns (uint256) {
-       return initiated + (interval * termLength);
-   }
+    /// @notice Return the timestamp corresponding to the start of the interval.
+    function startOf(uint256 interval) public view returns (uint256) {
+        return initiated + (interval * termLength);
+    }
 
-   /// @notice Return the timestamp corresponding to the end of the interval.
-   function endOf(uint256 interval) public view returns (uint256) {
-       return startOf(interval + 1);
-   }
+    /// @notice Return the timestamp corresponding to the end of the interval.
+    function endOf(uint256 interval) public view returns (uint256) {
+        return startOf(interval + 1);
+    }
 
     function _findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
         require(
