@@ -34,9 +34,6 @@ contract ECDSAKeepRewards {
     // mapping of keeps to booleans. True if the keep has been used to calim a reward.
     mapping(address => bool) claimed;
 
-    // Number of submissions for each interval.
-    mapping(uint256 => uint256) intervalSubmissions;
-
     // Array of timestamps marking interval's end.
     uint256[] intervalEndpoints;
 
@@ -87,52 +84,6 @@ contract ECDSAKeepRewards {
         _processKeep(false, keepAddress);
     }
 
-
-    /// @notice Get the rewards interval a given timestamp falls unnder.
-    /// @param _timestamp The timestamp to check.
-    /// @return The associated interval.
-    function findInterval(uint256 _timestamp) public returns (uint256){
-        // provide index/rewards interval and validate on-chain?
-        // if interval exists, return it. else updateInterval()
-        return updateInterval(_timestamp);
-    }
-
-    /// @notice Get the reward dividend for each keep for a given reward interval.
-    /// @param term The term to check.
-    /// @return The reward dividend.
-    function termReward(uint256 term) public view returns (uint256){
-        uint256 _totalTermRewards = totalRewards * intervalWeights[term] / 100;
-        return _totalTermRewards / intervalSubmissions[term];
-    }
-
-    /// @notice Updates the latest interval.
-    /// @dev Interval should only be updated if the _timestamp provided
-    ///      does not belong to a pre-existing interval.
-    /// @param _timestamp The timestamp to update with.
-    /// @return the new interval.
-    function updateInterval(uint256 _timestamp) internal returns (uint256){
-        require(
-            block.timestamp - initiated >= termLength * intervalEndpoints.length + termLength,
-            "not due for new interval"
-        );
-        uint256 intervalEndpointsLength = intervalEndpoints.length;
-        uint256 newInterval = _findEndpoint(_timestamp);
-
-        uint256 totalSubmissions = intervalEndpointsLength > 0 ?
-        newInterval:
-        newInterval - intervalEndpoints[intervalEndpointsLength - 1];
-
-        intervalSubmissions[intervalEndpointsLength] = totalSubmissions;
-        if (totalSubmissions < minimumKeepsPerInterval){
-            if(intervalEndpointsLength >= intervalWeights.length){
-                return newInterval;
-            }
-            intervalWeights[intervalEndpointsLength + 1] +=  intervalWeights[intervalEndpointsLength];
-            intervalWeights[intervalEndpointsLength] = 0;
-        }
-        return newInterval;
-    }
-
     /// @notice Checks if a keep is eligible to receive rewards.
     /// @dev Keeps that close dishonorably or early are not eligible for rewards.
     /// @param _keep The keep to check.
@@ -154,6 +105,36 @@ contract ECDSAKeepRewards {
         bool recognized = _recognizedByFactory(_keep);
         return !claimed && terminated && recognized;
     }
+
+   /// @notice Return the interval number
+   /// the provided timestamp falls within.
+   /// @dev Reverts if the timestamp is before `initiated`.
+   /// @param timestamp The timestamp whose interval is queried.
+   /// @return The interval of the timestamp.
+   function intervalOf(uint256 timestamp) public view returns (uint256) {
+       uint256 _initiated = initiated;
+       uint256 _termLength = termLength;
+
+       require(
+           timestamp >= _initiated,
+           "Timestamp is before the first interval"
+       );
+
+       uint256 difference = timestamp - _initiated;
+       uint256 interval = difference / _termLength;
+
+       return interval;
+   }
+
+   /// @notice Return the timestamp corresponding to the start of the interval.
+   function startOf(uint256 interval) public view returns (uint256) {
+       return initiated + (interval * termLength);
+   }
+
+   /// @notice Return the timestamp corresponding to the end of the interval.
+   function endOf(uint256 interval) public view returns (uint256) {
+       return startOf(interval + 1);
+   }
 
     function _findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
         require(
@@ -217,36 +198,6 @@ contract ECDSAKeepRewards {
         }
         return ub;
     }
-
-   /// @notice Return the interval number
-   /// the provided timestamp falls within.
-   /// @dev Reverts if the timestamp is before `initiated`.
-   /// @param timestamp The timestamp whose interval is queried.
-   /// @return The interval of the timestamp.
-   function intervalOf(uint256 timestamp) public view returns (uint256) {
-       uint256 _initiated = initiated;
-       uint256 _termLength = termLength;
-
-       require(
-           timestamp >= _initiated,
-           "Timestamp is before the first interval"
-       );
-
-       uint256 difference = timestamp - _initiated;
-       uint256 interval = difference / _termLength;
-
-       return interval;
-   }
-
-   /// @notice Return the timestamp corresponding to the start of the interval.
-   function startOf(uint256 interval) public view returns (uint256) {
-       return initiated + (interval * termLength);
-   }
-
-   /// @notice Return the timestamp corresponding to the end of the interval.
-   function endOf(uint256 interval) public view returns (uint256) {
-       return startOf(interval + 1);
-   }
 
    /// @notice Return the endpoint index of the interval,
    /// i.e. the number of keeps created in and before the interval.
