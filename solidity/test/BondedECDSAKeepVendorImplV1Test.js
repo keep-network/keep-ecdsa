@@ -1,3 +1,5 @@
+import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
+
 const Registry = artifacts.require('Registry')
 const BondedECDSAKeepVendor = artifacts.require('BondedECDSAKeepVendor')
 const BondedECDSAKeepVendorImplV1 = artifacts.require('BondedECDSAKeepVendorImplV1')
@@ -11,12 +13,19 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
 
     let registry, keepVendor
 
-    beforeEach(async () => {
+  before(async () => {
         registry = await Registry.new()
+  })
 
+  describe('registerFactory', async () => {
+    before(async () => {
         const bondedECDSAKeepVendorImplV1 = await BondedECDSAKeepVendorImplV1.new()
-        const bondedECDSAKeepVendorProxy = await BondedECDSAKeepVendor.new(bondedECDSAKeepVendorImplV1.address)
-        keepVendor = await BondedECDSAKeepVendorImplV1.at(bondedECDSAKeepVendorProxy.address)
+      const bondedECDSAKeepVendorProxy = await BondedECDSAKeepVendor.new(
+        bondedECDSAKeepVendorImplV1.address
+      )
+      keepVendor = await BondedECDSAKeepVendorImplV1.at(
+        bondedECDSAKeepVendorProxy.address
+      )
 
         await keepVendor.initialize(registry.address)
         await registry.setOperatorContractUpgrader(keepVendor.address, accounts[0])
@@ -25,7 +34,13 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         await registry.approveOperatorContract(address2)
     })
 
-    describe("keep factory registration", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
 
         it("registers one factory address", async () => {
             let expectedResult = address1
