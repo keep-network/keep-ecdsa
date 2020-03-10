@@ -47,7 +47,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
 
             await keepVendor.registerFactory(address1)
 
-            assertFactory(expectedResult)
+      await assertFactory(expectedResult)
         })
 
         it("does not register factory with zero address", async () => {
@@ -68,7 +68,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
             await keepVendor.registerFactory(address1)
             await keepVendor.registerFactory(address2)
 
-            assertFactory(address2)
+      await assertFactory(address2)
         })
 
         it("cannot be called by non-owner", async () => {
