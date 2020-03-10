@@ -19,6 +19,54 @@ contract('BondedECDSAKeepVendorImplV1', async accounts => {
     registry = await Registry.new()
   })
 
+  describe('initialize', async () => {
+    const implOwner = accounts[1]
+    const proxyOwner = accounts[2]
+
+    before(async () => {
+      const bondedECDSAKeepVendorImplV1 = await BondedECDSAKeepVendorImplV1.new(
+        { from: implOwner }
+      )
+      const bondedECDSAKeepVendorProxy = await BondedECDSAKeepVendor.new(
+        bondedECDSAKeepVendorImplV1.address,
+        { from: proxyOwner }
+      )
+      keepVendor = await BondedECDSAKeepVendorImplV1.at(
+        bondedECDSAKeepVendorProxy.address
+      )
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('marks contract as initialized', async () => {
+      await keepVendor.initialize(address0, { from: proxyOwner })
+
+      assert.isTrue(await keepVendor.initialized())
+    })
+
+    it('can be called only once', async () => {
+      await keepVendor.initialize(address0, { from: proxyOwner })
+
+      await expectRevert(
+        keepVendor.initialize(address0, { from: proxyOwner }),
+        'Contract is already initialized.'
+      )
+    })
+
+    it('cannot be called by non-owner', async () => {
+      await expectRevert(
+        keepVendor.initialize(address0, { from: implOwner }),
+        'Ownable: caller is not the owner.'
+      )
+    })
+  })
+
   describe('registerFactory', async () => {
     before(async () => {
       const bondedECDSAKeepVendorImplV1 = await BondedECDSAKeepVendorImplV1.new()
