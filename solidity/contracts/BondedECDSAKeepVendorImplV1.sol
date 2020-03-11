@@ -1,8 +1,8 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "@keep-network/keep-core/contracts/Registry.sol";
 import "./api/IBondedECDSAKeepVendor.sol";
+import "@keep-network/keep-core/contracts/Registry.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title Bonded ECDSA Keep Vendor
@@ -12,7 +12,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
 
     // Mapping to store new implementation versions that inherit from
     // this contract.
-    mapping (string => bool) internal _initialized;
+    mapping(string => bool) internal _initialized;
 
     // Registry contract with a list of approved factories (operator contracts)
     // and upgraders.
@@ -120,8 +120,13 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     /// @dev Throws if called by any account other than the operator contract
     /// upgrader authorized for this service contract.
     modifier onlyOperatorContractUpgrader() {
-        address operatorContractUpgrader = registry.operatorContractUpgraderFor(address(this));
-        require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
+        address operatorContractUpgrader = registry.operatorContractUpgraderFor(
+            address(this)
+        );
+        require(
+            operatorContractUpgrader == msg.sender,
+            "Caller is not operator contract upgrader"
+        );
         _;
     }
 }
