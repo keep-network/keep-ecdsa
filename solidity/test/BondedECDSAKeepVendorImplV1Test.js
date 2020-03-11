@@ -1,3 +1,5 @@
+import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
+
 const {
     BN,
     constants,
@@ -24,15 +26,73 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
 
     let registry, keepVendor;
 
-    beforeEach(async () => {
+    before(async () => {
         registry = await Registry.new();
+    });
 
-        await newVendor();
+    describe("initialize", async () => {
+        const implOwner = accounts[1];
+        const proxyOwner = accounts[2];
 
-        await keepVendor.initialize(registry.address, address0);
+        before(async () => {
+            const bondedECDSAKeepVendorImplV1Stub = await BondedECDSAKeepVendorImplV1Stub.new(
+                { from: implOwner }
+            );
+            const bondedECDSAKeepVendorProxy = await BondedECDSAKeepVendor.new(
+                bondedECDSAKeepVendorImplV1Stub.address,
+                { from: proxyOwner }
+            );
+            keepVendor = await BondedECDSAKeepVendorImplV1Stub.at(
+                bondedECDSAKeepVendorProxy.address
+            );
+        });
+
+        beforeEach(async () => {
+            await createSnapshot();
+        });
+
+        afterEach(async () => {
+            await restoreSnapshot();
+        });
+
+        it("marks contract as initialized", async () => {
+            await keepVendor.initialize(address0, address0, { from: proxyOwner });
+
+            assert.isTrue(await keepVendor.initialized());
+        });
+
+        it("can be called only once", async () => {
+            await keepVendor.initialize(address0, address0, { from: proxyOwner });
+
+            await expectRevert(
+                keepVendor.initialize(address0, address0, { from: proxyOwner }),
+                "Contract is already initialized."
+            );
+        });
+
+        it("cannot be called by non-owner", async () => {
+            await expectRevert(
+                keepVendor.initialize(address0, address0, { from: implOwner }),
+                "Ownable: caller is not the owner."
+            );
+        });
     });
 
     describe("registerFactory", async () => {
+        before(async () => {
+            keepVendor = await newVendor();
+
+            await keepVendor.initialize(registry.address, address0);
+        });
+
+        beforeEach(async () => {
+            await createSnapshot();
+        });
+
+        afterEach(async () => {
+            await restoreSnapshot();
+        });
+
         it("sets timestamp", async () => {
             await keepVendor.registerFactory(address1);
 
@@ -80,7 +140,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         });
 
         it("does not register factory that is already registered", async () => {
-            await newVendor();
+            const keepVendor = await newVendor();
 
             await keepVendor.initialize(registry.address, address1);
 
@@ -112,6 +172,20 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
     });
 
     describe("completeFactoryRegistration", async () => {
+        before(async () => {
+            keepVendor = await newVendor();
+
+            await keepVendor.initialize(registry.address, address0);
+        });
+
+        beforeEach(async () => {
+            await createSnapshot();
+        });
+
+        afterEach(async () => {
+            await restoreSnapshot();
+        });
+
         it("reverts when upgrade not initiated", async () => {
             await expectRevert(
                 keepVendor.completeFactoryRegistration(),
@@ -178,7 +252,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         const bondedECDSAKeepVendorProxy = await BondedECDSAKeepVendor.new(
             bondedECDSAKeepVendorImplV1Stub.address
         );
-        keepVendor = await BondedECDSAKeepVendorImplV1Stub.at(
+        const keepVendor = await BondedECDSAKeepVendorImplV1Stub.at(
             bondedECDSAKeepVendorProxy.address
         );
 
@@ -187,5 +261,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         await registry.approveOperatorContract(address0);
         await registry.approveOperatorContract(address1);
         await registry.approveOperatorContract(address2);
+
+        return keepVendor;
     }
 });
