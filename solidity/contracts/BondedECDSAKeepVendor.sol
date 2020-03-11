@@ -37,27 +37,6 @@ contract BondedECDSAKeepVendor is Ownable {
         setUpgradeTimeDelay(1 days); // TODO: Determine right value for this property.
     }
 
-    /// @notice Gets the address of the current vendor implementation.
-    /// @return Address of the current implementation.
-    function implementation() public view returns (address _implementation) {
-        bytes32 position = implementationPosition;
-        /* solium-disable-next-line */
-        assembly {
-            _implementation := sload(position)
-        }
-    }
-
-    /// @notice Sets the address of the current implementation.
-    /// @param _implementation Address representing the new implementation to
-    /// be set.
-    function setImplementation(address _implementation) internal {
-        bytes32 position = implementationPosition;
-        /* solium-disable-next-line */
-        assembly {
-            sstore(position, _implementation)
-        }
-    }
-
     /// @notice Delegates call to the current implementation contract.
     function() external payable {
         address _impl = implementation();
@@ -121,6 +100,27 @@ contract BondedECDSAKeepVendor is Ownable {
         setUpgradeInitiatedTimestamp(0);
 
         emit Upgraded(newImplementation);
+    }
+
+    /// @notice Gets the address of the current vendor implementation.
+    /// @return Address of the current implementation.
+    function implementation() public view returns (address _implementation) {
+        bytes32 position = implementationPosition;
+        /* solium-disable-next-line */
+        assembly {
+            _implementation := sload(position)
+        }
+    }
+
+    /// @notice Sets the address of the current implementation.
+    /// @param _implementation Address representing the new implementation to
+    /// be set.
+    function setImplementation(address _implementation) internal {
+        bytes32 position = implementationPosition;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _implementation)
+        }
     }
 
     function upgradeTimeDelay()
