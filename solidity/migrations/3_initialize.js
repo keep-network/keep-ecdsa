@@ -16,7 +16,10 @@ module.exports = async function (deployer) {
     }
 
     const vendor = await BondedECDSAKeepVendorImplV1.at(BondedECDSAKeepVendor.address)
-    await vendor.initialize(registry.address)
+
+    // Initialize vendor contract
+    await vendor.initialize(registry.address, BondedECDSAKeepFactory.address)
+    console.log(`registered factory [${BondedECDSAKeepFactory.address}] in vendor contract`)
 
     // Configure registry
     await registry.approveOperatorContract(BondedECDSAKeepFactory.address)
@@ -26,8 +29,4 @@ module.exports = async function (deployer) {
     const operatorContractUpgrader = await vendor.owner()
     await registry.setOperatorContractUpgrader(vendor.address, operatorContractUpgrader)
     console.log(`set operator [${operatorContractUpgrader}] as [${vendor.address}] contract upgrader`)
-
-    // Register keep factory
-    await vendor.registerFactory(BondedECDSAKeepFactory.address)
-    console.log(`registered factory [${BondedECDSAKeepFactory.address}] in vendor contract`)
 }

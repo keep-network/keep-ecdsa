@@ -38,14 +38,17 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
 
     /// @notice Initializes Keep Vendor contract implementation.
     /// @param registryAddress Keep registry contract linked to this contract.
-    function initialize(
-        address registryAddress
-    )
+    /// @param factory Keep factory contract registered initially in the vendor
+    /// contract.
+    function initialize(address registryAddress, address payable factory)
         public
     {
         require(!initialized(), "Contract is already initialized.");
         _initialized["BondedECDSAKeepVendorImplV1"] = true;
+
         registry = Registry(registryAddress);
+        keepFactory = factory;
+
         factoryRegistrationTimeDelay = 1 days; // TODO: Determine right value for this property.
     }
 
