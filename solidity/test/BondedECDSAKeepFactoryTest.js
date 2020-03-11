@@ -1,6 +1,6 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
-const { expectRevert } = require('openzeppelin-test-helpers')
+const { expectRevert } = require('@openzeppelin/test-helpers')
 
 import { mineBlocks } from './helpers/mineBlocks'
 import { getETHBalancesFromList, getETHBalancesMap, addToBalances, addToBalancesMap } from './helpers/listBalanceUtils'

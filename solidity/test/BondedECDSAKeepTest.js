@@ -8,7 +8,7 @@ import { mineBlocks } from './helpers/mineBlocks';
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 import { duration, increaseTime } from './helpers/increaseTime';
 
-const { expectRevert } = require('openzeppelin-test-helpers');
+const { expectRevert } = require('@openzeppelin/test-helpers')
 
 const Registry = artifacts.require('Registry')
 const BondedECDSAKeep = artifacts.require('./BondedECDSAKeep.sol')
