@@ -1,6 +1,10 @@
-const Registry = artifacts.require('Registry')
-const BondedECDSAKeepVendor = artifacts.require('BondedECDSAKeepVendor')
-const { expectRevert } = require('@openzeppelin/test-helpers')
+const { expectRevert } = require("@openzeppelin/test-helpers");
+
+const Registry = artifacts.require("Registry");
+const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor");
+const BondedECDSAKeepVendorImplV1 = artifacts.require(
+  "BondedECDSAKeepVendorImplV1"
+);
 
 contract("BondedECDSAKeepVendorImplV1", async accounts => {
     const address0 = "0x0000000000000000000000000000000000000000"
