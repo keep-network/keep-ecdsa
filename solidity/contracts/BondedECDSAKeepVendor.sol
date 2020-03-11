@@ -15,6 +15,16 @@ contract BondedECDSAKeepVendor is Ownable {
         "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
     );
 
+    // Storage position of the new implementation address.
+    bytes32 private constant newImplementationPosition = keccak256(
+        "network.keep.bondedecdsavendor.proxy.newImplementation"
+    );
+
+    // Storage position of the implementation address upgrade initiation.
+    bytes32 private constant upgradeInitiatedTimestampPosition = keccak256(
+        "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
+    );
+
     event Upgraded(address implementation);
 
     constructor(address _implementation) public {
@@ -98,4 +108,45 @@ contract BondedECDSAKeepVendor is Ownable {
         }
     }
 
+    function newImplementation()
+        public
+        view
+        returns (address _newImplementation)
+    {
+        bytes32 position = newImplementationPosition;
+        /* solium-disable-next-line */
+        assembly {
+            _newImplementation := sload(position)
+        }
+    }
+
+    function setNewImplementation(address _newImplementation) internal {
+        bytes32 position = newImplementationPosition;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _newImplementation)
+        }
+    }
+
+    function upgradeInitiatedTimestamp()
+        public
+        view
+        returns (uint256 _upgradeInitiatedTimestamp)
+    {
+        bytes32 position = upgradeInitiatedTimestampPosition;
+        /* solium-disable-next-line */
+        assembly {
+            _upgradeInitiatedTimestamp := sload(position)
+        }
+    }
+
+    function setUpgradeInitiatedTimestamp(uint256 _upgradeInitiatedTimestamp)
+        internal
+    {
+        bytes32 position = upgradeInitiatedTimestampPosition;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _upgradeInitiatedTimestamp)
+        }
+    }
 }
