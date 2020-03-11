@@ -3,10 +3,12 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "@keep-network/keep-core/contracts/Registry.sol";
 import "./api/IBondedECDSAKeepVendor.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title Bonded ECDSA Keep Vendor
 /// @notice The contract is used to obtain a new Bonded ECDSA keep factory.
 contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
+    using SafeMath for uint256;
 
     // Mapping to store new implementation versions that inherit from
     // this contract.
@@ -16,8 +18,23 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     // and upgraders.
     Registry internal registry;
 
+    // Upgrade time delay defines a waiting period for factory address registration.
+    // When new factory registration is initialized it has to wait this period
+    // before the change can take effect on the currently registered facotry
+    // address.
+    uint256 public factoryRegistrationTimeDelay;
+
     // Address of ECDSA keep factory.
     address payable keepFactory;
+
+    // Address of a new ECDSA keep factory in update process.
+    address payable newKeepFactory;
+
+    // Timestamp of the moment when factory registration process has started.
+    uint256 factoryRegistrationInitiatedTimestamp;
+
+    event FactoryRegistrationStarted(address factory, uint256 timestamp);
+    event FactoryRegistered(address factory);
 
     /// @notice Initializes Keep Vendor contract implementation.
     /// @param registryAddress Keep registry contract linked to this contract.
@@ -29,6 +46,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
         require(!initialized(), "Contract is already initialized.");
         _initialized["BondedECDSAKeepVendorImplV1"] = true;
         registry = Registry(registryAddress);
+        factoryRegistrationTimeDelay = 1 days; // TODO: Determine right value for this property.
     }
 
     /// @notice Checks if this contract is initialized.
@@ -36,11 +54,16 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
         return _initialized["BondedECDSAKeepVendorImplV1"];
     }
 
-    /// @notice Registers a new ECDSA keep factory.
+    /// @notice Starts new ECDSA keep factory registration.
     /// @dev Registers a new ECDSA keep factory. Address cannot be zero
-    /// and cannot be the same that is currently registered. 
+    /// and cannot be the same that is currently registered. It is a first part
+    /// of the two-step factory registration process. The function emits an event
+    /// containing the new factory address and current block timestamp.
     /// @param _factory ECDSA keep factory address.
-    function registerFactory(address payable _factory) external onlyOperatorContractUpgrader {
+    function registerFactory(address payable _factory)
+        external
+        onlyOperatorContractUpgrader
+    {
         require(_factory != address(0), "Incorrect factory address");
 
         require(keepFactory != _factory, "Factory already registered");
@@ -49,7 +72,39 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
             registry.isApprovedOperatorContract(_factory),
             "Factory contract is not approved"
         );
-        keepFactory = _factory;
+
+        newKeepFactory = _factory;
+
+        /* solium-disable-next-line security/no-block-members */
+        uint256 timestamp = block.timestamp;
+
+        factoryRegistrationInitiatedTimestamp = timestamp;
+
+        emit FactoryRegistrationStarted(_factory, timestamp);
+    }
+
+    /// @notice Finalizes ECDSA keep factory registration.
+    /// @dev It is the second part of the two-step factory registration process.
+    /// The function can be called after factory registration time delay period
+    /// has passed since the new factory registration. It emits an event
+    /// containing the new factory address.
+    function completeFactoryRegistration() public {
+        require(
+            factoryRegistrationInitiatedTimestamp > 0,
+            "Upgrade not initiated"
+        );
+
+        require(
+            /* solium-disable-next-line security/no-block-members */
+            block.timestamp.sub(factoryRegistrationInitiatedTimestamp) >=
+                factoryRegistrationTimeDelay,
+            "Timer not elapsed"
+        );
+
+        keepFactory = newKeepFactory;
+        factoryRegistrationInitiatedTimestamp = 0;
+
+        emit FactoryRegistered(newKeepFactory);
     }
 
     /// @notice Selects the latest ECDSA keep factory.
