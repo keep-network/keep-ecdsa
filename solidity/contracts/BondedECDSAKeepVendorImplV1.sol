@@ -38,10 +38,13 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
 
     /// @notice Registers a new ECDSA keep factory.
     /// @dev Registers a new ECDSA keep factory. Address cannot be zero
-    /// and replaces the old one if it was registered.
+    /// and cannot be the same that is currently registered. 
     /// @param _factory ECDSA keep factory address.
     function registerFactory(address payable _factory) external onlyOperatorContractUpgrader {
         require(_factory != address(0), "Incorrect factory address");
+
+        require(keepFactory != _factory, "Factory already registered");
+
         require(
             registry.isApprovedOperatorContract(_factory),
             "Factory contract is not approved"
