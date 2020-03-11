@@ -44,11 +44,9 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("sets timestamp", async () => {
-      const expectedTimestamp = new BN(
-        (await web3.eth.getBlock("latest")).timestamp
-      );
-
       await keepVendor.upgradeTo(address1);
+
+      const expectedTimestamp = await time.latest();
 
       expect(await keepVendor.upgradeInitiatedTimestamp()).to.eq.BN(
         expectedTimestamp
@@ -59,6 +57,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
       await keepVendor.upgradeTo(address1);
 
       assert.equal(await keepVendor.newImplementation.call(), address1);
+      assert.equal(await keepVendor.implementation.call(), currentAddress);
     });
 
     it("emits an event", async () => {
@@ -85,12 +84,20 @@ contract("BondedECDSAKeepVendor", async accounts => {
         keepVendor.upgradeTo(address0),
         "Implementation address can't be zero."
       );
+      0;
     });
 
     it("reverts on the same address", async () => {
       await expectRevert(
         keepVendor.upgradeTo(currentAddress),
         "Implementation address must be different from the current one."
+      );
+    });
+
+    it("reverts when called by non-owner", async () => {
+      await expectRevert(
+        keepVendor.upgradeTo(address1, { from: accounts[1] }),
+        "Ownable: caller is not the owner"
       );
     });
   });
@@ -143,6 +150,15 @@ contract("BondedECDSAKeepVendor", async accounts => {
       expectEvent(receipt, "Upgraded", {
         implementation: address1
       });
+    });
+
+    it("completes when called by non-owner", async () => {
+      await keepVendor.upgradeTo(address1);
+      await time.increase(await keepVendor.upgradeTimeDelay());
+
+      await keepVendor.completeUpgrade({ from: accounts[1] });
+
+      assert.equal(await keepVendor.implementation(), address1);
     });
   });
 });
