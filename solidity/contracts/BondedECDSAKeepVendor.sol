@@ -1,10 +1,12 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title Proxy contract for Bonded ECDSA Keep vendor.
 contract BondedECDSAKeepVendor is Ownable {
-    // Storage position of the address of the current implementation
+    using SafeMath for uint256;
+
     bytes32 private constant implementationPosition = keccak256(
         "network.keep.bondedecdsavendor.proxy.implementation"
     );
@@ -25,6 +27,7 @@ contract BondedECDSAKeepVendor is Ownable {
         "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
     );
 
+    event UpgradeStarted(address implementation, uint256 timestamp);
     event Upgraded(address implementation);
 
     constructor(address _implementation) public {
@@ -72,7 +75,10 @@ contract BondedECDSAKeepVendor is Ownable {
         }
     }
 
-    /// @notice Upgrades the current vendor implementation.
+    /// @notice Starts upgrade of the current vendor implementation.
+    /// @dev It is the first part of the two-step implementation address update
+    /// process. The function emits an event containing the new value and current
+    /// block timestamp.
     /// @param _implementation Address of the new vendor implementation contract.
     function upgradeTo(address _implementation) public onlyOwner {
         address currentImplementation = implementation();
@@ -84,8 +90,37 @@ contract BondedECDSAKeepVendor is Ownable {
             _implementation != currentImplementation,
             "Implementation address must be different from the current one."
         );
-        setImplementation(_implementation);
-        emit Upgraded(_implementation);
+
+        setNewImplementation(_implementation);
+
+        /* solium-disable-next-line security/no-block-members */
+        setUpgradeInitiatedTimestamp(block.timestamp);
+
+        /* solium-disable-next-line security/no-block-members */
+        emit UpgradeStarted(_implementation, block.timestamp);
+    }
+
+    /// @notice Finalizes implementation address upgrade.
+    /// @dev It is the second part of the two-step implementation address update
+    /// process. The function emits an event containing the new implementation
+    /// address. It can be called after upgrade time delay period has passed since
+    /// upgrade initiation.
+    function completeUpgrade() public {
+        require(upgradeInitiatedTimestamp() > 0, "Upgrade not initiated");
+
+        require(
+            /* solium-disable-next-line security/no-block-members */
+            block.timestamp.sub(upgradeInitiatedTimestamp()) >=
+                upgradeTimeDelay(),
+            "Timer not elapsed"
+        );
+
+        address newImplementation = newImplementation();
+
+        setImplementation(newImplementation);
+        setUpgradeInitiatedTimestamp(0);
+
+        emit Upgraded(newImplementation);
     }
 
     function upgradeTimeDelay()
