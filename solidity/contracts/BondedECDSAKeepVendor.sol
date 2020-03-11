@@ -7,6 +7,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract BondedECDSAKeepVendor is Ownable {
     using SafeMath for uint256;
 
+    // Storage position of the address of the current implementation.
     bytes32 private constant implementationPosition = keccak256(
         "network.keep.bondedecdsavendor.proxy.implementation"
     );
@@ -31,7 +32,10 @@ contract BondedECDSAKeepVendor is Ownable {
     event Upgraded(address implementation);
 
     constructor(address _implementation) public {
-        require(_implementation != address(0), "Implementation address can't be zero.");
+        require(
+            _implementation != address(0),
+            "Implementation address can't be zero."
+        );
         setImplementation(_implementation);
 
         setUpgradeTimeDelay(1 days); // TODO: Determine right value for this property.
@@ -49,8 +53,12 @@ contract BondedECDSAKeepVendor is Ownable {
             returndatacopy(ptr, 0, size)
 
             switch result
-            case 0 { revert(ptr, size) }
-            default { return(ptr, size) }
+                case 0 {
+                    revert(ptr, size)
+                }
+                default {
+                    return(ptr, size)
+                }
         }
     }
 
