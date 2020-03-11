@@ -9,11 +9,19 @@ contract BondedECDSAKeepVendor is Ownable {
         "network.keep.bondedecdsavendor.proxy.implementation"
     );
 
+    // Storage position of the upgrade time delay. Upgrade time delay defines a
+    // period for implementation upgrade.
+    bytes32 private constant upgradeTimeDelayPosition = keccak256(
+        "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
+    );
+
     event Upgraded(address implementation);
 
     constructor(address _implementation) public {
         require(_implementation != address(0), "Implementation address can't be zero.");
         setImplementation(_implementation);
+
+        setUpgradeTimeDelay(1 days); // TODO: Determine right value for this property.
     }
 
     /// @notice Gets the address of the current vendor implementation.
@@ -69,4 +77,25 @@ contract BondedECDSAKeepVendor is Ownable {
         setImplementation(_implementation);
         emit Upgraded(_implementation);
     }
+
+    function upgradeTimeDelay()
+        public
+        view
+        returns (uint256 _upgradeTimeDelay)
+    {
+        bytes32 position = upgradeTimeDelayPosition;
+        /* solium-disable-next-line */
+        assembly {
+            _upgradeTimeDelay := sload(position)
+        }
+    }
+
+    function setUpgradeTimeDelay(uint256 _upgradeTimeDelay) internal {
+        bytes32 position = upgradeTimeDelayPosition;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _upgradeTimeDelay)
+        }
+    }
+
 }
