@@ -97,7 +97,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     it("reverts when called by non-owner", async () => {
       await expectRevert(
         keepVendor.upgradeTo(address1, { from: accounts[1] }),
-        "Ownable: caller is not the owner"
+        "Caller is not the owner"
       );
     });
   });

@@ -73,7 +73,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         it("cannot be called by non-owner", async () => {
             await expectRevert(
                 keepVendor.initialize(address0, address0, { from: implOwner }),
-                "Ownable: caller is not the owner."
+                "Caller is not the owner."
             );
         });
     });
