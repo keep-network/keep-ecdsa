@@ -1222,6 +1222,71 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
     })
 
+    describe.only("reseedFee", async () => {
+        let newEntryFee;
+
+        before(async () => {
+            await initializeNewFactory()
+
+            let callbackGas = await keepFactory.callbackGas()
+            newEntryFee = await randomBeacon.entryFeeEstimate(callbackGas)
+        })
+
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("evaluates reseed fee for empty pool", async () => {
+            let reseedFee = await keepFactory.reseedFee()
+            expect(reseedFee).to.eq.BN(
+                newEntryFee, 
+                "reseed fee should equal new entry fee"
+            )
+        })
+
+        it("evaluates reseed fee for non-empty pool", async () => {
+            let poolValue = new BN(15)
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: poolValue
+            });
+
+            let reseedFee = await keepFactory.reseedFee()
+            expect(reseedFee).to.eq.BN(
+                newEntryFee.sub(poolValue), 
+                "reseed fee should equal new entry fee minus pool value"
+            )
+        })
+
+        it("should reseed for free if has enough funds in the pool", async () => {
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: newEntryFee
+            });
+
+            let reseedFee = await keepFactory.reseedFee()
+            expect(reseedFee).to.eq.BN(0, "reseed fee should be zero")
+        })
+
+        it("should reseed for free if has more than needed funds in the pool", async () => {
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: newEntryFee.muln(10)
+            });
+
+            let reseedFee = await keepFactory.reseedFee()
+            expect(reseedFee).to.eq.BN(0, "reseed fee should be zero")
+        })
+    })
+
     async function initializeNewFactory() {
         registry = await Registry.new()
         bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()

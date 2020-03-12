@@ -70,7 +70,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // gas required to call `setGroupSelectionSeed` function in the worst-case
     // scenario with all the checks and maximum allowed uint256 relay entry as
     // a callback parameter.
-    uint256 callbackGas = 41830;
+    uint256 public constant callbackGas = 41830;
 
     // Random beacon sends back callback surplus to the requestor. It may also
     // decide to send additional request subsidy fee. What's more, it may happen
@@ -338,16 +338,16 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
-    function reseedFee() view public {
+    function reseedFee() public view returns (uint256) {
         uint256 beaconFee = randomBeacon.entryFeeEstimate(callbackGas);
-        return beaconFee <= reseedPool ? beaconFee : beaconFee - reseedPool;
+        return beaconFee <= reseedPool ? 0 : beaconFee - reseedPool;
     }
 
-    function reseed() payable public {
+    function reseed() public payable {
         uint256 beaconFee = randomBeacon.entryFeeEstimate(callbackGas);
 
-        reseedPool = reseedPool.add(msg.value)        
-        require(reseedPool >= beaconFee, "Not enough funds to trigger reseed")
+        reseedPool = reseedPool.add(msg.value);
+        require(reseedPool >= beaconFee, "Not enough funds to trigger reseed");
 
         (bool success, ) = address(randomBeacon).call.value(beaconFee)(
             abi.encodeWithSignature(
