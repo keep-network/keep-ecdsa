@@ -1,11 +1,21 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title Proxy contract for Bonded ECDSA Keep vendor.
-contract BondedECDSAKeepVendor is Ownable {
+contract BondedECDSAKeepVendor {
     using SafeMath for uint256;
+
+    // The contract owner. The value is stored in the first position. The field
+    // should not be moved as the first slot is used for the owner field in the
+    // implementation contract.
+    //
+    // There is a collision for this slot between implementation and proxy, but
+    // it is desired as we want to use this value in the implementation contract
+    // to protect the initialization function.
+    //
+    // DO NOT MOVE THIS FIELD FROM THE FIRST POSITION.
+    address private _owner;
 
     // Storage position of the address of the current implementation.
     bytes32 private constant implementationPosition = keccak256(
@@ -39,6 +49,8 @@ contract BondedECDSAKeepVendor is Ownable {
         setImplementation(_implementation);
 
         setUpgradeTimeDelay(1 days); // TODO: Determine right value for this property.
+
+        _owner = msg.sender;
     }
 
     /// @notice Delegates call to the current implementation contract.
@@ -191,5 +203,17 @@ contract BondedECDSAKeepVendor is Ownable {
         assembly {
             sstore(position, _upgradeInitiatedTimestamp)
         }
+    }
+
+    /// @notice The owner of the contract.
+    /// @return The contract owner's address.
+    function owner() public view returns (address) {
+        return _owner;
+    }
+
+    /// @dev Throws if called by any account other than the contract owner.
+    modifier onlyOwner() {
+        require(msg.sender == owner(), "Caller is not the owner");
+        _;
     }
 }

@@ -1,14 +1,33 @@
 pragma solidity ^0.5.4;
 
 import "./api/IBondedECDSAKeepVendor.sol";
+
 import "@keep-network/keep-core/contracts/Registry.sol";
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title Bonded ECDSA Keep Vendor
 /// @notice The contract is used to obtain a new Bonded ECDSA keep factory.
-contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
+contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     using SafeMath for uint256;
+
+    // The contract owner. The value is stored in the first position. The field
+    // should not be moved as the first slot is used for the owner field in the
+    // implementation contract.
+    //
+    // There is a collision for this slot between implementation and proxy, but
+    // it is desired as we want to use this value in the implementation contract
+    // to protect the initialization function.
+    //
+    // The value is not being set in a constructor when deploying the contract
+    // which is common in regular deployment patterns. Since we are using the
+    // proxy upgrade pattern the value is assigned on initialization.
+    //
+    // In the case of calling this contract through the proxy contract, the value
+    // will be the owner of the proxy contract.
+    //
+    // DO NOT MOVE THIS FIELD FROM THE FIRST POSITION.
+    address private _owner;
 
     // Mapping to store new implementation versions that inherit from
     // this contract.
@@ -116,6 +135,20 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     function selectFactory() public view returns (address payable) {
         require(keepFactory != address(0), "Keep factory is not registered");
         return keepFactory;
+    }
+
+    /// @notice The owner of the contract.
+    /// @dev When called through the proxy contract it returns the owner of the
+    /// proxy contract.
+    /// @return The contract owner's address.
+    function owner() public view returns (address) {
+        return _owner;
+    }
+
+    /// @dev Throws if called by any account other than the contract owner.
+    modifier onlyOwner() {
+        require(msg.sender == owner(), "Caller is not the owner");
+        _;
     }
 
     /// @dev Throws if called by any account other than the operator contract
