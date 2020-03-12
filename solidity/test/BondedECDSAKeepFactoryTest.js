@@ -1222,7 +1222,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
     })
 
-    describe.only("reseedFee", async () => {
+    describe("reseedFee", async () => {
         let newEntryFee;
 
         before(async () => {
@@ -1284,6 +1284,108 @@ contract("BondedECDSAKeepFactory", async accounts => {
 
             let reseedFee = await keepFactory.reseedFee()
             expect(reseedFee).to.eq.BN(0, "reseed fee should be zero")
+        })
+    })
+
+    describe("reseed", async () => {
+        let newEntryFee
+
+        before(async () => {
+            await initializeNewFactory()
+            let callbackGas = await keepFactory.callbackGas()
+            newEntryFee = await randomBeacon.entryFeeEstimate(callbackGas)
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("requests new relay entry from the beacon and reseeds factory", async () => {
+            const expectedNewEntry = new BN(1337)
+            await randomBeacon.setEntry(expectedNewEntry)
+
+            let reseedFee = await keepFactory.reseedFee()
+            await keepFactory.reseed({ value: reseedFee })
+
+            assert.equal(
+                await randomBeacon.requestCount.call(),
+                1,
+                "incorrect number of beacon calls",
+            )
+
+            expect(
+                await keepFactory.getGroupSelectionSeed()
+            ).to.eq.BN(expectedNewEntry, "incorrect new group selection seed")
+        })
+
+        it("allows to reseed for free if the pool is full", async () => {
+            const expectedNewEntry = new BN(997)
+            await randomBeacon.setEntry(expectedNewEntry)
+
+            let poolValue = newEntryFee.muln(15)
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: poolValue
+            });
+
+            await keepFactory.reseed({ value: 0 })
+
+            assert.equal(
+                await randomBeacon.requestCount.call(),
+                1,
+                "incorrect number of beacon calls",
+            )
+
+            expect(
+                await keepFactory.getGroupSelectionSeed()
+            ).to.eq.BN(expectedNewEntry, "incorrect new group selection seed")
+        })
+
+        it("updates pool after reseeding", async () => {
+            await randomBeacon.setEntry(new BN(1337))
+
+            let poolValue = newEntryFee.muln(15)
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: poolValue
+            });
+
+            await keepFactory.reseed({ value: 0 })
+
+            let expectedPoolValue = poolValue.sub(newEntryFee)
+            expect(
+                await keepFactory.reseedPool()
+            ).to.eq.BN(expectedPoolValue, "unexpected reseed pool value")
+        })
+
+        it("reverts if the provided payment is not sufficient", async () => {
+            let poolValue = newEntryFee.subn(2)
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: poolValue
+            });
+
+            await expectRevert(
+                keepFactory.reseed({ value: 1}),
+                "Not enough funds to trigger reseed"
+            )
+        })
+
+        it("reverts if beacon is busy", async () => {
+            await randomBeacon.setShouldFail(true)
+
+            let reseedFee = await keepFactory.reseedFee()
+            await expectRevert(
+                keepFactory.reseed({ value: reseedFee }),
+                "Beacon is busy, could not reseed"
+            )
         })
     })
 

@@ -360,6 +360,8 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         if (!success) {
             revert("Beacon is busy, could not reseed");
         }
+
+        reseedPool = reseedPool.sub(beaconFee);
     }
 
     /// @notice Updates group selection seed.
