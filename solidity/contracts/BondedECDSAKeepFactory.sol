@@ -338,6 +338,30 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
+    function reseedFee() view public {
+        uint256 beaconFee = randomBeacon.entryFeeEstimate(callbackGas);
+        return beaconFee <= reseedPool ? beaconFee : beaconFee - reseedPool;
+    }
+
+    function reseed() payable public {
+        uint256 beaconFee = randomBeacon.entryFeeEstimate(callbackGas);
+
+        reseedPool = reseedPool.add(msg.value)        
+        require(reseedPool >= beaconFee, "Not enough funds to trigger reseed")
+
+        (bool success, ) = address(randomBeacon).call.value(beaconFee)(
+            abi.encodeWithSignature(
+                "requestRelayEntry(address,string,uint256)",
+                address(this),
+                "setGroupSelectionSeed(uint256)",
+                callbackGas
+            )
+        );
+        if (!success) {
+            revert("Beacon is busy, could not reseed");
+        }
+    }
+
     /// @notice Updates group selection seed.
     /// @dev The main goal of this function is to request the random beacon to
     /// generate a new random number. The beacon generates the number asynchronously
