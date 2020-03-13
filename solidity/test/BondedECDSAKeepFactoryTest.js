@@ -1384,7 +1384,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
             let reseedFee = await keepFactory.reseedFee()
             await expectRevert(
                 keepFactory.reseed({ value: reseedFee }),
-                "Beacon is busy, could not reseed"
+                "request relay entry failed"
             )
         })
     })

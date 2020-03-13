@@ -357,7 +357,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         reseedPool = reseedPool.add(msg.value);
         require(reseedPool >= beaconFee, "Not enough funds to trigger reseed");
 
-        (bool success, ) = address(randomBeacon).call.value(beaconFee)(
+        (bool success, bytes memory returnData) = address(randomBeacon).call.value(beaconFee)(
             abi.encodeWithSignature(
                 "requestRelayEntry(address,string,uint256)",
                 address(this),
@@ -366,7 +366,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             )
         );
         if (!success) {
-            revert("Beacon is busy, could not reseed");
+            revert(string(returnData));
         }
 
         reseedPool = reseedPool.sub(beaconFee);
