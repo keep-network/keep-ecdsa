@@ -343,7 +343,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// reseed pool and the price of a new relay entry, returned value may vary.
     function reseedFee() public view returns (uint256) {
         uint256 beaconFee = randomBeacon.entryFeeEstimate(callbackGas);
-        return beaconFee <= reseedPool ? 0 : beaconFee - reseedPool;
+        return beaconFee <= reseedPool ? 0 : beaconFee.sub(reseedPool);
     }
 
     /// @notice Reseeds the value used for a signer selection. Requires enough
