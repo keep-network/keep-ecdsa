@@ -357,14 +357,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         reseedPool = reseedPool.add(msg.value);
         require(reseedPool >= beaconFee, "Not enough funds to trigger reseed");
 
-        (bool success, bytes memory returnData) = address(randomBeacon).call.value(beaconFee)(
-            abi.encodeWithSignature(
-                "requestRelayEntry(address,string,uint256)",
-                address(this),
-                "setGroupSelectionSeed(uint256)",
-                callbackGas
-            )
-        );
+        (bool success, bytes memory returnData) = requestRelayEntry(beaconFee);
         if (!success) {
             revert(string(returnData));
         }
@@ -389,13 +382,19 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         );
 
         // Call the random beacon to get a random group selection seed.
-        //
-        // Limiting forwarded gas to prevent malicious behavior in case the
-        // beacon service contract gets compromised. Relay request should not
-        // consume more than 360k of gas. We set the limit to 400k to have
-        // a safety margin for future updates.
-        (bool success, ) = address(randomBeacon).call.gas(400000).value(
-            msg.value
+        (bool success, ) = requestRelayEntry(msg.value);
+        if (!success) {
+            reseedPool += msg.value;
+        }
+    }
+
+    /// @notice Requests for a relay entry using the beacon payment provided as
+    /// the parameter. Sets `setGroupSelectionSeed(uint256)` as beacon callback.
+    function requestRelayEntry(
+        uint256 payment
+    ) internal returns (bool, bytes memory) {
+        return address(randomBeacon).call.value(
+            payment
         )(
             abi.encodeWithSignature(
                 "requestRelayEntry(address,string,uint256)",
@@ -404,9 +403,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
                 callbackGas
             )
         );
-        if (!success) {
-            reseedPool += msg.value; // beacon is busy
-        }
     }
 
     /// @notice Sets a new group selection seed value.
