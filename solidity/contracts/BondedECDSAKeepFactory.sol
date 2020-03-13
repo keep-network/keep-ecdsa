@@ -341,7 +341,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @notice Calculates the fee requestor has to pay to reseed the factory
     /// for signer selection. Depending on how much value is stored in the
     /// reseed pool and the price of a new relay entry, returned value may vary.
-    function reseedFee() public view returns (uint256) {
+    function newGroupSelectionSeedFee() public view returns (uint256) {
         uint256 beaconFee = randomBeacon.entryFeeEstimate(callbackGas);
         return beaconFee <= reseedPool ? 0 : beaconFee.sub(reseedPool);
     }
@@ -351,7 +351,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// reseedFee function. Factory is automatically triggering reseeding after
     /// opening a new keep but the reseed can be also triggered at any moment
     /// using this function.
-    function reseed() public payable {
+    function requestNewGroupSelectionSeed() public payable {
         uint256 beaconFee = randomBeacon.entryFeeEstimate(callbackGas);
 
         reseedPool = reseedPool.add(msg.value);

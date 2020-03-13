@@ -1222,7 +1222,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
     })
 
-    describe("reseedFee", async () => {
+    describe("newGroupSelectionSeedFee", async () => {
         let newEntryFee;
 
         before(async () => {
@@ -1242,7 +1242,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
 
         it("evaluates reseed fee for empty pool", async () => {
-            let reseedFee = await keepFactory.reseedFee()
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
             expect(reseedFee).to.eq.BN(
                 newEntryFee, 
                 "reseed fee should equal new entry fee"
@@ -1257,7 +1257,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
                 value: poolValue
             });
 
-            let reseedFee = await keepFactory.reseedFee()
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
             expect(reseedFee).to.eq.BN(
                 newEntryFee.sub(poolValue), 
                 "reseed fee should equal new entry fee minus pool value"
@@ -1271,7 +1271,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
                 value: newEntryFee
             });
 
-            let reseedFee = await keepFactory.reseedFee()
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
             expect(reseedFee).to.eq.BN(0, "reseed fee should be zero")
         })
 
@@ -1282,12 +1282,12 @@ contract("BondedECDSAKeepFactory", async accounts => {
                 value: newEntryFee.addn(1)
             });
 
-            let reseedFee = await keepFactory.reseedFee()
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
             expect(reseedFee).to.eq.BN(0, "reseed fee should be zero")
         })
     })
 
-    describe("reseed", async () => {
+    describe("requestNewGroupSelectionSeed", async () => {
         let newEntryFee
 
         before(async () => {
@@ -1308,8 +1308,8 @@ contract("BondedECDSAKeepFactory", async accounts => {
             const expectedNewEntry = new BN(1337)
             await randomBeacon.setEntry(expectedNewEntry)
 
-            let reseedFee = await keepFactory.reseedFee()
-            await keepFactory.reseed({ value: reseedFee })
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
+            await keepFactory.requestNewGroupSelectionSeed({ value: reseedFee })
 
             assert.equal(
                 await randomBeacon.requestCount.call(),
@@ -1333,7 +1333,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
                 value: poolValue
             });
 
-            await keepFactory.reseed({ value: 0 })
+            await keepFactory.requestNewGroupSelectionSeed({ value: 0 })
 
             assert.equal(
                 await randomBeacon.requestCount.call(),
@@ -1356,7 +1356,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
                 value: poolValue
             });
 
-            await keepFactory.reseed({ value: 0 })
+            await keepFactory.requestNewGroupSelectionSeed({ value: 0 })
 
             let expectedPoolValue = poolValue.sub(newEntryFee)
             expect(
@@ -1375,7 +1375,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
             });
 
             const valueSent = new BN(10)
-            await keepFactory.reseed({ value: 10 })
+            await keepFactory.requestNewGroupSelectionSeed({ value: 10 })
 
             let expectedPoolValue = poolValue.sub(newEntryFee).add(valueSent)
             expect(
@@ -1392,7 +1392,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
             });
 
             await expectRevert(
-                keepFactory.reseed({ value: 1}),
+                keepFactory.requestNewGroupSelectionSeed({ value: 1}),
                 "Not enough funds to trigger reseed"
             )
         })
@@ -1400,9 +1400,9 @@ contract("BondedECDSAKeepFactory", async accounts => {
         it("reverts if beacon is busy", async () => {
             await randomBeacon.setShouldFail(true)
 
-            let reseedFee = await keepFactory.reseedFee()
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
             await expectRevert(
-                keepFactory.reseed({ value: reseedFee }),
+                keepFactory.requestNewGroupSelectionSeed({ value: reseedFee }),
                 "request relay entry failed"
             )
         })
