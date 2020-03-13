@@ -1279,7 +1279,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
             web3.eth.sendTransaction({
                 from: accounts[0],
                 to: keepFactory.address,
-                value: newEntryFee.muln(10)
+                value: newEntryFee.addn(1)
             });
 
             let reseedFee = await keepFactory.reseedFee()
