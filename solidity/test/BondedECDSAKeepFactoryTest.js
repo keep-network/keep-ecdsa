@@ -1326,7 +1326,7 @@ contract("BondedECDSAKeepFactory", async accounts => {
             const expectedNewEntry = new BN(997)
             await randomBeacon.setEntry(expectedNewEntry)
 
-            let poolValue = newEntryFee.muln(15)
+            let poolValue = newEntryFee
             web3.eth.sendTransaction({
                 from: accounts[0],
                 to: keepFactory.address,
