@@ -1364,6 +1364,25 @@ contract("BondedECDSAKeepFactory", async accounts => {
             ).to.eq.BN(expectedPoolValue, "unexpected reseed pool value")
         })
 
+        it("updates pool after reseeding with value", async () => {
+            await randomBeacon.setEntry(new BN(1337))
+
+            let poolValue = newEntryFee.muln(15)
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: poolValue
+            });
+
+            const valueSent = new BN(10)
+            await keepFactory.reseed({ value: 10 })
+
+            let expectedPoolValue = poolValue.sub(newEntryFee).add(valueSent)
+            expect(
+                await keepFactory.reseedPool()
+            ).to.eq.BN(expectedPoolValue, "unexpected reseed pool value")
+        })
+
         it("reverts if the provided payment is not sufficient", async () => {
             let poolValue = newEntryFee.subn(2)
             web3.eth.sendTransaction({
