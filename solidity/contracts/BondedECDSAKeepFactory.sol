@@ -447,7 +447,8 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     }
 
     /// @notice Gets the creation timestamp of a given keep.
-    /// @return Timestamp the given keep was created at.
+    /// @return Timestamp the given keep was created at or 0 if this keep
+    /// was not created by this factory.
     function getCreationTime(address _keep) external view returns (uint256) {
         return creationTime[_keep];
     }
