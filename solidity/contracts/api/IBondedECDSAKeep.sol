@@ -33,7 +33,7 @@ contract IBondedECDSAKeep {
         external;
 
     /// @notice Seizes the signers' ETH bonds. After seizing bonds keep is
-    /// closed so it will no longer respond to signing requests. Bonds can be
+    /// terminated so it will no longer respond to signing requests. Bonds can be
     /// seized only when there is no signing in progress or requested signing
     /// process has timed out. This function seizes all of signers' bonds.
     /// The application may decide to return part of bonds later after they are
