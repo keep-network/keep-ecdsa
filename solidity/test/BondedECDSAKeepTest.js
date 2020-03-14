@@ -953,12 +953,6 @@ contract('BondedECDSAKeep', (accounts) => {
       assert.isFalse(await keep.isActive(), 'keep should no longer be active');
     })
 
-    it('notifies factory', async () => {
-      await keep.closeKeep({ from: owner })
-
-      assert.isTrue(await factoryStub.notifiedKeepClosed(), 'factory was not notified about keep closure');
-    })
-
     it('frees members bonds', async () => {
       await keep.closeKeep({ from: owner })
 
