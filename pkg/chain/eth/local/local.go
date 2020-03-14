@@ -169,13 +169,19 @@ func (lc *localChain) UpdateStatusForApplication(application common.Address) err
 	panic("implement")
 }
 
-// OnKeepClosed archives key shares and unsubscibes from events.
 func (lc *localChain) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
 	panic("implement")
-} 
+}
+
+func (lc *localChain) OnKeepTerminated(
+	keepAddress common.Address,
+	handler func(event *eth.KeepTerminatedEvent),
+) (subscription.EventSubscription, error) {
+	panic("implement")
+}
 
 // OnConflictingPublicKeySubmitted logs mismatched public keys submitted by
 // members of a keep.

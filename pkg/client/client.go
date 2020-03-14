@@ -85,7 +85,13 @@ func Initialize(
 					// further processing.
 					continue
 				}
-				go monitorKeepClosedEvents(
+				go monitorKeepClosedEvent(
+					ethereumChain,
+					keepAddress,
+					keepsRegistry,
+					subscriptionOnSignatureRequested,
+				)
+				go monitorKeepTerminatedEvent(
 					ethereumChain,
 					keepAddress,
 					keepsRegistry,
@@ -156,7 +162,13 @@ func Initialize(
 				return
 			}
 
-			go monitorKeepClosedEvents(
+			go monitorKeepClosedEvent(
+				ethereumChain,
+				event.KeepAddress,
+				keepsRegistry,
+				subscriptionOnSignatureRequested,
+			)
+			go monitorKeepTerminatedEvent(
 				ethereumChain,
 				event.KeepAddress,
 				keepsRegistry,
@@ -281,8 +293,10 @@ func generateSignatureForKeep(
 	}
 }
 
-// monitorKeepClosedEvents subscribes and unsubscribes for keep closed events.
-func monitorKeepClosedEvents(
+// monitorKeepClosedEvent monitors KeepClosed event and if that event happens
+// unsubscribes from signing event for the given keep and unregisters it from
+// the keep registry.
+func monitorKeepClosedEvent(
 	ethereumChain eth.Handle,
 	keepAddress common.Address,
 	keepsRegistry *registry.Keeps,
@@ -293,7 +307,7 @@ func monitorKeepClosedEvents(
 	subscriptionOnKeepClosed, err := ethereumChain.OnKeepClosed(
 		keepAddress,
 		func(event *eth.KeepClosedEvent) {
-			logger.Infof("keep [%s] is being closed", keepAddress.String())
+			logger.Infof("keep [%s] closed", keepAddress.String())
 			keepsRegistry.UnregisterKeep(keepAddress)
 			keepClosed <- event
 		},
@@ -312,8 +326,41 @@ func monitorKeepClosedEvents(
 
 	<-keepClosed
 
-	logger.Info(
-		"unsubscribing from events on keep closure",
-	)
+	logger.Info("unsubscribing from events on keep closed")
+}
 
+// monitorKeepTerminatedEvent monitors KeepTerminated event and if that event
+// happens unsubscribes from signing event for the given keep and unregisters it
+// from the keep registry.
+func monitorKeepTerminatedEvent(
+	ethereumChain eth.Handle,
+	keepAddress common.Address,
+	keepsRegistry *registry.Keeps,
+	subscriptionOnSignatureRequested subscription.EventSubscription,
+) {
+	keepTerminated := make(chan *eth.KeepTerminatedEvent)
+
+	subscriptionOnKeepTerminated, err := ethereumChain.OnKeepTerminated(
+		keepAddress,
+		func(event *eth.KeepTerminatedEvent) {
+			logger.Warningf("keep [%s] terminated", keepAddress.String())
+			keepsRegistry.UnregisterKeep(keepAddress)
+			keepTerminated <- event
+		},
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed on registering for keep terminated event: [%v]",
+			err,
+		)
+
+		return
+	}
+
+	defer subscriptionOnKeepTerminated.Unsubscribe()
+	defer subscriptionOnSignatureRequested.Unsubscribe()
+
+	<-keepTerminated
+
+	logger.Info("unsubscribing from events on keep terminated")
 }

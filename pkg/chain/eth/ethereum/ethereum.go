@@ -3,8 +3,8 @@ package ethereum
 
 import (
 	"fmt"
-	"time"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -70,22 +70,38 @@ func (ec *EthereumChain) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
-		keepContract, err := ec.getKeepContract(keepAddress)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
-		}
-		return keepContract.WatchKeepClosed(
-			func(
-				blockNumber uint64,
-			) {
-				handler(&eth.KeepClosedEvent{})
-			},
-			func(err error) error {
-				return fmt.Errorf("keep closed callback failed: [%v]", err)
-			},
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+	return keepContract.WatchKeepClosed(
+		func(blockNumber uint64) {
+			handler(&eth.KeepClosedEvent{})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep closed callback failed: [%v]", err)
+		},
 	)
 }
-		
+
+// OnKeepTerminated is a callback that is invoked on-chain when keep is terminated.
+func (ec *EthereumChain) OnKeepTerminated(
+	keepAddress common.Address,
+	handler func(event *eth.KeepTerminatedEvent),
+) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+	return keepContract.WatchKeepTerminated(
+		func(blockNumber uint64) {
+			handler(&eth.KeepTerminatedEvent{})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep terminated callback failed: [%v]", err)
+		},
+	)
+}
 
 // OnPublicKeyPublished is a callback that is invoked when an on-chain
 // event of a published public key was emitted.
@@ -177,7 +193,7 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	if err != nil {
 		return err
 	}
-	
+
 	submitPubKey := func() error {
 		transaction, err := keepContract.SubmitPublicKey(
 			publicKey[:],
@@ -188,11 +204,11 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		if err != nil {
 			return err
 		}
-		
+
 		logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
 		return nil
 	}
-	
+
 	// There might be a scenario, when a public key submission fails because of
 	// a new cloned contract has not been registered by the ethereum node. Common
 	// case is when Ethereum nodes are behind a load balancer and not fully synced
