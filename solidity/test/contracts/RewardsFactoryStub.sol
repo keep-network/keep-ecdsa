@@ -40,7 +40,8 @@ contract RewardsFactoryStub is BondedECDSAKeepFactory {
                 members,
                 members.length,
                 address(tokenStaking),
-                address(keepBonding)
+                address(keepBonding),
+                address(this)
             );
             keeps.push(keepAddress);
             creationTime[keepAddress] = timestamps[i];
@@ -61,6 +62,7 @@ contract RewardsFactoryStub is BondedECDSAKeepFactory {
             _owner,
             members,
             0,
+            address(0),
             address(0),
             address(0)
         );
