@@ -31,14 +31,8 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
     }
 
     function addKeep(address keep) public {
-        keeps[keep] = true;
-    }
-
-    function removeKeep(address keep) public {
-        keeps[keep] = false;
-    }
-
-    function hasKeep(address _keepAddress) public view returns (bool) {
-        return keeps[_keepAddress];
+        keeps.push(keep);
+        /* solium-disable-next-line security/no-block-members*/
+        creationTime[keep] = block.timestamp;
     }
 }

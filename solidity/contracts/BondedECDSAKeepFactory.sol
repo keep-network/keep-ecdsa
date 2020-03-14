@@ -41,12 +41,11 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // master contract for cloning.
     address public masterBondedECDSAKeepAddress;
 
-    // List of all opened keeps
+    // Keeps created by this factory.
     address[] public keeps;
 
-    // Maps creation timestamp to ecach keep address
+    // Maps creation timestamp to each keep address
     mapping(address => uint256) creationTime;
-
 
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
@@ -86,9 +85,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // reseed pool and later use this pool to reseed using a public reseed
     // function on a manual request at any moment.
     uint256 public reseedPool;
-
-    // Keeps created by this factory.
-    mapping(address => bool) keeps;
 
     constructor(
         address _masterBondedECDSAKeepAddress,
@@ -330,8 +326,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             address(this)
         );
 
-        keeps[keepAddress] = true;
-
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
                 members[i],
@@ -489,17 +483,11 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         tokenStaking.slash(minimumStake, keep.getMembers());
     }
 
-    /// @notice Notifies the factory that a keep has been closed.
-    /// @dev Function should be called by a keep which is being closed.
-    function notifyKeepClosed() public onlyKeep {
-        keeps[msg.sender] = false;
-    }
-
     /// @notice Checks if the caller is a keep created by this factory.
     /// @dev Throws an error if called by any account other than a keep.
     modifier onlyKeep() {
         require(
-            keeps[msg.sender],
+            creationTime[msg.sender] != 0 && BondedECDSAKeep(msg.sender).isActive(),
             "Caller is not an active keep created by this factory"
         );
         _;

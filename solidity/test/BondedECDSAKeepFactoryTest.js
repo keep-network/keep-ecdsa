@@ -1210,55 +1210,6 @@ contract("BondedECDSAKeepFactory", async accounts => {
         })
     })
 
-    describe("notifyKeepClosed", async () => {
-        const keepOwner = accounts[5]
-        let keep
-
-        before(async () => {
-            await initializeNewFactory()
-            await initializeMemberCandidates()
-            await registerMemberCandidates()
-
-
-            keep = await openKeep()
-        })
-
-        beforeEach(async () => {
-            await createSnapshot()
-        })
-
-        afterEach(async () => {
-            await restoreSnapshot()
-        })
-
-        it("reverts if called not by keep", async () => {
-            await expectRevert(
-                keepFactory.notifyKeepClosed(),
-                "Caller is not an active keep created by this factory"
-            )
-        })
-
-        it("reverts if called by not active keep", async () => {
-            // The keep is removed from the list of keeps created by the factory
-            // or it's already marked as inactive.
-            await keepFactory.removeKeep(keep.address)
-
-            await expectRevert(
-                keep.closeKeep({ from: keepOwner }),
-                "Caller is not an active keep created by this factory"
-            )
-        })
-
-        it("marks keep closed", async () => {
-            // Add keep to the list of keeps created by the factory.
-            await keepFactory.addKeep(keep.address)
-
-            await keep.closeKeep({ from: keepOwner })
-
-            assert.isFalse(await keepFactory.hasKeep(keep.address))
-        })
-    })
-
     describe("newGroupSelectionSeedFee", async () => {
         let newEntryFee;
 

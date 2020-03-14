@@ -271,7 +271,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// The application may decide to return part of bonds later after they are
     /// processed using returnPartialSignerBonds function.
     function seizeSignerBonds() external onlyOwner onlyWhenActive {
-        markAsTerminated();();
+        markAsTerminated();
 
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(
@@ -507,9 +507,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         );
 
         status = Status.Terminated;
-
-        keepFactory.notifyKeepClosed();
-
         emit KeepClosed();
     }
 
