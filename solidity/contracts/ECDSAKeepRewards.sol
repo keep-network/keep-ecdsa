@@ -347,7 +347,7 @@ contract ECDSAKeepRewards {
 
        if (eligible) {
            keepToken.approve(keepAddress, perKeepReward);
-           IBondedECDSAKeep(keepAddress).distributeERC20ToMembers(
+           IBondedECDSAKeep(keepAddress).distributeERC20Reward(
                address(keepToken),
                perKeepReward
            );
@@ -415,7 +415,7 @@ interface IBondedECDSAKeep {
     function isClosed() external view returns (bool);
     function isTerminated() external view returns (bool);
     function isActive() external view returns (bool);
-    function distributeERC20ToMembers(address _erc20, uint256 amount) external;
+    function distributeERC20Reward(address _erc20, uint256 amount) external;
 }
 
 interface IBondedECDSAKeepFactory {
