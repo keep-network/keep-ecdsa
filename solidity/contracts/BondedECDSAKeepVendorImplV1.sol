@@ -7,10 +7,9 @@ import "./api/IBondedECDSAKeepVendor.sol";
 /// @title Bonded ECDSA Keep Vendor
 /// @notice The contract is used to obtain a new Bonded ECDSA keep factory.
 contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
-
     // Mapping to store new implementation versions that inherit from
     // this contract.
-    mapping (string => bool) internal _initialized;
+    mapping(string => bool) internal _initialized;
 
     // Registry contract with a list of approved factories (operator contracts)
     // and upgraders.
@@ -21,11 +20,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
 
     /// @notice Initializes Keep Vendor contract implementation.
     /// @param registryAddress Keep registry contract linked to this contract.
-    function initialize(
-        address registryAddress
-    )
-        public
-    {
+    function initialize(address registryAddress) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         _initialized["BondedECDSAKeepVendorImplV1"] = true;
         registry = Registry(registryAddress);
@@ -40,7 +35,10 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     /// @dev Registers a new ECDSA keep factory. Address cannot be zero
     /// and replaces the old one if it was registered.
     /// @param _factory ECDSA keep factory address.
-    function registerFactory(address payable _factory) external onlyOperatorContractUpgrader {
+    function registerFactory(address payable _factory)
+        external
+        onlyOperatorContractUpgrader
+    {
         require(_factory != address(0), "Incorrect factory address");
         require(
             registry.isApprovedOperatorContract(_factory),
@@ -59,8 +57,13 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
     /// @dev Throws if called by any account other than the operator contract
     /// upgrader authorized for this service contract.
     modifier onlyOperatorContractUpgrader() {
-        address operatorContractUpgrader = registry.operatorContractUpgraderFor(address(this));
-        require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
+        address operatorContractUpgrader = registry.operatorContractUpgraderFor(
+            address(this)
+        );
+        require(
+            operatorContractUpgrader == msg.sender,
+            "Caller is not operator contract upgrader"
+        );
         _;
     }
 }

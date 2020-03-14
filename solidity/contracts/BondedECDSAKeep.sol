@@ -270,8 +270,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// process has timed out. This function seizes all of signers' bonds.
     /// The application may decide to return part of bonds later after they are
     /// processed using returnPartialSignerBonds function.
-    function seizeSignerBonds() external onlyOwner {
-        markAsTerminated();
+    function seizeSignerBonds() external onlyOwner onlyWhenActive {
+        markAsTerminated();();
 
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(
