@@ -101,9 +101,13 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Notification that ERC20 reward has been distributed to keep members.
     event ERC20RewardDistributed();
 
-    // Notification that the keep was closed by the owner. Members no longer need
-    // to support it.
+    // Notification that the keep has been closed by the owner.
+    // Members no longer need to support this keep.
     event KeepClosed();
+
+    // Notification that the keep has been terminated by the owner.
+    // Members no longer need to support this keep.
+    event KeepTerminated();
 
     // Notification that the signature has been calculated. Contains a digest which
     // was used for signature calculation and a signature in a form of r, s and
@@ -507,7 +511,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         );
 
         status = Status.Terminated;
-        emit KeepClosed();
+        emit KeepTerminated();
     }
 
     /// @notice Returns bonds to the keep members.
