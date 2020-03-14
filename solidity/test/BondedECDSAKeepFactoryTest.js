@@ -1083,6 +1083,28 @@ contract("BondedECDSAKeepFactory", async accounts => {
             )
         })
 
+        it("produces active keeps", async () => {
+            let keepAddress = await keepFactory.openKeep.call(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate }
+            )
+
+            await keepFactory.openKeep(
+                groupSize,
+                threshold,
+                keepOwner,
+                bond,
+                { from: application, value: feeEstimate }
+            )     
+
+            let keep = await BondedECDSAKeep.at(keepAddress)
+
+            assert.isTrue(await keep.isActive(), "keep should be active")
+        })
+
         async function createDepositAndRegisterMembers(memberCount, unbondedAmount) {
             const stakeBalance = await keepFactory.minimumStake.call()
 
