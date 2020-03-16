@@ -32,6 +32,7 @@ gen_contract_go: $(contract_files)
 abi/%.abi: ${solidity_dir}/contracts/%.sol
 	solc solidity-bytes-utils/=${solidity_dir}/node_modules/solidity-bytes-utils/ \
 		 openzeppelin-solidity/=${solidity_dir}/node_modules/openzeppelin-solidity/ \
+		 @openzeppelin/upgrades/=${solidity_dir}/node_modules/@openzeppelin/upgrades/ \
 		 @keep-network/keep-core/=${solidity_dir}/node_modules/@keep-network/keep-core/  \
 		 @keep-network/sortition-pools/=${solidity_dir}/node_modules/@keep-network/sortition-pools/  \
 		 --allow-paths ${solidity_dir} \
