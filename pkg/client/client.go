@@ -250,11 +250,11 @@ func checkAwaitingSignature(
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
 ) {
-	logger.Debugf("checking awaiting signature for keep [%s]", keepAddress)
+	logger.Debugf("checking awaiting signature for keep [%s]", keepAddress.String())
 
 	latestDigest, err := ethereumChain.LatestDigest(keepAddress)
 	if err != nil {
-		logger.Errorf("could not get latest digest for keep [%s]", keepAddress)
+		logger.Errorf("could not get latest digest for keep [%s]", keepAddress.String())
 		return
 	}
 
@@ -264,7 +264,7 @@ func checkAwaitingSignature(
 			"could not check awaiting signature of "+
 				"digest [%+x] for keep [%s]",
 			latestDigest,
-			keepAddress,
+			keepAddress.String(),
 		)
 		return
 	}
