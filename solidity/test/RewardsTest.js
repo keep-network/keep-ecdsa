@@ -532,4 +532,68 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             )
         })
     })
+
+    describe("reportTermination", async () => {
+        it("unallocates rewards allocated to terminated keeps", async () => {
+            let timestamps = rewardTimestamps
+            await createKeeps(timestamps)
+
+            let closedKeepAddress = await keepFactory.getKeepAtIndex(1)
+            let closedKeep = await RewardsKeepStub.at(closedKeepAddress)
+            await closedKeep.close()
+            await rewards.receiveReward(closedKeepAddress) // allocate rewards
+
+            let terminatedKeepAddress = await keepFactory.getKeepAtIndex(0)
+            let terminatedKeep = await RewardsKeepStub.at(terminatedKeepAddress)
+            await terminatedKeep.terminate()
+            let preUnallocated = await rewards.getUnallocatedRewards()
+            await rewards.reportTermination(terminatedKeepAddress)
+            let postUnallocated = await rewards.getUnallocatedRewards()
+            expect(postUnallocated.toNumber()).to.equal(
+                preUnallocated.toNumber() + 66666
+            )
+        })
+
+        it("doesn't unallocate rewards twice for the same keep", async () => {
+            let timestamps = rewardTimestamps
+            await createKeeps(timestamps)
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.terminate()
+            await rewards.reportTermination(keepAddress)
+            await expectRevert(
+                rewards.reportTermination(keepAddress),
+                "Rewards already claimed"
+            )
+        })
+
+        it("doesn't unallocate active keeps' rewards", async () => {
+            await createKeeps(rewardTimestamps)
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            await expectRevert(
+                rewards.reportTermination(keepAddress),
+                "Keep is not terminated"
+            )
+        })
+
+        it("doesn't unallocate closed keeps' rewards", async () => {
+            await createKeeps(rewardTimestamps)
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.close()
+            await expectRevert(
+                rewards.reportTermination(keepAddress),
+                "Keep is not terminated"
+            )
+        })
+
+        it("doesn't unallocate unrecognized keeps' rewards", async () => {
+            await createKeeps(rewardTimestamps)
+            let fakeKeepAddress = accounts[8]
+            await expectRevert(
+                rewards.reportTermination(fakeKeepAddress),
+                "Keep address not recognized by factory"
+            )
+        })
+    })
 })
