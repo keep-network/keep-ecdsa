@@ -118,7 +118,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
             assert.equal(await keepVendor.getNewKeepFactory(), address3);
         });
 
-        it.skip("allows change back to current factory", async () => {
+        it("allows change back to current factory", async () => {
             await keepVendor.registerFactory(address2, { from: implOwner });
 
             await keepVendor.registerFactory(address1, { from: implOwner });
@@ -209,6 +209,15 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
                 keepVendor.completeFactoryRegistration(),
                 "Timer not elapsed"
             );
+        });
+
+        it("clears new factory", async () => {
+            await keepVendor.registerFactory(address2, { from: implOwner });
+            await time.increase(await keepVendor.factoryRegistrationTimeDelay());
+
+            await keepVendor.completeFactoryRegistration();
+
+            assert.equal(await keepVendor.getNewKeepFactory(), address0);
         });
 
         it("clears timestamp", async () => {

@@ -73,7 +73,14 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     {
         require(_factory != address(0), "Incorrect factory address");
 
-        require(keepFactory != _factory, "Factory already registered");
+        if (upgradeInitiated()) {
+            require(
+                newKeepFactory != _factory,
+                "Factory upgrade already initiated"
+            );
+        } else {
+            require(keepFactory != _factory, "Factory already registered");
+        }
 
         require(
             registry.isApprovedOperatorContract(_factory),
@@ -96,10 +103,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     /// has passed since the new factory registration. It emits an event
     /// containing the new factory address.
     function completeFactoryRegistration() public {
-        require(
-            factoryRegistrationInitiatedTimestamp > 0,
-            "Upgrade not initiated"
-        );
+        require(upgradeInitiated(), "Upgrade not initiated");
 
         require(
             /* solium-disable-next-line security/no-block-members */
@@ -109,9 +113,14 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
         );
 
         keepFactory = newKeepFactory;
+        newKeepFactory = address(0);
         factoryRegistrationInitiatedTimestamp = 0;
 
-        emit FactoryRegistered(newKeepFactory);
+        emit FactoryRegistered(keepFactory);
+    }
+
+    function upgradeInitiated() internal view returns (bool) {
+        return factoryRegistrationInitiatedTimestamp > 0;
     }
 
     /// @notice Selects the latest ECDSA keep factory.
