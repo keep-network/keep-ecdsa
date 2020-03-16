@@ -17,33 +17,39 @@ contract BondedECDSAKeepVendor is Proxy {
     /// validated in the constructor.
     bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
-    // Storage position of the upgrade time delay. Upgrade time delay defines a
-    // period for implementation upgrade.
-    bytes32 private constant upgradeTimeDelayPosition = keccak256(
-        "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
-    );
+    /// @dev Storage slot with the upgrade time delay. Upgrade time delay defines a
+    /// period for implementation upgrade.
+    /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
+    /// subtracted by 1, and is validated in the constructor.
+    bytes32 internal constant UPGRADE_TIME_DELAY_SLOT = 0x3ca583dafde9ce8bdb41fe825f85984a83b08ecf90ffaccbc4b049e8d8703563;
 
-    // Storage position of the new implementation address.
-    bytes32 private constant newImplementationPosition = keccak256(
-        "network.keep.bondedecdsavendor.proxy.newImplementation"
-    );
+    /// @dev Storage slot with the new implementation address.
+    /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.newImplementation"
+    /// subtracted by 1, and is validated in the constructor.
+    bytes32 internal constant NEW_IMPLEMENTATION_SLOT = 0xc1df127844d6e234fe925e20c7427692c06a35578419bbd7d991af12444e1560;
 
-    // Storage position of the implementation address upgrade initiation.
-    bytes32 private constant upgradeInitiatedTimestampPosition = keccak256(
-        "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
-    );
+    /// @dev Storage slot with the implementation address upgrade initiation.
+    /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
+    /// subtracted by 1, and is validated in the constructor.
+    bytes32 internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0x0816e8d9eeb2554df0d0b7edc58e2d957e6ce18adf92c138b50dd78a420bebaf;
 
     event UpgradeStarted(address implementation, uint256 timestamp);
     event Upgraded(address implementation);
 
     constructor(address _implementation, bytes memory _data) public {
-        assert(
-            IMPLEMENTATION_SLOT ==
-                bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
+        assertSlot(IMPLEMENTATION_SLOT, "eip1967.proxy.implementation");
+        assertSlot(ADMIN_SLOT, "eip1967.proxy.admin");
+        assertSlot(
+            UPGRADE_TIME_DELAY_SLOT,
+            "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
         );
-
-        assert(
-            ADMIN_SLOT == bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1)
+        assertSlot(
+            NEW_IMPLEMENTATION_SLOT,
+            "network.keep.bondedecdsavendor.proxy.newImplementation"
+        );
+        assertSlot(
+            UPGRADE_INIT_TIMESTAMP_SLOT,
+            "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
         );
 
         require(
@@ -131,6 +137,15 @@ contract BondedECDSAKeepVendor is Proxy {
         }
     }
 
+    /// @notice Asserts correct slot for provided key.
+    /// @dev To avoid clashing with implementation's fields the proxy contract
+    /// defines its' fields on specific slots. Slot is calculated as hash of a string
+    /// subtracted by 1 to reduce chances of a possible attack. For details see
+    /// EIP-1967.
+    function assertSlot(bytes32 slot, bytes memory key) internal view {
+        assert(slot == bytes32(uint256(keccak256(key)) - 1));
+    }
+
     /// @notice Gets the address of the current vendor implementation.
     /// @return Address of the current implementation.
     function implementation() public view returns (address) {
@@ -164,7 +179,7 @@ contract BondedECDSAKeepVendor is Proxy {
         view
         returns (uint256 _upgradeTimeDelay)
     {
-        bytes32 position = upgradeTimeDelayPosition;
+        bytes32 position = UPGRADE_TIME_DELAY_SLOT;
         /* solium-disable-next-line */
         assembly {
             _upgradeTimeDelay := sload(position)
@@ -172,7 +187,7 @@ contract BondedECDSAKeepVendor is Proxy {
     }
 
     function setUpgradeTimeDelay(uint256 _upgradeTimeDelay) internal {
-        bytes32 position = upgradeTimeDelayPosition;
+        bytes32 position = UPGRADE_TIME_DELAY_SLOT;
         /* solium-disable-next-line */
         assembly {
             sstore(position, _upgradeTimeDelay)
@@ -184,7 +199,7 @@ contract BondedECDSAKeepVendor is Proxy {
         view
         returns (address _newImplementation)
     {
-        bytes32 position = newImplementationPosition;
+        bytes32 position = NEW_IMPLEMENTATION_SLOT;
         /* solium-disable-next-line */
         assembly {
             _newImplementation := sload(position)
@@ -192,7 +207,7 @@ contract BondedECDSAKeepVendor is Proxy {
     }
 
     function setNewImplementation(address _newImplementation) internal {
-        bytes32 position = newImplementationPosition;
+        bytes32 position = NEW_IMPLEMENTATION_SLOT;
         /* solium-disable-next-line */
         assembly {
             sstore(position, _newImplementation)
@@ -204,7 +219,7 @@ contract BondedECDSAKeepVendor is Proxy {
         view
         returns (uint256 _upgradeInitiatedTimestamp)
     {
-        bytes32 position = upgradeInitiatedTimestampPosition;
+        bytes32 position = UPGRADE_INIT_TIMESTAMP_SLOT;
         /* solium-disable-next-line */
         assembly {
             _upgradeInitiatedTimestamp := sload(position)
@@ -214,7 +229,7 @@ contract BondedECDSAKeepVendor is Proxy {
     function setUpgradeInitiatedTimestamp(uint256 _upgradeInitiatedTimestamp)
         internal
     {
-        bytes32 position = upgradeInitiatedTimestampPosition;
+        bytes32 position = UPGRADE_INIT_TIMESTAMP_SLOT;
         /* solium-disable-next-line */
         assembly {
             sstore(position, _upgradeInitiatedTimestamp)
@@ -235,7 +250,6 @@ contract BondedECDSAKeepVendor is Proxy {
     /// @param _newAdmin Address of the new proxy admin.
     function setAdmin(address _newAdmin) internal {
         bytes32 slot = ADMIN_SLOT;
-
         /* solium-disable-next-line */
         assembly {
             sstore(slot, _newAdmin)
