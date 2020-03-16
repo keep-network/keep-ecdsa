@@ -345,3 +345,12 @@ func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) 
 
 	return nil
 }
+
+func (ec *EthereumChain) LatestDigest(keepAddress common.Address) ([32]byte, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return [32]byte{}, err
+	}
+
+	return keepContract.Digest()
+}
