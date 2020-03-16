@@ -73,7 +73,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     {
         require(_factory != address(0), "Incorrect factory address");
 
-        if (upgradeInitiated()) {
+        if (isUpgradeInitiated()) {
             require(
                 newKeepFactory != _factory,
                 "Factory upgrade already initiated"
@@ -103,7 +103,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     /// has passed since the new factory upgrade. It emits an event
     /// containing the new factory address.
     function completeFactoryUpgrade() public {
-        require(upgradeInitiated(), "Upgrade not initiated");
+        require(isUpgradeInitiated(), "Upgrade not initiated");
 
         require(
             /* solium-disable-next-line security/no-block-members */
@@ -119,7 +119,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
         emit FactoryUpgradeCompleted(keepFactory);
     }
 
-    function upgradeInitiated() internal view returns (bool) {
+    function isUpgradeInitiated() internal view returns (bool) {
         return factoryUpgradeInitiatedTimestamp > 0;
     }
 
