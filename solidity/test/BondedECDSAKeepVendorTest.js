@@ -147,9 +147,10 @@ contract("BondedECDSAKeepVendor", async accounts => {
       );
     });
 
-    it("reverts when called by non-owner", async () => {
-      await expectRevert.unspecified(
-        keepVendor.upgradeToAndCall(address1, initializeCallData)
+    it("reverts when called by non-admin", async () => {
+      await expectRevert(
+        keepVendor.upgradeToAndCall(address1, initializeCallData),
+        "Caller is not the admin"
       );
     });
 
