@@ -123,10 +123,10 @@ contract ECDSAKeepRewards {
     /// @param _keep The keep to check.
     /// @return True if the keep is eligible, false otherwise
     function eligibleForReward(address _keep) public view returns (bool){
-        bool claimed = _rewardClaimed(_keep);
+        bool _claimed = _rewardClaimed(_keep);
         bool closed = _isClosed(_keep);
         bool recognized = _recognizedByFactory(_keep);
-        return !claimed && closed && recognized;
+        return !_claimed && closed && recognized;
     }
 
     /// @notice Checks if a keep is terminated
@@ -134,10 +134,10 @@ contract ECDSAKeepRewards {
     /// @param _keep The keep to check.
     /// @return True if the keep is terminated, false otherwise
     function eligibleButTerminated(address _keep) public view returns (bool) {
-        bool claimed = _rewardClaimed(_keep);
+        bool _claimed = _rewardClaimed(_keep);
         bool terminated = _isTerminated(_keep);
         bool recognized = _recognizedByFactory(_keep);
-        return !claimed && terminated && recognized;
+        return !_claimed && terminated && recognized;
     }
 
     /// @notice Return the interval number
@@ -313,20 +313,20 @@ contract ECDSAKeepRewards {
    }
 
    function _adjustedAllocation(uint256 interval) internal returns (uint256) {
-       uint256 _baseAllocation = _baseAllocation(interval);
+       uint256 __baseAllocation = _baseAllocation(interval);
        uint256 adjustmentPercentage = _keepCountAdjustment(interval);
-       return _baseAllocation.mul(adjustmentPercentage).div(100);
+       return __baseAllocation.mul(adjustmentPercentage).div(100);
    }
 
    function _rewardPerKeep(uint256 interval) internal returns (uint256) {
-       uint256 _adjustedAllocation = _adjustedAllocation(interval);
-       if (_adjustedAllocation == 0) {
+       uint256 __adjustedAllocation = _adjustedAllocation(interval);
+       if (__adjustedAllocation == 0) {
            return 0;
        }
        uint256 keepCount = _keepsInInterval(interval);
        // Adjusted allocation would be zero if keep count was zero
        assert(keepCount > 0);
-       return _adjustedAllocation.div(keepCount);
+       return __adjustedAllocation.div(keepCount);
    }
 
    function _allocateRewards(uint256 interval)
@@ -373,8 +373,8 @@ contract ECDSAKeepRewards {
            _allocateRewards(interval);
        }
        uint256 allocation = intervalAllocations[interval];
-       uint256 _keepsInInterval = _keepsInInterval(interval);
-       uint256 perKeepReward = allocation.div(_keepsInInterval);
+       uint256 __keepsInInterval = _keepsInInterval(interval);
+       uint256 perKeepReward = allocation.div(__keepsInInterval);
        uint256 processedKeeps = intervalKeepsProcessed[interval];
        claimed[keepAddress] = true;
        intervalKeepsProcessed[interval] = processedKeeps + 1;
