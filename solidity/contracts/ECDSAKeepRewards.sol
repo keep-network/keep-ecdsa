@@ -102,18 +102,18 @@ contract ECDSAKeepRewards {
     /// @notice Sends the reward for a keep to the keep members.
     /// @param keepAddress ECDSA keep factory address.
     function receiveReward(address keepAddress)
+        factoryMustRecognize(keepAddress)
         rewardsNotClaimed(keepAddress)
         mustBeClosed(keepAddress)
-        factoryMustRecognize(keepAddress)
         public
     {
         _processKeep(true, keepAddress);
     }
 
     function reportTermination(address keepAddress)
+        factoryMustRecognize(keepAddress)
         rewardsNotClaimed(keepAddress)
         mustBeTerminated(keepAddress)
-        factoryMustRecognize(keepAddress)
         public
     {
         _processKeep(false, keepAddress);

@@ -489,5 +489,47 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             let aliceBalance = await token.balanceOf(aliceBeneficiary)
             expect(aliceBalance.toNumber()).to.equal(33333)
         })
+
+        it("doesn't let keeps claim rewards again", async () => {
+            let timestamps = rewardTimestamps
+            await createKeeps(timestamps)
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.close()
+            await rewards.receiveReward(keepAddress)
+            await expectRevert(
+                rewards.receiveReward(keepAddress),
+                "Rewards already claimed"
+            )
+        })
+
+        it("doesn't let active keeps claim the reward", async () => {
+            await createKeeps(rewardTimestamps)
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            await expectRevert(
+                rewards.receiveReward(keepAddress),
+                "Keep is not closed"
+            )
+        })
+
+        it("doesn't let terminated keeps claim the reward", async () => {
+            await createKeeps(rewardTimestamps)
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.terminate()
+            await expectRevert(
+                rewards.receiveReward(keepAddress),
+                "Keep is not closed"
+            )
+        })
+
+        it("doesn't let unrecognized keeps claim the reward", async () => {
+            await createKeeps(rewardTimestamps)
+            let fakeKeepAddress = accounts[8]
+            await expectRevert(
+                rewards.receiveReward(fakeKeepAddress),
+                "Keep address not recognized by factory"
+            )
+        })
     })
 })
