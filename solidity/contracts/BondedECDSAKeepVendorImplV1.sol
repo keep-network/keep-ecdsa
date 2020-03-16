@@ -61,7 +61,6 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     /// contract.
     function initialize(address registryAddress, address payable factory)
         public
-        onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
         _initialized["BondedECDSAKeepVendorImplV1"] = true;
