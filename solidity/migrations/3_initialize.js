@@ -15,19 +15,24 @@ module.exports = async function (deployer) {
         registry = await Registry.at(RegistryAddress)
     }
 
-    const vendor = await BondedECDSAKeepVendorImplV1.at(BondedECDSAKeepVendor.address)
-    await vendor.initialize(registry.address)
+    const proxy = await BondedECDSAKeepVendor.deployed()
+    const vendor = await BondedECDSAKeepVendorImplV1.at(proxy.address)
+
+    // The vendor implementation is being initialized as part of the vendor proxy
+    // deployment. Here we just want to sanity check if it is initialized.
+    if (!(await vendor.initialized())) {
+        throw Error("vendor contract not initialized")
+    }
+
+    const factoryAddress = await vendor.selectFactory()
+    console.log(`current factory address: [${factoryAddress}]`)
 
     // Configure registry
     await registry.approveOperatorContract(BondedECDSAKeepFactory.address)
     console.log(`approved operator contract [${BondedECDSAKeepFactory.address}] in registry`)
 
     // Set service contract owner as operator contract upgrader by default
-    const operatorContractUpgrader = await vendor.owner()
+    const operatorContractUpgrader = await proxy.admin()
     await registry.setOperatorContractUpgrader(vendor.address, operatorContractUpgrader)
     console.log(`set operator [${operatorContractUpgrader}] as [${vendor.address}] contract upgrader`)
-
-    // Register keep factory
-    await vendor.registerFactory(BondedECDSAKeepFactory.address)
-    console.log(`registered factory [${BondedECDSAKeepFactory.address}] in vendor contract`)
 }

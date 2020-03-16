@@ -1,28 +1,168 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
 
 /// @title Proxy contract for Bonded ECDSA Keep vendor.
-contract BondedECDSAKeepVendor is Ownable {
-    // Storage position of the address of the current implementation
-    bytes32 private constant implementationPosition = keccak256(
-        "network.keep.bondedecdsavendor.proxy.implementation"
-    );
+contract BondedECDSAKeepVendor is Proxy {
+    using SafeMath for uint256;
 
-    event Upgraded(address implementation);
+    /// @dev Storage slot with the admin of the contract.
+    /// This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1, and is
+    /// validated in the constructor.
+    bytes32 internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
-    constructor(address _implementation) public {
-        require(_implementation != address(0), "Implementation address can't be zero.");
+    /// @dev Storage slot with the address of the current implementation.
+    /// This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1, and is
+    /// validated in the constructor.
+    bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+
+    /// @dev Storage slot with the upgrade time delay. Upgrade time delay defines a
+    /// period for implementation upgrade.
+    /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
+    /// subtracted by 1, and is validated in the constructor.
+    bytes32 internal constant UPGRADE_TIME_DELAY_SLOT = 0x3ca583dafde9ce8bdb41fe825f85984a83b08ecf90ffaccbc4b049e8d8703563;
+
+    /// @dev Storage slot with the new implementation address.
+    /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeImplementation"
+    /// subtracted by 1, and is validated in the constructor.
+    bytes32 internal constant UPGRADE_IMPLEMENTATION_SLOT = 0x4e06287250f0fdd90b4a096f346c06d4e706d470a14747ab56a0156d48a6883f;
+
+    /// @dev Storage slot with the implementation address upgrade initiation.
+    /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
+    /// subtracted by 1, and is validated in the constructor.
+    bytes32 internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0x0816e8d9eeb2554df0d0b7edc58e2d957e6ce18adf92c138b50dd78a420bebaf;
+
+    event UpgradeStarted(address implementation, uint256 timestamp);
+    event UpgradeCompleted(address implementation);
+
+    constructor(address _implementation, bytes memory _data) public {
+        assertSlot(IMPLEMENTATION_SLOT, "eip1967.proxy.implementation");
+        assertSlot(ADMIN_SLOT, "eip1967.proxy.admin");
+        assertSlot(
+            UPGRADE_TIME_DELAY_SLOT,
+            "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
+        );
+        assertSlot(
+            UPGRADE_IMPLEMENTATION_SLOT,
+            "network.keep.bondedecdsavendor.proxy.upgradeImplementation"
+        );
+        assertSlot(
+            UPGRADE_INIT_TIMESTAMP_SLOT,
+            "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
+        );
+
+        require(
+            _implementation != address(0),
+            "Implementation address can't be zero."
+        );
+
+        if (_data.length > 0) {
+            initializeImplementation(_implementation, _data);
+        }
+
         setImplementation(_implementation);
+
+        setUpgradeTimeDelay(1 days);
+
+        setAdmin(msg.sender);
+    }
+
+    /// @notice Starts upgrade of the current vendor implementation.
+    /// @dev It is the first part of the two-step implementation address update
+    /// process. The function emits an event containing the new value and current
+    /// block timestamp.
+    /// @param _newImplementation Address of the new vendor implementation contract.
+    /// @param _data Delegate call data for implementation initialization.
+    function upgradeToAndCall(address _newImplementation, bytes memory _data)
+        public
+        onlyAdmin
+    {
+        address currentImplementation = _implementation();
+        require(
+            _newImplementation != address(0),
+            "Implementation address can't be zero."
+        );
+        require(
+            _newImplementation != currentImplementation,
+            "Implementation address must be different from the current one."
+        );
+
+        if (_data.length > 0) {
+            initializeImplementation(_newImplementation, _data);
+        }
+
+        setNewImplementation(_newImplementation);
+
+        /* solium-disable-next-line security/no-block-members */
+        setUpgradeInitiatedTimestamp(block.timestamp);
+
+        /* solium-disable-next-line security/no-block-members */
+        emit UpgradeStarted(_newImplementation, block.timestamp);
+    }
+
+    /// @notice Finalizes implementation address upgrade.
+    /// @dev It is the second part of the two-step implementation address update
+    /// process. The function emits an event containing the new implementation
+    /// address. It can be called after upgrade time delay period has passed since
+    /// upgrade initiation.
+    function completeUpgrade() public {
+        require(upgradeInitiatedTimestamp() > 0, "Upgrade not initiated");
+
+        require(
+            /* solium-disable-next-line security/no-block-members */
+            block.timestamp.sub(upgradeInitiatedTimestamp()) >=
+                upgradeTimeDelay(),
+            "Timer not elapsed"
+        );
+
+        address newImplementation = newImplementation();
+
+        setImplementation(newImplementation);
+        setUpgradeInitiatedTimestamp(0);
+
+        emit UpgradeCompleted(newImplementation);
+    }
+
+    /// @notice Initializes implementation contract.
+    /// @dev Delegates a call to the implementation with provided data. It is
+    /// expected that data contains details of function to be called.
+    /// @param _implementation Address of the new vendor implementation contract.
+    /// @param _data Delegate call data for implementation initialization.
+    function initializeImplementation(
+        address _implementation,
+        bytes memory _data
+    ) internal {
+        (bool success, bytes memory returnData) = _implementation.delegatecall(
+            _data
+        );
+
+        require(success, string(returnData));
+    }
+
+    /// @notice Asserts correct slot for provided key.
+    /// @dev To avoid clashing with implementation's fields the proxy contract
+    /// defines its' fields on specific slots. Slot is calculated as hash of a string
+    /// subtracted by 1 to reduce chances of a possible attack. For details see
+    /// EIP-1967.
+    function assertSlot(bytes32 slot, bytes memory key) internal pure {
+        assert(slot == bytes32(uint256(keccak256(key)) - 1));
     }
 
     /// @notice Gets the address of the current vendor implementation.
     /// @return Address of the current implementation.
-    function implementation() public view returns (address _implementation) {
-        bytes32 position = implementationPosition;
+    function implementation() public view returns (address) {
+        return _implementation();
+    }
+
+    /// @dev Returns the current implementation. Implements function from `Proxy`
+    /// contract.
+    /// @return Address of the current implementation
+    function _implementation() internal view returns (address impl) {
+        bytes32 slot = IMPLEMENTATION_SLOT;
         /* solium-disable-next-line */
         assembly {
-            _implementation := sload(position)
+            impl := sload(slot)
         }
     }
 
@@ -30,43 +170,98 @@ contract BondedECDSAKeepVendor is Ownable {
     /// @param _implementation Address representing the new implementation to
     /// be set.
     function setImplementation(address _implementation) internal {
-        bytes32 position = implementationPosition;
+        bytes32 slot = IMPLEMENTATION_SLOT;
         /* solium-disable-next-line */
         assembly {
-            sstore(position, _implementation)
+            sstore(slot, _implementation)
         }
     }
 
-    /// @notice Delegates call to the current implementation contract.
-    function() external payable {
-        address _impl = implementation();
+    function upgradeTimeDelay()
+        public
+        view
+        returns (uint256 _upgradeTimeDelay)
+    {
+        bytes32 position = UPGRADE_TIME_DELAY_SLOT;
         /* solium-disable-next-line */
         assembly {
-            let ptr := mload(0x40)
-            calldatacopy(ptr, 0, calldatasize)
-            let result := delegatecall(gas, _impl, ptr, calldatasize, 0, 0)
-            let size := returndatasize
-            returndatacopy(ptr, 0, size)
-
-            switch result
-            case 0 { revert(ptr, size) }
-            default { return(ptr, size) }
+            _upgradeTimeDelay := sload(position)
         }
     }
 
-    /// @notice Upgrades the current vendor implementation.
-    /// @param _implementation Address of the new vendor implementation contract.
-    function upgradeTo(address _implementation) public onlyOwner {
-        address currentImplementation = implementation();
-        require(
-            _implementation != address(0),
-            "Implementation address can't be zero."
-        );
-        require(
-            _implementation != currentImplementation,
-            "Implementation address must be different from the current one."
-        );
-        setImplementation(_implementation);
-        emit Upgraded(_implementation);
+    function setUpgradeTimeDelay(uint256 _upgradeTimeDelay) internal {
+        bytes32 position = UPGRADE_TIME_DELAY_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _upgradeTimeDelay)
+        }
+    }
+
+    function newImplementation()
+        public
+        view
+        returns (address _newImplementation)
+    {
+        bytes32 position = UPGRADE_IMPLEMENTATION_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            _newImplementation := sload(position)
+        }
+    }
+
+    function setNewImplementation(address _newImplementation) internal {
+        bytes32 position = UPGRADE_IMPLEMENTATION_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _newImplementation)
+        }
+    }
+
+    function upgradeInitiatedTimestamp()
+        public
+        view
+        returns (uint256 _upgradeInitiatedTimestamp)
+    {
+        bytes32 position = UPGRADE_INIT_TIMESTAMP_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            _upgradeInitiatedTimestamp := sload(position)
+        }
+    }
+
+    function setUpgradeInitiatedTimestamp(uint256 _upgradeInitiatedTimestamp)
+        internal
+    {
+        bytes32 position = UPGRADE_INIT_TIMESTAMP_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _upgradeInitiatedTimestamp)
+        }
+    }
+
+    /// @notice The admin slot.
+    /// @return The contract owner's address.
+    function admin() public view returns (address adm) {
+        bytes32 slot = ADMIN_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            adm := sload(slot)
+        }
+    }
+
+    /// @dev Sets the address of the proxy admin.
+    /// @param _newAdmin Address of the new proxy admin.
+    function setAdmin(address _newAdmin) internal {
+        bytes32 slot = ADMIN_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(slot, _newAdmin)
+        }
+    }
+
+    /// @dev Throws if called by any account other than the contract owner.
+    modifier onlyAdmin() {
+        require(msg.sender == admin(), "Caller is not the admin");
+        _;
     }
 }
