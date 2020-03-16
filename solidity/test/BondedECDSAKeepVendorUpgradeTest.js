@@ -39,7 +39,7 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
     );
   });
 
-  describe("upgrade", async () => {
+  describe("upgrade process", async () => {
     beforeEach(async () => {
       await createSnapshot();
     });
