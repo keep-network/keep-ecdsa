@@ -224,7 +224,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
 
       const receipt = await keepVendor.completeUpgrade();
 
-      expectEvent(receipt, "Upgraded", {
+      expectEvent(receipt, "UpgradeCompleted", {
         implementation: address1
       });
     });

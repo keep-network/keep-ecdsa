@@ -34,7 +34,7 @@ contract BondedECDSAKeepVendor is Proxy {
     bytes32 internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0x0816e8d9eeb2554df0d0b7edc58e2d957e6ce18adf92c138b50dd78a420bebaf;
 
     event UpgradeStarted(address implementation, uint256 timestamp);
-    event Upgraded(address implementation);
+    event UpgradeCompleted(address implementation);
 
     constructor(address _implementation, bytes memory _data) public {
         assertSlot(IMPLEMENTATION_SLOT, "eip1967.proxy.implementation");
@@ -117,7 +117,7 @@ contract BondedECDSAKeepVendor is Proxy {
         setImplementation(newImplementation);
         setUpgradeInitiatedTimestamp(0);
 
-        emit Upgraded(newImplementation);
+        emit UpgradeCompleted(newImplementation);
     }
 
     /// @notice Initializes implementation contract.

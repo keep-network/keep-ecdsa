@@ -59,7 +59,7 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
       await time.increase(await keepVendorProxy.upgradeTimeDelay());
 
       const receipt = await keepVendorProxy.completeUpgrade();
-      expectEvent(receipt, "Upgraded", {
+      expectEvent(receipt, "UpgradeCompleted", {
         implementation: implV2.address
       });
 
