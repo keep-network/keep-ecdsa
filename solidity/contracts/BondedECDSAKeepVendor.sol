@@ -145,7 +145,7 @@ contract BondedECDSAKeepVendor is Proxy {
     /// defines its' fields on specific slots. Slot is calculated as hash of a string
     /// subtracted by 1 to reduce chances of a possible attack. For details see
     /// EIP-1967.
-    function assertSlot(bytes32 slot, bytes memory key) internal view {
+    function assertSlot(bytes32 slot, bytes memory key) internal pure {
         assert(slot == bytes32(uint256(keccak256(key)) - 1));
     }
 
