@@ -228,6 +228,8 @@ func monitorSigningRequests(
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
 ) (subscription.EventSubscription, error) {
+	go checkAwaitingSignature(ethereumChain, tssNode, keepAddress, signer)
+
 	return ethereumChain.OnSignatureRequested(
 		keepAddress,
 		func(event *eth.SignatureRequestedEvent) {
@@ -237,16 +239,46 @@ func monitorSigningRequests(
 				event.Digest,
 			)
 
-			go generateSignatureForKeep(tssNode, keepAddress, signer, event)
+			go generateSignatureForKeep(tssNode, keepAddress, signer, event.Digest)
 		},
 	)
+}
+
+func checkAwaitingSignature(
+	ethereumChain eth.Handle,
+	tssNode *node.Node,
+	keepAddress common.Address,
+	signer *tss.ThresholdSigner,
+) {
+	logger.Debugf("checking awaiting signature for keep [%s]", keepAddress)
+
+	latestDigest, err := ethereumChain.LatestDigest(keepAddress)
+	if err != nil {
+		logger.Errorf("could not get latest digest for keep [%s]", keepAddress)
+		return
+	}
+
+	isAwaitingDigest, err := ethereumChain.IsAwaitingSignature(keepAddress, latestDigest)
+	if err != nil {
+		logger.Errorf(
+			"could not check awaiting signature of "+
+				"digest [%+x] for keep [%s]",
+			latestDigest,
+			keepAddress,
+		)
+		return
+	}
+
+	if isAwaitingDigest {
+		generateSignatureForKeep(tssNode, keepAddress, signer, latestDigest)
+	}
 }
 
 func generateSignatureForKeep(
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
-	event *eth.SignatureRequestedEvent,
+	digest [32]byte,
 ) {
 	signingCtx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
 	defer cancel()
@@ -270,7 +302,7 @@ func generateSignatureForKeep(
 		err := tssNode.CalculateSignature(
 			signingCtx,
 			signer,
-			event.Digest,
+			digest,
 		)
 		if err != nil {
 			logger.Errorf("signature calculation failed: [%v]", err)

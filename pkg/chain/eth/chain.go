@@ -102,4 +102,7 @@ type BondedECDSAKeep interface {
 	// IsActive checks if the keep with the given address is active and responds
 	// to signing request. This function returns false only for closed keeps.
 	IsActive(keepAddress common.Address) (bool, error)
+
+	// LatestDigest returns the latest digest requested to be signed.
+	LatestDigest(keepAddress common.Address) ([32]byte, error)
 }
