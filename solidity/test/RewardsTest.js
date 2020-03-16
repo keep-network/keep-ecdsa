@@ -251,12 +251,12 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
     describe("startOf", async () => {
         it("returns the start of the interval", async () => {
-            let end0 = await rewards.startOf(0)
-            expect(end0.toNumber()).to.equal(1000)
-            let end1 = await rewards.startOf(1)
-            expect(end1.toNumber()).to.equal(1100)
-            let end9990 = await rewards.startOf(9990)
-            expect(end9990.toNumber()).to.equal(1000000)
+            let start0 = await rewards.startOf(0)
+            expect(start0.toNumber()).to.equal(1000)
+            let start1 = await rewards.startOf(1)
+            expect(start1.toNumber()).to.equal(1100)
+            let start9990 = await rewards.startOf(9990)
+            expect(start9990.toNumber()).to.equal(1000000)
         })
     })
 
