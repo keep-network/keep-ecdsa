@@ -37,7 +37,8 @@ contract ECDSAKeepRewards {
     // Total number of intervals. (Implicit in intervalWeights)
     // uint256 termCount = intervalWeights.length;
 
-    // mapping of keeps to booleans. True if the keep has been used to calim a reward.
+    // mapping of keeps to booleans.
+    // True if the keep has been used to claim a reward.
     mapping(address => bool) claimed;
 
     // Array of timestamps marking interval's end.
@@ -161,15 +162,22 @@ contract ECDSAKeepRewards {
     }
 
     /// @notice Return the timestamp corresponding to the start of the interval.
+    /// @dev The start of an interval is inclusive;
+    /// a keep created at the timestamp `startOf(i)` is in interval `i`.
     function startOf(uint256 interval) public view returns (uint256) {
         return firstIntervalStart + (interval * termLength);
     }
 
     /// @notice Return the timestamp corresponding to the end of the interval.
+    /// @dev The end of an interval is exclusive;
+    /// a keep created at the timestamp `endOf(i)` is in interval `i+1`.
     function endOf(uint256 interval) public view returns (uint256) {
         return startOf(interval + 1);
     }
 
+    /// @notice Return the number of keeps created before `intervalEndpoint`
+    /// @dev Wraps the binary search of `_find`
+    /// with a number of checks for edge cases.
     function _findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
         require(
             intervalEndpoint <= block.timestamp,
@@ -190,7 +198,7 @@ contract ECDSAKeepRewards {
 
         uint256 ub = keepCount - 1; // upper bound, inclusive
         uint256 timestampUB = factory.getCreationTime(factory.getKeepAtIndex(ub));
-        // all keeps created in or before the interval -> return next keep
+        // all keeps created in or before the interval -> return keep count
         if (timestampUB < intervalEndpoint) {
             return keepCount;
         }
@@ -204,15 +212,22 @@ contract ECDSAKeepRewards {
         return _find(lb, timestampLB, ub, timestampUB, intervalEndpoint);
     }
 
-    // Invariants:
-    //   lb >= 0, lbTime < target
-    //   ub < keepCount, ubTime >= target
+    /// @notice Return the number of keeps created before `targetTime`,
+    /// with specified upper and lower bounds.
+    /// @dev Binary search assumes the following invariants:
+    ///   lb >= 0, lbTime < targetTime
+    ///   ub < keepCount, ubTime >= targetTime
+    /// @param lb The lower bound of the search (inclusive)
+    /// @param lbTime The creation time of keep number `lb`
+    /// @param ub The upper bound of the search (inclusive)
+    /// @param ubTime The creation time of keep number `ub`
+    /// @param targetTime The target time
     function _find(
         uint256 lb,
         uint256 lbTime,
         uint256 ub,
         uint256 ubTime,
-        uint256 target
+        uint256 targetTime
     ) internal view returns (uint256) {
         uint256 len = ub - lb;
         while (len > 1) {
@@ -221,7 +236,7 @@ contract ECDSAKeepRewards {
             uint256 mid = lb + (len / 2);
             uint256 midTime = factory.getCreationTime(factory.getKeepAtIndex(mid));
 
-            if (midTime >= target) {
+            if (midTime >= targetTime) {
                 ub = mid;
                 ubTime = midTime;
             } else {
@@ -284,6 +299,13 @@ contract ECDSAKeepRewards {
        return (_getEndpoint(interval) - _getPreviousEndpoint(interval));
    }
 
+   /// @notice Calculate the reward allocation adjustment percentage
+   /// when an interval has an insufficient number of keeps.
+   /// @dev An interval with at least `minimumKeepsPerInterval` keeps
+   /// will have the full reward allocated to it.
+   /// An interval with fewer keeps will only be allocated
+   /// a fraction of the base reward
+   /// equaling the fraction of the quota that was met.
    function _keepCountAdjustment(uint256 interval) internal returns (uint256) {
        uint256 minimumKeeps = minimumKeepsPerInterval;
        uint256 keepCount = _keepsInInterval(interval);
@@ -294,6 +316,8 @@ contract ECDSAKeepRewards {
        }
    }
 
+   /// @notice Return the percentage of remaining unallocated rewards
+   /// that is to be allocated to the specified `interval`
    function _getIntervalWeight(uint256 interval) internal view returns (uint256) {
        if (interval < _getIntervalCount()) {
            return intervalWeights[interval];
