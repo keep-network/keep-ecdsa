@@ -82,7 +82,11 @@ contract BondedECDSAKeepVendor {
     /// process. The function emits an event containing the new value and current
     /// block timestamp.
     /// @param _implementation Address of the new vendor implementation contract.
-    function upgradeTo(address _implementation) public onlyOwner {
+    /// @param _data Delegate call data for implementation initialization.
+    function upgradeToAndCall(address _implementation, bytes memory _data)
+        public
+        onlyOwner
+    {
         address currentImplementation = implementation();
         require(
             _implementation != address(0),
@@ -92,6 +96,8 @@ contract BondedECDSAKeepVendor {
             _implementation != currentImplementation,
             "Implementation address must be different from the current one."
         );
+
+        initializeImplementation(_implementation, _data);
 
         setNewImplementation(_implementation);
 
