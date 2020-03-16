@@ -76,6 +76,8 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
         await keepVendor.version(),
         "V2"
       );
+
+      assert.isTrue(await keepVendor.initialized(), "implementation not initialized");
     });
 
     it("reverts when call delegated to wrong contract", async () => {
