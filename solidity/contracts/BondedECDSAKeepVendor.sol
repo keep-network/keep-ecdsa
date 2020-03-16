@@ -1,9 +1,10 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
 
 /// @title Proxy contract for Bonded ECDSA Keep vendor.
-contract BondedECDSAKeepVendor {
+contract BondedECDSAKeepVendor is Proxy {
     using SafeMath for uint256;
 
     // The contract owner. The value is stored in the first position. The field
@@ -17,10 +18,10 @@ contract BondedECDSAKeepVendor {
     // DO NOT MOVE THIS FIELD FROM THE FIRST POSITION.
     address private _owner;
 
-    // Storage position of the address of the current implementation.
-    bytes32 private constant implementationPosition = keccak256(
-        "network.keep.bondedecdsavendor.proxy.implementation"
-    );
+    /// @dev Storage slot with the address of the current implementation.
+    /// This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1, and is
+    /// validated in the constructor.
+    bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     // Storage position of the upgrade time delay. Upgrade time delay defines a
     // period for implementation upgrade.
@@ -42,6 +43,10 @@ contract BondedECDSAKeepVendor {
     event Upgraded(address implementation);
 
     constructor(address _implementation, bytes memory _data) public {
+        assert(
+            IMPLEMENTATION_SLOT ==
+                bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
+        );
         require(
             _implementation != address(0),
             "Implementation address can't be zero."
@@ -56,56 +61,35 @@ contract BondedECDSAKeepVendor {
         _owner = msg.sender;
     }
 
-    /// @notice Delegates call to the current implementation contract.
-    function() external payable {
-        address _impl = implementation();
-        /* solium-disable-next-line */
-        assembly {
-            let ptr := mload(0x40)
-            calldatacopy(ptr, 0, calldatasize)
-            let result := delegatecall(gas, _impl, ptr, calldatasize, 0, 0)
-            let size := returndatasize
-            returndatacopy(ptr, 0, size)
-
-            switch result
-                case 0 {
-                    revert(ptr, size)
-                }
-                default {
-                    return(ptr, size)
-                }
-        }
-    }
-
     /// @notice Starts upgrade of the current vendor implementation.
     /// @dev It is the first part of the two-step implementation address update
     /// process. The function emits an event containing the new value and current
     /// block timestamp.
-    /// @param _implementation Address of the new vendor implementation contract.
+    /// @param _newImplementation Address of the new vendor implementation contract.
     /// @param _data Delegate call data for implementation initialization.
-    function upgradeToAndCall(address _implementation, bytes memory _data)
+    function upgradeToAndCall(address _newImplementation, bytes memory _data)
         public
-        onlyOwner
+        onlyAdmin
     {
-        address currentImplementation = implementation();
+        address currentImplementation = _implementation();
         require(
-            _implementation != address(0),
+            _newImplementation != address(0),
             "Implementation address can't be zero."
         );
         require(
-            _implementation != currentImplementation,
+            _newImplementation != currentImplementation,
             "Implementation address must be different from the current one."
         );
 
-        initializeImplementation(_implementation, _data);
+        initializeImplementation(_newImplementation, _data);
 
-        setNewImplementation(_implementation);
+        setNewImplementation(_newImplementation);
 
         /* solium-disable-next-line security/no-block-members */
         setUpgradeInitiatedTimestamp(block.timestamp);
 
         /* solium-disable-next-line security/no-block-members */
-        emit UpgradeStarted(_implementation, block.timestamp);
+        emit UpgradeStarted(_newImplementation, block.timestamp);
     }
 
     /// @notice Finalizes implementation address upgrade.
@@ -131,16 +115,6 @@ contract BondedECDSAKeepVendor {
         emit Upgraded(newImplementation);
     }
 
-    /// @notice Gets the address of the current vendor implementation.
-    /// @return Address of the current implementation.
-    function implementation() public view returns (address _implementation) {
-        bytes32 position = implementationPosition;
-        /* solium-disable-next-line */
-        assembly {
-            _implementation := sload(position)
-        }
-    }
-
     /// @notice Initializes implementation contract.
     /// @dev Delegates a call to the implementation with provided data. It is
     /// expected that data contains details of function to be called.
@@ -158,14 +132,31 @@ contract BondedECDSAKeepVendor {
         }
     }
 
+    /// @notice Gets the address of the current vendor implementation.
+    /// @return Address of the current implementation.
+    function implementation() public view returns (address) {
+        return _implementation();
+    }
+
+    /// @dev Returns the current implementation. Implements function from `Proxy`
+    /// contract.
+    /// @return Address of the current implementation
+    function _implementation() internal view returns (address impl) {
+        bytes32 slot = IMPLEMENTATION_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            impl := sload(slot)
+        }
+    }
+
     /// @notice Sets the address of the current implementation.
     /// @param _implementation Address representing the new implementation to
     /// be set.
     function setImplementation(address _implementation) internal {
-        bytes32 position = implementationPosition;
+        bytes32 slot = IMPLEMENTATION_SLOT;
         /* solium-disable-next-line */
         assembly {
-            sstore(position, _implementation)
+            sstore(slot, _implementation)
         }
     }
 
