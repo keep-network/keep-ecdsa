@@ -57,7 +57,9 @@ contract BondedECDSAKeepVendor is Proxy {
             "Implementation address can't be zero."
         );
 
-        initializeImplementation(_implementation, _data);
+        if (_data.length > 0) {
+            initializeImplementation(_implementation, _data);
+        }
 
         setImplementation(_implementation);
 
@@ -86,7 +88,9 @@ contract BondedECDSAKeepVendor is Proxy {
             "Implementation address must be different from the current one."
         );
 
-        initializeImplementation(_newImplementation, _data);
+        if (_data.length > 0) {
+            initializeImplementation(_newImplementation, _data);
+        }
 
         setNewImplementation(_newImplementation);
 
@@ -129,12 +133,11 @@ contract BondedECDSAKeepVendor is Proxy {
         address _implementation,
         bytes memory _data
     ) internal {
-        if (_data.length > 0) {
-            (bool success, bytes memory returnData) = _implementation
-                .delegatecall(_data);
+        (bool success, bytes memory returnData) = _implementation.delegatecall(
+            _data
+        );
 
-            require(success, string(returnData));
-        }
+        require(success, string(returnData));
     }
 
     /// @notice Asserts correct slot for provided key.
