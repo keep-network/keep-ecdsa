@@ -24,9 +24,9 @@ contract BondedECDSAKeepVendor is Proxy {
     bytes32 internal constant UPGRADE_TIME_DELAY_SLOT = 0x3ca583dafde9ce8bdb41fe825f85984a83b08ecf90ffaccbc4b049e8d8703563;
 
     /// @dev Storage slot with the new implementation address.
-    /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.newImplementation"
+    /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeImplementation"
     /// subtracted by 1, and is validated in the constructor.
-    bytes32 internal constant NEW_IMPLEMENTATION_SLOT = 0xc1df127844d6e234fe925e20c7427692c06a35578419bbd7d991af12444e1560;
+    bytes32 internal constant UPGRADE_IMPLEMENTATION_SLOT = 0x4e06287250f0fdd90b4a096f346c06d4e706d470a14747ab56a0156d48a6883f;
 
     /// @dev Storage slot with the implementation address upgrade initiation.
     /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
@@ -44,8 +44,8 @@ contract BondedECDSAKeepVendor is Proxy {
             "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
         );
         assertSlot(
-            NEW_IMPLEMENTATION_SLOT,
-            "network.keep.bondedecdsavendor.proxy.newImplementation"
+            UPGRADE_IMPLEMENTATION_SLOT,
+            "network.keep.bondedecdsavendor.proxy.upgradeImplementation"
         );
         assertSlot(
             UPGRADE_INIT_TIMESTAMP_SLOT,
@@ -199,7 +199,7 @@ contract BondedECDSAKeepVendor is Proxy {
         view
         returns (address _newImplementation)
     {
-        bytes32 position = NEW_IMPLEMENTATION_SLOT;
+        bytes32 position = UPGRADE_IMPLEMENTATION_SLOT;
         /* solium-disable-next-line */
         assembly {
             _newImplementation := sload(position)
@@ -207,7 +207,7 @@ contract BondedECDSAKeepVendor is Proxy {
     }
 
     function setNewImplementation(address _newImplementation) internal {
-        bytes32 position = NEW_IMPLEMENTATION_SLOT;
+        bytes32 position = UPGRADE_IMPLEMENTATION_SLOT;
         /* solium-disable-next-line */
         assembly {
             sstore(position, _newImplementation)
