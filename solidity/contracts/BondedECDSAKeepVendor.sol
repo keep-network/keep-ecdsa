@@ -7,16 +7,10 @@ import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
 contract BondedECDSAKeepVendor is Proxy {
     using SafeMath for uint256;
 
-    // The contract owner. The value is stored in the first position. The field
-    // should not be moved as the first slot is used for the owner field in the
-    // implementation contract.
-    //
-    // There is a collision for this slot between implementation and proxy, but
-    // it is desired as we want to use this value in the implementation contract
-    // to protect the initialization function.
-    //
-    // DO NOT MOVE THIS FIELD FROM THE FIRST POSITION.
-    address private _owner;
+    /// @dev Storage slot with the admin of the contract.
+    /// This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1, and is
+    /// validated in the constructor.
+    bytes32 internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
     /// @dev Storage slot with the address of the current implementation.
     /// This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1, and is
@@ -47,6 +41,11 @@ contract BondedECDSAKeepVendor is Proxy {
             IMPLEMENTATION_SLOT ==
                 bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
         );
+
+        assert(
+            ADMIN_SLOT == bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1)
+        );
+
         require(
             _implementation != address(0),
             "Implementation address can't be zero."
@@ -58,7 +57,7 @@ contract BondedECDSAKeepVendor is Proxy {
 
         setUpgradeTimeDelay(1 days); // TODO: Determine right value for this property.
 
-        _owner = msg.sender;
+        setAdmin(msg.sender);
     }
 
     /// @notice Starts upgrade of the current vendor implementation.
@@ -222,15 +221,30 @@ contract BondedECDSAKeepVendor is Proxy {
         }
     }
 
-    /// @notice The owner of the contract.
+    /// @notice The admin slot.
     /// @return The contract owner's address.
-    function owner() public view returns (address) {
-        return _owner;
+    function admin() public view returns (address adm) {
+        bytes32 slot = ADMIN_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            adm := sload(slot)
+        }
+    }
+
+    /// @dev Sets the address of the proxy admin.
+    /// @param _newAdmin Address of the new proxy admin.
+    function setAdmin(address _newAdmin) internal {
+        bytes32 slot = ADMIN_SLOT;
+
+        /* solium-disable-next-line */
+        assembly {
+            sstore(slot, _newAdmin)
+        }
     }
 
     /// @dev Throws if called by any account other than the contract owner.
-    modifier onlyOwner() {
-        require(msg.sender == owner(), "Caller is not the owner");
+    modifier onlyAdmin() {
+        require(msg.sender == admin(), "Caller is not the admin");
         _;
     }
 }

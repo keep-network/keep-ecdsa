@@ -31,7 +31,7 @@ module.exports = async function (deployer) {
     console.log(`approved operator contract [${BondedECDSAKeepFactory.address}] in registry`)
 
     // Set service contract owner as operator contract upgrader by default
-    const operatorContractUpgrader = await proxy.owner()
+    const operatorContractUpgrader = await proxy.admin()
     await registry.setOperatorContractUpgrader(vendor.address, operatorContractUpgrader)
     console.log(`set operator [${operatorContractUpgrader}] as [${vendor.address}] contract upgrader`)
 }
