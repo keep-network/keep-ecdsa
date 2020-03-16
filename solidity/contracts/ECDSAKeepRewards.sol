@@ -1,23 +1,29 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract ECDSAKeepRewards {
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
-    IERC20 keepToken;
+    IERC20 token;
     IBondedECDSAKeepFactory factory;
 
     // Total number of keep tokens to distribute.
     uint256 totalRewards;
     // Rewards that haven't been allocated to finished intervals
     uint256 unallocatedRewards;
+    // Rewards that have been paid out;
+    // `token.balanceOf(address(this))` should always equal
+    // `totalRewards.sub(paidOutRewards)`
+    uint256 paidOutRewards;
 
     // Length of one interval.
     uint256 termLength;
     // Timestamp of first interval beginning.
-    uint256 initiated;
+    uint256 firstIntervalStart;
 
     // Minimum number of keep submissions for each interval.
     uint256 minimumKeepsPerInterval;
@@ -46,22 +52,50 @@ contract ECDSAKeepRewards {
 
     constructor (
         uint256 _termLength,
-        uint256 _totalRewards,
-        address _keepToken,
+        address _token,
         uint256 _minimumKeepsPerInterval,
         address factoryAddress,
-        uint256 _initiated,
+        uint256 _firstIntervalStart,
         uint256[] memory _intervalWeights
     )
     public {
-       keepToken = IERC20(_keepToken);
-       totalRewards = _totalRewards;
-       unallocatedRewards = totalRewards;
+       token = IERC20(_token);
        termLength = _termLength;
-       initiated = _initiated;
+       firstIntervalStart = _firstIntervalStart;
        minimumKeepsPerInterval = _minimumKeepsPerInterval;
        factory = IBondedECDSAKeepFactory(factoryAddress);
        intervalWeights = _intervalWeights;
+    }
+
+    /// @notice `approveAndCall` funds the rewards contract.
+    /// @dev Adds the received amount of tokens
+    /// to `totalRewards` and `unallocatedRewards`.
+    /// May be called at any time, even after allocating some intervals.
+    /// Changes to `unallocatedRewards`
+    /// will take effect on subsequent interval allocations.
+    /// If the reward contract has received tokens outside `approveAndCall`,
+    /// this collects them as well.
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes memory
+    ) public {
+        require(IERC20(_token) == token, "Unsupported token");
+
+        token.safeTransferFrom(_from, address(this), _value);
+
+        uint256 currentBalance = token.balanceOf(address(this));
+        uint256 beforeBalance = _unpaidRewards();
+        require(
+            currentBalance >= beforeBalance,
+            "Reward contract has lost tokens"
+        );
+
+        uint256 addedBalance = currentBalance.sub(beforeBalance);
+
+        totalRewards += addedBalance;
+        unallocatedRewards += addedBalance;
     }
 
     /// @notice Sends the reward for a keep to the keep members.
@@ -108,19 +142,19 @@ contract ECDSAKeepRewards {
 
     /// @notice Return the interval number
     /// the provided timestamp falls within.
-    /// @dev If the timestamp is before `initiated`,
+    /// @dev If the timestamp is before `firstIntervalStart`,
     /// the interval is 0.
     /// @param timestamp The timestamp whose interval is queried.
     /// @return The interval of the timestamp.
     function intervalOf(uint256 timestamp) public view returns (uint256) {
-        uint256 _initiated = initiated;
+        uint256 _firstIntervalStart = firstIntervalStart;
         uint256 _termLength = termLength;
 
-        if (timestamp < _initiated) {
+        if (timestamp < _firstIntervalStart) {
             return 0;
         }
 
-        uint256 difference = timestamp - _initiated;
+        uint256 difference = timestamp - _firstIntervalStart;
         uint256 interval = difference / _termLength;
 
         return interval;
@@ -128,7 +162,7 @@ contract ECDSAKeepRewards {
 
     /// @notice Return the timestamp corresponding to the start of the interval.
     function startOf(uint256 interval) public view returns (uint256) {
-        return initiated + (interval * termLength);
+        return firstIntervalStart + (interval * termLength);
     }
 
     /// @notice Return the timestamp corresponding to the end of the interval.
@@ -346,15 +380,20 @@ contract ECDSAKeepRewards {
        intervalKeepsProcessed[interval] = processedKeeps + 1;
 
        if (eligible) {
-           keepToken.approve(keepAddress, perKeepReward);
+           paidOutRewards += perKeepReward;
+           token.approve(keepAddress, perKeepReward);
            IBondedECDSAKeep(keepAddress).distributeERC20Reward(
-               address(keepToken),
+               address(token),
                perKeepReward
            );
        } else {
            // Return the reward to the unallocated pool
            unallocatedRewards += perKeepReward;
        }
+   }
+
+   function _unpaidRewards() internal view returns (uint256) {
+       return totalRewards.sub(paidOutRewards);
    }
 
    function _rewardClaimed(address _keep) internal view returns (bool) {

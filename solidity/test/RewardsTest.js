@@ -14,11 +14,12 @@ const TestToken = artifacts.require('TestToken')
 const RewardsKeepStub = artifacts.require('RewardsKeepStub');
 const ECDSAKeepRewardsStub = artifacts.require('ECDSAKeepRewardsStub');
 
-contract('ECDSAKeepRewards', (accounts) => {
+contract.only('ECDSAKeepRewards', (accounts) => {
     const alice = accounts[0]
     const bob = accounts[1]
     const aliceBeneficiary = accounts[2]
     const bobBeneficiary = accounts[3]
+    const funder = accounts[9]
 
     let factory
     let registry
@@ -144,6 +145,16 @@ contract('ECDSAKeepRewards', (accounts) => {
         }
     }
 
+    async function fund(amount) {
+        await token.mint(funder, amount)
+        await token.approveAndCall(
+            rewards.address,
+            amount,
+            "0x0",
+            { from: funder }
+        )
+    }
+
     before(async () => {
         await initializeNewFactory()
 
@@ -151,13 +162,14 @@ contract('ECDSAKeepRewards', (accounts) => {
 
         rewards = await ECDSAKeepRewardsStub.new(
             termLength,
-            totalRewards,
             token.address,
             minimumIntervalKeeps,
             keepFactory.address,
             initiationTime,
             intervalWeights
         )
+
+        await fund(totalRewards)
     })
 
     beforeEach(async () => {
@@ -168,11 +180,26 @@ contract('ECDSAKeepRewards', (accounts) => {
         await restoreSnapshot()
     })
 
-    describe("TestToken", async () => {
-        it("is set up correctly", async () => {
-            token.mint(rewards.address, totalRewards)
-            let rewardsTokens = await token.balanceOf(rewards.address)
-            expect(rewardsTokens.toNumber()).to.equal(totalRewards)
+    describe("receiveApproval", async () => {
+        it("funds the rewards correctly", async () => {
+            let preRewards = await rewards.getTotalRewards()
+            expect(preRewards.toNumber()).to.equal(totalRewards)
+
+            await fund(totalRewards)
+            let postRewards = await rewards.getTotalRewards()
+            expect(postRewards.toNumber()).to.equal(totalRewards * 2)
+        })
+
+        it("collects tokens sent outside `approveAndCall`", async () => {
+            await token.mint(funder, totalRewards)
+            await token.transfer(rewards.address, totalRewards, {from: funder})
+
+            let preRewards = await rewards.getTotalRewards()
+            expect(preRewards.toNumber()).to.equal(totalRewards)
+
+            await fund(0)
+            let postRewards = await rewards.getTotalRewards()
+            expect(postRewards.toNumber()).to.equal(totalRewards * 2)
         })
     })
 
@@ -453,8 +480,6 @@ contract('ECDSAKeepRewards', (accounts) => {
 
     describe("receiveReward", async () => {
         it("lets closed keeps claim the reward correctly", async () => {
-            token.mint(rewards.address, totalRewards)
-
             let timestamps = rewardTimestamps
             await createKeeps(timestamps)
             let keepAddress = await keepFactory.getKeepAtIndex(0)

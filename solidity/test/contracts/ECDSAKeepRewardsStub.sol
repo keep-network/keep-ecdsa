@@ -5,7 +5,6 @@ import "../../contracts/ECDSAKeepRewards.sol";
 contract ECDSAKeepRewardsStub is ECDSAKeepRewards {
     constructor (
         uint256 _termLength,
-        uint256 _totalRewards,
         address _keepToken,
         uint256 _minimumKeepsPerInterval,
         address factoryAddress,
@@ -15,7 +14,6 @@ contract ECDSAKeepRewardsStub is ECDSAKeepRewards {
         public
         ECDSAKeepRewards(
             _termLength,
-            _totalRewards,
             _keepToken,
             _minimumKeepsPerInterval,
             factoryAddress,
@@ -23,6 +21,18 @@ contract ECDSAKeepRewardsStub is ECDSAKeepRewards {
             _intervalWeights
         )
     {}
+
+    function getTotalRewards() public view returns (uint256) {
+        return totalRewards;
+    }
+
+    function getUnallocatedRewards() public view returns (uint256) {
+        return unallocatedRewards;
+    }
+
+    function getPaidOutRewards() public view returns (uint256) {
+        return paidOutRewards;
+    }
 
     function currentTime() public view returns (uint256) {
         return block.timestamp;
