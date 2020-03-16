@@ -68,7 +68,7 @@ contract("BondedECDSAKeepVendorImplV1viaProxy", async accounts => {
             );
         });
 
-        it("cannot be called by non authorized upgrader", async () => {
+        it("cannot be called by non-authorized upgrader", async () => {
             await expectRevert(
                 keepVendor.upgradeFactory(address2),
                 "Caller is not operator contract upgrader"
