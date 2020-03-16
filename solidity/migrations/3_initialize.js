@@ -5,7 +5,7 @@ const Registry = artifacts.require("Registry")
 
 let { RegistryAddress } = require('./external-contracts')
 
-module.exports = async function () {
+module.exports = async function (deployer) {
     await BondedECDSAKeepFactory.deployed()
 
     let registry
