@@ -41,11 +41,14 @@ contract BondedECDSAKeepVendor {
     event UpgradeStarted(address implementation, uint256 timestamp);
     event Upgraded(address implementation);
 
-    constructor(address _implementation) public {
+    constructor(address _implementation, bytes memory _data) public {
         require(
             _implementation != address(0),
             "Implementation address can't be zero."
         );
+
+        initializeImplementation(_implementation, _data);
+
         setImplementation(_implementation);
 
         setUpgradeTimeDelay(1 days); // TODO: Determine right value for this property.
@@ -129,6 +132,23 @@ contract BondedECDSAKeepVendor {
         /* solium-disable-next-line */
         assembly {
             _implementation := sload(position)
+        }
+    }
+
+    /// @notice Initializes implementation contract.
+    /// @dev Delegates a call to the implementation with provided data. It is
+    /// expected that data contains details of function to be called.
+    /// @param _implementation Address of the new vendor implementation contract.
+    /// @param _data Delegate call data for implementation initialization.
+    function initializeImplementation(
+        address _implementation,
+        bytes memory _data
+    ) internal {
+        if (_data.length > 0) {
+            (bool success, bytes memory returnData) = _implementation
+                .delegatecall(_data);
+
+            require(success, string(returnData));
         }
     }
 
