@@ -61,7 +61,7 @@ contract BondedECDSAKeepVendor is Proxy {
 
         setImplementation(_implementation);
 
-        setUpgradeTimeDelay(1 days); // TODO: Determine right value for this property.
+        setUpgradeTimeDelay(1 days);
 
         setAdmin(msg.sender);
     }

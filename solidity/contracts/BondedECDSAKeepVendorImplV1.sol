@@ -53,7 +53,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
         registry = Registry(registryAddress);
         keepFactory = factory;
 
-        factoryRegistrationTimeDelay = 1 days; // TODO: Determine right value for this property.
+        factoryRegistrationTimeDelay = 1 days;
     }
 
     /// @notice Checks if this contract is initialized.
