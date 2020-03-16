@@ -75,7 +75,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         });
     });
 
-    describe("registerFactory", async () => {
+    describe("upgradeFactory", async () => {
         before(async () => {
             keepVendor = await newVendor();
 
@@ -91,7 +91,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         });
 
         it("sets timestamp", async () => {
-            await keepVendor.registerFactory(address2, { from: implOwner });
+            await keepVendor.upgradeFactory(address2, { from: implOwner });
 
             const expectedTimestamp = await time.latest();
 
@@ -101,7 +101,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         });
 
         it("sets new factory address", async () => {
-            await keepVendor.registerFactory(address2, { from: implOwner });
+            await keepVendor.upgradeFactory(address2, { from: implOwner });
 
             assert.equal(
                 await keepVendor.getNewKeepFactory(),
@@ -111,27 +111,27 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         });
 
         it("allows new value overwrite", async () => {
-            await keepVendor.registerFactory(address2, { from: implOwner });
+            await keepVendor.upgradeFactory(address2, { from: implOwner });
 
-            await keepVendor.registerFactory(address3, { from: implOwner });
+            await keepVendor.upgradeFactory(address3, { from: implOwner });
 
             assert.equal(await keepVendor.getNewKeepFactory(), address3);
         });
 
         it("allows change back to current factory", async () => {
-            await keepVendor.registerFactory(address2, { from: implOwner });
+            await keepVendor.upgradeFactory(address2, { from: implOwner });
 
-            await keepVendor.registerFactory(address1, { from: implOwner });
+            await keepVendor.upgradeFactory(address1, { from: implOwner });
 
             assert.equal(await keepVendor.getNewKeepFactory(), address1);
         });
 
         it("emits event", async () => {
-            const receipt = await keepVendor.registerFactory(address2, { from: implOwner });
+            const receipt = await keepVendor.upgradeFactory(address2, { from: implOwner });
 
             const expectedTimestamp = await time.latest();
 
-            expectEvent(receipt, "FactoryRegistrationStarted", {
+            expectEvent(receipt, "FactoryUpgradeStarted", {
                 factory: address2,
                 timestamp: expectedTimestamp
             });
@@ -139,7 +139,7 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
 
         it("does not register factory with zero address", async () => {
             await expectRevert(
-                keepVendor.registerFactory(address0, { from: implOwner }),
+                keepVendor.upgradeFactory(address0, { from: implOwner }),
                 "Incorrect factory address"
             );
         });
@@ -150,33 +150,33 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
             await keepVendor.initialize(registry.address, address2);
 
             await expectRevert(
-                keepVendor.registerFactory(address2, { from: implOwner }),
+                keepVendor.upgradeFactory(address2, { from: implOwner }),
                 "Factory already registered"
             );
         });
 
         it("does not register factory not approved in registry", async () => {
             await expectRevert(
-                keepVendor.registerFactory(address4, { from: implOwner }),
+                keepVendor.upgradeFactory(address4, { from: implOwner }),
                 "Factory contract is not approved"
             );
         });
 
         it("does not update current factory address", async () => {
-            await keepVendor.registerFactory(address2, { from: implOwner });
+            await keepVendor.upgradeFactory(address2, { from: implOwner });
 
             assert.equal(await keepVendor.getKeepFactory(), address1);
         });
 
         it("cannot be called by non authorized upgrader", async () => {
             await expectRevert(
-                keepVendor.registerFactory(address2),
+                keepVendor.upgradeFactory(address2),
                 "Caller is not operator contract upgrader"
             );
         });
     });
 
-    describe("completeFactoryRegistration", async () => {
+    describe("completeFactoryUpgrade", async () => {
         before(async () => {
             keepVendor = await newVendor();
 
@@ -193,38 +193,38 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
 
         it("reverts when upgrade not initiated", async () => {
             await expectRevert(
-                keepVendor.completeFactoryRegistration(),
+                keepVendor.completeFactoryUpgrade(),
                 "Upgrade not initiated"
             );
         });
 
         it("reverts when timer not elapsed", async () => {
-            await keepVendor.registerFactory(address2, { from: implOwner });
+            await keepVendor.upgradeFactory(address2, { from: implOwner });
 
             await time.increase(
-                (await keepVendor.factoryRegistrationTimeDelay()).subn(2)
+                (await keepVendor.factoryUpgradeTimeDelay()).subn(2)
             );
 
             await expectRevert(
-                keepVendor.completeFactoryRegistration(),
+                keepVendor.completeFactoryUpgrade(),
                 "Timer not elapsed"
             );
         });
 
         it("clears new factory", async () => {
-            await keepVendor.registerFactory(address2, { from: implOwner });
-            await time.increase(await keepVendor.factoryRegistrationTimeDelay());
+            await keepVendor.upgradeFactory(address2, { from: implOwner });
+            await time.increase(await keepVendor.factoryUpgradeTimeDelay());
 
-            await keepVendor.completeFactoryRegistration();
+            await keepVendor.completeFactoryUpgrade();
 
             assert.equal(await keepVendor.getNewKeepFactory(), address0);
         });
 
         it("clears timestamp", async () => {
-            await keepVendor.registerFactory(address2, { from: implOwner });
-            await time.increase(await keepVendor.factoryRegistrationTimeDelay());
+            await keepVendor.upgradeFactory(address2, { from: implOwner });
+            await time.increase(await keepVendor.factoryUpgradeTimeDelay());
 
-            await keepVendor.completeFactoryRegistration();
+            await keepVendor.completeFactoryUpgrade();
 
             expect(
                 await keepVendor.getFactoryRegistrationInitiatedTimestamp()
@@ -232,21 +232,21 @@ contract("BondedECDSAKeepVendorImplV1", async accounts => {
         });
 
         it("sets factory address", async () => {
-            await keepVendor.registerFactory(address2, { from: implOwner });
-            await time.increase(await keepVendor.factoryRegistrationTimeDelay());
+            await keepVendor.upgradeFactory(address2, { from: implOwner });
+            await time.increase(await keepVendor.factoryUpgradeTimeDelay());
 
-            await keepVendor.completeFactoryRegistration();
+            await keepVendor.completeFactoryUpgrade();
 
             assert.equal(await keepVendor.getKeepFactory(), address2);
         });
 
         it("emits an event", async () => {
-            await keepVendor.registerFactory(address2, { from: implOwner });
-            await time.increase(await keepVendor.factoryRegistrationTimeDelay());
+            await keepVendor.upgradeFactory(address2, { from: implOwner });
+            await time.increase(await keepVendor.factoryUpgradeTimeDelay());
 
-            const receipt = await keepVendor.completeFactoryRegistration();
+            const receipt = await keepVendor.completeFactoryUpgrade();
 
-            expectEvent(receipt, "FactoryRegistered", {
+            expectEvent(receipt, "FactoryUpgradeCompleted", {
                 factory: address2
             });
         });

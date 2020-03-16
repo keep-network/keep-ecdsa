@@ -45,7 +45,7 @@ contract("BondedECDSAKeepVendorImplV1viaProxy", async accounts => {
         });
     });
 
-    describe("registerFactory", async () => {
+    describe("upgradeFactory", async () => {
         before(async () => {
             keepVendor = await newVendor();
         });
@@ -59,7 +59,7 @@ contract("BondedECDSAKeepVendorImplV1viaProxy", async accounts => {
         });
 
         it("succeeds", async () => {
-            await keepVendor.registerFactory(address2, { from: upgrader });
+            await keepVendor.upgradeFactory(address2, { from: upgrader });
 
             assert.equal(
                 await keepVendor.getNewKeepFactory(),
@@ -70,13 +70,13 @@ contract("BondedECDSAKeepVendorImplV1viaProxy", async accounts => {
 
         it("cannot be called by non authorized upgrader", async () => {
             await expectRevert(
-                keepVendor.registerFactory(address2),
+                keepVendor.upgradeFactory(address2),
                 "Caller is not operator contract upgrader"
             );
         });
     });
 
-    describe("completeFactoryRegistration", async () => {
+    describe("completeFactoryUpgrade", async () => {
         before(async () => {
             keepVendor = await newVendor();
         });
@@ -90,10 +90,10 @@ contract("BondedECDSAKeepVendorImplV1viaProxy", async accounts => {
         });
 
         it("succeeds", async () => {
-            await keepVendor.registerFactory(address2, { from: upgrader });
-            await time.increase(await keepVendor.factoryRegistrationTimeDelay());
+            await keepVendor.upgradeFactory(address2, { from: upgrader });
+            await time.increase(await keepVendor.factoryUpgradeTimeDelay());
 
-            await keepVendor.completeFactoryRegistration();
+            await keepVendor.completeFactoryUpgrade();
 
             assert.equal(await keepVendor.getKeepFactory(), address2);
         });

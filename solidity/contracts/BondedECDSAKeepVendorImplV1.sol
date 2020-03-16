@@ -19,11 +19,11 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     // and upgraders.
     Registry internal registry;
 
-    // Upgrade time delay defines a waiting period for factory address registration.
-    // When new factory registration is initialized it has to wait this period
+    // Upgrade time delay defines a waiting period for factory address upgrade.
+    // When new factory upgrade is initialized it has to wait this period
     // before the change can take effect on the currently registered facotry
     // address.
-    uint256 public factoryRegistrationTimeDelay;
+    uint256 public factoryUpgradeTimeDelay;
 
     // Address of ECDSA keep factory.
     address payable keepFactory;
@@ -31,11 +31,11 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     // Address of a new ECDSA keep factory in update process.
     address payable newKeepFactory;
 
-    // Timestamp of the moment when factory registration process has started.
-    uint256 factoryRegistrationInitiatedTimestamp;
+    // Timestamp of the moment when factory upgrade process has started.
+    uint256 factoryUpgradeInitiatedTimestamp;
 
-    event FactoryRegistrationStarted(address factory, uint256 timestamp);
-    event FactoryRegistered(address factory);
+    event FactoryUpgradeStarted(address factory, uint256 timestamp);
+    event FactoryUpgradeCompleted(address factory);
 
     /// @notice Initializes Keep Vendor contract implementation.
     /// @param registryAddress Keep registry contract linked to this contract.
@@ -53,7 +53,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
         registry = Registry(registryAddress);
         keepFactory = factory;
 
-        factoryRegistrationTimeDelay = 1 days;
+        factoryUpgradeTimeDelay = 1 days;
     }
 
     /// @notice Checks if this contract is initialized.
@@ -61,13 +61,13 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
         return _initialized["BondedECDSAKeepVendorImplV1"];
     }
 
-    /// @notice Starts new ECDSA keep factory registration.
+    /// @notice Starts new ECDSA keep factory upgrade.
     /// @dev Registers a new ECDSA keep factory. Address cannot be zero
     /// and cannot be the same that is currently registered. It is a first part
-    /// of the two-step factory registration process. The function emits an event
+    /// of the two-step factory upgrade process. The function emits an event
     /// containing the new factory address and current block timestamp.
     /// @param _factory ECDSA keep factory address.
-    function registerFactory(address payable _factory)
+    function upgradeFactory(address payable _factory)
         external
         onlyOperatorContractUpgrader
     {
@@ -92,35 +92,35 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
         /* solium-disable-next-line security/no-block-members */
         uint256 timestamp = block.timestamp;
 
-        factoryRegistrationInitiatedTimestamp = timestamp;
+        factoryUpgradeInitiatedTimestamp = timestamp;
 
-        emit FactoryRegistrationStarted(_factory, timestamp);
+        emit FactoryUpgradeStarted(_factory, timestamp);
     }
 
-    /// @notice Finalizes ECDSA keep factory registration.
-    /// @dev It is the second part of the two-step factory registration process.
-    /// The function can be called after factory registration time delay period
-    /// has passed since the new factory registration. It emits an event
+    /// @notice Finalizes ECDSA keep factory upgrade.
+    /// @dev It is the second part of the two-step factory upgrade process.
+    /// The function can be called after factory upgrade time delay period
+    /// has passed since the new factory upgrade. It emits an event
     /// containing the new factory address.
-    function completeFactoryRegistration() public {
+    function completeFactoryUpgrade() public {
         require(upgradeInitiated(), "Upgrade not initiated");
 
         require(
             /* solium-disable-next-line security/no-block-members */
-            block.timestamp.sub(factoryRegistrationInitiatedTimestamp) >=
-                factoryRegistrationTimeDelay,
+            block.timestamp.sub(factoryUpgradeInitiatedTimestamp) >=
+                factoryUpgradeTimeDelay,
             "Timer not elapsed"
         );
 
         keepFactory = newKeepFactory;
         newKeepFactory = address(0);
-        factoryRegistrationInitiatedTimestamp = 0;
+        factoryUpgradeInitiatedTimestamp = 0;
 
-        emit FactoryRegistered(keepFactory);
+        emit FactoryUpgradeCompleted(keepFactory);
     }
 
     function upgradeInitiated() internal view returns (bool) {
-        return factoryRegistrationInitiatedTimestamp > 0;
+        return factoryUpgradeInitiatedTimestamp > 0;
     }
 
     /// @notice Selects the latest ECDSA keep factory.

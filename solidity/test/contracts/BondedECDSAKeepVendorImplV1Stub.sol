@@ -22,6 +22,6 @@ contract BondedECDSAKeepVendorImplV1Stub is BondedECDSAKeepVendorImplV1 {
         view
         returns (uint256)
     {
-        return factoryRegistrationInitiatedTimestamp;
+        return factoryUpgradeInitiatedTimestamp;
     }
 }
