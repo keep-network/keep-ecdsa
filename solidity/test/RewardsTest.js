@@ -21,7 +21,6 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     const bobBeneficiary = accounts[3]
     const funder = accounts[9]
 
-    let factory
     let registry
     let rewards
     let token
@@ -31,7 +30,6 @@ contract.only('ECDSAKeepRewards', (accounts) => {
     let bondedSortitionPoolFactory
     let keepBonding
     let randomBeacon
-    let signerPool
 
     // defaultTimestamps[i] == 1000 + i
     const defaultTimestamps = [
