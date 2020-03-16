@@ -282,19 +282,20 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             expect(index.toNumber()).to.equal(0)
         })
 
-        it("reverts if the endpoint is in the future", async () => {
-            let recentTimestamp = await rewards.currentTime()
-            let targetTimestamp = recentTimestamp + increment
-            await expectRevert(
-                rewards.findEndpoint(targetTimestamp),
-                "interval hasn't ended yet"
-            )
+        it("returns 0 when all current keeps were created after the interval", async () => {
+            let timestamps = defaultTimestamps
+            await createKeeps(timestamps)
+            let targetTimestamp = 500
+            let expectedIndex = 0
+            let index = await rewards.findEndpoint(targetTimestamp)
+
+            expect(index.toNumber()).to.equal(expectedIndex)
         })
 
         it("returns the first index outside the interval", async () => {
             let timestamps = defaultTimestamps
             await createKeeps(timestamps)
-            for (let i = 0; i < 16; i++) {
+            for (let i = 0; i < timestamps.length; i++) {
                 let expectedIndex = i
                 let targetTimestamp = timestamps[i]
                 let index = await rewards.findEndpoint(targetTimestamp)
@@ -303,21 +304,11 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             }
         })
 
-        it("returns the next keep's index when all current keeps were created in the interval", async () => {
+        it("returns the number of keeps when all current keeps were created in the interval", async () => {
             let timestamps = defaultTimestamps
             await createKeeps(timestamps)
             let targetTimestamp = 2000
             let expectedIndex = 16
-            let index = await rewards.findEndpoint(targetTimestamp)
-
-            expect(index.toNumber()).to.equal(expectedIndex)
-        })
-
-        it("returns 0 when all current keeps were created after the interval", async () => {
-            let timestamps = defaultTimestamps
-            await createKeeps(timestamps)
-            let targetTimestamp = 500
-            let expectedIndex = 0
             let index = await rewards.findEndpoint(targetTimestamp)
 
             expect(index.toNumber()).to.equal(expectedIndex)
@@ -332,19 +323,18 @@ contract.only('ECDSAKeepRewards', (accounts) => {
 
             expect(index.toNumber()).to.equal(expectedIndex)
         })
+
+        it("reverts if the endpoint is in the future", async () => {
+            let recentTimestamp = await rewards.currentTime()
+            let targetTimestamp = recentTimestamp + increment
+            await expectRevert(
+                rewards.findEndpoint(targetTimestamp),
+                "interval hasn't ended yet"
+            )
+        })
     })
 
     describe("getEndpoint", async () => {
-        it("reverts if the interval hasn't ended", async () => {
-            let recentTimestamp = await rewards.currentTime()
-            let targetTimestamp = recentTimestamp + termLength
-            let targetInterval = await rewards.intervalOf(targetTimestamp)
-            await expectRevert(
-                rewards.getEndpoint(targetInterval),
-                "Interval hasn't ended yet"
-            )
-        })
-
         it("returns the correct number of keeps for the interval", async () => {
             let timestamps = defaultTimestamps
             await createKeeps(timestamps)
@@ -357,6 +347,16 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             await createKeeps(timestamps)
             let keepCount = await rewards.getEndpoint.call(1)
             expect(keepCount.toNumber()).to.equal(0)
+        })
+
+        it("reverts if the interval hasn't ended", async () => {
+            let recentTimestamp = await rewards.currentTime()
+            let targetTimestamp = recentTimestamp + termLength
+            let targetInterval = await rewards.intervalOf(targetTimestamp)
+            await expectRevert(
+                rewards.getEndpoint(targetInterval),
+                "Interval hasn't ended yet"
+            )
         })
     })
 
