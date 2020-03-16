@@ -18,7 +18,8 @@ module.exports = async function (deployer) {
     const proxy = await BondedECDSAKeepVendor.deployed()
     const vendor = await BondedECDSAKeepVendorImplV1.at(proxy.address)
 
-    // Initialize vendor contract
+    // The vendor implementation is being initialized as part of the vendor proxy
+    // deployment. Here we just want to sanity check if it is initialized.
     if (!(await vendor.initialized())) {
         throw Error("vendor contract not initialized")
     }
