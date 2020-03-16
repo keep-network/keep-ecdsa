@@ -38,7 +38,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     bytes publicKey;
 
     // Latest digest requested to be signed. Used to validate submitted signature.
-    bytes32 digest;
+    bytes32 public digest;
 
     // Map of all digests requested to be signed. Used to validate submitted signature.
     mapping(bytes32 => bool) digests;
