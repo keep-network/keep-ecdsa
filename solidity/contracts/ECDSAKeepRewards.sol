@@ -67,7 +67,7 @@ contract ECDSAKeepRewards {
     // `totalRewards.sub(paidOutRewards)`
     uint256 paidOutRewards;
 
-    // Length of one interval.
+    // Length of one interval in seconds (timestamp diff).
     uint256 termLength;
     // Timestamp of first interval beginning.
     uint256 firstIntervalStart;
@@ -81,15 +81,9 @@ contract ECDSAKeepRewards {
     // Mapping of interval number to tokens allocated for the interval.
     uint256[] intervalAllocations;
 
-    // Total number of intervals. (Implicit in intervalWeights)
-    // uint256 termCount = intervalWeights.length;
-
     // mapping of keeps to booleans.
     // True if the keep has been used to claim a reward.
     mapping(address => bool) claimed;
-
-    // Array of timestamps marking interval's end.
-    uint256[] intervalEndpoints;
 
     // Mapping of interval to number of keeps created in/before the interval
     mapping(uint256 => uint256) keepsByInterval;
