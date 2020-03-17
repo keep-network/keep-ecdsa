@@ -14,7 +14,7 @@ const TestToken = artifacts.require('TestToken')
 const RewardsKeepStub = artifacts.require('RewardsKeepStub');
 const ECDSAKeepRewardsStub = artifacts.require('ECDSAKeepRewardsStub');
 
-contract.only('ECDSAKeepRewards', (accounts) => {
+contract('ECDSAKeepRewards', (accounts) => {
     const alice = accounts[0]
     const bob = accounts[1]
     const aliceBeneficiary = accounts[2]
