@@ -9,6 +9,7 @@ metadata:
     type: tecdsa
     id: '3'
 spec:
+  type: LoadBalancer
   ports:
     - port: 3919
       targetPort: 3919
