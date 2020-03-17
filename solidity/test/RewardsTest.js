@@ -529,6 +529,19 @@ contract.only('ECDSAKeepRewards', (accounts) => {
                 "Keep address not recognized by factory"
             )
         })
+
+        it("requires that the interval is over", async () => {
+            let recentTimestamp = await rewards.currentTime()
+            let targetTimestamp = recentTimestamp + 1000
+            await createKeeps([targetTimestamp])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.close()
+            await expectRevert(
+                rewards.receiveReward(keepAddress),
+                "Interval hasn't ended yet"
+            )
+        })
     })
 
     describe("reportTermination", async () => {
@@ -591,6 +604,19 @@ contract.only('ECDSAKeepRewards', (accounts) => {
             await expectRevert(
                 rewards.reportTermination(fakeKeepAddress),
                 "Keep address not recognized by factory"
+            )
+        })
+
+        it("requires that the interval is over", async () => {
+            let recentTimestamp = await rewards.currentTime()
+            let targetTimestamp = recentTimestamp + 1000
+            await createKeeps([targetTimestamp])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.terminate()
+            await expectRevert(
+                rewards.reportTermination(keepAddress),
+                "Interval hasn't ended yet"
             )
         })
     })
