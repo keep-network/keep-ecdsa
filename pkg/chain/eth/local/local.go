@@ -175,7 +175,7 @@ func (lc *localChain) OnKeepClosed(
 	handler func(event *eth.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
 	panic("implement")
-} 
+}
 
 // OnConflictingPublicKeySubmitted logs mismatched public keys submitted by
 // members of a keep.
@@ -191,5 +191,9 @@ func (lc *localChain) OnPublicKeyPublished(
 	keepAddress common.Address,
 	handler func(event *eth.PublicKeyPublishedEvent),
 ) (subscription.EventSubscription, error) {
+	panic("implement")
+}
+
+func (lc *localChain) LatestDigest(keepAddress common.Address) ([32]byte, error) {
 	panic("implement")
 }

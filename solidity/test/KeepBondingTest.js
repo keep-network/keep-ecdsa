@@ -5,7 +5,7 @@ const TokenStaking = artifacts.require('./TokenStakingStub.sol')
 const KeepBonding = artifacts.require('./KeepBonding.sol')
 const TestEtherReceiver = artifacts.require('./TestEtherReceiver.sol')
 
-const { expectRevert } = require('openzeppelin-test-helpers');
+const { expectRevert } = require('@openzeppelin/test-helpers')
 
 const BN = web3.utils.BN
 

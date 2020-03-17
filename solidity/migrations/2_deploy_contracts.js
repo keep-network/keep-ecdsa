@@ -40,6 +40,15 @@ module.exports = async function (deployer) {
         RandomBeaconAddress
     )
 
-    await deployer.deploy(BondedECDSAKeepVendorImplV1)
-    await deployer.deploy(BondedECDSAKeepVendor, BondedECDSAKeepVendorImplV1.address)
+    const bondedECDSAKeepVendorImplV1 = await deployer.deploy(BondedECDSAKeepVendorImplV1)
+
+    const implInitializeCallData = bondedECDSAKeepVendorImplV1.contract.methods
+        .initialize(RegistryAddress, BondedECDSAKeepFactory.address)
+        .encodeABI()
+
+    await deployer.deploy(
+        BondedECDSAKeepVendor,
+        BondedECDSAKeepVendorImplV1.address,
+        implInitializeCallData
+    )
 }

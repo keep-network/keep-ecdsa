@@ -1,6 +1,6 @@
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 
-const { expectRevert } = require('openzeppelin-test-helpers')
+const { expectRevert } = require('@openzeppelin/test-helpers')
 
 import { mineBlocks } from './helpers/mineBlocks'
 import { getETHBalancesFromList, getETHBalancesMap, addToBalances, addToBalancesMap } from './helpers/listBalanceUtils'
@@ -963,102 +963,6 @@ contract("BondedECDSAKeepFactory", async accounts => {
             )
         })
 
-        it("splits subsidy pool between selected signers", async () => {
-            const subsidyPool = feeEstimate.sub(new BN(10)) // [wei]
-            const remainder = subsidyPool.mod(new BN(members.length))
-
-            // pump subsidy pool
-            web3.eth.sendTransaction({
-                value: subsidyPool,
-                from: accounts[0],
-                to: keepFactory.address
-            })
-
-            const initialBalances = await getETHBalancesFromList(members)
-            const expectedSingleBalance = new BN(subsidyPool / members.length)
-
-            let blockNumber = await web3.eth.getBlockNumber()
-
-            const keep = await openKeep()
-
-            let eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
-                fromBlock: blockNumber,
-                toBlock: 'latest'
-            })
-            const selectedMembers = eventList[0].returnValues.members
-
-            const newBalances = await getETHBalancesFromList(members)
-            assert.deepEqual(newBalances, initialBalances)
-
-            expect(
-                await keepFactory.subsidyPool(),
-                "subsidy pool should go down to 0"
-            ).to.eq.BN(0)
-
-            expect(
-                await keep.getMemberETHBalance(selectedMembers[0]),
-                "incorrect member 1 balance"
-            ).to.eq.BN(expectedSingleBalance)
-
-            expect(
-                await keep.getMemberETHBalance(selectedMembers[1]),
-                "incorrect member 2 balance"
-            ).to.eq.BN(expectedSingleBalance)
-
-            expect(
-                await keep.getMemberETHBalance(selectedMembers[2]),
-                "incorrect member 3 balance"
-            ).to.eq.BN(expectedSingleBalance.add(remainder))
-        })
-
-        it("does not transfer more from subsidy pool than entry fee", async () => {
-            const subsidyPool = new BN(feeEstimate).mul(new BN(10)) // [wei]
-            const remainder = feeEstimate.mod(new BN(members.length))
-
-            // pump subsidy pool
-            web3.eth.sendTransaction({
-                value: subsidyPool,
-                from: accounts[0],
-                to: keepFactory.address
-            })
-
-            const initialBalances = await getETHBalancesMap(members)
-            const expectedSingleBalance = new BN(feeEstimate / members.length)
-
-            let blockNumber = await web3.eth.getBlockNumber()
-
-            const keep = await openKeep()
-
-            let eventList = await keepFactory.getPastEvents('BondedECDSAKeepCreated', {
-                fromBlock: blockNumber,
-                toBlock: 'latest'
-            })
-            const selectedMembers = eventList[0].returnValues.members
-
-            const newBalances = await getETHBalancesMap(members)
-            assert.deepEqual(newBalances, initialBalances)
-
-            expect(await keepFactory.subsidyPool()).to.eq.BN(
-                subsidyPool - feeEstimate,
-                "unexpected subsidy pool balance"
-            )
-
-            expect(
-                await keep.getMemberETHBalance(selectedMembers[0]),
-                "incorrect member 1 balance"
-            ).to.eq.BN(expectedSingleBalance)
-
-            expect(
-                await keep.getMemberETHBalance(selectedMembers[1]),
-                "incorrect member 2 balance"
-            ).to.eq.BN(expectedSingleBalance)
-
-            expect(
-                await keep.getMemberETHBalance(selectedMembers[2]),
-                "incorrect member 3 balance"
-            ).to.eq.BN(expectedSingleBalance.add(remainder))
-        })
-
         it("reverts when honest threshold is greater than the group size", async () => {
             let honestThreshold = 4
             let groupSize = 3
@@ -1315,6 +1219,192 @@ contract("BondedECDSAKeepFactory", async accounts => {
             await keep.closeKeep({ from: keepOwner })
 
             assert.isFalse(await keepFactory.hasKeep(keep.address))
+        })
+    })
+
+    describe("newGroupSelectionSeedFee", async () => {
+        let newEntryFee;
+
+        before(async () => {
+            await initializeNewFactory()
+
+            let callbackGas = await keepFactory.callbackGas()
+            newEntryFee = await randomBeacon.entryFeeEstimate(callbackGas)
+        })
+
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("evaluates reseed fee for empty pool", async () => {
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
+            expect(reseedFee).to.eq.BN(
+                newEntryFee, 
+                "reseed fee should equal new entry fee"
+            )
+        })
+
+        it("evaluates reseed fee for non-empty pool", async () => {
+            let poolValue = new BN(15)
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: poolValue
+            });
+
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
+            expect(reseedFee).to.eq.BN(
+                newEntryFee.sub(poolValue), 
+                "reseed fee should equal new entry fee minus pool value"
+            )
+        })
+
+        it("should reseed for free if has enough funds in the pool", async () => {
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: newEntryFee
+            });
+
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
+            expect(reseedFee).to.eq.BN(0, "reseed fee should be zero")
+        })
+
+        it("should reseed for free if has more than needed funds in the pool", async () => {
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: newEntryFee.addn(1)
+            });
+
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
+            expect(reseedFee).to.eq.BN(0, "reseed fee should be zero")
+        })
+    })
+
+    describe("requestNewGroupSelectionSeed", async () => {
+        let newEntryFee
+
+        before(async () => {
+            await initializeNewFactory()
+            let callbackGas = await keepFactory.callbackGas()
+            newEntryFee = await randomBeacon.entryFeeEstimate(callbackGas)
+        })
+
+        beforeEach(async () => {
+            await createSnapshot()
+        })
+
+        afterEach(async () => {
+            await restoreSnapshot()
+        })
+
+        it("requests new relay entry from the beacon and reseeds factory", async () => {
+            const expectedNewEntry = new BN(1337)
+            await randomBeacon.setEntry(expectedNewEntry)
+
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
+            await keepFactory.requestNewGroupSelectionSeed({ value: reseedFee })
+
+            assert.equal(
+                await randomBeacon.requestCount.call(),
+                1,
+                "incorrect number of beacon calls",
+            )
+
+            expect(
+                await keepFactory.getGroupSelectionSeed()
+            ).to.eq.BN(expectedNewEntry, "incorrect new group selection seed")
+        })
+
+        it("allows to reseed for free if the pool is full", async () => {
+            const expectedNewEntry = new BN(997)
+            await randomBeacon.setEntry(expectedNewEntry)
+
+            let poolValue = newEntryFee
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: poolValue
+            });
+
+            await keepFactory.requestNewGroupSelectionSeed({ value: 0 })
+
+            assert.equal(
+                await randomBeacon.requestCount.call(),
+                1,
+                "incorrect number of beacon calls",
+            )
+
+            expect(
+                await keepFactory.getGroupSelectionSeed()
+            ).to.eq.BN(expectedNewEntry, "incorrect new group selection seed")
+        })
+
+        it("updates pool after reseeding", async () => {
+            await randomBeacon.setEntry(new BN(1337))
+
+            let poolValue = newEntryFee.muln(15)
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: poolValue
+            });
+
+            await keepFactory.requestNewGroupSelectionSeed({ value: 0 })
+
+            let expectedPoolValue = poolValue.sub(newEntryFee)
+            expect(
+                await keepFactory.reseedPool()
+            ).to.eq.BN(expectedPoolValue, "unexpected reseed pool value")
+        })
+
+        it("updates pool after reseeding with value", async () => {
+            await randomBeacon.setEntry(new BN(1337))
+
+            let poolValue = newEntryFee.muln(15)
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: poolValue
+            });
+
+            const valueSent = new BN(10)
+            await keepFactory.requestNewGroupSelectionSeed({ value: 10 })
+
+            let expectedPoolValue = poolValue.sub(newEntryFee).add(valueSent)
+            expect(
+                await keepFactory.reseedPool()
+            ).to.eq.BN(expectedPoolValue, "unexpected reseed pool value")
+        })
+
+        it("reverts if the provided payment is not sufficient", async () => {
+            let poolValue = newEntryFee.subn(2)
+            web3.eth.sendTransaction({
+                from: accounts[0],
+                to: keepFactory.address,
+                value: poolValue
+            });
+
+            await expectRevert(
+                keepFactory.requestNewGroupSelectionSeed({ value: 1}),
+                "Not enough funds to trigger reseed"
+            )
+        })
+
+        it("reverts if beacon is busy", async () => {
+            await randomBeacon.setShouldFail(true)
+
+            let reseedFee = await keepFactory.newGroupSelectionSeedFee()
+            await expectRevert(
+                keepFactory.requestNewGroupSelectionSeed({ value: reseedFee }),
+                "request relay entry failed"
+            )
         })
     })
 

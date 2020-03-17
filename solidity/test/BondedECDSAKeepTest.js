@@ -8,7 +8,7 @@ import { mineBlocks } from './helpers/mineBlocks';
 import { createSnapshot, restoreSnapshot } from "./helpers/snapshot";
 import { duration, increaseTime } from './helpers/increaseTime';
 
-const { expectRevert } = require('openzeppelin-test-helpers');
+const { expectRevert } = require('@openzeppelin/test-helpers')
 
 const Registry = artifacts.require('Registry')
 const BondedECDSAKeep = artifacts.require('./BondedECDSAKeep.sol')
@@ -554,6 +554,24 @@ contract('BondedECDSAKeep', (accounts) => {
 
       await keep.seizeSignerBonds({ from: owner })
     })
+
+    it('reverts when already seized', async () => {
+      await keep.seizeSignerBonds({ from: owner })
+
+      await expectRevert(
+        keep.seizeSignerBonds({ from: owner }),
+        'Keep is not active'
+      )
+    })
+
+    it('reverts when already closed', async () => {
+      await keep.closeKeep({ from: owner })
+
+      await expectRevert(
+        keep.seizeSignerBonds({ from: owner }),
+        'Keep is not active'
+      )
+    })
   })
 
   describe('checkSignatureFraud', () => {
@@ -998,8 +1016,17 @@ contract('BondedECDSAKeep', (accounts) => {
       )
     })
 
-    it('reverts closing when already closed', async () => {
+    it('reverts when already closed', async () => {
       await keep.closeKeep({ from: owner })
+
+      await expectRevert(
+        keep.closeKeep({ from: owner }),
+        'Keep is not active'
+      )
+    })
+
+    it('reverts when already seized', async () => {
+      await keep.seizeSignerBonds({ from: owner })
 
       await expectRevert(
         keep.closeKeep({ from: owner }),
