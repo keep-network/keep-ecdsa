@@ -118,7 +118,7 @@ contract('KeepBonding', (accounts) => {
 
             await expectRevert(
                 keepBonding.withdraw(value, operator, { from: accounts[3] }),
-                "Only operator or the owner is allowed to withdraw bond"
+                "Not authorized to withdraw bond"
             )
         })
     })
