@@ -75,27 +75,27 @@ spec:
             - name: ETH_RPC_URL
               valueFrom:
                 configMapKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: rpc-url
             - name: ETH_WS_URL
               valueFrom:
                 configMapKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: ws-url
             - name: ETH_NETWORK_ID
               valueFrom:
                 configMapKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: network-id
             - name: CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
               valueFrom:
                 configMapKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: contract-owner-eth-account-address
             - name: CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: contract-owner-eth-account-private-key
             - name: KEEP_TECDSA_ETH_KEYFILE_PATH
               value: /mnt/keep-tecdsa/keyfile/account-2-keyfile
