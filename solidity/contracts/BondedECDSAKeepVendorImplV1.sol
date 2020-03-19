@@ -37,6 +37,13 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     event FactoryUpgradeStarted(address factory, uint256 timestamp);
     event FactoryUpgradeCompleted(address factory);
 
+    constructor() public {
+        // Mark as already initialized to block the direct usage of the contract
+        // after deployment. The contract is intended to be called via proxy, so
+        // setting this value will not affect the clones usage.
+        _initialized["BondedECDSAKeepVendorImplV1"] = true;
+    }
+
     /// @notice Initializes Keep Vendor contract implementation.
     /// @param registryAddress Keep registry contract linked to this contract.
     /// @param factory Keep factory contract registered initially in the vendor
