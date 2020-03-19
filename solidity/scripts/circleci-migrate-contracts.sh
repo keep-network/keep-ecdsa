@@ -63,7 +63,7 @@ ssh utilitybox << EOF
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
   echo "<<<<<<START Tenderly Push START<<<<<<"
   tenderly login --authentication-method token --token $TENDERLY_TOKEN
-  tenderly push --networks $ETH_NETWORK_ID --tag keep-core --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG
+  tenderly push --networks $ETH_NETWORK_ID --tag keep-ecdsa --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG
   echo "<<<<<<FINISH Tenderly Push FINISH<<<<<<"
 EOF
 
