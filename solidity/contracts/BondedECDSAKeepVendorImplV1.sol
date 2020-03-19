@@ -140,6 +140,11 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     /// @dev Throws if called by any account other than the operator contract
     /// upgrader authorized for this service contract.
     modifier onlyOperatorContractUpgrader() {
+        require(
+            address(registry) != address(0),
+            "Registry address is not registered"
+        );
+
         address operatorContractUpgrader = registry.operatorContractUpgraderFor(
             address(this)
         );
