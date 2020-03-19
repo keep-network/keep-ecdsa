@@ -1,28 +1,33 @@
 # keep-tecdsa
 
----
-
 ## Contracts
 
 See [solidity](./solidity/) directory.
 
----
+## Getting Set Up
 
-## Developer's environment setup
-
-To set up developers environment on MacOS execute:
+If you're on macOS, install Homebrew and run scripts/macos-setup.sh. Note that
+if you don't have Homebrew or you're not on macOS, the below information
+details what you'll need. The script additionally sets up pre-commit hooks.
 
 ```
-./scripts/lcl-macos-setup.sh
+./scripts/macos-setup.sh
 ```
 
----
+### Building
 
-## Quick installation
+Currently the easiest way to build the client is using the `Dockerfile` at the
+root of the repository. A simple `docker build` should get you a functioning
+container.
+
+To build manually, you'll need to install `jq`, `truffle`, and `npm`. Then you
+can follow the steps in the next section.
+
+### Quick installation
 
 To quickly install and start a single client use the installation script.
 
-### Prerequisites
+#### Prerequisites
 To run the script some manual preparation is needed:
 
 - [set up local ethereum chain](https://github.com/keep-network/keep-core/blob/master/docs/development/local-keep-network.adoc#setting-up-local-ethereum-client),
@@ -32,7 +37,7 @@ To run the script some manual preparation is needed:
 Please note that the client config file doesn't have to be pre-configured with contracts
 addresses as they will be populated during installation.
 
-### Install script
+#### Install script
 
 The `install.sh` script will:
 
@@ -43,13 +48,12 @@ The `install.sh` script will:
 The script will ask you for the password to previously created ethereum accounts.
 
 
-
 To start the installation execute:
 ```
 ./scripts/install.sh
 ```
 
-### Initialize script
+#### Initialize script
 
 The `initialize.sh` script should be called after external customer application
 contract (i.e. `TBTCSystem`) using keep-ecdsa is known. The script will:
@@ -70,20 +74,20 @@ To start the initialization execute:
 ./scripts/initialize.sh
 ```
 
-### Start client
+#### Start client
 
 To start the client execute:
 ```
 ./scripts/start.sh
 ```
 
----
-
 ## Go client
 
 ### Prerequisites
 
-Dependencies are managed by [Modules](https://github.com/golang/go/wiki/Modules) feature. 
+Dependencies are managed by
+[Modules](https://github.com/golang/go/wiki/Modules) feature. 
+
 To work in Go 1.11 it may require setting `GO111MODULE=on` environment variable.
 ```sh
 export GO111MODULE=on
