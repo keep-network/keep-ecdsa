@@ -260,53 +260,53 @@ workflows:
       - keep_test_approval:
           type: approval
           filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+            # tags:
+            #   only: /^v.*/
+            # branches:
+            #   ignore: /.*/
       - setup_github_package_registry:
           context: github-package-registry
           filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+            # tags:
+            #   only: /^v.*/
+            # branches:
+            #   ignore: /.*/
           requires:
             - keep_test_approval
       - build_client_and_test_go:
           context: github-package-registry
           filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+            # tags:
+            #   only: /^v.*/
+            # branches:
+            #   ignore: /.*/
           requires:
             - setup_github_package_registry
       - migrate_contracts:
           context: keep-test
           filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+            # tags:
+            #   only: /^v.*/
+            # branches:
+            #   ignore: /.*/
           requires:
             - build_client_and_test_go
       - build_initcontainer:
           context: keep-test
           filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+            # tags:
+            #   only: /^v.*/
+            # branches:
+            #   ignore: /.*/
           requires:
             - migrate_contracts
       - publish_client:
           context: keep-test
           filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+            # tags:
+            #   only: /^v.*/
+            # branches:
+            #   ignore: /.*/
           requires:
             - build_client_and_test_go
             - build_initcontainer
@@ -314,9 +314,9 @@ workflows:
       - publish_contract_data:
           context: keep-test
           filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+            # tags:
+            #   only: /^v.*/
+            # branches:
+            #   ignore: /.*/
           requires:
             - migrate_contracts
