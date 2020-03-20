@@ -1,4 +1,4 @@
-# keep-tecdsa
+# keep-ecdsa
 
 ---
 
