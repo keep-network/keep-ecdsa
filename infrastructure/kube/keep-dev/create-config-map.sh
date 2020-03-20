@@ -2,4 +2,4 @@
 
 set -e
 
-kubectl -n tbtc create configmap keep-tecdsa --from-file=files/
+kubectl -n tbtc create configmap keep-ecdsa --from-file=files/

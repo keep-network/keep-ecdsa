@@ -65,7 +65,7 @@ async function provisionKeepTecdsa() {
 
   try {
 
-    console.log('###########  Provisioning keep-tecdsa! ###########')
+    console.log('###########  Provisioning keep-ecdsa! ###########')
 
     console.log(`\n<<<<<<<<<<<< Create Sortition Pool for TBTCSystem: ${tbtcSystemContractAddress} >>>>>>>>>>>>`)
     const sortitionPoolContractAddress = await createSortitionPool(tbtcSystemContractAddress)
@@ -88,10 +88,10 @@ async function provisionKeepTecdsa() {
     console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`)
     await authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer)
 
-    console.log('\n<<<<<<<<<<<< Creating keep-tecdsa Config File >>>>>>>>>>>>')
+    console.log('\n<<<<<<<<<<<< Creating keep-ecdsa Config File >>>>>>>>>>>>')
     await createKeepTecdsaConfig()
 
-    console.log("\n########### keep-tecdsa Provisioning Complete! ###########")
+    console.log("\n########### keep-ecdsa Provisioning Complete! ###########")
     process.exit()
   } catch (error) {
     console.error(error.message)
@@ -228,7 +228,7 @@ async function createSortitionPool(applicationAddress) {
 }
 
 async function createKeepTecdsaConfig() {
-  let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/keep-tecdsa-config-template.toml', 'utf8'))
+  let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/keep-ecdsa-config-template.toml', 'utf8'))
 
   parsedConfigFile.ethereum.URL = ethWSUrl
   parsedConfigFile.ethereum.URLRPC = ethRPCUrl
@@ -255,8 +255,8 @@ async function createKeepTecdsaConfig() {
     replace: (key, value) => { return (key == 'Port') ? value.toFixed(0) : false }
   })
 
-  fs.writeFileSync('/mnt/keep-tecdsa/config/keep-tecdsa-config.toml', formattedConfigFile)
-  console.log('keep-tecdsa config written to /mnt/keep-tecdsa/config/keep-tecdsa-config.toml')
+  fs.writeFileSync('/mnt/keep-ecdsa/config/keep-ecdsa-config.toml', formattedConfigFile)
+  console.log('keep-ecdsa config written to /mnt/keep-ecdsa/config/keep-ecdsa-config.toml')
 }
 
 /*
