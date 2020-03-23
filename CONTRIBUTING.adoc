@@ -2,7 +2,7 @@
 
 👍🎉 First off, thanks for taking the time to contribute! 🎉👍 Contributions
 are welcome from anyone on the internet, and even the smallest of fixes
-are appreciated!
+is appreciated!
 
 The following is a set of guidelines for contributing to Keep and its
 packages. These are mostly guidelines, not rules. Use your best
