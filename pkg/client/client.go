@@ -13,7 +13,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
+	"github.com/keep-network/keep-tecdsa/pkg/chain"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-tecdsa/pkg/node"
 	"github.com/keep-network/keep-tecdsa/pkg/registry"

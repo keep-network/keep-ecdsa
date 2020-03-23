@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
+	"github.com/keep-network/keep-tecdsa/pkg/chain"
 )
 
 func TestOnBondedECDSAKeepCreated(t *testing.T) {

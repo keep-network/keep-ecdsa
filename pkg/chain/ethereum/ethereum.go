@@ -13,8 +13,8 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/gen/contract"
+	"github.com/keep-network/keep-tecdsa/pkg/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/gen/contract"
 	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
 )
