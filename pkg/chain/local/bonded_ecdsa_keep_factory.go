@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func (c *localChain) createKeep(keepAddress common.Address) error {

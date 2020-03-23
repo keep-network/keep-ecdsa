@@ -1,4 +1,4 @@
-module github.com/keep-network/keep-tecdsa
+module github.com/keep-network/keep-ecdsa
 
 go 1.13
 

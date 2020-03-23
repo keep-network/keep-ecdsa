@@ -2,7 +2,7 @@ package node
 
 import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
 // tssPreParamsPool is a pool holding TSS pre parameters. It autogenerates entries

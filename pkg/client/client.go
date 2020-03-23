@@ -13,13 +13,13 @@ import (
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
-	"github.com/keep-network/keep-tecdsa/pkg/node"
-	"github.com/keep-network/keep-tecdsa/pkg/registry"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/node"
+	"github.com/keep-network/keep-ecdsa/pkg/registry"
 )
 
-var logger = log.Logger("keep-tecdsa")
+var logger = log.Logger("keep-ecdsa")
 
 const (
 	KeyGenerationTimeout = 150 * time.Minute

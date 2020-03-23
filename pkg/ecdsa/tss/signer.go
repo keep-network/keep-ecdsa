@@ -3,7 +3,7 @@ package tss
 import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	tssLib "github.com/binance-chain/tss-lib/tss"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
 // ThresholdSigner is a threshold signer who completed key generation stage.

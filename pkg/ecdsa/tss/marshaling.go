@@ -8,7 +8,7 @@ import (
 	"github.com/binance-chain/tss-lib/crypto/paillier"
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
 // Marshal converts ThresholdSigner to byte array.

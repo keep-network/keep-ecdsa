@@ -1,6 +1,6 @@
 :toc: macro
 
-= keep-tecdsa
+= keep-ecdsa
 
 The on- and off-chain pieces of ECDSA keeps and Bonded ECDSA keeps
 for the Keep network. Builds on top of and requires the

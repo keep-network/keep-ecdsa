@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func TestRequestSignatureNonexistentKeep(t *testing.T) {

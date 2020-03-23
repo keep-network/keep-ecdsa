@@ -14,11 +14,11 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-tecdsa/pkg/chain"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
-var logger = log.Logger("keep-tecdsa")
+var logger = log.Logger("keep-ecdsa")
 
 const monitorKeepPublicKeySubmissionTimeout = 30 * time.Minute
 
