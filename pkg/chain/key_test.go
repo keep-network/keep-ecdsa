@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
 func TestSerializePublicKey(t *testing.T) {

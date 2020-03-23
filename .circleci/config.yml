@@ -73,7 +73,7 @@ jobs:
           name: Run Go tests
           command: |
             docker run \
-              --workdir /go/src/github.com/keep-network/keep-tecdsa \
+              --workdir /go/src/github.com/keep-network/keep-ecdsa \
               go-build-env \
               go test ./.../
       - run:

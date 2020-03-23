@@ -32,7 +32,7 @@ jobs:
           echo "::set-env name=PACKAGE_VERSION::$PACKAGE_VERSION"
       - name: Setup git
         run: |
-          git remote set-url origin https://${{ secrets.CI_GITHUB_TOKEN }}@github.com/keep-network/keep-tecdsa.git
+          git remote set-url origin https://${{ secrets.CI_GITHUB_TOKEN }}@github.com/keep-network/keep-ecdsa.git
           git config user.email "thesis-heimdall@users.noreply.github.com"
           git config user.name "Heimdall"
       - name: Commit

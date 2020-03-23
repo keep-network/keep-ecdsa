@@ -14,7 +14,7 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
 const (
