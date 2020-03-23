@@ -100,7 +100,7 @@ spec:
             - name: KEEP_TECDSA_ETH_KEYFILE_PATH
               value: /mnt/keep-ecdsa/keyfile/account-2-keyfile
             - name: KEEP_TECDSA_PEERS
-              value: /ip4/10.102.100.2/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY
+              value: /ip4/10.102.100.8/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY
             - name: KEEP_TECDSA_ANNOUNCED_ADDRESSES
               value: ''
             - name: KEEP_TECDSA_PORT
