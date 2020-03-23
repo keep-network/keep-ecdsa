@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 // checkStatusAndRegisterForApplication checks whether the operator is

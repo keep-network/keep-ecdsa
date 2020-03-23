@@ -1,8 +1,8 @@
 package eth
 
 import (
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-tecdsa/pkg/utils/byteutils"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
 )
 
 // SerializePublicKey takes X and Y coordinates of a signer's public key and

@@ -4,7 +4,7 @@
   "description": "Smart contracts for ECDSA Keep",
   "repository": {
     "type": "git",
-    "url": "ssh://git@github.com/keep-network/keep-tecdsa.git"
+    "url": "ssh://git@github.com/keep-network/keep-ecdsa.git"
   },
   "files": [
     "contracts/**/*.sol"
@@ -21,9 +21,9 @@
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/keep-network/keep-tecdsa/issues"
+    "url": "https://github.com/keep-network/keep-ecdsa/issues"
   },
-  "homepage": "https://github.com/keep-network/keep-tecdsa",
+  "homepage": "https://github.com/keep-network/keep-ecdsa",
   "dependencies": {
     "@keep-network/keep-core": "0.9.2",
     "@keep-network/sortition-pools": "0.1.1",

@@ -8,7 +8,7 @@ import (
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/logging"
-	"github.com/keep-network/keep-tecdsa/cmd"
+	"github.com/keep-network/keep-ecdsa/cmd"
 	"github.com/urfave/cli"
 )
 

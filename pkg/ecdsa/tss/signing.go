@@ -9,7 +9,7 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
 	"github.com/binance-chain/tss-lib/tss"
 	tssLib "github.com/binance-chain/tss-lib/tss"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
 // initializeSigning initializes a member to run a threshold multi-party signature

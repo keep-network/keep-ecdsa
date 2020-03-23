@@ -1,14 +1,14 @@
 FROM golang:1.13.8-alpine3.10 AS runtime
 
-ENV APP_NAME=keep-tecdsa \
+ENV APP_NAME=keep-ecdsa \
 	BIN_PATH=/usr/local/bin
 
 FROM runtime AS gobuild
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
-	APP_NAME=keep-tecdsa \
-	APP_DIR=/go/src/github.com/keep-network/keep-tecdsa \
+	APP_NAME=keep-ecdsa \
+	APP_DIR=/go/src/github.com/keep-network/keep-ecdsa \
 	BIN_PATH=/usr/local/bin \
 	# GO111MODULE required to support go modules
 	GO111MODULE=on
@@ -51,7 +51,7 @@ COPY ./solidity $APP_DIR/solidity
 RUN cd $APP_DIR/solidity && npm install
 
 # Generate code.
-COPY ./pkg/chain/eth/gen $APP_DIR/pkg/chain/eth/gen
+COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
 # Need this to resolve imports in generated Ethereum commands.
 COPY ./internal/config $APP_DIR/config

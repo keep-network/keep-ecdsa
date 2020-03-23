@@ -23,7 +23,7 @@ node_modules/
 *.abi
 abi/
 pkg/**/gen/*/*.go
-!pkg/chain/eth/gen/cmd/cmd.go
+!pkg/chain/gen/cmd/cmd.go
 
 # Build output
 build/

@@ -45,7 +45,7 @@ value. To initialize the operator:
 
 2. Initialize operator for Bonded ECDSA keep factory.
     ```sh
-    # Run from `keep-tecdsa/solidity` directory
+    # Run from `keep-ecdsa/solidity` directory
     truffle exec scripts/lcl-initialize.js`
     ```
 

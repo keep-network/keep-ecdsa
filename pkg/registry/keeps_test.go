@@ -9,9 +9,9 @@ import (
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-tecdsa/internal/testdata"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa/tss/gen/pb"
+	"github.com/keep-network/keep-ecdsa/internal/testdata"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
 var (

@@ -17,9 +17,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/local"
-	"github.com/keep-network/keep-tecdsa/internal/testdata"
-	"github.com/keep-network/keep-tecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-tecdsa/pkg/utils/testutils"
+	"github.com/keep-network/keep-ecdsa/internal/testdata"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/utils/testutils"
 )
 
 func TestGenerateKeyAndSign(t *testing.T) {

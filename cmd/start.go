@@ -15,9 +15,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
 
-	"github.com/keep-network/keep-tecdsa/internal/config"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth/ethereum"
-	"github.com/keep-network/keep-tecdsa/pkg/client"
+	"github.com/keep-network/keep-ecdsa/internal/config"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
+	"github.com/keep-network/keep-ecdsa/pkg/client"
 
 	"github.com/urfave/cli"
 )

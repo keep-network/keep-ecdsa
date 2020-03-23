@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keep-network/keep-tecdsa/internal/testdata"
-	"github.com/keep-network/keep-tecdsa/pkg/utils/pbutils"
+	"github.com/keep-network/keep-ecdsa/internal/testdata"
+	"github.com/keep-network/keep-ecdsa/pkg/utils/pbutils"
 )
 
 func TestSignerMarshalling(t *testing.T) {
