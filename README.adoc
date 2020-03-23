@@ -196,7 +196,7 @@ go test ./...
 
 `+configs/config.toml+` is default path to the config file. To provide
 custom configuration CLI supports `+--config+` flag. Sample
-configuration can be found in [config.toml.SAMPLE](configs/confi
+configuration can be found in [config.toml.SAMPLE](configs/config.toml.SAMPLE).
 
 
 To run a smoke test execute:
