@@ -38,33 +38,29 @@ keep-ecdsa/
   Dockerfile
   main.go, *.go
   docs/
-  contracts/ <1>
-    docs/
-    solidity/
+  solidity/ <1>
   cmd/ <2>
   pkg/ <3>
-    net/
-      net.go, *.go <4>
-      libp2p/
     chain/
       chain.go, *.go <4>
       ethereum/
         gen/
           gen.go <5>
-    relay/
-      relay.go, *.go
+    client/
+      client.go, *.go
+    ecdsa/
+      ecdsa.go, *.go
 ```
-<1> While Keep only uses Solidity at the moment, the directory structure allows
-    for other contract languages.
+<1> Keep smart contracts are implemented here.
 <2> Keep subcommands are implemented here, though they should be minimal and
     deal solely with user interaction. The meat of the commands should exist in
     a package fit for the appropriate purpose.
 <3> All additional packages live in `pkg/`.
 <4> The high-level interfaces for a package `mypackage` live in `mypackage.go`.
-    `net` and `chain` are interface packages that expose a common interface
-    to network and blockchain layers. Their subpackages provide particular
-    implementations of these common interfaces. Only `cmd/` and the main
-    package should interact with the implementations directly.
+    `chain` is an interface package that expose a common interface
+    to blockchain layer. Its subpackages provide particular implementations.
+    Only `cmd/` and the main package should interact with the implementations 
+    directly.
 <5> When a package requires generated code, it should have a subpackage named
     `gen/`. This subpackage should contain a single file, `gen.go`, with a
     `// go:generate` annotation to trigger appropriate code generation. All code
