@@ -165,16 +165,11 @@ To start the client execute:
 
 ==== Prerequisites
 
+Building `keep-ecdsa` requires Go version 1.13 or later. 
+
 Dependencies are managed by
 https://github.com/golang/go/wiki/Modules[Modules] feature.
 
-To work in Go 1.11 it may require setting `+GO111MODULE=on+` environment
-variable.
-
-[source,sh]
-----
-export GO111MODULE=on
-----
 
 ==== Build
 
