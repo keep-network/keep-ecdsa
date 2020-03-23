@@ -7,14 +7,14 @@ metadata:
   labels:
     keel.sh/policy: all
     app: keep
-    type: tecdsa
+    type: ecdsa
     id: '4'
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: keep
-      type: tecdsa
+      type: ecdsa
       id: '4'
   serviceName: keep-ecdsa-4
   volumeClaimTemplates:
@@ -36,7 +36,7 @@ spec:
     metadata:
       labels:
         app: keep
-        type: tecdsa
+        type: ecdsa
         id: '4'
     spec:
       containers:
