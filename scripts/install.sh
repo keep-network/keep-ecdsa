@@ -23,7 +23,7 @@ DONE_END='\n\n\e[0m'    # new line + reset
 printf "${LOG_START}Starting installation...${LOG_END}"
 KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
 KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
-KEEP_CORE_SOL_PATH=$(realpath $KEEP_CORE_PATH/contracts/solidity)
+KEEP_CORE_SOL_PATH=$(realpath $KEEP_CORE_PATH/solidity)
 KEEP_CORE_SOL_ARTIFACTS_PATH=$(realpath $KEEP_CORE_SOL_PATH/build/contracts)
 
 cd $KEEP_ECDSA_SOL_PATH
