@@ -15,8 +15,8 @@ COPY ./TokenStaking.json /tmp/TokenStaking.json
 
 COPY ./KeepToken.json /tmp/KeepToken.json
 
-COPY ./keep-tecdsa-config-template.toml /tmp/keep-tecdsa-config-template.toml
+COPY ./keep-ecdsa-config-template.toml /tmp/keep-ecdsa-config-template.toml
 
-COPY ./provision-keep-tecdsa.js /tmp/provision-keep-tecdsa.js
+COPY ./provision-keep-ecdsa.js /tmp/provision-keep-ecdsa.js
 
-ENTRYPOINT ["node", "./provision-keep-tecdsa.js"]
+ENTRYPOINT ["node", "./provision-keep-ecdsa.js"]
