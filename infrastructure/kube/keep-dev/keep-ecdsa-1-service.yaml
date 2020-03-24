@@ -2,19 +2,18 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: keep-tecdsa-3
+  name: keep-ecdsa-1
   namespace: default
   labels:
     app: keep
-    type: tecdsa
-    id: '3'
+    type: ecdsa
+    id: '1'
 spec:
-  type: LoadBalancer
   ports:
     - port: 3919
       targetPort: 3919
       name: tcp-3919
   selector:
     app: keep
-    type: tecdsa
-    id: '3'
+    type: ecdsa
+    id: '1'
