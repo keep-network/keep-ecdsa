@@ -238,6 +238,7 @@ contract("BondedECDSAKeepVendorImplV1viaProxy", async accounts => {
             .contract.methods.initialize(registryAddress, factoryAddress).encodeABI()
 
         const bondedECDSAKeepVendorProxy = await BondedECDSAKeepVendor.new(
+            "V1",
             bondedECDSAKeepVendorImplV1Stub.address,
             initializeCallData,
             { from: proxyAdmin }

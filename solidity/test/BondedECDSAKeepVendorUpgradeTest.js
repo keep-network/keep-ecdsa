@@ -23,6 +23,8 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
   let keepVendorProxy;
 
   let implV1, implV2;
+  const V1 = "V1";
+  const V2 = "V2";
 
   before(async () => {
     implV1 = await BondedECDSAKeepVendorImplV1Stub.new();
@@ -33,6 +35,7 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
       .encodeABI();
 
     keepVendorProxy = await BondedECDSAKeepVendor.new(
+      V1,
       implV1.address,
       initializeCallData,
       { from: proxyAdmin }
@@ -53,12 +56,12 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
         .initialize(false)
         .encodeABI();
 
-      await keepVendorProxy.upgradeToAndCall(implV2.address, initializeCallData, {
+      await keepVendorProxy.upgradeToAndCall(V2, implV2.address, initializeCallData, {
         from: proxyAdmin
       });
       await time.increase(await keepVendorProxy.upgradeTimeDelay());
 
-      const receipt = await keepVendorProxy.completeUpgrade();
+      const receipt = await keepVendorProxy.completeUpgrade({ from: proxyAdmin });
       expectEvent(receipt, "UpgradeCompleted", {
         implementation: implV2.address
       });
@@ -85,10 +88,13 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
         .initialize(registryAddress, factoryAddress)
         .encodeABI();
 
+      keepVendorProxy.upgradeToAndCall(V2, implV2.address, initializeCallData, {
+        from: proxyAdmin
+      })
+      await time.increase(await keepVendorProxy.upgradeTimeDelay());
+
       await expectRevert(
-        keepVendorProxy.upgradeToAndCall(implV2.address, initializeCallData, {
-          from: proxyAdmin
-        }),
+        keepVendorProxy.completeUpgrade({ from: proxyAdmin }),
         "revert"
       );
     });
