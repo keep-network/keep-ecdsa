@@ -390,19 +390,19 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
 
     /// @notice Requests for a relay entry using the beacon payment provided as
     /// the parameter. Sets `setGroupSelectionSeed(uint256)` as beacon callback.
-    function requestRelayEntry(
-        uint256 payment
-    ) internal returns (bool, bytes memory) {
-        return address(randomBeacon).call.value(
-            payment
-        )(
-            abi.encodeWithSignature(
-                "requestRelayEntry(address,string,uint256)",
-                address(this),
-                "setGroupSelectionSeed(uint256)",
-                callbackGas
-            )
-        );
+    function requestRelayEntry(uint256 payment)
+        internal
+        returns (bool, bytes memory)
+    {
+        return
+            address(randomBeacon).call.value(payment)(
+                abi.encodeWithSignature(
+                    "requestRelayEntry(address,string,uint256)",
+                    address(this),
+                    "setGroupSelectionSeed(uint256)",
+                    callbackGas
+                )
+            );
     }
 
     /// @notice Sets a new group selection seed value.
