@@ -1,10 +1,12 @@
 pragma solidity ^0.5.4;
 
+import "./UpgradableProxyStorage.sol";
+
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
 
 /// @title Proxy contract for Bonded ECDSA Keep vendor.
-contract BondedECDSAKeepVendor is Proxy {
+contract BondedECDSAKeepVendor is Proxy, UpgradableProxyStorage {
     using SafeMath for uint256;
 
     /// @dev Storage slot with the admin of the contract.
