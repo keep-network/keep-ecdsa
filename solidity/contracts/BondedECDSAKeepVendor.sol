@@ -36,8 +36,13 @@ contract BondedECDSAKeepVendor is Proxy, UpgradableProxyStorage {
     /// subtracted by 1, and is validated in the constructor.
     bytes32 internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0x0816e8d9eeb2554df0d0b7edc58e2d957e6ce18adf92c138b50dd78a420bebaf;
 
-    event UpgradeStarted(address implementation, uint256 timestamp);
-    event UpgradeCompleted(address implementation);
+    event UpgradeStarted(
+        string version,
+        address implementation,
+        bytes initialization,
+        uint256 timestamp
+    );
+    event UpgradeCompleted(string version, address implementation);
 
     constructor(
         string memory _version,
@@ -86,41 +91,67 @@ contract BondedECDSAKeepVendor is Proxy, UpgradableProxyStorage {
     /// @dev It is the first part of the two-step implementation address update
     /// process. The function emits an event containing the new value and current
     /// block timestamp.
+    /// @param _newVersion Version of the new vendor implementation contract.
     /// @param _newImplementation Address of the new vendor implementation contract.
     /// @param _data Delegate call data for implementation initialization.
-    function upgradeToAndCall(address _newImplementation, bytes memory _data)
-        public
-        onlyAdmin
-    {
-        address currentImplementation = _implementation();
+    function upgradeToAndCall(
+        string memory _newVersion,
+        address _newImplementation,
+        bytes memory _data
+    ) public onlyAdmin {
         require(
             _newImplementation != address(0),
             "Implementation address can't be zero."
         );
         require(
-            _newImplementation != currentImplementation,
-            "Implementation address must be different from the current one."
+            bytes(_newVersion).length > 0,
+            "Version can't be empty string."
         );
 
-        if (_data.length > 0) {
-            initializeImplementation(_newImplementation, _data);
+        uint256 newVersionID = uint256(
+            keccak256(abi.encodePacked(_newVersion))
+        );
+
+        require(
+            newVersionID != currentImplementationID(),
+            "Implementation version must be different from the current one."
+        );
+
+        // Check if the new version is already registered, but in case the upgrade
+        // for given version is already in progress let to update it's details.
+        if (newVersionID != upgradeImplementationID()) {
+            Implementation memory implementation = getImplementation(
+                newVersionID
+            );
+            require(
+                bytes(implementation.version).length == 0,
+                "Implementation version has already been registered before."
+            );
         }
 
-        setNewImplementation(_newImplementation);
+        setUpgradeImplementationID(newVersionID);
+
+        setImplementation(_newVersion, _newImplementation, _data);
 
         /* solium-disable-next-line security/no-block-members */
         setUpgradeInitiatedTimestamp(block.timestamp);
 
-        /* solium-disable-next-line security/no-block-members */
-        emit UpgradeStarted(_newImplementation, block.timestamp);
+        emit UpgradeStarted(
+            _newVersion,
+            _newImplementation,
+            _data,
+            /* solium-disable-next-line security/no-block-members */
+            block.timestamp
+        );
     }
 
     /// @notice Finalizes implementation address upgrade.
     /// @dev It is the second part of the two-step implementation address update
     /// process. The function emits an event containing the new implementation
     /// address. It can be called after upgrade time delay period has passed since
-    /// upgrade initiation.
-    function completeUpgrade() public {
+    /// upgrade initiation. If the upgrade initialization data had been stored
+    /// the function will call the new implementation contract to initialize.
+    function completeUpgrade() public onlyAdmin {
         require(upgradeInitiatedTimestamp() > 0, "Upgrade not initiated");
 
         require(
@@ -130,12 +161,26 @@ contract BondedECDSAKeepVendor is Proxy, UpgradableProxyStorage {
             "Timer not elapsed"
         );
 
-        address newImplementation = newImplementation();
+        setCurrentImplementationID(upgradeImplementationID());
 
-        setImplementation(newImplementation);
+        Implementation memory implementation = getImplementation(
+            upgradeImplementationID()
+        );
+
+        if (implementation.initializationData.length > 0) {
+            initializeImplementation(
+                implementation.implementationContract,
+                implementation.initializationData
+            );
+        }
+
+        setUpgradeImplementationID(0);
         setUpgradeInitiatedTimestamp(0);
 
-        emit UpgradeCompleted(newImplementation);
+        emit UpgradeCompleted(
+            implementation.version,
+            implementation.implementationContract
+        );
     }
 
     /// @notice Initializes implementation contract.
