@@ -39,16 +39,23 @@ contract BondedECDSAKeepVendor is Proxy, UpgradableProxyStorage {
     event UpgradeStarted(address implementation, uint256 timestamp);
     event UpgradeCompleted(address implementation);
 
-    constructor(address _implementation, bytes memory _data) public {
-        assertSlot(IMPLEMENTATION_SLOT, "eip1967.proxy.implementation");
+    constructor(
+        string memory _version,
+        address _implementation,
+        bytes memory _data
+    ) public {
         assertSlot(ADMIN_SLOT, "eip1967.proxy.admin");
         assertSlot(
             UPGRADE_TIME_DELAY_SLOT,
             "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
         );
         assertSlot(
-            UPGRADE_IMPLEMENTATION_SLOT,
-            "network.keep.bondedecdsavendor.proxy.upgradeImplementation"
+            CURRENT_IMPL_ID_SLOT,
+            "network.keep.proxy.currentimplementationid"
+        );
+        assertSlot(
+            UPGRADE_IMPL_ID_SLOT,
+            "network.keep.proxy.upgradeimplementationid"
         );
         assertSlot(
             UPGRADE_INIT_TIMESTAMP_SLOT,
@@ -60,11 +67,15 @@ contract BondedECDSAKeepVendor is Proxy, UpgradableProxyStorage {
             "Implementation address can't be zero."
         );
 
+        setCurrentImplementationID(
+            uint256(keccak256(abi.encodePacked(_version)))
+        );
+
+        setImplementation(_version, _implementation, _data);
+
         if (_data.length > 0) {
             initializeImplementation(_implementation, _data);
         }
-
-        setImplementation(_implementation);
 
         setUpgradeTimeDelay(1 days);
 
