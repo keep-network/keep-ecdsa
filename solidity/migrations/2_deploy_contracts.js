@@ -48,6 +48,7 @@ module.exports = async function (deployer) {
 
     await deployer.deploy(
         BondedECDSAKeepVendor,
+        "V1",
         BondedECDSAKeepVendorImplV1.address,
         implInitializeCallData
     )
