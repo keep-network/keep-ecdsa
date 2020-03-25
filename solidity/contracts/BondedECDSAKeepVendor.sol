@@ -12,21 +12,22 @@ contract BondedECDSAKeepVendor is Proxy {
     /// validated in the constructor.
     bytes32 internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
-    /// @dev Storage slot with the address of the current implementation.
-    /// This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1, and is
-    /// validated in the constructor.
-    bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
-
     /// @dev Storage slot with the upgrade time delay. Upgrade time delay defines a
     /// period for implementation upgrade.
     /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
     /// subtracted by 1, and is validated in the constructor.
     bytes32 internal constant UPGRADE_TIME_DELAY_SLOT = 0x3ca583dafde9ce8bdb41fe825f85984a83b08ecf90ffaccbc4b049e8d8703563;
 
-    /// @dev Storage slot with the new implementation address.
-    /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeImplementation"
+    /// @dev Storage slot with the ID of the current implementation. The ID is
+    /// an unique identifier of the implementation calculated based on the version.
+    /// This is the keccak-256 hash of "network.keep.proxy.currentimplementationid"
     /// subtracted by 1, and is validated in the constructor.
-    bytes32 internal constant UPGRADE_IMPLEMENTATION_SLOT = 0x4e06287250f0fdd90b4a096f346c06d4e706d470a14747ab56a0156d48a6883f;
+    bytes32 internal constant CURRENT_IMPL_ID_SLOT = 0x2fdc2b7761cb35b3c6cce7021b2c04230161423bd5b9520fd8a7ae15aa03ac9f;
+
+    /// @dev Storage slot with the new implementation ID.
+    /// This is the keccak-256 hash of "network.keep.proxy.upgradeimplementationid"
+    /// subtracted by 1, and is validated in the constructor.
+    bytes32 internal constant UPGRADE_IMPL_ID_SLOT = 0x1836489d800664edd6c29124d8cf32e481082cc2687a6f957a01e0f20a003d40;
 
     /// @dev Storage slot with the implementation address upgrade initiation.
     /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
@@ -149,71 +150,66 @@ contract BondedECDSAKeepVendor is Proxy {
         assert(slot == bytes32(uint256(keccak256(key)) - 1));
     }
 
-    /// @notice Gets the address of the current vendor implementation.
+    /// @notice Gets the address of the current vendor implementation address.
     /// @return Address of the current implementation.
     function implementation() public view returns (address) {
         return _implementation();
     }
 
-    /// @dev Returns the current implementation. Implements function from `Proxy`
-    /// contract.
+    /// @dev Returns the current implementation address. Implements function
+    /// from `Proxy` contract.
     /// @return Address of the current implementation
-    function _implementation() internal view returns (address impl) {
-        bytes32 slot = IMPLEMENTATION_SLOT;
-        /* solium-disable-next-line */
-        assembly {
-            impl := sload(slot)
-        }
+    function _implementation() internal view returns (address) {
+        Implementation memory implementation = getImplementation(
+            currentImplementationID()
+        );
+
+        return implementation.implementationContract;
     }
 
-    /// @notice Sets the address of the current implementation.
-    /// @param _implementation Address representing the new implementation to
-    /// be set.
-    function setImplementation(address _implementation) internal {
-        bytes32 slot = IMPLEMENTATION_SLOT;
-        /* solium-disable-next-line */
-        assembly {
-            sstore(slot, _implementation)
-        }
+    /// @dev Returns the current implementation version.
+    /// @return Version of the current implementation
+    function version() public view returns (string memory) {
+        Implementation memory implementation = getImplementation(
+            currentImplementationID()
+        );
+
+        return implementation.version;
     }
 
-    function upgradeTimeDelay()
-        public
+    function currentImplementationID()
+        internal
         view
-        returns (uint256 _upgradeTimeDelay)
+        returns (uint256 _version)
     {
-        bytes32 position = UPGRADE_TIME_DELAY_SLOT;
+        bytes32 position = CURRENT_IMPL_ID_SLOT;
         /* solium-disable-next-line */
         assembly {
-            _upgradeTimeDelay := sload(position)
+            _version := sload(position)
         }
     }
 
-    function setUpgradeTimeDelay(uint256 _upgradeTimeDelay) internal {
-        bytes32 position = UPGRADE_TIME_DELAY_SLOT;
+    function setCurrentImplementationID(uint256 _id) internal {
+        bytes32 position = CURRENT_IMPL_ID_SLOT;
         /* solium-disable-next-line */
         assembly {
-            sstore(position, _upgradeTimeDelay)
+            sstore(position, _id)
         }
     }
 
-    function newImplementation()
-        public
-        view
-        returns (address _newImplementation)
-    {
-        bytes32 position = UPGRADE_IMPLEMENTATION_SLOT;
+    function upgradeImplementationID() internal view returns (uint256 _newID) {
+        bytes32 position = UPGRADE_IMPL_ID_SLOT;
         /* solium-disable-next-line */
         assembly {
-            _newImplementation := sload(position)
+            _newID := sload(position)
         }
     }
 
-    function setNewImplementation(address _newImplementation) internal {
-        bytes32 position = UPGRADE_IMPLEMENTATION_SLOT;
+    function setUpgradeImplementationID(uint256 _newID) internal {
+        bytes32 position = UPGRADE_IMPL_ID_SLOT;
         /* solium-disable-next-line */
         assembly {
-            sstore(position, _newImplementation)
+            sstore(position, _newID)
         }
     }
 
@@ -236,6 +232,26 @@ contract BondedECDSAKeepVendor is Proxy {
         /* solium-disable-next-line */
         assembly {
             sstore(position, _upgradeInitiatedTimestamp)
+        }
+    }
+
+    function upgradeTimeDelay()
+        public
+        view
+        returns (uint256 _upgradeTimeDelay)
+    {
+        bytes32 position = UPGRADE_TIME_DELAY_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            _upgradeTimeDelay := sload(position)
+        }
+    }
+
+    function setUpgradeTimeDelay(uint256 _upgradeTimeDelay) internal {
+        bytes32 position = UPGRADE_TIME_DELAY_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(position, _upgradeTimeDelay)
         }
     }
 
