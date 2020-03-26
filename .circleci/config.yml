@@ -28,6 +28,18 @@ jobs:
           root: solidity
           paths:
             - .npmrc
+  lint:
+    executor: docker-node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: solidity
+      - run:
+          name: Lint Implementation
+          working_directory: ~/project/solidity
+          command: |
+            set -ex
+            npm run lint
   build_and_test_solidity:
     executor: docker-node
     steps:
@@ -210,6 +222,11 @@ jobs:
 
 workflows:
   version: 2
+  lint:
+    jobs:
+      - setup_github_package_registry:
+          context: github-package-registry
+      - lint
   solidity:
     jobs:
       - setup_github_package_registry:
