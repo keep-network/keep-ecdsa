@@ -101,6 +101,22 @@ contract("BondedECDSAKeepVendor", async accounts => {
       assert.equal(await keepVendor.implementation.call(), currentAddress);
     });
 
+    it("sets initialization call data", async () => {
+      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+        from: proxyAdmin
+      });
+
+      assert.equal(await keepVendor.initializationData.call(address1), initializeCallData);
+    });
+
+    it("supports empty initialization call data", async () => {
+      await keepVendor.upgradeToAndCall(address1, [], {
+        from: proxyAdmin
+      });
+
+      assert.notExists(await keepVendor.initializationData.call(address1));
+    });
+
     it("emits an event", async () => {
       const receipt = await keepVendor.upgradeToAndCall(
         address1,
@@ -116,7 +132,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
       });
     });
 
-    it("allows new value overwrite", async () => {
+    it("allows implementation overwrite", async () => {
       await keepVendor.upgradeToAndCall(address1, initializeCallData, {
         from: proxyAdmin
       });
@@ -127,6 +143,21 @@ contract("BondedECDSAKeepVendor", async accounts => {
 
       assert.equal(await keepVendor.newImplementation.call(), address2);
     });
+
+    it("allows initialization data overwrite", async () => {
+      const initializeCallData2 = '0x123456';
+
+      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+        from: proxyAdmin
+      });
+
+      await keepVendor.upgradeToAndCall(address1, initializeCallData2, {
+        from: proxyAdmin
+      });
+
+      assert.equal(await keepVendor.initializationData.call(address1), initializeCallData2);
+    });
+
 
     it("reverts on zero address", async () => {
       await expectRevert(
@@ -154,20 +185,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
       );
     });
 
-    it("reverts when initialization call fails", async () => {
-      const bondedECDSAKeepVendorImplV1 = await BondedECDSAKeepVendorImplV1.new();
 
-      const failingData = bondedECDSAKeepVendorImplV1.contract.methods
-        .initialize(registryAddress, address0)
-        .encodeABI();
-
-      await expectRevert(
-        keepVendor.upgradeToAndCall(bondedECDSAKeepVendorImplV1.address, failingData, {
-          from: proxyAdmin
-        }),
-        "Incorrect factory address"
-      );
-    });
   });
 
   describe("completeUpgrade", async () => {
@@ -180,7 +198,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("reverts when upgrade not initiated", async () => {
-      await expectRevert(keepVendor.completeUpgrade(), "Upgrade not initiated");
+      await expectRevert(keepVendor.completeUpgrade({ from: proxyAdmin }), "Upgrade not initiated");
     });
 
     it("reverts when timer not elapsed", async () => {
@@ -190,7 +208,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
 
       await time.increase((await keepVendor.upgradeTimeDelay()).subn(2));
 
-      await expectRevert(keepVendor.completeUpgrade(), "Timer not elapsed");
+      await expectRevert(keepVendor.completeUpgrade({ from: proxyAdmin }), "Timer not elapsed");
     });
 
     it("clears timestamp", async () => {
@@ -199,7 +217,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
       });
       await time.increase(await keepVendor.upgradeTimeDelay());
 
-      await keepVendor.completeUpgrade();
+      await keepVendor.completeUpgrade({ from: proxyAdmin });
 
       expect(await keepVendor.upgradeInitiatedTimestamp()).to.eq.BN(0);
     });
@@ -210,7 +228,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
       });
       await time.increase(await keepVendor.upgradeTimeDelay());
 
-      await keepVendor.completeUpgrade();
+      await keepVendor.completeUpgrade({ from: proxyAdmin });
       assert.equal(
         await keepVendor.implementation.call({ from: proxyAdmin }),
         address1
@@ -223,11 +241,49 @@ contract("BondedECDSAKeepVendor", async accounts => {
       });
       await time.increase(await keepVendor.upgradeTimeDelay());
 
-      const receipt = await keepVendor.completeUpgrade();
+      const receipt = await keepVendor.completeUpgrade({ from: proxyAdmin });
 
       expectEvent(receipt, "UpgradeCompleted", {
         implementation: address1
       });
+    });
+
+    it("supports empty initialization call data", async () => {
+      await keepVendor.upgradeToAndCall(address1, [], {
+        from: proxyAdmin
+      });
+      await time.increase(await keepVendor.upgradeTimeDelay());
+
+      await keepVendor.completeUpgrade({ from: proxyAdmin });
+    });
+
+    it("reverts when called by non-admin", async () => {
+      await expectRevert(
+        keepVendor.completeUpgrade(),
+        "Caller is not the admin"
+      );
+    });
+
+    it("reverts when initialization call fails", async () => {
+      const bondedECDSAKeepVendorImplV1 = await BondedECDSAKeepVendorImplV1.new();
+
+      const failingData = bondedECDSAKeepVendorImplV1.contract.methods
+        .initialize(registryAddress, address0)
+        .encodeABI();
+
+      keepVendor.upgradeToAndCall(
+        bondedECDSAKeepVendorImplV1.address,
+        failingData,
+        {
+          from: proxyAdmin
+        }
+      )
+      await time.increase(await keepVendor.upgradeTimeDelay());
+
+      await expectRevert(
+        keepVendor.completeUpgrade({ from: proxyAdmin }),
+        "Incorrect factory address"
+      );
     });
   });
 });

@@ -58,7 +58,7 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
       });
       await time.increase(await keepVendorProxy.upgradeTimeDelay());
 
-      const receipt = await keepVendorProxy.completeUpgrade();
+      const receipt = await keepVendorProxy.completeUpgrade({ from: proxyAdmin });
       expectEvent(receipt, "UpgradeCompleted", {
         implementation: implV2.address
       });
@@ -85,11 +85,50 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
         .initialize(registryAddress, factoryAddress)
         .encodeABI();
 
+      keepVendorProxy.upgradeToAndCall(implV2.address, initializeCallData, {
+        from: proxyAdmin
+      })
+      await time.increase(await keepVendorProxy.upgradeTimeDelay());
+
       await expectRevert(
-        keepVendorProxy.upgradeToAndCall(implV2.address, initializeCallData, {
-          from: proxyAdmin
-        }),
+        keepVendorProxy.completeUpgrade({ from: proxyAdmin }),
         "revert"
+      );
+    });
+
+    it("reverts when upgraded to a previously initialized contract", async () => {
+      const initializeCallData1 = implV1.contract.methods
+        .initialize(registryAddress, factoryAddress)
+        .encodeABI();
+
+      const initializeCallData2 = implV2.contract.methods
+        .initialize(false)
+        .encodeABI();
+
+
+      keepVendorProxy.upgradeToAndCall(
+        implV2.address,
+        initializeCallData2,
+        {
+          from: proxyAdmin
+        }
+      )
+      await time.increase(await keepVendorProxy.upgradeTimeDelay());
+
+      await keepVendorProxy.completeUpgrade({ from: proxyAdmin })
+
+      await keepVendorProxy.upgradeToAndCall(
+        implV1.address,
+        initializeCallData1,
+        {
+          from: proxyAdmin
+        }
+      )
+      await time.increase(await keepVendorProxy.upgradeTimeDelay());
+
+      await expectRevert(
+        keepVendorProxy.completeUpgrade({ from: proxyAdmin }),
+        "Contract is already initialized"
       );
     });
   });
