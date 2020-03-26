@@ -228,7 +228,11 @@ workflows:
   version: 2
   lint:
     jobs:
-      - lint
+      - setup_github_package_registry:
+          context: github-package-registry
+      - lint:
+          requires:
+            - setup_github_package_registry
   solidity:
     jobs:
       - setup_github_package_registry:
