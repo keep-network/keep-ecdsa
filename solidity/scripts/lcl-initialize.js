@@ -2,7 +2,7 @@ const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
 const KeepBonding = artifacts.require("KeepBonding")
 
 const TokenStaking = artifacts.require(
-  "@keep-network/keep-core/build/truffle/TokenStaking",
+  "@keep-network/keep-core/build/truffle/TokenStaking"
 )
 
 const {
@@ -33,20 +33,20 @@ module.exports = async function () {
         await tokenStaking.authorizeOperatorContract(
           operator,
           operatorContract,
-          {from: operator},
+          {from: operator}
         )
 
         await keepBonding.authorizeSortitionPoolContract(
           operator,
           sortitionPoolAddress,
-          {from: operator},
+          {from: operator}
         ) // this function should be called by authorizer but it's currently set to operator in demo.js
       } catch (err) {
         console.error(err)
         process.exit(1)
       }
       console.log(
-        `authorized operator [${operator}] for factory [${operatorContract}]`,
+        `authorized operator [${operator}] for factory [${operatorContract}]`
       )
     }
 
@@ -55,8 +55,8 @@ module.exports = async function () {
         await keepBonding.deposit(operator, {value: bondingValue})
         console.log(
           `deposited ${web3.utils.fromWei(
-            bondingValue,
-          )} ETH bonding value for operator [${operator}]`,
+            bondingValue
+          )} ETH bonding value for operator [${operator}]`
         )
       } catch (err) {
         console.error(err)
@@ -80,7 +80,7 @@ module.exports = async function () {
       console.log(`created sortition pool for application: [${application}]`)
 
       sortitionPoolAddress = await bondedECDSAKeepFactory.getSortitionPool(
-        application,
+        application
       )
     } catch (err) {
       console.error("failed to create sortition pool", err)

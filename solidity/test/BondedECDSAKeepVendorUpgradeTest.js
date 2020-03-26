@@ -4,10 +4,10 @@ const {expectEvent, expectRevert, time} = require("@openzeppelin/test-helpers")
 
 const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
 const BondedECDSAKeepVendorImplV1Stub = artifacts.require(
-  "BondedECDSAKeepVendorImplV1Stub",
+  "BondedECDSAKeepVendorImplV1Stub"
 )
 const BondedECDSAKeepVendorImplV2Stub = artifacts.require(
-  "BondedECDSAKeepVendorImplV2Stub",
+  "BondedECDSAKeepVendorImplV2Stub"
 )
 
 contract("BondedECDSAKeepVendorUpgrade", async (accounts) => {
@@ -32,7 +32,7 @@ contract("BondedECDSAKeepVendorUpgrade", async (accounts) => {
     keepVendorProxy = await BondedECDSAKeepVendor.new(
       implV1.address,
       initializeCallData,
-      {from: proxyAdmin},
+      {from: proxyAdmin}
     )
   })
 
@@ -65,14 +65,14 @@ contract("BondedECDSAKeepVendorUpgrade", async (accounts) => {
       assert.equal(await keepVendorProxy.implementation(), implV2.address)
 
       const keepVendor = await BondedECDSAKeepVendorImplV2Stub.at(
-        keepVendorProxy.address,
+        keepVendorProxy.address
       )
 
       assert.equal(await keepVendor.version(), "V2")
 
       assert.isTrue(
         await keepVendor.initialized(),
-        "implementation not initialized",
+        "implementation not initialized"
       )
     })
 
@@ -88,7 +88,7 @@ contract("BondedECDSAKeepVendorUpgrade", async (accounts) => {
 
       await expectRevert(
         keepVendorProxy.completeUpgrade({from: proxyAdmin}),
-        "revert",
+        "revert"
       )
     })
 
@@ -115,7 +115,7 @@ contract("BondedECDSAKeepVendorUpgrade", async (accounts) => {
 
       await expectRevert(
         keepVendorProxy.completeUpgrade({from: proxyAdmin}),
-        "Contract is already initialized",
+        "Contract is already initialized"
       )
     })
   })

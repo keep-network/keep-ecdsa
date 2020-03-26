@@ -19,8 +19,8 @@
     "test": "TEST=true truffle test --network=local",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:fix": "npm run lint:fix:js && npm run lint:fix:sol",
-    "lint:js": "eslint ${npm_package_config_eslintPaths} && prettier --list-different **/*.js",
-    "lint:fix:js": "eslint --fix ${npm_package_config_eslintPaths} && prettier --write **/*.js",
+    "lint:js": "eslint ${npm_package_config_eslintPaths}",
+    "lint:fix:js": "eslint --fix ${npm_package_config_eslintPaths}",
     "lint:sol": "solium -d contracts/ && prettier --list-different **/*.sol",
     "lint:fix:sol": "solium -d contracts/ --fix && prettier --write **/*.sol"
   },

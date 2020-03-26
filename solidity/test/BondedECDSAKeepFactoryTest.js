@@ -8,13 +8,13 @@ const truffleAssert = require("truffle-assertions")
 
 const Registry = artifacts.require("Registry")
 const BondedECDSAKeepFactoryStub = artifacts.require(
-  "BondedECDSAKeepFactoryStub",
+  "BondedECDSAKeepFactoryStub"
 )
 const KeepBonding = artifacts.require("KeepBonding")
 const TokenStakingStub = artifacts.require("TokenStakingStub")
 const BondedSortitionPool = artifacts.require("BondedSortitionPool")
 const BondedSortitionPoolFactory = artifacts.require(
-  "BondedSortitionPoolFactory",
+  "BondedSortitionPoolFactory"
 )
 const RandomBeaconStub = artifacts.require("RandomBeaconStub")
 const BondedECDSAKeep = artifacts.require("BondedECDSAKeep")
@@ -82,11 +82,11 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const pool = await BondedSortitionPool.at(signerPool)
       assert.isTrue(
         await pool.isOperatorInPool(members[0]),
-        "operator 1 is not in the pool",
+        "operator 1 is not in the pool"
       )
       assert.isTrue(
         await pool.isOperatorInPool(members[1]),
-        "operator 2 is not in the pool",
+        "operator 2 is not in the pool"
       )
     })
 
@@ -97,14 +97,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       assert.isTrue(
         await pool.isOperatorInPool(members[0]),
-        "operator is not in the pool",
+        "operator is not in the pool"
       )
 
       await keepFactory.registerMemberCandidate(application, {from: members[0]})
 
       assert.isTrue(
         await pool.isOperatorInPool(members[0]),
-        "operator is not in the pool",
+        "operator is not in the pool"
       )
     })
 
@@ -113,7 +113,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       await expectRevert(
         keepFactory.registerMemberCandidate(application, {from: members[0]}),
-        "Operator not eligible",
+        "Operator not eligible"
       )
     })
 
@@ -122,14 +122,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const availableUnbonded = await keepBonding.availableUnbondedValue(
         members[0],
         keepFactory.address,
-        signerPool,
+        signerPool
       )
       const withdrawValue = availableUnbonded.sub(minimumBond).add(new BN(1))
       await keepBonding.withdraw(withdrawValue, members[0], {from: members[0]})
 
       await expectRevert(
         keepFactory.registerMemberCandidate(application, {from: members[0]}),
-        "Operator not eligible",
+        "Operator not eligible"
       )
     })
 
@@ -138,23 +138,23 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const application2 = "0x0000000000000000000000000000000000000002"
 
       const signerPool1Address = await keepFactory.createSortitionPool.call(
-        application1,
+        application1
       )
       await keepFactory.createSortitionPool(application1)
       const signerPool2Address = await keepFactory.createSortitionPool.call(
-        application2,
+        application2
       )
       await keepFactory.createSortitionPool(application2)
 
       await keepBonding.authorizeSortitionPoolContract(
         members[0],
         signerPool1Address,
-        {from: authorizers[0]},
+        {from: authorizers[0]}
       )
       await keepBonding.authorizeSortitionPoolContract(
         members[1],
         signerPool2Address,
-        {from: authorizers[1]},
+        {from: authorizers[1]}
       )
 
       await keepFactory.registerMemberCandidate(application1, {
@@ -168,22 +168,22 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       assert.isTrue(
         await signerPool1.isOperatorInPool(members[0]),
-        "operator 1 is not in the pool",
+        "operator 1 is not in the pool"
       )
       assert.isFalse(
         await signerPool1.isOperatorInPool(members[1]),
-        "operator 2 is in the pool",
+        "operator 2 is in the pool"
       )
 
       const signerPool2 = await BondedSortitionPool.at(signerPool2Address)
 
       assert.isFalse(
         await signerPool2.isOperatorInPool(members[0]),
-        "operator 1 is in the pool",
+        "operator 1 is in the pool"
       )
       assert.isTrue(
         await signerPool2.isOperatorInPool(members[1]),
-        "operator 2 is not in the pool",
+        "operator 2 is not in the pool"
       )
     })
   })
@@ -203,7 +203,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
     it("creates new sortition pool and emits an event", async () => {
       const sortitionPoolAddress = await keepFactory.createSortitionPool.call(
-        application,
+        application
       )
 
       const res = await keepFactory.createSortitionPool(application)
@@ -218,7 +218,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       await expectRevert(
         keepFactory.createSortitionPool(application),
-        "Sortition pool already exists",
+        "Sortition pool already exists"
       )
     })
   })
@@ -238,7 +238,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
     it("returns address of sortition pool", async () => {
       const sortitionPoolAddress = await keepFactory.createSortitionPool.call(
-        application,
+        application
       )
       await keepFactory.createSortitionPool(application)
 
@@ -246,14 +246,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       assert.equal(
         result,
         sortitionPoolAddress,
-        "incorrect sortition pool address",
+        "incorrect sortition pool address"
       )
     })
 
     it("reverts if sortition pool does not exist", async () => {
       await expectRevert(
         keepFactory.getSortitionPool(application),
-        "No pool found for the application",
+        "No pool found for the application"
       )
     })
   })
@@ -276,7 +276,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepFactory.registerMemberCandidate(application, {from: members[0]})
 
       assert.isTrue(
-        await keepFactory.isOperatorRegistered(members[0], application),
+        await keepFactory.isOperatorRegistered(members[0], application)
       )
     })
 
@@ -286,13 +286,13 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepFactory.registerMemberCandidate(application, {from: members[0]})
 
       assert.isFalse(
-        await keepFactory.isOperatorRegistered(members[0], application2),
+        await keepFactory.isOperatorRegistered(members[0], application2)
       )
     })
 
     it("returns false if the operator is not registered for any application", async () => {
       assert.isFalse(
-        await keepFactory.isOperatorRegistered(members[0], application),
+        await keepFactory.isOperatorRegistered(members[0], application)
       )
     })
   })
@@ -316,7 +316,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepFactory.registerMemberCandidate(application, {from: members[0]})
 
       assert.isTrue(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -326,7 +326,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.subn(1))
 
       assert.isFalse(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -340,7 +340,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.mul(new BN(2)).sub(new BN(1)))
 
       assert.isTrue(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -352,7 +352,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.mul(new BN(2)))
 
       assert.isFalse(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -362,7 +362,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepBonding.withdraw(new BN(1), members[0], {from: members[0]})
 
       assert.isFalse(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -372,7 +372,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepBonding.deposit(members[0], {value: new BN(1)})
 
       assert.isTrue(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -382,7 +382,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       await expectRevert(
         keepFactory.isOperatorUpToDate(members[0], application),
-        "Operator not registered for the application",
+        "Operator not registered for the application"
       )
     })
   })
@@ -405,7 +405,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     it("revers if operator is up to date", async () => {
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
-        "Operator already up to date",
+        "Operator already up to date"
       )
     })
 
@@ -413,14 +413,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.sub(new BN(1)))
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after stake change",
+        "unexpected status of the operator after stake change"
       )
 
       await keepFactory.updateOperatorStatus(members[0], application)
 
       await expectRevert(
         keepFactory.isOperatorUpToDate(members[0], application),
-        "Operator not registered for the application",
+        "Operator not registered for the application"
       )
     })
 
@@ -430,14 +430,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.mul(new BN(2)))
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after stake change",
+        "unexpected status of the operator after stake change"
       )
 
       await keepFactory.updateOperatorStatus(members[0], application)
 
       assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after status update",
+        "unexpected status of the operator after status update"
       )
     })
 
@@ -445,14 +445,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       keepBonding.withdraw(new BN(1), members[0], {from: members[0]})
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after bonding value change",
+        "unexpected status of the operator after bonding value change"
       )
 
       await keepFactory.updateOperatorStatus(members[0], application)
 
       await expectRevert(
         keepFactory.isOperatorUpToDate(members[0], application),
-        "Operator not registered for the application",
+        "Operator not registered for the application"
       )
     })
 
@@ -460,12 +460,12 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       keepBonding.deposit(members[0], {value: new BN(1)})
       assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after bonding value change",
+        "unexpected status of the operator after bonding value change"
       )
 
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
-        "Operator already up to date",
+        "Operator already up to date"
       )
     })
 
@@ -475,7 +475,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
-        "Operator not registered for the application",
+        "Operator not registered for the application"
       )
     })
   })
@@ -498,7 +498,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepFactory.registerMemberCandidate(application, {from: members[0]})
 
       assert.isTrue(
-        await keepFactory.isOperatorRegistered(members[0], application),
+        await keepFactory.isOperatorRegistered(members[0], application)
       )
     })
 
@@ -508,13 +508,13 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepFactory.registerMemberCandidate(application, {from: members[0]})
 
       assert.isFalse(
-        await keepFactory.isOperatorRegistered(members[0], application2),
+        await keepFactory.isOperatorRegistered(members[0], application2)
       )
     })
 
     it("returns false if the operator is not registered for any application", async () => {
       assert.isFalse(
-        await keepFactory.isOperatorRegistered(members[0], application),
+        await keepFactory.isOperatorRegistered(members[0], application)
       )
     })
   })
@@ -538,7 +538,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepFactory.registerMemberCandidate(application, {from: members[0]})
 
       assert.isTrue(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -548,7 +548,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.sub(new BN(1)))
 
       assert.isFalse(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -562,7 +562,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.mul(new BN(2)).sub(new BN(1)))
 
       assert.isTrue(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -574,7 +574,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.mul(new BN(2)))
 
       assert.isFalse(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -584,7 +584,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       keepBonding.withdraw(new BN(1), members[0], {from: members[0]})
 
       assert.isFalse(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -594,7 +594,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       keepBonding.deposit(members[0], {value: new BN(1)})
 
       assert.isTrue(
-        await keepFactory.isOperatorUpToDate(members[0], application),
+        await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
@@ -604,7 +604,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       await expectRevert(
         keepFactory.isOperatorUpToDate(members[0], application),
-        "Operator not registered for the application",
+        "Operator not registered for the application"
       )
     })
   })
@@ -627,7 +627,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     it("revers if operator is up to date", async () => {
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
-        "Operator already up to date",
+        "Operator already up to date"
       )
     })
 
@@ -635,14 +635,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.sub(new BN(1)))
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after stake change",
+        "unexpected status of the operator after stake change"
       )
 
       await keepFactory.updateOperatorStatus(members[0], application)
 
       await expectRevert(
         keepFactory.isOperatorUpToDate(members[0], application),
-        "Operator not registered for the application",
+        "Operator not registered for the application"
       )
     })
 
@@ -652,14 +652,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.mul(new BN(2)))
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after stake change",
+        "unexpected status of the operator after stake change"
       )
 
       await keepFactory.updateOperatorStatus(members[0], application)
 
       assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after status update",
+        "unexpected status of the operator after status update"
       )
     })
 
@@ -667,14 +667,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       keepBonding.withdraw(new BN(1), members[0], {from: members[0]})
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after bonding value change",
+        "unexpected status of the operator after bonding value change"
       )
 
       await keepFactory.updateOperatorStatus(members[0], application)
 
       await expectRevert(
         keepFactory.isOperatorUpToDate(members[0], application),
-        "Operator not registered for the application",
+        "Operator not registered for the application"
       )
     })
 
@@ -682,12 +682,12 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       keepBonding.deposit(members[0], {value: new BN(1)})
       assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after bonding value change",
+        "unexpected status of the operator after bonding value change"
       )
 
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
-        "Operator already up to date",
+        "Operator already up to date"
       )
     })
 
@@ -697,7 +697,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
-        "Operator not registered for the application",
+        "Operator not registered for the application"
       )
     })
   })
@@ -726,7 +726,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
           value: feeEstimate,
         }),
-        "No signer pool for this application",
+        "No signer pool for this application"
       )
     })
 
@@ -738,7 +738,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
           from: application,
           value: feeEstimate,
         }),
-        "Bond per member must be greater than zero",
+        "Bond per member must be greater than zero"
       )
     })
 
@@ -750,7 +750,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
           from: application,
           fee: insufficientFee,
         }),
-        "Insufficient payment for opening a new keep",
+        "Insufficient payment for opening a new keep"
       )
     })
 
@@ -767,7 +767,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        },
+        }
       )
 
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
@@ -775,7 +775,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       assert.sameMembers(
         eventList[0].returnValues.members,
         [members[0], members[1], members[2]],
-        "incorrect keep member in emitted event",
+        "incorrect keep member in emitted event"
       )
     })
 
@@ -792,21 +792,21 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        },
+        }
       )
 
       const keepAddress = eventList[0].returnValues.keepAddress
 
       expect(
-        await keepBonding.bondAmount(members[0], keepAddress, keepAddress),
+        await keepBonding.bondAmount(members[0], keepAddress, keepAddress)
       ).to.eq.BN(singleBond, "invalid bond value for members[0]")
 
       expect(
-        await keepBonding.bondAmount(members[1], keepAddress, keepAddress),
+        await keepBonding.bondAmount(members[1], keepAddress, keepAddress)
       ).to.eq.BN(singleBond, "invalid bond value for members[1]")
 
       expect(
-        await keepBonding.bondAmount(members[2], keepAddress, keepAddress),
+        await keepBonding.bondAmount(members[2], keepAddress, keepAddress)
       ).to.eq.BN(singleBond, "invalid bond value for members[2]")
     })
 
@@ -823,7 +823,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         threshold,
         keepOwner,
         requestedBond,
-        {from: application, value: feeEstimate},
+        {from: application, value: feeEstimate}
       )
 
       const eventList = await keepFactory.getPastEvents(
@@ -831,24 +831,24 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        },
+        }
       )
 
       const keepAddress = eventList[0].returnValues.keepAddress
 
       expect(
         await keepBonding.bondAmount(members[0], keepAddress, keepAddress),
-        "invalid bond value for members[0]",
+        "invalid bond value for members[0]"
       ).to.eq.BN(expectedMemberBond)
 
       expect(
         await keepBonding.bondAmount(members[1], keepAddress, keepAddress),
-        "invalid bond value for members[1]",
+        "invalid bond value for members[1]"
       ).to.eq.BN(expectedMemberBond)
 
       expect(
         await keepBonding.bondAmount(members[2], keepAddress, keepAddress),
-        "invalid bond value for members[2]",
+        "invalid bond value for members[2]"
       ).to.eq.BN(expectedMemberBond)
     })
 
@@ -865,7 +865,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         threshold,
         keepOwner,
         requestedBond,
-        {from: application, value: feeEstimate},
+        {from: application, value: feeEstimate}
       )
 
       const eventList = await keepFactory.getPastEvents(
@@ -873,24 +873,24 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        },
+        }
       )
 
       const keepAddress = eventList[0].returnValues.keepAddress
 
       expect(
         await keepBonding.bondAmount(members[0], keepAddress, keepAddress),
-        "invalid bond value for members[0]",
+        "invalid bond value for members[0]"
       ).to.eq.BN(expectedMemberBond)
 
       expect(
         await keepBonding.bondAmount(members[1], keepAddress, keepAddress),
-        "invalid bond value for members[1]",
+        "invalid bond value for members[1]"
       ).to.eq.BN(expectedMemberBond)
 
       expect(
         await keepBonding.bondAmount(members[2], keepAddress, keepAddress),
-        "invalid bond value for members[2]",
+        "invalid bond value for members[2]"
       ).to.eq.BN(expectedMemberBond)
     })
 
@@ -902,7 +902,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
           from: application,
           value: feeEstimate,
         }),
-        "Not enough operators in pool",
+        "Not enough operators in pool"
       )
     })
 
@@ -911,7 +911,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const availableUnbonded = await keepBonding.availableUnbondedValue(
         members[2],
         keepFactory.address,
-        signerPool,
+        signerPool
       )
       const withdrawValue = availableUnbonded.sub(minimumBond).add(new BN(1))
       await keepBonding.withdraw(withdrawValue, members[2], {from: members[2]})
@@ -921,7 +921,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
           from: application,
           value: feeEstimate,
         }),
-        "Not enough operators in pool",
+        "Not enough operators in pool"
       )
     })
 
@@ -935,12 +935,12 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        },
+        }
       )
 
       assert.isTrue(
         web3.utils.isAddress(keep.address),
-        `keep address ${keep.address} is not a valid address`,
+        `keep address ${keep.address} is not a valid address`
       )
 
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
@@ -948,19 +948,19 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       assert.equal(
         eventList[0].returnValues.keepAddress,
         keep.address,
-        "incorrect keep address in emitted event",
+        "incorrect keep address in emitted event"
       )
 
       assert.sameMembers(
         eventList[0].returnValues.members,
         [members[0], members[1], members[2]],
-        "incorrect keep member in emitted event",
+        "incorrect keep member in emitted event"
       )
 
       assert.equal(
         eventList[0].returnValues.owner,
         keepOwner,
-        "incorrect keep owner in emitted event",
+        "incorrect keep owner in emitted event"
       )
     })
 
@@ -977,12 +977,12 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       assert.equal(
         await randomBeacon.requestCount.call(),
         1,
-        "incorrect number of beacon calls",
+        "incorrect number of beacon calls"
       )
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         expectedNewEntry,
-        "incorrect new group selection seed",
+        "incorrect new group selection seed"
       )
     })
 
@@ -994,7 +994,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepFactory.initialGroupSelectionSeed(groupSelectionSeed)
 
       const expectedNewGroupSelectionSeed = web3.utils.toBN(
-        web3.utils.soliditySha3(groupSelectionSeed, keepFactory.address),
+        web3.utils.soliditySha3(groupSelectionSeed, keepFactory.address)
       )
 
       await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
@@ -1004,7 +1004,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         expectedNewGroupSelectionSeed,
-        "incorrect new group selection seed",
+        "incorrect new group selection seed"
       )
     })
 
@@ -1029,7 +1029,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       expect(await web3.eth.getBalance(randomBeacon.address)).to.eq.BN(
         value,
-        "incorrect random beacon balance",
+        "incorrect random beacon balance"
       )
     })
 
@@ -1042,7 +1042,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
           from: application,
           value: feeEstimate,
         }),
-        "Honest threshold must be less or equal the group size",
+        "Honest threshold must be less or equal the group size"
       )
     })
 
@@ -1062,7 +1062,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        },
+        }
       )
 
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
@@ -1087,14 +1087,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        },
+        }
       )
 
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
       assert.equal(
         eventList[0].returnValues.members.length,
         groupSize,
-        "incorrect number of members",
+        "incorrect number of members"
       )
     })
 
@@ -1106,13 +1106,13 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
           from: application,
           value: feeEstimate,
         }),
-        "Maximum signing group size is 16",
+        "Maximum signing group size is 16"
       )
     })
 
     async function createDepositAndRegisterMembers(
       memberCount,
-      unbondedAmount,
+      unbondedAmount
     ) {
       const stakeBalance = await keepFactory.minimumStake.call()
 
@@ -1129,7 +1129,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         await tokenStaking.setBalance(operator, stakeBalance)
         await tokenStaking.authorizeOperatorContract(
           operator,
-          keepFactory.address,
+          keepFactory.address
         )
         await keepBonding.authorizeSortitionPoolContract(operator, signerPool, {
           from: operator,
@@ -1149,7 +1149,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       tokenStaking = await TokenStakingStub.new()
       keepBonding = await KeepBonding.new(
         registry.address,
-        tokenStaking.address,
+        tokenStaking.address
       )
       randomBeacon = accounts[1]
       const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
@@ -1158,7 +1158,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         bondedSortitionPoolFactory.address,
         tokenStaking.address,
         keepBonding.address,
-        randomBeacon,
+        randomBeacon
       )
     })
 
@@ -1177,7 +1177,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         newGroupSelectionSeed,
-        "incorrect new group selection seed",
+        "incorrect new group selection seed"
       )
     })
 
@@ -1186,7 +1186,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, {
           from: accounts[2],
         }),
-        "Caller is not the random beacon",
+        "Caller is not the random beacon"
       )
     })
   })
@@ -1205,7 +1205,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         members.length,
         tokenStaking.address,
         keepBonding.address,
-        keepFactory.address,
+        keepFactory.address
       )
     })
 
@@ -1220,7 +1220,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     it("reverts if called not by keep", async () => {
       await expectRevert(
         keepFactory.slashKeepMembers(),
-        "Caller is not an active keep created by this factory",
+        "Caller is not an active keep created by this factory"
       )
     })
 
@@ -1228,7 +1228,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       // The keep is not added to the list of keeps created by the factory.
       await expectRevert(
         keep.exposedSlashSignerStakes(),
-        "Caller is not an active keep created by this factory",
+        "Caller is not an active keep created by this factory"
       )
     })
 
@@ -1246,11 +1246,11 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       for (let i = 0; i < members.length; i++) {
         const actualStake = await tokenStaking.eligibleStake(
           members[i],
-          keepFactory.address,
+          keepFactory.address
         )
         expect(actualStake).to.eq.BN(
           remainingStake,
-          `incorrect stake for member ${i}`,
+          `incorrect stake for member ${i}`
         )
       }
     })
@@ -1279,7 +1279,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     it("reverts if called not by keep", async () => {
       await expectRevert(
         keepFactory.notifyKeepClosed(),
-        "Caller is not an active keep created by this factory",
+        "Caller is not an active keep created by this factory"
       )
     })
 
@@ -1290,7 +1290,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       await expectRevert(
         keep.closeKeep({from: keepOwner}),
-        "Caller is not an active keep created by this factory",
+        "Caller is not an active keep created by this factory"
       )
     })
 
@@ -1326,7 +1326,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const reseedFee = await keepFactory.newGroupSelectionSeedFee()
       expect(reseedFee).to.eq.BN(
         newEntryFee,
-        "reseed fee should equal new entry fee",
+        "reseed fee should equal new entry fee"
       )
     })
 
@@ -1341,7 +1341,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const reseedFee = await keepFactory.newGroupSelectionSeedFee()
       expect(reseedFee).to.eq.BN(
         newEntryFee.sub(poolValue),
-        "reseed fee should equal new entry fee minus pool value",
+        "reseed fee should equal new entry fee minus pool value"
       )
     })
 
@@ -1395,12 +1395,12 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       assert.equal(
         await randomBeacon.requestCount.call(),
         1,
-        "incorrect number of beacon calls",
+        "incorrect number of beacon calls"
       )
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         expectedNewEntry,
-        "incorrect new group selection seed",
+        "incorrect new group selection seed"
       )
     })
 
@@ -1420,12 +1420,12 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       assert.equal(
         await randomBeacon.requestCount.call(),
         1,
-        "incorrect number of beacon calls",
+        "incorrect number of beacon calls"
       )
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         expectedNewEntry,
-        "incorrect new group selection seed",
+        "incorrect new group selection seed"
       )
     })
 
@@ -1444,7 +1444,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const expectedPoolValue = poolValue.sub(newEntryFee)
       expect(await keepFactory.reseedPool()).to.eq.BN(
         expectedPoolValue,
-        "unexpected reseed pool value",
+        "unexpected reseed pool value"
       )
     })
 
@@ -1464,7 +1464,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const expectedPoolValue = poolValue.sub(newEntryFee).add(valueSent)
       expect(await keepFactory.reseedPool()).to.eq.BN(
         expectedPoolValue,
-        "unexpected reseed pool value",
+        "unexpected reseed pool value"
       )
     })
 
@@ -1478,7 +1478,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       await expectRevert(
         keepFactory.requestNewGroupSelectionSeed({value: 1}),
-        "Not enough funds to trigger reseed",
+        "Not enough funds to trigger reseed"
       )
     })
 
@@ -1488,7 +1488,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const reseedFee = await keepFactory.newGroupSelectionSeedFee()
       await expectRevert(
         keepFactory.requestNewGroupSelectionSeed({value: reseedFee}),
-        "request relay entry failed",
+        "request relay entry failed"
       )
     })
   })
@@ -1505,7 +1505,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       bondedSortitionPoolFactory.address,
       tokenStaking.address,
       keepBonding.address,
-      randomBeacon.address,
+      randomBeacon.address
     )
 
     await registry.approveOperatorContract(keepFactory.address)
@@ -1530,7 +1530,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     for (let i = 0; i < members.length; i++) {
       await tokenStaking.authorizeOperatorContract(
         members[i],
-        keepFactory.address,
+        keepFactory.address
       )
       await keepBonding.authorizeSortitionPoolContract(members[i], signerPool, {
         from: authorizers[i],
@@ -1566,7 +1566,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       threshold,
       keepOwner,
       bond,
-      {from: application, value: feeEstimate},
+      {from: application, value: feeEstimate}
     )
 
     await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {

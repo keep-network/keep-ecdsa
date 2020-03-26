@@ -4,7 +4,7 @@ const {constants, expectRevert} = require("@openzeppelin/test-helpers")
 
 const Registry = artifacts.require("Registry")
 const BondedECDSAKeepVendorImplV1Stub = artifacts.require(
-  "BondedECDSAKeepVendorImplV1Stub",
+  "BondedECDSAKeepVendorImplV1Stub"
 )
 
 // These tests are calling BondedECDSAKeepVendorImplV1 directly.
@@ -48,7 +48,7 @@ contract("BondedECDSAKeepVendorImplV1", async (accounts) => {
     it("reverts as contract is already initialized", async () => {
       await expectRevert(
         keepVendor.initialize(address1, address1),
-        "Contract is already initialized.",
+        "Contract is already initialized."
       )
     })
   })
@@ -61,7 +61,7 @@ contract("BondedECDSAKeepVendorImplV1", async (accounts) => {
     it("reverts when called directly", async () => {
       await expectRevert(
         keepVendor.upgradeFactory(address1, {from: upgrader}),
-        "Registry address is not registered",
+        "Registry address is not registered"
       )
     })
   })
@@ -74,7 +74,7 @@ contract("BondedECDSAKeepVendorImplV1", async (accounts) => {
     it("reverts when called directly", async () => {
       await expectRevert(
         keepVendor.completeFactoryUpgrade(),
-        "Upgrade not initiated",
+        "Upgrade not initiated"
       )
     })
   })

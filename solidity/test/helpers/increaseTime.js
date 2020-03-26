@@ -21,9 +21,9 @@ export const increaseTime = function (duration) {
           },
           (err2, res) => {
             return err2 ? reject(err2) : resolve(res)
-          },
+          }
         )
-      },
+      }
     )
   })
 }

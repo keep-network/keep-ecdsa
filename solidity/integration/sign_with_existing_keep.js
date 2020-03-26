@@ -56,7 +56,7 @@ module.exports = async function () {
       v,
       signature.r,
       signature.s,
-      true,
+      true
     )
 
     const keepPublicKeyAddress = publicKeyToAddress(keepPublicKey)
@@ -68,7 +68,7 @@ module.exports = async function () {
       console.error(
         "signature validation failed, recovered address doesn't match expected\n" +
           `expected:  [${keepPublicKeyAddress}]\n` +
-          `recovered: [${recoveredAddress}]`,
+          `recovered: [${recoveredAddress}]`
       )
     }
 
@@ -76,7 +76,7 @@ module.exports = async function () {
       "received valid signature:\n" +
         `r: [${signature.r}]\n` +
         `s: [${signature.s}]\n` +
-        `recoveryID: [${signature.recoveryID}]\n`,
+        `recoveryID: [${signature.recoveryID}]\n`
     )
   } catch (err) {
     console.error(`signing failed: [${err}]`)

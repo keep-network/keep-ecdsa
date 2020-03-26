@@ -4,14 +4,14 @@ const BondedECDSAKeep = artifacts.require("BondedECDSAKeep")
 const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
 const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
 const BondedECDSAKeepVendorImplV1 = artifacts.require(
-  "BondedECDSAKeepVendorImplV1",
+  "BondedECDSAKeepVendorImplV1"
 )
 
 const {
   deployBondedSortitionPoolFactory,
 } = require("@keep-network/sortition-pools/migrations/scripts/deployContracts")
 const BondedSortitionPoolFactory = artifacts.require(
-  "BondedSortitionPoolFactory",
+  "BondedSortitionPoolFactory"
 )
 
 let {
@@ -43,11 +43,11 @@ module.exports = async function (deployer) {
     BondedSortitionPoolFactory.address,
     TokenStakingAddress,
     KeepBonding.address,
-    RandomBeaconAddress,
+    RandomBeaconAddress
   )
 
   const bondedECDSAKeepVendorImplV1 = await deployer.deploy(
-    BondedECDSAKeepVendorImplV1,
+    BondedECDSAKeepVendorImplV1
   )
 
   const implInitializeCallData = bondedECDSAKeepVendorImplV1.contract.methods
@@ -57,6 +57,6 @@ module.exports = async function (deployer) {
   await deployer.deploy(
     BondedECDSAKeepVendor,
     BondedECDSAKeepVendorImplV1.address,
-    implInitializeCallData,
+    implInitializeCallData
   )
 }

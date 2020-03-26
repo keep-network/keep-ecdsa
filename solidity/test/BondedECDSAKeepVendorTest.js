@@ -14,7 +14,7 @@ const expect = chai.expect
 
 const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
 const BondedECDSAKeepVendorImplV1 = artifacts.require(
-  "BondedECDSAKeepVendorImplV1",
+  "BondedECDSAKeepVendorImplV1"
 )
 
 contract("BondedECDSAKeepVendor", async (accounts) => {
@@ -44,7 +44,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
     keepVendor = await BondedECDSAKeepVendor.new(
       bondedECDSAKeepVendorImplV1.address,
       initializeCallData,
-      {from: proxyAdmin},
+      {from: proxyAdmin}
     )
 
     currentAddress = bondedECDSAKeepVendorImplV1.address
@@ -53,7 +53,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
   describe("constructor", async () => {
     it("reverts when initialization fails", async () => {
       const bondedECDSAKeepVendorImplV1 = await BondedECDSAKeepVendorImplV1.new(
-        {from: implOwner},
+        {from: implOwner}
       )
 
       const initializeCallData = bondedECDSAKeepVendorImplV1.contract.methods
@@ -64,9 +64,9 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
         BondedECDSAKeepVendor.new(
           bondedECDSAKeepVendorImplV1.address,
           initializeCallData,
-          {from: proxyAdmin},
+          {from: proxyAdmin}
         ),
-        "Incorrect factory address",
+        "Incorrect factory address"
       )
     })
   })
@@ -88,7 +88,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
       const expectedTimestamp = await time.latest()
 
       expect(await keepVendor.upgradeInitiatedTimestamp()).to.eq.BN(
-        expectedTimestamp,
+        expectedTimestamp
       )
     })
 
@@ -108,7 +108,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
 
       assert.equal(
         await keepVendor.initializationData.call(address1),
-        initializeCallData,
+        initializeCallData
       )
     })
 
@@ -158,7 +158,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
 
       assert.equal(
         await keepVendor.initializationData.call(address1),
-        initializeCallData2,
+        initializeCallData2
       )
     })
 
@@ -167,7 +167,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
         keepVendor.upgradeTo(address0, initializeCallData, {
           from: proxyAdmin,
         }),
-        "Implementation address can't be zero.",
+        "Implementation address can't be zero."
       )
       0
     })
@@ -177,14 +177,14 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
         keepVendor.upgradeTo(currentAddress, initializeCallData, {
           from: proxyAdmin,
         }),
-        "Implementation address must be different from the current one.",
+        "Implementation address must be different from the current one."
       )
     })
 
     it("reverts when called by non-admin", async () => {
       await expectRevert(
         keepVendor.upgradeTo(address1, initializeCallData),
-        "Caller is not the admin",
+        "Caller is not the admin"
       )
     })
   })
@@ -201,7 +201,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
     it("reverts when upgrade not initiated", async () => {
       await expectRevert(
         keepVendor.completeUpgrade({from: proxyAdmin}),
-        "Upgrade not initiated",
+        "Upgrade not initiated"
       )
     })
 
@@ -214,7 +214,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
 
       await expectRevert(
         keepVendor.completeUpgrade({from: proxyAdmin}),
-        "Timer not elapsed",
+        "Timer not elapsed"
       )
     })
 
@@ -238,7 +238,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
       await keepVendor.completeUpgrade({from: proxyAdmin})
       assert.equal(
         await keepVendor.implementation.call({from: proxyAdmin}),
-        address1,
+        address1
       )
     })
 
@@ -267,7 +267,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
     it("reverts when called by non-admin", async () => {
       await expectRevert(
         keepVendor.completeUpgrade(),
-        "Caller is not the admin",
+        "Caller is not the admin"
       )
     })
 
@@ -285,7 +285,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
 
       await expectRevert(
         keepVendor.completeUpgrade({from: proxyAdmin}),
-        "Incorrect factory address",
+        "Incorrect factory address"
       )
     })
   })
