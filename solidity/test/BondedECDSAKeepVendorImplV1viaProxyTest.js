@@ -149,15 +149,15 @@ contract("BondedECDSAKeepVendorImplV1viaProxy", async accounts => {
 
         it("cannot be called by proxy admin", async () => {
             await expectRevert(
-                keepVendor.completeFactoryUpgrade({ from: proxyAdmin }),
-                "Upgrade not initiated"
+                keepVendor.upgradeFactory(address2, { from: proxyAdmin }),
+                "Caller is not operator contract upgrader"
             );
         });
 
         it("cannot be called by implementation owner", async () => {
             await expectRevert(
-                keepVendor.completeFactoryUpgrade({ from: implOwner }),
-                "Upgrade not initiated"
+                keepVendor.upgradeFactory(address2, { from: implOwner }),
+                "Caller is not operator contract upgrader"
             );
         });
 
