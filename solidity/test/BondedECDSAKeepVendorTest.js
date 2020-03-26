@@ -71,7 +71,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
   });
 
-  describe("upgradeToAndCall", async () => {
+  describe("upgradeTo", async () => {
     beforeEach(async () => {
       await createSnapshot();
     });
@@ -81,7 +81,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("sets timestamp", async () => {
-      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+      await keepVendor.upgradeTo(address1, initializeCallData, {
         from: proxyAdmin
       });
 
@@ -93,7 +93,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("sets new implementation", async () => {
-      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+      await keepVendor.upgradeTo(address1, initializeCallData, {
         from: proxyAdmin
       });
 
@@ -102,7 +102,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("sets initialization call data", async () => {
-      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+      await keepVendor.upgradeTo(address1, initializeCallData, {
         from: proxyAdmin
       });
 
@@ -110,7 +110,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("supports empty initialization call data", async () => {
-      await keepVendor.upgradeToAndCall(address1, [], {
+      await keepVendor.upgradeTo(address1, [], {
         from: proxyAdmin
       });
 
@@ -118,7 +118,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("emits an event", async () => {
-      const receipt = await keepVendor.upgradeToAndCall(
+      const receipt = await keepVendor.upgradeTo(
         address1,
         initializeCallData,
         { from: proxyAdmin }
@@ -133,11 +133,11 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("allows implementation overwrite", async () => {
-      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+      await keepVendor.upgradeTo(address1, initializeCallData, {
         from: proxyAdmin
       });
 
-      await keepVendor.upgradeToAndCall(address2, initializeCallData, {
+      await keepVendor.upgradeTo(address2, initializeCallData, {
         from: proxyAdmin
       });
 
@@ -147,11 +147,11 @@ contract("BondedECDSAKeepVendor", async accounts => {
     it("allows initialization data overwrite", async () => {
       const initializeCallData2 = '0x123456';
 
-      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+      await keepVendor.upgradeTo(address1, initializeCallData, {
         from: proxyAdmin
       });
 
-      await keepVendor.upgradeToAndCall(address1, initializeCallData2, {
+      await keepVendor.upgradeTo(address1, initializeCallData2, {
         from: proxyAdmin
       });
 
@@ -161,7 +161,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
 
     it("reverts on zero address", async () => {
       await expectRevert(
-        keepVendor.upgradeToAndCall(address0, initializeCallData, {
+        keepVendor.upgradeTo(address0, initializeCallData, {
           from: proxyAdmin
         }),
         "Implementation address can't be zero."
@@ -171,7 +171,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
 
     it("reverts on the same address", async () => {
       await expectRevert(
-        keepVendor.upgradeToAndCall(currentAddress, initializeCallData, {
+        keepVendor.upgradeTo(currentAddress, initializeCallData, {
           from: proxyAdmin
         }),
         "Implementation address must be different from the current one."
@@ -180,7 +180,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
 
     it("reverts when called by non-admin", async () => {
       await expectRevert(
-        keepVendor.upgradeToAndCall(address1, initializeCallData),
+        keepVendor.upgradeTo(address1, initializeCallData),
         "Caller is not the admin"
       );
     });
@@ -202,7 +202,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("reverts when timer not elapsed", async () => {
-      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+      await keepVendor.upgradeTo(address1, initializeCallData, {
         from: proxyAdmin
       });
 
@@ -212,7 +212,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("clears timestamp", async () => {
-      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+      await keepVendor.upgradeTo(address1, initializeCallData, {
         from: proxyAdmin
       });
       await time.increase(await keepVendor.upgradeTimeDelay());
@@ -223,7 +223,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("sets implementation", async () => {
-      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+      await keepVendor.upgradeTo(address1, initializeCallData, {
         from: proxyAdmin
       });
       await time.increase(await keepVendor.upgradeTimeDelay());
@@ -236,7 +236,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("emits an event", async () => {
-      await keepVendor.upgradeToAndCall(address1, initializeCallData, {
+      await keepVendor.upgradeTo(address1, initializeCallData, {
         from: proxyAdmin
       });
       await time.increase(await keepVendor.upgradeTimeDelay());
@@ -249,7 +249,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
     });
 
     it("supports empty initialization call data", async () => {
-      await keepVendor.upgradeToAndCall(address1, [], {
+      await keepVendor.upgradeTo(address1, [], {
         from: proxyAdmin
       });
       await time.increase(await keepVendor.upgradeTimeDelay());
@@ -271,7 +271,7 @@ contract("BondedECDSAKeepVendor", async accounts => {
         .initialize(registryAddress, address0)
         .encodeABI();
 
-      keepVendor.upgradeToAndCall(
+      keepVendor.upgradeTo(
         bondedECDSAKeepVendorImplV1.address,
         failingData,
         {

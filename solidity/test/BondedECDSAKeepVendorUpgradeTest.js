@@ -53,7 +53,7 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
         .initialize(false)
         .encodeABI();
 
-      await keepVendorProxy.upgradeToAndCall(implV2.address, initializeCallData, {
+      await keepVendorProxy.upgradeTo(implV2.address, initializeCallData, {
         from: proxyAdmin
       });
       await time.increase(await keepVendorProxy.upgradeTimeDelay());
@@ -85,7 +85,7 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
         .initialize(registryAddress, factoryAddress)
         .encodeABI();
 
-      keepVendorProxy.upgradeToAndCall(implV2.address, initializeCallData, {
+      keepVendorProxy.upgradeTo(implV2.address, initializeCallData, {
         from: proxyAdmin
       })
       await time.increase(await keepVendorProxy.upgradeTimeDelay());
@@ -106,7 +106,7 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
         .encodeABI();
 
 
-      keepVendorProxy.upgradeToAndCall(
+      keepVendorProxy.upgradeTo(
         implV2.address,
         initializeCallData2,
         {
@@ -117,7 +117,7 @@ contract("BondedECDSAKeepVendorUpgrade", async accounts => {
 
       await keepVendorProxy.completeUpgrade({ from: proxyAdmin })
 
-      await keepVendorProxy.upgradeToAndCall(
+      await keepVendorProxy.upgradeTo(
         implV1.address,
         initializeCallData1,
         {
