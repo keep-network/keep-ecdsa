@@ -1,14 +1,22 @@
-export default function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
-    let tickets = [];
-    for (let i = 1; i <= stakerWeight; i++) {
-      let ticketValueHex = web3.utils.soliditySha3({t: 'uint', v: randomBeaconValue}, {t: 'uint', v: stakerValue}, {t: 'uint', v: i})
-      let ticketValue = web3.utils.toBN(ticketValueHex);
-      let ticket = {
-        valueHex: ticketValueHex,
-        value: ticketValue,
-        virtualStakerIndex: i
-      }
-      tickets.push(ticket);
+export default function generateTickets(
+  randomBeaconValue,
+  stakerValue,
+  stakerWeight,
+) {
+  const tickets = []
+  for (let i = 1; i <= stakerWeight; i++) {
+    const ticketValueHex = web3.utils.soliditySha3(
+      {t: "uint", v: randomBeaconValue},
+      {t: "uint", v: stakerValue},
+      {t: "uint", v: i},
+    )
+    const ticketValue = web3.utils.toBN(ticketValueHex)
+    const ticket = {
+      valueHex: ticketValueHex,
+      value: ticketValue,
+      virtualStakerIndex: i,
     }
-    return tickets
+    tickets.push(ticket)
   }
+  return tickets
+}
