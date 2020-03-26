@@ -37,7 +37,7 @@ jobs:
       - run:
           name: Install dependencies
           working_directory: ~/project/solidity
-          command: npm install
+          command: npm ci
       - run:
           name: Lint Implementation
           working_directory: ~/project/solidity
@@ -60,7 +60,7 @@ jobs:
       - run:
           name: Setup solidity
           working_directory: ~/project/solidity
-          command: npm install
+          command: npm ci
       - run:
           name: Build solidity contracts
           working_directory: ~/project/solidity
