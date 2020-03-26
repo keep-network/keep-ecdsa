@@ -35,6 +35,10 @@ jobs:
       - attach_workspace:
           at: solidity
       - run:
+          name: Install dependencies
+          working_directory: ~/project/solidity
+          command: npm install
+      - run:
           name: Lint Implementation
           working_directory: ~/project/solidity
           command: |
