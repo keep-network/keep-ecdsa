@@ -1,7 +1,9 @@
+/* solium-disable function-order */
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
+
 
 /// @title Proxy contract for Bonded ECDSA Keep vendor.
 contract BondedECDSAKeepVendor is Proxy {
@@ -99,10 +101,8 @@ contract BondedECDSAKeepVendor is Proxy {
 
         setNewImplementation(_newImplementation);
 
-        /* solium-disable-next-line security/no-block-members */
         setUpgradeInitiatedTimestamp(block.timestamp);
 
-        /* solium-disable-next-line security/no-block-members */
         emit UpgradeStarted(_newImplementation, block.timestamp);
     }
 
@@ -115,7 +115,6 @@ contract BondedECDSAKeepVendor is Proxy {
         require(upgradeInitiatedTimestamp() > 0, "Upgrade not initiated");
 
         require(
-            /* solium-disable-next-line security/no-block-members */
             block.timestamp.sub(upgradeInitiatedTimestamp()) >=
                 upgradeTimeDelay(),
             "Timer not elapsed"
@@ -144,6 +143,7 @@ contract BondedECDSAKeepVendor is Proxy {
         address _implementation,
         bytes memory _data
     ) internal {
+        /* solium-disable-next-line security/no-low-level-calls */
         (bool success, bytes memory returnData) = _implementation.delegatecall(
             _data
         );

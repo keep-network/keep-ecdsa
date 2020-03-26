@@ -1,3 +1,4 @@
+/* solium-disable function-order */
 pragma solidity ^0.5.4;
 
 import "./BondedECDSAKeep.sol";
@@ -15,6 +16,7 @@ import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 
 /// @title Bonded ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
@@ -390,19 +392,19 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
 
     /// @notice Requests for a relay entry using the beacon payment provided as
     /// the parameter. Sets `setGroupSelectionSeed(uint256)` as beacon callback.
-    function requestRelayEntry(
-        uint256 payment
-    ) internal returns (bool, bytes memory) {
-        return address(randomBeacon).call.value(
-            payment
-        )(
-            abi.encodeWithSignature(
-                "requestRelayEntry(address,string,uint256)",
-                address(this),
-                "setGroupSelectionSeed(uint256)",
-                callbackGas
-            )
-        );
+    function requestRelayEntry(uint256 payment)
+        internal
+        returns (bool, bytes memory)
+    {
+        return
+            address(randomBeacon).call.value(payment)(
+                abi.encodeWithSignature(
+                    "requestRelayEntry(address,string,uint256)",
+                    address(this),
+                    "setGroupSelectionSeed(uint256)",
+                    callbackGas
+                )
+            );
     }
 
     /// @notice Sets a new group selection seed value.

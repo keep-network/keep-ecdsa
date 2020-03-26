@@ -1,3 +1,4 @@
+/* solium-disable function-order */
 pragma solidity ^0.5.4;
 
 import "./api/IBondedECDSAKeepVendor.sol";
@@ -5,6 +6,7 @@ import "./api/IBondedECDSAKeepVendor.sol";
 import "@keep-network/keep-core/contracts/Registry.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 
 /// @title Bonded ECDSA Keep Vendor
 /// @notice The contract is used to obtain a new Bonded ECDSA keep factory.
@@ -126,15 +128,15 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
         emit FactoryUpgradeCompleted(keepFactory);
     }
 
-    function isUpgradeInitiated() internal view returns (bool) {
-        return factoryUpgradeInitiatedTimestamp > 0;
-    }
-
     /// @notice Selects the latest ECDSA keep factory.
     /// @return ECDSA keep factory address.
     function selectFactory() public view returns (address payable) {
         require(keepFactory != address(0), "Keep factory is not registered");
         return keepFactory;
+    }
+
+    function isUpgradeInitiated() internal view returns (bool) {
+        return factoryUpgradeInitiatedTimestamp > 0;
     }
 
     /// @dev Throws if called by any account other than the operator contract
