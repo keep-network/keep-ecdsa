@@ -33,6 +33,13 @@ contract BondedECDSAKeepVendor is Proxy {
     /// subtracted by 1, and is validated in the constructor.
     bytes32 internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0x0816e8d9eeb2554df0d0b7edc58e2d957e6ce18adf92c138b50dd78a420bebaf;
 
+    /// @notice Details of initialization data to be called on the second step
+    /// of upgrade.
+    /// @dev Mapping is stored at position calculated with keccak256 of the entry
+    /// details, hence it should be protected from clashing with implementation's
+    /// fields.
+    mapping(address => bytes) public initializationData;
+
     event UpgradeStarted(address implementation, uint256 timestamp);
     event UpgradeCompleted(address implementation);
 
@@ -74,7 +81,7 @@ contract BondedECDSAKeepVendor is Proxy {
     /// block timestamp.
     /// @param _newImplementation Address of the new vendor implementation contract.
     /// @param _data Delegate call data for implementation initialization.
-    function upgradeToAndCall(address _newImplementation, bytes memory _data)
+    function upgradeTo(address _newImplementation, bytes memory _data)
         public
         onlyAdmin
     {
@@ -88,9 +95,7 @@ contract BondedECDSAKeepVendor is Proxy {
             "Implementation address must be different from the current one."
         );
 
-        if (_data.length > 0) {
-            initializeImplementation(_newImplementation, _data);
-        }
+        initializationData[_newImplementation] = _data;
 
         setNewImplementation(_newImplementation);
 
@@ -106,7 +111,7 @@ contract BondedECDSAKeepVendor is Proxy {
     /// process. The function emits an event containing the new implementation
     /// address. It can be called after upgrade time delay period has passed since
     /// upgrade initiation.
-    function completeUpgrade() public {
+    function completeUpgrade() public onlyAdmin {
         require(upgradeInitiatedTimestamp() > 0, "Upgrade not initiated");
 
         require(
@@ -119,6 +124,12 @@ contract BondedECDSAKeepVendor is Proxy {
         address newImplementation = newImplementation();
 
         setImplementation(newImplementation);
+
+        bytes memory data = initializationData[newImplementation];
+        if (data.length > 0) {
+            initializeImplementation(newImplementation, data);
+        }
+
         setUpgradeInitiatedTimestamp(0);
 
         emit UpgradeCompleted(newImplementation);
