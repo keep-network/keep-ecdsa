@@ -1,4 +1,3 @@
-/* solium-disable function-order */
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -134,6 +133,12 @@ contract BondedECDSAKeepVendor is Proxy {
         emit UpgradeCompleted(newImplementation);
     }
 
+    /// @notice Gets the address of the current vendor implementation.
+    /// @return Address of the current implementation.
+    function implementation() public view returns (address) {
+        return _implementation();
+    }
+
     /// @notice Initializes implementation contract.
     /// @dev Delegates a call to the implementation with provided data. It is
     /// expected that data contains details of function to be called.
@@ -160,11 +165,7 @@ contract BondedECDSAKeepVendor is Proxy {
         assert(slot == bytes32(uint256(keccak256(key)) - 1));
     }
 
-    /// @notice Gets the address of the current vendor implementation.
-    /// @return Address of the current implementation.
-    function implementation() public view returns (address) {
-        return _implementation();
-    }
+    /* solium-disable function-order */
 
     /// @dev Returns the current implementation. Implements function from `Proxy`
     /// contract.

@@ -1,4 +1,3 @@
-/* solium-disable function-order */
 pragma solidity ^0.5.4;
 
 import "./BondedECDSAKeep.sol";
@@ -170,28 +169,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         }
     }
 
-    /// @notice Checks if operator is registered as a candidate for the given
-    /// customer application.
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    /// @return True if operator is already registered in the candidates pool,
-    /// false otherwise.
-    function isOperatorRegistered(address _operator, address _application)
-        public
-        view
-        returns (bool)
-    {
-        if (candidatesPools[_application] == address(0)) {
-            return false;
-        }
-
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
-        );
-
-        return candidatesPool.isOperatorRegistered(_operator);
-    }
-
     /// @notice Checks if operator's details in the member candidates pool are
     /// up to date for the given application. If not update operator status
     /// function should be called by the one who is monitoring the status.
@@ -223,49 +200,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         );
 
         candidatesPool.updateOperatorStatus(_operator);
-    }
-
-    /// @notice Checks if given operator is eligible for the given application.
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    function isOperatorEligible(address _operator, address _application)
-        public
-        view
-        returns (bool)
-    {
-        if (candidatesPools[_application] == address(0)) {
-            return false;
-        }
-
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
-        );
-
-        return candidatesPool.isOperatorEligible(_operator);
-    }
-
-    /// @notice Gets bonded sortition pool of specific application for the
-    /// operator.
-    /// @dev Reverts if the operator is not registered for the application.
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    /// @return Bonded sortition pool.
-    function getSortitionPoolForOperator(
-        address _operator,
-        address _application
-    ) internal view returns (BondedSortitionPool) {
-        require(
-            isOperatorRegistered(_operator, _application),
-            "Operator not registered for the application"
-        );
-
-        return BondedSortitionPool(candidatesPools[_application]);
-    }
-
-    /// @notice Gets a fee estimate for opening a new keep.
-    /// @return Uint256 estimate.
-    function openKeepFeeEstimate() public view returns (uint256) {
-        return randomBeacon.entryFeeEstimate(callbackGas);
     }
 
     /// @notice Opens a new ECDSA keep.
@@ -340,6 +274,64 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
+    /// @notice Sets a new group selection seed value.
+    /// @dev The function is expected to be called in a callback by the random
+    /// beacon.
+    /// @param _groupSelectionSeed New value of group selection seed.
+    function setGroupSelectionSeed(uint256 _groupSelectionSeed)
+        external
+        onlyRandomBeacon
+    {
+        groupSelectionSeed = _groupSelectionSeed;
+    }
+
+    /// @notice Checks if operator is registered as a candidate for the given
+    /// customer application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    /// @return True if operator is already registered in the candidates pool,
+    /// false otherwise.
+    function isOperatorRegistered(address _operator, address _application)
+        public
+        view
+        returns (bool)
+    {
+        if (candidatesPools[_application] == address(0)) {
+            return false;
+        }
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        return candidatesPool.isOperatorRegistered(_operator);
+    }
+
+    /// @notice Checks if given operator is eligible for the given application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    function isOperatorEligible(address _operator, address _application)
+        public
+        view
+        returns (bool)
+    {
+        if (candidatesPools[_application] == address(0)) {
+            return false;
+        }
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        return candidatesPool.isOperatorEligible(_operator);
+    }
+
+    /// @notice Gets a fee estimate for opening a new keep.
+    /// @return Uint256 estimate.
+    function openKeepFeeEstimate() public view returns (uint256) {
+        return randomBeacon.entryFeeEstimate(callbackGas);
+    }
+
     /// @notice Calculates the fee requestor has to pay to reseed the factory
     /// for signer selection. Depending on how much value is stored in the
     /// reseed pool and the price of a new relay entry, returned value may vary.
@@ -365,6 +357,61 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         }
 
         reseedPool = reseedPool.sub(beaconFee);
+    }
+
+    /// @dev Checks if the specified account has enough active stake to become
+    /// network operator and that this contract has been authorized for potential
+    /// slashing.
+    ///
+    /// Having the required minimum of active stake makes the operator eligible
+    /// to join the network. If the active stake is not currently undelegating,
+    /// operator is also eligible for work selection.
+    ///
+    /// @param _operator operator's address
+    /// @return True if has enough active stake to participate in the network,
+    /// false otherwise.
+    function hasMinimumStake(address _operator) public view returns (bool) {
+        return
+            tokenStaking.activeStake(_operator, address(this)) >= minimumStake;
+    }
+
+    /// @dev Gets the stake balance of the specified operator.
+    /// @param _operator The operator to query the balance of.
+    /// @return An uint256 representing the amount staked by the passed operator.
+    function balanceOf(address _operator) public view returns (uint256) {
+        return tokenStaking.balanceOf(_operator);
+    }
+
+    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
+    /// amount equal to the minimum stake configured for this factory.
+    function slashKeepMembers() public onlyKeep {
+        BondedECDSAKeep keep = BondedECDSAKeep(msg.sender);
+
+        tokenStaking.slash(minimumStake, keep.getMembers());
+    }
+
+    /// @notice Notifies the factory that a keep has been closed.
+    /// @dev Function should be called by a keep which is being closed.
+    function notifyKeepClosed() public onlyKeep {
+        keeps[msg.sender] = false;
+    }
+
+    /// @notice Gets bonded sortition pool of specific application for the
+    /// operator.
+    /// @dev Reverts if the operator is not registered for the application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    /// @return Bonded sortition pool.
+    function getSortitionPoolForOperator(
+        address _operator,
+        address _application
+    ) internal view returns (BondedSortitionPool) {
+        require(
+            isOperatorRegistered(_operator, _application),
+            "Operator not registered for the application"
+        );
+
+        return BondedSortitionPool(candidatesPools[_application]);
     }
 
     /// @notice Updates group selection seed.
@@ -407,15 +454,14 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             );
     }
 
-    /// @notice Sets a new group selection seed value.
-    /// @dev The function is expected to be called in a callback by the random
-    /// beacon.
-    /// @param _groupSelectionSeed New value of group selection seed.
-    function setGroupSelectionSeed(uint256 _groupSelectionSeed)
-        external
-        onlyRandomBeacon
-    {
-        groupSelectionSeed = _groupSelectionSeed;
+    /// @notice Checks if the caller is a keep created by this factory.
+    /// @dev Throws an error if called by any account other than a keep.
+    modifier onlyKeep() {
+        require(
+            keeps[msg.sender],
+            "Caller is not an active keep created by this factory"
+        );
+        _;
     }
 
     /// @notice Checks if the caller is the random beacon.
@@ -424,53 +470,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         require(
             address(randomBeacon) == msg.sender,
             "Caller is not the random beacon"
-        );
-        _;
-    }
-
-    /// @dev Checks if the specified account has enough active stake to become
-    /// network operator and that this contract has been authorized for potential
-    /// slashing.
-    ///
-    /// Having the required minimum of active stake makes the operator eligible
-    /// to join the network. If the active stake is not currently undelegating,
-    /// operator is also eligible for work selection.
-    ///
-    /// @param _operator operator's address
-    /// @return True if has enough active stake to participate in the network,
-    /// false otherwise.
-    function hasMinimumStake(address _operator) public view returns (bool) {
-        return
-            tokenStaking.activeStake(_operator, address(this)) >= minimumStake;
-    }
-
-    /// @dev Gets the stake balance of the specified operator.
-    /// @param _operator The operator to query the balance of.
-    /// @return An uint256 representing the amount staked by the passed operator.
-    function balanceOf(address _operator) public view returns (uint256) {
-        return tokenStaking.balanceOf(_operator);
-    }
-
-    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
-    /// amount equal to the minimum stake configured for this factory.
-    function slashKeepMembers() public onlyKeep {
-        BondedECDSAKeep keep = BondedECDSAKeep(msg.sender);
-
-        tokenStaking.slash(minimumStake, keep.getMembers());
-    }
-
-    /// @notice Notifies the factory that a keep has been closed.
-    /// @dev Function should be called by a keep which is being closed.
-    function notifyKeepClosed() public onlyKeep {
-        keeps[msg.sender] = false;
-    }
-
-    /// @notice Checks if the caller is a keep created by this factory.
-    /// @dev Throws an error if called by any account other than a keep.
-    modifier onlyKeep() {
-        require(
-            keeps[msg.sender],
-            "Caller is not an active keep created by this factory"
         );
         _;
     }

@@ -1,4 +1,3 @@
-/* solium-disable function-order */
 pragma solidity ^0.5.4;
 
 import "./api/IBondedECDSAKeepVendor.sol";
@@ -77,7 +76,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     /// containing the new factory address and current block timestamp.
     /// @param _factory ECDSA keep factory address.
     function upgradeFactory(address payable _factory)
-        external
+        public
         onlyOperatorContractUpgrader
     {
         require(_factory != address(0), "Incorrect factory address");
