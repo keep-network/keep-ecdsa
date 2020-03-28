@@ -36,10 +36,11 @@ func Initialize(
 	networkProvider net.Provider,
 	persistence persistence.Handle,
 	sanctionedApplications []common.Address,
+	tssConfig *tss.Config,
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
-	tssNode := node.NewNode(ethereumChain, networkProvider)
+	tssNode := node.NewNode(ethereumChain, networkProvider, tssConfig)
 
 	tssNode.InitializeTSSPreParamsPool()
 
