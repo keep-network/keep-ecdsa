@@ -35,7 +35,7 @@ func (t *tssPreParamsPool) pumpPool() {
 			continue
 		}
 
-		logger.Debugf("generated new tss pre parameters")
+		logger.Infof("generated new tss pre parameters")
 
 		t.pool <- params
 	}
