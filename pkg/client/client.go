@@ -13,7 +13,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
@@ -36,10 +36,11 @@ func Initialize(
 	networkProvider net.Provider,
 	persistence persistence.Handle,
 	sanctionedApplications []common.Address,
+	tssConfig *tss.Config,
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
-	tssNode := node.NewNode(ethereumChain, networkProvider)
+	tssNode := node.NewNode(ethereumChain, networkProvider, tssConfig)
 
 	tssNode.InitializeTSSPreParamsPool()
 
