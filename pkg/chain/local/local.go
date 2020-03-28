@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
@@ -169,7 +169,6 @@ func (lc *localChain) UpdateStatusForApplication(application common.Address) err
 	panic("implement")
 }
 
-// OnKeepClosed archives key shares and unsubscibes from events.
 func (lc *localChain) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
@@ -177,8 +176,13 @@ func (lc *localChain) OnKeepClosed(
 	panic("implement")
 }
 
-// OnConflictingPublicKeySubmitted logs mismatched public keys submitted by
-// members of a keep.
+func (lc *localChain) OnKeepTerminated(
+	keepAddress common.Address,
+	handler func(event *eth.KeepTerminatedEvent),
+) (subscription.EventSubscription, error) {
+	panic("implement")
+}
+
 func (lc *localChain) OnConflictingPublicKeySubmitted(
 	keepAddress common.Address,
 	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
@@ -186,7 +190,6 @@ func (lc *localChain) OnConflictingPublicKeySubmitted(
 	panic("implement")
 }
 
-// OnPublicKeyPublshed logs a public key that was accepted by keep.
 func (lc *localChain) OnPublicKeyPublished(
 	keepAddress common.Address,
 	handler func(event *eth.PublicKeyPublishedEvent),

@@ -10,8 +10,12 @@ type BondedECDSAKeepCreatedEvent struct {
 	Members     []common.Address // keep members addresses
 }
 
-// KeepClosedEvent is an event emitted on a closing keep.
+// KeepClosedEvent is an event emitted when a keep has been closed.
 type KeepClosedEvent struct {
+}
+
+// KeepTerminatedEvent is an event emitted when a keep has been terminated.
+type KeepTerminatedEvent struct {
 }
 
 // IsMember checks if list of members contains the given address.
@@ -34,7 +38,7 @@ type SignatureRequestedEvent struct {
 // the members of a keep has submitted a key that does not match the keys submitted
 // so far by other members.
 type ConflictingPublicKeySubmittedEvent struct {
-	SubmittingMember common.Address
+	SubmittingMember     common.Address
 	ConflictingPublicKey []byte
 }
 

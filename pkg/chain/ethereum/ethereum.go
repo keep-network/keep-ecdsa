@@ -13,7 +13,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
@@ -75,13 +75,30 @@ func (ec *EthereumChain) OnKeepClosed(
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
 	return keepContract.WatchKeepClosed(
-		func(
-			blockNumber uint64,
-		) {
+		func(blockNumber uint64) {
 			handler(&eth.KeepClosedEvent{})
 		},
 		func(err error) error {
 			return fmt.Errorf("keep closed callback failed: [%v]", err)
+		},
+	)
+}
+
+// OnKeepTerminated is a callback that is invoked on-chain when keep is terminated.
+func (ec *EthereumChain) OnKeepTerminated(
+	keepAddress common.Address,
+	handler func(event *eth.KeepTerminatedEvent),
+) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+	return keepContract.WatchKeepTerminated(
+		func(blockNumber uint64) {
+			handler(&eth.KeepTerminatedEvent{})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep terminated callback failed: [%v]", err)
 		},
 	)
 }
