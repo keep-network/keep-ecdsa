@@ -20,7 +20,7 @@ const (
 // Code copied from:
 //   https://github.com/binance-chain/tss-lib/blob/master/ecdsa/keygen/test_utils.go
 // Test data JSON files copied from:
-//   https://github.com/binance-chain/tss-lib/tree/master/test/_fixtures
+//   https://github.com/binance-chain/tss-lib/tree/master/test/_ecdsa_fixtures
 func LoadKeygenTestFixtures(count int) ([]keygen.LocalPartySaveData, error) {
 	keys := make([]keygen.LocalPartySaveData, 0, count)
 	for j := 0; j < count; j++ {
@@ -37,25 +37,7 @@ func LoadKeygenTestFixtures(count int) ([]keygen.LocalPartySaveData, error) {
 				"could not unmarshal fixture data for party %d located at: %s",
 				j, fixtureFilePath)
 		}
-		keys = append(keys, keygen.LocalPartySaveData{
-			LocalPreParams: keygen.LocalPreParams{
-				PaillierSK: key.PaillierSK,
-				NTildei:    key.NTildei,
-				H1i:        key.H1i,
-				H2i:        key.H2i,
-			},
-			LocalSecrets: keygen.LocalSecrets{
-				Xi:      key.Xi,
-				ShareID: key.ShareID,
-			},
-			Ks:          key.Ks[:count],
-			NTildej:     key.NTildej[:count],
-			H1j:         key.H1j[:count],
-			H2j:         key.H2j[:count],
-			BigXj:       key.BigXj[:count],
-			PaillierPKs: key.PaillierPKs[:count],
-			ECDSAPub:    key.ECDSAPub,
-		})
+		keys = append(keys, key)
 	}
 	return keys, nil
 }
