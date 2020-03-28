@@ -5,12 +5,13 @@ import (
 	cecdsa "crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"math/rand"
 	"reflect"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ipfs/go-log"
@@ -23,7 +24,8 @@ import (
 )
 
 func TestGenerateKeyAndSign(t *testing.T) {
-	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
 	groupSize := 5
 	dishonestThreshold := uint(groupSize - 1)
@@ -68,7 +70,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		}()
 
 		for i, memberID := range groupMemberIDs {
-			go func(memberID MemberID) {
+			go func(memberID MemberID, index int) {
 				memberPublicKey, err := memberID.PublicKey()
 				if err != nil {
 					errChan <- err
@@ -81,7 +83,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				providersInitializedWg.Done()
 				<-providersInitialized
 
-				preParams := testData[i].LocalPreParams
+				preParams := testData[index].LocalPreParams
 
 				signer, err := GenerateThresholdSigner(
 					ctx,
@@ -101,7 +103,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 				signersMutex.Unlock()
 
 				keyGenWait.Done()
-			}(memberID)
+			}(memberID, i)
 		}
 
 		keyGenWait.Wait()
