@@ -19,7 +19,12 @@ const (
 // It is possible to generate the parameters way ahead of the TSS protocol
 // execution.
 func GenerateTSSPreParams() (*keygen.LocalPreParams, error) {
-	preParams, err := keygen.GeneratePreParams(preParamsGenerationTimeout)
+	// As a workaround for a bug in tss-lib we have to provide `optionalConcurrency`
+	// parameter with value of at least `3` so the underlying goroutines are
+	// executed on machines with less than 3 CPU.
+	//
+	// See: https://github.com/binance-chain/tss-lib/issues/93
+	preParams, err := keygen.GeneratePreParams(preParamsGenerationTimeout, 3)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate tss pre-params: [%v]", err)
 	}
