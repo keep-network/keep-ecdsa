@@ -82,6 +82,10 @@ func (tk *ThresholdKey) Marshal() ([]byte, error) {
 		NTilde: tk.LocalPreParams.NTildei.Bytes(),
 		H1I:    tk.LocalPreParams.H1i.Bytes(),
 		H2I:    tk.LocalPreParams.H2i.Bytes(),
+		Alpha:  tk.LocalPreParams.Alpha.Bytes(),
+		Beta:   tk.LocalPreParams.Beta.Bytes(),
+		P:      tk.LocalPreParams.P.Bytes(),
+		Q:      tk.LocalPreParams.Q.Bytes(),
 	}
 
 	localSecrets := &pb.LocalPartySaveData_LocalSecrets{
@@ -148,6 +152,10 @@ func (tk *ThresholdKey) Unmarshal(bytes []byte) error {
 		NTildei:    new(big.Int).SetBytes(pbData.GetLocalPreParams().GetNTilde()),
 		H1i:        new(big.Int).SetBytes(pbData.GetLocalPreParams().GetH1I()),
 		H2i:        new(big.Int).SetBytes(pbData.GetLocalPreParams().GetH2I()),
+		Alpha:      new(big.Int).SetBytes(pbData.GetLocalPreParams().GetAlpha()),
+		Beta:       new(big.Int).SetBytes(pbData.GetLocalPreParams().GetBeta()),
+		P:          new(big.Int).SetBytes(pbData.GetLocalPreParams().GetP()),
+		Q:          new(big.Int).SetBytes(pbData.GetLocalPreParams().GetQ()),
 	}
 
 	tk.LocalSecrets = keygen.LocalSecrets{
