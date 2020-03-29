@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
 const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
@@ -18,6 +19,7 @@ type Config struct {
 	SanctionedApplications SanctionedApplications
 	Storage                Storage
 	LibP2P                 libp2p.Config
+	TSS                    tss.Config
 }
 
 // SanctionedApplications contains addresses of applications approved by the

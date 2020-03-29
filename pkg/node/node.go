@@ -6,15 +6,16 @@ import (
 	cecdsa "crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"time"
+
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
@@ -28,6 +29,7 @@ type Node struct {
 	ethereumChain   eth.Handle
 	networkProvider net.Provider
 	tssParamsPool   *tssPreParamsPool
+	tssConfig       *tss.Config
 }
 
 // NewNode initializes node struct with provided ethereum chain interface and
@@ -36,10 +38,12 @@ type Node struct {
 func NewNode(
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
+	tssConfig *tss.Config,
 ) *Node {
 	return &Node{
 		ethereumChain:   ethereumChain,
 		networkProvider: networkProvider,
+		tssConfig:       tssConfig,
 	}
 }
 
