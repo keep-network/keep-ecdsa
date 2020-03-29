@@ -31,7 +31,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	dishonestThreshold := uint(groupSize - 1)
 	groupID := fmt.Sprintf("tss-test-%d", rand.Int())
 
-	err := log.SetLogLevel("*", "INFO")
+	err := log.SetLogLevel("*", "DEBUG")
 	if err != nil {
 		t.Fatalf("logger initialization failed: [%v]", err)
 	}
