@@ -24,14 +24,14 @@ import (
 )
 
 func TestGenerateKeyAndSign(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
 	groupSize := 5
 	dishonestThreshold := uint(groupSize - 1)
 	groupID := fmt.Sprintf("tss-test-%d", rand.Int())
 
-	err := log.SetLogLevel("*", "INFO")
+	err := log.SetLogLevel("*", "DEBUG")
 	if err != nil {
 		t.Fatalf("logger initialization failed: [%v]", err)
 	}

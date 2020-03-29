@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
 	"github.com/binance-chain/tss-lib/tss"
@@ -48,7 +49,7 @@ type signingSigner struct {
 	// Party for TSS protocol execution.
 	signingParty tssLib.Party
 	// Channel where a result of the signing protocol execution will be written to.
-	signingEndChan <-chan signing.SignatureData
+	signingEndChan <-chan common.SignatureData
 }
 
 // sign executes the protocol to calculate a signature. This function needs to be
@@ -103,11 +104,11 @@ func (s *ThresholdSigner) initializeSigningParty(
 	netBridge *networkBridge,
 ) (
 	tssLib.Party,
-	<-chan signing.SignatureData,
+	<-chan common.SignatureData,
 	error,
 ) {
 	tssMessageChan := make(chan tss.Message, len(s.groupMemberIDs))
-	endChan := make(chan signing.SignatureData)
+	endChan := make(chan common.SignatureData)
 
 	currentPartyID, groupPartiesIDs, err := generatePartiesIDs(
 		s.memberID,
@@ -144,7 +145,7 @@ func (s *ThresholdSigner) initializeSigningParty(
 	return party, endChan, nil
 }
 
-func convertSignatureTSStoECDSA(tssSignature signing.SignatureData) ecdsa.Signature {
+func convertSignatureTSStoECDSA(tssSignature common.SignatureData) ecdsa.Signature {
 	// `SignatureData` contains recovery ID as a byte slice. Only the first byte
 	// is relevant and is converted to `int`.
 	recoveryBytes := tssSignature.GetSignatureRecovery()
