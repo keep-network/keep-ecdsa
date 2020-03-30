@@ -2,7 +2,7 @@ import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
 const {expectRevert} = require("@openzeppelin/test-helpers")
 
-import {mineBlocks} from './helpers/mineBlocks'
+import {mineBlocks} from "./helpers/mineBlocks"
 
 const truffleAssert = require("truffle-assertions")
 
