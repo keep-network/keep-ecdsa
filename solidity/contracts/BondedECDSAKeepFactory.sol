@@ -74,7 +74,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     uint256 public constant minimumBond = 1;
 
     // Gas required for a callback from the random beacon. The value specifies
-    // gas required to call `setGroupSelectionSeed` function in the worst-case
+    // gas required to call `__beaconCallback` function in the worst-case
     // scenario with all the checks and maximum allowed uint256 relay entry as
     // a callback parameter.
     uint256 public constant callbackGas = 41830;
@@ -307,12 +307,12 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @notice Sets a new group selection seed value.
     /// @dev The function is expected to be called in a callback by the random
     /// beacon.
-    /// @param _groupSelectionSeed New value of group selection seed.
-    function setGroupSelectionSeed(uint256 _groupSelectionSeed)
+    /// @param _relayEntry Beacon output.
+    function __beaconCallback(uint256 _relayEntry)
         external
         onlyRandomBeacon
     {
-        groupSelectionSeed = _groupSelectionSeed;
+        groupSelectionSeed = _relayEntry;
     }
 
     /// @notice Checks if operator is registered as a candidate for the given
@@ -462,7 +462,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     }
 
     /// @notice Requests for a relay entry using the beacon payment provided as
-    /// the parameter. Sets `setGroupSelectionSeed(uint256)` as beacon callback.
+    /// the parameter.
     function requestRelayEntry(uint256 payment)
         internal
         returns (bool, bytes memory)
@@ -470,9 +470,8 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         return
             address(randomBeacon).call.value(payment)(
                 abi.encodeWithSignature(
-                    "requestRelayEntry(address,string,uint256)",
+                    "requestRelayEntry(address,uint256)",
                     address(this),
-                    "setGroupSelectionSeed(uint256)",
                     callbackGas
                 )
             );

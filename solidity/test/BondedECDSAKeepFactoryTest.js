@@ -2,7 +2,7 @@ import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
 const {expectRevert} = require("@openzeppelin/test-helpers")
 
-import {mineBlocks} from "./helpers/mineBlocks"
+import {mineBlocks} from './helpers/mineBlocks'
 
 const truffleAssert = require("truffle-assertions")
 
@@ -1121,7 +1121,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     }
   })
 
-  describe("setGroupSelectionSeed", async () => {
+  describe("__beaconCallback", async () => {
     const newGroupSelectionSeed = new BN(2345675)
 
     before(async () => {
@@ -1144,7 +1144,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     })
 
     it("sets group selection seed", async () => {
-      await keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, {
+      await keepFactory.__beaconCallback(newGroupSelectionSeed, {
         from: randomBeacon,
       })
 
@@ -1156,7 +1156,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
     it("reverts if called not by the random beacon", async () => {
       await expectRevert(
-        keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, {
+        keepFactory.__beaconCallback(newGroupSelectionSeed, {
           from: accounts[2],
         }),
         "Caller is not the random beacon"
