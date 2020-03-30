@@ -11,10 +11,12 @@ set -ex
 
 TBTC_SYSTEM_PROPERTY="TBTCSystemAddress"
 
+SED_SUBSTITUTION_REGEXP="['\"][a-zA-Z0-9]*['\"]"
+
 DESTINATION_FILE=$(realpath $(dirname $0)/../migrations/external-contracts.js)
 
 function update_tbtc_system_address() {
-  sed -i -e "/${TBTC_SYSTEM_PROPERTY}/s/'[a-zA-Z0-9]*'/'${CLIENT_APP_ADDRESS}'/" $DESTINATION_FILE
+  sed -i -e "/${TBTC_SYSTEM_PROPERTY}/s/${SED_SUBSTITUTION_REGEXP}/\"${CLIENT_APP_ADDRESS}\"/" $DESTINATION_FILE
 }
 
 update_tbtc_system_address

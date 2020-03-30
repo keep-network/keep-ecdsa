@@ -28,6 +28,8 @@ ADDRESS_REGEXP=^0[xX][0-9a-fA-F]{40}$
 # Query to get address of the deployed contract for the first network on the list.
 JSON_QUERY=".networks.\"${NETWORKID}\".address"
 
+SED_SUBSTITUTION_REGEXP="['\"][a-zA-Z0-9]*['\"]"
+
 FAILED=false
 
 function fetch_registry_contract_address() {
@@ -40,7 +42,7 @@ function fetch_registry_contract_address() {
     FAILED=true
   else
     echo "Found value for ${REGISTRY_PROPERTY} = ${ADDRESS}"
-    sed -i -e "/${REGISTRY_PROPERTY}/s/'[a-zA-Z0-9]*'/'${ADDRESS}'/" $DESTINATION_FILE
+    sed -i -e "/${REGISTRY_PROPERTY}/s/${SED_SUBSTITUTION_REGEXP}/\"${ADDRESS}\"/" $DESTINATION_FILE
   fi
 }
 
@@ -55,7 +57,7 @@ function fetch_token_staking_contract_address() {
     FAILED=true
   else 
     echo "Found value for ${TOKEN_STAKING_PROPERTY} = ${ADDRESS}"
-    sed -i -e "/${TOKEN_STAKING_PROPERTY}/s/'[a-zA-Z0-9]*'/'${ADDRESS}'/" $DESTINATION_FILE
+    sed -i -e "/${TOKEN_STAKING_PROPERTY}/s/${SED_SUBSTITUTION_REGEXP}/\"${ADDRESS}\"/" $DESTINATION_FILE
   fi
 }
 
@@ -70,7 +72,7 @@ function fetch_random_beacon_contract_address() {
     FAILED=true
   else
   echo "Found value for ${TOKEN_STAKING_PROPERTY} = ${ADDRESS}"
-  sed -i -e "/${RANDOM_BEACON_PROPERTY}/s/'[a-zA-Z0-9]*'/'${ADDRESS}'/" $DESTINATION_FILE
+  sed -i -e "/${RANDOM_BEACON_PROPERTY}/s/${SED_SUBSTITUTION_REGEXP}/\"${ADDRESS}\"/" $DESTINATION_FILE
   fi
 }
 
