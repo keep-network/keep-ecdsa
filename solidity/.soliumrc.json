@@ -1,19 +1,16 @@
 {
-    "extends": "solium:recommended",
-    "plugins": [
-      "security"
+  "extends": "keep",
+  "plugins": [
+    "security"
+  ],
+  "rules": {
+    "security/no-block-members": [
+      "off",
+      [
+        "timestamp"
+      ]
     ],
-    "rules": {
-      "quotes": [
-        "error",
-        "double"
-      ],
-      "indentation": [
-        "error",
-        4
-      ],
-      "security/no-block-members": ["off", ["timestamp"]],
-      "security/no-call-value": "off",
-      "security/no-inline-assembly": "off"
-    }
+    "security/no-call-value": "off",
+    "security/no-inline-assembly": "off"
+  }
 }
