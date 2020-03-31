@@ -1522,6 +1522,53 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     })
   })
 
+  describe("getKeepAtIndex", async () => {
+    before(async () => {
+      await initializeNewFactory()
+      const minimumBond = await keepFactory.minimumBond.call()
+      const memberBond = minimumBond.muln(2) // want to be able to open 2 keeps
+      await initializeMemberCandidates(memberBond)
+      await registerMemberCandidates()
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("reverts when there are no keeps", async () => {
+      await expectRevert(keepFactory.getKeepAtIndex(0), "Out of bounds")
+    })
+
+    it("reverts for out of bond index", async () => {
+      await openKeep()
+
+      await expectRevert(keepFactory.getKeepAtIndex(1), "Out of bounds")
+    })
+
+    it("returns keep at index", async () => {
+      const keep0 = await openKeep()
+      const keep1 = await openKeep()
+
+      const atIndex0 = await keepFactory.getKeepAtIndex(0)
+      const atIndex1 = await keepFactory.getKeepAtIndex(1)
+
+      assert.equal(
+        keep0.address,
+        atIndex0,
+        "incorrect keep address returned for index 0"
+      )
+      assert.equal(
+        keep1.address,
+        atIndex1,
+        "incorrect keep address returned for index 1"
+      )
+    })
+  })
+
   async function initializeNewFactory() {
     registry = await Registry.new()
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
