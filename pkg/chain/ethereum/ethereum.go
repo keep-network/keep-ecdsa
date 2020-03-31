@@ -13,7 +13,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
@@ -41,7 +41,7 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 	return nil
 }
 
-// OnBondedECDSAKeepCreated is a callback that is invoked when an on-chain
+// OnBondedECDSAKeepCreated installs a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
@@ -65,7 +65,7 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	)
 }
 
-// OnKeepClosed is a callback that is invoked on-chain when keep is closed.
+// OnKeepClosed installs a callback that is invoked on-chain when keep is closed.
 func (ec *EthereumChain) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
@@ -75,9 +75,7 @@ func (ec *EthereumChain) OnKeepClosed(
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
 	return keepContract.WatchKeepClosed(
-		func(
-			blockNumber uint64,
-		) {
+		func(blockNumber uint64) {
 			handler(&eth.KeepClosedEvent{})
 		},
 		func(err error) error {
@@ -86,7 +84,27 @@ func (ec *EthereumChain) OnKeepClosed(
 	)
 }
 
-// OnPublicKeyPublished is a callback that is invoked when an on-chain
+// OnKeepTerminated installs a callback that is invoked on-chain when keep
+// is terminated.
+func (ec *EthereumChain) OnKeepTerminated(
+	keepAddress common.Address,
+	handler func(event *eth.KeepTerminatedEvent),
+) (subscription.EventSubscription, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+	}
+	return keepContract.WatchKeepTerminated(
+		func(blockNumber uint64) {
+			handler(&eth.KeepTerminatedEvent{})
+		},
+		func(err error) error {
+			return fmt.Errorf("keep terminated callback failed: [%v]", err)
+		},
+	)
+}
+
+// OnPublicKeyPublished installs a callback that is invoked when an on-chain
 // event of a published public key was emitted.
 func (ec *EthereumChain) OnPublicKeyPublished(
 	keepAddress common.Address,
@@ -112,8 +130,8 @@ func (ec *EthereumChain) OnPublicKeyPublished(
 	)
 }
 
-// OnConflictingPublicKeySubmitted is a callback that is invoked when an on-chain
-// notification of a conflicting public key submission is seen.
+// OnConflictingPublicKeySubmitted installs a callback that is invoked when an
+// on-chain notification of a conflicting public key submission is seen.
 func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 	keepAddress common.Address,
 	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
@@ -140,7 +158,7 @@ func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 	)
 }
 
-// OnSignatureRequested is a callback that is invoked on-chain
+// OnSignatureRequested installs a callback that is invoked on-chain
 // when a keep's signature is requested.
 func (ec *EthereumChain) OnSignatureRequested(
 	keepAddress common.Address,

@@ -29,8 +29,8 @@ type BondedECDSAKeepFactory interface {
 	// to a keep.
 	RegisterAsMemberCandidate(application common.Address) error
 
-	// OnBondedECDSAKeepCreated is a callback that is invoked when an on-chain
-	// notification of a new bonded ECDSA keep creation is seen.
+	// OnBondedECDSAKeepCreated installs a callback that is invoked when an
+	// on-chain notification of a new bonded ECDSA keep creation is seen.
 	OnBondedECDSAKeepCreated(
 		handler func(event *BondedECDSAKeepCreatedEvent),
 	) (subscription.EventSubscription, error)
@@ -55,21 +55,21 @@ type BondedECDSAKeepFactory interface {
 // BondedECDSAKeep is an interface that provides ability to interact with
 // BondedECDSAKeep ethereum contracts.
 type BondedECDSAKeep interface {
-	// OnSignatureRequested is a callback that is invoked when an on-chain
+	// OnSignatureRequested installs a callback that is invoked when an on-chain
 	// notification of a new signing request for a given keep is seen.
 	OnSignatureRequested(
 		keepAddress common.Address,
 		handler func(event *SignatureRequestedEvent),
 	) (subscription.EventSubscription, error)
 
-	// OnConflictingPublicKeySubmitted is a callback that is invoked upon
+	// OnConflictingPublicKeySubmitted installs a callback that is invoked upon
 	// notification of mismatched public keys that were submitted by keep members.
 	OnConflictingPublicKeySubmitted(
 		keepAddress common.Address,
 		handler func(event *ConflictingPublicKeySubmittedEvent),
 	) (subscription.EventSubscription, error)
 
-	// OnPublicKeyPublished is a callback that is invoked upon
+	// OnPublicKeyPublished installs a callback that is invoked upon
 	// notification of a published public key, which means that all members have
 	// submitted the same key.
 	OnPublicKeyPublished(
@@ -88,11 +88,18 @@ type BondedECDSAKeep interface {
 		signature *ecdsa.Signature,
 	) error // TODO: Add promise *async.SignatureSubmissionPromise
 
-	// OnKeepClosed is a callback that is invoked when a notification is sent
-	// about the closed keep.
+	// OnKeepClosed installs a callback that will be called on closing the
+	// given keep.
 	OnKeepClosed(
 		keepAddress common.Address,
 		handler func(event *KeepClosedEvent),
+	) (subscription.EventSubscription, error)
+
+	// OnKeepTerminated installs a callback that will be called on terminating
+	// the given keep.
+	OnKeepTerminated(
+		keepAddress common.Address,
+		handler func(event *KeepTerminatedEvent),
 	) (subscription.EventSubscription, error)
 
 	// IsAwaitingSignature checks if the keep is waiting for a signature to be

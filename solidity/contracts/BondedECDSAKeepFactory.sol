@@ -42,6 +42,12 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // master contract for cloning.
     address public masterBondedECDSAKeepAddress;
 
+    // Keeps created by this factory.
+    address[] public keeps;
+
+    // Maps keep opened timestamp to each keep address
+    mapping(address => uint256) keepOpenedTimestamp;
+
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
 
@@ -80,9 +86,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // reseed pool and later use this pool to reseed using a public reseed
     // function on a manual request at any moment.
     uint256 public reseedPool;
-
-    // Keeps created by this factory.
-    mapping(address => bool) keeps;
 
     constructor(
         address _masterBondedECDSAKeepAddress,
@@ -259,8 +262,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             address(this)
         );
 
-        keeps[keepAddress] = true;
-
         for (uint256 i = 0; i < _groupSize; i++) {
             keepBonding.createBond(
                 members[i],
@@ -271,7 +272,36 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             );
         }
 
+        keeps.push(address(keep));
+        /* solium-disable-next-line security/no-block-members*/
+        keepOpenedTimestamp[address(keep)] = block.timestamp;
+
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
+    }
+
+    /// @notice Gets how many keeps have been opened by this contract.
+    /// @dev    Checks the size of the keeps array.
+    /// @return The number of keeps opened so far.
+    function getKeepCount() external view returns (uint256) {
+        return keeps.length;
+    }
+
+    /// @notice Gets a specific keep address at a given index.
+    /// @return The address of the keep at the given index.
+    function getKeepAtIndex(uint256 index) external view returns (address) {
+        require(index < keeps.length, "Out of bounds.");
+        return keeps[index];
+    }
+
+    /// @notice Gets the opened timestamp of the given keep.
+    /// @return Timestamp the given keep was opened at or 0 if this keep
+    /// was not created by this factory.
+    function getKeepOpenedTimestamp(address _keep)
+        external
+        view
+        returns (uint256)
+    {
+        return keepOpenedTimestamp[_keep];
     }
 
     /// @notice Sets a new group selection seed value.
@@ -384,16 +414,10 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
 
     /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
     /// amount equal to the minimum stake configured for this factory.
-    function slashKeepMembers() public onlyKeep {
+    function slashKeepMembers() public onlyActiveKeep {
         BondedECDSAKeep keep = BondedECDSAKeep(msg.sender);
 
         tokenStaking.slash(minimumStake, keep.getMembers());
-    }
-
-    /// @notice Notifies the factory that a keep has been closed.
-    /// @dev Function should be called by a keep which is being closed.
-    function notifyKeepClosed() public onlyKeep {
-        keeps[msg.sender] = false;
     }
 
     /// @notice Gets bonded sortition pool of specific application for the
@@ -456,9 +480,10 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
 
     /// @notice Checks if the caller is a keep created by this factory.
     /// @dev Throws an error if called by any account other than a keep.
-    modifier onlyKeep() {
+    modifier onlyActiveKeep() {
         require(
-            keeps[msg.sender],
+            keepOpenedTimestamp[msg.sender] != 0 &&
+                BondedECDSAKeep(msg.sender).isActive(),
             "Caller is not an active keep created by this factory"
         );
         _;

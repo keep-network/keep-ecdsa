@@ -48,18 +48,18 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const singleBond = new BN(1)
   const bond = singleBond.mul(groupSize)
 
+  beforeEach(async () => {
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot()
+  })
+
   describe("registerMemberCandidate", async () => {
     before(async () => {
       await initializeNewFactory()
       await initializeMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("inserts operator with the correct staking weight in the pool", async () => {
@@ -193,14 +193,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
     })
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
     it("creates new sortition pool and emits an event", async () => {
       const sortitionPoolAddress = await keepFactory.createSortitionPool.call(
         application
@@ -226,14 +218,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   describe("getSortitionPool", async () => {
     before(async () => {
       await initializeNewFactory()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("returns address of sortition pool", async () => {
@@ -262,14 +246,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     before(async () => {
       await initializeNewFactory()
       await initializeMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("returns true if the operator is registered for the application", async () => {
@@ -302,14 +278,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
       await initializeMemberCandidates()
       await registerMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("returns true if the operator is up to date for the application", async () => {
@@ -392,14 +360,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
       await initializeMemberCandidates()
       await registerMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("revers if operator is up to date", async () => {
@@ -486,14 +446,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeMemberCandidates()
     })
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
     it("returns true if the operator is registered for the application", async () => {
       await keepFactory.registerMemberCandidate(application, {from: members[0]})
 
@@ -524,14 +476,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
       await initializeMemberCandidates()
       await registerMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("returns true if the operator is up to date for the application", async () => {
@@ -614,14 +558,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
       await initializeMemberCandidates()
       await registerMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("revers if operator is up to date", async () => {
@@ -711,14 +647,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await registerMemberCandidates()
 
       feeEstimate = await keepFactory.openKeepFeeEstimate()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("reverts if no member candidates are registered", async () => {
@@ -1068,6 +996,59 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
     })
 
+    it("records the keep address and opening time", async () => {
+      const preKeepCount = await keepFactory.getKeepCount()
+
+      const keepAddress = await keepFactory.openKeep.call(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        {from: application, value: feeEstimate}
+      )
+
+      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
+        from: application,
+        value: feeEstimate,
+      })
+      const recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
+      const keep = await BondedECDSAKeep.at(keepAddress)
+      const keepOpenedTime = await keep.getOpenedTimestamp()
+      const factoryKeepOpenedTime = await keepFactory.getKeepOpenedTimestamp(
+        keepAddress
+      )
+
+      assert.equal(
+        recordedKeepAddress,
+        keepAddress,
+        "address recorded in factory differs from returned keep address"
+      )
+
+      expect(factoryKeepOpenedTime).to.eq.BN(
+        keepOpenedTime,
+        "opened time in factory differs from opened time in keep"
+      )
+    })
+
+    it("produces active keeps", async () => {
+      const keepAddress = await keepFactory.openKeep.call(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        {from: application, value: feeEstimate}
+      )
+
+      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
+        from: application,
+        value: feeEstimate,
+      })
+
+      const keep = await BondedECDSAKeep.at(keepAddress)
+
+      assert.isTrue(await keep.isActive(), "keep should be active")
+    })
+
     it("allows to use a group of 16 signers", async () => {
       const groupSize = 16
 
@@ -1162,14 +1143,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
     it("sets group selection seed", async () => {
       await keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, {
         from: randomBeacon,
@@ -1209,14 +1182,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
     it("reverts if called not by keep", async () => {
       await expectRevert(
         keepFactory.slashKeepMembers(),
@@ -1227,7 +1192,31 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     it("reverts if called by not authorized keep", async () => {
       // The keep is not added to the list of keeps created by the factory.
       await expectRevert(
-        keep.exposedSlashSignerStakes(),
+        keep.publicSlashSignerStakes(),
+        "Caller is not an active keep created by this factory"
+      )
+    })
+
+    it("reverts if called by closed keep", async () => {
+      // Add keep to the list of keeps created by the factory.
+      await keepFactory.addKeep(keep.address)
+
+      await keep.publicMarkAsClosed()
+
+      await expectRevert(
+        keep.publicSlashSignerStakes(),
+        "Caller is not an active keep created by this factory"
+      )
+    })
+
+    it("reverts if called by terminated keep", async () => {
+      // Add keep to the list of keeps created by the factory.
+      await keepFactory.addKeep(keep.address)
+
+      await keep.publicMarkAsTerminated()
+
+      await expectRevert(
+        keep.publicSlashSignerStakes(),
         "Caller is not an active keep created by this factory"
       )
     })
@@ -1241,7 +1230,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const stakeBalance = minimumStake.add(remainingStake)
       await stakeOperators(members, stakeBalance)
 
-      await keep.exposedSlashSignerStakes()
+      await keep.publicSlashSignerStakes()
 
       for (let i = 0; i < members.length; i++) {
         const actualStake = await tokenStaking.eligibleStake(
@@ -1256,54 +1245,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     })
   })
 
-  describe("notifyKeepClosed", async () => {
-    const keepOwner = accounts[5]
-    let keep
-
-    before(async () => {
-      await initializeNewFactory()
-      await initializeMemberCandidates()
-      await registerMemberCandidates()
-
-      keep = await openKeep()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
-    it("reverts if called not by keep", async () => {
-      await expectRevert(
-        keepFactory.notifyKeepClosed(),
-        "Caller is not an active keep created by this factory"
-      )
-    })
-
-    it("reverts if called by not active keep", async () => {
-      // The keep is removed from the list of keeps created by the factory
-      // or it's already marked as inactive.
-      await keepFactory.removeKeep(keep.address)
-
-      await expectRevert(
-        keep.closeKeep({from: keepOwner}),
-        "Caller is not an active keep created by this factory"
-      )
-    })
-
-    it("marks keep closed", async () => {
-      // Add keep to the list of keeps created by the factory.
-      await keepFactory.addKeep(keep.address)
-
-      await keep.closeKeep({from: keepOwner})
-
-      assert.isFalse(await keepFactory.hasKeep(keep.address))
-    })
-  })
-
   describe("newGroupSelectionSeedFee", async () => {
     let newEntryFee
 
@@ -1312,14 +1253,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       const callbackGas = await keepFactory.callbackGas()
       newEntryFee = await randomBeacon.entryFeeEstimate(callbackGas)
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("evaluates reseed fee for empty pool", async () => {
@@ -1375,14 +1308,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
       const callbackGas = await keepFactory.callbackGas()
       newEntryFee = await randomBeacon.entryFeeEstimate(callbackGas)
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("requests new relay entry from the beacon and reseeds factory", async () => {
@@ -1489,6 +1414,45 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await expectRevert(
         keepFactory.requestNewGroupSelectionSeed({value: reseedFee}),
         "request relay entry failed"
+      )
+    })
+  })
+
+  describe("getKeepAtIndex", async () => {
+    before(async () => {
+      await initializeNewFactory()
+      const minimumBond = await keepFactory.minimumBond.call()
+      const memberBond = minimumBond.muln(2) // want to be able to open 2 keeps
+      await initializeMemberCandidates(memberBond)
+      await registerMemberCandidates()
+    })
+
+    it("reverts when there are no keeps", async () => {
+      await expectRevert(keepFactory.getKeepAtIndex(0), "Out of bounds")
+    })
+
+    it("reverts for out of bond index", async () => {
+      await openKeep()
+
+      await expectRevert(keepFactory.getKeepAtIndex(1), "Out of bounds")
+    })
+
+    it("returns keep at index", async () => {
+      const keep0 = await openKeep()
+      const keep1 = await openKeep()
+
+      const atIndex0 = await keepFactory.getKeepAtIndex(0)
+      const atIndex1 = await keepFactory.getKeepAtIndex(1)
+
+      assert.equal(
+        keep0.address,
+        atIndex0,
+        "incorrect keep address returned for index 0"
+      )
+      assert.equal(
+        keep1.address,
+        atIndex1,
+        "incorrect keep address returned for index 1"
       )
     })
   })

@@ -22,6 +22,12 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
+    // Status of the keep.
+    // Active means the keep is active.
+    // Closed means the keep was closed happily.
+    // Terminated means the keep was closed due to misbehavior.
+    enum Status {Active, Closed, Terminated}
+
     // Flags execution of contract initialization.
     bool isInitialized;
 
@@ -68,10 +74,12 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Map stores amount of wei stored in the contract for each member address.
     mapping(address => uint256) memberETHBalances;
 
-    // Flag to monitor current keep state. If the keep is active members monitor
-    // it and support requests for the keep owner. If the owner decides to close
-    // the keep the flag is set to false.
-    bool public isActive;
+    // The current status of the keep.
+    // If the keep is Active members monitor it and support requests from the
+    // keep owner.
+    // If the owner decides to close the keep the flag is set to Closed.
+    // If the owner seizes member bonds the flag is set to Terminated.
+    Status internal status;
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(bytes32 digest);
@@ -94,9 +102,13 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Notification that ERC20 reward has been distributed to keep members.
     event ERC20RewardDistributed();
 
-    // Notification that the keep was closed by the owner. Members no longer need
-    // to support it.
+    // Notification that the keep was closed by the owner.
+    // Members no longer need to support this keep.
     event KeepClosed();
+
+    // Notification that the keep has been terminated by the owner.
+    // Members no longer need to support this keep.
+    event KeepTerminated();
 
     // Notification that the signature has been calculated. Contains a digest which
     // was used for signature calculation and a signature in a form of r, s and
@@ -267,7 +279,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// The application may decide to return part of bonds later after they are
     /// processed using returnPartialSignerBonds function.
     function seizeSignerBonds() external onlyOwner onlyWhenActive {
-        markAsClosed();
+        markAsTerminated();
 
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(
@@ -436,6 +448,18 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         require(success, "Transfer failed");
     }
 
+    /// @notice Gets the owner of the keep.
+    /// @return Address of the keep owner.
+    function getOwner() external view returns (address) {
+        return owner;
+    }
+
+    /// @notice Gets the timestamp the keep was opened at.
+    /// @return Timestamp the keep was opened at.
+    function getOpenedTimestamp() external view returns (uint256) {
+        return keyGenerationStartTimestamp;
+    }
+
     /// @notice Initialization function.
     /// @dev We use clone factory to create new keep. That is why this contract
     /// doesn't have a constructor. We provide keep parameters for each instance
@@ -463,11 +487,32 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         keepFactory = BondedECDSAKeepFactory(_keepFactory);
-        isActive = true;
+        status = Status.Active;
         isInitialized = true;
 
         /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
+    }
+
+    /// @notice Returns true if the keep is active.
+    /// @return true if the keep is active, false otherwise.
+    function isActive() public view returns (bool) {
+        return status == Status.Active;
+    }
+
+    /// @notice Returns true if the keep is closed and members no longer support
+    /// this keep.
+    /// @return true if the keep is closed, false otherwise.
+    function isClosed() public view returns (bool) {
+        return status == Status.Closed;
+    }
+
+    /// @notice Returns true if the keep has been terminated.
+    /// Keep is terminated when bonds are seized and members no longer support
+    /// this keep.
+    /// @return true if the keep has been terminated, false otherwise.
+    function isTerminated() public view returns (bool) {
+        return status == Status.Terminated;
     }
 
     /// @notice Returns members of the keep.
@@ -557,20 +602,30 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
-    /// @notice Marks the keep as closed. Keep can be marked as closed only
-    /// when there is no signing in progress or the requested signing process
-    /// has timed out.
+    /// @notice Marks the keep as closed.
+    /// Keep can be marked as closed only when there is no signing in progress
+    /// or the requested signing process has timed out.
     function markAsClosed() internal {
         require(
             !isSigningInProgress() || hasSigningTimedOut(),
             "Requested signing has not timed out yet"
         );
 
-        isActive = false;
-
-        keepFactory.notifyKeepClosed();
-
+        status = Status.Closed;
         emit KeepClosed();
+    }
+
+    /// @notice Marks the keep as terminated.
+    /// Keep can be marked as closed only when there is no signing in progress
+    /// or the requested signing process has timed out.
+    function markAsTerminated() internal {
+        require(
+            !isSigningInProgress() || hasSigningTimedOut(),
+            "Requested signing has not timed out yet"
+        );
+
+        status = Status.Terminated;
+        emit KeepTerminated();
     }
 
     /// @notice Returns bonds to the keep members.
@@ -611,7 +666,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @notice Checks if the keep is currently active.
     /// @dev Throws an error if called when the keep has been already closed.
     modifier onlyWhenActive() {
-        require(isActive, "Keep is not active");
+        require(isActive(), "Keep is not active");
         _;
     }
 }
