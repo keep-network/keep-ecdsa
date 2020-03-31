@@ -48,18 +48,18 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const singleBond = new BN(1)
   const bond = singleBond.mul(groupSize)
 
+  beforeEach(async () => {
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot()
+  })
+
   describe("registerMemberCandidate", async () => {
     before(async () => {
       await initializeNewFactory()
       await initializeMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("inserts operator with the correct staking weight in the pool", async () => {
@@ -193,14 +193,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
     })
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
     it("creates new sortition pool and emits an event", async () => {
       const sortitionPoolAddress = await keepFactory.createSortitionPool.call(
         application
@@ -226,14 +218,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   describe("getSortitionPool", async () => {
     before(async () => {
       await initializeNewFactory()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("returns address of sortition pool", async () => {
@@ -262,14 +246,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     before(async () => {
       await initializeNewFactory()
       await initializeMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("returns true if the operator is registered for the application", async () => {
@@ -302,14 +278,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
       await initializeMemberCandidates()
       await registerMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("returns true if the operator is up to date for the application", async () => {
@@ -392,14 +360,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
       await initializeMemberCandidates()
       await registerMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("revers if operator is up to date", async () => {
@@ -486,14 +446,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeMemberCandidates()
     })
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
     it("returns true if the operator is registered for the application", async () => {
       await keepFactory.registerMemberCandidate(application, {from: members[0]})
 
@@ -524,14 +476,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
       await initializeMemberCandidates()
       await registerMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("returns true if the operator is up to date for the application", async () => {
@@ -614,14 +558,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
       await initializeMemberCandidates()
       await registerMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("revers if operator is up to date", async () => {
@@ -711,14 +647,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await registerMemberCandidates()
 
       feeEstimate = await keepFactory.openKeepFeeEstimate()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("reverts if no member candidates are registered", async () => {
@@ -1215,14 +1143,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
     it("sets group selection seed", async () => {
       await keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, {
         from: randomBeacon,
@@ -1260,14 +1180,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         keepBonding.address,
         keepFactory.address
       )
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("reverts if called not by keep", async () => {
@@ -1343,14 +1255,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       newEntryFee = await randomBeacon.entryFeeEstimate(callbackGas)
     })
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
     it("evaluates reseed fee for empty pool", async () => {
       const reseedFee = await keepFactory.newGroupSelectionSeedFee()
       expect(reseedFee).to.eq.BN(
@@ -1404,14 +1308,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeNewFactory()
       const callbackGas = await keepFactory.callbackGas()
       newEntryFee = await randomBeacon.entryFeeEstimate(callbackGas)
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("requests new relay entry from the beacon and reseeds factory", async () => {
@@ -1529,14 +1425,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const memberBond = minimumBond.muln(2) // want to be able to open 2 keeps
       await initializeMemberCandidates(memberBond)
       await registerMemberCandidates()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it("reverts when there are no keeps", async () => {
