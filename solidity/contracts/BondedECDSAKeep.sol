@@ -455,7 +455,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     }
 
     /// @notice Gets the timestamp the keep was opened at.
-    /// @return timestamp the keep was opened at.
+    /// @return Timestamp the keep was opened at.
     function getOpenedTimestamp() external view returns (uint256) {
         return keyGenerationStartTimestamp;
     }
