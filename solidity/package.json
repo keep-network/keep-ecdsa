@@ -16,7 +16,16 @@
     "truffle": "truffle",
     "clean": "rm -rf build/",
     "build": "truffle compile",
-    "test": "TEST=true truffle test --network=local"
+    "test": "TEST=true truffle test --network=local",
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:fix": "npm run lint:fix:js && npm run lint:fix:sol",
+    "lint:js": "eslint ${npm_package_config_eslintPaths}",
+    "lint:fix:js": "eslint --fix ${npm_package_config_eslintPaths}",
+    "lint:sol": "solium -d contracts/ && prettier --list-different **/*.sol",
+    "lint:fix:sol": "solium -d contracts/ --fix && prettier --write **/*.sol"
+  },
+  "config": {
+    "eslintPaths": "test/ migrations/ scripts/ integration/"
   },
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
@@ -43,7 +52,13 @@
     "@truffle/hdwallet-provider": "^1.0.25",
     "bn-chai": "^1.0.1",
     "chai": "^4.2.0",
+    "eslint": "^6.8.0",
+    "eslint-config-keep": "github:keep-network/eslint-config-keep#0.3.0",
+    "prettier": "^2.0.2",
+    "prettier-plugin-solidity": "^1.0.0-alpha.47",
     "solc": "^0.5.16",
+    "solium": "^1.2.5",
+    "solium-config-keep": "github:keep-network/solium-config-keep#0.1.1",
     "toml": "^3.0.0",
     "tomlify-j0.4": "^3.0.0",
     "truffle": "^5.1.10",

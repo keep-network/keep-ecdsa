@@ -16,6 +16,7 @@ import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 /// @title Bonded ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
 /// @dev We avoid redeployment of bonded ECDSA keep contract by using the clone factory.
@@ -171,28 +172,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         }
     }
 
-    /// @notice Checks if operator is registered as a candidate for the given
-    /// customer application.
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    /// @return True if operator is already registered in the candidates pool,
-    /// false otherwise.
-    function isOperatorRegistered(address _operator, address _application)
-        public
-        view
-        returns (bool)
-    {
-        if (candidatesPools[_application] == address(0)) {
-            return false;
-        }
-
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
-        );
-
-        return candidatesPool.isOperatorRegistered(_operator);
-    }
-
     /// @notice Checks if operator's details in the member candidates pool are
     /// up to date for the given application. If not update operator status
     /// function should be called by the one who is monitoring the status.
@@ -224,49 +203,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         );
 
         candidatesPool.updateOperatorStatus(_operator);
-    }
-
-    /// @notice Checks if given operator is eligible for the given application.
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    function isOperatorEligible(address _operator, address _application)
-        public
-        view
-        returns (bool)
-    {
-        if (candidatesPools[_application] == address(0)) {
-            return false;
-        }
-
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
-        );
-
-        return candidatesPool.isOperatorEligible(_operator);
-    }
-
-    /// @notice Gets bonded sortition pool of specific application for the
-    /// operator.
-    /// @dev Reverts if the operator is not registered for the application.
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    /// @return Bonded sortition pool.
-    function getSortitionPoolForOperator(
-        address _operator,
-        address _application
-    ) internal view returns (BondedSortitionPool) {
-        require(
-            isOperatorRegistered(_operator, _application),
-            "Operator not registered for the application"
-        );
-
-        return BondedSortitionPool(candidatesPools[_application]);
-    }
-
-    /// @notice Gets a fee estimate for opening a new keep.
-    /// @return Uint256 estimate.
-    function openKeepFeeEstimate() public view returns (uint256) {
-        return randomBeacon.entryFeeEstimate(callbackGas);
     }
 
     /// @notice Opens a new ECDSA keep.
@@ -343,6 +279,85 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
 
+    /// @notice Gets how many keeps have been opened by this contract.
+    /// @dev    Checks the size of the keeps array.
+    /// @return The number of keeps opened so far.
+    function getKeepCount() external view returns (uint256){
+        return keeps.length;
+    }
+
+    /// @notice Gets a specific keep address at a given index.
+    /// @return The address of the keep at the given index.
+    function getKeepAtIndex(uint256 index) external view returns (address){
+        require(index < keeps.length, "Out of bounds.");
+        return keeps[index];
+    }
+
+    /// @notice Gets the creation timestamp of the given keep.
+    /// @return Timestamp the given keep was created at or 0 if this keep
+    /// was not created by this factory.
+    function getCreationTime(address _keep) external view returns (uint256) {
+        return creationTime[_keep];
+    }
+
+    /// @notice Sets a new group selection seed value.
+    /// @dev The function is expected to be called in a callback by the random
+    /// beacon.
+    /// @param _groupSelectionSeed New value of group selection seed.
+    function setGroupSelectionSeed(uint256 _groupSelectionSeed)
+        external
+        onlyRandomBeacon
+    {
+        groupSelectionSeed = _groupSelectionSeed;
+    }
+
+    /// @notice Checks if operator is registered as a candidate for the given
+    /// customer application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    /// @return True if operator is already registered in the candidates pool,
+    /// false otherwise.
+    function isOperatorRegistered(address _operator, address _application)
+        public
+        view
+        returns (bool)
+    {
+        if (candidatesPools[_application] == address(0)) {
+            return false;
+        }
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        return candidatesPool.isOperatorRegistered(_operator);
+    }
+
+    /// @notice Checks if given operator is eligible for the given application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    function isOperatorEligible(address _operator, address _application)
+        public
+        view
+        returns (bool)
+    {
+        if (candidatesPools[_application] == address(0)) {
+            return false;
+        }
+
+        BondedSortitionPool candidatesPool = BondedSortitionPool(
+            candidatesPools[_application]
+        );
+
+        return candidatesPool.isOperatorEligible(_operator);
+    }
+
+    /// @notice Gets a fee estimate for opening a new keep.
+    /// @return Uint256 estimate.
+    function openKeepFeeEstimate() public view returns (uint256) {
+        return randomBeacon.entryFeeEstimate(callbackGas);
+    }
+
     /// @notice Calculates the fee requestor has to pay to reseed the factory
     /// for signer selection. Depending on how much value is stored in the
     /// reseed pool and the price of a new relay entry, returned value may vary.
@@ -368,88 +383,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         }
 
         reseedPool = reseedPool.sub(beaconFee);
-    }
-
-    /// @notice Updates group selection seed.
-    /// @dev The main goal of this function is to request the random beacon to
-    /// generate a new random number. The beacon generates the number asynchronously
-    /// and will call a callback function when the number is ready. In the meantime
-    /// we update current group selection seed to a new value using a hash function.
-    /// In case of the random beacon request failure this function won't revert
-    /// but add beacon payment to factory's reseed pool.
-    function newGroupSelectionSeed() internal {
-        // Calculate new group selection seed based on the current seed.
-        // We added address of the factory as a key to calculate value different
-        // than sortition pool RNG will, so we don't end up selecting almost
-        // identical group.
-        groupSelectionSeed = uint256(
-            keccak256(abi.encodePacked(groupSelectionSeed, address(this)))
-        );
-
-        // Call the random beacon to get a random group selection seed.
-        (bool success, ) = requestRelayEntry(msg.value);
-        if (!success) {
-            reseedPool += msg.value;
-        }
-    }
-
-    /// @notice Requests for a relay entry using the beacon payment provided as
-    /// the parameter. Sets `setGroupSelectionSeed(uint256)` as beacon callback.
-    function requestRelayEntry(
-        uint256 payment
-    ) internal returns (bool, bytes memory) {
-        return address(randomBeacon).call.value(
-            payment
-        )(
-            abi.encodeWithSignature(
-                "requestRelayEntry(address,string,uint256)",
-                address(this),
-                "setGroupSelectionSeed(uint256)",
-                callbackGas
-            )
-        );
-    }
-
-    /// @notice Sets a new group selection seed value.
-    /// @dev The function is expected to be called in a callback by the random
-    /// beacon.
-    /// @param _groupSelectionSeed New value of group selection seed.
-    function setGroupSelectionSeed(uint256 _groupSelectionSeed)
-        external
-        onlyRandomBeacon
-    {
-        groupSelectionSeed = _groupSelectionSeed;
-    }
-
-    /// @notice Checks if the caller is the random beacon.
-    /// @dev Throws an error if called by any account other than the random beacon.
-    modifier onlyRandomBeacon() {
-        require(
-            address(randomBeacon) == msg.sender,
-            "Caller is not the random beacon"
-        );
-        _;
-    }
-
-    /// @notice Gets how many keeps have been opened by this contract.
-    /// @dev    Checks the size of the keeps array.
-    /// @return The number of keeps opened so far.
-    function getKeepCount() external view returns (uint256){
-        return keeps.length;
-    }
-
-    /// @notice Gets a specific keep address at a given index.
-    /// @return The address of the keep at the given index.
-    function getKeepAtIndex(uint256 index) external view returns (address){
-        require(index < keeps.length, "Out of bounds.");
-        return keeps[index];
-    }
-
-    /// @notice Gets the creation timestamp of the given keep.
-    /// @return Timestamp the given keep was created at or 0 if this keep
-    /// was not created by this factory.
-    function getCreationTime(address _keep) external view returns (uint256) {
-        return creationTime[_keep];
     }
 
     /// @dev Checks if the specified account has enough active stake to become
@@ -483,12 +416,80 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         tokenStaking.slash(minimumStake, keep.getMembers());
     }
 
+    /// @notice Gets bonded sortition pool of specific application for the
+    /// operator.
+    /// @dev Reverts if the operator is not registered for the application.
+    /// @param _operator Operator's address.
+    /// @param _application Customer application address.
+    /// @return Bonded sortition pool.
+    function getSortitionPoolForOperator(
+        address _operator,
+        address _application
+    ) internal view returns (BondedSortitionPool) {
+        require(
+            isOperatorRegistered(_operator, _application),
+            "Operator not registered for the application"
+        );
+
+        return BondedSortitionPool(candidatesPools[_application]);
+    }
+
+    /// @notice Updates group selection seed.
+    /// @dev The main goal of this function is to request the random beacon to
+    /// generate a new random number. The beacon generates the number asynchronously
+    /// and will call a callback function when the number is ready. In the meantime
+    /// we update current group selection seed to a new value using a hash function.
+    /// In case of the random beacon request failure this function won't revert
+    /// but add beacon payment to factory's reseed pool.
+    function newGroupSelectionSeed() internal {
+        // Calculate new group selection seed based on the current seed.
+        // We added address of the factory as a key to calculate value different
+        // than sortition pool RNG will, so we don't end up selecting almost
+        // identical group.
+        groupSelectionSeed = uint256(
+            keccak256(abi.encodePacked(groupSelectionSeed, address(this)))
+        );
+
+        // Call the random beacon to get a random group selection seed.
+        (bool success, ) = requestRelayEntry(msg.value);
+        if (!success) {
+            reseedPool += msg.value;
+        }
+    }
+
+    /// @notice Requests for a relay entry using the beacon payment provided as
+    /// the parameter. Sets `setGroupSelectionSeed(uint256)` as beacon callback.
+    function requestRelayEntry(uint256 payment)
+        internal
+        returns (bool, bytes memory)
+    {
+        return
+            address(randomBeacon).call.value(payment)(
+                abi.encodeWithSignature(
+                    "requestRelayEntry(address,string,uint256)",
+                    address(this),
+                    "setGroupSelectionSeed(uint256)",
+                    callbackGas
+                )
+            );
+    }
+
     /// @notice Checks if the caller is a keep created by this factory.
     /// @dev Throws an error if called by any account other than a keep.
     modifier onlyActiveKeep() {
         require(
             creationTime[msg.sender] != 0 && BondedECDSAKeep(msg.sender).isActive(),
             "Caller is not an active keep created by this factory"
+        );
+        _;
+    }
+
+    /// @notice Checks if the caller is the random beacon.
+    /// @dev Throws an error if called by any account other than the random beacon.
+    modifier onlyRandomBeacon() {
+        require(
+            address(randomBeacon) == msg.sender,
+            "Caller is not the random beacon"
         );
         _;
     }

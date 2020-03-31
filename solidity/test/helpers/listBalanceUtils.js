@@ -1,30 +1,30 @@
 const BN = web3.utils.BN
 
 /**
- *  Gets a list of ETH balances from a list of addresses. 
- *  @param members A list of addresses 
- *  @return The list of balances in BN notation
+ *  Gets a list of ETH balances from a list of addresses.
+ *  @param {list} members A list of addresses
+ *  @return {list} The list of balances in BN notation
  */
 async function getETHBalancesFromList(members) {
   async function getBalance(address) {
-    let balance = await web3.eth.getBalance(address)
+    const balance = await web3.eth.getBalance(address)
     return new BN(balance)
   }
-  return await Promise.all(members.map(address => getBalance(address)))
+  return await Promise.all(members.map((address) => getBalance(address)))
 }
 
 /**
  *  Gets a map of ETH balances from a list of addresses.
- *  @param members A list of addresses
- *  @return The map of balances in BN notation
+ *  @param {list} members A list of addresses
+ *  @return {map} The map of balances in BN notation
  */
 async function getETHBalancesMap(members) {
   async function getBalance(address) {
-    let balance = await web3.eth.getBalance(address)
+    const balance = await web3.eth.getBalance(address)
     return new BN(balance)
   }
 
-  let map = {}
+  const map = {}
   for (let i = 0; i < members.length; i++) {
     const member = members[i]
     map[member] = await getBalance(member)
@@ -33,36 +33,37 @@ async function getETHBalancesMap(members) {
 }
 
 /**
- *  Gets a list of ERC20 balances given a token and a list of addresses. 
- *  @param members A list of addresses 
- *  @param token ERC20 token instance
- *  @return The list of balances in BN notation
+ *  Gets a list of ERC20 balances given a token and a list of addresses.
+ *  @param {list} members A list of addresses
+ *  @param {Token} token ERC20 token instance
+ *  @return {list} The list of balances in BN notation
  */
 async function getERC20BalancesFromList(members, token) {
   async function getBalance(address) {
-    let balance = await token.balanceOf(address)
+    const balance = await token.balanceOf(address)
     return new BN(balance)
   }
-  return await Promise.all(members.map(address => getBalance(address)))
+  return await Promise.all(members.map((address) => getBalance(address)))
 }
 
 /**
  *  Adds a value to every element in a list
- *  @param list A list of values 
- *  @param increment The amount to add to each element
- *  @return The new list in BN notation
+ *  @param {list} list A list of values
+ *  @param {number} increment The amount to add to each element
+ *  @return {list} The new list in BN notation
  */
 function addToBalances(list, increment) {
-  return list.map(element => element.add(new BN(increment)));
+  return list.map((element) => element.add(new BN(increment)))
 }
 /**
  *  Adds a value to every entry value in a map
- *  @param map A map of values
- *  @param increment The amount to add to each element
- *  @return The new map in BN notation
+ *  @param {map} map A map of values
+ *  @param {number} increment The amount to add to each element
+ *  @return {list} The new map in BN notation
  */
 function addToBalancesMap(map, increment) {
-  for (let key in map) {
+  // eslint-disable-next-line guard-for-in
+  for (const key in map) {
     map[key] = map[key].add(new BN(increment))
   }
   return map
@@ -73,5 +74,5 @@ export {
   getETHBalancesMap,
   getERC20BalancesFromList,
   addToBalances,
-  addToBalancesMap
-};
+  addToBalancesMap,
+}

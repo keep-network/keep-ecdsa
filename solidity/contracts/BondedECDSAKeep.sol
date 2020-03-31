@@ -11,6 +11,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
+
 /// @title Bonded ECDSA Keep
 /// @notice ECDSA keep with additional signer bond requirement.
 /// @dev This contract is used as a master contract for clone factory in
@@ -126,65 +127,25 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     KeepBonding keepBonding;
     BondedECDSAKeepFactory keepFactory;
 
-    /// @notice Initialization function.
-    /// @dev We use clone factory to create new keep. That is why this contract
-    /// doesn't have a constructor. We provide keep parameters for each instance
-    /// function after cloning instances from the master contract.
-    /// @param _owner Address of the keep owner.
-    /// @param _members Addresses of the keep members.
-    /// @param _honestThreshold Minimum number of honest keep members.
-    /// @param _tokenStaking Address of the TokenStaking contract.
-    /// @param _keepBonding Address of the KeepBonding contract.
-    /// @param _keepFactory Address of the BondedECDSAKeepFactory that created
-    /// this keep.
-    function initialize(
-        address _owner,
-        address[] memory _members,
-        uint256 _honestThreshold,
-        address _tokenStaking,
-        address _keepBonding,
-        address payable _keepFactory
-    ) public {
-        require(!isInitialized, "Contract already initialized");
-
-        owner = _owner;
-        members = _members;
-        honestThreshold = _honestThreshold;
-        tokenStaking = TokenStaking(_tokenStaking);
-        keepBonding = KeepBonding(_keepBonding);
-        keepFactory = BondedECDSAKeepFactory(_keepFactory);
-        status = Status.Active;
-        isInitialized = true;
-
-        /* solium-disable-next-line security/no-block-members*/
-        keyGenerationStartTimestamp = block.timestamp;
+    /// @notice Returns keep's ECDSA public key.
+    /// @return Keep's ECDSA public key.
+    function getPublicKey() external view returns (bytes memory) {
+        return publicKey;
     }
 
-    /// @notice Returns true if the keep is active.
-    /// @return true if the keep is active, false otherwise.
-    function isActive() public view returns (bool) {
-        return status == Status.Active;
-    }
+    /// @notice Returns the amount of the keep's ETH bond in wei.
+    /// @return The amount of the keep's ETH bond in wei.
+    function checkBondAmount() external view returns (uint256) {
+        uint256 sumBondAmount = 0;
+        for (uint256 i = 0; i < members.length; i++) {
+            sumBondAmount += keepBonding.bondAmount(
+                members[i],
+                address(this),
+                uint256(address(this))
+            );
+        }
 
-    /// @notice Returns true if the keep is closed and members no longer support
-    /// this keep.
-    /// @return true if the keep is closed, false otherwise.
-    function isClosed() public view returns (bool) {
-        return status == Status.Closed;
-    }
-
-    /// @notice Returns true if the keep has been terminated.
-    /// Keep is terminated when bonds are seized and members no longer support
-    /// this keep.
-    /// @return true if the keep has been terminated, false otherwise.
-    function isTerminated() public view returns (bool) {
-        return status == Status.Terminated;
-    }
-
-    /// @notice Returns members of the keep.
-    /// @return List of the keep members' addresses.
-    function getMembers() public view returns (address[] memory) {
-        return members;
+        return sumBondAmount;
     }
 
     /// @notice Submits a public key to the keep.
@@ -233,177 +194,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         // All submitted signatures match.
         publicKey = _publicKey;
         emit PublicKeyPublished(_publicKey);
-    }
-
-    /// @notice Returns true if the ongoing key generation process timed out.
-    /// @dev There is a certain timeout for keep public key to be produced and
-    /// appear on the chain, see `keyGenerationTimeout`.
-    function hasKeyGenerationTimedOut() internal view returns (bool) {
-        /* solium-disable-next-line */
-        return
-            block.timestamp >
-            keyGenerationStartTimestamp + keyGenerationTimeout;
-    }
-
-    /// @notice Checks if the member already submitted a public key.
-    /// @param _member Address of the member.
-    /// @return True if member already submitted a public key, else false.
-    function hasMemberSubmittedPublicKey(address _member)
-        internal
-        view
-        returns (bool)
-    {
-        return submittedPublicKeys[_member].length != 0;
-    }
-
-    /// @notice Returns keep's ECDSA public key.
-    /// @return Keep's ECDSA public key.
-    function getPublicKey() external view returns (bytes memory) {
-        return publicKey;
-    }
-
-    /// @notice Returns the amount of the keep's ETH bond in wei.
-    /// @return The amount of the keep's ETH bond in wei.
-    function checkBondAmount() external view returns (uint256) {
-        uint256 sumBondAmount = 0;
-        for (uint256 i = 0; i < members.length; i++) {
-            sumBondAmount += keepBonding.bondAmount(
-                members[i],
-                address(this),
-                uint256(address(this))
-            );
-        }
-
-        return sumBondAmount;
-    }
-
-    /// @notice Seizes the signers' ETH bonds. After seizing bonds keep is
-    /// closed so it will no longer respond to signing requests. Bonds can be
-    /// seized only when there is no signing in progress or requested signing
-    /// process has timed out. This function seizes all of signers' bonds.
-    /// The application may decide to return part of bonds later after they are
-    /// processed using returnPartialSignerBonds function.
-    function seizeSignerBonds() external onlyOwner onlyWhenActive {
-        markAsTerminated();
-
-        for (uint256 i = 0; i < members.length; i++) {
-            uint256 amount = keepBonding.bondAmount(
-                members[i],
-                address(this),
-                uint256(address(this))
-            );
-
-            keepBonding.seizeBond(
-                members[i],
-                uint256(address(this)),
-                amount,
-                address(uint160(owner))
-            );
-        }
-    }
-
-    /// @notice Returns partial signer's ETH bonds to the pool as an unbounded
-    /// value. This function is called after bonds have been seized and processed
-    /// by the privileged application after calling seizeSignerBonds function.
-    /// It is entirely up to the application if a part of signers' bonds is
-    /// returned. The application may decide for that but may also decide to
-    /// seize bonds and do not return anything.
-    function returnPartialSignerBonds() external payable {
-        uint256 memberCount = members.length;
-        uint256 bondPerMember = msg.value.div(memberCount);
-
-        require(bondPerMember > 0, "Partial signer bond must be non-zero");
-
-        for (uint16 i = 0; i < memberCount - 1; i++) {
-            keepBonding.deposit.value(bondPerMember)(members[i]);
-        }
-
-        // Transfer of dividend for the last member. Remainder might be equal to
-        // zero in case of even distribution or some small number.
-        uint256 remainder = msg.value.mod(memberCount);
-        keepBonding.deposit.value(bondPerMember.add(remainder))(
-            members[memberCount - 1]
-        );
-    }
-
-    /// @notice Checks a fraud proof for a valid signature from this keep that was
-    /// not first approved via a call to sign.
-    /// @dev The function expects the signed digest to be calculated as a sha256 hash
-    /// of the preimage: `sha256(_preimage))`. The digest is verified against the
-    /// preimage to ensure the security of the ECDSA protocol. Verifying just the
-    /// signature and the digest is not enough and leaves the possibility of the
-    /// the existential forgery. If digest and preimage verification fails the
-    /// function reverts.
-    /// Reverts if a public key has not been set for the keep yet.
-    /// @param _v Signature's header byte: `27 + recoveryID`.
-    /// @param _r R part of ECDSA signature.
-    /// @param _s S part of ECDSA signature.
-    /// @param _signedDigest Digest for the provided signature. Result of hashing
-    /// the preimage with sha256.
-    /// @param _preimage Preimage of the hashed message.
-    /// @return True if fraud, false otherwise.
-    function checkSignatureFraud(
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s,
-        bytes32 _signedDigest,
-        bytes memory _preimage
-    ) public view returns (bool _isFraud) {
-        require(publicKey.length != 0, "Public key was not set yet");
-
-        bytes32 calculatedDigest = sha256(_preimage);
-        require(
-            _signedDigest == calculatedDigest,
-            "Signed digest does not match double sha256 hash of the preimage"
-        );
-
-        bool isSignatureValid = publicKeyToAddress(publicKey) ==
-            ecrecover(_signedDigest, _v, _r, _s);
-
-        // Check if the signature is valid but was not requested.
-        return isSignatureValid && !digests[_signedDigest];
-    }
-
-    /// @notice Submits a fraud proof for a valid signature from this keep that was
-    /// not first approved via a call to sign. If fraud is detected it slashes
-    /// members' KEEP tokens.
-    /// @dev The function expects the signed digest to be calculated as a sha256
-    /// hash of the preimage: `sha256(_preimage))`. The function reverts if the
-    /// signature is not fraudulent.
-    /// @param _v Signature's header byte: `27 + recoveryID`.
-    /// @param _r R part of ECDSA signature.
-    /// @param _s S part of ECDSA signature.
-    /// @param _signedDigest Digest for the provided signature. Result of hashing
-    /// the preimage with sha256.
-    /// @param _preimage Preimage of the hashed message.
-    /// @return True if fraud, error otherwise.
-    function submitSignatureFraud(
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s,
-        bytes32 _signedDigest,
-        bytes calldata _preimage
-    ) external returns (bool _isFraud) {
-        bool isFraud = checkSignatureFraud(
-            _v,
-            _r,
-            _s,
-            _signedDigest,
-            _preimage
-        );
-
-        require(isFraud, "Signature is not fraudulent");
-
-        slashSignerStakes();
-
-        return isFraud;
-    }
-
-    /// @notice Slashes signers' KEEP tokens.
-    /// @dev Keep contract is not authorized to slash tokens directly, so it calls
-    /// the factory to do it.
-    function slashSignerStakes() internal {
-        keepFactory.slashKeepMembers();
     }
 
     /// @notice Calculates a signature over provided digest by the keep.
@@ -472,21 +262,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         emit SignatureSubmitted(digest, _r, _s, _recoveryID);
     }
 
-    /// @notice Returns true if signing of a digest is currently in progress.
-    function isSigningInProgress() internal view returns (bool) {
-        return signingStartTimestamp != 0;
-    }
-
-    /// @notice Returns true if the ongoing signing process timed out.
-    /// @dev There is a certain timeout for a signature to be produced, see
-    /// `signingTimeout`.
-    function hasSigningTimedOut() internal view returns (bool) {
-        return
-            signingStartTimestamp != 0 &&
-            /* solium-disable-next-line */
-            block.timestamp > signingStartTimestamp + signingTimeout;
-    }
-
     /// @notice Closes keep when owner decides that they no longer need it.
     /// Releases bonds to the keep members. Keep can be closed only when
     /// there is no signing in progress or requested signing process has timed out.
@@ -497,51 +272,88 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         freeMembersBonds();
     }
 
-    /// @notice Marks the keep as closed. Keep can be marked as closed only
-    /// when there is no signing in progress or the requested signing process
-    /// has timed out.
-    function markAsClosed() internal {
-        require(
-            !isSigningInProgress() || hasSigningTimedOut(),
-            "Requested signing has not timed out yet"
-        );
+    /// @notice Seizes the signers' ETH bonds. After seizing bonds keep is
+    /// closed so it will no longer respond to signing requests. Bonds can be
+    /// seized only when there is no signing in progress or requested signing
+    /// process has timed out. This function seizes all of signers' bonds.
+    /// The application may decide to return part of bonds later after they are
+    /// processed using returnPartialSignerBonds function.
+    function seizeSignerBonds() external onlyOwner onlyWhenActive {
+        markAsTerminated();
 
-        status = Status.Closed;
-        emit KeepClosed();
-    }
-
-    /// @notice Marks the keep as terminated.
-    /// Keep can be marked as closed only when there is no signing in progress
-    /// or the requested signing process has timed out.
-    function markAsTerminated() internal {
-        require(
-            !isSigningInProgress() || hasSigningTimedOut(),
-            "Requested signing has not timed out yet"
-        );
-
-        status = Status.Terminated;
-        emit KeepTerminated();
-    }
-
-    /// @notice Returns bonds to the keep members.
-    function freeMembersBonds() internal {
         for (uint256 i = 0; i < members.length; i++) {
-            keepBonding.freeBond(members[i], uint256(address(this)));
+            uint256 amount = keepBonding.bondAmount(
+                members[i],
+                address(this),
+                uint256(address(this))
+            );
+
+            keepBonding.seizeBond(
+                members[i],
+                uint256(address(this)),
+                amount,
+                address(uint160(owner))
+            );
         }
     }
 
-    /// @notice Coverts a public key to an ethereum address.
-    /// @param _publicKey Public key provided as 64-bytes concatenation of
-    /// X and Y coordinates (32-bytes each).
-    /// @return Ethereum address.
-    function publicKeyToAddress(bytes memory _publicKey)
-        internal
-        pure
-        returns (address)
-    {
-        // We hash the public key and then truncate last 20 bytes of the digest
-        // which is the ethereum address.
-        return address(uint160(uint256(keccak256(_publicKey))));
+    /// @notice Returns partial signer's ETH bonds to the pool as an unbounded
+    /// value. This function is called after bonds have been seized and processed
+    /// by the privileged application after calling seizeSignerBonds function.
+    /// It is entirely up to the application if a part of signers' bonds is
+    /// returned. The application may decide for that but may also decide to
+    /// seize bonds and do not return anything.
+    function returnPartialSignerBonds() external payable {
+        uint256 memberCount = members.length;
+        uint256 bondPerMember = msg.value.div(memberCount);
+
+        require(bondPerMember > 0, "Partial signer bond must be non-zero");
+
+        for (uint16 i = 0; i < memberCount - 1; i++) {
+            keepBonding.deposit.value(bondPerMember)(members[i]);
+        }
+
+        // Transfer of dividend for the last member. Remainder might be equal to
+        // zero in case of even distribution or some small number.
+        uint256 remainder = msg.value.mod(memberCount);
+        keepBonding.deposit.value(bondPerMember.add(remainder))(
+            members[memberCount - 1]
+        );
+    }
+
+    /// @notice Submits a fraud proof for a valid signature from this keep that was
+    /// not first approved via a call to sign. If fraud is detected it slashes
+    /// members' KEEP tokens.
+    /// @dev The function expects the signed digest to be calculated as a sha256
+    /// hash of the preimage: `sha256(_preimage))`. The function reverts if the
+    /// signature is not fraudulent.
+    /// @param _v Signature's header byte: `27 + recoveryID`.
+    /// @param _r R part of ECDSA signature.
+    /// @param _s S part of ECDSA signature.
+    /// @param _signedDigest Digest for the provided signature. Result of hashing
+    /// the preimage with sha256.
+    /// @param _preimage Preimage of the hashed message.
+    /// @return True if fraud, error otherwise.
+    function submitSignatureFraud(
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s,
+        bytes32 _signedDigest,
+        bytes calldata _preimage
+    ) external returns (bool _isFraud) {
+        bool isFraud = checkSignatureFraud(
+            _v,
+            _r,
+            _s,
+            _signedDigest,
+            _preimage
+        );
+
+        require(isFraud, "Signature is not fraudulent");
+
+        slashSignerStakes();
+
+        return isFraud;
     }
 
     /// @notice Distributes ETH reward evenly across all keep signer beneficiaries.
@@ -634,6 +446,195 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         (bool success, ) = tokenStaking.magpieOf(_member).call.value(value)("");
 
         require(success, "Transfer failed");
+    }
+
+    /// @notice Initialization function.
+    /// @dev We use clone factory to create new keep. That is why this contract
+    /// doesn't have a constructor. We provide keep parameters for each instance
+    /// function after cloning instances from the master contract.
+    /// @param _owner Address of the keep owner.
+    /// @param _members Addresses of the keep members.
+    /// @param _honestThreshold Minimum number of honest keep members.
+    /// @param _tokenStaking Address of the TokenStaking contract.
+    /// @param _keepBonding Address of the KeepBonding contract.
+    /// @param _keepFactory Address of the BondedECDSAKeepFactory that created
+    /// this keep.
+    function initialize(
+        address _owner,
+        address[] memory _members,
+        uint256 _honestThreshold,
+        address _tokenStaking,
+        address _keepBonding,
+        address payable _keepFactory
+    ) public {
+        require(!isInitialized, "Contract already initialized");
+
+        owner = _owner;
+        members = _members;
+        honestThreshold = _honestThreshold;
+        tokenStaking = TokenStaking(_tokenStaking);
+        keepBonding = KeepBonding(_keepBonding);
+        keepFactory = BondedECDSAKeepFactory(_keepFactory);
+        status = Status.Active;
+        isInitialized = true;
+
+        /* solium-disable-next-line security/no-block-members*/
+        keyGenerationStartTimestamp = block.timestamp;
+    }
+
+    /// @notice Returns true if the keep is active.
+    /// @return true if the keep is active, false otherwise.
+    function isActive() public view returns (bool) {
+        return status == Status.Active;
+    }
+
+    /// @notice Returns true if the keep is closed and members no longer support
+    /// this keep.
+    /// @return true if the keep is closed, false otherwise.
+    function isClosed() public view returns (bool) {
+        return status == Status.Closed;
+    }
+
+    /// @notice Returns true if the keep has been terminated.
+    /// Keep is terminated when bonds are seized and members no longer support
+    /// this keep.
+    /// @return true if the keep has been terminated, false otherwise.
+    function isTerminated() public view returns (bool) {
+        return status == Status.Terminated;
+    }
+
+    /// @notice Returns members of the keep.
+    /// @return List of the keep members' addresses.
+    function getMembers() public view returns (address[] memory) {
+        return members;
+    }
+
+    /// @notice Checks a fraud proof for a valid signature from this keep that was
+    /// not first approved via a call to sign.
+    /// @dev The function expects the signed digest to be calculated as a sha256 hash
+    /// of the preimage: `sha256(_preimage))`. The digest is verified against the
+    /// preimage to ensure the security of the ECDSA protocol. Verifying just the
+    /// signature and the digest is not enough and leaves the possibility of the
+    /// the existential forgery. If digest and preimage verification fails the
+    /// function reverts.
+    /// Reverts if a public key has not been set for the keep yet.
+    /// @param _v Signature's header byte: `27 + recoveryID`.
+    /// @param _r R part of ECDSA signature.
+    /// @param _s S part of ECDSA signature.
+    /// @param _signedDigest Digest for the provided signature. Result of hashing
+    /// the preimage with sha256.
+    /// @param _preimage Preimage of the hashed message.
+    /// @return True if fraud, false otherwise.
+    function checkSignatureFraud(
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s,
+        bytes32 _signedDigest,
+        bytes memory _preimage
+    ) public view returns (bool _isFraud) {
+        require(publicKey.length != 0, "Public key was not set yet");
+
+        bytes32 calculatedDigest = sha256(_preimage);
+        require(
+            _signedDigest == calculatedDigest,
+            "Signed digest does not match double sha256 hash of the preimage"
+        );
+
+        bool isSignatureValid = publicKeyToAddress(publicKey) ==
+            ecrecover(_signedDigest, _v, _r, _s);
+
+        // Check if the signature is valid but was not requested.
+        return isSignatureValid && !digests[_signedDigest];
+    }
+
+    /// @notice Returns true if the ongoing key generation process timed out.
+    /// @dev There is a certain timeout for keep public key to be produced and
+    /// appear on the chain, see `keyGenerationTimeout`.
+    function hasKeyGenerationTimedOut() internal view returns (bool) {
+        /* solium-disable-next-line */
+        return
+            block.timestamp >
+            keyGenerationStartTimestamp + keyGenerationTimeout;
+    }
+
+    /// @notice Checks if the member already submitted a public key.
+    /// @param _member Address of the member.
+    /// @return True if member already submitted a public key, else false.
+    function hasMemberSubmittedPublicKey(address _member)
+        internal
+        view
+        returns (bool)
+    {
+        return submittedPublicKeys[_member].length != 0;
+    }
+
+    /// @notice Slashes signers' KEEP tokens.
+    /// @dev Keep contract is not authorized to slash tokens directly, so it calls
+    /// the factory to do it.
+    function slashSignerStakes() internal {
+        keepFactory.slashKeepMembers();
+    }
+
+    /// @notice Returns true if signing of a digest is currently in progress.
+    function isSigningInProgress() internal view returns (bool) {
+        return signingStartTimestamp != 0;
+    }
+
+    /// @notice Returns true if the ongoing signing process timed out.
+    /// @dev There is a certain timeout for a signature to be produced, see
+    /// `signingTimeout`.
+    function hasSigningTimedOut() internal view returns (bool) {
+        return
+            signingStartTimestamp != 0 &&
+            /* solium-disable-next-line */
+            block.timestamp > signingStartTimestamp + signingTimeout;
+    }
+
+    /// @notice Marks the keep as closed.
+    /// Keep can be marked as closed only when there is no signing in progress
+    /// or the requested signing process has timed out.
+    function markAsClosed() internal {
+        require(
+            !isSigningInProgress() || hasSigningTimedOut(),
+            "Requested signing has not timed out yet"
+        );
+
+        status = Status.Closed;
+        emit KeepClosed();
+    }
+
+    /// @notice Marks the keep as terminated.
+    /// Keep can be marked as closed only when there is no signing in progress
+    /// or the requested signing process has timed out.
+    function markAsTerminated() internal {
+        require(
+            !isSigningInProgress() || hasSigningTimedOut(),
+            "Requested signing has not timed out yet"
+        );
+
+        status = Status.Terminated;
+        emit KeepTerminated();
+    }
+
+    /// @notice Returns bonds to the keep members.
+    function freeMembersBonds() internal {
+        for (uint256 i = 0; i < members.length; i++) {
+            keepBonding.freeBond(members[i], uint256(address(this)));
+        }
+    }
+
+    /// @notice Coverts a public key to an ethereum address.
+    /// @param _publicKey Public key provided as 64-bytes concatenation of
+    /// X and Y coordinates (32-bytes each).
+    /// @return Ethereum address.
+    function publicKeyToAddress(bytes memory _publicKey)
+        internal
+        pure
+        returns (address)
+    {
+        // We hash the public key and then truncate last 20 bytes of the digest
+        // which is the ethereum address.
+        return address(uint160(uint256(keccak256(_publicKey))));
     }
 
     /// @notice Checks if the caller is the keep's owner.
