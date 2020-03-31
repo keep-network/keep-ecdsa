@@ -1086,7 +1086,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
       const keep = await BondedECDSAKeep.at(keepAddress)
       const keepOpenedTime = await keep.getOpenedTimestamp()
-      const factoryKeepOpenedTime = await keepFactory.getCreationTime(
+      const factoryKeepOpenedTime = await keepFactory.getKeepOpenedTimestamp(
         keepAddress
       )
 

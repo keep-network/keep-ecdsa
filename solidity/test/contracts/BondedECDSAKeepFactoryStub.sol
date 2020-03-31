@@ -33,6 +33,6 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
     function addKeep(address keep) public {
         keeps.push(keep);
         /* solium-disable-next-line security/no-block-members*/
-        creationTime[keep] = block.timestamp;
+        keepOpenedTimestamp[keep] = block.timestamp;
     }
 }

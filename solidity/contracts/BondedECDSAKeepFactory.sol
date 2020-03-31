@@ -45,8 +45,8 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // Keeps created by this factory.
     address[] public keeps;
 
-    // Maps keep creation timestamp to each keep address
-    mapping(address => uint256) creationTime;
+    // Maps keep opened timestamp to each keep address
+    mapping(address => uint256) keepOpenedTimestamp;
 
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
@@ -274,7 +274,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
 
         keeps.push(address(keep));
         /* solium-disable-next-line security/no-block-members*/
-        creationTime[address(keep)] = block.timestamp;
+        keepOpenedTimestamp[address(keep)] = block.timestamp;
 
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
@@ -293,11 +293,15 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         return keeps[index];
     }
 
-    /// @notice Gets the creation timestamp of the given keep.
-    /// @return Timestamp the given keep was created at or 0 if this keep
+    /// @notice Gets the opened timestamp of the given keep.
+    /// @return Timestamp the given keep was opened at or 0 if this keep
     /// was not created by this factory.
-    function getCreationTime(address _keep) external view returns (uint256) {
-        return creationTime[_keep];
+    function getKeepOpenedTimestamp(address _keep)
+        external
+        view
+        returns (uint256)
+    {
+        return keepOpenedTimestamp[_keep];
     }
 
     /// @notice Sets a new group selection seed value.
@@ -478,7 +482,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @dev Throws an error if called by any account other than a keep.
     modifier onlyActiveKeep() {
         require(
-            creationTime[msg.sender] != 0 &&
+            keepOpenedTimestamp[msg.sender] != 0 &&
                 BondedECDSAKeep(msg.sender).isActive(),
             "Caller is not an active keep created by this factory"
         );
