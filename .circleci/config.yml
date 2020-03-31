@@ -16,18 +16,6 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
 
 jobs:
-  setup_github_package_registry:
-    executor: docker-node
-    steps:
-      - checkout
-      - run:
-          name: Authenticate GitHub Package Registry
-          working_directory: ~/project/solidity
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
-      - persist_to_workspace:
-          root: solidity
-          paths:
-            - .npmrc
   lint:
     executor: docker-node
     steps:
@@ -177,6 +165,50 @@ jobs:
           root: /tmp/keep-ecdsa
           paths:
             - contracts
+  publish_npm_package:
+    executor: docker-node
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-ecdsa
+      - checkout
+      - run:
+          name: Bump and publish npm package
+          working_directory: ~/project/solidity
+          command: |
+            set -x
+            mkdir -p artifacts
+            cp -r /tmp/keep-ecdsa/contracts/* artifacts/
+            name=$(jq --raw-output .name package.json)
+            version=$(jq --raw-output .version package.json)
+            preid=$(echo $version | sed -e s/^.*-\\\([^.]*\\\).*$/\\1/)
+
+            # Find the latest published package version matching this preid.
+            # Note that in jq, we wrap the result in an array and then flatten;
+            # this is because npm show json contains a single string if there
+            # is only one matching version, or an array if there are multiple,
+            # and we want to look at an array always.
+            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | sort | .[-1]")
+            latest_version=${latest_version:-$version}
+            if [ -z $latest_version ]; then
+              echo "Latest version calculation failed. Resolved info:"
+              echo "$name@$version ; preid $preid"
+              exit 1
+            fi
+
+            # Update package.json with the latest published package version matching this
+            # preid to prepare for bumping.
+            echo $(jq -M ".version=\"${latest_version}\"" package.json) > package.json
+
+            # Bump without doing any git work. Versioning is a build-time action for us.
+            # Consider including commit id? Would be +<commit id>.
+            npm version prerelease --preid=$preid --no-git-tag-version
+
+            # Fix resolved dependency versions.
+            npm update
+
+            # Publish to npm.
+            echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
+            npm publish --access=public
   publish_client:
     executor: gcp-gcr/default
     steps:
@@ -228,48 +260,24 @@ workflows:
   version: 2
   lint:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - lint:
-          requires:
-            - setup_github_package_registry
+      - lint
   solidity:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - build_and_test_solidity:
-          requires:
-            - setup_github_package_registry
+      - build_and_test_solidity
   build-test-migrate-publish-keep-dev:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - build_client_and_test_go:
-          context: github-package-registry
-          requires:
-            - setup_github_package_registry
+      - build_client_and_test_go
       - migrate_contracts:
           filters:
             branches:
               only: master
           context: keep-dev
-          requires:
-            - build_client_and_test_go
-      - build_initcontainer:
+      - publish_npm_package:
           filters:
             branches:
               only: master
           context: keep-dev
           requires:
-            - migrate_contracts
-      - publish_client:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - build_client_and_test_go
-            - build_initcontainer
             - migrate_contracts
       - publish_contract_data:
           filters:
@@ -278,6 +286,21 @@ workflows:
           context: keep-dev
           requires:
             - migrate_contracts
+      - build_initcontainer:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - migrate_contracts
+            - build_client_and_test_go
+      - publish_client:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - build_initcontainer
   build-test-migrate-publish-keep-test:
     jobs:
       - keep_test_approval:
@@ -287,15 +310,6 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-      - setup_github_package_registry:
-          context: github-package-registry
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-          requires:
-            - keep_test_approval
       - build_client_and_test_go:
           context: github-package-registry
           filters:
@@ -303,8 +317,6 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-          requires:
-            - setup_github_package_registry
       - migrate_contracts:
           context: keep-test
           filters:
@@ -333,6 +345,15 @@ workflows:
           requires:
             - build_client_and_test_go
             - build_initcontainer
+            - migrate_contracts
+      - publish_npm_package:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
             - migrate_contracts
       - publish_contract_data:
           context: keep-test
