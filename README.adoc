@@ -25,10 +25,6 @@ pre-commit hooks.
 ./scripts/macos-setup.sh
 ```
 
-=== Getting Started as a Developer
-
-Start with the README in link:docs/[the developer docs directory].
-
 == Directory structure
 
 The directory structure used in this Keep repository is very similar to that used in other Go projects:
