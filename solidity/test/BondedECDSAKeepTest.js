@@ -541,17 +541,17 @@ contract("BondedECDSAKeep", (accounts) => {
       )
     })
 
-    it('terminates a keep', async () => {
-      await keep.seizeSignerBonds({ from: owner })
-      assert.isTrue(await keep.isTerminated(), 'keep should be terminated')
-      assert.isFalse(await keep.isActive(), 'keep should no longer be active')
-      assert.isFalse(await keep.isClosed(), 'keep should not be closed')
+    it("terminates a keep", async () => {
+      await keep.seizeSignerBonds({from: owner})
+      assert.isTrue(await keep.isTerminated(), "keep should be terminated")
+      assert.isFalse(await keep.isActive(), "keep should no longer be active")
+      assert.isFalse(await keep.isClosed(), "keep should not be closed")
     })
 
-    it('emits an event', async () => {
+    it("emits an event", async () => {
       truffleAssert.eventEmitted(
-        await keep.seizeSignerBonds({ from: owner }),
-        'KeepTerminated'
+        await keep.seizeSignerBonds({from: owner}),
+        "KeepTerminated"
       )
     })
 
@@ -981,11 +981,11 @@ contract("BondedECDSAKeep", (accounts) => {
       )
     })
 
-    it('marks keep as closed', async () => {
-      await keep.closeKeep({ from: owner })
-      assert.isTrue(await keep.isClosed(), 'keep should be closed')
-      assert.isFalse(await keep.isActive(), 'keep should no longer be active')
-      assert.isFalse(await keep.isTerminated(), 'keep should not be terminated')
+    it("marks keep as closed", async () => {
+      await keep.closeKeep({from: owner})
+      assert.isTrue(await keep.isClosed(), "keep should be closed")
+      assert.isFalse(await keep.isActive(), "keep should no longer be active")
+      assert.isFalse(await keep.isTerminated(), "keep should not be terminated")
     })
 
     it("frees members bonds", async () => {

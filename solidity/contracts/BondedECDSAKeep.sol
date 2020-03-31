@@ -26,7 +26,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Active means the keep is active.
     // Closed means the keep was closed happily.
     // Terminated means the keep was closed due to misbehavior.
-    enum Status { Active, Closed, Terminated }
+    enum Status {Active, Closed, Terminated}
 
     // Flags execution of contract initialization.
     bool isInitialized;
@@ -448,6 +448,18 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         require(success, "Transfer failed");
     }
 
+    /// @notice Gets the owner of the keep.
+    /// @return Address of the keep owner.
+    function getOwner() external view returns (address) {
+        return owner;
+    }
+
+    /// @notice Gets the timestamp the keep was opened at.
+    /// @return timestamp the keep was opened at.
+    function getTimestamp() external view returns (uint256) {
+        return keyGenerationStartTimestamp;
+    }
+
     /// @notice Initialization function.
     /// @dev We use clone factory to create new keep. That is why this contract
     /// doesn't have a constructor. We provide keep parameters for each instance
@@ -656,17 +668,5 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     modifier onlyWhenActive() {
         require(isActive(), "Keep is not active");
         _;
-    }
-
-    /// @notice Gets the owner of the keep.
-    /// @return Address of the keep owner.
-    function getOwner() external view returns (address){
-        return owner;
-    }
-
-    /// @notice Gets the timestamp the keep was opened at.
-    /// @return timestamp the keep was opened at.
-    function getTimestamp() external view returns (uint256){
-        return keyGenerationStartTimestamp;
     }
 }

@@ -1069,62 +1069,54 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     })
 
     it("records the keep address and opening time", async () => {
-        let preKeepCount = await keepFactory.getKeepCount()
+      const preKeepCount = await keepFactory.getKeepCount()
 
-        let keepAddress = await keepFactory.openKeep.call(
-            groupSize,
-            threshold,
-            keepOwner,
-            bond,
-            { from: application, value: feeEstimate }
-        )
+      const keepAddress = await keepFactory.openKeep.call(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        {from: application, value: feeEstimate}
+      )
 
-        await keepFactory.openKeep(
-            groupSize,
-            threshold,
-            keepOwner,
-            bond,
-            { from: application, value: feeEstimate }
-        )
-        let recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
-        let keep = await BondedECDSAKeep.at(keepAddress)
-        let keepCreationTime = await keep.getTimestamp()
-        let factoryCreationTime = await keepFactory.getCreationTime(keepAddress)
+      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
+        from: application,
+        value: feeEstimate,
+      })
+      const recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
+      const keep = await BondedECDSAKeep.at(keepAddress)
+      const keepCreationTime = await keep.getTimestamp()
+      const factoryCreationTime = await keepFactory.getCreationTime(keepAddress)
 
-        assert.equal(
-            recordedKeepAddress,
-            keepAddress,
-            "address recorded in factory differs from returned keep address",
-        );
+      assert.equal(
+        recordedKeepAddress,
+        keepAddress,
+        "address recorded in factory differs from returned keep address"
+      )
 
-        expect(
-            factoryCreationTime
-        ).to.eq.BN(
-            keepCreationTime,
-            "creation time in factory differs from creation time in keep",
-        )
+      expect(factoryCreationTime).to.eq.BN(
+        keepCreationTime,
+        "creation time in factory differs from creation time in keep"
+      )
     })
 
     it("produces active keeps", async () => {
-        let keepAddress = await keepFactory.openKeep.call(
-            groupSize,
-            threshold,
-            keepOwner,
-            bond,
-            { from: application, value: feeEstimate }
-        )
+      const keepAddress = await keepFactory.openKeep.call(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        {from: application, value: feeEstimate}
+      )
 
-        await keepFactory.openKeep(
-            groupSize,
-            threshold,
-            keepOwner,
-            bond,
-            { from: application, value: feeEstimate }
-        )     
+      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
+        from: application,
+        value: feeEstimate,
+      })
 
-        let keep = await BondedECDSAKeep.at(keepAddress)
+      const keep = await BondedECDSAKeep.at(keepAddress)
 
-        assert.isTrue(await keep.isActive(), "keep should be active")
+      assert.isTrue(await keep.isActive(), "keep should be active")
     })
 
     it("allows to use a group of 16 signers", async () => {
