@@ -41,7 +41,7 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 	return nil
 }
 
-// OnBondedECDSAKeepCreated is a callback that is invoked when an on-chain
+// OnBondedECDSAKeepCreated installs a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
@@ -65,7 +65,7 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	)
 }
 
-// OnKeepClosed is a callback that is invoked on-chain when keep is closed.
+// OnKeepClosed installs a callback that is invoked on-chain when keep is closed.
 func (ec *EthereumChain) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
@@ -84,7 +84,8 @@ func (ec *EthereumChain) OnKeepClosed(
 	)
 }
 
-// OnKeepTerminated is a callback that is invoked on-chain when keep is terminated.
+// OnKeepTerminated installs a callback that is invoked on-chain when keep
+// is terminated.
 func (ec *EthereumChain) OnKeepTerminated(
 	keepAddress common.Address,
 	handler func(event *eth.KeepTerminatedEvent),
@@ -103,7 +104,7 @@ func (ec *EthereumChain) OnKeepTerminated(
 	)
 }
 
-// OnPublicKeyPublished is a callback that is invoked when an on-chain
+// OnPublicKeyPublished installs a callback that is invoked when an on-chain
 // event of a published public key was emitted.
 func (ec *EthereumChain) OnPublicKeyPublished(
 	keepAddress common.Address,
@@ -129,8 +130,8 @@ func (ec *EthereumChain) OnPublicKeyPublished(
 	)
 }
 
-// OnConflictingPublicKeySubmitted is a callback that is invoked when an on-chain
-// notification of a conflicting public key submission is seen.
+// OnConflictingPublicKeySubmitted installs a callback that is invoked when an
+// on-chain notification of a conflicting public key submission is seen.
 func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 	keepAddress common.Address,
 	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
@@ -157,7 +158,7 @@ func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 	)
 }
 
-// OnSignatureRequested is a callback that is invoked on-chain
+// OnSignatureRequested installs a callback that is invoked on-chain
 // when a keep's signature is requested.
 func (ec *EthereumChain) OnSignatureRequested(
 	keepAddress common.Address,
