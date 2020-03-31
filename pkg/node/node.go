@@ -264,7 +264,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 		if monitoringCtx.Err() == context.DeadlineExceeded {
 			logger.Warningf(
 				"monitoring of public key submission for keep [%s] "+
-					"has been cancelled due to timeout exceeding",
+					"has been cancelled due to exceeded timeout",
 				keepAddress.String(),
 			)
 		}
