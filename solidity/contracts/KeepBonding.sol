@@ -5,6 +5,7 @@ import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 // TODO: This contract is expected to implement functions defined by IBonding
 // interface defined in @keep-network/sortition-pools. After merging the
 // repositories we need to move IBonding definition to sit closer to KeepBonding
@@ -32,7 +33,7 @@ contract KeepBonding {
 
     // Sortition pools authorized by operator's authorizer.
     // operator -> pool -> boolean
-    mapping(address => mapping (address => bool)) internal authorizedPools;
+    mapping(address => mapping(address => bool)) internal authorizedPools;
 
     /// @notice Initializes Keep Bonding contract.
     /// @param registryAddress Keep registry contract address.
@@ -40,6 +41,12 @@ contract KeepBonding {
     constructor(address registryAddress, address tokenStakingAddress) public {
         registry = Registry(registryAddress);
         tokenStaking = TokenStaking(tokenStakingAddress);
+    }
+
+    /// @notice Add the provided value to operator's pool available for bonding.
+    /// @param operator Address of the operator.
+    function deposit(address operator) external payable {
+        unbondedValue[operator] = unbondedValue[operator].add(msg.value);
     }
 
     /// @notice Returns the amount of wei the operator has made available for
@@ -64,16 +71,10 @@ contract KeepBonding {
             tokenStaking.isAuthorizedForOperator(operator, bondCreator) &&
             hasSecondaryAuthorization(operator, authorizedSortitionPool)
         ) {
-          return unbondedValue[operator];
+            return unbondedValue[operator];
         }
 
         return 0;
-    }
-
-    /// @notice Add the provided value to operator's pool available for bonding.
-    /// @param operator Address of the operator.
-    function deposit(address operator) external payable {
-        unbondedValue[operator] = unbondedValue[operator].add(msg.value);
     }
 
     /// @notice Withdraws amount from operator's value available for bonding.
@@ -82,7 +83,8 @@ contract KeepBonding {
     /// @param operator Address of the operator.
     function withdraw(uint256 amount, address operator) public {
         require(
-            msg.sender == operator || msg.sender == tokenStaking.ownerOf(operator),
+            msg.sender == operator ||
+                msg.sender == tokenStaking.ownerOf(operator),
             "Only operator or the owner is allowed to withdraw bond"
         );
 
@@ -93,7 +95,9 @@ contract KeepBonding {
 
         unbondedValue[operator] = unbondedValue[operator].sub(amount);
 
-        (bool success, ) = tokenStaking.magpieOf(operator).call.value(amount)("");
+        (bool success, ) = tokenStaking.magpieOf(operator).call.value(amount)(
+            ""
+        );
         require(success, "Transfer failed");
     }
 
@@ -113,7 +117,11 @@ contract KeepBonding {
         address authorizedSortitionPool
     ) public {
         require(
-            availableUnbondedValue(operator, msg.sender, authorizedSortitionPool) >= amount,
+            availableUnbondedValue(
+                operator,
+                msg.sender,
+                authorizedSortitionPool
+            ) >= amount,
             "Insufficient unbonded value"
         );
 
@@ -250,10 +258,11 @@ contract KeepBonding {
     /// @notice Checks if the sortition pool has been authorized for the
     /// provided operator by its authorizer.
     /// @dev See authorizeSortitionPoolContract.
-    function hasSecondaryAuthorization(
-        address _operator,
-        address _poolAddress
-    ) public view returns (bool) {
+    function hasSecondaryAuthorization(address _operator, address _poolAddress)
+        public
+        view
+        returns (bool)
+    {
         return authorizedPools[_operator][_poolAddress];
     }
 }

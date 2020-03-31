@@ -6,6 +6,7 @@ import "@keep-network/keep-core/contracts/Registry.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 /// @title Bonded ECDSA Keep Vendor
 /// @notice The contract is used to obtain a new Bonded ECDSA keep factory.
 contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
@@ -75,7 +76,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     /// containing the new factory address and current block timestamp.
     /// @param _factory ECDSA keep factory address.
     function upgradeFactory(address payable _factory)
-        external
+        public
         onlyOperatorContractUpgrader
     {
         require(_factory != address(0), "Incorrect factory address");
@@ -126,15 +127,15 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
         emit FactoryUpgradeCompleted(keepFactory);
     }
 
-    function isUpgradeInitiated() internal view returns (bool) {
-        return factoryUpgradeInitiatedTimestamp > 0;
-    }
-
     /// @notice Selects the latest ECDSA keep factory.
     /// @return ECDSA keep factory address.
     function selectFactory() public view returns (address payable) {
         require(keepFactory != address(0), "Keep factory is not registered");
         return keepFactory;
+    }
+
+    function isUpgradeInitiated() internal view returns (bool) {
+        return factoryUpgradeInitiatedTimestamp > 0;
     }
 
     /// @dev Throws if called by any account other than the operator contract

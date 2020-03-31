@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
 
+
 /// @title Proxy contract for Bonded ECDSA Keep vendor.
 contract BondedECDSAKeepVendor is Proxy {
     using SafeMath for uint256;
@@ -99,10 +100,8 @@ contract BondedECDSAKeepVendor is Proxy {
 
         setNewImplementation(_newImplementation);
 
-        /* solium-disable-next-line security/no-block-members */
         setUpgradeInitiatedTimestamp(block.timestamp);
 
-        /* solium-disable-next-line security/no-block-members */
         emit UpgradeStarted(_newImplementation, block.timestamp);
     }
 
@@ -115,7 +114,6 @@ contract BondedECDSAKeepVendor is Proxy {
         require(upgradeInitiatedTimestamp() > 0, "Upgrade not initiated");
 
         require(
-            /* solium-disable-next-line security/no-block-members */
             block.timestamp.sub(upgradeInitiatedTimestamp()) >=
                 upgradeTimeDelay(),
             "Timer not elapsed"
@@ -135,6 +133,12 @@ contract BondedECDSAKeepVendor is Proxy {
         emit UpgradeCompleted(newImplementation);
     }
 
+    /// @notice Gets the address of the current vendor implementation.
+    /// @return Address of the current implementation.
+    function implementation() public view returns (address) {
+        return _implementation();
+    }
+
     /// @notice Initializes implementation contract.
     /// @dev Delegates a call to the implementation with provided data. It is
     /// expected that data contains details of function to be called.
@@ -144,6 +148,7 @@ contract BondedECDSAKeepVendor is Proxy {
         address _implementation,
         bytes memory _data
     ) internal {
+        /* solium-disable-next-line security/no-low-level-calls */
         (bool success, bytes memory returnData) = _implementation.delegatecall(
             _data
         );
@@ -160,11 +165,7 @@ contract BondedECDSAKeepVendor is Proxy {
         assert(slot == bytes32(uint256(keccak256(key)) - 1));
     }
 
-    /// @notice Gets the address of the current vendor implementation.
-    /// @return Address of the current implementation.
-    function implementation() public view returns (address) {
-        return _implementation();
-    }
+    /* solium-disable function-order */
 
     /// @dev Returns the current implementation. Implements function from `Proxy`
     /// contract.
