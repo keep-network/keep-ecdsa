@@ -16,18 +16,6 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
 
 jobs:
-  setup_github_package_registry:
-    executor: docker-node
-    steps:
-      - checkout
-      - run:
-          name: Authenticate GitHub Package Registry
-          working_directory: ~/project/solidity
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
-      - persist_to_workspace:
-          root: solidity
-          paths:
-            - .npmrc
   lint:
     executor: docker-node
     steps:
@@ -272,26 +260,14 @@ workflows:
   version: 2
   lint:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - lint:
-          requires:
-            - setup_github_package_registry
+      - lint
   solidity:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - build_and_test_solidity:
-          requires:
-            - setup_github_package_registry
+      - build_and_test_solidity
   build-test-migrate-publish-keep-dev:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
       - build_client_and_test_go:
           context: github-package-registry
-          requires:
-            - setup_github_package_registry
       - migrate_contracts:
           filters:
             branches:
@@ -338,15 +314,6 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-      - setup_github_package_registry:
-          context: github-package-registry
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-          requires:
-            - keep_test_approval
       - build_client_and_test_go:
           context: github-package-registry
           filters:
@@ -354,8 +321,6 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-          requires:
-            - setup_github_package_registry
       - migrate_contracts:
           context: keep-test
           filters:
