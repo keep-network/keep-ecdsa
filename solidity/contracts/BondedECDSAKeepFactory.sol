@@ -308,10 +308,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @dev The function is expected to be called in a callback by the random
     /// beacon.
     /// @param _relayEntry Beacon output.
-    function __beaconCallback(uint256 _relayEntry)
-        external
-        onlyRandomBeacon
-    {
+    function __beaconCallback(uint256 _relayEntry) external onlyRandomBeacon {
         groupSelectionSeed = _relayEntry;
     }
 
