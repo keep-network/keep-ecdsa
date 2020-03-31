@@ -1280,7 +1280,31 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     it("reverts if called by not authorized keep", async () => {
       // The keep is not added to the list of keeps created by the factory.
       await expectRevert(
-        keep.exposedSlashSignerStakes(),
+        keep.publicSlashSignerStakes(),
+        "Caller is not an active keep created by this factory"
+      )
+    })
+
+    it("reverts if called by closed keep", async () => {
+      // Add keep to the list of keeps created by the factory.
+      await keepFactory.addKeep(keep.address)
+
+      await keep.publicMarkAsClosed()
+
+      await expectRevert(
+        keep.publicSlashSignerStakes(),
+        "Caller is not an active keep created by this factory"
+      )
+    })
+
+    it("reverts if called by terminated keep", async () => {
+      // Add keep to the list of keeps created by the factory.
+      await keepFactory.addKeep(keep.address)
+
+      await keep.publicMarkAsTerminated()
+
+      await expectRevert(
+        keep.publicSlashSignerStakes(),
         "Caller is not an active keep created by this factory"
       )
     })
@@ -1294,7 +1318,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const stakeBalance = minimumStake.add(remainingStake)
       await stakeOperators(members, stakeBalance)
 
-      await keep.exposedSlashSignerStakes()
+      await keep.publicSlashSignerStakes()
 
       for (let i = 0; i < members.length; i++) {
         const actualStake = await tokenStaking.eligibleStake(

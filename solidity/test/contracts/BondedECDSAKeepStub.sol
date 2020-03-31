@@ -5,7 +5,15 @@ import "../../contracts/BondedECDSAKeep.sol";
 /// @title Bonded ECDSA Keep Stub
 /// @dev This contract is for testing purposes only.
 contract BondedECDSAKeepStub is BondedECDSAKeep {
-    function exposedSlashSignerStakes() public {
+    function publicSlashSignerStakes() public {
         slashSignerStakes();
+    }
+
+    function publicMarkAsClosed() public {
+        markAsClosed();
+    }
+
+    function publicMarkAsTerminated() public {
+        markAsTerminated();
     }
 }
