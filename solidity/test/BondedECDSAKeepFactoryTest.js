@@ -1085,8 +1085,10 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       })
       const recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
       const keep = await BondedECDSAKeep.at(keepAddress)
-      const keepCreationTime = await keep.getTimestamp()
-      const factoryCreationTime = await keepFactory.getCreationTime(keepAddress)
+      const keepOpenedTime = await keep.getOpenedTimestamp()
+      const factoryKeepOpenedTime = await keepFactory.getCreationTime(
+        keepAddress
+      )
 
       assert.equal(
         recordedKeepAddress,
@@ -1094,9 +1096,9 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         "address recorded in factory differs from returned keep address"
       )
 
-      expect(factoryCreationTime).to.eq.BN(
-        keepCreationTime,
-        "creation time in factory differs from creation time in keep"
+      expect(factoryKeepOpenedTime).to.eq.BN(
+        keepOpenedTime,
+        "opened time in factory differs from opened time in keep"
       )
     })
 
