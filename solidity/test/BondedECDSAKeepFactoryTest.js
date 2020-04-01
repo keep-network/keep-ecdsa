@@ -1121,8 +1121,8 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     }
   })
 
-  describe("setGroupSelectionSeed", async () => {
-    const newGroupSelectionSeed = new BN(2345675)
+  describe("__beaconCallback", async () => {
+    const newRelayEntry = new BN(2345675)
 
     before(async () => {
       registry = await Registry.new()
@@ -1144,19 +1144,19 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     })
 
     it("sets group selection seed", async () => {
-      await keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, {
+      await keepFactory.__beaconCallback(newRelayEntry, {
         from: randomBeacon,
       })
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
-        newGroupSelectionSeed,
+        newRelayEntry,
         "incorrect new group selection seed"
       )
     })
 
     it("reverts if called not by the random beacon", async () => {
       await expectRevert(
-        keepFactory.setGroupSelectionSeed(newGroupSelectionSeed, {
+        keepFactory.__beaconCallback(newRelayEntry, {
           from: accounts[2],
         }),
         "Caller is not the random beacon"
