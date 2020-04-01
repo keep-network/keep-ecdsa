@@ -1,10 +1,10 @@
 pragma solidity ^0.5.4;
 
-//import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
+import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
 
 /// @title Random Beacon Service Stub
 /// @dev This contract is for testing purposes only.
-contract RandomBeaconStub /*is IRandomBeacon*/ {
+contract RandomBeaconStub is IRandomBeacon {
     uint256 feeEstimate = 58;
     uint256 entry = 0;
     uint256 public requestCount = 0;
