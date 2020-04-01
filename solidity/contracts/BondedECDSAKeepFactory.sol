@@ -77,7 +77,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // gas required to call `__beaconCallback` function in the worst-case
     // scenario with all the checks and maximum allowed uint256 relay entry as
     // a callback parameter.
-    uint256 public constant callbackGas = 41830;
+    uint256 public constant callbackGas = 30000;
 
     // Random beacon sends back callback surplus to the requestor. It may also
     // decide to send additional request subsidy fee. What's more, it may happen
@@ -101,6 +101,10 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         randomBeacon = IRandomBeacon(_randomBeacon);
+
+        // initial value before the random beacon updates the seed
+        // https://www.wolframalpha.com/input/?i=pi+to+78+digits
+        groupSelectionSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
     }
 
     /// @notice Adds any received funds to the factory reseed pool.
