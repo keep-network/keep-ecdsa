@@ -45,13 +45,25 @@ func (n *Node) InitializeTSSPreParamsPool() {
 
 func (t *tssPreParamsPool) pumpPool() {
 	for {
+		logger.Info("generate new tss pre parameters")
+
+		start := time.Now()
+
 		params, err := t.new()
 		if err != nil {
-			logger.Warningf("failed to generate tss pre parameters: [%v]", err)
+			logger.Warningf(
+				"failed to generate tss pre parameters after [%s]: [%v]",
+				time.Since(start),
+				err,
+			)
 			continue
 		}
 
-		logger.Infof("generated new tss pre parameters")
+		logger.Infof(
+			"generated new tss pre parameters, took: [%s], current pool size: [%d]",
+			time.Since(start),
+			len(t.pool)+1,
+		)
 
 		t.pool <- params
 	}
