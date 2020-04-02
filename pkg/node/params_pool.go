@@ -23,11 +23,18 @@ type tssPreParamsPool struct {
 func (n *Node) InitializeTSSPreParamsPool() {
 	poolSize := 5
 
+	var timeout time.Duration
+	if n.tssConfig.PreParamsGenerationTimeout.Duration > 0 {
+		timeout = time.Duration(n.tssConfig.PreParamsGenerationTimeout.Duration)
+	} else {
+		timeout = defaultPreParamsGenerationTimeout
+	}
+
 	n.tssParamsPool = &tssPreParamsPool{
 		pool: make(chan *keygen.LocalPreParams, poolSize),
 		new: func() (*keygen.LocalPreParams, error) {
 			return tss.GenerateTSSPreParams(
-				defaultPreParamsGenerationTimeout,
+				timeout,
 				n.tssConfig.PreParamsGenerationConcurrency,
 			)
 		},
