@@ -1,8 +1,14 @@
 package node
 
 import (
+	"time"
+
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+)
+
+const (
+	defaultPreParamsGenerationTimeout = 2 * time.Minute
 )
 
 // tssPreParamsPool is a pool holding TSS pre parameters. It autogenerates entries
@@ -20,7 +26,10 @@ func (n *Node) InitializeTSSPreParamsPool() {
 	n.tssParamsPool = &tssPreParamsPool{
 		pool: make(chan *keygen.LocalPreParams, poolSize),
 		new: func() (*keygen.LocalPreParams, error) {
-			return tss.GenerateTSSPreParams(n.tssConfig.PreParamsGenerationConcurrency)
+			return tss.GenerateTSSPreParams(
+				defaultPreParamsGenerationTimeout,
+				n.tssConfig.PreParamsGenerationConcurrency,
+			)
 		},
 	}
 
