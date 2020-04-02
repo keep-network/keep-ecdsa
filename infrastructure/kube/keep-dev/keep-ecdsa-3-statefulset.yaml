@@ -108,7 +108,7 @@ spec:
             - name: KEEP_DATA_DIR
               value: /mnt/keep-ecdsa/data
             - name: TBTC_SYSTEM_ADDRESS
-              value: '0xEBFaCe35675e5c7253dC088Cc8Eb9a17FFA6172D' # Shall we extract this property to a configmap?
+              value: '0x7F68B90dce19d2ac034477B7ba2229106656A084' # Shall we extract this property to a configmap?
           volumeMounts:
             - name: keep-ecdsa-config
               mountPath: /mnt/keep-ecdsa/config
