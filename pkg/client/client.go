@@ -22,8 +22,8 @@ import (
 var logger = log.Logger("keep-ecdsa")
 
 const (
-	KeyGenerationTimeout = 150 * time.Minute
-	SigningTimeout       = 90 * time.Minute
+	keyGenerationTimeout = 150 * time.Minute
+	signingTimeout       = 90 * time.Minute
 )
 
 // Initialize initializes the ECDSA client with rules related to events handling.
@@ -117,64 +117,66 @@ func Initialize(
 		)
 
 		if event.IsMember(ethereumChain.Address()) {
-			logger.Infof(
-				"member [%s] is starting signer generation for keep [%s]...",
-				ethereumChain.Address().String(),
-				event.KeepAddress.String(),
-			)
-
-			signer, err := generateSignerForKeep(ctx, tssNode, operatorPublicKey, event)
-			if err != nil {
-				logger.Errorf(
-					"failed to generate signer for keep [%s]: [%v]",
+			go func(event *eth.BondedECDSAKeepCreatedEvent) {
+				logger.Infof(
+					"member [%s] is starting signer generation for keep [%s]...",
+					ethereumChain.Address().String(),
 					event.KeepAddress.String(),
-					err,
-				)
-				return
-			}
-
-			logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
-
-			err = keepsRegistry.RegisterSigner(event.KeepAddress, signer)
-			if err != nil {
-				logger.Errorf(
-					"failed to register threshold signer for keep [%s]: [%v]",
-					event.KeepAddress.String(),
-					err,
-				)
-			}
-
-			subscriptionOnSignatureRequested, err := monitorSigningRequests(
-				ethereumChain,
-				tssNode,
-				event.KeepAddress,
-				signer,
-			)
-			if err != nil {
-				logger.Errorf(
-					"failed on registering for requested signature event for keep [%s]: [%v]",
-					event.KeepAddress.String(),
-					err,
 				)
 
-				// In case of an error we want to avoid subscribing to keep
-				// closed events. Something is wrong and we should stop
-				// further processing.
-				return
-			}
+				signer, err := generateSignerForKeep(ctx, tssNode, operatorPublicKey, event)
+				if err != nil {
+					logger.Errorf(
+						"failed to generate signer for keep [%s]: [%v]",
+						event.KeepAddress.String(),
+						err,
+					)
+					return
+				}
 
-			go monitorKeepClosedEvents(
-				ethereumChain,
-				event.KeepAddress,
-				keepsRegistry,
-				subscriptionOnSignatureRequested,
-			)
-			go monitorKeepTerminatedEvent(
-				ethereumChain,
-				event.KeepAddress,
-				keepsRegistry,
-				subscriptionOnSignatureRequested,
-			)
+				logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
+
+				err = keepsRegistry.RegisterSigner(event.KeepAddress, signer)
+				if err != nil {
+					logger.Errorf(
+						"failed to register threshold signer for keep [%s]: [%v]",
+						event.KeepAddress.String(),
+						err,
+					)
+				}
+
+				subscriptionOnSignatureRequested, err := monitorSigningRequests(
+					ethereumChain,
+					tssNode,
+					event.KeepAddress,
+					signer,
+				)
+				if err != nil {
+					logger.Errorf(
+						"failed on registering for requested signature event for keep [%s]: [%v]",
+						event.KeepAddress.String(),
+						err,
+					)
+
+					// In case of an error we want to avoid subscribing to keep
+					// closed events. Something is wrong and we should stop
+					// further processing.
+					return
+				}
+
+				go monitorKeepClosedEvents(
+					ethereumChain,
+					event.KeepAddress,
+					keepsRegistry,
+					subscriptionOnSignatureRequested,
+				)
+				go monitorKeepTerminatedEvent(
+					ethereumChain,
+					event.KeepAddress,
+					keepsRegistry,
+					subscriptionOnSignatureRequested,
+				)
+			}(event)
 		}
 	})
 
@@ -189,7 +191,7 @@ func generateSignerForKeep(
 	operatorPublicKey *operator.PublicKey,
 	event *eth.BondedECDSAKeepCreatedEvent,
 ) (*tss.ThresholdSigner, error) {
-	keygenCtx, cancel := context.WithTimeout(ctx, KeyGenerationTimeout)
+	keygenCtx, cancel := context.WithTimeout(ctx, keyGenerationTimeout)
 	defer cancel()
 
 	attemptCounter := 0
@@ -293,7 +295,7 @@ func generateSignatureForKeep(
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) {
-	signingCtx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
+	signingCtx, cancel := context.WithTimeout(context.Background(), signingTimeout)
 	defer cancel()
 
 	attemptCounter := 0
