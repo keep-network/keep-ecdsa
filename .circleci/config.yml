@@ -317,6 +317,8 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
+          requires:
+            - keep_test_approval
       - migrate_contracts:
           context: keep-test
           filters:
