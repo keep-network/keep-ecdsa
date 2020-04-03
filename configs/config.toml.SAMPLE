@@ -38,4 +38,4 @@
 # should be provided based on resources available on the machine running the client.
 # This is an optional parameter, if not provided timeout for TSS protocol
 # pre-parameters generation will be set to `2 minutes`.
-#  PreParamsGenerationTimeout = "2m"
+#  PreParamsGenerationTimeout = "2m30s"
