@@ -40,6 +40,14 @@ func (n *Node) InitializeTSSPreParamsPool() {
 	go n.tssParamsPool.pumpPool()
 }
 
+// InjectPreParameters gets TSS pre parameters from the pool and provides them
+// to the TSS protocol execution instance. If the pool is empty it will hold
+// until a new entry gets generated.
+// TODO: Replace this solution with simplier, but requiring `tssPreParamsPool` being exported?
+func (n *Node) InjectPreParameters(tssProtocol *tss.Protocol) {
+	tssProtocol.ProvidePreParams(n.tssParamsPool.get())
+}
+
 func (t *tssPreParamsPool) pumpPool() {
 	for {
 		logger.Info("generating new tss pre parameters")

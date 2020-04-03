@@ -109,17 +109,17 @@ func (n *Node) GenerateSignerForKeep(
 	operatorPublicKey *operator.PublicKey,
 	keepAddress common.Address,
 	keepMembersIDs []tss.MemberID,
+	tssProtocol *tss.Protocol,
 ) (*tss.ThresholdSigner, error) {
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
 
-	signer, err := tss.GenerateThresholdSigner(
+	signer, err := tssProtocol.GenerateThresholdSigner(
 		ctx,
 		keepAddress.Hex(),
 		memberID,
 		keepMembersIDs,
 		uint(len(keepMembersIDs)-1),
 		n.networkProvider,
-		n.tssParamsPool.get(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate threshold signer: [%v]", err)

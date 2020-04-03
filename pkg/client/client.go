@@ -196,6 +196,8 @@ func generateSignerForKeep(
 
 	attemptCounter := 0
 
+	tssProtocol := &tss.Protocol{}
+
 	for {
 		attemptCounter++
 
@@ -207,6 +209,15 @@ func generateSignerForKeep(
 
 		if keygenCtx.Err() != nil {
 			return nil, fmt.Errorf("key generation timeout exceeded")
+		}
+
+		// Check if TSS protocol already has pre parameters assigned, if not
+		// inject new set of parameters from the pool.
+		if !tssProtocol.PreParamsExist() {
+			logger.Infof("setting new tss pre parameters")
+			tssNode.InjectPreParameters(tssProtocol)
+		} else {
+			logger.Infof("reusing already set tss pre parameters")
 		}
 
 		memberIDs, err := tssNode.AnnounceSignerPresence(
@@ -225,6 +236,7 @@ func generateSignerForKeep(
 			operatorPublicKey,
 			event.KeepAddress,
 			memberIDs,
+			tssProtocol,
 		)
 		if err != nil {
 			logger.Errorf("signer generation failed: [%v]", err)

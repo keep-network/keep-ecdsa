@@ -85,14 +85,16 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 				preParams := testData[index].LocalPreParams
 
-				signer, err := GenerateThresholdSigner(
+				tssProtocol := &Protocol{}
+				tssProtocol.ProvidePreParams(&preParams)
+
+				signer, err := tssProtocol.GenerateThresholdSigner(
 					ctx,
 					groupID,
 					memberID,
 					groupMemberIDs,
 					dishonestThreshold,
 					network,
-					&preParams,
 				)
 				if err != nil {
 					errChan <- fmt.Errorf("failed to generate signer: [%v]", err)
