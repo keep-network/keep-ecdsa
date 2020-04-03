@@ -10,25 +10,14 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 )
 
-const (
-	preParamsGenerationTimeout = 120 * time.Second
-)
-
 // GenerateTSSPreParams calculates parameters required by TSS key generation.
-// It times out after 90 seconds if the required parameters could not be generated.
+// It times out after defined period if the required parameters could not be generated.
 // It is possible to generate the parameters way ahead of the TSS protocol
 // execution.
-func GenerateTSSPreParams(concurrency int) (*keygen.LocalPreParams, error) {
-	// As a workaround for a bug in tss-lib we have to provide `optionalConcurrency`
-	// parameter with value of at least `3` so the underlying goroutines are
-	// executed on machines with less than 3 CPU.
-	//
-	// See: https://github.com/binance-chain/tss-lib/issues/93
-	if concurrency < 3 {
-		concurrency = 3
-	}
-
-	preParams, err := keygen.GeneratePreParams(preParamsGenerationTimeout, concurrency)
+func GenerateTSSPreParams(
+	preParamsGenerationTimeout time.Duration,
+) (*keygen.LocalPreParams, error) {
+	preParams, err := keygen.GeneratePreParams(preParamsGenerationTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate tss pre-params: [%v]", err)
 	}
