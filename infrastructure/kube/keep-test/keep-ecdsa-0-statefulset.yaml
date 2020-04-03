@@ -52,6 +52,8 @@ spec:
                   key: account-0
             - name: LOG_LEVEL
               value: 'keep*=debug tss-lib=warning'
+            - name: IPFS_LOGGING_FMT
+              value: nocolor
           volumeMounts:
             - name: keep-ecdsa-config
               mountPath: /mnt/keep-ecdsa/config

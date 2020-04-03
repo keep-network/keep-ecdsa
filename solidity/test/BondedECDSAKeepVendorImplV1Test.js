@@ -20,6 +20,9 @@ contract("BondedECDSAKeepVendorImplV1", async (accounts) => {
 
   before(async () => {
     registry = await Registry.new()
+
+    await registry.approveOperatorContract(address0)
+    await registry.approveOperatorContract(address1)
   })
 
   beforeEach(async () => {
@@ -83,9 +86,6 @@ contract("BondedECDSAKeepVendorImplV1", async (accounts) => {
     const keepVendor = await BondedECDSAKeepVendorImplV1Stub.new()
 
     await registry.setOperatorContractUpgrader(keepVendor.address, upgrader)
-
-    await registry.approveOperatorContract(address0)
-    await registry.approveOperatorContract(address1)
 
     return keepVendor
   }

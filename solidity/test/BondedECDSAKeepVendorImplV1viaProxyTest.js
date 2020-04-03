@@ -36,6 +36,11 @@ contract("BondedECDSAKeepVendorImplV1viaProxy", async (accounts) => {
 
   before(async () => {
     registry = await Registry.new()
+    await registry.approveOperatorContract(address0)
+    await registry.approveOperatorContract(address1)
+    await registry.approveOperatorContract(address2)
+    await registry.approveOperatorContract(address3)
+
     keepVendor = await newVendor()
   })
 
@@ -258,11 +263,6 @@ contract("BondedECDSAKeepVendorImplV1viaProxy", async (accounts) => {
     const keepVendor = await deployVendorProxy(registryAddress, factoryAddress)
 
     await registry.setOperatorContractUpgrader(keepVendor.address, upgrader)
-
-    await registry.approveOperatorContract(address0)
-    await registry.approveOperatorContract(address1)
-    await registry.approveOperatorContract(address2)
-    await registry.approveOperatorContract(address3)
 
     return keepVendor
   }

@@ -22,7 +22,6 @@ contract RandomBeaconStub is IRandomBeacon {
 
     function requestRelayEntry(
         address callbackContract,
-        string memory callbackMethod,
         uint256 callbackGas
     ) public payable returns (uint256) {
         requestCount++;
@@ -33,13 +32,13 @@ contract RandomBeaconStub is IRandomBeacon {
 
         if (entry != 0) {
             callbackContract.call(
-                abi.encodeWithSignature(callbackMethod, entry)
+                abi.encodeWithSignature("__beaconCallback(uint256)", entry)
             );
         }
     }
 
     function requestRelayEntry() external payable returns (uint256) {
-        return requestRelayEntry(address(0), "", 0);
+        return requestRelayEntry(address(0), 0);
     }
 
     function setEntry(uint256 newEntry) public {

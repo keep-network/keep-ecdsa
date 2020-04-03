@@ -179,7 +179,7 @@ module.exports = async function () {
     }
 
     console.log(
-      "group selection seed was successfully updated by the random beacon"
+      `group selection seed successfully updated by the random beacon; seed = [${currentSeed}]`
     )
   } catch (err) {
     console.error(`random beacon callback failed: [${err}]`)
