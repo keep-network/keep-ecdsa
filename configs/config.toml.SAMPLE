@@ -29,11 +29,6 @@
 #   # AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
 
 [TSS]
-# Level of concurrency for TSS protocol pre-parameters generation. The value
-# should be provided based on resources available on the machine running the client.
-# This is an optional parameter, if not provided concurrency level for TSS protocol
-# will be set to `3` which is a minimum to run pre-parameters generation process.
-#  PreParamsGenerationConcurrency = 3
 # Timeout for TSS protocol pre-parameters generation. The value
 # should be provided based on resources available on the machine running the client.
 # This is an optional parameter, if not provided timeout for TSS protocol

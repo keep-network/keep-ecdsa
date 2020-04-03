@@ -11,17 +11,13 @@ import (
 )
 
 // GenerateTSSPreParams calculates parameters required by TSS key generation.
-// It times out after 90 seconds if the required parameters could not be generated.
+// It times out after defined period if the required parameters could not be generated.
 // It is possible to generate the parameters way ahead of the TSS protocol
 // execution.
 func GenerateTSSPreParams(
 	preParamsGenerationTimeout time.Duration,
-	concurrency int,
 ) (*keygen.LocalPreParams, error) {
-	preParams, err := keygen.GeneratePreParams(
-		preParamsGenerationTimeout,
-		concurrency,
-	)
+	preParams, err := keygen.GeneratePreParams(preParamsGenerationTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate tss pre-params: [%v]", err)
 	}

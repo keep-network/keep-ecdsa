@@ -6,8 +6,6 @@ import (
 
 // Config contains configuration for tss protocol execution.
 type Config struct {
-	// Concurrency level for pre-parameters generation in tss-lib.
-	PreParamsGenerationConcurrency int
 	// Timeout for pre-parameters generation in tss-lib.
 	PreParamsGenerationTimeout duration
 }

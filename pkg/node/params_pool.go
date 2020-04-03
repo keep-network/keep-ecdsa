@@ -33,10 +33,7 @@ func (n *Node) InitializeTSSPreParamsPool() {
 	n.tssParamsPool = &tssPreParamsPool{
 		pool: make(chan *keygen.LocalPreParams, poolSize),
 		new: func() (*keygen.LocalPreParams, error) {
-			return tss.GenerateTSSPreParams(
-				timeout,
-				n.tssConfig.PreParamsGenerationConcurrency,
-			)
+			return tss.GenerateTSSPreParams(timeout)
 		},
 	}
 
