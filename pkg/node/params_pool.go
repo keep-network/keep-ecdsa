@@ -1,8 +1,14 @@
 package node
 
 import (
+	"time"
+
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+)
+
+const (
+	defaultPreParamsGenerationTimeout = 2 * time.Minute
 )
 
 // tssPreParamsPool is a pool holding TSS pre parameters. It autogenerates entries
@@ -17,10 +23,17 @@ type tssPreParamsPool struct {
 func (n *Node) InitializeTSSPreParamsPool() {
 	poolSize := 5
 
+	var timeout time.Duration
+	if n.tssConfig.PreParamsGenerationTimeout.Duration > 0 {
+		timeout = time.Duration(n.tssConfig.PreParamsGenerationTimeout.Duration)
+	} else {
+		timeout = defaultPreParamsGenerationTimeout
+	}
+
 	n.tssParamsPool = &tssPreParamsPool{
 		pool: make(chan *keygen.LocalPreParams, poolSize),
 		new: func() (*keygen.LocalPreParams, error) {
-			return tss.GenerateTSSPreParams(n.tssConfig.PreParamsGenerationConcurrency)
+			return tss.GenerateTSSPreParams(timeout)
 		},
 	}
 
@@ -29,13 +42,25 @@ func (n *Node) InitializeTSSPreParamsPool() {
 
 func (t *tssPreParamsPool) pumpPool() {
 	for {
+		logger.Info("generating new tss pre parameters")
+
+		start := time.Now()
+
 		params, err := t.new()
 		if err != nil {
-			logger.Warningf("failed to generate tss pre parameters: [%v]", err)
+			logger.Warningf(
+				"failed to generate tss pre parameters after [%s]: [%v]",
+				time.Since(start),
+				err,
+			)
 			continue
 		}
 
-		logger.Infof("generated new tss pre parameters")
+		logger.Infof(
+			"generated new tss pre parameters, took: [%s], current pool size: [%d]",
+			time.Since(start),
+			len(t.pool)+1,
+		)
 
 		t.pool <- params
 	}
