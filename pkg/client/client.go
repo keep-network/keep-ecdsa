@@ -22,8 +22,8 @@ import (
 var logger = log.Logger("keep-ecdsa")
 
 const (
-	KeyGenerationTimeout = 150 * time.Minute
-	SigningTimeout       = 90 * time.Minute
+	keyGenerationTimeout = 150 * time.Minute
+	signingTimeout       = 90 * time.Minute
 )
 
 // Initialize initializes the ECDSA client with rules related to events handling.
@@ -189,7 +189,7 @@ func generateSignerForKeep(
 	operatorPublicKey *operator.PublicKey,
 	event *eth.BondedECDSAKeepCreatedEvent,
 ) (*tss.ThresholdSigner, error) {
-	keygenCtx, cancel := context.WithTimeout(ctx, KeyGenerationTimeout)
+	keygenCtx, cancel := context.WithTimeout(ctx, keyGenerationTimeout)
 	defer cancel()
 
 	attemptCounter := 0
@@ -293,7 +293,7 @@ func generateSignatureForKeep(
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) {
-	signingCtx, cancel := context.WithTimeout(context.Background(), SigningTimeout)
+	signingCtx, cancel := context.WithTimeout(context.Background(), signingTimeout)
 	defer cancel()
 
 	attemptCounter := 0
