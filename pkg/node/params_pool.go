@@ -45,7 +45,7 @@ func (n *Node) InitializeTSSPreParamsPool() {
 
 func (t *tssPreParamsPool) pumpPool() {
 	for {
-		logger.Info("generate new tss pre parameters")
+		logger.Info("generating new tss pre parameters")
 
 		start := time.Now()
 
