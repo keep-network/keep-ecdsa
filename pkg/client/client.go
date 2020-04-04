@@ -3,7 +3,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -194,45 +193,12 @@ func generateSignerForKeep(
 	keygenCtx, cancel := context.WithTimeout(ctx, keyGenerationTimeout)
 	defer cancel()
 
-	attemptCounter := 0
-
-	for {
-		attemptCounter++
-
-		logger.Infof(
-			"signer generation for keep [%s]; attempt [%v]",
-			event.KeepAddress.String(),
-			attemptCounter,
-		)
-
-		if keygenCtx.Err() != nil {
-			return nil, fmt.Errorf("key generation timeout exceeded")
-		}
-
-		memberIDs, err := tssNode.AnnounceSignerPresence(
-			keygenCtx,
-			operatorPublicKey,
-			event.KeepAddress,
-			event.Members,
-		)
-		if err != nil {
-			logger.Errorf("announce signer presence failed: [%v]", err)
-			continue
-		}
-
-		signer, err := tssNode.GenerateSignerForKeep(
-			keygenCtx,
-			operatorPublicKey,
-			event.KeepAddress,
-			memberIDs,
-		)
-		if err != nil {
-			logger.Errorf("signer generation failed: [%v]", err)
-			continue
-		}
-
-		return signer, nil // key generation succeeded.
-	}
+	return tssNode.GenerateSignerForKeep(
+		keygenCtx,
+		operatorPublicKey,
+		event.KeepAddress,
+		event.Members,
+	)
 }
 
 // monitorSigningRequests registers for signature requested events emitted by

@@ -109,29 +109,55 @@ func (n *Node) GenerateSignerForKeep(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
 	keepAddress common.Address,
-	keepMembersIDs []tss.MemberID,
+	members []common.Address,
 ) (*tss.ThresholdSigner, error) {
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
 
-	signer, err := tss.GenerateThresholdSigner(
-		ctx,
-		keepAddress.Hex(),
-		memberID,
-		keepMembersIDs,
-		uint(len(keepMembersIDs)-1),
-		n.networkProvider,
-		n.tssParamsPool.get(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate threshold signer: [%v]", err)
-	}
+	attemptCounter := 0
+	for {
+		attemptCounter++
 
-	err = n.publishSignerPublicKey(ctx, keepAddress, signer.PublicKey())
-	if err != nil {
-		return nil, err
-	}
+		logger.Infof(
+			"signer generation for keep [%s]; attempt [%v]",
+			keepAddress.String(),
+			attemptCounter,
+		)
 
-	return signer, nil
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("key generation timeout exceeded")
+		}
+
+		memberIDs, err := n.AnnounceSignerPresence(
+			ctx,
+			operatorPublicKey,
+			keepAddress,
+			members,
+		)
+		if err != nil {
+			logger.Errorf("announce signer presence failed: [%v]", err)
+			continue
+		}
+
+		signer, err := tss.GenerateThresholdSigner(
+			ctx,
+			keepAddress.Hex(),
+			memberID,
+			memberIDs,
+			uint(len(memberIDs)-1),
+			n.networkProvider,
+			n.tssParamsPool.get(),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate threshold signer: [%v]", err)
+		}
+
+		err = n.publishSignerPublicKey(ctx, keepAddress, signer.PublicKey())
+		if err != nil {
+			return nil, err
+		}
+
+		return signer, nil // key generation succeeded.
+	}
 }
 
 func (n *Node) publishSignerPublicKey(
