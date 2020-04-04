@@ -19,7 +19,7 @@ module.exports = async function () {
     const bondingValue = web3.utils.toWei("50", "ether")
 
     const accounts = await web3.eth.getAccounts()
-    const operators = [accounts[1], accounts[2], accounts[3]]
+    const operators = [accounts[1], accounts[2], accounts[3], accounts[4]]
     const application = TBTCSystemAddress
 
     let sortitionPoolAddress
