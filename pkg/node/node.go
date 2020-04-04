@@ -209,9 +209,9 @@ func (n *Node) publishSignerPublicKey(
 
 // CalculateSignature calculates a signature over a digest with threshold
 // signer and publishes the result to the keep associated with the signer.
-// In case of failure on signature submission we need to check if the keep is
-// still waiting for the signature. It is possible that other member was faster
-// than the current one and submitted the signature first.
+//
+// The attempt for generating and publishing signature is retried on failure
+// until the provided context is done.
 func (n *Node) CalculateSignature(
 	ctx context.Context,
 	signer *tss.ThresholdSigner,
@@ -219,43 +219,131 @@ func (n *Node) CalculateSignature(
 ) error {
 	keepAddress := common.HexToAddress(signer.GroupID())
 
-	signature, err := signer.CalculateSignature(ctx, digest[:], n.networkProvider)
-	if err != nil {
-		return fmt.Errorf("failed to calculate signature: [%v]", err)
+	attemptCounter := 0
+	for {
+		attemptCounter++
+
+		logger.Infof(
+			"calculate signature for keep [%s]; attempt [%v]",
+			keepAddress.String(),
+			attemptCounter,
+		)
+
+		// Global timeout for generating a signature exceeded.
+		// We are giving up and leaving this function.
+		if ctx.Err() != nil {
+			return fmt.Errorf("signing timeout exceeded")
+		}
+
+		// Calculate the signature executing threshold signing protocol with
+		// other keep members.
+		//
+		// If threshold signing fails, we retry from the beginning.
+		signature, err := signer.CalculateSignature(ctx, digest[:], n.networkProvider)
+		if err != nil {
+			logger.Errorf("failed to calculate signature: [%v]", err)
+			continue
+		}
+
+		logger.Debugf(
+			"signature calculated:\nr: [%#x]\ns: [%#x]\nrecovery ID: [%d]\n",
+			signature.R,
+			signature.S,
+			signature.RecoveryID,
+		)
+
+		// We have the signature so now we need to publish it.
+		// This function implements internal retries so we do not need to
+		// retry here.
+		return n.publishSignature(ctx, keepAddress, digest, signature)
 	}
-
-	logger.Debugf(
-		"signature calculated:\nr: [%#x]\ns: [%#x]\nrecovery ID: [%d]\n",
-		signature.R,
-		signature.S,
-		signature.RecoveryID,
-	)
-
-	return n.publishSignature(keepAddress, digest, signature)
 }
 
+// publisSignature takes the provided signature and attempts to publish it to
+// the chain. It implements retry mechanism allowing to attempt to publish again
+// in case of a failure.
+//
+// We do implement a retry in this function because the retry mechanism is much
+// more complex than in case of e.g. publishSignerPublicKey. Although all keep
+// members are supposed to try to publish the signature, only one transaction
+// succeeds. For each attempt, we need to check if the keep still awaits
+// a signature. Also, we need to implement some sane delay between attempts so
+// that we do not waste gas.
 func (n *Node) publishSignature(
+	ctx context.Context,
 	keepAddress common.Address,
 	digest [32]byte,
 	signature *ecdsa.Signature,
 ) error {
-	if err := n.ethereumChain.SubmitSignature(keepAddress, signature); err != nil {
+	attemptCounter := 0
+	for {
+		attemptCounter++
+
+		// Check if keep still awaits a signature for this digest.
+		// We do this check here in case the attempt was retried because of
+		// on-chain failure during submission. In this case we want to make sure
+		// no other member published the signature in the meantime so that we
+		// do not burn ether on redundant submission.
+		//
+		// If the check failed, we retry from the beginning.
 		isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(keepAddress, digest)
 		if err != nil {
-			return fmt.Errorf("failed to verify if keep is still awaiting signature: [%v]", err)
+			logger.Errorf(
+				"failed to verify if keep [%s] is still awaiting signature: [%v]",
+				keepAddress.String(),
+				err,
+			)
+			continue
 		}
 
+		// Someone submitted the signature and it was accepted by the keep.
+		// We are fine, leaving.
 		if !isAwaitingSignature {
-			logger.Infof("signature submitted by another member: [%+x]", digest)
+			logger.Infof(
+				"signature for keep [%s] already submitted: [%+x]",
+				keepAddress.String(),
+				digest,
+			)
 			return nil
 		}
 
-		return fmt.Errorf("failed to submit signature: [%v]", err)
+		logger.Infof(
+			"publishing signature for keep [%s]; attempt [%v]",
+			keepAddress.String(),
+			attemptCounter,
+		)
+
+		if err := n.ethereumChain.SubmitSignature(keepAddress, signature); err != nil {
+			isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(keepAddress, digest)
+			if err != nil {
+				logger.Errorf("failed to verify if keep is still awaiting signature: [%v]", err)
+				continue
+			}
+
+			// Check if we failed because someone else submitted in the meantime
+			// or because something wrong happened with our transaction.
+			if !isAwaitingSignature {
+				logger.Infof(
+					"signature for keep [%s] already submitted: [%+x]",
+					keepAddress.String(),
+					digest,
+				)
+				return nil
+			}
+
+			// Our public key submission transaction failed. We are going to
+			// wait for some time and then retry from the beginning.
+			logger.Errorf(
+				"failed to submit signature: [%v]; will retry after 10 minutes",
+				err,
+			)
+			time.Sleep(10 * time.Minute)
+			continue
+		}
+
+		logger.Infof("Signature submitted")
+		return nil
 	}
-
-	logger.Infof("submitted signature for digest: [%+x]", digest)
-
-	return nil
 }
 
 // monitorKeepPublicKeySubmission observes the chain until either the first

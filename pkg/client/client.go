@@ -264,33 +264,12 @@ func generateSignatureForKeep(
 	signingCtx, cancel := context.WithTimeout(context.Background(), signingTimeout)
 	defer cancel()
 
-	attemptCounter := 0
-
-	for {
-		attemptCounter++
-
-		logger.Infof(
-			"calculate signature for keep [%s]; attempt [%v]",
-			keepAddress.String(),
-			attemptCounter,
-		)
-
-		if signingCtx.Err() != nil {
-			logger.Errorf("signing timeout exceeded")
-			return
-		}
-
-		err := tssNode.CalculateSignature(
-			signingCtx,
-			signer,
-			digest,
-		)
-		if err != nil {
-			logger.Errorf("signature calculation failed: [%v]", err)
-			continue
-		}
-
-		return // signature generation succeeded.
+	if err := tssNode.CalculateSignature(
+		signingCtx,
+		signer,
+		digest,
+	); err != nil {
+		logger.Errorf("signature calculation failed: [%v]", err)
 	}
 }
 
