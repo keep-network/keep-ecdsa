@@ -6,7 +6,7 @@ const BondedECDSAKeepFactory = artifacts.require("./BondedECDSAKeepFactory.sol")
 const BondedECDSAKeep = artifacts.require("./BondedECDSAKeep.sol")
 
 // how many iterations
-const iterations = 50
+const iterations = 10
 // delay between the iterations [ms]
 const delay = 30000
 // number of keeps created at once
@@ -52,7 +52,7 @@ module.exports = async function () {
       )
 
       generatedKeys++
-      console.log(`generated [${generatedKeys}] so far`)
+      console.log(`generated [${generatedKeys}] public keys so far`)
     })
 
     for (let i = 0; i < iterations; i++) {
