@@ -16,7 +16,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
@@ -102,9 +101,11 @@ func createAddressFilter(
 	}
 }
 
-// GenerateSignerForKeep generates a new threshold signer with ECDSA key pair. The
-// public key is a public key of the signing group. It publishes the public key
-// to the keep. It uses keep address as unique signing group identifier.
+// GenerateSignerForKeep generates a new threshold signer with ECDSA key pair
+// and submits the public key to the on-chain keep.
+//
+// The attempt for generating signer is retried on failure until the provided
+// context is done.
 func (n *Node) GenerateSignerForKeep(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
@@ -123,10 +124,18 @@ func (n *Node) GenerateSignerForKeep(
 			attemptCounter,
 		)
 
+		// Global timeout for generating a signer exceeded.
+		// We are giving up and leaving this function.
 		if ctx.Err() != nil {
 			return nil, fmt.Errorf("key generation timeout exceeded")
 		}
 
+		// Announce signer presence. Other members of the keep need to receive
+		// the public key of this members. This member, need to receive public
+		// keys of all other members. Up to this point, only addresses from
+		// signer selection protocol are known.
+		//
+		// If signer announcement fails, we retry from the beginning.
 		memberIDs, err := n.AnnounceSignerPresence(
 			ctx,
 			operatorPublicKey,
@@ -134,10 +143,14 @@ func (n *Node) GenerateSignerForKeep(
 			members,
 		)
 		if err != nil {
-			logger.Errorf("announce signer presence failed: [%v]", err)
+			logger.Errorf("failed to announce signer presence: [%v]", err)
 			continue
 		}
 
+		// Generate threshold signer by generating threshold key with all other
+		// keep members.
+		//
+		// If threshold key generation fails, we retry from the beginning.
 		signer, err := tss.GenerateThresholdSigner(
 			ctx,
 			keepAddress.Hex(),
@@ -148,10 +161,20 @@ func (n *Node) GenerateSignerForKeep(
 			n.tssParamsPool.get(),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate threshold signer: [%v]", err)
+			logger.Errorf("failed to generate threshold signer: [%v]", err)
+			continue
 		}
 
-		err = n.publishSignerPublicKey(ctx, keepAddress, signer.PublicKey())
+		// Serialize and publish public key to the keep.
+		//
+		// We don't retry in case of an error although the specific chain
+		// implementation may implement its own retry policy. This action
+		// should never fail and if it failed, something terrible happened.
+		publicKey, err := eth.SerializePublicKey(signer.PublicKey())
+		if err != nil {
+			return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
+		}
+		err = n.publishSignerPublicKey(ctx, keepAddress, publicKey)
 		if err != nil {
 			return nil, err
 		}
@@ -163,38 +186,22 @@ func (n *Node) GenerateSignerForKeep(
 func (n *Node) publishSignerPublicKey(
 	ctx context.Context,
 	keepAddress common.Address,
-	signerPublicKey *ecdsa.PublicKey,
+	publicKey [64]byte,
 ) error {
-	// Publish signer's public key on ethereum blockchain in a specific keep
-	// contract.
-	serializedPublicKey, err := eth.SerializePublicKey(signerPublicKey)
-	if err != nil {
-		return fmt.Errorf("failed to serialize public key: [%v]", err)
-	}
-
 	logger.Debugf(
-		"submitting public key to keep [%s]: [%x]",
+		"submitting public key to the keep [%s]: [%x]",
 		keepAddress.String(),
-		serializedPublicKey,
+		publicKey,
 	)
 
 	monitoringAbort := make(chan interface{})
 	go n.monitorKeepPublicKeySubmission(ctx, monitoringAbort, keepAddress)
 
-	err = n.ethereumChain.SubmitKeepPublicKey(
-		keepAddress,
-		serializedPublicKey,
-	)
+	err := n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
 	if err != nil {
 		close(monitoringAbort)
 		return fmt.Errorf("failed to submit public key: [%v]", err)
 	}
-
-	logger.Debugf(
-		"submitted public key to the keep [%s]: [%x]",
-		keepAddress.String(),
-		serializedPublicKey,
-	)
 
 	return nil
 }
