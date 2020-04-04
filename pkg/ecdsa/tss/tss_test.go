@@ -20,6 +20,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-ecdsa/internal/testdata"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/params"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/testutils"
 )
 
@@ -92,7 +93,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 					groupMemberIDs,
 					dishonestThreshold,
 					network,
-					&preParams,
+					params.NewBox(&preParams),
 				)
 				if err != nil {
 					errChan <- fmt.Errorf("failed to generate signer: [%v]", err)

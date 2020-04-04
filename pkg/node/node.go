@@ -17,6 +17,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/params"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
@@ -115,6 +116,10 @@ func (n *Node) GenerateSignerForKeep(
 ) (*tss.ThresholdSigner, error) {
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
 
+	logger.Infof("Getting new key-generation pre-parameters from the pool")
+	preParamsBox := params.NewBox(n.tssParamsPool.get())
+	logger.Infof("Received new key-generation parameters from the pool")
+
 	attemptCounter := 0
 	for {
 		attemptCounter++
@@ -124,6 +129,15 @@ func (n *Node) GenerateSignerForKeep(
 			keepAddress.String(),
 			attemptCounter,
 		)
+
+		// If we are re-attempting the key generation, pre-parameters in the box
+		// could be destroyed because they were shared with other members.
+		// In this case, we need to re-generate them.
+		if preParamsBox.IsEmpty() {
+			logger.Infof("Getting new key-generation pre-parameters from the pool")
+			preParamsBox = params.NewBox(n.tssParamsPool.get())
+			logger.Infof("Received new key-generation parameters from the pool")
+		}
 
 		// Global timeout for generating a signer exceeded.
 		// We are giving up and leaving this function.
@@ -159,7 +173,7 @@ func (n *Node) GenerateSignerForKeep(
 			memberIDs,
 			uint(len(memberIDs)-1),
 			n.networkProvider,
-			n.tssParamsPool.get(),
+			preParamsBox,
 		)
 		if err != nil {
 			logger.Errorf("failed to generate threshold signer: [%v]", err)
