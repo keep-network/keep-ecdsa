@@ -16,6 +16,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
@@ -125,17 +126,31 @@ func (n *Node) GenerateSignerForKeep(
 		return nil, fmt.Errorf("failed to generate threshold signer: [%v]", err)
 	}
 
-	logger.Debugf(
-		"generated threshold signer with public key: [%x]",
-		signer.PublicKey().Marshal(),
-	)
+	err = n.publishSignerPublicKey(ctx, keepAddress, signer.PublicKey())
+	if err != nil {
+		return nil, err
+	}
 
+	return signer, nil
+}
+
+func (n *Node) publishSignerPublicKey(
+	ctx context.Context,
+	keepAddress common.Address,
+	signerPublicKey *ecdsa.PublicKey,
+) error {
 	// Publish signer's public key on ethereum blockchain in a specific keep
 	// contract.
-	serializedPublicKey, err := eth.SerializePublicKey(signer.PublicKey())
+	serializedPublicKey, err := eth.SerializePublicKey(signerPublicKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
+		return fmt.Errorf("failed to serialize public key: [%v]", err)
 	}
+
+	logger.Debugf(
+		"submitting public key to keep [%s]: [%x]",
+		keepAddress.String(),
+		serializedPublicKey,
+	)
 
 	monitoringAbort := make(chan interface{})
 	go n.monitorKeepPublicKeySubmission(ctx, monitoringAbort, keepAddress)
@@ -146,7 +161,7 @@ func (n *Node) GenerateSignerForKeep(
 	)
 	if err != nil {
 		close(monitoringAbort)
-		return nil, fmt.Errorf("failed to submit public key: [%v]", err)
+		return fmt.Errorf("failed to submit public key: [%v]", err)
 	}
 
 	logger.Debugf(
@@ -155,7 +170,7 @@ func (n *Node) GenerateSignerForKeep(
 		serializedPublicKey,
 	)
 
-	return signer, nil
+	return nil
 }
 
 // CalculateSignature calculates a signature over a digest with threshold
