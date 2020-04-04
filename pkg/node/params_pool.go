@@ -21,7 +21,7 @@ type tssPreParamsPool struct {
 
 // InitializeTSSPreParamsPool generates TSS pre-parameters and stores them in a pool.
 func (n *Node) InitializeTSSPreParamsPool() {
-	poolSize := 5
+	poolSize := 20
 
 	var timeout time.Duration
 	if n.tssConfig.PreParamsGenerationTimeout.Duration > 0 {
