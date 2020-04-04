@@ -40,7 +40,7 @@ func TestGetDestroyedContent(t *testing.T) {
 	box.DestroyContent()
 	_, err := box.Content()
 
-	expectedError := fmt.Errorf("box destroyed")
+	expectedError := fmt.Errorf("box is empty")
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Fatalf(
 			"unexpected error\nexpected: [%v]\nactual:   [%v]",

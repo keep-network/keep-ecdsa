@@ -26,7 +26,7 @@ type Box struct {
 
 // NewBox creates a new PreParamsBox with the provided key generation pre-params
 // inside.
-func NewBox(params *keygen.LocalPreParams) (ppb *Box) {
+func NewBox(params *keygen.LocalPreParams) *Box {
 	return &Box{
 		params: params,
 	}
@@ -35,14 +35,14 @@ func NewBox(params *keygen.LocalPreParams) (ppb *Box) {
 // Content gets the box content or error if the content has been previously
 // destroyed.
 func (b *Box) Content() (*keygen.LocalPreParams, error) {
-	if b.params == nil {
-		return nil, fmt.Errorf("box destroyed")
+	if b.IsEmpty() {
+		return nil, fmt.Errorf("box is empty")
 	}
 
 	return b.params, nil
 }
 
-// IsEmpty returns true if the box content has not been destroyed.
+// IsEmpty returns true if the box content has been destroyed.
 // Otherwise, returns false.
 func (b *Box) IsEmpty() bool {
 	return b.params == nil
