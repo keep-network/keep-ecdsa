@@ -16,6 +16,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
@@ -216,6 +217,8 @@ func (n *Node) CalculateSignature(
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) error {
+	keepAddress := common.HexToAddress(signer.GroupID())
+
 	signature, err := signer.CalculateSignature(ctx, digest[:], n.networkProvider)
 	if err != nil {
 		return fmt.Errorf("failed to calculate signature: [%v]", err)
@@ -228,8 +231,14 @@ func (n *Node) CalculateSignature(
 		signature.RecoveryID,
 	)
 
-	keepAddress := common.HexToAddress(signer.GroupID())
+	return n.publishSignature(keepAddress, digest, signature)
+}
 
+func (n *Node) publishSignature(
+	keepAddress common.Address,
+	digest [32]byte,
+	signature *ecdsa.Signature,
+) error {
 	if err := n.ethereumChain.SubmitSignature(keepAddress, signature); err != nil {
 		isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(keepAddress, digest)
 		if err != nil {
@@ -238,7 +247,6 @@ func (n *Node) CalculateSignature(
 
 		if !isAwaitingSignature {
 			logger.Infof("signature submitted by another member: [%+x]", digest)
-
 			return nil
 		}
 
