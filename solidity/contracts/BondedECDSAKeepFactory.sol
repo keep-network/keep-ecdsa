@@ -276,6 +276,7 @@ contract BondedECDSAKeepFactory is
             _owner,
             members,
             _honestThreshold,
+            minimumStake,
             address(tokenStaking),
             address(keepBonding),
             address(this)
@@ -439,14 +440,6 @@ contract BondedECDSAKeepFactory is
         return tokenStaking.balanceOf(_operator);
     }
 
-    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
-    /// amount equal to the minimum stake configured for this factory.
-    function slashKeepMembers() public onlyActiveKeep {
-        BondedECDSAKeep keep = BondedECDSAKeep(msg.sender);
-
-        tokenStaking.slash(minimumStake, keep.getMembers());
-    }
-
     /// @notice Gets bonded sortition pool of specific application for the
     /// operator.
     /// @dev Reverts if the operator is not registered for the application.
@@ -502,17 +495,6 @@ contract BondedECDSAKeepFactory is
                     callbackGas
                 )
             );
-    }
-
-    /// @notice Checks if the caller is a keep created by this factory.
-    /// @dev Throws an error if called by any account other than a keep.
-    modifier onlyActiveKeep() {
-        require(
-            keepOpenedTimestamp[msg.sender] != 0 &&
-                BondedECDSAKeep(msg.sender).isActive(),
-            "Caller is not an active keep created by this factory"
-        );
-        _;
     }
 
     /// @notice Checks if the caller is the random beacon.
