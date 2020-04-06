@@ -351,7 +351,7 @@ func (n *Node) publishSignature(
 				"failed to submit signature: [%v]; will retry after 10 minutes",
 				err,
 			)
-			time.Sleep(10 * time.Minute)
+			time.Sleep(1 * time.Minute)
 			continue
 		}
 
