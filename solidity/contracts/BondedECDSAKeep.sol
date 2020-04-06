@@ -496,7 +496,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         status = Status.Active;
         isInitialized = true;
 
-        tokenStaking.claimDelegatedAuthority(address(keepFactory));
+        tokenStaking.claimDelegatedAuthority(_keepFactory);
 
         /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
