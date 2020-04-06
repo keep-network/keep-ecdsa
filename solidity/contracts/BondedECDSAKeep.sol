@@ -629,7 +629,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     }
 
     /// @notice Marks the keep as terminated.
-    /// Keep can be marked as closed only when there is no signing in progress
+    /// Keep can be marked as terminated only when there is no signing in progress
     /// or the requested signing process has timed out.
     function markAsTerminated() internal {
         require(
