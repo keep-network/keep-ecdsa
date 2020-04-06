@@ -10,8 +10,11 @@ import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
+import {
+    AuthorityDelegator,
+    TokenStaking
+} from "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
-import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -23,7 +26,11 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// Proxy delegates calls to sortition pool and therefore does not affect contract's
 /// state. This means that we only need to deploy the bonded ECDSA keep contract
 /// once. The factory provides clean state for every new bonded ECDSA keep clone.
-contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
+contract BondedECDSAKeepFactory is
+    IBondedECDSAKeepFactory,
+    CloneFactory,
+    AuthorityDelegator
+{
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
@@ -257,6 +264,14 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
 
         keepAddress = createClone(masterBondedECDSAKeepAddress);
         BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
+
+        // keepOpenedTimestamp value for newly created keep is required to be set
+        // before calling `keep.initialize` function as it is used to determine
+        // token staking delegation authority recognition in `__isRecognized`
+        // function.
+        /* solium-disable-next-line security/no-block-members*/
+        keepOpenedTimestamp[address(keep)] = block.timestamp;
+
         keep.initialize(
             _owner,
             members,
@@ -277,8 +292,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         }
 
         keeps.push(address(keep));
-        /* solium-disable-next-line security/no-block-members*/
-        keepOpenedTimestamp[address(keep)] = block.timestamp;
 
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
@@ -306,6 +319,19 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         returns (uint256)
     {
         return keepOpenedTimestamp[_keep];
+    }
+
+    /// @notice Verifies if delegates authority recipient is valid address recognized
+    /// by the factory for token staking authority delegation.
+    /// @param _delegatedAuthorityRecipient Address of the delegated authority
+    /// recipient.
+    /// @return True if provided address is recognized delegated token staking
+    /// authority for this factory contract.
+    function __isRecognized(address _delegatedAuthorityRecipient)
+        external
+        returns (bool)
+    {
+        return keepOpenedTimestamp[_delegatedAuthorityRecipient] > 0;
     }
 
     /// @notice Sets a new group selection seed value.
