@@ -624,6 +624,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             "Requested signing has not timed out yet"
         );
 
+        unlockMembersTokenStakes();
+
         status = Status.Closed;
         emit KeepClosed();
     }
@@ -637,8 +639,18 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             "Requested signing has not timed out yet"
         );
 
+        unlockMembersTokenStakes();
+
         status = Status.Terminated;
         emit KeepTerminated();
+    }
+
+    /// @notice Releases locks the keep had previously placed on the members'
+    /// token stakes.
+    function unlockMembersTokenStakes() internal {
+        for (uint256 i = 0; i < members.length; i++) {
+            tokenStaking.unlockStake(members[i]);
+        }
     }
 
     /// @notice Returns bonds to the keep members.
