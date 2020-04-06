@@ -14,7 +14,7 @@ import (
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/params"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
 )
 
 const (

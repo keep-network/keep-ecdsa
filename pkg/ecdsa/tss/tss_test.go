@@ -20,7 +20,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-ecdsa/internal/testdata"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/params"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/testutils"
 )
 

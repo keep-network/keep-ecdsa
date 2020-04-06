@@ -17,8 +17,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
-	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/params"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
 )
 
 var logger = log.Logger("keep-ecdsa")
