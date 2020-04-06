@@ -158,7 +158,7 @@ func (n *Node) GenerateSignerForKeep(
 			members,
 		)
 		if err != nil {
-			logger.Errorf("failed to announce signer presence: [%v]", err)
+			logger.Warningf("failed to announce signer presence: [%v]", err)
 			continue
 		}
 
