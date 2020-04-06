@@ -20,6 +20,10 @@ const BondedECDSAKeep = artifacts.require("BondedECDSAKeep")
 
 const BN = web3.utils.BN
 
+const chai = require("chai")
+chai.use(require("bn-chai")(BN))
+const expect = chai.expect
+
 contract("BondedECDSAKeepFactory", async (accounts) => {
   let keepToken
   let tokenStaking
@@ -28,6 +32,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   let keepBonding
   let randomBeacon
   let signerPool
+  let feeEstimate
 
   const application = accounts[1]
   const members = [accounts[2], accounts[3], accounts[4]]
@@ -44,6 +49,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const initializationPeriod = new BN(100)
   const undelegationPeriod = 30
 
+  before(async () => {
+    await initializeNewFactory()
+    await initializeMemberCandidates()
+    await registerMemberCandidates()
+
+    feeEstimate = await keepFactory.openKeepFeeEstimate()
+  })
+
   beforeEach(async () => {
     await createSnapshot()
   })
@@ -53,16 +66,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   })
 
   describe("openKeep", async () => {
-    let feeEstimate
-
-    before(async () => {
-      await initializeNewFactory()
-      await initializeMemberCandidates()
-      await registerMemberCandidates()
-
-      feeEstimate = await keepFactory.openKeepFeeEstimate()
-    })
-
     it("registers token staking delegated authority claim from keep", async () => {
       const keepAddress = await keepFactory.openKeep.call(
         groupSize,
@@ -82,6 +85,77 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         keepFactory.address,
         "invalid token staking authority source"
       )
+    })
+  })
+
+  describe("submitSignatureFraud", () => {
+    // Private key: 0x937FFE93CFC943D1A8FC0CB8BAD44A978090A4623DA81EEFDFF5380D0A290B41
+    // Public key:
+    //  Curve: secp256k1
+    //  X: 0x9A0544440CC47779235CCB76D669590C2CD20C7E431F97E17A1093FAF03291C4
+    //  Y: 0x73E661A208A8A565CA1E384059BD2FF7FF6886DF081FF1229250099D388C83DF
+
+    // TODO: Extract test data to a test data file and use them consistently across other tests.
+
+    const publicKey1 =
+      "0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df"
+    const preimage1 =
+      "0xfdaf2feee2e37c24f2f8d15ad5814b49ba04b450e67b859976cbf25c13ea90d8"
+    // hash256Digest1 = sha256(preimage1)
+    const hash256Digest1 =
+      "0x8bacaa8f02ef807f2f61ae8e00a5bfa4528148e0ae73b2bd54b71b8abe61268e"
+
+    const signature1 = {
+      R: "0xedc074a86380cc7e2e4702eaf1bec87843bc0eb7ebd490f5bdd7f02493149170",
+      S: "0x3f5005a26eb6f065ea9faea543e5ddb657d13892db2656499a43dfebd6e12efc",
+      V: 28,
+    }
+
+    it("should return true and slash members when the signature is a fraud", async () => {
+      const keep = await openKeep()
+
+      const initialStakes = []
+      for (let i = 0; i < members.length; i++) {
+        initialStakes[i] = web3.utils.toBN(
+          await tokenStaking.eligibleStake(members[i], keepFactory.address)
+        )
+      }
+
+      await submitMembersPublicKeys(keep, publicKey1)
+
+      const res = await keep.submitSignatureFraud.call(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      assert.isTrue(res, "incorrect returned result")
+
+      for (let i = 0; i < members.length; i++) {
+        const expectedStake = initialStakes[i].sub(
+          await keepFactory.minimumStake.call()
+        )
+
+        const actualStake = await tokenStaking.eligibleStake(
+          members[i],
+          keepFactory.address
+        )
+
+        expect(actualStake).to.eq.BN(
+          expectedStake,
+          `incorrect stake for member ${i}`
+        )
+      }
     })
   })
 
@@ -176,5 +250,28 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     const pool = await BondedSortitionPool.at(signerPool)
     const initBlocks = await pool.operatorInitBlocks()
     await mineBlocks(initBlocks.add(new BN(1)))
+  }
+
+  async function openKeep() {
+    const keepAddress = await keepFactory.openKeep.call(
+      groupSize,
+      threshold,
+      keepOwner,
+      bond,
+      {from: application, value: feeEstimate}
+    )
+
+    await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
+      from: application,
+      value: feeEstimate,
+    })
+
+    return await BondedECDSAKeep.at(keepAddress)
+  }
+
+  async function submitMembersPublicKeys(keep, publicKey) {
+    await keep.submitPublicKey(publicKey, {from: members[0]})
+    await keep.submitPublicKey(publicKey, {from: members[1]})
+    await keep.submitPublicKey(publicKey, {from: members[2]})
   }
 })
