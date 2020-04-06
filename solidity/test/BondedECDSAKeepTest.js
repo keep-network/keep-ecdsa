@@ -8,7 +8,7 @@ import {mineBlocks} from "./helpers/mineBlocks"
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 import {duration, increaseTime} from "./helpers/increaseTime"
 
-const {expectRevert, constants} = require("@openzeppelin/test-helpers")
+const {expectRevert, constants, time} = require("@openzeppelin/test-helpers")
 
 const Registry = artifacts.require("Registry")
 const BondedECDSAKeepStub = artifacts.require("BondedECDSAKeepStub")
@@ -37,6 +37,8 @@ contract("BondedECDSAKeep", (accounts) => {
   const signingPool = accounts[5]
   const honestThreshold = 1
 
+  const stakeLockDuration = time.duration.days(180)
+
   let registry
   let keepBonding
   let tokenStaking
@@ -50,6 +52,7 @@ contract("BondedECDSAKeep", (accounts) => {
     members,
     honestThreshold,
     minimumStake,
+    stakeLockDuration,
     tokenStaking,
     keepBonding,
     keepFactory
@@ -61,6 +64,7 @@ contract("BondedECDSAKeep", (accounts) => {
       members,
       honestThreshold,
       minimumStake,
+      stakeLockDuration,
       tokenStaking,
       keepBonding,
       keepFactory
@@ -113,6 +117,7 @@ contract("BondedECDSAKeep", (accounts) => {
       members,
       honestThreshold,
       minimumStake,
+      stakeLockDuration,
       tokenStaking.address,
       keepBonding.address,
       factoryStub.address
@@ -134,6 +139,7 @@ contract("BondedECDSAKeep", (accounts) => {
         members,
         honestThreshold,
         minimumStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
@@ -155,6 +161,7 @@ contract("BondedECDSAKeep", (accounts) => {
         members,
         honestThreshold,
         minimumStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
@@ -167,6 +174,27 @@ contract("BondedECDSAKeep", (accounts) => {
       )
     })
 
+    it("locks members token stakes", async () => {
+      keep = await BondedECDSAKeepStub.new()
+      await keep.initialize(
+        owner,
+        members,
+        honestThreshold,
+        minimumStake,
+        stakeLockDuration,
+        tokenStaking.address,
+        keepBonding.address,
+        factoryStub.address
+      )
+
+      for (let i = 0; i < members.length; i++) {
+        expect(
+          await tokenStaking.operatorLocks(members[i]),
+          "incorrect token stake lock"
+        ).to.eq.BN(stakeLockDuration)
+      }
+    })
+
     it("reverts if called for the second time", async () => {
       // first call was a part of beforeEach
       await expectRevert(
@@ -175,6 +203,7 @@ contract("BondedECDSAKeep", (accounts) => {
           members,
           honestThreshold,
           minimumStake,
+          stakeLockDuration,
           tokenStaking.address,
           keepBonding.address,
           factoryStub.address
@@ -579,6 +608,17 @@ contract("BondedECDSAKeep", (accounts) => {
       assert.isTrue(await keep.isTerminated(), "keep should be terminated")
       assert.isFalse(await keep.isActive(), "keep should no longer be active")
       assert.isFalse(await keep.isClosed(), "keep should not be closed")
+    })
+
+    it("releases locks on members token stakes", async () => {
+      await keep.seizeSignerBonds({from: owner})
+
+      for (let i = 0; i < members.length; i++) {
+        expect(
+          await tokenStaking.operatorLocks(members[i]),
+          "incorrect token stake lock"
+        ).to.eq.BN(-1)
+      }
     })
 
     it("emits an event", async () => {
@@ -1107,6 +1147,17 @@ contract("BondedECDSAKeep", (accounts) => {
       ).to.eq.BN(bondValue2, "incorrect unbonded amount for member 2")
     })
 
+    it("releases locks on members token stakes", async () => {
+      await keep.closeKeep({from: owner})
+
+      for (let i = 0; i < members.length; i++) {
+        expect(
+          await tokenStaking.operatorLocks(members[i]),
+          "incorrect token stake lock"
+        ).to.eq.BN(-1)
+      }
+    })
+
     it("reverts when signing is in progress", async () => {
       keep.sign(digest, {from: owner})
 
@@ -1401,6 +1452,7 @@ contract("BondedECDSAKeep", (accounts) => {
         testMembers,
         honestThreshold,
         minimumStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
@@ -1436,6 +1488,7 @@ contract("BondedECDSAKeep", (accounts) => {
         [member],
         honestThreshold,
         minimumStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
@@ -1455,6 +1508,7 @@ contract("BondedECDSAKeep", (accounts) => {
         [member],
         honestThreshold,
         minimumStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
@@ -1593,6 +1647,7 @@ contract("BondedECDSAKeep", (accounts) => {
         testMembers,
         honestThreshold,
         minimumStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
