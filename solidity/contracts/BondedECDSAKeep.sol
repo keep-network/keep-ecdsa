@@ -40,6 +40,10 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
 
+    // Minimum stake that was required from each keep member on keep creation.
+    // The value is used for keep members slashing.
+    uint256 public minimumStake;
+
     // Keep's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
     bytes publicKey;
@@ -475,6 +479,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
+        uint256 _minimumStake,
         address _tokenStaking,
         address _keepBonding,
         address payable _keepFactory
@@ -484,11 +489,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         owner = _owner;
         members = _members;
         honestThreshold = _honestThreshold;
+        minimumStake = _minimumStake;
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         keepFactory = BondedECDSAKeepFactory(_keepFactory);
         status = Status.Active;
         isInitialized = true;
+
+        tokenStaking.claimDelegatedAuthority(address(keepFactory));
 
         /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
@@ -580,11 +588,10 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return submittedPublicKeys[_member].length != 0;
     }
 
-    /// @notice Slashes signers' KEEP tokens.
-    /// @dev Keep contract is not authorized to slash tokens directly, so it calls
-    /// the factory to do it.
-    function slashSignerStakes() internal {
-        keepFactory.slashKeepMembers();
+    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
+    /// amount equal to the minimum stake from the moment the keep was created.
+    function slashSignerStakes() internal onlyWhenActive {
+        tokenStaking.slash(minimumStake, members);
     }
 
     /// @notice Returns true if signing of a digest is currently in progress.

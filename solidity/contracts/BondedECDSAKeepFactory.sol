@@ -10,8 +10,11 @@ import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
+import {
+    AuthorityDelegator,
+    TokenStaking
+} from "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
-import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -23,7 +26,11 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// Proxy delegates calls to sortition pool and therefore does not affect contract's
 /// state. This means that we only need to deploy the bonded ECDSA keep contract
 /// once. The factory provides clean state for every new bonded ECDSA keep clone.
-contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
+contract BondedECDSAKeepFactory is
+    IBondedECDSAKeepFactory,
+    CloneFactory,
+    AuthorityDelegator
+{
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
@@ -257,10 +264,19 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
 
         keepAddress = createClone(masterBondedECDSAKeepAddress);
         BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
+
+        // keepOpenedTimestamp value for newly created keep is required to be set
+        // before calling `keep.initialize` function as it is used to determine
+        // token staking delegation authority recognition in `__isRecognized`
+        // function.
+        /* solium-disable-next-line security/no-block-members*/
+        keepOpenedTimestamp[address(keep)] = block.timestamp;
+
         keep.initialize(
             _owner,
             members,
             _honestThreshold,
+            minimumStake,
             address(tokenStaking),
             address(keepBonding),
             address(this)
@@ -277,8 +293,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         }
 
         keeps.push(address(keep));
-        /* solium-disable-next-line security/no-block-members*/
-        keepOpenedTimestamp[address(keep)] = block.timestamp;
 
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
@@ -306,6 +320,19 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         returns (uint256)
     {
         return keepOpenedTimestamp[_keep];
+    }
+
+    /// @notice Verifies if delegates authority recipient is valid address recognized
+    /// by the factory for token staking authority delegation.
+    /// @param _delegatedAuthorityRecipient Address of the delegated authority
+    /// recipient.
+    /// @return True if provided address is recognized delegated token staking
+    /// authority for this factory contract.
+    function __isRecognized(address _delegatedAuthorityRecipient)
+        external
+        returns (bool)
+    {
+        return keepOpenedTimestamp[_delegatedAuthorityRecipient] > 0;
     }
 
     /// @notice Sets a new group selection seed value.
@@ -413,14 +440,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         return tokenStaking.balanceOf(_operator);
     }
 
-    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
-    /// amount equal to the minimum stake configured for this factory.
-    function slashKeepMembers() public onlyActiveKeep {
-        BondedECDSAKeep keep = BondedECDSAKeep(msg.sender);
-
-        tokenStaking.slash(minimumStake, keep.getMembers());
-    }
-
     /// @notice Gets bonded sortition pool of specific application for the
     /// operator.
     /// @dev Reverts if the operator is not registered for the application.
@@ -476,17 +495,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
                     callbackGas
                 )
             );
-    }
-
-    /// @notice Checks if the caller is a keep created by this factory.
-    /// @dev Throws an error if called by any account other than a keep.
-    modifier onlyActiveKeep() {
-        require(
-            keepOpenedTimestamp[msg.sender] != 0 &&
-                BondedECDSAKeep(msg.sender).isActive(),
-            "Caller is not an active keep created by this factory"
-        );
-        _;
     }
 
     /// @notice Checks if the caller is the random beacon.
