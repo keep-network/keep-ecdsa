@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 /// @title Token Staking Stub
 /// @dev This contract is for testing purposes only.
 contract TokenStakingStub is IStaking {
@@ -17,6 +18,8 @@ contract TokenStakingStub is IStaking {
 
     // Map of operator -> owner.
     mapping(address => address) owners;
+
+    address public delegatedAuthority;
 
     /// @dev Sets balance variable value.
     function setBalance(address _operator, uint256 _balance) public {
@@ -77,5 +80,9 @@ contract TokenStakingStub is IStaking {
 
     function ownerOf(address _operator) public view returns (address) {
         return owners[_operator];
+    }
+
+    function claimDelegatedAuthority(address delegatedAuthoritySource) public {
+        delegatedAuthority = delegatedAuthoritySource;
     }
 }
