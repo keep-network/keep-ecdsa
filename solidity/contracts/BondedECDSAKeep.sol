@@ -472,6 +472,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @param _members Addresses of the keep members.
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _tokenStaking Address of the TokenStaking contract.
+    /// @param _stakeLockDuration Stake lock duration in seconds.
     /// @param _keepBonding Address of the KeepBonding contract.
     /// @param _keepFactory Address of the BondedECDSAKeepFactory that created
     /// this keep.
@@ -480,6 +481,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         address[] memory _members,
         uint256 _honestThreshold,
         uint256 _minimumStake,
+        uint256 _stakeLockDuration,
         address _tokenStaking,
         address _keepBonding,
         address payable _keepFactory
