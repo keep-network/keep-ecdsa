@@ -45,13 +45,13 @@ contract("BondedECDSAKeep", (accounts) => {
   let bondedECDSAKeepStubMaster
   let keep
   let factoryStub
-  let minimumStake
+  let memberStake
 
   async function newKeep(
     owner,
     members,
     honestThreshold,
-    minimumStake,
+    memberStake,
     stakeLockDuration,
     tokenStaking,
     keepBonding,
@@ -63,7 +63,7 @@ contract("BondedECDSAKeep", (accounts) => {
       owner,
       members,
       honestThreshold,
-      minimumStake,
+      memberStake,
       stakeLockDuration,
       tokenStaking,
       keepBonding,
@@ -95,8 +95,8 @@ contract("BondedECDSAKeep", (accounts) => {
 
     await registry.approveOperatorContract(bondCreator)
 
-    minimumStake = await factoryStub.minimumStake.call()
-    await stakeOperators(members, minimumStake)
+    memberStake = await factoryStub.minimumStake.call()
+    await stakeOperators(members, memberStake)
 
     await keepBonding.authorizeSortitionPoolContract(members[0], signingPool, {
       from: authorizers[0],
@@ -116,7 +116,7 @@ contract("BondedECDSAKeep", (accounts) => {
       owner,
       members,
       honestThreshold,
-      minimumStake,
+      memberStake,
       stakeLockDuration,
       tokenStaking.address,
       keepBonding.address,
@@ -138,7 +138,7 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         members,
         honestThreshold,
-        minimumStake,
+        memberStake,
         stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
@@ -160,7 +160,7 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         members,
         honestThreshold,
-        minimumStake,
+        memberStake,
         stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
@@ -180,7 +180,7 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         members,
         honestThreshold,
-        minimumStake,
+        memberStake,
         stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
@@ -202,7 +202,7 @@ contract("BondedECDSAKeep", (accounts) => {
           owner,
           members,
           honestThreshold,
-          minimumStake,
+          memberStake,
           stakeLockDuration,
           tokenStaking.address,
           keepBonding.address,
@@ -889,7 +889,7 @@ contract("BondedECDSAKeep", (accounts) => {
           constants.ZERO_ADDRESS
         )
         expect(actualStake).to.eq.BN(
-          minimumStake,
+          memberStake,
           `incorrect stake for member ${i}`
         )
       }
@@ -919,7 +919,7 @@ contract("BondedECDSAKeep", (accounts) => {
 
     it("slashes keep members stakes", async () => {
       const remainingStake = new BN(10)
-      const stakeBalance = minimumStake.add(remainingStake)
+      const stakeBalance = memberStake.add(remainingStake)
       await stakeOperators(members, stakeBalance)
 
       await keep.publicSlashSignerStakes()
@@ -1451,7 +1451,7 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         testMembers,
         honestThreshold,
-        minimumStake,
+        memberStake,
         stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
@@ -1487,7 +1487,7 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         [member],
         honestThreshold,
-        minimumStake,
+        memberStake,
         stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
@@ -1507,7 +1507,7 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         [member],
         honestThreshold,
-        minimumStake,
+        memberStake,
         stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
@@ -1646,7 +1646,7 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         testMembers,
         honestThreshold,
-        minimumStake,
+        memberStake,
         stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
