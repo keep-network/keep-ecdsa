@@ -135,6 +135,24 @@ contract("BondedECDSAKeep", (accounts) => {
       )
     })
 
+    it("claims token staking delegated authority", async () => {
+      keep = await BondedECDSAKeep.new()
+      await keep.initialize(
+        owner,
+        members,
+        honestThreshold,
+        tokenStaking.address,
+        keepBonding.address,
+        factoryStub.address
+      )
+
+      assert.equal(
+        await tokenStaking.delegatedAuthority(),
+        factoryStub.address,
+        "incorrect token staking delegated authority"
+      )
+    })
+
     it("reverts if called for the second time", async () => {
       // first call was a part of beforeEach
       await expectRevert(
