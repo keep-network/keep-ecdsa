@@ -115,10 +115,7 @@ func (n *Node) GenerateSignerForKeep(
 	members []common.Address,
 ) (*tss.ThresholdSigner, error) {
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
-
-	logger.Infof("Getting new key-generation pre-parameters from the pool")
 	preParamsBox := params.NewBox(n.tssParamsPool.get())
-	logger.Infof("Received new key-generation parameters from the pool")
 
 	attemptCounter := 0
 	for {
@@ -134,9 +131,7 @@ func (n *Node) GenerateSignerForKeep(
 		// could be destroyed because they were shared with other members.
 		// In this case, we need to re-generate them.
 		if preParamsBox.IsEmpty() {
-			logger.Infof("Getting new key-generation pre-parameters from the pool")
 			preParamsBox = params.NewBox(n.tssParamsPool.get())
-			logger.Infof("Received new key-generation parameters from the pool")
 		}
 
 		// Global timeout for generating a signer exceeded.
