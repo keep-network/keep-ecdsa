@@ -46,6 +46,8 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const singleBond = new BN(1)
   const bond = singleBond.mul(groupSize)
 
+  const stakeLockDuration = time.duration.days(180)
+
   const initializationPeriod = new BN(100)
   const undelegationPeriod = 30
 
@@ -72,19 +74,92 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         threshold,
         keepOwner,
         bond,
+        stakeLockDuration,
         {from: application, value: feeEstimate}
       )
 
-      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-        from: application,
-        value: feeEstimate,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       assert.equal(
         await tokenStaking.getAuthoritySource(keepAddress),
         keepFactory.address,
         "invalid token staking authority source"
       )
+    })
+
+    it("locks member stakes", async () => {
+      const tx = await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
+      const keepAddress = tx.logs[0].args.keepAddress
+
+      const expectedExpirationTime = (await time.latest()).add(
+        stakeLockDuration
+      )
+
+      for (let i = 0; i < members.length; i++) {
+        const {creators, expirations} = await tokenStaking.getLocks(members[i])
+
+        assert.deepEqual(
+          creators,
+          [keepAddress],
+          "incorrect token lock creator"
+        )
+
+        expect(expirations[0], "incorrect token lock expiration time").to.eq.BN(
+          expectedExpirationTime
+        )
+      }
+    })
+  })
+
+  describe("closeKeep", async () => {
+    it("releases locks on member stakes", async () => {
+      const keep = await openKeep({from: keepOwner})
+
+      await keep.closeKeep({from: keepOwner})
+
+      for (let i = 0; i < members.length; i++) {
+        const {creators, expirations} = await tokenStaking.getLocks(members[i])
+
+        assert.isEmpty(creators, "incorrect token lock creator")
+
+        assert.isEmpty(expirations, "incorrect token lock expiration time")
+      }
+    })
+  })
+
+  describe("seizeSignerBonds", async () => {
+    it("releases locks on member stakes", async () => {
+      const keep = await openKeep({from: keepOwner})
+
+      await keep.seizeSignerBonds({from: keepOwner})
+
+      for (let i = 0; i < members.length; i++) {
+        const {creators, expirations} = await tokenStaking.getLocks(members[i])
+
+        assert.isEmpty(creators, "incorrect token lock creator")
+
+        assert.isEmpty(expirations, "incorrect token lock expiration time")
+      }
     })
   })
 
@@ -258,13 +333,21 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       threshold,
       keepOwner,
       bond,
+      stakeLockDuration,
       {from: application, value: feeEstimate}
     )
 
-    await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-      from: application,
-      value: feeEstimate,
-    })
+    await keepFactory.openKeep(
+      groupSize,
+      threshold,
+      keepOwner,
+      bond,
+      stakeLockDuration,
+      {
+        from: application,
+        value: feeEstimate,
+      }
+    )
 
     return await BondedECDSAKeep.at(keepAddress)
   }

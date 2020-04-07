@@ -224,12 +224,14 @@ contract BondedECDSAKeepFactory is
     /// @param _honestThreshold Minimum number of honest keep signers.
     /// @param _owner Address of the keep owner.
     /// @param _bond Value of ETH bond required from the keep in wei.
+    /// @param _stakeLockDuration Stake lock duration in seconds.
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
         address _owner,
-        uint256 _bond
+        uint256 _bond,
+        uint256 _stakeLockDuration
     ) external payable returns (address keepAddress) {
         require(_groupSize <= 16, "Maximum signing group size is 16");
         require(
@@ -277,6 +279,7 @@ contract BondedECDSAKeepFactory is
             members,
             _honestThreshold,
             minimumStake,
+            _stakeLockDuration,
             address(tokenStaking),
             address(keepBonding),
             address(this)

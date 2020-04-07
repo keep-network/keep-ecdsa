@@ -23,6 +23,7 @@ contract BondedECDSAKeepCloneFactory is CloneFactory {
         address[] calldata _members,
         uint256 _honestThreshold,
         uint256 _minimumStake,
+        uint256 _stakeLockDuration,
         address _tokenStaking,
         address _keepBonding,
         address payable _keepFactory
@@ -36,6 +37,7 @@ contract BondedECDSAKeepCloneFactory is CloneFactory {
             _members,
             _honestThreshold,
             _minimumStake,
+            _stakeLockDuration,
             _tokenStaking,
             _keepBonding,
             _keepFactory
