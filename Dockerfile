@@ -20,13 +20,13 @@ RUN apk add --update --no-cache \
 	nodejs \
 	npm \
 	python \
-	git \ 
+	git \
 	protobuf && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
 # Install Solidity compiler.
-COPY --from=ethereum/solc:0.5.15 /usr/bin/solc /usr/bin/solc
+COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
 
 # Configure GitHub token to be able to get private repositories.
 ARG GITHUB_TOKEN
