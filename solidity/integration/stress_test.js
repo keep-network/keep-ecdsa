@@ -11,6 +11,7 @@ const stressLevel = 5
 const groupSize = 3
 const threshold = 3
 const bond = 10
+const stakeLockDuration = 100
 
 module.exports = async function () {
   const accounts = await web3.eth.getAccounts()
@@ -60,10 +61,17 @@ function openKeep(keepFactory, keepOwner, application) {
     const fee = await keepFactory.openKeepFeeEstimate.call()
 
     console.log(`opening a new keep at [${new Date().toLocaleString()}]...`)
-    await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-      from: application,
-      value: fee,
-    })
+    await keepFactory.openKeep(
+      groupSize,
+      threshold,
+      keepOwner,
+      bond,
+      stakeLockDuration,
+      {
+        from: application,
+        value: fee,
+      }
+    )
     resolve()
   })
 }
