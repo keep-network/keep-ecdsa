@@ -15,8 +15,8 @@ const bond = 10
 module.exports = async function () {
   const accounts = await web3.eth.getAccounts()
 
-  const keepOwner = accounts[4]
-  const application = accounts[5]
+  const keepOwner = accounts[5]
+  const application = accounts[6]
 
   try {
     const keepFactory = await BondedECDSAKeepFactory.deployed()
