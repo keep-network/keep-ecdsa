@@ -13,6 +13,8 @@ contract TokenStakingStub is IStaking {
 
     mapping(address => uint256) stakes;
 
+    mapping(address => int256) public operatorLocks;
+
     // Authorized operator contracts.
     mapping(address => mapping(address => bool)) internal authorizations;
 
@@ -54,6 +56,16 @@ contract TokenStakingStub is IStaking {
             address operator = _misbehavedOperators[i];
             stakes[operator] = stakes[operator].sub(_amount);
         }
+    }
+
+    function lockStake(address operator, uint256 duration) public {
+        operatorLocks[operator] = int256(duration);
+    }
+
+    function unlockStake(address operator) public {
+        // We set it to negative value to be sure in tests that the function is
+        // actually called and not just default `0` value is returned.
+        operatorLocks[operator] = -1;
     }
 
     function authorizeOperatorContract(

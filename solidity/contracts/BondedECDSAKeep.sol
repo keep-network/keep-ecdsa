@@ -40,9 +40,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
 
-    // Minimum stake that was required from each keep member on keep creation.
+    // Stake that was required from each keep member on keep creation.
     // The value is used for keep members slashing.
-    uint256 public minimumStake;
+    uint256 public memberStake;
 
     // Keep's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
@@ -471,6 +471,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @param _owner Address of the keep owner.
     /// @param _members Addresses of the keep members.
     /// @param _honestThreshold Minimum number of honest keep members.
+    /// @param _memberStake Stake required from each keep member.
+    /// @param _stakeLockDuration Stake lock duration in seconds.
     /// @param _tokenStaking Address of the TokenStaking contract.
     /// @param _keepBonding Address of the KeepBonding contract.
     /// @param _keepFactory Address of the BondedECDSAKeepFactory that created
@@ -479,7 +481,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
-        uint256 _minimumStake,
+        uint256 _memberStake,
+        uint256 _stakeLockDuration,
         address _tokenStaking,
         address _keepBonding,
         address payable _keepFactory
@@ -489,14 +492,18 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         owner = _owner;
         members = _members;
         honestThreshold = _honestThreshold;
-        minimumStake = _minimumStake;
+        memberStake = _memberStake;
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         keepFactory = BondedECDSAKeepFactory(_keepFactory);
         status = Status.Active;
         isInitialized = true;
 
-        tokenStaking.claimDelegatedAuthority(address(keepFactory));
+        tokenStaking.claimDelegatedAuthority(_keepFactory);
+
+        for (uint256 i = 0; i < _members.length; i++) {
+            tokenStaking.lockStake(_members[i], _stakeLockDuration);
+        }
 
         /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
@@ -589,9 +596,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     }
 
     /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
-    /// amount equal to the minimum stake from the moment the keep was created.
+    /// amount equal to the member stake set by the factory when keep was created.
     function slashSignerStakes() internal onlyWhenActive {
-        tokenStaking.slash(minimumStake, members);
+        tokenStaking.slash(memberStake, members);
     }
 
     /// @notice Returns true if signing of a digest is currently in progress.
@@ -618,12 +625,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             "Requested signing has not timed out yet"
         );
 
+        unlockMemberStakes();
+
         status = Status.Closed;
         emit KeepClosed();
     }
 
     /// @notice Marks the keep as terminated.
-    /// Keep can be marked as closed only when there is no signing in progress
+    /// Keep can be marked as terminated only when there is no signing in progress
     /// or the requested signing process has timed out.
     function markAsTerminated() internal {
         require(
@@ -631,8 +640,18 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             "Requested signing has not timed out yet"
         );
 
+        unlockMemberStakes();
+
         status = Status.Terminated;
         emit KeepTerminated();
+    }
+
+    /// @notice Releases locks the keep had previously placed on the members'
+    /// token stakes.
+    function unlockMemberStakes() internal {
+        for (uint256 i = 0; i < members.length; i++) {
+            tokenStaking.unlockStake(members[i]);
+        }
     }
 
     /// @notice Returns bonds to the keep members.

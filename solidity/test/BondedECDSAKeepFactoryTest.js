@@ -1,6 +1,6 @@
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 
 import {mineBlocks} from "./helpers/mineBlocks"
 
@@ -46,6 +46,8 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
   const singleBond = new BN(1)
   const bond = singleBond.mul(groupSize)
+
+  const stakeLockDuration = time.duration.days(180)
 
   beforeEach(async () => {
     await createSnapshot()
@@ -694,9 +696,16 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
     it("reverts if no member candidates are registered", async () => {
       await expectRevert(
-        keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-          value: feeEstimate,
-        }),
+        keepFactory.openKeep(
+          groupSize,
+          threshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            value: feeEstimate,
+          }
+        ),
         "No signer pool for this application"
       )
     })
@@ -705,10 +714,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const bond = 0
 
       await expectRevert(
-        keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-          from: application,
-          value: feeEstimate,
-        }),
+        keepFactory.openKeep(
+          groupSize,
+          threshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            from: application,
+            value: feeEstimate,
+          }
+        ),
         "Bond per member must be greater than zero"
       )
     })
@@ -717,10 +733,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const insufficientFee = feeEstimate.sub(new BN(1))
 
       await expectRevert(
-        keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-          from: application,
-          fee: insufficientFee,
-        }),
+        keepFactory.openKeep(
+          groupSize,
+          threshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            from: application,
+            fee: insufficientFee,
+          }
+        ),
         "Insufficient payment for opening a new keep"
       )
     })
@@ -728,10 +751,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     it("opens keep with multiple members", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-        from: application,
-        value: feeEstimate,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       const eventList = await keepFactory.getPastEvents(
         "BondedECDSAKeepCreated",
@@ -753,10 +783,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     it("opens bonds for keep", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-        from: application,
-        value: feeEstimate,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       const eventList = await keepFactory.getPastEvents(
         "BondedECDSAKeepCreated",
@@ -794,6 +831,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         threshold,
         keepOwner,
         requestedBond,
+        stakeLockDuration,
         {from: application, value: feeEstimate}
       )
 
@@ -836,6 +874,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         threshold,
         keepOwner,
         requestedBond,
+        stakeLockDuration,
         {from: application, value: feeEstimate}
       )
 
@@ -869,10 +908,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const requestedGroupSize = groupSize.addn(1)
 
       await expectRevert(
-        keepFactory.openKeep(requestedGroupSize, threshold, keepOwner, bond, {
-          from: application,
-          value: feeEstimate,
-        }),
+        keepFactory.openKeep(
+          requestedGroupSize,
+          threshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            from: application,
+            value: feeEstimate,
+          }
+        ),
         "Not enough operators in pool"
       )
     })
@@ -890,10 +936,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       })
 
       await expectRevert(
-        keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-          from: application,
-          value: feeEstimate,
-        }),
+        keepFactory.openKeep(
+          groupSize,
+          threshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            from: application,
+            value: feeEstimate,
+          }
+        ),
         "Not enough operators in pool"
       )
     })
@@ -942,10 +995,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       await randomBeacon.setEntry(expectedNewEntry)
 
-      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-        from: application,
-        value: feeEstimate,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       assert.equal(
         await randomBeacon.requestCount.call(),
@@ -970,10 +1030,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         web3.utils.soliditySha3(groupSelectionSeed, keepFactory.address)
       )
 
-      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-        from: application,
-        value: feeEstimate,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         expectedNewGroupSelectionSeed,
@@ -984,10 +1051,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     it("ignores beacon request relay entry failure", async () => {
       await randomBeacon.setShouldFail(true)
 
-      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-        from: application,
-        value: feeEstimate,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       // TODO: Add verification of what we will do in case of the failure.
     })
@@ -995,10 +1069,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     it("forwards payment to random beacon", async () => {
       const value = new BN(150)
 
-      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-        from: application,
-        value: value,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: value,
+        }
+      )
 
       expect(await web3.eth.getBalance(randomBeacon.address)).to.eq.BN(
         value,
@@ -1011,10 +1092,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const groupSize = 3
 
       await expectRevert(
-        keepFactory.openKeep(groupSize, honestThreshold, keepOwner, bond, {
-          from: application,
-          value: feeEstimate,
-        }),
+        keepFactory.openKeep(
+          groupSize,
+          honestThreshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            from: application,
+            value: feeEstimate,
+          }
+        ),
         "Honest threshold must be less or equal the group size"
       )
     })
@@ -1025,10 +1113,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await keepFactory.openKeep(groupSize, honestThreshold, keepOwner, bond, {
-        from: application,
-        value: feeEstimate,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        honestThreshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       const eventList = await keepFactory.getPastEvents(
         "BondedECDSAKeepCreated",
@@ -1049,13 +1144,21 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         threshold,
         keepOwner,
         bond,
+        stakeLockDuration,
         {from: application, value: feeEstimate}
       )
 
-      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-        from: application,
-        value: feeEstimate,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
       const recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
       const keep = await BondedECDSAKeep.at(keepAddress)
       const keepOpenedTime = await keep.getOpenedTimestamp()
@@ -1081,13 +1184,21 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         threshold,
         keepOwner,
         bond,
+        stakeLockDuration,
         {from: application, value: feeEstimate}
       )
 
-      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-        from: application,
-        value: feeEstimate,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       const keep = await BondedECDSAKeep.at(keepAddress)
 
@@ -1103,10 +1214,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-        from: application,
-        value: feeEstimate,
-      })
+      await keepFactory.openKeep(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       const eventList = await keepFactory.getPastEvents(
         "BondedECDSAKeepCreated",
@@ -1128,10 +1246,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       const groupSize = 17
 
       await expectRevert(
-        keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-          from: application,
-          value: feeEstimate,
-        }),
+        keepFactory.openKeep(
+          groupSize,
+          threshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            from: application,
+            value: feeEstimate,
+          }
+        ),
         "Maximum signing group size is 16"
       )
     })
@@ -1498,13 +1623,21 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       threshold,
       keepOwner,
       bond,
+      stakeLockDuration,
       {from: application, value: feeEstimate}
     )
 
-    await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-      from: application,
-      value: feeEstimate,
-    })
+    await keepFactory.openKeep(
+      groupSize,
+      threshold,
+      keepOwner,
+      bond,
+      stakeLockDuration,
+      {
+        from: application,
+        value: feeEstimate,
+      }
+    )
 
     return await BondedECDSAKeep.at(keepAddress)
   }
