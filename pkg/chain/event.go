@@ -10,6 +10,27 @@ type BondedECDSAKeepCreatedEvent struct {
 	Members     []common.Address // keep members addresses
 }
 
+// ConflictingPublicKeySubmittedEvent is an event emitted each time when one of
+// the members of a keep has submitted a key that does not match the keys submitted
+// so far by other members.
+type ConflictingPublicKeySubmittedEvent struct {
+	SubmittingMember     common.Address
+	ConflictingPublicKey []byte
+}
+
+// PublicKeyPublishedEvent is an event emitted once all the members have submitted
+// the same public key and it was accepted by keep as its public key.
+type PublicKeyPublishedEvent struct {
+	PublicKey []byte
+}
+
+// SignatureRequestedEvent is an event emitted when a user requests
+// a digest to be signed.
+type SignatureRequestedEvent struct {
+	Digest      [32]byte
+	BlockNumber uint64
+}
+
 // KeepClosedEvent is an event emitted when a keep has been closed.
 type KeepClosedEvent struct {
 	BlockNumber uint64
@@ -28,25 +49,4 @@ func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
 		}
 	}
 	return false
-}
-
-// SignatureRequestedEvent is an event emitted when a user requests
-// a digest to be signed.
-type SignatureRequestedEvent struct {
-	Digest      [32]byte
-	BlockNumber uint64
-}
-
-// ConflictingPublicKeySubmittedEvent is an event emitted each time when one of
-// the members of a keep has submitted a key that does not match the keys submitted
-// so far by other members.
-type ConflictingPublicKeySubmittedEvent struct {
-	SubmittingMember     common.Address
-	ConflictingPublicKey []byte
-}
-
-// PublicKeyPublishedEvent is an event emitted once all the members have submitted
-// the same public key and it was accepted by keep as its public key.
-type PublicKeyPublishedEvent struct {
-	PublicKey []byte
 }
