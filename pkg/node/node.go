@@ -355,7 +355,7 @@ func (n *Node) publishSignature(
 			continue
 		}
 
-		logger.Infof("Signature submitted")
+		logger.Infof("signature submitted")
 		return nil
 	}
 }
