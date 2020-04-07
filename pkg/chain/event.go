@@ -12,10 +12,12 @@ type BondedECDSAKeepCreatedEvent struct {
 
 // KeepClosedEvent is an event emitted when a keep has been closed.
 type KeepClosedEvent struct {
+	BlockNumber uint64
 }
 
 // KeepTerminatedEvent is an event emitted when a keep has been terminated.
 type KeepTerminatedEvent struct {
+	BlockNumber uint64
 }
 
 // IsMember checks if list of members contains the given address.
@@ -31,7 +33,8 @@ func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
 // SignatureRequestedEvent is an event emitted when a user requests
 // a digest to be signed.
 type SignatureRequestedEvent struct {
-	Digest [32]byte
+	Digest      [32]byte
+	BlockNumber uint64
 }
 
 // ConflictingPublicKeySubmittedEvent is an event emitted each time when one of
