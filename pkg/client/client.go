@@ -3,6 +3,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -23,6 +24,7 @@ var logger = log.Logger("keep-ecdsa")
 const (
 	keyGenerationTimeout = 150 * time.Minute
 	signingTimeout       = 90 * time.Minute
+	blockConfirmations   = 12
 )
 
 // Initialize initializes the ECDSA client with rules related to events handling.
@@ -215,10 +217,36 @@ func monitorSigningRequests(
 		keepAddress,
 		func(event *eth.SignatureRequestedEvent) {
 			logger.Infof(
-				"new signature requested from keep [%s] for digest: [%+x]",
+				"new signature requested from keep [%s] for digest [%+x] at block [%d]",
 				keepAddress.String(),
 				event.Digest,
+				event.BlockNumber,
 			)
+
+			isAwaitingSignature, err := waitForEventConfirmation(
+				ethereumChain,
+				event.BlockNumber,
+				func() (bool, error) {
+					return ethereumChain.IsAwaitingSignature(keepAddress, event.Digest)
+				},
+			)
+			if err != nil {
+				logger.Errorf(
+					"failed to confirm signing request for digest [%+x] and keep [%s]",
+					event.Digest,
+					keepAddress.String(),
+				)
+				return
+			}
+
+			if !isAwaitingSignature {
+				logger.Warningf(
+					"keep [%s] is not awaiting a signature for digest [%+x]",
+					keepAddress.String(),
+					event.Digest,
+				)
+				return
+			}
 
 			go generateSignatureForKeep(tssNode, keepAddress, signer, event.Digest)
 		},
@@ -287,7 +315,33 @@ func monitorKeepClosedEvents(
 	subscriptionOnKeepClosed, err := ethereumChain.OnKeepClosed(
 		keepAddress,
 		func(event *eth.KeepClosedEvent) {
-			logger.Infof("keep [%s] closed", keepAddress.String())
+			logger.Infof(
+				"keep [%s] closed event received at block [%d]",
+				keepAddress.String(),
+				event.BlockNumber,
+			)
+
+			isKeepActive, err := waitForEventConfirmation(
+				ethereumChain,
+				event.BlockNumber,
+				func() (bool, error) {
+					return ethereumChain.IsActive(keepAddress)
+				},
+			)
+			if err != nil {
+				logger.Errorf(
+					"failed to confirm keep [%s] closure: [%v]",
+					keepAddress.String(),
+					err,
+				)
+				return
+			}
+
+			if isKeepActive {
+				logger.Warningf("keep [%s] has not been closed", keepAddress.String())
+				return
+			}
+
 			keepsRegistry.UnregisterKeep(keepAddress)
 			keepClosed <- event
 		},
@@ -323,7 +377,33 @@ func monitorKeepTerminatedEvent(
 	subscriptionOnKeepTerminated, err := ethereumChain.OnKeepTerminated(
 		keepAddress,
 		func(event *eth.KeepTerminatedEvent) {
-			logger.Warningf("keep [%s] terminated", keepAddress.String())
+			logger.Warningf(
+				"keep [%s] terminated event received at block [%d]",
+				keepAddress.String(),
+				event.BlockNumber,
+			)
+
+			isKeepActive, err := waitForEventConfirmation(
+				ethereumChain,
+				event.BlockNumber,
+				func() (bool, error) {
+					return ethereumChain.IsActive(keepAddress)
+				},
+			)
+			if err != nil {
+				logger.Errorf(
+					"failed to confirm keep [%s] termination: [%v]",
+					keepAddress.String(),
+					err,
+				)
+				return
+			}
+
+			if isKeepActive {
+				logger.Warningf("keep [%s] has not been terminated", keepAddress.String())
+				return
+			}
+
 			keepsRegistry.UnregisterKeep(keepAddress)
 			keepTerminated <- event
 		},
@@ -343,4 +423,30 @@ func monitorKeepTerminatedEvent(
 	<-keepTerminated
 
 	logger.Info("unsubscribing from events on keep terminated")
+}
+
+// waitForEventConfirmation ensures that after receiving specific number of block
+// confirmations the state of the chain is actually as expected. It waits for
+// predefined number of blocks since the start block number provided. After the
+// required block number is reached it performs a check of the chain state with
+// a provided function returning a boolean value.
+func waitForEventConfirmation(
+	ethereumChain eth.Handle,
+	startBlockNumber uint64,
+	stateCheck func() (bool, error),
+) (bool, error) {
+	blockHeight := startBlockNumber + blockConfirmations
+	logger.Infof("waiting for [%d] block", blockHeight)
+
+	err := ethereumChain.BlockCounter().WaitForBlockHeight(blockHeight)
+	if err != nil {
+		return false, fmt.Errorf("failed to wait for block height: [%v]", err)
+	}
+
+	result, err := stateCheck()
+	if err != nil {
+		return false, fmt.Errorf("failed to get state confirmation: [%v]", err)
+	}
+
+	return result, nil
 }
