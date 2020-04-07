@@ -1,7 +1,3 @@
-const BondedECDSAKeepVendor = artifacts.require("./BondedECDSAKeepVendor.sol")
-const BondedECDSAKeepVendorImplV1 = artifacts.require(
-  "./BondedECDSAKeepVendorImplV1.sol"
-)
 const BondedECDSAKeepFactory = artifacts.require("./BondedECDSAKeepFactory.sol")
 const BondedECDSAKeep = artifacts.require("./BondedECDSAKeep.sol")
 
@@ -22,22 +18,11 @@ module.exports = async function () {
   const keepOwner = accounts[4]
   const application = accounts[5]
 
-  let keepFactory
-
   try {
-    const keepVendor = await BondedECDSAKeepVendorImplV1.at(
-      (await BondedECDSAKeepVendor.deployed()).address
-    )
-    const keepFactoryAddress = await keepVendor.selectFactory()
-    keepFactory = await BondedECDSAKeepFactory.at(keepFactoryAddress)
-  } catch (err) {
-    console.error(`failed to select a factory: [${err}]`)
-    process.exit(1)
-  }
+    const keepFactory = await BondedECDSAKeepFactory.deployed()
 
-  let generatedKeys = 0
+    let generatedKeys = 0
 
-  try {
     keepFactory.BondedECDSAKeepCreated(async (_, event) => {
       const keepAddress = event.returnValues.keepAddress
       keep = await BondedECDSAKeep.at(keepAddress)
