@@ -169,6 +169,10 @@ func (lc *localChain) UpdateStatusForApplication(application common.Address) err
 	panic("implement")
 }
 
+func (lc *localChain) GetLastKeep() (common.Address, error) {
+	panic("implement")
+}
+
 func (lc *localChain) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
@@ -198,5 +202,9 @@ func (lc *localChain) OnPublicKeyPublished(
 }
 
 func (lc *localChain) LatestDigest(keepAddress common.Address) ([32]byte, error) {
+	panic("implement")
+}
+
+func (lc *localChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
 	panic("implement")
 }

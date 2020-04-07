@@ -50,6 +50,9 @@ type BondedECDSAKeepFactory interface {
 	// UpdateStatusForApplication updates the operator's status in the signers'
 	// pool for the given application.
 	UpdateStatusForApplication(application common.Address) error
+
+	// GetLastKeep returns the address of the last opened keep.
+	GetLastKeep() (common.Address, error)
 }
 
 // BondedECDSAKeep is an interface that provides ability to interact with
@@ -112,4 +115,7 @@ type BondedECDSAKeep interface {
 
 	// LatestDigest returns the latest digest requested to be signed.
 	LatestDigest(keepAddress common.Address) ([32]byte, error)
+
+	// GetPublicKey returns keep's public key.
+	GetPublicKey(keepAddress common.Address) ([]uint8, error)
 }
