@@ -97,7 +97,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
-    it("locks members token stakes", async () => {
+    it("locks member stakes", async () => {
       const tx = await keepFactory.openKeep(
         groupSize,
         threshold,
@@ -132,7 +132,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   })
 
   describe("closeKeep", async () => {
-    it("releases locks on members token stakes", async () => {
+    it("releases locks on member stakes", async () => {
       const keep = await openKeep({from: keepOwner})
 
       await keep.closeKeep({from: keepOwner})
@@ -148,7 +148,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   })
 
   describe("seizeSignerBonds", async () => {
-    it("releases locks on members token stakes", async () => {
+    it("releases locks on member stakes", async () => {
       const keep = await openKeep({from: keepOwner})
 
       await keep.seizeSignerBonds({from: keepOwner})
