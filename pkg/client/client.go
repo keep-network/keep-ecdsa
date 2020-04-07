@@ -158,30 +158,52 @@ func checkAwaitingKeyGeneration(
 		return
 	}
 
-	publicKey, err := ethereumChain.GetPublicKey(keep)
+	err = checkAwaitingKeyGenerationForKeep(
+		ctx,
+		ethereumChain,
+		tssNode,
+		operatorPublicKey,
+		keepsRegistry,
+		keep,
+	)
 	if err != nil {
 		logger.Warningf(
-			"could not check awaiting key generation; "+
-				"could not get public key for keep [%s]: [%v]",
+			"could not check awaiting key generation for keep [%s]: [%v]",
 			keep.String(),
 			err,
 		)
-		return
+	}
+}
+
+func checkAwaitingKeyGenerationForKeep(
+	ctx context.Context,
+	ethereumChain eth.Handle,
+	tssNode *node.Node,
+	operatorPublicKey *operator.PublicKey,
+	keepsRegistry *registry.Keeps,
+	keep common.Address,
+) error {
+	publicKey, err := ethereumChain.GetPublicKey(keep)
+	if err != nil {
+		return err
 	}
 
 	if len(publicKey) != 0 {
-		return
+		return nil
+	}
+
+	hasKeyGenerationTimedOut, err := ethereumChain.HasKeyGenerationTimedOut(keep)
+	if err != nil {
+		return err
+	}
+
+	if hasKeyGenerationTimedOut {
+		return nil
 	}
 
 	members, err := ethereumChain.GetMembers(keep)
 	if err != nil {
-		logger.Warningf(
-			"could not check awaiting key generation; "+
-				"could not get members for keep [%s]: [%v]",
-			keep.String(),
-			err,
-		)
-		return
+		return err
 	}
 
 	isMember := false
@@ -193,10 +215,8 @@ func checkAwaitingKeyGeneration(
 	}
 
 	if !isMember {
-		return
+		return nil
 	}
-
-	// TODO: Check timeout.
 
 	generateKeyForKeep(
 		ctx,
@@ -207,6 +227,8 @@ func checkAwaitingKeyGeneration(
 		keep,
 		members,
 	)
+
+	return nil
 }
 
 func generateKeyForKeep(

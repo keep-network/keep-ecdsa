@@ -214,3 +214,9 @@ func (lc *localChain) GetMembers(
 ) ([]common.Address, error) {
 	panic("implement")
 }
+
+func (lc *localChain) HasKeyGenerationTimedOut(
+	keepAddress common.Address,
+) (bool, error) {
+	panic("implement")
+}

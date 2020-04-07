@@ -121,4 +121,8 @@ type BondedECDSAKeep interface {
 
 	// GetPublicKey returns keep's members.
 	GetMembers(keepAddress common.Address) ([]common.Address, error)
+
+	// HasKeyGenerationTimedOut returns whether key generation
+	// has timed out for given keep.
+	HasKeyGenerationTimedOut(keepAddress common.Address) (bool, error)
 }

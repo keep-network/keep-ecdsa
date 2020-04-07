@@ -411,3 +411,14 @@ func (ec *EthereumChain) GetMembers(
 
 	return keepContract.GetMembers()
 }
+
+func (ec *EthereumChain) HasKeyGenerationTimedOut(
+	keepAddress common.Address,
+) (bool, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	return keepContract.HasKeyGenerationTimedOut()
+}
