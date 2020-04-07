@@ -33,6 +33,7 @@ module.exports = async function () {
   const groupSize = 3
   const threshold = 3
   const bond = 10
+  const stakeLockDuration = 100
 
   try {
     startBlockNumber = await web3.eth.getBlock("latest").number
@@ -83,10 +84,17 @@ module.exports = async function () {
     relayEntryGeneratedWatcher = watchRelayEntryGenerated(randomBeacon)
     const keepCreatedWatcher = watchKeepCreated(keepFactory)
 
-    await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-      from: application,
-      value: fee,
-    })
+    await keepFactory.openKeep(
+      groupSize,
+      threshold,
+      keepOwner,
+      bond,
+      stakeLockDuration,
+      {
+        from: application,
+        value: fee,
+      }
+    )
 
     const keepCreatedEvent = await keepCreatedWatcher
 
