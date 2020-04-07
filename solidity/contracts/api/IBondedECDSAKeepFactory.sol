@@ -1,5 +1,6 @@
 pragma solidity ^0.5.4;
 
+
 /// @title Bonded ECDSA Keep Factory
 /// @notice Factory for Bonded ECDSA Keeps.
 interface IBondedECDSAKeepFactory {
@@ -8,12 +9,14 @@ interface IBondedECDSAKeepFactory {
     /// @param _honestThreshold Minimum number of honest keep members.
     /// @param _owner Address of the keep owner.
     /// @param _bond Value of ETH bond required from the keep.
+    /// @param _stakeLockDuration Stake lock duration in seconds.
     /// @return Address of the opened keep.
     function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
         address _owner,
-        uint256 _bond
+        uint256 _bond,
+        uint256 _stakeLockDuration
     ) external payable returns (address keepAddress);
 
     /// @notice Gets a fee estimate for opening a new keep.
