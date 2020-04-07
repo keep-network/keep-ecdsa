@@ -400,3 +400,14 @@ func (ec *EthereumChain) GetPublicKey(keepAddress common.Address) ([]uint8, erro
 
 	return keepContract.GetPublicKey()
 }
+
+func (ec *EthereumChain) GetMembers(
+	keepAddress common.Address,
+) ([]common.Address, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return []common.Address{}, err
+	}
+
+	return keepContract.GetMembers()
+}

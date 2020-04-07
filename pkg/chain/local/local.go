@@ -208,3 +208,9 @@ func (lc *localChain) LatestDigest(keepAddress common.Address) ([32]byte, error)
 func (lc *localChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
 	panic("implement")
 }
+
+func (lc *localChain) GetMembers(
+	keepAddress common.Address,
+) ([]common.Address, error) {
+	panic("implement")
+}

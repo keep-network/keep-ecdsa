@@ -118,4 +118,7 @@ type BondedECDSAKeep interface {
 
 	// GetPublicKey returns keep's public key.
 	GetPublicKey(keepAddress common.Address) ([]uint8, error)
+
+	// GetPublicKey returns keep's members.
+	GetMembers(keepAddress common.Address) ([]common.Address, error)
 }
