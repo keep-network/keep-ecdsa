@@ -293,6 +293,12 @@ func (n *Node) publishSignature(
 	for {
 		attemptCounter++
 
+		// Global timeout for generating a signature exceeded.
+		// We are giving up and leaving this function.
+		if ctx.Err() != nil {
+			return fmt.Errorf("signing timeout exceeded")
+		}
+
 		// Check if keep still awaits a signature for this digest.
 		// We do this check here in case the attempt was retried because of
 		// on-chain failure during submission. In this case we want to make sure
