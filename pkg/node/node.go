@@ -273,7 +273,7 @@ func (n *Node) CalculateSignature(
 	}
 }
 
-// publisSignature takes the provided signature and attempts to publish it to
+// publishSignature takes the provided signature and attempts to publish it to
 // the chain. It implements retry mechanism allowing to attempt to publish again
 // in case of a failure.
 //
