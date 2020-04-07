@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeep.sol";
