@@ -445,7 +445,7 @@ func waitForEventConfirmation(
 
 	result, err := stateCheck()
 	if err != nil {
-		return false, fmt.Errorf("failed to get state confirmation: [%v]", err)
+		return false, fmt.Errorf("failed to get chain state confirmation: [%v]", err)
 	}
 
 	return result, nil
