@@ -223,8 +223,8 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 }
 
 func (ec *EthereumChain) withRetry(fn func() error) error {
-	const numberOfRetries = 4
-	const delay = 250 * time.Millisecond
+	const numberOfRetries = 10
+	const delay = 12 * time.Second
 
 	for i := 1; ; i++ {
 		err := fn()

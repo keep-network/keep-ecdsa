@@ -21,10 +21,10 @@ module.exports = async function () {
   const accounts = await web3.eth.getAccounts()
 
   // It assumes that account[0] is contracts deployer for migrations and
-  // accounts[1-3] are configured as keep members.
-  const members = [accounts[1], accounts[2], accounts[3]]
-  const keepOwner = accounts[4]
-  const application = accounts[5]
+  // accounts[1-4] are configured as keep members.
+  const members = [accounts[1], accounts[2], accounts[3], accounts[4]]
+  const keepOwner = accounts[5]
+  const application = accounts[6]
 
   let keep
   let keepPublicKey
