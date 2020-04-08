@@ -23,6 +23,7 @@ func (ec *EthereumChain) OnUnbondedValueWithdrawn(
 		) {
 			handler(&eth.UnbondedValueWithdrawnEvent{
 				Operator: Operator,
+				Amount:   Amount,
 			})
 		},
 		func(err error) error {
@@ -48,7 +49,11 @@ func (ec *EthereumChain) OnBondCreated(
 			blockNumber uint64,
 		) {
 			handler(&eth.BondCreatedEvent{
-				Operator: Operator,
+				Operator:    Operator,
+				Holder:      Holder,
+				SignerPool:  SortitionPool,
+				ReferenceID: ReferenceID,
+				Amount:      Amount,
 			})
 		},
 		func(err error) error {

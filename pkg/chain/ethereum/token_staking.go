@@ -23,6 +23,7 @@ func (ec *EthereumChain) OnTokensSlashed(
 		) {
 			handler(&eth.TokensSlashedEvent{
 				Operator: Operator,
+				Amount:   Amount,
 			})
 		},
 		func(err error) error {
@@ -46,6 +47,7 @@ func (ec *EthereumChain) OnTokensSeized(
 		) {
 			handler(&eth.TokensSeizedEvent{
 				Operator: Operator,
+				Amount:   Amount,
 			})
 		},
 		func(err error) error {
