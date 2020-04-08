@@ -1,6 +1,8 @@
 package eth
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -39,6 +41,34 @@ type KeepClosedEvent struct {
 // KeepTerminatedEvent is an event emitted when a keep has been terminated.
 type KeepTerminatedEvent struct {
 	BlockNumber uint64
+}
+
+// UnbondedValueWithdrawnEvent is an event emitted when unbonded value has been
+// withdrawn for an operator.
+type UnbondedValueWithdrawnEvent struct {
+	Operator common.Address
+	Amount   *big.Int
+}
+
+// BondCreatedEvent is an event emitted a bond has been created.
+type BondCreatedEvent struct {
+	Operator    common.Address
+	Holder      common.Address
+	SignerPool  common.Address
+	ReferenceID *big.Int
+	Amount      *big.Int
+}
+
+// TokensSlashedEvent is an event emitted a tokens has been slashed for an operator.
+type TokensSlashedEvent struct {
+	Operator common.Address
+	Amount   *big.Int
+}
+
+// TokensSeizedEvent is an event emitted a tokens has been seized for an operator.
+type TokensSeizedEvent struct {
+	Operator common.Address
+	Amount   *big.Int
 }
 
 // IsMember checks if list of members contains the given address.

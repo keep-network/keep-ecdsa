@@ -20,6 +20,8 @@ type Handle interface {
 
 	BondedECDSAKeepFactory
 	BondedECDSAKeep
+	KeepBonding
+	TokenStaking
 }
 
 // BondedECDSAKeepFactory is an interface that provides ability to interact with
@@ -112,4 +114,40 @@ type BondedECDSAKeep interface {
 
 	// LatestDigest returns the latest digest requested to be signed.
 	LatestDigest(keepAddress common.Address) ([32]byte, error)
+}
+
+// KeepBonding is an interface that provides ability to interact with KeepBonding
+// ethereum contract.
+type KeepBonding interface {
+	// OnUnbondedValueWithdrawn installs a callback that will be called on unbonded
+	// value withdraw for the given operator.
+	OnUnbondedValueWithdrawn(
+		operatorAddress common.Address,
+		handler func(event *UnbondedValueWithdrawnEvent),
+	) (subscription.EventSubscription, error)
+
+	// OnBondCreated installs a callback that will be called on bond creation
+	// for the given operator.
+	OnBondCreated(
+		operatorAddress common.Address,
+		handler func(event *BondCreatedEvent),
+	) (subscription.EventSubscription, error)
+}
+
+// TokenStaking is an interface that provides ability to interact with TokenStaking
+// ethereum contract.
+type TokenStaking interface {
+	// OnTokensSlashed installs a callback that will be called on token stake
+	// slash for the given operator.
+	OnTokensSlashed(
+		operatorAddress common.Address,
+		handler func(event *TokensSlashedEvent),
+	) (subscription.EventSubscription, error)
+
+	// OnTokensSlashed installs a callback that will be called on token stake
+	// seizure for the given operator.
+	OnTokensSeized(
+		operatorAddress common.Address,
+		handler func(event *TokensSeizedEvent),
+	) (subscription.EventSubscription, error)
 }
