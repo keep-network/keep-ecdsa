@@ -230,7 +230,13 @@ func monitorSigningRequests(
 	signer *tss.ThresholdSigner,
 	requestedSignatures *requestedSignaturesTrack,
 ) (subscription.EventSubscription, error) {
-	go checkAwaitingSignature(ethereumChain, tssNode, keepAddress, signer)
+	go checkAwaitingSignature(
+		ethereumChain,
+		tssNode,
+		keepAddress,
+		signer,
+		requestedSignatures,
+	)
 
 	return ethereumChain.OnSignatureRequested(
 		keepAddress,
@@ -285,6 +291,7 @@ func checkAwaitingSignature(
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
+	requestedSignatures *requestedSignaturesTrack,
 ) {
 	logger.Debugf("checking awaiting signature for keep [%s]", keepAddress.String())
 
@@ -306,6 +313,12 @@ func checkAwaitingSignature(
 	}
 
 	if isAwaitingDigest {
+		if err := requestedSignatures.add(keepAddress, latestDigest); err != nil {
+			logger.Errorf("failed to register signature request [%v]", err)
+			return
+		}
+		defer requestedSignatures.remove(keepAddress, latestDigest)
+
 		currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
 		if err != nil {
 			logger.Errorf("failed to get current block height [%v]", err)
