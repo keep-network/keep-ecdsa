@@ -116,6 +116,34 @@ func Initialize(
 				"keep [%s] is no longer active; archiving",
 				keepAddress.String(),
 			)
+
+			currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
+			if err != nil {
+				logger.Errorf("failed to get current block height [%v]", err)
+				continue
+			}
+
+			isKeepActive, err := waitForChainConfirmation(
+				ethereumChain,
+				currentBlock,
+				func() (bool, error) {
+					return ethereumChain.IsActive(keepAddress)
+				},
+			)
+			if err != nil {
+				logger.Errorf(
+					"failed to confirm that keep [%s] is inactive: [%v]",
+					keepAddress.String(),
+					err,
+				)
+				continue
+			}
+
+			if isKeepActive {
+				logger.Warningf("keep [%s] has not been closed", keepAddress.String())
+				continue
+			}
+
 			keepsRegistry.UnregisterKeep(keepAddress)
 		}
 	}
