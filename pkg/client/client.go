@@ -130,8 +130,11 @@ func Initialize(
 
 		if event.IsMember(ethereumChain.Address()) {
 			go func(event *eth.BondedECDSAKeepCreatedEvent) {
-				if err := requestedSigners.add(event.KeepAddress); err != nil {
-					logger.Errorf("failed to register new keep creation event [%v]", err)
+				if ok := requestedSigners.add(event.KeepAddress); !ok {
+					logger.Errorf(
+						"keep creation event for keep [%s] already registered",
+						event.KeepAddress.String(),
+					)
 					return
 				}
 				defer requestedSigners.remove(event.KeepAddress)
@@ -243,8 +246,12 @@ func monitorSigningRequests(
 			)
 
 			go func(event *eth.SignatureRequestedEvent) {
-				if err := requestedSignatures.add(keepAddress, event.Digest); err != nil {
-					logger.Errorf("failed to register signature requested event [%v]", err)
+				if ok := requestedSignatures.add(keepAddress, event.Digest); !ok {
+					logger.Errorf(
+						"signature requested event for keep [%s] and digest [%x] already registered",
+						keepAddress.String(),
+						event.Digest,
+					)
 					return
 				}
 				defer requestedSignatures.remove(keepAddress, event.Digest)

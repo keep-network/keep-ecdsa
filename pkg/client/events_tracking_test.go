@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/hex"
-	"fmt"
 	"reflect"
 	"sync"
 	"testing"
@@ -19,11 +18,11 @@ func TestRequestedSignersTrackAdd(t *testing.T) {
 		mutex: &sync.Mutex{},
 	}
 
-	if err := rs.add(keepAddress1); err != nil {
-		t.Errorf("unexpected error: [%v]", err)
+	if !rs.add(keepAddress1) {
+		t.Error("unexpected failure")
 	}
 
-	if !rs.data[keepAddress1.String()] {
+	if ok := rs.data[keepAddress1.String()]; !ok {
 		t.Errorf(
 			"unexpected value for keep [%s]\nexpected: [%v]\nactual:   [%v]",
 			keepAddress1.String(),
@@ -32,8 +31,8 @@ func TestRequestedSignersTrackAdd(t *testing.T) {
 		)
 	}
 
-	if err := rs.add(keepAddress2); err != nil {
-		t.Errorf("unexpected error: [%v]", err)
+	if ok := rs.add(keepAddress2); !ok {
+		t.Error("unexpected failure")
 	}
 
 	if !rs.data[keepAddress2.String()] {
@@ -48,23 +47,21 @@ func TestRequestedSignersTrackAdd(t *testing.T) {
 
 func TestRequestedSignersTrackAdd_Duplicate(t *testing.T) {
 	keepAddress1 := common.BytesToAddress([]byte{1})
-	expectedError := fmt.Errorf("signer generation already requested for keep: [0x0000000000000000000000000000000000000001]")
 
 	rs := &requestedSignersTrack{
 		data:  make(map[string]bool),
 		mutex: &sync.Mutex{},
 	}
 
-	if err := rs.add(keepAddress1); err != nil {
-		t.Errorf("unexpected error: [%v]", err)
+	if ok := rs.add(keepAddress1); !ok {
+		t.Error("unexpected failure")
 	}
 
-	err := rs.add(keepAddress1)
-	if !reflect.DeepEqual(expectedError, err) {
+	if ok := rs.add(keepAddress1); ok {
 		t.Errorf(
-			"unexpected error\nexpected: [%v]\nactual:   [%v]",
-			expectedError,
-			err,
+			"unexpected result\nexpected: [%v]\nactual:   [%v]",
+			false,
+			ok,
 		)
 	}
 
@@ -86,8 +83,8 @@ func TestRequestedSignersTrackRemove(t *testing.T) {
 		mutex: &sync.Mutex{},
 	}
 
-	if err := rs.add(keepAddress1); err != nil {
-		t.Errorf("unexpected error: [%v]", err)
+	if ok := rs.add(keepAddress1); !ok {
+		t.Error("unexpected failure")
 	}
 
 	rs.remove(keepAddress1)
@@ -141,8 +138,8 @@ func TestRequestedSignaturesTrackAdd_SameKeep(t *testing.T) {
 			digest1String: true,
 		},
 	}
-	if err := rs.add(keepAddress1, digest1); err != nil {
-		t.Errorf("unexpected error: [%v]", err)
+	if ok := rs.add(keepAddress1, digest1); !ok {
+		t.Error("unexpected failure")
 	}
 	if !reflect.DeepEqual(expectedMap, rs.data) {
 		t.Errorf(
@@ -158,8 +155,8 @@ func TestRequestedSignaturesTrackAdd_SameKeep(t *testing.T) {
 			digest2String: true,
 		},
 	}
-	if err := rs.add(keepAddress1, digest2); err != nil {
-		t.Errorf("unexpected error: [%v]", err)
+	if ok := rs.add(keepAddress1, digest2); !ok {
+		t.Error("unexpected failure")
 	}
 	if !reflect.DeepEqual(expectedMap, rs.data) {
 		t.Errorf(
@@ -190,8 +187,8 @@ func TestRequestedSignaturesTrackAdd_DifferentKeeps(t *testing.T) {
 			digest1String: true,
 		},
 	}
-	if err := rs.add(keepAddress1, digest1); err != nil {
-		t.Errorf("unexpected error: [%v]", err)
+	if ok := rs.add(keepAddress1, digest1); !ok {
+		t.Error("unexpected failure")
 	}
 	if !reflect.DeepEqual(expectedMap, rs.data) {
 		t.Errorf(
@@ -209,8 +206,8 @@ func TestRequestedSignaturesTrackAdd_DifferentKeeps(t *testing.T) {
 			digest2String: true,
 		},
 	}
-	if err := rs.add(keepAddress2, digest2); err != nil {
-		t.Errorf("unexpected error: [%v]", err)
+	if ok := rs.add(keepAddress2, digest2); !ok {
+		t.Error("unexpected failure")
 	}
 	if !reflect.DeepEqual(expectedMap, rs.data) {
 		t.Errorf(
@@ -226,8 +223,6 @@ func TestRequestedSignaturesTrackAdd_Duplicate(t *testing.T) {
 	digest1 := [32]byte{9}
 	digest1String := hex.EncodeToString(digest1[:])
 
-	expectedError := fmt.Errorf("signature for digest [0900000000000000000000000000000000000000000000000000000000000000] already requested from keep: [0x0000000000000000000000000000000000000001]")
-
 	rs := &requestedSignaturesTrack{
 		data:  make(map[string]map[string]bool),
 		mutex: &sync.Mutex{},
@@ -238,8 +233,8 @@ func TestRequestedSignaturesTrackAdd_Duplicate(t *testing.T) {
 			digest1String: true,
 		},
 	}
-	if err := rs.add(keepAddress1, digest1); err != nil {
-		t.Errorf("unexpected error: [%v]", err)
+	if ok := rs.add(keepAddress1, digest1); !ok {
+		t.Error("unexpected failure")
 	}
 	if !reflect.DeepEqual(expectedMap, rs.data) {
 		t.Errorf(
@@ -249,12 +244,11 @@ func TestRequestedSignaturesTrackAdd_Duplicate(t *testing.T) {
 		)
 	}
 
-	err := rs.add(keepAddress1, digest1)
-	if !reflect.DeepEqual(expectedError, err) {
+	if ok := rs.add(keepAddress1, digest1); ok {
 		t.Errorf(
-			"unexpected error\nexpected: [%v]\nactual:   [%v]",
-			expectedError,
-			err,
+			"unexpected result\nexpected: [%v]\nactual:   [%v]",
+			false,
+			ok,
 		)
 	}
 	if !reflect.DeepEqual(expectedMap, rs.data) {
