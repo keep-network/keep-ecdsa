@@ -35,7 +35,7 @@ RegistrationLoop:
 					application.String(),
 					err,
 				)
-				return
+				continue RegistrationLoop
 			}
 
 			if !isRegistered {
