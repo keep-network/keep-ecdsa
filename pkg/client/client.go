@@ -355,8 +355,12 @@ func checkAwaitingSignature(
 	}
 
 	if isAwaitingDigest {
-		if err := requestedSignatures.add(keepAddress, latestDigest); err != nil {
-			logger.Errorf("failed to register signature request [%v]", err)
+		if ok := requestedSignatures.add(keepAddress, latestDigest); !ok {
+			logger.Errorf(
+				"signature requested event for keep [%s] and digest [%x] already registered",
+				keepAddress.String(),
+				latestDigest,
+			)
 			return
 		}
 		defer requestedSignatures.remove(keepAddress, latestDigest)
