@@ -235,7 +235,12 @@ async function createKeepTecdsaConfig() {
 
   parsedConfigFile.ethereum.account.KeyFile = operatorKeyFile
 
-  parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactory.address
+  parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory =
+    bondedECDSAKeepFactory.address
+  fileContent.ethereum.ContractAddresses.KeepBonding =
+    keepBondingContract.address
+  fileContent.ethereum.ContractAddresses.TokenStaking =
+    tokenStakingContract.address
 
   parsedConfigFile.SanctionedApplications.Addresses = [tbtcSystemContractAddress]
 
