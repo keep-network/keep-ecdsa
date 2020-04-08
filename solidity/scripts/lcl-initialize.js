@@ -12,6 +12,8 @@ const {
 
 module.exports = async function () {
   try {
+    const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000"
+
     // Assuming BTC/ETH rate = 50 to cover a keep bond of 1 BTC we need to have
     // 50 ETH / 3 members = 16,67 ETH of unbonded value for each member.
     // Here we set the bonding value to bigger value so members can handle
@@ -76,12 +78,25 @@ module.exports = async function () {
     }
 
     try {
-      await bondedECDSAKeepFactory.createSortitionPool(application)
-      console.log(`created sortition pool for application: [${application}]`)
-
       sortitionPoolAddress = await bondedECDSAKeepFactory.getSortitionPool(
         application
       )
+
+      if (
+        !sortitionPoolContractAddress ||
+        sortitionPoolAddress == ADDRESS_ZERO
+      ) {
+        await bondedECDSAKeepFactory.createSortitionPool(application)
+        console.log(`created sortition pool for application: [${application}]`)
+
+        sortitionPoolAddress = await bondedECDSAKeepFactory.getSortitionPool(
+          application
+        )
+      } else {
+        console.log(
+          `sortition pool already exists for application: [${application}]`
+        )
+      }
     } catch (err) {
       console.error("failed to create sortition pool", err)
       process.exit(1)
