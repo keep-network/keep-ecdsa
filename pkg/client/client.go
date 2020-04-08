@@ -513,6 +513,12 @@ func checkAwaitingSignature(
 	}
 
 	if isAwaitingDigest {
+		logger.Infof(
+			"awaiting signature for digest [%+x] exists for keep [%s]",
+			latestDigest,
+			keepAddress.String(),
+		)
+
 		if ok := requestedSignatures.add(keepAddress, latestDigest); !ok {
 			logger.Errorf(
 				"signature requested event for keep [%s] and digest [%x] already registered",
