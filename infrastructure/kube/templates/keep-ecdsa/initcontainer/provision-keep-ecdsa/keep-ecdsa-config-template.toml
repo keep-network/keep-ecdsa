@@ -11,6 +11,8 @@ URLRPC = ""
   # Addresses of contracts deployed on ethereum blockchain.
   [ethereum.ContractAddresses]
   BondedECDSAKeepFactory = ""
+  KeepBonding = ""
+  TokenStaking = ""
 
 # Addresses of applications approved by the operator.
 [SanctionedApplications]
