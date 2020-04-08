@@ -166,6 +166,7 @@ func Initialize(
 		tssNode,
 		operatorPublicKey,
 		keepsRegistry,
+		requestedSignatures,
 	)
 
 	// Watch for new keeps creation.
@@ -193,6 +194,7 @@ func Initialize(
 					tssNode,
 					operatorPublicKey,
 					keepsRegistry,
+					requestedSignatures,
 					event.KeepAddress,
 					event.Members,
 				)
@@ -211,6 +213,7 @@ func checkAwaitingKeyGeneration(
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
+	requestedSignatures *requestedSignaturesTrack,
 ) {
 	keepCount, err := ethereumChain.GetKeepCount()
 	if err != nil {
@@ -260,6 +263,7 @@ func checkAwaitingKeyGeneration(
 			tssNode,
 			operatorPublicKey,
 			keepsRegistry,
+			requestedSignatures,
 			keep,
 		)
 		if err != nil {
@@ -279,6 +283,7 @@ func checkAwaitingKeyGenerationForKeep(
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
+	requestedSignatures *requestedSignaturesTrack,
 	keep common.Address,
 ) error {
 	publicKey, err := ethereumChain.GetPublicKey(keep)
@@ -303,6 +308,7 @@ func checkAwaitingKeyGenerationForKeep(
 				tssNode,
 				operatorPublicKey,
 				keepsRegistry,
+				requestedSignatures,
 				keep,
 				members,
 			)
@@ -320,6 +326,7 @@ func generateKeyForKeep(
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
+	requestedSignatures *requestedSignaturesTrack,
 	keepAddress common.Address,
 	members []common.Address,
 ) {
