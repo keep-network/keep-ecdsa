@@ -4,6 +4,10 @@
 solidity_dir=$(realpath ${SOLIDITY_DIR})
 solidity_files := $(wildcard ${solidity_dir}/contracts/*.sol)
 
+# Append solidity files from external dependencies.
+dependencies_solidity_files := $(wildcard ${solidity_dir}/node_modules/@keep-network/keep-core/contracts/TokenStaking.sol)
+solidity_files += ${dependencies_solidity_files}
+
 # Bare Solidity filenames without .sol or Solidity directory prefix.
 contract_stems := $(notdir $(basename $(solidity_files)))
 # Go abigen bindings in abi/ subdirectory with .go suffix, alongside solc ABI
@@ -13,7 +17,7 @@ abigen_files := $(addprefix abi/,$(addsuffix .go,$(contract_stems)))
 # *ImplV1.go files will get generated into clean Keep contract bindings, the
 # corresponding contract filenames will drop the ImplV1, if it exists, and live
 # in the contract/ directory.
-clean_contract_stems := $(filter %ImplV1,$(contract_stems)) $(filter BondedECDSAKeepFactory, $(contract_stems)) $(filter BondedECDSAKeep, $(contract_stems))
+clean_contract_stems := $(filter %ImplV1,$(contract_stems)) $(filter BondedECDSAKeepFactory, $(contract_stems)) $(filter BondedECDSAKeep, $(contract_stems)) $(filter KeepBonding, $(contract_stems)) $(filter TokenStaking, $(contract_stems))
 contract_files := $(addprefix contract/,$(addsuffix .go,$(subst ImplV1,,$(clean_contract_stems))))
 
 all: gen_contract_go gen_abi_go
@@ -52,3 +56,9 @@ contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go: abi/BondedECDS
 
 contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go: abi/BondedECDSAKeep.abi abi/BondedECDSAKeep.go *.go
 	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go
+
+contract/KeepBonding.go cmd/KeepBonding.go: abi/KeepBonding.abi abi/KeepBonding.go *.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/KeepBonding.go cmd/KeepBonding.go 
+
+contract/TokenStaking.go cmd/TokenStaking.go: abi/TokenStaking.abi abi/TokenStaking.go *.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/TokenStaking.go cmd/TokenStaking.go 
