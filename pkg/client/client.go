@@ -58,6 +58,32 @@ func Initialize(
 	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
 
+	confirmIsInactive := func(keepAddress common.Address) bool {
+		currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
+		if err != nil {
+			logger.Errorf("failed to get current block height [%v]", err)
+			return false
+		}
+
+		isKeepActive, err := waitForChainConfirmation(
+			ethereumChain,
+			currentBlock,
+			func() (bool, error) {
+				return ethereumChain.IsActive(keepAddress)
+			},
+		)
+		if err != nil {
+			logger.Errorf(
+				"failed to confirm that keep [%s] is inactive: [%v]",
+				keepAddress.String(),
+				err,
+			)
+			return false
+		}
+
+		return !isKeepActive
+	}
+
 	for _, keepAddress := range keepsRegistry.GetKeepsAddresses() {
 		isActive, err := ethereumChain.IsActive(keepAddress)
 		if err != nil {
@@ -72,79 +98,59 @@ func Initialize(
 			continue
 		}
 
-		if isActive {
-			signers, err := keepsRegistry.GetSigners(keepAddress)
-			if err != nil {
-				logger.Errorf("no signers for keep [%s]", keepAddress.String())
-				continue
-			}
-
-			for _, signer := range signers {
-				subscriptionOnSignatureRequested, err := monitorSigningRequests(
-					ethereumChain,
-					tssNode,
-					keepAddress,
-					signer,
-					requestedSignatures,
-				)
-				if err != nil {
-					logger.Errorf(
-						"failed registering for requested signature event for keep [%s]: [%v]",
-						keepAddress.String(),
-						err,
-					)
-					// In case of an error we want to avoid subscribing to keep
-					// closed events. Something is wrong and we should stop
-					// further processing.
-					continue
-				}
-				go monitorKeepClosedEvents(
-					ethereumChain,
-					keepAddress,
-					keepsRegistry,
-					subscriptionOnSignatureRequested,
-				)
-				go monitorKeepTerminatedEvent(
-					ethereumChain,
-					keepAddress,
-					keepsRegistry,
-					subscriptionOnSignatureRequested,
-				)
-			}
-		} else {
+		if !isActive {
 			logger.Infof(
-				"keep [%s] is no longer active; archiving",
+				"keep [%s] seems no longer active; confirming",
 				keepAddress.String(),
 			)
-
-			currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
-			if err != nil {
-				logger.Errorf("failed to get current block height [%v]", err)
+			if isInactivityConfirmed := confirmIsInactive(keepAddress); isInactivityConfirmed {
+				logger.Infof(
+					"confirmed that keep [%s] is no longer active; archiving",
+					keepAddress.String(),
+				)
+				keepsRegistry.UnregisterKeep(keepAddress)
 				continue
 			}
+			logger.Warningf("keep [%s] is still active", keepAddress.String())
+		}
 
-			isKeepActive, err := waitForChainConfirmation(
+		signers, err := keepsRegistry.GetSigners(keepAddress)
+		if err != nil {
+			logger.Errorf("no signers for keep [%s]", keepAddress.String())
+			continue
+		}
+
+		for _, signer := range signers {
+			subscriptionOnSignatureRequested, err := monitorSigningRequests(
 				ethereumChain,
-				currentBlock,
-				func() (bool, error) {
-					return ethereumChain.IsActive(keepAddress)
-				},
+				tssNode,
+				keepAddress,
+				signer,
+				requestedSignatures,
 			)
 			if err != nil {
 				logger.Errorf(
-					"failed to confirm that keep [%s] is inactive: [%v]",
+					"failed registering for requested signature event for keep [%s]: [%v]",
 					keepAddress.String(),
 					err,
 				)
+				// In case of an error we want to avoid subscribing to keep
+				// closed events. Something is wrong and we should stop
+				// further processing.
 				continue
 			}
-
-			if isKeepActive {
-				logger.Warningf("keep [%s] has not been closed", keepAddress.String())
-				continue
-			}
-
-			keepsRegistry.UnregisterKeep(keepAddress)
+			go monitorKeepClosedEvents(
+				ethereumChain,
+				keepAddress,
+				keepsRegistry,
+				subscriptionOnSignatureRequested,
+			)
+			go monitorKeepTerminatedEvent(
+				ethereumChain,
+				keepAddress,
+				keepsRegistry,
+				subscriptionOnSignatureRequested,
+			)
 		}
 	}
 
