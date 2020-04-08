@@ -231,10 +231,11 @@ func monitorSignerPoolStatus(
 
 	for {
 		select {
-		case <-updateTrigger:
+		case event := <-updateTrigger:
 			logger.Infof(
-				"operator status update triggered for application: [%s]",
+				"operator status update triggered for application [%s] by event: [%v]",
 				application.String(),
+				event,
 			)
 
 			isUpToDate, err := ethereumChain.IsStatusUpToDateForApplication(application)
@@ -287,7 +288,7 @@ func subscribeStatusUpdateEvents(
 	subscriptionUnbondedValueWithdrawn, err := ethereumChain.OnUnbondedValueWithdrawn(
 		ethereumChain.Address(),
 		func(event *eth.UnbondedValueWithdrawnEvent) {
-			updateTrigger <- event
+			updateTrigger <- "UnbondedValueWithdrawn"
 		},
 	)
 	if err != nil {
@@ -299,7 +300,7 @@ func subscribeStatusUpdateEvents(
 	subscriptionBondCreated, err := ethereumChain.OnBondCreated(
 		ethereumChain.Address(),
 		func(event *eth.BondCreatedEvent) {
-			updateTrigger <- event
+			updateTrigger <- "BondCreated"
 		},
 	)
 	if err != nil {
@@ -311,7 +312,7 @@ func subscribeStatusUpdateEvents(
 	subscriptionTokenSlashed, err := ethereumChain.OnTokensSlashed(
 		ethereumChain.Address(),
 		func(event *eth.TokensSlashedEvent) {
-			updateTrigger <- event
+			updateTrigger <- "TokensSlashed"
 		},
 	)
 	if err != nil {
@@ -323,7 +324,7 @@ func subscribeStatusUpdateEvents(
 	subscriptionTokenSeized, err := ethereumChain.OnTokensSeized(
 		ethereumChain.Address(),
 		func(event *eth.TokensSeizedEvent) {
-			updateTrigger <- event
+			updateTrigger <- "TokensSeized"
 		},
 	)
 	if err != nil {
