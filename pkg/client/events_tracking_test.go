@@ -1,8 +1,6 @@
 package client
 
 import (
-	"encoding/hex"
-	"reflect"
 	"sync"
 	"testing"
 
@@ -19,150 +17,86 @@ func TestRequestedSignersTrackAdd(t *testing.T) {
 	}
 
 	if !rs.add(keepAddress1) {
-		t.Error("unexpected failure")
+		t.Error("event wasn't emitted before; should be added successfully")
 	}
 
-	if ok := rs.data[keepAddress1.String()]; !ok {
-		t.Errorf(
-			"unexpected value for keep [%s]\nexpected: [%v]\nactual:   [%v]",
-			keepAddress1.String(),
-			true,
-			rs.data[keepAddress1.String()],
-		)
-	}
-
-	if ok := rs.add(keepAddress2); !ok {
-		t.Error("unexpected failure")
-	}
-
-	if !rs.data[keepAddress2.String()] {
-		t.Errorf(
-			"unexpected value for keep [%s]\nexpected: [%v]\nactual:   [%v]",
-			keepAddress2.String(),
-			true,
-			rs.data[keepAddress1.String()],
-		)
+	if !rs.add(keepAddress2) {
+		t.Error("event wasn't emitted before; should be added successfully")
 	}
 }
 
 func TestRequestedSignersTrackAdd_Duplicate(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
+	keepAddress := common.BytesToAddress([]byte{1})
 
 	rs := &requestedSignersTrack{
 		data:  make(map[string]bool),
 		mutex: &sync.Mutex{},
 	}
 
-	if ok := rs.add(keepAddress1); !ok {
-		t.Error("unexpected failure")
+	if !rs.add(keepAddress) {
+		t.Error("event wasn't emitted before; should be added successfully")
 	}
 
-	if ok := rs.add(keepAddress1); ok {
-		t.Errorf(
-			"unexpected result\nexpected: [%v]\nactual:   [%v]",
-			false,
-			ok,
-		)
-	}
-
-	if !rs.data[keepAddress1.String()] {
-		t.Errorf(
-			"unexpected value for keep [%s]\nexpected: [%v]\nactual:   [%v]",
-			keepAddress1.String(),
-			true,
-			rs.data[keepAddress1.String()],
-		)
+	if rs.add(keepAddress) {
+		t.Error("event was emitted before; it should not be added")
 	}
 }
 
 func TestRequestedSignersTrackRemove(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
+	keepAddress := common.BytesToAddress([]byte{1})
 
 	rs := &requestedSignersTrack{
 		data:  make(map[string]bool),
 		mutex: &sync.Mutex{},
 	}
 
-	if ok := rs.add(keepAddress1); !ok {
-		t.Error("unexpected failure")
+	if !rs.add(keepAddress) {
+		t.Error("event wasn't emitted before; should be added successfully")
 	}
 
-	rs.remove(keepAddress1)
+	rs.remove(keepAddress)
 
-	if rs.data[keepAddress1.String()] {
-		t.Errorf(
-			"unexpected value for keep [%s]\nexpected: [%v]\nactual:   [%v]",
-			keepAddress1.String(),
-			false,
-			rs.data[keepAddress1.String()],
-		)
+	if !rs.add(keepAddress) {
+		t.Error("event was removed from tracking; should be added successfully")
 	}
 }
 
 func TestRequestedSignersTrackRemove_WhenEmpty(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
+	keepAddress := common.BytesToAddress([]byte{1})
 
 	rs := &requestedSignersTrack{
 		data:  make(map[string]bool),
 		mutex: &sync.Mutex{},
 	}
 
-	rs.remove(keepAddress1)
+	rs.remove(keepAddress)
 
-	if rs.data[keepAddress1.String()] {
-		t.Errorf(
-			"unexpected value for keep [%s]\nexpected: [%v]\nactual:   [%v]",
-			keepAddress1.String(),
-			false,
-			rs.data[keepAddress1.String()],
-		)
+	if !rs.add(keepAddress) {
+		t.Error("event wasn't emitted before; should be added successfully")
 	}
 }
 
 func TestRequestedSignaturesTrackAdd_SameKeep(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
+	keepAddress := common.BytesToAddress([]byte{1})
 
 	digest1 := [32]byte{9}
 	digest2 := [32]byte{8}
-
-	digest1String := hex.EncodeToString(digest1[:])
-	digest2String := hex.EncodeToString(digest2[:])
 
 	rs := &requestedSignaturesTrack{
 		data:  make(map[string]map[string]bool),
 		mutex: &sync.Mutex{},
 	}
 
-	expectedMap := map[string]map[string]bool{
-		keepAddress1.String(): map[string]bool{
-			digest1String: true,
-		},
-	}
-	if ok := rs.add(keepAddress1, digest1); !ok {
-		t.Error("unexpected failure")
-	}
-	if !reflect.DeepEqual(expectedMap, rs.data) {
-		t.Errorf(
-			"unexpected map content\nexpected: [%v]\nactual:   [%v]",
-			expectedMap,
-			rs.data,
+	if !rs.add(keepAddress, digest1) {
+		t.Error(
+			"signature for the first digest wasn't requested before; " +
+				"event should be added successfully",
 		)
 	}
-
-	expectedMap = map[string]map[string]bool{
-		keepAddress1.String(): map[string]bool{
-			digest1String: true,
-			digest2String: true,
-		},
-	}
-	if ok := rs.add(keepAddress1, digest2); !ok {
-		t.Error("unexpected failure")
-	}
-	if !reflect.DeepEqual(expectedMap, rs.data) {
-		t.Errorf(
-			"unexpected map content\nexpected: [%v]\nactual:   [%v]",
-			expectedMap,
-			rs.data,
+	if !rs.add(keepAddress, digest2) {
+		t.Error(
+			"signature for the second digest wasn't requested before; " +
+				"event should be added successfully",
 		)
 	}
 }
@@ -174,89 +108,43 @@ func TestRequestedSignaturesTrackAdd_DifferentKeeps(t *testing.T) {
 	digest1 := [32]byte{9}
 	digest2 := [32]byte{8}
 
-	digest1String := hex.EncodeToString(digest1[:])
-	digest2String := hex.EncodeToString(digest2[:])
-
 	rs := &requestedSignaturesTrack{
 		data:  make(map[string]map[string]bool),
 		mutex: &sync.Mutex{},
 	}
 
-	expectedMap := map[string]map[string]bool{
-		keepAddress1.String(): map[string]bool{
-			digest1String: true,
-		},
-	}
-	if ok := rs.add(keepAddress1, digest1); !ok {
-		t.Error("unexpected failure")
-	}
-	if !reflect.DeepEqual(expectedMap, rs.data) {
-		t.Errorf(
-			"unexpected map content\nexpected: [%v]\nactual:   [%v]",
-			expectedMap,
-			rs.data,
+	if !rs.add(keepAddress1, digest1) {
+		t.Error(
+			"signature from the first keep wasn't requested before; " +
+				"event should be added successfully",
 		)
 	}
 
-	expectedMap = map[string]map[string]bool{
-		keepAddress1.String(): map[string]bool{
-			digest1String: true,
-		},
-		keepAddress2.String(): map[string]bool{
-			digest2String: true,
-		},
-	}
-	if ok := rs.add(keepAddress2, digest2); !ok {
-		t.Error("unexpected failure")
-	}
-	if !reflect.DeepEqual(expectedMap, rs.data) {
-		t.Errorf(
-			"unexpected map content\nexpected: [%v]\nactual:   [%v]",
-			expectedMap,
-			rs.data,
+	if !rs.add(keepAddress2, digest2) {
+		t.Error(
+			"signature from the second keep wasn't requested before; " +
+				"event should be added successfully",
 		)
 	}
 }
 
 func TestRequestedSignaturesTrackAdd_Duplicate(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	digest1 := [32]byte{9}
-	digest1String := hex.EncodeToString(digest1[:])
+	keepAddress := common.BytesToAddress([]byte{1})
+	digest := [32]byte{9}
 
 	rs := &requestedSignaturesTrack{
 		data:  make(map[string]map[string]bool),
 		mutex: &sync.Mutex{},
 	}
 
-	expectedMap := map[string]map[string]bool{
-		keepAddress1.String(): map[string]bool{
-			digest1String: true,
-		},
-	}
-	if ok := rs.add(keepAddress1, digest1); !ok {
-		t.Error("unexpected failure")
-	}
-	if !reflect.DeepEqual(expectedMap, rs.data) {
-		t.Errorf(
-			"unexpected map content\nexpected: [%v]\nactual:   [%v]",
-			expectedMap,
-			rs.data,
+	if !rs.add(keepAddress, digest) {
+		t.Error(
+			"signature wasn't requested before; event should be added",
 		)
 	}
 
-	if ok := rs.add(keepAddress1, digest1); ok {
-		t.Errorf(
-			"unexpected result\nexpected: [%v]\nactual:   [%v]",
-			false,
-			ok,
-		)
-	}
-	if !reflect.DeepEqual(expectedMap, rs.data) {
-		t.Errorf(
-			"unexpected map content\nexpected: [%v]\nactual:   [%v]",
-			expectedMap,
-			rs.data,
-		)
+	if rs.add(keepAddress, digest) {
+		t.Error("signature was requested before; event should not be added")
 	}
 }
 
@@ -264,98 +152,59 @@ func TestRequestedSignaturesTrackRemove(t *testing.T) {
 	keepAddress1 := common.BytesToAddress([]byte{1})
 	keepAddress2 := common.BytesToAddress([]byte{2})
 
-	digest1 := [32]byte{9}
-	digest2 := [32]byte{8}
-	digest3 := [32]byte{7}
-
-	digest1String := hex.EncodeToString(digest1[:])
-	digest2String := hex.EncodeToString(digest2[:])
-	digest3String := hex.EncodeToString(digest3[:])
+	digest := [32]byte{9}
 
 	rs := &requestedSignaturesTrack{
 		data:  make(map[string]map[string]bool),
 		mutex: &sync.Mutex{},
 	}
 
-	rs.data = map[string]map[string]bool{
-		keepAddress1.String(): map[string]bool{
-			digest1String: true,
-			digest2String: true,
-		},
-		keepAddress2.String(): map[string]bool{
-			digest3String: true,
-		},
-	}
-
-	// Remove keep1 : digest1
-	expectedMap := map[string]map[string]bool{
-		keepAddress1.String(): map[string]bool{
-			digest2String: true,
-		},
-		keepAddress2.String(): map[string]bool{
-			digest3String: true,
-		},
-	}
-
-	rs.remove(keepAddress1, digest1)
-
-	if !reflect.DeepEqual(expectedMap, rs.data) {
-		t.Errorf(
-			"unexpected map content\nexpected: [%v]\nactual:   [%v]",
-			expectedMap,
-			rs.data,
+	if !rs.add(keepAddress1, digest) {
+		t.Error(
+			"signature from the first keep wasn't requested before; " +
+				"event should be added successfully",
 		)
 	}
 
-	// Remove keep2 : digest3
-	expectedMap = map[string]map[string]bool{
-		keepAddress1.String(): map[string]bool{
-			digest2String: true,
-		},
-	}
-
-	rs.remove(keepAddress2, digest3)
-
-	if !reflect.DeepEqual(expectedMap, rs.data) {
-		t.Errorf(
-			"unexpected map content\nexpected: [%v]\nactual:   [%v]",
-			expectedMap,
-			rs.data,
+	if !rs.add(keepAddress2, digest) {
+		t.Error(
+			"signature from the second keep wasn't requested before; " +
+				"event should be added successfully",
 		)
 	}
 
-	// Remove keep1 : digest1
-	expectedMap = map[string]map[string]bool{}
+	rs.remove(keepAddress1, digest)
 
-	rs.remove(keepAddress1, digest2)
+	if !rs.add(keepAddress1, digest) {
+		t.Error(
+			"signature event for the first keep was removed from tracking; " +
+				"event should be added successfully",
+		)
+	}
 
-	if !reflect.DeepEqual(expectedMap, rs.data) {
-		t.Errorf(
-			"unexpected map content\nexpected: [%v]\nactual:   [%v]",
-			expectedMap,
-			rs.data,
+	if rs.add(keepAddress2, digest) {
+		t.Error(
+			"signature event for the second keep was not removed from tracking; " +
+				"event should not be added",
 		)
 	}
 }
 
 func TestRequestedSignaturesTrackRemove_WhenEmpty(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	digest1 := [32]byte{9}
+	keepAddress := common.BytesToAddress([]byte{1})
+	digest := [32]byte{9}
 
 	rs := &requestedSignaturesTrack{
 		data:  make(map[string]map[string]bool),
 		mutex: &sync.Mutex{},
 	}
 
-	expectedMap := map[string]map[string]bool{}
+	rs.remove(keepAddress, digest)
 
-	rs.remove(keepAddress1, digest1)
-
-	if !reflect.DeepEqual(expectedMap, rs.data) {
-		t.Errorf(
-			"unexpected map content\nexpected: [%v]\nactual:   [%v]",
-			expectedMap,
-			rs.data,
+	if !rs.add(keepAddress, digest) {
+		t.Error(
+			"signature from the first keep wasn't requested before; " +
+				"event should be added successfully",
 		)
 	}
 }
