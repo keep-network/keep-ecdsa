@@ -54,7 +54,7 @@
     "eslint-config-keep": "github:keep-network/eslint-config-keep#0.3.0",
     "prettier": "^2.0.2",
     "prettier-plugin-solidity": "^1.0.0-alpha.47",
-    "solc": "^0.5.16",
+    "solc": "0.5.17",
     "solium": "^1.2.5",
     "solium-config-keep": "github:keep-network/solium-config-keep#0.1.1",
     "toml": "^3.0.0",

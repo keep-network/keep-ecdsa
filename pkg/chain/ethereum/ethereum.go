@@ -76,7 +76,7 @@ func (ec *EthereumChain) OnKeepClosed(
 	}
 	return keepContract.WatchKeepClosed(
 		func(blockNumber uint64) {
-			handler(&eth.KeepClosedEvent{})
+			handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
 		},
 		func(err error) error {
 			return fmt.Errorf("keep closed callback failed: [%v]", err)
@@ -96,7 +96,7 @@ func (ec *EthereumChain) OnKeepTerminated(
 	}
 	return keepContract.WatchKeepTerminated(
 		func(blockNumber uint64) {
-			handler(&eth.KeepTerminatedEvent{})
+			handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
 		},
 		func(err error) error {
 			return fmt.Errorf("keep terminated callback failed: [%v]", err)
@@ -175,7 +175,8 @@ func (ec *EthereumChain) OnSignatureRequested(
 			blockNumber uint64,
 		) {
 			handler(&eth.SignatureRequestedEvent{
-				Digest: Digest,
+				Digest:      Digest,
+				BlockNumber: blockNumber,
 			})
 		},
 		func(err error) error {

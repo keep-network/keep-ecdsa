@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.

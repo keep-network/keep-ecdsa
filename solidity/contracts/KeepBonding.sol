@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/Registry.sol";
 import "@keep-network/keep-core/contracts/TokenStaking.sol";

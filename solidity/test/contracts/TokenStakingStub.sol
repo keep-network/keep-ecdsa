@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
