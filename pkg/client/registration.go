@@ -211,11 +211,60 @@ func monitorSignerPoolStatus(
 		application.String(),
 	)
 
-	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
+	updateTrigger := make(chan interface{})
+
+	subscriptionUnbondedValueWithdrawn, err := ethereumChain.OnUnbondedValueWithdrawn(
+		ethereumChain.Address(),
+		func(event *eth.UnbondedValueWithdrawnEvent) {
+			updateTrigger <- event
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed on registering for unbonded value withdraw: [%v]", err)
+	}
+	defer subscriptionUnbondedValueWithdrawn.Unsubscribe()
+
+	subscriptionBondCreated, err := ethereumChain.OnBondCreated(
+		ethereumChain.Address(),
+		func(event *eth.BondCreatedEvent) {
+			updateTrigger <- event
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed on registering for bond creation: [%v]", err)
+	}
+	defer subscriptionBondCreated.Unsubscribe()
+
+	subscriptionTokenSlashed, err := ethereumChain.OnTokensSlashed(
+		ethereumChain.Address(),
+		func(event *eth.TokensSlashedEvent) {
+			updateTrigger <- event
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed on registering for tokens slashing: [%v]", err)
+	}
+	defer subscriptionTokenSlashed.Unsubscribe()
+
+	subscriptionTokenSeized, err := ethereumChain.OnTokensSeized(
+		ethereumChain.Address(),
+		func(event *eth.TokensSeizedEvent) {
+			updateTrigger <- event
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed on registering for tokens seizure: [%v]", err)
+	}
+	defer subscriptionTokenSeized.Unsubscribe()
 
 	for {
 		select {
-		case <-newBlockChan:
+		case <-updateTrigger:
+			logger.Infof(
+				"operator status update triggered for application: [%s]",
+				application.String(),
+			)
+
 			isUpToDate, err := ethereumChain.IsStatusUpToDateForApplication(application)
 			if err != nil {
 				return fmt.Errorf(
