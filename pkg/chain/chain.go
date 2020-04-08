@@ -144,7 +144,7 @@ type TokenStaking interface {
 		handler func(event *TokensSlashedEvent),
 	) (subscription.EventSubscription, error)
 
-	// OnTokensSlashed installs a callback that will be called on token stake
+	// OnTokensSeized installs a callback that will be called on token stake
 	// seizure for the given operator.
 	OnTokensSeized(
 		operatorAddress common.Address,
