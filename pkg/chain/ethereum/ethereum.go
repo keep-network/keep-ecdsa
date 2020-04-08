@@ -365,6 +365,16 @@ func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) 
 	return nil
 }
 
+func (ec *EthereumChain) GetKeepCount() (*big.Int, error) {
+	return ec.bondedECDSAKeepFactoryContract.GetKeepCount()
+}
+
+func (ec *EthereumChain) GetKeepAtIndex(
+	keepIndex *big.Int,
+) (common.Address, error) {
+	return ec.bondedECDSAKeepFactoryContract.GetKeepAtIndex(keepIndex)
+}
+
 func (ec *EthereumChain) LatestDigest(keepAddress common.Address) ([32]byte, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
@@ -372,4 +382,35 @@ func (ec *EthereumChain) LatestDigest(keepAddress common.Address) ([32]byte, err
 	}
 
 	return keepContract.Digest()
+}
+
+func (ec *EthereumChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return []uint8{}, err
+	}
+
+	return keepContract.GetPublicKey()
+}
+
+func (ec *EthereumChain) GetMembers(
+	keepAddress common.Address,
+) ([]common.Address, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return []common.Address{}, err
+	}
+
+	return keepContract.GetMembers()
+}
+
+func (ec *EthereumChain) HasKeyGenerationTimedOut(
+	keepAddress common.Address,
+) (bool, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	return keepContract.HasKeyGenerationTimedOut()
 }

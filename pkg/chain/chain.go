@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"math/big"
 )
 
 // Handle represents a handle to an ethereum blockchain.
@@ -52,6 +53,12 @@ type BondedECDSAKeepFactory interface {
 	// UpdateStatusForApplication updates the operator's status in the signers'
 	// pool for the given application.
 	UpdateStatusForApplication(application common.Address) error
+
+	// GetKeepCount returns number of keeps.
+	GetKeepCount() (*big.Int, error)
+
+	// GetKeepAtIndex returns the address of the keep at the given index.
+	GetKeepAtIndex(keepIndex *big.Int) (common.Address, error)
 }
 
 // BondedECDSAKeep is an interface that provides ability to interact with
@@ -114,6 +121,17 @@ type BondedECDSAKeep interface {
 
 	// LatestDigest returns the latest digest requested to be signed.
 	LatestDigest(keepAddress common.Address) ([32]byte, error)
+
+	// GetPublicKey returns keep's public key. If there is no public key yet,
+	// an empty slice is returned.
+	GetPublicKey(keepAddress common.Address) ([]uint8, error)
+
+	// GetPublicKey returns keep's members.
+	GetMembers(keepAddress common.Address) ([]common.Address, error)
+
+	// HasKeyGenerationTimedOut returns whether key generation
+	// has timed out for the given keep.
+	HasKeyGenerationTimedOut(keepAddress common.Address) (bool, error)
 }
 
 // KeepBonding is an interface that provides ability to interact with KeepBonding
