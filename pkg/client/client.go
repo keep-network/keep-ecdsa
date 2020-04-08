@@ -116,7 +116,11 @@ func Initialize(
 			if err != nil {
 				// If there are no signers for loaded keep that something is clearly
 				// wrong. We don't want to continue processing for this keep.
-				logger.Errorf("no signers for keep [%s]", keepAddress.String())
+				logger.Errorf(
+					"no signers for keep [%s]: [%v]",
+					keepAddress.String(),
+					err,
+				)
 				return
 			}
 
@@ -367,7 +371,7 @@ func checkAwaitingSignature(
 
 		currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
 		if err != nil {
-			logger.Errorf("failed to get current block height [%v]", err)
+			logger.Errorf("failed to get current block height: [%v]", err)
 			return
 		}
 
@@ -380,9 +384,10 @@ func checkAwaitingSignature(
 		)
 		if err != nil {
 			logger.Errorf(
-				"failed to confirm signing request for digest [%+x] and keep [%s]",
+				"failed to confirm signing request for digest [%+x] and keep [%s]: [%v]",
 				latestDigest,
 				keepAddress.String(),
+				err,
 			)
 			return
 		}
