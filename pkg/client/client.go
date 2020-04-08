@@ -4,6 +4,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -45,6 +46,15 @@ func Initialize(
 
 	tssNode.InitializeTSSPreParamsPool()
 
+	requestedSigners := &requestedSignersTrack{
+		data:  make(map[string]bool),
+		mutex: &sync.Mutex{},
+	}
+	requestedSignatures := &requestedSignaturesTrack{
+		data:  make(map[string]map[string]bool),
+		mutex: &sync.Mutex{},
+	}
+
 	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
 
@@ -75,6 +85,7 @@ func Initialize(
 					tssNode,
 					keepAddress,
 					signer,
+					requestedSignatures,
 				)
 				if err != nil {
 					logger.Errorf(
@@ -119,6 +130,15 @@ func Initialize(
 
 		if event.IsMember(ethereumChain.Address()) {
 			go func(event *eth.BondedECDSAKeepCreatedEvent) {
+				if ok := requestedSigners.add(event.KeepAddress); !ok {
+					logger.Errorf(
+						"keep creation event for keep [%s] already registered",
+						event.KeepAddress.String(),
+					)
+					return
+				}
+				defer requestedSigners.remove(event.KeepAddress)
+
 				logger.Infof(
 					"member [%s] is starting signer generation for keep [%s]...",
 					ethereumChain.Address().String(),
@@ -151,6 +171,7 @@ func Initialize(
 					tssNode,
 					event.KeepAddress,
 					signer,
+					requestedSignatures,
 				)
 				if err != nil {
 					logger.Errorf(
@@ -210,6 +231,7 @@ func monitorSigningRequests(
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
+	requestedSignatures *requestedSignaturesTrack,
 ) (subscription.EventSubscription, error) {
 	go checkAwaitingSignature(ethereumChain, tssNode, keepAddress, signer)
 
@@ -223,32 +245,44 @@ func monitorSigningRequests(
 				event.BlockNumber,
 			)
 
-			isAwaitingSignature, err := waitForEventConfirmation(
-				ethereumChain,
-				event.BlockNumber,
-				func() (bool, error) {
-					return ethereumChain.IsAwaitingSignature(keepAddress, event.Digest)
-				},
-			)
-			if err != nil {
-				logger.Errorf(
-					"failed to confirm signing request for digest [%+x] and keep [%s]",
-					event.Digest,
-					keepAddress.String(),
-				)
-				return
-			}
+			go func(event *eth.SignatureRequestedEvent) {
+				if ok := requestedSignatures.add(keepAddress, event.Digest); !ok {
+					logger.Errorf(
+						"signature requested event for keep [%s] and digest [%x] already registered",
+						keepAddress.String(),
+						event.Digest,
+					)
+					return
+				}
+				defer requestedSignatures.remove(keepAddress, event.Digest)
 
-			if !isAwaitingSignature {
-				logger.Warningf(
-					"keep [%s] is not awaiting a signature for digest [%+x]",
-					keepAddress.String(),
-					event.Digest,
+				isAwaitingSignature, err := waitForEventConfirmation(
+					ethereumChain,
+					event.BlockNumber,
+					func() (bool, error) {
+						return ethereumChain.IsAwaitingSignature(keepAddress, event.Digest)
+					},
 				)
-				return
-			}
+				if err != nil {
+					logger.Errorf(
+						"failed to confirm signing request for digest [%+x] and keep [%s]",
+						event.Digest,
+						keepAddress.String(),
+					)
+					return
+				}
 
-			go generateSignatureForKeep(tssNode, keepAddress, signer, event.Digest)
+				if !isAwaitingSignature {
+					logger.Warningf(
+						"keep [%s] is not awaiting a signature for digest [%+x]",
+						keepAddress.String(),
+						event.Digest,
+					)
+					return
+				}
+
+				generateSignatureForKeep(tssNode, keepAddress, signer, event.Digest)
+			}(event)
 		},
 	)
 }
