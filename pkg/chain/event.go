@@ -50,7 +50,7 @@ type UnbondedValueWithdrawnEvent struct {
 	Amount   *big.Int
 }
 
-// BondCreatedEvent is an event emitted a bond has been created.
+// BondCreatedEvent is an event emitted when a bond has been created.
 type BondCreatedEvent struct {
 	Operator    common.Address
 	Holder      common.Address
@@ -59,13 +59,13 @@ type BondCreatedEvent struct {
 	Amount      *big.Int
 }
 
-// TokensSlashedEvent is an event emitted a tokens has been slashed for an operator.
+// TokensSlashedEvent is an event emitted when tokens have been slashed for an operator.
 type TokensSlashedEvent struct {
 	Operator common.Address
 	Amount   *big.Int
 }
 
-// TokensSeizedEvent is an event emitted a tokens has been seized for an operator.
+// TokensSeizedEvent is an event emitted when tokens have been seized for an operator.
 type TokensSeizedEvent struct {
 	Operator common.Address
 	Amount   *big.Int
