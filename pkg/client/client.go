@@ -558,7 +558,7 @@ func waitForChainConfirmation(
 	stateCheck func() (bool, error),
 ) (bool, error) {
 	blockHeight := startBlockNumber + blockConfirmations
-	logger.Infof("waiting for block [%d]", blockHeight)
+	logger.Infof("waiting for block [%d] to confirm chain state", blockHeight)
 
 	err := ethereumChain.BlockCounter().WaitForBlockHeight(blockHeight)
 	if err != nil {
