@@ -9,7 +9,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
 
@@ -19,6 +19,8 @@ type EthereumChain struct {
 	accountKey                     *keystore.Key
 	client                         *ethclient.Client
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
+	keepBondingContract            *contract.KeepBonding
+	tokenStakingContract           *contract.TokenStaking
 	blockCounter                   *blockcounter.EthereumBlockCounter
 
 	// transactionMutex allows interested parties to forcibly serialize
@@ -60,6 +62,34 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		return nil, err
 	}
 
+	keepBondingContractAddress, err := config.ContractAddress(KeepBondingContractName)
+	if err != nil {
+		return nil, err
+	}
+	keepBondingContract, err := contract.NewKeepBonding(
+		*keepBondingContractAddress,
+		accountKey,
+		client,
+		transactionMutex,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenStakingContractAddress, err := config.ContractAddress(TokenStakingContractName)
+	if err != nil {
+		return nil, err
+	}
+	tokenStakingContract, err := contract.NewTokenStaking(
+		*tokenStakingContractAddress,
+		accountKey,
+		client,
+		transactionMutex,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	blockCounter, err := blockcounter.CreateBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -74,6 +104,8 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		client:                         client,
 		transactionMutex:               transactionMutex,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
+		keepBondingContract:            keepBondingContract,
+		tokenStakingContract:           tokenStakingContract,
 		blockCounter:                   blockCounter,
 	}, nil
 }
