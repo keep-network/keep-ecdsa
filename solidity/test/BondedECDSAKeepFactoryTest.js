@@ -294,6 +294,8 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   })
 
   describe("isOperatorUpToDate", async () => {
+    const precision = new BN("1000000000000000000") // 1 KEEP = 10^18
+
     before(async () => {
       await initializeNewFactory()
       await initializeMemberCandidates()
@@ -310,19 +312,65 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     })
 
     it("returns false if the operator stake dropped", async () => {
-      await stakeOperators(members, minimumStake.muln(50))
+      const stake = minimumStake.muln(10) // 10 * 2000000 * 10^18
+      await stakeOperators(members, stake)
 
       await keepFactory.registerMemberCandidate(application, {
         from: members[0],
       })
-      await stakeOperators(members, minimumStake.muln(49))
 
+      await stakeOperators(members, stake.subn(1)) // (10 * 2000000 * 10^18) - 1
+
+      // Precision (pool weight divisor) is 10^18
+      // ((10 * 200000 * 10^18)) / 10^18     =  2000000
+      // ((10 * 200000 * 10^18) - 1) / 10^18 =~ 1999999.99
+      // Ethereum uint256 division performs implicit floor:
+      // The weight went down from 2,000,000 to 1,999,999
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
 
-    it("returns false if the operator stake dropped below minimum", async () => {
+    it("returns false if the operator stake increased", async () => {
+      const stake = minimumStake.muln(10) // 10 * 2000000 * 10^18
+      await stakeOperators(members, stake)
+
+      await keepFactory.registerMemberCandidate(application, {
+        from: members[0],
+      })
+
+      await stakeOperators(members, stake.add(precision)) // (10 * 2000000 * 10^18) + 10^18
+
+      // Precision (pool weight divisor) is 10^18
+      // ((10 * 200000 * 10^18)) / 10^18         = 2000000
+      // ((10 * 200000 * 10^18) + 10^18) / 10^18 = 2000001
+      // The weight went up from 2,000,000 to 2,000,001
+      assert.isFalse(
+        await keepFactory.isOperatorUpToDate(members[0], application)
+      )
+    })
+
+    it("returns true if the operator stake increase is below weight precision", async () => {
+      const stake = minimumStake.muln(10) // 10 * 2000000 * 10^18
+      await stakeOperators(members, stake)
+
+      await keepFactory.registerMemberCandidate(application, {
+        from: members[0],
+      })
+
+      await stakeOperators(members, stake.add(precision).subn(1)) // (10 * 2000000 * 10^18) + 10^18 - 1
+
+      // Precision (pool weight divisor) is 10^18
+      // ((10 * 200000 * 10^18)) / 10^18             = 2000000
+      // ((10 * 200000 * 10^18) + 10^18 - 1) / 10^18 = 2000000.99
+      // Ethereum uint256 division performs implicit floor:
+      // The weight dit not change: 2,000,000 == floor(2,000,000.99)
+      assert.isTrue(
+        await keepFactory.isOperatorUpToDate(members[0], application)
+      )
+    })
+
+    it("returns false if the operator stake dropped below minimum stake", async () => {
       await keepFactory.registerMemberCandidate(application, {
         from: members[0],
       })
@@ -330,18 +378,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await stakeOperators(members, minimumStake.subn(1))
 
       assert.isFalse(
-        await keepFactory.isOperatorUpToDate(members[0], application)
-      )
-    })
-
-    it("returns true if the operator stake increased", async () => {
-      await keepFactory.registerMemberCandidate(application, {
-        from: members[0],
-      })
-
-      await stakeOperators(members, minimumStake.addn(1))
-
-      assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
