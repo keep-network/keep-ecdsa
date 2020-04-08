@@ -73,7 +73,10 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       const pool = await BondedSortitionPool.at(signerPool)
       const actualWeight = await pool.getPoolWeight.call(members[0])
-      const expectedWeight = minimumStakeMultiplier
+
+      // minimumStake * minimumStakeMultiplier / poolStakeWeightDivisor =
+      // 200000 * 1e18 * 10 / 1e18 = 2000000
+      const expectedWeight = new BN("2000000")
 
       expect(actualWeight).to.eq.BN(expectedWeight, "invalid staking weight")
     })
@@ -294,7 +297,6 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     before(async () => {
       await initializeNewFactory()
       await initializeMemberCandidates()
-      await registerMemberCandidates()
     })
 
     it("returns true if the operator is up to date for the application", async () => {
@@ -307,7 +309,20 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
-    it("returns false if the operator stake is below minimum", async () => {
+    it("returns false if the operator stake dropped", async () => {
+      await stakeOperators(members, minimumStake.muln(50))
+
+      await keepFactory.registerMemberCandidate(application, {
+        from: members[0],
+      })
+      await stakeOperators(members, minimumStake.muln(49))
+
+      assert.isFalse(
+        await keepFactory.isOperatorUpToDate(members[0], application)
+      )
+    })
+
+    it("returns false if the operator stake dropped below minimum", async () => {
       await keepFactory.registerMemberCandidate(application, {
         from: members[0],
       })
@@ -319,32 +334,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
-    it("returns true if the operator stake changed insufficiently", async () => {
+    it("returns false if the operator stake increased", async () => {
       await keepFactory.registerMemberCandidate(application, {
         from: members[0],
       })
 
-      // We multiply minimumStake as sortition pools expect multiplies of the
-      // minimum stake to calculate stakers weight for eligibility.
-      // We subtract 1 to get the same staking weight which is calculated as
-      // `weight = floor(stakingBalance / minimumStake)`.
-      await stakeOperators(members, minimumStake.mul(new BN(2)).sub(new BN(1)))
+      await stakeOperators(members, minimumStake.addn(1))
 
       assert.isTrue(
-        await keepFactory.isOperatorUpToDate(members[0], application)
-      )
-    })
-
-    it("returns false if the operator stake is above minimum", async () => {
-      await keepFactory.registerMemberCandidate(application, {
-        from: members[0],
-      })
-
-      // We multiply minimumStake as sortition pools expect multiplies of the
-      // minimum stake to calculate stakers weight for eligibility.
-      await stakeOperators(members, minimumStake.mul(new BN(2)))
-
-      assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application)
       )
     })
@@ -1051,7 +1048,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       memberCount,
       unbondedAmount
     ) {
-      const stakeBalance = await keepFactory.minimumStake.call()
+      const stakeBalance = await tokenStaking.minimumStake.call()
 
       for (let i = 0; i < memberCount; i++) {
         const operator = await web3.eth.personal.newAccount("pass")
@@ -1351,8 +1348,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
     await registry.approveOperatorContract(keepFactory.address)
 
-    minimumStake = await keepFactory.minimumStake.call()
-
+    minimumStake = await tokenStaking.minimumStake.call()
     await stakeOperators(members, minimumStake)
   }
 
