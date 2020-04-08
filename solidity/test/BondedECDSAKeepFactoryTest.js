@@ -334,7 +334,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
-    it("returns false if the operator stake increased", async () => {
+    it("returns true if the operator stake increased", async () => {
       await keepFactory.registerMemberCandidate(application, {
         from: members[0],
       })
