@@ -249,7 +249,7 @@ func monitorSigningRequests(
 				}
 				defer requestedSignatures.remove(keepAddress, event.Digest)
 
-				isAwaitingSignature, err := waitForEventConfirmation(
+				isAwaitingSignature, err := waitForChainConfirmation(
 					ethereumChain,
 					event.BlockNumber,
 					func() (bool, error) {
@@ -348,7 +348,7 @@ func monitorKeepClosedEvents(
 				event.BlockNumber,
 			)
 
-			isKeepActive, err := waitForEventConfirmation(
+			isKeepActive, err := waitForChainConfirmation(
 				ethereumChain,
 				event.BlockNumber,
 				func() (bool, error) {
@@ -410,7 +410,7 @@ func monitorKeepTerminatedEvent(
 				event.BlockNumber,
 			)
 
-			isKeepActive, err := waitForEventConfirmation(
+			isKeepActive, err := waitForChainConfirmation(
 				ethereumChain,
 				event.BlockNumber,
 				func() (bool, error) {
@@ -452,12 +452,12 @@ func monitorKeepTerminatedEvent(
 	logger.Info("unsubscribing from events on keep terminated")
 }
 
-// waitForEventConfirmation ensures that after receiving specific number of block
+// waitForChainConfirmation ensures that after receiving specific number of block
 // confirmations the state of the chain is actually as expected. It waits for
 // predefined number of blocks since the start block number provided. After the
 // required block number is reached it performs a check of the chain state with
 // a provided function returning a boolean value.
-func waitForEventConfirmation(
+func waitForChainConfirmation(
 	ethereumChain eth.Handle,
 	startBlockNumber uint64,
 	stateCheck func() (bool, error),
