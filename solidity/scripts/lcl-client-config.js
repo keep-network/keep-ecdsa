@@ -12,6 +12,8 @@ const toml = require("toml")
 const tomlify = require("tomlify-j0.4")
 
 const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
+const KeepBonding = artifacts.require("KeepBonding")
+const {TokenStakingAddress} = require("../migrations/external-contracts")
 
 module.exports = async function () {
   try {
@@ -19,9 +21,13 @@ module.exports = async function () {
     const sanctionedApp = process.env.CLIENT_APP_ADDRESS
 
     let keepFactoryAddress
+    let keepBondingAddress
     try {
       const keepFactory = await BondedECDSAKeepFactory.deployed()
       keepFactoryAddress = keepFactory.address
+
+      const keepBonding = await KeepBonding.deployed()
+      keepBondingAddress = keepBonding.address
     } catch (err) {
       console.error("failed to get deployed contracts", err)
       process.exit(1)
@@ -33,6 +39,8 @@ module.exports = async function () {
       fileContent.ethereum.URL = web3.currentProvider.connection._url
 
       fileContent.ethereum.ContractAddresses.BondedECDSAKeepFactory = keepFactoryAddress
+      fileContent.ethereum.ContractAddresses.KeepBonding = keepBondingAddress
+      fileContent.ethereum.ContractAddresses.TokenStaking = TokenStakingAddress
 
       fileContent.SanctionedApplications.Addresses = [sanctionedApp]
 
