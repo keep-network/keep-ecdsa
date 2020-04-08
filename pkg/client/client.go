@@ -306,6 +306,37 @@ func checkAwaitingSignature(
 	}
 
 	if isAwaitingDigest {
+		currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
+		if err != nil {
+			logger.Errorf("failed to get current block height [%v]", err)
+			return
+		}
+
+		isStillAwaitingSignature, err := waitForChainConfirmation(
+			ethereumChain,
+			currentBlock,
+			func() (bool, error) {
+				return ethereumChain.IsAwaitingSignature(keepAddress, latestDigest)
+			},
+		)
+		if err != nil {
+			logger.Errorf(
+				"failed to confirm signing request for digest [%+x] and keep [%s]",
+				latestDigest,
+				keepAddress.String(),
+			)
+			return
+		}
+
+		if !isStillAwaitingSignature {
+			logger.Warningf(
+				"keep [%s] is not awaiting a signature for digest [%+x]",
+				keepAddress.String(),
+				latestDigest,
+			)
+			return
+		}
+
 		generateSignatureForKeep(tssNode, keepAddress, signer, latestDigest)
 	}
 }
