@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-common/pkg/subscription"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
@@ -213,49 +214,20 @@ func monitorSignerPoolStatus(
 
 	updateTrigger := make(chan interface{})
 
-	subscriptionUnbondedValueWithdrawn, err := ethereumChain.OnUnbondedValueWithdrawn(
-		ethereumChain.Address(),
-		func(event *eth.UnbondedValueWithdrawnEvent) {
-			updateTrigger <- event
-		},
+	unsubscribeAll, err := subscribeStatusUpdateEvents(
+		ethereumChain,
+		updateTrigger,
 	)
 	if err != nil {
-		return fmt.Errorf("failed on registering for unbonded value withdraw: [%v]", err)
+		return fmt.Errorf(
+			"failed to subscribe for status update events for application [%s]: [%v]",
+			application.String(),
+			err,
+		)
 	}
-	defer subscriptionUnbondedValueWithdrawn.Unsubscribe()
+	defer unsubscribeAll()
 
-	subscriptionBondCreated, err := ethereumChain.OnBondCreated(
-		ethereumChain.Address(),
-		func(event *eth.BondCreatedEvent) {
-			updateTrigger <- event
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed on registering for bond creation: [%v]", err)
-	}
-	defer subscriptionBondCreated.Unsubscribe()
-
-	subscriptionTokenSlashed, err := ethereumChain.OnTokensSlashed(
-		ethereumChain.Address(),
-		func(event *eth.TokensSlashedEvent) {
-			updateTrigger <- event
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed on registering for tokens slashing: [%v]", err)
-	}
-	defer subscriptionTokenSlashed.Unsubscribe()
-
-	subscriptionTokenSeized, err := ethereumChain.OnTokensSeized(
-		ethereumChain.Address(),
-		func(event *eth.TokensSeizedEvent) {
-			updateTrigger <- event
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed on registering for tokens seizure: [%v]", err)
-	}
-	defer subscriptionTokenSeized.Unsubscribe()
+	logger.Infof("subscribed for status update events")
 
 	for {
 		select {
@@ -298,4 +270,67 @@ func monitorSignerPoolStatus(
 			return ctx.Err()
 		}
 	}
+}
+
+func subscribeStatusUpdateEvents(
+	ethereumChain eth.Handle,
+	updateTrigger chan<- interface{},
+) (func(), error) {
+	subscriptions := []subscription.EventSubscription{}
+
+	unsubscribeAll := func() {
+		for _, s := range subscriptions {
+			s.Unsubscribe()
+		}
+	}
+
+	subscriptionUnbondedValueWithdrawn, err := ethereumChain.OnUnbondedValueWithdrawn(
+		ethereumChain.Address(),
+		func(event *eth.UnbondedValueWithdrawnEvent) {
+			updateTrigger <- event
+		},
+	)
+	if err != nil {
+		unsubscribeAll()
+		return nil, fmt.Errorf("failed on registering for unbonded value withdraw: [%v]", err)
+	}
+	subscriptions = append(subscriptions, subscriptionUnbondedValueWithdrawn)
+
+	subscriptionBondCreated, err := ethereumChain.OnBondCreated(
+		ethereumChain.Address(),
+		func(event *eth.BondCreatedEvent) {
+			updateTrigger <- event
+		},
+	)
+	if err != nil {
+		unsubscribeAll()
+		return nil, fmt.Errorf("failed on registering for bond creation: [%v]", err)
+	}
+	subscriptions = append(subscriptions, subscriptionBondCreated)
+
+	subscriptionTokenSlashed, err := ethereumChain.OnTokensSlashed(
+		ethereumChain.Address(),
+		func(event *eth.TokensSlashedEvent) {
+			updateTrigger <- event
+		},
+	)
+	if err != nil {
+		unsubscribeAll()
+		return nil, fmt.Errorf("failed on registering for tokens slashing: [%v]", err)
+	}
+	subscriptions = append(subscriptions, subscriptionTokenSlashed)
+
+	subscriptionTokenSeized, err := ethereumChain.OnTokensSeized(
+		ethereumChain.Address(),
+		func(event *eth.TokensSeizedEvent) {
+			updateTrigger <- event
+		},
+	)
+	if err != nil {
+		unsubscribeAll()
+		return nil, fmt.Errorf("failed on registering for tokens seizure: [%v]", err)
+	}
+	subscriptions = append(subscriptions, subscriptionTokenSeized)
+
+	return unsubscribeAll, nil
 }
