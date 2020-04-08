@@ -228,6 +228,10 @@ func checkAwaitingKeyGeneration(
 
 	// Iterate through keeps starting from the end.
 	for keepIndex := new(big.Int).Set(lastIndex); keepIndex.Cmp(zero) != -1; keepIndex.Sub(keepIndex, one) {
+		logger.Debugf(
+			"checking awaiting key generation for keep at index [%v]",
+			keepIndex.String(),
+		)
 
 		keep, err := ethereumChain.GetKeepAtIndex(keepIndex)
 		if err != nil {
@@ -514,9 +518,9 @@ func checkAwaitingSignature(
 
 	if isAwaitingDigest {
 		logger.Infof(
-			"awaiting signature for digest [%+x] exists for keep [%s]",
-			latestDigest,
+			"awaiting a signature from keep [%s] for digest [%+x]",
 			keepAddress.String(),
+			latestDigest,
 		)
 
 		if ok := requestedSignatures.add(keepAddress, latestDigest); !ok {
