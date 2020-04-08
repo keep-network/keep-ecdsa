@@ -310,9 +310,10 @@ func monitorSigningRequests(
 				)
 				if err != nil {
 					logger.Errorf(
-						"failed to confirm signing request for digest [%+x] and keep [%s]",
+						"failed to confirm signing request for digest [%+x] and keep [%s]: [%v]",
 						event.Digest,
 						keepAddress.String(),
+						err,
 					)
 					return
 				}
