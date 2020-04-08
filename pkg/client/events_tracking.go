@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/hex"
-	"fmt"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -11,7 +10,7 @@ import (
 // requestedSignersTrack is used to track signers generation started after keep
 // creation event is received. It is used to ensure that the process execution
 // is not duplicated, e.g. when the client receives the same event multiple times.
-// When event is received, it should be noted in in this struct. When the signer
+// When event is received, it should be noted in this struct. When the signer
 // generation process completes (no matter if it succeeded or failed), it should
 // be removed from this struct.
 type requestedSignersTrack struct {
@@ -19,20 +18,17 @@ type requestedSignersTrack struct {
 	mutex *sync.Mutex
 }
 
-func (rst *requestedSignersTrack) add(keepAddress common.Address) error {
+func (rst *requestedSignersTrack) add(keepAddress common.Address) bool {
 	rst.mutex.Lock()
 	defer rst.mutex.Unlock()
 
 	if rst.data[keepAddress.String()] == true {
-		return fmt.Errorf(
-			"signer generation already requested for keep: [%s]",
-			keepAddress.String(),
-		)
+		return false
 	}
 
 	rst.data[keepAddress.String()] = true
 
-	return nil
+	return true
 }
 
 func (rst *requestedSignersTrack) remove(keepAddress common.Address) {
@@ -45,7 +41,7 @@ func (rst *requestedSignersTrack) remove(keepAddress common.Address) {
 // requestedSignaturesTrack is used to track signature calculation started after
 // signature request event is received. It is used to ensure that the process execution
 // is not duplicated, e.g. when the client receives the same event multiple times.
-// When event is received, it should be noted in in this struct. When the signature
+// When event is received, it should be noted in this struct. When the signature
 // calculation process completes (no matter if it succeeded or failed), it should
 // be removed from this struct.
 type requestedSignaturesTrack struct {
@@ -53,7 +49,7 @@ type requestedSignaturesTrack struct {
 	mutex *sync.Mutex
 }
 
-func (rst *requestedSignaturesTrack) add(keepAddress common.Address, digest [32]byte) error {
+func (rst *requestedSignaturesTrack) add(keepAddress common.Address, digest [32]byte) bool {
 	rst.mutex.Lock()
 	defer rst.mutex.Unlock()
 
@@ -62,18 +58,14 @@ func (rst *requestedSignaturesTrack) add(keepAddress common.Address, digest [32]
 	keepSignaturesRequests, ok := rst.data[keepAddress.String()]
 	if !ok {
 		rst.data[keepAddress.String()] = map[string]bool{digestString: true}
-		return nil
+		return true
 	}
 	if keepSignaturesRequests[digestString] == true {
-		return fmt.Errorf(
-			"signature for digest [%s] already requested from keep: [%s]",
-			digestString,
-			keepAddress.String(),
-		)
+		return false
 	}
 
 	keepSignaturesRequests[digestString] = true
-	return nil
+	return true
 
 }
 
