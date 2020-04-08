@@ -5,7 +5,7 @@ const TokenStaking = artifacts.require("./TokenStakingStub.sol")
 const KeepBonding = artifacts.require("./KeepBonding.sol")
 const TestEtherReceiver = artifacts.require("./TestEtherReceiver.sol")
 
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const {expectEvent, expectRevert} = require("@openzeppelin/test-helpers")
 
 const BN = web3.utils.BN
 
@@ -54,11 +54,10 @@ contract("KeepBonding", (accounts) => {
   })
 
   describe("deposit", async () => {
+    const value = new BN(100)
+    const expectedUnbonded = value
+
     it("registers unbonded value", async () => {
-      const value = new BN(100)
-
-      const expectedUnbonded = value
-
       await keepBonding.deposit(operator, {value: value})
 
       const unbonded = await keepBonding.availableUnbondedValue(
@@ -68,6 +67,14 @@ contract("KeepBonding", (accounts) => {
       )
 
       expect(unbonded).to.eq.BN(expectedUnbonded, "invalid unbonded value")
+    })
+
+    it("emits event", async () => {
+      const receipt = await keepBonding.deposit(operator, {value: value})
+      expectEvent(receipt, "UnbondedValueDeposited", {
+        operator: operator,
+        amount: value,
+      })
     })
   })
 
@@ -106,6 +113,18 @@ contract("KeepBonding", (accounts) => {
       await tokenStaking.setOwner(operator, owner)
 
       await keepBonding.withdraw(value, operator, {from: owner})
+    })
+
+    it("emits event", async () => {
+      const value = new BN(90)
+
+      const receipt = await keepBonding.withdraw(value, operator, {
+        from: operator,
+      })
+      expectEvent(receipt, "UnbondedValueWithdrawn", {
+        operator: operator,
+        amount: value,
+      })
     })
 
     it("reverts if insufficient unbonded value", async () => {
@@ -205,7 +224,7 @@ contract("KeepBonding", (accounts) => {
     })
 
     it("creates bond", async () => {
-      const reference = 888
+      const reference = new BN(888)
 
       const expectedUnbonded = 0
 
@@ -233,11 +252,32 @@ contract("KeepBonding", (accounts) => {
       expect(lockedBonds).to.eq.BN(value, "unexpected bond value")
     })
 
+    it("emits event", async () => {
+      const reference = new BN(999)
+
+      const receipt = await keepBonding.createBond(
+        operator,
+        holder,
+        reference,
+        value,
+        sortitionPool,
+        {from: bondCreator}
+      )
+
+      expectEvent(receipt, "BondCreated", {
+        operator: operator,
+        holder: holder,
+        sortitionPool: sortitionPool,
+        referenceID: reference,
+        amount: value,
+      })
+    })
+
     it("creates two bonds with the same reference for different operators", async () => {
       const operator2 = accounts[2]
       const authorizer2 = accounts[2]
       const bondValue = new BN(10)
-      const reference = 777
+      const reference = new BN(777)
 
       const expectedUnbonded = value.sub(bondValue)
 
@@ -297,7 +337,7 @@ contract("KeepBonding", (accounts) => {
 
     it("fails to create two bonds with the same reference for the same operator", async () => {
       const bondValue = new BN(10)
-      const reference = 777
+      const reference = new BN(777)
 
       await keepBonding.createBond(
         operator,
@@ -337,8 +377,8 @@ contract("KeepBonding", (accounts) => {
     const holder = accounts[2]
     const newHolder = accounts[3]
     const bondValue = new BN(100)
-    const reference = 777
-    const newReference = 888
+    const reference = new BN(777)
+    const newReference = new BN(888)
 
     beforeEach(async () => {
       await keepBonding.deposit(operator, {value: bondValue})
@@ -422,6 +462,23 @@ contract("KeepBonding", (accounts) => {
       expect(lockedBonds).to.eq.BN(bondValue, "invalid locked bonds")
     })
 
+    it("emits event", async () => {
+      const receipt = await keepBonding.reassignBond(
+        operator,
+        reference,
+        newHolder,
+        newReference,
+        {from: holder}
+      )
+
+      expectEvent(receipt, "BondReassigned", {
+        operator: operator,
+        referenceID: reference,
+        newHolder: newHolder,
+        newReferenceID: newReference,
+      })
+    })
+
     it("fails if sender is not the holder", async () => {
       await expectRevert(
         keepBonding.reassignBond(operator, reference, newHolder, newReference, {
@@ -455,7 +512,7 @@ contract("KeepBonding", (accounts) => {
     const holder = accounts[2]
     const initialUnboundedValue = new BN(500)
     const bondValue = new BN(100)
-    const reference = 777
+    const reference = new BN(777)
 
     beforeEach(async () => {
       await keepBonding.deposit(operator, {value: initialUnboundedValue})
@@ -490,6 +547,17 @@ contract("KeepBonding", (accounts) => {
       )
     })
 
+    it("emits event", async () => {
+      const receipt = await keepBonding.freeBond(operator, reference, {
+        from: holder,
+      })
+
+      expectEvent(receipt, "BondReleased", {
+        operator: operator,
+        referenceID: reference,
+      })
+    })
+
     it("fails if sender is not the holder", async () => {
       await expectRevert(
         keepBonding.freeBond(operator, reference, {from: accounts[0]}),
@@ -502,7 +570,7 @@ contract("KeepBonding", (accounts) => {
     const holder = accounts[2]
     const destination = accounts[3]
     const bondValue = new BN(1000)
-    const reference = 777
+    const reference = new BN(777)
 
     beforeEach(async () => {
       await keepBonding.deposit(operator, {value: bondValue})
@@ -538,6 +606,27 @@ contract("KeepBonding", (accounts) => {
         reference
       )
       expect(lockedBonds).to.eq.BN(0, "unexpected remaining bond value")
+    })
+
+    it("emits event", async () => {
+      const amount = new BN(80)
+
+      const receipt = await keepBonding.seizeBond(
+        operator,
+        reference,
+        amount,
+        destination,
+        {
+          from: holder,
+        }
+      )
+
+      expectEvent(receipt, "BondSeized", {
+        operator: operator,
+        referenceID: reference,
+        destination: destination,
+        amount: amount,
+      })
     })
 
     it("transfers less than bond amount to destination account", async () => {
