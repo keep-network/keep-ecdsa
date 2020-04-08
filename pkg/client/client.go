@@ -4,6 +4,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -150,30 +151,64 @@ func checkAwaitingKeyGeneration(
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
 ) {
-	keep, err := ethereumChain.GetLastKeep()
+	keepCount, err := ethereumChain.GetKeepCount()
 	if err != nil {
-		logger.Warningf(
-			"could not check awaiting key generation; "+
-				"could not get last keep: [%v]",
-			err,
-		)
+		logger.Warningf("could not get keep count: [%v]", err)
 		return
 	}
 
-	err = checkAwaitingKeyGenerationForKeep(
-		ctx,
-		ethereumChain,
-		tssNode,
-		operatorPublicKey,
-		keepsRegistry,
-		keep,
-	)
-	if err != nil {
-		logger.Warningf(
-			"could not check awaiting key generation for keep [%s]: [%v]",
-			keep.String(),
-			err,
+	zero := big.NewInt(0)
+	one := big.NewInt(1)
+
+	lastIndex := new(big.Int).Sub(keepCount, one)
+
+	// Iterate through keeps starting from the end.
+	for keepIndex := new(big.Int).Set(lastIndex); keepIndex.Cmp(zero) != -1; keepIndex.Sub(keepIndex, one) {
+
+		keep, err := ethereumChain.GetKeepAtIndex(keepIndex)
+		if err != nil {
+			logger.Warningf(
+				"could not get keep at index [%v]: [%v]",
+				keepIndex,
+				err,
+			)
+			continue
+		}
+
+		keygenTimeout, err := ethereumChain.HasKeyGenerationTimedOut(keep)
+		if err != nil {
+			logger.Warningf(
+				"could not check key generation timeout "+
+					"for keep [%v]: [%v]",
+				keep.String(),
+				err,
+			)
+			continue
+		}
+
+		// If key generation timeout of current keep has been exceeded,
+		// there is no sense to continue because the next keep (created earlier)
+		// will have this timeout exceeded as well.
+		if keygenTimeout {
+			break
+		}
+
+		err = checkAwaitingKeyGenerationForKeep(
+			ctx,
+			ethereumChain,
+			tssNode,
+			operatorPublicKey,
+			keepsRegistry,
+			keep,
 		)
+		if err != nil {
+			logger.Warningf(
+				"could not check awaiting key generation "+
+					"for keep [%s]: [%v]",
+				keep.String(),
+				err,
+			)
+		}
 	}
 }
 
@@ -194,41 +229,26 @@ func checkAwaitingKeyGenerationForKeep(
 		return nil
 	}
 
-	hasKeyGenerationTimedOut, err := ethereumChain.HasKeyGenerationTimedOut(keep)
-	if err != nil {
-		return err
-	}
-
-	if hasKeyGenerationTimedOut {
-		return nil
-	}
-
 	members, err := ethereumChain.GetMembers(keep)
 	if err != nil {
 		return err
 	}
 
-	isMember := false
 	for _, member := range members {
 		if ethereumChain.Address() == member {
-			isMember = true
+			go generateKeyForKeep(
+				ctx,
+				ethereumChain,
+				tssNode,
+				operatorPublicKey,
+				keepsRegistry,
+				keep,
+				members,
+			)
+
 			break
 		}
 	}
-
-	if !isMember {
-		return nil
-	}
-
-	generateKeyForKeep(
-		ctx,
-		ethereumChain,
-		tssNode,
-		operatorPublicKey,
-		keepsRegistry,
-		keep,
-		members,
-	)
 
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"math/big"
 )
 
 // Handle represents a handle to an ethereum blockchain.
@@ -51,8 +52,11 @@ type BondedECDSAKeepFactory interface {
 	// pool for the given application.
 	UpdateStatusForApplication(application common.Address) error
 
-	// GetLastKeep returns the address of the last opened keep.
-	GetLastKeep() (common.Address, error)
+	// GetKeepCount returns number of keeps.
+	GetKeepCount() (*big.Int, error)
+
+	// GetKeepAtIndex returns keep at given index.
+	GetKeepAtIndex(keepIndex *big.Int) (common.Address, error)
 }
 
 // BondedECDSAKeep is an interface that provides ability to interact with

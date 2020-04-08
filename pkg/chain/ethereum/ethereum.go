@@ -365,23 +365,14 @@ func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) 
 	return nil
 }
 
-func (ec *EthereumChain) GetLastKeep() (common.Address, error) {
-	var lastKeep common.Address
+func (ec *EthereumChain) GetKeepCount() (*big.Int, error) {
+	return ec.bondedECDSAKeepFactoryContract.GetKeepCount()
+}
 
-	keepCount, err := ec.bondedECDSAKeepFactoryContract.GetKeepCount()
-	if err != nil {
-		return lastKeep, err
-	}
-
-	if keepCount.Cmp(big.NewInt(0)) == 0 {
-		return lastKeep, fmt.Errorf("no keeps")
-	}
-
-	lastKeep, err = ec.bondedECDSAKeepFactoryContract.GetKeepAtIndex(
-		new(big.Int).Sub(keepCount, big.NewInt(1)),
-	)
-
-	return lastKeep, err
+func (ec *EthereumChain) GetKeepAtIndex(
+	keepIndex *big.Int,
+) (common.Address, error) {
+	return ec.bondedECDSAKeepFactoryContract.GetKeepAtIndex(keepIndex)
 }
 
 func (ec *EthereumChain) LatestDigest(keepAddress common.Address) ([32]byte, error) {

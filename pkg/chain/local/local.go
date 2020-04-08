@@ -2,6 +2,7 @@ package local
 
 import (
 	"fmt"
+	"math/big"
 	"math/rand"
 	"sync"
 
@@ -169,7 +170,13 @@ func (lc *localChain) UpdateStatusForApplication(application common.Address) err
 	panic("implement")
 }
 
-func (lc *localChain) GetLastKeep() (common.Address, error) {
+func (lc *localChain) GetKeepCount() (*big.Int, error) {
+	panic("implement")
+}
+
+func (lc *localChain) GetKeepAtIndex(
+	keepIndex *big.Int,
+) (common.Address, error) {
 	panic("implement")
 }
 
