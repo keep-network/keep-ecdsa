@@ -268,36 +268,36 @@ workflows:
     jobs:
       - build_client_and_test_go
       - migrate_contracts:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
       - publish_npm_package:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - migrate_contracts
       - publish_contract_data:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - migrate_contracts
       - build_initcontainer:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - migrate_contracts
             - build_client_and_test_go
       - publish_client:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - build_initcontainer
