@@ -266,6 +266,20 @@ func monitorSignerPoolStatus(
 						err,
 					)
 				}
+
+				isRegistered, err := ethereumChain.IsRegisteredForApplication(application)
+				if err != nil {
+					return fmt.Errorf(
+						"failed to check operator registration for application [%s]: [%v]",
+						application.String(),
+						err,
+					)
+				}
+				if !isRegistered {
+					return fmt.Errorf(
+						"operator is no longer registered for application [%s]",
+						application.String())
+				}
 			}
 		case <-ctx.Done():
 			return ctx.Err()
