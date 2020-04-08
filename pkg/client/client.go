@@ -4,6 +4,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"sync"
 	"time"
 
@@ -159,6 +160,15 @@ func Initialize(
 		}(keepAddress)
 	}
 
+	go checkAwaitingKeyGeneration(
+		ctx,
+		ethereumChain,
+		tssNode,
+		operatorPublicKey,
+		keepsRegistry,
+		requestedSignatures,
+	)
+
 	// Watch for new keeps creation.
 	ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(
@@ -178,64 +188,15 @@ func Initialize(
 				}
 				defer requestedSigners.remove(event.KeepAddress)
 
-				logger.Infof(
-					"member [%s] is starting signer generation for keep [%s]...",
-					ethereumChain.Address().String(),
-					event.KeepAddress.String(),
-				)
-
-				signer, err := generateSignerForKeep(ctx, tssNode, operatorPublicKey, event)
-				if err != nil {
-					logger.Errorf(
-						"failed to generate signer for keep [%s]: [%v]",
-						event.KeepAddress.String(),
-						err,
-					)
-					return
-				}
-
-				logger.Infof("initialized signer for keep [%s]", event.KeepAddress.String())
-
-				err = keepsRegistry.RegisterSigner(event.KeepAddress, signer)
-				if err != nil {
-					logger.Errorf(
-						"failed to register threshold signer for keep [%s]: [%v]",
-						event.KeepAddress.String(),
-						err,
-					)
-				}
-
-				subscriptionOnSignatureRequested, err := monitorSigningRequests(
+				generateKeyForKeep(
+					ctx,
 					ethereumChain,
 					tssNode,
-					event.KeepAddress,
-					signer,
+					operatorPublicKey,
+					keepsRegistry,
 					requestedSignatures,
-				)
-				if err != nil {
-					logger.Errorf(
-						"failed on registering for requested signature event for keep [%s]: [%v]",
-						event.KeepAddress.String(),
-						err,
-					)
-
-					// In case of an error we want to avoid subscribing to keep
-					// closed events. Something is wrong and we should stop
-					// further processing.
-					return
-				}
-
-				go monitorKeepClosedEvents(
-					ethereumChain,
 					event.KeepAddress,
-					keepsRegistry,
-					subscriptionOnSignatureRequested,
-				)
-				go monitorKeepTerminatedEvent(
-					ethereumChain,
-					event.KeepAddress,
-					keepsRegistry,
-					subscriptionOnSignatureRequested,
+					event.Members,
 				)
 			}(event)
 		}
@@ -246,11 +207,207 @@ func Initialize(
 	}
 }
 
+func checkAwaitingKeyGeneration(
+	ctx context.Context,
+	ethereumChain eth.Handle,
+	tssNode *node.Node,
+	operatorPublicKey *operator.PublicKey,
+	keepsRegistry *registry.Keeps,
+	requestedSignatures *requestedSignaturesTrack,
+) {
+	keepCount, err := ethereumChain.GetKeepCount()
+	if err != nil {
+		logger.Warningf("could not get keep count: [%v]", err)
+		return
+	}
+
+	zero := big.NewInt(0)
+	one := big.NewInt(1)
+
+	lastIndex := new(big.Int).Sub(keepCount, one)
+
+	// Iterate through keeps starting from the end.
+	for keepIndex := new(big.Int).Set(lastIndex); keepIndex.Cmp(zero) != -1; keepIndex.Sub(keepIndex, one) {
+		logger.Debugf(
+			"checking awaiting key generation for keep at index [%v]",
+			keepIndex.String(),
+		)
+
+		keep, err := ethereumChain.GetKeepAtIndex(keepIndex)
+		if err != nil {
+			logger.Warningf(
+				"could not get keep at index [%v]: [%v]",
+				keepIndex,
+				err,
+			)
+			continue
+		}
+
+		keygenTimeout, err := ethereumChain.HasKeyGenerationTimedOut(keep)
+		if err != nil {
+			logger.Warningf(
+				"could not check key generation timeout "+
+					"for keep [%v]: [%v]",
+				keep.String(),
+				err,
+			)
+			continue
+		}
+
+		// If key generation timeout of current keep has been exceeded,
+		// there is no sense to continue because the next keep (created earlier)
+		// will have this timeout exceeded as well.
+		if keygenTimeout {
+			break
+		}
+
+		err = checkAwaitingKeyGenerationForKeep(
+			ctx,
+			ethereumChain,
+			tssNode,
+			operatorPublicKey,
+			keepsRegistry,
+			requestedSignatures,
+			keep,
+		)
+		if err != nil {
+			logger.Warningf(
+				"could not check awaiting key generation "+
+					"for keep [%s]: [%v]",
+				keep.String(),
+				err,
+			)
+		}
+	}
+}
+
+func checkAwaitingKeyGenerationForKeep(
+	ctx context.Context,
+	ethereumChain eth.Handle,
+	tssNode *node.Node,
+	operatorPublicKey *operator.PublicKey,
+	keepsRegistry *registry.Keeps,
+	requestedSignatures *requestedSignaturesTrack,
+	keep common.Address,
+) error {
+	publicKey, err := ethereumChain.GetPublicKey(keep)
+	if err != nil {
+		return err
+	}
+
+	if len(publicKey) != 0 {
+		return nil
+	}
+
+	members, err := ethereumChain.GetMembers(keep)
+	if err != nil {
+		return err
+	}
+
+	for _, member := range members {
+		if ethereumChain.Address() == member {
+			go generateKeyForKeep(
+				ctx,
+				ethereumChain,
+				tssNode,
+				operatorPublicKey,
+				keepsRegistry,
+				requestedSignatures,
+				keep,
+				members,
+			)
+
+			break
+		}
+	}
+
+	return nil
+}
+
+func generateKeyForKeep(
+	ctx context.Context,
+	ethereumChain eth.Handle,
+	tssNode *node.Node,
+	operatorPublicKey *operator.PublicKey,
+	keepsRegistry *registry.Keeps,
+	requestedSignatures *requestedSignaturesTrack,
+	keepAddress common.Address,
+	members []common.Address,
+) {
+	logger.Infof(
+		"member [%s] is starting signer generation for keep [%s]...",
+		ethereumChain.Address().String(),
+		keepAddress.String(),
+	)
+
+	signer, err := generateSignerForKeep(
+		ctx,
+		tssNode,
+		operatorPublicKey,
+		keepAddress,
+		members,
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed to generate signer for keep [%s]: [%v]",
+			keepAddress.String(),
+			err,
+		)
+		return
+	}
+
+	logger.Infof("initialized signer for keep [%s]", keepAddress.String())
+
+	err = keepsRegistry.RegisterSigner(keepAddress, signer)
+	if err != nil {
+		logger.Errorf(
+			"failed to register threshold signer for keep [%s]: [%v]",
+			keepAddress.String(),
+			err,
+		)
+	}
+
+	subscriptionOnSignatureRequested, err := monitorSigningRequests(
+		ethereumChain,
+		tssNode,
+		keepAddress,
+		signer,
+		requestedSignatures,
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed on registering for requested signature event "+
+				"for keep [%s]: [%v]",
+			keepAddress.String(),
+			err,
+		)
+
+		// In case of an error we want to avoid subscribing to keep
+		// closed events. Something is wrong and we should stop
+		// further processing.
+		return
+	}
+
+	go monitorKeepClosedEvents(
+		ethereumChain,
+		keepAddress,
+		keepsRegistry,
+		subscriptionOnSignatureRequested,
+	)
+	go monitorKeepTerminatedEvent(
+		ethereumChain,
+		keepAddress,
+		keepsRegistry,
+		subscriptionOnSignatureRequested,
+	)
+}
+
 func generateSignerForKeep(
 	ctx context.Context,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
-	event *eth.BondedECDSAKeepCreatedEvent,
+	keepAddress common.Address,
+	members []common.Address,
 ) (*tss.ThresholdSigner, error) {
 	keygenCtx, cancel := context.WithTimeout(ctx, keyGenerationTimeout)
 	defer cancel()
@@ -258,8 +415,8 @@ func generateSignerForKeep(
 	return tssNode.GenerateSignerForKeep(
 		keygenCtx,
 		operatorPublicKey,
-		event.KeepAddress,
-		event.Members,
+		keepAddress,
+		members,
 	)
 }
 
@@ -360,6 +517,12 @@ func checkAwaitingSignature(
 	}
 
 	if isAwaitingDigest {
+		logger.Infof(
+			"awaiting a signature from keep [%s] for digest [%+x]",
+			keepAddress.String(),
+			latestDigest,
+		)
+
 		if ok := requestedSignatures.add(keepAddress, latestDigest); !ok {
 			logger.Errorf(
 				"signature requested event for keep [%s] and digest [%x] already registered",
