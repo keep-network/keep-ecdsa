@@ -22,7 +22,7 @@ func checkStatusAndRegisterForApplication(
 	ethereumChain eth.Handle,
 	application common.Address,
 ) {
-Registration:
+RegistrationLoop:
 	for {
 		select {
 		case <-ctx.Done():
@@ -49,7 +49,7 @@ Registration:
 			// registered, we can start to monitor the status
 			if err := monitorSignerPoolStatus(ctx, ethereumChain, application); err != nil {
 				logger.Errorf("failed on signer pool status monitoring: [%v]", err)
-				continue Registration
+				continue RegistrationLoop
 			}
 		}
 	}
