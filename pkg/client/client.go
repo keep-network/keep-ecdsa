@@ -93,9 +93,6 @@ func Initialize(
 						"subscriptions for keep signing and closing events are skipped",
 					err,
 				)
-
-				// If there are no signers for loaded keep that something is clearly
-				// wrong. We don't want to continue processing for this keep.
 				return
 			}
 
@@ -117,6 +114,8 @@ func Initialize(
 
 			signers, err := keepsRegistry.GetSigners(keepAddress)
 			if err != nil {
+				// If there are no signers for loaded keep that something is clearly
+				// wrong. We don't want to continue processing for this keep.
 				logger.Errorf("no signers for keep [%s]", keepAddress.String())
 				return
 			}
