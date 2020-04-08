@@ -267,6 +267,17 @@ func monitorSignerPoolStatus(
 					)
 				}
 
+				// We wait for a block to be mined so a possible operator removal
+				// have time to be mined.
+				currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
+				if err != nil {
+					return fmt.Errorf("failed to get current block height: [%v]", err)
+				}
+				blockHeight := currentBlock + 1
+				if err := ethereumChain.BlockCounter().WaitForBlockHeight(blockHeight); err != nil {
+					return fmt.Errorf("failed to wait for block [%d]: [%v]", blockHeight, err)
+				}
+
 				isRegistered, err := ethereumChain.IsRegisteredForApplication(application)
 				if err != nil {
 					return fmt.Errorf(
@@ -280,6 +291,11 @@ func monitorSignerPoolStatus(
 						"operator is no longer registered for application [%s]",
 						application.String())
 				}
+
+				logger.Debugf(
+					"operator is still registered for application [%s]",
+					application.String(),
+				)
 			}
 		case <-ctx.Done():
 			return ctx.Err()
