@@ -65,8 +65,6 @@ contract BondedECDSAKeepFactory is
     KeepBonding keepBonding;
     IRandomBeacon randomBeacon;
 
-    uint256 public minimumStake = 200000 * 1e18;
-
     // Sortition pool is created with a minimum bond of 1 to avoid
     // griefing.
     //
@@ -79,6 +77,12 @@ contract BondedECDSAKeepFactory is
     // to allow the pool adjust the minimum bond during the first signer
     // selection.
     uint256 public constant minimumBond = 1;
+
+    // Signer candidates in bonded sortition pool are weighted by their eligible
+    // stake divided by a constant divisor. The divisor is set to 1 KEEP so that
+    // all KEEPs in eligible stake matter when calculating operator's eligible
+    // weight for signer selection.
+    uint256 public constant poolStakeWeightDivisor = 1e18;
 
     // Gas required for a callback from the random beacon. The value specifies
     // gas required to call `__beaconCallback` function in the worst-case
@@ -135,8 +139,9 @@ contract BondedECDSAKeepFactory is
         address sortitionPoolAddress = sortitionPoolFactory.createSortitionPool(
             IStaking(address(tokenStaking)),
             IBonding(address(keepBonding)),
-            minimumStake,
-            minimumBond
+            tokenStaking.minimumStake(),
+            minimumBond,
+            poolStakeWeightDivisor
         );
 
         candidatesPools[_application] = sortitionPoolAddress;
@@ -256,9 +261,12 @@ contract BondedECDSAKeepFactory is
             "Insufficient payment for opening a new keep"
         );
 
+        uint256 minimumStake = tokenStaking.minimumStake();
+
         address[] memory members = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
             bytes32(groupSelectionSeed),
+            minimumStake,
             memberBond
         );
 
@@ -432,8 +440,7 @@ contract BondedECDSAKeepFactory is
     /// @return True if has enough active stake to participate in the network,
     /// false otherwise.
     function hasMinimumStake(address _operator) public view returns (bool) {
-        return
-            tokenStaking.activeStake(_operator, address(this)) >= minimumStake;
+        return tokenStaking.hasMinimumStake(_operator, address(this));
     }
 
     /// @dev Gets the stake balance of the specified operator.
