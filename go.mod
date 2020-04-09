@@ -19,7 +19,6 @@ require (
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/keep-common v0.1.1-0.20200409131849-1363a51644b7 // TODO: update to released version
 	github.com/keep-network/keep-core v0.10.0
-	github.com/keep-network/keep-tecdsa v0.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
 )
