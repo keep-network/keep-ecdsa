@@ -8,6 +8,8 @@ import (
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
+const statusCheckIntervalBlocks = 100
+
 // checkStatusAndRegisterForApplication checks whether the operator is
 // registered as a member candidate for keep for the given application.
 // If not, checks operators's eligibility and retries until the operator is
@@ -211,11 +213,30 @@ func monitorSignerPoolStatus(
 		application.String(),
 	)
 
-	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
+	blockCounter := ethereumChain.BlockCounter()
+
+	startingBlock, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return err
+	}
+
+	statusCheckTrigger, err := blockCounter.BlockHeightWaiter(
+		startingBlock + statusCheckIntervalBlocks,
+	)
+	if err != nil {
+		return err
+	}
 
 	for {
 		select {
-		case <-newBlockChan:
+		case statusCheckBlock := <-statusCheckTrigger:
+			logger.Debugf(
+				"operator status check for application [%s] "+
+					"triggered at block [%v]",
+				application.String(),
+				statusCheckBlock,
+			)
+
 			isUpToDate, err := ethereumChain.IsStatusUpToDateForApplication(application)
 			if err != nil {
 				return fmt.Errorf(
@@ -244,6 +265,13 @@ func monitorSignerPoolStatus(
 						err,
 					)
 				}
+			}
+
+			statusCheckTrigger, err = blockCounter.BlockHeightWaiter(
+				statusCheckBlock + statusCheckIntervalBlocks,
+			)
+			if err != nil {
+				return err
 			}
 		case <-ctx.Done():
 			return ctx.Err()
