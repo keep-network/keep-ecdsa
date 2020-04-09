@@ -265,6 +265,31 @@ func monitorSignerPoolStatus(
 						err,
 					)
 				}
+
+				isRegistered, err := waitForChainConfirmation(
+					ethereumChain,
+					statusCheckBlock,
+					func() (bool, error) {
+						return ethereumChain.IsRegisteredForApplication(
+							application,
+						)
+					},
+				)
+				if err != nil {
+					return fmt.Errorf(
+						"failed to confirm that operator is registered "+
+							"for application [%s]: [%v]",
+						application.String(),
+						err,
+					)
+				}
+
+				if !isRegistered {
+					return fmt.Errorf(
+						"operator is no longer registered for application [%s]",
+						application.String(),
+					)
+				}
 			}
 
 			statusCheckTrigger, err = blockCounter.BlockHeightWaiter(
