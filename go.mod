@@ -12,16 +12,14 @@ replace (
 
 require (
 	github.com/BurntSushi/toml v0.3.1
-	github.com/aristanetworks/goarista v0.0.0-20200211191935-58c705f5cf52 // indirect
 	github.com/binance-chain/tss-lib v1.3.1
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/ethereum/go-ethereum v1.9.10
 	github.com/gogo/protobuf v1.3.1
 	github.com/ipfs/go-log v0.0.1
-	github.com/keep-network/keep-common v0.1.1-0.20200330215727-8ca95ff9de56 // TODO: update to released version
+	github.com/keep-network/keep-common v0.1.1-0.20200409131849-1363a51644b7 // TODO: update to released version
 	github.com/keep-network/keep-core v0.10.0
-	github.com/olekukonko/tablewriter v0.0.4 // indirect
+	github.com/keep-network/keep-tecdsa v0.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
-	golang.org/x/crypto v0.0.0-20200210222208-86ce3cb69678 // indirect
 )
