@@ -10,30 +10,6 @@ type BondedECDSAKeepCreatedEvent struct {
 	Members     []common.Address // keep members addresses
 }
 
-// KeepClosedEvent is an event emitted when a keep has been closed.
-type KeepClosedEvent struct {
-}
-
-// KeepTerminatedEvent is an event emitted when a keep has been terminated.
-type KeepTerminatedEvent struct {
-}
-
-// IsMember checks if list of members contains the given address.
-func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
-	for _, member := range e.Members {
-		if member == address {
-			return true
-		}
-	}
-	return false
-}
-
-// SignatureRequestedEvent is an event emitted when a user requests
-// a digest to be signed.
-type SignatureRequestedEvent struct {
-	Digest [32]byte
-}
-
 // ConflictingPublicKeySubmittedEvent is an event emitted each time when one of
 // the members of a keep has submitted a key that does not match the keys submitted
 // so far by other members.
@@ -46,4 +22,31 @@ type ConflictingPublicKeySubmittedEvent struct {
 // the same public key and it was accepted by keep as its public key.
 type PublicKeyPublishedEvent struct {
 	PublicKey []byte
+}
+
+// SignatureRequestedEvent is an event emitted when a user requests
+// a digest to be signed.
+type SignatureRequestedEvent struct {
+	Digest      [32]byte
+	BlockNumber uint64
+}
+
+// KeepClosedEvent is an event emitted when a keep has been closed.
+type KeepClosedEvent struct {
+	BlockNumber uint64
+}
+
+// KeepTerminatedEvent is an event emitted when a keep has been terminated.
+type KeepTerminatedEvent struct {
+	BlockNumber uint64
+}
+
+// IsMember checks if list of members contains the given address.
+func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
+	for _, member := range e.Members {
+		if member == address {
+			return true
+		}
+	}
+	return false
 }

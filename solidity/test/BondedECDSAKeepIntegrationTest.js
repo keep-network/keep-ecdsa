@@ -218,7 +218,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       for (let i = 0; i < members.length; i++) {
         const expectedStake = initialStakes[i].sub(
-          await keepFactory.minimumStake.call()
+          await tokenStaking.minimumStake.call()
         )
 
         const actualStake = await tokenStaking.eligibleStake(
@@ -286,7 +286,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   }
 
   async function initializeMemberCandidates(unbondedValue) {
-    const minimumStake = await keepFactory.minimumStake.call()
+    const minimumStake = await tokenStaking.minimumStake.call()
     await stakeOperators(minimumStake)
 
     signerPool = await keepFactory.createSortitionPool.call(application)

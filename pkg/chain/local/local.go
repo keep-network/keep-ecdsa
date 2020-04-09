@@ -2,6 +2,7 @@ package local
 
 import (
 	"fmt"
+	"math/big"
 	"math/rand"
 	"sync"
 
@@ -169,6 +170,16 @@ func (lc *localChain) UpdateStatusForApplication(application common.Address) err
 	panic("implement")
 }
 
+func (lc *localChain) GetKeepCount() (*big.Int, error) {
+	panic("implement")
+}
+
+func (lc *localChain) GetKeepAtIndex(
+	keepIndex *big.Int,
+) (common.Address, error) {
+	panic("implement")
+}
+
 func (lc *localChain) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
@@ -198,5 +209,21 @@ func (lc *localChain) OnPublicKeyPublished(
 }
 
 func (lc *localChain) LatestDigest(keepAddress common.Address) ([32]byte, error) {
+	panic("implement")
+}
+
+func (lc *localChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
+	panic("implement")
+}
+
+func (lc *localChain) GetMembers(
+	keepAddress common.Address,
+) ([]common.Address, error) {
+	panic("implement")
+}
+
+func (lc *localChain) HasKeyGenerationTimedOut(
+	keepAddress common.Address,
+) (bool, error) {
 	panic("implement")
 }

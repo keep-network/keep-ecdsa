@@ -577,7 +577,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @notice Returns true if the ongoing key generation process timed out.
     /// @dev There is a certain timeout for keep public key to be produced and
     /// appear on the chain, see `keyGenerationTimeout`.
-    function hasKeyGenerationTimedOut() internal view returns (bool) {
+    function hasKeyGenerationTimedOut() public view returns (bool) {
         /* solium-disable-next-line */
         return
             block.timestamp >
