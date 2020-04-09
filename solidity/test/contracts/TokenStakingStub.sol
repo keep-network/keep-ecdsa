@@ -9,6 +9,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract TokenStakingStub is IStaking {
     using SafeMath for uint256;
 
+    uint256 public minimumStake = 200000 * 1e18;
+
     mapping(address => address payable) operatorToMagpie;
 
     mapping(address => uint256) stakes;
