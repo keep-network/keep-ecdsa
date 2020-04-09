@@ -76,7 +76,7 @@ func (ec *EthereumChain) OnKeepClosed(
 	}
 	return keepContract.WatchKeepClosed(
 		func(blockNumber uint64) {
-			handler(&eth.KeepClosedEvent{})
+			handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
 		},
 		func(err error) error {
 			return fmt.Errorf("keep closed callback failed: [%v]", err)
@@ -96,7 +96,7 @@ func (ec *EthereumChain) OnKeepTerminated(
 	}
 	return keepContract.WatchKeepTerminated(
 		func(blockNumber uint64) {
-			handler(&eth.KeepTerminatedEvent{})
+			handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
 		},
 		func(err error) error {
 			return fmt.Errorf("keep terminated callback failed: [%v]", err)
@@ -175,7 +175,8 @@ func (ec *EthereumChain) OnSignatureRequested(
 			blockNumber uint64,
 		) {
 			handler(&eth.SignatureRequestedEvent{
-				Digest: Digest,
+				Digest:      Digest,
+				BlockNumber: blockNumber,
 			})
 		},
 		func(err error) error {
@@ -223,8 +224,8 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 }
 
 func (ec *EthereumChain) withRetry(fn func() error) error {
-	const numberOfRetries = 4
-	const delay = 250 * time.Millisecond
+	const numberOfRetries = 10
+	const delay = 12 * time.Second
 
 	for i := 1; ; i++ {
 		err := fn()
@@ -364,6 +365,16 @@ func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) 
 	return nil
 }
 
+func (ec *EthereumChain) GetKeepCount() (*big.Int, error) {
+	return ec.bondedECDSAKeepFactoryContract.GetKeepCount()
+}
+
+func (ec *EthereumChain) GetKeepAtIndex(
+	keepIndex *big.Int,
+) (common.Address, error) {
+	return ec.bondedECDSAKeepFactoryContract.GetKeepAtIndex(keepIndex)
+}
+
 func (ec *EthereumChain) LatestDigest(keepAddress common.Address) ([32]byte, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
@@ -371,4 +382,35 @@ func (ec *EthereumChain) LatestDigest(keepAddress common.Address) ([32]byte, err
 	}
 
 	return keepContract.Digest()
+}
+
+func (ec *EthereumChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return []uint8{}, err
+	}
+
+	return keepContract.GetPublicKey()
+}
+
+func (ec *EthereumChain) GetMembers(
+	keepAddress common.Address,
+) ([]common.Address, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return []common.Address{}, err
+	}
+
+	return keepContract.GetMembers()
+}
+
+func (ec *EthereumChain) HasKeyGenerationTimedOut(
+	keepAddress common.Address,
+) (bool, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	return keepContract.HasKeyGenerationTimedOut()
 }

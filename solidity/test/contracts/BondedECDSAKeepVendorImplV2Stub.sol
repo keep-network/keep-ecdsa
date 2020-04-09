@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 /// @title Bonded ECDSA Keep Vendor Implementation V2 Stub
 /// @dev This contract is for testing purposes only.

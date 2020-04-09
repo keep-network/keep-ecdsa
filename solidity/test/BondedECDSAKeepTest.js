@@ -8,14 +8,14 @@ import {mineBlocks} from "./helpers/mineBlocks"
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 import {duration, increaseTime} from "./helpers/increaseTime"
 
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const {expectRevert, constants, time} = require("@openzeppelin/test-helpers")
 
 const Registry = artifacts.require("Registry")
-const BondedECDSAKeep = artifacts.require("./BondedECDSAKeep.sol")
-const TestToken = artifacts.require("./TestToken.sol")
-const KeepBonding = artifacts.require("./KeepBonding.sol")
-const TestEtherReceiver = artifacts.require("./TestEtherReceiver.sol")
-const TokenStakingStub = artifacts.require("./TokenStakingStub.sol")
+const BondedECDSAKeepStub = artifacts.require("BondedECDSAKeepStub")
+const TestToken = artifacts.require("TestToken")
+const KeepBonding = artifacts.require("KeepBonding")
+const TestEtherReceiver = artifacts.require("TestEtherReceiver")
+const TokenStakingStub = artifacts.require("TokenStakingStub")
 const BondedECDSAKeepCloneFactory = artifacts.require(
   "BondedECDSAKeepCloneFactory"
 )
@@ -37,16 +37,22 @@ contract("BondedECDSAKeep", (accounts) => {
   const signingPool = accounts[5]
   const honestThreshold = 1
 
+  const stakeLockDuration = time.duration.days(180)
+
   let registry
   let keepBonding
   let tokenStaking
+  let bondedECDSAKeepStubMaster
   let keep
   let factoryStub
+  let memberStake
 
   async function newKeep(
     owner,
     members,
     honestThreshold,
+    memberStake,
+    stakeLockDuration,
     tokenStaking,
     keepBonding,
     keepFactory
@@ -57,6 +63,8 @@ contract("BondedECDSAKeep", (accounts) => {
       owner,
       members,
       honestThreshold,
+      memberStake,
+      stakeLockDuration,
       tokenStaking,
       keepBonding,
       keepFactory
@@ -73,16 +81,23 @@ contract("BondedECDSAKeep", (accounts) => {
     )
     const keepAddress = events[0].returnValues.keepAddress
 
-    return await BondedECDSAKeep.at(keepAddress)
+    return await BondedECDSAKeepStub.at(keepAddress)
   }
 
   before(async () => {
     registry = await Registry.new()
     tokenStaking = await TokenStakingStub.new()
     keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
-    factoryStub = await BondedECDSAKeepCloneFactory.new(BondedECDSAKeep.address)
+    bondedECDSAKeepStubMaster = await BondedECDSAKeepStub.new()
+    factoryStub = await BondedECDSAKeepCloneFactory.new(
+      bondedECDSAKeepStubMaster.address
+    )
 
     await registry.approveOperatorContract(bondCreator)
+
+    memberStake = await factoryStub.minimumStake.call()
+    await stakeOperators(members, memberStake)
+
     await keepBonding.authorizeSortitionPoolContract(members[0], signingPool, {
       from: authorizers[0],
     })
@@ -101,6 +116,8 @@ contract("BondedECDSAKeep", (accounts) => {
       owner,
       members,
       honestThreshold,
+      memberStake,
+      stakeLockDuration,
       tokenStaking.address,
       keepBonding.address,
       factoryStub.address
@@ -116,11 +133,13 @@ contract("BondedECDSAKeep", (accounts) => {
       const expectedKeyGenerationTimeout = new BN(9000) // 9000 = 150*60 = 2.5h in seconds
       const expectedSigningTimeout = new BN(5400) // 5400 = 90 * 60 = 1.5h in seconds
 
-      keep = await BondedECDSAKeep.new()
+      keep = await BondedECDSAKeepStub.new()
       await keep.initialize(
         owner,
         members,
         honestThreshold,
+        memberStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
@@ -135,6 +154,47 @@ contract("BondedECDSAKeep", (accounts) => {
       )
     })
 
+    it("claims token staking delegated authority", async () => {
+      keep = await BondedECDSAKeepStub.new()
+      await keep.initialize(
+        owner,
+        members,
+        honestThreshold,
+        memberStake,
+        stakeLockDuration,
+        tokenStaking.address,
+        keepBonding.address,
+        factoryStub.address
+      )
+
+      assert.equal(
+        await tokenStaking.delegatedAuthority(),
+        factoryStub.address,
+        "incorrect token staking delegated authority"
+      )
+    })
+
+    it("locks members token stakes", async () => {
+      keep = await BondedECDSAKeepStub.new()
+      await keep.initialize(
+        owner,
+        members,
+        honestThreshold,
+        memberStake,
+        stakeLockDuration,
+        tokenStaking.address,
+        keepBonding.address,
+        factoryStub.address
+      )
+
+      for (let i = 0; i < members.length; i++) {
+        expect(
+          await tokenStaking.operatorLocks(members[i]),
+          "incorrect token stake lock"
+        ).to.eq.BN(stakeLockDuration)
+      }
+    })
+
     it("reverts if called for the second time", async () => {
       // first call was a part of beforeEach
       await expectRevert(
@@ -142,6 +202,8 @@ contract("BondedECDSAKeep", (accounts) => {
           owner,
           members,
           honestThreshold,
+          memberStake,
+          stakeLockDuration,
           tokenStaking.address,
           keepBonding.address,
           factoryStub.address
@@ -548,6 +610,17 @@ contract("BondedECDSAKeep", (accounts) => {
       assert.isFalse(await keep.isClosed(), "keep should not be closed")
     })
 
+    it("releases locks on members token stakes", async () => {
+      await keep.seizeSignerBonds({from: owner})
+
+      for (let i = 0; i < members.length; i++) {
+        expect(
+          await tokenStaking.operatorLocks(members[i]),
+          "incorrect token stake lock"
+        ).to.eq.BN(-1)
+      }
+    })
+
     it("emits an event", async () => {
       truffleAssert.eventEmitted(
         await keep.seizeSignerBonds({from: owner}),
@@ -785,10 +858,13 @@ contract("BondedECDSAKeep", (accounts) => {
 
       assert.isTrue(res, "incorrect returned result")
 
-      assert.isTrue(
-        await factoryStub.membersSlashed(),
-        "slash members not called"
-      )
+      for (let i = 0; i < members.length; i++) {
+        const actualStake = await tokenStaking.eligibleStake(
+          members[i],
+          constants.ZERO_ADDRESS
+        )
+        expect(actualStake).to.eq.BN(0, `incorrect stake for member ${i}`)
+      }
     })
 
     it("should revert when the signature is not a fraud", async () => {
@@ -807,7 +883,57 @@ contract("BondedECDSAKeep", (accounts) => {
         "Signature is not fraudulent"
       )
 
-      assert.isFalse(await factoryStub.membersSlashed(), "slash members called")
+      for (let i = 0; i < members.length; i++) {
+        const actualStake = await tokenStaking.eligibleStake(
+          members[i],
+          constants.ZERO_ADDRESS
+        )
+        expect(actualStake).to.eq.BN(
+          memberStake,
+          `incorrect stake for member ${i}`
+        )
+      }
+    })
+  })
+
+  describe("slashSignerStakes", async () => {
+    it("is not public", async () => {
+      try {
+        await keep.slashSignerStakes()
+      } catch (err) {
+        assert.equal(err, "TypeError: keep.slashSignerStakes is not a function")
+      }
+    })
+
+    it("reverts if called by closed keep", async () => {
+      await keep.publicMarkAsClosed()
+
+      await expectRevert(keep.publicSlashSignerStakes(), "Keep is not active")
+    })
+
+    it("reverts if called by terminated keep", async () => {
+      await keep.publicMarkAsTerminated()
+
+      await expectRevert(keep.publicSlashSignerStakes(), "Keep is not active")
+    })
+
+    it("slashes keep members stakes", async () => {
+      const remainingStake = new BN(10)
+      const stakeBalance = memberStake.add(remainingStake)
+      await stakeOperators(members, stakeBalance)
+
+      await keep.publicSlashSignerStakes()
+
+      for (let i = 0; i < members.length; i++) {
+        const actualStake = await tokenStaking.eligibleStake(
+          members[i],
+          constants.ZERO_ADDRESS
+        )
+        expect(actualStake).to.eq.BN(
+          remainingStake,
+          `incorrect stake for member ${i}`
+        )
+      }
     })
   })
 
@@ -1019,6 +1145,17 @@ contract("BondedECDSAKeep", (accounts) => {
           signingPool
         )
       ).to.eq.BN(bondValue2, "incorrect unbonded amount for member 2")
+    })
+
+    it("releases locks on members token stakes", async () => {
+      await keep.closeKeep({from: owner})
+
+      for (let i = 0; i < members.length; i++) {
+        expect(
+          await tokenStaking.operatorLocks(members[i]),
+          "incorrect token stake lock"
+        ).to.eq.BN(-1)
+      }
     })
 
     it("reverts when signing is in progress", async () => {
@@ -1314,6 +1451,8 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         testMembers,
         honestThreshold,
+        memberStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
@@ -1348,6 +1487,8 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         [member],
         honestThreshold,
+        memberStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
@@ -1366,6 +1507,8 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         [member],
         honestThreshold,
+        memberStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
@@ -1503,6 +1646,8 @@ contract("BondedECDSAKeep", (accounts) => {
         owner,
         testMembers,
         honestThreshold,
+        memberStake,
+        stakeLockDuration,
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
@@ -1530,6 +1675,12 @@ contract("BondedECDSAKeep", (accounts) => {
     await keep.submitPublicKey(publicKey, {from: members[0]})
     await keep.submitPublicKey(publicKey, {from: members[1]})
     await keep.submitPublicKey(publicKey, {from: members[2]})
+  }
+
+  async function stakeOperators(members, stakeBalance) {
+    for (let i = 0; i < members.length; i++) {
+      await tokenStaking.setBalance(members[i], stakeBalance)
+    }
   }
 
   async function authorizeBondCreator() {

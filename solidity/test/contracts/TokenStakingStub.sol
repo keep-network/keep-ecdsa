@@ -1,22 +1,29 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 
 /// @title Token Staking Stub
 /// @dev This contract is for testing purposes only.
 contract TokenStakingStub is IStaking {
     using SafeMath for uint256;
 
+    uint256 public minimumStake = 200000 * 1e18;
+
     mapping(address => address payable) operatorToMagpie;
 
     mapping(address => uint256) stakes;
+
+    mapping(address => int256) public operatorLocks;
 
     // Authorized operator contracts.
     mapping(address => mapping(address => bool)) internal authorizations;
 
     // Map of operator -> owner.
     mapping(address => address) owners;
+
+    address public delegatedAuthority;
 
     /// @dev Sets balance variable value.
     function setBalance(address _operator, uint256 _balance) public {
@@ -53,6 +60,16 @@ contract TokenStakingStub is IStaking {
         }
     }
 
+    function lockStake(address operator, uint256 duration) public {
+        operatorLocks[operator] = int256(duration);
+    }
+
+    function unlockStake(address operator) public {
+        // We set it to negative value to be sure in tests that the function is
+        // actually called and not just default `0` value is returned.
+        operatorLocks[operator] = -1;
+    }
+
     function authorizeOperatorContract(
         address _operator,
         address _operatorContract
@@ -77,5 +94,9 @@ contract TokenStakingStub is IStaking {
 
     function ownerOf(address _operator) public view returns (address) {
         return owners[_operator];
+    }
+
+    function claimDelegatedAuthority(address delegatedAuthoritySource) public {
+        delegatedAuthority = delegatedAuthoritySource;
     }
 }

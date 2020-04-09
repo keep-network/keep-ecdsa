@@ -2,10 +2,13 @@ package client
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
+
+const statusCheckIntervalBlocks = 100
 
 // checkStatusAndRegisterForApplication checks whether the operator is
 // registered as a member candidate for keep for the given application.
@@ -14,33 +17,44 @@ import (
 // as a keep member candidate.
 // Also, once the client is confirmed as registered, it triggers the monitoring
 // process to keep the operator's status up to date in the pool.
+// If operator status in the pool cannot be monitored, e.g. when operator is
+// removed from the pool it triggers the registration process from the begining.
 func checkStatusAndRegisterForApplication(
 	ctx context.Context,
 	ethereumChain eth.Handle,
 	application common.Address,
 ) {
-	isRegistered, err := ethereumChain.IsRegisteredForApplication(application)
-	if err != nil {
-		logger.Errorf(
-			"failed to check if member is registered for application [%s]: [%v]",
-			application.String(),
-			err,
-		)
-		return
-	}
+RegistrationLoop:
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			isRegistered, err := ethereumChain.IsRegisteredForApplication(application)
+			if err != nil {
+				logger.Errorf(
+					"failed to check if member is registered for application [%s]: [%v]",
+					application.String(),
+					err,
+				)
+				continue RegistrationLoop
+			}
 
-	go func() {
-		if !isRegistered {
-			// if the operator is not registered, we need to register it and
-			// wait until registration is confirmed
-			registerAsMemberCandidate(ctx, ethereumChain, application)
-			waitUntilRegistered(ctx, ethereumChain, application)
+			if !isRegistered {
+				// if the operator is not registered, we need to register it and
+				// wait until registration is confirmed
+				registerAsMemberCandidate(ctx, ethereumChain, application)
+				waitUntilRegistered(ctx, ethereumChain, application)
+			}
+
+			// once the registration is confirmed or if the client is already
+			// registered, we can start to monitor the status
+			if err := monitorSignerPoolStatus(ctx, ethereumChain, application); err != nil {
+				logger.Errorf("failed on signer pool status monitoring: [%v]", err)
+				continue RegistrationLoop
+			}
 		}
-
-		// once the registration is confirmed or if the client is already
-		// registered, we can start to monitor the status
-		monitorSignerPoolStatus(ctx, ethereumChain, application)
-	}()
+	}
 }
 
 // registerAsMemberCandidate checks current operator's eligibility to become
@@ -193,25 +207,43 @@ func monitorSignerPoolStatus(
 	ctx context.Context,
 	ethereumChain eth.Handle,
 	application common.Address,
-) {
+) error {
 	logger.Debugf(
 		"starting monitoring operatator status for application [%s]",
 		application.String(),
 	)
 
-	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
+	blockCounter := ethereumChain.BlockCounter()
+
+	startingBlock, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return err
+	}
+
+	statusCheckTrigger, err := blockCounter.BlockHeightWaiter(
+		startingBlock + statusCheckIntervalBlocks,
+	)
+	if err != nil {
+		return err
+	}
 
 	for {
 		select {
-		case <-newBlockChan:
+		case statusCheckBlock := <-statusCheckTrigger:
+			logger.Debugf(
+				"operator status check for application [%s] "+
+					"triggered at block [%v]",
+				application.String(),
+				statusCheckBlock,
+			)
+
 			isUpToDate, err := ethereumChain.IsStatusUpToDateForApplication(application)
 			if err != nil {
-				logger.Errorf(
+				return fmt.Errorf(
 					"failed to check operator status for application [%s]: [%v]",
 					application.String(),
 					err,
 				)
-				continue
 			}
 
 			if isUpToDate {
@@ -227,15 +259,47 @@ func monitorSignerPoolStatus(
 
 				err := ethereumChain.UpdateStatusForApplication(application)
 				if err != nil {
-					logger.Errorf(
+					return fmt.Errorf(
 						"failed to update operator status for application [%s]: [%v]",
 						application.String(),
 						err,
 					)
 				}
+
+				isRegistered, err := waitForChainConfirmation(
+					ethereumChain,
+					statusCheckBlock,
+					func() (bool, error) {
+						return ethereumChain.IsRegisteredForApplication(
+							application,
+						)
+					},
+				)
+				if err != nil {
+					return fmt.Errorf(
+						"failed to confirm that operator is registered "+
+							"for application [%s]: [%v]",
+						application.String(),
+						err,
+					)
+				}
+
+				if !isRegistered {
+					return fmt.Errorf(
+						"operator is no longer registered for application [%s]",
+						application.String(),
+					)
+				}
+			}
+
+			statusCheckTrigger, err = blockCounter.BlockHeightWaiter(
+				statusCheckBlock + statusCheckIntervalBlocks,
+			)
+			if err != nil {
+				return err
 			}
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		}
 	}
 }

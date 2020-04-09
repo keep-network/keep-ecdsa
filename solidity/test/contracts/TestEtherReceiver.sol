@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 /// @title Ether Transfer Receiver.
 /// @dev This contract is for testing purposes only.

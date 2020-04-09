@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "./BondedECDSAKeep.sol";
 import "./KeepBonding.sol";
@@ -10,8 +10,11 @@ import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPool.sol";
 import "@keep-network/sortition-pools/contracts/BondedSortitionPoolFactory.sol";
 
+import {
+    AuthorityDelegator,
+    TokenStaking
+} from "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
-import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -23,7 +26,11 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// Proxy delegates calls to sortition pool and therefore does not affect contract's
 /// state. This means that we only need to deploy the bonded ECDSA keep contract
 /// once. The factory provides clean state for every new bonded ECDSA keep clone.
-contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
+contract BondedECDSAKeepFactory is
+    IBondedECDSAKeepFactory,
+    CloneFactory,
+    AuthorityDelegator
+{
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
@@ -58,8 +65,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     KeepBonding keepBonding;
     IRandomBeacon randomBeacon;
 
-    uint256 public minimumStake = 200000 * 1e18;
-
     // Sortition pool is created with a minimum bond of 1 to avoid
     // griefing.
     //
@@ -72,6 +77,12 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     // to allow the pool adjust the minimum bond during the first signer
     // selection.
     uint256 public constant minimumBond = 1;
+
+    // Signer candidates in bonded sortition pool are weighted by their eligible
+    // stake divided by a constant divisor. The divisor is set to 1 KEEP so that
+    // all KEEPs in eligible stake matter when calculating operator's eligible
+    // weight for signer selection.
+    uint256 public constant poolStakeWeightDivisor = 1e18;
 
     // Gas required for a callback from the random beacon. The value specifies
     // gas required to call `__beaconCallback` function in the worst-case
@@ -128,8 +139,9 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         address sortitionPoolAddress = sortitionPoolFactory.createSortitionPool(
             IStaking(address(tokenStaking)),
             IBonding(address(keepBonding)),
-            minimumStake,
-            minimumBond
+            tokenStaking.minimumStake(),
+            minimumBond,
+            poolStakeWeightDivisor
         );
 
         candidatesPools[_application] = sortitionPoolAddress;
@@ -217,12 +229,14 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @param _honestThreshold Minimum number of honest keep signers.
     /// @param _owner Address of the keep owner.
     /// @param _bond Value of ETH bond required from the keep in wei.
+    /// @param _stakeLockDuration Stake lock duration in seconds.
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
         uint256 _honestThreshold,
         address _owner,
-        uint256 _bond
+        uint256 _bond,
+        uint256 _stakeLockDuration
     ) external payable returns (address keepAddress) {
         require(_groupSize <= 16, "Maximum signing group size is 16");
         require(
@@ -247,9 +261,12 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
             "Insufficient payment for opening a new keep"
         );
 
+        uint256 minimumStake = tokenStaking.minimumStake();
+
         address[] memory members = BondedSortitionPool(pool).selectSetGroup(
             _groupSize,
             bytes32(groupSelectionSeed),
+            minimumStake,
             memberBond
         );
 
@@ -257,10 +274,20 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
 
         keepAddress = createClone(masterBondedECDSAKeepAddress);
         BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
+
+        // keepOpenedTimestamp value for newly created keep is required to be set
+        // before calling `keep.initialize` function as it is used to determine
+        // token staking delegation authority recognition in `__isRecognized`
+        // function.
+        /* solium-disable-next-line security/no-block-members*/
+        keepOpenedTimestamp[address(keep)] = block.timestamp;
+
         keep.initialize(
             _owner,
             members,
             _honestThreshold,
+            minimumStake,
+            _stakeLockDuration,
             address(tokenStaking),
             address(keepBonding),
             address(this)
@@ -277,8 +304,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         }
 
         keeps.push(address(keep));
-        /* solium-disable-next-line security/no-block-members*/
-        keepOpenedTimestamp[address(keep)] = block.timestamp;
 
         emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
     }
@@ -306,6 +331,19 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
         returns (uint256)
     {
         return keepOpenedTimestamp[_keep];
+    }
+
+    /// @notice Verifies if delegates authority recipient is valid address recognized
+    /// by the factory for token staking authority delegation.
+    /// @param _delegatedAuthorityRecipient Address of the delegated authority
+    /// recipient.
+    /// @return True if provided address is recognized delegated token staking
+    /// authority for this factory contract.
+    function __isRecognized(address _delegatedAuthorityRecipient)
+        external
+        returns (bool)
+    {
+        return keepOpenedTimestamp[_delegatedAuthorityRecipient] > 0;
     }
 
     /// @notice Sets a new group selection seed value.
@@ -402,8 +440,7 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @return True if has enough active stake to participate in the network,
     /// false otherwise.
     function hasMinimumStake(address _operator) public view returns (bool) {
-        return
-            tokenStaking.activeStake(_operator, address(this)) >= minimumStake;
+        return tokenStaking.hasMinimumStake(_operator, address(this));
     }
 
     /// @dev Gets the stake balance of the specified operator.
@@ -411,14 +448,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
     /// @return An uint256 representing the amount staked by the passed operator.
     function balanceOf(address _operator) public view returns (uint256) {
         return tokenStaking.balanceOf(_operator);
-    }
-
-    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
-    /// amount equal to the minimum stake configured for this factory.
-    function slashKeepMembers() public onlyActiveKeep {
-        BondedECDSAKeep keep = BondedECDSAKeep(msg.sender);
-
-        tokenStaking.slash(minimumStake, keep.getMembers());
     }
 
     /// @notice Gets bonded sortition pool of specific application for the
@@ -476,17 +505,6 @@ contract BondedECDSAKeepFactory is IBondedECDSAKeepFactory, CloneFactory {
                     callbackGas
                 )
             );
-    }
-
-    /// @notice Checks if the caller is a keep created by this factory.
-    /// @dev Throws an error if called by any account other than a keep.
-    modifier onlyActiveKeep() {
-        require(
-            keepOpenedTimestamp[msg.sender] != 0 &&
-                BondedECDSAKeep(msg.sender).isActive(),
-            "Caller is not an active keep created by this factory"
-        );
-        _;
     }
 
     /// @notice Checks if the caller is the random beacon.
