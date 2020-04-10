@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"testing"
 
+	fuzz "github.com/google/gofuzz"
+
 	"github.com/keep-network/keep-ecdsa/internal/testdata"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/pbutils"
 )
@@ -93,6 +95,19 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 	}
 }
 
+func TestTSSProtocolMessageFuzzing(t *testing.T) {
+	for i := 0; i < 100000; i++ {
+		message := TSSProtocolMessage{}
+
+		f := fuzz.New().NilChance(0.25)
+		f.Fuzz(&message)
+
+		if err := pbutils.RoundTrip(&message, &TSSProtocolMessage{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestReadyMessageMarshalling(t *testing.T) {
 	msg := &ReadyMessage{
 		SenderID: MemberID([]byte("member-1")),
@@ -112,6 +127,19 @@ func TestReadyMessageMarshalling(t *testing.T) {
 	}
 }
 
+func TestReadyMessageFuzzing(t *testing.T) {
+	for i := 0; i < 100000; i++ {
+		message := ReadyMessage{}
+
+		f := fuzz.New().NilChance(0.25)
+		f.Fuzz(&message)
+
+		if err := pbutils.RoundTrip(&message, &ReadyMessage{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestAnnounceMessageMarshalling(t *testing.T) {
 	msg := &AnnounceMessage{
 		SenderID: MemberID([]byte("member-1")),
@@ -128,5 +156,18 @@ func TestAnnounceMessageMarshalling(t *testing.T) {
 			msg,
 			unmarshaled,
 		)
+	}
+}
+
+func TestAnnounceMessageFuzzing(t *testing.T) {
+	for i := 0; i < 100000; i++ {
+		message := AnnounceMessage{}
+
+		f := fuzz.New().NilChance(0.25)
+		f.Fuzz(&message)
+
+		if err := pbutils.RoundTrip(&message, &AnnounceMessage{}); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
