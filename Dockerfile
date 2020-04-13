@@ -48,7 +48,7 @@ RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.10/cmd/abigen && go inst
 
 # Install Solidity contracts.
 COPY ./solidity $APP_DIR/solidity
-RUN cd $APP_DIR/solidity && npm install
+RUN cd $APP_DIR/solidity && npm ci
 
 # Generate code.
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
