@@ -21,4 +21,7 @@ require (
 	github.com/keep-network/keep-core v0.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
+	golang.org/x/crypto v0.0.0-20200210222208-86ce3cb69678 // indirect
+	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
+	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 )
