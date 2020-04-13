@@ -3,8 +3,9 @@ package tss
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // MemberID is an unique identifier of a member across the network.

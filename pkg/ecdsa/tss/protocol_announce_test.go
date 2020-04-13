@@ -2,10 +2,11 @@ package tss
 
 import (
 	"context"
-	"github.com/keep-network/keep-core/pkg/net"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/net"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net/key"

@@ -3,11 +3,12 @@
 package chain
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
-	"math/big"
 )
 
 // FIXME common.Address needs to be replaced by Staker from
