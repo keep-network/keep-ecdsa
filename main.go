@@ -15,7 +15,7 @@ import (
 var logger = log.Logger("keep-main")
 
 const (
-	defaultConfigPath = "./configs/config.toml"
+	defaultConfigPath = "./configs/config.toml.test"
 )
 
 var (
