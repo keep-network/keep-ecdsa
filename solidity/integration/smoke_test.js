@@ -21,10 +21,10 @@ module.exports = async function () {
   const accounts = await web3.eth.getAccounts()
 
   // It assumes that account[0] is contracts deployer for migrations and
-  // accounts[1-3] are configured as keep members.
-  const members = [accounts[1], accounts[2], accounts[3]]
-  const keepOwner = accounts[4]
-  const application = accounts[5]
+  // accounts[1-4] are configured as keep members.
+  const members = [accounts[1], accounts[2], accounts[3], accounts[4]]
+  const keepOwner = accounts[5]
+  const application = accounts[6]
 
   let keep
   let keepPublicKey
@@ -33,6 +33,7 @@ module.exports = async function () {
   const groupSize = 3
   const threshold = 3
   const bond = 10
+  const stakeLockDuration = 100
 
   try {
     startBlockNumber = await web3.eth.getBlock("latest").number
@@ -83,10 +84,17 @@ module.exports = async function () {
     relayEntryGeneratedWatcher = watchRelayEntryGenerated(randomBeacon)
     const keepCreatedWatcher = watchKeepCreated(keepFactory)
 
-    await keepFactory.openKeep(groupSize, threshold, keepOwner, bond, {
-      from: application,
-      value: fee,
-    })
+    await keepFactory.openKeep(
+      groupSize,
+      threshold,
+      keepOwner,
+      bond,
+      stakeLockDuration,
+      {
+        from: application,
+        value: fee,
+      }
+    )
 
     const keepCreatedEvent = await keepCreatedWatcher
 

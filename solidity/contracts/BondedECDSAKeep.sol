@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeep.sol";
@@ -39,6 +39,10 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
     // Minimum number of honest keep members required to produce a signature.
     uint256 honestThreshold;
+
+    // Stake that was required from each keep member on keep creation.
+    // The value is used for keep members slashing.
+    uint256 public memberStake;
 
     // Keep's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
@@ -467,6 +471,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @param _owner Address of the keep owner.
     /// @param _members Addresses of the keep members.
     /// @param _honestThreshold Minimum number of honest keep members.
+    /// @param _memberStake Stake required from each keep member.
+    /// @param _stakeLockDuration Stake lock duration in seconds.
     /// @param _tokenStaking Address of the TokenStaking contract.
     /// @param _keepBonding Address of the KeepBonding contract.
     /// @param _keepFactory Address of the BondedECDSAKeepFactory that created
@@ -475,6 +481,8 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
+        uint256 _memberStake,
+        uint256 _stakeLockDuration,
         address _tokenStaking,
         address _keepBonding,
         address payable _keepFactory
@@ -484,11 +492,18 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         owner = _owner;
         members = _members;
         honestThreshold = _honestThreshold;
+        memberStake = _memberStake;
         tokenStaking = TokenStaking(_tokenStaking);
         keepBonding = KeepBonding(_keepBonding);
         keepFactory = BondedECDSAKeepFactory(_keepFactory);
         status = Status.Active;
         isInitialized = true;
+
+        tokenStaking.claimDelegatedAuthority(_keepFactory);
+
+        for (uint256 i = 0; i < _members.length; i++) {
+            tokenStaking.lockStake(_members[i], _stakeLockDuration);
+        }
 
         /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
@@ -562,7 +577,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @notice Returns true if the ongoing key generation process timed out.
     /// @dev There is a certain timeout for keep public key to be produced and
     /// appear on the chain, see `keyGenerationTimeout`.
-    function hasKeyGenerationTimedOut() internal view returns (bool) {
+    function hasKeyGenerationTimedOut() public view returns (bool) {
         /* solium-disable-next-line */
         return
             block.timestamp >
@@ -580,11 +595,10 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return submittedPublicKeys[_member].length != 0;
     }
 
-    /// @notice Slashes signers' KEEP tokens.
-    /// @dev Keep contract is not authorized to slash tokens directly, so it calls
-    /// the factory to do it.
-    function slashSignerStakes() internal {
-        keepFactory.slashKeepMembers();
+    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
+    /// amount equal to the member stake set by the factory when keep was created.
+    function slashSignerStakes() internal onlyWhenActive {
+        tokenStaking.slash(memberStake, members);
     }
 
     /// @notice Returns true if signing of a digest is currently in progress.
@@ -611,12 +625,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             "Requested signing has not timed out yet"
         );
 
+        unlockMemberStakes();
+
         status = Status.Closed;
         emit KeepClosed();
     }
 
     /// @notice Marks the keep as terminated.
-    /// Keep can be marked as closed only when there is no signing in progress
+    /// Keep can be marked as terminated only when there is no signing in progress
     /// or the requested signing process has timed out.
     function markAsTerminated() internal {
         require(
@@ -624,8 +640,18 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             "Requested signing has not timed out yet"
         );
 
+        unlockMemberStakes();
+
         status = Status.Terminated;
         emit KeepTerminated();
+    }
+
+    /// @notice Releases locks the keep had previously placed on the members'
+    /// token stakes.
+    function unlockMemberStakes() internal {
+        for (uint256 i = 0; i < members.length; i++) {
+            tokenStaking.unlockStake(members[i]);
+        }
     }
 
     /// @notice Returns bonds to the keep members.

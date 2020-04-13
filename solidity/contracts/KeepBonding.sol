@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/Registry.sol";
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
@@ -35,6 +35,29 @@ contract KeepBonding {
     // operator -> pool -> boolean
     mapping(address => mapping(address => bool)) internal authorizedPools;
 
+    event UnbondedValueDeposited(address indexed operator, uint256 amount);
+    event UnbondedValueWithdrawn(address indexed operator, uint256 amount);
+    event BondCreated(
+        address indexed operator,
+        address indexed holder,
+        address indexed sortitionPool,
+        uint256 referenceID,
+        uint256 amount
+    );
+    event BondReassigned(
+        address indexed operator,
+        uint256 indexed referenceID,
+        address newHolder,
+        uint256 newReferenceID
+    );
+    event BondReleased(address indexed operator, uint256 indexed referenceID);
+    event BondSeized(
+        address indexed operator,
+        uint256 indexed referenceID,
+        address destination,
+        uint256 amount
+    );
+
     /// @notice Initializes Keep Bonding contract.
     /// @param registryAddress Keep registry contract address.
     /// @param tokenStakingAddress KEEP Token staking contract address.
@@ -47,6 +70,7 @@ contract KeepBonding {
     /// @param operator Address of the operator.
     function deposit(address operator) external payable {
         unbondedValue[operator] = unbondedValue[operator].add(msg.value);
+        emit UnbondedValueDeposited(operator, msg.value);
     }
 
     /// @notice Returns the amount of wei the operator has made available for
@@ -99,6 +123,8 @@ contract KeepBonding {
             ""
         );
         require(success, "Transfer failed");
+
+        emit UnbondedValueWithdrawn(operator, amount);
     }
 
     /// @notice Create bond for the given operator, holder, reference and amount.
@@ -136,6 +162,14 @@ contract KeepBonding {
 
         unbondedValue[operator] = unbondedValue[operator].sub(amount);
         lockedBonds[bondID] = lockedBonds[bondID].add(amount);
+
+        emit BondCreated(
+            operator,
+            holder,
+            authorizedSortitionPool,
+            referenceID,
+            amount
+        );
     }
 
     /// @notice Returns value of wei bonded for the operator.
@@ -186,6 +220,8 @@ contract KeepBonding {
 
         lockedBonds[newBondID] = lockedBonds[bondID];
         lockedBonds[bondID] = 0;
+
+        emit BondReassigned(operator, referenceID, newHolder, newReferenceID);
     }
 
     /// @notice Releases the bond and moves the bond value to the operator's
@@ -205,6 +241,8 @@ contract KeepBonding {
         uint256 amount = lockedBonds[bondID];
         lockedBonds[bondID] = 0;
         unbondedValue[operator] = unbondedValue[operator].add(amount);
+
+        emit BondReleased(operator, referenceID);
     }
 
     /// @notice Seizes the bond by moving some or all of the locked bond to the
@@ -237,12 +275,14 @@ contract KeepBonding {
 
         (bool success, ) = destination.call.value(amount)("");
         require(success, "Transfer failed");
+
+        emit BondSeized(operator, referenceID, destination, amount);
     }
 
     /// @notice Authorizes sortition pool for the provided operator.
     /// Operator's authorizers need to authorize individual sortition pools
     /// per application since they may be interested in participating only in
-    /// a subset of keep types used by the given appliction.
+    /// a subset of keep types used by the given application.
     /// @dev Only operator's authorizer can call this function.
     function authorizeSortitionPoolContract(
         address _operator,
