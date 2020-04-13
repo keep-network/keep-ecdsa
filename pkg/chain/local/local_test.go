@@ -15,15 +15,15 @@ func TestOnBondedECDSAKeepCreated(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chain := initializeLocalChain()
-	eventFired := make(chan *eth.BondedECDSAKeepCreatedEvent)
+	handle := initializeLocalChain()
+	eventFired := make(chan *chain.BondedECDSAKeepCreatedEvent)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
-	expectedEvent := &eth.BondedECDSAKeepCreatedEvent{
+	expectedEvent := &chain.BondedECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
 	}
 
-	subscription, err := chain.OnBondedECDSAKeepCreated(
-		func(event *eth.BondedECDSAKeepCreatedEvent) {
+	subscription, err := handle.OnBondedECDSAKeepCreated(
+		func(event *chain.BondedECDSAKeepCreatedEvent) {
 			eventFired <- event
 		},
 	)
@@ -32,7 +32,7 @@ func TestOnBondedECDSAKeepCreated(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	err = chain.createKeep(keepAddress)
+	err = handle.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,19 +55,19 @@ func TestOnSignatureRequested(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chain := initializeLocalChain()
-	eventFired := make(chan *eth.SignatureRequestedEvent)
+	handle := initializeLocalChain()
+	eventFired := make(chan *chain.SignatureRequestedEvent)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
-	err := chain.createKeep(keepAddress)
+	err := handle.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	subscription, err := chain.OnSignatureRequested(
+	subscription, err := handle.OnSignatureRequested(
 		keepAddress,
-		func(event *eth.SignatureRequestedEvent) {
+		func(event *chain.SignatureRequestedEvent) {
 			eventFired <- event
 		},
 	)
@@ -76,12 +76,12 @@ func TestOnSignatureRequested(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = handle.requestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedEvent := &eth.SignatureRequestedEvent{
+	expectedEvent := &chain.SignatureRequestedEvent{
 		Digest: digest,
 	}
 
@@ -100,7 +100,7 @@ func TestOnSignatureRequested(t *testing.T) {
 }
 
 func TestSubmitKeepPublicKey(t *testing.T) {
-	chain := initializeLocalChain()
+	handle := initializeLocalChain()
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 	expectedDuplicationError := fmt.Errorf(
@@ -108,12 +108,12 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		keepAddress.String(),
 	)
 
-	err := chain.createKeep(keepAddress)
+	err := handle.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = chain.SubmitKeepPublicKey(
+	err = handle.SubmitKeepPublicKey(
 		keepAddress,
 		keepPublicKey,
 	)
@@ -121,15 +121,15 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(keepPublicKey, chain.keeps[keepAddress].publicKey) {
+	if !reflect.DeepEqual(keepPublicKey, handle.keeps[keepAddress].publicKey) {
 		t.Errorf(
 			"unexpected result\nexpected: [%+v]\nactual:   [%+v]",
 			keepPublicKey,
-			chain.keeps[keepAddress].publicKey,
+			handle.keeps[keepAddress].publicKey,
 		)
 	}
 
-	err = chain.SubmitKeepPublicKey(
+	err = handle.SubmitKeepPublicKey(
 		keepAddress,
 		keepPublicKey,
 	)

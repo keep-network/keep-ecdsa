@@ -38,7 +38,7 @@ type EthereumChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, error) {
+func Connect(accountKey *keystore.Key, config *ethereum.Config) (chain.Handle, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, err

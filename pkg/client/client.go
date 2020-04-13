@@ -15,7 +15,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
@@ -35,7 +35,7 @@ const (
 func Initialize(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	networkProvider net.Provider,
 	persistence persistence.Handle,
 	sanctionedApplications []common.Address,
@@ -170,7 +170,7 @@ func Initialize(
 	)
 
 	// Watch for new keeps creation.
-	ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
+	ethereumChain.OnBondedECDSAKeepCreated(func(event *chain.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(
 			"new keep [%s] created with members: [%x]\n",
 			event.KeepAddress.String(),
@@ -178,7 +178,7 @@ func Initialize(
 		)
 
 		if event.IsMember(ethereumChain.Address()) {
-			go func(event *eth.BondedECDSAKeepCreatedEvent) {
+			go func(event *chain.BondedECDSAKeepCreatedEvent) {
 				if ok := requestedSigners.add(event.KeepAddress); !ok {
 					logger.Errorf(
 						"keep creation event for keep [%s] already registered",
@@ -209,7 +209,7 @@ func Initialize(
 
 func checkAwaitingKeyGeneration(
 	ctx context.Context,
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -283,7 +283,7 @@ func checkAwaitingKeyGeneration(
 
 func checkAwaitingKeyGenerationForKeep(
 	ctx context.Context,
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -326,7 +326,7 @@ func checkAwaitingKeyGenerationForKeep(
 
 func generateKeyForKeep(
 	ctx context.Context,
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -423,7 +423,7 @@ func generateSignerForKeep(
 // monitorSigningRequests registers for signature requested events emitted by
 // specific keep contract.
 func monitorSigningRequests(
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
@@ -439,7 +439,7 @@ func monitorSigningRequests(
 
 	return ethereumChain.OnSignatureRequested(
 		keepAddress,
-		func(event *eth.SignatureRequestedEvent) {
+		func(event *chain.SignatureRequestedEvent) {
 			logger.Infof(
 				"new signature requested from keep [%s] for digest [%+x] at block [%d]",
 				keepAddress.String(),
@@ -447,7 +447,7 @@ func monitorSigningRequests(
 				event.BlockNumber,
 			)
 
-			go func(event *eth.SignatureRequestedEvent) {
+			go func(event *chain.SignatureRequestedEvent) {
 				if ok := requestedSignatures.add(keepAddress, event.Digest); !ok {
 					logger.Errorf(
 						"signature requested event for keep [%s] and digest [%x] already registered",
@@ -491,7 +491,7 @@ func monitorSigningRequests(
 }
 
 func checkAwaitingSignature(
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
@@ -591,16 +591,16 @@ func generateSignatureForKeep(
 // unsubscribes from signing event for the given keep and unregisters it from
 // the keep registry.
 func monitorKeepClosedEvents(
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	keepAddress common.Address,
 	keepsRegistry *registry.Keeps,
 	subscriptionOnSignatureRequested subscription.EventSubscription,
 ) {
-	keepClosed := make(chan *eth.KeepClosedEvent)
+	keepClosed := make(chan *chain.KeepClosedEvent)
 
 	subscriptionOnKeepClosed, err := ethereumChain.OnKeepClosed(
 		keepAddress,
-		func(event *eth.KeepClosedEvent) {
+		func(event *chain.KeepClosedEvent) {
 			logger.Infof(
 				"keep [%s] closed event received at block [%d]",
 				keepAddress.String(),
@@ -653,16 +653,16 @@ func monitorKeepClosedEvents(
 // happens unsubscribes from signing event for the given keep and unregisters it
 // from the keep registry.
 func monitorKeepTerminatedEvent(
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	keepAddress common.Address,
 	keepsRegistry *registry.Keeps,
 	subscriptionOnSignatureRequested subscription.EventSubscription,
 ) {
-	keepTerminated := make(chan *eth.KeepTerminatedEvent)
+	keepTerminated := make(chan *chain.KeepTerminatedEvent)
 
 	subscriptionOnKeepTerminated, err := ethereumChain.OnKeepTerminated(
 		keepAddress,
-		func(event *eth.KeepTerminatedEvent) {
+		func(event *chain.KeepTerminatedEvent) {
 			logger.Warningf(
 				"keep [%s] terminated event received at block [%d]",
 				keepAddress.String(),
@@ -717,7 +717,7 @@ func monitorKeepTerminatedEvent(
 // required block number is reached it performs a check of the chain state with
 // a provided function returning a boolean value.
 func waitForChainConfirmation(
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	startBlockNumber uint64,
 	stateCheck func() (bool, error),
 ) (bool, error) {

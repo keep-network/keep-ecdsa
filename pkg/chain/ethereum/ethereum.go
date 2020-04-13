@@ -13,7 +13,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	ecdsachain "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
@@ -44,7 +44,7 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 // OnBondedECDSAKeepCreated installs a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnBondedECDSAKeepCreated(
-	handler func(event *eth.BondedECDSAKeepCreatedEvent),
+	handler func(event *ecdsachain.BondedECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	return ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
 		func(
@@ -54,7 +54,7 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 			Application common.Address,
 			blockNumber uint64,
 		) {
-			handler(&eth.BondedECDSAKeepCreatedEvent{
+			handler(&ecdsachain.BondedECDSAKeepCreatedEvent{
 				KeepAddress: KeepAddress,
 				Members:     Members,
 			})
@@ -68,7 +68,7 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 // OnKeepClosed installs a callback that is invoked on-chain when keep is closed.
 func (ec *EthereumChain) OnKeepClosed(
 	keepAddress common.Address,
-	handler func(event *eth.KeepClosedEvent),
+	handler func(event *ecdsachain.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
@@ -76,7 +76,7 @@ func (ec *EthereumChain) OnKeepClosed(
 	}
 	return keepContract.WatchKeepClosed(
 		func(blockNumber uint64) {
-			handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
+			handler(&ecdsachain.KeepClosedEvent{BlockNumber: blockNumber})
 		},
 		func(err error) error {
 			return fmt.Errorf("keep closed callback failed: [%v]", err)
@@ -88,7 +88,7 @@ func (ec *EthereumChain) OnKeepClosed(
 // is terminated.
 func (ec *EthereumChain) OnKeepTerminated(
 	keepAddress common.Address,
-	handler func(event *eth.KeepTerminatedEvent),
+	handler func(event *ecdsachain.KeepTerminatedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
@@ -96,7 +96,7 @@ func (ec *EthereumChain) OnKeepTerminated(
 	}
 	return keepContract.WatchKeepTerminated(
 		func(blockNumber uint64) {
-			handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
+			handler(&ecdsachain.KeepTerminatedEvent{BlockNumber: blockNumber})
 		},
 		func(err error) error {
 			return fmt.Errorf("keep terminated callback failed: [%v]", err)
@@ -108,7 +108,7 @@ func (ec *EthereumChain) OnKeepTerminated(
 // event of a published public key was emitted.
 func (ec *EthereumChain) OnPublicKeyPublished(
 	keepAddress common.Address,
-	handler func(event *eth.PublicKeyPublishedEvent),
+	handler func(event *ecdsachain.PublicKeyPublishedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
@@ -120,7 +120,7 @@ func (ec *EthereumChain) OnPublicKeyPublished(
 			PublicKey []byte,
 			blockNumber uint64,
 		) {
-			handler(&eth.PublicKeyPublishedEvent{
+			handler(&ecdsachain.PublicKeyPublishedEvent{
 				PublicKey: PublicKey,
 			})
 		},
@@ -134,7 +134,7 @@ func (ec *EthereumChain) OnPublicKeyPublished(
 // on-chain notification of a conflicting public key submission is seen.
 func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 	keepAddress common.Address,
-	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
+	handler func(event *ecdsachain.ConflictingPublicKeySubmittedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
@@ -147,7 +147,7 @@ func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 			ConflictingPublicKey []byte,
 			blockNumber uint64,
 		) {
-			handler(&eth.ConflictingPublicKeySubmittedEvent{
+			handler(&ecdsachain.ConflictingPublicKeySubmittedEvent{
 				SubmittingMember:     SubmittingMember,
 				ConflictingPublicKey: ConflictingPublicKey,
 			})
@@ -162,7 +162,7 @@ func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 // when a keep's signature is requested.
 func (ec *EthereumChain) OnSignatureRequested(
 	keepAddress common.Address,
-	handler func(event *eth.SignatureRequestedEvent),
+	handler func(event *ecdsachain.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
@@ -174,7 +174,7 @@ func (ec *EthereumChain) OnSignatureRequested(
 			Digest [32]uint8,
 			blockNumber uint64,
 		) {
-			handler(&eth.SignatureRequestedEvent{
+			handler(&ecdsachain.SignatureRequestedEvent{
 				Digest:      Digest,
 				BlockNumber: blockNumber,
 			})

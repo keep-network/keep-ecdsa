@@ -13,12 +13,12 @@ import (
 )
 
 func TestRequestSignatureNonexistentKeep(t *testing.T) {
-	chain := initializeLocalChain()
+	handle := initializeLocalChain()
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 	expectedError := fmt.Errorf("failed to find keep with address: [0x0000000000000000000000000000000000000001]")
 
-	err := chain.requestSignature(keepAddress, digest)
+	err := handle.requestSignature(keepAddress, digest)
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf(
@@ -30,16 +30,16 @@ func TestRequestSignatureNonexistentKeep(t *testing.T) {
 }
 
 func TestRequestSignatureNoHandler(t *testing.T) {
-	chain := initializeLocalChain()
+	handle := initializeLocalChain()
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
-	err := chain.createKeep(keepAddress)
+	err := handle.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = handle.requestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,21 +49,21 @@ func TestRequestSignature(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chain := initializeLocalChain()
+	handle := initializeLocalChain()
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
-	eventEmitted := make(chan *eth.SignatureRequestedEvent)
-	handler := func(event *eth.SignatureRequestedEvent) {
+	eventEmitted := make(chan *chain.SignatureRequestedEvent)
+	handler := func(event *chain.SignatureRequestedEvent) {
 		eventEmitted <- event
 	}
 
-	err := chain.createKeep(keepAddress)
+	err := handle.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
-	chain.keeps[keepAddress].signatureRequestedHandlers[0] = handler
+	handle.keeps[keepAddress].signatureRequestedHandlers[0] = handler
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = handle.requestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}

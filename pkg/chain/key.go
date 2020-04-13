@@ -1,4 +1,4 @@
-package eth
+package chain
 
 import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"

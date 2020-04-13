@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	ecdsachain "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
@@ -22,17 +22,17 @@ type localChain struct {
 
 	keeps map[common.Address]*localKeep
 
-	keepCreatedHandlers map[int]func(event *eth.BondedECDSAKeepCreatedEvent)
+	keepCreatedHandlers map[int]func(event *ecdsachain.BondedECDSAKeepCreatedEvent)
 
 	clientAddress common.Address
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect() eth.Handle {
+func Connect() ecdsachain.Handle {
 	return &localChain{
 		keeps:               make(map[common.Address]*localKeep),
-		keepCreatedHandlers: make(map[int]func(event *eth.BondedECDSAKeepCreatedEvent)),
+		keepCreatedHandlers: make(map[int]func(event *ecdsachain.BondedECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
 	}
 }
@@ -55,7 +55,7 @@ func (lc *localChain) RegisterAsMemberCandidate(application common.Address) erro
 // OnBondedECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (lc *localChain) OnBondedECDSAKeepCreated(
-	handler func(event *eth.BondedECDSAKeepCreatedEvent),
+	handler func(event *ecdsachain.BondedECDSAKeepCreatedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
@@ -76,7 +76,7 @@ func (lc *localChain) OnBondedECDSAKeepCreated(
 // when a keep's signature is requested.
 func (lc *localChain) OnSignatureRequested(
 	keepAddress common.Address,
-	handler func(event *eth.SignatureRequestedEvent),
+	handler func(event *ecdsachain.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
@@ -182,28 +182,28 @@ func (lc *localChain) GetKeepAtIndex(
 
 func (lc *localChain) OnKeepClosed(
 	keepAddress common.Address,
-	handler func(event *eth.KeepClosedEvent),
+	handler func(event *ecdsachain.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
 	panic("implement")
 }
 
 func (lc *localChain) OnKeepTerminated(
 	keepAddress common.Address,
-	handler func(event *eth.KeepTerminatedEvent),
+	handler func(event *ecdsachain.KeepTerminatedEvent),
 ) (subscription.EventSubscription, error) {
 	panic("implement")
 }
 
 func (lc *localChain) OnConflictingPublicKeySubmitted(
 	keepAddress common.Address,
-	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
+	handler func(event *ecdsachain.ConflictingPublicKeySubmittedEvent),
 ) (subscription.EventSubscription, error) {
 	panic("implement")
 }
 
 func (lc *localChain) OnPublicKeyPublished(
 	keepAddress common.Address,
-	handler func(event *eth.PublicKeyPublishedEvent),
+	handler func(event *ecdsachain.PublicKeyPublishedEvent),
 ) (subscription.EventSubscription, error) {
 	panic("implement")
 }

@@ -19,17 +19,17 @@ func (c *localChain) createKeep(keepAddress common.Address) error {
 	}
 
 	localKeep := &localKeep{
-		signatureRequestedHandlers: make(map[int]func(event *eth.SignatureRequestedEvent)),
+		signatureRequestedHandlers: make(map[int]func(event *chain.SignatureRequestedEvent)),
 		publicKey:                  [64]byte{},
 	}
 	c.keeps[keepAddress] = localKeep
 
-	keepCreatedEvent := &eth.BondedECDSAKeepCreatedEvent{
+	keepCreatedEvent := &chain.BondedECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
 	}
 
 	for _, handler := range c.keepCreatedHandlers {
-		go func(handler func(event *eth.BondedECDSAKeepCreatedEvent), keepCreatedEvent *eth.BondedECDSAKeepCreatedEvent) {
+		go func(handler func(event *chain.BondedECDSAKeepCreatedEvent), keepCreatedEvent *chain.BondedECDSAKeepCreatedEvent) {
 			handler(keepCreatedEvent)
 		}(handler, keepCreatedEvent)
 	}

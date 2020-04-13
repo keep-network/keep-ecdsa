@@ -1,6 +1,6 @@
-// Package eth contains interface for interaction with an ethereum blockchain
-// along with structures reflecting events emitted on an ethereum blockchain.
-package eth
+// Package chain contains interface for interaction with a blockchain along
+// with structures reflecting events emitted on a blockchain.
+package chain
 
 import (
 	"github.com/ethereum/go-ethereum/common"
@@ -10,13 +10,19 @@ import (
 	"math/big"
 )
 
-// Handle represents a handle to an ethereum blockchain.
+// FIXME common.Address needs to be replaced by Staker from
+// FIXME keep-core/pkg/chain, which exposes an Address without committing to a
+// FIXME particular chain type.  keep-core/pkg/beacon/relay/chain.StakerAddress
+// FIXME can straightforwardly be promoted to keep-core/pkg/chain to
+// FIXME achieve this.
+
+// Handle represents a handle to a blockchain.
 type Handle interface {
 	// Address returns client's ethereum address.
 	Address() common.Address
-	// StakeMonitor returns a stake monitor.
+	// StakeMonitor returns a keep-core stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
-	// BlockCounter returns a block counter.
+	// BlockCounter returns a keep-core block counter.
 	BlockCounter() chain.BlockCounter
 
 	BondedECDSAKeepFactory
@@ -24,7 +30,7 @@ type Handle interface {
 }
 
 // BondedECDSAKeepFactory is an interface that provides ability to interact with
-// BondedECDSAKeepFactory ethereum contracts.
+// BondedECDSAKeepFactory contracts.
 type BondedECDSAKeepFactory interface {
 	// RegisterAsMemberCandidate registers client as a candidate to be selected
 	// to a keep.

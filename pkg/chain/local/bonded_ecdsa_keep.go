@@ -10,7 +10,7 @@ import (
 type localKeep struct {
 	publicKey [64]byte
 
-	signatureRequestedHandlers map[int]func(event *eth.SignatureRequestedEvent)
+	signatureRequestedHandlers map[int]func(event *chain.SignatureRequestedEvent)
 }
 
 func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byte) error {
@@ -25,12 +25,12 @@ func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byt
 		)
 	}
 
-	signatureRequestedEvent := &eth.SignatureRequestedEvent{
+	signatureRequestedEvent := &chain.SignatureRequestedEvent{
 		Digest: digest,
 	}
 
 	for _, handler := range keep.signatureRequestedHandlers {
-		go func(handler func(event *eth.SignatureRequestedEvent), signatureRequestedEvent *eth.SignatureRequestedEvent) {
+		go func(handler func(event *chain.SignatureRequestedEvent), signatureRequestedEvent *chain.SignatureRequestedEvent) {
 			handler(signatureRequestedEvent)
 		}(handler, signatureRequestedEvent)
 	}
