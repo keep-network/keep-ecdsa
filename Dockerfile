@@ -28,10 +28,6 @@ RUN apk add --update --no-cache \
 # Install Solidity compiler.
 COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
 
-# Configure GitHub token to be able to get private repositories.
-ARG GITHUB_TOKEN
-RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
-
 # Configure working directory.
 RUN mkdir -p $APP_DIR
 WORKDIR $APP_DIR
@@ -60,11 +56,7 @@ RUN go generate ./.../gen
 # Build the application.
 COPY ./ $APP_DIR/
 
-# Configure private repositories for Go dependencies
-ARG GOPRIVATE
-
-RUN GOOS=linux GOPRIVATE=$GOPRIVATE go build -a -o $APP_NAME ./ && \
-	mv $APP_NAME $BIN_PATH
+RUN GOOS=linux go build -a -o $APP_NAME ./ && mv $APP_NAME $BIN_PATH
 
 # Configure runtime container.
 FROM runtime
