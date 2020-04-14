@@ -136,7 +136,7 @@ func Start(c *cli.Context) error {
 		return err
 	}
 
-	nodeHeader(networkProvider.AddrStrings(), config.LibP2P.Port)
+	nodeHeader(networkProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
 
 	handle, err := persistence.NewDiskHandle(config.Storage.DataDir)
 	if err != nil {
