@@ -247,6 +247,8 @@ github.com/keep-network/keep-common v0.1.1-0.20200228111656-16dd370ca897 h1:0T9+
 github.com/keep-network/keep-common v0.1.1-0.20200228111656-16dd370ca897/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
 github.com/keep-network/keep-common v0.1.1-0.20200409131849-1363a51644b7 h1:xDcehHCGSl/WKQ8KjeeP+nY7DircDIkfqCqq7FjWNJ8=
 github.com/keep-network/keep-common v0.1.1-0.20200409131849-1363a51644b7/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
+github.com/keep-network/keep-common v0.2.0-rc h1:dkG8qtcKINk9kXqtGg4dAFu9x0xiSZtP3Jzj2sxqd2g=
+github.com/keep-network/keep-common v0.2.0-rc/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
 github.com/keep-network/keep-core v0.10.0 h1:+aZe5BMwmaGgZdXdGvIHun2PNtJE4L1SPnBtRL8CRVY=
 github.com/keep-network/keep-core v0.10.0/go.mod h1:9ImACmSRMnBLRN3b/RS38OqTstdfy3Y3UHNMmdejLqo=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
