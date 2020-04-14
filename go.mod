@@ -18,7 +18,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/keep-common v0.2.0-rc
-	github.com/keep-network/keep-core v0.10.0
+	github.com/keep-network/keep-core v0.13.0-rc
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
 )
