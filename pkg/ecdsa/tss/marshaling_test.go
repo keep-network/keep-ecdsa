@@ -2,6 +2,7 @@ package tss
 
 import (
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/net"
 	"reflect"
 	"testing"
 
@@ -95,30 +96,8 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 	}
 }
 
-func TestTSSProtocolMessageRoundTripFuzzing(t *testing.T) {
-	for i := 0; i < 100000; i++ {
-		message := TSSProtocolMessage{}
-
-		f := fuzz.New().NilChance(0.25)
-		f.Fuzz(&message)
-
-		if err := pbutils.RoundTrip(&message, &TSSProtocolMessage{}); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-func TestTSSProtocolMessageUnmarshallingFuzzing(t *testing.T) {
-	for i := 0; i < 100000; i++ {
-		var messageBytes []byte
-
-		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
-		f.Fuzz(&messageBytes)
-
-		unmarshaled := &TSSProtocolMessage{}
-
-		_ = unmarshaled.Unmarshal(messageBytes)
-	}
+func TestFuzzTSSProtocolMessageUnmarshaler(t *testing.T) {
+	fuzzUnmarshaler(&TSSProtocolMessage{})
 }
 
 func TestReadyMessageMarshalling(t *testing.T) {
@@ -140,30 +119,8 @@ func TestReadyMessageMarshalling(t *testing.T) {
 	}
 }
 
-func TestReadyMessageRoundTripFuzzing(t *testing.T) {
-	for i := 0; i < 100000; i++ {
-		message := ReadyMessage{}
-
-		f := fuzz.New().NilChance(0.25)
-		f.Fuzz(&message)
-
-		if err := pbutils.RoundTrip(&message, &ReadyMessage{}); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-func TestReadyMessageUnmarshallingFuzzing(t *testing.T) {
-	for i := 0; i < 100000; i++ {
-		var messageBytes []byte
-
-		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
-		f.Fuzz(&messageBytes)
-
-		unmarshaled := &ReadyMessage{}
-
-		_ = unmarshaled.Unmarshal(messageBytes)
-	}
+func TestFuzzReadyMessageUnmarshaler(t *testing.T) {
+	fuzzUnmarshaler(&ReadyMessage{})
 }
 
 func TestAnnounceMessageMarshalling(t *testing.T) {
@@ -185,28 +142,17 @@ func TestAnnounceMessageMarshalling(t *testing.T) {
 	}
 }
 
-func TestAnnounceMessageRoundTripFuzzing(t *testing.T) {
-	for i := 0; i < 100000; i++ {
-		message := AnnounceMessage{}
-
-		f := fuzz.New().NilChance(0.25)
-		f.Fuzz(&message)
-
-		if err := pbutils.RoundTrip(&message, &AnnounceMessage{}); err != nil {
-			t.Fatal(err)
-		}
-	}
+func TestFuzzAnnounceMessageUnmarshaler(t *testing.T) {
+	fuzzUnmarshaler(&AnnounceMessage{})
 }
 
-func TestAnnounceMessageUnmarshallingFuzzing(t *testing.T) {
+func fuzzUnmarshaler(unmarshaler net.TaggedUnmarshaler) {
 	for i := 0; i < 100000; i++ {
 		var messageBytes []byte
 
 		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
 		f.Fuzz(&messageBytes)
 
-		unmarshaled := &AnnounceMessage{}
-
-		_ = unmarshaled.Unmarshal(messageBytes)
+		_ = unmarshaler.Unmarshal(messageBytes)
 	}
 }
