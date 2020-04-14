@@ -95,7 +95,7 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 	}
 }
 
-func TestTSSProtocolMessageFuzzing(t *testing.T) {
+func TestTSSProtocolMessageRoundTripFuzzing(t *testing.T) {
 	for i := 0; i < 100000; i++ {
 		message := TSSProtocolMessage{}
 
@@ -105,6 +105,19 @@ func TestTSSProtocolMessageFuzzing(t *testing.T) {
 		if err := pbutils.RoundTrip(&message, &TSSProtocolMessage{}); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestTSSProtocolMessageUnmarshallingFuzzing(t *testing.T) {
+	for i := 0; i < 100000; i++ {
+		var messageBytes []byte
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f.Fuzz(&messageBytes)
+
+		unmarshaled := &TSSProtocolMessage{}
+
+		_ = unmarshaled.Unmarshal(messageBytes)
 	}
 }
 
@@ -127,7 +140,7 @@ func TestReadyMessageMarshalling(t *testing.T) {
 	}
 }
 
-func TestReadyMessageFuzzing(t *testing.T) {
+func TestReadyMessageRoundTripFuzzing(t *testing.T) {
 	for i := 0; i < 100000; i++ {
 		message := ReadyMessage{}
 
@@ -137,6 +150,19 @@ func TestReadyMessageFuzzing(t *testing.T) {
 		if err := pbutils.RoundTrip(&message, &ReadyMessage{}); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestReadyMessageUnmarshallingFuzzing(t *testing.T) {
+	for i := 0; i < 100000; i++ {
+		var messageBytes []byte
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f.Fuzz(&messageBytes)
+
+		unmarshaled := &ReadyMessage{}
+
+		_ = unmarshaled.Unmarshal(messageBytes)
 	}
 }
 
@@ -159,7 +185,7 @@ func TestAnnounceMessageMarshalling(t *testing.T) {
 	}
 }
 
-func TestAnnounceMessageFuzzing(t *testing.T) {
+func TestAnnounceMessageRoundTripFuzzing(t *testing.T) {
 	for i := 0; i < 100000; i++ {
 		message := AnnounceMessage{}
 
@@ -169,5 +195,18 @@ func TestAnnounceMessageFuzzing(t *testing.T) {
 		if err := pbutils.RoundTrip(&message, &AnnounceMessage{}); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestAnnounceMessageUnmarshallingFuzzing(t *testing.T) {
+	for i := 0; i < 100000; i++ {
+		var messageBytes []byte
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f.Fuzz(&messageBytes)
+
+		unmarshaled := &AnnounceMessage{}
+
+		_ = unmarshaled.Unmarshal(messageBytes)
 	}
 }
