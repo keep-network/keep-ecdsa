@@ -219,7 +219,7 @@ jobs:
       - run:
           name: Load Docker images
           command: |
-            docker load -i /tmp/keep-ecdsa/docker-images/keep-ecdsa.tar
+            # docker load -i /tmp/keep-ecdsa/docker-images/keep-ecdsa.tar
             docker load -i /tmp/keep-ecdsa/docker-images/initcontainer-provision-keep-ecdsa.tar
       - run:
           name: Tag Docker images
