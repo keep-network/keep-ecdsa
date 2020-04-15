@@ -224,7 +224,7 @@ jobs:
       - run:
           name: Tag Docker images
           command: |
-            docker tag keep-ecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-ecdsa
+            # docker tag keep-ecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-ecdsa
             docker tag initcontainer-provision-keep-ecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-ecdsa
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
