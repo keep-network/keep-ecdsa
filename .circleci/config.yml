@@ -337,8 +337,8 @@ workflows:
           #     only: /^v.*/
           #   branches:
           #     ignore: /.*/
-          requires:
-            - migrate_contracts
+          # requires:
+          #   - migrate_contracts
       - publish_client:
           context: keep-test
           # filters:
