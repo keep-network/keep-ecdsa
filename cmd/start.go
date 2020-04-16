@@ -10,6 +10,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
 
+	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -127,7 +128,7 @@ func Start(c *cli.Context) error {
 		ctx,
 		config.LibP2P,
 		networkPrivateKey,
-		stakeMonitor,
+		firewall.MinimumStakePolicy(stakeMonitor),
 		retransmission.NewTimeTicker(ctx, 1*time.Second),
 		libp2p.WithRoutingTableRefreshPeriod(routingTableRefreshPeriod),
 		libp2p.WithBootstrapMinPeerThreshold(bootstrapMinPeerThreshold),

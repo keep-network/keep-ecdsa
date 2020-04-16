@@ -245,6 +245,8 @@ github.com/keep-network/keep-common v0.2.0-rc h1:dkG8qtcKINk9kXqtGg4dAFu9x0xiSZt
 github.com/keep-network/keep-common v0.2.0-rc/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
 github.com/keep-network/keep-core v0.13.0-rc h1:Fl3P/qPa4eYd6Zhm4PrkxH6cYd+ssxYUeAMxi7zf5Ts=
 github.com/keep-network/keep-core v0.13.0-rc/go.mod h1:wyvHiiC+w4SJqcWlgRFMPBGdOxqlwvUxTY9svvOULc0=
+github.com/keep-network/keep-core v0.13.0-rc.0.20200416001330-0347b73e812f h1:qZTwkK+xm/vSBkeXlcqqnEJUhTVMWkSQBTXVAIcD1FQ=
+github.com/keep-network/keep-core v0.13.0-rc.0.20200416001330-0347b73e812f/go.mod h1:wyvHiiC+w4SJqcWlgRFMPBGdOxqlwvUxTY9svvOULc0=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
