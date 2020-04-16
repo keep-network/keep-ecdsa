@@ -332,7 +332,7 @@ func (n *Node) publishSignature(
 			attemptCounter,
 		)
 
-		if err := n.ethereumChain.SubmitSignature(keepAddress, signature); err != nil {
+		if submissionErr := n.ethereumChain.SubmitSignature(keepAddress, signature); submissionErr != nil {
 			isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(keepAddress, digest)
 			if err != nil {
 				logger.Errorf(
@@ -360,7 +360,7 @@ func (n *Node) publishSignature(
 				"failed to submit signature for keep [%s]: [%v]; "+
 					"will retry after 1 minute",
 				keepAddress.String(),
-				err,
+				submissionErr,
 			)
 			time.Sleep(1 * time.Minute)
 			continue
