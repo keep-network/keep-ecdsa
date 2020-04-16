@@ -205,7 +205,7 @@ func (n *Node) publishSignerPublicKey(
 	)
 
 	monitoringAbort := make(chan interface{})
-	go n.monitorKeepPublicKeySubmission(ctx, monitoringAbort, keepAddress)
+	go n.monitorKeepPublicKeySubmission(monitoringAbort, keepAddress)
 
 	err := n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
 	if err != nil {
@@ -365,12 +365,11 @@ func (n *Node) publishSignature(
 // conflicting public key is published or until keep established public key
 // or until key generation timed out.
 func (n *Node) monitorKeepPublicKeySubmission(
-	ctx context.Context,
 	abort chan interface{},
 	keepAddress common.Address,
 ) {
 	monitoringCtx, monitoringCancel := context.WithTimeout(
-		ctx,
+		context.Background(),
 		monitorKeepPublicKeySubmissionTimeout,
 	)
 	defer monitoringCancel()
@@ -420,13 +419,12 @@ func (n *Node) monitorKeepPublicKeySubmission(
 			event.ConflictingPublicKey,
 		)
 	case <-monitoringCtx.Done():
-		if monitoringCtx.Err() == context.DeadlineExceeded {
-			logger.Warningf(
-				"monitoring of public key submission for keep [%s] "+
-					"has been cancelled due to exceeded timeout",
-				keepAddress.String(),
-			)
-		}
+		logger.Warningf(
+			"monitoring of public key submission for keep [%s] "+
+				"has been cancelled: [%v]",
+			keepAddress.String(),
+			monitoringCtx.Err(),
+		)
 	case <-abort:
 		logger.Warningf(
 			"monitoring of public key submission for keep [%s] "+
