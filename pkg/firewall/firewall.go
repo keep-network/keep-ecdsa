@@ -22,6 +22,9 @@ var logger = log.Logger("keep-ecdsa-firewall")
 // members. We use the cache to minimize calls to Ethereum client.
 const KeepCacheLifetime = 24 * time.Hour
 
+var errNoMinStakeNoActiveKeep = fmt.Errorf("remote peer has no minimum " +
+	"stake and is not a member in any of active keeps")
+
 // NewStakeOrActiveKeepPolicy if a firewall policy checking if the remote peer
 // has a minimum stake and if it has no minimum stake if it is a member in at
 // least one active keep.
@@ -108,7 +111,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 		// peers created before this one are still active.
 		isActive, err := soakp.chain.IsActive(keep)
 		if err != nil {
-			logger.Warningf(
+			logger.Errorf(
 				"could not check if keep [%x] is active: [%v]",
 				keepIndex,
 				err,
@@ -144,7 +147,5 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	// If we are here, it means that the client is not a member in any of
 	// active keeps and it's minimum stake check failed as well. We are not
 	// allowing to connect with that peer.
-	return fmt.Errorf(
-		"remote peer has no minimum stake and is not a member in any of active keeps",
-	)
+	return errNoMinStakeNoActiveKeep
 }

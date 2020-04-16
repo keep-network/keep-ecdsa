@@ -13,6 +13,15 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
+// Chain is an extention of eth.Handle interface which exposes
+// additional functions useful for testing.
+type Chain interface {
+	eth.Handle
+
+	OpenKeep(keepAddress common.Address, members []common.Address)
+	CloseKeep(keepAddress common.Address) error
+}
+
 // localChain is an implementation of ethereum blockchain interface.
 //
 // It mocks the behaviour of a real blockchain, without the complexity of deployments,
@@ -20,7 +29,8 @@ import (
 type localChain struct {
 	handlerMutex sync.Mutex
 
-	keeps map[common.Address]*localKeep
+	keepIndexes []common.Address
+	keeps       map[common.Address]*localKeep
 
 	keepCreatedHandlers map[int]func(event *eth.BondedECDSAKeepCreatedEvent)
 
@@ -29,12 +39,34 @@ type localChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect() eth.Handle {
+func Connect() Chain {
 	return &localChain{
 		keeps:               make(map[common.Address]*localKeep),
 		keepCreatedHandlers: make(map[int]func(event *eth.BondedECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
 	}
+}
+
+func (lc *localChain) OpenKeep(keepAddress common.Address, members []common.Address) {
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	lc.keeps[keepAddress] = &localKeep{
+		members: members,
+	}
+	lc.keepIndexes = append(lc.keepIndexes, keepAddress)
+}
+
+func (lc *localChain) CloseKeep(keepAddress common.Address) error {
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return fmt.Errorf("no keep with address [%v]", keepAddress)
+	}
+	keep.status = closed
+	return nil
 }
 
 // Address returns client's ethereum address.
@@ -147,7 +179,15 @@ func (lc *localChain) IsAwaitingSignature(
 
 // IsActive checks for current state of a keep on-chain.
 func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
-	panic("implement")
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return false, fmt.Errorf("no keep with address [%v]", keepAddress)
+	}
+
+	return keep.status == active, nil
 }
 
 func (lc *localChain) BlockCounter() chain.BlockCounter {
@@ -171,13 +211,25 @@ func (lc *localChain) UpdateStatusForApplication(application common.Address) err
 }
 
 func (lc *localChain) GetKeepCount() (*big.Int, error) {
-	panic("implement")
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	return big.NewInt(int64(len(lc.keeps))), nil
 }
 
 func (lc *localChain) GetKeepAtIndex(
 	keepIndex *big.Int,
 ) (common.Address, error) {
-	panic("implement")
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	index := int(keepIndex.Uint64())
+
+	if index > len(lc.keepIndexes) {
+		return common.HexToAddress("0x0"), fmt.Errorf("out of bounds")
+	}
+
+	return lc.keepIndexes[index], nil
 }
 
 func (lc *localChain) OnKeepClosed(
@@ -219,7 +271,14 @@ func (lc *localChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) 
 func (lc *localChain) GetMembers(
 	keepAddress common.Address,
 ) ([]common.Address, error) {
-	panic("implement")
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return nil, fmt.Errorf("no keep with address [%v]", keepAddress)
+	}
+	return keep.members, nil
 }
 
 func (lc *localChain) HasKeyGenerationTimedOut(
