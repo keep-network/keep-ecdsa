@@ -205,7 +205,7 @@ func (n *Node) publishSignerPublicKey(
 	)
 
 	monitoringAbort := make(chan interface{})
-	go n.monitorKeepPublicKeySubmission(ctx, monitoringAbort, keepAddress)
+	go n.monitorKeepPublicKeySubmission(monitoringAbort, keepAddress)
 
 	err := n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
 	if err != nil {
@@ -250,7 +250,11 @@ func (n *Node) CalculateSignature(
 		// If threshold signing fails, we retry from the beginning.
 		signature, err := signer.CalculateSignature(ctx, digest[:], n.networkProvider)
 		if err != nil {
-			logger.Errorf("failed to calculate signature: [%v]", err)
+			logger.Errorf(
+				"failed to calculate signature for keep [%s]: [%v]",
+				keepAddress.String(),
+				err,
+			)
 			continue
 		}
 
@@ -328,10 +332,14 @@ func (n *Node) publishSignature(
 			attemptCounter,
 		)
 
-		if err := n.ethereumChain.SubmitSignature(keepAddress, signature); err != nil {
+		if submissionErr := n.ethereumChain.SubmitSignature(keepAddress, signature); submissionErr != nil {
 			isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(keepAddress, digest)
 			if err != nil {
-				logger.Errorf("failed to verify if keep is still awaiting signature: [%v]", err)
+				logger.Errorf(
+					"failed to verify if keep [%s] is still awaiting signature: [%v]",
+					keepAddress.String(),
+					err,
+				)
 				continue
 			}
 
@@ -349,14 +357,16 @@ func (n *Node) publishSignature(
 			// Our public key submission transaction failed. We are going to
 			// wait for some time and then retry from the beginning.
 			logger.Errorf(
-				"failed to submit signature: [%v]; will retry after 10 minutes",
-				err,
+				"failed to submit signature for keep [%s]: [%v]; "+
+					"will retry after 1 minute",
+				keepAddress.String(),
+				submissionErr,
 			)
 			time.Sleep(1 * time.Minute)
 			continue
 		}
 
-		logger.Infof("signature submitted")
+		logger.Infof("signature submitted for keep [%s]", keepAddress.String())
 		return nil
 	}
 }
@@ -365,12 +375,11 @@ func (n *Node) publishSignature(
 // conflicting public key is published or until keep established public key
 // or until key generation timed out.
 func (n *Node) monitorKeepPublicKeySubmission(
-	ctx context.Context,
 	abort chan interface{},
 	keepAddress common.Address,
 ) {
 	monitoringCtx, monitoringCancel := context.WithTimeout(
-		ctx,
+		context.Background(),
 		monitorKeepPublicKeySubmissionTimeout,
 	)
 	defer monitoringCancel()
@@ -386,7 +395,8 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed on watching public key published event: [%v]",
+			"failed on watching public key published event for keep [%s]: [%v]",
+			keepAddress.String(),
 			err,
 		)
 	}
@@ -399,7 +409,8 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed on watching conflicting public key event: [%v]",
+			"failed on watching conflicting public key event for keep [%s]: [%v]",
+			keepAddress.String(),
 			err,
 		)
 	}
@@ -410,23 +421,24 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	select {
 	case event := <-publicKeyPublished:
 		logger.Infof(
-			"public key [%x] has been accepted by keep",
+			"public key [%x] has been accepted by keep: [%s]",
 			event.PublicKey,
+			keepAddress.String(),
 		)
 	case event := <-conflictingPublicKey:
 		logger.Errorf(
-			"member [%x] has submitted conflicting public key: [%x]",
+			"member [%x] has submitted conflicting public key for keep [%s]: [%x]",
 			event.SubmittingMember,
+			keepAddress.String(),
 			event.ConflictingPublicKey,
 		)
 	case <-monitoringCtx.Done():
-		if monitoringCtx.Err() == context.DeadlineExceeded {
-			logger.Warningf(
-				"monitoring of public key submission for keep [%s] "+
-					"has been cancelled due to exceeded timeout",
-				keepAddress.String(),
-			)
-		}
+		logger.Warningf(
+			"monitoring of public key submission for keep [%s] "+
+				"has been cancelled: [%v]",
+			keepAddress.String(),
+			monitoringCtx.Err(),
+		)
 	case <-abort:
 		logger.Warningf(
 			"monitoring of public key submission for keep [%s] "+
