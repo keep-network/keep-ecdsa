@@ -419,13 +419,12 @@ func (n *Node) monitorKeepPublicKeySubmission(
 			event.ConflictingPublicKey,
 		)
 	case <-monitoringCtx.Done():
-		if monitoringCtx.Err() == context.DeadlineExceeded {
-			logger.Warningf(
-				"monitoring of public key submission for keep [%s] "+
-					"has been cancelled due to exceeded timeout",
-				keepAddress.String(),
-			)
-		}
+		logger.Warningf(
+			"monitoring of public key submission for keep [%s] "+
+				"has been cancelled: [%v]",
+			keepAddress.String(),
+			monitoringCtx.Err(),
+		)
 	case <-abort:
 		logger.Warningf(
 			"monitoring of public key submission for keep [%s] "+
