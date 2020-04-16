@@ -29,7 +29,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract BondedECDSAKeepFactory is
     IBondedECDSAKeepFactory,
     CloneFactory,
-    AuthorityDelegator
+    AuthorityDelegator,
+    IRandomBeaconConsumer
 {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;

@@ -90,8 +90,9 @@ func Initialize(
 			isActive, err := ethereumChain.IsActive(keepAddress)
 			if err != nil {
 				logger.Errorf(
-					"failed to verify if keep is still active: [%v]; "+
+					"failed to verify if keep [%s] is still active: [%v]; "+
 						"subscriptions for keep signing and closing events are skipped",
+					keepAddress.String(),
 					err,
 				)
 				return
@@ -246,8 +247,7 @@ func checkAwaitingKeyGeneration(
 		keygenTimeout, err := ethereumChain.HasKeyGenerationTimedOut(keep)
 		if err != nil {
 			logger.Warningf(
-				"could not check key generation timeout "+
-					"for keep [%v]: [%v]",
+				"could not check key generation timeout for keep [%s]: [%v]",
 				keep.String(),
 				err,
 			)
@@ -272,8 +272,7 @@ func checkAwaitingKeyGeneration(
 		)
 		if err != nil {
 			logger.Warningf(
-				"could not check awaiting key generation "+
-					"for keep [%s]: [%v]",
+				"could not check awaiting key generation for keep [%s]: [%v]",
 				keep.String(),
 				err,
 			)
@@ -583,7 +582,11 @@ func generateSignatureForKeep(
 		signer,
 		digest,
 	); err != nil {
-		logger.Errorf("signature calculation failed: [%v]", err)
+		logger.Errorf(
+			"signature calculation failed for keep [%s]: [%v]",
+			keepAddress.String(),
+			err,
+		)
 	}
 }
 
@@ -634,7 +637,8 @@ func monitorKeepClosedEvents(
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed on registering for keep closed event: [%v]",
+			"failed on registering for closed event for keep [%s]: [%v]",
+			keepAddress.String(),
 			err,
 		)
 
@@ -696,7 +700,8 @@ func monitorKeepTerminatedEvent(
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed on registering for keep terminated event: [%v]",
+			"failed on registering for terminated event for keep [%s]: [%v]",
+			keepAddress.String(),
 			err,
 		)
 

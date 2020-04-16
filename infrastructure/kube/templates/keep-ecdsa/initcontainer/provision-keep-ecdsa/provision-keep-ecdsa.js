@@ -47,9 +47,9 @@ const keepBondingContract = getWeb3Contract('KeepBonding')
 const tokenStakingContract = getWeb3Contract('TokenStaking')
 const keepTokenContract = getWeb3Contract('KeepToken')
 
-// Address of the external TBTCSystem contract which should be set for the InitContainer
-// execution.
-const tbtcSystemContractAddress = process.env.TBTC_SYSTEM_ADDRESS
+// Addresses of the external contracts (e.g. TBTCSystem) which should be set for
+// the InitContainer execution. Addresses should be separated with spaces.
+const sanctionedApplications = process.env.SANCTIONED_APPLICATIONS.split(" ")
 
 // Returns a web3 contract object based on a truffle contract artifact JSON file.
 function getWeb3Contract(contractName) {
@@ -67,9 +67,6 @@ async function provisionKeepTecdsa() {
 
     console.log('###########  Provisioning keep-ecdsa! ###########')
 
-    console.log(`\n<<<<<<<<<<<< Create Sortition Pool for TBTCSystem: ${tbtcSystemContractAddress} >>>>>>>>>>>>`)
-    const sortitionPoolContractAddress = await createSortitionPool(tbtcSystemContractAddress)
-
     console.log(`\n<<<<<<<<<<<< Read operator address from key file >>>>>>>>>>>>`)
     const operatorAddress = readAddressFromKeyFile(operatorKeyFile)
 
@@ -85,8 +82,17 @@ async function provisionKeepTecdsa() {
     console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${bondedECDSAKeepFactory.address} >>>>>>>>>>>>`)
     await authorizeOperatorContract(operatorAddress, bondedECDSAKeepFactory.address, authorizer)
 
-    console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`)
-    await authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer)
+    for (let i = 0; i < sanctionedApplications.length; i++) {
+      const sanctionedApplicationAddress = sanctionedApplications[i]
+
+      console.log(`\n<<<<<<<<<<<< Create Sortition Pool for sanctioned application: ${sanctionedApplicationAddress} >>>>>>>>>>>>`)
+      const sortitionPoolContractAddress = await createSortitionPool(
+        sanctionedApplicationAddress
+      )
+
+      console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`)
+      await authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer)
+    }
 
     console.log('\n<<<<<<<<<<<< Creating keep-ecdsa Config File >>>>>>>>>>>>')
     await createKeepTecdsaConfig()
@@ -237,7 +243,7 @@ async function createKeepTecdsaConfig() {
 
   parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactory.address
 
-  parsedConfigFile.SanctionedApplications.Addresses = [tbtcSystemContractAddress]
+  parsedConfigFile.SanctionedApplications.Addresses = [].concat(sanctionedApplications)
 
   parsedConfigFile.LibP2P.Peers = libp2pPeers
   parsedConfigFile.LibP2P.Port = libp2pPort
