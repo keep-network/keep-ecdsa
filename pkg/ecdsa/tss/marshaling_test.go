@@ -2,11 +2,9 @@ package tss
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/net"
+	fuzz "github.com/google/gofuzz"
 	"reflect"
 	"testing"
-
-	fuzz "github.com/google/gofuzz"
 
 	"github.com/keep-network/keep-ecdsa/internal/testdata"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/pbutils"
@@ -96,8 +94,19 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 	}
 }
 
+func TestFuzzTSSProtocolMessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var message TSSProtocolMessage
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f.Fuzz(&message)
+
+		_ = pbutils.RoundTrip(&message, &TSSProtocolMessage{})
+	}
+}
+
 func TestFuzzTSSProtocolMessageUnmarshaler(t *testing.T) {
-	fuzzUnmarshaler(&TSSProtocolMessage{})
+	pbutils.FuzzUnmarshaler(&TSSProtocolMessage{})
 }
 
 func TestReadyMessageMarshalling(t *testing.T) {
@@ -119,8 +128,19 @@ func TestReadyMessageMarshalling(t *testing.T) {
 	}
 }
 
+func TestFuzzReadyMessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var message ReadyMessage
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f.Fuzz(&message)
+
+		_ = pbutils.RoundTrip(&message, &ReadyMessage{})
+	}
+}
+
 func TestFuzzReadyMessageUnmarshaler(t *testing.T) {
-	fuzzUnmarshaler(&ReadyMessage{})
+	pbutils.FuzzUnmarshaler(&ReadyMessage{})
 }
 
 func TestAnnounceMessageMarshalling(t *testing.T) {
@@ -142,17 +162,17 @@ func TestAnnounceMessageMarshalling(t *testing.T) {
 	}
 }
 
-func TestFuzzAnnounceMessageUnmarshaler(t *testing.T) {
-	fuzzUnmarshaler(&AnnounceMessage{})
-}
-
-func fuzzUnmarshaler(unmarshaler net.TaggedUnmarshaler) {
-	for i := 0; i < 100000; i++ {
-		var messageBytes []byte
+func TestFuzzAnnounceMessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var message AnnounceMessage
 
 		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
-		f.Fuzz(&messageBytes)
+		f.Fuzz(&message)
 
-		_ = unmarshaler.Unmarshal(messageBytes)
+		_ = pbutils.RoundTrip(&message, &AnnounceMessage{})
 	}
+}
+
+func TestFuzzAnnounceMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&AnnounceMessage{})
 }
