@@ -2,6 +2,7 @@ package tss
 
 import (
 	"fmt"
+	fuzz "github.com/google/gofuzz"
 	"reflect"
 	"testing"
 
@@ -93,6 +94,21 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 	}
 }
 
+func TestFuzzTSSProtocolMessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var message TSSProtocolMessage
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f.Fuzz(&message)
+
+		_ = pbutils.RoundTrip(&message, &TSSProtocolMessage{})
+	}
+}
+
+func TestFuzzTSSProtocolMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&TSSProtocolMessage{})
+}
+
 func TestReadyMessageMarshalling(t *testing.T) {
 	msg := &ReadyMessage{
 		SenderID: MemberID([]byte("member-1")),
@@ -112,6 +128,21 @@ func TestReadyMessageMarshalling(t *testing.T) {
 	}
 }
 
+func TestFuzzReadyMessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var message ReadyMessage
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f.Fuzz(&message)
+
+		_ = pbutils.RoundTrip(&message, &ReadyMessage{})
+	}
+}
+
+func TestFuzzReadyMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&ReadyMessage{})
+}
+
 func TestAnnounceMessageMarshalling(t *testing.T) {
 	msg := &AnnounceMessage{
 		SenderID: MemberID([]byte("member-1")),
@@ -129,4 +160,19 @@ func TestAnnounceMessageMarshalling(t *testing.T) {
 			unmarshaled,
 		)
 	}
+}
+
+func TestFuzzAnnounceMessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var message AnnounceMessage
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f.Fuzz(&message)
+
+		_ = pbutils.RoundTrip(&message, &AnnounceMessage{})
+	}
+}
+
+func TestFuzzAnnounceMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&AnnounceMessage{})
 }
