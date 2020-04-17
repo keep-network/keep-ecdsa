@@ -16,6 +16,7 @@ require (
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/ethereum/go-ethereum v1.9.10
 	github.com/gogo/protobuf v1.3.1
+	github.com/google/gofuzz v1.1.0
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/keep-common v0.2.0-rc
 	github.com/keep-network/keep-core v0.13.0-rc.0.20200416001330-0347b73e812f
