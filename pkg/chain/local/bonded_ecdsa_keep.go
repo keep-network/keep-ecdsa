@@ -10,9 +10,9 @@ import (
 type keepStatus int
 
 const (
-	active     keepStatus = iota
-	closed                = iota
-	terminated            = iota
+	active keepStatus = iota
+	closed
+	terminated
 )
 
 type localKeep struct {
