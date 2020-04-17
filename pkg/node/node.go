@@ -310,7 +310,7 @@ func (n *Node) publishSignature(
 			)
 			continue
 		}
-		if !hasSigningTimedOut {
+		if hasSigningTimedOut {
 			return fmt.Errorf("on-chain timeout exceeded")
 		}
 
