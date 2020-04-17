@@ -119,7 +119,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	lastIndex := new(big.Int).Sub(keepCount, one)
 
 	for keepIndex := new(big.Int).Set(lastIndex); keepIndex.Cmp(zero) != -1; keepIndex.Sub(keepIndex, one) {
-		keep, err := soakp.chain.GetKeepAtIndex(keepIndex)
+		keepAddress, err := soakp.chain.GetKeepAtIndex(keepIndex)
 		if err != nil {
 			logger.Errorf(
 				"could not get keep at index [%v]: [%v]",
@@ -133,11 +133,11 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 		// active, we skip it. We still need to process the rest of the keeps
 		// because it's possible that although this keep is not active some
 		// peers created before this one are still active.
-		isActive, err := soakp.chain.IsActive(keep)
+		isActive, err := soakp.chain.IsActive(keepAddress)
 		if err != nil {
 			logger.Errorf(
 				"could not check if keep [%x] is active: [%v]",
-				keepIndex,
+				keepAddress,
 				err,
 			)
 			continue
@@ -148,11 +148,11 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 
 		// Get all the members of the active keep and store them in the active
 		// keep members cache.
-		members, err := soakp.chain.GetMembers(keep)
+		members, err := soakp.chain.GetMembers(keepAddress)
 		if err != nil {
 			logger.Errorf(
 				"could not get members of keep [%x]: [%v]",
-				keepIndex,
+				keepAddress,
 				err,
 			)
 			continue
