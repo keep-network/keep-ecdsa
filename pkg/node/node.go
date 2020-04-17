@@ -154,6 +154,7 @@ func (n *Node) GenerateSignerForKeep(
 		)
 		if err != nil {
 			logger.Warningf("failed to announce signer presence: [%v]", err)
+			time.Sleep(time.Second)
 			continue
 		}
 
@@ -172,6 +173,7 @@ func (n *Node) GenerateSignerForKeep(
 		)
 		if err != nil {
 			logger.Errorf("failed to generate threshold signer: [%v]", err)
+			time.Sleep(time.Second)
 			continue
 		}
 
@@ -255,6 +257,7 @@ func (n *Node) CalculateSignature(
 				keepAddress.String(),
 				err,
 			)
+			time.Sleep(time.Second)
 			continue
 		}
 
