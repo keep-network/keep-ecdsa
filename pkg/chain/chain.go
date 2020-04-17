@@ -3,11 +3,12 @@
 package eth
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
-	"math/big"
 )
 
 // Handle represents a handle to an ethereum blockchain.
@@ -51,6 +52,10 @@ type BondedECDSAKeepFactory interface {
 	// UpdateStatusForApplication updates the operator's status in the signers'
 	// pool for the given application.
 	UpdateStatusForApplication(application common.Address) error
+
+	// HasAuthorization checks if the factory has the authorization to
+	// operate on stake represented by the provided operator.
+	HasAuthorization(operator common.Address) (bool, error)
 
 	// GetKeepCount returns number of keeps.
 	GetKeepCount() (*big.Int, error)

@@ -210,6 +210,10 @@ func (lc *localChain) UpdateStatusForApplication(application common.Address) err
 	panic("implement")
 }
 
+func (lc *localChain) HasAuthorization(operator common.Address) (bool, error) {
+	panic("implement")
+}
+
 func (lc *localChain) GetKeepCount() (*big.Int, error) {
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()

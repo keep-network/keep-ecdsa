@@ -38,8 +38,9 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const application = accounts[1]
   const members = [accounts[2], accounts[3], accounts[4]]
   const authorizers = [members[0], members[1], members[2]]
+  const notMember = accounts[5]
 
-  const keepOwner = accounts[5]
+  const keepOwner = accounts[6]
 
   const groupSize = new BN(members.length)
   const threshold = groupSize
@@ -1363,6 +1364,27 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         keep1.address,
         atIndex1,
         "incorrect keep address returned for index 1"
+      )
+    })
+  })
+
+  describe("hasAuthorization", async () => {
+    before(async () => {
+      await initializeNewFactory()
+      await initializeMemberCandidates()
+    })
+
+    it("returns true if operator authorized the factory", async () => {
+      assert.isTrue(
+        await keepFactory.hasAuthorization(members[0]),
+        "the operator has authorized the factory"
+      )
+    })
+
+    it("returns false if operator has not authorized the factory", async () => {
+      assert.isFalse(
+        await keepFactory.hasAuthorization(notMember),
+        "the operator has not authorized the factory"
       )
     })
   })
