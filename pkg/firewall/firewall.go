@@ -28,9 +28,9 @@ var errNoAuthorization = fmt.Errorf("remote peer has no authorization on the fac
 var errNoMinStakeNoActiveKeep = fmt.Errorf("remote peer has no minimum " +
 	"stake and is not a member in any of active keeps")
 
-// NewStakeOrActiveKeepPolicy if a firewall policy checking if the remote peer
-// has a minimum stake and if it has no minimum stake if it is a member in at
-// least one active keep.
+// NewStakeOrActiveKeepPolicy is a firewall policy checking if the remote peer
+// has a minimum stake and in case it has no minimum stake if it is a member of
+// at least one active keep.
 func NewStakeOrActiveKeepPolicy(
 	chain eth.Handle,
 	stakeMonitor coreChain.StakeMonitor,
