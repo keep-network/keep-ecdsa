@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
 	coreChain "github.com/keep-network/keep-core/pkg/chain"
@@ -21,6 +22,8 @@ var logger = log.Logger("keep-ecdsa-firewall")
 // KeepCacheLifetime is the time the cache maintains the list of active keep
 // members. We use the cache to minimize calls to Ethereum client.
 const KeepCacheLifetime = 24 * time.Hour
+
+var errNoAuthorization = fmt.Errorf("remote peer has no authorization on the factory")
 
 var errNoMinStakeNoActiveKeep = fmt.Errorf("remote peer has no minimum " +
 	"stake and is not a member in any of active keeps")
@@ -54,17 +57,38 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 		return nil
 	}
 
+	remotePeerNetworkPublicKey := coreKey.NetworkPublic(*remotePeerPublicKey)
+	remotePeerAddress := coreKey.NetworkPubKeyToEthAddress(&remotePeerNetworkPublicKey)
+
+	// Check if the remote peer has authorization on the factory.
+	// The authorization cannot be revoked.
+	// If peer has no authorization on the factory it means it has never
+	// participated in any group selection so there is no chance it can be
+	// a member of any keep.
+	hasAuthorization, err := soakp.chain.HasAuthorization(
+		common.HexToAddress(remotePeerAddress),
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"could not check authorization for address [%v]: [%v]",
+			remotePeerAddress,
+			err,
+		)
+	}
+
+	if !hasAuthorization {
+		return errNoAuthorization
+	}
+
 	// In case the remote peer has no minimum stake, we need to check if it is
 	// a member in at least one active keep. If so, we let to connect.
 	// Otherwise, we do not let to connect.
-	return soakp.validateActiveKeepMembership(remotePeerPublicKey)
+	return soakp.validateActiveKeepMembership(remotePeerAddress)
 }
 
 func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
-	remotePeerPublicKey *ecdsa.PublicKey,
+	remotePeerAddress string,
 ) error {
-	remotePeerNetworkPublicKey := coreKey.NetworkPublic(*remotePeerPublicKey)
-	remotePeerAddress := coreKey.NetworkPubKeyToEthAddress(&remotePeerNetworkPublicKey)
 
 	// First, check in the in-memory time cache to minimize hits to ETH client.
 	// If the Keep client with the given chain address is in the cache it means

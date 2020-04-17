@@ -13,6 +13,8 @@ import (
 
 var cacheLifeTime = time.Second
 
+// Has minimum stake.
+// Should allow to connect.
 func TestHasMinimumStake(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
@@ -36,7 +38,10 @@ func TestHasMinimumStake(t *testing.T) {
 	}
 }
 
-func TestNoMinimumStakeNoKeepsExist(t *testing.T) {
+// Has no minimum stake.
+// Has no authorization.
+// Should NOT allow to connect.
+func TestNoAuthorization(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	policy := &stakeOrActiveKeepPolicy{
@@ -52,6 +57,39 @@ func TestNoMinimumStakeNoKeepsExist(t *testing.T) {
 
 	if err := policy.Validate(
 		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
+	); err != errNoAuthorization {
+		t.Fatalf(
+			"unexpected validation error\nactual:   [%v]\nexpected: [%v]",
+			err,
+			errNoMinStakeNoActiveKeep,
+		)
+	}
+}
+
+// Has no minimum stake.
+// Has authorization.
+// No keeps exist.
+// Should NOT allow to connect.
+func TestNoMinimumStakeNoKeepsExist(t *testing.T) {
+	chain := local.Connect()
+	coreFirewall := newMockCoreFirewall()
+	policy := &stakeOrActiveKeepPolicy{
+		chain:                  chain,
+		minimumStakePolicy:     coreFirewall,
+		activeKeepMembersCache: newTimeCache(cacheLifeTime),
+	}
+
+	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chain.AuthorizeOperator(common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+	))
+
+	if err := policy.Validate(
+		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
 	); err != errNoMinStakeNoActiveKeep {
 		t.Fatalf(
 			"unexpected validation error\nactual:   [%v]\nexpected: [%v]",
@@ -61,6 +99,10 @@ func TestNoMinimumStakeNoKeepsExist(t *testing.T) {
 	}
 }
 
+// Has no minimum stake.
+// Has authorization.
+// It not a member of a keep.
+// Should NOT allow to connect.
 func TestNoMinimumStakeIsNotKeepMember(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
@@ -74,6 +116,10 @@ func TestNoMinimumStakeIsNotKeepMember(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	chain.AuthorizeOperator(common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+	))
 
 	chain.OpenKeep(
 		common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256"),
@@ -94,6 +140,10 @@ func TestNoMinimumStakeIsNotKeepMember(t *testing.T) {
 	}
 }
 
+// Has no minimum stake.
+// Has authorization.
+// Is a member of an active keep
+// Should allow to connect.
 func TestNoMinimumStakeIsActiveKeepMember(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
@@ -107,6 +157,10 @@ func TestNoMinimumStakeIsActiveKeepMember(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	chain.AuthorizeOperator(common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+	))
 
 	chain.OpenKeep(
 		common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256"),
@@ -123,6 +177,10 @@ func TestNoMinimumStakeIsActiveKeepMember(t *testing.T) {
 	}
 }
 
+// Has no minimum stake.
+// Has authorization.
+// Is a member of a closed keep
+// Should NOT allow to connect.
 func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
@@ -136,6 +194,10 @@ func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	chain.AuthorizeOperator(common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+	))
 
 	keepAddress := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
 	chain.OpenKeep(
@@ -160,6 +222,11 @@ func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
 	}
 }
 
+// Has no minimum stake.
+// Has authorization.
+// There are multiple keeps.
+// Is a member of an active keep
+// Should allow to connect.
 func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
@@ -173,6 +240,10 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	chain.AuthorizeOperator(common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
 	chain.OpenKeep(

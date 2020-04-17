@@ -20,6 +20,7 @@ type Chain interface {
 
 	OpenKeep(keepAddress common.Address, members []common.Address)
 	CloseKeep(keepAddress common.Address) error
+	AuthorizeOperator(operatorAddress common.Address)
 }
 
 // localChain is an implementation of ethereum blockchain interface.
@@ -35,6 +36,8 @@ type localChain struct {
 	keepCreatedHandlers map[int]func(event *eth.BondedECDSAKeepCreatedEvent)
 
 	clientAddress common.Address
+
+	authorizations map[common.Address]bool
 }
 
 // Connect performs initialization for communication with Ethereum blockchain
@@ -44,6 +47,7 @@ func Connect() Chain {
 		keeps:               make(map[common.Address]*localKeep),
 		keepCreatedHandlers: make(map[int]func(event *eth.BondedECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
+		authorizations:      make(map[common.Address]bool),
 	}
 }
 
@@ -67,6 +71,13 @@ func (lc *localChain) CloseKeep(keepAddress common.Address) error {
 	}
 	keep.status = closed
 	return nil
+}
+
+func (lc *localChain) AuthorizeOperator(operator common.Address) {
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	lc.authorizations[operator] = true
 }
 
 // Address returns client's ethereum address.
@@ -211,7 +222,10 @@ func (lc *localChain) UpdateStatusForApplication(application common.Address) err
 }
 
 func (lc *localChain) HasAuthorization(operator common.Address) (bool, error) {
-	panic("implement")
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	return lc.authorizations[operator], nil
 }
 
 func (lc *localChain) GetKeepCount() (*big.Int, error) {
