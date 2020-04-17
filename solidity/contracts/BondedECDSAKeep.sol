@@ -51,8 +51,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Latest digest requested to be signed. Used to validate submitted signature.
     bytes32 public digest;
 
-    // Map of all digests requested to be signed. Used to validate submitted signature.
-    // Holds block number from the moment when a signature was requested.
+    // Map of all digests requested to be signed. Used to validate submitted
+    // signature. Holds the block number at which the signature over the given
+    // digest was requested
     mapping(bytes32 => uint256) public digests;
 
     // Timeout for the keep public key to appear on the chain. Time is counted
