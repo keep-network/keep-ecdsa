@@ -43,7 +43,7 @@ func (tc *timeCache) add(item string) bool {
 		return false
 	}
 
-	// sweep old entries
+	// sweep old entries (those for which caching timespan has passed)
 	for {
 		back := tc.indexer.Back()
 		if back == nil {
