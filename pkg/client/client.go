@@ -534,7 +534,12 @@ func checkAwaitingSignature(
 
 		startBlock, err := ethereumChain.SignatureRequestedBlock(keepAddress, latestDigest)
 		if err != nil {
-			logger.Errorf("failed to get signature request block height: [%v]", err)
+			logger.Errorf(
+				"failed to get signature request block height for keep [%s] and digest [%x]: [%v]",
+				keepAddress.String(),
+				latestDigest,
+				err,
+			)
 			return
 		}
 
