@@ -235,6 +235,18 @@ contract("BondedECDSAKeep", (accounts) => {
       })
     })
 
+    it("sets block number for digest", async () => {
+      await submitMembersPublicKeys(publicKey)
+
+      const signTx = await keep.sign(digest, {from: owner})
+
+      const blockNumber = await keep.digests.call(digest)
+
+      expect(blockNumber, "incorrect block number").to.eq.BN(
+        signTx.receipt.blockNumber
+      )
+    })
+
     it("cannot be requested if keep is closed", async () => {
       await createMembersBonds(keep)
 
