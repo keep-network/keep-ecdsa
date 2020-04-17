@@ -1114,7 +1114,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
             value: feeEstimate,
           }
         ),
-        "Minimum signing group size must be greater than 0"
+        "Minimum signing group size is 1"
       )
     })
 
