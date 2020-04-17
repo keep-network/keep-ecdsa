@@ -30,8 +30,8 @@ type Chain interface {
 type localChain struct {
 	handlerMutex sync.Mutex
 
-	keepIndexes []common.Address
-	keeps       map[common.Address]*localKeep
+	keepAddresses []common.Address
+	keeps         map[common.Address]*localKeep
 
 	keepCreatedHandlers map[int]func(event *eth.BondedECDSAKeepCreatedEvent)
 
@@ -58,7 +58,7 @@ func (lc *localChain) OpenKeep(keepAddress common.Address, members []common.Addr
 	lc.keeps[keepAddress] = &localKeep{
 		members: members,
 	}
-	lc.keepIndexes = append(lc.keepIndexes, keepAddress)
+	lc.keepAddresses = append(lc.keepAddresses, keepAddress)
 }
 
 func (lc *localChain) CloseKeep(keepAddress common.Address) error {
@@ -243,11 +243,11 @@ func (lc *localChain) GetKeepAtIndex(
 
 	index := int(keepIndex.Uint64())
 
-	if index > len(lc.keepIndexes) {
+	if index > len(lc.keepAddresses) {
 		return common.HexToAddress("0x0"), fmt.Errorf("out of bounds")
 	}
 
-	return lc.keepIndexes[index], nil
+	return lc.keepAddresses[index], nil
 }
 
 func (lc *localChain) OnKeepClosed(
