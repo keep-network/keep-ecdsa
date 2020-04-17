@@ -17,7 +17,7 @@ import (
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
-var logger = log.Logger("keep-ecdsa-firewall")
+var logger = log.Logger("keep-firewall")
 
 // KeepCacheLifetime is the time the cache maintains the list of active keep
 // members. We use the cache to minimize calls to Ethereum client.
