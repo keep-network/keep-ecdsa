@@ -24,6 +24,7 @@ import (
 var logger = log.Logger("keep-ecdsa")
 
 const monitorKeepPublicKeySubmissionTimeout = 30 * time.Minute
+const retryDelay = time.Second
 
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
@@ -154,7 +155,7 @@ func (n *Node) GenerateSignerForKeep(
 		)
 		if err != nil {
 			logger.Warningf("failed to announce signer presence: [%v]", err)
-			time.Sleep(time.Second)
+			time.Sleep(retryDelay)
 			continue
 		}
 
@@ -173,7 +174,7 @@ func (n *Node) GenerateSignerForKeep(
 		)
 		if err != nil {
 			logger.Errorf("failed to generate threshold signer: [%v]", err)
-			time.Sleep(time.Second)
+			time.Sleep(retryDelay)
 			continue
 		}
 
@@ -257,7 +258,7 @@ func (n *Node) CalculateSignature(
 				keepAddress.String(),
 				err,
 			)
-			time.Sleep(time.Second)
+			time.Sleep(retryDelay)
 			continue
 		}
 
