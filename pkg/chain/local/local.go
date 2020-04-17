@@ -145,6 +145,11 @@ func (lc *localChain) IsAwaitingSignature(
 	panic("implement")
 }
 
+// HasSigningTimedOut checks if signing has timed out for keep.
+func (lc *localChain) HasSigningTimedOut(keepAddress common.Address) (bool, error) {
+	panic("implement")
+}
+
 // IsActive checks for current state of a keep on-chain.
 func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
 	panic("implement")
