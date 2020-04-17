@@ -926,6 +926,25 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
+    it("reverts when honest threshold is 0", async () => {
+      const honestThreshold = 0
+
+      await expectRevert(
+        keepFactory.openKeep(
+          groupSize,
+          honestThreshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            from: application,
+            value: feeEstimate,
+          }
+        ),
+        "Honest threshold must be greater than 0"
+      )
+    })
+
     it("works when honest threshold is equal to the group size", async () => {
       const honestThreshold = 3
       const groupSize = honestThreshold
@@ -1077,6 +1096,25 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
           }
         ),
         "Maximum signing group size is 16"
+      )
+    })
+
+    it("reverts when trying to use a group of 0 signers", async () => {
+      const groupSize = 0
+
+      await expectRevert(
+        keepFactory.openKeep(
+          groupSize,
+          threshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            from: application,
+            value: feeEstimate,
+          }
+        ),
+        "Minimum signing group size must be greater than 0"
       )
     })
 
