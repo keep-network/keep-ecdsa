@@ -1374,17 +1374,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await initializeMemberCandidates()
     })
 
-    it("returns true if operator authorized the factory", async () => {
+    it("returns true if operator is authorized for the factory", async () => {
       assert.isTrue(
         await keepFactory.isOperatorAuthorized(members[0]),
-        "the operator has authorized the factory"
+        "the operator is authorized for the factory"
       )
     })
 
-    it("returns false if operator has not authorized the factory", async () => {
+    it("returns false if operator is not authorized for the factory", async () => {
       assert.isFalse(
         await keepFactory.isOperatorAuthorized(notMember),
-        "the operator has not authorized the factory"
+        "the operator is not authorized for the factory"
       )
     })
   })
