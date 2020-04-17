@@ -9,8 +9,15 @@ import (
 // timeCache provides a time cache safe for concurrent use by
 // multiple goroutines without additional locking or coordination.
 type timeCache struct {
-	indexer  *list.List
-	cache    map[string]time.Time
+	// all items in the cache in the order they were added
+	// most recent items are on the front of the indexer;
+	// it is used to optimize cache sweeping
+	indexer *list.List
+	// item in the cache with the timestamp it's been added
+	// to the cache the last time
+	cache map[string]time.Time
+	// the timespan after which entry in the cache is considered
+	// as outdated and can be removed from the cache
 	timespan time.Duration
 	mutex    sync.RWMutex
 }
