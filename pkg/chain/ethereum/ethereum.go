@@ -365,8 +365,8 @@ func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) 
 	return nil
 }
 
-func (ec *EthereumChain) HasAuthorization(operator common.Address) (bool, error) {
-	return ec.bondedECDSAKeepFactoryContract.HasAuthorization(operator)
+func (ec *EthereumChain) IsOperatorAuthorized(operator common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorAuthorized(operator)
 }
 
 func (ec *EthereumChain) GetKeepCount() (*big.Int, error) {

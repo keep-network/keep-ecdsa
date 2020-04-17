@@ -53,9 +53,9 @@ type BondedECDSAKeepFactory interface {
 	// pool for the given application.
 	UpdateStatusForApplication(application common.Address) error
 
-	// HasAuthorization checks if the factory has the authorization to
+	// IsOperatorAuthorized checks if the factory has the authorization to
 	// operate on stake represented by the provided operator.
-	HasAuthorization(operator common.Address) (bool, error)
+	IsOperatorAuthorized(operator common.Address) (bool, error)
 
 	// GetKeepCount returns number of keeps.
 	GetKeepCount() (*big.Int, error)

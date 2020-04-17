@@ -221,7 +221,7 @@ func (lc *localChain) UpdateStatusForApplication(application common.Address) err
 	panic("implement")
 }
 
-func (lc *localChain) HasAuthorization(operator common.Address) (bool, error) {
+func (lc *localChain) IsOperatorAuthorized(operator common.Address) (bool, error) {
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
 

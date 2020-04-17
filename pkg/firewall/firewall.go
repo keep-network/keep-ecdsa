@@ -65,7 +65,7 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 	// If peer has no authorization on the factory it means it has never
 	// participated in any group selection so there is no chance it can be
 	// a member of any keep.
-	hasAuthorization, err := soakp.chain.HasAuthorization(
+	isAuthorized, err := soakp.chain.IsOperatorAuthorized(
 		common.HexToAddress(remotePeerAddress),
 	)
 	if err != nil {
@@ -76,7 +76,7 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 		)
 	}
 
-	if !hasAuthorization {
+	if !isAuthorized {
 		return errNoAuthorization
 	}
 

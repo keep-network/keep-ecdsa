@@ -450,7 +450,11 @@ contract BondedECDSAKeepFactory is
     /// @param _operator operator's address
     /// @return True if the factory has access to the staked token balance of
     /// the provided operator and can slash that stake. False otherwise.
-    function hasAuthorization(address _operator) public view returns (bool) {
+    function isOperatorAuthorized(address _operator)
+        public
+        view
+        returns (bool)
+    {
         return tokenStaking.isAuthorizedForOperator(_operator, address(this));
     }
 
