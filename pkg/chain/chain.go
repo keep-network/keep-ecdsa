@@ -3,11 +3,12 @@
 package eth
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
-	"math/big"
 )
 
 // Handle represents a handle to an ethereum blockchain.
@@ -119,6 +120,10 @@ type BondedECDSAKeep interface {
 
 	// LatestDigest returns the latest digest requested to be signed.
 	LatestDigest(keepAddress common.Address) ([32]byte, error)
+
+	// SignatureRequestedBlock returns block number from the moment when a signature
+	// was requested for the given digest from a keep.
+	SignatureRequestedBlock(keepAddress common.Address, digest [32]byte) (uint64, error)
 
 	// GetPublicKey returns keep's public key. If there is no public key yet,
 	// an empty slice is returned.

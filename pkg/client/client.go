@@ -532,15 +532,15 @@ func checkAwaitingSignature(
 		}
 		defer requestedSignatures.remove(keepAddress, latestDigest)
 
-		currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
+		startBlock, err := ethereumChain.SignatureRequestedBlock(keepAddress, latestDigest)
 		if err != nil {
-			logger.Errorf("failed to get current block height: [%v]", err)
+			logger.Errorf("failed to get signature request block height: [%v]", err)
 			return
 		}
 
 		isStillAwaitingSignature, err := waitForChainConfirmation(
 			ethereumChain,
-			currentBlock,
+			startBlock,
 			func() (bool, error) {
 				return ethereumChain.IsAwaitingSignature(keepAddress, latestDigest)
 			},
