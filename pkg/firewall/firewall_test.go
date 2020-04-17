@@ -273,6 +273,66 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 	}
 }
 
+// Has no minimum stake.
+// Has authorization.
+// There are multiple keeps.
+// Is not a member of an active keep.
+// Should NOT allow to connect but should cache all active keep members in-memory.
+func TestCachesActiveKeepMembers(t *testing.T) {
+	chain := local.Connect()
+	coreFirewall := newMockCoreFirewall()
+	cache := newTimeCache(cacheLifeTime)
+	policy := &stakeOrActiveKeepPolicy{
+		chain:                  chain,
+		minimumStakePolicy:     coreFirewall,
+		activeKeepMembersCache: cache,
+	}
+
+	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chain.AuthorizeOperator(common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+	))
+
+	activeKeepMembers := []common.Address{
+		common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256"),
+		common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
+	}
+	closedKeepMembers := []common.Address{
+		common.HexToAddress("0x1AD7E510d9AAA24588cB23De4F14fE57D42A5385"),
+		common.HexToAddress("0x18e67aF1a54BF713Bc04EF811a7779b5AC0ef0eC"),
+	}
+
+	chain.OpenKeep(
+		common.HexToAddress("0xCFEF2DC492E44a2747B2712f92d82527964B4b8F"),
+		activeKeepMembers,
+	)
+
+	closedKeepAddress := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
+	chain.OpenKeep(closedKeepAddress, closedKeepMembers)
+	if err := chain.CloseKeep(closedKeepAddress); err != nil {
+		t.Fatal(err)
+	}
+
+	policy.Validate(key.NetworkKeyToECDSAKey(remotePeerPublicKey))
+
+	if !cache.has(activeKeepMembers[0].String()) {
+		t.Errorf("should cache active keep members")
+	}
+	if !cache.has(activeKeepMembers[1].String()) {
+		t.Errorf("should cache active keep members")
+	}
+	if cache.has(closedKeepMembers[0].String()) {
+		t.Errorf("should not cache non-active keep members")
+	}
+	if cache.has(closedKeepMembers[1].String()) {
+		t.Errorf("should not cache non-active keep members")
+	}
+}
+
 func newMockCoreFirewall() *mockCoreFirewall {
 	return &mockCoreFirewall{
 		meetsCriteria: make(map[uint64]bool),
