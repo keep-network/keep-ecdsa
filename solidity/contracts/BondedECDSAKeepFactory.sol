@@ -43,7 +43,8 @@ contract BondedECDSAKeepFactory is
         address keepAddress,
         address[] members,
         address owner,
-        address application
+        address application,
+        uint256 honestThreshold
     );
 
     // Holds the address of the bonded ECDSA keep contract that will be used as a
@@ -311,7 +312,13 @@ contract BondedECDSAKeepFactory is
 
         keeps.push(address(keep));
 
-        emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
+        emit BondedECDSAKeepCreated(
+            keepAddress,
+            members,
+            _owner,
+            application,
+            _honestThreshold
+        );
     }
 
     /// @notice Gets how many keeps have been opened by this contract.
