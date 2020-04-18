@@ -38,7 +38,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     address[] internal members;
 
     // Minimum number of honest keep members required to produce a signature.
-    uint256 honestThreshold;
+    uint256 public honestThreshold;
 
     // Stake that was required from each keep member on keep creation.
     // The value is used for keep members slashing.
