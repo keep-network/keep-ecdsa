@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -111,7 +111,7 @@ func Initialize(
 					keepsRegistry.UnregisterKeep(keepAddress)
 					return
 				}
-				logger.Warningf("keep [%s] is still active", keepAddress.String())
+				logger.Warnf("keep [%s] is still active", keepAddress.String())
 			}
 
 			signers, err := keepsRegistry.GetSigners(keepAddress)
@@ -219,7 +219,7 @@ func checkAwaitingKeyGeneration(
 ) {
 	keepCount, err := ethereumChain.GetKeepCount()
 	if err != nil {
-		logger.Warningf("could not get keep count: [%v]", err)
+		logger.Warnf("could not get keep count: [%v]", err)
 		return
 	}
 
@@ -237,7 +237,7 @@ func checkAwaitingKeyGeneration(
 
 		keep, err := ethereumChain.GetKeepAtIndex(keepIndex)
 		if err != nil {
-			logger.Warningf(
+			logger.Warnf(
 				"could not get keep at index [%v]: [%v]",
 				keepIndex,
 				err,
@@ -247,7 +247,7 @@ func checkAwaitingKeyGeneration(
 
 		keygenTimeout, err := ethereumChain.HasKeyGenerationTimedOut(keep)
 		if err != nil {
-			logger.Warningf(
+			logger.Warnf(
 				"could not check key generation timeout for keep [%s]: [%v]",
 				keep.String(),
 				err,
@@ -272,7 +272,7 @@ func checkAwaitingKeyGeneration(
 			keep,
 		)
 		if err != nil {
-			logger.Warningf(
+			logger.Warnf(
 				"could not check awaiting key generation for keep [%s]: [%v]",
 				keep.String(),
 				err,
@@ -505,7 +505,7 @@ func monitorSigningRequests(
 				}
 
 				if !isAwaitingSignature {
-					logger.Warningf(
+					logger.Warnf(
 						"keep [%s] is not awaiting a signature for digest [%+x]",
 						keepAddress.String(),
 						event.Digest,
@@ -601,7 +601,7 @@ func checkAwaitingSignature(
 		}
 
 		if !isStillAwaitingSignature {
-			logger.Warningf(
+			logger.Warnf(
 				"keep [%s] is not awaiting a signature for digest [%+x]",
 				keepAddress.String(),
 				latestDigest,
@@ -672,7 +672,7 @@ func monitorKeepClosedEvents(
 			}
 
 			if isKeepActive {
-				logger.Warningf("keep [%s] has not been closed", keepAddress.String())
+				logger.Warnf("keep [%s] has not been closed", keepAddress.String())
 				return
 			}
 
@@ -712,7 +712,7 @@ func monitorKeepTerminatedEvent(
 	subscriptionOnKeepTerminated, err := ethereumChain.OnKeepTerminated(
 		keepAddress,
 		func(event *eth.KeepTerminatedEvent) {
-			logger.Warningf(
+			logger.Warnf(
 				"keep [%s] terminated event received at block [%d]",
 				keepAddress.String(),
 				event.BlockNumber,
@@ -735,7 +735,7 @@ func monitorKeepTerminatedEvent(
 			}
 
 			if isKeepActive {
-				logger.Warningf("keep [%s] has not been terminated", keepAddress.String())
+				logger.Warnf("keep [%s] has not been terminated", keepAddress.String())
 				return
 			}
 

@@ -130,7 +130,7 @@ func registerAsMemberCandidateWhenEligible(
 			if !isEligible {
 				// if the operator is not yet eligible wait for the next
 				// block and execute the check again
-				logger.Warningf(
+				logger.Warnf(
 					"operator is not eligible for application [%s]",
 					application.String(),
 				)

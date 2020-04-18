@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
@@ -94,7 +94,7 @@ func createAddressFilter(
 		_, isAuthorized := authorizations[authorAddress]
 
 		if !isAuthorized {
-			logger.Warningf(
+			logger.Warnf(
 				"rejecting message from [%v]; author is not authorized",
 				authorAddress,
 			)
@@ -154,7 +154,7 @@ func (n *Node) GenerateSignerForKeep(
 			members,
 		)
 		if err != nil {
-			logger.Warningf("failed to announce signer presence: [%v]", err)
+			logger.Warnf("failed to announce signer presence: [%v]", err)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
@@ -456,14 +456,14 @@ func (n *Node) monitorKeepPublicKeySubmission(
 			event.ConflictingPublicKey,
 		)
 	case <-monitoringCtx.Done():
-		logger.Warningf(
+		logger.Warnf(
 			"monitoring of public key submission for keep [%s] "+
 				"has been cancelled: [%v]",
 			keepAddress.String(),
 			monitoringCtx.Err(),
 		)
 	case <-abort:
-		logger.Warningf(
+		logger.Warnf(
 			"monitoring of public key submission for keep [%s] "+
 				"has been aborted",
 			keepAddress.String(),

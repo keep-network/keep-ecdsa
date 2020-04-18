@@ -145,7 +145,7 @@ func (b *networkBridge) getUnicastChannel(
 			return unicastChannel, nil
 		}
 
-		logger.Warningf(
+		logger.Warnf(
 			"failed to get unicast channel with peer [%v] "+
 				"because of: [%v]; will retry after wait time",
 			peerTransportID.String(),
@@ -210,7 +210,7 @@ func createMemberIDFilter(
 		_, isAuthorized := authorizations[author.String()]
 
 		if !isAuthorized {
-			logger.Warningf(
+			logger.Warnf(
 				"rejecting message from [%v]; author is not authorized",
 				author,
 			)
