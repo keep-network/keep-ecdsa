@@ -52,11 +52,13 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 			Members []common.Address,
 			Owner common.Address,
 			Application common.Address,
+			HonestThreshold *big.Int,
 			blockNumber uint64,
 		) {
 			handler(&eth.BondedECDSAKeepCreatedEvent{
-				KeepAddress: KeepAddress,
-				Members:     Members,
+				KeepAddress:     KeepAddress,
+				Members:         Members,
+				HonestThreshold: HonestThreshold,
 			})
 		},
 		func(err error) error {

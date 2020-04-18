@@ -1,13 +1,16 @@
 package eth
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
 // BondedECDSAKeepCreatedEvent is an event emitted on a new keep creation.
 type BondedECDSAKeepCreatedEvent struct {
-	KeepAddress common.Address   // keep contract address
-	Members     []common.Address // keep members addresses
+	KeepAddress     common.Address   // keep contract address
+	Members         []common.Address // keep members addresses
+	HonestThreshold *big.Int
 }
 
 // ConflictingPublicKeySubmittedEvent is an event emitted each time when one of
