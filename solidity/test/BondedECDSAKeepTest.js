@@ -1189,8 +1189,6 @@ contract("BondedECDSAKeep", (accounts) => {
         "Caller is not the keep member"
       )
     })
-
-    it("does not fail if slashing failed", async () => {})
   })
 
   describe("closeKeep", () => {
