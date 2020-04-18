@@ -24,7 +24,7 @@ import (
 var logger = log.Logger("keep-ecdsa")
 
 const monitorKeepPublicKeySubmissionTimeout = 30 * time.Minute
-const retryDelay = time.Second
+const retryDelay = 1 * time.Second
 
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
