@@ -64,6 +64,9 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 		func(err error) error {
 			return fmt.Errorf("watch keep created failed: [%v]", err)
 		},
+		nil,
+		nil,
+		nil,
 	)
 }
 
@@ -157,6 +160,7 @@ func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 		func(err error) error {
 			return fmt.Errorf("keep created callback failed: [%v]", err)
 		},
+		nil,
 	)
 }
 
@@ -184,6 +188,7 @@ func (ec *EthereumChain) OnSignatureRequested(
 		func(err error) error {
 			return fmt.Errorf("keep signature requested callback failed: [%v]", err)
 		},
+		nil,
 	)
 }
 
