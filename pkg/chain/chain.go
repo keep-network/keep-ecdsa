@@ -139,7 +139,7 @@ type BondedECDSAKeep interface {
 	GetMembers(keepAddress common.Address) ([]common.Address, error)
 
 	// GetHonestThreshold returns keep's honest threshold.
-	GetHonestThreshold(keepAddress common.Address) (*big.Int, error)
+	GetHonestThreshold(keepAddress common.Address) (uint64, error)
 
 	// HasKeyGenerationTimedOut returns whether key generation
 	// has timed out for the given keep.

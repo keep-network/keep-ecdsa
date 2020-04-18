@@ -1,8 +1,6 @@
 package eth
 
 import (
-	"math/big"
-
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -10,7 +8,7 @@ import (
 type BondedECDSAKeepCreatedEvent struct {
 	KeepAddress     common.Address   // keep contract address
 	Members         []common.Address // keep members addresses
-	HonestThreshold *big.Int
+	HonestThreshold uint64
 }
 
 // ConflictingPublicKeySubmittedEvent is an event emitted each time when one of

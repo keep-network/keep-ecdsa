@@ -236,7 +236,7 @@ func (lc *localChain) GetMembers(
 
 func (lc *localChain) GetHonestThreshold(
 	keepAddress common.Address,
-) (*big.Int, error) {
+) (uint64, error) {
 	panic("implement")
 }
 

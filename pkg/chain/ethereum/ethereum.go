@@ -58,7 +58,7 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 			handler(&eth.BondedECDSAKeepCreatedEvent{
 				KeepAddress:     KeepAddress,
 				Members:         Members,
-				HonestThreshold: HonestThreshold,
+				HonestThreshold: HonestThreshold.Uint64(),
 			})
 		},
 		func(err error) error {
@@ -459,13 +459,18 @@ func (ec *EthereumChain) GetMembers(
 // GetHonestThreshold returns keep's honest threshold.
 func (ec *EthereumChain) GetHonestThreshold(
 	keepAddress common.Address,
-) (*big.Int, error) {
+) (uint64, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return keepContract.HonestThreshold()
+	threshold, err := keepContract.HonestThreshold()
+	if err != nil {
+		return 0, err
+	}
+
+	return threshold.Uint64(), nil
 }
 
 // HasKeyGenerationTimedOut returns whether key generation

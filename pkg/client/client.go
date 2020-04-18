@@ -339,7 +339,7 @@ func generateKeyForKeep(
 	requestedSignatures *requestedSignaturesTrack,
 	keepAddress common.Address,
 	members []common.Address,
-	honestThreshold *big.Int,
+	honestThreshold uint64,
 ) {
 	if len(members) < 2 {
 		// TODO: #408 Implement single signer support.
@@ -351,7 +351,7 @@ func generateKeyForKeep(
 		return
 	}
 
-	if honestThreshold.Cmp(big.NewInt(int64(len(members)))) != 0 {
+	if honestThreshold != uint64(len(members)) {
 		// TODO: #325 Implement threshold support.
 		logger.Errorf(
 			"keep [%s] has honest threshold [%s] and [%d] members; "+
