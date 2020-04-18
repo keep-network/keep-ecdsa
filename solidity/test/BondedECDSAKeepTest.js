@@ -331,6 +331,61 @@ contract("BondedECDSAKeep", (accounts) => {
     })
   })
 
+  describe("hasSigningTimedOut", async () => {
+    const digest1 =
+      "0x54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b"
+    const publicKey =
+      "0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051"
+    const signatureR =
+      "0x9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2"
+    const signatureS =
+      "0x6f7c776efde1e382f2ecc99ec0db13534a70ee86bd91d7b3a4059bccbed5d70c"
+    const signatureRecoveryID = 1
+
+    const digest2 =
+      "0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da"
+
+    let signingTimeout
+
+    beforeEach(async () => {
+      signingTimeout = await keep.signingTimeout.call()
+
+      await submitMembersPublicKeys(publicKey)
+    })
+
+    it("returns false if signing was not requested", async () => {
+      assert.isFalse(await keep.hasSigningTimedOut())
+    })
+
+    it("returns false if signing was requested and have not timed out yet", async () => {
+      await keep.sign(digest1, {from: owner})
+
+      await increaseTime(duration.seconds(signingTimeout - 1))
+
+      assert.isFalse(await keep.hasSigningTimedOut())
+    })
+
+    it("returns true if signing was requested and have timed out", async () => {
+      await keep.sign(digest2, {from: owner})
+
+      await increaseTime(duration.seconds(signingTimeout))
+
+      assert.isTrue(await keep.hasSigningTimedOut())
+    })
+
+    it("returns false if signing was requested and signature have been submitted", async () => {
+      await keep.sign(digest1, {from: owner})
+
+      await keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
+        from: members[0],
+      })
+
+      await increaseTime(duration.seconds(signingTimeout))
+
+      assert.isFalse(await keep.hasSigningTimedOut())
+    })
+  })
+
   describe("public key", () => {
     const publicKey0 =
       "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -812,6 +867,31 @@ contract("BondedECDSAKeep", (accounts) => {
       await submitMembersPublicKeys(publicKey1)
 
       await keep.sign(hash256Digest1, {from: owner})
+
+      assert.isFalse(
+        await keep.checkSignatureFraud.call(
+          signature1.V,
+          signature1.R,
+          signature1.S,
+          hash256Digest1,
+          preimage1
+        ),
+        "signature is not fraudulent"
+      )
+    })
+
+    it("should return false when signature is valid, was requested and was submitted", async () => {
+      await submitMembersPublicKeys(publicKey1)
+
+      await keep.sign(hash256Digest1, {from: owner})
+      await keep.submitSignature(
+        signature1.R,
+        signature1.S,
+        signature1.V - 27,
+        {
+          from: members[0],
+        }
+      )
 
       assert.isFalse(
         await keep.checkSignatureFraud.call(
