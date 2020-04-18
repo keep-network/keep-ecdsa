@@ -198,6 +198,7 @@ func Initialize(
 					requestedSignatures,
 					event.KeepAddress,
 					event.Members,
+					event.HonestThreshold,
 				)
 			}(event)
 		}
@@ -303,6 +304,11 @@ func checkAwaitingKeyGenerationForKeep(
 		return err
 	}
 
+	honestThreshold, err := ethereumChain.GetHonestThreshold(keep)
+	if err != nil {
+		return err
+	}
+
 	for _, member := range members {
 		if ethereumChain.Address() == member {
 			go generateKeyForKeep(
@@ -314,6 +320,7 @@ func checkAwaitingKeyGenerationForKeep(
 				requestedSignatures,
 				keep,
 				members,
+				honestThreshold,
 			)
 
 			break
@@ -332,12 +339,25 @@ func generateKeyForKeep(
 	requestedSignatures *requestedSignaturesTrack,
 	keepAddress common.Address,
 	members []common.Address,
+	honestThreshold *big.Int,
 ) {
 	if len(members) < 2 {
 		// TODO: #408 Implement single signer support.
 		logger.Errorf(
 			"keep [%s] has [%d] members; only keeps with at least 2 members are supported",
 			keepAddress.String(),
+			len(members),
+		)
+		return
+	}
+
+	if honestThreshold.Cmp(big.NewInt(int64(len(members)))) != 0 {
+		// TODO: #325 Implement threshold support.
+		logger.Errorf(
+			"keep [%s] has honest threshold [%s] and [%d] members; "+
+				"only keeps with honest threshold same as group size are supported",
+			keepAddress.String(),
+			honestThreshold,
 			len(members),
 		)
 		return
