@@ -333,6 +333,16 @@ func generateKeyForKeep(
 	keepAddress common.Address,
 	members []common.Address,
 ) {
+	if len(members) < 2 {
+		// TODO: #408 Implement single signer support.
+		logger.Errorf(
+			"keep [%s] has [%d] members; only keeps with at least 2 members are supported",
+			keepAddress.String(),
+			len(members),
+		)
+		return
+	}
+
 	logger.Infof(
 		"member [%s] is starting signer generation for keep [%s]...",
 		ethereumChain.Address().String(),
