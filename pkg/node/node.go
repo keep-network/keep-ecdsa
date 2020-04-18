@@ -155,7 +155,7 @@ func (n *Node) GenerateSignerForKeep(
 		)
 		if err != nil {
 			logger.Warningf("failed to announce signer presence: [%v]", err)
-			time.Sleep(retryDelay)
+			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
 
@@ -174,7 +174,7 @@ func (n *Node) GenerateSignerForKeep(
 		)
 		if err != nil {
 			logger.Errorf("failed to generate threshold signer: [%v]", err)
-			time.Sleep(retryDelay)
+			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
 
@@ -258,7 +258,7 @@ func (n *Node) CalculateSignature(
 				keepAddress.String(),
 				err,
 			)
-			time.Sleep(retryDelay)
+			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
 
@@ -312,7 +312,7 @@ func (n *Node) publishSignature(
 				keepAddress.String(),
 				err,
 			)
-			time.Sleep(retryDelay)
+			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
 		if hasSigningTimedOut {
@@ -333,7 +333,7 @@ func (n *Node) publishSignature(
 				keepAddress.String(),
 				err,
 			)
-			time.Sleep(retryDelay)
+			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
 
@@ -362,7 +362,7 @@ func (n *Node) publishSignature(
 					keepAddress.String(),
 					err,
 				)
-				time.Sleep(retryDelay)
+				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 				continue
 			}
 
