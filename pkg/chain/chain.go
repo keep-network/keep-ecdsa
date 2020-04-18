@@ -138,6 +138,9 @@ type BondedECDSAKeep interface {
 	// GetPublicKey returns keep's members.
 	GetMembers(keepAddress common.Address) ([]common.Address, error)
 
+	// GetHonestThreshold returns keep's honest threshold.
+	GetHonestThreshold(keepAddress common.Address) (*big.Int, error)
+
 	// HasKeyGenerationTimedOut returns whether key generation
 	// has timed out for the given keep.
 	HasKeyGenerationTimedOut(keepAddress common.Address) (bool, error)

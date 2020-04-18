@@ -433,6 +433,17 @@ func (ec *EthereumChain) GetMembers(
 	return keepContract.GetMembers()
 }
 
+func (ec *EthereumChain) GetHonestThreshold(
+	keepAddress common.Address,
+) (*big.Int, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return keepContract.HonestThreshold()
+}
+
 func (ec *EthereumChain) HasKeyGenerationTimedOut(
 	keepAddress common.Address,
 ) (bool, error) {
