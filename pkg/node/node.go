@@ -312,6 +312,7 @@ func (n *Node) publishSignature(
 				keepAddress.String(),
 				err,
 			)
+			time.Sleep(retryDelay)
 			continue
 		}
 		if hasSigningTimedOut {
@@ -332,6 +333,7 @@ func (n *Node) publishSignature(
 				keepAddress.String(),
 				err,
 			)
+			time.Sleep(retryDelay)
 			continue
 		}
 
@@ -360,6 +362,7 @@ func (n *Node) publishSignature(
 					keepAddress.String(),
 					err,
 				)
+				time.Sleep(retryDelay)
 				continue
 			}
 
