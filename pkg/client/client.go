@@ -542,7 +542,17 @@ func checkAwaitingSignature(
 			ethereumChain,
 			currentBlock,
 			func() (bool, error) {
-				return ethereumChain.IsAwaitingSignature(keepAddress, latestDigest)
+				isAwaitingSignature, err := ethereumChain.IsAwaitingSignature(keepAddress, latestDigest)
+				if err != nil {
+					return false, err
+				}
+
+				hasSigningTimedOut, err := ethereumChain.HasSigningTimedOut(keepAddress)
+				if err != nil {
+					return false, err
+				}
+
+				return (isAwaitingSignature && !hasSigningTimedOut), nil
 			},
 		)
 		if err != nil {

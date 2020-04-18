@@ -3,11 +3,12 @@
 package eth
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
-	"math/big"
 )
 
 // Handle represents a handle to an ethereum blockchain.
@@ -112,6 +113,11 @@ type BondedECDSAKeep interface {
 	// IsAwaitingSignature checks if the keep is waiting for a signature to be
 	// calculated for the given digest.
 	IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error)
+
+	// HasSigningTimedOut checks if the ongoing signing process timed out for
+	// the keep. If there is no ongoing signing for the keep or if the ongoing
+	// signing process has not timed out yet, this function returns false.
+	HasSigningTimedOut(keepAddress common.Address) (bool, error)
 
 	// IsActive checks if the keep with the given address is active and responds
 	// to signing request. This function returns false only for closed keeps.
