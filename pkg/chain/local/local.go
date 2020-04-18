@@ -217,6 +217,13 @@ func (lc *localChain) LatestDigest(keepAddress common.Address) ([32]byte, error)
 	panic("implement")
 }
 
+func (lc *localChain) SignatureRequestedBlock(
+	keepAddress common.Address,
+	digest [32]byte,
+) (uint64, error) {
+	panic("implement")
+}
+
 func (lc *localChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
 	panic("implement")
 }

@@ -126,6 +126,11 @@ type BondedECDSAKeep interface {
 	// LatestDigest returns the latest digest requested to be signed.
 	LatestDigest(keepAddress common.Address) ([32]byte, error)
 
+	// SignatureRequestedBlock returns block number from the moment when a
+	// signature was requested for the given digest from a keep.
+	// If a signature was not requested for the given digest, returns 0.
+	SignatureRequestedBlock(keepAddress common.Address, digest [32]byte) (uint64, error)
+
 	// GetPublicKey returns keep's public key. If there is no public key yet,
 	// an empty slice is returned.
 	GetPublicKey(keepAddress common.Address) ([]uint8, error)
