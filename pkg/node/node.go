@@ -295,7 +295,23 @@ func (n *Node) publishSignature(
 		// Global timeout for generating a signature exceeded.
 		// We are giving up and leaving this function.
 		if ctx.Err() != nil {
-			return fmt.Errorf("signing timeout exceeded")
+			return fmt.Errorf("context timeout exceeded")
+		}
+
+		// Timeout for generating a signature defined in the contract exceeded.
+		// There is no point in submitting the request as it will be rejected
+		// by the chain. We are giving up and leaving this function.
+		hasSigningTimedOut, err := n.ethereumChain.HasSigningTimedOut(keepAddress)
+		if err != nil {
+			logger.Errorf(
+				"failed to verify if signing has timed out for keep [%s]: [%v]",
+				keepAddress.String(),
+				err,
+			)
+			continue
+		}
+		if hasSigningTimedOut {
+			return fmt.Errorf("on-chain timeout exceeded")
 		}
 
 		// Check if keep still awaits a signature for this digest.

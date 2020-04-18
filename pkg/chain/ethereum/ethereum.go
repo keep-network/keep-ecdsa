@@ -301,6 +301,16 @@ func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest 
 	return keepContract.IsAwaitingSignature(digest)
 }
 
+// HasSigningTimedOut checks if signing has timed out for keep.
+func (ec *EthereumChain) HasSigningTimedOut(keepAddress common.Address) (bool, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	return keepContract.HasSigningTimedOut()
+}
+
 // IsActive checks for current state of a keep on-chain.
 func (ec *EthereumChain) IsActive(keepAddress common.Address) (bool, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
@@ -386,6 +396,23 @@ func (ec *EthereumChain) LatestDigest(keepAddress common.Address) ([32]byte, err
 	}
 
 	return keepContract.Digest()
+}
+
+func (ec *EthereumChain) SignatureRequestedBlock(
+	keepAddress common.Address,
+	digest [32]byte,
+) (uint64, error) {
+	keepContract, err := ec.getKeepContract(keepAddress)
+	if err != nil {
+		return 0, err
+	}
+
+	blockNumber, err := keepContract.Digests(digest)
+	if err != nil {
+		return 0, err
+	}
+
+	return blockNumber.Uint64(), nil
 }
 
 func (ec *EthereumChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {

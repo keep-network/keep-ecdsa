@@ -118,12 +118,22 @@ type BondedECDSAKeep interface {
 	// calculated for the given digest.
 	IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error)
 
+	// HasSigningTimedOut checks if the ongoing signing process timed out for
+	// the keep. If there is no ongoing signing for the keep or if the ongoing
+	// signing process has not timed out yet, this function returns false.
+	HasSigningTimedOut(keepAddress common.Address) (bool, error)
+
 	// IsActive checks if the keep with the given address is active and responds
 	// to signing request. This function returns false only for closed keeps.
 	IsActive(keepAddress common.Address) (bool, error)
 
 	// LatestDigest returns the latest digest requested to be signed.
 	LatestDigest(keepAddress common.Address) ([32]byte, error)
+
+	// SignatureRequestedBlock returns block number from the moment when a
+	// signature was requested for the given digest from a keep.
+	// If a signature was not requested for the given digest, returns 0.
+	SignatureRequestedBlock(keepAddress common.Address, digest [32]byte) (uint64, error)
 
 	// GetPublicKey returns keep's public key. If there is no public key yet,
 	// an empty slice is returned.

@@ -239,7 +239,12 @@ contract BondedECDSAKeepFactory is
         uint256 _bond,
         uint256 _stakeLockDuration
     ) external payable returns (address keepAddress) {
+        require(_groupSize > 0, "Minimum signing group size is 1");
         require(_groupSize <= 16, "Maximum signing group size is 16");
+        require(
+            _honestThreshold > 0,
+            "Honest threshold must be greater than 0"
+        );
         require(
             _honestThreshold <= _groupSize,
             "Honest threshold must be less or equal the group size"

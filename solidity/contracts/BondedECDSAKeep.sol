@@ -51,8 +51,10 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Latest digest requested to be signed. Used to validate submitted signature.
     bytes32 public digest;
 
-    // Map of all digests requested to be signed. Used to validate submitted signature.
-    mapping(bytes32 => bool) digests;
+    // Map of all digests requested to be signed. Used to validate submitted
+    // signature. Holds the block number at which the signature over the given
+    // digest was requested
+    mapping(bytes32 => uint256) public digests;
 
     // Timeout for the keep public key to appear on the chain. Time is counted
     // from the moment keep has been created.
@@ -210,7 +212,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         /* solium-disable-next-line */
         signingStartTimestamp = block.timestamp;
 
-        digests[_digest] = true;
+        digests[_digest] = block.number;
         digest = _digest;
 
         emit SignatureRequested(_digest);
@@ -571,7 +573,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             ecrecover(_signedDigest, _v, _r, _s);
 
         // Check if the signature is valid but was not requested.
-        return isSignatureValid && !digests[_signedDigest];
+        return isSignatureValid && digests[_signedDigest] == 0;
     }
 
     /// @notice Returns true if the ongoing key generation process timed out.
@@ -582,6 +584,16 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return
             block.timestamp >
             keyGenerationStartTimestamp + keyGenerationTimeout;
+    }
+
+    /// @notice Returns true if the ongoing signing process timed out.
+    /// @dev There is a certain timeout for a signature to be produced, see
+    /// `signingTimeout`.
+    function hasSigningTimedOut() public view returns (bool) {
+        return
+            signingStartTimestamp != 0 &&
+            /* solium-disable-next-line */
+            block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
     /// @notice Checks if the member already submitted a public key.
@@ -604,16 +616,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @notice Returns true if signing of a digest is currently in progress.
     function isSigningInProgress() internal view returns (bool) {
         return signingStartTimestamp != 0;
-    }
-
-    /// @notice Returns true if the ongoing signing process timed out.
-    /// @dev There is a certain timeout for a signature to be produced, see
-    /// `signingTimeout`.
-    function hasSigningTimedOut() internal view returns (bool) {
-        return
-            signingStartTimestamp != 0 &&
-            /* solium-disable-next-line */
-            block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
     /// @notice Marks the keep as closed.
