@@ -36,14 +36,17 @@ contract BondedECDSAKeepFactory is
     using SafeMath for uint256;
 
     // Notification that a new sortition pool has been created.
-    event SortitionPoolCreated(address application, address sortitionPool);
+    event SortitionPoolCreated(
+        address indexed application,
+        address sortitionPool
+    );
 
     // Notification that a new keep has been created.
     event BondedECDSAKeepCreated(
-        address keepAddress,
+        address indexed keepAddress,
         address[] members,
-        address owner,
-        address application,
+        address indexed owner,
+        address indexed application,
         uint256 honestThreshold
     );
 
