@@ -829,6 +829,16 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
+    it("delegates authority to keep", async () => {
+      const keep = await openKeep()
+
+      assert.equal(
+        await tokenStaking.delegatedAuthority(),
+        keep.address,
+        "incorrect token staking delegated authority"
+      )
+    })
+
     it("requests new random group selection seed from random beacon", async () => {
       const expectedNewEntry = new BN(789)
 

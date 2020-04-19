@@ -501,8 +501,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         status = Status.Active;
         isInitialized = true;
 
-        tokenStaking.claimDelegatedAuthority(_keepFactory);
-
         for (uint256 i = 0; i < _members.length; i++) {
             tokenStaking.lockStake(_members[i], _stakeLockDuration);
         }

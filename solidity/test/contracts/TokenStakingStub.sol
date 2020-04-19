@@ -96,7 +96,7 @@ contract TokenStakingStub is IStaking {
         return owners[_operator];
     }
 
-    function claimDelegatedAuthority(address delegatedAuthoritySource) public {
-        delegatedAuthority = delegatedAuthoritySource;
+    function delegateAuthority(address authorityGrantee) public {
+        delegatedAuthority = authorityGrantee;
     }
 }

@@ -154,26 +154,6 @@ contract("BondedECDSAKeep", (accounts) => {
       )
     })
 
-    it("claims token staking delegated authority", async () => {
-      keep = await BondedECDSAKeepStub.new()
-      await keep.initialize(
-        owner,
-        members,
-        honestThreshold,
-        memberStake,
-        stakeLockDuration,
-        tokenStaking.address,
-        keepBonding.address,
-        factoryStub.address
-      )
-
-      assert.equal(
-        await tokenStaking.delegatedAuthority(),
-        factoryStub.address,
-        "incorrect token staking delegated authority"
-      )
-    })
-
     it("locks members token stakes", async () => {
       keep = await BondedECDSAKeepStub.new()
       await keep.initialize(

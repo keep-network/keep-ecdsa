@@ -285,12 +285,9 @@ contract BondedECDSAKeepFactory is
         keepAddress = createClone(masterBondedECDSAKeepAddress);
         BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
 
-        // keepOpenedTimestamp value for newly created keep is required to be set
-        // before calling `keep.initialize` function as it is used to determine
-        // token staking delegation authority recognition in `__isRecognized`
-        // function.
-        /* solium-disable-next-line security/no-block-members*/
         keepOpenedTimestamp[address(keep)] = block.timestamp;
+
+        tokenStaking.delegateAuthority(keepAddress);
 
         keep.initialize(
             _owner,
