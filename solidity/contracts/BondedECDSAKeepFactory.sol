@@ -444,7 +444,7 @@ contract BondedECDSAKeepFactory is
         reseedPool = reseedPool.sub(beaconFee);
     }
 
-    /// @dev Checks if the specified account has enough active stake to become
+    /// @notice Checks if the specified account has enough active stake to become
     /// network operator and that this contract has been authorized for potential
     /// slashing.
     ///
@@ -459,7 +459,21 @@ contract BondedECDSAKeepFactory is
         return tokenStaking.hasMinimumStake(_operator, address(this));
     }
 
-    /// @dev Gets the stake balance of the specified operator.
+    /// @notice Checks if the factory has the authorization to operate on stake
+    /// represented by the provided operator.
+    ///
+    /// @param _operator operator's address
+    /// @return True if the factory has access to the staked token balance of
+    /// the provided operator and can slash that stake. False otherwise.
+    function isOperatorAuthorized(address _operator)
+        public
+        view
+        returns (bool)
+    {
+        return tokenStaking.isAuthorizedForOperator(_operator, address(this));
+    }
+
+    /// @notice Gets the stake balance of the specified operator.
     /// @param _operator The operator to query the balance of.
     /// @return An uint256 representing the amount staked by the passed operator.
     function balanceOf(address _operator) public view returns (uint256) {

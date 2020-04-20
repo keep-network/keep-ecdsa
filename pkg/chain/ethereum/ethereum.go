@@ -391,6 +391,10 @@ func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) 
 	return nil
 }
 
+func (ec *EthereumChain) IsOperatorAuthorized(operator common.Address) (bool, error) {
+	return ec.bondedECDSAKeepFactoryContract.IsOperatorAuthorized(operator)
+}
+
 // GetKeepCount returns number of keeps.
 func (ec *EthereumChain) GetKeepCount() (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.GetKeepCount()
