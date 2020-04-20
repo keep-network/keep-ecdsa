@@ -139,8 +139,11 @@ type BondedECDSAKeep interface {
 	// an empty slice is returned.
 	GetPublicKey(keepAddress common.Address) ([]uint8, error)
 
-	// GetPublicKey returns keep's members.
+	// GetMembers returns keep's members.
 	GetMembers(keepAddress common.Address) ([]common.Address, error)
+
+	// GetHonestThreshold returns keep's honest threshold.
+	GetHonestThreshold(keepAddress common.Address) (uint64, error)
 
 	// HasKeyGenerationTimedOut returns whether key generation
 	// has timed out for the given keep.

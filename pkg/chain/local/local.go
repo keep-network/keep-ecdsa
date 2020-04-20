@@ -311,6 +311,12 @@ func (lc *localChain) GetMembers(
 	return keep.members, nil
 }
 
+func (lc *localChain) GetHonestThreshold(
+	keepAddress common.Address,
+) (uint64, error) {
+	panic("implement")
+}
+
 func (lc *localChain) HasKeyGenerationTimedOut(
 	keepAddress common.Address,
 ) (bool, error) {

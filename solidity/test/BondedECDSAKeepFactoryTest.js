@@ -43,7 +43,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const keepOwner = accounts[6]
 
   const groupSize = new BN(members.length)
-  const threshold = groupSize
+  const threshold = new BN(groupSize - 1)
 
   const singleBond = new BN(1)
   const bond = singleBond.mul(groupSize)
@@ -568,8 +568,20 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
-    it("opens keep with multiple members", async () => {
+    it("opens keep with multiple members and emits event", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
+
+      const keepAddress = await keepFactory.openKeep.call(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       await keepFactory.openKeep(
         groupSize,
@@ -593,11 +605,19 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
 
+      const ev = eventList[0].returnValues
+
+      assert.equal(ev.keepAddress, keepAddress, "incorrect keep address")
+      assert.equal(ev.owner, keepOwner, "incorrect keep owner")
+      assert.equal(ev.application, application, "incorrect application")
+
       assert.sameMembers(
-        eventList[0].returnValues.members,
+        ev.members,
         [members[0], members[1], members[2]],
-        "incorrect keep member in emitted event"
+        "incorrect keep members"
       )
+
+      expect(ev.honestThreshold).to.eq.BN(threshold, "incorrect threshold")
     })
 
     it("opens bonds for keep", async () => {

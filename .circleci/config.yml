@@ -222,8 +222,8 @@ jobs:
       - run:
           name: Tag Docker images
           command: |
-            docker tag keep-ecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-ecdsa
-            docker tag initcontainer-provision-keep-ecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-ecdsa
+            docker tag keep-ecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-ecdsa:$DOCKER_IMAGE_TAG
+            docker tag initcontainer-provision-keep-ecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-ecdsa:$DOCKER_IMAGE_TAG
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -233,12 +233,12 @@ jobs:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: keep-ecdsa
-          tag: latest
+          tag: $DOCKER_IMAGE_TAG
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: initcontainer-provision-keep-ecdsa
-          tag: latest
+          tag: $DOCKER_IMAGE_TAG
   publish_contract_data:
     executor: gcp-cli/default
     steps:
