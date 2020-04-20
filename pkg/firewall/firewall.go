@@ -21,7 +21,7 @@ var logger = log.Logger("keep-firewall")
 
 // KeepCacheLifetime is the time the cache maintains the list of active keep
 // members. We use the cache to minimize calls to Ethereum client.
-const KeepCacheLifetime = 24 * time.Hour
+const KeepCacheLifetime = 168 * time.Hour // one week
 
 var errNoAuthorization = fmt.Errorf("remote peer has no authorization on the factory")
 
