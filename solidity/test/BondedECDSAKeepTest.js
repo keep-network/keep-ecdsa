@@ -986,46 +986,60 @@ contract("BondedECDSAKeep", (accounts) => {
         )
       }
     })
-  })
 
-  describe("slashSignerStakes", async () => {
-    it("is not public", async () => {
-      try {
-        await keep.slashSignerStakes()
-      } catch (err) {
-        assert.equal(err, "TypeError: keep.slashSignerStakes is not a function")
-      }
-    })
-
-    it("reverts if called by closed keep", async () => {
+    it("reverts if called for closed keep", async () => {
       await keep.publicMarkAsClosed()
 
-      await expectRevert(keep.publicSlashSignerStakes(), "Keep is not active")
+      await expectRevert(
+        keep.submitSignatureFraud(
+          signature1.V,
+          signature1.R,
+          signature1.S,
+          hash256Digest1,
+          preimage1
+        ),
+        "Keep is not active"
+      )
     })
 
-    it("reverts if called by terminated keep", async () => {
+    it("reverts if called for terminated keep", async () => {
       await keep.publicMarkAsTerminated()
 
-      await expectRevert(keep.publicSlashSignerStakes(), "Keep is not active")
+      await expectRevert(
+        keep.submitSignatureFraud(
+          signature1.V,
+          signature1.R,
+          signature1.S,
+          hash256Digest1,
+          preimage1
+        ),
+        "Keep is not active"
+      )
     })
 
-    it("slashes keep members stakes", async () => {
-      const remainingStake = new BN(10)
-      const stakeBalance = memberStake.add(remainingStake)
-      await stakeOperators(members, stakeBalance)
+    it("does not revert if slashing failed", async () => {
+      await submitMembersPublicKeys(publicKey1)
 
-      await keep.publicSlashSignerStakes()
+      await tokenStaking.setSlashingShouldFail(true)
 
-      for (let i = 0; i < members.length; i++) {
-        const actualStake = await tokenStaking.eligibleStake(
-          members[i],
-          constants.ZERO_ADDRESS
-        )
-        expect(actualStake).to.eq.BN(
-          remainingStake,
-          `incorrect stake for member ${i}`
-        )
-      }
+      const res = await keep.submitSignatureFraud.call(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      const tx = await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      assert.isTrue(res, "incorrect returned result")
+      truffleAssert.eventEmitted(tx, "SlashingFailed")
     })
   })
 

@@ -25,6 +25,12 @@ contract TokenStakingStub is IStaking {
 
     address public delegatedAuthority;
 
+    bool slashingShouldFail;
+
+    function setSlashingShouldFail(bool _shouldFail) public {
+        slashingShouldFail = _shouldFail;
+    }
+
     /// @dev Sets balance variable value.
     function setBalance(address _operator, uint256 _balance) public {
         stakes[_operator] = _balance;
@@ -54,6 +60,10 @@ contract TokenStakingStub is IStaking {
     function slash(uint256 _amount, address[] memory _misbehavedOperators)
         public
     {
+        if (slashingShouldFail) {
+            // THIS SHOULD NEVER HAPPEN WITH REAL TOKEN STAKING
+            revert("slashing failed");
+        }
         for (uint256 i = 0; i < _misbehavedOperators.length; i++) {
             address operator = _misbehavedOperators[i];
             stakes[operator] = stakes[operator].sub(_amount);

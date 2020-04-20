@@ -129,6 +129,13 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         uint8 recoveryID
     );
 
+    // Emitted when KEEP token slashing failed when submitting signature
+    // fraud proof. In practice, this situation should never happen but we want
+    // to be very explicit in this contract and protect the owner that even if
+    // it happens, the transaction submitting fraud proof is not going to fail
+    // and keep owner can seize and liquidate bonds in the same transaction.
+    event SlashingFailed();
+
     TokenStaking tokenStaking;
     KeepBonding keepBonding;
     BondedECDSAKeepFactory keepFactory;
@@ -328,11 +335,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     }
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
-    /// not first approved via a call to sign. If fraud is detected it slashes
-    /// members' KEEP tokens.
+    /// not first approved via a call to sign. If fraud is detected it tries to
+    /// slash members' KEEP tokens. For each keep member tries slashing amount
+    /// equal to the member stake set by the factory when keep was created.
     /// @dev The function expects the signed digest to be calculated as a sha256
     /// hash of the preimage: `sha256(_preimage))`. The function reverts if the
-    /// signature is not fraudulent.
+    /// signature is not fraudulent. The function does not revert if KEEP slashing
+    /// failed but emits an event instead. In practice, KEEP slashing should
+    /// never fail.
     /// @param _v Signature's header byte: `27 + recoveryID`.
     /// @param _r R part of ECDSA signature.
     /// @param _s S part of ECDSA signature.
@@ -346,7 +356,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes calldata _preimage
-    ) external returns (bool _isFraud) {
+    ) external onlyWhenActive returns (bool _isFraud) {
         bool isFraud = checkSignatureFraud(
             _v,
             _r,
@@ -357,7 +367,20 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
         require(isFraud, "Signature is not fraudulent");
 
-        slashSignerStakes();
+        /* solium-disable-next-line */
+        (bool success, ) = address(tokenStaking).call(
+            abi.encodeWithSignature(
+                "slash(uint256,address[])",
+                memberStake,
+                members
+            )
+        );
+        // Should never happen but we want to protect the owner and make sure the
+        // fraud submission transaction does not fail so that the owner can
+        // seize and liquidate bonds in the same transaction.
+        if (!success) {
+            emit SlashingFailed();
+        }
 
         return isFraud;
     }
@@ -605,12 +628,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         returns (bool)
     {
         return submittedPublicKeys[_member].length != 0;
-    }
-
-    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
-    /// amount equal to the member stake set by the factory when keep was created.
-    function slashSignerStakes() internal onlyWhenActive {
-        tokenStaking.slash(memberStake, members);
     }
 
     /// @notice Returns true if signing of a digest is currently in progress.
