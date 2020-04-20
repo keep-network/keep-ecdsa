@@ -53,7 +53,7 @@ func (tc *timeCache) add(item string) bool {
 		item := back.Value.(string)
 		itemTime, ok := tc.cache[item]
 		if !ok {
-			logger.Panicf(
+			logger.Errorf(
 				"inconsistent cache state - expected item [%v] is not present",
 				item,
 			)
