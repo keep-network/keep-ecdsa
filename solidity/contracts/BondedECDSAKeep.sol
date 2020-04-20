@@ -38,7 +38,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     address[] internal members;
 
     // Minimum number of honest keep members required to produce a signature.
-    uint256 honestThreshold;
+    uint256 public honestThreshold;
 
     // Stake that was required from each keep member on keep creation.
     // The value is used for keep members slashing.
@@ -88,14 +88,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     Status internal status;
 
     // Notification that the keep was requested to sign a digest.
-    event SignatureRequested(bytes32 digest);
+    event SignatureRequested(bytes32 indexed digest);
 
     // Notification that the submitted public key does not match a key submitted
     // by other member. The event contains address of the member who tried to
     // submit a public key and a conflicting public key submitted already by other
     // member.
     event ConflictingPublicKeySubmitted(
-        address submittingMember,
+        address indexed submittingMember,
         bytes conflictingPublicKey
     );
 
@@ -123,7 +123,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // `v` to be calculated by increasing recovery id by 27. Please consult the
     // documentation about what the particular chain expects.
     event SignatureSubmitted(
-        bytes32 digest,
+        bytes32 indexed digest,
         bytes32 r,
         bytes32 s,
         uint8 recoveryID
