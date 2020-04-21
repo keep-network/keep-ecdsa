@@ -279,7 +279,7 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 // There are multiple keeps.
 // Is not a member of an active keep.
 // Should NOT allow to connect but should cache all active keep members in-memory.
-func TestCachesActiveKeepMembers(t *testing.T) {
+func TestCachesAllActiveKeepMembers(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	cache := cache.NewTimeCache(cacheLifeTime)
@@ -332,6 +332,71 @@ func TestCachesActiveKeepMembers(t *testing.T) {
 	if cache.Has(closedKeepMembers[1].String()) {
 		t.Errorf("should not cache non-active keep members")
 	}
+}
+
+// Has no minimum stake.
+// Has authorization.
+// There are multiple keeps.
+// Is a member of an active keep
+// Should allow to connect.
+// After some time, the keep gets closed.
+// It should no longer allow to connect.
+func TestSweepsCache(t *testing.T) {
+	chain := local.Connect()
+	coreFirewall := newMockCoreFirewall()
+	policy := &stakeOrActiveKeepPolicy{
+		chain:                  chain,
+		minimumStakePolicy:     coreFirewall,
+		activeKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+	}
+
+	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chain.AuthorizeOperator(common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+	))
+
+	keepAddress := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
+	chain.OpenKeep(
+		keepAddress,
+		[]common.Address{
+			common.HexToAddress(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)),
+		},
+	)
+
+	if err := policy.Validate(
+		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
+	); err != nil {
+		t.Fatalf("validation should pass: [%v]", err)
+	}
+
+	if err := chain.CloseKeep(keepAddress); err != nil {
+		t.Fatal(err)
+	}
+
+	// still caching the old result
+	if err := policy.Validate(
+		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
+	); err != nil {
+		t.Fatalf("validation should pass: [%v]", err)
+	}
+
+	time.Sleep(cacheLifeTime)
+
+	// no longer caches the previous result
+	if err := policy.Validate(
+		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
+	); err != errNoMinStakeNoActiveKeep {
+		t.Fatalf(
+			"unexpected validation error\nactual:   [%v]\nexpected: [%v]",
+			err,
+			errNoMinStakeNoActiveKeep,
+		)
+	}
+
 }
 
 func newMockCoreFirewall() *mockCoreFirewall {

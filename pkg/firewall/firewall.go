@@ -21,9 +21,9 @@ import (
 
 var logger = log.Logger("keep-firewall")
 
-// KeepCacheLifetime is the time the cache maintains the list of active keep
+// KeepCachePeriod is the time the cache maintains the list of active keep
 // members. We use the cache to minimize calls to Ethereum client.
-const KeepCacheLifetime = 168 * time.Hour // one week
+const KeepCachePeriod = 168 * time.Hour // one week
 
 var errNoAuthorization = fmt.Errorf("remote peer has no authorization on the factory")
 
@@ -40,7 +40,7 @@ func NewStakeOrActiveKeepPolicy(
 	return &stakeOrActiveKeepPolicy{
 		chain:                  chain,
 		minimumStakePolicy:     coreFirewall.MinimumStakePolicy(stakeMonitor),
-		activeKeepMembersCache: cache.NewTimeCache(KeepCacheLifetime),
+		activeKeepMembersCache: cache.NewTimeCache(KeepCachePeriod),
 	}
 }
 
@@ -104,6 +104,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	// Similarly, if the client was not a member of an active keep the last time
 	// validateActiveKeepMembership was executed, we have to ask the chain
 	// about the current status.
+	soakp.activeKeepMembersCache.Sweep()
 	if soakp.activeKeepMembersCache.Has(remotePeerAddress) {
 		return nil
 	}
