@@ -59,13 +59,6 @@ const (
 	// as changes in the network need some time to propagate and frequent
 	// refreshes can increase resource consumption and network congestion.
 	routingTableRefreshPeriod = 5 * time.Minute
-
-	// bootstrapMinPeerThreshold determines the minimum number of peers
-	// that the node will try to keep connections with. Number of active
-	// connections is checked during core bootstrap rounds and if this number
-	// is less than the minimum, new connection attempts will be performed
-	// against peers listed in config (`LibP2P.Peers`).
-	bootstrapMinPeerThreshold = 10
 )
 
 func init() {
@@ -136,7 +129,6 @@ func Start(c *cli.Context) error {
 		firewall.NewStakeOrActiveKeepPolicy(ethereumChain, stakeMonitor),
 		retransmission.NewTimeTicker(ctx, 1*time.Second),
 		libp2p.WithRoutingTableRefreshPeriod(routingTableRefreshPeriod),
-		libp2p.WithBootstrapMinPeerThreshold(bootstrapMinPeerThreshold),
 	)
 	if err != nil {
 		return err
