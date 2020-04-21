@@ -17,7 +17,6 @@ require (
 	github.com/ethereum/go-ethereum v1.9.10
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/gofuzz v1.1.0
-	github.com/ipfs/go-log v0.0.1
 	github.com/ipfs/go-log/v2 v2.0.4
 	github.com/keep-network/keep-common v0.2.0-rc.0.20200418131348-a69cacb292ce
 	github.com/keep-network/keep-core v0.13.0-rc.0.20200420192659-e30c76aa3bc4
