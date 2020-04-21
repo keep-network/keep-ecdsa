@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"

@@ -48,7 +48,7 @@ func (t *tssPreParamsPool) pumpPool() {
 
 		params, err := t.new()
 		if err != nil {
-			logger.Warningf(
+			logger.Warnf(
 				"failed to generate tss pre parameters after [%s]: [%v]",
 				time.Since(start),
 				err,

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	coreChain "github.com/keep-network/keep-core/pkg/chain"
 	coreFirewall "github.com/keep-network/keep-core/pkg/firewall"
