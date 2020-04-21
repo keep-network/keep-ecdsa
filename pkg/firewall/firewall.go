@@ -9,6 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/cache"
+
 	coreChain "github.com/keep-network/keep-core/pkg/chain"
 	coreFirewall "github.com/keep-network/keep-core/pkg/firewall"
 	coreNet "github.com/keep-network/keep-core/pkg/net"
@@ -19,9 +21,9 @@ import (
 
 var logger = log.Logger("keep-firewall")
 
-// KeepCacheLifetime is the time the cache maintains the list of active keep
+// KeepCachePeriod is the time the cache maintains the list of active keep
 // members. We use the cache to minimize calls to Ethereum client.
-const KeepCacheLifetime = 168 * time.Hour // one week
+const KeepCachePeriod = 168 * time.Hour // one week
 
 var errNoAuthorization = fmt.Errorf("remote peer has no authorization on the factory")
 
@@ -38,14 +40,14 @@ func NewStakeOrActiveKeepPolicy(
 	return &stakeOrActiveKeepPolicy{
 		chain:                  chain,
 		minimumStakePolicy:     coreFirewall.MinimumStakePolicy(stakeMonitor),
-		activeKeepMembersCache: newTimeCache(KeepCacheLifetime),
+		activeKeepMembersCache: cache.NewTimeCache(KeepCachePeriod),
 	}
 }
 
 type stakeOrActiveKeepPolicy struct {
 	chain                  eth.Handle
 	minimumStakePolicy     coreNet.Firewall
-	activeKeepMembersCache *timeCache
+	activeKeepMembersCache *cache.TimeCache
 }
 
 func (soakp *stakeOrActiveKeepPolicy) Validate(
@@ -102,7 +104,8 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	// Similarly, if the client was not a member of an active keep the last time
 	// validateActiveKeepMembership was executed, we have to ask the chain
 	// about the current status.
-	if soakp.activeKeepMembersCache.has(remotePeerAddress) {
+	soakp.activeKeepMembersCache.Sweep()
+	if soakp.activeKeepMembersCache.Has(remotePeerAddress) {
 		return nil
 	}
 
@@ -158,12 +161,12 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 			continue
 		}
 		for _, member := range members {
-			soakp.activeKeepMembersCache.add(member.String())
+			soakp.activeKeepMembersCache.Add(member.String())
 		}
 
 		// If the remote peer address has been added to the cache we can
 		// connect with this client as it's a member of an active keep.
-		if soakp.activeKeepMembersCache.has(remotePeerAddress) {
+		if soakp.activeKeepMembersCache.Has(remotePeerAddress) {
 			return nil
 		}
 	}
