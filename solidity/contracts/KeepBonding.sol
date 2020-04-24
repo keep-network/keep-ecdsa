@@ -119,7 +119,7 @@ contract KeepBonding {
 
         unbondedValue[operator] = unbondedValue[operator].sub(amount);
 
-        (bool success, ) = tokenStaking.magpieOf(operator).call.value(amount)(
+        (bool success, ) = tokenStaking.beneficiaryOf(operator).call.value(amount)(
             ""
         );
         require(success, "Transfer failed");

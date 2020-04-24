@@ -11,7 +11,7 @@ contract TokenStakingStub is IStaking {
 
     uint256 public minimumStake = 200000 * 1e18;
 
-    mapping(address => address payable) operatorToMagpie;
+    mapping(address => address payable) operatorToBeneficiary;
 
     mapping(address => uint256) stakes;
 
@@ -45,16 +45,16 @@ contract TokenStakingStub is IStaking {
         return stakes[_operator];
     }
 
-    function setMagpie(address _operator, address payable _magpie) public {
-        operatorToMagpie[_operator] = _magpie;
+    function setBeneficiary(address _operator, address payable _beneficiary) public {
+        operatorToBeneficiary[_operator] = _beneficiary;
     }
 
-    function magpieOf(address _operator) public view returns (address payable) {
-        address payable magpie = operatorToMagpie[_operator];
-        if (magpie == address(0)) {
+    function beneficiaryOf(address _operator) public view returns (address payable) {
+        address payable beneficiary = operatorToBeneficiary[_operator];
+        if (beneficiary == address(0)) {
             return address(uint160(_operator));
         }
-        return magpie;
+        return beneficiary;
     }
 
     function slash(uint256 _amount, address[] memory _misbehavedOperators)
