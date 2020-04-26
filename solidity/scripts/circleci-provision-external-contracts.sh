@@ -5,7 +5,7 @@ set -ex
 # CONTRACT_DATA_BUCKET and ETH_NETWORK_ID are configured in Circle CI Context 
 # config to values specific to given environment.
 
-REGISTRY_CONTRACT_DATA="Registry.json"
+REGISTRY_CONTRACT_DATA="KeepRegistry.json"
 REGISTRY_PROPERTY="RegistryAddress"
 
 TOKEN_STAKING_CONTRACT_DATA="TokenStaking.json"

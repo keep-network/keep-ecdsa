@@ -1,4 +1,4 @@
-const Registry = artifacts.require("Registry")
+const KeepRegistry = artifacts.require("KeepRegistry")
 const KeepBonding = artifacts.require("KeepBonding")
 const BondedECDSAKeep = artifacts.require("BondedECDSAKeep")
 const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
@@ -30,7 +30,7 @@ module.exports = async function (deployer) {
     RandomBeaconStub = artifacts.require("RandomBeaconStub")
     RandomBeaconAddress = (await RandomBeaconStub.new()).address
 
-    RegistryAddress = (await deployer.deploy(Registry)).address
+    RegistryAddress = (await deployer.deploy(KeepRegistry)).address
   }
 
   await deployer.deploy(KeepBonding, RegistryAddress, TokenStakingAddress)

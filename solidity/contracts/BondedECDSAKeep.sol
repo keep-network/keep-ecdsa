@@ -433,7 +433,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         for (uint16 i = 0; i < memberCount - 1; i++) {
             token.safeTransferFrom(
                 msg.sender,
-                tokenStaking.magpieOf(members[i]),
+                tokenStaking.beneficiaryOf(members[i]),
                 dividend
             );
         }
@@ -443,7 +443,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         uint256 remainder = _value.mod(memberCount);
         token.safeTransferFrom(
             msg.sender,
-            tokenStaking.magpieOf(members[memberCount - 1]),
+            tokenStaking.beneficiaryOf(members[memberCount - 1]),
             dividend.add(remainder)
         );
 
@@ -472,7 +472,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         memberETHBalances[_member] = 0;
 
         /* solium-disable-next-line security/no-call-value */
-        (bool success, ) = tokenStaking.magpieOf(_member).call.value(value)("");
+        (bool success, ) = tokenStaking.beneficiaryOf(_member).call.value(
+            value
+        )("");
 
         require(success, "Transfer failed");
     }

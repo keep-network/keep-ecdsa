@@ -6,7 +6,7 @@ import {mineBlocks} from "./helpers/mineBlocks"
 
 const truffleAssert = require("truffle-assertions")
 
-const Registry = artifacts.require("Registry")
+const KeepRegistry = artifacts.require("KeepRegistry")
 const BondedECDSAKeepFactoryStub = artifacts.require(
   "BondedECDSAKeepFactoryStub"
 )
@@ -1175,7 +1175,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     const newRelayEntry = new BN(2345675)
 
     before(async () => {
-      registry = await Registry.new()
+      registry = await KeepRegistry.new()
       bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
       tokenStaking = await TokenStakingStub.new()
       keepBonding = await KeepBonding.new(
@@ -1448,7 +1448,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   })
 
   async function initializeNewFactory() {
-    registry = await Registry.new()
+    registry = await KeepRegistry.new()
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
     tokenStaking = await TokenStakingStub.new()
     keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
