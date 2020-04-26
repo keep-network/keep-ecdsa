@@ -87,7 +87,7 @@ contract("KeepBonding", (accounts) => {
 
     it("transfers unbonded value to beneficiary of operator", async () => {
       const expectedUnbonded = 0
-      await tokenStaking.setMagpie(operator, beneficiary)
+      await tokenStaking.setBeneficiary(operator, beneficiary)
       const expectedBeneficiaryBalance = web3.utils
         .toBN(await web3.eth.getBalance(beneficiary))
         .add(value)
@@ -138,7 +138,7 @@ contract("KeepBonding", (accounts) => {
 
     it("reverts if transfer fails", async () => {
       await etherReceiver.setShouldFail(true)
-      await tokenStaking.setMagpie(operator, etherReceiver.address)
+      await tokenStaking.setBeneficiary(operator, etherReceiver.address)
 
       await expectRevert(
         keepBonding.withdraw(value, operator, {from: operator}),

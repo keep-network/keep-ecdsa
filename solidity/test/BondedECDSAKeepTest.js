@@ -1564,8 +1564,8 @@ contract("BondedECDSAKeep", (accounts) => {
         factoryStub.address
       )
 
-      await tokenStaking.setMagpie(member1, beneficiary)
-      await tokenStaking.setMagpie(member2, beneficiary)
+      await tokenStaking.setBeneficiary(member1, beneficiary)
+      await tokenStaking.setBeneficiary(member2, beneficiary)
 
       await keep.distributeETHReward({value: valueWithRemainder})
 
@@ -1761,8 +1761,8 @@ contract("BondedECDSAKeep", (accounts) => {
 
       await initializeTokens(token, keep, accounts[0], valueWithRemainder)
 
-      await tokenStaking.setMagpie(member1, beneficiary)
-      await tokenStaking.setMagpie(member2, beneficiary)
+      await tokenStaking.setBeneficiary(member1, beneficiary)
+      await tokenStaking.setBeneficiary(member2, beneficiary)
 
       await keep.distributeERC20Reward(token.address, valueWithRemainder)
 
