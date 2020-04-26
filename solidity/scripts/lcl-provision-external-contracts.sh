@@ -12,7 +12,7 @@ set -e
 # NETWORK_ID=1801 \
 #   ./lcl-provision-external-contracts.sh
 
-REGISTRY_CONTRACT_DATA="Registry.json"
+REGISTRY_CONTRACT_DATA="KeepRegistry.json"
 REGISTRY_PROPERTY="RegistryAddress"
 
 TOKEN_STAKING_CONTRACT_DATA="TokenStaking.json"
