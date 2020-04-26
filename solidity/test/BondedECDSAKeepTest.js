@@ -10,7 +10,7 @@ import {duration, increaseTime} from "./helpers/increaseTime"
 
 const {expectRevert, constants, time} = require("@openzeppelin/test-helpers")
 
-const Registry = artifacts.require("Registry")
+const KeepRegistry = artifacts.require("KeepRegistry")
 const BondedECDSAKeepStub = artifacts.require("BondedECDSAKeepStub")
 const TestToken = artifacts.require("TestToken")
 const KeepBonding = artifacts.require("KeepBonding")
@@ -85,7 +85,7 @@ contract("BondedECDSAKeep", (accounts) => {
   }
 
   before(async () => {
-    registry = await Registry.new()
+    registry = await KeepRegistry.new()
     tokenStaking = await TokenStakingStub.new()
     keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
     bondedECDSAKeepStubMaster = await BondedECDSAKeepStub.new()

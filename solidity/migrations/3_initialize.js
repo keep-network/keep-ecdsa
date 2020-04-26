@@ -3,7 +3,7 @@ const BondedECDSAKeepVendorImplV1 = artifacts.require(
   "BondedECDSAKeepVendorImplV1"
 )
 const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
-const Registry = artifacts.require("Registry")
+const KeepRegistry = artifacts.require("KeepRegistry")
 
 const {RegistryAddress} = require("./external-contracts")
 
@@ -12,9 +12,9 @@ module.exports = async function (deployer) {
 
   let registry
   if (process.env.TEST) {
-    registry = await Registry.deployed()
+    registry = await KeepRegistry.deployed()
   } else {
-    registry = await Registry.at(RegistryAddress)
+    registry = await KeepRegistry.at(RegistryAddress)
   }
 
   const proxy = await BondedECDSAKeepVendor.deployed()

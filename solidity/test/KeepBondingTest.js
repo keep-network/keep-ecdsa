@@ -1,6 +1,6 @@
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
-const Registry = artifacts.require("./Registry.sol")
+const KeepRegistry = artifacts.require("./KeepRegistry.sol")
 const TokenStaking = artifacts.require("./TokenStakingStub.sol")
 const KeepBonding = artifacts.require("./KeepBonding.sol")
 const TestEtherReceiver = artifacts.require("./TestEtherReceiver.sol")
@@ -32,7 +32,7 @@ contract("KeepBonding", (accounts) => {
     bondCreator = accounts[4]
     sortitionPool = accounts[5]
 
-    registry = await Registry.new()
+    registry = await KeepRegistry.new()
     tokenStaking = await TokenStaking.new()
     keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
     etherReceiver = await TestEtherReceiver.new()

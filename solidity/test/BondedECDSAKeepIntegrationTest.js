@@ -5,7 +5,7 @@ const {time} = require("@openzeppelin/test-helpers")
 import {mineBlocks} from "./helpers/mineBlocks"
 
 const KeepToken = artifacts.require("KeepTokenIntegration")
-const Registry = artifacts.require("Registry")
+const KeepRegistry = artifacts.require("KeepRegistry")
 const BondedECDSAKeepFactoryStub = artifacts.require(
   "BondedECDSAKeepFactoryStub"
 )
@@ -236,7 +236,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
   async function initializeNewFactory() {
     keepToken = await KeepToken.new()
-    const registry = await Registry.new()
+    const registry = await KeepRegistry.new()
 
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
     tokenStaking = await TokenStaking.new(

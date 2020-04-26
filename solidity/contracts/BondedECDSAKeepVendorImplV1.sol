@@ -2,7 +2,7 @@ pragma solidity 0.5.17;
 
 import "./api/IBondedECDSAKeepVendor.sol";
 
-import "@keep-network/keep-core/contracts/Registry.sol";
+import "@keep-network/keep-core/contracts/KeepRegistry.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -16,9 +16,9 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     // this contract.
     mapping(string => bool) internal _initialized;
 
-    // Registry contract with a list of approved factories (operator contracts)
+    // KeepRegistry contract with a list of approved factories (operator contracts)
     // and upgraders.
-    Registry internal registry;
+    KeepRegistry internal registry;
 
     // Upgrade time delay defines a waiting period for factory address upgrade.
     // When new factory upgrade is initialized it has to wait this period
@@ -58,7 +58,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
         require(!initialized(), "Contract is already initialized.");
         _initialized["BondedECDSAKeepVendorImplV1"] = true;
 
-        registry = Registry(registryAddress);
+        registry = KeepRegistry(registryAddress);
         keepFactory = factory;
 
         factoryUpgradeTimeDelay = 1 days;
@@ -143,7 +143,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
     modifier onlyOperatorContractUpgrader() {
         require(
             address(registry) != address(0),
-            "Registry address is not registered"
+            "KeepRegistry address is not registered"
         );
 
         address operatorContractUpgrader = registry.operatorContractUpgraderFor(
