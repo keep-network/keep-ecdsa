@@ -241,16 +241,10 @@ github.com/keep-network/btcutil v0.0.0-20190425235716-9e5f4b9a998d h1:ZUxpxggD2R
 github.com/keep-network/btcutil v0.0.0-20190425235716-9e5f4b9a998d/go.mod h1:vhMoS7zlQpjHWB/xCYPYcnoDvRMJWhSGTsSWw5Pj4zE=
 github.com/keep-network/cli v1.20.0 h1:mEufpPsovOVdduTTkk+a2CxS3crIrGFqUsvs58gSik8=
 github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxKNohQWtQhA=
-github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200420163504-f5aa53962524 h1:iOBE6U3YmgJ+VB2DnO5bNH9rmVWSiGUY1xgyjKOEGH8=
-github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200420163504-f5aa53962524/go.mod h1:MtZSKNavpxpPY0VLt2sl118IxptrGQDUb/MBu+j2Yow=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec h1:2pXAsi4OUUjZKr5ds5UOF2IxXN+jVW0WetVO+czkf+A=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec/go.mod h1:xR8jf3/VJAjh3nWu5tFe8Yxnt2HvWsqZHfGef1P5oDk=
-github.com/keep-network/keep-common v0.3.0-rc h1:e2Vdq3TyQ6dGRNZQBykvfYZgKZwNKS+Z8DYEwoMIiuc=
-github.com/keep-network/keep-common v0.3.0-rc/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
 github.com/keep-network/keep-common v0.3.0-rc.0.20200427145435-e24eeb9599e4 h1:j8W6ckP0u2tr+1CB7KkVLz2EP3B4zT+wobv81DMSSxE=
 github.com/keep-network/keep-common v0.3.0-rc.0.20200427145435-e24eeb9599e4/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
-github.com/keep-network/keep-core v0.14.0-rc h1:pSRZg7zFrgLHp2WYzjcdbejht9i5uM9zMl4IbRm+wKw=
-github.com/keep-network/keep-core v0.14.0-rc/go.mod h1:dg6b06oi8P/vOpM3Y+TWQfN6FKEabXARgsf8hDgGxlY=
 github.com/keep-network/keep-core v0.14.1-rc.0.20200428164847-ba505b296334 h1:/nApz0Dcqwd7xgqiP4gMuYDtv3OepP49upggT6vxgo8=
 github.com/keep-network/keep-core v0.14.1-rc.0.20200428164847-ba505b296334/go.mod h1:v/7GduEV299AEnD+atg4wmGSB5/VY+UEm8fF7r7oR0k=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
@@ -320,7 +314,6 @@ github.com/libp2p/go-libp2p-kad-dht v0.3.0 h1:KUJaqW3kkHP6zcL0s1CDg+yO0NYNNPkXmG
 github.com/libp2p/go-libp2p-kad-dht v0.3.0/go.mod h1:7nBsfkMq2zN1qPs6n/fNopJfvmK9NZRNicRrCnwQR8o=
 github.com/libp2p/go-libp2p-kbucket v0.2.1 h1:q9Jfwww9XnXc1K9dyYuARJxJvIvhgYVaQCuziO/dF3c=
 github.com/libp2p/go-libp2p-kbucket v0.2.1/go.mod h1:/Rtu8tqbJ4WQ2KTCOMJhggMukOLNLNPY1EtEWWLxUvc=
-github.com/libp2p/go-libp2p-loggables v0.0.1/go.mod h1:lDipDlBNYbpyqyPX/KcoO+eq0sJYEVR2JgOexcivchg=
 github.com/libp2p/go-libp2p-loggables v0.1.0 h1:h3w8QFfCt2UJl/0/NW4K829HX/0S4KD31PQ7m8UXXO8=
 github.com/libp2p/go-libp2p-loggables v0.1.0/go.mod h1:EyumB2Y6PrYjr55Q3/tiJ/o3xoDasoRYM7nOzEpoa90=
 github.com/libp2p/go-libp2p-mplex v0.2.0/go.mod h1:Ejl9IyjvXJ0T9iqUTE1jpYATQ9NM3g+OtR+EMMODbKo=
