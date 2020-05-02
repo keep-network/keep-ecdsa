@@ -186,16 +186,19 @@ contract BondedECDSAKeepSubFactory is
     /// @dev Reverts if sortition does not exits for the application.
     /// @param _application Address of the application.
     /// @return The sum of all registered operators' weights in the pool.
+    /// If no pool exists, returns 0.
     function getSortitionPoolWeight(address _application)
         external
         view
         returns (uint256)
     {
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
-        );
+        address poolAddress = candidatesPools[_application];
 
-        return candidatesPool.getTotalWeight();
+        if (poolAddress == address(0)) { return 0; }
+
+        BondedSortitionPool pool = BondedSortitionPool(poolAddress);
+
+        return pool.getTotalWeight();
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
