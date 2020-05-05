@@ -1,6 +1,6 @@
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
-const Registry = artifacts.require("./Registry.sol")
+const KeepRegistry = artifacts.require("./KeepRegistry.sol")
 const TokenStaking = artifacts.require("./TokenStakingStub.sol")
 const KeepBonding = artifacts.require("./KeepBonding.sol")
 const TestEtherReceiver = artifacts.require("./TestEtherReceiver.sol")
@@ -32,7 +32,7 @@ contract("KeepBonding", (accounts) => {
     bondCreator = accounts[4]
     sortitionPool = accounts[5]
 
-    registry = await Registry.new()
+    registry = await KeepRegistry.new()
     tokenStaking = await TokenStaking.new()
     keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
     etherReceiver = await TestEtherReceiver.new()
@@ -87,7 +87,7 @@ contract("KeepBonding", (accounts) => {
 
     it("transfers unbonded value to beneficiary of operator", async () => {
       const expectedUnbonded = 0
-      await tokenStaking.setMagpie(operator, beneficiary)
+      await tokenStaking.setBeneficiary(operator, beneficiary)
       const expectedBeneficiaryBalance = web3.utils
         .toBN(await web3.eth.getBalance(beneficiary))
         .add(value)
@@ -138,7 +138,7 @@ contract("KeepBonding", (accounts) => {
 
     it("reverts if transfer fails", async () => {
       await etherReceiver.setShouldFail(true)
-      await tokenStaking.setMagpie(operator, etherReceiver.address)
+      await tokenStaking.setBeneficiary(operator, etherReceiver.address)
 
       await expectRevert(
         keepBonding.withdraw(value, operator, {from: operator}),

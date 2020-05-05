@@ -6,7 +6,7 @@ import {mineBlocks} from "./helpers/mineBlocks"
 
 const truffleAssert = require("truffle-assertions")
 
-const Registry = artifacts.require("Registry")
+const KeepRegistry = artifacts.require("KeepRegistry")
 const BondedECDSAKeepFactoryStub = artifacts.require(
   "BondedECDSAKeepFactoryStub"
 )
@@ -38,11 +38,12 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const application = accounts[1]
   const members = [accounts[2], accounts[3], accounts[4]]
   const authorizers = [members[0], members[1], members[2]]
+  const notMember = accounts[5]
 
-  const keepOwner = accounts[5]
+  const keepOwner = accounts[6]
 
   const groupSize = new BN(members.length)
-  const threshold = groupSize
+  const threshold = new BN(groupSize - 1)
 
   const singleBond = new BN(1)
   const bond = singleBond.mul(groupSize)
@@ -567,8 +568,20 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
-    it("opens keep with multiple members", async () => {
+    it("opens keep with multiple members and emits event", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
+
+      const keepAddress = await keepFactory.openKeep.call(
+        groupSize,
+        threshold,
+        keepOwner,
+        bond,
+        stakeLockDuration,
+        {
+          from: application,
+          value: feeEstimate,
+        }
+      )
 
       await keepFactory.openKeep(
         groupSize,
@@ -592,11 +605,19 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
 
+      const ev = eventList[0].returnValues
+
+      assert.equal(ev.keepAddress, keepAddress, "incorrect keep address")
+      assert.equal(ev.owner, keepOwner, "incorrect keep owner")
+      assert.equal(ev.application, application, "incorrect application")
+
       assert.sameMembers(
-        eventList[0].returnValues.members,
+        ev.members,
         [members[0], members[1], members[2]],
-        "incorrect keep member in emitted event"
+        "incorrect keep members"
       )
+
+      expect(ev.honestThreshold).to.eq.BN(threshold, "incorrect threshold")
     })
 
     it("opens bonds for keep", async () => {
@@ -926,6 +947,25 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
+    it("reverts when honest threshold is 0", async () => {
+      const honestThreshold = 0
+
+      await expectRevert(
+        keepFactory.openKeep(
+          groupSize,
+          honestThreshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            from: application,
+            value: feeEstimate,
+          }
+        ),
+        "Honest threshold must be greater than 0"
+      )
+    })
+
     it("works when honest threshold is equal to the group size", async () => {
       const honestThreshold = 3
       const groupSize = honestThreshold
@@ -1080,6 +1120,25 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       )
     })
 
+    it("reverts when trying to use a group of 0 signers", async () => {
+      const groupSize = 0
+
+      await expectRevert(
+        keepFactory.openKeep(
+          groupSize,
+          threshold,
+          keepOwner,
+          bond,
+          stakeLockDuration,
+          {
+            from: application,
+            value: feeEstimate,
+          }
+        ),
+        "Minimum signing group size is 1"
+      )
+    })
+
     async function createDepositAndRegisterMembers(
       memberCount,
       unbondedAmount
@@ -1116,7 +1175,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     const newRelayEntry = new BN(2345675)
 
     before(async () => {
-      registry = await Registry.new()
+      registry = await KeepRegistry.new()
       bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
       tokenStaking = await TokenStakingStub.new()
       keepBonding = await KeepBonding.new(
@@ -1367,8 +1426,29 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     })
   })
 
+  describe("isOperatorAuthorized", async () => {
+    before(async () => {
+      await initializeNewFactory()
+      await initializeMemberCandidates()
+    })
+
+    it("returns true if operator is authorized for the factory", async () => {
+      assert.isTrue(
+        await keepFactory.isOperatorAuthorized(members[0]),
+        "the operator is authorized for the factory"
+      )
+    })
+
+    it("returns false if operator is not authorized for the factory", async () => {
+      assert.isFalse(
+        await keepFactory.isOperatorAuthorized(notMember),
+        "the operator is not authorized for the factory"
+      )
+    })
+  })
+
   async function initializeNewFactory() {
-    registry = await Registry.new()
+    registry = await KeepRegistry.new()
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
     tokenStaking = await TokenStakingStub.new()
     keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)

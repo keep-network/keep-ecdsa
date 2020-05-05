@@ -12,7 +12,7 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-const Registry = artifacts.require("Registry")
+const KeepRegistry = artifacts.require("KeepRegistry")
 
 const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
 const BondedECDSAKeepVendorImplV1Stub = artifacts.require(
@@ -35,7 +35,7 @@ contract("BondedECDSAKeepVendorImplV1viaProxy", async (accounts) => {
   let keepVendor
 
   before(async () => {
-    registry = await Registry.new()
+    registry = await KeepRegistry.new()
     await registry.approveOperatorContract(address0)
     await registry.approveOperatorContract(address1)
     await registry.approveOperatorContract(address2)

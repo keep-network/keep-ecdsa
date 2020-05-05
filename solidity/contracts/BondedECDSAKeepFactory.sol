@@ -29,20 +29,25 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract BondedECDSAKeepFactory is
     IBondedECDSAKeepFactory,
     CloneFactory,
-    AuthorityDelegator
+    AuthorityDelegator,
+    IRandomBeaconConsumer
 {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
     // Notification that a new sortition pool has been created.
-    event SortitionPoolCreated(address application, address sortitionPool);
+    event SortitionPoolCreated(
+        address indexed application,
+        address sortitionPool
+    );
 
     // Notification that a new keep has been created.
     event BondedECDSAKeepCreated(
-        address keepAddress,
+        address indexed keepAddress,
         address[] members,
-        address owner,
-        address application
+        address indexed owner,
+        address indexed application,
+        uint256 honestThreshold
     );
 
     // Holds the address of the bonded ECDSA keep contract that will be used as a
@@ -238,7 +243,12 @@ contract BondedECDSAKeepFactory is
         uint256 _bond,
         uint256 _stakeLockDuration
     ) external payable returns (address keepAddress) {
+        require(_groupSize > 0, "Minimum signing group size is 1");
         require(_groupSize <= 16, "Maximum signing group size is 16");
+        require(
+            _honestThreshold > 0,
+            "Honest threshold must be greater than 0"
+        );
         require(
             _honestThreshold <= _groupSize,
             "Honest threshold must be less or equal the group size"
@@ -305,7 +315,13 @@ contract BondedECDSAKeepFactory is
 
         keeps.push(address(keep));
 
-        emit BondedECDSAKeepCreated(keepAddress, members, _owner, application);
+        emit BondedECDSAKeepCreated(
+            keepAddress,
+            members,
+            _owner,
+            application,
+            _honestThreshold
+        );
     }
 
     /// @notice Gets how many keeps have been opened by this contract.
@@ -428,7 +444,7 @@ contract BondedECDSAKeepFactory is
         reseedPool = reseedPool.sub(beaconFee);
     }
 
-    /// @dev Checks if the specified account has enough active stake to become
+    /// @notice Checks if the specified account has enough active stake to become
     /// network operator and that this contract has been authorized for potential
     /// slashing.
     ///
@@ -443,7 +459,21 @@ contract BondedECDSAKeepFactory is
         return tokenStaking.hasMinimumStake(_operator, address(this));
     }
 
-    /// @dev Gets the stake balance of the specified operator.
+    /// @notice Checks if the factory has the authorization to operate on stake
+    /// represented by the provided operator.
+    ///
+    /// @param _operator operator's address
+    /// @return True if the factory has access to the staked token balance of
+    /// the provided operator and can slash that stake. False otherwise.
+    function isOperatorAuthorized(address _operator)
+        public
+        view
+        returns (bool)
+    {
+        return tokenStaking.isAuthorizedForOperator(_operator, address(this));
+    }
+
+    /// @notice Gets the stake balance of the specified operator.
     /// @param _operator The operator to query the balance of.
     /// @return An uint256 representing the amount staked by the passed operator.
     function balanceOf(address _operator) public view returns (uint256) {

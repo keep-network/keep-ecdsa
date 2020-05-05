@@ -14,6 +14,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-ecdsa/pkg/firewall"
 
 	"github.com/keep-network/keep-ecdsa/internal/config"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
@@ -58,13 +59,6 @@ const (
 	// as changes in the network need some time to propagate and frequent
 	// refreshes can increase resource consumption and network congestion.
 	routingTableRefreshPeriod = 5 * time.Minute
-
-	// bootstrapMinPeerThreshold determines the minimum number of peers
-	// that the node will try to keep connections with. Number of active
-	// connections is checked during core bootstrap rounds and if this number
-	// is less than the minimum, new connection attempts will be performed
-	// against peers listed in config (`LibP2P.Peers`).
-	bootstrapMinPeerThreshold = 10
 )
 
 func init() {
@@ -114,7 +108,12 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not check the stake: [%v]", err)
 	}
 	if !hasMinimumStake {
-		return fmt.Errorf("stake is below the required minimum")
+		return fmt.Errorf(
+			"no minimum KEEP stake or operator is not authorized to use it; " +
+				"please make sure the operator address in the configuration " +
+				"is correct and it has KEEP tokens delegated and the operator " +
+				"contract has been authorized to operate on the stake",
+		)
 	}
 
 	operatorPrivateKey, operatorPublicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
@@ -127,16 +126,15 @@ func Start(c *cli.Context) error {
 		ctx,
 		config.LibP2P,
 		networkPrivateKey,
-		stakeMonitor,
+		firewall.NewStakeOrActiveKeepPolicy(ethereumChain, stakeMonitor),
 		retransmission.NewTimeTicker(ctx, 1*time.Second),
 		libp2p.WithRoutingTableRefreshPeriod(routingTableRefreshPeriod),
-		libp2p.WithBootstrapMinPeerThreshold(bootstrapMinPeerThreshold),
 	)
 	if err != nil {
 		return err
 	}
 
-	nodeHeader(networkProvider.AddrStrings(), config.LibP2P.Port)
+	nodeHeader(networkProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
 
 	handle, err := persistence.NewDiskHandle(config.Storage.DataDir)
 	if err != nil {

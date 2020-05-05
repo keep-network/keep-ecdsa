@@ -90,8 +90,9 @@ func Initialize(
 			isActive, err := ethereumChain.IsActive(keepAddress)
 			if err != nil {
 				logger.Errorf(
-					"failed to verify if keep is still active: [%v]; "+
+					"failed to verify if keep [%s] is still active: [%v]; "+
 						"subscriptions for keep signing and closing events are skipped",
+					keepAddress.String(),
 					err,
 				)
 				return
@@ -197,6 +198,7 @@ func Initialize(
 					requestedSignatures,
 					event.KeepAddress,
 					event.Members,
+					event.HonestThreshold,
 				)
 			}(event)
 		}
@@ -246,8 +248,7 @@ func checkAwaitingKeyGeneration(
 		keygenTimeout, err := ethereumChain.HasKeyGenerationTimedOut(keep)
 		if err != nil {
 			logger.Warningf(
-				"could not check key generation timeout "+
-					"for keep [%v]: [%v]",
+				"could not check key generation timeout for keep [%s]: [%v]",
 				keep.String(),
 				err,
 			)
@@ -272,8 +273,7 @@ func checkAwaitingKeyGeneration(
 		)
 		if err != nil {
 			logger.Warningf(
-				"could not check awaiting key generation "+
-					"for keep [%s]: [%v]",
+				"could not check awaiting key generation for keep [%s]: [%v]",
 				keep.String(),
 				err,
 			)
@@ -304,6 +304,11 @@ func checkAwaitingKeyGenerationForKeep(
 		return err
 	}
 
+	honestThreshold, err := ethereumChain.GetHonestThreshold(keep)
+	if err != nil {
+		return err
+	}
+
 	for _, member := range members {
 		if ethereumChain.Address() == member {
 			go generateKeyForKeep(
@@ -315,6 +320,7 @@ func checkAwaitingKeyGenerationForKeep(
 				requestedSignatures,
 				keep,
 				members,
+				honestThreshold,
 			)
 
 			break
@@ -333,7 +339,30 @@ func generateKeyForKeep(
 	requestedSignatures *requestedSignaturesTrack,
 	keepAddress common.Address,
 	members []common.Address,
+	honestThreshold uint64,
 ) {
+	if len(members) < 2 {
+		// TODO: #408 Implement single signer support.
+		logger.Errorf(
+			"keep [%s] has [%d] members; only keeps with at least 2 members are supported",
+			keepAddress.String(),
+			len(members),
+		)
+		return
+	}
+
+	if honestThreshold != uint64(len(members)) {
+		// TODO: #325 Implement threshold support.
+		logger.Errorf(
+			"keep [%s] has honest threshold [%s] and [%d] members; "+
+				"only keeps with honest threshold same as group size are supported",
+			keepAddress.String(),
+			honestThreshold,
+			len(members),
+		)
+		return
+	}
+
 	logger.Infof(
 		"member [%s] is starting signer generation for keep [%s]...",
 		ethereumChain.Address().String(),
@@ -533,17 +562,32 @@ func checkAwaitingSignature(
 		}
 		defer requestedSignatures.remove(keepAddress, latestDigest)
 
-		currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
+		startBlock, err := ethereumChain.SignatureRequestedBlock(keepAddress, latestDigest)
 		if err != nil {
-			logger.Errorf("failed to get current block height: [%v]", err)
+			logger.Errorf(
+				"failed to get signature request block height for keep [%s] and digest [%x]: [%v]",
+				keepAddress.String(),
+				latestDigest,
+				err,
+			)
 			return
 		}
 
 		isStillAwaitingSignature, err := waitForChainConfirmation(
 			ethereumChain,
-			currentBlock,
+			startBlock,
 			func() (bool, error) {
-				return ethereumChain.IsAwaitingSignature(keepAddress, latestDigest)
+				isAwaitingSignature, err := ethereumChain.IsAwaitingSignature(keepAddress, latestDigest)
+				if err != nil {
+					return false, err
+				}
+
+				hasSigningTimedOut, err := ethereumChain.HasSigningTimedOut(keepAddress)
+				if err != nil {
+					return false, err
+				}
+
+				return (isAwaitingSignature && !hasSigningTimedOut), nil
 			},
 		)
 		if err != nil {
@@ -583,7 +627,11 @@ func generateSignatureForKeep(
 		signer,
 		digest,
 	); err != nil {
-		logger.Errorf("signature calculation failed: [%v]", err)
+		logger.Errorf(
+			"signature calculation failed for keep [%s]: [%v]",
+			keepAddress.String(),
+			err,
+		)
 	}
 }
 
@@ -634,7 +682,8 @@ func monitorKeepClosedEvents(
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed on registering for keep closed event: [%v]",
+			"failed on registering for closed event for keep [%s]: [%v]",
+			keepAddress.String(),
 			err,
 		)
 
@@ -696,7 +745,8 @@ func monitorKeepTerminatedEvent(
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed on registering for keep terminated event: [%v]",
+			"failed on registering for terminated event for keep [%s]: [%v]",
+			keepAddress.String(),
 			err,
 		)
 

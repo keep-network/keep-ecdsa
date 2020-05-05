@@ -74,7 +74,7 @@ async function provisionKeepTecdsa() {
     await fundOperator(operatorAddress, purse, '10')
 
     console.log(`\n<<<<<<<<<<<< Deposit to KeepBondingContract ${keepBondingContract.address} >>>>>>>>>>>>`)
-    await depositUnbondedValue(operatorAddress, purse, '50')
+    await depositUnbondedValue(operatorAddress, purse, '10')
 
     console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`)
     await stakeOperator(operatorAddress, contractOwnerAddress, authorizer)
@@ -182,7 +182,7 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
-    formatAmount(20000000, 18),
+    formatAmount(2000000, 18),
     delegation).send({ from: contractOwnerAddress })
 
   console.log(`Staked!`)

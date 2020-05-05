@@ -38,7 +38,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     address[] internal members;
 
     // Minimum number of honest keep members required to produce a signature.
-    uint256 honestThreshold;
+    uint256 public honestThreshold;
 
     // Stake that was required from each keep member on keep creation.
     // The value is used for keep members slashing.
@@ -51,8 +51,10 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Latest digest requested to be signed. Used to validate submitted signature.
     bytes32 public digest;
 
-    // Map of all digests requested to be signed. Used to validate submitted signature.
-    mapping(bytes32 => bool) digests;
+    // Map of all digests requested to be signed. Used to validate submitted
+    // signature. Holds the block number at which the signature over the given
+    // digest was requested
+    mapping(bytes32 => uint256) public digests;
 
     // Timeout for the keep public key to appear on the chain. Time is counted
     // from the moment keep has been created.
@@ -86,14 +88,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     Status internal status;
 
     // Notification that the keep was requested to sign a digest.
-    event SignatureRequested(bytes32 digest);
+    event SignatureRequested(bytes32 indexed digest);
 
     // Notification that the submitted public key does not match a key submitted
     // by other member. The event contains address of the member who tried to
     // submit a public key and a conflicting public key submitted already by other
     // member.
     event ConflictingPublicKeySubmitted(
-        address submittingMember,
+        address indexed submittingMember,
         bytes conflictingPublicKey
     );
 
@@ -121,11 +123,18 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // `v` to be calculated by increasing recovery id by 27. Please consult the
     // documentation about what the particular chain expects.
     event SignatureSubmitted(
-        bytes32 digest,
+        bytes32 indexed digest,
         bytes32 r,
         bytes32 s,
         uint8 recoveryID
     );
+
+    // Emitted when KEEP token slashing failed when submitting signature
+    // fraud proof. In practice, this situation should never happen but we want
+    // to be very explicit in this contract and protect the owner that even if
+    // it happens, the transaction submitting fraud proof is not going to fail
+    // and keep owner can seize and liquidate bonds in the same transaction.
+    event SlashingFailed();
 
     TokenStaking tokenStaking;
     KeepBonding keepBonding;
@@ -210,7 +219,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         /* solium-disable-next-line */
         signingStartTimestamp = block.timestamp;
 
-        digests[_digest] = true;
+        digests[_digest] = block.number;
         digest = _digest;
 
         emit SignatureRequested(_digest);
@@ -326,11 +335,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     }
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
-    /// not first approved via a call to sign. If fraud is detected it slashes
-    /// members' KEEP tokens.
+    /// not first approved via a call to sign. If fraud is detected it tries to
+    /// slash members' KEEP tokens. For each keep member tries slashing amount
+    /// equal to the member stake set by the factory when keep was created.
     /// @dev The function expects the signed digest to be calculated as a sha256
     /// hash of the preimage: `sha256(_preimage))`. The function reverts if the
-    /// signature is not fraudulent.
+    /// signature is not fraudulent. The function does not revert if KEEP slashing
+    /// failed but emits an event instead. In practice, KEEP slashing should
+    /// never fail.
     /// @param _v Signature's header byte: `27 + recoveryID`.
     /// @param _r R part of ECDSA signature.
     /// @param _s S part of ECDSA signature.
@@ -344,7 +356,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes calldata _preimage
-    ) external returns (bool _isFraud) {
+    ) external onlyWhenActive returns (bool _isFraud) {
         bool isFraud = checkSignatureFraud(
             _v,
             _r,
@@ -355,7 +367,20 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
         require(isFraud, "Signature is not fraudulent");
 
-        slashSignerStakes();
+        /* solium-disable-next-line */
+        (bool success, ) = address(tokenStaking).call(
+            abi.encodeWithSignature(
+                "slash(uint256,address[])",
+                memberStake,
+                members
+            )
+        );
+        // Should never happen but we want to protect the owner and make sure the
+        // fraud submission transaction does not fail so that the owner can
+        // seize and liquidate bonds in the same transaction.
+        if (!success) {
+            emit SlashingFailed();
+        }
 
         return isFraud;
     }
@@ -408,7 +433,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         for (uint16 i = 0; i < memberCount - 1; i++) {
             token.safeTransferFrom(
                 msg.sender,
-                tokenStaking.magpieOf(members[i]),
+                tokenStaking.beneficiaryOf(members[i]),
                 dividend
             );
         }
@@ -418,7 +443,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         uint256 remainder = _value.mod(memberCount);
         token.safeTransferFrom(
             msg.sender,
-            tokenStaking.magpieOf(members[memberCount - 1]),
+            tokenStaking.beneficiaryOf(members[memberCount - 1]),
             dividend.add(remainder)
         );
 
@@ -447,7 +472,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         memberETHBalances[_member] = 0;
 
         /* solium-disable-next-line security/no-call-value */
-        (bool success, ) = tokenStaking.magpieOf(_member).call.value(value)("");
+        (bool success, ) = tokenStaking.beneficiaryOf(_member).call.value(
+            value
+        )("");
 
         require(success, "Transfer failed");
     }
@@ -571,7 +598,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             ecrecover(_signedDigest, _v, _r, _s);
 
         // Check if the signature is valid but was not requested.
-        return isSignatureValid && !digests[_signedDigest];
+        return isSignatureValid && digests[_signedDigest] == 0;
     }
 
     /// @notice Returns true if the ongoing key generation process timed out.
@@ -582,6 +609,16 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return
             block.timestamp >
             keyGenerationStartTimestamp + keyGenerationTimeout;
+    }
+
+    /// @notice Returns true if the ongoing signing process timed out.
+    /// @dev There is a certain timeout for a signature to be produced, see
+    /// `signingTimeout`.
+    function hasSigningTimedOut() public view returns (bool) {
+        return
+            signingStartTimestamp != 0 &&
+            /* solium-disable-next-line */
+            block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
     /// @notice Checks if the member already submitted a public key.
@@ -595,25 +632,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return submittedPublicKeys[_member].length != 0;
     }
 
-    /// @notice Slashes keep members' KEEP tokens. For each keep member it slashes
-    /// amount equal to the member stake set by the factory when keep was created.
-    function slashSignerStakes() internal onlyWhenActive {
-        tokenStaking.slash(memberStake, members);
-    }
-
     /// @notice Returns true if signing of a digest is currently in progress.
     function isSigningInProgress() internal view returns (bool) {
         return signingStartTimestamp != 0;
-    }
-
-    /// @notice Returns true if the ongoing signing process timed out.
-    /// @dev There is a certain timeout for a signature to be produced, see
-    /// `signingTimeout`.
-    function hasSigningTimedOut() internal view returns (bool) {
-        return
-            signingStartTimestamp != 0 &&
-            /* solium-disable-next-line */
-            block.timestamp > signingStartTimestamp + signingTimeout;
     }
 
     /// @notice Marks the keep as closed.

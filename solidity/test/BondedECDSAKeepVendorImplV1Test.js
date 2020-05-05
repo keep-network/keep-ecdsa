@@ -2,7 +2,7 @@ import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
 const {constants, expectRevert} = require("@openzeppelin/test-helpers")
 
-const Registry = artifacts.require("Registry")
+const KeepRegistry = artifacts.require("KeepRegistry")
 const BondedECDSAKeepVendorImplV1Stub = artifacts.require(
   "BondedECDSAKeepVendorImplV1Stub"
 )
@@ -19,7 +19,7 @@ contract("BondedECDSAKeepVendorImplV1", async (accounts) => {
   const upgrader = accounts[2]
 
   before(async () => {
-    registry = await Registry.new()
+    registry = await KeepRegistry.new()
 
     await registry.approveOperatorContract(address0)
     await registry.approveOperatorContract(address1)
@@ -64,7 +64,7 @@ contract("BondedECDSAKeepVendorImplV1", async (accounts) => {
     it("reverts when called directly", async () => {
       await expectRevert(
         keepVendor.upgradeFactory(address1, {from: upgrader}),
-        "Registry address is not registered"
+        "KeepRegistry address is not registered"
       )
     })
   })

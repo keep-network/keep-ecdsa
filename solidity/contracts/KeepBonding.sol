@@ -1,6 +1,6 @@
 pragma solidity 0.5.17;
 
-import "@keep-network/keep-core/contracts/Registry.sol";
+import "@keep-network/keep-core/contracts/KeepRegistry.sol";
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -19,7 +19,7 @@ contract KeepBonding {
     using SafeMath for uint256;
 
     // Registry contract with a list of approved factories (operator contracts).
-    Registry internal registry;
+    KeepRegistry internal registry;
 
     // KEEP token staking contract.
     TokenStaking internal tokenStaking;
@@ -62,7 +62,7 @@ contract KeepBonding {
     /// @param registryAddress Keep registry contract address.
     /// @param tokenStakingAddress KEEP Token staking contract address.
     constructor(address registryAddress, address tokenStakingAddress) public {
-        registry = Registry(registryAddress);
+        registry = KeepRegistry(registryAddress);
         tokenStaking = TokenStaking(tokenStakingAddress);
     }
 
@@ -119,9 +119,9 @@ contract KeepBonding {
 
         unbondedValue[operator] = unbondedValue[operator].sub(amount);
 
-        (bool success, ) = tokenStaking.magpieOf(operator).call.value(amount)(
-            ""
-        );
+        (bool success, ) = tokenStaking.beneficiaryOf(operator).call.value(
+            amount
+        )("");
         require(success, "Transfer failed");
 
         emit UnbondedValueWithdrawn(operator, amount);
