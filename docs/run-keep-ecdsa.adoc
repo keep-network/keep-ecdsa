@@ -240,17 +240,18 @@ Doesn't exist for the public yet.
 This is a sample run command for illustration purposes only.
 
 ```
-export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
-export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
-export KEEP_CLIENT_PERSISTENCE_DIR=$(pwd)/persistence
+export KEEP_ECDSA_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
+export KEEP_ECDSA_CONFIG_DIR=$(pwd)/config
+export KEEP_ECDSA_PERSISTENCE_DIR=$(pwd)/persistence
 
-docker run -dit \
---volume $KEEP_CLIENT_PERSISTENCE_DIR:/mnt/keep-ecdsa/persistence \
---volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-ecdsa/config \
---env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
+docker run -d \
+--entrypoint /usr/local/bin/keep-ecdsa \
+--volume $KEEP_ECDSA_PERSISTENCE_DIR:/mnt/keep-ecdsa/persistence \
+--volume $KEEP_ECDSA_CONFIG_DIR:/mnt/keep-ecdsa/config \
+--env KEEP_ETHEREUM_PASSWORD=$KEEP_ECDSA_ETHEREUM_PASSWORD \
 --env LOG_LEVEL=debug \
 -p 3919:3919 \
-keep-ecdsa --config /mnt/keep-ecdsa/config/keep-ecdsa-config.toml start
+keepnetwork/keep-ecdsa:<version> --config /mnt/keep-ecdsa/config/keep-ecdsa-config.toml start
 ```
 
 == Deployment Considerations
