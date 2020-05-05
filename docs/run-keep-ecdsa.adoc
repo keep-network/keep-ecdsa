@@ -234,7 +234,13 @@ See the https://github.com/keep-network/keep-core/tree/master/docs/development#b
 
 === Get Image
 
-Doesn't exist for the public yet.
+https://hub.docker.com/r/keepnetwork/keep-ecdsa/
+
+*Latest:*
+`docker pull keepnetwork/keep-ecdsa`
+
+*Tag:*
+`docker pull keepnetwork/keep-ecdsa:<tag-version>`
 
 === Run Image
 This is a sample run command for illustration purposes only.
