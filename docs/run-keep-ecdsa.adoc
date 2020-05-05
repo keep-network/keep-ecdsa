@@ -50,10 +50,10 @@ Default port mappings.
 |Port
 
 |Ethereum Network
-|`8545` / `8546`
+| TCP: `8545` / `8546`
 
 |Keep Network
-|`3919`
+| TCP: `3919`
 |===
 
 [%header,cols=2*]
@@ -414,6 +414,5 @@ operator appointed during the delegation becomes eligible for work selection.
 === Authorizations
 Before operator is considered as eligible for work selection, authorizer appointed during the delegation needs to review
 and authorize TBTCSystem smart contract. Smart contracts can be authorized using KEEP token dashboard. Authorized operator contracts may slash or seize tokens in case of operator's misbehavior.  Authorized operator contracts are set in `SanctionedApplications.Addresses` in your Keep ECDSA config.
-
 
 
