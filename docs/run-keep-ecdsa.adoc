@@ -75,7 +75,8 @@ Application configurations are stored in a `.toml` file and passed to the applic
 
 ==== Sample
 
-```
+[source,toml]
+----
 # This is a TOML configuration file.
 
 # Connection details of ethereum blockchain.
@@ -112,8 +113,7 @@ Application configurations are stored in a `.toml` file and passed to the applic
 # This is an optional parameter, if not provided timeout for TSS protocol
 # pre-parameters generation will be set to `2 minutes`.
   PreParamsGenerationTimeout = "2m30s"
-
-```
+----
 
 ==== Parameters
 
@@ -245,7 +245,8 @@ https://hub.docker.com/r/keepnetwork/keep-ecdsa/
 === Run Image
 This is a sample run command for illustration purposes only.
 
-```
+[source,bash]
+----
 export KEEP_ECDSA_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
 export KEEP_ECDSA_CONFIG_DIR=$(pwd)/config
 export KEEP_ECDSA_PERSISTENCE_DIR=$(pwd)/persistence
@@ -258,7 +259,7 @@ docker run -d \
 --env LOG_LEVEL=debug \
 -p 3919:3919 \
 keepnetwork/keep-ecdsa:<version> --config /mnt/keep-ecdsa/config/keep-ecdsa-config.toml start
-```
+----
 
 == Deployment Considerations
 
