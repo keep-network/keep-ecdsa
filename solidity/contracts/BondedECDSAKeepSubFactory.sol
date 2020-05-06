@@ -316,14 +316,15 @@ contract BondedECDSAKeepSubFactory is
     /// @dev Selects a list of signers for the keep based on provided parameters.
     /// A caller of this function is expected to be an application for which
     /// member candidates were registered in a pool.
-    /// @
+    /// @param application The caller of a direct `openKeep`
+    /// or the original caller to the load balancer of `indirectOpenKeep`
     /// @param _groupSize Number of signers in the keep.
     /// @param _honestThreshold Minimum number of honest keep signers.
     /// @param _owner Address of the keep owner.
     /// @param _bond Value of ETH bond required from the keep in wei.
     /// @param _stakeLockDuration Stake lock duration in seconds.
     /// @return Created keep address.
-    function openKeep(
+    function _openKeep(
         address application,
         uint256 _groupSize,
         uint256 _honestThreshold,
