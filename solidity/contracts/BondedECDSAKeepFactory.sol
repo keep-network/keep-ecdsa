@@ -480,6 +480,24 @@ contract BondedECDSAKeepFactory is
         return tokenStaking.balanceOf(_operator);
     }
 
+    /// @notice Gets the total weight of operators
+    /// in the sortition pool for the given application.
+    /// @dev Reverts if sortition does not exits for the application.
+    /// @param _application Address of the application.
+    /// @return The sum of all registered operators' weights in the pool.
+    /// If no pool exists, returns 0.
+    function getSortitionPoolWeight(
+        address _application
+    ) public view returns (uint256) {
+        address poolAddress = candidatesPools[_application];
+
+        if (poolAddress == address(0)) {
+            return 0;
+        }
+
+        return BondedSortitionPool(poolAddress).totalWeight();
+    }
+
     /// @notice Gets bonded sortition pool of specific application for the
     /// operator.
     /// @dev Reverts if the operator is not registered for the application.
