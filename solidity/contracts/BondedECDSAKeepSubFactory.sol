@@ -331,7 +331,7 @@ contract BondedECDSAKeepSubFactory is
         address _owner,
         uint256 _bond,
         uint256 _stakeLockDuration
-    ) internal payable returns (address keepAddress) {
+    ) internal returns (address keepAddress) {
         require(_groupSize > 0, "Minimum signing group size is 1");
         require(_groupSize <= 16, "Maximum signing group size is 16");
         require(
