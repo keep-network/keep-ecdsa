@@ -17,13 +17,17 @@ contract BondedECDSAKeepLoadBalancerFactory is
 
     mapping(address => uint256) applicationRequestCounter;
 
-    address public owner;
+    address public factoryUpgrader;
 
     constructor() public {
-        owner = msg.sender;
+        factoryUpgrader = msg.sender;
     };
 
-    function addFactory(address factoryAddress) public onlyOwner {
+    function addFactory(address factoryAddress) public {
+        require(
+            msg.sender == factoryUpgrader,
+            "Only callable by factory upgrader"
+        );
         require(
             address(factoryB) == address(0),
             "Both factories already set"
