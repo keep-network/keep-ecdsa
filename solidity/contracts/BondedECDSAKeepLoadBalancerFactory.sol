@@ -83,7 +83,7 @@ contract BondedECDSAKeepLoadBalancerFactory is
                 factoryB.openKeepFeeEstimate()
             );
         }
-    };
+    }
 
     function _chooseFactory(address application)
         internal returns (IBondedECDSAKeepSubFactory factory) {
