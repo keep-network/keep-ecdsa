@@ -822,7 +822,7 @@ contract("BondedECDSAKeep", (accounts) => {
           hash256Digest1,
           preimage2
         ),
-        "Signed digest does not match double sha256 hash of the preimage"
+        "Signed digest does not match sha256 hash of the preimage"
       )
     })
 

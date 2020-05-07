@@ -27,6 +27,7 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
 
   const proxyAdmin = accounts[1]
   const implOwner = accounts[2]
+  const newAdmin = accounts[3]
 
   let currentAddress
   let keepVendor
@@ -286,6 +287,38 @@ contract("BondedECDSAKeepVendor", async (accounts) => {
       await expectRevert(
         keepVendor.completeUpgrade({from: proxyAdmin}),
         "Incorrect factory address"
+      )
+    })
+  })
+
+  describe("updateAdmin", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("sets new admin when called by admin", async () => {
+      await keepVendor.updateAdmin(newAdmin, {from: proxyAdmin})
+
+      assert.equal(await keepVendor.admin(), newAdmin, "Unexpected admin")
+    })
+
+    it("reverts when called by non-admin", async () => {
+      await expectRevert(
+        keepVendor.updateAdmin(newAdmin),
+        "Caller is not the admin"
+      )
+    })
+
+    it("reverts when called by admin after role transfer", async () => {
+      await keepVendor.updateAdmin(newAdmin, {from: proxyAdmin})
+
+      await expectRevert(
+        keepVendor.updateAdmin(accounts[0], {from: proxyAdmin}),
+        "Caller is not the admin"
       )
     })
   })
