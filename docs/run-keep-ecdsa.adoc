@@ -426,6 +426,13 @@ operator appointed during the delegation becomes eligible for work selection.
 
 === Authorizations
 Before operator is considered as eligible for work selection, authorizer appointed during the delegation needs to review
-and authorize TBTCSystem smart contract. Smart contracts can be authorized using KEEP token dashboard. Authorized operator contracts may slash or seize tokens in case of operator's misbehavior.  Authorized operator contracts are set in `SanctionedApplications.Addresses` in your Keep ECDSA config.
+and authorize the following contracts:
+
+- BondedECDSAKeepFactory operator contract in TokenStaking contract:
+  - Allows the factory to slash tokens on misbehaviour and makes the operator eligible for work selection.
+- Sortition pool:
+  - Allows for the authorized application to operate on bonds stored in the `KeepBonding` contract.
+
+ Smart contracts can be authorized using KEEP token dashboard. Authorized operator contracts may slash or seize tokens in case of operator's misbehavior.  Authorized operator contracts are set in `SanctionedApplications.Addresses` in your Keep ECDSA config.
 
 
