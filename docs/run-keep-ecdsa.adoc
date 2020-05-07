@@ -234,13 +234,13 @@ See the https://github.com/keep-network/keep-core/tree/master/docs/development#b
 
 === Get Image
 
-https://hub.docker.com/r/keepnetwork/keep-ecdsa/
+https://hub.docker.com/r/keepnetwork/keep-ecdsa-client/
 
 *Latest:*
-`docker pull keepnetwork/keep-ecdsa`
+`docker pull keepnetwork/keep-ecdsa-client`
 
 *Tag:*
-`docker pull keepnetwork/keep-ecdsa:<tag-version>`
+`docker pull keepnetwork/keep-ecdsa-client:<tag-version>`
 
 === Run Image
 This is a sample run command for illustration purposes only.
@@ -258,7 +258,7 @@ docker run -d \
 --env KEEP_ETHEREUM_PASSWORD=$KEEP_ECDSA_ETHEREUM_PASSWORD \
 --env LOG_LEVEL=debug \
 -p 3919:3919 \
-keepnetwork/keep-ecdsa:<version> --config /mnt/keep-ecdsa/config/keep-ecdsa-config.toml start
+keepnetwork/keep-ecdsa-client:<version> --config /mnt/keep-ecdsa/config/keep-ecdsa-config.toml start
 ----
 
 == Deployment Considerations
