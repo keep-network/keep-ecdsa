@@ -1,5 +1,6 @@
 pragma solidity 0.5.17;
 
+
 /// @title ECDSA Keep
 /// @notice Contract reflecting an ECDSA keep.
 contract IBondedECDSAKeep {
@@ -50,8 +51,8 @@ contract IBondedECDSAKeep {
 
     /// @notice Submits a fraud proof for a valid signature from this keep that was
     /// not first approved via a call to sign.
-    /// @dev The function expects the signed digest to be calculated as a double
-    /// sha256 hash (hash256) of the preimage: `sha256(sha256(_preimage))`.
+    /// @dev The function expects the signed digest to be calculated as a sha256
+    /// hash of the preimage: `sha256(_preimage)`.
     /// @param _v Signature's header byte: `27 + recoveryID`.
     /// @param _r R part of ECDSA signature.
     /// @param _s S part of ECDSA signature.
