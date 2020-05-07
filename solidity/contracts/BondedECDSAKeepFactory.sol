@@ -491,9 +491,10 @@ contract BondedECDSAKeepFactory is
     ) public view returns (uint256) {
         address poolAddress = candidatesPools[_application];
 
-        if (poolAddress == address(0)) {
-            return 0;
-        }
+        require(
+            poolAddress != address(0),
+            "No pool found for the application"
+        );
 
         return BondedSortitionPool(poolAddress).totalWeight();
     }
