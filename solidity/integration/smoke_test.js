@@ -1,12 +1,7 @@
-const BondedECDSAKeepVendor = artifacts.require("./BondedECDSAKeepVendor.sol")
-const BondedECDSAKeepVendorImplV1 = artifacts.require(
-  "./BondedECDSAKeepVendorImplV1.sol"
-)
 const BondedECDSAKeepFactory = artifacts.require("./BondedECDSAKeepFactory.sol")
 const BondedECDSAKeep = artifacts.require("./BondedECDSAKeep.sol")
 
 const RandomBeaconService = artifacts.require("IRandomBeacon")
-const {RandomBeaconAddress} = require("../migrations/external-contracts")
 
 // This test validates integration between on-chain contracts and off-chain client.
 // It also validates integration with the random beacon by verifying update of
@@ -18,8 +13,6 @@ const {RandomBeaconAddress} = require("../migrations/external-contracts")
 // To execute this smoke test run:
 // truffle exec integration/smoke_test.js
 module.exports = async function () {
-  const accounts = await web3.eth.getAccounts()
-
   // It assumes that account[0] is contracts deployer for migrations and
   // accounts[1-4] are configured as keep members.
   const members = [accounts[1], accounts[2], accounts[3], accounts[4]]

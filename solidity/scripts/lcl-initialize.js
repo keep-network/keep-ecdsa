@@ -5,11 +5,6 @@ const TokenStaking = artifacts.require(
   "@keep-network/keep-core/build/truffle/TokenStaking"
 )
 
-const {
-  TokenStakingAddress,
-  TBTCSystemAddress,
-} = require("../migrations/external-contracts")
-
 module.exports = async function () {
   try {
     // Assuming BTC/ETH rate = 50 to cover a keep bond of 1 BTC we need to have
