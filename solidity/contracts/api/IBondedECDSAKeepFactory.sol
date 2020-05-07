@@ -29,5 +29,5 @@ interface IBondedECDSAKeepFactory {
     /// @return The sum of all registered operators' weights in the pool.
     function getSortitionPoolWeight(
         address _application
-    ) external view returns (uint256 poolWeight);
+    ) external view returns (uint256);
 }
