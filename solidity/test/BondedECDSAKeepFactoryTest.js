@@ -1447,6 +1447,32 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     })
   })
 
+  describe("getSortitionPoolWeight", async () => {
+    before(async () => {
+      await initializeNewFactory()
+    })
+
+    it("returns pool weight if pool exists for application", async () => {
+      await initializeMemberCandidates()
+      await registerMemberCandidates()
+
+      const poolWeight = await keepFactory.getSortitionPoolWeight(application)
+
+      const expectedPoolWeight = new BN(600000);
+      expect(poolWeight).to.eq.BN(
+          expectedPoolWeight,
+          "incorrect sortition pool weight"
+      )
+    })
+
+    it("it reverts when pool doesn't exist for application", async () => {
+      await expectRevert(
+          keepFactory.getSortitionPoolWeight(application),
+          "No pool found for the application"
+      )
+    })
+  })
+
   async function initializeNewFactory() {
     registry = await KeepRegistry.new()
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
