@@ -485,7 +485,7 @@ contract BondedECDSAKeepFactory is
     /// @dev Reverts if sortition does not exits for the application.
     /// @param _application Address of the application.
     /// @return The sum of all registered operators' weights in the pool.
-    /// If no pool exists, returns 0.
+    /// Reverts if sortition pool for the application does not exist.
     function getSortitionPoolWeight(
         address _application
     ) public view returns (uint256) {
