@@ -486,15 +486,14 @@ contract BondedECDSAKeepFactory is
     /// @param _application Address of the application.
     /// @return The sum of all registered operators' weights in the pool.
     /// Reverts if sortition pool for the application does not exist.
-    function getSortitionPoolWeight(
-        address _application
-    ) public view returns (uint256) {
+    function getSortitionPoolWeight(address _application)
+        public
+        view
+        returns (uint256)
+    {
         address poolAddress = candidatesPools[_application];
 
-        require(
-            poolAddress != address(0),
-            "No pool found for the application"
-        );
+        require(poolAddress != address(0), "No pool found for the application");
 
         return BondedSortitionPool(poolAddress).totalWeight();
     }
