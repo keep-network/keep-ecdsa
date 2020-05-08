@@ -1458,17 +1458,17 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
       const poolWeight = await keepFactory.getSortitionPoolWeight(application)
 
-      const expectedPoolWeight = new BN(600000);
+      const expectedPoolWeight = new BN(600000)
       expect(poolWeight).to.eq.BN(
-          expectedPoolWeight,
-          "incorrect sortition pool weight"
+        expectedPoolWeight,
+        "incorrect sortition pool weight"
       )
     })
 
     it("it reverts when pool doesn't exist for application", async () => {
       await expectRevert(
-          keepFactory.getSortitionPoolWeight(application),
-          "No pool found for the application"
+        keepFactory.getSortitionPoolWeight(application),
+        "No pool found for the application"
       )
     })
   })
