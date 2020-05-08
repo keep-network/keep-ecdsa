@@ -215,15 +215,13 @@ jobs:
       - attach_workspace:
           at: /tmp/keep-ecdsa
       - run:
-          name: Load Docker images
+          name: Load Docker image
           command: |
             docker load -i /tmp/keep-ecdsa/docker-images/keep-ecdsa.tar
-            docker load -i /tmp/keep-ecdsa/docker-images/initcontainer-provision-keep-ecdsa.tar
       - run:
-          name: Tag Docker images
+          name: Tag Docker image
           command: |
             docker tag keep-ecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-ecdsa
-            docker tag initcontainer-provision-keep-ecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-ecdsa
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -234,6 +232,24 @@ jobs:
           registry-url: $GCR_REGISTRY_URL
           image: keep-ecdsa
           tag: latest
+  publish_initcontainer_provision_keep_ecdsa:
+    executor: gcp-gcr/default
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-ecdsa
+      - run:
+          name: Load Docker image
+          command: |
+            docker load -i /tmp/keep-ecdsa/docker-images/initcontainer-provision-keep-ecdsa.tar
+      - run:
+          name: Tag Docker image
+          command: |
+            docker tag initcontainer-provision-keep-ecdsa $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-ecdsa
+      - gcp-gcr/gcr-auth:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
@@ -264,43 +280,14 @@ workflows:
   solidity:
     jobs:
       - build_and_test_solidity
-  build-test-migrate-publish-keep-dev:
+  build-test-publish-keep-dev:
     jobs:
       - build_client_and_test_go
-      - migrate_contracts:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-      - publish_npm_package:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-      - publish_contract_data:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-      - build_initcontainer:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-            - build_client_and_test_go
       - publish_client:
           filters:
             branches:
               only: master
           context: keep-dev
-          requires:
-            - build_initcontainer
   build-test-migrate-publish-keep-test:
     jobs:
       - keep_test_approval:
@@ -338,6 +325,17 @@ workflows:
           requires:
             - migrate_contracts
       - publish_client:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - build_client_and_test_go
+            - build_initcontainer
+            - migrate_contracts
+      - publish_initcontainer_provision_keep_ecdsa:
           context: keep-test
           filters:
             tags:
