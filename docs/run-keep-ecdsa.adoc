@@ -169,7 +169,7 @@ Application configurations are stored in a `.toml` file and passed to the applic
 |Required
 
 |`Addresses`
-|Comma delimited hex-encoded list of application addresses authorized for a given operator.
+|Comma delimited hex-encoded list of application addresses authorized to bond for a given operator.
 |[""]
 |Yes
 |===
@@ -386,7 +386,14 @@ Contract addresses needed to boot a Keep ECDSA client:
 
 |BondedECDSAKeepFactory
 |`0x385D0793B464851F214DF41AE08D2C3760dF41f0`
+
+|Sanctioned Applications
+|`0x2b70907b5c44897030ea1369591ddcd23c5d85d6` (tBTC's system contract)
+
+|tBTC Sortition pool (for <<Authorizations,authorization>>)
+|`0xf5bc2812344ecacdd45c0b53824168f522533fc5`
 |===
+
 
 == Staking
 
@@ -425,14 +432,22 @@ Delegation takes immediate effect but can be cancelled within one week without a
 operator appointed during the delegation becomes eligible for work selection.
 
 === Authorizations
-Before operator is considered as eligible for work selection, authorizer appointed during the delegation needs to review
-and authorize the following contracts:
+Before operator is considered as eligible for work selection, the authorizer
+appointed during the delegation needs to review and perform the following
+authorizations:
 
-- BondedECDSAKeepFactory operator contract in TokenStaking contract:
-  - Allows the factory to slash tokens on misbehaviour and makes the operator eligible for work selection.
-- Sortition pool:
-  - Allows for the authorized application to operate on bonds stored in the `KeepBonding` contract.
+BondedECDSAKeepFactory operator contract::
+  Allows the factory to slash tokens on misbehaviour and makes the operator
+  eligible for work selection. This is an operator contract much like the
+  `KeepRandomBeaconOperator` contract. Uses `tokenStaking.authorizeOperatorContract`.
+Bond Access for tBTC::
+  Allows for the authorized application (tBTC) to bond from the available bond value
+  stored in the `KeepBonding` contract. Uses `keepBonding.authorizeSortitionPoolContract`.
 
- Smart contracts can be authorized using KEEP token dashboard. Authorized operator contracts may slash or seize tokens in case of operator's misbehavior.  Authorized operator contracts are set in `SanctionedApplications.Addresses` in your Keep ECDSA config.
-
-
+These smart contracts can be authorized using the KEEP token dashboard. As always,
+authorized operator contracts may slash or seize tokens in case of operator
+misbehavior. Contracts authorized for bonding are set in `SanctionedApplications.Addresses`
+in the config file. The operator must explicitly register as a candidate for selection,
+as a safeguard against choosing clients that have not yet booted up; the sanctioned
+applications list allows the client software to automatically register as a candidate
+on startup.
