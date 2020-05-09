@@ -22,4 +22,13 @@ interface IBondedECDSAKeepFactory {
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
     function openKeepFeeEstimate() external view returns (uint256);
+
+    /// @notice Gets the total weight of operators
+    /// in the sortition pool for the given application.
+    /// @param _application Address of the application.
+    /// @return The sum of all registered operators' weights in the pool.
+    /// Reverts if sortition pool for the application does not exist.
+    function getSortitionPoolWeight(
+        address _application
+    ) external view returns (uint256);
 }
