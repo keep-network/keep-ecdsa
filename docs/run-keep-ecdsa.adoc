@@ -385,7 +385,7 @@ Contract addresses needed to boot a Keep ECDSA client:
 |
 
 |BondedECDSAKeepFactory
-|`0x385D0793B464851F214DF41AE08D2C3760dF41f0`
+|`0x17caddf97a1d1123efb7b233cb16c76c31a96e02`
 
 |Sanctioned Applications
 |`0x2b70907b5c44897030ea1369591ddcd23c5d85d6` (tBTC's system contract)
