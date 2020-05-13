@@ -253,6 +253,7 @@ func (ec *EthereumChain) getKeepContract(address common.Address) (*contract.Bond
 		address,
 		ec.accountKey,
 		ec.client,
+		ec.nonceManager,
 		ec.transactionMutex,
 	)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
@@ -20,6 +21,7 @@ type EthereumChain struct {
 	client                         *ethclient.Client
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *blockcounter.EthereumBlockCounter
+	nonceManager                   *ethutil.NonceManager
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -46,6 +48,11 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 
 	transactionMutex := &sync.Mutex{}
 
+	nonceManager := ethutil.NewNonceManager(
+		accountKey.Address,
+		client,
+	)
+
 	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(BondedECDSAKeepFactoryContractName)
 	if err != nil {
 		return nil, err
@@ -54,6 +61,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		*bondedECDSAKeepFactoryContractAddress,
 		accountKey,
 		client,
+		nonceManager,
 		transactionMutex,
 	)
 	if err != nil {
@@ -72,8 +80,9 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		config:                         config,
 		accountKey:                     accountKey,
 		client:                         client,
-		transactionMutex:               transactionMutex,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		blockCounter:                   blockCounter,
+		nonceManager:                   nonceManager,
+		transactionMutex:               transactionMutex,
 	}, nil
 }
