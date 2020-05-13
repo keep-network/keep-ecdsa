@@ -36,7 +36,7 @@ func (ps *persistentStorage) save(keepAddress common.Address, signer *tss.Thresh
 		keepAddress.String(),
 		// Take just the first 20 bytes of member ID so that we don't produce
 		// too long file names.
-		fmt.Sprintf("/membership_%s", signer.MemberID().String()[0:40]),
+		fmt.Sprintf("/membership_%.40s", signer.MemberID().String()),
 	)
 }
 
