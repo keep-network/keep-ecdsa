@@ -326,7 +326,11 @@ Trust math, not hardware.
 
 ==== Boostrap Peers
 
-==== Contracts
+[.small]
+```
+"/dns4/bst-a01.ecdsa.keep.boar.network/tcp/4001/ipfs/16Uiu2HAkzYFHsqbwt64ZztWWK1hyeLntRNqWMYFiZjaKu1PZgikN",
+"/dns4/bst-b01.ecdsa.keep.boar.network/tcp/4001/ipfs/16Uiu2HAkxLttmh3G8LYzAy1V1g1b3kdukzYskjpvv5DihY4wvx7D",
+```
 
 ==== Contracts
 
