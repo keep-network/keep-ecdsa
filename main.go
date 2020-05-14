@@ -19,10 +19,20 @@ const (
 )
 
 var (
+	version  string
+	revision string
+
 	configPath string
 )
 
 func main() {
+	if version == "" {
+		version = "unknown"
+	}
+	if revision == "" {
+		revision = "unknown"
+	}
+
 	err := logging.Configure(os.Getenv("LOG_LEVEL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to configure logging: [%v]\n", err)
@@ -38,6 +48,7 @@ func main() {
 			Email: "info@keep.network",
 		},
 	}
+	app.Version = fmt.Sprintf("%s (revision %s)", version, revision)
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "config,c",
