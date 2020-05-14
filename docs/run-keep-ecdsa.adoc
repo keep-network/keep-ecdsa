@@ -328,13 +328,23 @@ Trust math, not hardware.
 
 ==== Contracts
 
+==== Contracts
+
+Contract addresses needed to boot a Keep ECDSA client:
+
 [%header,cols=2*]
 |===
 |Bonding
 |
 
 |BondedECDSAKeepFactory
-|""
+|`0x18758f16988E61Cd4B61E6B930694BD9fB07C22F`
+
+|Sanctioned Applications
+|`<not yet deployed>` (tBTC's system contract)
+
+|tBTC Sortition pool (for <<Authorizations,authorization>>)
+|`<not yet deployed>`
 |===
 
 === Testnet
