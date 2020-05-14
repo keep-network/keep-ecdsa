@@ -48,6 +48,7 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		cmd.StartCommand,
+		cmd.EthereumCommand,
 	}
 
 	err = app.Run(os.Args)
