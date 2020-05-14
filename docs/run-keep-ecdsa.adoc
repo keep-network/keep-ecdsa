@@ -326,7 +326,15 @@ Trust math, not hardware.
 
 ==== Boostrap Peers
 
+[.small]
+```
+"/dns4/bst-a01.ecdsa.keep.boar.network/tcp/4001/ipfs/16Uiu2HAkzYFHsqbwt64ZztWWK1hyeLntRNqWMYFiZjaKu1PZgikN",
+"/dns4/bst-b01.ecdsa.keep.boar.network/tcp/4001/ipfs/16Uiu2HAkxLttmh3G8LYzAy1V1g1b3kdukzYskjpvv5DihY4wvx7D",
+```
+
 ==== Contracts
+
+Contract addresses needed to boot a Keep ECDSA client:
 
 [%header,cols=2*]
 |===
@@ -334,7 +342,13 @@ Trust math, not hardware.
 |
 
 |BondedECDSAKeepFactory
-|""
+|`0x18758f16988E61Cd4B61E6B930694BD9fB07C22F`
+
+|Sanctioned Applications
+|`<not yet deployed>` (tBTC's system contract)
+
+|tBTC Sortition pool (for <<Authorizations,authorization>>)
+|`<not yet deployed>`
 |===
 
 === Testnet
