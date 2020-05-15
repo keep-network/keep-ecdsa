@@ -334,6 +334,8 @@ Trust math, not hardware.
 "/dns4/keep-boot-validator-1.prod-us-west-2.staked.cloud/tcp/3920/ipfs/16Uiu2HAmHbbMTDDsT2f6z8zMgDtJkTUDJQSYsQYUpaJjdMjiYNEf",
 "/dns4/keep-boot-validator-2.prod-us-west-2.staked.cloud/tcp/3920/ipfs/16Uiu2HAmBXoNLLMYU9EcKYH6JN5tA498sXQHFWk4heK22RfXD7wC",
 "/ip4/54.39.179.73/tcp/4001/ipfs/16Uiu2HAkyYtzNoWuF3ULaA7RMfVAxvfQQ9YRvRT3TK4tXmuZtaWi",
+"/ip4/54.39.186.166/tcp/4001/ipfs/16Uiu2HAkzD5n4mtTSddzqVY3wPJZmtvWjARTSpr4JbDX9n9PDJRh",
+"/ip4/54.39.179.134/tcp/4001/ipfs/16Uiu2HAkuxCuWA4zXnsj9R6A3b3a1TKUjQvBpAEaJ98KGdGue67p",
 ```
 
 ==== Contracts
