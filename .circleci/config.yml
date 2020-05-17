@@ -284,10 +284,12 @@ workflows:
     jobs:
       - build_client_and_test_go
       - publish_client:
+          context: keep-dev
           filters:
             branches:
               only: master
-          context: keep-dev
+          requires:
+            - build_client_and_test_go
   build-test-migrate-publish-keep-test:
     jobs:
       - keep_test_approval:
