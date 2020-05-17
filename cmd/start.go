@@ -126,6 +126,7 @@ func Start(c *cli.Context) error {
 		ctx,
 		config.LibP2P,
 		networkPrivateKey,
+		libp2p.ProtocolECDSA,
 		firewall.NewStakeOrActiveKeepPolicy(ethereumChain, stakeMonitor),
 		retransmission.NewTimeTicker(ctx, 1*time.Second),
 		libp2p.WithRoutingTableRefreshPeriod(routingTableRefreshPeriod),

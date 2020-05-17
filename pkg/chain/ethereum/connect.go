@@ -2,7 +2,9 @@ package ethereum
 
 import (
 	"fmt"
+	"math/big"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -14,6 +16,21 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
 
+var (
+	// DefaultMiningCheckInterval is the default interval in which transaction
+	// mining status is checked. If the transaction is not mined within this
+	// time, the gas price is increased and transaction is resubmitted.
+	// This value can be overwritten in the configuration file.
+	DefaultMiningCheckInterval = 60 * time.Second
+
+	// DefaultMaxGasPrice specifies the default maximum gas price the client is
+	// willing to pay for the transaction to be mined. The offered transaction
+	// gas price can not be higher than the max gas price value. If the maximum
+	// allowed gas price is reached, no further resubmission attempts are
+	// performed. This value can be overwritten in the configuration file.
+	DefaultMaxGasPrice = big.NewInt(50000000000) // 50 Gwei
+)
+
 // EthereumChain is an implementation of ethereum blockchain interface.
 type EthereumChain struct {
 	config                         *ethereum.Config
@@ -21,6 +38,7 @@ type EthereumChain struct {
 	client                         *ethclient.Client
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *blockcounter.EthereumBlockCounter
+	miningWaiter                   *ethutil.MiningWaiter
 	nonceManager                   *ethutil.NonceManager
 
 	// transactionMutex allows interested parties to forcibly serialize
@@ -53,6 +71,19 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		client,
 	)
 
+	checkInterval := DefaultMiningCheckInterval
+	maxGasPrice := DefaultMaxGasPrice
+	if config.MiningCheckInterval != 0 {
+		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
+	}
+	if config.MaxGasPrice != 0 {
+		maxGasPrice = new(big.Int).SetUint64(config.MaxGasPrice)
+	}
+
+	logger.Infof("using [%v] mining check interval", checkInterval)
+	logger.Infof("using [%v] wei max gas price", maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+
 	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(BondedECDSAKeepFactoryContractName)
 	if err != nil {
 		return nil, err
@@ -62,6 +93,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		accountKey,
 		client,
 		nonceManager,
+		miningWaiter,
 		transactionMutex,
 	)
 	if err != nil {
@@ -83,6 +115,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
+		miningWaiter:                   miningWaiter,
 		transactionMutex:               transactionMutex,
 	}, nil
 }
