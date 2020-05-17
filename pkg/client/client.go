@@ -299,6 +299,22 @@ func checkAwaitingKeyGenerationForKeep(
 		return nil
 	}
 
+	// If the key material is stored in the registry it means that the key
+	// generation succeeded and public key transaction has been submitted.
+	// There are two scenarios possible:
+	// - public key submission transactions are still mining,
+	// - conflicting public key has been submitted.
+	// In both cases, the client should not attempt to generate the key again.
+	if keepsRegistry.HasSigner(keep) {
+		logger.Warningf(
+			"keep public key is not registered on-chain but key material "+
+				"is stored on disk; skipping key generation; PLEASE INSPECT "+
+				"PUBLIC KEY SUBMISSION TRANSACTION FOR KEEP [%v]",
+			keep.String(),
+		)
+		return nil
+	}
+
 	members, err := ethereumChain.GetMembers(keep)
 	if err != nil {
 		return err

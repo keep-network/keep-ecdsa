@@ -67,6 +67,16 @@ func (k *Keeps) GetSigners(keepAddress common.Address) ([]*tss.ThresholdSigner, 
 	return signers, nil
 }
 
+// HasSigner returns true if at least one signer exists in the registry
+// for the keep with the given addres.
+func (k *Keeps) HasSigner(keepAddress common.Address) bool {
+	k.myKeepsMutex.RLock()
+	defer k.myKeepsMutex.RUnlock()
+
+	_, has := k.myKeeps[keepAddress]
+	return has
+}
+
 // GetKeepsAddresses returns addresses of all registered keeps.
 func (k *Keeps) GetKeepsAddresses() []common.Address {
 	k.myKeepsMutex.RLock()
