@@ -245,8 +245,8 @@ github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec h
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec/go.mod h1:xR8jf3/VJAjh3nWu5tFe8Yxnt2HvWsqZHfGef1P5oDk=
 github.com/keep-network/keep-common v1.1.0 h1:m5ZDfUpH+DVqQz3qIi+E53utWHv7kVSooPD01kVG3n8=
 github.com/keep-network/keep-common v1.1.0/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
-github.com/keep-network/keep-core v1.2.0-rc.1 h1:wLGulrR33ivFczdhtfp3J774htpIsUEQVbVUbhzBCyo=
-github.com/keep-network/keep-core v1.2.0-rc.1/go.mod h1:+8wx+DsRXczgc0By80PecvDTVu9HRh2Ti671/uFdGsQ=
+github.com/keep-network/keep-core v1.2.0 h1:SYUlMqcZ2cqfJGSWQKdsf+MYNrl5MAUz+ahP5EGZw9E=
+github.com/keep-network/keep-core v1.2.0/go.mod h1:+8wx+DsRXczgc0By80PecvDTVu9HRh2Ti671/uFdGsQ=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=

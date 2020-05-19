@@ -19,7 +19,7 @@ require (
 	github.com/google/gofuzz v1.1.0
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/keep-common v1.1.0
-	github.com/keep-network/keep-core v1.2.0-rc.1
+	github.com/keep-network/keep-core v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
 )
