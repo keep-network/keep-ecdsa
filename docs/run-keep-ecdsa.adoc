@@ -351,10 +351,10 @@ Contract addresses needed to boot a Keep ECDSA client:
 |`0x18758f16988E61Cd4B61E6B930694BD9fB07C22F`
 
 |Sanctioned Applications
-|`<not yet deployed>` (tBTC's system contract)
+|`0x41A1b40c1280883eA14C6a71e23bb66b83B3fB59` (tBTC's system contract)
 
 |tBTC Sortition pool (for <<Authorizations,authorization>>)
-|`<not yet deployed>`
+|`0x4b558ff45f08198e00cc13de2ccefb9998e0290e`
 |===
 
 === Testnet
