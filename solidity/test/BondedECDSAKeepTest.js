@@ -1423,7 +1423,9 @@ contract("BondedECDSAKeep", (accounts) => {
       const startBlock = await web3.eth.getBlockNumber()
 
       const res = await keep.distributeETHReward({value: ethValue})
-      truffleAssert.eventEmitted(res, "ETHRewardDistributed")
+      truffleAssert.eventEmitted(res, "ETHRewardDistributed", (event) => {
+        return web3.utils.toBN(event.amount).eq(ethValue)
+      })
 
       assert.lengthOf(
         await keep.getPastEvents("ETHRewardDistributed", {
@@ -1667,7 +1669,9 @@ contract("BondedECDSAKeep", (accounts) => {
       const startBlock = await web3.eth.getBlockNumber()
 
       const res = await keep.distributeERC20Reward(token.address, erc20Value)
-      truffleAssert.eventEmitted(res, "ERC20RewardDistributed")
+      truffleAssert.eventEmitted(res, "ERC20RewardDistributed", (event) => {
+        return web3.utils.toBN(event.amount).eq(erc20Value)
+      })
 
       assert.lengthOf(
         await keep.getPastEvents("ERC20RewardDistributed", {
