@@ -295,6 +295,23 @@ contract KeepBonding {
         authorizedPools[_operator][_poolAddress] = true;
     }
 
+    /// @notice Deauthorizes sortition pool for the provided operator.
+    /// Authorizer may deauthorize individual sortition pool in case the
+    /// operator should no longer be eligible for work selection and the
+    /// application represented by the sortition pool should no longer be
+    /// eligible to create bonds for the operator.
+    /// @dev Only operator's authorizer can call this function.
+    function deauthorizeSortitionPoolContract(
+        address _operator,
+        address _poolAddress
+    ) public {
+        require(
+            tokenStaking.authorizerOf(_operator) == msg.sender,
+            "Not authorized"
+        );
+        authorizedPools[_operator][_poolAddress] = false;
+    }
+
     /// @notice Checks if the sortition pool has been authorized for the
     /// provided operator by its authorizer.
     /// @dev See authorizeSortitionPoolContract.
