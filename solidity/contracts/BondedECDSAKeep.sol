@@ -103,10 +103,10 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     event PublicKeyPublished(bytes publicKey);
 
     // Notification that ETH reward has been distributed to keep members.
-    event ETHRewardDistributed();
+    event ETHRewardDistributed(uint256 amount);
 
     // Notification that ERC20 reward has been distributed to keep members.
-    event ERC20RewardDistributed();
+    event ERC20RewardDistributed(address indexed token, uint256 amount);
 
     // Notification that the keep was closed by the owner.
     // Members no longer need to support this keep.
@@ -407,7 +407,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         uint256 remainder = msg.value.mod(memberCount);
         memberETHBalances[members[memberCount - 1]] += dividend.add(remainder);
 
-        emit ETHRewardDistributed();
+        emit ETHRewardDistributed(msg.value);
     }
 
     /// @notice Distributes ERC20 reward evenly across all keep signer beneficiaries.
@@ -447,7 +447,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             dividend.add(remainder)
         );
 
-        emit ERC20RewardDistributed();
+        emit ERC20RewardDistributed(_tokenAddress, _value);
     }
 
     /// @notice Gets current amount of ETH hold in the keep for the member.
