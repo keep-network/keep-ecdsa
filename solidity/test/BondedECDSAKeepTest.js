@@ -1670,7 +1670,10 @@ contract("BondedECDSAKeep", (accounts) => {
 
       const res = await keep.distributeERC20Reward(token.address, erc20Value)
       truffleAssert.eventEmitted(res, "ERC20RewardDistributed", (event) => {
-        return web3.utils.toBN(event.amount).eq(erc20Value)
+        return (
+          token.address == event.token &&
+          web3.utils.toBN(event.amount).eq(erc20Value)
+        )
       })
 
       assert.lengthOf(
