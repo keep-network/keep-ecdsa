@@ -34,10 +34,10 @@ Keep ECDSA client.
 |n1-standard-2
 
 |AWS
-|t3.medium
+|c5.large
 
 |Azure
-|A2 v2
+|F2s v2
 
 |Self-hosted
 |2 vCPU / 4 GiB RAM / 1 GiB Persistent Storage
