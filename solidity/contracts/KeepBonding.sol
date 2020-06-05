@@ -1,3 +1,17 @@
+/**
+▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓▌        ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀
+  ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌
+▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+
+                           Trust math, not hardware.
+*/
+
 pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/KeepRegistry.sol";
@@ -5,13 +19,6 @@ import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-
-// TODO: This contract is expected to implement functions defined by IBonding
-// interface defined in @keep-network/sortition-pools. After merging the
-// repositories we need to move IBonding definition to sit closer to KeepBonding
-// contract so that sortition pools import it for own needs. It is the bonding
-// module which should define an interface, and sortition pool module should be
-// just importing it.
 
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
@@ -293,6 +300,23 @@ contract KeepBonding {
             "Not authorized"
         );
         authorizedPools[_operator][_poolAddress] = true;
+    }
+
+    /// @notice Deauthorizes sortition pool for the provided operator.
+    /// Authorizer may deauthorize individual sortition pool in case the
+    /// operator should no longer be eligible for work selection and the
+    /// application represented by the sortition pool should no longer be
+    /// eligible to create bonds for the operator.
+    /// @dev Only operator's authorizer can call this function.
+    function deauthorizeSortitionPoolContract(
+        address _operator,
+        address _poolAddress
+    ) public {
+        require(
+            tokenStaking.authorizerOf(_operator) == msg.sender,
+            "Not authorized"
+        );
+        authorizedPools[_operator][_poolAddress] = false;
     }
 
     /// @notice Checks if the sortition pool has been authorized for the
