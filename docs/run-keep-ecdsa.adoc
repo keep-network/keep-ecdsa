@@ -31,7 +31,7 @@ Keep ECDSA client.
 |Machine Type
 
 |Google Cloud
-|n1-standard-2
+|n2-highcpu-2
 
 |AWS
 |c5.large
@@ -40,7 +40,7 @@ Keep ECDSA client.
 |F2s v2
 
 |Self-hosted
-|2 vCPU / 4 GiB RAM / 1 GiB Persistent Storage
+|2 vCPU / 2 GiB RAM / 1 GiB Persistent Storage
 |===
 
 == Configuration
