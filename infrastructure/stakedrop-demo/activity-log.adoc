@@ -57,12 +57,9 @@ staked keep-ecdsa-client on the Ropsten testnet.
 ... Expected Output:
     
     Created token grant with 300000000000000000000000 KEEP for account: 0x91c9122ee29ab47908f00dc2cafaa41454f1722f
-
-  You can follow the transaction at https://ropsten.etherscan.io/tx/0x71129ec72b54529ee96298a87a734df3275baf92b918d6d48b6b8394ef2addc7
-
-  You can manage your token grants at: https://dashboard.test.keep.network.
-
-  You can find us on Discord at: https://discord.gg/jqxBU4m.
+    You can follow the transaction at https://ropsten.etherscan.io/tx/0x71129ec72b54529ee96298a87a734df3275baf92b918d6d48b6b8394ef2addc7
+    You can manage your token grants at: https://dashboard.test.keep.network.
+    You can find us on Discord at: https://discord.gg/jqxBU4m.
 
 . Delegate a stake from your grant
 .. https://keep-network.gitbook.io/staking-documentation/how-to-stake/how-to-get-staking-after-tge[Visual Instructions]
