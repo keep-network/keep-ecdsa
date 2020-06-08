@@ -1,7 +1,6 @@
 # Stakedrop Demo Activity Log
 
-This log contains step by step actions and expected output to go from a new Ethereum to running a
-staked keep-ecdsa-client on the Ropsten testnet.
+This activty log contains step-by-step actions to go from a new Ethereum account to running a staked keep-ecdsa-client on the Ropsten testnet.
 
 
 ## Things You Need
