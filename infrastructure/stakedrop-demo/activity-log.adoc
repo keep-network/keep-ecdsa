@@ -15,10 +15,10 @@ This activty log contains step-by-step actions to go from a new Ethereum account
 
 ## Activity Log
 
-. Prepare stakedrop-demo directory
+. **Create stakedrop-demo directory**
   .. `mkdir -p stakedrop-demo/config stakedrop-demo/persistence`
 
-. Prepare keep-ecdsa-client files
+. **Create keep-ecdsa-client files**
   .. `cd stakedrop-demo/config`
   .. `touch config.toml keep-ecdsa-operator-account-address.txt keep-ecdsa-operator-account-keyfile keep-ecdsa-operator-account-password.txt`
   ... Final directory structure:
