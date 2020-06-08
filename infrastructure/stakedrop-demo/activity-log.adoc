@@ -22,8 +22,7 @@ This activty log contains step-by-step actions to go from a new Ethereum account
   .. `cd stakedrop-demo/config`
   .. `touch config.toml keep-ecdsa-operator-account-address.txt keep-ecdsa-operator-account-keyfile keep-ecdsa-operator-account-password.txt`
   ... Final directory structure:
-    
-    
+     
     .
     ├── config
     │   ├── config.toml
@@ -31,10 +30,8 @@ This activty log contains step-by-step actions to go from a new Ethereum account
     │   ├── keep-ecdsa-operator-account-keyfile
     │   └── keep-ecdsa-operator-account-password.txt
     └── persistence
-
     2 directories, 4 files
-    
-
+  
 . Create ETH account
   .. Put your account password in the `keep-ecdsa-operator-account-password.txt` file created in step 2.   Put just the password text on the first line, no other comments in  the file.
   .. `cd stakedrop-demo/config`
