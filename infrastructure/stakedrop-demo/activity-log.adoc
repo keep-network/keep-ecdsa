@@ -53,6 +53,7 @@ staked keep-ecdsa-client on the Ropsten testnet.
   .. Copy/Paste the password in `keep-ecdsa-operator-account-password.txt`.
 
 . Get a KEEP token grant
+.. https://github.com/keep-network/keep-ecdsa/blob/master/docs/run-keep-ecdsa.adoc#72-testnet[Documentation]
 .. `https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten?account=0x91c9122ee29ab47908f00dc2cafaa41454f1722f` From Browser.  Results in Ethereum transaction.
 ... Expected Output:
     
