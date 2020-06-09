@@ -356,6 +356,9 @@ contract KeepBonding {
         return authorizedPools[_operator][_poolAddress];
     }
 
+    /// @notice Withdraws the provided amount from unbonded value of the
+    /// provided operator to operator's beneficiary. If there is no enough
+    /// unbonded value or the transfer failed, function fails.
     function withdrawBond(uint256 amount, address operator) internal {
         require(
             unbondedValue[operator] >= amount,
