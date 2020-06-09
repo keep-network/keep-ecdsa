@@ -1,0 +1,107 @@
+# Stakedrop Demo Activity Log
+
+This activty log contains step-by-step actions to go from a new Ethereum account to running a staked keep-ecdsa-client on the Ropsten testnet.
+
+
+## Things You Need
+
+. Text editor.
+. An internet connection.
+. https://metamask.io/[Metamask] and compatible web browser. (Chrome, Firefox, Brave).
+. An Ethereum account with keyfile and password for the account. https://geth.ethereum.org/docs/install-and-build/installing-geth[Geth] was used with this demo.
+. Some amount of Ropsten ETH.  https://faucet.metamask.io/[Metamask faucet].
+. https://docs.docker.com/get-docker/[Docker].
+
+
+## Activity Log
+
+. **Create stakedrop-demo directory**
+  .. `mkdir -p stakedrop-demo/config stakedrop-demo/persistence`
+
+. **Create keep-ecdsa-client files**
+  .. `cd stakedrop-demo/config`
+  .. `touch config.toml keep-ecdsa-operator-account-address.txt keep-ecdsa-operator-account-keyfile keep-ecdsa-operator-account-password.txt`
+  ... Final directory structure:
+     
+    .
+    ├── config
+    │   ├── config.toml
+    │   ├── keep-ecdsa-operator-account-address.txt
+    │   ├── keep-ecdsa-operator-account-keyfile
+    │   └── keep-ecdsa-operator-account-password.txt
+    └── persistence
+    2 directories, 4 files
+  
+. **Create ETH account**
+  .. Put your account password in the `keep-ecdsa-operator-account-password.txt` file created in step 2.   Put just the password text on the first line, no other comments in  the file.
+  .. `cd stakedrop-demo/config`
+  .. `geth account new --keystore . --password keep-ecdsa-operator-account-password.txt`
+  .. Copy generated account address to file `keep-ecdsa-operator-account-address.txt`.  Prefix the output address with `0x`.
+  ... `0x91c9122ee29ab47908f00dc2cafaa41454f1722f`
+  
+  .. Copy generated keyfile (`UTC--...`) to file `keep-ecdsa-operator-account-keyfile`. 
+  ... `cp UTC--2020-06-07T18-07-48.709606000Z--91c9122ee29ab47908f00dc2cafaa41454f1722f keep-ecdsa-operator-account-keyfile`
+
+. **Import your account into Metamask**
+  .. https://metamask.zendesk.com/hc/en-us/articles/360015489331-Importing-an-Account[ Visual Instructions]
+  .. Select `JSON File` as import option.
+  .. Choose the `keep-ecdsa-operator-account-keyfile` prepared earlier as the JSON file.
+  .. Copy/Paste the password in `keep-ecdsa-operator-account-password.txt`.
+
+. **Get a KEEP token grant**
+.. https://github.com/keep-network/keep-ecdsa/blob/master/docs/run-keep-ecdsa.adoc#72-testnet[Documentation]
+.. `https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten?account=0x91c9122ee29ab47908f00dc2cafaa41454f1722f` From Browser.  Results in Ethereum transaction.
+... Expected Output:
+    
+    Created token grant with 300000000000000000000000 KEEP for account: 0x91c9122ee29ab47908f00dc2cafaa41454f1722f
+    You can follow the transaction at https://ropsten.etherscan.io/tx/0x71129ec72b54529ee96298a87a734df3275baf92b918d6d48b6b8394ef2addc7
+    You can manage your token grants at: https://dashboard.test.keep.network.
+    You can find us on Discord at: https://discord.gg/jqxBU4m.
+
+. **Delegate a stake from your grant**
+.. https://keep-network.gitbook.io/staking-documentation/how-to-stake/how-to-get-staking-after-tge[Visual Instructions]
+.. https://dashboard.test.keep.network
+.. Log in via metamask
+.. Select your account imported in the previous step
+.. Delegate at least `100k` KEEP with `authorizer`, `beneficiary`, `operator` set as your generated account from step 3.  Results in Ethereum transaction.
+
+. **Authorize operator contracts**
+.. https://keep-network.gitbook.io/staking-documentation/how-to-stake/how-to-authorize-contracts[Visual Instructions]
+.. Click `Authorize` for `BondedECDSAKeepFactory`.  Results in Ethereum Transaciton.
+.. Click `Authorize` for `TBTCSystem`. Results in Ethereum Transaction.
+
+. **Add ETH for bondng**
+.. https://keep-network.gitbook.io/staking-documentation/how-to-stake/how-to-add-eth-for-bonding[Visual Instructions]
+.. Click `Add ETH`, add some nominal amount.  `0.5` used for demo.  Results in Ethereum Transaction.
+
+. **Prepare `keep-ecdsa-client` configuration file**
+.. See https://github.com/keep-network/keep-ecdsa/blob/master/docs/run-keep-ecdsa.adoc#application[Application Configuration] for template.
+.. Testnet contract addresses can be found https://github.com/keep-network/keep-ecdsa/blob/master/docs/run-keep-ecdsa.adoc#723-contracts[here].
+.. See `/stakedrop-demo/config/config.toml` for prepared example.
+
+. Get latest Ropsten keep-ecdsa-client Docker iamge
+.. `docker pull keepnetwork/keep-ecdsa-client:v1.0.0`
+
+. **Start keep-ecdsa-client**
+.. cd `/stakedrop-demo`
+.. Run:
+```
+export KEEP_ECDSA_OPERATOR_ACCOUNT_PASSWORD=$(cat ./config/keep-ecdsa-operator-account-password.txt)
+export KEEP_ECDSA_CONFIG_DIR=$(pwd)/config
+export KEEP_ECDSA_PERSISTENCE_DIR=$(pwd)/persistence
+
+docker run \
+--entrypoint keep-ecdsa \
+--volume $KEEP_ECDSA_PERSISTENCE_DIR:/mnt/keep-ecdsa-client/persistence \
+--volume $KEEP_ECDSA_CONFIG_DIR:/mnt/keep-ecdsa-client/config \
+--env KEEP_ETHEREUM_PASSWORD=$KEEP_ECDSA_OPERATOR_ACCOUNT_PASSWORD \
+--env LOG_LEVEL=info \
+-p 3919:3919 \
+keepnetwork/keep-ecdsa-client:v1.0.0 --config /mnt/keep-ecdsa-client/config/config.toml start
+```
+
+
+## Supporting Documents
+
+- https://github.com/keep-network/keep-ecdsa/blob/master/docs/run-keep-ecdsa.adoc[Run Keep ECDSA]
+- https://keep-network.gitbook.io/staking-documentation/[KEEP staking guide]
