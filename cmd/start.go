@@ -3,6 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/metrics"
+	"github.com/keep-network/keep-core/pkg/net"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -162,6 +165,11 @@ func Start(c *cli.Context) error {
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
+	err = initializeMetrics(ctx, config, networkProvider, stakeMonitor)
+	if err != nil {
+		return fmt.Errorf("error initializing metrics: [%v]", err)
+	}
+
 	logger.Info("client started")
 
 	select {
@@ -172,4 +180,59 @@ func Start(c *cli.Context) error {
 
 		return fmt.Errorf("unexpected context cancellation")
 	}
+}
+
+func initializeMetrics(
+	ctx context.Context,
+	config *config.Config,
+	netProvider net.Provider,
+	stakeMonitor chain.StakeMonitor,
+) error {
+	registry, err := metrics.Initialize(
+		"keep-ecdsa",
+		config.Metrics.Identifier,
+		config.Metrics.Port,
+	)
+	if err != nil {
+		logger.Infof("metrics are not configured")
+		return nil
+	}
+
+	logger.Infof(
+		"enabled metrics with identifier [%v] on port [%v]",
+		config.Metrics.Identifier,
+		config.Metrics.Port,
+	)
+
+	var observationTick time.Duration
+	if tick := config.Metrics.Tick; tick != 0 {
+		observationTick = time.Duration(tick) * time.Second
+	} else {
+		observationTick = 60 * time.Second
+	}
+
+	metrics.ObserveConnectedPeersCount(
+		ctx,
+		registry,
+		netProvider,
+		observationTick,
+	)
+
+	metrics.ObserveConnectedBootstrapPercentage(
+		ctx,
+		registry,
+		netProvider,
+		config.LibP2P.Peers,
+		observationTick,
+	)
+
+	metrics.ObserveEthConnectivity(
+		ctx,
+		registry,
+		stakeMonitor,
+		config.Ethereum.Account.Address,
+		observationTick,
+	)
+
+	return nil
 }
