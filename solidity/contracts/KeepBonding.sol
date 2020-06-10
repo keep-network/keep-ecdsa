@@ -109,7 +109,8 @@ contract KeepBonding {
     }
 
     /// @notice Withdraws amount from operator's value available for bonding.
-    /// Can be called only by the operator or by the stake owner.
+    /// Can be called only by the operator or by the stake owner. The value is
+    /// transferred to the beneficiary associated with the operator.
     /// @param amount Value to withdraw in wei.
     /// @param operator Address of the operator.
     function withdraw(uint256 amount, address operator) public {
@@ -126,9 +127,13 @@ contract KeepBonding {
 
         unbondedValue[operator] = unbondedValue[operator].sub(amount);
 
-        (bool success, ) = tokenStaking.beneficiaryOf(operator).call.value(
-            amount
-        )("");
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        require(
+            beneficiary != address(0),
+            "Beneficiary not defined for the operator"
+        );
+
+        (bool success, ) = beneficiary.call.value(amount)("");
         require(success, "Transfer failed");
 
         emit UnbondedValueWithdrawn(operator, amount);
