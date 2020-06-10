@@ -43,7 +43,11 @@ contract KeepBonding {
     mapping(address => mapping(address => bool)) internal authorizedPools;
 
     event UnbondedValueDeposited(address indexed operator, uint256 amount);
-    event UnbondedValueWithdrawn(address indexed operator, uint256 amount);
+    event UnbondedValueWithdrawn(
+        address indexed operator,
+        address indexed beneficiary,
+        uint256 amount
+    );
     event BondCreated(
         address indexed operator,
         address indexed holder,
@@ -136,7 +140,7 @@ contract KeepBonding {
         (bool success, ) = beneficiary.call.value(amount)("");
         require(success, "Transfer failed");
 
-        emit UnbondedValueWithdrawn(operator, amount);
+        emit UnbondedValueWithdrawn(operator, beneficiary, amount);
     }
 
     /// @notice Create bond for the given operator, holder, reference and amount.
