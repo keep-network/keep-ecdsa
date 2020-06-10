@@ -485,10 +485,14 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
         memberETHBalances[_member] = 0;
 
+        address beneficiary = tokenStaking.beneficiaryOf(_member);
+        require(
+            beneficiary != address(0),
+            "Beneficiary not defined for the operator"
+        );
+
         /* solium-disable-next-line security/no-call-value */
-        (bool success, ) = tokenStaking.beneficiaryOf(_member).call.value(
-            value
-        )("");
+        (bool success, ) = beneficiary.call.value(value)("");
 
         require(success, "Transfer failed");
     }
