@@ -54,9 +54,8 @@ type Storage struct {
 
 // Metrics stores meta-info about metrics.
 type Metrics struct {
-	Identifier string
-	Port       int
-	Tick       int
+	Port int
+	Tick int
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file

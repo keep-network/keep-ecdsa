@@ -247,10 +247,14 @@ github.com/keep-network/keep-common v1.1.0 h1:m5ZDfUpH+DVqQz3qIi+E53utWHv7kVSooP
 github.com/keep-network/keep-common v1.1.0/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
 github.com/keep-network/keep-common v1.1.1-0.20200610130035-55afd4237caf h1:bNOzvCwlxnWANqoUzN+FWVKfzToA86EZrfLquERwcUY=
 github.com/keep-network/keep-common v1.1.1-0.20200610130035-55afd4237caf/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
+github.com/keep-network/keep-common v1.1.1-0.20200612121439-e1944b162625 h1:ZDb+ewPufSqbbO49hTPotyO8RMzVODcOPxGWm8xzHeg=
+github.com/keep-network/keep-common v1.1.1-0.20200612121439-e1944b162625/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
 github.com/keep-network/keep-core v1.2.0 h1:SYUlMqcZ2cqfJGSWQKdsf+MYNrl5MAUz+ahP5EGZw9E=
 github.com/keep-network/keep-core v1.2.0/go.mod h1:+8wx+DsRXczgc0By80PecvDTVu9HRh2Ti671/uFdGsQ=
 github.com/keep-network/keep-core v1.2.2-0.20200610141441-f0f42b38cee5 h1:EFuFrEIDwn683td2TYg/tnZIvWq2dy2xSFcBlDWDYfk=
 github.com/keep-network/keep-core v1.2.2-0.20200610141441-f0f42b38cee5/go.mod h1:wIMKFESKwioAdQSo+j+Ppf48A5dGH9JZX2vTUAtKzYM=
+github.com/keep-network/keep-core v1.2.2-0.20200612133212-1e0d6439ee2a h1:kYnqEPxYkavipvXm2rZQwT5+dSGTf7glHdokI1m8nHw=
+github.com/keep-network/keep-core v1.2.2-0.20200612133212-1e0d6439ee2a/go.mod h1:+SCVJxA1UBcd3RPEgUq4YnEIoCjbt+pj+Axj3tc4Yn8=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=

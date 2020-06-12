@@ -189,8 +189,6 @@ func initializeMetrics(
 	stakeMonitor chain.StakeMonitor,
 ) error {
 	registry, err := metrics.Initialize(
-		"keep-ecdsa",
-		config.Metrics.Identifier,
 		config.Metrics.Port,
 	)
 	if err != nil {
@@ -199,8 +197,7 @@ func initializeMetrics(
 	}
 
 	logger.Infof(
-		"enabled metrics with identifier [%v] on port [%v]",
-		config.Metrics.Identifier,
+		"enabled metrics on port [%v]",
 		config.Metrics.Port,
 	)
 
@@ -232,6 +229,11 @@ func initializeMetrics(
 		stakeMonitor,
 		config.Ethereum.Account.Address,
 		observationTick,
+	)
+
+	metrics.ExposeLibP2PInfo(
+		registry,
+		netProvider,
 	)
 
 	return nil
