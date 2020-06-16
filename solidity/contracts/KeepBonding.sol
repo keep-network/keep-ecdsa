@@ -121,10 +121,14 @@ contract KeepBonding {
     }
 
     /// @notice Withdraws amount from operator's value available for bonding.
-    /// Can be called only by:
-    /// - operator
-    /// - staked tokens owner
+    /// Should not be used by grantee of managed grants. For this case,
+    /// please use `withdrawAsManagedGrantee`.
+    ///
+    /// This function can be called only by:
+    /// - operator,
+    /// - liquid, staked tokens owner (not a grant),
     /// - direct staked tokens grantee (not a managed grant).
+    ///
     /// @param amount Value to withdraw in wei.
     /// @param operator Address of the operator.
     function withdraw(uint256 amount, address operator) public {
