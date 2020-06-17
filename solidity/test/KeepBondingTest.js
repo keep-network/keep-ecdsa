@@ -204,6 +204,7 @@ contract("KeepBonding", (accounts) => {
 
     beforeEach(async () => {
       await keepBonding.deposit(operator, {value: value})
+      await tokenStaking.setBeneficiary(operator, beneficiary)
 
       managedGrant = await ManagedGrant.new(managedGrantee)
       await tokenGrant.setGranteeOperator(managedGrant.address, operator)
