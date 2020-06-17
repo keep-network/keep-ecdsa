@@ -17,6 +17,7 @@ const BondedSortitionPoolFactory = artifacts.require(
 let {
   RandomBeaconAddress,
   TokenStakingAddress,
+  TokenGrantAddress,
   RegistryAddress,
 } = require("./external-contracts")
 
@@ -27,13 +28,21 @@ module.exports = async function (deployer) {
     TokenStakingStub = artifacts.require("TokenStakingStub")
     TokenStakingAddress = (await TokenStakingStub.new()).address
 
+    TokenGrantStub = artifacts.require("TokenGrantStub")
+    TokenGrantAddress = (await TokenGrantStub.new()).address
+
     RandomBeaconStub = artifacts.require("RandomBeaconStub")
     RandomBeaconAddress = (await RandomBeaconStub.new()).address
 
     RegistryAddress = (await deployer.deploy(KeepRegistry)).address
   }
 
-  await deployer.deploy(KeepBonding, RegistryAddress, TokenStakingAddress)
+  await deployer.deploy(
+    KeepBonding,
+    RegistryAddress,
+    TokenStakingAddress,
+    TokenGrantAddress
+  )
 
   await deployer.deploy(BondedECDSAKeep)
 
