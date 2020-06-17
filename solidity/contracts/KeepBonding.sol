@@ -16,6 +16,8 @@ pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/KeepRegistry.sol";
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
+import "@keep-network/keep-core/contracts/TokenGrant.sol";
+import "@keep-network/keep-core/contracts/libraries/RolesLookup.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -24,12 +26,16 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// @notice Contract holding deposits from keeps' operators.
 contract KeepBonding {
     using SafeMath for uint256;
+    using RolesLookup for address payable;
 
     // Registry contract with a list of approved factories (operator contracts).
     KeepRegistry internal registry;
 
     // KEEP token staking contract.
     TokenStaking internal tokenStaking;
+
+    // KEEP token grant contract.
+    TokenGrant internal tokenGrant;
 
     // Unassigned value in wei deposited by operators.
     mapping(address => uint256) public unbondedValue;
@@ -71,10 +77,16 @@ contract KeepBonding {
 
     /// @notice Initializes Keep Bonding contract.
     /// @param registryAddress Keep registry contract address.
-    /// @param tokenStakingAddress KEEP Token staking contract address.
-    constructor(address registryAddress, address tokenStakingAddress) public {
+    /// @param tokenStakingAddress KEEP token staking contract address.
+    /// @param tokenGrantAddress KEEP token grant contract address.
+    constructor(
+        address registryAddress,
+        address tokenStakingAddress,
+        address tokenGrantAddress
+    ) public {
         registry = KeepRegistry(registryAddress);
         tokenStaking = TokenStaking(tokenStakingAddress);
+        tokenGrant = TokenGrant(tokenGrantAddress);
     }
 
     /// @notice Add the provided value to operator's pool available for bonding.
@@ -113,34 +125,47 @@ contract KeepBonding {
     }
 
     /// @notice Withdraws amount from operator's value available for bonding.
-    /// Can be called only by the operator or by the stake owner. The value is
-    /// transferred to the beneficiary associated with the operator.
+    /// Should not be used by grantee of managed grants. For this case,
+    /// please use `withdrawAsManagedGrantee`.
+    ///
+    /// This function can be called only by:
+    /// - operator,
+    /// - liquid, staked tokens owner (not a grant),
+    /// - direct staked tokens grantee (not a managed grant).
+    ///
     /// @param amount Value to withdraw in wei.
     /// @param operator Address of the operator.
     function withdraw(uint256 amount, address operator) public {
         require(
             msg.sender == operator ||
-                msg.sender == tokenStaking.ownerOf(operator),
+                msg.sender.isTokenOwnerForOperator(operator, tokenStaking) ||
+                msg.sender.isGranteeForOperator(operator, tokenGrant),
             "Only operator or the owner is allowed to withdraw bond"
         );
 
+        withdrawBond(amount, operator);
+    }
+
+    /// @notice Withdraws amount from operator's value available for bonding.
+    /// Can be called only by staked tokens managed grantee.
+    /// @param amount Value to withdraw in wei.
+    /// @param operator Address of the operator.
+    /// @param managedGrant Address of the managed grant contract.
+    function withdrawAsManagedGrantee(
+        uint256 amount,
+        address operator,
+        address managedGrant
+    ) public {
         require(
-            unbondedValue[operator] >= amount,
-            "Insufficient unbonded value"
+            msg.sender.isManagedGranteeForOperator(
+                operator,
+                managedGrant,
+                tokenGrant
+            ),
+            "Only grantee is allowed to withdraw bond"
         );
 
-        unbondedValue[operator] = unbondedValue[operator].sub(amount);
-
-        address beneficiary = tokenStaking.beneficiaryOf(operator);
-        require(
-            beneficiary != address(0),
-            "Beneficiary not defined for the operator"
-        );
-
-        (bool success, ) = beneficiary.call.value(amount)("");
-        require(success, "Transfer failed");
-
-        emit UnbondedValueWithdrawn(operator, beneficiary, amount);
+        withdrawBond(amount, operator);
     }
 
     /// @notice Create bond for the given operator, holder, reference and amount.
@@ -337,5 +362,28 @@ contract KeepBonding {
         returns (bool)
     {
         return authorizedPools[_operator][_poolAddress];
+    }
+
+    /// @notice Withdraws the provided amount from unbonded value of the
+    /// provided operator to operator's beneficiary. If there is no enough
+    /// unbonded value or the transfer failed, function fails.
+    function withdrawBond(uint256 amount, address operator) internal {
+        require(
+            unbondedValue[operator] >= amount,
+            "Insufficient unbonded value"
+        );
+
+        unbondedValue[operator] = unbondedValue[operator].sub(amount);
+
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        require(
+            beneficiary != address(0),
+            "Beneficiary not defined for the operator"
+        );
+
+        (bool success, ) = beneficiary.call.value(amount)("");
+        require(success, "Transfer failed");
+
+        emit UnbondedValueWithdrawn(operator, beneficiary, amount);
     }
 }

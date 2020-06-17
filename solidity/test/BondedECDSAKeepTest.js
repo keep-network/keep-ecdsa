@@ -16,6 +16,7 @@ const TestToken = artifacts.require("TestToken")
 const KeepBonding = artifacts.require("KeepBonding")
 const TestEtherReceiver = artifacts.require("TestEtherReceiver")
 const TokenStakingStub = artifacts.require("TokenStakingStub")
+const TokenGrantStub = artifacts.require("TokenGrantStub")
 const BondedECDSAKeepCloneFactory = artifacts.require(
   "BondedECDSAKeepCloneFactory"
 )
@@ -42,6 +43,7 @@ contract("BondedECDSAKeep", (accounts) => {
   let registry
   let keepBonding
   let tokenStaking
+  let tokenGrant
   let bondedECDSAKeepStubMaster
   let keep
   let factoryStub
@@ -87,7 +89,12 @@ contract("BondedECDSAKeep", (accounts) => {
   before(async () => {
     registry = await KeepRegistry.new()
     tokenStaking = await TokenStakingStub.new()
-    keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+    tokenGrant = await TokenGrantStub.new()
+    keepBonding = await KeepBonding.new(
+      registry.address,
+      tokenStaking.address,
+      tokenGrant.address
+    )
     bondedECDSAKeepStubMaster = await BondedECDSAKeepStub.new()
     factoryStub = await BondedECDSAKeepCloneFactory.new(
       bondedECDSAKeepStubMaster.address

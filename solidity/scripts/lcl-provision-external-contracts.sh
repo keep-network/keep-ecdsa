@@ -18,6 +18,9 @@ REGISTRY_PROPERTY="RegistryAddress"
 TOKEN_STAKING_CONTRACT_DATA="TokenStaking.json"
 TOKEN_STAKING_PROPERTY="TokenStakingAddress"
 
+TOKEN_GRANT_CONTRACT_DATA="TokenGrant.json"
+TOKEN_GRANT_PROPERTY="TokenGrantAddress"
+
 RANDOM_BEACON_CONTRACT_DATA="KeepRandomBeaconService.json"
 RANDOM_BEACON_PROPERTY="RandomBeaconAddress"
 
@@ -61,6 +64,21 @@ function fetch_token_staking_contract_address() {
   fi
 }
 
+function fetch_token_grant_contract_address() {
+  echo "Fetching value for ${TOKEN_GRANT_PROPERTY}..."
+
+  local contractDataPath=$(realpath $KEEP_CORE_SOL_ARTIFACTS_PATH/$TOKEN_GRANT_CONTRACT_DATA)
+  local ADDRESS=$(cat ${contractDataPath} | jq "${JSON_QUERY}" | tr -d '"')
+
+  if [[ !($ADDRESS =~ $ADDRESS_REGEXP) ]]; then
+    echo "Invalid address: ${ADDRESS}"
+    FAILED=true
+  else 
+    echo "Found value for ${TOKEN_GRANT_PROPERTY} = ${ADDRESS}"
+    sed -i -e "/${TOKEN_GRANT_PROPERTY}/s/${SED_SUBSTITUTION_REGEXP}/\"${ADDRESS}\"/" $DESTINATION_FILE
+  fi
+}
+
 function fetch_random_beacon_contract_address() {
   echo "Fetching value for ${RANDOM_BEACON_PROPERTY}..."
 
@@ -78,6 +96,7 @@ function fetch_random_beacon_contract_address() {
 
 fetch_registry_contract_address
 fetch_token_staking_contract_address
+fetch_token_grant_contract_address
 fetch_random_beacon_contract_address
 
 if $FAILED; then
