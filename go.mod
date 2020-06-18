@@ -8,6 +8,7 @@ replace (
 	github.com/btcsuite/btcd => github.com/keep-network/btcd v0.0.0-20190427004231-96897255fd17
 	github.com/btcsuite/btcutil => github.com/keep-network/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 	github.com/urfave/cli => github.com/keep-network/cli v1.20.0
+	github.com/keep-network/keep-core => github.com/jeremyid/keep-core v1.1.3
 )
 
 require (
