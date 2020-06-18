@@ -11,6 +11,7 @@ const BondedECDSAKeepFactoryStub = artifacts.require(
 )
 const KeepBonding = artifacts.require("KeepBonding")
 const TokenStaking = artifacts.require("TokenStaking")
+const TokenGrant = artifacts.require("TokenGrant")
 const BondedSortitionPool = artifacts.require("BondedSortitionPool")
 const BondedSortitionPoolFactory = artifacts.require(
   "BondedSortitionPoolFactory"
@@ -27,6 +28,7 @@ const expect = chai.expect
 contract("BondedECDSAKeepFactory", async (accounts) => {
   let keepToken
   let tokenStaking
+  let tokenGrant
   let keepFactory
   let bondedSortitionPoolFactory
   let keepBonding
@@ -245,8 +247,13 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       initializationPeriod,
       undelegationPeriod
     )
+    tokenGrant = await TokenGrant.new(keepToken.address)
 
-    keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+    keepBonding = await KeepBonding.new(
+      registry.address,
+      tokenStaking.address,
+      tokenGrant.address
+    )
     randomBeacon = await RandomBeaconStub.new()
     const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
     keepFactory = await BondedECDSAKeepFactoryStub.new(
