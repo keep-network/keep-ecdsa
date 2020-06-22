@@ -936,7 +936,7 @@ contract("BondedECDSAKeep", (accounts) => {
       V: 28,
     }
 
-    it("should return true and slash members when the signature is a fraud", async () => {
+    it("should return true and slash members when the signature is fraudulent", async () => {
       await submitMembersPublicKeys(publicKey1)
 
       const res = await keep.submitSignatureFraud.call(
@@ -966,7 +966,50 @@ contract("BondedECDSAKeep", (accounts) => {
       }
     })
 
-    it("should revert when the signature is not a fraud", async () => {
+    it("should prevent from slashing members multiple times for the same fradulent preimage", async () => {
+      await submitMembersPublicKeys(publicKey1)
+
+      const minimumStake = await factoryStub.minimumStake.call()
+      const memberStake = web3.utils.toBN("100000000000000000000000")
+      // setting a value other then the min stake for testing purposes
+      keep.setMemberStake(memberStake)
+      
+      assert.isFalse(
+        await keep.isFradulentPreimageSet(preimage1), 
+        "fradulent preimage should not have been set"
+      )
+
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      assert.isTrue(
+        await keep.isFradulentPreimageSet(preimage1), 
+        "fradulent preimage should have been set"
+      )
+      
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      for (let i = 0; i < members.length; i++) {
+        const actualStake = await tokenStaking.eligibleStake(
+          members[i],
+          constants.ZERO_ADDRESS
+        )
+        expect(actualStake).to.eq.BN(minimumStake.sub(memberStake), `incorrect stake for member ${i}`)
+      }
+    })
+
+    it("should revert when the signature is not fraudulent", async () => {
       await submitMembersPublicKeys(publicKey1)
 
       await keep.sign(hash256Digest1, {from: owner})
