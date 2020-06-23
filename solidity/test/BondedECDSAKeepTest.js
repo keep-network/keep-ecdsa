@@ -972,7 +972,7 @@ contract("BondedECDSAKeep", (accounts) => {
       const minimumStake = await factoryStub.minimumStake.call()
       const memberStake = web3.utils.toBN("100000000000000000000000")
       // setting a value other then the min stake for testing purposes
-      keep.setMemberStake(memberStake)
+      await keep.setMemberStake(memberStake)
       
       assert.isFalse(
         await keep.isFradulentPreimageSet(preimage1), 
