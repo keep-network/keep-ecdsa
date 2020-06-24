@@ -376,6 +376,9 @@ contract KeepBonding {
         unbondedValue[operator] = unbondedValue[operator].sub(amount);
 
         address beneficiary = tokenStaking.beneficiaryOf(operator);
+        // Following check protects from a situation when a bonding value has
+        // been deposited before defining a beneficiary for the operator in the
+        // TokenStaking contract.
         require(
             beneficiary != address(0),
             "Beneficiary not defined for the operator"
