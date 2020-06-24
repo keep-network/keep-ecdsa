@@ -125,14 +125,13 @@ func Start(c *cli.Context) error {
 		operatorPrivateKey, operatorPublicKey,
 	)
 
-	//Read last seen peers file as a slice of strings and convert it to array of strings
+	//Read last seen peers file as a bytearray and convert to a slice of strings
 	s, err := ioutil.ReadFile(c.GlobalString("peers"))
 	if err != nil {
 		logger.Debugf("Error reading last seen peers file")
 	}
 	lastSeenPeersString := string(s[:])
 	lastSeenPeers := strings.Split(lastSeenPeersString, ",")
-	logger.Infof("LOCALDEV: Last seen peers content: ", lastSeenPeers)
 
 	//If the slice of last seen peers is non empty, use it as bootstrap peers list
 	if len(lastSeenPeers) != 0 {
