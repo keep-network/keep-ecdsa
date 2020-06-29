@@ -973,9 +973,9 @@ contract("BondedECDSAKeep", (accounts) => {
       const memberStake = web3.utils.toBN("100000000000000000000000")
       // setting a value other then the min stake for testing purposes
       await keep.setMemberStake(memberStake)
-      
+
       assert.isFalse(
-        await keep.isFradulentPreimageSet(preimage1), 
+        await keep.isFradulentPreimageSet(preimage1),
         "fradulent preimage should not have been set"
       )
 
@@ -988,10 +988,10 @@ contract("BondedECDSAKeep", (accounts) => {
       )
 
       assert.isTrue(
-        await keep.isFradulentPreimageSet(preimage1), 
+        await keep.isFradulentPreimageSet(preimage1),
         "fradulent preimage should have been set"
       )
-      
+
       await keep.submitSignatureFraud(
         signature1.V,
         signature1.R,
@@ -1005,7 +1005,10 @@ contract("BondedECDSAKeep", (accounts) => {
           members[i],
           constants.ZERO_ADDRESS
         )
-        expect(actualStake).to.eq.BN(minimumStake.sub(memberStake), `incorrect stake for member ${i}`)
+        expect(actualStake).to.eq.BN(
+          minimumStake.sub(memberStake),
+          `incorrect stake for member ${i}`
+        )
       }
     })
 
@@ -1657,17 +1660,6 @@ contract("BondedECDSAKeep", (accounts) => {
       )
 
       await expectRevert(keep.withdraw(member), "No funds to withdraw")
-    })
-
-    it("reverts in case of not defined beneficiary", async () => {
-      const member = members[0]
-
-      await tokenStaking.setBeneficiary(member, constants.ZERO_ADDRESS)
-
-      await expectRevert(
-        keep.withdraw(member),
-        "Beneficiary not defined for the operator"
-      )
     })
 
     it("reverts in case of transfer failure", async () => {
