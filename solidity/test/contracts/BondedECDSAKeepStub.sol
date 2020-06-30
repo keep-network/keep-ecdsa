@@ -13,4 +13,12 @@ contract BondedECDSAKeepStub is BondedECDSAKeep {
     function publicMarkAsTerminated() public {
         markAsTerminated();
     }
+
+    function isFradulentPreimageSet(bytes memory preimage) public view returns (bool) {
+        return fraudulentPreimages[preimage];
+    }
+
+    function setMemberStake(uint256 stake) public {
+        memberStake = stake;
+    }
 }
