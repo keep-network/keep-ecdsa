@@ -973,9 +973,9 @@ contract("BondedECDSAKeep", (accounts) => {
       const memberStake = web3.utils.toBN("100000000000000000000000")
       // setting a value other then the min stake for testing purposes
       await keep.setMemberStake(memberStake)
-      
+
       assert.isFalse(
-        await keep.isFradulentPreimageSet(preimage1), 
+        await keep.isFradulentPreimageSet(preimage1),
         "fradulent preimage should not have been set"
       )
 
@@ -988,10 +988,10 @@ contract("BondedECDSAKeep", (accounts) => {
       )
 
       assert.isTrue(
-        await keep.isFradulentPreimageSet(preimage1), 
+        await keep.isFradulentPreimageSet(preimage1),
         "fradulent preimage should have been set"
       )
-      
+
       await keep.submitSignatureFraud(
         signature1.V,
         signature1.R,
@@ -1005,7 +1005,10 @@ contract("BondedECDSAKeep", (accounts) => {
           members[i],
           constants.ZERO_ADDRESS
         )
-        expect(actualStake).to.eq.BN(minimumStake.sub(memberStake), `incorrect stake for member ${i}`)
+        expect(actualStake).to.eq.BN(
+          minimumStake.sub(memberStake),
+          `incorrect stake for member ${i}`
+        )
       }
     })
 
@@ -1563,13 +1566,18 @@ contract("BondedECDSAKeep", (accounts) => {
   describe("withdraw", async () => {
     const singleValue = new BN(1000)
     const ethValue = singleValue.mul(new BN(members.length))
+    const beneficiary = accounts[4]
 
     beforeEach(async () => {
       await keep.distributeETHReward({value: ethValue})
     })
 
     it("correctly transfers value", async () => {
-      const initialMemberBalance = new BN(await web3.eth.getBalance(members[0]))
+      const initialMemberBalance = new BN(
+        await web3.eth.getBalance(beneficiary)
+      )
+
+      await tokenStaking.setBeneficiary(members[0], beneficiary)
 
       await keep.withdraw(members[0])
 
@@ -1584,7 +1592,7 @@ contract("BondedECDSAKeep", (accounts) => {
       ).to.eq.BN(0)
 
       expect(
-        await web3.eth.getBalance(members[0]),
+        await web3.eth.getBalance(beneficiary),
         "incorrect member account balance"
       ).to.eq.BN(initialMemberBalance.add(singleValue))
     })
@@ -1592,9 +1600,8 @@ contract("BondedECDSAKeep", (accounts) => {
     it("sends ETH to beneficiary", async () => {
       const valueWithRemainder = ethValue.add(new BN(1))
 
-      const member1 = accounts[2]
-      const member2 = accounts[3]
-      const beneficiary = accounts[4]
+      const member1 = members[0]
+      const member2 = members[1]
 
       const testMembers = [member1, member2]
 
@@ -1659,7 +1666,8 @@ contract("BondedECDSAKeep", (accounts) => {
       const etherReceiver = await TestEtherReceiver.new()
       await etherReceiver.setShouldFail(true)
 
-      const member = etherReceiver.address // a receiver which we expect to reject the transfer
+      const member = members[0]
+      await tokenStaking.setBeneficiary(member, etherReceiver.address) // a receiver which we expect to reject the transfer
 
       const keep = await newKeep(
         owner,
@@ -1676,9 +1684,9 @@ contract("BondedECDSAKeep", (accounts) => {
 
       await expectRevert(keep.withdraw(member), "Transfer failed")
 
-      // Check balances of keep member's account.
+      // Check balances of keep members's beneficiary account.
       expect(
-        await web3.eth.getBalance(member),
+        await web3.eth.getBalance(etherReceiver.address),
         "incorrect member's account balance"
       ).to.eq.BN(0)
 
@@ -1696,6 +1704,10 @@ contract("BondedECDSAKeep", (accounts) => {
 
     beforeEach(async () => {
       token = await TestToken.new()
+
+      for (let i = 0; i < members.length; i++) {
+        await tokenStaking.setBeneficiary(members[i], members[i])
+      }
     })
 
     it("correctly distributes ERC20", async () => {

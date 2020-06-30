@@ -7,7 +7,11 @@ const ManagedGrant = artifacts.require("./ManagedGrantStub.sol")
 const KeepBonding = artifacts.require("./KeepBonding.sol")
 const TestEtherReceiver = artifacts.require("./TestEtherReceiver.sol")
 
-const {expectEvent, expectRevert} = require("@openzeppelin/test-helpers")
+const {
+  constants,
+  expectEvent,
+  expectRevert,
+} = require("@openzeppelin/test-helpers")
 
 const BN = web3.utils.BN
 
@@ -90,6 +94,8 @@ contract("KeepBonding", (accounts) => {
     const value = new BN(1000)
 
     beforeEach(async () => {
+      await tokenStaking.setBeneficiary(operator, beneficiary)
+
       await keepBonding.deposit(operator, {value: value})
     })
 
@@ -157,8 +163,18 @@ contract("KeepBonding", (accounts) => {
       })
       expectEvent(receipt, "UnbondedValueWithdrawn", {
         operator: operator,
+        beneficiary: beneficiary,
         amount: value,
       })
+    })
+
+    it("reverts if beneficiary is not defined", async () => {
+      await tokenStaking.setBeneficiary(operator, constants.ZERO_ADDRESS)
+
+      await expectRevert(
+        keepBonding.withdraw(value, operator, {from: operator}),
+        "Beneficiary not defined for the operator"
+      )
     })
 
     it("reverts if insufficient unbonded value", async () => {
@@ -188,6 +204,7 @@ contract("KeepBonding", (accounts) => {
 
     beforeEach(async () => {
       await keepBonding.deposit(operator, {value: value})
+      await tokenStaking.setBeneficiary(operator, beneficiary)
 
       managedGrant = await ManagedGrant.new(managedGrantee)
       await tokenGrant.setGranteeOperator(managedGrant.address, operator)

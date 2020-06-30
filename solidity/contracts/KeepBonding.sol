@@ -49,7 +49,11 @@ contract KeepBonding {
     mapping(address => mapping(address => bool)) internal authorizedPools;
 
     event UnbondedValueDeposited(address indexed operator, uint256 amount);
-    event UnbondedValueWithdrawn(address indexed operator, uint256 amount);
+    event UnbondedValueWithdrawn(
+        address indexed operator,
+        address indexed beneficiary,
+        uint256 amount
+    );
     event BondCreated(
         address indexed operator,
         address indexed holder,
@@ -371,11 +375,18 @@ contract KeepBonding {
 
         unbondedValue[operator] = unbondedValue[operator].sub(amount);
 
-        (bool success, ) = tokenStaking.beneficiaryOf(operator).call.value(
-            amount
-        )("");
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        // Following check protects from a situation when a bonding value has
+        // been deposited before defining a beneficiary for the operator in the
+        // TokenStaking contract.
+        require(
+            beneficiary != address(0),
+            "Beneficiary not defined for the operator"
+        );
+
+        (bool success, ) = beneficiary.call.value(amount)("");
         require(success, "Transfer failed");
 
-        emit UnbondedValueWithdrawn(operator, amount);
+        emit UnbondedValueWithdrawn(operator, beneficiary, amount);
     }
 }
