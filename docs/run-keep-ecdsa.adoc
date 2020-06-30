@@ -391,9 +391,14 @@ Once you've got your KEEP token grant you can manage it with our https://dashboa
 
 ==== Bootstrap Peers
 
+Bootstrap peers will come and go on testnet.  As long as at least one of your configured peers is
+up, there is no need to worry.
+
 [.small]
 ```
 "/dns4/bootstrap-1.ecdsa.keep.test.boar.network/tcp/4001/ipfs/16Uiu2HAmPFXDaeGWtnzd8s39NsaQguoWtKi77834A6xwYqeicq6N",
+"/dns4/ecdsa-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp",	
+"/dns4/ecdsa-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf",
 ```
 
 ==== Contracts
@@ -406,13 +411,13 @@ Contract addresses needed to boot a Keep ECDSA client:
 |
 
 |BondedECDSAKeepFactory
-|`0x17caddf97a1d1123efb7b233cb16c76c31a96e02`
+|`0xe7BF8421fBE80c3Bf67082370D86C8D81D1D77F4`
 
 |Sanctioned Applications
-|`0x2b70907b5c44897030ea1369591ddcd23c5d85d6` (tBTC's system contract)
+|`0x25B60668E7a0967a86223828D20f93714D91Ee4B` (tBTC's system contract)
 
 |tBTC Sortition pool (for <<Authorizations,authorization>>)
-|`0xf5bc2812344ecacdd45c0b53824168f522533fc5`
+|`0x787fE59d9EefAf4c1214D6d6F547318Fcad54EE9`
 |===
 
 
