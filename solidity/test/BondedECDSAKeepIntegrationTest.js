@@ -5,11 +5,14 @@ const {time} = require("@openzeppelin/test-helpers")
 import {mineBlocks} from "./helpers/mineBlocks"
 
 const KeepToken = artifacts.require("KeepTokenIntegration")
+const KeepTokenGrant = artifacts.require("TokenGrant")
 const KeepRegistry = artifacts.require("KeepRegistry")
 const BondedECDSAKeepFactoryStub = artifacts.require(
   "BondedECDSAKeepFactoryStub"
 )
 const KeepBonding = artifacts.require("KeepBonding")
+const MinimumStakeSchedule = artifacts.require("MinimumStakeSchedule")
+const TokenStakingEscrow = artifacts.require("TokenStakingEscrow")
 const TokenStaking = artifacts.require("TokenStaking")
 const TokenGrant = artifacts.require("TokenGrant")
 const BondedSortitionPool = artifacts.require("BondedSortitionPool")
@@ -238,13 +241,27 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
   async function initializeNewFactory() {
     keepToken = await KeepToken.new()
+    const keepTokenGrant = await KeepTokenGrant.new(keepToken.address)
     const registry = await KeepRegistry.new()
 
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+    await TokenStaking.link(
+      "MinimumStakeSchedule",
+      (await MinimumStakeSchedule.new()).address
+    )
+    const stakingEscrow = await TokenStakingEscrow.new(
+      keepToken.address,
+      keepTokenGrant.address
+    )
+
+    const stakeInitializationPeriod = 30 // In seconds
+
     tokenStaking = await TokenStaking.new(
       keepToken.address,
+      keepTokenGrant.address,
+      stakingEscrow.address,
       registry.address,
-      initializationPeriod,
+      stakeInitializationPeriod,
       undelegationPeriod
     )
     tokenGrant = await TokenGrant.new(keepToken.address)
