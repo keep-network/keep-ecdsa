@@ -1,3 +1,17 @@
+/**
+▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓▌        ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀
+  ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌
+▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+
+                           Trust math, not hardware.
+*/
+
 pragma solidity 0.5.17;
 
 import "./KeepBonding.sol";
@@ -80,6 +94,11 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Map stores amount of wei stored in the contract for each member address.
     mapping(address => uint256) memberETHBalances;
 
+    // Map stores preimages that have been proven to be fraudulent. This is needed
+    // to prevent from slashing members multiple times for the same fraudulent
+    // preimage.
+    mapping(bytes => bool) fraudulentPreimages;
+
     // The current status of the keep.
     // If the keep is Active members monitor it and support requests from the
     // keep owner.
@@ -103,10 +122,10 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     event PublicKeyPublished(bytes publicKey);
 
     // Notification that ETH reward has been distributed to keep members.
-    event ETHRewardDistributed();
+    event ETHRewardDistributed(uint256 amount);
 
     // Notification that ERC20 reward has been distributed to keep members.
-    event ERC20RewardDistributed();
+    event ERC20RewardDistributed(address indexed token, uint256 amount);
 
     // Notification that the keep was closed by the owner.
     // Members no longer need to support this keep.
@@ -367,19 +386,24 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
         require(isFraud, "Signature is not fraudulent");
 
-        /* solium-disable-next-line */
-        (bool success, ) = address(tokenStaking).call(
-            abi.encodeWithSignature(
-                "slash(uint256,address[])",
-                memberStake,
-                members
-            )
-        );
-        // Should never happen but we want to protect the owner and make sure the
-        // fraud submission transaction does not fail so that the owner can
-        // seize and liquidate bonds in the same transaction.
-        if (!success) {
-            emit SlashingFailed();
+        if (!fraudulentPreimages[_preimage]) {
+            /* solium-disable-next-line */
+            (bool success, ) = address(tokenStaking).call(
+                abi.encodeWithSignature(
+                    "slash(uint256,address[])",
+                    memberStake,
+                    members
+                )
+            );
+
+            fraudulentPreimages[_preimage] = true;
+
+            // Should never happen but we want to protect the owner and make sure the
+            // fraud submission transaction does not fail so that the owner can
+            // seize and liquidate bonds in the same transaction.
+            if (!success) {
+                emit SlashingFailed();
+            }
         }
 
         return isFraud;
@@ -407,7 +431,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         uint256 remainder = msg.value.mod(memberCount);
         memberETHBalances[members[memberCount - 1]] += dividend.add(remainder);
 
-        emit ETHRewardDistributed();
+        emit ETHRewardDistributed(msg.value);
     }
 
     /// @notice Distributes ERC20 reward evenly across all keep signer beneficiaries.
@@ -447,7 +471,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             dividend.add(remainder)
         );
 
-        emit ERC20RewardDistributed();
+        emit ERC20RewardDistributed(_tokenAddress, _value);
     }
 
     /// @notice Gets current amount of ETH hold in the keep for the member.

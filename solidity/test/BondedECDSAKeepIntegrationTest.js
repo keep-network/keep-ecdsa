@@ -5,12 +5,16 @@ const {time} = require("@openzeppelin/test-helpers")
 import {mineBlocks} from "./helpers/mineBlocks"
 
 const KeepToken = artifacts.require("KeepTokenIntegration")
+const KeepTokenGrant = artifacts.require("TokenGrant")
 const KeepRegistry = artifacts.require("KeepRegistry")
 const BondedECDSAKeepFactoryStub = artifacts.require(
   "BondedECDSAKeepFactoryStub"
 )
 const KeepBonding = artifacts.require("KeepBonding")
+const MinimumStakeSchedule = artifacts.require("MinimumStakeSchedule")
+const TokenStakingEscrow = artifacts.require("TokenStakingEscrow")
 const TokenStaking = artifacts.require("TokenStaking")
+const TokenGrant = artifacts.require("TokenGrant")
 const BondedSortitionPool = artifacts.require("BondedSortitionPool")
 const BondedSortitionPoolFactory = artifacts.require(
   "BondedSortitionPoolFactory"
@@ -27,6 +31,7 @@ const expect = chai.expect
 contract("BondedECDSAKeepFactory", async (accounts) => {
   let keepToken
   let tokenStaking
+  let tokenGrant
   let keepFactory
   let bondedSortitionPoolFactory
   let keepBonding
@@ -236,17 +241,36 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
 
   async function initializeNewFactory() {
     keepToken = await KeepToken.new()
+    const keepTokenGrant = await KeepTokenGrant.new(keepToken.address)
     const registry = await KeepRegistry.new()
 
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-    tokenStaking = await TokenStaking.new(
+    await TokenStaking.link(
+      "MinimumStakeSchedule",
+      (await MinimumStakeSchedule.new()).address
+    )
+    const stakingEscrow = await TokenStakingEscrow.new(
       keepToken.address,
-      registry.address,
-      initializationPeriod,
-      undelegationPeriod
+      keepTokenGrant.address
     )
 
-    keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+    const stakeInitializationPeriod = 30 // In seconds
+
+    tokenStaking = await TokenStaking.new(
+      keepToken.address,
+      keepTokenGrant.address,
+      stakingEscrow.address,
+      registry.address,
+      stakeInitializationPeriod,
+      undelegationPeriod
+    )
+    tokenGrant = await TokenGrant.new(keepToken.address)
+
+    keepBonding = await KeepBonding.new(
+      registry.address,
+      tokenStaking.address,
+      tokenGrant.address
+    )
     randomBeacon = await RandomBeaconStub.new()
     const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
     keepFactory = await BondedECDSAKeepFactoryStub.new(

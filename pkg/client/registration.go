@@ -3,12 +3,14 @@ package client
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 const statusCheckIntervalBlocks = 100
+const retryDelay = 1 * time.Second
 
 // checkStatusAndRegisterForApplication checks whether the operator is
 // registered as a member candidate for keep for the given application.
@@ -37,6 +39,7 @@ RegistrationLoop:
 					application.String(),
 					err,
 				)
+				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 				continue RegistrationLoop
 			}
 
@@ -51,6 +54,7 @@ RegistrationLoop:
 			// registered, we can start to monitor the status
 			if err := monitorSignerPoolStatus(ctx, ethereumChain, application); err != nil {
 				logger.Errorf("failed on signer pool status monitoring: [%v]", err)
+				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 				continue RegistrationLoop
 			}
 		}
@@ -124,6 +128,7 @@ func registerAsMemberCandidateWhenEligible(
 					application.String(),
 					err,
 				)
+				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 				continue
 			}
 
@@ -134,6 +139,7 @@ func registerAsMemberCandidateWhenEligible(
 					"operator is not eligible for application [%s]",
 					application.String(),
 				)
+				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 				continue
 			}
 
@@ -149,6 +155,7 @@ func registerAsMemberCandidateWhenEligible(
 					application.String(),
 					err,
 				)
+				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 				continue
 			}
 
@@ -180,6 +187,7 @@ func waitUntilRegistered(
 					application.String(),
 					err,
 				)
+				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 				continue
 			}
 

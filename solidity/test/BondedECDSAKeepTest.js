@@ -16,6 +16,7 @@ const TestToken = artifacts.require("TestToken")
 const KeepBonding = artifacts.require("KeepBonding")
 const TestEtherReceiver = artifacts.require("TestEtherReceiver")
 const TokenStakingStub = artifacts.require("TokenStakingStub")
+const TokenGrantStub = artifacts.require("TokenGrantStub")
 const BondedECDSAKeepCloneFactory = artifacts.require(
   "BondedECDSAKeepCloneFactory"
 )
@@ -42,6 +43,7 @@ contract("BondedECDSAKeep", (accounts) => {
   let registry
   let keepBonding
   let tokenStaking
+  let tokenGrant
   let bondedECDSAKeepStubMaster
   let keep
   let factoryStub
@@ -87,7 +89,12 @@ contract("BondedECDSAKeep", (accounts) => {
   before(async () => {
     registry = await KeepRegistry.new()
     tokenStaking = await TokenStakingStub.new()
-    keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+    tokenGrant = await TokenGrantStub.new()
+    keepBonding = await KeepBonding.new(
+      registry.address,
+      tokenStaking.address,
+      tokenGrant.address
+    )
     bondedECDSAKeepStubMaster = await BondedECDSAKeepStub.new()
     factoryStub = await BondedECDSAKeepCloneFactory.new(
       bondedECDSAKeepStubMaster.address
@@ -929,7 +936,7 @@ contract("BondedECDSAKeep", (accounts) => {
       V: 28,
     }
 
-    it("should return true and slash members when the signature is a fraud", async () => {
+    it("should return true and slash members when the signature is fraudulent", async () => {
       await submitMembersPublicKeys(publicKey1)
 
       const res = await keep.submitSignatureFraud.call(
@@ -959,7 +966,53 @@ contract("BondedECDSAKeep", (accounts) => {
       }
     })
 
-    it("should revert when the signature is not a fraud", async () => {
+    it("should prevent from slashing members multiple times for the same fradulent preimage", async () => {
+      await submitMembersPublicKeys(publicKey1)
+
+      const minimumStake = await factoryStub.minimumStake.call()
+      const memberStake = web3.utils.toBN("100000000000000000000000")
+      // setting a value other then the min stake for testing purposes
+      await keep.setMemberStake(memberStake)
+
+      assert.isFalse(
+        await keep.isFradulentPreimageSet(preimage1),
+        "fradulent preimage should not have been set"
+      )
+
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      assert.isTrue(
+        await keep.isFradulentPreimageSet(preimage1),
+        "fradulent preimage should have been set"
+      )
+
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      for (let i = 0; i < members.length; i++) {
+        const actualStake = await tokenStaking.eligibleStake(
+          members[i],
+          constants.ZERO_ADDRESS
+        )
+        expect(actualStake).to.eq.BN(
+          minimumStake.sub(memberStake),
+          `incorrect stake for member ${i}`
+        )
+      }
+    })
+
+    it("should revert when the signature is not fraudulent", async () => {
       await submitMembersPublicKeys(publicKey1)
 
       await keep.sign(hash256Digest1, {from: owner})
@@ -1423,7 +1476,9 @@ contract("BondedECDSAKeep", (accounts) => {
       const startBlock = await web3.eth.getBlockNumber()
 
       const res = await keep.distributeETHReward({value: ethValue})
-      truffleAssert.eventEmitted(res, "ETHRewardDistributed")
+      truffleAssert.eventEmitted(res, "ETHRewardDistributed", (event) => {
+        return web3.utils.toBN(event.amount).eq(ethValue)
+      })
 
       assert.lengthOf(
         await keep.getPastEvents("ETHRewardDistributed", {
@@ -1511,13 +1566,18 @@ contract("BondedECDSAKeep", (accounts) => {
   describe("withdraw", async () => {
     const singleValue = new BN(1000)
     const ethValue = singleValue.mul(new BN(members.length))
+    const beneficiary = accounts[4]
 
     beforeEach(async () => {
       await keep.distributeETHReward({value: ethValue})
     })
 
     it("correctly transfers value", async () => {
-      const initialMemberBalance = new BN(await web3.eth.getBalance(members[0]))
+      const initialMemberBalance = new BN(
+        await web3.eth.getBalance(beneficiary)
+      )
+
+      await tokenStaking.setBeneficiary(members[0], beneficiary)
 
       await keep.withdraw(members[0])
 
@@ -1532,7 +1592,7 @@ contract("BondedECDSAKeep", (accounts) => {
       ).to.eq.BN(0)
 
       expect(
-        await web3.eth.getBalance(members[0]),
+        await web3.eth.getBalance(beneficiary),
         "incorrect member account balance"
       ).to.eq.BN(initialMemberBalance.add(singleValue))
     })
@@ -1540,9 +1600,8 @@ contract("BondedECDSAKeep", (accounts) => {
     it("sends ETH to beneficiary", async () => {
       const valueWithRemainder = ethValue.add(new BN(1))
 
-      const member1 = accounts[2]
-      const member2 = accounts[3]
-      const beneficiary = accounts[4]
+      const member1 = members[0]
+      const member2 = members[1]
 
       const testMembers = [member1, member2]
 
@@ -1607,7 +1666,8 @@ contract("BondedECDSAKeep", (accounts) => {
       const etherReceiver = await TestEtherReceiver.new()
       await etherReceiver.setShouldFail(true)
 
-      const member = etherReceiver.address // a receiver which we expect to reject the transfer
+      const member = members[0]
+      await tokenStaking.setBeneficiary(member, etherReceiver.address) // a receiver which we expect to reject the transfer
 
       const keep = await newKeep(
         owner,
@@ -1624,9 +1684,9 @@ contract("BondedECDSAKeep", (accounts) => {
 
       await expectRevert(keep.withdraw(member), "Transfer failed")
 
-      // Check balances of keep member's account.
+      // Check balances of keep members's beneficiary account.
       expect(
-        await web3.eth.getBalance(member),
+        await web3.eth.getBalance(etherReceiver.address),
         "incorrect member's account balance"
       ).to.eq.BN(0)
 
@@ -1644,6 +1704,10 @@ contract("BondedECDSAKeep", (accounts) => {
 
     beforeEach(async () => {
       token = await TestToken.new()
+
+      for (let i = 0; i < members.length; i++) {
+        await tokenStaking.setBeneficiary(members[i], members[i])
+      }
     })
 
     it("correctly distributes ERC20", async () => {
@@ -1667,7 +1731,12 @@ contract("BondedECDSAKeep", (accounts) => {
       const startBlock = await web3.eth.getBlockNumber()
 
       const res = await keep.distributeERC20Reward(token.address, erc20Value)
-      truffleAssert.eventEmitted(res, "ERC20RewardDistributed")
+      truffleAssert.eventEmitted(res, "ERC20RewardDistributed", (event) => {
+        return (
+          token.address == event.token &&
+          web3.utils.toBN(event.amount).eq(erc20Value)
+        )
+      })
 
       assert.lengthOf(
         await keep.getPastEvents("ERC20RewardDistributed", {
