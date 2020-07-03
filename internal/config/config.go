@@ -20,6 +20,7 @@ type Config struct {
 	Storage                Storage
 	LibP2P                 libp2p.Config
 	TSS                    tss.Config
+	Metrics                Metrics
 }
 
 // SanctionedApplications contains addresses of applications approved by the
@@ -49,6 +50,13 @@ func (sa *SanctionedApplications) Addresses() ([]common.Address, error) {
 // Storage stores meta-info about keeping data on disk
 type Storage struct {
 	DataDir string
+}
+
+// Metrics stores meta-info about metrics.
+type Metrics struct {
+	Port                int
+	NetworkMetricsTick  int
+	EthereumMetricsTick int
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file
