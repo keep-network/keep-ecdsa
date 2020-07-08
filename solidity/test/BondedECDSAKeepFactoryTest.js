@@ -1523,6 +1523,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepBonding.authorizeSortitionPoolContract(members[i], signerPool, {
         from: authorizers[i],
       })
+      await tokenStaking.setBeneficiary(members[i], members[i])
     }
 
     const unbondedAmount = unbondedValue || minimumBond

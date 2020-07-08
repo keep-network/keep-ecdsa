@@ -94,6 +94,11 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // Map stores amount of wei stored in the contract for each member address.
     mapping(address => uint256) memberETHBalances;
 
+    // Map stores preimages that have been proven to be fraudulent. This is needed
+    // to prevent from slashing members multiple times for the same fraudulent
+    // preimage.
+    mapping(bytes => bool) fraudulentPreimages;
+
     // The current status of the keep.
     // If the keep is Active members monitor it and support requests from the
     // keep owner.
@@ -381,19 +386,24 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
         require(isFraud, "Signature is not fraudulent");
 
-        /* solium-disable-next-line */
-        (bool success, ) = address(tokenStaking).call(
-            abi.encodeWithSignature(
-                "slash(uint256,address[])",
-                memberStake,
-                members
-            )
-        );
-        // Should never happen but we want to protect the owner and make sure the
-        // fraud submission transaction does not fail so that the owner can
-        // seize and liquidate bonds in the same transaction.
-        if (!success) {
-            emit SlashingFailed();
+        if (!fraudulentPreimages[_preimage]) {
+            /* solium-disable-next-line */
+            (bool success, ) = address(tokenStaking).call(
+                abi.encodeWithSignature(
+                    "slash(uint256,address[])",
+                    memberStake,
+                    members
+                )
+            );
+
+            fraudulentPreimages[_preimage] = true;
+
+            // Should never happen but we want to protect the owner and make sure the
+            // fraud submission transaction does not fail so that the owner can
+            // seize and liquidate bonds in the same transaction.
+            if (!success) {
+                emit SlashingFailed();
+            }
         }
 
         return isFraud;
