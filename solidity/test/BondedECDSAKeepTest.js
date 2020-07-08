@@ -1865,6 +1865,11 @@ contract("BondedECDSAKeep", (accounts) => {
   }
 
   async function depositForBonding(member1Value, member2Value, member3Value) {
+    const beneficiary = accounts[4]
+    await tokenStaking.setBeneficiary(members[0], beneficiary)
+    await tokenStaking.setBeneficiary(members[1], beneficiary)
+    await tokenStaking.setBeneficiary(members[2], beneficiary)
+
     await keepBonding.deposit(members[0], {value: member1Value})
     await keepBonding.deposit(members[1], {value: member2Value})
     await keepBonding.deposit(members[2], {value: member3Value})

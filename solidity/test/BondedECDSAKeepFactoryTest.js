@@ -43,6 +43,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const notMember = accounts[5]
 
   const keepOwner = accounts[6]
+  const beneficiary = notMember
 
   const groupSize = new BN(members.length)
   const threshold = new BN(groupSize - 1)
@@ -1150,6 +1151,8 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       for (let i = 0; i < memberCount; i++) {
         const operator = await web3.eth.personal.newAccount("pass")
         await web3.eth.personal.unlockAccount(operator, "pass", 5000) // 5 sec unlock
+
+        await tokenStaking.setBeneficiary(operator, beneficiary)
 
         web3.eth.sendTransaction({
           from: accounts[0],
