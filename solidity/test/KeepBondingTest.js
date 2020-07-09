@@ -94,10 +94,10 @@ contract("KeepBonding", (accounts) => {
     it("reverts if beneficiary is not defined", async () => {
       await tokenStaking.setBeneficiary(operator, constants.ZERO_ADDRESS)
 
-      await expectRevert(	
-        keepBonding.deposit(operator, {value: value}),	
-        "Beneficiary not defined for the operator"	
-      )	
+      await expectRevert(
+        keepBonding.deposit(operator, {value: value}),
+        "Beneficiary not defined for the operator"
+      )
     })
   })
 
