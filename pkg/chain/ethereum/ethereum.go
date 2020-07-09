@@ -310,16 +310,6 @@ func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest 
 	return keepContract.IsAwaitingSignature(digest)
 }
 
-// HasSigningTimedOut checks if signing has timed out for keep.
-func (ec *EthereumChain) HasSigningTimedOut(keepAddress common.Address) (bool, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return false, err
-	}
-
-	return keepContract.HasSigningTimedOut()
-}
-
 // IsActive checks for current state of a keep on-chain.
 func (ec *EthereumChain) IsActive(keepAddress common.Address) (bool, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)

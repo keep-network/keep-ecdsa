@@ -598,12 +598,12 @@ func checkAwaitingSignature(
 					return false, err
 				}
 
-				hasSigningTimedOut, err := ethereumChain.HasSigningTimedOut(keepAddress)
+				isActive, err := ethereumChain.IsActive(keepAddress)
 				if err != nil {
 					return false, err
 				}
 
-				return (isAwaitingSignature && !hasSigningTimedOut), nil
+				return (isAwaitingSignature && isActive), nil
 			},
 		)
 		if err != nil {
