@@ -21,6 +21,7 @@ import "@keep-network/keep-core/contracts/libraries/RolesLookup.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
 contract KeepBonding {
@@ -230,11 +231,11 @@ contract KeepBonding {
     /// @param holder Address of the holder of the bond.
     /// @param referenceID Reference ID of the bond.
     /// @return Amount of wei in the selected bond.
-    function bondAmount(
-        address operator,
-        address holder,
-        uint256 referenceID
-    ) public view returns (uint256) {
+    function bondAmount(address operator, address holder, uint256 referenceID)
+        public
+        view
+        returns (uint256)
+    {
         bytes32 bondID = keccak256(
             abi.encodePacked(operator, holder, referenceID)
         );
@@ -326,6 +327,7 @@ contract KeepBonding {
 
         lockedBonds[bondID] = lockedBonds[bondID].sub(amount);
 
+        /* solium-disable-next-line */
         (bool success, ) = destination.call.value(amount)("");
         require(success, "Transfer failed");
 
@@ -389,6 +391,7 @@ contract KeepBonding {
 
         address beneficiary = tokenStaking.beneficiaryOf(operator);
 
+        /* solium-disable-next-line */
         (bool success, ) = beneficiary.call.value(amount)("");
         require(success, "Transfer failed");
 
