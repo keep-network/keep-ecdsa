@@ -479,15 +479,19 @@ func (ec *EthereumChain) GetHonestThreshold(
 	return threshold.Uint64(), nil
 }
 
-// HasKeyGenerationTimedOut returns whether key generation
-// has timed out for the given keep.
-func (ec *EthereumChain) HasKeyGenerationTimedOut(
-	keepAddress common.Address,
-) (bool, error) {
+// GetOpenedTimestamp returns timestamp when the keep was created.
+func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time, error) {
 	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
-		return false, err
+		return time.Unix(0, 0), err
 	}
 
-	return keepContract.HasKeyGenerationTimedOut()
+	timestamp, err := keepContract.GetOpenedTimestamp()
+	if err != nil {
+		return time.Unix(0, 0), err
+	}
+
+	keepOpenTime := time.Unix(timestamp.Int64(), 0)
+
+	return keepOpenTime, nil
 }
