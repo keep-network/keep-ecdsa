@@ -68,14 +68,10 @@ contract("KeepBonding", (accounts) => {
   describe("deposit", async () => {
     const value = new BN(100)
     const expectedUnbonded = value
-    let receipt;
-
-    beforeEach(async () => {
-      await tokenStaking.setBeneficiary(operator, beneficiary)
-      receipt = await keepBonding.deposit(operator, {value: value})
-    })
 
     it("registers unbonded value", async () => {
+      await tokenStaking.setBeneficiary(operator, beneficiary)
+      await keepBonding.deposit(operator, {value: value})
       const unbonded = await keepBonding.availableUnbondedValue(
         operator,
         bondCreator,
@@ -86,10 +82,22 @@ contract("KeepBonding", (accounts) => {
     })
 
     it("emits event", async () => {
+      await tokenStaking.setBeneficiary(operator, beneficiary)
+      const receipt = await keepBonding.deposit(operator, {value: value})
       expectEvent(receipt, "UnbondedValueDeposited", {
         operator: operator,
+        beneficiary: beneficiary,
         amount: value,
       })
+    })
+
+    it("reverts if beneficiary is not defined", async () => {
+      await tokenStaking.setBeneficiary(operator, constants.ZERO_ADDRESS)
+
+      await expectRevert(	
+        keepBonding.deposit(operator, {value: value}),	
+        "Beneficiary not defined for the operator"	
+      )	
     })
   })
 
@@ -98,7 +106,6 @@ contract("KeepBonding", (accounts) => {
 
     beforeEach(async () => {
       await tokenStaking.setBeneficiary(operator, beneficiary)
-
       await keepBonding.deposit(operator, {value: value})
     })
 
