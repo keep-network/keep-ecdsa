@@ -650,14 +650,6 @@ contract("BondedECDSAKeep", (accounts) => {
       )
     })
 
-    it("reverts when signing is in progress", async () => {
-      keep.sign(digest, {from: owner})
-      await expectRevert(
-        keep.seizeSignerBonds({from: owner}),
-        "Requested signing has not timed out yet"
-      )
-    })
-
     it("succeeds when signing is in progress", async () => {
       keep.sign(digest, {from: owner})
 
