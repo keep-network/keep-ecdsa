@@ -78,10 +78,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // started.
     uint256 internal keyGenerationStartTimestamp;
 
-    // Timeout for a signature to appear on the chain. Time is counted from the
-    // moment signing request occurred.
-    uint256 public constant signingTimeout = 90 * 60; // 1.5h in seconds
-
     // The timestamp at which signing process started. Used also to track if
     // signing is in progress. When set to `0` indicates there is no
     // signing process in progress.
@@ -266,7 +262,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         onlyMember
     {
         require(isSigningInProgress(), "Not awaiting a signature");
-        require(!hasSigningTimedOut(), "Signing timeout elapsed");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // Validate `s` value for a malleability concern described in EIP-2.
@@ -635,16 +630,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
             keyGenerationStartTimestamp + keyGenerationTimeout;
     }
 
-    /// @notice Returns true if the ongoing signing process timed out.
-    /// @dev There is a certain timeout for a signature to be produced, see
-    /// `signingTimeout`.
-    function hasSigningTimedOut() public view returns (bool) {
-        return
-            signingStartTimestamp != 0 &&
-            /* solium-disable-next-line */
-            block.timestamp > signingStartTimestamp + signingTimeout;
-    }
-
     /// @notice Checks if the member already submitted a public key.
     /// @param _member Address of the member.
     /// @return True if member already submitted a public key, else false.
@@ -665,11 +650,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// Keep can be marked as closed only when there is no signing in progress
     /// or the requested signing process has timed out.
     function markAsClosed() internal {
-        require(
-            !isSigningInProgress() || hasSigningTimedOut(),
-            "Requested signing has not timed out yet"
-        );
-
         unlockMemberStakes();
 
         status = Status.Closed;
@@ -680,11 +660,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// Keep can be marked as terminated only when there is no signing in progress
     /// or the requested signing process has timed out.
     function markAsTerminated() internal {
-        require(
-            !isSigningInProgress() || hasSigningTimedOut(),
-            "Requested signing has not timed out yet"
-        );
-
         unlockMemberStakes();
 
         status = Status.Terminated;
