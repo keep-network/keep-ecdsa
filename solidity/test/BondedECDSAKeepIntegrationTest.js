@@ -12,6 +12,8 @@ const BondedECDSAKeepFactoryStub = artifacts.require(
 )
 const KeepBonding = artifacts.require("KeepBonding")
 const MinimumStakeSchedule = artifacts.require("MinimumStakeSchedule")
+const GrantStaking = artifacts.require("GrantStaking")
+const Locks = artifacts.require("Locks")
 const TokenStakingEscrow = artifacts.require("TokenStakingEscrow")
 const TokenStaking = artifacts.require("TokenStaking")
 const TokenGrant = artifacts.require("TokenGrant")
@@ -253,6 +255,9 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       keepToken.address,
       keepTokenGrant.address
     )
+
+    await TokenStaking.link("GrantStaking", (await GrantStaking.new()).address)
+    await TokenStaking.link("Locks", (await Locks.new()).address)
 
     const stakeInitializationPeriod = 30 // In seconds
 
