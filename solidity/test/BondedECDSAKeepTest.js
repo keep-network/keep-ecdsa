@@ -36,6 +36,7 @@ contract("BondedECDSAKeep", (accounts) => {
   const members = [accounts[2], accounts[3], accounts[4]]
   const authorizers = [accounts[2], accounts[3], accounts[4]]
   const signingPool = accounts[5]
+  const beneficiary = accounts[6]
   const honestThreshold = 1
 
   const stakeLockDuration = time.duration.days(180)
@@ -1529,7 +1530,6 @@ contract("BondedECDSAKeep", (accounts) => {
   describe("withdraw", async () => {
     const singleValue = new BN(1000)
     const ethValue = singleValue.mul(new BN(members.length))
-    const beneficiary = accounts[4]
 
     beforeEach(async () => {
       await keep.distributeETHReward({value: ethValue})
@@ -1769,7 +1769,6 @@ contract("BondedECDSAKeep", (accounts) => {
 
       const member1 = accounts[2]
       const member2 = accounts[3]
-      const beneficiary = accounts[4]
 
       const testMembers = [member1, member2]
 
@@ -1828,6 +1827,10 @@ contract("BondedECDSAKeep", (accounts) => {
   }
 
   async function depositForBonding(member1Value, member2Value, member3Value) {
+    await tokenStaking.setBeneficiary(members[0], beneficiary)
+    await tokenStaking.setBeneficiary(members[1], beneficiary)
+    await tokenStaking.setBeneficiary(members[2], beneficiary)
+
     await keepBonding.deposit(members[0], {value: member1Value})
     await keepBonding.deposit(members[1], {value: member2Value})
     await keepBonding.deposit(members[2], {value: member3Value})
