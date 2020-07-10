@@ -25,8 +25,8 @@ var logger = log.Logger("keep-ecdsa")
 
 const (
 	defaultAwaitingKeyGenerationLookback = 24 * time.Hour
-	defaultKeyGenerationTimeout          = 120 * time.Minute
-	defaultSigningTimeout                = 90 * time.Minute
+	defaultKeyGenerationTimeout          = 3 * time.Hour
+	defaultSigningTimeout                = 2 * time.Hour
 	blockConfirmations                   = 12
 )
 
