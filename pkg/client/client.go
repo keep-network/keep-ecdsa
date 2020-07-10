@@ -258,7 +258,7 @@ func checkAwaitingKeyGeneration(
 
 		// If a keep was opened before the defined lookback duration there is no
 		// sense to continue because the next keep was created earlier.
-		if keepOpenedTimestamp.Before(time.Now().Add(-awaitingKeyGenerationLookback)) {
+		if keepOpenedTimestamp.Add(awaitingKeyGenerationLookback).Before(time.Now()) {
 			logger.Debugf(
 				"stopping awaiting key generation check with keep at index [%s] opened at [%s]",
 				keepIndex,
