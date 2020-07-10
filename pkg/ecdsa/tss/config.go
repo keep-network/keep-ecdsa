@@ -16,7 +16,8 @@ type Config struct {
 	PreParamsGenerationTimeout configtime.Duration
 }
 
-// GetKeyGenerationTimeout return key generation timeout as `time.Duration`.
+// GetPreParamsGenerationTimeout returns pre-parameters generation timeout. If
+// a value is not set it returns a default value.
 func (c *Config) GetPreParamsGenerationTimeout() time.Duration {
 	timeout := c.PreParamsGenerationTimeout.ToDuration()
 	if timeout == 0 {
