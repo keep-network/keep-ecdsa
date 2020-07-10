@@ -303,8 +303,8 @@ func (n *Node) publishSignature(
 		}
 
 		// Check if keep is still active. There is no point in submitting the
-		// request as keep is no longer active, which means that it was either
-		// closed or terminated and signers' bonds may have been seized already.
+		// request when keep is no longer active, which means that it was either
+		// closed or terminated and signers' bonds might have been seized already.
 		// We are giving up and leaving this function.
 		isActive, err := n.ethereumChain.IsActive(keepAddress)
 		if err != nil {
