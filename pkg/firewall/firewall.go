@@ -21,9 +21,15 @@ import (
 
 var logger = log.Logger("keep-firewall")
 
-// KeepCachePeriod is the time the cache maintains the list of active keep
-// members. We use the cache to minimize calls to Ethereum client.
-const KeepCachePeriod = 168 * time.Hour // one week
+const (
+	// ActiveKeepCachePeriod is the time the cache maintains the list of active keep
+	// members. We use the cache to minimize calls to Ethereum client.
+	ActiveKeepCachePeriod = 168 * time.Hour // one week
+
+	// NoActiveKeepCachePeriod is the time the cache maintains the list of
+	// no active keep members. We use the cache to minimize calls to Ethereum client.
+	NoActiveKeepCachePeriod = 168 * time.Hour // one week
+)
 
 var errNoAuthorization = fmt.Errorf("remote peer has no authorization on the factory")
 
@@ -38,16 +44,18 @@ func NewStakeOrActiveKeepPolicy(
 	stakeMonitor coreChain.StakeMonitor,
 ) coreNet.Firewall {
 	return &stakeOrActiveKeepPolicy{
-		chain:                  chain,
-		minimumStakePolicy:     coreFirewall.MinimumStakePolicy(stakeMonitor),
-		activeKeepMembersCache: cache.NewTimeCache(KeepCachePeriod),
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall.MinimumStakePolicy(stakeMonitor),
+		activeKeepMembersCache:   cache.NewTimeCache(ActiveKeepCachePeriod),
+		noActiveKeepMembersCache: cache.NewTimeCache(NoActiveKeepCachePeriod),
 	}
 }
 
 type stakeOrActiveKeepPolicy struct {
-	chain                  eth.Handle
-	minimumStakePolicy     coreNet.Firewall
-	activeKeepMembersCache *cache.TimeCache
+	chain                    eth.Handle
+	minimumStakePolicy       coreNet.Firewall
+	activeKeepMembersCache   *cache.TimeCache
+	noActiveKeepMembersCache *cache.TimeCache
 }
 
 func (soakp *stakeOrActiveKeepPolicy) Validate(
@@ -93,20 +101,23 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 ) error {
 
 	// First, check in the in-memory time cache to minimize hits to ETH client.
-	// If the Keep client with the given chain address is in the cache it means
-	// it's been a member in at least one active keep the last time
+	// If the Keep client with the given chain address is in the active members
+	// cache it means it's been a member in at least one active keep the last time
 	// validateActiveKeepMembership was executed and caching period has not
-	// elapsed yet.
+	// elapsed yet. Similarly, if the client is in the no active keep members
+	// cache it means it hasn't been a member of any keep during the last check.
 	//
 	// If the caching period elapsed, this check will return false and we
 	// have to ask the chain about the current status.
-	//
-	// Similarly, if the client was not a member of an active keep the last time
-	// validateActiveKeepMembership was executed, we have to ask the chain
-	// about the current status.
 	soakp.activeKeepMembersCache.Sweep()
+	soakp.noActiveKeepMembersCache.Sweep()
+
 	if soakp.activeKeepMembersCache.Has(remotePeerAddress) {
 		return nil
+	}
+
+	if soakp.noActiveKeepMembersCache.Has(remotePeerAddress) {
+		return errNoMinStakeNoActiveKeep
 	}
 
 	zero := big.NewInt(0)
@@ -170,6 +181,8 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 			return nil
 		}
 	}
+
+	soakp.noActiveKeepMembersCache.Add(remotePeerAddress)
 
 	// If we are here, it means that the client is not a member in any of
 	// active keeps and it's minimum stake check failed as well. We are not
