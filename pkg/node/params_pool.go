@@ -7,10 +7,6 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
-const (
-	defaultPreParamsGenerationTimeout = 2 * time.Minute
-)
-
 // tssPreParamsPool is a pool holding TSS pre parameters. It autogenerates entries
 // up to the pool size. When an entry is pulled from the pool it will generate
 // new entry.
@@ -23,15 +19,12 @@ type tssPreParamsPool struct {
 func (n *Node) InitializeTSSPreParamsPool() {
 	poolSize := 20
 
-	timeout := n.tssConfig.PreParamsGenerationTimeout.ToDuration()
-	if timeout == 0 {
-		timeout = defaultPreParamsGenerationTimeout
-	}
-
 	n.tssParamsPool = &tssPreParamsPool{
 		pool: make(chan *keygen.LocalPreParams, poolSize),
 		new: func() (*keygen.LocalPreParams, error) {
-			return tss.GenerateTSSPreParams(timeout)
+			return tss.GenerateTSSPreParams(
+				n.tssConfig.GetPreParamsGenerationTimeout(),
+			)
 		},
 	}
 

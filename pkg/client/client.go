@@ -23,12 +23,7 @@ import (
 
 var logger = log.Logger("keep-ecdsa")
 
-const (
-	defaultAwaitingKeyGenerationLookback = 24 * time.Hour
-	defaultKeyGenerationTimeout          = 3 * time.Hour
-	defaultSigningTimeout                = 2 * time.Hour
-	blockConfirmations                   = 12
-)
+const blockConfirmations = 12
 
 // Initialize initializes the ECDSA client with rules related to events handling.
 // Expects a slice of sanctioned applications selected by the operator for which
@@ -229,10 +224,7 @@ func checkAwaitingKeyGeneration(
 		return
 	}
 
-	lookbackPeriod := clientConfig.AwaitingKeyGenerationLookback.ToDuration()
-	if lookbackPeriod == 0 {
-		lookbackPeriod = defaultAwaitingKeyGenerationLookback
-	}
+	lookbackPeriod := clientConfig.GetAwaitingKeyGenerationLookback()
 
 	zero := big.NewInt(0)
 	one := big.NewInt(1)
@@ -476,12 +468,7 @@ func generateSignerForKeep(
 	keepAddress common.Address,
 	members []common.Address,
 ) (*tss.ThresholdSigner, error) {
-	timeout := clientConfig.KeyGenerationTimeout.ToDuration()
-	if timeout == 0 {
-		timeout = defaultKeyGenerationTimeout
-	}
-
-	keygenCtx, cancel := context.WithTimeout(ctx, timeout)
+	keygenCtx, cancel := context.WithTimeout(ctx, clientConfig.GetKeyGenerationTimeout())
 	defer cancel()
 
 	return tssNode.GenerateSignerForKeep(
@@ -666,12 +653,10 @@ func generateSignatureForKeep(
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) {
-	timeout := clientConfig.SigningTimeout.ToDuration()
-	if timeout == 0 {
-		timeout = defaultSigningTimeout
-	}
-
-	signingCtx, cancel := context.WithTimeout(context.Background(), timeout)
+	signingCtx, cancel := context.WithTimeout(
+		context.Background(),
+		clientConfig.GetSigningTimeout(),
+	)
 	defer cancel()
 
 	if err := tssNode.CalculateSignature(
