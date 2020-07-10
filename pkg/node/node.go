@@ -319,21 +319,22 @@ func (n *Node) publishSignature(
 			return fmt.Errorf("context timeout exceeded")
 		}
 
-		// Timeout for generating a signature defined in the contract exceeded.
-		// There is no point in submitting the request as it will be rejected
-		// by the chain. We are giving up and leaving this function.
-		hasSigningTimedOut, err := n.ethereumChain.HasSigningTimedOut(keepAddress)
+		// Check if keep is still active. There is no point in submitting the
+		// request when keep is no longer active, which means that it was either
+		// closed or terminated and signers' bonds might have been seized already.
+		// We are giving up and leaving this function.
+		isActive, err := n.ethereumChain.IsActive(keepAddress)
 		if err != nil {
 			logger.Errorf(
-				"failed to verify if signing has timed out for keep [%s]: [%v]",
+				"failed to verify if keep [%s] is still active: [%v]",
 				keepAddress.String(),
 				err,
 			)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
-		if hasSigningTimedOut {
-			return fmt.Errorf("on-chain timeout exceeded")
+		if !isActive {
+			return fmt.Errorf("keep is no longer active")
 		}
 
 		// Check if keep still awaits a signature for this digest.
