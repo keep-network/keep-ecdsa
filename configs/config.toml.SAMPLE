@@ -44,7 +44,7 @@
 #   # AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
 
 [Client]
-# Look-back period to check if existing keeps are awaiting signer generation.
+# Look-back period to check if existing keeps are awaiting signing key generation.
 # The value should be provided based on the sanctioned application requirements.
 #  AwaitingKeyGenerationLookback = "24h"	# optional
 
