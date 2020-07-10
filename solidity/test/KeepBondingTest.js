@@ -70,8 +70,8 @@ contract("KeepBonding", (accounts) => {
     const expectedUnbonded = value
 
     it("registers unbonded value", async () => {
+      await tokenStaking.setBeneficiary(operator, beneficiary)
       await keepBonding.deposit(operator, {value: value})
-
       const unbonded = await keepBonding.availableUnbondedValue(
         operator,
         bondCreator,
@@ -82,11 +82,22 @@ contract("KeepBonding", (accounts) => {
     })
 
     it("emits event", async () => {
+      await tokenStaking.setBeneficiary(operator, beneficiary)
       const receipt = await keepBonding.deposit(operator, {value: value})
       expectEvent(receipt, "UnbondedValueDeposited", {
         operator: operator,
+        beneficiary: beneficiary,
         amount: value,
       })
+    })
+
+    it("reverts if beneficiary is not defined", async () => {
+      await tokenStaking.setBeneficiary(operator, constants.ZERO_ADDRESS)
+
+      await expectRevert(
+        keepBonding.deposit(operator, {value: value}),
+        "Beneficiary not defined for the operator"
+      )
     })
   })
 
@@ -95,7 +106,6 @@ contract("KeepBonding", (accounts) => {
 
     beforeEach(async () => {
       await tokenStaking.setBeneficiary(operator, beneficiary)
-
       await keepBonding.deposit(operator, {value: value})
     })
 
@@ -168,15 +178,6 @@ contract("KeepBonding", (accounts) => {
       })
     })
 
-    it("reverts if beneficiary is not defined", async () => {
-      await tokenStaking.setBeneficiary(operator, constants.ZERO_ADDRESS)
-
-      await expectRevert(
-        keepBonding.withdraw(value, operator, {from: operator}),
-        "Beneficiary not defined for the operator"
-      )
-    })
-
     it("reverts if insufficient unbonded value", async () => {
       const invalidValue = value.add(new BN(1))
 
@@ -203,8 +204,8 @@ contract("KeepBonding", (accounts) => {
     let managedGrant
 
     beforeEach(async () => {
-      await keepBonding.deposit(operator, {value: value})
       await tokenStaking.setBeneficiary(operator, beneficiary)
+      await keepBonding.deposit(operator, {value: value})
 
       managedGrant = await ManagedGrant.new(managedGrantee)
       await tokenGrant.setGranteeOperator(managedGrant.address, operator)
@@ -353,6 +354,7 @@ contract("KeepBonding", (accounts) => {
     const value = new BN(100)
 
     beforeEach(async () => {
+      await tokenStaking.setBeneficiary(operator, beneficiary)
       await keepBonding.deposit(operator, {value: value})
     })
 
@@ -412,6 +414,7 @@ contract("KeepBonding", (accounts) => {
     const value = new BN(100)
 
     beforeEach(async () => {
+      await tokenStaking.setBeneficiary(operator, beneficiary)
       await keepBonding.deposit(operator, {value: value})
     })
 
@@ -473,6 +476,7 @@ contract("KeepBonding", (accounts) => {
 
       const expectedUnbonded = value.sub(bondValue)
 
+      await tokenStaking.setBeneficiary(operator2, etherReceiver.address)
       await keepBonding.deposit(operator2, {value: value})
 
       await tokenStaking.authorizeOperatorContract(operator2, bondCreator)
@@ -573,6 +577,7 @@ contract("KeepBonding", (accounts) => {
     const newReference = new BN(888)
 
     beforeEach(async () => {
+      await tokenStaking.setBeneficiary(operator, beneficiary)
       await keepBonding.deposit(operator, {value: bondValue})
       await keepBonding.createBond(
         operator,
@@ -707,6 +712,7 @@ contract("KeepBonding", (accounts) => {
     const reference = new BN(777)
 
     beforeEach(async () => {
+      await tokenStaking.setBeneficiary(operator, beneficiary)
       await keepBonding.deposit(operator, {value: initialUnboundedValue})
       await keepBonding.createBond(
         operator,
@@ -765,6 +771,7 @@ contract("KeepBonding", (accounts) => {
     const reference = new BN(777)
 
     beforeEach(async () => {
+      await tokenStaking.setBeneficiary(operator, beneficiary)
       await keepBonding.deposit(operator, {value: bondValue})
       await keepBonding.createBond(
         operator,
