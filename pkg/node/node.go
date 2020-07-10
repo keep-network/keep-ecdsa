@@ -128,6 +128,23 @@ func (n *Node) GenerateSignerForKeep(
 			attemptCounter,
 		)
 
+		isActive, err := n.ethereumChain.IsActive(keepAddress)
+		if err != nil {
+			logger.Warningf(
+				"could not check if keep [%s] is still active: [%v]",
+				keepAddress.String(),
+				err,
+			)
+			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
+			continue
+		}
+
+		// If the keep is not active there is no point in generating a signer as
+		// the keep is either closed or terminated.
+		if !isActive {
+			return nil, fmt.Errorf("keep is no longer active")
+		}
+
 		// If we are re-attempting the key generation, pre-parameters in the box
 		// could be destroyed because they were shared with other members.
 		// In this case, we need to re-generate them.

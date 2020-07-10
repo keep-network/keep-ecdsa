@@ -70,10 +70,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // digest was requested
     mapping(bytes32 => uint256) public digests;
 
-    // Timeout for the keep public key to appear on the chain. Time is counted
-    // from the moment keep has been created.
-    uint256 public constant keyGenerationTimeout = 150 * 60; // 2.5h in seconds
-
     // The timestamp at which keep has been created and key generation process
     // started.
     uint256 internal keyGenerationStartTimestamp;
@@ -184,8 +180,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// event.
     /// @param _publicKey Signer's public key.
     function submitPublicKey(bytes calldata _publicKey) external onlyMember {
-        require(!hasKeyGenerationTimedOut(), "Key generation timeout elapsed");
-
         require(
             !hasMemberSubmittedPublicKey(msg.sender),
             "Member already submitted a public key"
@@ -618,16 +612,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
 
         // Check if the signature is valid but was not requested.
         return isSignatureValid && digests[_signedDigest] == 0;
-    }
-
-    /// @notice Returns true if the ongoing key generation process timed out.
-    /// @dev There is a certain timeout for keep public key to be produced and
-    /// appear on the chain, see `keyGenerationTimeout`.
-    function hasKeyGenerationTimedOut() public view returns (bool) {
-        /* solium-disable-next-line */
-        return
-            block.timestamp >
-            keyGenerationStartTimestamp + keyGenerationTimeout;
     }
 
     /// @notice Checks if the member already submitted a public key.

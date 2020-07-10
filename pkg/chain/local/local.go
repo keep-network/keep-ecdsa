@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -312,8 +313,6 @@ func (lc *localChain) GetHonestThreshold(
 	panic("implement")
 }
 
-func (lc *localChain) HasKeyGenerationTimedOut(
-	keepAddress common.Address,
-) (bool, error) {
+func (lc *localChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time, error) {
 	panic("implement")
 }

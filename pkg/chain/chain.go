@@ -4,6 +4,7 @@ package eth
 
 import (
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -140,7 +141,6 @@ type BondedECDSAKeep interface {
 	// GetHonestThreshold returns keep's honest threshold.
 	GetHonestThreshold(keepAddress common.Address) (uint64, error)
 
-	// HasKeyGenerationTimedOut returns whether key generation
-	// has timed out for the given keep.
-	HasKeyGenerationTimedOut(keepAddress common.Address) (bool, error)
+	// GetOpenedTimestamp returns timestamp when the keep was created.
+	GetOpenedTimestamp(keepAddress common.Address) (time.Time, error)
 }

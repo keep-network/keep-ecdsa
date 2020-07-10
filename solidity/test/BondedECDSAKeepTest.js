@@ -6,7 +6,6 @@ import {
 
 import {mineBlocks} from "./helpers/mineBlocks"
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
-import {duration, increaseTime} from "./helpers/increaseTime"
 
 const {expectRevert, constants, time} = require("@openzeppelin/test-helpers")
 
@@ -138,8 +137,6 @@ contract("BondedECDSAKeep", (accounts) => {
 
   describe("initialize", async () => {
     it("succeeds", async () => {
-      const expectedKeyGenerationTimeout = new BN(9000) // 9000 = 150*60 = 2.5h in seconds
-
       keep = await BondedECDSAKeepStub.new()
       await keep.initialize(
         owner,
@@ -151,11 +148,6 @@ contract("BondedECDSAKeep", (accounts) => {
         keepBonding.address,
         factoryStub.address
       )
-
-      expect(
-        await keep.keyGenerationTimeout(),
-        "incorrect key generation timeout"
-      ).to.eq.BN(expectedKeyGenerationTimeout)
     })
 
     it("claims token staking delegated authority", async () => {
@@ -529,38 +521,6 @@ contract("BondedECDSAKeep", (accounts) => {
         await expectRevert(
           keep.submitPublicKey(badPublicKey, {from: members[2]}),
           "Public key must be 64 bytes long"
-        )
-      })
-
-      it("can be called just before the timeout", async () => {
-        const keyGenerationTimeout = await keep.keyGenerationTimeout.call()
-
-        await keep.submitPublicKey(publicKey1, {from: members[0]})
-        await keep.submitPublicKey(publicKey1, {from: members[1]})
-
-        // 5 seconds before the timeout
-        await increaseTime(duration.seconds(keyGenerationTimeout - 5))
-
-        await keep.submitPublicKey(publicKey1, {from: members[2]})
-
-        assert.equal(
-          await keep.getPublicKey(),
-          publicKey1,
-          "incorrect public key"
-        )
-      })
-
-      it("cannot be called after timeout", async () => {
-        const keyGenerationTimeout = await keep.keyGenerationTimeout.call()
-
-        await keep.submitPublicKey(publicKey1, {from: members[0]})
-        await keep.submitPublicKey(publicKey1, {from: members[1]})
-
-        await increaseTime(duration.seconds(keyGenerationTimeout))
-
-        await expectRevert(
-          keep.submitPublicKey(publicKey1, {from: members[2]}),
-          "Key generation timeout elapsed"
         )
       })
     })
