@@ -45,7 +45,7 @@
 
 [Client]
 # Look-back period to check if existing keeps are awaiting signer generation.
-# The values should be provided based on the sanctioned application requirements.
+# The value should be provided based on the sanctioned application requirements.
 #  AwaitingKeyGenerationLookback = "24h"	# optional
 
 # Timeouts for processes execution. Within these timeouts the process will keep
