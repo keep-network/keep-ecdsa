@@ -23,10 +23,8 @@ type tssPreParamsPool struct {
 func (n *Node) InitializeTSSPreParamsPool() {
 	poolSize := 20
 
-	var timeout time.Duration
-	if n.tssConfig.PreParamsGenerationTimeout.Duration > 0 {
-		timeout = time.Duration(n.tssConfig.PreParamsGenerationTimeout.Duration)
-	} else {
+	timeout := n.tssConfig.PreParamsGenerationTimeout.ToDuration()
+	if timeout == 0 {
 		timeout = defaultPreParamsGenerationTimeout
 	}
 
