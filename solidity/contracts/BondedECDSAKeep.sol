@@ -70,17 +70,9 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     // digest was requested
     mapping(bytes32 => uint256) public digests;
 
-    // Timeout for the keep public key to appear on the chain. Time is counted
-    // from the moment keep has been created.
-    uint256 public constant keyGenerationTimeout = 150 * 60; // 2.5h in seconds
-
     // The timestamp at which keep has been created and key generation process
     // started.
     uint256 internal keyGenerationStartTimestamp;
-
-    // Timeout for a signature to appear on the chain. Time is counted from the
-    // moment signing request occurred.
-    uint256 public constant signingTimeout = 90 * 60; // 1.5h in seconds
 
     // The timestamp at which signing process started. Used also to track if
     // signing is in progress. When set to `0` indicates there is no
@@ -188,8 +180,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// event.
     /// @param _publicKey Signer's public key.
     function submitPublicKey(bytes calldata _publicKey) external onlyMember {
-        require(!hasKeyGenerationTimedOut(), "Key generation timeout elapsed");
-
         require(
             !hasMemberSubmittedPublicKey(msg.sender),
             "Member already submitted a public key"
@@ -266,7 +256,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         onlyMember
     {
         require(isSigningInProgress(), "Not awaiting a signature");
-        require(!hasSigningTimedOut(), "Signing timeout elapsed");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 
         // Validate `s` value for a malleability concern described in EIP-2.
@@ -625,26 +614,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return isSignatureValid && digests[_signedDigest] == 0;
     }
 
-    /// @notice Returns true if the ongoing key generation process timed out.
-    /// @dev There is a certain timeout for keep public key to be produced and
-    /// appear on the chain, see `keyGenerationTimeout`.
-    function hasKeyGenerationTimedOut() public view returns (bool) {
-        /* solium-disable-next-line */
-        return
-            block.timestamp >
-            keyGenerationStartTimestamp + keyGenerationTimeout;
-    }
-
-    /// @notice Returns true if the ongoing signing process timed out.
-    /// @dev There is a certain timeout for a signature to be produced, see
-    /// `signingTimeout`.
-    function hasSigningTimedOut() public view returns (bool) {
-        return
-            signingStartTimestamp != 0 &&
-            /* solium-disable-next-line */
-            block.timestamp > signingStartTimestamp + signingTimeout;
-    }
-
     /// @notice Checks if the member already submitted a public key.
     /// @param _member Address of the member.
     /// @return True if member already submitted a public key, else false.
@@ -665,11 +634,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// Keep can be marked as closed only when there is no signing in progress
     /// or the requested signing process has timed out.
     function markAsClosed() internal {
-        require(
-            !isSigningInProgress() || hasSigningTimedOut(),
-            "Requested signing has not timed out yet"
-        );
-
         unlockMemberStakes();
 
         status = Status.Closed;
@@ -680,11 +644,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// Keep can be marked as terminated only when there is no signing in progress
     /// or the requested signing process has timed out.
     function markAsTerminated() internal {
-        require(
-            !isSigningInProgress() || hasSigningTimedOut(),
-            "Requested signing has not timed out yet"
-        );
-
         unlockMemberStakes();
 
         status = Status.Terminated;

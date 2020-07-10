@@ -6,7 +6,6 @@ import {
 
 import {mineBlocks} from "./helpers/mineBlocks"
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
-import {duration, increaseTime} from "./helpers/increaseTime"
 
 const {expectRevert, constants, time} = require("@openzeppelin/test-helpers")
 
@@ -138,9 +137,6 @@ contract("BondedECDSAKeep", (accounts) => {
 
   describe("initialize", async () => {
     it("succeeds", async () => {
-      const expectedKeyGenerationTimeout = new BN(9000) // 9000 = 150*60 = 2.5h in seconds
-      const expectedSigningTimeout = new BN(5400) // 5400 = 90 * 60 = 1.5h in seconds
-
       keep = await BondedECDSAKeepStub.new()
       await keep.initialize(
         owner,
@@ -151,14 +147,6 @@ contract("BondedECDSAKeep", (accounts) => {
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
-      )
-
-      expect(
-        await keep.keyGenerationTimeout(),
-        "incorrect key generation timeout"
-      ).to.eq.BN(expectedKeyGenerationTimeout)
-      expect(await keep.signingTimeout(), "incorrect signing timeout").to.eq.BN(
-        expectedSigningTimeout
       )
     })
 
@@ -336,61 +324,6 @@ contract("BondedECDSAKeep", (accounts) => {
       )
 
       assert.isTrue(await keep.isAwaitingSignature(digest1))
-    })
-  })
-
-  describe("hasSigningTimedOut", async () => {
-    const digest1 =
-      "0x54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b"
-    const publicKey =
-      "0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051"
-    const signatureR =
-      "0x9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2"
-    const signatureS =
-      "0x6f7c776efde1e382f2ecc99ec0db13534a70ee86bd91d7b3a4059bccbed5d70c"
-    const signatureRecoveryID = 1
-
-    const digest2 =
-      "0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da"
-
-    let signingTimeout
-
-    beforeEach(async () => {
-      signingTimeout = await keep.signingTimeout.call()
-
-      await submitMembersPublicKeys(publicKey)
-    })
-
-    it("returns false if signing was not requested", async () => {
-      assert.isFalse(await keep.hasSigningTimedOut())
-    })
-
-    it("returns false if signing was requested and have not timed out yet", async () => {
-      await keep.sign(digest1, {from: owner})
-
-      await increaseTime(duration.seconds(signingTimeout - 1))
-
-      assert.isFalse(await keep.hasSigningTimedOut())
-    })
-
-    it("returns true if signing was requested and have timed out", async () => {
-      await keep.sign(digest2, {from: owner})
-
-      await increaseTime(duration.seconds(signingTimeout))
-
-      assert.isTrue(await keep.hasSigningTimedOut())
-    })
-
-    it("returns false if signing was requested and signature have been submitted", async () => {
-      await keep.sign(digest1, {from: owner})
-
-      await keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
-        from: members[0],
-      })
-
-      await increaseTime(duration.seconds(signingTimeout))
-
-      assert.isFalse(await keep.hasSigningTimedOut())
     })
   })
 
@@ -590,38 +523,6 @@ contract("BondedECDSAKeep", (accounts) => {
           "Public key must be 64 bytes long"
         )
       })
-
-      it("can be called just before the timeout", async () => {
-        const keyGenerationTimeout = await keep.keyGenerationTimeout.call()
-
-        await keep.submitPublicKey(publicKey1, {from: members[0]})
-        await keep.submitPublicKey(publicKey1, {from: members[1]})
-
-        // 5 seconds before the timeout
-        await increaseTime(duration.seconds(keyGenerationTimeout - 5))
-
-        await keep.submitPublicKey(publicKey1, {from: members[2]})
-
-        assert.equal(
-          await keep.getPublicKey(),
-          publicKey1,
-          "incorrect public key"
-        )
-      })
-
-      it("cannot be called after timeout", async () => {
-        const keyGenerationTimeout = await keep.keyGenerationTimeout.call()
-
-        await keep.submitPublicKey(publicKey1, {from: members[0]})
-        await keep.submitPublicKey(publicKey1, {from: members[1]})
-
-        await increaseTime(duration.seconds(keyGenerationTimeout))
-
-        await expectRevert(
-          keep.submitPublicKey(publicKey1, {from: members[2]}),
-          "Key generation timeout elapsed"
-        )
-      })
     })
   })
 
@@ -710,35 +611,11 @@ contract("BondedECDSAKeep", (accounts) => {
       )
     })
 
-    it("reverts when signing is in progress", async () => {
+    it("succeeds when signing is in progress", async () => {
       keep.sign(digest, {from: owner})
-      await expectRevert(
-        keep.seizeSignerBonds({from: owner}),
-        "Requested signing has not timed out yet"
-      )
-    })
-
-    it("reverts when signing was requested but has not timed out yet", async () => {
-      keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-      await increaseTime(duration.seconds(signingTimeout - 1))
-
-      await expectRevert(
-        keep.seizeSignerBonds({from: owner}),
-        "Requested signing has not timed out yet"
-      )
-    })
-
-    it("succeeds when signing was requested but timed out", async () => {
-      keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-      await increaseTime(duration.seconds(signingTimeout))
 
       await keep.seizeSignerBonds({from: owner})
     })
-
     it("reverts when already seized", async () => {
       await keep.seizeSignerBonds({from: owner})
 
@@ -1151,33 +1028,6 @@ contract("BondedECDSAKeep", (accounts) => {
       await keep.sign(digest, {from: owner})
     })
 
-    it("can be called just before the timeout", async () => {
-      await keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-
-      await increaseTime(duration.seconds(signingTimeout - 1))
-
-      await keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
-        from: members[0],
-      })
-    })
-
-    it("cannot be called after the timeout passed", async () => {
-      await keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-
-      await increaseTime(duration.seconds(signingTimeout))
-
-      await expectRevert(
-        keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
-          from: members[0],
-        }),
-        "Signing timeout elapsed"
-      )
-    })
-
     it("cannot be submitted if signing was not requested", async () => {
       await expectRevert(
         keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
@@ -1318,32 +1168,8 @@ contract("BondedECDSAKeep", (accounts) => {
       }
     })
 
-    it("reverts when signing is in progress", async () => {
+    it("succeeds when signing is in progress", async () => {
       keep.sign(digest, {from: owner})
-
-      await expectRevert(
-        keep.closeKeep({from: owner}),
-        "Requested signing has not timed out yet"
-      )
-    })
-
-    it("reverts when signing was requested but has not timed out yet", async () => {
-      keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-      await increaseTime(duration.seconds(signingTimeout - 1))
-
-      await expectRevert(
-        keep.closeKeep({from: owner}),
-        "Requested signing has not timed out yet"
-      )
-    })
-
-    it("succeeds when signing was requested but timed out", async () => {
-      keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-      await increaseTime(duration.seconds(signingTimeout))
 
       await keep.closeKeep({from: owner})
     })
