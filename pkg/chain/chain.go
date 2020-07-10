@@ -4,6 +4,7 @@ package eth
 
 import (
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -118,11 +119,6 @@ type BondedECDSAKeep interface {
 	// calculated for the given digest.
 	IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error)
 
-	// HasSigningTimedOut checks if the ongoing signing process timed out for
-	// the keep. If there is no ongoing signing for the keep or if the ongoing
-	// signing process has not timed out yet, this function returns false.
-	HasSigningTimedOut(keepAddress common.Address) (bool, error)
-
 	// IsActive checks if the keep with the given address is active and responds
 	// to signing request. This function returns false only for closed keeps.
 	IsActive(keepAddress common.Address) (bool, error)
@@ -145,7 +141,6 @@ type BondedECDSAKeep interface {
 	// GetHonestThreshold returns keep's honest threshold.
 	GetHonestThreshold(keepAddress common.Address) (uint64, error)
 
-	// HasKeyGenerationTimedOut returns whether key generation
-	// has timed out for the given keep.
-	HasKeyGenerationTimedOut(keepAddress common.Address) (bool, error)
+	// GetOpenedTimestamp returns timestamp when the keep was created.
+	GetOpenedTimestamp(keepAddress common.Address) (time.Time, error)
 }

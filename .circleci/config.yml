@@ -298,14 +298,14 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
       - build_client_and_test_go:
           context: github-package-registry
           filters:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           requires:
             - keep_test_approval
       - migrate_contracts:
@@ -314,7 +314,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           requires:
             - build_client_and_test_go
       - build_initcontainer:
@@ -323,7 +323,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           requires:
             - migrate_contracts
       - publish_client:
@@ -332,7 +332,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           requires:
             - build_client_and_test_go
             - build_initcontainer
@@ -343,7 +343,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           requires:
             - build_client_and_test_go
             - build_initcontainer
@@ -354,7 +354,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           requires:
             - migrate_contracts
       - publish_contract_data:
@@ -363,6 +363,6 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           requires:
             - migrate_contracts

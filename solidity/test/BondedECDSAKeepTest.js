@@ -6,7 +6,6 @@ import {
 
 import {mineBlocks} from "./helpers/mineBlocks"
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
-import {duration, increaseTime} from "./helpers/increaseTime"
 
 const {expectRevert, constants, time} = require("@openzeppelin/test-helpers")
 
@@ -16,6 +15,7 @@ const TestToken = artifacts.require("TestToken")
 const KeepBonding = artifacts.require("KeepBonding")
 const TestEtherReceiver = artifacts.require("TestEtherReceiver")
 const TokenStakingStub = artifacts.require("TokenStakingStub")
+const TokenGrantStub = artifacts.require("TokenGrantStub")
 const BondedECDSAKeepCloneFactory = artifacts.require(
   "BondedECDSAKeepCloneFactory"
 )
@@ -35,6 +35,7 @@ contract("BondedECDSAKeep", (accounts) => {
   const members = [accounts[2], accounts[3], accounts[4]]
   const authorizers = [accounts[2], accounts[3], accounts[4]]
   const signingPool = accounts[5]
+  const beneficiary = accounts[6]
   const honestThreshold = 1
 
   const stakeLockDuration = time.duration.days(180)
@@ -42,6 +43,7 @@ contract("BondedECDSAKeep", (accounts) => {
   let registry
   let keepBonding
   let tokenStaking
+  let tokenGrant
   let bondedECDSAKeepStubMaster
   let keep
   let factoryStub
@@ -87,7 +89,12 @@ contract("BondedECDSAKeep", (accounts) => {
   before(async () => {
     registry = await KeepRegistry.new()
     tokenStaking = await TokenStakingStub.new()
-    keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+    tokenGrant = await TokenGrantStub.new()
+    keepBonding = await KeepBonding.new(
+      registry.address,
+      tokenStaking.address,
+      tokenGrant.address
+    )
     bondedECDSAKeepStubMaster = await BondedECDSAKeepStub.new()
     factoryStub = await BondedECDSAKeepCloneFactory.new(
       bondedECDSAKeepStubMaster.address
@@ -130,9 +137,6 @@ contract("BondedECDSAKeep", (accounts) => {
 
   describe("initialize", async () => {
     it("succeeds", async () => {
-      const expectedKeyGenerationTimeout = new BN(9000) // 9000 = 150*60 = 2.5h in seconds
-      const expectedSigningTimeout = new BN(5400) // 5400 = 90 * 60 = 1.5h in seconds
-
       keep = await BondedECDSAKeepStub.new()
       await keep.initialize(
         owner,
@@ -143,14 +147,6 @@ contract("BondedECDSAKeep", (accounts) => {
         tokenStaking.address,
         keepBonding.address,
         factoryStub.address
-      )
-
-      expect(
-        await keep.keyGenerationTimeout(),
-        "incorrect key generation timeout"
-      ).to.eq.BN(expectedKeyGenerationTimeout)
-      expect(await keep.signingTimeout(), "incorrect signing timeout").to.eq.BN(
-        expectedSigningTimeout
       )
     })
 
@@ -328,61 +324,6 @@ contract("BondedECDSAKeep", (accounts) => {
       )
 
       assert.isTrue(await keep.isAwaitingSignature(digest1))
-    })
-  })
-
-  describe("hasSigningTimedOut", async () => {
-    const digest1 =
-      "0x54a6483b8aca55c9df2a35baf71d9965ddfd623468d81d51229bd5eb7d1e1c1b"
-    const publicKey =
-      "0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051"
-    const signatureR =
-      "0x9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2"
-    const signatureS =
-      "0x6f7c776efde1e382f2ecc99ec0db13534a70ee86bd91d7b3a4059bccbed5d70c"
-    const signatureRecoveryID = 1
-
-    const digest2 =
-      "0xca071ca92644f1f2c4ae1bf71b6032e5eff4f78f3aa632b27cbc5f84104a32da"
-
-    let signingTimeout
-
-    beforeEach(async () => {
-      signingTimeout = await keep.signingTimeout.call()
-
-      await submitMembersPublicKeys(publicKey)
-    })
-
-    it("returns false if signing was not requested", async () => {
-      assert.isFalse(await keep.hasSigningTimedOut())
-    })
-
-    it("returns false if signing was requested and have not timed out yet", async () => {
-      await keep.sign(digest1, {from: owner})
-
-      await increaseTime(duration.seconds(signingTimeout - 1))
-
-      assert.isFalse(await keep.hasSigningTimedOut())
-    })
-
-    it("returns true if signing was requested and have timed out", async () => {
-      await keep.sign(digest2, {from: owner})
-
-      await increaseTime(duration.seconds(signingTimeout))
-
-      assert.isTrue(await keep.hasSigningTimedOut())
-    })
-
-    it("returns false if signing was requested and signature have been submitted", async () => {
-      await keep.sign(digest1, {from: owner})
-
-      await keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
-        from: members[0],
-      })
-
-      await increaseTime(duration.seconds(signingTimeout))
-
-      assert.isFalse(await keep.hasSigningTimedOut())
     })
   })
 
@@ -582,38 +523,6 @@ contract("BondedECDSAKeep", (accounts) => {
           "Public key must be 64 bytes long"
         )
       })
-
-      it("can be called just before the timeout", async () => {
-        const keyGenerationTimeout = await keep.keyGenerationTimeout.call()
-
-        await keep.submitPublicKey(publicKey1, {from: members[0]})
-        await keep.submitPublicKey(publicKey1, {from: members[1]})
-
-        // 5 seconds before the timeout
-        await increaseTime(duration.seconds(keyGenerationTimeout - 5))
-
-        await keep.submitPublicKey(publicKey1, {from: members[2]})
-
-        assert.equal(
-          await keep.getPublicKey(),
-          publicKey1,
-          "incorrect public key"
-        )
-      })
-
-      it("cannot be called after timeout", async () => {
-        const keyGenerationTimeout = await keep.keyGenerationTimeout.call()
-
-        await keep.submitPublicKey(publicKey1, {from: members[0]})
-        await keep.submitPublicKey(publicKey1, {from: members[1]})
-
-        await increaseTime(duration.seconds(keyGenerationTimeout))
-
-        await expectRevert(
-          keep.submitPublicKey(publicKey1, {from: members[2]}),
-          "Key generation timeout elapsed"
-        )
-      })
     })
   })
 
@@ -702,35 +611,11 @@ contract("BondedECDSAKeep", (accounts) => {
       )
     })
 
-    it("reverts when signing is in progress", async () => {
+    it("succeeds when signing is in progress", async () => {
       keep.sign(digest, {from: owner})
-      await expectRevert(
-        keep.seizeSignerBonds({from: owner}),
-        "Requested signing has not timed out yet"
-      )
-    })
-
-    it("reverts when signing was requested but has not timed out yet", async () => {
-      keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-      await increaseTime(duration.seconds(signingTimeout - 1))
-
-      await expectRevert(
-        keep.seizeSignerBonds({from: owner}),
-        "Requested signing has not timed out yet"
-      )
-    })
-
-    it("succeeds when signing was requested but timed out", async () => {
-      keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-      await increaseTime(duration.seconds(signingTimeout))
 
       await keep.seizeSignerBonds({from: owner})
     })
-
     it("reverts when already seized", async () => {
       await keep.seizeSignerBonds({from: owner})
 
@@ -929,7 +814,7 @@ contract("BondedECDSAKeep", (accounts) => {
       V: 28,
     }
 
-    it("should return true and slash members when the signature is a fraud", async () => {
+    it("should return true and slash members when the signature is fraudulent", async () => {
       await submitMembersPublicKeys(publicKey1)
 
       const res = await keep.submitSignatureFraud.call(
@@ -959,7 +844,53 @@ contract("BondedECDSAKeep", (accounts) => {
       }
     })
 
-    it("should revert when the signature is not a fraud", async () => {
+    it("should prevent from slashing members multiple times for the same fradulent preimage", async () => {
+      await submitMembersPublicKeys(publicKey1)
+
+      const minimumStake = await factoryStub.minimumStake.call()
+      const memberStake = web3.utils.toBN("100000000000000000000000")
+      // setting a value other then the min stake for testing purposes
+      await keep.setMemberStake(memberStake)
+
+      assert.isFalse(
+        await keep.isFradulentPreimageSet(preimage1),
+        "fradulent preimage should not have been set"
+      )
+
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      assert.isTrue(
+        await keep.isFradulentPreimageSet(preimage1),
+        "fradulent preimage should have been set"
+      )
+
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
+
+      for (let i = 0; i < members.length; i++) {
+        const actualStake = await tokenStaking.eligibleStake(
+          members[i],
+          constants.ZERO_ADDRESS
+        )
+        expect(actualStake).to.eq.BN(
+          minimumStake.sub(memberStake),
+          `incorrect stake for member ${i}`
+        )
+      }
+    })
+
+    it("should revert when the signature is not fraudulent", async () => {
       await submitMembersPublicKeys(publicKey1)
 
       await keep.sign(hash256Digest1, {from: owner})
@@ -1095,33 +1026,6 @@ contract("BondedECDSAKeep", (accounts) => {
       })
 
       await keep.sign(digest, {from: owner})
-    })
-
-    it("can be called just before the timeout", async () => {
-      await keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-
-      await increaseTime(duration.seconds(signingTimeout - 1))
-
-      await keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
-        from: members[0],
-      })
-    })
-
-    it("cannot be called after the timeout passed", async () => {
-      await keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-
-      await increaseTime(duration.seconds(signingTimeout))
-
-      await expectRevert(
-        keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
-          from: members[0],
-        }),
-        "Signing timeout elapsed"
-      )
     })
 
     it("cannot be submitted if signing was not requested", async () => {
@@ -1264,32 +1168,8 @@ contract("BondedECDSAKeep", (accounts) => {
       }
     })
 
-    it("reverts when signing is in progress", async () => {
+    it("succeeds when signing is in progress", async () => {
       keep.sign(digest, {from: owner})
-
-      await expectRevert(
-        keep.closeKeep({from: owner}),
-        "Requested signing has not timed out yet"
-      )
-    })
-
-    it("reverts when signing was requested but has not timed out yet", async () => {
-      keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-      await increaseTime(duration.seconds(signingTimeout - 1))
-
-      await expectRevert(
-        keep.closeKeep({from: owner}),
-        "Requested signing has not timed out yet"
-      )
-    })
-
-    it("succeeds when signing was requested but timed out", async () => {
-      keep.sign(digest, {from: owner})
-
-      const signingTimeout = await keep.signingTimeout.call()
-      await increaseTime(duration.seconds(signingTimeout))
 
       await keep.closeKeep({from: owner})
     })
@@ -1423,7 +1303,9 @@ contract("BondedECDSAKeep", (accounts) => {
       const startBlock = await web3.eth.getBlockNumber()
 
       const res = await keep.distributeETHReward({value: ethValue})
-      truffleAssert.eventEmitted(res, "ETHRewardDistributed")
+      truffleAssert.eventEmitted(res, "ETHRewardDistributed", (event) => {
+        return web3.utils.toBN(event.amount).eq(ethValue)
+      })
 
       assert.lengthOf(
         await keep.getPastEvents("ETHRewardDistributed", {
@@ -1517,7 +1399,11 @@ contract("BondedECDSAKeep", (accounts) => {
     })
 
     it("correctly transfers value", async () => {
-      const initialMemberBalance = new BN(await web3.eth.getBalance(members[0]))
+      const initialMemberBalance = new BN(
+        await web3.eth.getBalance(beneficiary)
+      )
+
+      await tokenStaking.setBeneficiary(members[0], beneficiary)
 
       await keep.withdraw(members[0])
 
@@ -1532,7 +1418,7 @@ contract("BondedECDSAKeep", (accounts) => {
       ).to.eq.BN(0)
 
       expect(
-        await web3.eth.getBalance(members[0]),
+        await web3.eth.getBalance(beneficiary),
         "incorrect member account balance"
       ).to.eq.BN(initialMemberBalance.add(singleValue))
     })
@@ -1540,9 +1426,8 @@ contract("BondedECDSAKeep", (accounts) => {
     it("sends ETH to beneficiary", async () => {
       const valueWithRemainder = ethValue.add(new BN(1))
 
-      const member1 = accounts[2]
-      const member2 = accounts[3]
-      const beneficiary = accounts[4]
+      const member1 = members[0]
+      const member2 = members[1]
 
       const testMembers = [member1, member2]
 
@@ -1607,7 +1492,8 @@ contract("BondedECDSAKeep", (accounts) => {
       const etherReceiver = await TestEtherReceiver.new()
       await etherReceiver.setShouldFail(true)
 
-      const member = etherReceiver.address // a receiver which we expect to reject the transfer
+      const member = members[0]
+      await tokenStaking.setBeneficiary(member, etherReceiver.address) // a receiver which we expect to reject the transfer
 
       const keep = await newKeep(
         owner,
@@ -1624,9 +1510,9 @@ contract("BondedECDSAKeep", (accounts) => {
 
       await expectRevert(keep.withdraw(member), "Transfer failed")
 
-      // Check balances of keep member's account.
+      // Check balances of keep members's beneficiary account.
       expect(
-        await web3.eth.getBalance(member),
+        await web3.eth.getBalance(etherReceiver.address),
         "incorrect member's account balance"
       ).to.eq.BN(0)
 
@@ -1644,6 +1530,10 @@ contract("BondedECDSAKeep", (accounts) => {
 
     beforeEach(async () => {
       token = await TestToken.new()
+
+      for (let i = 0; i < members.length; i++) {
+        await tokenStaking.setBeneficiary(members[i], members[i])
+      }
     })
 
     it("correctly distributes ERC20", async () => {
@@ -1667,7 +1557,12 @@ contract("BondedECDSAKeep", (accounts) => {
       const startBlock = await web3.eth.getBlockNumber()
 
       const res = await keep.distributeERC20Reward(token.address, erc20Value)
-      truffleAssert.eventEmitted(res, "ERC20RewardDistributed")
+      truffleAssert.eventEmitted(res, "ERC20RewardDistributed", (event) => {
+        return (
+          token.address == event.token &&
+          web3.utils.toBN(event.amount).eq(erc20Value)
+        )
+      })
 
       assert.lengthOf(
         await keep.getPastEvents("ERC20RewardDistributed", {
@@ -1737,7 +1632,6 @@ contract("BondedECDSAKeep", (accounts) => {
 
       const member1 = accounts[2]
       const member2 = accounts[3]
-      const beneficiary = accounts[4]
 
       const testMembers = [member1, member2]
 
@@ -1796,6 +1690,10 @@ contract("BondedECDSAKeep", (accounts) => {
   }
 
   async function depositForBonding(member1Value, member2Value, member3Value) {
+    await tokenStaking.setBeneficiary(members[0], beneficiary)
+    await tokenStaking.setBeneficiary(members[1], beneficiary)
+    await tokenStaking.setBeneficiary(members[2], beneficiary)
+
     await keepBonding.deposit(members[0], {value: member1Value})
     await keepBonding.deposit(members[1], {value: member2Value})
     await keepBonding.deposit(members[2], {value: member3Value})

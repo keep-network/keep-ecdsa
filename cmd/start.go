@@ -3,6 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/metrics"
+	"github.com/keep-network/keep-core/pkg/net"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -162,6 +165,8 @@ func Start(c *cli.Context) error {
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
+	initializeMetrics(ctx, config, networkProvider, stakeMonitor)
+
 	logger.Info("client started")
 
 	select {
@@ -172,4 +177,52 @@ func Start(c *cli.Context) error {
 
 		return fmt.Errorf("unexpected context cancellation")
 	}
+}
+
+func initializeMetrics(
+	ctx context.Context,
+	config *config.Config,
+	netProvider net.Provider,
+	stakeMonitor chain.StakeMonitor,
+) {
+	registry, isConfigured := metrics.Initialize(
+		config.Metrics.Port,
+	)
+	if !isConfigured {
+		logger.Infof("metrics are not configured")
+		return
+	}
+
+	logger.Infof(
+		"enabled metrics on port [%v]",
+		config.Metrics.Port,
+	)
+
+	metrics.ObserveConnectedPeersCount(
+		ctx,
+		registry,
+		netProvider,
+		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
+	)
+
+	metrics.ObserveConnectedBootstrapCount(
+		ctx,
+		registry,
+		netProvider,
+		config.LibP2P.Peers,
+		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
+	)
+
+	metrics.ObserveEthConnectivity(
+		ctx,
+		registry,
+		stakeMonitor,
+		config.Ethereum.Account.Address,
+		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
+	)
+
+	metrics.ExposeLibP2PInfo(
+		registry,
+		netProvider,
+	)
 }

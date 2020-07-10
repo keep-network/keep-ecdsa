@@ -20,22 +20,27 @@ these capabilities consider the following criteria:
   application port running under the same IP.
 - Recommended machine types by provider:
 
+Your operating environment will ultimately dictate what machine type to go with.  This is
+particulary relevant if you're running a containerized solution where multiple applications are
+sharing VM resources.  The below types are sufficient for running at least one instance of the
+Keep ECDSA client.
+
 [%header,cols=2*]
 |===
 |Cloud Provider
 |Machine Type
 
 |Google Cloud
-|n1-standard-4
+|n2-highcpu-2
 
 |AWS
-|m5.xlarge
+|c5.large
 
 |Azure
-|D4s v3
+|F2s v2
 
 |Self-hosted
-|4 vCPU / 4 GiB RAM / 1 GiB Persistent Storage
+|2 vCPU / 2 GiB RAM / 1 GiB Persistent Storage
 |===
 
 == Configuration
@@ -257,6 +262,8 @@ docker run -d \
 --volume $KEEP_ECDSA_CONFIG_DIR:/mnt/keep-ecdsa/config \
 --env KEEP_ETHEREUM_PASSWORD=$KEEP_ECDSA_ETHEREUM_PASSWORD \
 --env LOG_LEVEL=debug \
+--log-opt max-size=100m \
+--log-opt max-file=3 \
 -p 3919:3919 \
 keepnetwork/keep-ecdsa-client:<version> --config /mnt/keep-ecdsa/config/keep-ecdsa-config.toml start
 ----
@@ -389,13 +396,14 @@ Once you've got your KEEP token grant you can manage it with our https://dashboa
 
 ==== Bootstrap Peers
 
+Bootstrap peers will come and go on testnet.  As long as at least one of your configured peers is
+up, there is no need to worry.
+
 [.small]
 ```
-"/dns4/ecdsa-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH",
-"/dns4/ecdsa-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY",
-"/dns4/ecdsa-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp",
+"/dns4/bootstrap-1.ecdsa.keep.test.boar.network/tcp/4001/ipfs/16Uiu2HAmPFXDaeGWtnzd8s39NsaQguoWtKi77834A6xwYqeicq6N",
+"/dns4/ecdsa-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp",	
 "/dns4/ecdsa-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf",
-"/dns4/ecdsa-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAkxRTeySEWZfW9C83GPFpQUXvrygmZryCN6DL4piZrbAv4",
 ```
 
 ==== Contracts
@@ -408,13 +416,13 @@ Contract addresses needed to boot a Keep ECDSA client:
 |
 
 |BondedECDSAKeepFactory
-|`0x17caddf97a1d1123efb7b233cb16c76c31a96e02`
+|`0xe7BF8421fBE80c3Bf67082370D86C8D81D1D77F4`
 
 |Sanctioned Applications
-|`0x2b70907b5c44897030ea1369591ddcd23c5d85d6` (tBTC's system contract)
+|`0x25B60668E7a0967a86223828D20f93714D91Ee4B` (tBTC's system contract)
 
 |tBTC Sortition pool (for <<Authorizations,authorization>>)
-|`0xf5bc2812344ecacdd45c0b53824168f522533fc5`
+|`0x787fE59d9EefAf4c1214D6d6F547318Fcad54EE9`
 |===
 
 

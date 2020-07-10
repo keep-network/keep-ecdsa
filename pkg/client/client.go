@@ -24,9 +24,10 @@ import (
 var logger = log.Logger("keep-ecdsa")
 
 const (
-	keyGenerationTimeout = 150 * time.Minute
-	signingTimeout       = 90 * time.Minute
-	blockConfirmations   = 12
+	awaitingKeyGenerationLookback = 24 * time.Hour
+	keyGenerationTimeout          = 120 * time.Minute
+	signingTimeout                = 90 * time.Minute
+	blockConfirmations            = 12
 )
 
 // Initialize initializes the ECDSA client with rules related to events handling.
@@ -245,20 +246,24 @@ func checkAwaitingKeyGeneration(
 			continue
 		}
 
-		keygenTimeout, err := ethereumChain.HasKeyGenerationTimedOut(keep)
+		keepOpenedTimestamp, err := ethereumChain.GetOpenedTimestamp(keep)
 		if err != nil {
 			logger.Warningf(
-				"could not check key generation timeout for keep [%s]: [%v]",
+				"could not check opening timestamp for keep [%s]: [%v]",
 				keep.String(),
 				err,
 			)
 			continue
 		}
 
-		// If key generation timeout of current keep has been exceeded,
-		// there is no sense to continue because the next keep (created earlier)
-		// will have this timeout exceeded as well.
-		if keygenTimeout {
+		// If a keep was opened before the defined lookback duration there is no
+		// sense to continue because the next keep was created earlier.
+		if keepOpenedTimestamp.Add(awaitingKeyGenerationLookback).Before(time.Now()) {
+			logger.Debugf(
+				"stopping awaiting key generation check with keep at index [%s] opened at [%s]",
+				keepIndex,
+				keepOpenedTimestamp,
+			)
 			break
 		}
 
@@ -598,12 +603,12 @@ func checkAwaitingSignature(
 					return false, err
 				}
 
-				hasSigningTimedOut, err := ethereumChain.HasSigningTimedOut(keepAddress)
+				isActive, err := ethereumChain.IsActive(keepAddress)
 				if err != nil {
 					return false, err
 				}
 
-				return (isAwaitingSignature && !hasSigningTimedOut), nil
+				return (isAwaitingSignature && isActive), nil
 			},
 		)
 		if err != nil {

@@ -42,7 +42,7 @@ abi/%.abi: ${solidity_dir}/contracts/%.sol
 
 
 abi/%.go: abi/%.abi
-	abigen --abi $< --pkg abi --type $* --out $@
+	go run github.com/ethereum/go-ethereum/cmd/abigen --abi $< --pkg abi --type $* --out $@
 
 contract/%.go cmd/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.go
 	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*.go cmd/$*.go

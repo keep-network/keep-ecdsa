@@ -45,16 +45,18 @@ contract TokenStakingStub is IStaking {
         return stakes[_operator];
     }
 
-    function setBeneficiary(address _operator, address payable _beneficiary) public {
+    function setBeneficiary(address _operator, address payable _beneficiary)
+        public
+    {
         operatorToBeneficiary[_operator] = _beneficiary;
     }
 
-    function beneficiaryOf(address _operator) public view returns (address payable) {
-        address payable beneficiary = operatorToBeneficiary[_operator];
-        if (beneficiary == address(0)) {
-            return address(uint160(_operator));
-        }
-        return beneficiary;
+    function beneficiaryOf(address _operator)
+        public
+        view
+        returns (address payable)
+    {
+        return operatorToBeneficiary[_operator];
     }
 
     function slash(uint256 _amount, address[] memory _misbehavedOperators)

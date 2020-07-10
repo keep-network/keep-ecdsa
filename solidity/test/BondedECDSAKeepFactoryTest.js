@@ -12,6 +12,7 @@ const BondedECDSAKeepFactoryStub = artifacts.require(
 )
 const KeepBonding = artifacts.require("KeepBonding")
 const TokenStakingStub = artifacts.require("TokenStakingStub")
+const TokenGrantStub = artifacts.require("TokenGrantStub")
 const BondedSortitionPool = artifacts.require("BondedSortitionPool")
 const BondedSortitionPoolFactory = artifacts.require(
   "BondedSortitionPoolFactory"
@@ -28,6 +29,7 @@ const expect = chai.expect
 contract("BondedECDSAKeepFactory", async (accounts) => {
   let registry
   let tokenStaking
+  let tokenGrant
   let keepFactory
   let bondedSortitionPoolFactory
   let keepBonding
@@ -41,6 +43,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const notMember = accounts[5]
 
   const keepOwner = accounts[6]
+  const beneficiary = accounts[7]
 
   const groupSize = new BN(members.length)
   const threshold = new BN(groupSize - 1)
@@ -1149,6 +1152,8 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
         const operator = await web3.eth.personal.newAccount("pass")
         await web3.eth.personal.unlockAccount(operator, "pass", 5000) // 5 sec unlock
 
+        await tokenStaking.setBeneficiary(operator, beneficiary)
+
         web3.eth.sendTransaction({
           from: accounts[0],
           to: operator,
@@ -1178,9 +1183,11 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       registry = await KeepRegistry.new()
       bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
       tokenStaking = await TokenStakingStub.new()
+      tokenGrant = await TokenGrantStub.new()
       keepBonding = await KeepBonding.new(
         registry.address,
-        tokenStaking.address
+        tokenStaking.address,
+        tokenGrant.address
       )
       randomBeacon = accounts[1]
       const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
@@ -1477,7 +1484,12 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     registry = await KeepRegistry.new()
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
     tokenStaking = await TokenStakingStub.new()
-    keepBonding = await KeepBonding.new(registry.address, tokenStaking.address)
+    tokenGrant = await TokenGrantStub.new()
+    keepBonding = await KeepBonding.new(
+      registry.address,
+      tokenStaking.address,
+      tokenGrant.address
+    )
     randomBeacon = await RandomBeaconStub.new()
     const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
     keepFactory = await BondedECDSAKeepFactoryStub.new(
@@ -1514,6 +1526,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepBonding.authorizeSortitionPoolContract(members[i], signerPool, {
         from: authorizers[i],
       })
+      await tokenStaking.setBeneficiary(members[i], members[i])
     }
 
     const unbondedAmount = unbondedValue || minimumBond
