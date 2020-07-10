@@ -251,13 +251,13 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       "MinimumStakeSchedule",
       (await MinimumStakeSchedule.new()).address
     )
+    await TokenStaking.link("GrantStaking", (await GrantStaking.new()).address)
+    await TokenStaking.link("Locks", (await Locks.new()).address)
+
     const stakingEscrow = await TokenStakingEscrow.new(
       keepToken.address,
       keepTokenGrant.address
     )
-
-    await TokenStaking.link("GrantStaking", (await GrantStaking.new()).address)
-    await TokenStaking.link("Locks", (await Locks.new()).address)
 
     const stakeInitializationPeriod = 30 // In seconds
 
