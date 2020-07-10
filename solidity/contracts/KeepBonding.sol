@@ -48,7 +48,11 @@ contract KeepBonding {
     // operator -> pool -> boolean
     mapping(address => mapping(address => bool)) internal authorizedPools;
 
-    event UnbondedValueDeposited(address indexed operator, uint256 amount);
+    event UnbondedValueDeposited(
+        address indexed operator,
+        address indexed beneficiary,
+        uint256 amount
+    );
     event UnbondedValueWithdrawn(
         address indexed operator,
         address indexed beneficiary,
@@ -92,8 +96,17 @@ contract KeepBonding {
     /// @notice Add the provided value to operator's pool available for bonding.
     /// @param operator Address of the operator.
     function deposit(address operator) external payable {
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        // Beneficiary has to be set (delegation exist) before an operator can
+        // deposit wei. It protects from a situation when an operator wants
+        // to withdraw funds which are transfered to beneficiary with zero
+        // address.
+        require(
+            beneficiary != address(0),
+            "Beneficiary not defined for the operator"
+        );
         unbondedValue[operator] = unbondedValue[operator].add(msg.value);
-        emit UnbondedValueDeposited(operator, msg.value);
+        emit UnbondedValueDeposited(operator, beneficiary, msg.value);
     }
 
     /// @notice Returns the amount of wei the operator has made available for
@@ -376,13 +389,6 @@ contract KeepBonding {
         unbondedValue[operator] = unbondedValue[operator].sub(amount);
 
         address beneficiary = tokenStaking.beneficiaryOf(operator);
-        // Following check protects from a situation when a bonding value has
-        // been deposited before defining a beneficiary for the operator in the
-        // TokenStaking contract.
-        require(
-            beneficiary != address(0),
-            "Beneficiary not defined for the operator"
-        );
 
         (bool success, ) = beneficiary.call.value(amount)("");
         require(success, "Transfer failed");
