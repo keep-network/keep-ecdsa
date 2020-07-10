@@ -43,7 +43,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const notMember = accounts[5]
 
   const keepOwner = accounts[6]
-  const beneficiary = notMember
+  const beneficiary = accounts[7]
 
   const groupSize = new BN(members.length)
   const threshold = new BN(groupSize - 1)

@@ -327,7 +327,6 @@ contract KeepBonding {
 
         lockedBonds[bondID] = lockedBonds[bondID].sub(amount);
 
-        /* solium-disable-next-line */
         (bool success, ) = destination.call.value(amount)("");
         require(success, "Transfer failed");
 
@@ -391,7 +390,6 @@ contract KeepBonding {
 
         address beneficiary = tokenStaking.beneficiaryOf(operator);
 
-        /* solium-disable-next-line */
         (bool success, ) = beneficiary.call.value(amount)("");
         require(success, "Transfer failed");
 
