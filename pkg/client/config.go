@@ -24,7 +24,9 @@ const (
 
 // Config contains configuration for tss protocol execution.
 type Config struct {
-	// Period to check keeps for awaiting key generation on client start.
+	// Defines the look-back period to check if existing, active keeps are awaiting
+	// signer generation on the client start. The client does not check keeps older
+	// than the look-back value.
 	AwaitingKeyGenerationLookback configtime.Duration
 
 	// Timeout for key generation and signature calculation.

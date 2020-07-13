@@ -23,7 +23,7 @@ import (
 
 var logger = log.Logger("keep-ecdsa")
 
-// The default number of block confirmations the client waits until it starts the
+// The number of block confirmations the client waits until it starts the
 // requested signing process. This value prevents from reporting unauthorized
 // signings by adversaries in case of a chain fork.
 const blockConfirmations = 12
