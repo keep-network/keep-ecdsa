@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-ecdsa/pkg/client"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
@@ -19,6 +20,7 @@ type Config struct {
 	SanctionedApplications SanctionedApplications
 	Storage                Storage
 	LibP2P                 libp2p.Config
+	Client                 client.Config
 	TSS                    tss.Config
 	Metrics                Metrics
 }
