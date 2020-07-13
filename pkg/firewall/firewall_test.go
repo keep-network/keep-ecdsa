@@ -412,8 +412,9 @@ func TestSweepsActiveKeepMembersCache(t *testing.T) {
 // Has authorization.
 // Is not a member of an active keep.
 // Should NOT allow to connect.
-// After some time, becomes member of an active keep.
-// Then, it should allow to connect.
+// After some time, has a minimum stake again and becomes a member of an active keep.
+// Shortly after that, the minimum stake drops below the required minimum but
+// the membership in an active keep remains.
 func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()

@@ -105,7 +105,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	// cache it means it's been a member in at least one active keep the last time
 	// validateActiveKeepMembership was executed and caching period has not
 	// elapsed yet. Similarly, if the client is in the no active keep members
-	// cache it means it hasn't been a member of any keep during the last check.
+	// cache it means it hasn't been a member of any active keep during the last check.
 	//
 	// If the caching period elapsed, this check will return false and we
 	// have to ask the chain about the current status.
