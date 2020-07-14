@@ -20,9 +20,10 @@ func TestHasMinimumStake(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	policy := &stakeOrActiveKeepPolicy{
-		chain:                  chain,
-		minimumStakePolicy:     coreFirewall,
-		activeKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall,
+		activeKeepMembersCache:   cache.NewTimeCache(cacheLifeTime),
+		noActiveKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -46,9 +47,10 @@ func TestNoAuthorization(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	policy := &stakeOrActiveKeepPolicy{
-		chain:                  chain,
-		minimumStakePolicy:     coreFirewall,
-		activeKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall,
+		activeKeepMembersCache:   cache.NewTimeCache(cacheLifeTime),
+		noActiveKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -75,9 +77,10 @@ func TestNoMinimumStakeNoKeepsExist(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	policy := &stakeOrActiveKeepPolicy{
-		chain:                  chain,
-		minimumStakePolicy:     coreFirewall,
-		activeKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall,
+		activeKeepMembersCache:   cache.NewTimeCache(cacheLifeTime),
+		noActiveKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -108,9 +111,10 @@ func TestNoMinimumStakeIsNotKeepMember(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	policy := &stakeOrActiveKeepPolicy{
-		chain:                  chain,
-		minimumStakePolicy:     coreFirewall,
-		activeKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall,
+		activeKeepMembersCache:   cache.NewTimeCache(cacheLifeTime),
+		noActiveKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -149,9 +153,10 @@ func TestNoMinimumStakeIsActiveKeepMember(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	policy := &stakeOrActiveKeepPolicy{
-		chain:                  chain,
-		minimumStakePolicy:     coreFirewall,
-		activeKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall,
+		activeKeepMembersCache:   cache.NewTimeCache(cacheLifeTime),
+		noActiveKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -186,9 +191,10 @@ func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	policy := &stakeOrActiveKeepPolicy{
-		chain:                  chain,
-		minimumStakePolicy:     coreFirewall,
-		activeKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall,
+		activeKeepMembersCache:   cache.NewTimeCache(cacheLifeTime),
+		noActiveKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -232,9 +238,10 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	policy := &stakeOrActiveKeepPolicy{
-		chain:                  chain,
-		minimumStakePolicy:     coreFirewall,
-		activeKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall,
+		activeKeepMembersCache:   cache.NewTimeCache(cacheLifeTime),
+		noActiveKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -282,11 +289,13 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 func TestCachesAllActiveKeepMembers(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
-	cache := cache.NewTimeCache(cacheLifeTime)
+	activeKeepMembersCache := cache.NewTimeCache(cacheLifeTime)
+	noActiveKeepMembersCache := cache.NewTimeCache(cacheLifeTime)
 	policy := &stakeOrActiveKeepPolicy{
-		chain:                  chain,
-		minimumStakePolicy:     coreFirewall,
-		activeKeepMembersCache: cache,
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall,
+		activeKeepMembersCache:   activeKeepMembersCache,
+		noActiveKeepMembersCache: noActiveKeepMembersCache,
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -320,17 +329,37 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 
 	policy.Validate(key.NetworkKeyToECDSAKey(remotePeerPublicKey))
 
-	if !cache.Has(activeKeepMembers[0].String()) {
+	if !activeKeepMembersCache.Has(activeKeepMembers[0].String()) {
 		t.Errorf("should cache active keep members")
 	}
-	if !cache.Has(activeKeepMembers[1].String()) {
+	if !activeKeepMembersCache.Has(activeKeepMembers[1].String()) {
 		t.Errorf("should cache active keep members")
 	}
-	if cache.Has(closedKeepMembers[0].String()) {
+	if activeKeepMembersCache.Has(closedKeepMembers[0].String()) {
 		t.Errorf("should not cache non-active keep members")
 	}
-	if cache.Has(closedKeepMembers[1].String()) {
+	if activeKeepMembersCache.Has(closedKeepMembers[1].String()) {
 		t.Errorf("should not cache non-active keep members")
+	}
+
+	// We don't put members of an active keep inside noActiveKeepMembersCache.
+	// We don't put members of an inactive keep inside noActiveKeepMembersCache
+	// because those members can belong to another active keep. We put there
+	// only those members for which we executed the check.
+	if noActiveKeepMembersCache.Has(activeKeepMembers[0].String()) {
+		t.Errorf("should not cache member until all keeps are checked")
+	}
+	if noActiveKeepMembersCache.Has(activeKeepMembers[1].String()) {
+		t.Errorf("should not cache member until all keeps are checked")
+	}
+	if noActiveKeepMembersCache.Has(closedKeepMembers[0].String()) {
+		t.Errorf("should not cache member until all keeps are checked")
+	}
+	if noActiveKeepMembersCache.Has(closedKeepMembers[1].String()) {
+		t.Errorf("should not cache member until all keeps are checked")
+	}
+	if !noActiveKeepMembersCache.Has(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)) {
+		t.Errorf("should be in the no active keep members cache")
 	}
 }
 
@@ -341,13 +370,14 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 // Should allow to connect.
 // After some time, the keep gets closed.
 // It should no longer allow to connect.
-func TestSweepsCache(t *testing.T) {
+func TestSweepsActiveKeepMembersCache(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	policy := &stakeOrActiveKeepPolicy{
-		chain:                  chain,
-		minimumStakePolicy:     coreFirewall,
-		activeKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall,
+		activeKeepMembersCache:   cache.NewTimeCache(cacheLifeTime),
+		noActiveKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -397,6 +427,71 @@ func TestSweepsCache(t *testing.T) {
 		)
 	}
 
+}
+
+// Has no minimum stake.
+// Has authorization.
+// Is not a member of an active keep.
+// Should NOT allow to connect.
+// After some time, has a minimum stake again and becomes a member of an active keep.
+// Shortly after that, the minimum stake drops below the required minimum but
+// the membership in an active keep remains.
+func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
+	chain := local.Connect()
+	coreFirewall := newMockCoreFirewall()
+	policy := &stakeOrActiveKeepPolicy{
+		chain:                    chain,
+		minimumStakePolicy:       coreFirewall,
+		activeKeepMembersCache:   cache.NewTimeCache(cacheLifeTime),
+		noActiveKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+	}
+
+	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chain.AuthorizeOperator(common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+	))
+
+	if err := policy.Validate(
+		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
+	); err != errNoMinStakeNoActiveKeep {
+		t.Fatalf(
+			"unexpected validation error\nactual:   [%v]\nexpected: [%v]",
+			err,
+			errNoMinStakeNoActiveKeep,
+		)
+	}
+
+	keepAddress := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
+	chain.OpenKeep(
+		keepAddress,
+		[]common.Address{
+			common.HexToAddress(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)),
+		},
+	)
+
+	// still caching the old result
+	if err := policy.Validate(
+		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
+	); err != errNoMinStakeNoActiveKeep {
+		t.Fatalf(
+			"unexpected validation error\nactual:   [%v]\nexpected: [%v]",
+			err,
+			errNoMinStakeNoActiveKeep,
+		)
+	}
+
+	time.Sleep(cacheLifeTime)
+
+	// no longer caches the previous result
+	if err := policy.Validate(
+		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
+	); err != nil {
+		t.Fatalf("validation should pass: [%v]", err)
+	}
 }
 
 func newMockCoreFirewall() *mockCoreFirewall {
