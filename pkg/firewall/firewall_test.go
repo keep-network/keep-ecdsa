@@ -290,11 +290,12 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 	chain := local.Connect()
 	coreFirewall := newMockCoreFirewall()
 	activeKeepMembersCache := cache.NewTimeCache(cacheLifeTime)
+	noActiveKeepMembersCache := cache.NewTimeCache(cacheLifeTime)
 	policy := &stakeOrActiveKeepPolicy{
 		chain:                    chain,
 		minimumStakePolicy:       coreFirewall,
 		activeKeepMembersCache:   activeKeepMembersCache,
-		noActiveKeepMembersCache: cache.NewTimeCache(cacheLifeTime),
+		noActiveKeepMembersCache: noActiveKeepMembersCache,
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -339,6 +340,26 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 	}
 	if activeKeepMembersCache.Has(closedKeepMembers[1].String()) {
 		t.Errorf("should not cache non-active keep members")
+	}
+
+	// We don't put members of an active keep inside noActiveKeepMembersCache.
+	// We don't put members of an inactive keep inside noActiveKeepMembersCache
+	// because those members can belong to another active keep. We put there
+	// only those members for which we executed the check.
+	if noActiveKeepMembersCache.Has(activeKeepMembers[0].String()) {
+		t.Errorf("should not cache member until all keeps are checked")
+	}
+	if noActiveKeepMembersCache.Has(activeKeepMembers[1].String()) {
+		t.Errorf("should not cache member until all keeps are checked")
+	}
+	if noActiveKeepMembersCache.Has(closedKeepMembers[0].String()) {
+		t.Errorf("should not cache member until all keeps are checked")
+	}
+	if noActiveKeepMembersCache.Has(closedKeepMembers[1].String()) {
+		t.Errorf("should not cache member until all keeps are checked")
+	}
+	if !noActiveKeepMembersCache.Has(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)) {
+		t.Errorf("should be in the no active keep members cache")
 	}
 }
 
