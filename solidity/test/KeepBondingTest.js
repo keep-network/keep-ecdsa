@@ -1,11 +1,12 @@
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+const {accounts, contract, web3} = require("@openzeppelin/test-environment")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
-const KeepRegistry = artifacts.require("./KeepRegistry.sol")
-const TokenStaking = artifacts.require("./TokenStakingStub.sol")
-const TokenGrant = artifacts.require("./TokenGrantStub.sol")
-const ManagedGrant = artifacts.require("./ManagedGrantStub.sol")
-const KeepBonding = artifacts.require("./KeepBonding.sol")
-const TestEtherReceiver = artifacts.require("./TestEtherReceiver.sol")
+const KeepRegistry = contract.fromArtifact("KeepRegistry")
+const TokenStaking = contract.fromArtifact("TokenStakingStub")
+const TokenGrant = contract.fromArtifact("TokenGrantStub")
+const ManagedGrant = contract.fromArtifact("ManagedGrantStub")
+const KeepBonding = contract.fromArtifact("KeepBonding")
+const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
 
 const {
   constants,
@@ -18,8 +19,9 @@ const BN = web3.utils.BN
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
+const assert = chai.assert
 
-contract("KeepBonding", (accounts) => {
+describe("KeepBonding", function () {
   let registry
   let tokenStaking
   let tokenGrant

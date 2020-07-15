@@ -1,4 +1,5 @@
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+const {accounts, contract} = require("@openzeppelin/test-environment")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const {
   BN,
@@ -11,13 +12,14 @@ const {
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
+const assert = chai.assert
 
-const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
-const BondedECDSAKeepVendorImplV1 = artifacts.require(
+const BondedECDSAKeepVendor = contract.fromArtifact("BondedECDSAKeepVendor")
+const BondedECDSAKeepVendorImplV1 = contract.fromArtifact(
   "BondedECDSAKeepVendorImplV1"
 )
 
-contract("BondedECDSAKeepVendor", async (accounts) => {
+describe("BondedECDSAKeepVendor", function () {
   const address0 = constants.ZERO_ADDRESS
   const address1 = "0xF2D3Af2495E286C7820643B963FB9D34418c871d"
   const address2 = "0x4566716c07617c5854fe7dA9aE5a1219B19CCd27"

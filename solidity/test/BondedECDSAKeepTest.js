@@ -1,22 +1,23 @@
-import {
+const {accounts, contract, web3} = require("@openzeppelin/test-environment")
+const {
   getETHBalancesFromList,
   getERC20BalancesFromList,
   addToBalances,
-} from "./helpers/listBalanceUtils"
+} = require("./helpers/listBalanceUtils")
 
-import {mineBlocks} from "./helpers/mineBlocks"
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+const {mineBlocks} = require("./helpers/mineBlocks")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const {expectRevert, constants, time} = require("@openzeppelin/test-helpers")
 
-const KeepRegistry = artifacts.require("KeepRegistry")
-const BondedECDSAKeepStub = artifacts.require("BondedECDSAKeepStub")
-const TestToken = artifacts.require("TestToken")
-const KeepBonding = artifacts.require("KeepBonding")
-const TestEtherReceiver = artifacts.require("TestEtherReceiver")
-const TokenStakingStub = artifacts.require("TokenStakingStub")
-const TokenGrantStub = artifacts.require("TokenGrantStub")
-const BondedECDSAKeepCloneFactory = artifacts.require(
+const KeepRegistry = contract.fromArtifact("KeepRegistry")
+const BondedECDSAKeepStub = contract.fromArtifact("BondedECDSAKeepStub")
+const TestToken = contract.fromArtifact("TestToken")
+const KeepBonding = contract.fromArtifact("KeepBonding")
+const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
+const TokenStakingStub = contract.fromArtifact("TokenStakingStub")
+const TokenGrantStub = contract.fromArtifact("TokenGrantStub")
+const BondedECDSAKeepCloneFactory = contract.fromArtifact(
   "BondedECDSAKeepCloneFactory"
 )
 
@@ -27,8 +28,9 @@ const BN = web3.utils.BN
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
+const assert = chai.assert
 
-contract("BondedECDSAKeep", (accounts) => {
+describe("BondedECDSAKeep", function () {
   const bondCreator = accounts[0]
   const owner = accounts[1]
   const nonOwner = accounts[2]
@@ -1544,7 +1546,9 @@ contract("BondedECDSAKeep", (accounts) => {
         erc20Value / members.length
       )
 
-      await keep.distributeERC20Reward(token.address, erc20Value)
+      await keep.distributeERC20Reward(token.address, erc20Value, {
+        from: accounts[0],
+      })
 
       const newBalances = await getERC20BalancesFromList(members, token)
 
@@ -1556,7 +1560,9 @@ contract("BondedECDSAKeep", (accounts) => {
 
       const startBlock = await web3.eth.getBlockNumber()
 
-      const res = await keep.distributeERC20Reward(token.address, erc20Value)
+      const res = await keep.distributeERC20Reward(token.address, erc20Value, {
+        from: accounts[0],
+      })
       truffleAssert.eventEmitted(res, "ERC20RewardDistributed", (event) => {
         return (
           token.address == event.token &&
@@ -1590,7 +1596,9 @@ contract("BondedECDSAKeep", (accounts) => {
         expectedRemainder
       )
 
-      await keep.distributeERC20Reward(token.address, valueWithRemainder)
+      await keep.distributeERC20Reward(token.address, valueWithRemainder, {
+        from: accounts[0],
+      })
 
       const newBalances = await getERC20BalancesFromList(members, token)
 
@@ -1658,7 +1666,9 @@ contract("BondedECDSAKeep", (accounts) => {
       await tokenStaking.setBeneficiary(member1, beneficiary)
       await tokenStaking.setBeneficiary(member2, beneficiary)
 
-      await keep.distributeERC20Reward(token.address, valueWithRemainder)
+      await keep.distributeERC20Reward(token.address, valueWithRemainder, {
+        from: accounts[0],
+      })
 
       // Check balances of all keep members' and beneficiary.
       const newBalances = await getERC20BalancesFromList(accountsInTest, token)
@@ -1666,8 +1676,8 @@ contract("BondedECDSAKeep", (accounts) => {
     })
 
     async function initializeTokens(token, keep, account, amount) {
-      await token.mint(account, amount)
-      await token.approve(keep.address, amount)
+      await token.mint(account, amount, {from: accounts[0]})
+      await token.approve(keep.address, amount, {from: accounts[0]})
     }
   })
 
@@ -1715,21 +1725,24 @@ contract("BondedECDSAKeep", (accounts) => {
       keep.address,
       referenceID,
       bondValue1,
-      signingPool
+      signingPool,
+      {from: bondCreator}
     )
     await keepBonding.createBond(
       members[1],
       keep.address,
       referenceID,
       bondValue2,
-      signingPool
+      signingPool,
+      {from: bondCreator}
     )
     await keepBonding.createBond(
       members[2],
       keep.address,
       referenceID,
       bondValue3,
-      signingPool
+      signingPool,
+      {from: bondCreator}
     )
 
     return bondValue1.add(bondValue2).add(bondValue3)
