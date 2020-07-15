@@ -1,5 +1,7 @@
-const BondedECDSAKeepFactory = artifacts.require("./BondedECDSAKeepFactory.sol")
-const BondedECDSAKeep = artifacts.require("./BondedECDSAKeep.sol")
+const {contract, web3} = require("@openzeppelin/test-environment")
+
+const BondedECDSAKeepFactory = contract.fromArtifact("BondedECDSAKeepFactory")
+const BondedECDSAKeep = contract.fromArtifact("BondedECDSAKeep")
 
 // Creates a new keep, requests signature for a digest and gets the signature
 // submitted to the chain.

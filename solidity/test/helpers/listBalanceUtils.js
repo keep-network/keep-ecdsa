@@ -1,3 +1,5 @@
+const {web3} = require("@openzeppelin/test-environment")
+
 const BN = web3.utils.BN
 
 /**
@@ -69,10 +71,8 @@ function addToBalancesMap(map, increment) {
   return map
 }
 
-export {
-  getETHBalancesFromList,
-  getETHBalancesMap,
-  getERC20BalancesFromList,
-  addToBalances,
-  addToBalancesMap,
-}
+module.exports.getETHBalancesFromList = getETHBalancesFromList
+module.exports.getETHBalancesMap = getETHBalancesMap
+module.exports.getERC20BalancesFromList = getERC20BalancesFromList
+module.exports.addToBalances = addToBalances
+module.exports.addToBalancesMap = addToBalancesMap

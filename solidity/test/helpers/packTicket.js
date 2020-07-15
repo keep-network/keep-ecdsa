@@ -1,4 +1,6 @@
-export default function packTicket(ticketValueHex, index, operator) {
+const {web3} = require("@openzeppelin/test-environment")
+
+function packTicket(ticketValueHex, index, operator) {
   const stakerValueBytes = web3.utils.hexToBytes(operator)
 
   const ticketBytes = web3.utils.hexToBytes(ticketValueHex)
@@ -11,3 +13,5 @@ export default function packTicket(ticketValueHex, index, operator) {
 
   return ticketValue.concat(stakerValueBytes).concat(virtualStakerIndexBytes)
 }
+
+module.exports.packTicket = packTicket
