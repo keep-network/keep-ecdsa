@@ -57,9 +57,6 @@ describe("BondedECDSAKeepFactory", function () {
   const stakeLockDuration = time.duration.days(180)
 
   before(async () => {
-    await BondedSortitionPool.detectNetwork()
-    await BondedSortitionPool.link("StackLib", (await StackLib.new()).address)
-
     await BondedSortitionPoolFactory.detectNetwork()
     await BondedSortitionPoolFactory.link(
       "StackLib",
