@@ -1,4 +1,4 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
+const {accounts, contract} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const {expectEvent, expectRevert, time} = require("@openzeppelin/test-helpers")
