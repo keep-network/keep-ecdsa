@@ -5,13 +5,13 @@ pragma solidity 0.5.17;
 contract TestEtherReceiver {
     bool shouldFail;
 
-    function setShouldFail(bool _value) public {
-        shouldFail = _value;
-    }
-
     /// @notice Rejects ether transfers sent to this contract if the shouldFail
     /// flag is set to true.
     function() external payable {
         require(!shouldFail, "Payment rejected");
+    }
+
+    function setShouldFail(bool _value) public {
+        shouldFail = _value;
     }
 }

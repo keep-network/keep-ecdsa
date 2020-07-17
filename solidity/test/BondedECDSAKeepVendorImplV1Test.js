@@ -1,14 +1,18 @@
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+const {accounts, contract} = require("@openzeppelin/test-environment")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const {constants, expectRevert} = require("@openzeppelin/test-helpers")
 
-const KeepRegistry = artifacts.require("KeepRegistry")
-const BondedECDSAKeepVendorImplV1Stub = artifacts.require(
+const KeepRegistry = contract.fromArtifact("KeepRegistry")
+const BondedECDSAKeepVendorImplV1Stub = contract.fromArtifact(
   "BondedECDSAKeepVendorImplV1Stub"
 )
 
+const chai = require("chai")
+const assert = chai.assert
+
 // These tests are calling BondedECDSAKeepVendorImplV1 directly.
-contract("BondedECDSAKeepVendorImplV1", async (accounts) => {
+describe("BondedECDSAKeepVendorImplV1", function () {
   const address0 = constants.ZERO_ADDRESS
   const address1 = "0xF2D3Af2495E286C7820643B963FB9D34418c871d"
 

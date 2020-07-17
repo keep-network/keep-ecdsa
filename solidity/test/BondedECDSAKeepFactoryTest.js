@@ -1,32 +1,35 @@
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+const {accounts, contract, web3} = require("@openzeppelin/test-environment")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 
-import {mineBlocks} from "./helpers/mineBlocks"
+const {mineBlocks} = require("./helpers/mineBlocks")
 
 const truffleAssert = require("truffle-assertions")
 
-const KeepRegistry = artifacts.require("KeepRegistry")
-const BondedECDSAKeepFactoryStub = artifacts.require(
+const StackLib = contract.fromArtifact("StackLib")
+const KeepRegistry = contract.fromArtifact("KeepRegistry")
+const BondedECDSAKeepFactoryStub = contract.fromArtifact(
   "BondedECDSAKeepFactoryStub"
 )
-const KeepBonding = artifacts.require("KeepBonding")
-const TokenStakingStub = artifacts.require("TokenStakingStub")
-const TokenGrantStub = artifacts.require("TokenGrantStub")
-const BondedSortitionPool = artifacts.require("BondedSortitionPool")
-const BondedSortitionPoolFactory = artifacts.require(
+const KeepBonding = contract.fromArtifact("KeepBonding")
+const TokenStakingStub = contract.fromArtifact("TokenStakingStub")
+const TokenGrantStub = contract.fromArtifact("TokenGrantStub")
+const BondedSortitionPool = contract.fromArtifact("BondedSortitionPool")
+const BondedSortitionPoolFactory = contract.fromArtifact(
   "BondedSortitionPoolFactory"
 )
-const RandomBeaconStub = artifacts.require("RandomBeaconStub")
-const BondedECDSAKeep = artifacts.require("BondedECDSAKeep")
+const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
+const BondedECDSAKeep = contract.fromArtifact("BondedECDSAKeep")
 
 const BN = web3.utils.BN
 
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
+const assert = chai.assert
 
-contract("BondedECDSAKeepFactory", async (accounts) => {
+describe("BondedECDSAKeepFactory", function () {
   let registry
   let tokenStaking
   let tokenGrant
@@ -52,6 +55,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const bond = singleBond.mul(groupSize)
 
   const stakeLockDuration = time.duration.days(180)
+
+  before(async () => {
+    await BondedSortitionPoolFactory.detectNetwork()
+    await BondedSortitionPoolFactory.link(
+      "StackLib",
+      (await StackLib.new()).address
+    )
+  })
 
   beforeEach(async () => {
     await createSnapshot()
