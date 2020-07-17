@@ -11,9 +11,7 @@ const BondedECDSAKeepVendorImplV2Stub = contract.fromArtifact(
   "BondedECDSAKeepVendorImplV2Stub"
 )
 
-const BN = web3.utils.BN
 const chai = require("chai")
-chai.use(require("bn-chai")(BN))
 const assert = chai.assert
 
 describe("BondedECDSAKeepVendorUpgrade", function () {

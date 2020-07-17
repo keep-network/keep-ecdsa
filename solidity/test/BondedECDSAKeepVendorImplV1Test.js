@@ -8,9 +8,7 @@ const BondedECDSAKeepVendorImplV1Stub = contract.fromArtifact(
   "BondedECDSAKeepVendorImplV1Stub"
 )
 
-const BN = web3.utils.BN
 const chai = require("chai")
-chai.use(require("bn-chai")(BN))
 const assert = chai.assert
 
 // These tests are calling BondedECDSAKeepVendorImplV1 directly.
