@@ -1676,8 +1676,8 @@ describe("BondedECDSAKeep", function () {
     })
 
     async function initializeTokens(token, keep, account, amount) {
-      await token.mint(account, amount, {from: accounts[0]})
-      await token.approve(keep.address, amount, {from: accounts[0]})
+      await token.mint(account, amount, {from: account})
+      await token.approve(keep.address, amount, {from: account})
     }
   })
 
