@@ -82,15 +82,14 @@ async function provisionKeepTecdsa() {
     console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${bondedECDSAKeepFactory.address} >>>>>>>>>>>>`)
     await authorizeOperatorContract(operatorAddress, bondedECDSAKeepFactory.address, authorizer)
 
+    
     for (let i = 0; i < sanctionedApplications.length; i++) {
       const sanctionedApplicationAddress = sanctionedApplications[i]
 
-      console.log(`\n<<<<<<<<<<<< Create Sortition Pool for sanctioned application: ${sanctionedApplicationAddress} >>>>>>>>>>>>`)
-      const sortitionPoolContractAddress = await createSortitionPool(
-        sanctionedApplicationAddress
-      )
-
+      let sortitionPoolContractAddress = await getSortitionPool(sanctionedApplicationAddress)
+      
       console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`)
+      
       await authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer)
     }
 
@@ -207,27 +206,10 @@ async function authorizeSortitionPoolContract(operatorAddress, sortitionPoolCont
   console.log(`Authorized!`)
 }
 
-async function createSortitionPool(applicationAddress) {
-  const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000"
-
+async function getSortitionPool(applicationAddress) {
   let sortitionPoolContractAddress
-
-  const create = async () => {
-    await bondedECDSAKeepFactory.methods.createSortitionPool(applicationAddress).send({ from: contractOwnerAddress })
-
-    console.log(`created sortition pool for application: [${applicationAddress}]`)
-
-    return await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call()
-  }
-
+  
   sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call()
-
-  if (!sortitionPoolContractAddress || sortitionPoolContractAddress == ADDRESS_ZERO) {
-    console.log("sortition pool does not exists yet")
-    sortitionPoolContractAddress = await create()
-  } else {
-    console.log(`sortition pool already exists for application: [${applicationAddress}]`)
-  }
 
   console.log(`sortition pool contract address: ${sortitionPoolContractAddress}`)
   return sortitionPoolContractAddress
