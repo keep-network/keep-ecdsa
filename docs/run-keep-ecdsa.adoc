@@ -416,10 +416,10 @@ Contract addresses needed to boot a Keep ECDSA client:
 |`0xe7BF8421fBE80c3Bf67082370D86C8D81D1D77F4`
 
 |Sanctioned Applications
-|`0x25B60668E7a0967a86223828D20f93714D91Ee4B` (tBTC's system contract)
+|`0x14dC06F762E7f4a756825c1A1dA569b3180153cB` (tBTC's system contract)
 
 |tBTC Sortition pool (for <<Authorizations,authorization>>)
-|`0x787fE59d9EefAf4c1214D6d6F547318Fcad54EE9`
+|`0x4BA599512761fA0F2ff2aa63a3fd4599D6c1F412`
 |===
 
 
