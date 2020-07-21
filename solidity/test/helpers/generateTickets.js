@@ -1,8 +1,6 @@
-export default function generateTickets(
-  randomBeaconValue,
-  stakerValue,
-  stakerWeight
-) {
+const {web3} = require("@openzeppelin/test-environment")
+
+function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
   const tickets = []
   for (let i = 1; i <= stakerWeight; i++) {
     const ticketValueHex = web3.utils.soliditySha3(
@@ -20,3 +18,5 @@ export default function generateTickets(
   }
   return tickets
 }
+
+module.exports.generateTickets = generateTickets

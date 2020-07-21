@@ -23,11 +23,10 @@ import (
 
 var logger = log.Logger("keep-ecdsa")
 
-const (
-	keyGenerationTimeout = 150 * time.Minute
-	signingTimeout       = 90 * time.Minute
-	blockConfirmations   = 12
-)
+// The number of block confirmations the client waits until it starts the
+// requested signing process. This value prevents from reporting unauthorized
+// signings by adversaries in case of a chain fork.
+const blockConfirmations = 12
 
 // Initialize initializes the ECDSA client with rules related to events handling.
 // Expects a slice of sanctioned applications selected by the operator for which
@@ -39,6 +38,7 @@ func Initialize(
 	networkProvider net.Provider,
 	persistence persistence.Handle,
 	sanctionedApplications []common.Address,
+	clientConfig *Config,
 	tssConfig *tss.Config,
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
@@ -129,6 +129,7 @@ func Initialize(
 			for _, signer := range signers {
 				subscriptionOnSignatureRequested, err := monitorSigningRequests(
 					ethereumChain,
+					clientConfig,
 					tssNode,
 					keepAddress,
 					signer,
@@ -164,6 +165,7 @@ func Initialize(
 	go checkAwaitingKeyGeneration(
 		ctx,
 		ethereumChain,
+		clientConfig,
 		tssNode,
 		operatorPublicKey,
 		keepsRegistry,
@@ -192,6 +194,7 @@ func Initialize(
 				generateKeyForKeep(
 					ctx,
 					ethereumChain,
+					clientConfig,
 					tssNode,
 					operatorPublicKey,
 					keepsRegistry,
@@ -212,6 +215,7 @@ func Initialize(
 func checkAwaitingKeyGeneration(
 	ctx context.Context,
 	ethereumChain eth.Handle,
+	clientConfig *Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -222,6 +226,8 @@ func checkAwaitingKeyGeneration(
 		logger.Warningf("could not get keep count: [%v]", err)
 		return
 	}
+
+	lookbackPeriod := clientConfig.GetAwaitingKeyGenerationLookback()
 
 	zero := big.NewInt(0)
 	one := big.NewInt(1)
@@ -245,26 +251,31 @@ func checkAwaitingKeyGeneration(
 			continue
 		}
 
-		keygenTimeout, err := ethereumChain.HasKeyGenerationTimedOut(keep)
+		keepOpenedTimestamp, err := ethereumChain.GetOpenedTimestamp(keep)
 		if err != nil {
 			logger.Warningf(
-				"could not check key generation timeout for keep [%s]: [%v]",
+				"could not check opening timestamp for keep [%s]: [%v]",
 				keep.String(),
 				err,
 			)
 			continue
 		}
 
-		// If key generation timeout of current keep has been exceeded,
-		// there is no sense to continue because the next keep (created earlier)
-		// will have this timeout exceeded as well.
-		if keygenTimeout {
+		// If a keep was opened before the defined lookback duration there is no
+		// sense to continue because the next keep was created earlier.
+		if keepOpenedTimestamp.Add(lookbackPeriod).Before(time.Now()) {
+			logger.Debugf(
+				"stopping awaiting key generation check with keep at index [%s] opened at [%s]",
+				keepIndex,
+				keepOpenedTimestamp,
+			)
 			break
 		}
 
 		err = checkAwaitingKeyGenerationForKeep(
 			ctx,
 			ethereumChain,
+			clientConfig,
 			tssNode,
 			operatorPublicKey,
 			keepsRegistry,
@@ -284,6 +295,7 @@ func checkAwaitingKeyGeneration(
 func checkAwaitingKeyGenerationForKeep(
 	ctx context.Context,
 	ethereumChain eth.Handle,
+	clientConfig *Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -330,6 +342,7 @@ func checkAwaitingKeyGenerationForKeep(
 			go generateKeyForKeep(
 				ctx,
 				ethereumChain,
+				clientConfig,
 				tssNode,
 				operatorPublicKey,
 				keepsRegistry,
@@ -349,6 +362,7 @@ func checkAwaitingKeyGenerationForKeep(
 func generateKeyForKeep(
 	ctx context.Context,
 	ethereumChain eth.Handle,
+	clientConfig *Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -387,6 +401,7 @@ func generateKeyForKeep(
 
 	signer, err := generateSignerForKeep(
 		ctx,
+		clientConfig,
 		tssNode,
 		operatorPublicKey,
 		keepAddress,
@@ -414,6 +429,7 @@ func generateKeyForKeep(
 
 	subscriptionOnSignatureRequested, err := monitorSigningRequests(
 		ethereumChain,
+		clientConfig,
 		tssNode,
 		keepAddress,
 		signer,
@@ -449,12 +465,13 @@ func generateKeyForKeep(
 
 func generateSignerForKeep(
 	ctx context.Context,
+	clientConfig *Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepAddress common.Address,
 	members []common.Address,
 ) (*tss.ThresholdSigner, error) {
-	keygenCtx, cancel := context.WithTimeout(ctx, keyGenerationTimeout)
+	keygenCtx, cancel := context.WithTimeout(ctx, clientConfig.GetKeyGenerationTimeout())
 	defer cancel()
 
 	return tssNode.GenerateSignerForKeep(
@@ -469,6 +486,7 @@ func generateSignerForKeep(
 // specific keep contract.
 func monitorSigningRequests(
 	ethereumChain eth.Handle,
+	clientConfig *Config,
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
@@ -476,6 +494,7 @@ func monitorSigningRequests(
 ) (subscription.EventSubscription, error) {
 	go checkAwaitingSignature(
 		ethereumChain,
+		clientConfig,
 		tssNode,
 		keepAddress,
 		signer,
@@ -529,7 +548,7 @@ func monitorSigningRequests(
 					return
 				}
 
-				generateSignatureForKeep(tssNode, keepAddress, signer, event.Digest)
+				generateSignatureForKeep(clientConfig, tssNode, keepAddress, signer, event.Digest)
 			}(event)
 		},
 	)
@@ -537,6 +556,7 @@ func monitorSigningRequests(
 
 func checkAwaitingSignature(
 	ethereumChain eth.Handle,
+	clientConfig *Config,
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
@@ -598,12 +618,12 @@ func checkAwaitingSignature(
 					return false, err
 				}
 
-				hasSigningTimedOut, err := ethereumChain.HasSigningTimedOut(keepAddress)
+				isActive, err := ethereumChain.IsActive(keepAddress)
 				if err != nil {
 					return false, err
 				}
 
-				return (isAwaitingSignature && !hasSigningTimedOut), nil
+				return (isAwaitingSignature && isActive), nil
 			},
 		)
 		if err != nil {
@@ -625,17 +645,21 @@ func checkAwaitingSignature(
 			return
 		}
 
-		generateSignatureForKeep(tssNode, keepAddress, signer, latestDigest)
+		generateSignatureForKeep(clientConfig, tssNode, keepAddress, signer, latestDigest)
 	}
 }
 
 func generateSignatureForKeep(
+	clientConfig *Config,
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) {
-	signingCtx, cancel := context.WithTimeout(context.Background(), signingTimeout)
+	signingCtx, cancel := context.WithTimeout(
+		context.Background(),
+		clientConfig.GetSigningTimeout(),
+	)
 	defer cancel()
 
 	if err := tssNode.CalculateSignature(

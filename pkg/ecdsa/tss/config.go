@@ -2,23 +2,27 @@ package tss
 
 import (
 	"time"
+
+	configtime "github.com/keep-network/keep-ecdsa/internal/config/time"
+)
+
+const (
+	defaultPreParamsGenerationTimeout = 2 * time.Minute
 )
 
 // Config contains configuration for tss protocol execution.
 type Config struct {
 	// Timeout for pre-parameters generation in tss-lib.
-	PreParamsGenerationTimeout duration
+	PreParamsGenerationTimeout configtime.Duration
 }
 
-// We use BurntSushi/toml package to parse configuration file. Unfortunately it
-// doesn't support time.Duration out of the box. Here we introduce a workaround
-// to be able to parse values provided in more friendly way, e.g. "4m20s".
-type duration struct {
-	time.Duration
-}
+// GetPreParamsGenerationTimeout returns pre-parameters generation timeout. If
+// a value is not set it returns a default value.
+func (c *Config) GetPreParamsGenerationTimeout() time.Duration {
+	timeout := c.PreParamsGenerationTimeout.ToDuration()
+	if timeout == 0 {
+		timeout = defaultPreParamsGenerationTimeout
+	}
 
-func (d *duration) UnmarshalText(text []byte) error {
-	var err error
-	d.Duration, err = time.ParseDuration(string(text))
-	return err
+	return timeout
 }

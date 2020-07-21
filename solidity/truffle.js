@@ -27,30 +27,36 @@ module.exports = {
     // options below to some value.
     //
     local: {
-      host: "127.0.0.1",     // Localhost (default: none)
-      port: 8545,            // Standard Ethereum port (default: none)
-      network_id: "*",       // Any network (default: none)
-      websockets: false,     // To enable EventEmitter interface for web3 change it to 'true'
+      host: "127.0.0.1", // Localhost (default: none)
+      port: 8545, // Standard Ethereum port (default: none)
+      network_id: "*", // Any network (default: none)
+      websockets: true, //  Enable EventEmitter interface for web3 (default: false)
     },
     keep_dev: {
       provider: function () {
-        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "http://localhost:8545")
+        return new HDWalletProvider(
+          process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY,
+          "http://localhost:8545"
+        )
       },
       gas: 6721975,
-      network_id: 1101
+      network_id: 1101,
     },
     ropsten: {
       provider: function () {
-        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5")
+        return new HDWalletProvider(
+          process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY,
+          "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
+        )
       },
       gas: 6721975,
-      network_id: 3
-    }
+      network_id: 3,
+    },
   },
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.5.17",    // Fetch exact version from solc-bin (default: truffle's version)
-    }
-  }
+      version: "0.5.17", // Fetch exact version from solc-bin (default: truffle's version)
+    },
+  },
 }

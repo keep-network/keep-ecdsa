@@ -1,34 +1,39 @@
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+const {accounts, contract, web3} = require("@openzeppelin/test-environment")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const {time} = require("@openzeppelin/test-helpers")
 
-import {mineBlocks} from "./helpers/mineBlocks"
+const {mineBlocks} = require("./helpers/mineBlocks")
 
-const KeepToken = artifacts.require("KeepTokenIntegration")
-const KeepTokenGrant = artifacts.require("TokenGrant")
-const KeepRegistry = artifacts.require("KeepRegistry")
-const BondedECDSAKeepFactoryStub = artifacts.require(
+const KeepToken = contract.fromArtifact("KeepTokenIntegration")
+const KeepTokenGrant = contract.fromArtifact("TokenGrant")
+const KeepRegistry = contract.fromArtifact("KeepRegistry")
+const BondedECDSAKeepFactoryStub = contract.fromArtifact(
   "BondedECDSAKeepFactoryStub"
 )
-const KeepBonding = artifacts.require("KeepBonding")
-const MinimumStakeSchedule = artifacts.require("MinimumStakeSchedule")
-const TokenStakingEscrow = artifacts.require("TokenStakingEscrow")
-const TokenStaking = artifacts.require("TokenStaking")
-const TokenGrant = artifacts.require("TokenGrant")
-const BondedSortitionPool = artifacts.require("BondedSortitionPool")
-const BondedSortitionPoolFactory = artifacts.require(
+const KeepBonding = contract.fromArtifact("KeepBonding")
+const MinimumStakeSchedule = contract.fromArtifact("MinimumStakeSchedule")
+const GrantStaking = contract.fromArtifact("GrantStaking")
+const Locks = contract.fromArtifact("Locks")
+const TokenStakingEscrow = contract.fromArtifact("TokenStakingEscrow")
+const TokenStaking = contract.fromArtifact("TokenStaking")
+const TokenGrant = contract.fromArtifact("TokenGrant")
+const BondedSortitionPool = contract.fromArtifact("BondedSortitionPool")
+const BondedSortitionPoolFactory = contract.fromArtifact(
   "BondedSortitionPoolFactory"
 )
-const RandomBeaconStub = artifacts.require("RandomBeaconStub")
-const BondedECDSAKeep = artifacts.require("BondedECDSAKeep")
+const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
+const BondedECDSAKeep = contract.fromArtifact("BondedECDSAKeep")
+const StackLib = contract.fromArtifact("StackLib")
 
 const BN = web3.utils.BN
 
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
+const assert = chai.assert
 
-contract("BondedECDSAKeepFactory", async (accounts) => {
+describe("BondedECDSAKeepFactory", function () {
   let keepToken
   let tokenStaking
   let tokenGrant
@@ -57,6 +62,12 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
   const undelegationPeriod = 30
 
   before(async () => {
+    await BondedSortitionPoolFactory.detectNetwork()
+    await BondedSortitionPoolFactory.link(
+      "StackLib",
+      (await StackLib.new()).address
+    )
+
     await initializeNewFactory()
     await initializeMemberCandidates()
     await registerMemberCandidates()
@@ -245,10 +256,14 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
     const registry = await KeepRegistry.new()
 
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
+    await TokenStaking.detectNetwork()
     await TokenStaking.link(
       "MinimumStakeSchedule",
       (await MinimumStakeSchedule.new()).address
     )
+    await TokenStaking.link("GrantStaking", (await GrantStaking.new()).address)
+    await TokenStaking.link("Locks", (await Locks.new()).address)
+
     const stakingEscrow = await TokenStakingEscrow.new(
       keepToken.address,
       keepTokenGrant.address
@@ -301,8 +316,7 @@ contract("BondedECDSAKeepFactory", async (accounts) => {
       await keepToken.approveAndCall(
         tokenStaking.address,
         stakeBalance,
-        delegation,
-        {from: tokenOwner}
+        delegation
       )
 
       await time.increase(initializationPeriod.addn(1))

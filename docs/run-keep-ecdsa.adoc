@@ -262,6 +262,8 @@ docker run -d \
 --volume $KEEP_ECDSA_CONFIG_DIR:/mnt/keep-ecdsa/config \
 --env KEEP_ETHEREUM_PASSWORD=$KEEP_ECDSA_ETHEREUM_PASSWORD \
 --env LOG_LEVEL=debug \
+--log-opt max-size=100m \
+--log-opt max-file=3 \
 -p 3919:3919 \
 keepnetwork/keep-ecdsa-client:<version> --config /mnt/keep-ecdsa/config/keep-ecdsa-config.toml start
 ----

@@ -3,10 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
-	"time"
 
 	"github.com/ipfs/go-log"
 
@@ -161,6 +162,7 @@ func Start(c *cli.Context) error {
 		networkProvider,
 		persistence,
 		sanctionedApplications,
+		&config.Client,
 		&config.TSS,
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())

@@ -1,3 +1,5 @@
+const {web3} = require("@openzeppelin/test-environment")
+
 /**
  *  Mines specific number of blocks.
  *  @param {number} blocks Number of blocks to mine.
@@ -17,4 +19,4 @@ async function mineBlocks(blocks) {
   }
 }
 
-export {mineBlocks}
+module.exports.mineBlocks = mineBlocks

@@ -10,6 +10,10 @@ contract RandomBeaconStub is IRandomBeacon {
     uint256 public requestCount = 0;
     bool shouldFail;
 
+    function requestRelayEntry() external payable returns (uint256) {
+        return requestRelayEntry(address(0), 0);
+    }
+
     /// @dev Get the entry fee estimate in wei for relay entry request.
     /// @param callbackGas Gas required for the callback.
     function entryFeeEstimate(uint256 callbackGas)
@@ -35,10 +39,6 @@ contract RandomBeaconStub is IRandomBeacon {
                 abi.encodeWithSignature("__beaconCallback(uint256)", entry)
             );
         }
-    }
-
-    function requestRelayEntry() external payable returns (uint256) {
-        return requestRelayEntry(address(0), 0);
     }
 
     function setEntry(uint256 newEntry) public {

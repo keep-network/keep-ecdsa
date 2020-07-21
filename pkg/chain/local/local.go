@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -188,11 +189,6 @@ func (lc *localChain) IsAwaitingSignature(
 	panic("implement")
 }
 
-// HasSigningTimedOut checks if signing has timed out for keep.
-func (lc *localChain) HasSigningTimedOut(keepAddress common.Address) (bool, error) {
-	panic("implement")
-}
-
 // IsActive checks for current state of a keep on-chain.
 func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
 	lc.handlerMutex.Lock()
@@ -317,8 +313,6 @@ func (lc *localChain) GetHonestThreshold(
 	panic("implement")
 }
 
-func (lc *localChain) HasKeyGenerationTimedOut(
-	keepAddress common.Address,
-) (bool, error) {
+func (lc *localChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time, error) {
 	panic("implement")
 }

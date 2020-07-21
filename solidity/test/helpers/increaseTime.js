@@ -1,5 +1,7 @@
+const {web3} = require("@openzeppelin/test-environment")
+
 // Increases testrpc time by the passed duration in seconds
-export const increaseTime = function (duration) {
+function increaseTime(duration) {
   const id = Date.now()
 
   return new Promise((resolve, reject) => {
@@ -28,7 +30,7 @@ export const increaseTime = function (duration) {
   })
 }
 
-export const duration = {
+const duration = {
   seconds: function (val) {
     return val
   },
@@ -48,3 +50,6 @@ export const duration = {
     return val * this.days(365)
   },
 }
+
+module.exports.increaseTime = increaseTime
+module.exports.duration = duration

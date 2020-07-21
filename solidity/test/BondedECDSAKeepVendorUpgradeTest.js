@@ -1,16 +1,20 @@
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+const {accounts, contract} = require("@openzeppelin/test-environment")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const {expectEvent, expectRevert, time} = require("@openzeppelin/test-helpers")
 
-const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
-const BondedECDSAKeepVendorImplV1Stub = artifacts.require(
+const BondedECDSAKeepVendor = contract.fromArtifact("BondedECDSAKeepVendor")
+const BondedECDSAKeepVendorImplV1Stub = contract.fromArtifact(
   "BondedECDSAKeepVendorImplV1Stub"
 )
-const BondedECDSAKeepVendorImplV2Stub = artifacts.require(
+const BondedECDSAKeepVendorImplV2Stub = contract.fromArtifact(
   "BondedECDSAKeepVendorImplV2Stub"
 )
 
-contract("BondedECDSAKeepVendorUpgrade", async (accounts) => {
+const chai = require("chai")
+const assert = chai.assert
+
+describe("BondedECDSAKeepVendorUpgrade", function () {
   const registryAddress = "0x0000000000000000000000000000000000000001"
   const factoryAddress = "0x0000000000000000000000000000000000000002"
 
