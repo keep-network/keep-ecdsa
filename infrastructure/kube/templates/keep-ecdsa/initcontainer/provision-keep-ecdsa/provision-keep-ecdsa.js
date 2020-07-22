@@ -88,6 +88,10 @@ async function provisionKeepTecdsa() {
 
       const sortitionPoolContractAddress = await getSortitionPool(sanctionedApplicationAddress)
       
+  if (!sortitionPoolContractAddress || sortitionPoolContractAddress == ADDRESS_ZERO) {
+    console.error(`missing sortition pool for application: [${applicationAddress}]`)
+    continue
+  }
       console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`)
       
       await authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer)
