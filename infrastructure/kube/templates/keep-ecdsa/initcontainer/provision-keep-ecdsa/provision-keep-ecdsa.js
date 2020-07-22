@@ -209,7 +209,7 @@ async function authorizeSortitionPoolContract(operatorAddress, sortitionPoolCont
 async function getSortitionPool(applicationAddress) {
   let sortitionPoolContractAddress
   
-  sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call()
+const sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call()
 
   console.log(`sortition pool contract address: ${sortitionPoolContractAddress}`)
   return sortitionPoolContractAddress
