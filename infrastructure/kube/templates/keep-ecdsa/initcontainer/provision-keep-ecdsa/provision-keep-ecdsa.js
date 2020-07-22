@@ -86,7 +86,7 @@ async function provisionKeepTecdsa() {
     for (let i = 0; i < sanctionedApplications.length; i++) {
       const sanctionedApplicationAddress = sanctionedApplications[i]
 
-      let sortitionPoolContractAddress = await getSortitionPool(sanctionedApplicationAddress)
+      const sortitionPoolContractAddress = await getSortitionPool(sanctionedApplicationAddress)
       
       console.log(`\n<<<<<<<<<<<< Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} >>>>>>>>>>>>`)
       
