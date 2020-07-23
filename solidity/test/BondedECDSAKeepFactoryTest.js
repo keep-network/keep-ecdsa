@@ -1491,6 +1491,27 @@ describe("BondedECDSAKeepFactory", function () {
     })
   })
 
+  describe("setMinimumBondableValue", async () => {
+    before(async () => {
+      await initializeNewFactory()
+      await initializeMemberCandidates()
+    })
+
+    it("fails for unknown application", async () => {
+      await expectRevert(
+        keepFactory.setMinimumBondableValue(10),
+        "No pool found for the application"
+      )
+    })
+
+    it("sets the minimum bond value for the application", async () => {
+      await keepFactory.setMinimumBondableValue(13, {from: application})
+      const poolAddress = await keepFactory.getSortitionPool(application)
+      const pool = await BondedSortitionPool.at(poolAddress)
+      expect(await pool.getMinimumBondableValue()).to.eq.BN(13)
+    })
+  })
+
   async function initializeNewFactory() {
     registry = await KeepRegistry.new()
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
