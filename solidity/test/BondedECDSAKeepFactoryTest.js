@@ -51,7 +51,7 @@ describe("BondedECDSAKeepFactory", function () {
   const groupSize = new BN(members.length)
   const threshold = new BN(groupSize - 1)
 
-  const singleBond = new BN(1)
+  const singleBond = web3.utils.toWei(new BN("20"), "ether")
   const bond = singleBond.mul(groupSize)
 
   const stakeLockDuration = time.duration.days(180)
@@ -1168,7 +1168,7 @@ describe("BondedECDSAKeepFactory", function () {
         web3.eth.sendTransaction({
           from: accounts[0],
           to: operator,
-          value: web3.utils.toWei("1", "ether"),
+          value: web3.utils.toWei("21", "ether"),
         })
 
         await tokenStaking.setBalance(operator, stakeBalance)

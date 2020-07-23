@@ -84,18 +84,14 @@ contract BondedECDSAKeepFactory is
     KeepBonding keepBonding;
     IRandomBeacon randomBeacon;
 
-    // Sortition pool is created with a minimum bond of 1 to avoid
-    // griefing.
+    // Sortition pool is created with a minimum bond of 20 ETH to avoid
+    // small operators joining and griefing future selections before the
+    // minimum bond is set to the right value by the application.
     //
-    // Anyone can create a sortition pool for an application. If a pool is
-    // created with a ridiculously high bond, nobody can join it and
-    // updating bond is not possible because trying to select a group
-    // with an empty pool reverts.
-    //
-    // We set the minimum bond value to 1 to prevent from this situation and
-    // to allow the pool adjust the minimum bond during the first signer
-    // selection.
-    uint256 public constant minimumBond = 1;
+    // Anyone can create a sortition pool for an application with the default
+    // minimum bond value but the application can change this value later, at
+    // any point.
+    uint256 public constant minimumBond = 20e18; // 20 ETH
 
     // Signer candidates in bonded sortition pool are weighted by their eligible
     // stake divided by a constant divisor. The divisor is set to 1 KEEP so that
