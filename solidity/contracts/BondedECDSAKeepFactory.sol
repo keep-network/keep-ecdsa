@@ -174,9 +174,8 @@ contract BondedECDSAKeepFactory is
     /// @param _minimumBondableValue The minimum unbonded value allowing
     /// an operator to join and stay in the sortition pool for the application.
     function setMinimumBondableValue(uint256 _minimumBondableValue) external {
-        BondedSortitionPool(getSortitionPool(msg.sender)).setMinimumBondableValue(
-            _minimumBondableValue
-        );
+        BondedSortitionPool(getSortitionPool(msg.sender))
+            .setMinimumBondableValue(_minimumBondableValue);
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
@@ -509,7 +508,8 @@ contract BondedECDSAKeepFactory is
         view
         returns (uint256)
     {
-        return BondedSortitionPool(getSortitionPool(_application)).totalWeight();
+        return
+            BondedSortitionPool(getSortitionPool(_application)).totalWeight();
     }
 
     /// @notice Gets bonded sortition pool of specific application for the
