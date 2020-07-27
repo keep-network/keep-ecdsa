@@ -29,8 +29,23 @@ func (ec *EthereumChain) Address() common.Address {
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
 func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) error {
+	gasEstimate, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidateGasEstimate(application)
+	if err != nil {
+		return fmt.Errorf("failed to estimate gas [%v]", err)
+	}
+
+	// If we have multiple sortition pool join transactions queued - and that
+	// happens when multiple operators become eligible to join at the same time,
+	// e.g. after lowering the minimum bond requirement, transactions mined at
+	// the end may no longer have valid gas limits as they were estimated based
+	// on a different state of the pool. We add 20% safety margin to the original
+	// gas estimation to account for that.
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
 	transaction, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidate(
 		application,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
 	)
 	if err != nil {
 		return err
