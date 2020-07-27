@@ -35,11 +35,11 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 	}
 
 	// If we have multiple sortition pool join transactions queued - and that
-	// happens when multiple operators gets eligible to join, e.g. after
-	// lowering the minimum bond requirement - transactions mined at the end may
-	// no longer have valid gas limits as they were estimated based on a
-	// different state of the pool. We add 20% safety margin to the original gas
-	// estimation to account for that.
+	// happens when multiple operators become eligible to join at the same time,
+	// e.g. after lowering the minimum bond requirement, transactions mined at
+	// the end may no longer have valid gas limits as they were estimated based
+	// on a different state of the pool. We add 20% safety margin to the original
+	// gas estimation to account for that.
 	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
 	transaction, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidate(
 		application,
