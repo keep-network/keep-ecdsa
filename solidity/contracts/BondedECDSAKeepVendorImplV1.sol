@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "@keep-network/keep-core/contracts/Registry.sol";
+import "@keep-network/keep-core/contracts/KeepRegistry.sol";
 import "./api/IBondedECDSAKeepVendor.sol";
 
 /// @title Bonded ECDSA Keep Vendor
@@ -13,7 +13,7 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor, Ownable {
 
     // Registry contract with a list of approved factories (operator contracts)
     // and upgraders.
-    Registry internal registry;
+    KeepRegistry internal registry;
 
     // Address of ECDSA keep factory.
     address payable keepFactory;
