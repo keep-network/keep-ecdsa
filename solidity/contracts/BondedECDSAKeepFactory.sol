@@ -371,7 +371,7 @@ contract BondedECDSAKeepFactory is
     }
 
     /// @notice Gets the sortition pool address for the given application.
-    /// @dev Reverts if sortition does not exits for the application.
+    /// @dev Reverts if sortition does not exist for the application.
     /// @param _application Address of the application.
     /// @return Address of the sortition pool contract.
     function getSortitionPool(address _application)
