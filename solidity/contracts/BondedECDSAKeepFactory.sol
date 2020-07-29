@@ -84,18 +84,14 @@ contract BondedECDSAKeepFactory is
     KeepBonding keepBonding;
     IRandomBeacon randomBeacon;
 
-    // Sortition pool is created with a minimum bond of 1 to avoid
-    // griefing.
+    // Sortition pool is created with a minimum bond of 20 ETH to avoid
+    // small operators joining and griefing future selections before the
+    // minimum bond is set to the right value by the application.
     //
-    // Anyone can create a sortition pool for an application. If a pool is
-    // created with a ridiculously high bond, nobody can join it and
-    // updating bond is not possible because trying to select a group
-    // with an empty pool reverts.
-    //
-    // We set the minimum bond value to 1 to prevent from this situation and
-    // to allow the pool adjust the minimum bond during the first signer
-    // selection.
-    uint256 public constant minimumBond = 1;
+    // Anyone can create a sortition pool for an application with the default
+    // minimum bond value but the application can change this value later, at
+    // any point.
+    uint256 public constant minimumBond = 20e18; // 20 ETH
 
     // Signer candidates in bonded sortition pool are weighted by their eligible
     // stake divided by a constant divisor. The divisor is set to 1 KEEP so that
@@ -170,21 +166,16 @@ contract BondedECDSAKeepFactory is
         return candidatesPools[_application];
     }
 
-    /// @notice Gets the sortition pool address for the given application.
-    /// @dev Reverts if sortition does not exits for the application.
-    /// @param _application Address of the application.
-    /// @return Address of the sortition pool contract.
-    function getSortitionPool(address _application)
-        external
-        view
-        returns (address)
-    {
-        require(
-            candidatesPools[_application] != address(0),
-            "No pool found for the application"
-        );
-
-        return candidatesPools[_application];
+    /// @notice Sets the minimum bondable value required from the operator to
+    /// join the sortition pool of the given application. It is up to the
+    /// application to specify a reasonable minimum bond for operators trying to
+    /// join the pool to prevent griefing by operators joining without enough
+    /// bondable value.
+    /// @param _minimumBondableValue The minimum unbonded value allowing
+    /// an operator to join and stay in the sortition pool for the application.
+    function setMinimumBondableValue(uint256 _minimumBondableValue) external {
+        BondedSortitionPool(getSortitionPool(msg.sender))
+            .setMinimumBondableValue(_minimumBondableValue);
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
@@ -192,13 +183,8 @@ contract BondedECDSAKeepFactory is
     /// @dev If caller is already registered it returns without any changes.
     /// @param _application Address of the application.
     function registerMemberCandidate(address _application) external {
-        require(
-            candidatesPools[_application] != address(0),
-            "No pool found for the application"
-        );
-
         BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
+            getSortitionPool(_application)
         );
 
         address operator = msg.sender;
@@ -384,6 +370,23 @@ contract BondedECDSAKeepFactory is
         groupSelectionSeed = _relayEntry;
     }
 
+    /// @notice Gets the sortition pool address for the given application.
+    /// @dev Reverts if sortition does not exist for the application.
+    /// @param _application Address of the application.
+    /// @return Address of the sortition pool contract.
+    function getSortitionPool(address _application)
+        public
+        view
+        returns (address)
+    {
+        require(
+            candidatesPools[_application] != address(0),
+            "No pool found for the application"
+        );
+
+        return candidatesPools[_application];
+    }
+
     /// @notice Checks if operator is registered as a candidate for the given
     /// customer application.
     /// @param _operator Operator's address.
@@ -505,11 +508,8 @@ contract BondedECDSAKeepFactory is
         view
         returns (uint256)
     {
-        address poolAddress = candidatesPools[_application];
-
-        require(poolAddress != address(0), "No pool found for the application");
-
-        return BondedSortitionPool(poolAddress).totalWeight();
+        return
+            BondedSortitionPool(getSortitionPool(_application)).totalWeight();
     }
 
     /// @notice Gets bonded sortition pool of specific application for the

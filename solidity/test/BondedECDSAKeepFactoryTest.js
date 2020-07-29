@@ -51,7 +51,7 @@ describe("BondedECDSAKeepFactory", function () {
   const groupSize = new BN(members.length)
   const threshold = new BN(groupSize - 1)
 
-  const singleBond = new BN(1)
+  const singleBond = web3.utils.toWei(new BN("20"), "ether")
   const bond = singleBond.mul(groupSize)
 
   const stakeLockDuration = time.duration.days(180)
@@ -76,6 +76,16 @@ describe("BondedECDSAKeepFactory", function () {
     before(async () => {
       await initializeNewFactory()
       await initializeMemberCandidates()
+    })
+
+    it("reverts for unknown application", async () => {
+      const unknownApplication = "0xCfd27747D1583feb1eCbD7c4e66C848Db0aA82FB"
+      await expectRevert(
+        keepFactory.registerMemberCandidate(unknownApplication, {
+          from: members[0],
+        }),
+        "No pool found for the application"
+      )
     })
 
     it("inserts operator with the correct staking weight in the pool", async () => {
@@ -1168,7 +1178,7 @@ describe("BondedECDSAKeepFactory", function () {
         web3.eth.sendTransaction({
           from: accounts[0],
           to: operator,
-          value: web3.utils.toWei("1", "ether"),
+          value: web3.utils.toWei("21", "ether"),
         })
 
         await tokenStaking.setBalance(operator, stakeBalance)
@@ -1488,6 +1498,27 @@ describe("BondedECDSAKeepFactory", function () {
         keepFactory.getSortitionPoolWeight(application),
         "No pool found for the application"
       )
+    })
+  })
+
+  describe("setMinimumBondableValue", async () => {
+    before(async () => {
+      await initializeNewFactory()
+      await initializeMemberCandidates()
+    })
+
+    it("reverts for unknown application", async () => {
+      await expectRevert(
+        keepFactory.setMinimumBondableValue(10),
+        "No pool found for the application"
+      )
+    })
+
+    it("sets the minimum bond value for the application", async () => {
+      await keepFactory.setMinimumBondableValue(13, {from: application})
+      const poolAddress = await keepFactory.getSortitionPool(application)
+      const pool = await BondedSortitionPool.at(poolAddress)
+      expect(await pool.getMinimumBondableValue()).to.eq.BN(13)
     })
   })
 
