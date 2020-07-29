@@ -78,6 +78,16 @@ describe("BondedECDSAKeepFactory", function () {
       await initializeMemberCandidates()
     })
 
+    it("reverts for unknown application", async () => {
+      const unknownApplication = "0xCfd27747D1583feb1eCbD7c4e66C848Db0aA82FB"
+      await expectRevert(
+        keepFactory.registerMemberCandidate(unknownApplication, {
+          from: members[0],
+        }),
+        "No pool found for the application"
+      )
+    })
+
     it("inserts operator with the correct staking weight in the pool", async () => {
       const minimumStakeMultiplier = new BN("10")
       await stakeOperators(members, minimumStake.mul(minimumStakeMultiplier))
@@ -1497,7 +1507,7 @@ describe("BondedECDSAKeepFactory", function () {
       await initializeMemberCandidates()
     })
 
-    it("fails for unknown application", async () => {
+    it("reverts for unknown application", async () => {
       await expectRevert(
         keepFactory.setMinimumBondableValue(10),
         "No pool found for the application"
