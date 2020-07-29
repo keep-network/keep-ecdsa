@@ -173,7 +173,7 @@ contract BondedECDSAKeepFactory is
     /// bondable value.
     /// @param _minimumBondableValue The minimum bond value the application
     /// requires from a single keep.
-    /// @param _groupSize Number of singers in the keep.
+    /// @param _groupSize Number of signers in the keep.
     /// @param _honestThreshold Minimum number of honest keep signers.
     function setMinimumBondableValue(
         uint256 _minimumBondableValue,
