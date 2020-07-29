@@ -174,9 +174,11 @@ contract BondedECDSAKeepFactory is
     /// @param _minimumBondableValue The minimum bond value the application
     /// requires from a single keep.
     /// @param _groupSize Number of singers in the keep.
+    /// @param _honestThreshold Minimum number of honest keep signers.
     function setMinimumBondableValue(
         uint256 _minimumBondableValue,
-        uint256 _groupSize
+        uint256 _groupSize,
+        uint256 _honestThreshold
     ) external {
         uint256 memberBond = bondPerMember(_minimumBondableValue, _groupSize);
         BondedSortitionPool(getSortitionPool(msg.sender))
@@ -517,10 +519,11 @@ contract BondedECDSAKeepFactory is
     /// @param _keepBond The bond required from a keep.
     /// @param _groupSize Number of signers in the keep.
     /// @return Bond value required from each keep member.
-    function bondPerMember(
-        uint256 _keepBond,
-        uint256 _groupSize
-    ) internal pure returns (uint256) {
+    function bondPerMember(uint256 _keepBond, uint256 _groupSize)
+        internal
+        pure
+        returns (uint256)
+    {
         // In Solidity, division rounds towards zero (down) and dividing
         // '_bond' by '_groupSize' can leave a remainder. Even though, a remainder
         // is very small, we want to avoid this from happening and memberBond is
