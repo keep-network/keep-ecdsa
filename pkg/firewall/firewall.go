@@ -22,13 +22,15 @@ import (
 var logger = log.Logger("keep-firewall")
 
 const (
-	// ActiveKeepCachePeriod is the time the cache maintains the list of active keep
-	// members. We use the cache to minimize calls to Ethereum client.
-	ActiveKeepCachePeriod = 168 * time.Hour // one week
+	// authorizationCachePeriod it the time the cache maintains information
+	// about operators authorized and not authorized for the keep factory.
+	// We use the cache to minimize calls to Ethereum client.
+	authorizationCachePeriod = 24 * time.Hour
 
-	// NoActiveKeepCachePeriod is the time the cache maintains the list of
-	// no active keep members. We use the cache to minimize calls to Ethereum client.
-	NoActiveKeepCachePeriod = 168 * time.Hour // one week
+	// activeKeepCachePeriod is the time the cache maintains information
+	// about active and no active keep members. We use the cache to minimize
+	// calls to Ethereum client.
+	activeKeepCachePeriod = 168 * time.Hour // one week
 )
 
 var errNoAuthorization = fmt.Errorf("remote peer has no authorization on the factory")
@@ -44,18 +46,22 @@ func NewStakeOrActiveKeepPolicy(
 	stakeMonitor coreChain.StakeMonitor,
 ) coreNet.Firewall {
 	return &stakeOrActiveKeepPolicy{
-		chain:                    chain,
-		minimumStakePolicy:       coreFirewall.MinimumStakePolicy(stakeMonitor),
-		activeKeepMembersCache:   cache.NewTimeCache(ActiveKeepCachePeriod),
-		noActiveKeepMembersCache: cache.NewTimeCache(NoActiveKeepCachePeriod),
+		chain:                       chain,
+		minimumStakePolicy:          coreFirewall.MinimumStakePolicy(stakeMonitor),
+		authorizedOperatorsCache:    cache.NewTimeCache(authorizationCachePeriod),
+		nonAuthorizedOperatorsCache: cache.NewTimeCache(authorizationCachePeriod),
+		activeKeepMembersCache:      cache.NewTimeCache(activeKeepCachePeriod),
+		noActiveKeepMembersCache:    cache.NewTimeCache(activeKeepCachePeriod),
 	}
 }
 
 type stakeOrActiveKeepPolicy struct {
-	chain                    eth.Handle
-	minimumStakePolicy       coreNet.Firewall
-	activeKeepMembersCache   *cache.TimeCache
-	noActiveKeepMembersCache *cache.TimeCache
+	chain                       eth.Handle
+	minimumStakePolicy          coreNet.Firewall
+	authorizedOperatorsCache    *cache.TimeCache
+	nonAuthorizedOperatorsCache *cache.TimeCache
+	activeKeepMembersCache      *cache.TimeCache
+	noActiveKeepMembersCache    *cache.TimeCache
 }
 
 func (soakp *stakeOrActiveKeepPolicy) Validate(
@@ -87,8 +93,11 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 	}
 
 	if !isAuthorized {
+		soakp.nonAuthorizedOperatorsCache.Add(remotePeerAddress)
 		return errNoAuthorization
 	}
+
+	soakp.authorizedOperatorsCache.Add(remotePeerAddress)
 
 	// In case the remote peer has no minimum stake, we need to check if it is
 	// a member in at least one active keep. If so, we let to connect.
