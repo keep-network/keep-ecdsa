@@ -3,6 +3,7 @@ package firewall
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -499,6 +500,152 @@ func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 	}
 }
 
+func TestIsKeepActiveCaching(t *testing.T) {
+	chain := local.Connect()
+	coreFirewall := newMockCoreFirewall()
+	policy := createNewPolicy(chain, coreFirewall)
+
+	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chain.AuthorizeOperator(common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+	))
+
+	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
+	chain.OpenKeep(
+		keep1Address,
+		[]common.Address{
+			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
+		},
+	)
+	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
+	chain.OpenKeep(
+		keep2Address,
+		[]common.Address{
+			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
+		},
+	)
+	chain.CloseKeep(keep2Address)
+
+	// first check, result should be put into the cache
+	isActive, err := policy.isKeepActive(keep1Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !isActive {
+		t.Fatal("keep is active")
+	}
+	isActive, err = policy.isKeepActive(keep2Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if isActive {
+		t.Fatal("keep is not active")
+	}
+
+	// result is read from the cache, should be the same as the original one
+	isActive, err = policy.isKeepActive(keep1Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !isActive {
+		t.Fatal("keep is active")
+	}
+	isActive, err = policy.isKeepActive(keep2Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if isActive {
+		t.Fatal("keep is not active")
+	}
+
+	// close active keep and see it's been updated properly
+	chain.CloseKeep(keep1Address)
+	isActive, err = policy.isKeepActive(keep1Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if isActive {
+		t.Fatal("keep is not active")
+	}
+}
+
+func TestGetKeepMembersCaching(t *testing.T) {
+	chain := local.Connect()
+	coreFirewall := newMockCoreFirewall()
+	policy := createNewPolicy(chain, coreFirewall)
+
+	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chain.AuthorizeOperator(common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+	))
+
+	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
+	chain.OpenKeep(
+		keep1Address,
+		[]common.Address{
+			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
+			common.HexToAddress("0xA04Ba34b0689D1b1b5670a774a8EC5538C77FfaF"),
+		},
+	)
+	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
+	chain.OpenKeep(
+		keep2Address,
+		[]common.Address{
+			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
+			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
+		},
+	)
+
+	keep1ExpectedMembers := []string{
+		"0x4f7C771Ab173bEc2BbE980497111866383a21172",
+		"0xA04Ba34b0689D1b1b5670a774a8EC5538C77FfaF",
+	}
+	keep2ExpectedMembers := []string{
+		"0xF9798F39CfEf21931d3B5F73aF67718ae569a73e",
+		"0x4f7C771Ab173bEc2BbE980497111866383a21172",
+	}
+
+	// first check, result should be put into the cache
+	members, err := policy.getKeepMembers(keep1Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(members, keep1ExpectedMembers) {
+		t.Fatal("unexpected members")
+	}
+	members, err = policy.getKeepMembers(keep2Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(members, keep2ExpectedMembers) {
+		t.Fatal("unexpected members")
+	}
+
+	// result is read from the cache, should be the same as the original one
+	members, err = policy.getKeepMembers(keep1Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(members, keep1ExpectedMembers) {
+		t.Fatal("unexpected members")
+	}
+	members, err = policy.getKeepMembers(keep2Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(members, keep2ExpectedMembers) {
+		t.Fatal("unexpected members")
+	}
+}
+
 func createNewPolicy(
 	chain eth.Handle,
 	coreFirewall coreNet.Firewall,
@@ -510,6 +657,7 @@ func createNewPolicy(
 		nonAuthorizedOperatorsCache: cache.NewTimeCache(cacheLifeTime),
 		activeKeepMembersCache:      cache.NewTimeCache(cacheLifeTime),
 		noActiveKeepMembersCache:    cache.NewTimeCache(cacheLifeTime),
+		keepInfoCache:               newKeepInfoCache(),
 	}
 }
 

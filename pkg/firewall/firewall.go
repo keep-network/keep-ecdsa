@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -52,6 +53,7 @@ func NewStakeOrActiveKeepPolicy(
 		nonAuthorizedOperatorsCache: cache.NewTimeCache(authorizationCachePeriod),
 		activeKeepMembersCache:      cache.NewTimeCache(activeKeepCachePeriod),
 		noActiveKeepMembersCache:    cache.NewTimeCache(activeKeepCachePeriod),
+		keepInfoCache:               newKeepInfoCache(),
 	}
 }
 
@@ -62,6 +64,7 @@ type stakeOrActiveKeepPolicy struct {
 	nonAuthorizedOperatorsCache *cache.TimeCache
 	activeKeepMembersCache      *cache.TimeCache
 	noActiveKeepMembersCache    *cache.TimeCache
+	keepInfoCache               *keepInfoCache
 }
 
 func (soakp *stakeOrActiveKeepPolicy) Validate(
@@ -156,7 +159,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 		// active, we skip it. We still need to process the rest of the keeps
 		// because it's possible that although this keep is not active some
 		// peers created before this one are still active.
-		isActive, err := soakp.chain.IsActive(keepAddress)
+		isActive, err := soakp.isKeepActive(keepAddress)
 		if err != nil {
 			logger.Errorf(
 				"could not check if keep [%x] is active: [%v]",
@@ -171,7 +174,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 
 		// Get all the members of the active keep and store them in the active
 		// keep members cache.
-		members, err := soakp.chain.GetMembers(keepAddress)
+		members, err := soakp.getKeepMembers(keepAddress)
 		if err != nil {
 			logger.Errorf(
 				"could not get members of keep [%x]: [%v]",
@@ -181,7 +184,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 			continue
 		}
 		for _, member := range members {
-			soakp.activeKeepMembersCache.Add(member.String())
+			soakp.activeKeepMembersCache.Add(member)
 		}
 
 		// If the remote peer address has been added to the cache we can
@@ -197,4 +200,87 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	// active keeps and it's minimum stake check failed as well. We are not
 	// allowing to connect with that peer.
 	return errNoMinStakeNoActiveKeep
+}
+
+// isKeepActive performs on-chain check whether the keep with the given address
+// is active if the keep has not been previously marked as inactive in the cache.
+// If the keep has been marked as inactive in the cache, function returns false
+// without hitting the chain.
+func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
+	keepAddress common.Address,
+) (bool, error) {
+	cache := soakp.keepInfoCache
+
+	cache.mutex.RLock()
+	isInactive, isCached := cache.isInactive[keepAddress.String()]
+	cache.mutex.RUnlock()
+
+	if isCached && isInactive {
+		return false, nil
+	}
+
+	isActive, err := soakp.chain.IsActive(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	if !isActive {
+		cache.mutex.Lock()
+		cache.isInactive[keepAddress.String()] = true
+		cache.mutex.Unlock()
+	}
+
+	return isActive, nil
+}
+
+// getKeepMembers fetches members of the keep with the given address from the
+// chain or reads them from a cache if this information is available there.
+func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
+	keepAddress common.Address,
+) ([]string, error) {
+	cache := soakp.keepInfoCache
+
+	cache.mutex.RLock()
+	members, areCached := cache.members[keepAddress.String()]
+	cache.mutex.RUnlock()
+
+	if areCached {
+		return members, nil
+	}
+
+	memberAddresses, err := soakp.chain.GetMembers(keepAddress)
+	if err != nil {
+		return nil, nil
+	}
+
+	members = make([]string, len(memberAddresses))
+	for i, member := range memberAddresses {
+		members[i] = member.String()
+	}
+
+	cache.mutex.Lock()
+	cache.members[keepAddress.String()] = members
+	cache.mutex.Unlock()
+
+	return members, nil
+}
+
+// keepInfoCache caches invariant information obtained from the chain.
+// This cache never expires.
+//
+// There are two invariants that can be cached:
+// 1. Information whether the keep is inactive. Inactive keep can never become
+//    active again.
+// 2. Information about keep members. Keep members never change.
+type keepInfoCache struct {
+	isInactive map[string]bool
+	members    map[string][]string
+	mutex      sync.RWMutex
+}
+
+func newKeepInfoCache() *keepInfoCache {
+	return &keepInfoCache{
+		isInactive: make(map[string]bool),
+		members:    make(map[string][]string),
+	}
 }
