@@ -2,6 +2,14 @@ pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
+interface tokenRecipient {
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes calldata _extraData) external;
+}
+
 contract TestToken is ERC20 {
 
     /// @dev             Mints an amount of the token and assigns it to an account.
@@ -12,5 +20,14 @@ contract TestToken is ERC20 {
         // NOTE: this is a public function with unchecked minting.
         _mint(_account, _amount);
         return true;
+    }
+
+
+    function approveAndCall(address _spender, uint256 _value, bytes memory _extraData) public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, address(this), _extraData);
+            return true;
+        }
     }
 }
