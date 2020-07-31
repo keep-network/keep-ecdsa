@@ -171,11 +171,18 @@ contract BondedECDSAKeepFactory is
     /// application to specify a reasonable minimum bond for operators trying to
     /// join the pool to prevent griefing by operators joining without enough
     /// bondable value.
-    /// @param _minimumBondableValue The minimum unbonded value allowing
-    /// an operator to join and stay in the sortition pool for the application.
-    function setMinimumBondableValue(uint256 _minimumBondableValue) external {
+    /// @param _minimumBondableValue The minimum bond value the application
+    /// requires from a single keep.
+    /// @param _groupSize Number of signers in the keep.
+    /// @param _honestThreshold Minimum number of honest keep signers.
+    function setMinimumBondableValue(
+        uint256 _minimumBondableValue,
+        uint256 _groupSize,
+        uint256 _honestThreshold
+    ) external {
+        uint256 memberBond = bondPerMember(_minimumBondableValue, _groupSize);
         BondedSortitionPool(getSortitionPool(msg.sender))
-            .setMinimumBondableValue(_minimumBondableValue);
+            .setMinimumBondableValue(memberBond);
     }
 
     /// @notice Register caller as a candidate to be selected as keep member
@@ -258,12 +265,7 @@ contract BondedECDSAKeepFactory is
         address pool = candidatesPools[application];
         require(pool != address(0), "No signer pool for this application");
 
-        // In Solidity, division rounds towards zero (down) and dividing
-        // '_bond' by '_groupSize' can leave a remainder. Even though, a remainder
-        // is very small, we want to avoid this from happening and memberBond is
-        // rounded up by: `(bond + groupSize - 1 ) / groupSize`
-        // Ex. (100 + 3 - 1) / 3 = 34
-        uint256 memberBond = (_bond.add(_groupSize).sub(1)).div(_groupSize);
+        uint256 memberBond = bondPerMember(_bond, _groupSize);
         require(memberBond > 0, "Bond per member must be greater than zero");
 
         require(
@@ -510,6 +512,24 @@ contract BondedECDSAKeepFactory is
     {
         return
             BondedSortitionPool(getSortitionPool(_application)).totalWeight();
+    }
+
+    /// @notice Calculates bond requirement per member performing the necessary
+    /// rounding.
+    /// @param _keepBond The bond required from a keep.
+    /// @param _groupSize Number of signers in the keep.
+    /// @return Bond value required from each keep member.
+    function bondPerMember(uint256 _keepBond, uint256 _groupSize)
+        internal
+        pure
+        returns (uint256)
+    {
+        // In Solidity, division rounds towards zero (down) and dividing
+        // '_bond' by '_groupSize' can leave a remainder. Even though, a remainder
+        // is very small, we want to avoid this from happening and memberBond is
+        // rounded up by: `(bond + groupSize - 1 ) / groupSize`
+        // Ex. (100 + 3 - 1) / 3 = 34
+        return (_keepBond.add(_groupSize).sub(1)).div(_groupSize);
     }
 
     /// @notice Gets bonded sortition pool of specific application for the

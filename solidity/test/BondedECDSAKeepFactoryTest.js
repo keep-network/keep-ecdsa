@@ -1509,16 +1509,30 @@ describe("BondedECDSAKeepFactory", function () {
 
     it("reverts for unknown application", async () => {
       await expectRevert(
-        keepFactory.setMinimumBondableValue(10),
+        keepFactory.setMinimumBondableValue(10, 3, 3),
         "No pool found for the application"
       )
     })
 
     it("sets the minimum bond value for the application", async () => {
-      await keepFactory.setMinimumBondableValue(13, {from: application})
+      await keepFactory.setMinimumBondableValue(12, 3, 3, {from: application})
       const poolAddress = await keepFactory.getSortitionPool(application)
       const pool = await BondedSortitionPool.at(poolAddress)
-      expect(await pool.getMinimumBondableValue()).to.eq.BN(13)
+      expect(await pool.getMinimumBondableValue()).to.eq.BN(4)
+    })
+
+    it("rounds up member bonds", async () => {
+      await keepFactory.setMinimumBondableValue(10, 3, 3, {from: application})
+      const poolAddress = await keepFactory.getSortitionPool(application)
+      const pool = await BondedSortitionPool.at(poolAddress)
+      expect(await pool.getMinimumBondableValue()).to.eq.BN(4)
+    })
+
+    it("rounds up members bonds when calculated bond per member equals zero", async () => {
+      await keepFactory.setMinimumBondableValue(2, 3, 3, {from: application})
+      const poolAddress = await keepFactory.getSortitionPool(application)
+      const pool = await BondedSortitionPool.at(poolAddress)
+      expect(await pool.getMinimumBondableValue()).to.eq.BN(1)
     })
   })
 
