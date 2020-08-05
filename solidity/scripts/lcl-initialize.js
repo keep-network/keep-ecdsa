@@ -82,9 +82,18 @@ module.exports = async function () {
         application
       )
     } catch (err) {
-      console.error("failed to get sortition pool", err, "; creating a new one")
+      console.error("failed to get sortition pool", err)
+    }
 
+    if (
+      !sortitionPoolAddress ||
+      sortitionPoolAddress === "0x0000000000000000000000000000000000000000"
+    ) {
       try {
+        console.error(
+          `no sortition pool for application: [${application}]; creating a new one`
+        )
+
         await bondedECDSAKeepFactory.createSortitionPool(application)
 
         console.log(`created sortition pool for application: [${application}]`)
