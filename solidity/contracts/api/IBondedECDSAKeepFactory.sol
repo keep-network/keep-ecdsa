@@ -44,4 +44,21 @@ interface IBondedECDSAKeepFactory {
     function getSortitionPoolWeight(
         address _application
     ) external view returns (uint256);
+
+    /// @notice Sets the minimum bondable value required from the operator to
+    /// join the sortition pool of the given application. It is up to the
+    /// application to specify a reasonable minimum bond for operators trying to
+    /// join the pool to prevent griefing by operators joining without enough
+    /// bondable value.
+    /// @dev The default minimum bond value for each sortition pool created
+    /// is 20 ETH.
+    /// @param _minimumBondableValue The minimum unbonded value the application
+    /// requires from a single keep.
+    /// @param _groupSize Number of signers in the keep.
+    /// @param _honestThreshold Minimum number of honest keep signers.
+    function setMinimumBondableValue(
+        uint256 _minimumBondableValue,
+        uint256 _groupSize,
+        uint256 _honestThreshold
+    ) external;
 }

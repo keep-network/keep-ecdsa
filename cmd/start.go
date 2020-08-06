@@ -167,7 +167,7 @@ func Start(c *cli.Context) error {
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
-	initializeMetrics(ctx, config, networkProvider, stakeMonitor)
+	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
 
 	logger.Info("client started")
 
@@ -186,6 +186,7 @@ func initializeMetrics(
 	config *config.Config,
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
+	ethereumAddres string,
 ) {
 	registry, isConfigured := metrics.Initialize(
 		config.Metrics.Port,
@@ -219,7 +220,7 @@ func initializeMetrics(
 		ctx,
 		registry,
 		stakeMonitor,
-		config.Ethereum.Account.Address,
+		ethereumAddres,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
 

@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -22,13 +23,15 @@ import (
 var logger = log.Logger("keep-firewall")
 
 const (
-	// ActiveKeepCachePeriod is the time the cache maintains the list of active keep
-	// members. We use the cache to minimize calls to Ethereum client.
-	ActiveKeepCachePeriod = 168 * time.Hour // one week
+	// authorizationCachePeriod it the time the cache maintains information
+	// about operators authorized and not authorized for the keep factory.
+	// We use the cache to minimize calls to Ethereum client.
+	authorizationCachePeriod = 24 * time.Hour
 
-	// NoActiveKeepCachePeriod is the time the cache maintains the list of
-	// no active keep members. We use the cache to minimize calls to Ethereum client.
-	NoActiveKeepCachePeriod = 168 * time.Hour // one week
+	// activeKeepCachePeriod is the time the cache maintains information
+	// about active and no active keep members. We use the cache to minimize
+	// calls to Ethereum client.
+	activeKeepCachePeriod = 168 * time.Hour // one week
 )
 
 var errNoAuthorization = fmt.Errorf("remote peer has no authorization on the factory")
@@ -44,18 +47,24 @@ func NewStakeOrActiveKeepPolicy(
 	stakeMonitor coreChain.StakeMonitor,
 ) coreNet.Firewall {
 	return &stakeOrActiveKeepPolicy{
-		chain:                    chain,
-		minimumStakePolicy:       coreFirewall.MinimumStakePolicy(stakeMonitor),
-		activeKeepMembersCache:   cache.NewTimeCache(ActiveKeepCachePeriod),
-		noActiveKeepMembersCache: cache.NewTimeCache(NoActiveKeepCachePeriod),
+		chain:                       chain,
+		minimumStakePolicy:          coreFirewall.MinimumStakePolicy(stakeMonitor),
+		authorizedOperatorsCache:    cache.NewTimeCache(authorizationCachePeriod),
+		nonAuthorizedOperatorsCache: cache.NewTimeCache(authorizationCachePeriod),
+		activeKeepMembersCache:      cache.NewTimeCache(activeKeepCachePeriod),
+		noActiveKeepMembersCache:    cache.NewTimeCache(activeKeepCachePeriod),
+		keepInfoCache:               newKeepInfoCache(),
 	}
 }
 
 type stakeOrActiveKeepPolicy struct {
-	chain                    eth.Handle
-	minimumStakePolicy       coreNet.Firewall
-	activeKeepMembersCache   *cache.TimeCache
-	noActiveKeepMembersCache *cache.TimeCache
+	chain                       eth.Handle
+	minimumStakePolicy          coreNet.Firewall
+	authorizedOperatorsCache    *cache.TimeCache
+	nonAuthorizedOperatorsCache *cache.TimeCache
+	activeKeepMembersCache      *cache.TimeCache
+	noActiveKeepMembersCache    *cache.TimeCache
+	keepInfoCache               *keepInfoCache
 }
 
 func (soakp *stakeOrActiveKeepPolicy) Validate(
@@ -87,8 +96,11 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 	}
 
 	if !isAuthorized {
+		soakp.nonAuthorizedOperatorsCache.Add(remotePeerAddress)
 		return errNoAuthorization
 	}
+
+	soakp.authorizedOperatorsCache.Add(remotePeerAddress)
 
 	// In case the remote peer has no minimum stake, we need to check if it is
 	// a member in at least one active keep. If so, we let to connect.
@@ -147,7 +159,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 		// active, we skip it. We still need to process the rest of the keeps
 		// because it's possible that although this keep is not active some
 		// peers created before this one are still active.
-		isActive, err := soakp.chain.IsActive(keepAddress)
+		isActive, err := soakp.isKeepActive(keepAddress)
 		if err != nil {
 			logger.Errorf(
 				"could not check if keep [%x] is active: [%v]",
@@ -162,7 +174,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 
 		// Get all the members of the active keep and store them in the active
 		// keep members cache.
-		members, err := soakp.chain.GetMembers(keepAddress)
+		members, err := soakp.getKeepMembers(keepAddress)
 		if err != nil {
 			logger.Errorf(
 				"could not get members of keep [%x]: [%v]",
@@ -172,7 +184,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 			continue
 		}
 		for _, member := range members {
-			soakp.activeKeepMembersCache.Add(member.String())
+			soakp.activeKeepMembersCache.Add(member)
 		}
 
 		// If the remote peer address has been added to the cache we can
@@ -188,4 +200,87 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	// active keeps and it's minimum stake check failed as well. We are not
 	// allowing to connect with that peer.
 	return errNoMinStakeNoActiveKeep
+}
+
+// isKeepActive performs on-chain check whether the keep with the given address
+// is active if the keep has not been previously marked as inactive in the cache.
+// If the keep has been marked as inactive in the cache, function returns false
+// without hitting the chain.
+func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
+	keepAddress common.Address,
+) (bool, error) {
+	cache := soakp.keepInfoCache
+
+	cache.mutex.RLock()
+	isInactive, isCached := cache.isInactive[keepAddress.String()]
+	cache.mutex.RUnlock()
+
+	if isCached && isInactive {
+		return false, nil
+	}
+
+	isActive, err := soakp.chain.IsActive(keepAddress)
+	if err != nil {
+		return false, err
+	}
+
+	if !isActive {
+		cache.mutex.Lock()
+		cache.isInactive[keepAddress.String()] = true
+		cache.mutex.Unlock()
+	}
+
+	return isActive, nil
+}
+
+// getKeepMembers fetches members of the keep with the given address from the
+// chain or reads them from a cache if this information is available there.
+func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
+	keepAddress common.Address,
+) ([]string, error) {
+	cache := soakp.keepInfoCache
+
+	cache.mutex.RLock()
+	members, areCached := cache.members[keepAddress.String()]
+	cache.mutex.RUnlock()
+
+	if areCached {
+		return members, nil
+	}
+
+	memberAddresses, err := soakp.chain.GetMembers(keepAddress)
+	if err != nil {
+		return nil, nil
+	}
+
+	members = make([]string, len(memberAddresses))
+	for i, member := range memberAddresses {
+		members[i] = member.String()
+	}
+
+	cache.mutex.Lock()
+	cache.members[keepAddress.String()] = members
+	cache.mutex.Unlock()
+
+	return members, nil
+}
+
+// keepInfoCache caches invariant information obtained from the chain.
+// This cache never expires.
+//
+// There are two invariants that can be cached:
+// 1. Information whether the keep is inactive. Inactive keep can never become
+//    active again.
+// 2. Information about keep members. Keep members never change.
+type keepInfoCache struct {
+	isInactive map[string]bool
+	members    map[string][]string
+	mutex      sync.RWMutex
+}
+
+func newKeepInfoCache() *keepInfoCache {
+	return &keepInfoCache{
+		isInactive: make(map[string]bool),
+		members:    make(map[string][]string),
+	}
 }
