@@ -15,21 +15,9 @@ contract ECDSAKeepRewardsStub is ECDSAKeepRewards {
             _intervalWeights
     ) {}
 
-    // function eligibleForRewardA(address keep) public view returns (bool) {
-    //     return eligibleForReward(fromAddress(keep));
-    // }
-
-    // function eligibleButTerminatedA(address keep) public view returns (bool) {
-    //     return eligibleButTerminated(fromAddress(keep));
-    // }
-
-    // function receiveRewardA(address keep) public {
-    //     return receiveReward(fromAddress(keep));
-    // }
-
-    // function reportTerminationA(address keep) public {
-    //     return reportTermination(fromAddress(keep));
-    // }
+    function currentTime() public view returns (uint256) {
+        return block.timestamp;
+    }
 
     function getUnallocatedRewards() public view returns (uint256) {
         return unallocatedRewards;

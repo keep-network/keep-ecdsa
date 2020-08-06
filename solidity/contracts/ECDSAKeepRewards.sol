@@ -73,8 +73,7 @@ contract ECDSAKeepRewards is Rewards {
 
    modifier isAddress(bytes32 _keep) {
        require(
-           true,
-           // validAddressBytes(_keep),
+           validAddressBytes(_keep),
            "Invalid keep address"
        );
        _;

@@ -254,12 +254,6 @@ describe('ECDSAKeepRewards', () => {
             let keepAddress = await keepFactory.getKeepAtIndex(0)
             let keep = await RewardsKeepStub.at(keepAddress)
             await keep.close()
-            console.log(keepAddress)
-            console.log(await rewards._toAddress(keepAddress));
-            let addressBytes = await rewards._fromAddress(keepAddress)
-            console.log(addressBytes)
-            console.log(await rewards._toAddress(addressBytes));
-            await rewards.testRoundtrip(keepAddress)
             let eligible = await rewards.eligibleForReward(keepAddress)
             expect(eligible).to.equal(true)
         })
@@ -332,7 +326,7 @@ describe('ECDSAKeepRewards', () => {
             let fakeKeepAddress = accounts[8]
             await expectRevert(
                 rewards.receiveReward(fakeKeepAddress),
-                "Keep address not recognized by factory"
+                "Keep not recognized by factory"
             )
         })
 
@@ -409,7 +403,7 @@ describe('ECDSAKeepRewards', () => {
             let fakeKeepAddress = accounts[8]
             await expectRevert(
                 rewards.reportTermination(fakeKeepAddress),
-                "Keep address not recognized by factory"
+                "Keep not recognized by factory"
             )
         })
 
