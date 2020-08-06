@@ -22,4 +22,8 @@ require (
 	github.com/keep-network/keep-core v1.2.4-rc.0.20200730171509-23390fca2250
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
+	go.uber.org/automaxprocs v1.3.0
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
+	golang.org/x/tools v0.0.0-20200522201501-cb1345f3a375 // indirect
+	honnef.co/go/tools v0.0.1-2020.1.4 // indirect
 )

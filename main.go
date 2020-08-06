@@ -10,6 +10,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-ecdsa/cmd"
 	"github.com/urfave/cli"
+	_ "go.uber.org/automaxprocs"
 )
 
 var logger = log.Logger("keep-main")
