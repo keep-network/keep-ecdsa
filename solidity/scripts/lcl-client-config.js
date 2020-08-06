@@ -44,10 +44,27 @@ module.exports = async function () {
       const formattedConfigFile = tomlify.toToml(fileContent, {
         space: 2,
         replace: (key, value) => {
-          // Find keys that match exactly `Port` or ends with `MetricsTick`.
-          return key.match(/(^Port|MetricsTick)$/) ? value.toFixed(0) : false;
+          let result
+          try {
+            result =
+              // We expect the config file to contain arrays, in such case key for
+              // each entry is its' index number. We verify if the key is a string
+              // so we can run the following match check.
+              typeof key === "string" &&
+              // Find keys that match exactly `Port` or ends with `MetricsTick`.
+              key.match(/(^Port|MetricsTick)$/)
+                ? value.toFixed(0) // convert float to integer
+                : false // do nothing
+          } catch (err) {
+            console.error(
+              `tomlify replace failed for key ${key} and value ${value} with error: [${err}]`
+            )
+            process.exit(1)
+          }
+
+          return result
         },
-      });
+      })
 
       fs.writeFileSync(configFilePath, formattedConfigFile, (err) => {
         if (err) throw err
