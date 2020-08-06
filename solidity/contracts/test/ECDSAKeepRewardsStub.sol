@@ -4,16 +4,12 @@ import "../../contracts/ECDSAKeepRewards.sol";
 
 contract ECDSAKeepRewardsStub is ECDSAKeepRewards {
     constructor (
-        uint256 _termLength,
         address _keepToken,
-        uint256 _minimumKeepsPerInterval,
         address factoryAddress,
         uint256 _initiated,
         uint256[] memory _intervalWeights
     ) public ECDSAKeepRewards(
-            _termLength,
             _keepToken,
-            _minimumKeepsPerInterval,
             factoryAddress,
             _initiated,
             _intervalWeights
@@ -49,5 +45,17 @@ contract ECDSAKeepRewardsStub is ECDSAKeepRewards {
 
     function testRoundtrip(bytes32 b) public pure returns (bool) {
         return validAddressBytes(b);
+    }
+
+    function isClosed(bytes32 keep) public view returns (bool) {
+        return _isClosed(keep);
+    }
+
+    function isTerminated(bytes32 keep) public view returns (bool) {
+        return _isTerminated(keep);
+    }
+
+    function recognizedByFactory(bytes32 keep) public view returns (bool) {
+        return _recognizedByFactory(keep);
     }
 }

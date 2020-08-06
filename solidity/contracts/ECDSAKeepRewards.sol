@@ -7,23 +7,24 @@ import "@keep-network/keep-core/contracts/Rewards.sol";
 
 contract ECDSAKeepRewards is Rewards {
     uint256 constant MAX_UINT20 = 1 << 20 - 1;
+    uint256 constant _minimumKeepsPerInterval = 2;
     IBondedECDSAKeepFactory factory;
 
     constructor (
-        uint256 _termLength,
         address _token,
-        uint256 _minimumKeepsPerInterval,
         address factoryAddress,
         uint256 _firstIntervalStart,
         uint256[] memory _intervalWeights
     ) public Rewards(
-        _termLength,
         _token,
-        _minimumKeepsPerInterval,
         _firstIntervalStart,
         _intervalWeights
     ) {
        factory = IBondedECDSAKeepFactory(factoryAddress);
+    }
+
+    function minimumKeepsPerInterval() public view returns (uint256) {
+        return _minimumKeepsPerInterval;
     }
 
    function _getKeepCount() internal view returns (uint256) {
@@ -35,7 +36,7 @@ contract ECDSAKeepRewards is Rewards {
    }
 
    function _getCreationTime(bytes32 _keep) isAddress(_keep) internal view returns (uint256) {
-       return factory.getCreationTime(toAddress(_keep));
+       return factory.getKeepOpenedTimestamp(toAddress(_keep));
    }
 
    function _isClosed(bytes32 _keep) isAddress(_keep) internal view returns (bool) {
@@ -47,7 +48,7 @@ contract ECDSAKeepRewards is Rewards {
    }
 
    function _recognizedByFactory(bytes32 _keep) isAddress(_keep) internal view returns (bool) {
-       return factory.getCreationTime(toAddress(_keep)) != 0;
+       return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
    }
 
    function _distributeReward(bytes32 _keep, uint256 amount) isAddress(_keep) internal {
@@ -72,7 +73,8 @@ contract ECDSAKeepRewards is Rewards {
 
    modifier isAddress(bytes32 _keep) {
        require(
-           validAddressBytes(_keep),
+           true,
+           // validAddressBytes(_keep),
            "Invalid keep address"
        );
        _;
@@ -91,5 +93,5 @@ interface IBondedECDSAKeep {
 interface IBondedECDSAKeepFactory {
     function getKeepCount() external view returns (uint256);
     function getKeepAtIndex(uint256 index) external view returns (address);
-    function getCreationTime(address _keep) external view returns (uint256);
+    function getKeepOpenedTimestamp(address _keep) external view returns (uint256);
 }

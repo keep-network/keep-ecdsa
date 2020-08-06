@@ -20,7 +20,7 @@ const chai = require("chai")
 const expect = chai.expect
 const assert = chai.assert
 
-describe.only('ECDSAKeepRewards', () => {
+describe('ECDSAKeepRewards', () => {
     const alice = accounts[0]
     const bob = accounts[1]
     const aliceBeneficiary = accounts[2]
@@ -111,9 +111,7 @@ describe.only('ECDSAKeepRewards', () => {
         token = await TestToken.new()
 
         rewards = await ECDSAKeepRewards.new(
-            termLength,
             token.address,
-            minimumIntervalKeeps,
             keepFactory.address,
             initiationTime,
             intervalWeights
@@ -153,6 +151,100 @@ describe.only('ECDSAKeepRewards', () => {
             expect(await rewards.testRoundtrip(inputA)).to.equal(false)
             expect(await rewards.testRoundtrip(inputB)).to.equal(true)
             expect(await rewards.testRoundtrip(inputC)).to.equal(false)
+        })
+    })
+
+    describe("_isClosed", async () => {
+        it("returns true for happily closed keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.close()
+            let closed = await rewards.isClosed(keepAddress)
+            expect(closed).to.equal(true)
+        })
+
+        it("returns false for terminated keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.terminate()
+            let closed = await rewards.isClosed(keepAddress)
+            expect(closed).to.equal(false)
+        })
+
+        it("returns false for active keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let closed = await rewards.isClosed(keepAddress)
+            expect(closed).to.equal(false)
+        })
+    })
+
+    describe("_isTerminated", async () => {
+        it("returns false for happily closed keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.close()
+            let terminated = await rewards.isTerminated(keepAddress)
+            expect(terminated).to.equal(false)
+        })
+
+        it("returns true for terminated keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.terminate()
+            let terminated = await rewards.isTerminated(keepAddress)
+            expect(terminated).to.equal(true)
+        })
+
+        it("returns false for active keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let terminated = await rewards.isTerminated(keepAddress)
+            expect(terminated).to.equal(false)
+        })
+    })
+
+    describe("_isClosed", async () => {
+        it("returns true for happily closed keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.close()
+            let closed = await rewards.isClosed(keepAddress)
+            expect(closed).to.equal(true)
+        })
+
+        it("returns false for terminated keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let keep = await RewardsKeepStub.at(keepAddress)
+            await keep.terminate()
+            let closed = await rewards.isClosed(keepAddress)
+            expect(closed).to.equal(false)
+        })
+
+        it("returns false for active keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            let closed = await rewards.isClosed(keepAddress)
+            expect(closed).to.equal(false)
+        })
+    })
+
+    describe("_recognizedByFactory", async () => {
+        it("returns true for valid keeps", async () => {
+            await createKeeps([1000])
+            let keepAddress = await keepFactory.getKeepAtIndex(0)
+            expect(await rewards.recognizedByFactory(keepAddress)).to.equal(true)
+        })
+
+        it("returns false for other addresses", async () => {
+            await createKeeps([1000])
+            expect(await rewards.recognizedByFactory(alice)).to.equal(false)
         })
     })
 
