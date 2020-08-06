@@ -82,9 +82,22 @@ module.exports = async function () {
         application
       )
     } catch (err) {
-      console.error("failed to get sortition pool", err, "; creating a new one")
+      console.error("failed to get sortition pool", err)
+    }
 
+    // FIXME: Workaround for https://github.com/ethereum/go-ethereum/pull/21083 - instead of failing,
+    // contract call returns address 0x0. Once we are able to update to the most recent abigen
+    // (see https://github.com/keep-network/keep-common/issues/45), the additional case for 0x0 address
+    // should be removed.
+    if (
+      !sortitionPoolAddress ||
+      sortitionPoolAddress === "0x0000000000000000000000000000000000000000"
+    ) {
       try {
+        console.error(
+          `no sortition pool for application: [${application}]; creating a new one`
+        )
+
         await bondedECDSAKeepFactory.createSortitionPool(application)
 
         console.log(`created sortition pool for application: [${application}]`)
