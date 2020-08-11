@@ -25,6 +25,9 @@ import "@keep-network/keep-core/contracts/libraries/RolesLookup.sol";
 contract KeepBonding is AbstractBonding {
     using RolesLookup for address payable;
 
+    // KEEP Token Staking contract.
+    TokenStaking internal tokenStaking;
+
     // KEEP token grant contract.
     TokenGrant internal tokenGrant;
 
@@ -36,14 +39,8 @@ contract KeepBonding is AbstractBonding {
         address registryAddress,
         address tokenStakingAddress,
         address tokenGrantAddress
-    )
-        public
-        AbstractBonding(
-            registryAddress,
-            tokenStakingAddress, // Authorizations
-            tokenStakingAddress // StakeDelegatable
-        )
-    {
+    ) public AbstractBonding(registryAddress) {
+        tokenStaking = TokenStaking(tokenStakingAddress);
         tokenGrant = TokenGrant(tokenGrantAddress);
     }
 
@@ -61,10 +58,7 @@ contract KeepBonding is AbstractBonding {
     function withdraw(uint256 amount, address operator) public {
         require(
             msg.sender == operator ||
-                msg.sender.isTokenOwnerForOperator(
-                    operator,
-                    stakeDelegatable
-                ) ||
+                msg.sender.isTokenOwnerForOperator(operator, tokenStaking) ||
                 msg.sender.isGranteeForOperator(operator, tokenGrant),
             "Only operator or the owner is allowed to withdraw bond"
         );
@@ -92,5 +86,25 @@ contract KeepBonding is AbstractBonding {
         );
 
         withdrawBond(amount, operator);
+    }
+
+    function isAuthorizedForOperator(
+        address _operator,
+        address _operatorContract
+    ) internal view returns (bool) {
+        return
+            tokenStaking.isAuthorizedForOperator(_operator, _operatorContract);
+    }
+
+    function authorizerOf(address _operator) internal view returns (address) {
+        return tokenStaking.authorizerOf(_operator);
+    }
+
+    function beneficiaryOf(address _operator)
+        internal
+        view
+        returns (address payable)
+    {
+        return tokenStaking.beneficiaryOf(_operator);
     }
 }

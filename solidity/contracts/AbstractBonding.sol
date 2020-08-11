@@ -15,9 +15,8 @@
 pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/KeepRegistry.sol";
-import "@keep-network/keep-core/contracts/Authorizations.sol";
-import "@keep-network/keep-core/contracts/StakeDelegatable.sol";
 import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
+
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
@@ -28,12 +27,6 @@ contract AbstractBonding is IBonding {
 
     // Registry contract with a list of approved factories (operator contracts).
     KeepRegistry internal registry;
-
-    // Staking Authorizations contract.
-    Authorizations internal authorizations;
-
-    // Stake Delegatable contract.
-    StakeDelegatable internal stakeDelegatable;
 
     // Unassigned value in wei deposited by operators.
     mapping(address => uint256) public unbondedValue;
@@ -79,22 +72,14 @@ contract AbstractBonding is IBonding {
 
     /// @notice Initializes Keep Bonding contract.
     /// @param registryAddress Keep registry contract address.
-    /// @param authorizationsAddress Staking Authorizations contract address.
-    /// @param stakeDelegatableAddress Stake Delegatable contract address.
-    constructor(
-        address registryAddress,
-        address authorizationsAddress,
-        address stakeDelegatableAddress
-    ) public {
+    constructor(address registryAddress) public {
         registry = KeepRegistry(registryAddress);
-        authorizations = Authorizations(authorizationsAddress);
-        stakeDelegatable = StakeDelegatable(stakeDelegatableAddress);
     }
 
     /// @notice Add the provided value to operator's pool available for bonding.
     /// @param operator Address of the operator.
     function deposit(address operator) external payable {
-        address beneficiary = stakeDelegatable.beneficiaryOf(operator);
+        address beneficiary = beneficiaryOf(operator);
         // Beneficiary has to be set (delegation exist) before an operator can
         // deposit wei. It protects from a situation when an operator wants
         // to withdraw funds which are transfered to beneficiary with zero
@@ -131,7 +116,7 @@ contract AbstractBonding is IBonding {
         // are no longer eligible. We cannot revert here.
         if (
             registry.isApprovedOperatorContract(bondCreator) &&
-            authorizations.isAuthorizedForOperator(operator, bondCreator) &&
+            isAuthorizedForOperator(operator, bondCreator) &&
             hasSecondaryAuthorization(operator, authorizedSortitionPool)
         ) {
             return unbondedValue[operator];
@@ -301,10 +286,7 @@ contract AbstractBonding is IBonding {
         address _operator,
         address _poolAddress
     ) public {
-        require(
-            stakeDelegatable.authorizerOf(_operator) == msg.sender,
-            "Not authorized"
-        );
+        require(authorizerOf(_operator) == msg.sender, "Not authorized");
         authorizedPools[_operator][_poolAddress] = true;
     }
 
@@ -318,10 +300,7 @@ contract AbstractBonding is IBonding {
         address _operator,
         address _poolAddress
     ) public {
-        require(
-            stakeDelegatable.authorizerOf(_operator) == msg.sender,
-            "Not authorized"
-        );
+        require(authorizerOf(_operator) == msg.sender, "Not authorized");
         authorizedPools[_operator][_poolAddress] = false;
     }
 
@@ -347,11 +326,33 @@ contract AbstractBonding is IBonding {
 
         unbondedValue[operator] = unbondedValue[operator].sub(amount);
 
-        address beneficiary = stakeDelegatable.beneficiaryOf(operator);
+        address beneficiary = beneficiaryOf(operator);
 
         (bool success, ) = beneficiary.call.value(amount)("");
         require(success, "Transfer failed");
 
         emit UnbondedValueWithdrawn(operator, beneficiary, amount);
     }
+
+    /// @notice Checks if operator contract has been authorized for the provided
+    /// operator.
+    /// @param _operator Operator address.
+    /// @param _operatorContract Address of the operator contract.
+    function isAuthorizedForOperator(
+        address _operator,
+        address _operatorContract
+    ) internal view returns (bool);
+
+    /// @notice Gets the authorizer for the specified operator address.
+    /// @param _operator Operator address.
+    /// @return Authorizer address.
+    function authorizerOf(address _operator) internal view returns (address);
+
+    /// @notice Gets the beneficiary for the specified operator address.
+    /// @param _operator Operator address.
+    /// @return Beneficiary address.
+    function beneficiaryOf(address _operator)
+        internal
+        view
+        returns (address payable);
 }
