@@ -2,8 +2,7 @@ const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
-const AuthorizationsStub = contract.fromArtifact("AuthorizationsStub")
-const StakeDelegatableStub = contract.fromArtifact("StakeDelegatableStub")
+const StakingInfoStub = contract.fromArtifact("StakingInfoStub")
 const AbstractBonding = contract.fromArtifact("AbstractBondingStub")
 const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
 
@@ -22,7 +21,6 @@ const assert = chai.assert
 
 describe("AbstractBonding", function () {
   let registry
-  let stakeDelegatable
   let abstractBonding
   let etherReceiver
 
@@ -40,21 +38,18 @@ describe("AbstractBonding", function () {
     sortitionPool = accounts[5]
 
     registry = await KeepRegistry.new()
-    authorizations = await AuthorizationsStub.new(registry.address)
-
-    stakeDelegatable = await StakeDelegatableStub.new()
+    stakingInfoStub = await StakingInfoStub.new()
 
     abstractBonding = await AbstractBonding.new(
       registry.address,
-      authorizations.address,
-      stakeDelegatable.address
+      stakingInfoStub.address
     )
 
     etherReceiver = await TestEtherReceiver.new()
 
     await registry.approveOperatorContract(bondCreator)
 
-    await stakeDelegatable.setAuthorizer(operator, authorizer)
+    await stakingInfoStub.setAuthorizer(operator, authorizer)
     await abstractBonding.authorizeSortitionPoolContract(
       operator,
       sortitionPool,
@@ -63,7 +58,7 @@ describe("AbstractBonding", function () {
       }
     )
 
-    await authorizations.authorizeOperatorContract(operator, bondCreator)
+    await stakingInfoStub.authorizeOperatorContract(operator, bondCreator)
   })
 
   beforeEach(async () => {
@@ -79,7 +74,7 @@ describe("AbstractBonding", function () {
     const expectedUnbonded = value
 
     it("registers unbonded value", async () => {
-      await stakeDelegatable.setBeneficiary(operator, beneficiary)
+      await stakingInfoStub.setBeneficiary(operator, beneficiary)
       await abstractBonding.deposit(operator, {value: value})
       const unbonded = await abstractBonding.availableUnbondedValue(
         operator,
@@ -94,7 +89,7 @@ describe("AbstractBonding", function () {
       const value1 = value
       const value2 = new BN(230)
 
-      await stakeDelegatable.setBeneficiary(operator, beneficiary)
+      await stakingInfoStub.setBeneficiary(operator, beneficiary)
 
       await abstractBonding.deposit(operator, {value: value1})
       expect(
@@ -119,7 +114,7 @@ describe("AbstractBonding", function () {
     })
 
     it("emits event", async () => {
-      await stakeDelegatable.setBeneficiary(operator, beneficiary)
+      await stakingInfoStub.setBeneficiary(operator, beneficiary)
       const receipt = await abstractBonding.deposit(operator, {value: value})
       expectEvent(receipt, "UnbondedValueDeposited", {
         operator: operator,
@@ -129,7 +124,7 @@ describe("AbstractBonding", function () {
     })
 
     it("reverts if beneficiary is not defined", async () => {
-      await stakeDelegatable.setBeneficiary(operator, constants.ZERO_ADDRESS)
+      await stakingInfoStub.setBeneficiary(operator, constants.ZERO_ADDRESS)
 
       await expectRevert(
         abstractBonding.deposit(operator, {value: value}),
@@ -142,7 +137,7 @@ describe("AbstractBonding", function () {
     const value = new BN(100)
 
     beforeEach(async () => {
-      await stakeDelegatable.setBeneficiary(operator, beneficiary)
+      await stakingInfoStub.setBeneficiary(operator, beneficiary)
       await abstractBonding.deposit(operator, {value: value})
     })
 
@@ -202,7 +197,7 @@ describe("AbstractBonding", function () {
     const value = new BN(100)
 
     beforeEach(async () => {
-      await stakeDelegatable.setBeneficiary(operator, beneficiary)
+      await stakingInfoStub.setBeneficiary(operator, beneficiary)
       await abstractBonding.deposit(operator, {value: value})
     })
 
@@ -264,12 +259,12 @@ describe("AbstractBonding", function () {
 
       const expectedUnbonded = value.sub(bondValue)
 
-      await stakeDelegatable.setBeneficiary(operator2, etherReceiver.address)
-      await stakeDelegatable.setAuthorizer(operator2, authorizer2)
+      await stakingInfoStub.setBeneficiary(operator2, etherReceiver.address)
+      await stakingInfoStub.setAuthorizer(operator2, authorizer2)
 
       await abstractBonding.deposit(operator2, {value: value})
 
-      await authorizations.authorizeOperatorContract(operator2, bondCreator)
+      await stakingInfoStub.authorizeOperatorContract(operator2, bondCreator)
       await abstractBonding.authorizeSortitionPoolContract(
         operator2,
         sortitionPool,
@@ -374,7 +369,7 @@ describe("AbstractBonding", function () {
     const newReference = new BN(888)
 
     beforeEach(async () => {
-      await stakeDelegatable.setBeneficiary(operator, beneficiary)
+      await stakingInfoStub.setBeneficiary(operator, beneficiary)
       await abstractBonding.deposit(operator, {value: bondValue})
       await abstractBonding.createBond(
         operator,
@@ -537,7 +532,7 @@ describe("AbstractBonding", function () {
     const reference = new BN(777)
 
     beforeEach(async () => {
-      await stakeDelegatable.setBeneficiary(operator, beneficiary)
+      await stakingInfoStub.setBeneficiary(operator, beneficiary)
       await abstractBonding.deposit(operator, {value: initialUnboundedValue})
       await abstractBonding.createBond(
         operator,
@@ -596,7 +591,7 @@ describe("AbstractBonding", function () {
     const reference = new BN(777)
 
     beforeEach(async () => {
-      await stakeDelegatable.setBeneficiary(operator, beneficiary)
+      await stakingInfoStub.setBeneficiary(operator, beneficiary)
       await abstractBonding.deposit(operator, {value: bondValue})
       await abstractBonding.createBond(
         operator,
@@ -812,13 +807,13 @@ describe("AbstractBonding", function () {
       const value = new BN(1000)
 
       beforeEach(async () => {
-        await stakeDelegatable.setBeneficiary(operator, beneficiary)
+        await stakingInfoStub.setBeneficiary(operator, beneficiary)
         await abstractBonding.deposit(operator, {value: value})
       })
 
       it("transfers unbonded value to beneficiary", async () => {
         const expectedUnbonded = 0
-        await stakeDelegatable.setBeneficiary(operator, beneficiary)
+        await stakingInfoStub.setBeneficiary(operator, beneficiary)
         const expectedBeneficiaryBalance = web3.utils
           .toBN(await web3.eth.getBalance(beneficiary))
           .add(value)
@@ -871,7 +866,7 @@ describe("AbstractBonding", function () {
 
       it("reverts if transfer fails", async () => {
         await etherReceiver.setShouldFail(true)
-        await stakeDelegatable.setBeneficiary(operator, etherReceiver.address)
+        await stakingInfoStub.setBeneficiary(operator, etherReceiver.address)
 
         await expectRevert(
           abstractBonding.withdrawBondExposed(value, operator, {

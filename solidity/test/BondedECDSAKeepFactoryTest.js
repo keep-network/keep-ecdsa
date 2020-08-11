@@ -1182,6 +1182,8 @@ describe("BondedECDSAKeepFactory", function () {
         })
 
         await tokenStaking.setBalance(operator, stakeBalance)
+        await tokenStaking.setAuthorizer(operator, operator)
+
         await tokenStaking.authorizeOperatorContract(
           operator,
           keepFactory.address
@@ -1575,6 +1577,8 @@ describe("BondedECDSAKeepFactory", function () {
     await keepFactory.createSortitionPool(application)
 
     for (let i = 0; i < members.length; i++) {
+      await tokenStaking.setAuthorizer(members[i], authorizers[i])
+
       await tokenStaking.authorizeOperatorContract(
         members[i],
         keepFactory.address

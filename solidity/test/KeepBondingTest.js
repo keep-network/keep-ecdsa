@@ -48,6 +48,7 @@ describe("KeepBonding", function () {
 
     await registry.approveOperatorContract(bondCreator)
 
+    await tokenStaking.setAuthorizer(operator, authorizer)
     await keepBonding.authorizeSortitionPoolContract(operator, sortitionPool, {
       from: authorizer,
     })

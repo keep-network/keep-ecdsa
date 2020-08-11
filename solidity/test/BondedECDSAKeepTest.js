@@ -107,6 +107,10 @@ describe("BondedECDSAKeep", function () {
     memberStake = await factoryStub.minimumStake.call()
     await stakeOperators(members, memberStake)
 
+    await tokenStaking.setAuthorizer(members[0], authorizers[0])
+    await tokenStaking.setAuthorizer(members[1], authorizers[1])
+    await tokenStaking.setAuthorizer(members[2], authorizers[2])
+
     await keepBonding.authorizeSortitionPoolContract(members[0], signingPool, {
       from: authorizers[0],
     })
