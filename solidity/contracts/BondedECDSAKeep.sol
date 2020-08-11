@@ -25,7 +25,6 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
-
 /// @title Bonded ECDSA Keep
 /// @notice ECDSA keep with additional signer bond requirement.
 /// @dev This contract is used as a master contract for clone factory in
@@ -251,10 +250,11 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// @param _r Calculated signature's R value.
     /// @param _s Calculated signature's S value.
     /// @param _recoveryID Calculated signature's recovery ID (one of {0, 1, 2, 3}).
-    function submitSignature(bytes32 _r, bytes32 _s, uint8 _recoveryID)
-        external
-        onlyMember
-    {
+    function submitSignature(
+        bytes32 _r,
+        bytes32 _s,
+        uint8 _recoveryID
+    ) external onlyMember {
         require(isSigningInProgress(), "Not awaiting a signature");
         require(_recoveryID < 4, "Recovery ID must be one of {0, 1, 2, 3}");
 

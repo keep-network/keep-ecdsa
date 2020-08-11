@@ -19,7 +19,6 @@ import "./AbstractBonding.sol";
 import "@keep-network/keep-core/contracts/TokenGrant.sol";
 import "@keep-network/keep-core/contracts/libraries/RolesLookup.sol";
 
-
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
 contract KeepBonding is AbstractBonding {

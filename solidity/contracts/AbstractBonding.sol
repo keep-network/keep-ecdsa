@@ -19,7 +19,6 @@ import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-
 /// @title Keep Bonding
 /// @notice Contract holding deposits from keeps' operators.
 contract AbstractBonding is IBonding {
@@ -175,11 +174,11 @@ contract AbstractBonding is IBonding {
     /// @param holder Address of the holder of the bond.
     /// @param referenceID Reference ID of the bond.
     /// @return Amount of wei in the selected bond.
-    function bondAmount(address operator, address holder, uint256 referenceID)
-        public
-        view
-        returns (uint256)
-    {
+    function bondAmount(
+        address operator,
+        address holder,
+        uint256 referenceID
+    ) public view returns (uint256) {
         bytes32 bondID = keccak256(
             abi.encodePacked(operator, holder, referenceID)
         );
