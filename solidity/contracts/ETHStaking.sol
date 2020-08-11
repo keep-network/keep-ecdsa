@@ -59,6 +59,8 @@ contract ETHStaking is Authorizations, StakeDelegatable {
         operators[operator] = Operator(0, _from, beneficiary, authorizer);
         ownerOperators[_from].push(operator);
 
+        // TODO: Add initialization period as per https://github.com/keep-network/keep-ecdsa/pull/483#discussion_r468628872
+
         emit Staked(_from, operator, beneficiary, authorizer);
     }
 }
