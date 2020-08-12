@@ -14,11 +14,8 @@
 
 pragma solidity 0.5.17;
 
-import "./AbstractECDSAKeep.sol";
-import "./api/IBondedECDSAKeep.sol";
-
+import "./AbstractBondedECDSAKeep.sol";
 import "./BondedECDSAKeepFactory.sol";
-import "./KeepBonding.sol";
 
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
@@ -29,7 +26,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// @dev This contract is used as a master contract for clone factory in
 /// BondedECDSAKeepFactory as per EIP-1167. It should never be removed after
 /// initial deployment as this will break functionality for all created clones.
-contract BondedECDSAKeep is IBondedECDSAKeep, AbstractECDSAKeep {
+contract BondedECDSAKeep is AbstractBondedECDSAKeep {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
 
@@ -45,23 +42,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep, AbstractECDSAKeep {
     event SlashingFailed();
 
     TokenStaking tokenStaking;
-    KeepBonding keepBonding;
     BondedECDSAKeepFactory keepFactory;
-
-    /// @notice Returns the amount of the keep's ETH bond in wei.
-    /// @return The amount of the keep's ETH bond in wei.
-    function checkBondAmount() external view returns (uint256) {
-        uint256 sumBondAmount = 0;
-        for (uint256 i = 0; i < members.length; i++) {
-            sumBondAmount += keepBonding.bondAmount(
-                members[i],
-                address(this),
-                uint256(address(this))
-            );
-        }
-
-        return sumBondAmount;
-    }
 
     /// @notice Closes keep when owner decides that they no longer need it.
     /// Releases bonds to the keep members. Keep can be closed only when
@@ -72,55 +53,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep, AbstractECDSAKeep {
         markAsClosed();
         unlockMemberStakes();
         freeMembersBonds();
-    }
-
-    /// @notice Seizes the signers' ETH bonds. After seizing bonds keep is
-    /// closed so it will no longer respond to signing requests. Bonds can be
-    /// seized only when there is no signing in progress or requested signing
-    /// process has timed out. This function seizes all of signers' bonds.
-    /// The application may decide to return part of bonds later after they are
-    /// processed using returnPartialSignerBonds function.
-    function seizeSignerBonds() external onlyOwner onlyWhenActive {
-        terminateKeep();
-
-        for (uint256 i = 0; i < members.length; i++) {
-            uint256 amount = keepBonding.bondAmount(
-                members[i],
-                address(this),
-                uint256(address(this))
-            );
-
-            keepBonding.seizeBond(
-                members[i],
-                uint256(address(this)),
-                amount,
-                address(uint160(owner))
-            );
-        }
-    }
-
-    /// @notice Returns partial signer's ETH bonds to the pool as an unbounded
-    /// value. This function is called after bonds have been seized and processed
-    /// by the privileged application after calling seizeSignerBonds function.
-    /// It is entirely up to the application if a part of signers' bonds is
-    /// returned. The application may decide for that but may also decide to
-    /// seize bonds and do not return anything.
-    function returnPartialSignerBonds() external payable {
-        uint256 memberCount = members.length;
-        uint256 bondPerMember = msg.value.div(memberCount);
-
-        require(bondPerMember > 0, "Partial signer bond must be non-zero");
-
-        for (uint16 i = 0; i < memberCount - 1; i++) {
-            keepBonding.deposit.value(bondPerMember)(members[i]);
-        }
-
-        // Transfer of dividend for the last member. Remainder might be equal to
-        // zero in case of even distribution or some small number.
-        uint256 remainder = msg.value.mod(memberCount);
-        keepBonding.deposit.value(bondPerMember.add(remainder))(
-            members[memberCount - 1]
-        );
     }
 
     /// @notice Initialization function.
@@ -146,11 +78,15 @@ contract BondedECDSAKeep is IBondedECDSAKeep, AbstractECDSAKeep {
         address _keepBonding,
         address payable _keepFactory
     ) public {
-        initializeECDSAKeep(_owner, _members, _honestThreshold);
+        initializeBondedECDSAKeep(
+            _owner,
+            _members,
+            _honestThreshold,
+            _keepBonding
+        );
 
         memberStake = _memberStake;
         tokenStaking = TokenStaking(_tokenStaking);
-        keepBonding = KeepBonding(_keepBonding);
         keepFactory = BondedECDSAKeepFactory(_keepFactory);
 
         tokenStaking.claimDelegatedAuthority(_keepFactory);
@@ -191,13 +127,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep, AbstractECDSAKeep {
     function unlockMemberStakes() internal {
         for (uint256 i = 0; i < members.length; i++) {
             tokenStaking.unlockStake(members[i]);
-        }
-    }
-
-    /// @notice Returns bonds to the keep members.
-    function freeMembersBonds() internal {
-        for (uint256 i = 0; i < members.length; i++) {
-            keepBonding.freeBond(members[i], uint256(address(this)));
         }
     }
 
