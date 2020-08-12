@@ -314,6 +314,28 @@ contract AbstractBonding is IBonding {
         return authorizedPools[_operator][_poolAddress];
     }
 
+    /// @notice Checks if operator contract has been authorized for the provided
+    /// operator.
+    /// @param _operator Operator address.
+    /// @param _operatorContract Address of the operator contract.
+    function isAuthorizedForOperator(
+        address _operator,
+        address _operatorContract
+    ) public view returns (bool);
+
+    /// @notice Gets the authorizer for the specified operator address.
+    /// @param _operator Operator address.
+    /// @return Authorizer address.
+    function authorizerOf(address _operator) public view returns (address);
+
+    /// @notice Gets the beneficiary for the specified operator address.
+    /// @param _operator Operator address.
+    /// @return Beneficiary address.
+    function beneficiaryOf(address _operator)
+        public
+        view
+        returns (address payable);
+
     /// @notice Withdraws the provided amount from unbonded value of the
     /// provided operator to operator's beneficiary. If there is no enough
     /// unbonded value or the transfer failed, function fails.
@@ -332,26 +354,4 @@ contract AbstractBonding is IBonding {
 
         emit UnbondedValueWithdrawn(operator, beneficiary, amount);
     }
-
-    /// @notice Checks if operator contract has been authorized for the provided
-    /// operator.
-    /// @param _operator Operator address.
-    /// @param _operatorContract Address of the operator contract.
-    function isAuthorizedForOperator(
-        address _operator,
-        address _operatorContract
-    ) internal view returns (bool);
-
-    /// @notice Gets the authorizer for the specified operator address.
-    /// @param _operator Operator address.
-    /// @return Authorizer address.
-    function authorizerOf(address _operator) internal view returns (address);
-
-    /// @notice Gets the beneficiary for the specified operator address.
-    /// @param _operator Operator address.
-    /// @return Beneficiary address.
-    function beneficiaryOf(address _operator)
-        internal
-        view
-        returns (address payable);
 }
