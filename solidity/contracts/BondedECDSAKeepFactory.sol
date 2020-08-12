@@ -151,8 +151,7 @@ contract BondedECDSAKeepFactory is
         );
 
         address application = msg.sender;
-        address pool = candidatesPools[application];
-        require(pool != address(0), "No signer pool for this application");
+        address pool = getSortitionPool(application);
 
         uint256 memberBond = bondPerMember(_bond, _groupSize);
         require(memberBond > 0, "Bond per member must be greater than zero");
