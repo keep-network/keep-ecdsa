@@ -25,7 +25,7 @@ contract AbstractBondingStub is AbstractBonding {
     function isAuthorizedForOperator(
         address _operator,
         address _operatorContract
-    ) internal view returns (bool) {
+    ) public view returns (bool) {
         return
             stakingInfoStub.isAuthorizedForOperator(
                 _operator,
@@ -33,12 +33,12 @@ contract AbstractBondingStub is AbstractBonding {
             );
     }
 
-    function authorizerOf(address _operator) internal view returns (address) {
+    function authorizerOf(address _operator) public view returns (address) {
         return stakingInfoStub.authorizerOf(_operator);
     }
 
     function beneficiaryOf(address _operator)
-        internal
+        public
         view
         returns (address payable)
     {
