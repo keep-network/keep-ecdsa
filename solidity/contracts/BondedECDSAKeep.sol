@@ -290,6 +290,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// if the keep has not been already closed.
     function closeKeep() external onlyOwner onlyWhenActive {
         markAsClosed();
+        unlockMemberStakes();
         freeMembersBonds();
     }
 
@@ -300,7 +301,7 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// The application may decide to return part of bonds later after they are
     /// processed using returnPartialSignerBonds function.
     function seizeSignerBonds() external onlyOwner onlyWhenActive {
-        markAsTerminated();
+        terminateKeep();
 
         for (uint256 i = 0; i < members.length; i++) {
             uint256 amount = keepBonding.bondAmount(
@@ -630,12 +631,18 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
         return signingStartTimestamp != 0;
     }
 
+    /// @notice Terminates the keep.
+    /// Keep can be marked as terminated only when there is no signing in progress
+    /// or the requested signing process has timed out.
+    function terminateKeep() internal {
+        unlockMemberStakes();
+        markAsTerminated();
+    }
+
     /// @notice Marks the keep as closed.
     /// Keep can be marked as closed only when there is no signing in progress
     /// or the requested signing process has timed out.
     function markAsClosed() internal {
-        unlockMemberStakes();
-
         status = Status.Closed;
         emit KeepClosed();
     }
@@ -644,8 +651,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep {
     /// Keep can be marked as terminated only when there is no signing in progress
     /// or the requested signing process has timed out.
     function markAsTerminated() internal {
-        unlockMemberStakes();
-
         status = Status.Terminated;
         emit KeepTerminated();
     }
