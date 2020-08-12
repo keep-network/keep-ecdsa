@@ -19,6 +19,7 @@ import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./CloneFactory.sol";
 import "./KeepFactorySeed.sol";
+import "./KeepFactoryCandidatesPools.sol";
 
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
@@ -43,16 +44,11 @@ contract BondedECDSAKeepFactory is
     IBondedECDSAKeepFactory,
     CloneFactory,
     AuthorityDelegator,
-    KeepFactorySeed
+    KeepFactorySeed,
+    KeepFactoryCandidatesPools
 {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
-
-    // Notification that a new sortition pool has been created.
-    event SortitionPoolCreated(
-        address indexed application,
-        address sortitionPool
-    );
 
     // Notification that a new keep has been created.
     event BondedECDSAKeepCreated(
@@ -72,9 +68,6 @@ contract BondedECDSAKeepFactory is
 
     // Maps keep opened timestamp to each keep address
     mapping(address => uint256) keepOpenedTimestamp;
-
-    // Mapping of pools with registered member candidates for each application.
-    mapping(address => address) candidatesPools; // application -> candidates pool
 
     BondedSortitionPoolFactory sortitionPoolFactory;
     TokenStaking tokenStaking;
@@ -110,34 +103,6 @@ contract BondedECDSAKeepFactory is
         keepBonding = KeepBonding(_keepBonding);
     }
 
-    /// @notice Creates new sortition pool for the application.
-    /// @dev Emits an event after sortition pool creation.
-    /// @param _application Address of the application.
-    /// @return Address of the created sortition pool contract.
-    function createSortitionPool(address _application)
-        external
-        returns (address)
-    {
-        require(
-            candidatesPools[_application] == address(0),
-            "Sortition pool already exists"
-        );
-
-        address sortitionPoolAddress = sortitionPoolFactory.createSortitionPool(
-            IStaking(address(tokenStaking)),
-            IBonding(address(keepBonding)),
-            tokenStaking.minimumStake(),
-            minimumBond,
-            poolStakeWeightDivisor
-        );
-
-        candidatesPools[_application] = sortitionPoolAddress;
-
-        emit SortitionPoolCreated(_application, sortitionPoolAddress);
-
-        return candidatesPools[_application];
-    }
-
     /// @notice Sets the minimum bondable value required from the operator to
     /// join the sortition pool of the given application. It is up to the
     /// application to specify a reasonable minimum bond for operators trying to
@@ -155,54 +120,6 @@ contract BondedECDSAKeepFactory is
         uint256 memberBond = bondPerMember(_minimumBondableValue, _groupSize);
         BondedSortitionPool(getSortitionPool(msg.sender))
             .setMinimumBondableValue(memberBond);
-    }
-
-    /// @notice Register caller as a candidate to be selected as keep member
-    /// for the provided customer application.
-    /// @dev If caller is already registered it returns without any changes.
-    /// @param _application Address of the application.
-    function registerMemberCandidate(address _application) external {
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            getSortitionPool(_application)
-        );
-
-        address operator = msg.sender;
-        if (!candidatesPool.isOperatorInPool(operator)) {
-            candidatesPool.joinPool(operator);
-        }
-    }
-
-    /// @notice Checks if operator's details in the member candidates pool are
-    /// up to date for the given application. If not update operator status
-    /// function should be called by the one who is monitoring the status.
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    function isOperatorUpToDate(address _operator, address _application)
-        external
-        view
-        returns (bool)
-    {
-        BondedSortitionPool candidatesPool = getSortitionPoolForOperator(
-            _operator,
-            _application
-        );
-
-        return candidatesPool.isOperatorUpToDate(_operator);
-    }
-
-    /// @notice Invokes update of operator's details in the member candidates pool
-    /// for the given application
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    function updateOperatorStatus(address _operator, address _application)
-        external
-    {
-        BondedSortitionPool candidatesPool = getSortitionPoolForOperator(
-            _operator,
-            _application
-        );
-
-        candidatesPool.updateOperatorStatus(_operator);
     }
 
     /// @notice Opens a new ECDSA keep.
@@ -234,8 +151,7 @@ contract BondedECDSAKeepFactory is
         );
 
         address application = msg.sender;
-        address pool = candidatesPools[application];
-        require(pool != address(0), "No signer pool for this application");
+        address pool = getSortitionPool(application);
 
         uint256 memberBond = bondPerMember(_bond, _groupSize);
         require(memberBond > 0, "Bond per member must be greater than zero");
@@ -336,64 +252,6 @@ contract BondedECDSAKeepFactory is
         return keepOpenedTimestamp[_delegatedAuthorityRecipient] > 0;
     }
 
-    /// @notice Gets the sortition pool address for the given application.
-    /// @dev Reverts if sortition does not exist for the application.
-    /// @param _application Address of the application.
-    /// @return Address of the sortition pool contract.
-    function getSortitionPool(address _application)
-        public
-        view
-        returns (address)
-    {
-        require(
-            candidatesPools[_application] != address(0),
-            "No pool found for the application"
-        );
-
-        return candidatesPools[_application];
-    }
-
-    /// @notice Checks if operator is registered as a candidate for the given
-    /// customer application.
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    /// @return True if operator is already registered in the candidates pool,
-    /// false otherwise.
-    function isOperatorRegistered(address _operator, address _application)
-        public
-        view
-        returns (bool)
-    {
-        if (candidatesPools[_application] == address(0)) {
-            return false;
-        }
-
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
-        );
-
-        return candidatesPool.isOperatorRegistered(_operator);
-    }
-
-    /// @notice Checks if given operator is eligible for the given application.
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    function isOperatorEligible(address _operator, address _application)
-        public
-        view
-        returns (bool)
-    {
-        if (candidatesPools[_application] == address(0)) {
-            return false;
-        }
-
-        BondedSortitionPool candidatesPool = BondedSortitionPool(
-            candidatesPools[_application]
-        );
-
-        return candidatesPool.isOperatorEligible(_operator);
-    }
-
     /// @notice Gets a fee estimate for opening a new keep.
     /// @return Uint256 estimate.
     function openKeepFeeEstimate() public view returns (uint256) {
@@ -436,19 +294,15 @@ contract BondedECDSAKeepFactory is
         return tokenStaking.balanceOf(_operator);
     }
 
-    /// @notice Gets the total weight of operators
-    /// in the sortition pool for the given application.
-    /// @dev Reverts if sortition does not exits for the application.
-    /// @param _application Address of the application.
-    /// @return The sum of all registered operators' weights in the pool.
-    /// Reverts if sortition pool for the application does not exist.
-    function getSortitionPoolWeight(address _application)
-        public
-        view
-        returns (uint256)
-    {
+    function newSortitionPool(address _application) internal returns (address) {
         return
-            BondedSortitionPool(getSortitionPool(_application)).totalWeight();
+            sortitionPoolFactory.createSortitionPool(
+                IStaking(address(tokenStaking)),
+                IBonding(address(keepBonding)),
+                tokenStaking.minimumStake(),
+                minimumBond,
+                poolStakeWeightDivisor
+            );
     }
 
     /// @notice Calculates bond requirement per member performing the necessary
@@ -467,23 +321,5 @@ contract BondedECDSAKeepFactory is
         // rounded up by: `(bond + groupSize - 1 ) / groupSize`
         // Ex. (100 + 3 - 1) / 3 = 34
         return (_keepBond.add(_groupSize).sub(1)).div(_groupSize);
-    }
-
-    /// @notice Gets bonded sortition pool of specific application for the
-    /// operator.
-    /// @dev Reverts if the operator is not registered for the application.
-    /// @param _operator Operator's address.
-    /// @param _application Customer application address.
-    /// @return Bonded sortition pool.
-    function getSortitionPoolForOperator(
-        address _operator,
-        address _application
-    ) internal view returns (BondedSortitionPool) {
-        require(
-            isOperatorRegistered(_operator, _application),
-            "Operator not registered for the application"
-        );
-
-        return BondedSortitionPool(candidatesPools[_application]);
     }
 }

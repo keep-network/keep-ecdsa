@@ -550,7 +550,7 @@ describe("BondedECDSAKeepFactory", function () {
             value: feeEstimate,
           }
         ),
-        "No signer pool for this application"
+        "No pool found for the application"
       )
     })
 
