@@ -33,7 +33,6 @@ import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-
 /// @title Bonded ECDSA Keep Factory
 /// @notice Contract creating bonded ECDSA keeps.
 /// @dev We avoid redeployment of bonded ECDSA keep contract by using the clone factory.
