@@ -18,7 +18,7 @@ import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-contract KeepFactorySeeder is IRandomBeaconConsumer {
+contract KeepFactorySeed is IRandomBeaconConsumer {
     using SafeMath for uint256;
 
     IRandomBeacon randomBeacon;
