@@ -335,6 +335,48 @@ contract AbstractECDSAKeep {
         require(success, "Transfer failed");
     }
 
+    /// @notice Submits a fraud proof for a valid signature from this keep that was
+    /// not first approved via a call to sign. If fraud is detected it tries to
+    /// slash members' KEEP tokens. For each keep member tries slashing amount
+    /// equal to the member stake set by the factory when keep was created.
+    /// @dev The function expects the signed digest to be calculated as a sha256
+    /// hash of the preimage: `sha256(_preimage))`. The function reverts if the
+    /// signature is not fraudulent. The function does not revert if KEEP slashing
+    /// failed but emits an event instead. In practice, KEEP slashing should
+    /// never fail.
+    /// @param _v Signature's header byte: `27 + recoveryID`.
+    /// @param _r R part of ECDSA signature.
+    /// @param _s S part of ECDSA signature.
+    /// @param _signedDigest Digest for the provided signature. Result of hashing
+    /// the preimage with sha256.
+    /// @param _preimage Preimage of the hashed message.
+    /// @return True if fraud, error otherwise.
+    function submitSignatureFraud(
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s,
+        bytes32 _signedDigest,
+        bytes calldata _preimage
+    ) external onlyWhenActive returns (bool _isFraud) {
+        bool isFraud = checkSignatureFraud(
+            _v,
+            _r,
+            _s,
+            _signedDigest,
+            _preimage
+        );
+
+        require(isFraud, "Signature is not fraudulent");
+
+        if (!fraudulentPreimages[_preimage]) {
+            punishMembersForSignatureFraud();
+
+            fraudulentPreimages[_preimage] = true;
+        }
+
+        return isFraud;
+    }
+
     /// @notice Gets the owner of the keep.
     /// @return Address of the keep owner.
     function getOwner() external view returns (address) {
@@ -482,6 +524,9 @@ contract AbstractECDSAKeep {
         // which is the ethereum address.
         return address(uint160(uint256(keccak256(_publicKey))));
     }
+
+    /// @notice Punishes keep members after proving a signature fraud.
+    function punishMembersForSignatureFraud() internal;
 
     /// @notice Gets the beneficiary for the specified member address.
     /// @param _member Member address.

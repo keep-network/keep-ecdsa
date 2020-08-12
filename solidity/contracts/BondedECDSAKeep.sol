@@ -123,62 +123,6 @@ contract BondedECDSAKeep is IBondedECDSAKeep, AbstractECDSAKeep {
         );
     }
 
-    /// @notice Submits a fraud proof for a valid signature from this keep that was
-    /// not first approved via a call to sign. If fraud is detected it tries to
-    /// slash members' KEEP tokens. For each keep member tries slashing amount
-    /// equal to the member stake set by the factory when keep was created.
-    /// @dev The function expects the signed digest to be calculated as a sha256
-    /// hash of the preimage: `sha256(_preimage))`. The function reverts if the
-    /// signature is not fraudulent. The function does not revert if KEEP slashing
-    /// failed but emits an event instead. In practice, KEEP slashing should
-    /// never fail.
-    /// @param _v Signature's header byte: `27 + recoveryID`.
-    /// @param _r R part of ECDSA signature.
-    /// @param _s S part of ECDSA signature.
-    /// @param _signedDigest Digest for the provided signature. Result of hashing
-    /// the preimage with sha256.
-    /// @param _preimage Preimage of the hashed message.
-    /// @return True if fraud, error otherwise.
-    function submitSignatureFraud(
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s,
-        bytes32 _signedDigest,
-        bytes calldata _preimage
-    ) external onlyWhenActive returns (bool _isFraud) {
-        bool isFraud = checkSignatureFraud(
-            _v,
-            _r,
-            _s,
-            _signedDigest,
-            _preimage
-        );
-
-        require(isFraud, "Signature is not fraudulent");
-
-        if (!fraudulentPreimages[_preimage]) {
-            /* solium-disable-next-line */
-            (bool success, ) = address(tokenStaking).call(
-                abi.encodeWithSignature(
-                    "slash(uint256,address[])",
-                    memberStake,
-                    members
-                )
-            );
-
-            fraudulentPreimages[_preimage] = true;
-
-            // Should never happen but we want to protect the owner and make sure the
-            // fraud submission transaction does not fail so that the owner can
-            // seize and liquidate bonds in the same transaction.
-            if (!success) {
-                emit SlashingFailed();
-            }
-        }
-
-        return isFraud;
-    }
-
     /// @notice Initialization function.
     /// @dev We use clone factory to create new keep. That is why this contract
     /// doesn't have a constructor. We provide keep parameters for each instance
@@ -213,6 +157,24 @@ contract BondedECDSAKeep is IBondedECDSAKeep, AbstractECDSAKeep {
 
         for (uint256 i = 0; i < _members.length; i++) {
             tokenStaking.lockStake(_members[i], _stakeLockDuration);
+        }
+    }
+
+    function punishMembersForSignatureFraud() internal {
+        /* solium-disable-next-line */
+        (bool success, ) = address(tokenStaking).call(
+            abi.encodeWithSignature(
+                "slash(uint256,address[])",
+                memberStake,
+                members
+            )
+        );
+
+        // Should never happen but we want to protect the owner and make sure the
+        // fraud submission transaction does not fail so that the owner can
+        // seize and liquidate bonds in the same transaction.
+        if (!success) {
+            emit SlashingFailed();
         }
     }
 
