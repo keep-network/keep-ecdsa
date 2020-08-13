@@ -71,12 +71,7 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
         address _keepBonding,
         address payable _keepFactory
     ) public {
-        initializeBondedECDSAKeep(
-            _owner,
-            _members,
-            _honestThreshold,
-            _keepBonding
-        );
+        super.initialize(_owner, _members, _honestThreshold, _keepBonding);
 
         memberStake = _memberStake;
         tokenStaking = TokenStaking(_tokenStaking);

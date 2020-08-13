@@ -539,7 +539,7 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
     /// @param _owner Address of the keep owner.
     /// @param _members Addresses of the keep members.
     /// @param _honestThreshold Minimum number of honest keep members.
-    function initializeBondedECDSAKeep(
+    function initialize(
         address _owner,
         address[] memory _members,
         uint256 _honestThreshold,
