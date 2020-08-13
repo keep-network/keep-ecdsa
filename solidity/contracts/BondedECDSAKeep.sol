@@ -89,9 +89,7 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
 
         tokenStaking.claimDelegatedAuthority(_keepFactory);
 
-        for (uint256 i = 0; i < _members.length; i++) {
-            tokenStaking.lockStake(_members[i], _stakeLockDuration);
-        }
+        lockMemberStakes(_stakeLockDuration);
     }
 
     function slashForSignatureFraud() internal {
@@ -118,6 +116,14 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
     function terminateKeep() internal {
         unlockMemberStakes();
         markAsTerminated();
+    }
+
+    /// @notice Creates locks on members' token stakes.
+    /// @param _stakeLockDuration Stake lock duration in seconds.
+    function lockMemberStakes(uint256 _stakeLockDuration) internal {
+        for (uint256 i = 0; i < members.length; i++) {
+            tokenStaking.lockStake(members[i], _stakeLockDuration);
+        }
     }
 
     /// @notice Releases locks the keep had previously placed on the members'
