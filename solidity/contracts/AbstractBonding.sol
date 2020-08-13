@@ -14,14 +14,15 @@
 
 pragma solidity 0.5.17;
 
+import "./api/IBondingManagement.sol";
+
 import "@keep-network/keep-core/contracts/KeepRegistry.sol";
-import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-/// @title Keep Bonding
+/// @title Abstract Bonding
 /// @notice Contract holding deposits from keeps' operators.
-contract AbstractBonding is IBonding {
+contract AbstractBonding is IBondingManagement {
     using SafeMath for uint256;
 
     // Registry contract with a list of approved factories (operator contracts).
