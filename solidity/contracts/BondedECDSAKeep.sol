@@ -42,7 +42,6 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
     event SlashingFailed();
 
     TokenStaking tokenStaking;
-    BondedECDSAKeepFactory keepFactory;
 
     /// @notice Closes keep when owner decides that they no longer need it.
     /// Releases bonds to the keep members. Keep can be closed only when
@@ -87,7 +86,6 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
 
         memberStake = _memberStake;
         tokenStaking = TokenStaking(_tokenStaking);
-        keepFactory = BondedECDSAKeepFactory(_keepFactory);
 
         tokenStaking.claimDelegatedAuthority(_keepFactory);
 
