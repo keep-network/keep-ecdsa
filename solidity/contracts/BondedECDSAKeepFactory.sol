@@ -18,7 +18,7 @@ import "./BondedECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./KeepFactory.sol";
-import "./KeepFactorySeed.sol";
+import "./GroupSelectionSeed.sol";
 import "./CandidatesPools.sol";
 
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
@@ -44,7 +44,7 @@ contract BondedECDSAKeepFactory is
     IBondedECDSAKeepFactory,
     KeepFactory,
     AuthorityDelegator,
-    KeepFactorySeed,
+    GroupSelectionSeed,
     CandidatesPools
 {
     using AddressArrayUtils for address[];
@@ -87,7 +87,7 @@ contract BondedECDSAKeepFactory is
     )
         public
         KeepFactory(_masterBondedECDSAKeepAddress)
-        KeepFactorySeed(_randomBeacon)
+        GroupSelectionSeed(_randomBeacon)
     {
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
