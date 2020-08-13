@@ -458,6 +458,15 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
         );
     }
 
+    /// @notice Closes keep when owner decides that they no longer need it.
+    /// Releases bonds to the keep members.
+    /// @dev The function can be called only by the owner of the keep and only
+    /// if the keep has not been already closed.
+    function closeKeep() public onlyOwner onlyWhenActive {
+        markAsClosed();
+        freeMembersBonds();
+    }
+
     /// @notice Returns true if the keep is active.
     /// @return true if the keep is active, false otherwise.
     function isActive() public view returns (bool) {
@@ -604,6 +613,11 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
         }
     }
 
+    /// @notice Terminates the keep.
+    function terminateKeep() internal {
+        markAsTerminated();
+    }
+
     /// @notice Punishes keep members after proving a signature fraud.
     function slashForSignatureFraud() internal;
 
@@ -614,11 +628,6 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
         internal
         view
         returns (address payable);
-
-    /// @notice Terminates the keep.
-    /// Keep can be marked as terminated only when there is no signing in progress
-    /// or the requested signing process has timed out.
-    function terminateKeep() internal;
 
     /// @notice Checks if the caller is the keep's owner.
     /// @dev Throws an error if called by any account other than owner.

@@ -43,10 +43,9 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
     /// there is no signing in progress or requested signing process has timed out.
     /// @dev The function can be called only by the owner of the keep and only
     /// if the keep has not been already closed.
-    function closeKeep() external onlyOwner onlyWhenActive {
-        markAsClosed();
+    function closeKeep() public onlyOwner onlyWhenActive {
+        super.closeKeep();
         unlockMemberStakes();
-        freeMembersBonds();
     }
 
     /// @notice Initialization function.
@@ -106,11 +105,9 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
     }
 
     /// @notice Terminates the keep.
-    /// Keep can be marked as terminated only when there is no signing in progress
-    /// or the requested signing process has timed out.
     function terminateKeep() internal {
+        super.terminateKeep();
         unlockMemberStakes();
-        markAsTerminated();
     }
 
     /// @notice Creates locks on members' token stakes.
