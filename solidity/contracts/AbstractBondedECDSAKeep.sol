@@ -374,7 +374,7 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
         require(isFraud, "Signature is not fraudulent");
 
         if (!fraudulentPreimages[_preimage]) {
-            punishMembersForSignatureFraud();
+            slashForSignatureFraud();
 
             fraudulentPreimages[_preimage] = true;
         }
@@ -605,7 +605,7 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
     }
 
     /// @notice Punishes keep members after proving a signature fraud.
-    function punishMembersForSignatureFraud() internal;
+    function slashForSignatureFraud() internal;
 
     /// @notice Gets the beneficiary for the specified member address.
     /// @param _member Member address.

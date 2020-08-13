@@ -96,7 +96,7 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
         }
     }
 
-    function punishMembersForSignatureFraud() internal {
+    function slashForSignatureFraud() internal {
         /* solium-disable-next-line */
         (bool success, ) = address(tokenStaking).call(
             abi.encodeWithSignature(
