@@ -15,7 +15,7 @@
 pragma solidity 0.5.17;
 
 import "./api/IBondedECDSAKeep.sol";
-import "./AbstractBonding.sol";
+import "./api/IBondingManagement.sol";
 
 import "@keep-network/keep-core/contracts/utils/AddressArrayUtils.sol";
 
@@ -86,7 +86,7 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
     // If the owner seizes member bonds the flag is set to Terminated.
     Status internal status;
 
-    AbstractBonding bonding;
+    IBondingManagement bonding;
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(bytes32 indexed digest);
@@ -548,7 +548,7 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
         /* solium-disable-next-line security/no-block-members*/
         keyGenerationStartTimestamp = block.timestamp;
 
-        bonding = AbstractBonding(_bonding);
+        bonding = IBondingManagement(_bonding);
     }
 
     /// @notice Checks if the member already submitted a public key.
