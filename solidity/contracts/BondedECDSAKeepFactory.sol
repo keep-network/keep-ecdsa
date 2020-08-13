@@ -19,7 +19,7 @@ import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
 import "./KeepFactory.sol";
 import "./KeepFactorySeed.sol";
-import "./KeepFactoryCandidatesPools.sol";
+import "./CandidatesPools.sol";
 
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
@@ -45,7 +45,7 @@ contract BondedECDSAKeepFactory is
     KeepFactory,
     AuthorityDelegator,
     KeepFactorySeed,
-    KeepFactoryCandidatesPools
+    CandidatesPools
 {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;

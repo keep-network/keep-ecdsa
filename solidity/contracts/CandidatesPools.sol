@@ -2,7 +2,7 @@ pragma solidity 0.5.17;
 
 import "@keep-network/sortition-pools/contracts/AbstractSortitionPool.sol";
 
-contract KeepFactoryCandidatesPools {
+contract CandidatesPools {
     // Notification that a new sortition pool has been created.
     event SortitionPoolCreated(
         address indexed application,
