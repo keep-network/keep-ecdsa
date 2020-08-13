@@ -17,9 +17,9 @@ pragma solidity 0.5.17;
 import "./BondedECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
-import "./CloneFactory.sol";
-import "./KeepFactorySeed.sol";
-import "./KeepFactoryCandidatesPools.sol";
+import "./KeepCreator.sol";
+import "./GroupSelectionSeed.sol";
+import "./CandidatesPools.sol";
 
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "@keep-network/sortition-pools/contracts/api/IBonding.sol";
@@ -42,10 +42,10 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// once. The factory provides clean state for every new bonded ECDSA keep clone.
 contract BondedECDSAKeepFactory is
     IBondedECDSAKeepFactory,
-    CloneFactory,
+    KeepCreator,
     AuthorityDelegator,
-    KeepFactorySeed,
-    KeepFactoryCandidatesPools
+    GroupSelectionSeed,
+    CandidatesPools
 {
     using AddressArrayUtils for address[];
     using SafeMath for uint256;
@@ -58,16 +58,6 @@ contract BondedECDSAKeepFactory is
         address indexed application,
         uint256 honestThreshold
     );
-
-    // Holds the address of the bonded ECDSA keep contract that will be used as a
-    // master contract for cloning.
-    address public masterBondedECDSAKeepAddress;
-
-    // Keeps created by this factory.
-    address[] public keeps;
-
-    // Maps keep opened timestamp to each keep address
-    mapping(address => uint256) keepOpenedTimestamp;
 
     BondedSortitionPoolFactory sortitionPoolFactory;
     TokenStaking tokenStaking;
@@ -94,8 +84,11 @@ contract BondedECDSAKeepFactory is
         address _tokenStaking,
         address _keepBonding,
         address _randomBeacon
-    ) public KeepFactorySeed(_randomBeacon) {
-        masterBondedECDSAKeepAddress = _masterBondedECDSAKeepAddress;
+    )
+        public
+        KeepCreator(_masterBondedECDSAKeepAddress)
+        GroupSelectionSeed(_randomBeacon)
+    {
         sortitionPoolFactory = BondedSortitionPoolFactory(
             _sortitionPoolFactory
         );
@@ -172,17 +165,13 @@ contract BondedECDSAKeepFactory is
 
         newGroupSelectionSeed();
 
-        keepAddress = createClone(masterBondedECDSAKeepAddress);
-        BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
+        // createKeep sets keepOpenedTimestamp value for newly created keep which
+        // is required to be set before calling `keep.initialize` function as it
+        // is used to determine token staking delegation authority recognition
+        // in `__isRecognized` function.
+        keepAddress = createKeep();
 
-        // keepOpenedTimestamp value for newly created keep is required to be set
-        // before calling `keep.initialize` function as it is used to determine
-        // token staking delegation authority recognition in `__isRecognized`
-        // function.
-        /* solium-disable-next-line security/no-block-members*/
-        keepOpenedTimestamp[address(keep)] = block.timestamp;
-
-        keep.initialize(
+        BondedECDSAKeep(keepAddress).initialize(
             _owner,
             members,
             _honestThreshold,
@@ -203,8 +192,6 @@ contract BondedECDSAKeepFactory is
             );
         }
 
-        keeps.push(address(keep));
-
         emit BondedECDSAKeepCreated(
             keepAddress,
             members,
@@ -212,31 +199,6 @@ contract BondedECDSAKeepFactory is
             application,
             _honestThreshold
         );
-    }
-
-    /// @notice Gets how many keeps have been opened by this contract.
-    /// @dev    Checks the size of the keeps array.
-    /// @return The number of keeps opened so far.
-    function getKeepCount() external view returns (uint256) {
-        return keeps.length;
-    }
-
-    /// @notice Gets a specific keep address at a given index.
-    /// @return The address of the keep at the given index.
-    function getKeepAtIndex(uint256 index) external view returns (address) {
-        require(index < keeps.length, "Out of bounds.");
-        return keeps[index];
-    }
-
-    /// @notice Gets the opened timestamp of the given keep.
-    /// @return Timestamp the given keep was opened at or 0 if this keep
-    /// was not created by this factory.
-    function getKeepOpenedTimestamp(address _keep)
-        external
-        view
-        returns (uint256)
-    {
-        return keepOpenedTimestamp[_keep];
     }
 
     /// @notice Verifies if delegates authority recipient is valid address recognized

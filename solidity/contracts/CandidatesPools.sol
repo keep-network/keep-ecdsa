@@ -2,7 +2,7 @@ pragma solidity 0.5.17;
 
 import "@keep-network/sortition-pools/contracts/AbstractSortitionPool.sol";
 
-contract KeepFactoryCandidatesPools {
+contract CandidatesPools {
     // Notification that a new sortition pool has been created.
     event SortitionPoolCreated(
         address indexed application,
@@ -33,21 +33,6 @@ contract KeepFactoryCandidatesPools {
 
         return candidatesPools[_application];
     }
-
-    /// @notice Sets the minimum bondable value required from the operator to
-    /// join the sortition pool of the given application. It is up to the
-    /// application to specify a reasonable minimum bond for operators trying to
-    /// join the pool to prevent griefing by operators joining without enough
-    /// bondable value.
-    /// @param _minimumBondableValue The minimum bond value the application
-    /// requires from a single keep.
-    /// @param _groupSize Number of signers in the keep.
-    /// @param _honestThreshold Minimum number of honest keep signers.
-    function setMinimumBondableValue(
-        uint256 _minimumBondableValue,
-        uint256 _groupSize,
-        uint256 _honestThreshold
-    ) external;
 
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application.
