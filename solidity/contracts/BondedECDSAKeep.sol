@@ -38,16 +38,6 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
 
     TokenStaking tokenStaking;
 
-    /// @notice Closes keep when owner decides that they no longer need it.
-    /// Releases bonds to the keep members. Keep can be closed only when
-    /// there is no signing in progress or requested signing process has timed out.
-    /// @dev The function can be called only by the owner of the keep and only
-    /// if the keep has not been already closed.
-    function closeKeep() public onlyOwner onlyWhenActive {
-        super.closeKeep();
-        unlockMemberStakes();
-    }
-
     /// @notice Initialization function.
     /// @dev We use clone factory to create new keep. That is why this contract
     /// doesn't have a constructor. We provide keep parameters for each instance
@@ -81,6 +71,22 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
         lockMemberStakes(_stakeLockDuration);
     }
 
+    /// @notice Closes keep when owner decides that they no longer need it.
+    /// Releases bonds to the keep members. Keep can be closed only when
+    /// there is no signing in progress or requested signing process has timed out.
+    /// @dev The function can be called only by the owner of the keep and only
+    /// if the keep has not been already closed.
+    function closeKeep() public onlyOwner onlyWhenActive {
+        super.closeKeep();
+        unlockMemberStakes();
+    }
+
+    /// @notice Terminates the keep.
+    function terminateKeep() internal {
+        super.terminateKeep();
+        unlockMemberStakes();
+    }
+
     function slashForSignatureFraud() internal {
         /* solium-disable-next-line */
         (bool success, ) = address(tokenStaking).call(
@@ -97,12 +103,6 @@ contract BondedECDSAKeep is AbstractBondedECDSAKeep {
         if (!success) {
             emit SlashingFailed();
         }
-    }
-
-    /// @notice Terminates the keep.
-    function terminateKeep() internal {
-        super.terminateKeep();
-        unlockMemberStakes();
     }
 
     /// @notice Creates locks on members' token stakes.
