@@ -16,7 +16,7 @@ pragma solidity 0.5.17;
 
 import "./CloneFactory.sol";
 
-contract KeepFactory is CloneFactory {
+contract KeepCreator is CloneFactory {
     // Holds the address of the keep contract that will be used as a master
     // contract for cloning.
     address public masterKeepAddress;

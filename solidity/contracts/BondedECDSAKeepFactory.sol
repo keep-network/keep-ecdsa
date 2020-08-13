@@ -17,7 +17,7 @@ pragma solidity 0.5.17;
 import "./BondedECDSAKeep.sol";
 import "./KeepBonding.sol";
 import "./api/IBondedECDSAKeepFactory.sol";
-import "./KeepFactory.sol";
+import "./KeepCreator.sol";
 import "./GroupSelectionSeed.sol";
 import "./CandidatesPools.sol";
 
@@ -42,7 +42,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// once. The factory provides clean state for every new bonded ECDSA keep clone.
 contract BondedECDSAKeepFactory is
     IBondedECDSAKeepFactory,
-    KeepFactory,
+    KeepCreator,
     AuthorityDelegator,
     GroupSelectionSeed,
     CandidatesPools
@@ -86,7 +86,7 @@ contract BondedECDSAKeepFactory is
         address _randomBeacon
     )
         public
-        KeepFactory(_masterBondedECDSAKeepAddress)
+        KeepCreator(_masterBondedECDSAKeepAddress)
         GroupSelectionSeed(_randomBeacon)
     {
         sortitionPoolFactory = BondedSortitionPoolFactory(
