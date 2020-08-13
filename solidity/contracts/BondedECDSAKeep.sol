@@ -19,17 +19,12 @@ import "./BondedECDSAKeepFactory.sol";
 
 import "@keep-network/keep-core/contracts/TokenStaking.sol";
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-
 /// @title Bonded ECDSA Keep
 /// @notice ECDSA keep with additional signer bond requirement.
 /// @dev This contract is used as a master contract for clone factory in
 /// BondedECDSAKeepFactory as per EIP-1167. It should never be removed after
 /// initial deployment as this will break functionality for all created clones.
 contract BondedECDSAKeep is AbstractBondedECDSAKeep {
-    using AddressArrayUtils for address[];
-    using SafeMath for uint256;
-
     // Stake that was required from each keep member on keep creation.
     // The value is used for keep members slashing.
     uint256 public memberStake;
