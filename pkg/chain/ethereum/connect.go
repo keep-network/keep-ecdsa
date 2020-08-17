@@ -64,6 +64,16 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		return nil, err
 	}
 
+	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
+		client = ethutil.WrapRateLimiting(
+			client,
+			&ethutil.RateLimiterConfig{
+				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
+				ConcurrencyLimit:       config.ConcurrencyLimit,
+			},
+		).(*ethclient.Client)
+	}
+
 	transactionMutex := &sync.Mutex{}
 
 	nonceManager := ethutil.NewNonceManager(
