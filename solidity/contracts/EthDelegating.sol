@@ -50,18 +50,18 @@ contract EthDelegating is Authorizations, StakeDelegatable {
         address authorizer
     ) external payable {
         // TODO: Do we need to verify the caller in any way?
-        address _from = msg.sender;
+        address owner = msg.sender;
 
         require(
             operators[operator].owner == address(0),
             "Operator already in use"
         );
 
-        operators[operator] = Operator(0, _from, beneficiary, authorizer);
+        operators[operator] = Operator(0, owner, beneficiary, authorizer);
 
         // TODO: Add initialization period as per https://github.com/keep-network/keep-ecdsa/pull/483#discussion_r468628872
 
-        emit Delegated(_from, operator);
+        emit Delegated(owner, operator);
         emit OperatorDelegated(operator, beneficiary, authorizer);
     }
 }
