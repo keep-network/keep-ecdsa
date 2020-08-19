@@ -1,4 +1,5 @@
 const KeepRegistry = artifacts.require("KeepRegistry")
+
 const KeepBonding = artifacts.require("KeepBonding")
 const BondedECDSAKeep = artifacts.require("BondedECDSAKeep")
 const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
@@ -6,6 +7,8 @@ const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
 const BondedECDSAKeepVendorImplV1 = artifacts.require(
   "BondedECDSAKeepVendorImplV1"
 )
+
+const EthBonding = artifacts.require("EthBonding")
 
 const {
   deployBondedSortitionPoolFactory,
@@ -37,6 +40,7 @@ module.exports = async function (deployer) {
     RegistryAddress = (await deployer.deploy(KeepRegistry)).address
   }
 
+  // KEEP and ETH backed bonding
   await deployer.deploy(
     KeepBonding,
     RegistryAddress,
@@ -68,4 +72,7 @@ module.exports = async function (deployer) {
     BondedECDSAKeepVendorImplV1.address,
     implInitializeCallData
   )
+
+  // ETH-only backed bonding
+  await deployer.deploy(EthBonding, RegistryAddress)
 }
