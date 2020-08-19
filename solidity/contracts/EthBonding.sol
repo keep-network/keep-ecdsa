@@ -23,13 +23,13 @@ contract EthBonding is AbstractBonding {
     EthDelegating ethDelegating;
 
     /// @notice Initializes Keep Bonding contract.
-    /// @param registryAddress Keep registry contract address.
-    /// @param ethDelegatingAddress ETH Staking contract address.
-    constructor(address registryAddress, address ethDelegatingAddress)
+    /// @param _keepRegistry Keep Registry contract address.
+    /// @param _ethDelegating ETH Delegating contract address.
+    constructor(KeepRegistry _keepRegistry, EthDelegating _ethDelegating)
         public
-        AbstractBonding(registryAddress)
+        AbstractBonding(_keepRegistry)
     {
-        ethDelegating = EthDelegating(ethDelegatingAddress);
+        ethDelegating = _ethDelegating;
     }
 
     /// @notice Withdraws amount from operator's value available for bonding.

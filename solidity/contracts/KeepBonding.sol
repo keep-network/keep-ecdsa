@@ -31,16 +31,16 @@ contract KeepBonding is AbstractBonding {
     TokenGrant internal tokenGrant;
 
     /// @notice Initializes Keep Bonding contract.
-    /// @param registryAddress Keep registry contract address.
-    /// @param tokenStakingAddress KEEP token staking contract address.
-    /// @param tokenGrantAddress KEEP token grant contract address.
+    /// @param _keepRegistry Keep Registry contract address.
+    /// @param _tokenStaking KEEP token staking contract address.
+    /// @param _tokenGrant KEEP token grant contract address.
     constructor(
-        address registryAddress,
-        address tokenStakingAddress,
-        address tokenGrantAddress
-    ) public AbstractBonding(registryAddress) {
-        tokenStaking = TokenStaking(tokenStakingAddress);
-        tokenGrant = TokenGrant(tokenGrantAddress);
+        KeepRegistry _keepRegistry,
+        TokenStaking _tokenStaking,
+        TokenGrant _tokenGrant
+    ) public AbstractBonding(_keepRegistry) {
+        tokenStaking = _tokenStaking;
+        tokenGrant = _tokenGrant;
     }
 
     /// @notice Withdraws amount from operator's value available for bonding.

@@ -71,9 +71,9 @@ contract AbstractBonding is IBondingManagement {
     );
 
     /// @notice Initializes Keep Bonding contract.
-    /// @param registryAddress Keep registry contract address.
-    constructor(address registryAddress) public {
-        registry = KeepRegistry(registryAddress);
+    /// @param _keepRegistry Keep Registry contract address.
+    constructor(KeepRegistry _keepRegistry) public {
+        registry = _keepRegistry;
     }
 
     /// @notice Add the provided value to operator's pool available for bonding.
