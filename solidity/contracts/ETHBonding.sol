@@ -52,16 +52,16 @@ contract ETHBonding is AbstractBonding {
     function isAuthorizedForOperator(
         address _operator,
         address _operatorContract
-    ) internal view returns (bool) {
+    ) public view returns (bool) {
         return ethStaking.isAuthorizedForOperator(_operator, _operatorContract);
     }
 
-    function authorizerOf(address _operator) internal view returns (address) {
+    function authorizerOf(address _operator) public view returns (address) {
         return ethStaking.authorizerOf(_operator);
     }
 
     function beneficiaryOf(address _operator)
-        internal
+        public
         view
         returns (address payable)
     {
