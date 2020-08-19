@@ -70,7 +70,7 @@ describe("ETHStaking", function () {
       )
     })
 
-    it("emits event", async () => {
+    it("emits events", async () => {
       const receipt = await ethStaking.stake(
         operator,
         beneficiary,
@@ -80,15 +80,19 @@ describe("ETHStaking", function () {
         }
       )
 
-      await expectEvent(receipt, "Staked", {
+      await expectEvent(receipt, "Delegated", {
         owner: stakeOwner,
+        operator: operator,
+      })
+
+      await expectEvent(receipt, "OperatorDelegated", {
         operator: operator,
         beneficiary: beneficiary,
         authorizer: authorizer,
       })
     })
 
-    it("registers multiple operators for the same owner", async () => {
+    it("allows multiple operators for the same owner", async () => {
       const operator2 = accounts[5]
 
       await ethStaking.stake(operator, beneficiary, authorizer, {
@@ -98,12 +102,6 @@ describe("ETHStaking", function () {
       await ethStaking.stake(operator2, beneficiary, authorizer, {
         from: stakeOwner,
       })
-
-      assert.deepEqual(
-        await ethStaking.operatorsOf(stakeOwner),
-        [operator, operator2],
-        "incorrect operators for owner"
-      )
     })
 
     it("reverts if operator is already in use", async () => {

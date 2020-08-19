@@ -25,17 +25,18 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// ETH as a stake to an operator. The value of ETH the owner is willing to stake
 /// should be deposited in `ETHBonding` contract for the given operator.
 contract ETHStaking is Authorizations, StakeDelegatable {
-    constructor(KeepRegistry keepRegistry)
-        public
-        Authorizations(keepRegistry)
-    {}
+    event Delegated(address indexed owner, address indexed operator);
 
-    event Staked(
-        address owner,
+    event OperatorDelegated(
         address indexed operator,
         address indexed beneficiary,
         address indexed authorizer
     );
+
+    constructor(KeepRegistry keepRegistry)
+        public
+        Authorizations(keepRegistry)
+    {}
 
     /// @notice Registers stake details. The function is used to register
     /// addresses of operator, beneficiary and authorizer for a stake from the
@@ -57,10 +58,10 @@ contract ETHStaking is Authorizations, StakeDelegatable {
         );
 
         operators[operator] = Operator(0, _from, beneficiary, authorizer);
-        ownerOperators[_from].push(operator);
 
         // TODO: Add initialization period as per https://github.com/keep-network/keep-ecdsa/pull/483#discussion_r468628872
 
-        emit Staked(_from, operator, beneficiary, authorizer);
+        emit Delegated(_from, operator);
+        emit OperatorDelegated(operator, beneficiary, authorizer);
     }
 }
