@@ -2,7 +2,7 @@ const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
-const ETHStaking = contract.fromArtifact("ETHStaking")
+const EthDelegating = contract.fromArtifact("EthDelegating")
 
 const {expectEvent, expectRevert} = require("@openzeppelin/test-helpers")
 
@@ -13,9 +13,9 @@ chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 const assert = chai.assert
 
-describe("ETHStaking", function () {
+describe("EthDelegating", function () {
   let registry
-  let ethStaking
+  let ethDelegating
 
   let operator
   let authorizer
@@ -29,7 +29,7 @@ describe("ETHStaking", function () {
     stakeOwner = accounts[4]
 
     registry = await KeepRegistry.new()
-    ethStaking = await ETHStaking.new(registry.address)
+    ethDelegating = await EthDelegating.new(registry.address)
   })
 
   beforeEach(async () => {
@@ -42,36 +42,36 @@ describe("ETHStaking", function () {
 
   describe("stake", async () => {
     it("registers stake", async () => {
-      await ethStaking.stake(operator, beneficiary, authorizer, {
+      await ethDelegating.stake(operator, beneficiary, authorizer, {
         from: stakeOwner,
       })
 
       assert.equal(
-        await ethStaking.ownerOf(operator),
+        await ethDelegating.ownerOf(operator),
         stakeOwner,
         "incorrect stake owner address"
       )
 
       assert.equal(
-        await ethStaking.beneficiaryOf(operator),
+        await ethDelegating.beneficiaryOf(operator),
         beneficiary,
         "incorrect beneficiary address"
       )
 
       assert.equal(
-        await ethStaking.authorizerOf(operator),
+        await ethDelegating.authorizerOf(operator),
         authorizer,
         "incorrect authorizer address"
       )
 
-      expect(await ethStaking.balanceOf(operator)).to.eq.BN(
+      expect(await ethDelegating.balanceOf(operator)).to.eq.BN(
         0,
         "incorrect stake balance"
       )
     })
 
     it("emits events", async () => {
-      const receipt = await ethStaking.stake(
+      const receipt = await ethDelegating.stake(
         operator,
         beneficiary,
         authorizer,
@@ -95,22 +95,22 @@ describe("ETHStaking", function () {
     it("allows multiple operators for the same owner", async () => {
       const operator2 = accounts[5]
 
-      await ethStaking.stake(operator, beneficiary, authorizer, {
+      await ethDelegating.stake(operator, beneficiary, authorizer, {
         from: stakeOwner,
       })
 
-      await ethStaking.stake(operator2, beneficiary, authorizer, {
+      await ethDelegating.stake(operator2, beneficiary, authorizer, {
         from: stakeOwner,
       })
     })
 
     it("reverts if operator is already in use", async () => {
-      await ethStaking.stake(operator, beneficiary, authorizer, {
+      await ethDelegating.stake(operator, beneficiary, authorizer, {
         from: stakeOwner,
       })
 
       await expectRevert(
-        ethStaking.stake(operator, accounts[5], accounts[5]),
+        ethDelegating.stake(operator, accounts[5], accounts[5]),
         "Operator already in use"
       )
     })

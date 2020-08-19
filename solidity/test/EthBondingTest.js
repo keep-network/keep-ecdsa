@@ -2,7 +2,7 @@ const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
-const ETHStaking = contract.fromArtifact("ETHStaking")
+const EthDelegating = contract.fromArtifact("EthDelegating")
 const EthBonding = contract.fromArtifact("EthBonding")
 const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
 
@@ -16,7 +16,7 @@ const expect = chai.expect
 
 describe("EthBonding", function () {
   let registry
-  let ethStaking
+  let ethDelegating
   let ethBonding
   let etherReceiver
 
@@ -36,17 +36,17 @@ describe("EthBonding", function () {
     sortitionPool = accounts[6]
 
     registry = await KeepRegistry.new()
-    ethStaking = await ETHStaking.new(registry.address)
-    ethBonding = await EthBonding.new(registry.address, ethStaking.address)
+    ethDelegating = await EthDelegating.new(registry.address)
+    ethBonding = await EthBonding.new(registry.address, ethDelegating.address)
     etherReceiver = await TestEtherReceiver.new()
 
     await registry.approveOperatorContract(bondCreator)
 
-    await ethStaking.stake(operator, beneficiary, authorizer, {
+    await ethDelegating.stake(operator, beneficiary, authorizer, {
       from: stakeOwner,
     })
 
-    await ethStaking.authorizeOperatorContract(operator, bondCreator, {
+    await ethDelegating.authorizeOperatorContract(operator, bondCreator, {
       from: authorizer,
     })
   })
@@ -149,7 +149,7 @@ describe("EthBonding", function () {
 
       await etherReceiver.setShouldFail(true)
 
-      await ethStaking.stake(operator2, etherReceiver.address, authorizer, {
+      await ethDelegating.stake(operator2, etherReceiver.address, authorizer, {
         from: stakeOwner,
       })
 

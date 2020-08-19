@@ -20,11 +20,11 @@ import "@keep-network/keep-core/contracts/StakeDelegatable.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-/// @title ETH Staking
-/// @notice A staking contract for ETH staking. An owner of the ETH can delegate
-/// ETH as a stake to an operator. The value of ETH the owner is willing to stake
+/// @title ETH Delegating
+/// @notice A contract for ETH delegating. An owner of the ETH can delegate
+/// ETH as to an operator. The value of ETH the owner is willing to delegate
 /// should be deposited in `EthBonding` contract for the given operator.
-contract ETHStaking is Authorizations, StakeDelegatable {
+contract EthDelegating is Authorizations, StakeDelegatable {
     event Delegated(address indexed owner, address indexed operator);
 
     event OperatorDelegated(

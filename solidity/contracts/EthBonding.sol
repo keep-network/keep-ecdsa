@@ -15,21 +15,21 @@
 pragma solidity 0.5.17;
 
 import "./AbstractBonding.sol";
-import "./ETHStaking.sol";
+import "./EthDelegating.sol";
 
 /// @title ETH Bonding
 /// @notice Contract holding deposits from ETH-only keeps' operators.
 contract EthBonding is AbstractBonding {
-    ETHStaking ethStaking;
+    EthDelegating ethDelegating;
 
     /// @notice Initializes Keep Bonding contract.
     /// @param registryAddress Keep registry contract address.
-    /// @param ethStakingAddress ETH Staking contract address.
-    constructor(address registryAddress, address ethStakingAddress)
+    /// @param ethDelegatingAddress ETH Staking contract address.
+    constructor(address registryAddress, address ethDelegatingAddress)
         public
         AbstractBonding(registryAddress)
     {
-        ethStaking = ETHStaking(ethStakingAddress);
+        ethDelegating = EthDelegating(ethDelegatingAddress);
     }
 
     /// @notice Withdraws amount from operator's value available for bonding.
@@ -42,7 +42,7 @@ contract EthBonding is AbstractBonding {
     function withdraw(uint256 amount, address operator) public {
         require(
             msg.sender == operator ||
-                msg.sender == ethStaking.ownerOf(operator),
+                msg.sender == ethDelegating.ownerOf(operator),
             "Only operator or the owner is allowed to withdraw bond"
         );
 
@@ -53,11 +53,12 @@ contract EthBonding is AbstractBonding {
         address _operator,
         address _operatorContract
     ) public view returns (bool) {
-        return ethStaking.isAuthorizedForOperator(_operator, _operatorContract);
+        return
+            ethDelegating.isAuthorizedForOperator(_operator, _operatorContract);
     }
 
     function authorizerOf(address _operator) public view returns (address) {
-        return ethStaking.authorizerOf(_operator);
+        return ethDelegating.authorizerOf(_operator);
     }
 
     function beneficiaryOf(address _operator)
@@ -65,6 +66,6 @@ contract EthBonding is AbstractBonding {
         view
         returns (address payable)
     {
-        return ethStaking.beneficiaryOf(_operator);
+        return ethDelegating.beneficiaryOf(_operator);
     }
 }
