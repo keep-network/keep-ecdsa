@@ -3,7 +3,7 @@ const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const ETHStaking = contract.fromArtifact("ETHStaking")
-const ETHBonding = contract.fromArtifact("ETHBonding")
+const EthBonding = contract.fromArtifact("EthBonding")
 const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
 
 const {expectEvent, expectRevert} = require("@openzeppelin/test-helpers")
@@ -14,7 +14,7 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe("ETHBonding", function () {
+describe("EthBonding", function () {
   let registry
   let ethStaking
   let ethBonding
@@ -37,7 +37,7 @@ describe("ETHBonding", function () {
 
     registry = await KeepRegistry.new()
     ethStaking = await ETHStaking.new(registry.address)
-    ethBonding = await ETHBonding.new(registry.address, ethStaking.address)
+    ethBonding = await EthBonding.new(registry.address, ethStaking.address)
     etherReceiver = await TestEtherReceiver.new()
 
     await registry.approveOperatorContract(bondCreator)

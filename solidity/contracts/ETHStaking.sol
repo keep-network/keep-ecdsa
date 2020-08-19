@@ -23,7 +23,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// @title ETH Staking
 /// @notice A staking contract for ETH staking. An owner of the ETH can delegate
 /// ETH as a stake to an operator. The value of ETH the owner is willing to stake
-/// should be deposited in `ETHBonding` contract for the given operator.
+/// should be deposited in `EthBonding` contract for the given operator.
 contract ETHStaking is Authorizations, StakeDelegatable {
     event Delegated(address indexed owner, address indexed operator);
 

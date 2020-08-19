@@ -18,8 +18,8 @@ import "./AbstractBonding.sol";
 import "./ETHStaking.sol";
 
 /// @title ETH Bonding
-/// @notice Contract holding deposits from keeps' operators.
-contract ETHBonding is AbstractBonding {
+/// @notice Contract holding deposits from ETH-only keeps' operators.
+contract EthBonding is AbstractBonding {
     ETHStaking ethStaking;
 
     /// @notice Initializes Keep Bonding contract.
