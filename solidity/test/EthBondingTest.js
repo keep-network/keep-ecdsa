@@ -23,7 +23,7 @@ describe("EthBonding", function () {
   let operator
   let authorizer
   let beneficiary
-  let stakeOwner
+  let owner
   let bondCreator
   let sortitionPool
 
@@ -31,7 +31,7 @@ describe("EthBonding", function () {
     operator = accounts[1]
     authorizer = accounts[2]
     beneficiary = accounts[3]
-    stakeOwner = accounts[4]
+    owner = accounts[4]
     bondCreator = accounts[5]
     sortitionPool = accounts[6]
 
@@ -42,8 +42,8 @@ describe("EthBonding", function () {
 
     await registry.approveOperatorContract(bondCreator)
 
-    await ethDelegating.stake(operator, beneficiary, authorizer, {
-      from: stakeOwner,
+    await ethDelegating.delegate(operator, beneficiary, authorizer, {
+      from: owner,
     })
 
     await ethDelegating.authorizeOperatorContract(operator, bondCreator, {
@@ -71,8 +71,8 @@ describe("EthBonding", function () {
       // ok, no reverts
     })
 
-    it("can be called by stake owner", async () => {
-      await ethBonding.withdraw(value, operator, {from: stakeOwner})
+    it("can be called by delegation owner", async () => {
+      await ethBonding.withdraw(value, operator, {from: owner})
       // ok, no reverts
     })
 
@@ -149,9 +149,14 @@ describe("EthBonding", function () {
 
       await etherReceiver.setShouldFail(true)
 
-      await ethDelegating.stake(operator2, etherReceiver.address, authorizer, {
-        from: stakeOwner,
-      })
+      await ethDelegating.delegate(
+        operator2,
+        etherReceiver.address,
+        authorizer,
+        {
+          from: owner,
+        }
+      )
 
       await ethBonding.deposit(operator2, {value: value})
 

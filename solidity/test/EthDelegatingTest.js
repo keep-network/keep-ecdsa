@@ -20,13 +20,13 @@ describe("EthDelegating", function () {
   let operator
   let authorizer
   let beneficiary
-  let stakeOwner
+  let owner
 
   before(async () => {
     operator = accounts[1]
     authorizer = accounts[2]
     beneficiary = accounts[3]
-    stakeOwner = accounts[4]
+    owner = accounts[4]
 
     registry = await KeepRegistry.new()
     ethDelegating = await EthDelegating.new(registry.address)
@@ -40,16 +40,16 @@ describe("EthDelegating", function () {
     await restoreSnapshot()
   })
 
-  describe("stake", async () => {
-    it("registers stake", async () => {
-      await ethDelegating.stake(operator, beneficiary, authorizer, {
-        from: stakeOwner,
+  describe("delegate", async () => {
+    it("registers delegate", async () => {
+      await ethDelegating.delegate(operator, beneficiary, authorizer, {
+        from: owner,
       })
 
       assert.equal(
         await ethDelegating.ownerOf(operator),
-        stakeOwner,
-        "incorrect stake owner address"
+        owner,
+        "incorrect owner address"
       )
 
       assert.equal(
@@ -66,22 +66,22 @@ describe("EthDelegating", function () {
 
       expect(await ethDelegating.balanceOf(operator)).to.eq.BN(
         0,
-        "incorrect stake balance"
+        "incorrect delegation balance"
       )
     })
 
     it("emits events", async () => {
-      const receipt = await ethDelegating.stake(
+      const receipt = await ethDelegating.delegate(
         operator,
         beneficiary,
         authorizer,
         {
-          from: stakeOwner,
+          from: owner,
         }
       )
 
       await expectEvent(receipt, "Delegated", {
-        owner: stakeOwner,
+        owner: owner,
         operator: operator,
       })
 
@@ -95,22 +95,22 @@ describe("EthDelegating", function () {
     it("allows multiple operators for the same owner", async () => {
       const operator2 = accounts[5]
 
-      await ethDelegating.stake(operator, beneficiary, authorizer, {
-        from: stakeOwner,
+      await ethDelegating.delegate(operator, beneficiary, authorizer, {
+        from: owner,
       })
 
-      await ethDelegating.stake(operator2, beneficiary, authorizer, {
-        from: stakeOwner,
+      await ethDelegating.delegate(operator2, beneficiary, authorizer, {
+        from: owner,
       })
     })
 
     it("reverts if operator is already in use", async () => {
-      await ethDelegating.stake(operator, beneficiary, authorizer, {
-        from: stakeOwner,
+      await ethDelegating.delegate(operator, beneficiary, authorizer, {
+        from: owner,
       })
 
       await expectRevert(
-        ethDelegating.stake(operator, accounts[5], accounts[5]),
+        ethDelegating.delegate(operator, accounts[5], accounts[5]),
         "Operator already in use"
       )
     })

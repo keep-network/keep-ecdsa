@@ -38,13 +38,13 @@ contract EthDelegating is Authorizations, StakeDelegatable {
         Authorizations(keepRegistry)
     {}
 
-    /// @notice Registers stake details. The function is used to register
-    /// addresses of operator, beneficiary and authorizer for a stake from the
-    /// caller.
+    /// @notice Registers delegation details. The function is used to register
+    /// addresses of operator, beneficiary and authorizer for a delegation from
+    /// the caller.
     /// @param operator Address of the operator.
     /// @param beneficiary Address of the beneficiary.
     /// @param authorizer Address of the authorizer.
-    function stake(
+    function delegate(
         address operator,
         address payable beneficiary,
         address authorizer
