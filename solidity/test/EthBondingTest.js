@@ -2,7 +2,6 @@ const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
-const EthDelegating = contract.fromArtifact("EthDelegating")
 const EthBonding = contract.fromArtifact("EthBonding")
 const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
 
@@ -13,10 +12,10 @@ const BN = web3.utils.BN
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
+const assert = chai.assert
 
 describe("EthBonding", function () {
   let registry
-  let ethDelegating
   let ethBonding
   let etherReceiver
 
@@ -36,19 +35,10 @@ describe("EthBonding", function () {
     sortitionPool = accounts[6]
 
     registry = await KeepRegistry.new()
-    ethDelegating = await EthDelegating.new(registry.address)
-    ethBonding = await EthBonding.new(registry.address, ethDelegating.address)
+    ethBonding = await EthBonding.new(registry.address)
     etherReceiver = await TestEtherReceiver.new()
 
     await registry.approveOperatorContract(bondCreator)
-
-    await ethDelegating.delegate(operator, beneficiary, authorizer, {
-      from: owner,
-    })
-
-    await ethDelegating.authorizeOperatorContract(operator, bondCreator, {
-      from: authorizer,
-    })
   })
 
   beforeEach(async () => {
@@ -59,11 +49,95 @@ describe("EthBonding", function () {
     await restoreSnapshot()
   })
 
+  describe("delegate", async () => {
+    it("registers delegate", async () => {
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+      })
+
+      assert.equal(
+        await ethBonding.ownerOf(operator),
+        owner,
+        "incorrect owner address"
+      )
+
+      assert.equal(
+        await ethBonding.beneficiaryOf(operator),
+        beneficiary,
+        "incorrect beneficiary address"
+      )
+
+      assert.equal(
+        await ethBonding.authorizerOf(operator),
+        authorizer,
+        "incorrect authorizer address"
+      )
+
+      expect(await ethBonding.balanceOf(operator)).to.eq.BN(
+        0,
+        "incorrect delegation balance"
+      )
+    })
+
+    it("emits events", async () => {
+      const receipt = await ethBonding.delegate(
+        operator,
+        beneficiary,
+        authorizer,
+        {
+          from: owner,
+        }
+      )
+
+      await expectEvent(receipt, "Delegated", {
+        owner: owner,
+        operator: operator,
+      })
+
+      await expectEvent(receipt, "OperatorDelegated", {
+        operator: operator,
+        beneficiary: beneficiary,
+        authorizer: authorizer,
+      })
+    })
+
+    it("allows multiple operators for the same owner", async () => {
+      const operator2 = accounts[5]
+
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+      })
+
+      await ethBonding.delegate(operator2, beneficiary, authorizer, {
+        from: owner,
+      })
+    })
+
+    it("reverts if operator is already in use", async () => {
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+      })
+
+      await expectRevert(
+        ethBonding.delegate(operator, accounts[5], accounts[5]),
+        "Operator already in use"
+      )
+    })
+  })
+
   describe("withdraw", async () => {
     const value = new BN(1000)
 
     beforeEach(async () => {
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+      })
+
       await ethBonding.deposit(operator, {value: value})
+
+      await ethBonding.authorizeOperatorContract(operator, bondCreator, {
+        from: authorizer,
+      })
     })
 
     it("can be called by operator", async () => {
@@ -149,14 +223,9 @@ describe("EthBonding", function () {
 
       await etherReceiver.setShouldFail(true)
 
-      await ethDelegating.delegate(
-        operator2,
-        etherReceiver.address,
-        authorizer,
-        {
-          from: owner,
-        }
-      )
+      await ethBonding.delegate(operator2, etherReceiver.address, authorizer, {
+        from: owner,
+      })
 
       await ethBonding.deposit(operator2, {value: value})
 
