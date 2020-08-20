@@ -133,6 +133,24 @@ contract EthBonding is
         withdrawBond(amount, operator);
     }
 
+    /// @notice Gets delegation info for the given operator.
+    /// @param operator Address of the operator.
+    /// @return createdAt The time when the delegation was created.
+    /// @return undelegatedAt The time when undelegation has been requested.
+    /// If undelegation has not been requested, 0 is returned.
+    function getDelegationInfo(address operator)
+        public
+        view
+        returns (uint256 createdAt, uint256 undelegatedAt)
+    {
+        uint256 operatorParams = operators[operator].packedParams;
+
+        return (
+            operatorParams.getCreationTimestamp(),
+            operatorParams.getUndelegationTimestamp()
+        );
+    }
+
     /// @notice Is the operator with the given params initialized
     function _isInitialized(uint256 operatorParams)
         internal

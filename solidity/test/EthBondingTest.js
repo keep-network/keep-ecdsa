@@ -404,5 +404,18 @@ describe("EthBonding", function () {
 
       assert.isFalse(await ethBonding.isInitialized(operator, bondCreator))
     })
+
+    describe("getDelegationInfo", async () => {
+      it("returns delegation details", async () => {
+        await ethBonding.delegate(operator, beneficiary, authorizer, {
+          from: owner,
+          value: minimumDelegationValue,
+        })
+
+        const delegationInfo = await ethBonding.getDelegationInfo(operator)
+        expect(delegationInfo.createdAt).to.eq.BN(await time.latest())
+        expect(delegationInfo.undelegatedAt).to.eq.BN(0)
+      })
+    })
   })
 })
