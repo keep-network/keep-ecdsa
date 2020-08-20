@@ -24,8 +24,6 @@ node_modules/
 abi/
 pkg/**/gen/*/*.go
 !pkg/chain/gen/cmd/cmd.go
-!pkg/chain/gen/contract/contract.go
-!pkg/ecdsa/tss/gen/pb/pb.go
 
 # Build output
 build/
