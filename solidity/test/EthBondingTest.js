@@ -5,7 +5,7 @@ const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const EthBonding = contract.fromArtifact("EthBonding")
 const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
 
-const {expectEvent, expectRevert} = require("@openzeppelin/test-helpers")
+const {expectEvent, expectRevert, time} = require("@openzeppelin/test-helpers")
 
 const BN = web3.utils.BN
 
@@ -15,6 +15,8 @@ const expect = chai.expect
 const assert = chai.assert
 
 describe("EthBonding", function () {
+  const initializationPeriod = new BN(60)
+
   let registry
   let ethBonding
   let etherReceiver
@@ -25,6 +27,7 @@ describe("EthBonding", function () {
   let owner
   let bondCreator
   let sortitionPool
+  let thirdParty
 
   before(async () => {
     operator = accounts[1]
@@ -33,9 +36,10 @@ describe("EthBonding", function () {
     owner = accounts[4]
     bondCreator = accounts[5]
     sortitionPool = accounts[6]
+    thirdParty = accounts[7]
 
     registry = await KeepRegistry.new()
-    ethBonding = await EthBonding.new(registry.address)
+    ethBonding = await EthBonding.new(registry.address, initializationPeriod)
     etherReceiver = await TestEtherReceiver.new()
 
     await registry.approveOperatorContract(bondCreator)
@@ -50,7 +54,7 @@ describe("EthBonding", function () {
   })
 
   describe("delegate", async () => {
-    it("registers delegate", async () => {
+    it("registers delegation", async () => {
       await ethBonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
       })
@@ -233,6 +237,69 @@ describe("EthBonding", function () {
         ethBonding.withdraw(value, operator2, {from: operator2}),
         "Transfer failed"
       )
+    })
+  })
+
+  describe("isInitialized", async () => {
+    it("returns true when authorized and initialization period passed", async () => {
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+      })
+
+      await ethBonding.authorizeOperatorContract(operator, bondCreator, {
+        from: authorizer,
+      })
+
+      await time.increase(initializationPeriod.addn(1))
+
+      assert.isTrue(await ethBonding.isInitialized(operator, bondCreator))
+    })
+
+    it("returns false when authorized but initialization period not passed yet", async () => {
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+      })
+
+      await ethBonding.authorizeOperatorContract(operator, bondCreator, {
+        from: authorizer,
+      })
+
+      await time.increase(initializationPeriod)
+
+      assert.isFalse(await ethBonding.isInitialized(operator, bondCreator))
+    })
+
+    it("returns false when initialization period passed but not authorized", async () => {
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+      })
+
+      await time.increase(initializationPeriod.addn(1))
+
+      assert.isFalse(await ethBonding.isInitialized(operator, bondCreator))
+    })
+
+    it("returns false when not authorized and initialization period not passed", async () => {
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+      })
+
+      assert.isFalse(await ethBonding.isInitialized(operator, bondCreator))
+    })
+
+    it("returns false when initialization period passed but other contract authorized", async () => {
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+      })
+
+      await registry.approveOperatorContract(thirdParty)
+      await ethBonding.authorizeOperatorContract(operator, thirdParty, {
+        from: authorizer,
+      })
+
+      await time.increase(initializationPeriod.addn(1))
+
+      assert.isFalse(await ethBonding.isInitialized(operator, bondCreator))
     })
   })
 })
