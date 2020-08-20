@@ -536,6 +536,8 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
     /// @dev We use clone factory to create new keep. That is why this contract
     /// doesn't have a constructor. We provide keep parameters for each instance
     /// function after cloning instances from the master contract.
+    /// Initialization must happen in the same transaction in which the clone is
+    /// created.
     /// @param _owner Address of the keep owner.
     /// @param _members Addresses of the keep members.
     /// @param _honestThreshold Minimum number of honest keep members.
