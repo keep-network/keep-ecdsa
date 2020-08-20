@@ -39,6 +39,8 @@ contract RandomBeaconStub is IRandomBeacon {
                 abi.encodeWithSignature("__beaconCallback(uint256)", entry)
             );
         }
+
+        return requestCount;
     }
 
     function setEntry(uint256 newEntry) public {
