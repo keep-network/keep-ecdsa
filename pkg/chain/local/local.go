@@ -104,7 +104,7 @@ func (lc *localChain) OnBondedECDSAKeepCreated(
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
 
-	handlerID := rand.Int()
+	handlerID := rand.Int() // #nosec
 
 	lc.keepCreatedHandlers[handlerID] = handler
 
@@ -125,7 +125,7 @@ func (lc *localChain) OnSignatureRequested(
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
 
-	handlerID := rand.Int()
+	handlerID := rand.Int() // #nosec
 
 	keep, ok := lc.keeps[keepAddress]
 	if !ok {

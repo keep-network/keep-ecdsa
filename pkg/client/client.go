@@ -173,7 +173,7 @@ func Initialize(
 	)
 
 	// Watch for new keeps creation.
-	ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
+	_, err := ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(
 			"new keep [%s] created with members: [%x]\n",
 			event.KeepAddress.String(),
@@ -206,6 +206,12 @@ func Initialize(
 			}(event)
 		}
 	})
+	if err != nil {
+		logger.Errorf(
+			"could not subscribe to BondedECDSAKeepCreated event: [%v]",
+			err,
+		)
+	}
 
 	for _, application := range sanctionedApplications {
 		go checkStatusAndRegisterForApplication(ctx, ethereumChain, application)
