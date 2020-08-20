@@ -17,6 +17,8 @@ const assert = chai.assert
 describe("EthBonding", function () {
   const initializationPeriod = new BN(60)
 
+  let minimumDelegationValue
+
   let registry
   let ethBonding
   let etherReceiver
@@ -42,6 +44,8 @@ describe("EthBonding", function () {
     ethBonding = await EthBonding.new(registry.address, initializationPeriod)
     etherReceiver = await TestEtherReceiver.new()
 
+    minimumDelegationValue = await ethBonding.MINIMUM_DELEGATION_DEPOSIT()
+
     await registry.approveOperatorContract(bondCreator)
   })
 
@@ -57,6 +61,7 @@ describe("EthBonding", function () {
     it("registers delegation", async () => {
       await ethBonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
+        value: minimumDelegationValue,
       })
 
       assert.equal(
@@ -90,6 +95,7 @@ describe("EthBonding", function () {
         authorizer,
         {
           from: owner,
+          value: minimumDelegationValue,
         }
       )
 
@@ -105,21 +111,66 @@ describe("EthBonding", function () {
       })
     })
 
+    it("deposits passed value as unbonded value", async () => {
+      const value = minimumDelegationValue
+
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+        value: value,
+      })
+
+      expect(await ethBonding.unbondedValue(operator)).to.eq.BN(
+        value,
+        "invalid unbonded value"
+      )
+
+      await ethBonding.authorizeOperatorContract(operator, bondCreator, {
+        from: authorizer,
+      })
+
+      await ethBonding.authorizeSortitionPoolContract(operator, sortitionPool, {
+        from: authorizer,
+      })
+
+      expect(
+        await ethBonding.availableUnbondedValue(
+          operator,
+          bondCreator,
+          sortitionPool
+        )
+      ).to.eq.BN(value, "invalid available unbonded value")
+    })
+
+    it("reverts if insufficient value passed", async () => {
+      const value = minimumDelegationValue.subn(1)
+
+      await expectRevert(
+        ethBonding.delegate(operator, beneficiary, authorizer, {
+          from: owner,
+          value: value,
+        }),
+        "Insufficient delegation value"
+      )
+    })
+
     it("allows multiple operators for the same owner", async () => {
       const operator2 = accounts[5]
 
       await ethBonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
+        value: minimumDelegationValue,
       })
 
       await ethBonding.delegate(operator2, beneficiary, authorizer, {
         from: owner,
+        value: minimumDelegationValue,
       })
     })
 
     it("reverts if operator is already in use", async () => {
       await ethBonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
+        value: minimumDelegationValue,
       })
 
       await expectRevert(
@@ -129,15 +180,60 @@ describe("EthBonding", function () {
     })
   })
 
+  describe("deposit", async () => {
+    it("adds value to deposited on delegation", async () => {
+      const initialDeposit = minimumDelegationValue
+      const value = new BN(123)
+      const expectedFinalBalance = initialDeposit.add(value)
+
+      await ethBonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+        value: initialDeposit,
+      })
+
+      expect(await ethBonding.unbondedValue(operator)).to.eq.BN(
+        initialDeposit,
+        "invalid initial unbonded value"
+      )
+
+      await ethBonding.deposit(operator, {
+        value: value,
+      })
+
+      expect(await ethBonding.unbondedValue(operator)).to.eq.BN(
+        expectedFinalBalance,
+        "invalid final unbonded value"
+      )
+
+      await ethBonding.authorizeOperatorContract(operator, bondCreator, {
+        from: authorizer,
+      })
+
+      await ethBonding.authorizeSortitionPoolContract(operator, sortitionPool, {
+        from: authorizer,
+      })
+
+      expect(
+        await ethBonding.availableUnbondedValue(
+          operator,
+          bondCreator,
+          sortitionPool
+        )
+      ).to.eq.BN(expectedFinalBalance, "invalid final available unbonded value")
+    })
+  })
+
   describe("withdraw", async () => {
+    let initialDeposit
     const value = new BN(1000)
 
     beforeEach(async () => {
+      initialDeposit = minimumDelegationValue
+
       await ethBonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
+        value: initialDeposit,
       })
-
-      await ethBonding.deposit(operator, {value: value})
 
       await ethBonding.authorizeOperatorContract(operator, bondCreator, {
         from: authorizer,
@@ -178,20 +274,23 @@ describe("EthBonding", function () {
     })
 
     it("transfers unbonded value to beneficiary", async () => {
-      const expectedUnbonded = 0
+      const expectedUnbonded = initialDeposit.sub(value)
 
       const expectedBeneficiaryBalance = web3.utils
         .toBN(await web3.eth.getBalance(beneficiary))
         .add(value)
 
+      expect(await ethBonding.unbondedValue(operator)).to.eq.BN(
+        initialDeposit,
+        "invalid unbonded value"
+      )
+
       await ethBonding.withdraw(value, operator, {from: operator})
 
-      const unbonded = await ethBonding.availableUnbondedValue(
-        operator,
-        bondCreator,
-        sortitionPool
+      expect(await ethBonding.unbondedValue(operator)).to.eq.BN(
+        expectedUnbonded,
+        "invalid unbonded value"
       )
-      expect(unbonded).to.eq.BN(expectedUnbonded, "invalid unbonded value")
 
       const actualBeneficiaryBalance = await web3.eth.getBalance(beneficiary)
       expect(actualBeneficiaryBalance).to.eq.BN(
@@ -214,7 +313,7 @@ describe("EthBonding", function () {
     })
 
     it("reverts if insufficient unbonded value", async () => {
-      const invalidValue = value.add(new BN(1))
+      const invalidValue = initialDeposit.addn(1)
 
       await expectRevert(
         ethBonding.withdraw(invalidValue, operator, {from: operator}),
@@ -229,9 +328,8 @@ describe("EthBonding", function () {
 
       await ethBonding.delegate(operator2, etherReceiver.address, authorizer, {
         from: owner,
+        value: initialDeposit,
       })
-
-      await ethBonding.deposit(operator2, {value: value})
 
       await expectRevert(
         ethBonding.withdraw(value, operator2, {from: operator2}),
@@ -244,6 +342,7 @@ describe("EthBonding", function () {
     it("returns true when authorized and initialization period passed", async () => {
       await ethBonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
+        value: minimumDelegationValue,
       })
 
       await ethBonding.authorizeOperatorContract(operator, bondCreator, {
@@ -258,6 +357,7 @@ describe("EthBonding", function () {
     it("returns false when authorized but initialization period not passed yet", async () => {
       await ethBonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
+        value: minimumDelegationValue,
       })
 
       await ethBonding.authorizeOperatorContract(operator, bondCreator, {
@@ -272,6 +372,7 @@ describe("EthBonding", function () {
     it("returns false when initialization period passed but not authorized", async () => {
       await ethBonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
+        value: minimumDelegationValue,
       })
 
       await time.increase(initializationPeriod.addn(1))
@@ -282,6 +383,7 @@ describe("EthBonding", function () {
     it("returns false when not authorized and initialization period not passed", async () => {
       await ethBonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
+        value: minimumDelegationValue,
       })
 
       assert.isFalse(await ethBonding.isInitialized(operator, bondCreator))
@@ -290,6 +392,7 @@ describe("EthBonding", function () {
     it("returns false when initialization period passed but other contract authorized", async () => {
       await ethBonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
+        value: minimumDelegationValue,
       })
 
       await registry.approveOperatorContract(thirdParty)

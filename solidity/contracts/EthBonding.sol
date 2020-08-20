@@ -41,6 +41,9 @@ contract EthBonding is
         address indexed authorizer
     );
 
+    // TODO: Decide on the final value and if we want a setter for it.
+    uint256 public constant MINIMUM_DELEGATION_DEPOSIT = 12345;
+
     uint256 public initializationPeriod;
 
     /// @notice Initializes Keep Bonding contract.
@@ -59,6 +62,10 @@ contract EthBonding is
     /// @notice Registers delegation details. The function is used to register
     /// addresses of operator, beneficiary and authorizer for a delegation from
     /// the caller.
+    /// The function requires ETH to be submitted in the call as a protection
+    /// against attacks blocking operators. The value should be at least equal
+    /// to the minimum delegation deposit. Whole amount is deposited as operator's
+    /// unbonded value for the future bonding.
     /// @param operator Address of the operator.
     /// @param beneficiary Address of the beneficiary.
     /// @param authorizer Address of the authorizer.
@@ -67,13 +74,16 @@ contract EthBonding is
         address payable beneficiary,
         address authorizer
     ) external payable {
-        // check value passed with delegation
-
         address owner = msg.sender;
 
         require(
             operators[operator].owner == address(0),
             "Operator already in use"
+        );
+
+        require(
+            msg.value >= MINIMUM_DELEGATION_DEPOSIT,
+            "Insufficient delegation value"
         );
 
         operators[operator] = Operator(
@@ -82,6 +92,8 @@ contract EthBonding is
             beneficiary,
             authorizer
         );
+
+        deposit(operator);
 
         emit Delegated(owner, operator);
         emit OperatorDelegated(operator, beneficiary, authorizer);
