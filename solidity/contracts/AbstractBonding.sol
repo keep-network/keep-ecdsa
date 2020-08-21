@@ -78,7 +78,7 @@ contract AbstractBonding is IBondingManagement {
 
     /// @notice Add the provided value to operator's pool available for bonding.
     /// @param operator Address of the operator.
-    function deposit(address operator) external payable {
+    function deposit(address operator) public payable {
         address beneficiary = beneficiaryOf(operator);
         // Beneficiary has to be set (delegation exist) before an operator can
         // deposit wei. It protects from a situation when an operator wants
