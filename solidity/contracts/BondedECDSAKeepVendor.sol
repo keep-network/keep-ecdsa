@@ -160,6 +160,9 @@ contract BondedECDSAKeepVendor is Proxy {
     /// @notice Initializes implementation contract.
     /// @dev Delegates a call to the implementation with provided data. It is
     /// expected that data contains details of function to be called.
+    /// This function uses delegatecall to a input-controlled function id and
+    /// contract address. This is safe because both _implementation and _data
+    /// an be set only by the admin of this contract in upgradeTo and constructor.
     /// @param _implementation Address of the new vendor implementation contract.
     /// @param _data Delegate call data for implementation initialization.
     function initializeImplementation(
