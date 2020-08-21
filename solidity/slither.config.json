@@ -1,4 +1,3 @@
 {
-    "exclude_dependencies": true,
-    "filter_paths": "contracts/test"
+    "filter_paths": "contracts/test|node_modules/@keep-network/keep-core"
 }
