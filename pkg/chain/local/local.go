@@ -100,7 +100,7 @@ func (lc *localChain) RegisterAsMemberCandidate(application common.Address) erro
 // notification of a new ECDSA keep creation is seen.
 func (lc *localChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
 
@@ -113,7 +113,7 @@ func (lc *localChain) OnBondedECDSAKeepCreated(
 		defer lc.handlerMutex.Unlock()
 
 		delete(lc.keepCreatedHandlers, handlerID)
-	}), nil
+	})
 }
 
 // OnSignatureRequested is a callback that is invoked on-chain
