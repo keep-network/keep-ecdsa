@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"math/big"
 	"sync"
 	"time"
@@ -35,7 +36,7 @@ var (
 type EthereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
-	client                         *ethclient.Client
+	client                         bind.ContractBackend
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *blockcounter.EthereumBlockCounter
 	miningWaiter                   *ethutil.MiningWaiter
@@ -64,21 +65,13 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		return nil, err
 	}
 
-	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
-		client = ethutil.WrapRateLimiting(
-			client,
-			&ethutil.RateLimiterConfig{
-				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
-				ConcurrencyLimit:       config.ConcurrencyLimit,
-			},
-		).(*ethclient.Client)
-	}
+	wrappedClient := addClientWrappers(config, client)
 
 	transactionMutex := &sync.Mutex{}
 
 	nonceManager := ethutil.NewNonceManager(
 		accountKey.Address,
-		client,
+		wrappedClient,
 	)
 
 	checkInterval := DefaultMiningCheckInterval
@@ -101,7 +94,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
 		*bondedECDSAKeepFactoryContractAddress,
 		accountKey,
-		client,
+		wrappedClient,
 		nonceManager,
 		miningWaiter,
 		transactionMutex,
@@ -121,11 +114,38 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 	return &EthereumChain{
 		config:                         config,
 		accountKey:                     accountKey,
-		client:                         client,
+		client:                         wrappedClient,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
 		transactionMutex:               transactionMutex,
 	}, nil
+}
+
+func addClientWrappers(
+	config *ethereum.Config,
+	backend bind.ContractBackend,
+) bind.ContractBackend {
+	loggingBackend := ethutil.WrapCallLogging(logger, backend)
+
+	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
+		logger.Infof(
+			"enabled ethereum rate limiter; "+
+				"rps limit [%v]; "+
+				"concurrency limit [%v]",
+			config.RequestsPerSecondLimit,
+			config.ConcurrencyLimit,
+		)
+
+		return ethutil.WrapRateLimiting(
+			loggingBackend,
+			&ethutil.RateLimiterConfig{
+				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
+				ConcurrencyLimit:       config.ConcurrencyLimit,
+			},
+		)
+	}
+
+	return loggingBackend
 }
