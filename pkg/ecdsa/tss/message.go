@@ -40,33 +40,15 @@ func (m *AnnounceMessage) Type() string {
 }
 
 func RegisterUnmarshalers(broadcastChannel net.BroadcastChannel) {
-	err := broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &AnnounceMessage{}
 	})
-	if err != nil {
-		logger.Errorf(
-			"could not register AnnounceMessage unmarshaller: [%v]",
-			err,
-		)
-	}
 
-	err = broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ReadyMessage{}
 	})
-	if err != nil {
-		logger.Errorf(
-			"could not register ReadyMessage unmarshaller: [%v]",
-			err,
-		)
-	}
 
-	err = broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &TSSProtocolMessage{}
 	})
-	if err != nil {
-		logger.Errorf(
-			"could not register TSSProtocolMessage unmarshaller: [%v]",
-			err,
-		)
-	}
 }
