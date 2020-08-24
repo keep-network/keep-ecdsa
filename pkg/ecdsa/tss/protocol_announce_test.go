@@ -51,7 +51,7 @@ func TestAnnounceProtocol(t *testing.T) {
 				return
 			}
 
-			broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+			broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 				return &AnnounceMessage{}
 			})
 

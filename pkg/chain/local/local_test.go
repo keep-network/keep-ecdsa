@@ -22,17 +22,14 @@ func TestOnBondedECDSAKeepCreated(t *testing.T) {
 		KeepAddress: keepAddress,
 	}
 
-	subscription, err := chain.OnBondedECDSAKeepCreated(
+	subscription := chain.OnBondedECDSAKeepCreated(
 		func(event *eth.BondedECDSAKeepCreatedEvent) {
 			eventFired <- event
 		},
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
 	defer subscription.Unsubscribe()
 
-	err = chain.createKeep(keepAddress)
+	err := chain.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}

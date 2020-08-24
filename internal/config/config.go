@@ -12,6 +12,9 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
+// #nosec G101 (look for hardcoded credentials)
+// This line doesn't contain any credentials.
+// It's just the name of the environment variable.
 const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
 // Config is the top level config structure.

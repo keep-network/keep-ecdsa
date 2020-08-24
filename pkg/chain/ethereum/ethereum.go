@@ -60,8 +60,8 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
-) (subscription.EventSubscription, error) {
-	return ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
+) subscription.EventSubscription {
+	subscription, err := ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
 		func(
 			KeepAddress common.Address,
 			Members []common.Address,
@@ -83,6 +83,11 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 		nil,
 		nil,
 	)
+	if err != nil {
+		logger.Errorf("could not watch BondedECDSAKeepCreated event: [%v]", err)
+	}
+
+	return subscription
 }
 
 // OnKeepClosed installs a callback that is invoked on-chain when keep is closed.

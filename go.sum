@@ -339,6 +339,8 @@ github.com/keep-network/keep-core v1.2.4-rc.0.20200805110315-51be43db21f8 h1:fQ4
 github.com/keep-network/keep-core v1.2.4-rc.0.20200805110315-51be43db21f8/go.mod h1:AfeYKy/K2q3saznDAep4pFVb7czQVBvBUlWHnYiA3RI=
 github.com/keep-network/keep-core v1.2.4-rc.0.20200824101104-60dbd7fe9699 h1:9MRU0Gwl2JELY9wt6GQ07Owpqc5HC3Ujl8pagt3XC/E=
 github.com/keep-network/keep-core v1.2.4-rc.0.20200824101104-60dbd7fe9699/go.mod h1:SZLqmBuiJwCyVd++7UiYvLc4px3IpeITRloQzD5rHnk=
+github.com/keep-network/keep-core v1.2.4-rc.0.20200824115317-f48f2148ae66 h1:HqIWcoL5LTplpca0BEZCGsey5iBc9gdtSEm+mPpySVg=
+github.com/keep-network/keep-core v1.2.4-rc.0.20200824115317-f48f2148ae66/go.mod h1:SZLqmBuiJwCyVd++7UiYvLc4px3IpeITRloQzD5rHnk=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
