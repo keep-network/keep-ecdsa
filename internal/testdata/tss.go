@@ -25,7 +25,11 @@ func LoadKeygenTestFixtures(count int) ([]keygen.LocalPartySaveData, error) {
 	keys := make([]keygen.LocalPartySaveData, 0, count)
 	for j := 0; j < count; j++ {
 		fixtureFilePath := makeTestFixtureFilePath(j)
-		bz, err := ioutil.ReadFile(fixtureFilePath) // #nosec
+
+		// #nosec G304 (file path provided as taint input)
+		// This line is used to read a test fixture file.
+		// There is no user input.
+		bz, err := ioutil.ReadFile(fixtureFilePath)
 		if err != nil {
 			return nil, errors.Wrapf(err,
 				"could not open the test fixture for party %d in the expected location: %s. run keygen tests first.",

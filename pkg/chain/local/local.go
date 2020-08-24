@@ -104,7 +104,7 @@ func (lc *localChain) OnBondedECDSAKeepCreated(
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
 
-	handlerID := rand.Int() // #nosec
+	handlerID := generateHandlerID()
 
 	lc.keepCreatedHandlers[handlerID] = handler
 
@@ -125,7 +125,7 @@ func (lc *localChain) OnSignatureRequested(
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
 
-	handlerID := rand.Int() // #nosec
+	handlerID := generateHandlerID()
 
 	keep, ok := lc.keeps[keepAddress]
 	if !ok {
@@ -315,4 +315,10 @@ func (lc *localChain) GetHonestThreshold(
 
 func (lc *localChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time, error) {
 	panic("implement")
+}
+
+func generateHandlerID() int {
+	// #nosec G404 (insecure random number source (rand))
+	// Local chain implementation doesn't require secure randomness.
+	return rand.Int()
 }
