@@ -23,6 +23,7 @@ type Config struct {
 	Client                 client.Config
 	TSS                    tss.Config
 	Metrics                Metrics
+	Diagnostics            Diagnostics
 }
 
 // SanctionedApplications contains addresses of applications approved by the
@@ -59,6 +60,11 @@ type Metrics struct {
 	Port                int
 	NetworkMetricsTick  int
 	EthereumMetricsTick int
+}
+
+// Diagnostics stores diagnostics-related configuration.
+type Diagnostics struct {
+	Port int
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file
