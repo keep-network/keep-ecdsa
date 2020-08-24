@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -168,6 +169,7 @@ func Start(c *cli.Context) error {
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
 	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
+	initializeDiagnostics(config, networkProvider)
 
 	logger.Info("client started")
 
@@ -223,9 +225,25 @@ func initializeMetrics(
 		ethereumAddres,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
+}
 
-	metrics.ExposeLibP2PInfo(
-		registry,
-		netProvider,
+func initializeDiagnostics(
+	config *config.Config,
+	netProvider net.Provider,
+) {
+	registry, isConfigured := diagnostics.Initialize(
+		config.Diagnostics.Port,
 	)
+	if !isConfigured {
+		logger.Infof("diagnostics are not configured")
+		return
+	}
+
+	logger.Infof(
+		"enabled diagnostics on port [%v]",
+		config.Diagnostics.Port,
+	)
+
+	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
+	diagnostics.RegisterClientInfoSource(registry, netProvider)
 }
