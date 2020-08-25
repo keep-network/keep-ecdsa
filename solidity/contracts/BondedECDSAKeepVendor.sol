@@ -62,7 +62,7 @@ contract BondedECDSAKeepVendor is Proxy {
     event UpgradeStarted(address implementation, uint256 timestamp);
     event UpgradeCompleted(address implementation);
 
-    constructor(address _implementation, bytes memory _data) public {
+    constructor(address _implementationAddress, bytes memory _data) public {
         assertSlot(IMPLEMENTATION_SLOT, "eip1967.proxy.implementation");
         assertSlot(ADMIN_SLOT, "eip1967.proxy.admin");
         assertSlot(
@@ -79,15 +79,15 @@ contract BondedECDSAKeepVendor is Proxy {
         );
 
         require(
-            _implementation != address(0),
+            _implementationAddress != address(0),
             "Implementation address can't be zero."
         );
 
         if (_data.length > 0) {
-            initializeImplementation(_implementation, _data);
+            initializeImplementation(_implementationAddress, _data);
         }
 
-        setImplementation(_implementation);
+        setImplementation(_implementationAddress);
 
         setUpgradeTimeDelay(1 days);
 
@@ -137,18 +137,18 @@ contract BondedECDSAKeepVendor is Proxy {
             "Timer not elapsed"
         );
 
-        address newImplementation = newImplementation();
+        address _newImplementation = newImplementation();
 
-        setImplementation(newImplementation);
+        setImplementation(_newImplementation);
 
-        bytes memory data = initializationData[newImplementation];
+        bytes memory data = initializationData[_newImplementation];
         if (data.length > 0) {
-            initializeImplementation(newImplementation, data);
+            initializeImplementation(_newImplementation, data);
         }
 
         setUpgradeInitiatedTimestamp(0);
 
-        emit UpgradeCompleted(newImplementation);
+        emit UpgradeCompleted(_newImplementation);
     }
 
     /// @notice Gets the address of the current vendor implementation.
@@ -163,14 +163,15 @@ contract BondedECDSAKeepVendor is Proxy {
     /// This function uses delegatecall to a input-controlled function id and
     /// contract address. This is safe because both _implementation and _data
     /// an be set only by the admin of this contract in upgradeTo and constructor.
-    /// @param _implementation Address of the new vendor implementation contract.
+    /// @param _implementationAddress Address of the new vendor implementation
+    /// contract.
     /// @param _data Delegate call data for implementation initialization.
     function initializeImplementation(
-        address _implementation,
+        address _implementationAddress,
         bytes memory _data
     ) internal {
         /* solium-disable-next-line security/no-low-level-calls */
-        (bool success, bytes memory returnData) = _implementation.delegatecall(
+        (bool success, bytes memory returnData) = _implementationAddress.delegatecall(
             _data
         );
 
@@ -200,13 +201,13 @@ contract BondedECDSAKeepVendor is Proxy {
     }
 
     /// @notice Sets the address of the current implementation.
-    /// @param _implementation Address representing the new implementation to
-    /// be set.
-    function setImplementation(address _implementation) internal {
+    /// @param _implementationAddress Address representing the new
+    /// implementation to be set.
+    function setImplementation(address _implementationAddress) internal {
         bytes32 slot = IMPLEMENTATION_SLOT;
         /* solium-disable-next-line */
         assembly {
-            sstore(slot, _implementation)
+            sstore(slot, _implementationAddress)
         }
     }
 
