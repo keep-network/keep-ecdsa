@@ -171,9 +171,8 @@ contract BondedECDSAKeepVendor is Proxy {
         bytes memory _data
     ) internal {
         /* solium-disable-next-line security/no-low-level-calls */
-        (bool success, bytes memory returnData) = _implementationAddress.delegatecall(
-            _data
-        );
+        (bool success, bytes memory returnData) = _implementationAddress
+            .delegatecall(_data);
 
         require(success, string(returnData));
     }
