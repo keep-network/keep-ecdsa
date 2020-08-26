@@ -17,8 +17,9 @@ pragma solidity 0.5.17;
 import "@keep-network/keep-core/contracts/IRandomBeacon.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 
-contract GroupSelectionSeed is IRandomBeaconConsumer {
+contract GroupSelectionSeed is IRandomBeaconConsumer, ReentrancyGuard {
     using SafeMath for uint256;
 
     IRandomBeacon randomBeacon;
@@ -79,18 +80,17 @@ contract GroupSelectionSeed is IRandomBeaconConsumer {
     /// reseedFee function. Factory is automatically triggering reseeding after
     /// opening a new keep but the reseed can be also triggered at any moment
     /// using this function.
-    function requestNewGroupSelectionSeed() public payable {
-        uint256 beaconFee = randomBeacon.entryFeeEstimate(callbackGas);
-
+    function requestNewGroupSelectionSeed() public payable nonReentrant {
         reseedPool = reseedPool.add(msg.value);
+
+        uint256 beaconFee = randomBeacon.entryFeeEstimate(callbackGas);
         require(reseedPool >= beaconFee, "Not enough funds to trigger reseed");
+        reseedPool = reseedPool.sub(beaconFee);
 
         (bool success, bytes memory returnData) = requestRelayEntry(beaconFee);
         if (!success) {
             revert(string(returnData));
         }
-
-        reseedPool = reseedPool.sub(beaconFee);
     }
 
     /// @notice Updates group selection seed.

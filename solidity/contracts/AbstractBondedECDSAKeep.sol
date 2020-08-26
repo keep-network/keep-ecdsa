@@ -34,21 +34,18 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
     // Terminated means the keep was closed due to misbehavior.
     enum Status {Active, Closed, Terminated}
 
-    // Flags execution of contract initialization.
-    bool isInitialized;
-
     // Address of the keep's owner.
-    address internal owner;
+    address public owner;
 
     // List of keep members' addresses.
-    address[] internal members;
+    address[] public members;
 
     // Minimum number of honest keep members required to produce a signature.
     uint256 public honestThreshold;
 
     // Keep's ECDSA public key serialized to 64-bytes, where X and Y coordinates
     // are padded with zeros to 32-byte each.
-    bytes publicKey;
+    bytes public publicKey;
 
     // Latest digest requested to be signed. Used to validate submitted signature.
     bytes32 public digest;
@@ -69,15 +66,15 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
 
     // Map stores public key by member addresses. All members should submit the
     // same public key.
-    mapping(address => bytes) submittedPublicKeys;
+    mapping(address => bytes) internal submittedPublicKeys;
 
     // Map stores amount of wei stored in the contract for each member address.
-    mapping(address => uint256) memberETHBalances;
+    mapping(address => uint256) internal memberETHBalances;
 
     // Map stores preimages that have been proven to be fraudulent. This is needed
     // to prevent from slashing members multiple times for the same fraudulent
     // preimage.
-    mapping(bytes => bool) fraudulentPreimages;
+    mapping(bytes => bool) internal fraudulentPreimages;
 
     // The current status of the keep.
     // If the keep is Active members monitor it and support requests from the
@@ -86,7 +83,10 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
     // If the owner seizes member bonds the flag is set to Terminated.
     Status internal status;
 
-    IBondingManagement bonding;
+    IBondingManagement internal bonding;
+
+    // Flags execution of contract initialization.
+    bool internal isInitialized;
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(bytes32 indexed digest);
@@ -536,6 +536,8 @@ contract AbstractBondedECDSAKeep is IBondedECDSAKeep {
     /// @dev We use clone factory to create new keep. That is why this contract
     /// doesn't have a constructor. We provide keep parameters for each instance
     /// function after cloning instances from the master contract.
+    /// Initialization must happen in the same transaction in which the clone is
+    /// created.
     /// @param _owner Address of the keep owner.
     /// @param _members Addresses of the keep members.
     /// @param _honestThreshold Minimum number of honest keep members.
