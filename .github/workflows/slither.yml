@@ -25,5 +25,7 @@ jobs:
           sudo ln -s -f /usr/local/bin/solc-static-linux /usr/local/bin/solc
       - name: Install Slither
         run: pip3 install slither-analyzer
+      - name: Install NPM packages
+        run: cd solidity && npm install
       - name: Run Slither
         run: cd solidity && slither .
