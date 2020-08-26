@@ -25,10 +25,13 @@ jobs:
           sudo ln -s -f /usr/local/bin/solc-static-linux /usr/local/bin/solc
       - name: Install Slither
         run: pip3 install slither-analyzer
-      - uses: actions/cache@v2
-          with:
-            path: 'solidity/node_modules'
-            key: ${{ runner.os }}-modules-${{ hashFiles('solidity/package-lock.json') }}
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('./solidity/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       - name: Install NPM packages
         run: cd solidity && npm install
       - name: Run Slither
