@@ -1,4 +1,4 @@
 {
-    "filter_paths": "contracts/test|node_modules/@keep-network/keep-core",
+    "filter_paths": "contracts/test|node_modules/@keep-network/keep-core|node_modules/@keep-network/sortition-pools",
     "detectors_to_exclude": "assembly,timestamp,solc-version"
 }
