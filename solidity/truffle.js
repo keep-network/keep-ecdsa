@@ -51,6 +51,7 @@ module.exports = {
       },
       gas: 8000000,
       network_id: 3,
+      skipDryRun: true
     },
   },
   // Configure your compilers
