@@ -4,9 +4,6 @@ executors:
   docker-node:
     docker:
       - image: circleci/node:11
-  docker-node-gcloud:
-    docker:
-      - image: appfarm/node-gcloud-base
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
