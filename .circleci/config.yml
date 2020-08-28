@@ -136,24 +136,14 @@ jobs:
           paths:
             - docker-images
   migrate_contracts:
-    executor: docker-node-gcloud
+    executor: docker-node
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
-      - attach_workspace:
-          at: solidity
-      - run:
-          name: Set Gcloud Auth for bucket access
-          command: |
-            echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
-            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
       - run:
           name: Fetch external contracts artifacts
           command: |
-            # This needs to be part of a base docker image, not installed here.
-            apt-get update
-            apt-get install jq -y
             solidity/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
