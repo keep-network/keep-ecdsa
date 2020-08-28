@@ -49,7 +49,7 @@ module.exports = {
           "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
         )
       },
-      gas: 6721975,
+      gas: 8000000,
       network_id: 3,
     },
   },
