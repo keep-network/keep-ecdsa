@@ -157,12 +157,10 @@ jobs:
             solidity/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
-          working_directory: ~/project/solidity
           command: |
-            mkdir -p /tmp/keep-ecdsa/contracts
-            npm ci
-            ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
-            cp ./build/contracts/* /tmp/keep-ecdsa/contracts
+            export BUILD_TAG=$CIRCLE_SHA1
+            export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
+            solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/keep-ecdsa
           paths:
