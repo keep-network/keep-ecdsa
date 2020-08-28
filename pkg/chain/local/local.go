@@ -100,11 +100,11 @@ func (lc *localChain) RegisterAsMemberCandidate(application common.Address) erro
 // notification of a new ECDSA keep creation is seen.
 func (lc *localChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
 
-	handlerID := rand.Int()
+	handlerID := generateHandlerID()
 
 	lc.keepCreatedHandlers[handlerID] = handler
 
@@ -113,7 +113,7 @@ func (lc *localChain) OnBondedECDSAKeepCreated(
 		defer lc.handlerMutex.Unlock()
 
 		delete(lc.keepCreatedHandlers, handlerID)
-	}), nil
+	})
 }
 
 // OnSignatureRequested is a callback that is invoked on-chain
@@ -125,7 +125,7 @@ func (lc *localChain) OnSignatureRequested(
 	lc.handlerMutex.Lock()
 	defer lc.handlerMutex.Unlock()
 
-	handlerID := rand.Int()
+	handlerID := generateHandlerID()
 
 	keep, ok := lc.keeps[keepAddress]
 	if !ok {
@@ -315,4 +315,10 @@ func (lc *localChain) GetHonestThreshold(
 
 func (lc *localChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time, error) {
 	panic("implement")
+}
+
+func generateHandlerID() int {
+	// #nosec G404 (insecure random number source (rand))
+	// Local chain implementation doesn't require secure randomness.
+	return rand.Int()
 }

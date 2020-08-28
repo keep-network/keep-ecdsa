@@ -17,7 +17,6 @@ pragma solidity 0.5.17;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
 
-
 /// @title Proxy contract for Bonded ECDSA Keep vendor.
 contract BondedECDSAKeepVendor is Proxy {
     using SafeMath for uint256;
@@ -25,28 +24,33 @@ contract BondedECDSAKeepVendor is Proxy {
     /// @dev Storage slot with the admin of the contract.
     /// This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1, and is
     /// validated in the constructor.
-    bytes32 internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
+    bytes32
+        internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
     /// @dev Storage slot with the address of the current implementation.
     /// This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1, and is
     /// validated in the constructor.
-    bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+    bytes32
+        internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     /// @dev Storage slot with the upgrade time delay. Upgrade time delay defines a
     /// period for implementation upgrade.
     /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
     /// subtracted by 1, and is validated in the constructor.
-    bytes32 internal constant UPGRADE_TIME_DELAY_SLOT = 0x3ca583dafde9ce8bdb41fe825f85984a83b08ecf90ffaccbc4b049e8d8703563;
+    bytes32
+        internal constant UPGRADE_TIME_DELAY_SLOT = 0x3ca583dafde9ce8bdb41fe825f85984a83b08ecf90ffaccbc4b049e8d8703563;
 
     /// @dev Storage slot with the new implementation address.
     /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeImplementation"
     /// subtracted by 1, and is validated in the constructor.
-    bytes32 internal constant UPGRADE_IMPLEMENTATION_SLOT = 0x4e06287250f0fdd90b4a096f346c06d4e706d470a14747ab56a0156d48a6883f;
+    bytes32
+        internal constant UPGRADE_IMPLEMENTATION_SLOT = 0x4e06287250f0fdd90b4a096f346c06d4e706d470a14747ab56a0156d48a6883f;
 
     /// @dev Storage slot with the implementation address upgrade initiation.
     /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
     /// subtracted by 1, and is validated in the constructor.
-    bytes32 internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0x0816e8d9eeb2554df0d0b7edc58e2d957e6ce18adf92c138b50dd78a420bebaf;
+    bytes32
+        internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0x0816e8d9eeb2554df0d0b7edc58e2d957e6ce18adf92c138b50dd78a420bebaf;
 
     /// @notice Details of initialization data to be called on the second step
     /// of upgrade.
@@ -58,7 +62,7 @@ contract BondedECDSAKeepVendor is Proxy {
     event UpgradeStarted(address implementation, uint256 timestamp);
     event UpgradeCompleted(address implementation);
 
-    constructor(address _implementation, bytes memory _data) public {
+    constructor(address _implementationAddress, bytes memory _data) public {
         assertSlot(IMPLEMENTATION_SLOT, "eip1967.proxy.implementation");
         assertSlot(ADMIN_SLOT, "eip1967.proxy.admin");
         assertSlot(
@@ -75,15 +79,15 @@ contract BondedECDSAKeepVendor is Proxy {
         );
 
         require(
-            _implementation != address(0),
+            _implementationAddress != address(0),
             "Implementation address can't be zero."
         );
 
         if (_data.length > 0) {
-            initializeImplementation(_implementation, _data);
+            initializeImplementation(_implementationAddress, _data);
         }
 
-        setImplementation(_implementation);
+        setImplementation(_implementationAddress);
 
         setUpgradeTimeDelay(1 days);
 
@@ -133,18 +137,18 @@ contract BondedECDSAKeepVendor is Proxy {
             "Timer not elapsed"
         );
 
-        address newImplementation = newImplementation();
+        address _newImplementation = newImplementation();
 
-        setImplementation(newImplementation);
+        setImplementation(_newImplementation);
 
-        bytes memory data = initializationData[newImplementation];
+        bytes memory data = initializationData[_newImplementation];
         if (data.length > 0) {
-            initializeImplementation(newImplementation, data);
+            initializeImplementation(_newImplementation, data);
         }
 
         setUpgradeInitiatedTimestamp(0);
 
-        emit UpgradeCompleted(newImplementation);
+        emit UpgradeCompleted(_newImplementation);
     }
 
     /// @notice Gets the address of the current vendor implementation.
@@ -156,16 +160,19 @@ contract BondedECDSAKeepVendor is Proxy {
     /// @notice Initializes implementation contract.
     /// @dev Delegates a call to the implementation with provided data. It is
     /// expected that data contains details of function to be called.
-    /// @param _implementation Address of the new vendor implementation contract.
+    /// This function uses delegatecall to a input-controlled function id and
+    /// contract address. This is safe because both _implementation and _data
+    /// an be set only by the admin of this contract in upgradeTo and constructor.
+    /// @param _implementationAddress Address of the new vendor implementation
+    /// contract.
     /// @param _data Delegate call data for implementation initialization.
     function initializeImplementation(
-        address _implementation,
+        address _implementationAddress,
         bytes memory _data
     ) internal {
         /* solium-disable-next-line security/no-low-level-calls */
-        (bool success, bytes memory returnData) = _implementation.delegatecall(
-            _data
-        );
+        (bool success, bytes memory returnData) = _implementationAddress
+            .delegatecall(_data);
 
         require(success, string(returnData));
     }
@@ -193,13 +200,13 @@ contract BondedECDSAKeepVendor is Proxy {
     }
 
     /// @notice Sets the address of the current implementation.
-    /// @param _implementation Address representing the new implementation to
-    /// be set.
-    function setImplementation(address _implementation) internal {
+    /// @param _implementationAddress Address representing the new
+    /// implementation to be set.
+    function setImplementation(address _implementationAddress) internal {
         bytes32 slot = IMPLEMENTATION_SLOT;
         /* solium-disable-next-line */
         assembly {
-            sstore(slot, _implementation)
+            sstore(slot, _implementationAddress)
         }
     }
 

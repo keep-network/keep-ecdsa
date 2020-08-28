@@ -118,6 +118,43 @@ func TestCachesAuthorizedOperators(t *testing.T) {
 	}
 }
 
+func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
+	chain := local.Connect()
+	coreFirewall := newMockCoreFirewall()
+	policy := createNewPolicy(chain, coreFirewall)
+
+	_, remotePeer1PublicKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	remotePeer1Address := common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeer1PublicKey),
+	)
+
+	_, remotePeer2PublicKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	remotePeer2Address := common.HexToAddress(
+		key.NetworkPubKeyToEthAddress(remotePeer2PublicKey),
+	)
+
+	policy.authorizedOperatorsCache.Add(remotePeer1Address.String())
+
+	policy.nonAuthorizedOperatorsCache.Add(remotePeer2Address.String())
+	chain.AuthorizeOperator(remotePeer2Address)
+
+	err = policy.validateAuthorization(remotePeer1Address.String())
+	if err != nil {
+		t.Errorf("expected no valdation error; has: [%v]", err)
+	}
+
+	err = policy.validateAuthorization(remotePeer2Address.String())
+	if err != errNoAuthorization {
+		t.Errorf("expected error about no authorization; has: [%v]", err)
+	}
+}
+
 // Has no minimum stake.
 // Has authorization.
 // No keeps exist.
