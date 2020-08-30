@@ -4,6 +4,9 @@ executors:
   docker-node:
     docker:
       - image: circleci/node:11
+  docker-node-gcloud:
+    docker:
+      - image: appfarm/node-gcloud-base
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
@@ -133,7 +136,7 @@ jobs:
           paths:
             - docker-images
   migrate_contracts:
-    executor: docker-node
+    executor: docker-node-gcloud
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
