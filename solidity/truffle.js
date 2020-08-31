@@ -50,6 +50,7 @@ module.exports = {
         )
       },
       gas: 8000000,
+      gasPrice: 400000000000, // 400Gwei
       network_id: 3,
       skipDryRun: true
     },
