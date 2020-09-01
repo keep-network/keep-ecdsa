@@ -78,12 +78,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: eth-network-ropsten
-                  key: rpc-url
+                  key: keep-ecdsa-rpc-url
             - name: ETH_WS_URL
               valueFrom:
                 secretKeyRef:
                   name: eth-network-ropsten
-                  key: ws-url
+                  key: keep-ecdsa-ws-url
             - name: ETH_NETWORK_ID
               valueFrom:
                 configMapKeyRef:
@@ -110,7 +110,7 @@ spec:
             - name: KEEP_DATA_DIR
               value: /mnt/keep-ecdsa/data
             - name: SANCTIONED_APPLICATIONS
-              value: '0x14dC06F762E7f4a756825c1A1dA569b3180153cB' # Shall we extract this property to a configmap?
+              value: '0x9F3B3bCED0AFfe862D436CB8FF462a454040Af80' # Shall we extract this property to a configmap?
           volumeMounts:
             - name: keep-ecdsa-config
               mountPath: /mnt/keep-ecdsa/config

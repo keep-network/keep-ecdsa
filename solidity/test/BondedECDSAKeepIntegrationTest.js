@@ -15,6 +15,7 @@ const KeepBonding = contract.fromArtifact("KeepBonding")
 const MinimumStakeSchedule = contract.fromArtifact("MinimumStakeSchedule")
 const GrantStaking = contract.fromArtifact("GrantStaking")
 const Locks = contract.fromArtifact("Locks")
+const TopUps = contract.fromArtifact("TopUps")
 const TokenStakingEscrow = contract.fromArtifact("TokenStakingEscrow")
 const TokenStaking = contract.fromArtifact("TokenStaking")
 const TokenGrant = contract.fromArtifact("TokenGrant")
@@ -59,7 +60,6 @@ describe("BondedECDSAKeepFactory", function () {
   const stakeLockDuration = time.duration.days(180)
 
   const initializationPeriod = new BN(100)
-  const undelegationPeriod = 30
 
   before(async () => {
     await BondedSortitionPoolFactory.detectNetwork()
@@ -263,6 +263,7 @@ describe("BondedECDSAKeepFactory", function () {
     )
     await TokenStaking.link("GrantStaking", (await GrantStaking.new()).address)
     await TokenStaking.link("Locks", (await Locks.new()).address)
+    await TokenStaking.link("TopUps", (await TopUps.new()).address)
 
     const stakingEscrow = await TokenStakingEscrow.new(
       keepToken.address,
@@ -276,8 +277,7 @@ describe("BondedECDSAKeepFactory", function () {
       keepTokenGrant.address,
       stakingEscrow.address,
       registry.address,
-      stakeInitializationPeriod,
-      undelegationPeriod
+      stakeInitializationPeriod
     )
     tokenGrant = await TokenGrant.new(keepToken.address)
 
