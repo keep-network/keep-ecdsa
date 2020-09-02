@@ -220,7 +220,11 @@ async function createSortitionPool(applicationAddress) {
     return await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call()
   }
 
-  sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call()
+  try {
+    sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call()
+  } catch (err) {
+    console.error("failed to get sortition pool", err)
+  }
 
   if (!sortitionPoolContractAddress || sortitionPoolContractAddress == ADDRESS_ZERO) {
     console.log("sortition pool does not exists yet")
