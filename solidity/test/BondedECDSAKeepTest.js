@@ -11,6 +11,7 @@ const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 const {expectRevert, constants, time} = require("@openzeppelin/test-helpers")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
+const BondedECDSAKeep = contract.fromArtifact("BondedECDSAKeep")
 const BondedECDSAKeepStub = contract.fromArtifact("BondedECDSAKeepStub")
 const TestToken = contract.fromArtifact("TestToken")
 const KeepBonding = contract.fromArtifact("KeepBonding")
@@ -330,6 +331,71 @@ describe("BondedECDSAKeep", function () {
       )
 
       assert.isTrue(await keep.isAwaitingSignature(digest1))
+    })
+  })
+
+  describe("public key submission gas cost", async () => {
+    const publicKey =
+      "0x657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051"
+    const anotherPublicKey =
+      "0x699282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4052"
+
+    const sixteenSigners = [...Array(16).keys()].map((i) => accounts[i])
+
+    let keepWith16Signers
+
+    beforeEach(async () => {
+      const keepAddress = await factoryStub.newKeep.call(
+        owner,
+        sixteenSigners,
+        sixteenSigners.length,
+        memberStake,
+        stakeLockDuration,
+        tokenStaking.address,
+        keepBonding.address,
+        factoryStub.address
+      )
+
+      await factoryStub.newKeep(
+        owner,
+        sixteenSigners,
+        sixteenSigners.length,
+        memberStake,
+        stakeLockDuration,
+        tokenStaking.address,
+        keepBonding.address,
+        factoryStub.address
+      )
+
+      keepWith16Signers = await BondedECDSAKeep.at(keepAddress)
+    })
+
+    it("should be less than 350k if all submitted keys match", async () => {
+      const maxExpectedCost = web3.utils.toBN(350000)
+      for (let i = 0; i < sixteenSigners.length; i++) {
+        const tx = await keepWith16Signers.submitPublicKey(publicKey, {
+          from: sixteenSigners[i],
+        })
+
+        const gasUsed = web3.utils.toBN(tx.receipt.gasUsed)
+        expect(gasUsed).to.be.lte.BN(maxExpectedCost)
+      }
+    })
+
+    it("should be less than 350k if the last submitted key does not match", async () => {
+      const maxExpectedCost = web3.utils.toBN(350000)
+      for (let i = 0; i < sixteenSigners.length - 1; i++) {
+        await keepWith16Signers.submitPublicKey(publicKey, {
+          from: sixteenSigners[i],
+        })
+      }
+
+      const tx = await keepWith16Signers.submitPublicKey(anotherPublicKey, {
+        from: sixteenSigners[15],
+      })
+
+      const gasUsed = web3.utils.toBN(tx.receipt.gasUsed)
+      expect(gasUsed).to.be.lte.BN(maxExpectedCost)
     })
   })
 
