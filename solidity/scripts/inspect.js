@@ -14,12 +14,12 @@ module.exports = async function () {
         const goodOperators = new Set()
 
         for (i = 0; i < keepCount; i++) {
-            const keepAddress = await factory.getKeepAtIndex(i)
+            const keepAddress = await callWithRetry(() => factory.getKeepAtIndex(i))
             const keep = await BondedECDSAKeep.at(keepAddress) 
-            const keepPublicKey = await keep.publicKey()
-            const members = await keep.getMembers()
-            const isActive = await keep.isActive()
-            const bond = await keep.checkBondAmount()
+            const keepPublicKey = await callWithRetry(() => keep.publicKey())
+            const members = await callWithRetry(() => keep.getMembers())
+            const isActive = await callWithRetry(() => keep.isActive())
+            const bond = await callWithRetry(()=> keep.checkBondAmount())
 
             console.log(`keep address: ${keepAddress}`)
             console.log(`keep index:   ${i}`)
@@ -58,5 +58,14 @@ module.exports = async function () {
         process.exit()
     } catch (error) {
       console.log(error)
+    }
+}
+
+async function callWithRetry(fn) {
+    try {
+        return await fn()
+    } catch (error) {
+        console.log(`Error ${error} occurred; retrying...`)
+        return await fn()
     }
 }
