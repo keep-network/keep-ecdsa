@@ -43,6 +43,47 @@ Keep ECDSA client.
 |2 vCPU / 2 GiB RAM / 1 GiB Persistent Storage
 |===
 
+== Gas Costs
+
+Keep ECDSA smart contracts do not reimburse the operator for submitted transactions. It is the
+responsibility of the application using ECDSA keeps to make sure operators are rewarded accordingly
+and the outcomes are net-positive. It is expected that the operators have enough ETH on the accounts
+used by clients to submit the required transactions and that the operator account balance is monitored
+and refilled as needed. Bear in mind that the higher stake is and the higher unbonded value is, the
+operator is selected more frequently and is expected to submit more transactions as a result.
+
+Below is the average gas cost of the most important transactions the client is submitting:
+
+[%header,cols=3*]
+|===
+|TX
+|Gas Cost
+|Reimbursed
+
+|Submit keep public key
+|150 000
+|No
+
+|Submit keep signature
+|30 500
+|No
+
+|Update operator status in sortition pool
+|125 000
+|No
+|===
+
+For example, if we expect the operator to handle 100 keeps by submitting all the transactions mentioned
+above for each keep, the operator needs to have `100 * (150 000 + 30 500 + 125 000) * gas_price` ETH on
+the account:
+
+- For the gas price of 20 Gwei, this is at least 0.611 ETH. 
+- For the gas price of 100 Gwei, this is at least 3.055 ETH. 
+- For the gas price of 800 Gwei, this is at least 24.44 ETH. 
+
+It is paramount that the operators have some safety margin and consider the current gas price, stake, and
+unbonded value when funding their accounts.
+
 == Configuration
 
 === Network
