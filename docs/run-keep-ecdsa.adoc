@@ -54,19 +54,23 @@ operator is selected more frequently and is expected to submit more transactions
 
 Below is the average gas cost of the most important transactions the client is submitting:
 
-[%header,cols=2*]
+[%header,cols=3*]
 |===
 |TX
 |Gas Cost
+|Reimbursed
 
 |Submit keep public key
 |150 000
+|No
 
 |Submit keep signature
 |30 500
+|No
 
 |Update operator status in sortition pool
 |125 000
+|No
 |===
 
 For example, if we expect the operator to handle 100 keeps by submitting all the transactions mentioned
