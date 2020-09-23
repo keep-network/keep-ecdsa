@@ -191,6 +191,14 @@ func Initialize(
 				}
 				defer requestedSigners.remove(event.KeepAddress)
 
+				if keepsRegistry.HasSigner(event.KeepAddress) {
+					logger.Warning(
+						"signer for keep [%s] already registered;",
+						event.KeepAddress.String(),
+					)
+					return
+				}
+
 				generateKeyForKeep(
 					ctx,
 					ethereumChain,
