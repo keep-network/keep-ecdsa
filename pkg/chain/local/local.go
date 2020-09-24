@@ -96,9 +96,9 @@ func (lc *localChain) RegisterAsMemberCandidate(application common.Address) erro
 	return nil
 }
 
-// OnBondedECDSAKeepCreated is a callback that is invoked when an on-chain
-// notification of a new ECDSA keep creation is seen.
-func (lc *localChain) OnBondedECDSAKeepCreated(
+// OnKeepCreated is a callback that is invoked when an on-chain
+// notification of a new keep creation is seen.
+func (lc *localChain) OnKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
 ) subscription.EventSubscription {
 	lc.handlerMutex.Lock()

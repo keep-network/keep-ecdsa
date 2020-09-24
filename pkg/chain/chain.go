@@ -32,10 +32,10 @@ type KeepFactory interface {
 	// to a keep.
 	RegisterAsMemberCandidate(application common.Address) error
 
-	// OnBondedECDSAKeepCreated installs a callback that is invoked when an
+	// OnKeepCreated installs a callback that is invoked when an
 	// on-chain notification of a new bonded ECDSA keep creation is seen.
-	OnBondedECDSAKeepCreated(
-		handler func(event *BondedECDSAKeepCreatedEvent), // TODO: Write abstraction for that event
+	OnKeepCreated(
+		handler func(event *BondedECDSAKeepCreatedEvent),
 	) subscription.EventSubscription
 
 	// IsRegisteredForApplication checks if the operator is registered

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func TestOnBondedECDSAKeepCreated(t *testing.T) {
@@ -22,7 +22,7 @@ func TestOnBondedECDSAKeepCreated(t *testing.T) {
 		KeepAddress: keepAddress,
 	}
 
-	subscription := chain.OnBondedECDSAKeepCreated(
+	subscription := chain.OnKeepCreated(
 		func(event *eth.BondedECDSAKeepCreatedEvent) {
 			eventFired <- event
 		},

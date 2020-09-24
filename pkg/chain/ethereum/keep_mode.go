@@ -88,9 +88,9 @@ func (ksch *KeepStakeChainHandle) RegisterAsMemberCandidate(application common.A
 	return nil
 }
 
-// OnBondedECDSAKeepCreated installs a callback that is invoked when an on-chain
-// notification of a new ECDSA keep creation is seen.
-func (ksch *KeepStakeChainHandle) OnBondedECDSAKeepCreated(
+// OnKeepCreated installs a callback that is invoked when an on-chain
+// notification of a new keep creation is seen.
+func (ksch *KeepStakeChainHandle) OnKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
 ) subscription.EventSubscription {
 	subscription, err := ksch.keepFactoryContract.WatchBondedECDSAKeepCreated(
