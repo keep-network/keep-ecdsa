@@ -22,16 +22,16 @@ import "@keep-network/keep-core/contracts/StakeDelegatable.sol";
 
 import "@keep-network/sortition-pools/contracts/api/IFullyBackedBonding.sol";
 
-/// @title ETH Bonding
+/// @title Fully Backed Bonding
 /// @notice Contract holding deposits and delegations for ETH-only keeps'
 /// operators. An owner of the ETH can delegate ETH to an operator. The value
 /// of ETH the owner is willing to delegate should be deposited for the given
 /// operator.
-contract EthBonding is
+contract FullyBackedBonding is
+    IFullyBackedBonding,
     AbstractBonding,
     Authorizations,
-    StakeDelegatable,
-    IFullyBackedBonding
+    StakeDelegatable
 {
     event Delegated(address indexed owner, address indexed operator);
 
@@ -46,7 +46,7 @@ contract EthBonding is
 
     uint256 public initializationPeriod;
 
-    /// @notice Initializes Keep Bonding contract.
+    /// @notice Initializes Fully Backed Bonding contract.
     /// @param _keepRegistry Keep Registry contract address.
     /// @param _initializationPeriod To avoid certain attacks on group selection,
     /// recently delegated operators must wait for a specific period of time
