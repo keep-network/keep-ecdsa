@@ -14,7 +14,7 @@
 
 pragma solidity 0.5.17;
 
-import "./AbstractBonding.sol";
+import "../AbstractBonding.sol";
 
 import "@keep-network/keep-core/contracts/Authorizations.sol";
 import "@keep-network/keep-core/contracts/StakeDelegatable.sol";
