@@ -4,6 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// TODO: Rename to `KeepCreatedEvent`
 // BondedECDSAKeepCreatedEvent is an event emitted on a new keep creation.
 type BondedECDSAKeepCreatedEvent struct {
 	KeepAddress     common.Address   // keep contract address
