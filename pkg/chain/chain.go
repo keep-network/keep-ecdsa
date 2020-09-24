@@ -21,13 +21,13 @@ type Handle interface {
 	// BlockCounter returns a block counter.
 	BlockCounter() chain.BlockCounter
 
-	BondedECDSAKeepFactory
-	BondedECDSAKeep
+	KeepFactory
+	Keep
 }
 
-// BondedECDSAKeepFactory is an interface that provides ability to interact with
-// BondedECDSAKeepFactory ethereum contracts.
-type BondedECDSAKeepFactory interface {
+// KeepFactory is an interface that provides ability to interact with
+// keep factory ethereum contracts.
+type KeepFactory interface {
 	// RegisterAsMemberCandidate registers client as a candidate to be selected
 	// to a keep.
 	RegisterAsMemberCandidate(application common.Address) error
@@ -35,7 +35,7 @@ type BondedECDSAKeepFactory interface {
 	// OnBondedECDSAKeepCreated installs a callback that is invoked when an
 	// on-chain notification of a new bonded ECDSA keep creation is seen.
 	OnBondedECDSAKeepCreated(
-		handler func(event *BondedECDSAKeepCreatedEvent),
+		handler func(event *BondedECDSAKeepCreatedEvent), // TODO: Write abstraction for that event
 	) subscription.EventSubscription
 
 	// IsRegisteredForApplication checks if the operator is registered
@@ -65,9 +65,9 @@ type BondedECDSAKeepFactory interface {
 	GetKeepAtIndex(keepIndex *big.Int) (common.Address, error)
 }
 
-// BondedECDSAKeep is an interface that provides ability to interact with
-// BondedECDSAKeep ethereum contracts.
-type BondedECDSAKeep interface {
+// Keep is an interface that provides ability to interact with
+// keep ethereum contracts.
+type Keep interface {
 	// OnSignatureRequested installs a callback that is invoked when an on-chain
 	// notification of a new signing request for a given keep is seen.
 	OnSignatureRequested(
