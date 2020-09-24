@@ -3,8 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -102,15 +103,25 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("failed to connect to ethereum node: [%v]", err)
 	}
 
-	stakeMonitor, err := ethereumChain.StakeMonitor()
+	// TODO: Create keepStakeChainHandle only if `BondedECDSAKeepFactory`
+	//  is present in the config.
+	keepStakeChainHandle, err := ethereum.NewKeepStakeHandle(
+		ethereumChain,
+		&config.Ethereum,
+	)
 	if err != nil {
-		return fmt.Errorf("error obtaining stake monitor handle: [%v]", err)
+		return fmt.Errorf("failed to enable keep stake mode: [%v]", err)
 	}
-	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
+
+	keepStakeMonitor, err := keepStakeChainHandle.StakeMonitor()
+	if err != nil {
+		return fmt.Errorf("error obtaining keep stake monitor handle: [%v]", err)
+	}
+	hasMinimumStake, err := keepStakeMonitor.HasMinimumStake(
 		ethereumKey.Address.Hex(),
 	)
 	if err != nil {
-		return fmt.Errorf("could not check the stake: [%v]", err)
+		return fmt.Errorf("could not check the keep stake: [%v]", err)
 	}
 	if !hasMinimumStake {
 		return fmt.Errorf(
@@ -120,6 +131,9 @@ func Start(c *cli.Context) error {
 				"contract has been authorized to operate on the stake",
 		)
 	}
+
+	// TODO: Create ethStakeChainHandle only if `FullyBackedBondedECDSAKeepFactory`
+	//  is present in the config.
 
 	operatorPrivateKey, operatorPublicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
 
@@ -132,7 +146,8 @@ func Start(c *cli.Context) error {
 		config.LibP2P,
 		networkPrivateKey,
 		libp2p.ProtocolECDSA,
-		firewall.NewStakeOrActiveKeepPolicy(ethereumChain, stakeMonitor),
+		// TODO: Introduce firewall composite to check both keep and eth stakes.
+		firewall.NewStakeOrActiveKeepPolicy(keepStakeChainHandle, keepStakeMonitor),
 		retransmission.NewTimeTicker(ctx, 1*time.Second),
 		libp2p.WithRoutingTableRefreshPeriod(routingTableRefreshPeriod),
 	)
@@ -159,16 +174,21 @@ func Start(c *cli.Context) error {
 	client.Initialize(
 		ctx,
 		operatorPublicKey,
-		ethereumChain,
+		keepStakeChainHandle,
 		networkProvider,
-		persistence,
+		persistence, // TODO: Handle only the `keep stake` part of registered keeps.
 		sanctionedApplications,
 		&config.Client,
 		&config.TSS,
 	)
-	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
+	logger.Debugf(
+		"initialized operator with address: [%s] for keep stake mode",
+		ethereumKey.Address.String(),
+	)
 
-	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
+	// TODO: Invoke `client.Initialize` for `ethStakeChainHandle`.
+
+	initializeMetrics(ctx, config, networkProvider, keepStakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(config, networkProvider)
 
 	logger.Info("client started")

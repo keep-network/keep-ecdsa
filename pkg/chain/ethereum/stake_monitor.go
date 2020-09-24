@@ -9,8 +9,13 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+type stakeDataProvider interface {
+	HasMinimumStake(address common.Address) (bool, error)
+	BalanceOf(address common.Address) (*big.Int, error)
+}
+
 type ethereumStakeMonitor struct {
-	ethereum *EthereumChain
+	dataProvider stakeDataProvider
 }
 
 func (esm *ethereumStakeMonitor) HasMinimumStake(address string) (bool, error) {
@@ -18,7 +23,7 @@ func (esm *ethereumStakeMonitor) HasMinimumStake(address string) (bool, error) {
 		return false, fmt.Errorf("not a valid ethereum address: %v", address)
 	}
 
-	return esm.ethereum.HasMinimumStake(common.HexToAddress(address))
+	return esm.dataProvider.HasMinimumStake(common.HexToAddress(address))
 }
 
 func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error) {
@@ -27,18 +32,14 @@ func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error)
 	}
 
 	return &ethereumStaker{
-		address:  address,
-		ethereum: esm.ethereum,
+		address:      address,
+		dataProvider: esm.dataProvider,
 	}, nil
 }
 
-func (ec *EthereumChain) StakeMonitor() (chain.StakeMonitor, error) {
-	return &ethereumStakeMonitor{ec}, nil
-}
-
 type ethereumStaker struct {
-	address  string
-	ethereum *EthereumChain
+	address      string
+	dataProvider stakeDataProvider
 }
 
 func (es *ethereumStaker) Address() relaychain.StakerAddress {
@@ -46,5 +47,5 @@ func (es *ethereumStaker) Address() relaychain.StakerAddress {
 }
 
 func (es *ethereumStaker) Stake() (*big.Int, error) {
-	return es.ethereum.BalanceOf(common.HexToAddress(es.address))
+	return es.dataProvider.BalanceOf(common.HexToAddress(es.address))
 }

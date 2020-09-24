@@ -6,10 +6,11 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain"
+
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/ipfs/go-log"
-
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
@@ -18,12 +19,49 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
 )
 
-var logger = log.Logger("keep-chain-eth-ethereum")
+type KeepStakeChainHandle struct {
+	*EthereumChain
+
+	keepFactoryContract *contract.BondedECDSAKeepFactory
+}
+
+func NewKeepStakeHandle(
+	ethereumChain *EthereumChain,
+	config *ethereum.Config,
+) (*KeepStakeChainHandle, error) {
+	keepFactoryContractAddress, err := config.ContractAddress(
+		BondedECDSAKeepFactoryContractName,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	keepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
+		*keepFactoryContractAddress,
+		ethereumChain.accountKey,
+		ethereumChain.client,
+		ethereumChain.nonceManager,
+		ethereumChain.miningWaiter,
+		ethereumChain.transactionMutex,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &KeepStakeChainHandle{
+		EthereumChain:       ethereumChain,
+		keepFactoryContract: keepFactoryContract,
+	}, nil
+}
+
+func (ksch *KeepStakeChainHandle) StakeMonitor() (chain.StakeMonitor, error) {
+	return &ethereumStakeMonitor{ksch}, nil
+}
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
-func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) error {
-	gasEstimate, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidateGasEstimate(application)
+func (ksch *KeepStakeChainHandle) RegisterAsMemberCandidate(application common.Address) error {
+	gasEstimate, err := ksch.keepFactoryContract.RegisterMemberCandidateGasEstimate(application)
 	if err != nil {
 		return fmt.Errorf("failed to estimate gas [%v]", err)
 	}
@@ -35,7 +73,7 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 	// on a different state of the pool. We add 20% safety margin to the original
 	// gas estimation to account for that.
 	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
-	transaction, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidate(
+	transaction, err := ksch.keepFactoryContract.RegisterMemberCandidate(
 		application,
 		ethutil.TransactionOptions{
 			GasLimit: uint64(gasEstimateWithMargin),
@@ -52,10 +90,10 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 
 // OnBondedECDSAKeepCreated installs a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
-func (ec *EthereumChain) OnBondedECDSAKeepCreated(
+func (ksch *KeepStakeChainHandle) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
 ) subscription.EventSubscription {
-	subscription, err := ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
+	subscription, err := ksch.keepFactoryContract.WatchBondedECDSAKeepCreated(
 		func(
 			KeepAddress common.Address,
 			Members []common.Address,
@@ -85,11 +123,11 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 }
 
 // OnKeepClosed installs a callback that is invoked on-chain when keep is closed.
-func (ec *EthereumChain) OnKeepClosed(
+func (ksch *KeepStakeChainHandle) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
@@ -105,11 +143,11 @@ func (ec *EthereumChain) OnKeepClosed(
 
 // OnKeepTerminated installs a callback that is invoked on-chain when keep
 // is terminated.
-func (ec *EthereumChain) OnKeepTerminated(
+func (ksch *KeepStakeChainHandle) OnKeepTerminated(
 	keepAddress common.Address,
 	handler func(event *eth.KeepTerminatedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
@@ -125,11 +163,11 @@ func (ec *EthereumChain) OnKeepTerminated(
 
 // OnPublicKeyPublished installs a callback that is invoked when an on-chain
 // event of a published public key was emitted.
-func (ec *EthereumChain) OnPublicKeyPublished(
+func (ksch *KeepStakeChainHandle) OnPublicKeyPublished(
 	keepAddress common.Address,
 	handler func(event *eth.PublicKeyPublishedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
@@ -151,11 +189,11 @@ func (ec *EthereumChain) OnPublicKeyPublished(
 
 // OnConflictingPublicKeySubmitted installs a callback that is invoked when an
 // on-chain notification of a conflicting public key submission is seen.
-func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
+func (ksch *KeepStakeChainHandle) OnConflictingPublicKeySubmitted(
 	keepAddress common.Address,
 	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
@@ -180,11 +218,11 @@ func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 
 // OnSignatureRequested installs a callback that is invoked on-chain
 // when a keep's signature is requested.
-func (ec *EthereumChain) OnSignatureRequested(
+func (ksch *KeepStakeChainHandle) OnSignatureRequested(
 	keepAddress common.Address,
 	handler func(event *eth.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
@@ -208,11 +246,11 @@ func (ec *EthereumChain) OnSignatureRequested(
 
 // SubmitKeepPublicKey submits a public key to a keep contract deployed under
 // a given address.
-func (ec *EthereumChain) SubmitKeepPublicKey(
+func (ksch *KeepStakeChainHandle) SubmitKeepPublicKey(
 	keepAddress common.Address,
 	publicKey [64]byte,
 ) error {
-	keepContract, err := ec.getKeepContract(keepAddress)
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return err
 	}
@@ -228,7 +266,10 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 			return err
 		}
 
-		logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
+		logger.Debugf(
+			"submitted SubmitPublicKey transaction with hash: [%x]",
+			transaction.Hash(),
+		)
 		return nil
 	}
 
@@ -237,14 +278,14 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	// case is when Ethereum nodes are behind a load balancer and not fully synced
 	// with each other. To mitigate this issue, a client will retry submitting
 	// a public key up to 10 times with a 250ms interval.
-	if err := ec.withRetry(submitPubKey); err != nil {
+	if err := ksch.withRetry(submitPubKey); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ec *EthereumChain) withRetry(fn func() error) error {
+func (ksch *KeepStakeChainHandle) withRetry(fn func() error) error {
 	const numberOfRetries = 10
 	const delay = 12 * time.Second
 
@@ -262,14 +303,16 @@ func (ec *EthereumChain) withRetry(fn func() error) error {
 	}
 }
 
-func (ec *EthereumChain) getKeepContract(address common.Address) (*contract.BondedECDSAKeep, error) {
+func (ksch *KeepStakeChainHandle) getKeepContract(
+	address common.Address,
+) (*contract.BondedECDSAKeep, error) {
 	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
 		address,
-		ec.accountKey,
-		ec.client,
-		ec.nonceManager,
-		ec.miningWaiter,
-		ec.transactionMutex,
+		ksch.accountKey,
+		ksch.client,
+		ksch.nonceManager,
+		ksch.miningWaiter,
+		ksch.transactionMutex,
 	)
 	if err != nil {
 		return nil, err
@@ -280,11 +323,11 @@ func (ec *EthereumChain) getKeepContract(address common.Address) (*contract.Bond
 
 // SubmitSignature submits a signature to a keep contract deployed under a
 // given address.
-func (ec *EthereumChain) SubmitSignature(
+func (ksch *KeepStakeChainHandle) SubmitSignature(
 	keepAddress common.Address,
 	signature *ecdsa.Signature,
 ) error {
-	keepContract, err := ec.getKeepContract(keepAddress)
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return err
 	}
@@ -308,15 +351,21 @@ func (ec *EthereumChain) SubmitSignature(
 		return err
 	}
 
-	logger.Debugf("submitted SubmitSignature transaction with hash: [%x]", transaction.Hash())
+	logger.Debugf(
+		"submitted SubmitSignature transaction with hash: [%x]",
+		transaction.Hash(),
+	)
 
 	return nil
 }
 
 // IsAwaitingSignature checks if the keep is waiting for a signature to be
 // calculated for the given digest.
-func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+func (ksch *KeepStakeChainHandle) IsAwaitingSignature(
+	keepAddress common.Address,
+	digest [32]byte,
+) (bool, error) {
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return false, err
 	}
@@ -325,8 +374,10 @@ func (ec *EthereumChain) IsAwaitingSignature(keepAddress common.Address, digest 
 }
 
 // IsActive checks for current state of a keep on-chain.
-func (ec *EthereumChain) IsActive(keepAddress common.Address) (bool, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+func (ksch *KeepStakeChainHandle) IsActive(
+	keepAddress common.Address,
+) (bool, error) {
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return false, err
 	}
@@ -337,47 +388,59 @@ func (ec *EthereumChain) IsActive(keepAddress common.Address) (bool, error) {
 // HasMinimumStake returns true if the specified address is staked.  False will
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.
-func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
-	return ec.bondedECDSAKeepFactoryContract.HasMinimumStake(address)
+func (ksch *KeepStakeChainHandle) HasMinimumStake(
+	address common.Address,
+) (bool, error) {
+	return ksch.keepFactoryContract.HasMinimumStake(address)
 }
 
 // BalanceOf returns the stake balance of the specified address.
-func (ec *EthereumChain) BalanceOf(address common.Address) (*big.Int, error) {
-	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
+func (ksch *KeepStakeChainHandle) BalanceOf(
+	address common.Address,
+) (*big.Int, error) {
+	return ksch.keepFactoryContract.BalanceOf(address)
 }
 
 // IsRegisteredForApplication checks if the operator is registered
 // as a signer candidate in the factory for the given application.
-func (ec *EthereumChain) IsRegisteredForApplication(application common.Address) (bool, error) {
-	return ec.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
-		ec.Address(),
+func (ksch *KeepStakeChainHandle) IsRegisteredForApplication(
+	application common.Address,
+) (bool, error) {
+	return ksch.keepFactoryContract.IsOperatorRegistered(
+		ksch.Address(),
 		application,
 	)
 }
 
 // IsEligibleForApplication checks if the operator is eligible to register
 // as a signer candidate for the given application.
-func (ec *EthereumChain) IsEligibleForApplication(application common.Address) (bool, error) {
-	return ec.bondedECDSAKeepFactoryContract.IsOperatorEligible(
-		ec.Address(),
+func (ksch *KeepStakeChainHandle) IsEligibleForApplication(
+	application common.Address,
+) (bool, error) {
+	return ksch.keepFactoryContract.IsOperatorEligible(
+		ksch.Address(),
 		application,
 	)
 }
 
 // IsStatusUpToDateForApplication checks if the operator's status
 // is up to date in the signers' pool of the given application.
-func (ec *EthereumChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
-	return ec.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
-		ec.Address(),
+func (ksch *KeepStakeChainHandle) IsStatusUpToDateForApplication(
+	application common.Address,
+) (bool, error) {
+	return ksch.keepFactoryContract.IsOperatorUpToDate(
+		ksch.Address(),
 		application,
 	)
 }
 
 // UpdateStatusForApplication updates the operator's status in the signers'
 // pool for the given application.
-func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) error {
-	transaction, err := ec.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
-		ec.Address(),
+func (ksch *KeepStakeChainHandle) UpdateStatusForApplication(
+	application common.Address,
+) error {
+	transaction, err := ksch.keepFactoryContract.UpdateOperatorStatus(
+		ksch.Address(),
 		application,
 	)
 	if err != nil {
@@ -394,25 +457,29 @@ func (ec *EthereumChain) UpdateStatusForApplication(application common.Address) 
 
 // IsOperatorAuthorized checks if the factory has the authorization to
 // operate on stake represented by the provided operator.
-func (ec *EthereumChain) IsOperatorAuthorized(operator common.Address) (bool, error) {
-	return ec.bondedECDSAKeepFactoryContract.IsOperatorAuthorized(operator)
+func (ksch *KeepStakeChainHandle) IsOperatorAuthorized(
+	operator common.Address,
+) (bool, error) {
+	return ksch.keepFactoryContract.IsOperatorAuthorized(operator)
 }
 
 // GetKeepCount returns number of keeps.
-func (ec *EthereumChain) GetKeepCount() (*big.Int, error) {
-	return ec.bondedECDSAKeepFactoryContract.GetKeepCount()
+func (ksch *KeepStakeChainHandle) GetKeepCount() (*big.Int, error) {
+	return ksch.keepFactoryContract.GetKeepCount()
 }
 
 // GetKeepAtIndex returns the address of the keep at the given index.
-func (ec *EthereumChain) GetKeepAtIndex(
+func (ksch *KeepStakeChainHandle) GetKeepAtIndex(
 	keepIndex *big.Int,
 ) (common.Address, error) {
-	return ec.bondedECDSAKeepFactoryContract.GetKeepAtIndex(keepIndex)
+	return ksch.keepFactoryContract.GetKeepAtIndex(keepIndex)
 }
 
 // LatestDigest returns the latest digest requested to be signed.
-func (ec *EthereumChain) LatestDigest(keepAddress common.Address) ([32]byte, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+func (ksch *KeepStakeChainHandle) LatestDigest(
+	keepAddress common.Address,
+) ([32]byte, error) {
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -423,11 +490,11 @@ func (ec *EthereumChain) LatestDigest(keepAddress common.Address) ([32]byte, err
 // SignatureRequestedBlock returns block number from the moment when a
 // signature was requested for the given digest from a keep.
 // If a signature was not requested for the given digest, returns 0.
-func (ec *EthereumChain) SignatureRequestedBlock(
+func (ksch *KeepStakeChainHandle) SignatureRequestedBlock(
 	keepAddress common.Address,
 	digest [32]byte,
 ) (uint64, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return 0, err
 	}
@@ -442,8 +509,10 @@ func (ec *EthereumChain) SignatureRequestedBlock(
 
 // GetPublicKey returns keep's public key. If there is no public key yet,
 // an empty slice is returned.
-func (ec *EthereumChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+func (ksch *KeepStakeChainHandle) GetPublicKey(
+	keepAddress common.Address,
+) ([]uint8, error) {
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return []uint8{}, err
 	}
@@ -452,10 +521,10 @@ func (ec *EthereumChain) GetPublicKey(keepAddress common.Address) ([]uint8, erro
 }
 
 // GetMembers returns keep's members.
-func (ec *EthereumChain) GetMembers(
+func (ksch *KeepStakeChainHandle) GetMembers(
 	keepAddress common.Address,
 ) ([]common.Address, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return []common.Address{}, err
 	}
@@ -464,10 +533,10 @@ func (ec *EthereumChain) GetMembers(
 }
 
 // GetHonestThreshold returns keep's honest threshold.
-func (ec *EthereumChain) GetHonestThreshold(
+func (ksch *KeepStakeChainHandle) GetHonestThreshold(
 	keepAddress common.Address,
 ) (uint64, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return 0, err
 	}
@@ -481,8 +550,10 @@ func (ec *EthereumChain) GetHonestThreshold(
 }
 
 // GetOpenedTimestamp returns timestamp when the keep was created.
-func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+func (ksch *KeepStakeChainHandle) GetOpenedTimestamp(
+	keepAddress common.Address,
+) (time.Time, error) {
+	keepContract, err := ksch.getKeepContract(keepAddress)
 	if err != nil {
 		return time.Unix(0, 0), err
 	}

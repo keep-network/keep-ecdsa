@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,9 +17,9 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
+
+var logger = log.Logger("keep-chain-eth-ethereum")
 
 var (
 	// DefaultMiningCheckInterval is the default interval in which transaction
@@ -36,13 +38,12 @@ var (
 
 // EthereumChain is an implementation of ethereum blockchain interface.
 type EthereumChain struct {
-	config                         *ethereum.Config
-	accountKey                     *keystore.Key
-	client                         bind.ContractBackend
-	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory // TODO: remove
-	blockCounter                   *blockcounter.EthereumBlockCounter
-	miningWaiter                   *ethutil.MiningWaiter
-	nonceManager                   *ethutil.NonceManager
+	config       *ethereum.Config
+	accountKey   *keystore.Key
+	client       bind.ContractBackend
+	blockCounter *blockcounter.EthereumBlockCounter
+	miningWaiter *ethutil.MiningWaiter
+	nonceManager *ethutil.NonceManager
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -61,7 +62,7 @@ type EthereumChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, error) {
+func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
