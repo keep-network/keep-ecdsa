@@ -12,7 +12,6 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/keep-core/pkg/chain"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
@@ -20,11 +19,6 @@ import (
 )
 
 var logger = log.Logger("keep-chain-eth-ethereum")
-
-// Address returns client's ethereum address.
-func (ec *EthereumChain) Address() common.Address {
-	return ec.accountKey.Address
-}
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
@@ -350,11 +344,6 @@ func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
 // BalanceOf returns the stake balance of the specified address.
 func (ec *EthereumChain) BalanceOf(address common.Address) (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
-}
-
-// BlockCounter returns a block counter.
-func (ec *EthereumChain) BlockCounter() chain.BlockCounter {
-	return ec.blockCounter
 }
 
 // IsRegisteredForApplication checks if the operator is registered

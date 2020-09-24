@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/chain"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
@@ -38,7 +39,7 @@ type EthereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
 	client                         bind.ContractBackend
-	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
+	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory // TODO: remove
 	blockCounter                   *blockcounter.EthereumBlockCounter
 	miningWaiter                   *ethutil.MiningWaiter
 	nonceManager                   *ethutil.NonceManager
@@ -88,22 +89,6 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
 	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
 
-	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(BondedECDSAKeepFactoryContractName)
-	if err != nil {
-		return nil, err
-	}
-	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
-		*bondedECDSAKeepFactoryContractAddress,
-		accountKey,
-		wrappedClient,
-		nonceManager,
-		miningWaiter,
-		transactionMutex,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	blockCounter, err := blockcounter.CreateBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -113,14 +98,13 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 	}
 
 	return &EthereumChain{
-		config:                         config,
-		accountKey:                     accountKey,
-		client:                         wrappedClient,
-		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
-		blockCounter:                   blockCounter,
-		nonceManager:                   nonceManager,
-		miningWaiter:                   miningWaiter,
-		transactionMutex:               transactionMutex,
+		config:           config,
+		accountKey:       accountKey,
+		client:           wrappedClient,
+		blockCounter:     blockCounter,
+		nonceManager:     nonceManager,
+		miningWaiter:     miningWaiter,
+		transactionMutex: transactionMutex,
 	}, nil
 }
 
@@ -149,4 +133,14 @@ func addClientWrappers(
 	}
 
 	return loggingBackend
+}
+
+// Address returns client's ethereum address.
+func (ec *EthereumChain) Address() common.Address {
+	return ec.accountKey.Address
+}
+
+// BlockCounter returns a block counter.
+func (ec *EthereumChain) BlockCounter() chain.BlockCounter {
+	return ec.blockCounter
 }
