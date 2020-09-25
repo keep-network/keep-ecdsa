@@ -1,0 +1,54 @@
+pragma solidity 0.5.17;
+
+import "../../contracts/fully-backed/FullyBackedBondedECDSAKeep.sol";
+import "../../contracts/CloneFactory.sol";
+
+import {
+    AuthorityDelegator
+} from "@keep-network/keep-core/contracts/Authorizations.sol";
+
+/// @title Fully Backed Bonded ECDSA Keep Factory Stub using clone factory.
+/// @dev This contract is for testing purposes only.
+contract FullyBackedBondedECDSAKeepCloneFactoryStub is
+    CloneFactory,
+    AuthorityDelegator
+{
+    address public masterKeepAddress;
+
+    constructor(address _masterKeepAddress) public {
+        masterKeepAddress = _masterKeepAddress;
+    }
+
+    event FullyBackedBondedECDSAKeepCreated(address keepAddress);
+
+    function newKeep(
+        address _owner,
+        address[] calldata _members,
+        uint256 _honestThreshold,
+        address _keepBonding,
+        address payable _keepFactory
+    ) external payable returns (address keepAddress) {
+        keepAddress = createClone(masterKeepAddress);
+        assert(isClone(masterKeepAddress, keepAddress));
+
+        FullyBackedBondedECDSAKeep keep = FullyBackedBondedECDSAKeep(
+            keepAddress
+        );
+        keep.initialize(
+            _owner,
+            _members,
+            _honestThreshold,
+            _keepBonding,
+            _keepFactory
+        );
+
+        emit FullyBackedBondedECDSAKeepCreated(keepAddress);
+    }
+
+    function __isRecognized(address _delegatedAuthorityRecipient)
+        external
+        returns (bool)
+    {
+        return true;
+    }
+}
