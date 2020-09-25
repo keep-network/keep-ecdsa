@@ -44,7 +44,7 @@ contract FullyBackedBonding is
     // TODO: Decide on the final value and if we want a setter for it.
     uint256 public constant MINIMUM_DELEGATION_DEPOSIT = 12345;
 
-    uint256 public initializationPeriod;
+    uint256 public initializationPeriod; // varies between mainnet and testnet
 
     /// @notice Initializes Fully Backed Bonding contract.
     /// @param _keepRegistry Keep Registry contract address.

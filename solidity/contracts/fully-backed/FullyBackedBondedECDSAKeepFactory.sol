@@ -60,9 +60,9 @@ contract FullyBackedBondedECDSAKeepFactory is
     uint256 public constant minimumBond = 20e18; // 20 ETH // TODO: Decide on value
 
     // Signer candidates in bonded sortition pool are weighted by their eligible
-    // stake divided by a constant divisor. The divisor is set to 1 KEEP so that
-    // all KEEPs in eligible stake matter when calculating operator's eligible
-    // weight for signer selection.
+    // stake divided by a constant divisor. The divisor is set to 1 ETH so that
+    // all ETHs in available unbonded value matter when calculating operator's
+    // eligible weight for signer selection.
     uint256 public constant bondWeightDivisor = 1e18; // 1 ETH // TODO: Decide on value
 
     // Notification that a new keep has been created.
@@ -118,7 +118,8 @@ contract FullyBackedBondedECDSAKeepFactory is
     /// @param _honestThreshold Minimum number of honest keep signers.
     /// @param _owner Address of the keep owner.
     /// @param _bond Value of ETH bond required from the keep in wei.
-    /// @param _stakeLockDuration Stake lock duration in seconds.
+    /// @param _stakeLockDuration Stake lock duration in seconds. Ignored by
+    /// this implementation.
     /// @return Created keep address.
     function openKeep(
         uint256 _groupSize,
