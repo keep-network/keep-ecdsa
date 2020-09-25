@@ -49,6 +49,8 @@ contract FullyBackedBondedECDSAKeep is AbstractBondedECDSAKeep {
 
         bonding = FullyBackedBonding(_bonding);
         keepFactory = FullyBackedBondedECDSAKeepFactory(_keepFactory);
+
+        bonding.claimDelegatedAuthority(_keepFactory);
     }
 
     function slashForSignatureFraud() internal {
