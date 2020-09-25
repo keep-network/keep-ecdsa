@@ -8,13 +8,25 @@ const BondedECDSAKeepVendorImplV1 = artifacts.require(
   "BondedECDSAKeepVendorImplV1"
 )
 
+const FullyBackedBonding = artifacts.require("FullyBackedBonding")
+const FullyBackedBondedECDSAKeep = artifacts.require(
+  "FullyBackedBondedECDSAKeep"
+)
+const FullyBackedBondedECDSAKeepFactory = artifacts.require(
+  "FullyBackedBondedECDSAKeepFactory"
+)
+
 const EthBonding = artifacts.require("EthBonding")
 
 const {
   deployBondedSortitionPoolFactory,
+  deployFullyBackedSortitionPoolFactory,
 } = require("@keep-network/sortition-pools/migrations/scripts/deployContracts")
 const BondedSortitionPoolFactory = artifacts.require(
   "BondedSortitionPoolFactory"
+)
+const FullyBackedSortitionPoolFactory = artifacts.require(
+  "FullyBackedSortitionPoolFactory"
 )
 
 let {
@@ -26,6 +38,7 @@ let {
 
 module.exports = async function (deployer) {
   await deployBondedSortitionPoolFactory(artifacts, deployer)
+  await deployFullyBackedSortitionPoolFactory(artifacts, deployer)
 
   if (process.env.TEST) {
     TokenStakingStub = artifacts.require("TokenStakingStub")
@@ -71,6 +84,19 @@ module.exports = async function (deployer) {
     BondedECDSAKeepVendor,
     BondedECDSAKeepVendorImplV1.address,
     implInitializeCallData
+  )
+
+  // ETH-only Staking
+  await deployer.deploy(FullyBackedBonding, RegistryAddress)
+
+  await deployer.deploy(FullyBackedBondedECDSAKeep)
+
+  await deployer.deploy(
+    FullyBackedBondedECDSAKeepFactory,
+    FullyBackedBondedECDSAKeep.address,
+    FullyBackedSortitionPoolFactory.address,
+    FullyBackedBonding.address,
+    RandomBeaconAddress
   )
 
   // ETH-only backed bonding
