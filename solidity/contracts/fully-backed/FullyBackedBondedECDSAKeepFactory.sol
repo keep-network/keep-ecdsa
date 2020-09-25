@@ -22,6 +22,10 @@ import "../KeepCreator.sol";
 import "../GroupSelectionSeed.sol";
 import "../CandidatesPools.sol";
 
+import {
+    AuthorityDelegator
+} from "@keep-network/keep-core/contracts/Authorizations.sol";
+
 import "@keep-network/sortition-pools/contracts/api/IFullyBackedBonding.sol";
 import "@keep-network/sortition-pools/contracts/FullyBackedSortitionPoolFactory.sol";
 import "@keep-network/sortition-pools/contracts/FullyBackedSortitionPool.sol";
