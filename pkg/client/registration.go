@@ -61,7 +61,11 @@ RegistrationLoop:
 			// once the registration is confirmed or if the client is already
 			// registered, we can start to monitor the status
 			if err := monitorSignerPoolStatus(ctx, ethereumChain, application); err != nil {
-				logger.Errorf("failed on signer pool status monitoring: [%v]", err)
+				logger.Errorf(
+					"failed on signer pool status monitoring; please inspect "+
+						"signer's unbonded value and stake: [%v]",
+					err,
+				)
 				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 				continue RegistrationLoop
 			}
