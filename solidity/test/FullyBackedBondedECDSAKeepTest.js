@@ -1642,6 +1642,8 @@ describe("FullyBackedBondedECDSAKeep", function () {
     await delegate(members[0], beneficiaries[0], authorizers[0])
     await delegate(members[1], beneficiaries[1], authorizers[1])
     await delegate(members[2], beneficiaries[2], authorizers[2])
+
+    await time.increase(await bonding.DELEGATION_LOCK_PERIOD.call())
   }
 
   async function delegate(operator, beneficiary, authorizer, unbondedValue) {

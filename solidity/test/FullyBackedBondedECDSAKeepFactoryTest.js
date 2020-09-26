@@ -56,6 +56,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
 
   const stakeLockDuration = 0 // parameter is ignored by FullyBackedBondedECDSAKeepFactory implementation
   const delegationInitPeriod = time.duration.hours(12)
+  const delegationLockPeriod = time.duration.days(1)
 
   before(async () => {
     await FullyBackedSortitionPoolFactory.detectNetwork()
@@ -1555,7 +1556,8 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
     }
 
-    await time.increase(delegationInitPeriod.addn(1))
+    // delegationLockPeriod > delegationInitPeriod so we wait the longer one.
+    await time.increase(delegationLockPeriod.addn(1))
   }
 
   async function delegate(operator, beneficiary, authorizer, unbondedValue) {

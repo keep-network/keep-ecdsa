@@ -227,11 +227,14 @@ describe("FullyBackedBonding", function () {
   })
 
   describe("withdraw", async () => {
-    let initialDeposit
     const value = new BN(1000)
+
+    let initialDeposit
+    let delegationLockPeriod
 
     beforeEach(async () => {
       initialDeposit = minimumDelegationValue
+      delegationLockPeriod = await bonding.DELEGATION_LOCK_PERIOD.call()
 
       await bonding.delegate(operator, beneficiary, authorizer, {
         from: owner,
@@ -241,6 +244,8 @@ describe("FullyBackedBonding", function () {
       await bonding.authorizeOperatorContract(operator, bondCreator, {
         from: authorizer,
       })
+
+      await time.increase(delegationLockPeriod.addn(1))
     })
 
     it("can be called by operator", async () => {
@@ -251,6 +256,26 @@ describe("FullyBackedBonding", function () {
     it("can be called by delegation owner", async () => {
       await bonding.withdraw(value, operator, {from: owner})
       // ok, no reverts
+    })
+
+    it("cannot be called before delegation lock period passes", async () => {
+      const operator2 = await web3.eth.personal.newAccount("pass")
+
+      await bonding.delegate(operator2, beneficiary, authorizer, {
+        from: owner,
+        value: initialDeposit,
+      })
+
+      await bonding.authorizeOperatorContract(operator2, bondCreator, {
+        from: authorizer,
+      })
+
+      await time.increase(delegationLockPeriod)
+
+      await expectRevert(
+        bonding.withdraw(value, operator2, {from: owner}),
+        "Delegation lock period has not passed yet"
+      )
     })
 
     it("cannot be called by authorizer", async () => {
@@ -333,6 +358,8 @@ describe("FullyBackedBonding", function () {
         from: owner,
         value: initialDeposit,
       })
+
+      await time.increase(delegationLockPeriod.addn(1))
 
       await expectRevert(
         bonding.withdraw(value, operator2, {from: operator2}),

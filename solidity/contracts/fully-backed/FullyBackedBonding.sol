@@ -41,8 +41,13 @@ contract FullyBackedBonding is
         address indexed authorizer
     );
 
-    // TODO: Decide on the final value and if we want a setter for it.
-    uint256 public constant MINIMUM_DELEGATION_DEPOSIT = 12345;
+    // The ether value (in wei) that should be passed along with the delegation
+    // and deposited for bonding.
+    uint256 public constant MINIMUM_DELEGATION_DEPOSIT = 12345; // TODO: Decide right value
+
+    // Once a delegation to an operator is received the delegator has to wait for
+    // specific time period before being able to pull out the funds.
+    uint256 public constant DELEGATION_LOCK_PERIOD = 1 days; // TODO: Decide right value
 
     uint256 public initializationPeriod; // varies between mainnet and testnet
 
@@ -121,13 +126,20 @@ contract FullyBackedBonding is
     /// This function can be called only by:
     /// - operator,
     /// - owner of the stake.
-    ///
+    /// Withdraw cannot be performed immediately after delegation to protect
+    /// from a griefing. It is required that delegator waits specific period
+    /// of time before they can pull out the funds deposited on delegation.
     /// @param amount Value to withdraw in wei.
     /// @param operator Address of the operator.
     function withdraw(uint256 amount, address operator) public {
         require(
             msg.sender == operator || msg.sender == ownerOf(operator),
             "Only operator or the owner is allowed to withdraw bond"
+        );
+
+        require(
+            hasDelegationLockPassed(operator),
+            "Delegation lock period has not passed yet"
         );
 
         withdrawBond(amount, operator);
@@ -160,5 +172,20 @@ contract FullyBackedBonding is
         return
             block.timestamp >
             operatorParams.getCreationTimestamp().add(initializationPeriod);
+    }
+
+    /// @notice Has lock period passed for a delegation.
+    /// @param operator Address of the operator.
+    /// @return True if delegation lock period passed, false otherwise.
+    function hasDelegationLockPassed(address operator)
+        internal
+        view
+        returns (bool)
+    {
+        return
+            block.timestamp >
+            operators[operator].packedParams.getCreationTimestamp().add(
+                DELEGATION_LOCK_PERIOD
+            );
     }
 }
