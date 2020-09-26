@@ -10,7 +10,15 @@ import (
 )
 
 const statusCheckIntervalBlocks = 100
+
+// retryDelay defines the delay between retries related to the registration logic
+// that do not have their own specific values (like for example `eligibilityRetryDelay`
+// for sortition pool join eligibility checks).
 const retryDelay = 1 * time.Second
+
+// eligibilityRetryDelay defines the delay between checks whether the operator
+// is eligible to join the sortition pool.
+const eligibilityRetryDelay = 20 * time.Minute
 
 // checkStatusAndRegisterForApplication checks whether the operator is
 // registered as a member candidate for keep for the given application.
@@ -139,7 +147,7 @@ func registerAsMemberCandidateWhenEligible(
 					"operator is not eligible for application [%s]",
 					application.String(),
 				)
-				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
+				time.Sleep(eligibilityRetryDelay) // TODO: #413 Replace with backoff.
 				continue
 			}
 
