@@ -43,6 +43,7 @@ func Initialize(
 ) {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
+	// TODO: Use one tss node for both keep and eth staking modes.
 	tssNode := node.NewNode(ethereumChain, networkProvider, tssConfig)
 
 	tssNode.InitializeTSSPreParamsPool()
