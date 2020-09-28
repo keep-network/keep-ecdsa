@@ -173,7 +173,7 @@ func Initialize(
 	)
 
 	// Watch for new keeps creation.
-	ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
+	_ = ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(
 			"new keep [%s] created with members: [%x]\n",
 			event.KeepAddress.String(),
@@ -183,13 +183,21 @@ func Initialize(
 		if event.IsMember(ethereumChain.Address()) {
 			go func(event *eth.BondedECDSAKeepCreatedEvent) {
 				if ok := requestedSigners.add(event.KeepAddress); !ok {
-					logger.Errorf(
+					logger.Warningf(
 						"keep creation event for keep [%s] already registered",
 						event.KeepAddress.String(),
 					)
 					return
 				}
 				defer requestedSigners.remove(event.KeepAddress)
+
+				if keepsRegistry.HasSigner(event.KeepAddress) {
+					logger.Warning(
+						"signer for keep [%s] already registered;",
+						event.KeepAddress.String(),
+					)
+					return
+				}
 
 				generateKeyForKeep(
 					ctx,
@@ -513,7 +521,7 @@ func monitorSigningRequests(
 
 			go func(event *eth.SignatureRequestedEvent) {
 				if ok := requestedSignatures.add(keepAddress, event.Digest); !ok {
-					logger.Errorf(
+					logger.Warningf(
 						"signature requested event for keep [%s] and digest [%x] already registered",
 						keepAddress.String(),
 						event.Digest,
@@ -589,7 +597,7 @@ func checkAwaitingSignature(
 		)
 
 		if ok := requestedSignatures.add(keepAddress, latestDigest); !ok {
-			logger.Errorf(
+			logger.Warningf(
 				"signature requested event for keep [%s] and digest [%x] already registered",
 				keepAddress.String(),
 				latestDigest,

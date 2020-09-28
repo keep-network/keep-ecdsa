@@ -43,6 +43,47 @@ Keep ECDSA client.
 |2 vCPU / 2 GiB RAM / 1 GiB Persistent Storage
 |===
 
+== Gas Costs
+
+Keep ECDSA smart contracts do not reimburse the operator for submitted transactions. It is the
+responsibility of the application using ECDSA keeps to make sure operators are rewarded accordingly
+and the outcomes are net-positive. It is expected that the operators have enough ETH on the accounts
+used by clients to submit the required transactions and that the operator account balance is monitored
+and refilled as needed. Bear in mind that the higher stake is and the higher unbonded value is, the
+operator is selected more frequently and is expected to submit more transactions as a result.
+
+Below is the average gas cost of the most important transactions the client is submitting:
+
+[%header,cols=3*]
+|===
+|TX
+|Gas Cost
+|Reimbursed
+
+|Submit keep public key
+|150 000
+|No
+
+|Submit keep signature
+|30 500
+|No
+
+|Update operator status in sortition pool
+|125 000
+|No
+|===
+
+For example, if we expect the operator to handle 100 keeps by submitting all the transactions mentioned
+above for each keep, the operator needs to have `100 * (150 000 + 30 500 + 125 000) * gas_price` ETH on
+the account:
+
+- For the gas price of 20 Gwei, this is at least 0.611 ETH. 
+- For the gas price of 100 Gwei, this is at least 3.055 ETH. 
+- For the gas price of 800 Gwei, this is at least 24.44 ETH. 
+
+It is paramount that the operators have some safety margin and consider the current gas price, stake, and
+unbonded value when funding their accounts.
+
 == Configuration
 
 === Network
@@ -336,13 +377,7 @@ Trust math, not hardware.
 [.small]
 ```
 "/dns4/bst-a01.ecdsa.keep.boar.network/tcp/4001/ipfs/16Uiu2HAkzYFHsqbwt64ZztWWK1hyeLntRNqWMYFiZjaKu1PZgikN",
-"/dns4/bst-b01.ecdsa.keep.boar.network/tcp/4001/ipfs/16Uiu2HAkxLttmh3G8LYzAy1V1g1b3kdukzYskjpvv5DihY4wvx7D",
-"/dns4/keep-boot-validator-0.prod-us-west-2.staked.cloud/tcp/3920/ipfs/16Uiu2HAmDnq9qZJH9zJJ3TR4pX1BkYHWtR2rVww24ttxQTiKhsaJ",
-"/dns4/keep-boot-validator-1.prod-us-west-2.staked.cloud/tcp/3920/ipfs/16Uiu2HAmHbbMTDDsT2f6z8zMgDtJkTUDJQSYsQYUpaJjdMjiYNEf",
-"/dns4/keep-boot-validator-2.prod-us-west-2.staked.cloud/tcp/3920/ipfs/16Uiu2HAmBXoNLLMYU9EcKYH6JN5tA498sXQHFWk4heK22RfXD7wC",
-"/ip4/54.39.179.73/tcp/4001/ipfs/16Uiu2HAkyYtzNoWuF3ULaA7RMfVAxvfQQ9YRvRT3TK4tXmuZtaWi",
-"/ip4/54.39.186.166/tcp/4001/ipfs/16Uiu2HAkzD5n4mtTSddzqVY3wPJZmtvWjARTSpr4JbDX9n9PDJRh",
-"/ip4/54.39.179.134/tcp/4001/ipfs/16Uiu2HAkuxCuWA4zXnsj9R6A3b3a1TKUjQvBpAEaJ98KGdGue67p",
+"/dns4/bst-b01.ecdsa.keep.boar.network/tcp/4001/ipfs/16Uiu2HAkxLttmh3G8LYzAy1V1g1b3kdukzYskjpvv5DihY4wvx7D"
 ```
 
 ==== Contracts
@@ -355,13 +390,13 @@ Contract addresses needed to boot a Keep ECDSA client:
 |
 
 |BondedECDSAKeepFactory
-|`0x18758f16988E61Cd4B61E6B930694BD9fB07C22F`
+|`0xA7d9E842EFB252389d613dA88EDa3731512e40bD`
 
 |Sanctioned Applications
-|`0x41A1b40c1280883eA14C6a71e23bb66b83B3fB59` (tBTC's system contract)
+|`0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a` (tBTC's system contract)
 
 |tBTC Sortition pool (for <<Authorizations,authorization>>)
-|`0x4b558ff45f08198e00cc13de2ccefb9998e0290e`
+|`0xa3748633c6786e1842b5cc44fa43db1ecc710501`
 |===
 
 === Testnet
@@ -413,13 +448,13 @@ Contract addresses needed to boot a Keep ECDSA client:
 |
 
 |BondedECDSAKeepFactory
-|`0xe7BF8421fBE80c3Bf67082370D86C8D81D1D77F4`
+|`0x9EcCf03dFBDa6A5E50d7aBA14e0c60c2F6c575E6`
 
 |Sanctioned Applications
-|`0x14dC06F762E7f4a756825c1A1dA569b3180153cB` (tBTC's system contract)
+|`0xc3f96306eDabACEa249D2D22Ec65697f38c6Da69` (tBTC's system contract)
 
 |tBTC Sortition pool (for <<Authorizations,authorization>>)
-|`0x4BA599512761fA0F2ff2aa63a3fd4599D6c1F412`
+|`0x20F1f14a42135d3944fEd1AeD2bE13b01c152054`
 |===
 
 
@@ -456,7 +491,7 @@ and authorizer. Owner may delegate owned tokens or tokens from a grant. Owner ma
 of owned tokens or just a part of tokens from a grant. Owner may delegate multiple times to different operators.
 Tokens can be delegated using Tokens page in https://dashboard.test.keep.network[KEEP token dashboard] and a certain minimum stake defined by the system is required to be provided in the delegation. The more stake is delegated, the higher chance to be selected to relay group.
 
-Delegation takes immediate effect but can be cancelled within one week without additional delay. After one week
+Delegation takes immediate effect but can be cancelled within 12 hours without additional delay. After 12 hours
 operator appointed during the delegation becomes eligible for work selection.
 
 === Authorizations

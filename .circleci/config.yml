@@ -4,6 +4,9 @@ executors:
   docker-node:
     docker:
       - image: circleci/node:11
+  docker-node-gcloud:
+    docker:
+      - image: appfarm/node-gcloud-base
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
@@ -133,13 +136,11 @@ jobs:
           paths:
             - docker-images
   migrate_contracts:
-    executor: docker-thesis-buildpack
+    executor: docker-node-gcloud
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
-      - attach_workspace:
-          at: solidity
       - run:
           name: Set Gcloud Auth for bucket access
           command: |
@@ -148,18 +149,15 @@ jobs:
       - run:
           name: Fetch external contracts artifacts
           command: |
+            # This needs to be part of a base docker image, not installed here.
+            apt-get update
+            apt-get install jq -y
             solidity/scripts/circleci-provision-external-contracts.sh
-      - run:
-          name: Set Gcloud Auth for jumphost SSH
-          command: |
-            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
-            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
       - run:
           name: Migrate Contracts
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
-            mkdir -p /tmp/keep-ecdsa/contracts
             solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/keep-ecdsa

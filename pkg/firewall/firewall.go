@@ -84,6 +84,37 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 	// If peer has no authorization on the factory it means it has never
 	// participated in any group selection so there is no chance it can be
 	// a member of any keep.
+	err := soakp.validateAuthorization(remotePeerAddress)
+	if err != nil {
+		return err
+	}
+
+	// In case the remote peer has no minimum stake, we need to check if it is
+	// a member in at least one active keep. If so, we let to connect.
+	// Otherwise, we do not let to connect.
+	return soakp.validateActiveKeepMembership(remotePeerAddress)
+}
+
+func (soakp *stakeOrActiveKeepPolicy) validateAuthorization(
+	remotePeerAddress string,
+) error {
+	// Before hitting ETH client, consult the in-memory time cache.
+	// If the caching time for the given entry elapsed or if that entry is
+	// not in the cache, we'll have to consult the chain and execute a call
+	// to ETH client.
+	soakp.authorizedOperatorsCache.Sweep()
+	soakp.nonAuthorizedOperatorsCache.Sweep()
+
+	if soakp.authorizedOperatorsCache.Has(remotePeerAddress) {
+		return nil
+	}
+
+	if soakp.nonAuthorizedOperatorsCache.Has(remotePeerAddress) {
+		return errNoAuthorization
+	}
+
+	// We do not know if the remote peer has or has not the authorization so
+	// we need to ask ETH client about it.
 	isAuthorized, err := soakp.chain.IsOperatorAuthorized(
 		common.HexToAddress(remotePeerAddress),
 	)
@@ -101,11 +132,7 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 	}
 
 	soakp.authorizedOperatorsCache.Add(remotePeerAddress)
-
-	// In case the remote peer has no minimum stake, we need to check if it is
-	// a member in at least one active keep. If so, we let to connect.
-	// Otherwise, we do not let to connect.
-	return soakp.validateActiveKeepMembership(remotePeerAddress)
+	return nil
 }
 
 func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(

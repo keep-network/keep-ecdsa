@@ -60,8 +60,8 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
-) (subscription.EventSubscription, error) {
-	return ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
+) subscription.EventSubscription {
+	subscription, err := ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
 		func(
 			KeepAddress common.Address,
 			Members []common.Address,
@@ -83,6 +83,11 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 		nil,
 		nil,
 	)
+	if err != nil {
+		logger.Errorf("could not watch BondedECDSAKeepCreated event: [%v]", err)
+	}
+
+	return subscription
 }
 
 // OnKeepClosed installs a callback that is invoked on-chain when keep is closed.
@@ -222,7 +227,7 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		transaction, err := keepContract.SubmitPublicKey(
 			publicKey[:],
 			ethutil.TransactionOptions{
-				GasLimit: 3000000, // enough for a group size of 16
+				GasLimit: 350000, // enough for a group size of 16
 			},
 		)
 		if err != nil {
@@ -237,7 +242,7 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	// a new cloned contract has not been registered by the ethereum node. Common
 	// case is when Ethereum nodes are behind a load balancer and not fully synced
 	// with each other. To mitigate this issue, a client will retry submitting
-	// a public key up to 4 times with a 250ms interval.
+	// a public key up to 10 times with a 250ms interval.
 	if err := ec.withRetry(submitPubKey); err != nil {
 		return err
 	}

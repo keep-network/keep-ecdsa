@@ -36,7 +36,7 @@ type BondedECDSAKeepFactory interface {
 	// on-chain notification of a new bonded ECDSA keep creation is seen.
 	OnBondedECDSAKeepCreated(
 		handler func(event *BondedECDSAKeepCreatedEvent),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 
 	// IsRegisteredForApplication checks if the operator is registered
 	// as a signer candidate in the factory for the given application.

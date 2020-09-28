@@ -10,7 +10,15 @@ import (
 )
 
 const statusCheckIntervalBlocks = 100
+
+// retryDelay defines the delay between retries related to the registration logic
+// that do not have their own specific values (like for example `eligibilityRetryDelay`
+// for sortition pool join eligibility checks).
 const retryDelay = 1 * time.Second
+
+// eligibilityRetryDelay defines the delay between checks whether the operator
+// is eligible to join the sortition pool.
+const eligibilityRetryDelay = 20 * time.Minute
 
 // checkStatusAndRegisterForApplication checks whether the operator is
 // registered as a member candidate for keep for the given application.
@@ -53,7 +61,11 @@ RegistrationLoop:
 			// once the registration is confirmed or if the client is already
 			// registered, we can start to monitor the status
 			if err := monitorSignerPoolStatus(ctx, ethereumChain, application); err != nil {
-				logger.Errorf("failed on signer pool status monitoring: [%v]", err)
+				logger.Errorf(
+					"failed on signer pool status monitoring; please inspect "+
+						"signer's unbonded value and stake: [%v]",
+					err,
+				)
 				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 				continue RegistrationLoop
 			}
@@ -139,7 +151,7 @@ func registerAsMemberCandidateWhenEligible(
 					"operator is not eligible for application [%s]",
 					application.String(),
 				)
-				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
+				time.Sleep(eligibilityRetryDelay) // TODO: #413 Replace with backoff.
 				continue
 			}
 

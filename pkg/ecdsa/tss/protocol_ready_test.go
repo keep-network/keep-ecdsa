@@ -57,7 +57,7 @@ func TestReadyProtocol(t *testing.T) {
 				return
 			}
 
-			broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+			broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 				return &ReadyMessage{}
 			})
 

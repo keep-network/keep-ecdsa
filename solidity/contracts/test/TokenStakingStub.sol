@@ -1,27 +1,20 @@
 pragma solidity 0.5.17;
 
+import "./StakingInfoStub.sol";
+
 import "@keep-network/sortition-pools/contracts/api/IStaking.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-
 /// @title Token Staking Stub
 /// @dev This contract is for testing purposes only.
-contract TokenStakingStub is IStaking {
+contract TokenStakingStub is IStaking, StakingInfoStub {
     using SafeMath for uint256;
 
     uint256 public minimumStake = 200000 * 1e18;
 
-    mapping(address => address payable) operatorToBeneficiary;
-
     mapping(address => uint256) stakes;
 
     mapping(address => int256) public operatorLocks;
-
-    // Authorized operator contracts.
-    mapping(address => mapping(address => bool)) internal authorizations;
-
-    // Map of operator -> owner.
-    mapping(address => address) owners;
 
     address public delegatedAuthority;
 
@@ -36,6 +29,10 @@ contract TokenStakingStub is IStaking {
         stakes[_operator] = _balance;
     }
 
+    function balanceOf(address _address) public view returns (uint256 balance) {
+        return stakes[_address];
+    }
+
     /// @dev Returns balance variable value.
     function eligibleStake(address _operator, address)
         public
@@ -43,20 +40,6 @@ contract TokenStakingStub is IStaking {
         returns (uint256)
     {
         return stakes[_operator];
-    }
-
-    function setBeneficiary(address _operator, address payable _beneficiary)
-        public
-    {
-        operatorToBeneficiary[_operator] = _beneficiary;
-    }
-
-    function beneficiaryOf(address _operator)
-        public
-        view
-        returns (address payable)
-    {
-        return operatorToBeneficiary[_operator];
     }
 
     function slash(uint256 _amount, address[] memory _misbehavedOperators)
@@ -80,32 +63,6 @@ contract TokenStakingStub is IStaking {
         // We set it to negative value to be sure in tests that the function is
         // actually called and not just default `0` value is returned.
         operatorLocks[operator] = -1;
-    }
-
-    function authorizeOperatorContract(
-        address _operator,
-        address _operatorContract
-    ) public {
-        authorizations[_operatorContract][_operator] = true;
-    }
-
-    function isAuthorizedForOperator(
-        address _operator,
-        address _operatorContract
-    ) public view returns (bool) {
-        return authorizations[_operatorContract][_operator];
-    }
-
-    function authorizerOf(address _operator) public view returns (address) {
-        return _operator;
-    }
-
-    function setOwner(address _operator, address _owner) public {
-        owners[_operator] = _owner;
-    }
-
-    function ownerOf(address _operator) public view returns (address) {
-        return owners[_operator];
     }
 
     function claimDelegatedAuthority(address delegatedAuthoritySource) public {

@@ -40,13 +40,15 @@ func (m *AnnounceMessage) Type() string {
 }
 
 func RegisterUnmarshalers(broadcastChannel net.BroadcastChannel) {
-	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &AnnounceMessage{}
 	})
-	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ReadyMessage{}
 	})
-	broadcastChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &TSSProtocolMessage{}
 	})
 }
