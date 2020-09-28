@@ -6,7 +6,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@keep-network/keep-core/contracts/Rewards.sol";
 
 contract ECDSAKeepRewards is Rewards {
-    uint256 constant _minimumKeepsPerInterval = 2;
+    uint256 constant _minimumKeepsPerInterval = 2; // TODO: Finalize this value
     IBondedECDSAKeepFactory factory;
 
     constructor(
