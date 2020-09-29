@@ -5,9 +5,12 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
+
+var logger = log.Logger("keep-registry")
 
 // Keeps represents a collection of keeps in which the given client is a member.
 type Keeps struct {
