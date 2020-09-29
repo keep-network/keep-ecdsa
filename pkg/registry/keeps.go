@@ -59,6 +59,13 @@ func (k *Keeps) RegisterSigner(
 	return nil
 }
 
+func (k *Keeps) SnapshotSigner(
+	keepAddress common.Address,
+	signer *tss.ThresholdSigner,
+) error {
+	return k.storage.snapshot(keepAddress, signer)
+}
+
 // UnregisterKeep archives threeshold signer info for the given keep address.
 func (k *Keeps) UnregisterKeep(keepAddress common.Address) {
 	k.myKeepsMutex.Lock()

@@ -88,6 +88,51 @@ func TestRegisterSigner(t *testing.T) {
 	}
 }
 
+func TestSnapshotSigner(t *testing.T) {
+	persistenceMock := &persistenceHandleMock{}
+	kr := NewKeepsRegistry(persistenceMock)
+
+	signer1, err := newTestSigner(0)
+	if err != nil {
+		t.Fatalf("failed to get signer: [%v]", err)
+	}
+
+	expectedSignerBytes, err := signer1.Marshal()
+	if err != nil {
+		t.Fatalf("failed to marshal signer: [%v]", err)
+	}
+
+	expectedFile := &testFileInfo{
+		data:      expectedSignerBytes,
+		directory: keepAddress1.String(),
+		name:      fmt.Sprintf("/membership_%s", signer1.MemberID().String()),
+	}
+
+	err = kr.SnapshotSigner(keepAddress1, signer1)
+	if err != nil {
+		t.Fatalf("failed to snapshot signer: [%v]", err)
+	}
+
+	if len(persistenceMock.snapshots) != 1 {
+		t.Errorf(
+			"unexpected number of persisted groups\nexpected: [%d]\nactual:   [%d]",
+			1,
+			len(persistenceMock.snapshots),
+		)
+	}
+
+	if !reflect.DeepEqual(
+		expectedFile,
+		persistenceMock.snapshots[0],
+	) {
+		t.Errorf(
+			"unexpected persisted group\nexpected: [%+v]\nactual:   [%+v]",
+			expectedFile,
+			persistenceMock.snapshots[0],
+		)
+	}
+}
+
 func TestUnregisterSigner(t *testing.T) {
 	persistenceMock := &persistenceHandleMock{}
 	kr := NewKeepsRegistry(persistenceMock)
@@ -236,6 +281,7 @@ func TestLoadExistingGroups(t *testing.T) {
 
 type persistenceHandleMock struct {
 	persistedGroups []*testFileInfo
+	snapshots       []*testFileInfo
 	archivedGroups  []string
 }
 
@@ -250,6 +296,16 @@ func (phm *persistenceHandleMock) Save(data []byte, directory string, name strin
 		phm.persistedGroups,
 		&testFileInfo{data, directory, name},
 	)
+
+	return nil
+}
+
+func (phm *persistenceHandleMock) Snapshot(data []byte, directory string, name string) error {
+	phm.snapshots = append(
+		phm.snapshots,
+		&testFileInfo{data, directory, name},
+	)
+
 	return nil
 }
 

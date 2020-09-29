@@ -413,6 +413,7 @@ func generateKeyForKeep(
 		operatorPublicKey,
 		keepAddress,
 		members,
+		keepsRegistry,
 	)
 	if err != nil {
 		logger.Errorf(
@@ -479,6 +480,7 @@ func generateSignerForKeep(
 	operatorPublicKey *operator.PublicKey,
 	keepAddress common.Address,
 	members []common.Address,
+	keepsRegistry *registry.Keeps,
 ) (*tss.ThresholdSigner, error) {
 	keygenCtx, cancel := context.WithTimeout(ctx, clientConfig.GetKeyGenerationTimeout())
 	defer cancel()
@@ -488,6 +490,7 @@ func generateSignerForKeep(
 		operatorPublicKey,
 		keepAddress,
 		members,
+		keepsRegistry,
 	)
 }
 
