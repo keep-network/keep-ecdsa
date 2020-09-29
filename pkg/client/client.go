@@ -433,7 +433,7 @@ func generateKeyForKeep(
 			err,
 		)
 
-		// TODO: An action should be taken here.
+		return
 	}
 
 	subscriptionOnSignatureRequested, err := monitorSigningRequests(
