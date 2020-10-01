@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/local"
@@ -16,7 +18,6 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-ecdsa/internal/config"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
@@ -31,13 +32,22 @@ func init() {
 	SigningCommand = cli.Command{
 		Name:  "signing",
 		Usage: "Provides several tools useful for out-of-band signing",
+		Before: func(c *cli.Context) error {
+			_ = log.SetLogLevel("*", "fatal") // disable the regular logger
+			return nil
+		},
 		Subcommands: []cli.Command{
 			{
-				Name: "decrypt-key-share",
-				Usage: "Decrypts the key share of the operator for the given " +
-					"keep and stores it in a file",
+				Name:      "decrypt-key-share",
+				Usage:     "Decrypts the key share of the operator for the given keep",
 				ArgsUsage: "[keep-address]",
 				Action:    DecryptKeyShare,
+				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:  "output-file,o",
+						Usage: "Output file for the decrypted key share",
+					},
+				},
 			},
 			{
 				Name:      "sign-digest",
@@ -54,14 +64,6 @@ func DecryptKeyShare(c *cli.Context) error {
 	config, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("failed while reading config file: [%v]", err)
-	}
-
-	keyFile, err := ethutil.DecryptKeyFile(
-		config.Ethereum.Account.KeyFile,
-		config.Ethereum.Account.KeyFilePassword,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to decrypt key file: [%v]", err)
 	}
 
 	keepAddressHex := c.Args().First()
@@ -108,32 +110,27 @@ func DecryptKeyShare(c *cli.Context) error {
 		)
 	}
 
-	targetFilePath := fmt.Sprintf(
-		"key_share_%.10s_%.10s",
-		keepAddress.String(),
-		keyFile.Address.String(),
-	)
+	fmt.Printf("%x", signerBytes)
 
-	if _, err := os.Stat(targetFilePath); !os.IsNotExist(err) {
-		return fmt.Errorf(
-			"could not write shares to file; file [%s] already exists",
-			targetFilePath,
-		)
+	outputFilePath := c.String("output-file")
+
+	if len(outputFilePath) > 0 {
+		if _, err := os.Stat(outputFilePath); !os.IsNotExist(err) {
+			return fmt.Errorf(
+				"could not write shares to file; file [%s] already exists",
+				outputFilePath,
+			)
+		}
+
+		err = ioutil.WriteFile(outputFilePath, signerBytes, 0444) // read-only
+		if err != nil {
+			return fmt.Errorf(
+				"failed to write to file [%s]: [%v]",
+				outputFilePath,
+				err,
+			)
+		}
 	}
-
-	err = ioutil.WriteFile(targetFilePath, signerBytes, 0444) // read-only
-	if err != nil {
-		return fmt.Errorf(
-			"failed to write to file [%s]: [%v]",
-			targetFilePath,
-			err,
-		)
-	}
-
-	logger.Infof(
-		"key share has been decrypted successfully and written to file [%s]",
-		targetFilePath,
-	)
 
 	return nil
 }
