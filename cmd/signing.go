@@ -110,7 +110,13 @@ func DecryptKeyShare(c *cli.Context) error {
 		)
 	}
 
-	fmt.Printf("%x", signerBytes)
+	_, err = os.Stdout.Write(signerBytes)
+	if err != nil {
+		return fmt.Errorf(
+			"could not write signer bytes to stdout: [%v]",
+			err,
+		)
+	}
 
 	outputFilePath := c.String("output-file")
 
