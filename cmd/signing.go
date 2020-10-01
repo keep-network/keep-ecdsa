@@ -36,13 +36,8 @@ func init() {
 				Name: "decrypt-key-share",
 				Usage: "Decrypts the key share of the operator for the given " +
 					"keep and stores it in a file",
-				Action: DecryptKeyShare,
-				Flags: []cli.Flag{
-					cli.StringFlag{
-						Name:  "keep-address,k",
-						Usage: "address of the keep",
-					},
-				},
+				ArgsUsage: "[keep-address]",
+				Action:    DecryptKeyShare,
 			},
 			{
 				Name:   "sign-digest",
@@ -80,7 +75,7 @@ func DecryptKeyShare(c *cli.Context) error {
 		return fmt.Errorf("failed to decrypt key file: [%v]", err)
 	}
 
-	keepAddressHex := c.String("keep-address")
+	keepAddressHex := c.Args().First()
 	if !common.IsHexAddress(keepAddressHex) {
 		return fmt.Errorf("invalid keep address")
 	}
