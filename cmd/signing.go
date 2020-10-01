@@ -40,21 +40,10 @@ func init() {
 				Action:    DecryptKeyShare,
 			},
 			{
-				Name:   "sign-digest",
-				Usage:  "Sign a given digest using provided key shares",
-				Action: SignDigest,
-				Flags: []cli.Flag{
-					cli.StringFlag{
-						Name: "digest,d",
-						Usage: "digest to sign in hex format without " +
-							"the `0x` prefix",
-					},
-					cli.StringFlag{
-						Name: "key-shares-dir,k",
-						Usage: "directory containing the key shares which " +
-							"should be used for signing",
-					},
-				},
+				Name:      "sign-digest",
+				Usage:     "Sign a given digest using provided key shares",
+				Action:    SignDigest,
+				ArgsUsage: "[unprefixed-hex-digest] [key-shares-dir]",
 			},
 		},
 	}
@@ -151,12 +140,12 @@ func DecryptKeyShare(c *cli.Context) error {
 
 // SignDigest signs a given digest using key shares from the provided directory.
 func SignDigest(c *cli.Context) error {
-	digest := c.String("digest")
+	digest := c.Args().First()
 	if len(digest) == 0 {
 		return fmt.Errorf("invalid digest")
 	}
 
-	keySharesDir := c.String("key-shares-dir")
+	keySharesDir := c.Args().Get(1)
 	if len(keySharesDir) == 0 {
 		return fmt.Errorf("invalid key shares directory name")
 	}
