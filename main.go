@@ -60,6 +60,7 @@ func main() {
 	app.Commands = []cli.Command{
 		cmd.StartCommand,
 		cmd.EthereumCommand,
+		cmd.SigningCommand,
 	}
 
 	err = app.Run(os.Args)
