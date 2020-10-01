@@ -244,24 +244,38 @@ func SignDigest(c *cli.Context) error {
 	waitGroup.Wait()
 	close(signingOutcomesChannel)
 
+	signatures := make(map[string]int)
+
 	for signingOutcome := range signingOutcomesChannel {
 		if signingOutcome.err != nil {
-			logger.Errorf(
-				"[signer:%v] error: [%v]",
+			_, _ = fmt.Fprintf(
+				os.Stderr,
+				"signer with index [%v] returned an error: [%v]",
 				signingOutcome.signerIndex,
 				signingOutcome.err,
 			)
 			continue
 		}
 
-		logger.Infof(
-			"[signer:%v] signature: [%+v]",
-			signingOutcome.signerIndex,
-			signingOutcome.signature,
+		signature := fmt.Sprintf("%+v", signingOutcome.signature)
+		signatures[signature]++
+	}
+
+	if len(signatures) != 1 {
+		return fmt.Errorf(
+			"signing failed; a single signature should be produced",
 		)
 	}
 
-	logger.Infof("signing completed")
+	for signature, signersCount := range signatures {
+		if signersCount != len(signers) {
+			return fmt.Errorf(
+				"signing failed; all signers should support the signature",
+			)
+		}
+
+		fmt.Printf(signature)
+	}
 
 	return nil
 }
