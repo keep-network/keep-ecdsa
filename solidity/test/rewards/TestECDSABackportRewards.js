@@ -161,7 +161,7 @@ describe("ECDSABackportRewards", () => {
     await initializeNewFactory()
     await createStakedMembers()
     rewardsContract = await ECDSABackportRewards.new(
-      tokenStaking.address,
+      keepToken.address,
       keepFactory.address
     )
 
@@ -169,11 +169,11 @@ describe("ECDSABackportRewards", () => {
   })
 
   async function fund(amount) {
-    // await keepToken.mint(owner, amount)
     console.log("keepToken.address2 ", keepToken.address)
     await keepToken.approveAndCall(rewardsContract.address, amount, "0x0", {
       from: owner,
     })
+    await rewardsContract.markAsFunded({from: owner})
   }
 
   async function timeJumpToEndOfInterval(intervalNumber) {
