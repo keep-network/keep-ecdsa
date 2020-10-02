@@ -70,6 +70,18 @@ func TestRegisterSigner(t *testing.T) {
 			persistenceMock.persistedGroups[0],
 		)
 	}
+}
+
+func TestRegisterSignerDuplicate(t *testing.T) {
+	persistenceMock := &persistenceHandleMock{}
+	kr := NewKeepsRegistry(persistenceMock)
+
+	signer1, err := newTestSigner(0)
+	if err != nil {
+		t.Fatalf("failed to get signer: [%v]", err)
+	}
+
+	err = kr.RegisterSigner(keepAddress1, signer1)
 
 	signer2, err := newTestSigner(1)
 	if err != nil {
@@ -79,7 +91,7 @@ func TestRegisterSigner(t *testing.T) {
 	err = kr.RegisterSigner(keepAddress1, signer2)
 
 	expectedError := fmt.Errorf("signer for keep [%s] already registered", keepAddress1.String())
-	if err == nil || (!reflect.DeepEqual(expectedError, err)) {
+	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\nexpected: [%v]\nactual:   [%v]",
 			expectedError,
