@@ -52,9 +52,12 @@ contract FullyBackedECDSAKeep is AbstractBondedECDSAKeep {
         bonding.claimDelegatedAuthority(_keepFactory);
     }
 
+    /// @notice Punishes keep members after proving a signature fraud.
+    /// @dev Calls the keep factory to ban members of the keep. The owner of the
+    /// keep is able to seize the members bonds, so no action is necessary to be
+    /// taken from perspective of this function.
     function slashForSignatureFraud() internal {
-        // TODO: We don't need to do anything as keep owner is able to seize the bonds
-        // TODO: Ban members (remove from sortition pool and don't let to rejoin)
+        keepFactory.banKeepMembers();
     }
 
     /// @notice Gets the beneficiary for the specified member address.
