@@ -65,6 +65,9 @@ contract FullyBackedBondedECDSAKeepFactory is
     // eligible weight for signer selection.
     uint256 public constant bondWeightDivisor = 1e18; // 1 ETH // TODO: Decide on value
 
+    // List of applications that got sortition pool created.
+    address[] applications;
+
     // Notification that a new keep has been created.
     event FullyBackedBondedECDSAKeepCreated(
         address indexed keepAddress,
@@ -203,6 +206,19 @@ contract FullyBackedBondedECDSAKeepFactory is
         returns (bool)
     {
         return keepOpenedTimestamp[_delegatedAuthorityRecipient] > 0;
+    }
+
+    /// @notice Creates new sortition pool for the application.
+    /// @dev Emits an event after sortition pool creation.
+    /// @param _application Address of the application.
+    /// @return Address of the created sortition pool contract.
+    function createSortitionPool(address _application)
+        public
+        returns (address sortitionPool)
+    {
+        sortitionPool = super.createSortitionPool(_application);
+
+        applications.push(_application);
     }
 
     /// @notice Gets a fee estimate for opening a new keep.

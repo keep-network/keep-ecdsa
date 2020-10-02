@@ -12,28 +12,6 @@ contract CandidatesPools {
     // Mapping of pools with registered member candidates for each application.
     mapping(address => address) candidatesPools; // application -> candidates pool
 
-    /// @notice Creates new sortition pool for the application.
-    /// @dev Emits an event after sortition pool creation.
-    /// @param _application Address of the application.
-    /// @return Address of the created sortition pool contract.
-    function createSortitionPool(address _application)
-        external
-        returns (address)
-    {
-        require(
-            candidatesPools[_application] == address(0),
-            "Sortition pool already exists"
-        );
-
-        address sortitionPoolAddress = newSortitionPool(_application);
-
-        candidatesPools[_application] = sortitionPoolAddress;
-
-        emit SortitionPoolCreated(_application, sortitionPoolAddress);
-
-        return candidatesPools[_application];
-    }
-
     /// @notice Register caller as a candidate to be selected as keep member
     /// for the provided customer application.
     /// @dev If caller is already registered it returns without any changes.
@@ -73,6 +51,28 @@ contract CandidatesPools {
     {
         getSortitionPoolForOperator(_operator, _application)
             .updateOperatorStatus(_operator);
+    }
+
+    /// @notice Creates new sortition pool for the application.
+    /// @dev Emits an event after sortition pool creation.
+    /// @param _application Address of the application.
+    /// @return Address of the created sortition pool contract.
+    function createSortitionPool(address _application)
+        public
+        returns (address)
+    {
+        require(
+            candidatesPools[_application] == address(0),
+            "Sortition pool already exists"
+        );
+
+        address sortitionPoolAddress = newSortitionPool(_application);
+
+        candidatesPools[_application] = sortitionPoolAddress;
+
+        emit SortitionPoolCreated(_application, sortitionPoolAddress);
+
+        return candidatesPools[_application];
     }
 
     /// @notice Gets the sortition pool address for the given application.
