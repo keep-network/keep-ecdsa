@@ -9,8 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs/go-log"
-
+	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/local"
@@ -33,7 +32,8 @@ func init() {
 		Name:  "signing",
 		Usage: "Provides several tools useful for out-of-band signing",
 		Before: func(c *cli.Context) error {
-			_ = log.SetLogLevel("*", "fatal") // disable the regular logger
+			// disable the regular logger
+			_ = logging.Configure("keep*=fatal")
 			return nil
 		},
 		Subcommands: []cli.Command{
@@ -110,17 +110,7 @@ func DecryptKeyShare(c *cli.Context) error {
 		)
 	}
 
-	_, err = os.Stdout.Write(signerBytes)
-	if err != nil {
-		return fmt.Errorf(
-			"could not write signer bytes to stdout: [%v]",
-			err,
-		)
-	}
-
-	outputFilePath := c.String("output-file")
-
-	if len(outputFilePath) > 0 {
+	if outputFilePath := c.String("output-file"); len(outputFilePath) > 0 {
 		if _, err := os.Stat(outputFilePath); !os.IsNotExist(err) {
 			return fmt.Errorf(
 				"could not write shares to file; file [%s] already exists",
@@ -133,6 +123,14 @@ func DecryptKeyShare(c *cli.Context) error {
 			return fmt.Errorf(
 				"failed to write to file [%s]: [%v]",
 				outputFilePath,
+				err,
+			)
+		}
+	} else {
+		_, err = os.Stdout.Write(signerBytes)
+		if err != nil {
+			return fmt.Errorf(
+				"could not write signer bytes to stdout: [%v]",
 				err,
 			)
 		}

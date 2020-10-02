@@ -65,6 +65,6 @@ func main() {
 
 	err = app.Run(os.Args)
 	if err != nil {
-		logger.Fatal(err)
+		fmt.Print(err)
 	}
 }
