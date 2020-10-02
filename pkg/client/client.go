@@ -434,6 +434,9 @@ func generateKeyForKeep(
 			err,
 		)
 
+		// In case of an error during signer registration, we want to avoid
+		// subscribing to the events emitted by the keep. The signer is not
+		// operating so we should stop further processing.
 		return
 	}
 
