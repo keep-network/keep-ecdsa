@@ -76,6 +76,10 @@ contract FullyBackedECDSAKeepFactory is
     // eligible weight for signer selection.
     uint256 public constant bondWeightDivisor = 1 ether;
 
+    // Maps a keep to an application for which the keep was created.
+    // keep address -> application address
+    mapping(address => address) keepApplication;
+
     // Notification that a new keep has been created.
     event FullyBackedECDSAKeepCreated(
         address indexed keepAddress,
@@ -84,6 +88,10 @@ contract FullyBackedECDSAKeepFactory is
         address indexed application,
         uint256 honestThreshold
     );
+
+    // Notification when an operator gets banned in a sortition pool for
+    // an application.
+    event OperatorBanned(address indexed operator, address indexed application);
 
     constructor(
         address _masterKeepAddress,
@@ -194,6 +202,8 @@ contract FullyBackedECDSAKeepFactory is
             );
         }
 
+        keepApplication[keepAddress] = application;
+
         emit FullyBackedECDSAKeepCreated(
             keepAddress,
             members,
@@ -236,6 +246,29 @@ contract FullyBackedECDSAKeepFactory is
         return bonding.isAuthorizedForOperator(_operator, address(this));
     }
 
+    /// @notice Bans members of a calling keep in an sortition pools associated
+    /// with the application for which the keep was created.
+    /// @dev The function can be called only by a keep created by this factory.
+    function banKeepMembers() public onlyKeep() {
+        FullyBackedECDSAKeep keep = FullyBackedECDSAKeep(msg.sender);
+
+        address[] memory members = keep.getMembers();
+
+        address application = keepApplication[address(keep)];
+
+        FullyBackedSortitionPool sortitionPool = FullyBackedSortitionPool(
+            getSortitionPool(application)
+        );
+
+        for (uint256 i = 0; i < members.length; i++) {
+            address operator = members[i];
+
+            sortitionPool.ban(operator);
+
+            emit OperatorBanned(operator, application);
+        }
+    }
+
     function newSortitionPool(address _application) internal returns (address) {
         return
             sortitionPoolFactory.createSortitionPool(
@@ -261,5 +294,14 @@ contract FullyBackedECDSAKeepFactory is
         // rounded up by: `(bond + groupSize - 1 ) / groupSize`
         // Ex. (100 + 3 - 1) / 3 = 34
         return (_keepBond.add(_groupSize).sub(1)).div(_groupSize);
+    }
+
+    /// @notice Checks if caller is a keep created by this factory.
+    modifier onlyKeep() {
+        require(
+            keepOpenedTimestamp[msg.sender] > 0,
+            "Caller is not a keep created by the factory"
+        );
+        _;
     }
 }
