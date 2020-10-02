@@ -9,8 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs/go-log"
-
+	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/local"
@@ -33,7 +32,8 @@ func init() {
 		Name:  "signing",
 		Usage: "Provides several tools useful for out-of-band signing",
 		Before: func(c *cli.Context) error {
-			_ = log.SetLogLevel("*", "fatal") // disable the regular logger
+			// disable the regular logger
+			_ = logging.Configure("keep*=fatal")
 			return nil
 		},
 		Subcommands: []cli.Command{
