@@ -270,7 +270,7 @@ describe("FullyBackedBonding", function () {
         from: authorizer,
       })
 
-      await time.increase(delegationLockPeriod)
+      await time.increase(delegationLockPeriod.subn(1))
 
       await expectRevert(
         bonding.withdraw(value, operator2, {from: owner}),
@@ -394,7 +394,7 @@ describe("FullyBackedBonding", function () {
         from: authorizer,
       })
 
-      await time.increase(initializationPeriod)
+      await time.increase(initializationPeriod.subn(1))
 
       assert.isFalse(await bonding.isInitialized(operator, bondCreator))
     })
