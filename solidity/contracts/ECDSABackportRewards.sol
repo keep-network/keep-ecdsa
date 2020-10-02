@@ -46,9 +46,7 @@ contract ECDSABackportRewards is Rewards {
 
     constructor (
         address _token,
-        address _factoryAddress,
-        address _operatorContract,
-        address _stakingContract
+        address _factoryAddress
     ) public Rewards(
         _token,
         bondedECDSAKeepFactoryDeployment,
