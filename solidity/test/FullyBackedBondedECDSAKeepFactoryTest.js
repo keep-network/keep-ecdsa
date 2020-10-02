@@ -770,7 +770,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
     })
 
     it("reverts if one member has insufficient unbonded value", async () => {
-      const minimumBond = await keepFactory.minimumBond.call()
+      const minimumBond = await keepFactory.defaultMinimumBond.call()
       const availableUnbonded = await bonding.availableUnbondedValue(
         members[2],
         keepFactory.address,
@@ -1397,7 +1397,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
   describe("getKeepAtIndex", async () => {
     before(async () => {
       await initializeNewFactory()
-      const minimumBond = await keepFactory.minimumBond.call()
+      const minimumBond = await keepFactory.defaultMinimumBond.call()
       const memberBond = minimumBond.muln(2) // want to be able to open 2 keeps
       await initializeMemberCandidates(memberBond)
       await registerMemberCandidates()
@@ -1542,7 +1542,8 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
   }
 
   async function initializeMemberCandidates(unbondedValue) {
-    const minimumBond = await keepFactory.minimumBond.call()
+    const minimumBond = await keepFactory.defaultMinimumBond.call()
+
 
     signerPool = await keepFactory.createSortitionPool.call(application)
     await keepFactory.createSortitionPool(application)

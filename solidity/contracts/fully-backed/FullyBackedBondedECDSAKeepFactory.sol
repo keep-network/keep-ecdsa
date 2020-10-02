@@ -57,7 +57,7 @@ contract FullyBackedBondedECDSAKeepFactory is
     // Anyone can create a sortition pool for an application with the default
     // minimum bond value but the application can change this value later, at
     // any point.
-    uint256 public constant minimumBond = 20e18; // 20 ETH // TODO: Decide on value
+    uint256 public constant defaultMinimumBond = 20e18; // 20 ETH // TODO: Decide on value
 
     // Signer candidates in bonded sortition pool are weighted by their eligible
     // stake divided by a constant divisor. The divisor is set to 1 ETH so that
@@ -229,7 +229,7 @@ contract FullyBackedBondedECDSAKeepFactory is
         return
             sortitionPoolFactory.createSortitionPool(
                 IFullyBackedBonding(address(bonding)),
-                minimumBond,
+                defaultMinimumBond,
                 bondWeightDivisor
             );
     }
