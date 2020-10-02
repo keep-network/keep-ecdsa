@@ -68,7 +68,7 @@ contract FullyBackedECDSAKeepFactory is
     // in `FullyBackedBonding` contract. Minimum delegation deposit determines
     // a minimum value of ether that should be transferred to the bonding contract
     // by an owner when delegating to an operator.
-    uint256 public constant minimumBond = 20 ether;
+    uint256 public constant defaultMinimumBond = 20 ether;
 
     // Signer candidates in bonded sortition pool are weighted by their eligible
     // stake divided by a constant divisor. The divisor is set to 1 ETH so that
@@ -240,7 +240,7 @@ contract FullyBackedECDSAKeepFactory is
         return
             sortitionPoolFactory.createSortitionPool(
                 IFullyBackedBonding(address(bonding)),
-                minimumBond,
+                defaultMinimumBond,
                 bondWeightDivisor
             );
     }
