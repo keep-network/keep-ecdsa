@@ -20,7 +20,9 @@ const FullyBackedSortitionPoolFactory = contract.fromArtifact(
   "FullyBackedSortitionPoolFactory"
 )
 const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
-const FullyBackedECDSAKeep = contract.fromArtifact("FullyBackedECDSAKeep")
+const FullyBackedECDSAKeepStub = contract.fromArtifact(
+  "FullyBackedECDSAKeepStub"
+)
 
 const BN = web3.utils.BN
 
@@ -29,13 +31,15 @@ chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 const assert = chai.assert
 
+// TODO: Refactor tests by pulling common parts of BondedECDSAKeepFactory and
+// FullyBackedECDSAKeepFactory to one file.
 describe("FullyBackedECDSAKeepFactory", function () {
   let registry
   let keepFactory
   let sortitionPoolFactory
   let bonding
   let randomBeacon
-  let signerPool
+  let signerPoolAddress
   let minimumDelegationDeposit
   let delegationLockPeriod
 
@@ -81,7 +85,8 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await initializeNewFactory()
       await initializeMemberCandidates()
 
-      pool = await FullyBackedSortitionPool.at(signerPool)
+      signerPoolAddress = await keepFactory.getSortitionPool(application)
+      pool = await FullyBackedSortitionPool.at(signerPoolAddress)
       minimumBondableValue = await pool.getMinimumBondableValue()
 
       bondWeightDivisor = await keepFactory.bondWeightDivisor.call()
@@ -100,7 +105,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     it("inserts operator with the correct unbonded value available", async () => {
       const unbondedValue = await bonding.unbondedValue(members[0])
 
-      const pool = await FullyBackedSortitionPool.at(signerPool)
+      const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
 
       const expectedWeight = unbondedValue.div(bondWeightDivisor)
 
@@ -122,7 +127,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         from: members[1],
       })
 
-      const pool = await FullyBackedSortitionPool.at(signerPool)
+      const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
       assert.isTrue(
         await pool.isOperatorInPool(members[0]),
         "operator 1 is not in the pool"
@@ -138,7 +143,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         from: members[0],
       })
 
-      const pool = await FullyBackedSortitionPool.at(signerPool)
+      const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
 
       assert.isTrue(
         await pool.isOperatorInPool(members[0]),
@@ -221,9 +226,11 @@ describe("FullyBackedECDSAKeepFactory", function () {
     it("reverts if delegation initialization period has not passed", async () => {
       await initializeNewFactory()
 
-      signerPool = await keepFactory.createSortitionPool.call(application)
+      signerPoolAddress = await keepFactory.createSortitionPool.call(
+        application
+      )
       await keepFactory.createSortitionPool(application)
-      const pool = await FullyBackedSortitionPool.at(signerPool)
+      const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
 
       await delegate(members[0], members[0], authorizers[0])
 
@@ -245,6 +252,25 @@ describe("FullyBackedECDSAKeepFactory", function () {
       assert.isTrue(
         await pool.isOperatorInPool(members[0]),
         "operator is not in the pool after initialization period"
+      )
+    })
+
+    it("does not let banned operator to register", async () => {
+      await initializeNewFactory()
+      await initializeMemberCandidates()
+
+      await registerMemberCandidates(members, application)
+
+      const keep = await openKeep()
+
+      await keep.publicSlashForSignatureFraud()
+      const keepMembers = await keep.getMembers()
+
+      await expectRevert(
+        keepFactory.registerMemberCandidate(application, {
+          from: keepMembers[1],
+        }),
+        "Operator not eligible"
       )
     })
   })
@@ -347,7 +373,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await initializeNewFactory()
       await initializeMemberCandidates()
 
-      const pool = await FullyBackedSortitionPool.at(signerPool)
+      const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
       minimumBondableValue = await pool.getMinimumBondableValue()
     })
 
@@ -451,7 +477,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await initializeMemberCandidates()
       await registerMemberCandidates()
 
-      const pool = await FullyBackedSortitionPool.at(signerPool)
+      const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
       minimumBondableValue = await pool.getMinimumBondableValue()
 
       await setUnbondedValue(members[0], minimumBondableValue.muln(3))
@@ -571,7 +597,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       feeEstimate = await keepFactory.openKeepFeeEstimate()
 
-      const pool = await FullyBackedSortitionPool.at(signerPool)
+      const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
       minimumBondableValue = await pool.getMinimumBondableValue()
     })
 
@@ -828,7 +854,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       const availableUnbonded = await bonding.availableUnbondedValue(
         members[2],
         keepFactory.address,
-        signerPool
+        signerPoolAddress
       )
       const withdrawValue = availableUnbonded.sub(minimumBond).add(new BN(1))
       await bonding.withdraw(withdrawValue, members[2], {
@@ -1079,7 +1105,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         }
       )
       const recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
-      const keep = await FullyBackedECDSAKeep.at(keepAddress)
+      const keep = await FullyBackedECDSAKeepStub.at(keepAddress)
       const keepOpenedTime = await keep.getOpenedTimestamp()
       const factoryKeepOpenedTime = await keepFactory.getKeepOpenedTimestamp(
         keepAddress
@@ -1119,7 +1145,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         }
       )
 
-      const keep = await FullyBackedECDSAKeep.at(keepAddress)
+      const keep = await FullyBackedECDSAKeepStub.at(keepAddress)
 
       assert.isTrue(await keep.isActive(), "keep should be active")
     })
@@ -1206,15 +1232,9 @@ describe("FullyBackedECDSAKeepFactory", function () {
       const operators = []
 
       for (let i = 0; i < memberCount; i++) {
-        const operator = await web3.eth.personal.newAccount("pass")
-        const authorizer = operator
-        await web3.eth.personal.unlockAccount(operator, "pass", 5000) // 5 sec unlock
+        const operator = await newAccount("21")
 
-        web3.eth.sendTransaction({
-          from: accounts[0],
-          to: operator,
-          value: web3.utils.toWei("21", "ether"),
-        })
+        const authorizer = operator
 
         await delegate(operator, beneficiary, authorizer, unbondedAmount)
 
@@ -1229,7 +1249,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         })
       }
 
-      const pool = await FullyBackedSortitionPool.at(signerPool)
+      const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
       await mineBlocks((await pool.operatorInitBlocks()).add(new BN(1)))
     }
   })
@@ -1245,7 +1265,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         delegationInitPeriod
       )
       randomBeacon = accounts[1]
-      const keepMasterContract = await FullyBackedECDSAKeep.new()
+      const keepMasterContract = await FullyBackedECDSAKeepStub.new()
       keepFactory = await FullyBackedECDSAKeepFactoryStub.new(
         keepMasterContract.address,
         sortitionPoolFactory.address,
@@ -1453,7 +1473,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await initializeNewFactory()
       const minimumBond = await keepFactory.defaultMinimumBond.call()
       const memberBond = minimumBond.muln(2) // want to be able to open 2 keeps
-      await initializeMemberCandidates(memberBond)
+      await initializeMemberCandidates(members, memberBond)
       await registerMemberCandidates()
     })
 
@@ -1508,6 +1528,106 @@ describe("FullyBackedECDSAKeepFactory", function () {
     })
   })
 
+  describe("banKeepMembers", async () => {
+    let operators
+
+    before(async () => {
+      operators = members
+
+      // Adding more operators to check that only keep members get banned.
+      operators.push(await newAccount())
+      operators.push(await newAccount())
+      operators.push(await newAccount())
+
+      await initializeNewFactory()
+      await initializeMemberCandidates(operators)
+      await registerMemberCandidates(operators)
+    })
+
+    it("reverts when called by non-keep", async () => {
+      await expectRevert(
+        keepFactory.banKeepMembers(),
+        "Caller is not a keep created by the factory"
+      )
+    })
+
+    it("bans keep members in a pool they are registered", async () => {
+      const keep = await openKeep()
+
+      await keep.publicSlashForSignatureFraud()
+      const keepMembers = await keep.getMembers()
+
+      const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
+
+      for (let i = 0; i < operators.length; i++) {
+        const operator = operators[i]
+
+        if (keepMembers.includes(operator)) {
+          assert.isFalse(
+            await keepFactory.isOperatorRegistered(operator, application)
+          )
+
+          assert.isTrue(await pool.bannedOperators(operator))
+        } else {
+          assert.isFalse(await pool.bannedOperators(operator))
+        }
+      }
+    })
+
+    it("does not ban keep members in a pool they are not registered", async () => {
+      const keep = await openKeep()
+
+      const application2 = "0x0000000000000000000000000000000000000002"
+      const pool2Address = await keepFactory.createSortitionPool.call(
+        application2
+      )
+      await keepFactory.createSortitionPool(application2)
+      const pool2 = await FullyBackedSortitionPool.at(pool2Address)
+
+      await keep.publicSlashForSignatureFraud()
+
+      for (let i = 0; i < operators.length; i++) {
+        const operator = operators[i]
+
+        assert.isFalse(await pool2.bannedOperators(operator))
+      }
+    })
+
+    it("emits events", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
+
+      const keep = await openKeep()
+
+      await keep.publicSlashForSignatureFraud()
+      const keepMembers = await keep.getMembers()
+
+      const eventList = await keepFactory.getPastEvents("OperatorBanned", {
+        fromBlock: blockNumber,
+        toBlock: "latest",
+      })
+
+      assert.equal(
+        eventList.length,
+        keepMembers.length,
+        "incorrect number of emitted events"
+      )
+
+      for (let i = 0; i < eventList.length; i++) {
+        assert.equal(
+          eventList[i].returnValues.operator,
+          keepMembers[i],
+          `incorrect operator address in event ${i}`
+        )
+
+        assert.equal(
+          eventList[i].returnValues.application,
+          application,
+          `incorrect application address in event ${i}`
+        )
+      }
+    })
+  })
+
   describe("getSortitionPoolWeight", async () => {
     before(async () => {
       await initializeNewFactory()
@@ -1521,10 +1641,10 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       const expectedPoolWeight = minimumDelegationDeposit
         .div(await keepFactory.bondWeightDivisor.call())
-        .muln(3)
-      expect(poolWeight).to.eq.BN(
-        expectedPoolWeight,
-        "incorrect sortition pool weight"
+        .muln(members.length)
+
+      expect(poolWeight, "incorrect sortition pool weight").to.eq.BN(
+        expectedPoolWeight
       )
     })
 
@@ -1579,7 +1699,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       delegationInitPeriod
     )
     randomBeacon = await RandomBeaconStub.new()
-    const keepMasterContract = await FullyBackedECDSAKeep.new()
+    const keepMasterContract = await FullyBackedECDSAKeepStub.new()
     keepFactory = await FullyBackedECDSAKeepFactoryStub.new(
       keepMasterContract.address,
       sortitionPoolFactory.address,
@@ -1593,16 +1713,21 @@ describe("FullyBackedECDSAKeepFactory", function () {
     await registry.approveOperatorContract(keepFactory.address)
   }
 
-  async function initializeMemberCandidates(unbondedValue) {
+  async function initializeMemberCandidates(
+    operators = members,
+    unbondedValue
+  ) {
     const minimumDelegationValue = await bonding.MINIMUM_DELEGATION_DEPOSIT.call()
 
-    signerPool = await keepFactory.createSortitionPool.call(application)
+    const authorizers = operators
+
+    signerPoolAddress = await keepFactory.createSortitionPool.call(application)
     await keepFactory.createSortitionPool(application)
 
-    for (let i = 0; i < members.length; i++) {
+    for (let i = 0; i < operators.length; i++) {
       await delegate(
-        members[i],
-        members[i],
+        operators[i],
+        operators[i],
         authorizers[i],
         unbondedValue || minimumDelegationValue
       )
@@ -1620,7 +1745,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     await bonding.authorizeOperatorContract(operator, keepFactory.address, {
       from: authorizer,
     })
-    await bonding.authorizeSortitionPoolContract(operator, signerPool, {
+    await bonding.authorizeSortitionPoolContract(operator, signerPoolAddress, {
       from: authorizer,
     })
   }
@@ -1645,14 +1770,19 @@ describe("FullyBackedECDSAKeepFactory", function () {
     }
   }
 
-  async function registerMemberCandidates() {
-    for (let i = 0; i < members.length; i++) {
-      await keepFactory.registerMemberCandidate(application, {
-        from: members[i],
+  async function registerMemberCandidates(
+    operators = members,
+    app = application
+  ) {
+    for (let i = 0; i < operators.length; i++) {
+      await keepFactory.registerMemberCandidate(app, {
+        from: operators[i],
       })
     }
 
-    const pool = await FullyBackedSortitionPool.at(signerPool)
+    const pool = await FullyBackedSortitionPool.at(
+      await keepFactory.getSortitionPool.call(app)
+    )
     const poolInitBlocks = await pool.operatorInitBlocks()
     await mineBlocks(poolInitBlocks.add(new BN(1)))
   }
@@ -1681,6 +1811,20 @@ describe("FullyBackedECDSAKeepFactory", function () {
       }
     )
 
-    return await FullyBackedECDSAKeep.at(keepAddress)
+    return await FullyBackedECDSAKeepStub.at(keepAddress)
+  }
+
+  async function newAccount(initialBalanceETH = "1") {
+    const account = await web3.eth.personal.newAccount("pass")
+
+    await web3.eth.personal.unlockAccount(account, "pass", 5000) // 5 sec unlock
+
+    web3.eth.sendTransaction({
+      from: accounts[0],
+      to: account,
+      value: web3.utils.toWei(initialBalanceETH, "ether"),
+    })
+
+    return account
   }
 })
