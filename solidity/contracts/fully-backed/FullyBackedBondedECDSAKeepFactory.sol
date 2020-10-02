@@ -77,6 +77,9 @@ contract FullyBackedBondedECDSAKeepFactory is
         uint256 honestThreshold
     );
 
+    // Notification when operator gets banned in sortition pools.
+    event OperatorBanned(address indexed operator);
+
     constructor(
         address _masterKeepAddress,
         address _sortitionPoolFactoryAddress,
@@ -241,6 +244,29 @@ contract FullyBackedBondedECDSAKeepFactory is
         return bonding.isAuthorizedForOperator(_operator, address(this));
     }
 
+    /// @notice Bans members of a calling keep in all associated sortition pools
+    /// for every registered application.
+    /// @dev The function can be called only by a keep created by this factory.
+    function banKeepMembers() public onlyKeep() {
+        FullyBackedBondedECDSAKeep keep = FullyBackedBondedECDSAKeep(
+            msg.sender
+        );
+
+        address[] memory members = keep.getMembers();
+
+        for (uint256 i = 0; i < members.length; i++) {
+            address operator = members[i];
+
+            for (uint256 j = 0; j < applications.length; j++) {
+                FullyBackedSortitionPool(getSortitionPool(applications[j])).ban(
+                    operator
+                );
+            }
+
+            emit OperatorBanned(operator);
+        }
+    }
+
     function newSortitionPool(address _application) internal returns (address) {
         return
             sortitionPoolFactory.createSortitionPool(
@@ -266,5 +292,14 @@ contract FullyBackedBondedECDSAKeepFactory is
         // rounded up by: `(bond + groupSize - 1 ) / groupSize`
         // Ex. (100 + 3 - 1) / 3 = 34
         return (_keepBond.add(_groupSize).sub(1)).div(_groupSize);
+    }
+
+    /// @notice Checks if caller is a keep created by this factory.
+    modifier onlyKeep() {
+        require(
+            keepOpenedTimestamp[msg.sender] > 0,
+            "Caller is not a keep created by the factory"
+        );
+        _;
     }
 }
