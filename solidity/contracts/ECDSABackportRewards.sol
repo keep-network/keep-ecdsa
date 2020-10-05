@@ -15,7 +15,7 @@
 pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/Rewards.sol";
-import "./api/IBondedECDSAKeepFactory.sol";
+import "./BondedECDSAKeepFactory.sol";
 import "./api/IBondedECDSAKeep.sol";
 
 contract ECDSABackportRewards is Rewards {
@@ -42,11 +42,11 @@ contract ECDSABackportRewards is Rewards {
     // We allocate ecdsa backport rewards to all 41 keeps.
     uint256 internal constant minimumECDSAKeepsPerInterval = numberOfCreatedECDSAKeeps;
 
-    IBondedECDSAKeepFactory factory;
+    BondedECDSAKeepFactory factory;
 
     constructor (
         address _token,
-        address _factoryAddress
+        address payable _factoryAddress
     ) public Rewards(
         _token,
         bondedECDSAKeepFactoryDeployment,
@@ -54,17 +54,11 @@ contract ECDSABackportRewards is Rewards {
         backportECDSATermLength,
         minimumECDSAKeepsPerInterval
     ) {
-        factory = IBondedECDSAKeepFactory(_factoryAddress);
-    }
-
-    /// @notice Sends the reward for a keep to the group signing member beneficiaries.
-    /// @param groupIndex Index of the keep to receive a reward.
-    function receiveReward(uint256 groupIndex) public {
-        receiveReward(bytes32(groupIndex));
+        factory = BondedECDSAKeepFactory(_factoryAddress);
     }
 
     function _getKeepCount() internal view returns (uint256) {
-        // Between May 17 2020 - Sep 14 2020 there were 41 keeps opened.
+        // Between May 13 2020 - Sep 14 2020 there were 41 keeps opened.
         return numberOfCreatedECDSAKeeps;
     }
 
@@ -78,7 +72,7 @@ contract ECDSABackportRewards is Rewards {
     }
 
     function _isClosed(bytes32) internal view returns (bool) {
-        // All keeps created between May 17 2020 - Sep 14 2020 are considered closed.
+        // All keeps created between May 13 2020 - Sep 14 2020 are considered closed.
         return true;
     }
 
@@ -86,9 +80,13 @@ contract ECDSABackportRewards is Rewards {
         return false;
     }
 
-    // A keep is recognized if its index is at most `last eligible keep`.
-    function _recognizedByFactory(bytes32 groupIndexBytes) internal view returns (bool) {
-        return numberOfCreatedECDSAKeeps > uint256(groupIndexBytes);
+    // A keep is recognized if its creation time is between May-13-2020 - Sep 14 2020
+    function _recognizedByFactory(bytes32 _keep) internal view returns (bool) {
+        uint256 keepCreatedTimestamp = factory.getKeepOpenedTimestamp(toAddress(_keep));
+        if (keepCreatedTimestamp == 0) {
+            return false;
+        }
+        return keepCreatedTimestamp < bondedECDSAKeepFactoryDeployment.add(backportECDSATermLength);
     }
 
     function _distributeReward(bytes32 _keep, uint256 amount) internal isAddress(_keep) {
