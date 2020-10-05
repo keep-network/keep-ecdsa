@@ -74,11 +74,11 @@
 #  KeyGenerationTimeout = "3h" 				# optional
 #  SigningTimeout = "2h"					# optional
 #
-# Specifies the minimum operator ETH balance to participate in new keeps.
+# Specifies the minimum operator WEI balance to participate in new keeps.
 # When the operator balance is below the minimum, the operator will unregister
 # from the sortition pool and focus on supporting existing keeps by providing
 # the requested signatures instead of candidating to new keeps.
-#  MinimumKeyGenerationBalance = 0.5 # 0.5 ETH (default value)
+#  MinimumKeyGenerationBalance = 500000000000000000 # 0.5 ETH (default value)
 
 [TSS]
 # Timeout for TSS protocol pre-parameters generation. The value

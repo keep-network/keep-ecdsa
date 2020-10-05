@@ -216,7 +216,12 @@ func Initialize(
 	})
 
 	for _, application := range sanctionedApplications {
-		go checkStatusAndRegisterForApplication(ctx, ethereumChain, application)
+		go checkStatusAndRegisterForApplication(
+			ctx,
+			ethereumChain,
+			application,
+			clientConfig,
+		)
 	}
 }
 

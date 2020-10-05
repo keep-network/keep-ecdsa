@@ -33,6 +33,7 @@ func checkStatusAndRegisterForApplication(
 	ctx context.Context,
 	ethereumChain eth.Handle,
 	application common.Address,
+	clientConfig *Config,
 ) {
 RegistrationLoop:
 	for {
@@ -60,7 +61,12 @@ RegistrationLoop:
 
 			// once the registration is confirmed or if the client is already
 			// registered, we can start to monitor the status
-			if err := monitorSignerPoolStatus(ctx, ethereumChain, application); err != nil {
+			if err := monitorSignerPoolStatus(
+				ctx,
+				ethereumChain,
+				application,
+				clientConfig,
+			); err != nil {
 				logger.Errorf(
 					"failed on signer pool status monitoring; please inspect "+
 						"signer's unbonded value and stake: [%v]",
@@ -227,6 +233,7 @@ func monitorSignerPoolStatus(
 	ctx context.Context,
 	ethereumChain eth.Handle,
 	application common.Address,
+	clientConfig *Config,
 ) error {
 	logger.Debugf(
 		"starting monitoring operatator status for application [%s]",
@@ -277,7 +284,28 @@ func monitorSignerPoolStatus(
 					application.String(),
 				)
 
-				err := ethereumChain.UpdateStatusForApplication(application)
+				operatorBalance, err := ethereumChain.BalanceOf(
+					ethereumChain.Address(),
+				)
+				if err != nil {
+					return fmt.Errorf(
+						"failed to get operator balance: [%v]",
+						err,
+					)
+				}
+
+				minimumKeyGenerationBalance := clientConfig.GetMinimumKeyGenerationBalance()
+				if operatorBalance.Cmp(minimumKeyGenerationBalance) == -1 {
+					logger.Warningf(
+						"current operator balance is below the minimum "+
+							"key generation balance: [%v] WEI; "+
+							"aborting the operator status update",
+						minimumKeyGenerationBalance.Text(10),
+					)
+					continue
+				}
+
+				err = ethereumChain.UpdateStatusForApplication(application)
 				if err != nil {
 					return fmt.Errorf(
 						"failed to update operator status for application [%s]: [%v]",
