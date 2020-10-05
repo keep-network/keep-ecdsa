@@ -46,11 +46,11 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
     /// @return Created keep address.
     function stubOpenKeep(
         address _owner,
-        address[] calldata _members,
+        address[] memory _members,
         address _tokenStaking,
         address payable _keepFactory,
         uint256 _creationTimestamp
-    ) external payable returns (address keepAddress) {
+    ) public payable returns (address keepAddress) {
         keepAddress = createClone(masterKeepAddress);
         BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
         keep.initialize(
