@@ -20,6 +20,9 @@ const (
 
 	// The default value of a timeout for a signature calculation.
 	defaultSigningTimeout = 2 * time.Hour
+
+	// The default value of the minimum key generation balance.
+	defaultMinimumKeyGenerationBalance = 0.5 // ETH
 )
 
 // Config contains configuration for tss protocol execution.
@@ -32,6 +35,9 @@ type Config struct {
 	// Timeout for key generation and signature calculation.
 	KeyGenerationTimeout configtime.Duration
 	SigningTimeout       configtime.Duration
+
+	// Specifies the minimum operator balance to participate in new keeps.
+	MinimumKeyGenerationBalance float64
 }
 
 // GetAwaitingKeyGenerationLookback returns a look-back period to check if
@@ -66,4 +72,15 @@ func (c *Config) GetSigningTimeout() time.Duration {
 	}
 
 	return timeout
+}
+
+// GetMinimumKeyGenerationBalance returns the minimum key generation balance.
+// If a value is not set it returns a default value.
+func (c *Config) GetMinimumKeyGenerationBalance() float64 {
+	minimumBalance := c.MinimumKeyGenerationBalance
+	if minimumBalance == 0 {
+		minimumBalance = defaultMinimumKeyGenerationBalance
+	}
+
+	return minimumBalance
 }
