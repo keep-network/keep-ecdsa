@@ -25,7 +25,6 @@ contract ECDSABackportRewards is Rewards {
 
     // We are going to have one interval, with a weight of 100%.
     uint256[] internal backportECDSAIntervalWeight = [100];
-    uint256 internal constant lastInterval = 0;
 
     // Interval is the difference in time of creation between older and newer
     // versions of BondedECDSAKeepFactory.
