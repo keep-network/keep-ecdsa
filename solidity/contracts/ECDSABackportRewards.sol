@@ -19,7 +19,6 @@ import "./BondedECDSAKeepFactory.sol";
 import "./api/IBondedECDSAKeep.sol";
 
 contract ECDSABackportRewards is Rewards {
-
     // BondedECDSAKeepFactory deployment date, May-13-2020 interval started.
     // https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
     uint256 internal constant bondedECDSAKeepFactoryDeployment = 1589408351;
@@ -28,7 +27,7 @@ contract ECDSABackportRewards is Rewards {
     uint256[] internal backportECDSAIntervalWeight = [100];
     uint256 internal constant lastInterval = 0;
 
-    // Interval is the difference in time of creation between older and newer 
+    // Interval is the difference in time of creation between older and newer
     // versions of BondedECDSAKeepFactory.
     // Older: https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
     // Newer: https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
@@ -40,20 +39,21 @@ contract ECDSABackportRewards is Rewards {
     uint256 internal constant numberOfCreatedECDSAKeeps = 41;
 
     // We allocate ecdsa backport rewards to all 41 keeps.
-    uint256 internal constant minimumECDSAKeepsPerInterval = numberOfCreatedECDSAKeeps;
+    uint256
+        internal constant minimumECDSAKeepsPerInterval = numberOfCreatedECDSAKeeps;
 
     BondedECDSAKeepFactory factory;
 
-    constructor (
-        address _token,
-        address payable _factoryAddress
-    ) public Rewards(
-        _token,
-        bondedECDSAKeepFactoryDeployment,
-        backportECDSAIntervalWeight,
-        backportECDSATermLength,
-        minimumECDSAKeepsPerInterval
-    ) {
+    constructor(address _token, address payable _factoryAddress)
+        public
+        Rewards(
+            _token,
+            bondedECDSAKeepFactoryDeployment,
+            backportECDSAIntervalWeight,
+            backportECDSATermLength,
+            minimumECDSAKeepsPerInterval
+        )
+    {
         factory = BondedECDSAKeepFactory(_factoryAddress);
     }
 
@@ -76,23 +76,37 @@ contract ECDSABackportRewards is Rewards {
         return true;
     }
 
-    function _isTerminated(bytes32 groupIndexBytes) internal view returns (bool) {
+    function _isTerminated(bytes32 groupIndexBytes)
+        internal
+        view
+        returns (bool)
+    {
         return false;
     }
 
     // A keep is recognized if its creation time is between May-13-2020 - Sep 14 2020
     function _recognizedByFactory(bytes32 _keep) internal view returns (bool) {
-        uint256 keepCreatedTimestamp = factory.getKeepOpenedTimestamp(toAddress(_keep));
+        uint256 keepCreatedTimestamp = factory.getKeepOpenedTimestamp(
+            toAddress(_keep)
+        );
         if (keepCreatedTimestamp == 0) {
             return false;
         }
-        return keepCreatedTimestamp < bondedECDSAKeepFactoryDeployment.add(backportECDSATermLength);
+        return
+            keepCreatedTimestamp <
+            bondedECDSAKeepFactoryDeployment.add(backportECDSATermLength);
     }
 
-    function _distributeReward(bytes32 _keep, uint256 amount) internal isAddress(_keep) {
+    function _distributeReward(bytes32 _keep, uint256 amount)
+        internal
+        isAddress(_keep)
+    {
         token.approve(toAddress(_keep), amount);
 
-        IBondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(address(token), amount);
+        IBondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
+            address(token),
+            amount
+        );
     }
 
     function validAddressBytes(bytes32 keepBytes) internal pure returns (bool) {
