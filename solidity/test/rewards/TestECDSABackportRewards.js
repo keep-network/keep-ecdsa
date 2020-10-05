@@ -1,12 +1,9 @@
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
 
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const {expectRevert} = require("@openzeppelin/test-helpers")
 
-const {mineBlocks} = require("../helpers/mineBlocks")
-
-const truffleAssert = require("truffle-assertions")
-
+const KeepToken = contract.fromArtifact("KeepToken")
 const StackLib = contract.fromArtifact("StackLib")
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const BondedECDSAKeepFactoryStub = contract.fromArtifact(
@@ -18,16 +15,15 @@ const GrantStaking = contract.fromArtifact("GrantStaking")
 const Locks = contract.fromArtifact("Locks")
 const TopUps = contract.fromArtifact("TopUps")
 const TokenStakingEscrow = contract.fromArtifact("TokenStakingEscrow")
-const TokenStaking = contract.fromArtifact("TokenStaking")
+const TokenStaking = contract.fromArtifact("TokenStakingStub")
 const TokenGrant = contract.fromArtifact("TokenGrant")
-const BondedSortitionPool = contract.fromArtifact("BondedSortitionPool")
 const BondedSortitionPoolFactory = contract.fromArtifact(
   "BondedSortitionPoolFactory"
 )
 const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
 const BondedECDSAKeep = contract.fromArtifact("BondedECDSAKeep")
 const ECDSABackportRewards = contract.fromArtifact("ECDSABackportRewards")
-const KeepToken = contract.fromArtifact("KeepToken")
+
 const KeepTokenGrant = contract.fromArtifact("TokenGrant")
 
 const BN = web3.utils.BN
@@ -35,7 +31,6 @@ const BN = web3.utils.BN
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
-const assert = chai.assert
 
 describe("ECDSABackportRewards", () => {
   let registry
@@ -48,14 +43,13 @@ describe("ECDSABackportRewards", () => {
   let bondedSortitionPoolFactory
   let keepBonding
   let randomBeacon
+  let keepMembers
 
   const owner = accounts[0]
 
   const keepSize = 16
-  const intervalWeights = [100]
-
-  // BondedECDSAKeepFactory deployment date
-  const initiationTime = 1589408351
+  const numberOfCreatedKeeps = 41
+  const keepCreationTimestamp = 1589408353
 
   // 1,000,000,000 - total KEEP supply
   //   200,000,000 - 20% of the total supply goes to staker rewards
@@ -63,127 +57,23 @@ describe("ECDSABackportRewards", () => {
   //     1,800,000 - 1% of ECDSA staker rewards goes to May - Sep keeps
   const ECDSABackportKEEPRewards = 1800000
 
-  async function createStakedMembers() {
-    const minimumStake = await tokenStaking.minimumStake.call()
-
-    console.log("mnimum stake", minimumStake.toString())
-    const members = []
-
-    // 16 members in each keep
-    for (let i = 0; i < keepSize; i++) {
-      const operator = accounts[i]
-      const beneficiary = accounts[keepSize + i]
-      const authorizer = accounts[i]
-
-      const delegation = Buffer.concat([
-        Buffer.from(web3.utils.hexToBytes(beneficiary)),
-        Buffer.from(web3.utils.hexToBytes(operator)),
-        Buffer.from(web3.utils.hexToBytes(authorizer)),
-      ])
-
-      console.log("keepToken.address1 ", keepToken.address)
-      await keepToken.approveAndCall(
-        tokenStaking.address,
-        minimumStake,
-        delegation
-      )
-      members.push(accounts[i])
-    }
-
-    return members
-  }
-
-  async function initializeNewFactory() {
-    keepToken = await KeepToken.new()
-    const keepTokenGrant = await KeepTokenGrant.new(keepToken.address)
-    registry = await KeepRegistry.new()
-
-    bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
-    await TokenStaking.detectNetwork()
-    await TokenStaking.link(
-      "MinimumStakeSchedule",
-      (await MinimumStakeSchedule.new()).address
-    )
-    await TokenStaking.link("GrantStaking", (await GrantStaking.new()).address)
-    await TokenStaking.link("Locks", (await Locks.new()).address)
-    await TokenStaking.link("TopUps", (await TopUps.new()).address)
-
-    const stakingEscrow = await TokenStakingEscrow.new(
-      keepToken.address,
-      keepTokenGrant.address
-    )
-
-    const stakeInitializationPeriod = 30 // In seconds
-
-    tokenStaking = await TokenStaking.new(
-      keepToken.address,
-      keepTokenGrant.address,
-      stakingEscrow.address,
-      registry.address,
-      stakeInitializationPeriod
-    )
-    tokenGrant = await TokenGrant.new(keepToken.address)
-
-    keepBonding = await KeepBonding.new(
-      registry.address,
-      tokenStaking.address,
-      tokenGrant.address
-    )
-    randomBeacon = await RandomBeaconStub.new()
-    const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
-    keepFactory = await BondedECDSAKeepFactoryStub.new(
-      bondedECDSAKeepMasterContract.address,
-      bondedSortitionPoolFactory.address,
-      tokenStaking.address,
-      keepBonding.address,
-      randomBeacon.address
-    )
-
-    await registry.approveOperatorContract(keepFactory.address)
-  }
-
-  async function createKeeps(timestamps) {
-    await keepFactory.openSyntheticKeeps([alice, bob], timestamps)
-    for (let i = 0; i < timestamps.length; i++) {
-      const keepAddress = await keepFactory.getKeepAtIndex(i)
-      const keep = await RewardsKeepStub.at(keepAddress)
-      await keep.setTimestamp(timestamps[i])
-    }
-  }
-
   before(async () => {
     await BondedSortitionPoolFactory.detectNetwork()
     await BondedSortitionPoolFactory.link(
       "StackLib",
-      (await StackLib.new()).address
+      (await StackLib.new({from: owner})).address
     )
 
     await initializeNewFactory()
-    await createStakedMembers()
+    keepMembers = await createMembers()
     rewardsContract = await ECDSABackportRewards.new(
       keepToken.address,
-      keepFactory.address
+      keepFactory.address,
+      {from: owner}
     )
 
     await fund(ECDSABackportKEEPRewards)
   })
-
-  async function fund(amount) {
-    console.log("keepToken.address2 ", keepToken.address)
-    await keepToken.approveAndCall(rewardsContract.address, amount, "0x0", {
-      from: owner,
-    })
-    await rewardsContract.markAsFunded({from: owner})
-  }
-
-  async function timeJumpToEndOfInterval(intervalNumber) {
-    const endOf = await rewardsContract.endOf(intervalNumber)
-    const now = await time.latest()
-
-    if (now.lt(endOf)) {
-      await time.increaseTo(endOf.addn(1))
-    }
-  }
 
   beforeEach(async () => {
     await createSnapshot()
@@ -193,18 +83,177 @@ describe("ECDSABackportRewards", () => {
     await restoreSnapshot()
   })
 
-  describe.only("interval allocation", async () => {
+  describe("interval allocation", async () => {
     it("should equal the full allocation", async () => {
       const expectedAllocation = 1800000
 
-      await timeJumpToEndOfInterval(0)
       await rewardsContract.allocateRewards(0)
 
       const allocated = await rewardsContract.getAllocatedRewards(0)
-      //   const allocatedKeep = allocated.div(tokenDecimalMultiplier)
-
-      //   expect(allocatedKeep).to.eq.BN(expectedAllocation)
       expect(allocated).to.eq.BN(expectedAllocation)
     })
   })
+
+  describe("rewards withdrawal", async () => {
+    it("should correctly distribute rewards between beneficiaries", async () => {
+      await createKeeps()
+
+      // 1800000 / 41 / 16 = 2743.9024 KEEP
+      // First 15 beneficiaries receive 2743 KEEP
+      // Decimals (0.9024) are rolled over to the last keep signer.
+      // The last keep signer receives 0.9024 * 15 = 13.536 more KEEP than other signers.
+      // The last keep signer receives 2743.9024 + 13.536 = 2757.4384 KEEP => 2757
+      //
+      // All 16 signers belong to all 41 keeps for testing purposes.
+      // KEEP is added to the signers in every iteration; total 41 times (number of keeps)
+      const expectedSingleReward = 2743
+      const expectedSingleRewardForLastSigner = 2757
+
+      for (let i = 0; i < numberOfCreatedKeeps; i++) {
+        const keepAddress = await keepFactory.getKeepAtIndex(i)
+        await rewardsContract.receiveReward(keepAddress)
+
+        await assertKeepBalanceOfBeneficiaries(
+          i,
+          expectedSingleReward,
+          expectedSingleRewardForLastSigner
+        )
+      }
+    })
+
+    it("should fail for non-existing group", async () => {
+      await expectRevert(
+        rewardsContract.receiveReward(
+          "0x1111111111111111111111111111111111111111"
+        ),
+        "Keep not recognized by factory"
+      )
+    })
+  })
+
+  async function assertKeepBalanceOfBeneficiaries(
+    keepNumber,
+    expectedSingleReward,
+    expectedSingleRewardForLastSigner
+  ) {
+    // Check the balance of all beneficiaries but the last one.
+    for (let i = 0; i < keepSize - 1; i++) {
+      const actualBalance = await keepToken.balanceOf(
+        keepMembers[i].beneficiary
+      )
+      const expectedBalance =
+        expectedSingleReward + keepNumber * expectedSingleReward
+
+      expect(actualBalance).to.eq.BN(expectedBalance)
+    }
+
+    const actualLastSignerBalance = await keepToken.balanceOf(
+      keepMembers[keepSize - 1].beneficiary
+    )
+    const expectedLastSignerBalance =
+      expectedSingleRewardForLastSigner +
+      keepNumber * expectedSingleRewardForLastSigner
+
+    // Check the balance of the last beneficiary.
+    expect(actualLastSignerBalance).to.eq.BN(expectedLastSignerBalance)
+  }
+
+  async function initializeNewFactory() {
+    keepToken = await KeepToken.new({from: owner})
+    const keepTokenGrant = await KeepTokenGrant.new(keepToken.address)
+    registry = await KeepRegistry.new({from: owner})
+
+    bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new({
+      from: owner,
+    })
+    await TokenStaking.detectNetwork()
+    await TokenStaking.link(
+      "MinimumStakeSchedule",
+      (await MinimumStakeSchedule.new({from: owner})).address
+    )
+    await TokenStaking.link(
+      "GrantStaking",
+      (await GrantStaking.new({from: owner})).address
+    )
+    await TokenStaking.link("Locks", (await Locks.new({from: owner})).address)
+    await TokenStaking.link("TopUps", (await TopUps.new({from: owner})).address)
+
+    const stakingEscrow = await TokenStakingEscrow.new(
+      keepToken.address,
+      keepTokenGrant.address,
+      {from: owner}
+    )
+
+    const stakeInitializationPeriod = 30 // In seconds
+
+    tokenStaking = await TokenStaking.new(
+      keepToken.address,
+      keepTokenGrant.address,
+      stakingEscrow.address,
+      registry.address,
+      stakeInitializationPeriod,
+      {from: owner}
+    )
+    tokenGrant = await TokenGrant.new(keepToken.address, {from: owner})
+
+    keepBonding = await KeepBonding.new(
+      registry.address,
+      tokenStaking.address,
+      tokenGrant.address,
+      {from: owner}
+    )
+    randomBeacon = await RandomBeaconStub.new({from: owner})
+    const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new({
+      from: owner,
+    })
+    keepFactory = await BondedECDSAKeepFactoryStub.new(
+      bondedECDSAKeepMasterContract.address,
+      bondedSortitionPoolFactory.address,
+      tokenStaking.address,
+      keepBonding.address,
+      randomBeacon.address,
+      {from: owner}
+    )
+
+    await registry.approveOperatorContract(keepFactory.address, {from: owner})
+  }
+
+  async function createMembers() {
+    const membersArr = []
+
+    // 16 members in each keep
+    for (let i = 0; i < keepSize; i++) {
+      const operator = accounts[i]
+      const beneficiary = accounts[keepSize + i]
+      await tokenStaking.setBeneficiary(operator, beneficiary)
+      const member = {
+        operator: operator,
+        beneficiary: beneficiary,
+      }
+
+      membersArr.push(member)
+    }
+
+    return membersArr
+  }
+
+  async function createKeeps() {
+    const members = keepMembers.map((m) => m.operator)
+    for (let i = 0; i < numberOfCreatedKeeps; i++) {
+      await keepFactory.stubOpenKeep(
+        owner,
+        members,
+        tokenStaking.address,
+        keepFactory.address,
+        keepCreationTimestamp
+      )
+    }
+  }
+
+  async function fund(amount) {
+    await keepToken.approveAndCall(rewardsContract.address, amount, "0x0", {
+      from: owner,
+    })
+    await rewardsContract.markAsFunded({from: owner})
+  }
 })
