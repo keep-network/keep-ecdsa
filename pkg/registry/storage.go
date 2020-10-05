@@ -11,6 +11,7 @@ import (
 
 type storage interface {
 	save(keepAddress common.Address, signer *tss.ThresholdSigner) error
+	snapshot(keepAddress common.Address, signer *tss.ThresholdSigner) error
 	readAll() (<-chan *keepSigner, <-chan error)
 	archive(keepAddress string) error
 }
@@ -25,13 +26,34 @@ func newStorage(persistence persistence.Handle) storage {
 	}
 }
 
-func (ps *persistentStorage) save(keepAddress common.Address, signer *tss.ThresholdSigner) error {
+func (ps *persistentStorage) save(
+	keepAddress common.Address,
+	signer *tss.ThresholdSigner,
+) error {
 	signerBytes, err := signer.Marshal()
 	if err != nil {
 		return fmt.Errorf("failed to marshal signer: [%v]", err)
 	}
 
 	return ps.handle.Save(
+		signerBytes,
+		keepAddress.String(),
+		// Take just the first 20 bytes of member ID so that we don't produce
+		// too long file names.
+		fmt.Sprintf("/membership_%.40s", signer.MemberID().String()),
+	)
+}
+
+func (ps *persistentStorage) snapshot(
+	keepAddress common.Address,
+	signer *tss.ThresholdSigner,
+) error {
+	signerBytes, err := signer.Marshal()
+	if err != nil {
+		return fmt.Errorf("failed to marshal signer: [%v]", err)
+	}
+
+	return ps.handle.Snapshot(
 		signerBytes,
 		keepAddress.String(),
 		// Take just the first 20 bytes of member ID so that we don't produce
