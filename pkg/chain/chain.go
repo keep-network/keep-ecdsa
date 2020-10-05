@@ -16,6 +16,8 @@ import (
 type Handle interface {
 	// Address returns client's ethereum address.
 	Address() common.Address
+	// BalanceOf returns the balance of the given address.
+	BalanceOf(address common.Address) (*big.Int, error)
 	// StakeMonitor returns a stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
 	// BlockCounter returns a block counter.

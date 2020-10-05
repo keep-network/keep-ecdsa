@@ -86,6 +86,10 @@ func (lc *localChain) Address() common.Address {
 	return lc.clientAddress
 }
 
+func (lc *localChain) BalanceOf(address common.Address) (*big.Int, error) {
+	return nil, nil // not implemented.
+}
+
 func (lc *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return nil, nil // not implemented.
 }
