@@ -239,7 +239,6 @@ describe("ECDSABackportRewards", () => {
         owner,
         members,
         tokenStaking.address,
-        keepFactory.address,
         keepCreationTimestamp
       )
       keepCreationTimestamp += 7200 // adding 2 hours interval between each opened keep
