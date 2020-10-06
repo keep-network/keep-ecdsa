@@ -23,7 +23,7 @@ import "./api/IBondedECDSAKeep.sol";
 /// the keeps which were created by the BondedECDSAKeepFactory contract:
 /// https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
 ///
-/// Keep signers from May release of BondedECDSAKeepFactory contract can claim 
+/// Keep signers from May release of BondedECDSAKeepFactory contract can claim
 /// their rewards at any time.
 contract ECDSABackportRewards is Rewards {
     // BondedECDSAKeepFactory deployment date, May-13-2020 interval started.
@@ -37,7 +37,7 @@ contract ECDSABackportRewards is Rewards {
     // versions of BondedECDSAKeepFactory.
     // Older: https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
     // Newer: https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
-    // The actual value between these 2 contracts deployment time is a little less 
+    // The actual value between these 2 contracts deployment time is a little less
     // than 124 days.
     uint256 internal constant backportECDSATermLength = 124 days;
 
@@ -94,10 +94,7 @@ contract ECDSABackportRewards is Rewards {
         return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
-    function _distributeReward(bytes32 _keep, uint256 amount)
-        internal
-        isAddress(_keep)
-    {
+    function _distributeReward(bytes32 _keep, uint256 amount) internal {
         token.approve(toAddress(_keep), amount);
 
         IBondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
@@ -106,20 +103,11 @@ contract ECDSABackportRewards is Rewards {
         );
     }
 
-    function validAddressBytes(bytes32 keepBytes) internal pure returns (bool) {
-        return fromAddress(toAddress(keepBytes)) == keepBytes;
-    }
-
     function toAddress(bytes32 keepBytes) internal pure returns (address) {
         return address(bytes20(keepBytes));
     }
 
     function fromAddress(address keepAddress) internal pure returns (bytes32) {
         return bytes32(bytes20(keepAddress));
-    }
-
-    modifier isAddress(bytes32 _keep) {
-        require(validAddressBytes(_keep), "Invalid keep address");
-        _;
     }
 }
