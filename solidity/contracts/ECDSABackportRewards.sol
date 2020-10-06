@@ -18,6 +18,13 @@ import "@keep-network/keep-core/contracts/Rewards.sol";
 import "./BondedECDSAKeepFactory.sol";
 import "./api/IBondedECDSAKeep.sol";
 
+/// @title KEEP Random ECDSA Signer Subsidy Rewards for the May release.
+/// @notice Contract distributes KEEP rewards to signers that were part of
+/// the keeps which were created by the BondedECDSAKeepFactory contract:
+/// https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
+///
+/// Keep signers from May release of BondedECDSAKeepFactory contract can claim 
+/// their rewards at any time.
 contract ECDSABackportRewards is Rewards {
     // BondedECDSAKeepFactory deployment date, May-13-2020 interval started.
     // https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
@@ -65,10 +72,12 @@ contract ECDSABackportRewards is Rewards {
 
     function _isClosed(bytes32) internal view returns (bool) {
         // Even though we still have some of the keeps opened, all the keeps
-        // created between May 13 2020 - Sep 14 2020 are considered closed. Because
-        // of the deposits pause https://tbtc.network/news/2020-05-21-details-of-the-tbtc-deposit-pause-on-may-18-2020/
-        // closing all the keeps is not easily achievable. However, we do not want
-        // to block rewards distribution for good stakers caused by the incident on May 18th.
+        // created between May 13 2020 - Sep 14 2020 are considered closed.
+        // Because of the deposits pause
+        // https://tbtc.network/news/2020-05-21-details-of-the-tbtc-deposit-pause-on-may-18-2020/
+        // closing all the keeps is not easily achievable. However, we do not
+        // want to block rewards distribution for good stakers caused by the
+        // incident on May 18th.
         return true;
     }
 

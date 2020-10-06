@@ -59,6 +59,7 @@ describe("ECDSABackportRewards", () => {
     .toBN(1800000)
     .mul(tokenDecimalMultiplier)
 
+  // First keep creation timestamp.
   let keepCreationTimestamp = 1589408353
 
   before(async () => {
