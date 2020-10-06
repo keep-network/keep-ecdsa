@@ -335,8 +335,12 @@ github.com/keep-network/keep-common v1.2.0 h1:hVd2tTd7vL+9CQP5Ntk5kjs+GYvkgrRNBc
 github.com/keep-network/keep-common v1.2.0/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
 github.com/keep-network/keep-common v1.2.1-0.20201002105641-e04cc579ff66 h1:x/9fra2wLrBDhS8LOQztFajoM2q13FgBN5jFiqBGBog=
 github.com/keep-network/keep-common v1.2.1-0.20201002105641-e04cc579ff66/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
+github.com/keep-network/keep-common v1.2.1-0.20201006102729-2dbe02bd3d5b h1:QdqEEwIeAFVpzGnc6ZHoEmygaefO2cc7/iA1/is/IdI=
+github.com/keep-network/keep-common v1.2.1-0.20201006102729-2dbe02bd3d5b/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
 github.com/keep-network/keep-core v1.3.0 h1:7Tb33EmO/ntHOEbOiYciRlBhqu5Ln6KemWCaYK0Z6LA=
 github.com/keep-network/keep-core v1.3.0/go.mod h1:1KsSSTQoN754TrFLW7kLy50pOG2CQ4BOfnJqdvEG7FA=
+github.com/keep-network/keep-core v1.3.1-0.20201006110049-b8d261047e57 h1:DInZ/s8fXeskiVXC2znn0XCaEIVTiYWvNPS0DNdH00E=
+github.com/keep-network/keep-core v1.3.1-0.20201006110049-b8d261047e57/go.mod h1:TMbNLqu/vGwYLD/TCtbZSaSawWE/pEWTUE27aO7IQi8=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
