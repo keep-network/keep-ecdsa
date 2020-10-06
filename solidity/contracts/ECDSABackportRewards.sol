@@ -30,7 +30,9 @@ contract ECDSABackportRewards is Rewards {
     // versions of BondedECDSAKeepFactory.
     // Older: https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
     // Newer: https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
-    uint256 internal constant backportECDSATermLength = 123 days; // 10678946 sec
+    // The actual value between these 2 contracts deployment time is a little less 
+    // than 124 days.
+    uint256 internal constant backportECDSATermLength = 124 days;
 
     uint256 internal constant minimumECDSAKeepsPerInterval = 40;
 
