@@ -96,20 +96,18 @@ describe("ECDSABackportRewards", () => {
 
   describe("rewards withdrawal", async () => {
     it("should correctly distribute rewards between beneficiaries", async () => {
-      // 1800000 / 41 / 3 = 14634.14634 KEEP.
-      // Each beneficiary receive 14634 KEEP.
-      // Decimals (0.14634) are rolled over to the last keep signer.
-      //
       // All 3 signers belong to all 41 keeps for testing purposes.
       // KEEP is added to the signers in every iteration; total 41 times (number of keeps).
-      const expectedSingleReward = new BN(14634)
+      //
+      // 1800000 / 3 = 600000 KEEP.
+      const expectedBeneficiaryBalance = new BN(600000)
 
       for (let i = 0; i < numberOfCreatedKeeps; i++) {
         const keepAddress = await keepFactory.getKeepAtIndex(i)
         await rewardsContract.receiveReward(keepAddress)
-
-        await assertKeepBalanceOfBeneficiaries(i, expectedSingleReward)
       }
+
+      await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
     })
 
     it("should fail for non-existing group", async () => {
@@ -122,25 +120,18 @@ describe("ECDSABackportRewards", () => {
     })
   })
 
-  async function assertKeepBalanceOfBeneficiaries(
-    keepNumber,
-    expectedSingleReward
-  ) {
+  async function assertKeepBalanceOfBeneficiaries(expectedBalance) {
     // Solidity is not very good when it comes to floating point precision,
-    // we are allowing for ~6 KEEP difference margin between expected and
+    // we are allowing for ~1 KEEP difference margin between expected and
     // actual value.
-    const precision = 6
+    const precision = 1
 
-    for (let i = 0; i < keepSize; i++) {
+    for (let i = 0; i < keepMembers.length; i++) {
       const actualBalance = (
         await keepToken.balanceOf(keepMembers[i].beneficiary)
       ).div(tokenDecimalMultiplier)
 
-      const expectedBalance = expectedSingleReward.add(
-        expectedSingleReward.muln(keepNumber)
-      )
-
-      expect(actualBalance).to.gte.BN(expectedBalance)
+      expect(actualBalance).to.gte.BN(expectedBalance.subn(precision))
       expect(actualBalance).to.lte.BN(expectedBalance.addn(precision))
     }
   }
