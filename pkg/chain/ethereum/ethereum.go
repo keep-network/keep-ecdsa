@@ -510,6 +510,7 @@ func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Ti
 	return keepOpenTime, nil
 }
 
+// WeiBalanceOf returns the given address balance in WEI.
 func (ec *EthereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
 	return ec.clientRPC.BalanceAt(
 		context.Background(),
@@ -518,6 +519,7 @@ func (ec *EthereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) 
 	)
 }
 
+// BalanceMonitor returns a balance monitor.
 func (ec *EthereumChain) BalanceMonitor() (chain.BalanceMonitor, error) {
-	return &ethereum.BalanceMonitor{ec.WeiBalanceOf}, nil
+	return ethereum.NewBalanceMonitor(ec.WeiBalanceOf), nil
 }
