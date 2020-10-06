@@ -82,17 +82,9 @@ contract ECDSABackportRewards is Rewards {
         return false;
     }
 
-    // A keep is recognized if its creation time is between May-13-2020 - Sep 14 2020
+    // A keep is recognized if it was created by this factory between May 13 2020 - Sep 14 2020
     function _recognizedByFactory(bytes32 _keep) internal view returns (bool) {
-        uint256 keepCreatedTimestamp = factory.getKeepOpenedTimestamp(
-            toAddress(_keep)
-        );
-        if (keepCreatedTimestamp == 0) {
-            return false;
-        }
-        return
-            keepCreatedTimestamp <
-            bondedECDSAKeepFactoryDeployment.add(backportECDSATermLength);
+        return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
     function _distributeReward(bytes32 _keep, uint256 amount)
