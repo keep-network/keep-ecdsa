@@ -61,12 +61,6 @@ describe("ECDSABackportRewards", () => {
     .mul(tokenDecimalMultiplier)
 
   before(async () => {
-    await BondedSortitionPoolFactory.detectNetwork()
-    await BondedSortitionPoolFactory.link(
-      "StackLib",
-      (await StackLib.new({from: owner})).address
-    )
-
     await initializeNewFactory()
     keepMembers = await createMembers()
     rewardsContract = await ECDSABackportRewards.new(
@@ -152,6 +146,12 @@ describe("ECDSABackportRewards", () => {
   }
 
   async function initializeNewFactory() {
+    await BondedSortitionPoolFactory.detectNetwork()
+    await BondedSortitionPoolFactory.link(
+      "StackLib",
+      (await StackLib.new({from: owner})).address
+    )
+
     keepToken = await KeepToken.new({from: owner})
     const keepTokenGrant = await KeepTokenGrant.new(keepToken.address)
     registry = await KeepRegistry.new({from: owner})
