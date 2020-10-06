@@ -50,6 +50,7 @@ describe("ECDSABackportRewards", () => {
   const keepSize = 3
   const numberOfCreatedKeeps = 41
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
+  const firstKeepCreationTimestamp = 1589408352
 
   // 1,000,000,000 - total KEEP supply
   //   200,000,000 - 20% of the total supply goes to staker rewards
@@ -58,9 +59,6 @@ describe("ECDSABackportRewards", () => {
   const ECDSABackportKEEPRewards = web3.utils
     .toBN(1800000)
     .mul(tokenDecimalMultiplier)
-
-  // First keep creation timestamp.
-  let keepCreationTimestamp = 1589408353
 
   before(async () => {
     await BondedSortitionPoolFactory.detectNetwork()
@@ -234,6 +232,7 @@ describe("ECDSABackportRewards", () => {
 
   async function createKeeps() {
     const members = keepMembers.map((m) => m.operator)
+    let keepCreationTimestamp = firstKeepCreationTimestamp
     for (let i = 0; i < numberOfCreatedKeeps; i++) {
       await keepFactory.stubOpenKeep(owner, members, keepCreationTimestamp)
       keepCreationTimestamp += 7200 // adding 2 hours interval between each opened keep
