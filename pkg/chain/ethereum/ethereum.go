@@ -2,6 +2,7 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
@@ -506,4 +508,16 @@ func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Ti
 	keepOpenTime := time.Unix(timestamp.Int64(), 0)
 
 	return keepOpenTime, nil
+}
+
+func (ec *EthereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
+	return ec.clientRPC.BalanceAt(
+		context.Background(),
+		address,
+		nil,
+	)
+}
+
+func (ec *EthereumChain) BalanceMonitor() (chain.BalanceMonitor, error) {
+	return &ethereum.BalanceMonitor{ec.WeiBalanceOf}, nil
 }

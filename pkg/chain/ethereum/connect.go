@@ -38,6 +38,7 @@ type EthereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
 	client                         bind.ContractBackend
+	clientRPC                      *ethclient.Client
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *blockcounter.EthereumBlockCounter
 	miningWaiter                   *ethutil.MiningWaiter
@@ -116,6 +117,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		config:                         config,
 		accountKey:                     accountKey,
 		client:                         wrappedClient,
+		clientRPC:                      client,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,

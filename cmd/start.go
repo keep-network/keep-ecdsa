@@ -3,8 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/diagnostics"
+	"math/big"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/diagnostics"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -170,6 +173,7 @@ func Start(c *cli.Context) error {
 
 	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(config, networkProvider)
+	initializeBalanceMonitoring(ctx, ethereumChain, config, ethereumKey.Address.Hex())
 
 	logger.Info("client started")
 
@@ -246,4 +250,35 @@ func initializeDiagnostics(
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
 	diagnostics.RegisterClientInfoSource(registry, netProvider)
+}
+
+func initializeBalanceMonitoring(
+	ctx context.Context,
+	chainHandle eth.Handle,
+	config *config.Config,
+	ethereumAddress string,
+) {
+	balanceMonitor, err := chainHandle.BalanceMonitor()
+	if err != nil {
+		logger.Errorf("error obtaining balance monitor handle [%v]", err)
+	}
+
+	alertThreshold := config.Ethereum.BalanceAlertThreshold
+	if alertThreshold == 0 {
+		alertThreshold = 500000000000000000 // 0.5 ETH by default.
+	}
+
+	balanceMonitor.Observe(
+		ctx,
+		ethereumAddress,
+		new(big.Int).SetUint64(alertThreshold),
+		10*time.Minute,
+	)
+
+	logger.Infof(
+		"started balance monitoring for address [%v] "+
+			"with alerting below [%v] wei",
+		ethereumAddress,
+		alertThreshold,
+	)
 }
