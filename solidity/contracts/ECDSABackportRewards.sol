@@ -50,9 +50,6 @@ contract ECDSABackportRewards is Rewards {
     }
 
     function _getKeepCount() internal view returns (uint256) {
-        // Between May 13 2020 - Sep 14 2020 there were 41 keeps opened.
-        // The last Keep was opened on May-17-2020
-        // https://etherscan.io/address/0x45A3cACA2F2a78A53607618651C86111c9720AA5
         return factory.getKeepCount();
     }
 
@@ -82,7 +79,7 @@ contract ECDSABackportRewards is Rewards {
         return false;
     }
 
-    // A keep is recognized if it was created by this factory between May 13 2020 - Sep 14 2020
+    // A keep is recognized if it was created by this factory.
     function _recognizedByFactory(bytes32 _keep) internal view returns (bool) {
         return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
