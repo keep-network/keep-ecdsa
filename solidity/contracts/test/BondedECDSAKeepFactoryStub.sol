@@ -39,14 +39,12 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
     /// @notice Opens a new ECDSA keep.
     /// @param _owner Address of the keep owner.
     /// @param _members Keep members.
-    /// @param _tokenStaking Token staking address.
     /// @param _creationTimestamp Keep creation timestamp.
     ///
     /// @return Created keep address.
     function stubOpenKeep(
         address _owner,
         address[] memory _members,
-        address _tokenStaking,
         uint256 _creationTimestamp
     ) public payable returns (address keepAddress) {
         keepAddress = createClone(masterKeepAddress);
@@ -57,7 +55,7 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
             0,
             0,
             0,
-            _tokenStaking,
+            address(tokenStaking),
             address(keepBonding),
             address(this)
         );

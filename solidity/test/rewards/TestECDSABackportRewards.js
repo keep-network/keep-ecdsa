@@ -235,12 +235,7 @@ describe("ECDSABackportRewards", () => {
   async function createKeeps() {
     const members = keepMembers.map((m) => m.operator)
     for (let i = 0; i < numberOfCreatedKeeps; i++) {
-      await keepFactory.stubOpenKeep(
-        owner,
-        members,
-        tokenStaking.address,
-        keepCreationTimestamp
-      )
+      await keepFactory.stubOpenKeep(owner, members, keepCreationTimestamp)
       keepCreationTimestamp += 7200 // adding 2 hours interval between each opened keep
     }
   }
