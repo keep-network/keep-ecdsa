@@ -59,9 +59,8 @@ contract ECDSABackportRewards is Rewards {
         return fromAddress(factory.getKeepAtIndex(index));
     }
 
-    function _getCreationTime(bytes32) internal view returns (uint256) {
-        // Assign each keep to the starting timestamp of its interval.
-        return startOf(0);
+    function _getCreationTime(bytes32 _keep) internal view returns (uint256) {
+        return factory.getKeepOpenedTimestamp(toAddress(_keep));
     }
 
     function _isClosed(bytes32) internal view returns (bool) {
