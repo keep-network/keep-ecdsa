@@ -240,6 +240,7 @@ describe("ECDSABackportRewards", () => {
         keepFactory.address,
         keepCreationTimestamp
       )
+      keepCreationTimestamp + 7200 // adding 2 hours interval between each opened keep
     }
   }
 
