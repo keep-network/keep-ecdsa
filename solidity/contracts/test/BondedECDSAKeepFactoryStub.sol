@@ -35,4 +35,31 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
         /* solium-disable-next-line security/no-block-members*/
         keepOpenedTimestamp[keep] = block.timestamp;
     }
+
+    /// @notice Opens a new ECDSA keep.
+    /// @param _owner Address of the keep owner.
+    /// @param _members Keep members.
+    /// @param _creationTimestamp Keep creation timestamp.
+    ///
+    /// @return Created keep address.
+    function stubOpenKeep(
+        address _owner,
+        address[] memory _members,
+        uint256 _creationTimestamp
+    ) public payable returns (address keepAddress) {
+        keepAddress = createClone(masterKeepAddress);
+        BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
+        keep.initialize(
+            _owner,
+            _members,
+            0,
+            0,
+            0,
+            address(tokenStaking),
+            address(keepBonding),
+            address(this)
+        );
+        keeps.push(keepAddress);
+        keepOpenedTimestamp[keepAddress] = _creationTimestamp;
+    }
 }
