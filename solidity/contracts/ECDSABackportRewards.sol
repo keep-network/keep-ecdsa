@@ -56,8 +56,8 @@ contract ECDSABackportRewards is Rewards {
         return factory.getKeepCount();
     }
 
-    function _getKeepAtIndex(uint256 i) internal view returns (bytes32) {
-        return bytes32(i);
+    function _getKeepAtIndex(uint256 index) internal view returns (bytes32) {
+        return fromAddress(factory.getKeepAtIndex(index));
     }
 
     function _getCreationTime(bytes32) internal view returns (uint256) {

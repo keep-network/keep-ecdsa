@@ -73,6 +73,7 @@ describe("ECDSABackportRewards", () => {
     )
 
     await fund(ECDSABackportKEEPRewards)
+    await createKeeps()
   })
 
   beforeEach(async () => {
@@ -96,8 +97,6 @@ describe("ECDSABackportRewards", () => {
 
   describe("rewards withdrawal", async () => {
     it("should correctly distribute rewards between beneficiaries", async () => {
-      await createKeeps()
-
       // 1800000 / 41 / 16 = 2743.9024 KEEP
       // First 15 beneficiaries receive 2743 KEEP
       // Decimals (0.9024) are rolled over to the last keep signer.
