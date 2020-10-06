@@ -58,7 +58,7 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
             0,
             0,
             _tokenStaking,
-            address(0),
+            address(keepBonding),
             address(this)
         );
         keeps.push(keepAddress);
