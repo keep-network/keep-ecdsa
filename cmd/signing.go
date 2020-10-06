@@ -90,7 +90,7 @@ func DecryptKeyShare(c *cli.Context) error {
 
 	keepRegistry.LoadExistingKeeps()
 
-	signers, err := keepRegistry.GetSigners(keepAddress)
+	signer, err := keepRegistry.GetSigner(keepAddress)
 	if err != nil {
 		return fmt.Errorf(
 			"no signers for keep [%s]: [%v]",
@@ -98,8 +98,6 @@ func DecryptKeyShare(c *cli.Context) error {
 			err,
 		)
 	}
-
-	signer := signers[0]
 
 	signerBytes, err := signer.Marshal()
 	if err != nil {
