@@ -18,13 +18,44 @@ import "@keep-network/keep-core/contracts/Rewards.sol";
 import "./BondedECDSAKeepFactory.sol";
 import "./BondedECDSAKeep.sol";
 
+/// @title KEEP Random ECDSA Signer Subsidy Rewards for the Sep 2020 release.
+/// @notice Contract distributes KEEP rewards to signers that were part of
+/// the keeps which were created by the BondedECDSAKeepFactory contract:
+/// https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
+///
+/// The amount of KEEP to be distributed is determined by funding the contract,
+/// and additional KEEP can be added at any time.
+///
+/// When an interval is over, it will be allocated a percentage of the remaining
+/// unallocated rewards based on its weight, and adjusted by the number of keeps
+/// created in the interval if the quota is not met.
+///
+/// The adjustment for not meeting the keep quota is a percentage that equals
+/// the percentage of the quota that was met; if the number of keeps created is
+/// 80% of the quota then 80% of the base reward will be allocated for the
+/// interval.
+///
+/// Any unallocated rewards will stay in the unallocated rewards pool,
+/// to be allocated for future intervals. Intervals past the initially defined
+/// schedule have a weight of the last scheduled interval.
+///
+/// Keeps can receive rewards once the interval they were created in is over,
+/// and the keep has been marked as closed.
+/// There is no time limit to receiving rewards, nor is there need to wait for
+/// all keeps from the interval to be marked as closed.
+/// Calling `receiveReward` automatically allocates the rewards for the interval
+/// the specified keep was created in and all previous intervals.
+///
+/// If a keep is terminated, that fact can be reported to the reward contract.
+/// Reporting a terminated keep returns its allocated reward to the pool of
+/// unallocated rewards.
 contract ECDSARewards is Rewards {
     // BondedECDSAKeepFactory deployment date, Sep-14-2020 interval started.
     // https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
     uint256 internal constant ecdsaFirstIntervalStart = 1600087297;
 
     /// Weights of the 24 reward intervals assigned over
-    // 24 * backportECDSATermLength days.
+    // 24 * termLength days.
     uint256[] internal intervalWeights = [
         4, 8, 10, 12, 15, 15,
         15, 15, 15, 15, 15, 15,
@@ -33,10 +64,9 @@ contract ECDSARewards is Rewards {
     ];
 
     // Each interval is 30 days long.
-    uint256 internal constant backportECDSATermLength = 30 days;
+    uint256 internal constant termLength = 30 days;
 
-    // TODO: Define..
-    uint256 internal constant minimumECDSAKeepsPerInterval = 2;
+    uint256 internal constant minimumECDSAKeepsPerInterval = 4;
 
     BondedECDSAKeepFactory factory;
 
@@ -46,7 +76,7 @@ contract ECDSARewards is Rewards {
             _token,
             ecdsaFirstIntervalStart,
             intervalWeights,
-            backportECDSATermLength,
+            termLength,
             minimumECDSAKeepsPerInterval
         )
     {
@@ -69,11 +99,7 @@ contract ECDSARewards is Rewards {
         return BondedECDSAKeep(toAddress(_keep)).isClosed();
     }
 
-    function _isTerminated(bytes32 _keep)
-        internal
-        view
-        returns (bool)
-    {
+    function _isTerminated(bytes32 _keep) internal view returns (bool) {
         return BondedECDSAKeep(toAddress(_keep)).isTerminated();
     }
 
@@ -82,10 +108,7 @@ contract ECDSARewards is Rewards {
         return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
-    function _distributeReward(bytes32 _keep, uint256 amount)
-        internal
-        isAddress(_keep)
-    {
+    function _distributeReward(bytes32 _keep, uint256 amount) internal {
         token.approve(toAddress(_keep), amount);
 
         BondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
@@ -94,20 +117,11 @@ contract ECDSARewards is Rewards {
         );
     }
 
-    function validAddressBytes(bytes32 keepBytes) internal pure returns (bool) {
-        return fromAddress(toAddress(keepBytes)) == keepBytes;
-    }
-
     function toAddress(bytes32 keepBytes) internal pure returns (address) {
         return address(bytes20(keepBytes));
     }
 
     function fromAddress(address keepAddress) internal pure returns (bytes32) {
         return bytes32(bytes20(keepAddress));
-    }
-
-    modifier isAddress(bytes32 _keep) {
-        require(validAddressBytes(_keep), "Invalid keep address");
-        _;
     }
 }
