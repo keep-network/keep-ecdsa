@@ -18,6 +18,13 @@ import "@keep-network/keep-core/contracts/Rewards.sol";
 import "./BondedECDSAKeepFactory.sol";
 import "./api/IBondedECDSAKeep.sol";
 
+/// @title KEEP Random ECDSA Signer Subsidy Rewards for the May release.
+/// @notice Contract distributes KEEP rewards to signers that were part of
+/// the keeps which were created by the BondedECDSAKeepFactory contract:
+/// https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
+///
+/// Keep signers from May release of BondedECDSAKeepFactory contract can claim
+/// their rewards at any time.
 contract ECDSABackportRewards is Rewards {
     // BondedECDSAKeepFactory deployment date, May-13-2020 interval started.
     // https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
@@ -25,22 +32,16 @@ contract ECDSABackportRewards is Rewards {
 
     // We are going to have one interval, with a weight of 100%.
     uint256[] internal backportECDSAIntervalWeight = [100];
-    uint256 internal constant lastInterval = 0;
 
     // Interval is the difference in time of creation between older and newer
     // versions of BondedECDSAKeepFactory.
     // Older: https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
     // Newer: https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
-    uint256 internal constant backportECDSATermLength = 123 days; // 10678946 sec
+    // The actual value between these 2 contracts deployment time is a little less
+    // than 124 days.
+    uint256 internal constant backportECDSATermLength = 124 days;
 
-    // There were 41 Keeps created by BondedECDSAKeepFactory : 0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
-    // The last Keep was opened on May-17-2020
-    // https://etherscan.io/address/0x45A3cACA2F2a78A53607618651C86111c9720AA5
-    uint256 internal constant numberOfCreatedECDSAKeeps = 41;
-
-    // We allocate ecdsa backport rewards to all 41 keeps.
-    uint256
-        internal constant minimumECDSAKeepsPerInterval = numberOfCreatedECDSAKeeps;
+    uint256 internal constant minimumECDSAKeepsPerInterval = 40;
 
     BondedECDSAKeepFactory factory;
 
@@ -58,21 +59,25 @@ contract ECDSABackportRewards is Rewards {
     }
 
     function _getKeepCount() internal view returns (uint256) {
-        // Between May 13 2020 - Sep 14 2020 there were 41 keeps opened.
-        return numberOfCreatedECDSAKeeps;
+        return factory.getKeepCount();
     }
 
-    function _getKeepAtIndex(uint256 i) internal view returns (bytes32) {
-        return bytes32(i);
+    function _getKeepAtIndex(uint256 index) internal view returns (bytes32) {
+        return fromAddress(factory.getKeepAtIndex(index));
     }
 
-    function _getCreationTime(bytes32) internal view returns (uint256) {
-        // Assign each keep to the starting timestamp of its interval.
-        return startOf(0);
+    function _getCreationTime(bytes32 _keep) internal view returns (uint256) {
+        return factory.getKeepOpenedTimestamp(toAddress(_keep));
     }
 
     function _isClosed(bytes32) internal view returns (bool) {
-        // All keeps created between May 13 2020 - Sep 14 2020 are considered closed.
+        // Even though we still have some of the keeps opened, all the keeps
+        // created between May 13 2020 - Sep 14 2020 are considered closed.
+        // Because of the deposits pause
+        // https://tbtc.network/news/2020-05-21-details-of-the-tbtc-deposit-pause-on-may-18-2020/
+        // closing all the keeps is not easily achievable. However, we do not
+        // want to block rewards distribution for good stakers caused by the
+        // incident on May 18th.
         return true;
     }
 
@@ -84,23 +89,12 @@ contract ECDSABackportRewards is Rewards {
         return false;
     }
 
-    // A keep is recognized if its creation time is between May-13-2020 - Sep 14 2020
+    // A keep is recognized if it was created by this factory.
     function _recognizedByFactory(bytes32 _keep) internal view returns (bool) {
-        uint256 keepCreatedTimestamp = factory.getKeepOpenedTimestamp(
-            toAddress(_keep)
-        );
-        if (keepCreatedTimestamp == 0) {
-            return false;
-        }
-        return
-            keepCreatedTimestamp <
-            bondedECDSAKeepFactoryDeployment.add(backportECDSATermLength);
+        return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
-    function _distributeReward(bytes32 _keep, uint256 amount)
-        internal
-        isAddress(_keep)
-    {
+    function _distributeReward(bytes32 _keep, uint256 amount) internal {
         token.approve(toAddress(_keep), amount);
 
         IBondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
@@ -109,20 +103,11 @@ contract ECDSABackportRewards is Rewards {
         );
     }
 
-    function validAddressBytes(bytes32 keepBytes) internal pure returns (bool) {
-        return fromAddress(toAddress(keepBytes)) == keepBytes;
-    }
-
     function toAddress(bytes32 keepBytes) internal pure returns (address) {
         return address(bytes20(keepBytes));
     }
 
     function fromAddress(address keepAddress) internal pure returns (bytes32) {
         return bytes32(bytes20(keepAddress));
-    }
-
-    modifier isAddress(bytes32 _keep) {
-        require(validAddressBytes(_keep), "Invalid keep address");
-        _;
     }
 }

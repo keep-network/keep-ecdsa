@@ -47,23 +47,20 @@ describe("ECDSABackportRewards", () => {
 
   const owner = accounts[0]
 
-  const keepSize = 16
+  const keepSize = 3
   const numberOfCreatedKeeps = 41
-  const keepCreationTimestamp = 1589408353
+  const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
+  const firstKeepCreationTimestamp = 1589408352
 
   // 1,000,000,000 - total KEEP supply
   //   200,000,000 - 20% of the total supply goes to staker rewards
   //   180,000,000 - 90% of staker rewards goes to the ECDSA stakers
   //     1,800,000 - 1% of ECDSA staker rewards goes to May - Sep keeps
-  const ECDSABackportKEEPRewards = 1800000
+  const ECDSABackportKEEPRewards = web3.utils
+    .toBN(1800000)
+    .mul(tokenDecimalMultiplier)
 
   before(async () => {
-    await BondedSortitionPoolFactory.detectNetwork()
-    await BondedSortitionPoolFactory.link(
-      "StackLib",
-      (await StackLib.new({from: owner})).address
-    )
-
     await initializeNewFactory()
     keepMembers = await createMembers()
     rewardsContract = await ECDSABackportRewards.new(
@@ -73,6 +70,7 @@ describe("ECDSABackportRewards", () => {
     )
 
     await fund(ECDSABackportKEEPRewards)
+    await createKeeps()
   })
 
   beforeEach(async () => {
@@ -89,36 +87,27 @@ describe("ECDSABackportRewards", () => {
 
       await rewardsContract.allocateRewards(0)
 
-      const allocated = await rewardsContract.getAllocatedRewards(0)
+      const allocated = (await rewardsContract.getAllocatedRewards(0)).div(
+        tokenDecimalMultiplier
+      )
       expect(allocated).to.eq.BN(expectedAllocation)
     })
   })
 
   describe("rewards withdrawal", async () => {
     it("should correctly distribute rewards between beneficiaries", async () => {
-      await createKeeps()
-
-      // 1800000 / 41 / 16 = 2743.9024 KEEP
-      // First 15 beneficiaries receive 2743 KEEP
-      // Decimals (0.9024) are rolled over to the last keep signer.
-      // The last keep signer receives 0.9024 * 15 = 13.536 more KEEP than other signers.
-      // The last keep signer receives 2743.9024 + 13.536 = 2757.4384 KEEP => 2757
+      // All 3 signers belong to all 41 keeps for testing purposes.
+      // KEEP is added to the signers in every iteration; total 41 times (number of keeps).
       //
-      // All 16 signers belong to all 41 keeps for testing purposes.
-      // KEEP is added to the signers in every iteration; total 41 times (number of keeps)
-      const expectedSingleReward = 2743
-      const expectedSingleRewardForLastSigner = 2757
+      // 1800000 / 3 = 600000 KEEP.
+      const expectedBeneficiaryBalance = new BN(600000)
 
       for (let i = 0; i < numberOfCreatedKeeps; i++) {
         const keepAddress = await keepFactory.getKeepAtIndex(i)
         await rewardsContract.receiveReward(keepAddress)
-
-        await assertKeepBalanceOfBeneficiaries(
-          i,
-          expectedSingleReward,
-          expectedSingleRewardForLastSigner
-        )
       }
+
+      await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
     })
 
     it("should fail for non-existing group", async () => {
@@ -131,34 +120,29 @@ describe("ECDSABackportRewards", () => {
     })
   })
 
-  async function assertKeepBalanceOfBeneficiaries(
-    keepNumber,
-    expectedSingleReward,
-    expectedSingleRewardForLastSigner
-  ) {
-    // Check the balance of all beneficiaries but the last one.
-    for (let i = 0; i < keepSize - 1; i++) {
-      const actualBalance = await keepToken.balanceOf(
-        keepMembers[i].beneficiary
-      )
-      const expectedBalance =
-        expectedSingleReward + keepNumber * expectedSingleReward
+  async function assertKeepBalanceOfBeneficiaries(expectedBalance) {
+    // Solidity is not very good when it comes to floating point precision,
+    // we are allowing for ~1 KEEP difference margin between expected and
+    // actual value.
+    const precision = 1
 
-      expect(actualBalance).to.eq.BN(expectedBalance)
+    for (let i = 0; i < keepMembers.length; i++) {
+      const actualBalance = (
+        await keepToken.balanceOf(keepMembers[i].beneficiary)
+      ).div(tokenDecimalMultiplier)
+
+      expect(actualBalance).to.gte.BN(expectedBalance.subn(precision))
+      expect(actualBalance).to.lte.BN(expectedBalance.addn(precision))
     }
-
-    const actualLastSignerBalance = await keepToken.balanceOf(
-      keepMembers[keepSize - 1].beneficiary
-    )
-    const expectedLastSignerBalance =
-      expectedSingleRewardForLastSigner +
-      keepNumber * expectedSingleRewardForLastSigner
-
-    // Check the balance of the last beneficiary.
-    expect(actualLastSignerBalance).to.eq.BN(expectedLastSignerBalance)
   }
 
   async function initializeNewFactory() {
+    await BondedSortitionPoolFactory.detectNetwork()
+    await BondedSortitionPoolFactory.link(
+      "StackLib",
+      (await StackLib.new({from: owner})).address
+    )
+
     keepToken = await KeepToken.new({from: owner})
     const keepTokenGrant = await KeepTokenGrant.new(keepToken.address)
     registry = await KeepRegistry.new({from: owner})
@@ -221,7 +205,7 @@ describe("ECDSABackportRewards", () => {
   async function createMembers() {
     const membersArr = []
 
-    // 16 members in each keep
+    // 3 members in each keep
     for (let i = 0; i < keepSize; i++) {
       const operator = accounts[i]
       const beneficiary = accounts[keepSize + i]
@@ -239,14 +223,10 @@ describe("ECDSABackportRewards", () => {
 
   async function createKeeps() {
     const members = keepMembers.map((m) => m.operator)
+    let keepCreationTimestamp = firstKeepCreationTimestamp
     for (let i = 0; i < numberOfCreatedKeeps; i++) {
-      await keepFactory.stubOpenKeep(
-        owner,
-        members,
-        tokenStaking.address,
-        keepFactory.address,
-        keepCreationTimestamp
-      )
+      await keepFactory.stubOpenKeep(owner, members, keepCreationTimestamp)
+      keepCreationTimestamp += 7200 // adding 2 hours interval between each opened keep
     }
   }
 
