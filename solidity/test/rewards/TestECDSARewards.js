@@ -21,7 +21,7 @@ const BondedSortitionPoolFactory = contract.fromArtifact(
   "BondedSortitionPoolFactory"
 )
 const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
-const BondedECDSAKeep = contract.fromArtifact("BondedECDSAKeepStub")
+const BondedECDSAKeepStub = contract.fromArtifact("BondedECDSAKeepStub")
 const ECDSARewards = contract.fromArtifact("ECDSARewards")
 
 const KeepTokenGrant = contract.fromArtifact("TokenGrant")
@@ -90,7 +90,7 @@ describe("ECDSARewards", () => {
       7128000.0, 13685760.0, 15738624.0, 16997713.92, 18697485.31, 15892862.52,
       13508933.14, 11482593.17, 9760204.19, 8296173.56, 7051747.53, 5993985.4,
       5094887.59, 4330654.45, 3681056.28, 3128897.84, 2659563.16, 2260628.69,
-      1921534.39, 1633304.23, 1388308.59, 1180062.31, 1003052.96, 852595.02,
+      1921534.39, 1633304.23, 1388308.59, 1180062.31, 1003052.96, 852595.02
     ]
 
     it("should equal to expected allocations when 5 keeps were created per interval", async () => {
@@ -122,6 +122,78 @@ describe("ECDSARewards", () => {
   }
 
   describe("rewards distribution", async () => {
+    it("should not be possible when a keep is not closed", async () => {
+      await createKeeps(1, firstKeepCreationTimestamp)
+
+      const keepAddress = await keepFactory.getKeepAtIndex(0)
+
+      const isEligible = await rewardsContract.eligibleForReward(keepAddress)
+      expect(isEligible).to.be.false
+
+      await timeJumpToEndOfInterval(0)
+      await expectRevert(
+        rewardsContract.receiveReward(keepAddress),
+        "Keep is not closed"
+      )
+    })
+
+    it("should not be possible when a keep is terminated", async () => {
+      await createKeeps(1, firstKeepCreationTimestamp)
+
+      const keepAddress = await keepFactory.getKeepAtIndex(0)
+      const keep = await BondedECDSAKeepStub.at(keepAddress)
+      await keep.publicMarkAsTerminated()
+
+      const isEligible = await rewardsContract.eligibleForReward(keepAddress)
+      expect(isEligible).to.be.false
+
+      await timeJumpToEndOfInterval(0)
+      await expectRevert(
+        rewardsContract.receiveReward(keepAddress),
+        "Keep is not closed"
+      )
+    })
+
+    it("should not count terminated groups when distributing rewards", async () => {
+      await createKeeps(2, firstKeepCreationTimestamp)
+      // reward for the first interval: 7128000 KEEP
+      // keeps created: 2, but the min is 4 => 7128000 / 4 = 1782000 KEEP per keep
+      // member receives: 1782000 / 3 = 594000 (3 signers per keep)
+      const expectedBeneficiaryBalance = new BN(594000)
+
+      await timeJumpToEndOfInterval(0)
+
+      const keepTerminatedAddress = await keepFactory.getKeepAtIndex(0)
+      const keepTerminated = await BondedECDSAKeepStub.at(keepTerminatedAddress)
+      await keepTerminated.publicMarkAsTerminated()
+
+      const keepAddress = await keepFactory.getKeepAtIndex(1)
+      const keep = await BondedECDSAKeepStub.at(keepAddress)
+      await keep.publicMarkAsClosed()
+
+      await expectRevert(
+        rewardsContract.receiveReward(keepTerminatedAddress),
+        "Keep is not closed"
+      )
+
+      await rewardsContract.receiveReward(keepAddress)
+      // Only the second keep was properly closed.
+      await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
+
+      // the remaining 5346000 stays in unallocated rewards but the fact
+      // one keep was terminated needs to be reported to recalculate the 
+      // unallocated amount
+      let unallocated = await rewardsContract.unallocatedRewards()
+      let unallocatedInKeep = unallocated.div(tokenDecimalMultiplier)
+      expect(unallocatedInKeep).to.eq.BN(174636000) // 178200000 - (2 * 1782000)
+
+      await rewardsContract.reportTermination(keepTerminatedAddress)
+
+      unallocated = await rewardsContract.unallocatedRewards()
+      unallocatedInKeep = unallocated.div(tokenDecimalMultiplier)
+      expect(unallocatedInKeep).to.eq.BN(176418000) // 178200000 - 1782000
+    })
+
     it("should correctly distribute rewards between beneficiaries", async () => {
       await createKeeps(8, firstKeepCreationTimestamp)
       // reward for the first interval: 7128000 KEEP
@@ -129,10 +201,10 @@ describe("ECDSARewards", () => {
       // member receives: 891000 / 3 = 297000 (3 signers per keep)
       const expectedBeneficiaryBalance = new BN(297000)
 
-      keepCreationTimestamp = await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfInterval(0)
 
       let keepAddress = await keepFactory.getKeepAtIndex(0)
-      let keep = await BondedECDSAKeep.at(keepAddress)
+      let keep = await BondedECDSAKeepStub.at(keepAddress)
       await keep.publicMarkAsClosed()
 
       await rewardsContract.receiveReward(keepAddress)
@@ -141,7 +213,7 @@ describe("ECDSARewards", () => {
 
       // verify second keep in this interval
       keepAddress = await keepFactory.getKeepAtIndex(1)
-      keep = await BondedECDSAKeep.at(keepAddress)
+      keep = await BondedECDSAKeepStub.at(keepAddress)
       await keep.publicMarkAsClosed()
 
       await rewardsContract.receiveReward(keepAddress)
@@ -218,7 +290,7 @@ describe("ECDSARewards", () => {
       {from: owner}
     )
     randomBeacon = await RandomBeaconStub.new({from: owner})
-    const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new({
+    const bondedECDSAKeepMasterContract = await BondedECDSAKeepStub.new({
       from: owner,
     })
     keepFactory = await BondedECDSAKeepFactoryStub.new(
