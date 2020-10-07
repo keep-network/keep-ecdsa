@@ -49,6 +49,9 @@ describe("ECDSARewards", () => {
   const owner = accounts[0]
 
   const keepSize = 3
+  // Solidity is not very good when it comes to floating point precision,
+  // we are allowing for ~1 KEEP difference margin between expected and
+  // actual value.
   const precision = 1
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
   const firstKeepCreationTimestamp = 1600087297 // Sep 14 2020
@@ -224,11 +227,6 @@ describe("ECDSARewards", () => {
   })
 
   async function assertKeepBalanceOfBeneficiaries(expectedBalance) {
-    // Solidity is not very good when it comes to floating point precision,
-    // we are allowing for ~1 KEEP difference margin between expected and
-    // actual value.
-    const precision = 1
-
     for (let i = 0; i < keepMembers.length; i++) {
       const actualBalance = (
         await keepToken.balanceOf(keepMembers[i].beneficiary)
