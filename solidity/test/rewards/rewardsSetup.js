@@ -105,7 +105,7 @@ async function fund(keepToken, rewardsContract, amount) {
 }
 
 async function createMembers(tokenStaking) {
-  const membersArr = []
+  const members = []
   const keepSize = 3
 
   // 3 members in each keep
@@ -118,10 +118,10 @@ async function createMembers(tokenStaking) {
       beneficiary: beneficiary,
     }
 
-    membersArr.push(member)
+    members.push(member)
   }
 
-  return membersArr
+  return members
 }
 
 module.exports.initialize = initialize
