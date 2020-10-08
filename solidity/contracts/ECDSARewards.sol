@@ -16,32 +16,76 @@ pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/Rewards.sol";
 import "./BondedECDSAKeepFactory.sol";
-import "./api/IBondedECDSAKeep.sol";
+import "./BondedECDSAKeep.sol";
 
-/// @title KEEP Random ECDSA Signer Subsidy Rewards for the May release.
+/// @title KEEP ECDSA Signer Subsidy Rewards for the Sep 2020 release.
 /// @notice Contract distributes KEEP rewards to signers that were part of
-/// the keeps which were created by the BondedECDSAKeepFactory contract:
-/// https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
+/// the keeps which were created by the BondedECDSAKeepFactory contract.
 ///
-/// Keep signers from May release of BondedECDSAKeepFactory contract can claim
-/// their rewards at any time.
-contract ECDSABackportRewards is Rewards {
-    // BondedECDSAKeepFactory deployment date, May-13-2020 interval started.
-    // https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
-    uint256 internal constant bondedECDSAKeepFactoryDeployment = 1589408351;
+/// The amount of KEEP to be distributed is determined by funding the contract,
+/// and additional KEEP can be added at any time.
+///
+/// When an interval is over, it will be allocated a percentage of the remaining
+/// unallocated rewards based on its weight, and adjusted by the number of keeps
+/// created in the interval if the quota is not met.
+///
+/// The adjustment for not meeting the keep quota is a percentage that equals
+/// the percentage of the quota that was met; if the number of keeps created is
+/// 80% of the quota then 80% of the base reward will be allocated for the
+/// interval.
+///
+/// Any unallocated rewards will stay in the unallocated rewards pool,
+/// to be allocated for future intervals. Intervals past the initially defined
+/// schedule have a weight of the last scheduled interval.
+///
+/// Keeps can receive rewards once the interval they were created in is over,
+/// and the keep has been marked as closed.
+/// There is no time limit to receiving rewards, nor is there need to wait for
+/// all keeps from the interval to be marked as closed.
+/// Calling `receiveReward` automatically allocates the rewards for the interval
+/// the specified keep was created in and all previous intervals.
+///
+/// If a keep is terminated, that fact can be reported to the reward contract.
+/// Reporting a terminated keep returns its allocated reward to the pool of
+/// unallocated rewards.
+contract ECDSARewards is Rewards {
+    // BondedECDSAKeepFactory deployment date, Sep-14-2020 interval started.
+    // https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
+    uint256 internal constant ecdsaFirstIntervalStart = 1600041600;
 
-    // We are going to have one interval, with a weight of 100%.
-    uint256[] internal backportECDSAIntervalWeight = [100];
+    /// Weights of the 24 reward intervals assigned over
+    // 24 * termLength days.
+    uint256[] internal intervalWeights = [
+        4,
+        8,
+        10,
+        12,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+    ];
 
-    // Interval is the difference in time of creation between older and newer
-    // versions of BondedECDSAKeepFactory.
-    // Older: https://etherscan.io/address/0x18758f16988E61Cd4B61E6B930694BD9fB07C22F
-    // Newer: https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
-    // The actual value between these 2 contracts deployment time is a little less
-    // than 124 days.
-    uint256 internal constant backportECDSATermLength = 124 days;
+    // Each interval is 30 days long.
+    uint256 internal constant termLength = 30 days;
 
-    uint256 internal constant minimumECDSAKeepsPerInterval = 40;
+    uint256 internal constant minimumECDSAKeepsPerInterval = 1000;
 
     BondedECDSAKeepFactory factory;
 
@@ -49,9 +93,9 @@ contract ECDSABackportRewards is Rewards {
         public
         Rewards(
             _token,
-            bondedECDSAKeepFactoryDeployment,
-            backportECDSAIntervalWeight,
-            backportECDSATermLength,
+            ecdsaFirstIntervalStart,
+            intervalWeights,
+            termLength,
             minimumECDSAKeepsPerInterval
         )
     {
@@ -62,8 +106,8 @@ contract ECDSABackportRewards is Rewards {
         return factory.getKeepCount();
     }
 
-    function _getKeepAtIndex(uint256 index) internal view returns (bytes32) {
-        return fromAddress(factory.getKeepAtIndex(index));
+    function _getKeepAtIndex(uint256 i) internal view returns (bytes32) {
+        return fromAddress(factory.getKeepAtIndex(i));
     }
 
     function _getCreationTime(bytes32 _keep)
@@ -81,14 +125,7 @@ contract ECDSABackportRewards is Rewards {
         isAddress(_keep)
         returns (bool)
     {
-        // Even though we still have some of the keeps opened, all the keeps
-        // created between May 13 2020 - Sep 14 2020 are considered closed.
-        // Because of the deposits pause
-        // https://tbtc.network/news/2020-05-21-details-of-the-tbtc-deposit-pause-on-may-18-2020/
-        // closing all the keeps is not easily achievable. However, we do not
-        // want to block rewards distribution for good stakers caused by the
-        // incident on May 18th.
-        return true;
+        return BondedECDSAKeep(toAddress(_keep)).isClosed();
     }
 
     function _isTerminated(bytes32 _keep)
@@ -97,10 +134,10 @@ contract ECDSABackportRewards is Rewards {
         isAddress(_keep)
         returns (bool)
     {
-        return false;
+        return BondedECDSAKeep(toAddress(_keep)).isTerminated();
     }
 
-    // A keep is recognized if it was created by this factory.
+    // A keep is recognized if it was opened by this factory.
     function _recognizedByFactory(bytes32 _keep)
         internal
         view
@@ -116,7 +153,7 @@ contract ECDSABackportRewards is Rewards {
     {
         token.approve(toAddress(_keep), amount);
 
-        IBondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
+        BondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
             address(token),
             amount
         );
