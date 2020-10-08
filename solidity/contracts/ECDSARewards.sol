@@ -18,10 +18,9 @@ import "@keep-network/keep-core/contracts/Rewards.sol";
 import "./BondedECDSAKeepFactory.sol";
 import "./BondedECDSAKeep.sol";
 
-/// @title KEEP Random ECDSA Signer Subsidy Rewards for the Sep 2020 release.
+/// @title KEEP ECDSA Signer Subsidy Rewards for the Sep 2020 release.
 /// @notice Contract distributes KEEP rewards to signers that were part of
-/// the keeps which were created by the BondedECDSAKeepFactory contract:
-/// https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
+/// the keeps which were created by the BondedECDSAKeepFactory contract.
 ///
 /// The amount of KEEP to be distributed is determined by funding the contract,
 /// and additional KEEP can be added at any time.
@@ -52,7 +51,7 @@ import "./BondedECDSAKeep.sol";
 contract ECDSARewards is Rewards {
     // BondedECDSAKeepFactory deployment date, Sep-14-2020 interval started.
     // https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
-    uint256 internal constant ecdsaFirstIntervalStart = 1600087297;
+    uint256 internal constant ecdsaFirstIntervalStart = 1600041600;
 
     /// Weights of the 24 reward intervals assigned over
     // 24 * termLength days.
