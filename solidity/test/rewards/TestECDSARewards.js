@@ -44,10 +44,10 @@ describe.only("ECDSARewards", () => {
   const totalRewardsAllocation = web3.utils.toBN(178200000).mul(tokenDecimalMultiplier)
 
   before(async () => {
-    const setup = await initialize()
-    tokenStaking = setup.tokenStaking
-    keepToken = setup.keepToken
-    keepFactory = setup.keepFactory
+    const contracts = await initialize()
+    tokenStaking = contracts.tokenStaking
+    keepToken = contracts.keepToken
+    keepFactory = contracts.keepFactory
 
     keepMembers = await createMembers(tokenStaking)
     rewardsContract = await ECDSARewards.new(
