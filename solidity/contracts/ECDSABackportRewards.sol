@@ -75,7 +75,12 @@ contract ECDSABackportRewards is Rewards {
         return factory.getKeepOpenedTimestamp(toAddress(_keep));
     }
 
-    function _isClosed(bytes32) internal view isAddress(_keep) returns (bool) {
+    function _isClosed(bytes32 _keep)
+        internal
+        view
+        isAddress(_keep)
+        returns (bool)
+    {
         // Even though we still have some of the keeps opened, all the keeps
         // created between May 13 2020 - Sep 14 2020 are considered closed.
         // Because of the deposits pause
@@ -86,7 +91,7 @@ contract ECDSABackportRewards is Rewards {
         return true;
     }
 
-    function _isTerminated(bytes32 groupIndexBytes)
+    function _isTerminated(bytes32 _keep)
         internal
         view
         isAddress(_keep)
