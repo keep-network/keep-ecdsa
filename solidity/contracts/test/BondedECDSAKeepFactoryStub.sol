@@ -46,7 +46,7 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
         address _owner,
         address[] memory _members,
         uint256 _creationTimestamp
-    ) public payable returns (address keepAddress) {
+    ) public returns (address keepAddress) {
         keepAddress = createClone(masterKeepAddress);
         BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
         keep.initialize(
@@ -61,5 +61,21 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
         );
         keeps.push(keepAddress);
         keepOpenedTimestamp[keepAddress] = _creationTimestamp;
+    }
+
+    /// @notice Mocks opening `_numberOfKeeps` with the opening timestamp of
+    /// the first keep starting at `_firstKeepCreationTimestamp`.
+    /// IMPORTANT! This function does not actually create new keep instances!
+    /// It would not be possible to create 100 keeps in one block because of
+    /// gas limits.
+    function stubBatchOpenFakeKeeps(
+        uint256 _numberOfKeeps,
+        uint256 _firstKeepCreationTimestamp
+    ) public {
+        for (uint256 i = 0; i < _numberOfKeeps; i++) {
+            address keepAddress = address(block.timestamp + i);
+            keeps.push(keepAddress);
+            keepOpenedTimestamp[keepAddress] = _firstKeepCreationTimestamp + i; 
+        }
     }
 }

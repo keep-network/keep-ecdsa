@@ -1,41 +1,28 @@
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
-const {initialize, fund, createMembers} = require("./rewardsSetup")
-
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 
 const BondedECDSAKeepStub = contract.fromArtifact("BondedECDSAKeepStub")
 const ECDSARewards = contract.fromArtifact("ECDSARewards")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
+const {initialize, fund, createMembers} = require("./rewardsSetup")
 
 const BN = web3.utils.BN
-
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe.only("ECDSARewards", () => {
-  let rewardsContract
+describe("ECDSARewards", () => {
   let keepToken
-
   let tokenStaking
   let keepFactory
-  let keepMembers
-
-  const expectedIntervalAllocations = [
-    7128000.0, 13685760.0, 15738624.0, 16997713.92, 18697485.31, 15892862.52,
-    13508933.14, 11482593.17, 9760204.19, 8296173.56, 7051747.53, 5993985.4,
-    5094887.59, 4330654.45, 3681056.28, 3128897.84, 2659563.16, 2260628.69,
-    1921534.39, 1633304.23, 1388308.59, 1180062.31, 1003052.96, 852595.02
-  ]
+  let rewardsContract
 
   const owner = accounts[0]
+  let operators
+  let beneficiaries
 
-  // Solidity is not very good when it comes to floating point precision,
-  // we are allowing for ~1 KEEP difference margin between expected and
-  // actual value.
-  const precision = 1
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
-  const firstKeepCreationTimestamp = 1600041600 // Sep 14 2020
+  const firstIntervalStart = 1600041600 // Sep 14 2020
 
   // 1,000,000,000 - total KEEP supply
   //   200,000,000 - 20% of the total supply goes to staker rewards
@@ -51,7 +38,10 @@ describe.only("ECDSARewards", () => {
     keepToken = contracts.keepToken
     keepFactory = contracts.keepFactory
 
-    keepMembers = await createMembers(tokenStaking)
+    stakers = await createMembers(tokenStaking)
+    operators = stakers.map((s) => s.operator)
+    beneficiaries = stakers.map((s) => s.beneficiary)
+
     rewardsContract = await ECDSARewards.new(
       keepToken.address,
       keepFactory.address,
@@ -70,38 +60,60 @@ describe.only("ECDSARewards", () => {
   })
 
   describe("interval allocation", async () => {
-    it("should equal to expected allocations when 5 keeps were created per interval", async () => {
-      await verifyIntervalAllocations(5)
+    it("should equal expected allocation in first interval", async () => {
+      await keepFactory.stubBatchOpenFakeKeeps(100, firstIntervalStart)
+
+      await timeJumpToEndOfInterval(0)
+      await rewardsContract.allocateRewards(0)
+      const allocated = await rewardsContract.getAllocatedRewards(0)
+      const allocatedKeep = allocated.div(tokenDecimalMultiplier)
+
+      // Full allocation for the first interval would be
+      // 178,200,000 * 4% = 7,128,000.
+      // Because just 10% of minimum keep quota is met, the allocation is
+      // 7,128,000 * 10% = 712,800.
+      expect(allocatedKeep).to.eq.BN(712800)
     })
 
-    it("should equal to expected allocations when 1 keep was created per interval", async () => {
-      await verifyIntervalAllocations(1)
+    it("should equal expected allocation in second interval", async () => {
+      await keepFactory.stubBatchOpenFakeKeeps(100, firstIntervalStart)
+      const firstIntervalEnd = await timeJumpToEndOfInterval(0)
+      await keepFactory.stubBatchOpenFakeKeeps(50, firstIntervalEnd)
+      await timeJumpToEndOfInterval(1)
+
+      await rewardsContract.allocateRewards(1)
+      const allocated = await rewardsContract.getAllocatedRewards(1)
+      const allocatedKeep = allocated.div(tokenDecimalMultiplier)
+
+      // 712,800 allocated in the first interval,
+      // Full allocation for second interval would be
+      // (178,200,000 - 712,800) * 8% = 14,198,976.
+      // Because just 5% of minimum keep quota is met, the allocation is
+      // 14,198,976 * 5% = 709,948.
+      expect(allocatedKeep).to.eq.BN(709948)
+    })
+
+    it("should equal expected allocation in third interval", async () => {
+      const secondIntervalEnd = await timeJumpToEndOfInterval(1)
+      await keepFactory.stubBatchOpenFakeKeeps(40, secondIntervalEnd)
+      await timeJumpToEndOfInterval(2)
+
+      await rewardsContract.allocateRewards(2)
+      const allocated = await rewardsContract.getAllocatedRewards(2)
+      const allocatedKeep = allocated.div(tokenDecimalMultiplier)
+
+      // No rewards allocated in first and second interval.
+      // Full allocation for third interval would be
+      // 178,200,000 * 10% = 17,820,000.
+      // Because just 4% of minimum keep quota is met, the allocation is
+      // 17,820,000 * 4% = 712,800.
+      expect(allocatedKeep).to.eq.BN(712800)
     })
   })
 
-  async function verifyIntervalAllocations(keepToCreatePerInterval) {
-    let keepCreationTimestamp = firstKeepCreationTimestamp
-
-    for (let i = 0; i < 24; i++) {
-      await createKeeps(keepToCreatePerInterval, keepCreationTimestamp)
-
-      keepCreationTimestamp = await timeJumpToEndOfInterval(i)
-
-      await rewardsContract.allocateRewards(i)
-
-      const actualBalance = (await rewardsContract.getAllocatedRewards(i)).div(
-        tokenDecimalMultiplier
-      )
-
-      expect(actualBalance).to.gte.BN(expectedIntervalAllocations - precision)
-      expect(actualBalance).to.lte.BN(expectedIntervalAllocations + precision)
-    }
-  }
-
   describe("rewards distribution", async () => {
     it("should not be possible when a keep is not closed", async () => {
-      await createKeeps(1, firstKeepCreationTimestamp)
-
+      await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       const keepAddress = await keepFactory.getKeepAtIndex(0)
 
       const isEligible = await rewardsContract.eligibleForReward(keepAddress)
@@ -115,8 +127,7 @@ describe.only("ECDSARewards", () => {
     })
 
     it("should not be possible when a keep is terminated", async () => {
-      await createKeeps(1, firstKeepCreationTimestamp)
-
+      await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       const keepAddress = await keepFactory.getKeepAtIndex(0)
       const keep = await BondedECDSAKeepStub.at(keepAddress)
       await keep.publicMarkAsTerminated()
@@ -132,7 +143,8 @@ describe.only("ECDSARewards", () => {
     })
 
     it("should not count terminated groups when distributing rewards", async () => {
-      await createKeeps(2, firstKeepCreationTimestamp)
+      await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
+      await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart + 1)
 
       await timeJumpToEndOfInterval(0)
 
@@ -146,33 +158,33 @@ describe.only("ECDSARewards", () => {
 
       await rewardsContract.receiveReward(keepAddress)
 
-      // reward for the first interval: 7128000 KEEP
-      // keeps created: 2, but the min is 4 => 7128000 / 4 = 1782000 KEEP per keep
-      // first keep was terminated, only the second keep was closed properly
-      // member receives: 1782000 / 3 = 594000 (3 signers per keep)
-      const expectedBeneficiaryBalance = new BN(594000)
+      // Full allocation for the first interval would be 7,128,000 KEEP.
+      // Because just 2 keeps were created, the allocation is:
+      // 7,128,000 * 0.2% = 14,256.
+      // The reward per keep is 14,256 / 2 = 7128.
+      // First keep was terminated, only the second keep was closed properly.
+      // Member receives: 7128 / 3 = 2376 (3 signers per keep)
+      const expectedBeneficiaryBalance = new BN(2376)
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
 
-      // the remaining 5346000 stays in unallocated rewards but the fact
-      // one keep was terminated needs to be reported to recalculate the
-      // unallocated amount
+      // The 178,200,000 - 14,256 = 178,185,744 stays in unallocated
+      // rewards and the fact one keep was terminated needs to be reported to
+      // recalculate the unallocated amount
       let unallocated = await rewardsContract.unallocatedRewards()
       let unallocatedInKeep = unallocated.div(tokenDecimalMultiplier)
-      expect(unallocatedInKeep).to.eq.BN(174636000) // 178200000 - (2 * 1782000)
+      expect(unallocatedInKeep).to.eq.BN(178185744)
 
       await rewardsContract.reportTermination(keepTerminatedAddress)
 
       unallocated = await rewardsContract.unallocatedRewards()
       unallocatedInKeep = unallocated.div(tokenDecimalMultiplier)
-      expect(unallocatedInKeep).to.eq.BN(176418000) // 178200000 - 1782000
+      expect(unallocatedInKeep).to.eq.BN(178192872) // 178,185,744 + 7,128
     })
 
     it("should correctly distribute rewards between beneficiaries", async () => {
-      await createKeeps(8, firstKeepCreationTimestamp)
-      // reward for the first interval: 7128000 KEEP
-      // keeps created: 8 => 891000 KEEP per keep
-      // member receives: 891000 / 3 = 297000 (3 signers per keep)
-      const expectedBeneficiaryBalance = new BN(297000)
+      for (let i = 0; i < 8; i++) {
+        await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
+      }
 
       await timeJumpToEndOfInterval(0)
 
@@ -182,6 +194,10 @@ describe.only("ECDSARewards", () => {
 
       await rewardsContract.receiveReward(keepAddress)
 
+      // reward for the first interval: 7,128,000 KEEP
+      // keeps created: 8 => 891,000 KEEP per keep
+      // member receives: 891,000 / 3 = 297,000 (3 signers per keep)
+      const expectedBeneficiaryBalance = new BN(297000)
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
 
       // verify second keep in this interval
@@ -191,28 +207,24 @@ describe.only("ECDSARewards", () => {
 
       await rewardsContract.receiveReward(keepAddress)
 
-      // 297000 * 2 = 594000
+      // 297,000 * 2 = 594,000
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance.muln(2))
     })
   })
 
   async function assertKeepBalanceOfBeneficiaries(expectedBalance) {
-    for (let i = 0; i < keepMembers.length; i++) {
-      const actualBalance = (
-        await keepToken.balanceOf(keepMembers[i].beneficiary)
-      ).div(tokenDecimalMultiplier)
+    // Solidity is not very good when it comes to floating point precision,
+    // we are allowing for ~1 KEEP difference margin between expected and
+    // actual value.
+    const precision = 1
+
+    for (let i = 0; i < beneficiaries; i++) {
+      const actualBalance = (await keepToken.balanceOf(beneficiaries[i])).div(
+        tokenDecimalMultiplier
+      )
 
       expect(actualBalance).to.gte.BN(expectedBalance.subn(precision))
       expect(actualBalance).to.lte.BN(expectedBalance.addn(precision))
-    }
-  }
-
-  async function createKeeps(numberOfKeepsToOpen, keepCreationTimestamp) {
-    let timestamp = new BN(keepCreationTimestamp)
-    const members = keepMembers.map((m) => m.operator)
-    for (let i = 0; i < numberOfKeepsToOpen; i++) {
-      await keepFactory.stubOpenKeep(keepFactory.address, members, timestamp)
-      timestamp = timestamp.addn(7200) // adding 2 hours interval between each opened keep
     }
   }
 

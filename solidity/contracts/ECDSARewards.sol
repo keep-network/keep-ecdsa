@@ -65,7 +65,7 @@ contract ECDSARewards is Rewards {
     // Each interval is 30 days long.
     uint256 internal constant termLength = 30 days;
 
-    uint256 internal constant minimumECDSAKeepsPerInterval = 4;
+    uint256 internal constant minimumECDSAKeepsPerInterval = 1000;
 
     BondedECDSAKeepFactory factory;
 
