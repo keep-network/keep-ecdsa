@@ -90,24 +90,24 @@ contract ECDSARewards is Rewards {
         return fromAddress(factory.getKeepAtIndex(i));
     }
 
-    function _getCreationTime(bytes32 _keep) internal view returns (uint256) {
+    function _getCreationTime(bytes32 _keep) internal isAddress(_keep) view returns (uint256) {
         return factory.getKeepOpenedTimestamp(toAddress(_keep));
     }
 
-    function _isClosed(bytes32 _keep) internal view returns (bool) {
+    function _isClosed(bytes32 _keep) internal isAddress(_keep) view returns (bool) {
         return BondedECDSAKeep(toAddress(_keep)).isClosed();
     }
 
-    function _isTerminated(bytes32 _keep) internal view returns (bool) {
+    function _isTerminated(bytes32 _keep) internal isAddress(_keep) view returns (bool) {
         return BondedECDSAKeep(toAddress(_keep)).isTerminated();
     }
 
     // A keep is recognized if it was opened by this factory.
-    function _recognizedByFactory(bytes32 _keep) internal view returns (bool) {
+    function _recognizedByFactory(bytes32 _keep) internal view isAddress(_keep) returns (bool) {
         return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
-    function _distributeReward(bytes32 _keep, uint256 amount) internal {
+    function _distributeReward(bytes32 _keep, uint256 amount) internal isAddress(_keep) {
         token.approve(toAddress(_keep), amount);
 
         BondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
@@ -116,11 +116,20 @@ contract ECDSARewards is Rewards {
         );
     }
 
-    function toAddress(bytes32 keepBytes) internal pure returns (address) {
+   function toAddress(bytes32 keepBytes) internal pure returns (address) {
         return address(bytes20(keepBytes));
     }
 
     function fromAddress(address keepAddress) internal pure returns (bytes32) {
         return bytes32(bytes20(keepAddress));
+    }
+
+    function validAddressBytes(bytes32 keepBytes) internal pure returns (bool) {
+        return fromAddress(toAddress(keepBytes)) == keepBytes;
+    }
+
+    modifier isAddress(bytes32 _keep) {
+        require(validAddressBytes(_keep), "Invalid keep address");
+        _;
     }
 }
