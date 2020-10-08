@@ -29,7 +29,7 @@ describe("ECDSARewards", () => {
   // actual value.
   const precision = 1
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
-  const firstKeepCreationTimestamp = 1600087297 // Sep 14 2020
+  const firstKeepCreationTimestamp = 1600041600 // Sep 14 2020
 
   // 1,000,000,000 - total KEEP supply
   //   200,000,000 - 20% of the total supply goes to staker rewards
