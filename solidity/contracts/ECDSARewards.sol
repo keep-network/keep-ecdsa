@@ -56,10 +56,30 @@ contract ECDSARewards is Rewards {
     /// Weights of the 24 reward intervals assigned over
     // 24 * termLength days.
     uint256[] internal intervalWeights = [
-        4, 8, 10, 12, 15, 15,
-        15, 15, 15, 15, 15, 15,
-        15, 15, 15, 15, 15, 15,
-        15, 15, 15, 15, 15, 15
+        4,
+        8,
+        10,
+        12,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
     ];
 
     // Each interval is 30 days long.
@@ -90,24 +110,47 @@ contract ECDSARewards is Rewards {
         return fromAddress(factory.getKeepAtIndex(i));
     }
 
-    function _getCreationTime(bytes32 _keep) internal isAddress(_keep) view returns (uint256) {
+    function _getCreationTime(bytes32 _keep)
+        internal
+        view
+        isAddress(_keep)
+        returns (uint256)
+    {
         return factory.getKeepOpenedTimestamp(toAddress(_keep));
     }
 
-    function _isClosed(bytes32 _keep) internal isAddress(_keep) view returns (bool) {
+    function _isClosed(bytes32 _keep)
+        internal
+        view
+        isAddress(_keep)
+        returns (bool)
+    {
         return BondedECDSAKeep(toAddress(_keep)).isClosed();
     }
 
-    function _isTerminated(bytes32 _keep) internal isAddress(_keep) view returns (bool) {
+    function _isTerminated(bytes32 _keep)
+        internal
+        view
+        isAddress(_keep)
+        returns (bool)
+    {
         return BondedECDSAKeep(toAddress(_keep)).isTerminated();
     }
 
     // A keep is recognized if it was opened by this factory.
-    function _recognizedByFactory(bytes32 _keep) internal view isAddress(_keep) returns (bool) {
+    function _recognizedByFactory(bytes32 _keep)
+        internal
+        view
+        isAddress(_keep)
+        returns (bool)
+    {
         return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
-    function _distributeReward(bytes32 _keep, uint256 amount) internal isAddress(_keep) {
+    function _distributeReward(bytes32 _keep, uint256 amount)
+        internal
+        isAddress(_keep)
+    {
         token.approve(toAddress(_keep), amount);
 
         BondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
@@ -116,7 +159,7 @@ contract ECDSARewards is Rewards {
         );
     }
 
-   function toAddress(bytes32 keepBytes) internal pure returns (address) {
+    function toAddress(bytes32 keepBytes) internal pure returns (address) {
         return address(bytes20(keepBytes));
     }
 

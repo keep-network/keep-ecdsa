@@ -66,11 +66,16 @@ contract ECDSABackportRewards is Rewards {
         return fromAddress(factory.getKeepAtIndex(index));
     }
 
-    function _getCreationTime(bytes32 _keep) internal isAddress(_keep) view returns (uint256) {
+    function _getCreationTime(bytes32 _keep)
+        internal
+        view
+        isAddress(_keep)
+        returns (uint256)
+    {
         return factory.getKeepOpenedTimestamp(toAddress(_keep));
     }
 
-    function _isClosed(bytes32) internal isAddress(_keep)  view returns (bool) {
+    function _isClosed(bytes32) internal view isAddress(_keep) returns (bool) {
         // Even though we still have some of the keeps opened, all the keeps
         // created between May 13 2020 - Sep 14 2020 are considered closed.
         // Because of the deposits pause
@@ -83,19 +88,27 @@ contract ECDSABackportRewards is Rewards {
 
     function _isTerminated(bytes32 groupIndexBytes)
         internal
-        isAddress(_keep) 
         view
+        isAddress(_keep)
         returns (bool)
     {
         return false;
     }
 
     // A keep is recognized if it was created by this factory.
-    function _recognizedByFactory(bytes32 _keep) internal view isAddress(_keep) returns (bool) {
+    function _recognizedByFactory(bytes32 _keep)
+        internal
+        view
+        isAddress(_keep)
+        returns (bool)
+    {
         return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
-    function _distributeReward(bytes32 _keep, uint256 amount) internal isAddress(_keep) {
+    function _distributeReward(bytes32 _keep, uint256 amount)
+        internal
+        isAddress(_keep)
+    {
         token.approve(toAddress(_keep), amount);
 
         IBondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
@@ -104,7 +117,7 @@ contract ECDSABackportRewards is Rewards {
         );
     }
 
-   function toAddress(bytes32 keepBytes) internal pure returns (address) {
+    function toAddress(bytes32 keepBytes) internal pure returns (address) {
         return address(bytes20(keepBytes));
     }
 
