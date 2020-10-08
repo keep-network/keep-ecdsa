@@ -1,30 +1,11 @@
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
+const {initialize, fund, createMembers} = require("./rewardsSetup")
 
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 
-const KeepToken = contract.fromArtifact("KeepToken")
-const StackLib = contract.fromArtifact("StackLib")
-const KeepRegistry = contract.fromArtifact("KeepRegistry")
-const BondedECDSAKeepFactoryStub = contract.fromArtifact(
-  "BondedECDSAKeepFactoryStub"
-)
-const KeepBonding = contract.fromArtifact("KeepBonding")
-const MinimumStakeSchedule = contract.fromArtifact("MinimumStakeSchedule")
-const GrantStaking = contract.fromArtifact("GrantStaking")
-const Locks = contract.fromArtifact("Locks")
-const TopUps = contract.fromArtifact("TopUps")
-const TokenStakingEscrow = contract.fromArtifact("TokenStakingEscrow")
-const TokenStaking = contract.fromArtifact("TokenStakingStub")
-const TokenGrant = contract.fromArtifact("TokenGrant")
-const BondedSortitionPoolFactory = contract.fromArtifact(
-  "BondedSortitionPoolFactory"
-)
-const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
 const BondedECDSAKeepStub = contract.fromArtifact("BondedECDSAKeepStub")
 const ECDSARewards = contract.fromArtifact("ECDSARewards")
-
-const KeepTokenGrant = contract.fromArtifact("TokenGrant")
 
 const BN = web3.utils.BN
 
@@ -33,22 +14,16 @@ chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
 describe("ECDSARewards", () => {
-  let registry
   let rewardsContract
   let keepToken
 
   let tokenStaking
-  let tokenGrant
   let keepFactory
-  let bondedSortitionPoolFactory
-  let keepBonding
-  let randomBeacon
   let keepMembers
   let expectedKEEPAllocation
 
   const owner = accounts[0]
 
-  const keepSize = 3
   // Solidity is not very good when it comes to floating point precision,
   // we are allowing for ~1 KEEP difference margin between expected and
   // actual value.
@@ -63,21 +38,19 @@ describe("ECDSARewards", () => {
   const KEEPRewards = web3.utils.toBN(178200000).mul(tokenDecimalMultiplier)
 
   before(async () => {
-    await BondedSortitionPoolFactory.detectNetwork()
-    await BondedSortitionPoolFactory.link(
-      "StackLib",
-      (await StackLib.new({from: owner})).address
-    )
+    const setup = await initialize()
+    tokenStaking = setup.tokenStaking
+    keepToken = setup.keepToken
+    keepFactory = setup.keepFactory
 
-    await initializeNewFactory()
-    keepMembers = await createMembers()
+    keepMembers = await createMembers(tokenStaking)
     rewardsContract = await ECDSARewards.new(
       keepToken.address,
       keepFactory.address,
       {from: owner}
     )
 
-    await fund(KEEPRewards)
+    await fund(keepToken, rewardsContract, KEEPRewards)
   })
 
   beforeEach(async () => {
@@ -184,7 +157,7 @@ describe("ECDSARewards", () => {
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
 
       // the remaining 5346000 stays in unallocated rewards but the fact
-      // one keep was terminated needs to be reported to recalculate the 
+      // one keep was terminated needs to be reported to recalculate the
       // unallocated amount
       let unallocated = await rewardsContract.unallocatedRewards()
       let unallocatedInKeep = unallocated.div(tokenDecimalMultiplier)
@@ -237,91 +210,6 @@ describe("ECDSARewards", () => {
     }
   }
 
-  async function initializeNewFactory() {
-    await BondedSortitionPoolFactory.detectNetwork()
-    await BondedSortitionPoolFactory.link(
-      "StackLib",
-      (await StackLib.new({from: owner})).address
-    )
-
-    keepToken = await KeepToken.new({from: owner})
-    const keepTokenGrant = await KeepTokenGrant.new(keepToken.address)
-    registry = await KeepRegistry.new({from: owner})
-
-    bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new({
-      from: owner,
-    })
-    await TokenStaking.detectNetwork()
-    await TokenStaking.link(
-      "MinimumStakeSchedule",
-      (await MinimumStakeSchedule.new({from: owner})).address
-    )
-    await TokenStaking.link(
-      "GrantStaking",
-      (await GrantStaking.new({from: owner})).address
-    )
-    await TokenStaking.link("Locks", (await Locks.new({from: owner})).address)
-    await TokenStaking.link("TopUps", (await TopUps.new({from: owner})).address)
-
-    const stakingEscrow = await TokenStakingEscrow.new(
-      keepToken.address,
-      keepTokenGrant.address,
-      {from: owner}
-    )
-
-    const stakeInitializationPeriod = 30 // In seconds
-
-    tokenStaking = await TokenStaking.new(
-      keepToken.address,
-      keepTokenGrant.address,
-      stakingEscrow.address,
-      registry.address,
-      stakeInitializationPeriod,
-      {from: owner}
-    )
-    tokenGrant = await TokenGrant.new(keepToken.address, {from: owner})
-
-    keepBonding = await KeepBonding.new(
-      registry.address,
-      tokenStaking.address,
-      tokenGrant.address,
-      {from: owner}
-    )
-    randomBeacon = await RandomBeaconStub.new({from: owner})
-    const bondedECDSAKeepMasterContract = await BondedECDSAKeepStub.new({
-      from: owner,
-    })
-    keepFactory = await BondedECDSAKeepFactoryStub.new(
-      bondedECDSAKeepMasterContract.address,
-      bondedSortitionPoolFactory.address,
-      tokenStaking.address,
-      keepBonding.address,
-      randomBeacon.address,
-      {from: owner}
-    )
-
-    await registry.approveOperatorContract(keepFactory.address, {from: owner})
-  }
-
-  async function createMembers() {
-    const membersArr = []
-
-    // 3 members in each keep
-    for (let i = 0; i < keepSize; i++) {
-      const operator = accounts[i]
-      const beneficiary = accounts[keepSize + i]
-      await tokenStaking.setBeneficiary(operator, beneficiary)
-      const member = {
-        operator: operator,
-        beneficiary: beneficiary,
-      }
-
-      membersArr.push(member)
-    }
-
-    return membersArr
-  }
-
   async function createKeeps(numberOfKeepsToOpen, keepCreationTimestamp) {
     let timestamp = new BN(keepCreationTimestamp)
     const members = keepMembers.map((m) => m.operator)
@@ -329,13 +217,6 @@ describe("ECDSARewards", () => {
       await keepFactory.stubOpenKeep(keepFactory.address, members, timestamp)
       timestamp = timestamp.addn(7200) // adding 2 hours interval between each opened keep
     }
-  }
-
-  async function fund(amount) {
-    await keepToken.approveAndCall(rewardsContract.address, amount, "0x0", {
-      from: owner,
-    })
-    await rewardsContract.markAsFunded({from: owner})
   }
 
   async function timeJumpToEndOfInterval(intervalNumber) {
