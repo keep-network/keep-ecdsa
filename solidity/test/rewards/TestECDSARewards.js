@@ -13,14 +13,20 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe("ECDSARewards", () => {
+describe.only("ECDSARewards", () => {
   let rewardsContract
   let keepToken
 
   let tokenStaking
   let keepFactory
   let keepMembers
-  let expectedKEEPAllocation
+
+  const expectedIntervalAllocations = [
+    7128000.0, 13685760.0, 15738624.0, 16997713.92, 18697485.31, 15892862.52,
+    13508933.14, 11482593.17, 9760204.19, 8296173.56, 7051747.53, 5993985.4,
+    5094887.59, 4330654.45, 3681056.28, 3128897.84, 2659563.16, 2260628.69,
+    1921534.39, 1633304.23, 1388308.59, 1180062.31, 1003052.96, 852595.02
+  ]
 
   const owner = accounts[0]
 
@@ -62,13 +68,6 @@ describe("ECDSARewards", () => {
   })
 
   describe("interval allocation", async () => {
-    expectedKEEPAllocation = [
-      7128000.0, 13685760.0, 15738624.0, 16997713.92, 18697485.31, 15892862.52,
-      13508933.14, 11482593.17, 9760204.19, 8296173.56, 7051747.53, 5993985.4,
-      5094887.59, 4330654.45, 3681056.28, 3128897.84, 2659563.16, 2260628.69,
-      1921534.39, 1633304.23, 1388308.59, 1180062.31, 1003052.96, 852595.02
-    ]
-
     it("should equal to expected allocations when 5 keeps were created per interval", async () => {
       await verifyIntervalAllocations(5)
     })
@@ -92,8 +91,8 @@ describe("ECDSARewards", () => {
         tokenDecimalMultiplier
       )
 
-      expect(actualBalance).to.gte.BN(expectedKEEPAllocation - precision)
-      expect(actualBalance).to.lte.BN(expectedKEEPAllocation + precision)
+      expect(actualBalance).to.gte.BN(expectedIntervalAllocations - precision)
+      expect(actualBalance).to.lte.BN(expectedIntervalAllocations + precision)
     }
   }
 
