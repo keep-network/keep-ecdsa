@@ -58,8 +58,8 @@ describe("ECDSARewards", () => {
 
   // 1,000,000,000 - total KEEP supply
   //   200,000,000 - 20% of the total supply goes to staker rewards
-  //   180,000,000 - 90% of staker rewards goes to the ECDSA stakers
-  //   178,200,000 - 89% of ECDSA staker rewards goes to keeps opened after Sep 14 2020
+  //   180,000,000 - 90% of staker rewards goes to the ECDSA staker rewards
+  //   178,200,000 - 99% of ECDSA staker rewards goes to keeps opened after Sep 14 2020
   const KEEPRewards = web3.utils.toBN(178200000).mul(tokenDecimalMultiplier)
 
   before(async () => {
