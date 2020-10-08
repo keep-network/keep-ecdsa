@@ -133,10 +133,6 @@ describe.only("ECDSARewards", () => {
 
     it("should not count terminated groups when distributing rewards", async () => {
       await createKeeps(2, firstKeepCreationTimestamp)
-      // reward for the first interval: 7128000 KEEP
-      // keeps created: 2, but the min is 4 => 7128000 / 4 = 1782000 KEEP per keep
-      // member receives: 1782000 / 3 = 594000 (3 signers per keep)
-      const expectedBeneficiaryBalance = new BN(594000)
 
       await timeJumpToEndOfInterval(0)
 
@@ -149,7 +145,12 @@ describe.only("ECDSARewards", () => {
       await keep.publicMarkAsClosed()
 
       await rewardsContract.receiveReward(keepAddress)
-      // Only the second keep was properly closed.
+
+      // reward for the first interval: 7128000 KEEP
+      // keeps created: 2, but the min is 4 => 7128000 / 4 = 1782000 KEEP per keep
+      // first keep was terminated, only the second keep was closed properly
+      // member receives: 1782000 / 3 = 594000 (3 signers per keep)
+      const expectedBeneficiaryBalance = new BN(594000)
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
 
       // the remaining 5346000 stays in unallocated rewards but the fact
