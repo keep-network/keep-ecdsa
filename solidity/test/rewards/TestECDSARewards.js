@@ -41,7 +41,9 @@ describe.only("ECDSARewards", () => {
   //   200,000,000 - 20% of the total supply goes to staker rewards
   //   180,000,000 - 90% of staker rewards goes to the ECDSA staker rewards
   //   178,200,000 - 99% of ECDSA staker rewards goes to keeps opened after Sep 14 2020
-  const totalRewardsAllocation = web3.utils.toBN(178200000).mul(tokenDecimalMultiplier)
+  const totalRewardsAllocation = web3.utils
+    .toBN(178200000)
+    .mul(tokenDecimalMultiplier)
 
   before(async () => {
     const contracts = await initialize()
@@ -145,11 +147,6 @@ describe.only("ECDSARewards", () => {
       const keepAddress = await keepFactory.getKeepAtIndex(1)
       const keep = await BondedECDSAKeepStub.at(keepAddress)
       await keep.publicMarkAsClosed()
-
-      await expectRevert(
-        rewardsContract.receiveReward(keepTerminatedAddress),
-        "Keep is not closed"
-      )
 
       await rewardsContract.receiveReward(keepAddress)
       // Only the second keep was properly closed.
