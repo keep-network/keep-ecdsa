@@ -1,0 +1,230 @@
+:toc: macro
+
+= RFC 1: tBTC-specific ECDSA client actions
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+The Keep ECDSA client is built as a generic client for ECDSA keeps. In turn,
+ECDSA keeps are designed to be on-chain smart contract representations of a
+signing group that can provide on-demand key generation and signature
+services for a consumer application (represented by another smart contract).
+Currently, the signer responsibilities encapsulated by the ECDSA client are
+exclusively limited to direct responsibilities assigned to ECDSA keeps. However,
+specific applications, like tBTC, have additional expectations or incentivized
+behaviors for the signing parties in their protocols. In these cases, the
+ECDSA client as currently built has no ability to provide these additional
+functions.
+
+This RFC seeks to outline a short-term improvement to the client that can deal
+with the immediate incentivized actions in tBTC's signing group behaviors, so
+that signers are behaving optimally with respect to the underlying protocol.
+
+=== Current Functionality
+
+ECDSA clients currently monitor for three classes of events:
+
+ - Requests for a new keep.
+ - Requests for a signature from a keep the client is already participating in.
+ - Notifications that a keep has closed, either normally or abnormally.
+
+This monitoring is currently closely tied to underlying Ethereum implementation
+details, and has no external dependencies beyond the existing Ethereum
+connection. It is completely application-agnostic; the client's only interest in
+the application is to know whether the current operator account is authorized
+and has available bond for the application in question.
+
+In response to the above requests, the client may do a few things:
+
+New keep requests::
+    Join an ECDSA unicast channel, perform distributed key generation, and
+    publish the key to the ECDSA keep contract.
+Signature requests::
+    Join an ECDSA unicast channel, perform a single-round threshold signature
+    protocol, and publish the resulting signature to the ECDSA keep contract.
+Close notification::
+    Clean up any resources and event handlers, and archive key material for
+    the closed keep.
+
+== Proposal
+
+=== Goal
+
+This proposal is focused on extending both monitoring and reactions for ECDSA
+keeps to include additional actions that are specific to tBTC. In particular,
+these are:
+
+ - Calling `retrievePubkey` on the tBTC deposit that is associated with a given
+   keep once the key is generated and published, if the signature setup timeout
+   is approaching.
+ - Calling `provideRedemptionProof` on a tBTC deposit if it is redeemed,
+   sufficiently confirmed, and the redemption proof timeout is approaching.
+ - Calling `increaseRedemptionFee` on the tBTC deposit that is associated with
+   a given keep if the redemption proof timeout is approaching and an underlying
+   redemption proof is unavailable.
+
+This proposal is very narrowly focused on shot-term changes. It does not seek
+to propose a deep refactoring of the current functionality, but rather seeks
+to define a handful of tactical additions that can deal with the immediate
+needs.
+
+=== Implementation
+
+==== Basic Abstraction
+
+For simplicity, the three handlers defined above can be defined as three
+variants of a common pattern:
+
+ * Check the deposit state.
+    ** If it is past a particular state, do not start monitoring.
+ * Monitor for an event on the keep.
+    ** Once seen, monitor for an event on the deposit that indicates the
+       transaction in question isn't necessary.
+        *** If the event is seen, terminate monitoring for timeout and event.
+    ** Once seen, monitor for the approach of a timeout.
+        *** If the timeout is reached, publish a transaction. Once it is
+            confirmed, terminate monitoring for timeout.
+ * If at any point the keep is closed, terminate monitoring.
+
+A pseudocode Go implementation:
+
+[source,go]
+-----------
+type EventMonitorFunc func()
+
+func MonitorAndAct(
+    deposit tbtc.Deposit,
+    // The state that starts monitoring.
+    triggerState tbtc.DepositState,
+    // Sets up monitoring for the trigger event.
+    triggerEventSetupFunc event.EventHandlerSetupFunc,
+    // Sets up monitoring for anything that could indicate the trigger event is
+    // sufficiently handled and no more monitoring is needed.
+    eventHandledSetupFunc event.EventHandlerSetupFunc
+    // Submits the required transaction, returns nil when the transaction is
+    // confirmed or returns an error if an error occurs.
+    transactionSubmitterFunc func() error,
+    // How long before monitoring should take action. Should have a healthy
+    // error margin in case of gas issues, slow block times, etc.
+    timeout time.Duration,
+    // Channel receives a struct{}{} when the keep is closed, normally or
+    // abnormally.
+    keepClosed <-chan struct{},
+    // True if the trigger event can only fire once, false otherwise.
+    singleShot bool,
+) error {
+    currentState, err := deposit.CurrentState()
+    if err != nil {
+        return err
+    }
+
+    if currentState > triggerState {
+        return nil
+    }
+
+    stopMonitoringChan := make(chan struct{})
+
+    triggerSubscription, err := triggerEventSetupFunc(func() error {
+        // If the event is handled elsewhere, stop monitoring completely.
+        handledSubscription, err := eventHandledSetupFunc(func() {
+            stopMonitoringChan <- struct{}{}
+        })
+        if err != nil {
+            return err
+        }
+        defer handledSubscription.Unsubscribe()
+
+        timeoutChan := time.After(timeout)
+
+        for {
+            switch {
+            case <-stopMonitoringChan:
+                break // stop monitoring
+            case <-keepClosed:
+                break // stop monitoring
+            case <-timeoutChan:
+                err := transactionSubmitterFunc()
+                if err != nil {
+                    // Retry quickly, or consider doing exponential backoff.
+                    timeoutChan := time.After(time.Second)
+                    // Continue without breaking, waiting for the signals again.
+                } else {
+                    if singleShot {
+                        // Stop all monitoring if single-shot.
+                        stopMonitoringChan <- struct{}{}
+                    }
+
+                    break // stop monitoring for trigger event
+                }
+            }
+        }
+    })
+    if err != nil {
+        return err
+    }
+    defer triggerSubscription.Unsubscribe()
+
+    for {
+        switch {
+        case <-keepClosed:
+            break // stop monitoring
+        case <-stopMonitoringChan:
+            break // stop monitoring
+        }
+    }
+
+    return nil
+}
+-----------
+
+This is parametrized across several complex callback functions, but ensures that
+the core behavior is the same. `singleShot` is meant to deal with the fact that
+redemption fee increases may be required multiple times.
+
+==== Deposits and Electrum connection
+
+For this to work successfully, the ECDSA client will need to know both which
+deposit is associated with a given keep, as well as gain the capacity to inspect
+the Bitcoin chain for information about those deposits. This means it will have
+to learn to speak to ElectrumX, as the tBTC dApp currently does, though only
+for certain very specific use cases. It will also have to learn to construct
+SPV proofs.
+
+Additionally, this means the client will have to learn to understand the
+keep->deposit relationship. This latter can be achieved during the keep
+opening event, by attaching the transaction where the event was found to the
+event, or to the event handler. This transaction can then be checked for the
+corresponding `Created` event on the tBTC system contract.
+
+Another option for detecting the keep->deposit relationship is to watch for
+`Created` events, which carries the keep address on it. In this scenario, the
+association would have to be created out of band for use by the monitoring
+process.
+
+==== Submitter choice
+
+=== Limitations
+
+This approach mostly adds necessary complexity, but by adding many additional
+event handlers, it introduces the possibility of unexpected race conditions.
+Care will have to be taken to limit how often the client publishes a transaction
+that is not needed, and to carefully calibrate retries so that a transaction is
+only retried if the underlying keep still requires additional maintenance.
+
+Additionally, this approach is restricted to the tBTC on Ethereum
+application, and is not immediately generalized to cross-chain tBTC
+implementation or applications beyond tBTC. These aspects will have to be
+addressed in followup work.
+
+== Open Questions (optional)
+
+Why not invert this? A single loop monitoring for each of these
+events and checking against locally handled keeps.
+
+[bibliography]
+== Related Links
+
+- Links to come...
