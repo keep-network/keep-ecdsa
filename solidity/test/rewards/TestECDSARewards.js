@@ -63,7 +63,7 @@ describe("ECDSARewards", () => {
     it("should equal expected allocation in first interval", async () => {
       await keepFactory.stubBatchOpenFakeKeeps(100, firstIntervalStart)
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
       await rewardsContract.allocateRewards(0)
       const allocated = await rewardsContract.getAllocatedRewards(0)
       const allocatedKeep = allocated.div(tokenDecimalMultiplier)
@@ -77,9 +77,20 @@ describe("ECDSARewards", () => {
 
     it("should equal expected allocation in second interval", async () => {
       await keepFactory.stubBatchOpenFakeKeeps(100, firstIntervalStart)
-      const firstIntervalEnd = await timeJumpToEndOfInterval(0)
-      await keepFactory.stubBatchOpenFakeKeeps(50, firstIntervalEnd)
-      await timeJumpToEndOfInterval(1)
+      await rewardsContract.allocateRewards(0)
+
+      const endOf = await rewardsContract.endOf(0)
+      let now = await time.latest()
+      // create 50 keeps in the second interval
+      if (now.lt(endOf)) {
+        await time.increaseTo(endOf.addn(1))
+        now = await time.latest()
+        await keepFactory.stubBatchOpenFakeKeeps(50, now)
+      } else {
+        await keepFactory.stubBatchOpenFakeKeeps(50, endOf.addn(1))
+      }
+
+      await timeJumpToEndOfIntervalIfApplicable(1)
 
       await rewardsContract.allocateRewards(1)
       const allocated = await rewardsContract.getAllocatedRewards(1)
@@ -94,9 +105,17 @@ describe("ECDSARewards", () => {
     })
 
     it("should equal expected allocation in third interval", async () => {
-      const secondIntervalEnd = await timeJumpToEndOfInterval(1)
-      await keepFactory.stubBatchOpenFakeKeeps(40, secondIntervalEnd)
-      await timeJumpToEndOfInterval(2)
+      const endOf = await rewardsContract.endOf(1)
+      let now = await time.latest()
+      if (now.lt(endOf)) {
+        await time.increaseTo(endOf.addn(1))
+        now = await time.latest()
+        await keepFactory.stubBatchOpenFakeKeeps(40, now)
+      } else {
+        await keepFactory.stubBatchOpenFakeKeeps(40, endOf.addn(1))
+      }
+
+      await timeJumpToEndOfIntervalIfApplicable(2)
 
       await rewardsContract.allocateRewards(2)
       const allocated = await rewardsContract.getAllocatedRewards(2)
@@ -119,7 +138,7 @@ describe("ECDSARewards", () => {
       const isEligible = await rewardsContract.eligibleForReward(keepAddress)
       expect(isEligible).to.be.false
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
       await expectRevert(
         rewardsContract.receiveReward(keepAddress),
         "Keep is not closed"
@@ -135,7 +154,7 @@ describe("ECDSARewards", () => {
       const isEligible = await rewardsContract.eligibleForReward(keepAddress)
       expect(isEligible).to.be.false
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
       await expectRevert(
         rewardsContract.receiveReward(keepAddress),
         "Keep is not closed"
@@ -146,7 +165,7 @@ describe("ECDSARewards", () => {
       await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart + 1)
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
 
       const keepTerminatedAddress = await keepFactory.getKeepAtIndex(0)
       const keepTerminated = await BondedECDSAKeepStub.at(keepTerminatedAddress)
@@ -186,7 +205,7 @@ describe("ECDSARewards", () => {
         await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       }
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
 
       let keepAddress = await keepFactory.getKeepAtIndex(0)
       let keep = await BondedECDSAKeepStub.at(keepAddress)
@@ -228,14 +247,12 @@ describe("ECDSARewards", () => {
     }
   }
 
-  async function timeJumpToEndOfInterval(intervalNumber) {
+  async function timeJumpToEndOfIntervalIfApplicable(intervalNumber) {
     const endOf = await rewardsContract.endOf(intervalNumber)
     const now = await time.latest()
 
     if (now.lt(endOf)) {
       await time.increaseTo(endOf.addn(60))
     }
-
-    return await time.latest()
   }
 })
