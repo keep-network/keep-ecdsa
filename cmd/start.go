@@ -3,8 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/diagnostics"
+	"github.com/keep-network/keep-ecdsa/pkg/actions"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -168,6 +170,8 @@ func Start(c *cli.Context) error {
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
+	initializeApplicationSpecificActions(config.Actions, ethereumChain)
+
 	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(config, networkProvider)
 
@@ -180,6 +184,23 @@ func Start(c *cli.Context) error {
 		}
 
 		return fmt.Errorf("unexpected context cancellation")
+	}
+}
+
+func initializeApplicationSpecificActions(
+	actionsConfig config.Actions,
+	ethereumChain *ethereum.EthereumChain,
+) {
+	if len(actionsConfig.TBTC.DepositLog) > 0 {
+		tbtcEthereumChain, err := ethereum.WithTBTCExtensions(
+			ethereumChain,
+			actionsConfig.TBTC.DepositLog,
+		)
+		if err != nil {
+
+		}
+
+		actions.InitializeTBTCActions(tbtcEthereumChain)
 	}
 }
 
