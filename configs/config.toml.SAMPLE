@@ -109,3 +109,8 @@
 # customized below.
 # [Diagnostics]
 	# Port = 8081
+
+[Actions]
+	[TBTC]
+		DepositLog = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
