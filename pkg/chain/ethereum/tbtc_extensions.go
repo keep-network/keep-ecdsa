@@ -3,13 +3,10 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"sync"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
+	"github.com/keep-network/tbtc/bindings/go/contract"
 )
 
 // TBTCEthereumChain represents an Ethereum chain handle with
@@ -17,7 +14,7 @@ import (
 type TBTCEthereumChain struct {
 	*EthereumChain
 
-	depositLogContract *mockDepositLog
+	depositLogContract *contract.DepositLog
 }
 
 // WithTBTCExtensions extends the Ethereum chain handle with
@@ -30,7 +27,7 @@ func WithTBTCExtensions(
 		return nil, fmt.Errorf("incorrect deposit log contract address")
 	}
 
-	depositLogContract, err := newMockDepositLog(
+	depositLogContract, err := contract.NewDepositLog(
 		common.HexToAddress(depositLogContractAddress),
 		ethereumChain.accountKey,
 		ethereumChain.client,
@@ -65,32 +62,12 @@ func (tec *TBTCEthereumChain) OnDepositCreated(
 		func(err error) error {
 			return fmt.Errorf("watch deposit created failed: [%v]", err)
 		},
+		nil,
+		nil,
 	)
 	if err != nil {
 		logger.Errorf("could not watch Created event: [%v]", err)
 	}
 
 	return subscription
-}
-
-// TODO: Remove `mockDepositLog` because it's a temporary mock.
-
-type mockDepositLog struct{}
-
-func newMockDepositLog(
-	contractAddress common.Address,
-	accountKey *keystore.Key,
-	backend bind.ContractBackend,
-	nonceManager *ethutil.NonceManager,
-	miningWaiter *ethutil.MiningWaiter,
-	transactionMutex *sync.Mutex,
-) (*mockDepositLog, error) {
-	return &mockDepositLog{}, nil
-}
-
-func (mdl *mockDepositLog) WatchCreated(
-	success func(common.Address, common.Address, *big.Int, uint64),
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	return nil, nil
 }
