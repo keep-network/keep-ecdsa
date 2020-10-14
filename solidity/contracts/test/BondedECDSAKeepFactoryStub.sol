@@ -73,9 +73,9 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
         uint256 _firstKeepCreationTimestamp
     ) public {
         for (uint256 i = 0; i < _numberOfKeeps; i++) {
-            address keepAddress = address(block.timestamp + i);
+            address keepAddress = address(block.timestamp.add(i));
             keeps.push(keepAddress);
-            keepOpenedTimestamp[keepAddress] = _firstKeepCreationTimestamp + i; 
+            keepOpenedTimestamp[keepAddress] = _firstKeepCreationTimestamp.add(i); 
         }
     }
 }
