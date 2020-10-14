@@ -115,13 +115,14 @@ describe("ECDSARewards", () => {
     it("should not be possible when a keep is not closed", async () => {
       await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       const keepAddress = await keepFactory.getKeepAtIndex(0)
+      const keepAddresses = [keepAddress]
 
       const isEligible = await rewardsContract.eligibleForReward(keepAddress)
       expect(isEligible).to.be.false
 
       await timeJumpToEndOfInterval(0)
       await expectRevert(
-        rewardsContract.receiveReward(keepAddress),
+        rewardsContract.receiveReward(keepAddresses),
         "Keep is not closed"
       )
     })
@@ -129,6 +130,7 @@ describe("ECDSARewards", () => {
     it("should not be possible when a keep is terminated", async () => {
       await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       const keepAddress = await keepFactory.getKeepAtIndex(0)
+      const keepAddresses = [keepAddress]
       const keep = await BondedECDSAKeepStub.at(keepAddress)
       await keep.publicMarkAsTerminated()
 
@@ -137,7 +139,7 @@ describe("ECDSARewards", () => {
 
       await timeJumpToEndOfInterval(0)
       await expectRevert(
-        rewardsContract.receiveReward(keepAddress),
+        rewardsContract.receiveReward(keepAddresses),
         "Keep is not closed"
       )
     })
@@ -153,10 +155,11 @@ describe("ECDSARewards", () => {
       await keepTerminated.publicMarkAsTerminated()
 
       const keepAddress = await keepFactory.getKeepAtIndex(1)
+      const keepAddresses = [keepAddress]
       const keep = await BondedECDSAKeepStub.at(keepAddress)
       await keep.publicMarkAsClosed()
 
-      await rewardsContract.receiveReward(keepAddress)
+      await rewardsContract.receiveReward(keepAddresses)
 
       // Full allocation for the first interval would be 7,128,000 KEEP.
       // Because just 2 keeps were created, the allocation is:
@@ -189,10 +192,11 @@ describe("ECDSARewards", () => {
       await timeJumpToEndOfInterval(0)
 
       let keepAddress = await keepFactory.getKeepAtIndex(0)
+      let keepAddresses = [keepAddress]
       let keep = await BondedECDSAKeepStub.at(keepAddress)
       await keep.publicMarkAsClosed()
 
-      await rewardsContract.receiveReward(keepAddress)
+      await rewardsContract.receiveReward(keepAddresses)
 
       // reward for the first interval: 7,128,000 KEEP
       // keeps created: 8 => 891,000 KEEP per keep
@@ -202,13 +206,44 @@ describe("ECDSARewards", () => {
 
       // verify second keep in this interval
       keepAddress = await keepFactory.getKeepAtIndex(1)
+      keepAddresses = [keepAddress]
       keep = await BondedECDSAKeepStub.at(keepAddress)
       await keep.publicMarkAsClosed()
 
-      await rewardsContract.receiveReward(keepAddress)
+      await rewardsContract.receiveReward(keepAddresses)
 
       // 297,000 * 2 = 594,000
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance.muln(2))
+    })
+
+    it("should correctly receive rewards from multiple keeps", async () => {
+      for (let i = 0; i < 10; i++) {
+        await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
+      }
+
+      await timeJumpToEndOfInterval(0)
+
+      const keepAddress = await keepFactory.getKeepAtIndex(0)
+      const keepAddress1 = await keepFactory.getKeepAtIndex(1)
+      const keepAddress2 = await keepFactory.getKeepAtIndex(2)
+      const keepAddresses = [keepAddress, keepAddress1, keepAddress2]
+      const keep = await BondedECDSAKeepStub.at(keepAddress)
+      const keep1 = await BondedECDSAKeepStub.at(keepAddress1)
+      const keep2 = await BondedECDSAKeepStub.at(keepAddress2)
+
+      await keep.publicMarkAsClosed()
+      await keep1.publicMarkAsClosed()
+      await keep2.publicMarkAsClosed()
+
+      await rewardsContract.receiveReward(keepAddresses)
+
+      // reward for the first interval: 7,128,000 KEEP
+      // keeps created: 10 => 712,800 KEEP per keep
+      // member receives: 712,800 / 3 = 237,600 (3 signers per keep)
+      // member was in 3 properly closed keeps: 237,600 * 3 = 712,800
+      const expectedBeneficiaryBalance = new BN(712800)
+
+      await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
     })
   })
 
