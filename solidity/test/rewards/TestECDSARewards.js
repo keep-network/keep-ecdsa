@@ -220,7 +220,7 @@ describe("ECDSARewards", () => {
         await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       }
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
 
       const keepAddress = await keepFactory.getKeepAtIndex(0)
       const keepAddress1 = await keepFactory.getKeepAtIndex(1)
