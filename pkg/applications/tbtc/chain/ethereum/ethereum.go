@@ -3,16 +3,25 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sync"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	base_ethereum "github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/tbtc/go/contract"
 )
 
+var logger = log.Logger("app-tbtc-eth")
+
 // TBTCEthereumChain represents an Ethereum chain handle with
 // TBTC-specific capabilities.
 type TBTCEthereumChain struct {
-	*EthereumChain
+	*base_ethereum.EthereumChain
 
 	tbtcSystemContract *contract.TBTCSystem
 }
@@ -20,20 +29,30 @@ type TBTCEthereumChain struct {
 // WithTBTCExtensions extends the Ethereum chain handle with
 // TBTC-specific capabilities.
 func WithTBTCExtensions(
-	ethereumChain *EthereumChain,
+	ethereumChain *base_ethereum.EthereumChain,
 	tbtcSystemContractAddress string,
 ) (*TBTCEthereumChain, error) {
 	if !common.IsHexAddress(tbtcSystemContractAddress) {
 		return nil, fmt.Errorf("incorrect tbtc system contract address")
 	}
 
-	tbtcSystemContract, err := contract.NewTBTCSystem(
-		common.HexToAddress(tbtcSystemContractAddress),
-		ethereumChain.accountKey,
-		ethereumChain.client,
-		ethereumChain.nonceManager,
-		ethereumChain.miningWaiter,
-		ethereumChain.transactionMutex,
+	tbtcSystemContract, err := ethereumChain.CreateContract(
+		func(
+			accountKey *keystore.Key,
+			client bind.ContractBackend,
+			nonceManager *ethutil.NonceManager,
+			miningWaiter *ethutil.MiningWaiter,
+			transactionMutex *sync.Mutex,
+		) (interface{}, error) {
+			return contract.NewTBTCSystem(
+				common.HexToAddress(tbtcSystemContractAddress),
+				accountKey,
+				client,
+				nonceManager,
+				miningWaiter,
+				transactionMutex,
+			)
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -41,7 +60,7 @@ func WithTBTCExtensions(
 
 	return &TBTCEthereumChain{
 		EthereumChain:      ethereumChain,
-		tbtcSystemContract: tbtcSystemContract,
+		tbtcSystemContract: tbtcSystemContract.(*contract.TBTCSystem),
 	}, nil
 }
 

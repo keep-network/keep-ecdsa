@@ -111,6 +111,6 @@
 	# Port = 8081
 
 [ApplicationExtensions]
-	[TBTC]
+	[ApplicationExtensions.TBTC]
 		TBTCSystem = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 

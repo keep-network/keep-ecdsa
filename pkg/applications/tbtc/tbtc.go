@@ -8,14 +8,14 @@ import (
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
-var logger = log.Logger("keep-actions")
+var logger = log.Logger("app-tbtc")
 
 // Handle represents a chain handle extended with TBTC-specific capabilities.
 type Handle interface {
 	eth.Handle
 
 	Deposit
-	DepositLog
+	TBTCSystem
 }
 
 // Deposit is an interface that provides ability to interact
@@ -23,9 +23,9 @@ type Handle interface {
 type Deposit interface {
 }
 
-// DepositLog is an interface that provides ability to interact
-// with DepositLog contract.
-type DepositLog interface {
+// TBTCSystem is an interface that provides ability to interact
+// with TBTCSystem contract.
+type TBTCSystem interface {
 	// OnDepositCreated installs a callback that is invoked when an
 	// on-chain notification of a new deposit creation is seen.
 	OnDepositCreated(

@@ -23,6 +23,7 @@ import (
 
 	"github.com/keep-network/keep-ecdsa/internal/config"
 	"github.com/keep-network/keep-ecdsa/pkg/applications/tbtc"
+	tbtc_ethereum "github.com/keep-network/keep-ecdsa/pkg/applications/tbtc/chain/ethereum"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
 	"github.com/keep-network/keep-ecdsa/pkg/firewall"
@@ -192,12 +193,16 @@ func initializeApplicationActions(
 	ethereumChain *ethereum.EthereumChain,
 ) {
 	if len(config.TBTC.TBTCSystem) > 0 {
-		tbtcEthereumChain, err := ethereum.WithTBTCExtensions(
+		tbtcEthereumChain, err := tbtc_ethereum.WithTBTCExtensions(
 			ethereumChain,
 			config.TBTC.TBTCSystem,
 		)
 		if err != nil {
-
+			logger.Errorf(
+				"error during application actions initialization: [%v]",
+				err,
+			)
+			return
 		}
 
 		tbtc.InitializeActions(tbtcEthereumChain)
