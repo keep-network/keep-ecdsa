@@ -102,7 +102,7 @@ contract ECDSARewards is Rewards {
         factory = BondedECDSAKeepFactory(_factoryAddress);
     }
 
-    /// @notice Stakers can receive KEEP rewards from multiple keeps of their choice 
+    /// @notice Stakers can receive KEEP rewards from multiple keeps of their choice
     /// in one transaction to reduce total cost comparing to single calls for rewards.
     /// It is a caller responsibility to determine the cost and consumed gas when
     /// receiving rewards from multiple keeps.
