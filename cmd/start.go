@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
-	"github.com/keep-network/keep-ecdsa/pkg/actions"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -21,11 +20,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/keep-network/keep-ecdsa/pkg/firewall"
 
 	"github.com/keep-network/keep-ecdsa/internal/config"
+	"github.com/keep-network/keep-ecdsa/pkg/applications/tbtc"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
+	"github.com/keep-network/keep-ecdsa/pkg/firewall"
 
 	"github.com/urfave/cli"
 )
@@ -170,7 +170,7 @@ func Start(c *cli.Context) error {
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
-	initializeApplicationSpecificActions(config.Actions, ethereumChain)
+	initializeApplicationActions(config.Actions, ethereumChain)
 
 	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(config, networkProvider)
@@ -187,7 +187,7 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func initializeApplicationSpecificActions(
+func initializeApplicationActions(
 	actionsConfig config.Actions,
 	ethereumChain *ethereum.EthereumChain,
 ) {
@@ -200,7 +200,7 @@ func initializeApplicationSpecificActions(
 
 		}
 
-		actions.InitializeTBTCActions(tbtcEthereumChain)
+		tbtc.InitializeActions(tbtcEthereumChain)
 	}
 }
 

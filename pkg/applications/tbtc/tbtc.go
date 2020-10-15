@@ -1,4 +1,4 @@
-package actions
+package tbtc
 
 import (
 	"math/big"
@@ -10,8 +10,8 @@ import (
 
 var logger = log.Logger("keep-actions")
 
-// TBTCHandle represents a chain handle extended with TBTC-specific capabilities.
-type TBTCHandle interface {
+// Handle represents a chain handle extended with TBTC-specific capabilities.
+type Handle interface {
 	eth.Handle
 
 	Deposit
@@ -33,11 +33,11 @@ type DepositLog interface {
 	) subscription.EventSubscription
 }
 
-// InitializeTBTCActions initializes actions specific for the TBTC application.
-func InitializeTBTCActions(tbtcHandle TBTCHandle) {
+// InitializeActions initializes actions specific for the TBTC application.
+func InitializeActions(handle Handle) {
 	logger.Infof("initializing tbtc-specific actions")
 
-	tbtcHandle.OnDepositCreated(func(
+	handle.OnDepositCreated(func(
 		depositAddress,
 		keepAddress string,
 		timestamp *big.Int,
