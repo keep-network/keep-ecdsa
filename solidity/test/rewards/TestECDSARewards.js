@@ -79,16 +79,8 @@ describe("ECDSARewards", () => {
       await keepFactory.stubBatchOpenFakeKeeps(100, firstIntervalStart)
       await rewardsContract.allocateRewards(0)
 
-      const endOf = await rewardsContract.endOf(0)
-      let now = await time.latest()
-      // create 50 keeps in the second interval
-      if (now.lt(endOf)) {
-        await time.increaseTo(endOf.addn(1))
-        now = await time.latest()
-        await keepFactory.stubBatchOpenFakeKeeps(50, now)
-      } else {
-        await keepFactory.stubBatchOpenFakeKeeps(50, endOf.addn(1))
-      }
+      const firstIntervalEnd = await rewardsContract.endOf(0)
+      await keepFactory.stubBatchOpenFakeKeeps(50, firstIntervalEnd.addn(1))
 
       await timeJumpToEndOfIntervalIfApplicable(1)
 
@@ -105,15 +97,8 @@ describe("ECDSARewards", () => {
     })
 
     it("should equal expected allocation in third interval", async () => {
-      const endOf = await rewardsContract.endOf(1)
-      let now = await time.latest()
-      if (now.lt(endOf)) {
-        await time.increaseTo(endOf.addn(1))
-        now = await time.latest()
-        await keepFactory.stubBatchOpenFakeKeeps(40, now)
-      } else {
-        await keepFactory.stubBatchOpenFakeKeeps(40, endOf.addn(1))
-      }
+      const secondIntervalEnd = await rewardsContract.endOf(1)
+      await keepFactory.stubBatchOpenFakeKeeps(40, secondIntervalEnd.addn(1))
 
       await timeJumpToEndOfIntervalIfApplicable(2)
 
