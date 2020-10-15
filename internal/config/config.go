@@ -27,7 +27,7 @@ type Config struct {
 	TSS                    tss.Config
 	Metrics                Metrics
 	Diagnostics            Diagnostics
-	Actions                Actions
+	ApplicationExtensions  ApplicationExtensions
 }
 
 // SanctionedApplications contains addresses of applications approved by the
@@ -71,14 +71,14 @@ type Diagnostics struct {
 	Port int
 }
 
-// Actions stores app-specific actions configuration.
-type Actions struct {
-	TBTC TBTCActions
+// ApplicationExtensions stores app-specific extensions configuration.
+type ApplicationExtensions struct {
+	TBTC TBTC
 }
 
-// TBTCActions stores configuration related with TBTC-specific actions.
-type TBTCActions struct {
-	DepositLog string
+// TBTC stores configuration related with TBTC-specific actions.
+type TBTC struct {
+	TBTCSystem string
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file

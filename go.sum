@@ -342,6 +342,8 @@ github.com/keep-network/keep-core v1.3.0/go.mod h1:1KsSSTQoN754TrFLW7kLy50pOG2CQ
 github.com/keep-network/tbtc v1.1.1-0.20201015092834-5f6ed68d464e h1:I5uD+L9IpEa/tQsspqM5LFo3Ip0PvkY4LJKLLIex5xg=
 github.com/keep-network/tbtc/go v0.0.0-20201015092834-5f6ed68d464e h1:F2LZZHJ738bSr5Wu45qjLEEYQqpOFtWyq51BMb/ScSM=
 github.com/keep-network/tbtc/go v0.0.0-20201015092834-5f6ed68d464e/go.mod h1:ndaWkbmuX4d8Xfywh1CSVybH56o/CFA/rkmMb2jqo2g=
+github.com/keep-network/tbtc/go v0.0.0-20201015113033-f8f4d65fbc31 h1:Prt234RjylD0EoT/eYE99RzNXRZPkVb0M9dPLD4qDDY=
+github.com/keep-network/tbtc/go v0.0.0-20201015113033-f8f4d65fbc31/go.mod h1:ndaWkbmuX4d8Xfywh1CSVybH56o/CFA/rkmMb2jqo2g=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=

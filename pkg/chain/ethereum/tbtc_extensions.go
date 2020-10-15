@@ -14,21 +14,21 @@ import (
 type TBTCEthereumChain struct {
 	*EthereumChain
 
-	depositLogContract *contract.DepositLog
+	tbtcSystemContract *contract.TBTCSystem
 }
 
 // WithTBTCExtensions extends the Ethereum chain handle with
 // TBTC-specific capabilities.
 func WithTBTCExtensions(
 	ethereumChain *EthereumChain,
-	depositLogContractAddress string,
+	tbtcSystemContractAddress string,
 ) (*TBTCEthereumChain, error) {
-	if !common.IsHexAddress(depositLogContractAddress) {
-		return nil, fmt.Errorf("incorrect deposit log contract address")
+	if !common.IsHexAddress(tbtcSystemContractAddress) {
+		return nil, fmt.Errorf("incorrect tbtc system contract address")
 	}
 
-	depositLogContract, err := contract.NewDepositLog(
-		common.HexToAddress(depositLogContractAddress),
+	tbtcSystemContract, err := contract.NewTBTCSystem(
+		common.HexToAddress(tbtcSystemContractAddress),
 		ethereumChain.accountKey,
 		ethereumChain.client,
 		ethereumChain.nonceManager,
@@ -41,7 +41,7 @@ func WithTBTCExtensions(
 
 	return &TBTCEthereumChain{
 		EthereumChain:      ethereumChain,
-		depositLogContract: depositLogContract,
+		tbtcSystemContract: tbtcSystemContract,
 	}, nil
 }
 
@@ -50,7 +50,7 @@ func WithTBTCExtensions(
 func (tec *TBTCEthereumChain) OnDepositCreated(
 	handler func(depositAddress, keepAddress string, timestamp *big.Int),
 ) subscription.EventSubscription {
-	subscription, err := tec.depositLogContract.WatchCreated(
+	subscription, err := tec.tbtcSystemContract.WatchCreated(
 		func(
 			DepositContractAddress common.Address,
 			KeepAddress common.Address,

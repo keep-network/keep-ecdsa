@@ -170,7 +170,7 @@ func Start(c *cli.Context) error {
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
-	initializeApplicationActions(config.Actions, ethereumChain)
+	initializeApplicationActions(config.ApplicationExtensions, ethereumChain)
 
 	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(config, networkProvider)
@@ -188,13 +188,13 @@ func Start(c *cli.Context) error {
 }
 
 func initializeApplicationActions(
-	actionsConfig config.Actions,
+	config config.ApplicationExtensions,
 	ethereumChain *ethereum.EthereumChain,
 ) {
-	if len(actionsConfig.TBTC.DepositLog) > 0 {
+	if len(config.TBTC.TBTCSystem) > 0 {
 		tbtcEthereumChain, err := ethereum.WithTBTCExtensions(
 			ethereumChain,
-			actionsConfig.TBTC.DepositLog,
+			config.TBTC.TBTCSystem,
 		)
 		if err != nil {
 

@@ -110,7 +110,7 @@
 # [Diagnostics]
 	# Port = 8081
 
-[Actions]
+[ApplicationExtensions]
 	[TBTC]
-		DepositLog = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+		TBTCSystem = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
