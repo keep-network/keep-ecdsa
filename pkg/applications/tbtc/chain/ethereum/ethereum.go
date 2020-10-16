@@ -67,16 +67,16 @@ func WithTBTCExtensions(
 // OnDepositCreated installs a callback that is invoked when an
 // on-chain notification of a new deposit creation is seen.
 func (tec *TBTCEthereumChain) OnDepositCreated(
-	handler func(depositAddress, keepAddress string, timestamp *big.Int),
-) subscription.EventSubscription {
-	subscription, err := tec.tbtcSystemContract.WatchCreated(
+	handler func(depositAddress string),
+) (subscription.EventSubscription, error) {
+	return tec.tbtcSystemContract.WatchCreated(
 		func(
 			DepositContractAddress common.Address,
 			KeepAddress common.Address,
 			Timestamp *big.Int,
 			blockNumber uint64,
 		) {
-			handler(DepositContractAddress.Hex(), KeepAddress.Hex(), Timestamp)
+			handler(DepositContractAddress.Hex())
 		},
 		func(err error) error {
 			return fmt.Errorf("watch deposit created failed: [%v]", err)
@@ -84,9 +84,99 @@ func (tec *TBTCEthereumChain) OnDepositCreated(
 		nil,
 		nil,
 	)
+}
+
+// OnDepositRegisteredPubkey installs a callback that is invoked when an
+// on-chain notification of a deposit's pubkey registration is seen.
+func (tec *TBTCEthereumChain) OnDepositRegisteredPubkey(
+	handler func(depositAddress string),
+) (subscription.EventSubscription, error) {
+	return tec.tbtcSystemContract.WatchRegisteredPubkey(
+		func(
+			DepositContractAddress common.Address,
+			SigningGroupPubkeyX [32]uint8,
+			SigningGroupPubkeyY [32]uint8,
+			Timestamp *big.Int,
+			blockNumber uint64,
+		) {
+			handler(DepositContractAddress.Hex())
+		},
+		func(err error) error {
+			return fmt.Errorf("watch deposit created failed: [%v]", err)
+		},
+		nil,
+	)
+}
+
+// KeepAddress returns the underlying keep address for the
+// provided deposit.
+func (tec *TBTCEthereumChain) KeepAddress(
+	depositAddress string,
+) (string, error) {
+	deposit, err := tec.getDepositContract(depositAddress)
 	if err != nil {
-		logger.Errorf("could not watch Created event: [%v]", err)
+		return "", err
 	}
 
-	return subscription
+	keepAddress, err := deposit.KeepAddress()
+	if err != nil {
+		return "", err
+	}
+
+	return keepAddress.Hex(), nil
+}
+
+// RetrieveSignerPubkey retrieves the signer public key for the
+// provided deposit.
+func (tec *TBTCEthereumChain) RetrieveSignerPubkey(
+	depositAddress string,
+) error {
+	deposit, err := tec.getDepositContract(depositAddress)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := deposit.RetrieveSignerPubkey()
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf(
+		"submitted RetrieveSignerPubkey transaction with hash: [%x]",
+		transaction.Hash(),
+	)
+
+	return nil
+}
+
+func (tec *TBTCEthereumChain) getDepositContract(
+	address string,
+) (*contract.Deposit, error) {
+	if !common.IsHexAddress(address) {
+		return nil, fmt.Errorf("incorrect deposit contract address")
+	}
+
+	depositContract, err := tec.CreateContract(
+		func(
+			accountKey *keystore.Key,
+			client bind.ContractBackend,
+			nonceManager *ethutil.NonceManager,
+			miningWaiter *ethutil.MiningWaiter,
+			transactionMutex *sync.Mutex,
+		) (interface{}, error) {
+			return contract.NewDeposit(
+				common.HexToAddress(address),
+				accountKey,
+				client,
+				nonceManager,
+				miningWaiter,
+				transactionMutex,
+			)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return depositContract.(*contract.Deposit), nil
 }
