@@ -293,6 +293,8 @@ func (am *actionsManager) setupKeepClosedHandler(
 
 func (am *actionsManager) submitterBackoff(attempt int) time.Duration {
 	backoffMillis := math.Pow(2, float64(attempt)) * 1000
+	// #nosec G404 (insecure random number source (rand))
+	// No need to use secure randomness for jitter value.
 	jitterMillis := rand.Intn(100)
 	return time.Duration(int(backoffMillis) + jitterMillis)
 }
