@@ -63,7 +63,7 @@ describe("ECDSARewards", () => {
     it("should equal expected allocation in first interval", async () => {
       await keepFactory.stubBatchOpenFakeKeeps(100, firstIntervalStart)
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
       await rewardsContract.allocateRewards(0)
       const allocated = await rewardsContract.getAllocatedRewards(0)
       const allocatedKeep = allocated.div(tokenDecimalMultiplier)
@@ -77,9 +77,12 @@ describe("ECDSARewards", () => {
 
     it("should equal expected allocation in second interval", async () => {
       await keepFactory.stubBatchOpenFakeKeeps(100, firstIntervalStart)
-      const firstIntervalEnd = await timeJumpToEndOfInterval(0)
-      await keepFactory.stubBatchOpenFakeKeeps(50, firstIntervalEnd)
-      await timeJumpToEndOfInterval(1)
+      await rewardsContract.allocateRewards(0)
+
+      const firstIntervalEnd = await rewardsContract.endOf(0)
+      await keepFactory.stubBatchOpenFakeKeeps(50, firstIntervalEnd.addn(1))
+
+      await timeJumpToEndOfIntervalIfApplicable(1)
 
       await rewardsContract.allocateRewards(1)
       const allocated = await rewardsContract.getAllocatedRewards(1)
@@ -94,9 +97,10 @@ describe("ECDSARewards", () => {
     })
 
     it("should equal expected allocation in third interval", async () => {
-      const secondIntervalEnd = await timeJumpToEndOfInterval(1)
-      await keepFactory.stubBatchOpenFakeKeeps(40, secondIntervalEnd)
-      await timeJumpToEndOfInterval(2)
+      const secondIntervalEnd = await rewardsContract.endOf(1)
+      await keepFactory.stubBatchOpenFakeKeeps(40, secondIntervalEnd.addn(1))
+
+      await timeJumpToEndOfIntervalIfApplicable(2)
 
       await rewardsContract.allocateRewards(2)
       const allocated = await rewardsContract.getAllocatedRewards(2)
@@ -119,7 +123,7 @@ describe("ECDSARewards", () => {
       const isEligible = await rewardsContract.eligibleForReward(keepAddress)
       expect(isEligible).to.be.false
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
       await expectRevert(
         rewardsContract.receiveReward(keepAddress),
         "Keep is not closed"
@@ -135,7 +139,7 @@ describe("ECDSARewards", () => {
       const isEligible = await rewardsContract.eligibleForReward(keepAddress)
       expect(isEligible).to.be.false
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
       await expectRevert(
         rewardsContract.receiveReward(keepAddress),
         "Keep is not closed"
@@ -146,7 +150,7 @@ describe("ECDSARewards", () => {
       await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart + 1)
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
 
       const keepTerminatedAddress = await keepFactory.getKeepAtIndex(0)
       const keepTerminated = await BondedECDSAKeepStub.at(keepTerminatedAddress)
@@ -186,7 +190,7 @@ describe("ECDSARewards", () => {
         await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       }
 
-      await timeJumpToEndOfInterval(0)
+      await timeJumpToEndOfIntervalIfApplicable(0)
 
       let keepAddress = await keepFactory.getKeepAtIndex(0)
       let keep = await BondedECDSAKeepStub.at(keepAddress)
@@ -210,6 +214,33 @@ describe("ECDSARewards", () => {
       // 297,000 * 2 = 594,000
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance.muln(2))
     })
+
+    it("should correctly receive rewards from multiple keeps", async () => {
+      for (let i = 0; i < 10; i++) {
+        await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
+      }
+
+      await timeJumpToEndOfIntervalIfApplicable(0)
+
+      const keepAddress = await keepFactory.getKeepAtIndex(0)
+      const keepAddress1 = await keepFactory.getKeepAtIndex(1)
+      const keepAddresses = [keepAddress, keepAddress1]
+      const keep = await BondedECDSAKeepStub.at(keepAddress)
+      const keep1 = await BondedECDSAKeepStub.at(keepAddress1)
+
+      await keep.publicMarkAsClosed()
+      await keep1.publicMarkAsClosed()
+
+      await rewardsContract.receiveRewards(keepAddresses)
+
+      // reward for the first interval: 7,128,000 KEEP
+      // keeps created: 10 => 712,800 KEEP per keep
+      // member receives: 712,800 / 3 = 237,600 (3 signers per keep)
+      // member was in 2 properly closed keeps: 237,600 * 2 = 475,200
+      const expectedBeneficiaryBalance = new BN(475200)
+
+      await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
+    })
   })
 
   async function assertKeepBalanceOfBeneficiaries(expectedBalance) {
@@ -228,14 +259,12 @@ describe("ECDSARewards", () => {
     }
   }
 
-  async function timeJumpToEndOfInterval(intervalNumber) {
+  async function timeJumpToEndOfIntervalIfApplicable(intervalNumber) {
     const endOf = await rewardsContract.endOf(intervalNumber)
     const now = await time.latest()
 
     if (now.lt(endOf)) {
       await time.increaseTo(endOf.addn(60))
     }
-
-    return await time.latest()
   }
 })
