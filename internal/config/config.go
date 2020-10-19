@@ -27,7 +27,7 @@ type Config struct {
 	TSS                    tss.Config
 	Metrics                Metrics
 	Diagnostics            Diagnostics
-	ApplicationExtensions  ApplicationExtensions
+	Extensions             Extensions
 }
 
 // SanctionedApplications contains addresses of applications approved by the
@@ -71,12 +71,12 @@ type Diagnostics struct {
 	Port int
 }
 
-// ApplicationExtensions stores app-specific extensions configuration.
-type ApplicationExtensions struct {
+// Extensions stores app-specific extensions configuration.
+type Extensions struct {
 	TBTC TBTC
 }
 
-// TBTC stores configuration related with TBTC-specific actions.
+// TBTC stores configuration related with TBTC-specific extensions.
 type TBTC struct {
 	TBTCSystem string
 }

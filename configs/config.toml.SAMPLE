@@ -111,6 +111,6 @@
 	# Port = 8081
 
 # Uncomment to enable application-specific extensions.
-# [ApplicationExtensions.TBTC]
+# [Extensions.TBTC]
 	# TBTCSystem = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
