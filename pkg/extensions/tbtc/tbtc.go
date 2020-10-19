@@ -16,6 +16,8 @@ import (
 
 var logger = log.Logger("extensions-tbtc")
 
+const maxTransactionAttempts = 3
+
 // InitializeExtensions initializes extensions specific to the TBTC application.
 func InitializeExtensions(ctx context.Context, handle Handle) error {
 	logger.Infof("initializing tbtc extensions")
@@ -167,7 +169,7 @@ func (em *extensionsManager) initializeExtension(
 			case <-timeoutChan:
 				err := transactionSubmitter(deposit)
 				if err != nil {
-					if transactionAttempt == 3 {
+					if transactionAttempt == maxTransactionAttempts {
 						logger.Errorf(
 							"could not submit transaction "+
 								"for [%v] extension and deposit [%v]: [%v]; "+
