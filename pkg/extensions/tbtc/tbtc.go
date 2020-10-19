@@ -24,7 +24,7 @@ func InitializeExtensions(ctx context.Context, handle Handle) error {
 
 	manager := &extensionsManager{handle}
 
-	err := manager.initializeRetrievePubkeyExtension(ctx)
+	err := manager.initializeRetrievePubkeyExtension(ctx, 150*time.Minute)
 	if err != nil {
 		return fmt.Errorf(
 			"could not initialize retrieve pubkey extension: [%v]",
@@ -57,6 +57,7 @@ type extensionsManager struct {
 
 func (em *extensionsManager) initializeRetrievePubkeyExtension(
 	ctx context.Context,
+	timeout time.Duration,
 ) error {
 	logger.Infof("initializing retrieve pubkey extension")
 
@@ -72,7 +73,7 @@ func (em *extensionsManager) initializeRetrievePubkeyExtension(
 		func(deposit string) error {
 			return em.handle.RetrieveSignerPubkey(deposit)
 		},
-		150*time.Minute,
+		timeout,
 	)
 	if err != nil {
 		return err
@@ -264,5 +265,5 @@ func (em *extensionsManager) calculateBackoff(attempt int) time.Duration {
 	// #nosec G404 (insecure random number source (rand))
 	// No need to use secure randomness for jitter value.
 	jitterMillis := rand.Intn(100)
-	return time.Duration(int(backoffMillis) + jitterMillis)
+	return time.Duration(int(backoffMillis)+jitterMillis) * time.Millisecond
 }
