@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/tbtc/go/contract"
+	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
 )
 
 // TBTCEthereumChain represents an Ethereum chain handle with
