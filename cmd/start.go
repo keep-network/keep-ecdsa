@@ -171,7 +171,7 @@ func Start(c *cli.Context) error {
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
-	initializeApplicationActions(ctx, config.ApplicationExtensions, ethereumChain)
+	initializeExtensions(ctx, config.ApplicationExtensions, ethereumChain)
 
 	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(config, networkProvider)
@@ -188,7 +188,7 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func initializeApplicationActions(
+func initializeExtensions(
 	ctx context.Context,
 	config config.ApplicationExtensions,
 	ethereumChain *ethereum.EthereumChain,
@@ -206,10 +206,10 @@ func initializeApplicationActions(
 			return
 		}
 
-		err = tbtc.InitializeActions(ctx, tbtcEthereumChain)
+		err = tbtc.InitializeExtensions(ctx, tbtcEthereumChain)
 		if err != nil {
 			logger.Errorf(
-				"could not initialize tbtc actions: [%v]",
+				"could not initialize tbtc extensions: [%v]",
 				err,
 			)
 			return

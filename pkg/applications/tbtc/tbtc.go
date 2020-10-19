@@ -52,21 +52,21 @@ type TBTCSystem interface {
 	) (subscription.EventSubscription, error)
 }
 
-// InitializeActions initializes actions specific for the TBTC application.
-func InitializeActions(ctx context.Context, handle Handle) error {
-	logger.Infof("initializing tbtc actions")
+// InitializeExtensions initializes extensions specific to the TBTC application.
+func InitializeExtensions(ctx context.Context, handle Handle) error {
+	logger.Infof("initializing tbtc extensions")
 
-	manager := &actionsManager{handle}
+	manager := &extensionsManager{handle}
 
-	err := manager.initializeRetrievePubkeyAction(ctx)
+	err := manager.initializeRetrievePubkeyExtension(ctx)
 	if err != nil {
 		return fmt.Errorf(
-			"could not initialize retrieve pubkey action: [%v]",
+			"could not initialize retrieve pubkey extension: [%v]",
 			err,
 		)
 	}
 
-	logger.Infof("tbtc actions have been initialized")
+	logger.Infof("tbtc extensions have been initialized")
 
 	return nil
 }
@@ -85,26 +85,26 @@ type keepClosedHandlerSetup func(deposit string) (
 
 type depositTransactionSubmitter func(deposit string) error
 
-type actionsManager struct {
+type extensionsManager struct {
 	handle Handle
 }
 
-func (am *actionsManager) initializeRetrievePubkeyAction(
+func (em *extensionsManager) initializeRetrievePubkeyExtension(
 	ctx context.Context,
 ) error {
-	logger.Infof("initializing retrieve pubkey action")
+	logger.Infof("initializing retrieve pubkey extension")
 
-	subscription, err := am.monitorAndAct(
+	subscription, err := em.initializeExtension(
 		"retrieve pubkey",
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			return am.handle.OnDepositCreated(handler)
+			return em.handle.OnDepositCreated(handler)
 		},
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			return am.handle.OnDepositRegisteredPubkey(handler)
+			return em.handle.OnDepositRegisteredPubkey(handler)
 		},
-		am.setupKeepClosedHandler,
+		em.setupKeepClosedHandler,
 		func(deposit string) error {
-			return am.handle.RetrieveSignerPubkey(deposit)
+			return em.handle.RetrieveSignerPubkey(deposit)
 		},
 		150*time.Minute,
 	)
@@ -115,10 +115,10 @@ func (am *actionsManager) initializeRetrievePubkeyAction(
 	go func() {
 		<-ctx.Done()
 		subscription.Unsubscribe()
-		logger.Infof("retrieve pubkey action has been disabled")
+		logger.Infof("retrieve pubkey extension has been disabled")
 	}()
 
-	logger.Infof("retrieve pubkey action has been initialized")
+	logger.Infof("retrieve pubkey extension has been initialized")
 
 	return nil
 }
@@ -126,9 +126,9 @@ func (am *actionsManager) initializeRetrievePubkeyAction(
 // TODO:
 //  1. Filter incoming events by operator interest.
 //  2. Incoming events deduplication.
-//  3. Resume actions after client restart.
-func (am *actionsManager) monitorAndAct(
-	actionName string,
+//  3. Resume extensions executions after client restart.
+func (em *extensionsManager) initializeExtension(
+	extensionName string,
 	triggerEventHandlerSetup depositEventHandlerSetup,
 	stopEventHandlerSetup depositEventHandlerSetup,
 	keepClosedHandlerSetup keepClosedHandlerSetup,
@@ -137,8 +137,8 @@ func (am *actionsManager) monitorAndAct(
 ) (subscription.EventSubscription, error) {
 	handleTriggerEvent := func(deposit string) {
 		logger.Infof(
-			"triggering [%v] action for deposit [%v]",
-			actionName,
+			"triggering [%v] extension execution for deposit [%v]",
+			extensionName,
 			deposit,
 		)
 
@@ -154,9 +154,9 @@ func (am *actionsManager) monitorAndAct(
 		)
 		if err != nil {
 			logger.Errorf(
-				"could not setup stop event handler for [%v] action "+
+				"could not setup stop event handler for [%v] extension "+
 					"and deposit [%v]: [%v]",
-				actionName,
+				extensionName,
 				deposit,
 				err,
 			)
@@ -167,9 +167,9 @@ func (am *actionsManager) monitorAndAct(
 		keepClosedChan, keepClosedCancel, err := keepClosedHandlerSetup(deposit)
 		if err != nil {
 			logger.Errorf(
-				"could not setup keep closed handler for [%v] action "+
+				"could not setup keep closed handler for [%v] extension "+
 					"and deposit [%v]: [%v]",
-				actionName,
+				extensionName,
 				deposit,
 				err,
 			)
@@ -186,15 +186,17 @@ func (am *actionsManager) monitorAndAct(
 			select {
 			case <-stopEventChan:
 				logger.Infof(
-					"stop event occurred for [%v] action and deposit [%v]",
-					actionName,
+					"stop event occurred for [%v] extension "+
+						"and deposit [%v]",
+					extensionName,
 					deposit,
 				)
 				break monitoring
 			case <-keepClosedChan:
 				logger.Infof(
-					"keep closed event occurred for [%v] action and deposit [%v]",
-					actionName,
+					"keep closed event occurred for [%v] extension "+
+						"and deposit [%v]",
+					extensionName,
 					deposit,
 				)
 				break monitoring
@@ -204,22 +206,22 @@ func (am *actionsManager) monitorAndAct(
 					if transactionAttempt == 3 {
 						logger.Errorf(
 							"could not submit transaction "+
-								"for [%v] action and deposit [%v]: [%v]; "+
+								"for [%v] extension and deposit [%v]: [%v]; "+
 								"last attempt failed",
-							actionName,
+							extensionName,
 							deposit,
 							err,
 						)
 						break monitoring
 					}
 
-					backoff := am.submitterBackoff(transactionAttempt)
+					backoff := em.submitterBackoff(transactionAttempt)
 
 					logger.Errorf(
 						"could not submit transaction "+
-							"for [%v] action and deposit [%v]: [%v]; "+
+							"for [%v] extension and deposit [%v]: [%v]; "+
 							"retrying after: [%v]",
-						actionName,
+						extensionName,
 						deposit,
 						err,
 						backoff,
@@ -229,9 +231,9 @@ func (am *actionsManager) monitorAndAct(
 					transactionAttempt++
 				} else {
 					logger.Infof(
-						"transaction for [%v] action and deposit [%v] "+
+						"transaction for [%v] extension and deposit [%v] "+
 							"has been submitted successfully",
-						actionName,
+						extensionName,
 						deposit,
 					)
 					break monitoring
@@ -240,8 +242,9 @@ func (am *actionsManager) monitorAndAct(
 		}
 
 		logger.Infof(
-			"[%v] action for deposit [%v] has been completed",
-			actionName,
+			"[%v] extension execution for deposit [%v] "+
+				"has been completed",
+			extensionName,
 			deposit,
 		)
 	}
@@ -253,17 +256,17 @@ func (am *actionsManager) monitorAndAct(
 	)
 }
 
-func (am *actionsManager) setupKeepClosedHandler(
+func (em *extensionsManager) setupKeepClosedHandler(
 	deposit string,
 ) (chan struct{}, func(), error) {
 	signalChan := make(chan struct{})
 
-	keepAddress, err := am.handle.KeepAddress(deposit)
+	keepAddress, err := em.handle.KeepAddress(deposit)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	keepClosedSubscription, err := am.handle.OnKeepClosed(
+	keepClosedSubscription, err := em.handle.OnKeepClosed(
 		common.HexToAddress(keepAddress),
 		func(_ *eth.KeepClosedEvent) {
 			signalChan <- struct{}{}
@@ -273,7 +276,7 @@ func (am *actionsManager) setupKeepClosedHandler(
 		return nil, nil, err
 	}
 
-	keepTerminatedSubscription, err := am.handle.OnKeepTerminated(
+	keepTerminatedSubscription, err := em.handle.OnKeepTerminated(
 		common.HexToAddress(keepAddress),
 		func(_ *eth.KeepTerminatedEvent) {
 			signalChan <- struct{}{}
@@ -291,7 +294,7 @@ func (am *actionsManager) setupKeepClosedHandler(
 	return signalChan, unsubscribe, nil
 }
 
-func (am *actionsManager) submitterBackoff(attempt int) time.Duration {
+func (em *extensionsManager) submitterBackoff(attempt int) time.Duration {
 	backoffMillis := math.Pow(2, float64(attempt)) * 1000
 	// #nosec G404 (insecure random number source (rand))
 	// No need to use secure randomness for jitter value.
