@@ -39,17 +39,17 @@ func InitializeExtensions(ctx context.Context, handle Handle) error {
 
 type depositEventHandler func(deposit string)
 
-type depositEventHandlerSetup func(
+type watchDepositEventFn func(
 	handler depositEventHandler,
 ) (subscription.EventSubscription, error)
 
-type keepClosedHandlerSetup func(deposit string) (
+type watchKeepClosedFn func(deposit string) (
 	keepClosedChan chan struct{},
 	keepClosedCancel func(),
 	err error,
 )
 
-type depositTransactionSubmitter func(deposit string) error
+type submitDepositTxFn func(deposit string) error
 
 type extensionsManager struct {
 	handle Handle
@@ -60,7 +60,7 @@ func (em *extensionsManager) initializeRetrievePubkeyExtension(
 ) error {
 	logger.Infof("initializing retrieve pubkey extension")
 
-	subscription, err := em.initializeExtension(
+	startEventSubscription, err := em.monitorAndAct(
 		"retrieve pubkey",
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
 			return em.handle.OnDepositCreated(handler)
@@ -68,7 +68,7 @@ func (em *extensionsManager) initializeRetrievePubkeyExtension(
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
 			return em.handle.OnDepositRegisteredPubkey(handler)
 		},
-		em.setupKeepClosedHandler,
+		em.watchKeepClosed,
 		func(deposit string) error {
 			return em.handle.RetrieveSignerPubkey(deposit)
 		},
@@ -80,7 +80,7 @@ func (em *extensionsManager) initializeRetrievePubkeyExtension(
 
 	go func() {
 		<-ctx.Done()
-		subscription.Unsubscribe()
+		startEventSubscription.Unsubscribe()
 		logger.Infof("retrieve pubkey extension has been disabled")
 	}()
 
@@ -93,15 +93,15 @@ func (em *extensionsManager) initializeRetrievePubkeyExtension(
 //  1. Filter incoming events by operator interest.
 //  2. Incoming events deduplication.
 //  3. Resume extensions executions after client restart.
-func (em *extensionsManager) initializeExtension(
+func (em *extensionsManager) monitorAndAct(
 	extensionName string,
-	triggerEventHandlerSetup depositEventHandlerSetup,
-	stopEventHandlerSetup depositEventHandlerSetup,
-	keepClosedHandlerSetup keepClosedHandlerSetup,
-	transactionSubmitter depositTransactionSubmitter,
+	monitoringStartFn watchDepositEventFn,
+	monitoringStopFn watchDepositEventFn,
+	keepClosedFn watchKeepClosedFn,
+	actFn submitDepositTxFn,
 	timeout time.Duration,
 ) (subscription.EventSubscription, error) {
-	handleTriggerEvent := func(deposit string) {
+	handleStartEvent := func(deposit string) {
 		logger.Infof(
 			"triggering [%v] extension execution for deposit [%v]",
 			extensionName,
@@ -109,9 +109,8 @@ func (em *extensionsManager) initializeExtension(
 		)
 
 		stopEventChan := make(chan struct{})
-		keepClosedChan := make(chan struct{})
 
-		stopSubscription, err := stopEventHandlerSetup(
+		stopEventSubscription, err := monitoringStopFn(
 			func(stopEventDeposit string) {
 				if deposit == stopEventDeposit {
 					stopEventChan <- struct{}{}
@@ -120,28 +119,28 @@ func (em *extensionsManager) initializeExtension(
 		)
 		if err != nil {
 			logger.Errorf(
-				"could not setup stop event handler for [%v] extension "+
-					"and deposit [%v]: [%v]",
+				"could not setup stop event handler for [%v] "+
+					"extension execution and deposit [%v]: [%v]",
 				extensionName,
 				deposit,
 				err,
 			)
 			return
 		}
-		defer stopSubscription.Unsubscribe()
+		defer stopEventSubscription.Unsubscribe()
 
-		keepClosedChan, keepClosedCancel, err := keepClosedHandlerSetup(deposit)
+		keepClosedChan, keepClosedSubscriptionCancel, err := keepClosedFn(deposit)
 		if err != nil {
 			logger.Errorf(
-				"could not setup keep closed handler for [%v] extension "+
-					"and deposit [%v]: [%v]",
+				"could not setup keep closed handler for [%v] "+
+					"extension execution and deposit [%v]: [%v]",
 				extensionName,
 				deposit,
 				err,
 			)
 			return
 		}
-		defer keepClosedCancel()
+		defer keepClosedSubscriptionCancel()
 
 		timeoutChan := time.After(timeout)
 
@@ -152,28 +151,28 @@ func (em *extensionsManager) initializeExtension(
 			select {
 			case <-stopEventChan:
 				logger.Infof(
-					"stop event occurred for [%v] extension "+
-						"and deposit [%v]",
+					"stop event occurred for [%v] "+
+						"extension execution and deposit [%v]",
 					extensionName,
 					deposit,
 				)
 				break monitoring
 			case <-keepClosedChan:
 				logger.Infof(
-					"keep closed event occurred for [%v] extension "+
-						"and deposit [%v]",
+					"keep closed event occurred for [%v] "+
+						"extension execution and deposit [%v]",
 					extensionName,
 					deposit,
 				)
 				break monitoring
 			case <-timeoutChan:
-				err := transactionSubmitter(deposit)
+				err := actFn(deposit)
 				if err != nil {
 					if transactionAttempt == maxTransactionAttempts {
 						logger.Errorf(
 							"could not submit transaction "+
-								"for [%v] extension and deposit [%v]: [%v]; "+
-								"last attempt failed",
+								"for [%v] extension execution and "+
+								"deposit [%v]: [%v]; last attempt failed",
 							extensionName,
 							deposit,
 							err,
@@ -181,12 +180,12 @@ func (em *extensionsManager) initializeExtension(
 						break monitoring
 					}
 
-					backoff := em.submitterBackoff(transactionAttempt)
+					backoff := em.calculateBackoff(transactionAttempt)
 
 					logger.Errorf(
 						"could not submit transaction "+
-							"for [%v] extension and deposit [%v]: [%v]; "+
-							"retrying after: [%v]",
+							"for [%v] extension execution and "+
+							"deposit [%v]: [%v]; retrying after: [%v]",
 						extensionName,
 						deposit,
 						err,
@@ -197,8 +196,8 @@ func (em *extensionsManager) initializeExtension(
 					transactionAttempt++
 				} else {
 					logger.Infof(
-						"transaction for [%v] extension and deposit [%v] "+
-							"has been submitted successfully",
+						"transaction for [%v] extension execution and "+
+							"deposit [%v] has been submitted successfully",
 						extensionName,
 						deposit,
 					)
@@ -215,14 +214,14 @@ func (em *extensionsManager) initializeExtension(
 		)
 	}
 
-	return triggerEventHandlerSetup(
+	return monitoringStartFn(
 		func(deposit string) {
-			go handleTriggerEvent(deposit)
+			go handleStartEvent(deposit)
 		},
 	)
 }
 
-func (em *extensionsManager) setupKeepClosedHandler(
+func (em *extensionsManager) watchKeepClosed(
 	deposit string,
 ) (chan struct{}, func(), error) {
 	signalChan := make(chan struct{})
@@ -260,7 +259,7 @@ func (em *extensionsManager) setupKeepClosedHandler(
 	return signalChan, unsubscribe, nil
 }
 
-func (em *extensionsManager) submitterBackoff(attempt int) time.Duration {
+func (em *extensionsManager) calculateBackoff(attempt int) time.Duration {
 	backoffMillis := math.Pow(2, float64(attempt)) * 1000
 	// #nosec G404 (insecure random number source (rand))
 	// No need to use secure randomness for jitter value.
