@@ -3,25 +3,16 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"sync"
-
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	base_ethereum "github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/tbtc/go/contract"
 )
 
-var logger = log.Logger("app-tbtc-eth")
-
 // TBTCEthereumChain represents an Ethereum chain handle with
 // TBTC-specific capabilities.
 type TBTCEthereumChain struct {
-	*base_ethereum.EthereumChain
+	*EthereumChain
 
 	tbtcSystemContract *contract.TBTCSystem
 }
@@ -29,30 +20,20 @@ type TBTCEthereumChain struct {
 // WithTBTCExtensions extends the Ethereum chain handle with
 // TBTC-specific capabilities.
 func WithTBTCExtensions(
-	ethereumChain *base_ethereum.EthereumChain,
+	ethereumChain *EthereumChain,
 	tbtcSystemContractAddress string,
 ) (*TBTCEthereumChain, error) {
 	if !common.IsHexAddress(tbtcSystemContractAddress) {
 		return nil, fmt.Errorf("incorrect tbtc system contract address")
 	}
 
-	tbtcSystemContract, err := ethereumChain.CreateContract(
-		func(
-			accountKey *keystore.Key,
-			client bind.ContractBackend,
-			nonceManager *ethutil.NonceManager,
-			miningWaiter *ethutil.MiningWaiter,
-			transactionMutex *sync.Mutex,
-		) (interface{}, error) {
-			return contract.NewTBTCSystem(
-				common.HexToAddress(tbtcSystemContractAddress),
-				accountKey,
-				client,
-				nonceManager,
-				miningWaiter,
-				transactionMutex,
-			)
-		},
+	tbtcSystemContract, err := contract.NewTBTCSystem(
+		common.HexToAddress(tbtcSystemContractAddress),
+		ethereumChain.accountKey,
+		ethereumChain.client,
+		ethereumChain.nonceManager,
+		ethereumChain.miningWaiter,
+		ethereumChain.transactionMutex,
 	)
 	if err != nil {
 		return nil, err
@@ -60,7 +41,7 @@ func WithTBTCExtensions(
 
 	return &TBTCEthereumChain{
 		EthereumChain:      ethereumChain,
-		tbtcSystemContract: tbtcSystemContract.(*contract.TBTCSystem),
+		tbtcSystemContract: tbtcSystemContract,
 	}, nil
 }
 
@@ -156,27 +137,17 @@ func (tec *TBTCEthereumChain) getDepositContract(
 		return nil, fmt.Errorf("incorrect deposit contract address")
 	}
 
-	depositContract, err := tec.CreateContract(
-		func(
-			accountKey *keystore.Key,
-			client bind.ContractBackend,
-			nonceManager *ethutil.NonceManager,
-			miningWaiter *ethutil.MiningWaiter,
-			transactionMutex *sync.Mutex,
-		) (interface{}, error) {
-			return contract.NewDeposit(
-				common.HexToAddress(address),
-				accountKey,
-				client,
-				nonceManager,
-				miningWaiter,
-				transactionMutex,
-			)
-		},
+	depositContract, err := contract.NewDeposit(
+		common.HexToAddress(address),
+		tec.accountKey,
+		tec.client,
+		tec.nonceManager,
+		tec.miningWaiter,
+		tec.transactionMutex,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return depositContract.(*contract.Deposit), nil
+	return depositContract, nil
 }

@@ -149,27 +149,3 @@ func addClientWrappers(
 
 	return loggingBackend
 }
-
-// ContractConstructor represents a contract binding constructor function.
-type ContractConstructor func(
-	*keystore.Key,
-	bind.ContractBackend,
-	*ethutil.NonceManager,
-	*ethutil.MiningWaiter,
-	*sync.Mutex,
-) (interface{}, error)
-
-// CreateContract creates a new contract binding instance by injecting
-// the underlying backend items into the provided contract constructor
-// function and then invoking that function to obtain the instance.
-func (ec *EthereumChain) CreateContract(
-	constructor ContractConstructor,
-) (interface{}, error) {
-	return constructor(
-		ec.accountKey,
-		ec.client,
-		ec.nonceManager,
-		ec.miningWaiter,
-		ec.transactionMutex,
-	)
-}

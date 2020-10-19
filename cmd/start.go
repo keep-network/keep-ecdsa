@@ -23,7 +23,6 @@ import (
 
 	"github.com/keep-network/keep-ecdsa/internal/config"
 	"github.com/keep-network/keep-ecdsa/pkg/applications/tbtc"
-	tbtc_ethereum "github.com/keep-network/keep-ecdsa/pkg/applications/tbtc/chain/ethereum"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
 	"github.com/keep-network/keep-ecdsa/pkg/firewall"
@@ -194,7 +193,7 @@ func initializeExtensions(
 	ethereumChain *ethereum.EthereumChain,
 ) {
 	if len(config.TBTC.TBTCSystem) > 0 {
-		tbtcEthereumChain, err := tbtc_ethereum.WithTBTCExtensions(
+		tbtcEthereumChain, err := ethereum.WithTBTCExtensions(
 			ethereumChain,
 			config.TBTC.TBTCSystem,
 		)
