@@ -110,7 +110,7 @@
 # [Diagnostics]
 	# Port = 8081
 
-# Uncomment to enable application-specific extensions.
+# Uncomment to enable TBTC-specific extensions.
 # [Extensions.TBTC]
 	# TBTCSystem = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
