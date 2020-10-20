@@ -24,7 +24,11 @@ func InitializeExtensions(ctx context.Context, handle Handle) error {
 
 	manager := &extensionsManager{handle}
 
-	err := manager.initializeRetrievePubkeyExtension(ctx, 150*time.Minute)
+	err := manager.initializeRetrievePubkeyExtension(
+		ctx,
+		exponentialBackoff,
+		150*time.Minute,
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"could not initialize retrieve pubkey extension: [%v]",
@@ -51,17 +55,21 @@ type watchKeepClosedFn func(deposit string) (
 
 type submitDepositTxFn func(deposit string) error
 
+type backoffFn func(iteration int) time.Duration
+
 type extensionsManager struct {
 	handle Handle
 }
 
 func (em *extensionsManager) initializeRetrievePubkeyExtension(
 	ctx context.Context,
+	actBackoffFn backoffFn,
 	timeout time.Duration,
 ) error {
 	logger.Infof("initializing retrieve pubkey extension")
 
 	startEventSubscription, err := em.monitorAndAct(
+		ctx,
 		"retrieve pubkey",
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
 			return em.handle.OnDepositCreated(handler)
@@ -73,6 +81,7 @@ func (em *extensionsManager) initializeRetrievePubkeyExtension(
 		func(deposit string) error {
 			return em.handle.RetrieveSignerPubkey(deposit)
 		},
+		actBackoffFn,
 		timeout,
 	)
 	if err != nil {
@@ -95,11 +104,13 @@ func (em *extensionsManager) initializeRetrievePubkeyExtension(
 //  2. Incoming events deduplication.
 //  3. Resume extensions executions after client restart.
 func (em *extensionsManager) monitorAndAct(
+	ctx context.Context,
 	extensionName string,
 	monitoringStartFn watchDepositEventFn,
 	monitoringStopFn watchDepositEventFn,
 	keepClosedFn watchKeepClosedFn,
 	actFn submitDepositTxFn,
+	actBackoffFn backoffFn,
 	timeout time.Duration,
 ) (subscription.EventSubscription, error) {
 	handleStartEvent := func(deposit string) {
@@ -150,6 +161,14 @@ func (em *extensionsManager) monitorAndAct(
 	monitoring:
 		for {
 			select {
+			case <-ctx.Done():
+				logger.Infof(
+					"context is done for [%v] "+
+						"extension execution and deposit [%v]",
+					extensionName,
+					deposit,
+				)
+				break monitoring
 			case <-stopEventChan:
 				logger.Infof(
 					"stop event occurred for [%v] "+
@@ -181,7 +200,7 @@ func (em *extensionsManager) monitorAndAct(
 						break monitoring
 					}
 
-					backoff := em.calculateBackoff(transactionAttempt)
+					backoff := actBackoffFn(transactionAttempt)
 
 					logger.Errorf(
 						"could not submit transaction "+
@@ -260,8 +279,8 @@ func (em *extensionsManager) watchKeepClosed(
 	return signalChan, unsubscribe, nil
 }
 
-func (em *extensionsManager) calculateBackoff(attempt int) time.Duration {
-	backoffMillis := math.Pow(2, float64(attempt)) * 1000
+func exponentialBackoff(iteration int) time.Duration {
+	backoffMillis := math.Pow(2, float64(iteration)) * 1000
 	// #nosec G404 (insecure random number source (rand))
 	// No need to use secure randomness for jitter value.
 	jitterMillis := rand.Intn(100)

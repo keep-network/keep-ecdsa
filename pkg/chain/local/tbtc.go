@@ -14,10 +14,24 @@ type localDeposit struct {
 	pubkey      []byte
 }
 
+type localChainLogger struct {
+	retrieveSignerPubkeyCalls int
+}
+
+func (lcl *localChainLogger) logRetrieveSignerPubkeyCall() {
+	lcl.retrieveSignerPubkeyCalls++
+}
+
+func (lcl *localChainLogger) RetrieveSignerPubkeyCalls() int {
+	return lcl.retrieveSignerPubkeyCalls
+}
+
 type TBTCLocalChain struct {
 	*localChain
 
 	mutex sync.Mutex
+
+	logger *localChainLogger
 
 	deposits                        map[string]*localDeposit
 	depositCreatedHandlers          map[int]func(depositAddress string)
@@ -27,6 +41,7 @@ type TBTCLocalChain struct {
 func NewTBTCLocalChain() *TBTCLocalChain {
 	return &TBTCLocalChain{
 		localChain:                      Connect().(*localChain),
+		logger:                          &localChainLogger{},
 		deposits:                        make(map[string]*localDeposit),
 		depositCreatedHandlers:          make(map[int]func(depositAddress string)),
 		depositRegisteredPubkeyHandlers: make(map[int]func(depositAddress string)),
@@ -107,6 +122,8 @@ func (tlc *TBTCLocalChain) RetrieveSignerPubkey(depositAddress string) error {
 	tlc.mutex.Lock()
 	defer tlc.mutex.Unlock()
 
+	tlc.logger.logRetrieveSignerPubkeyCall()
+
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
 		return fmt.Errorf("no deposit with address [%v]", depositAddress)
@@ -169,4 +186,8 @@ func (tlc *TBTCLocalChain) DepositPubkey(
 	}
 
 	return deposit.pubkey, nil
+}
+
+func (tlc *TBTCLocalChain) Logger() *localChainLogger {
+	return tlc.logger
 }
