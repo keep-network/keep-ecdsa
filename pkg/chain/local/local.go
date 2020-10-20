@@ -359,8 +359,10 @@ func generateHandlerID() int {
 
 func generateAddress() common.Address {
 	var address [20]byte
-	// #nosec G404 (insecure random number source (rand))
+	// #nosec G404 G104 (insecure random number source (rand) | error unhandled)
 	// Local chain implementation doesn't require secure randomness.
+	// Error can be ignored because according to the `rand.Read` docs it's
+	// always `nil`.
 	rand.Read(address[:])
 	return address
 }
