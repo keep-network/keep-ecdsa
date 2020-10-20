@@ -204,7 +204,7 @@ contract ECDSARewards is Rewards {
             if (newAllocation > operatorRewardCap) {
                 uint256 deallocatedAmount = newAllocation.sub(operatorRewardCap);
                 newAllocation = operatorRewardCap;
-                unallocatedRewards = unallocatedRewards.add(deallocatedAmount);
+                sendToNewRewards(deallocatedAmount);
             }
             allocatedRewards[member][interval] = newAllocation;
         }
