@@ -54,6 +54,9 @@ func Connect() Chain {
 }
 
 func (lc *localChain) OpenKeep(keepAddress common.Address, members []common.Address) {
+	// #nosec G104 (errors unhandled)
+	// No need to handle that error for now as it is triggered only
+	// in case the keep already exists.
 	_ = lc.createKeepWithMembers(keepAddress, members)
 }
 
@@ -356,6 +359,8 @@ func generateHandlerID() int {
 
 func generateAddress() common.Address {
 	var address [20]byte
+	// #nosec G404 (insecure random number source (rand))
+	// Local chain implementation doesn't require secure randomness.
 	rand.Read(address[:])
 	return address
 }
