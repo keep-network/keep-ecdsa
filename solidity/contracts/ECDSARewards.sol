@@ -88,8 +88,18 @@ contract ECDSARewards is Rewards {
     uint256 internal constant minimumECDSAKeepsPerInterval = 1000;
 
     BondedECDSAKeepFactory factory;
+    TokenStaking tokenStaking;
 
-    constructor(address _token, address payable _factoryAddress)
+    // TODO: set actual value
+    uint256 internal constant operatorRewardCap = 400000 * 10**18;
+    mapping(address => mapping(uint256 => uint256)) allocatedRewards;
+    mapping(address => mapping(uint256 => uint256)) withdrawnRewards;
+
+    constructor(
+        address _token,
+        address payable _factoryAddress,
+        address _tokenStakingAddress
+    )
         public
         Rewards(
             _token,
@@ -100,6 +110,7 @@ contract ECDSARewards is Rewards {
         )
     {
         factory = BondedECDSAKeepFactory(_factoryAddress);
+        tokenStaking = TokenStaking(_tokenStakingAddress);
     }
 
     /// @notice Stakers can receive KEEP rewards from multiple keeps of their choice
@@ -162,12 +173,32 @@ contract ECDSARewards is Rewards {
         internal
         isAddress(_keep)
     {
-        token.approve(toAddress(_keep), amount);
+        address[] memory members = BondedECDSAKeep(toAddress(_keep)).getMembers();
+        uint256 interval = intervalOf(_getCreationTime(_keep));
 
-        BondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
-            address(token),
-            amount
-        );
+        uint256 memberCount = members.length;
+        uint256 dividend = amount.div(memberCount);
+        uint256 remainder = amount.mod(memberCount);
+
+        uint256[] memory allocations = new uint256[](memberCount);
+
+        for (uint256 i = 0; i < memberCount - 1; i++) {
+            allocations[i] = dividend;
+        }
+        allocations[memberCount - 1] = dividend.add(remainder);
+
+        for (uint256 i = 0; i < memberCount; i++) {
+            address member = members[i];
+            uint256 addedAllocation = allocations[i];
+            uint256 prevAllocated = allocatedRewards[member][interval];
+            uint256 newAllocation = prevAllocated.add(addedAllocation);
+            if (newAllocation > operatorRewardCap) {
+                newAllocation = operatorRewardCap;
+                uint256 deallocatedAmount = newAllocation.sub(operatorRewardCap);
+                unallocatedRewards = unallocatedRewards.add(deallocatedAmount);
+            }
+            allocatedRewards[member][interval] = newAllocation;
+        }
     }
 
     function toAddress(bytes32 keepBytes) internal pure returns (address) {
@@ -180,6 +211,26 @@ contract ECDSARewards is Rewards {
 
     function validAddressBytes(bytes32 keepBytes) internal pure returns (bool) {
         return fromAddress(toAddress(keepBytes)) == keepBytes;
+    }
+
+    function withdrawRewards(uint256 interval) external {
+        address operator = msg.sender;
+        uint256 allocatedForOperator = allocatedRewards[operator][interval];
+        uint256 alreadyWithdrawn = withdrawnRewards[operator][interval];
+
+        require(
+            allocatedForOperator > alreadyWithdrawn,
+            "No rewards to withdraw"
+        );
+
+        uint256 withdrawableRewards = allocatedForOperator.sub(alreadyWithdrawn);
+
+        withdrawnRewards[operator][interval] = allocatedForOperator;
+
+        token.safeTransfer(
+            tokenStaking.beneficiaryOf(operator),
+            withdrawableRewards
+        );
     }
 
     modifier isAddress(bytes32 _keep) {

@@ -45,6 +45,7 @@ describe("ECDSARewards", () => {
     rewardsContract = await ECDSARewards.new(
       keepToken.address,
       keepFactory.address,
+      tokenStaking.address,
       {from: owner}
     )
 
