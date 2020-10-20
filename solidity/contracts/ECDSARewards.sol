@@ -92,7 +92,11 @@ contract ECDSARewards is Rewards {
 
     // TODO: set actual value
     uint256 internal constant operatorRewardCap = 400000 * 10**18;
+    // The total amount of rewards allocated to the given operator address,
+    // in the given interval.
+    // `allocatedRewards[operator][interval] -> amount`
     mapping(address => mapping(uint256 => uint256)) allocatedRewards;
+    // The amount of interval rewards withdrawn by the given operator.
     mapping(address => mapping(uint256 => uint256)) withdrawnRewards;
 
     constructor(
@@ -169,6 +173,11 @@ contract ECDSARewards is Rewards {
         return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
+    // Get the members of the specified keep,
+    // and distribute the reward amount between them.
+    // The reward isn't paid out immediately,
+    // but is instead kept in the reward contract
+    // until each operator individually requests to withdraw the rewards.
     function _distributeReward(bytes32 _keep, uint256 amount)
         internal
         isAddress(_keep)
@@ -193,8 +202,8 @@ contract ECDSARewards is Rewards {
             uint256 prevAllocated = allocatedRewards[member][interval];
             uint256 newAllocation = prevAllocated.add(addedAllocation);
             if (newAllocation > operatorRewardCap) {
-                newAllocation = operatorRewardCap;
                 uint256 deallocatedAmount = newAllocation.sub(operatorRewardCap);
+                newAllocation = operatorRewardCap;
                 unallocatedRewards = unallocatedRewards.add(deallocatedAmount);
             }
             allocatedRewards[member][interval] = newAllocation;
@@ -213,6 +222,10 @@ contract ECDSARewards is Rewards {
         return fromAddress(toAddress(keepBytes)) == keepBytes;
     }
 
+    /// @notice Withdraw all available rewards for the given interval.
+    /// The rewards will be paid to the beneficiary
+    /// of the operator requesting the withdrawal.
+    /// @param interval The interval
     function withdrawRewards(uint256 interval) external {
         address operator = msg.sender;
         uint256 allocatedForOperator = allocatedRewards[operator][interval];
