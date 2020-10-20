@@ -18,12 +18,12 @@ const (
 	depositAddress = "0xa5FA806723A7c7c8523F33c39686f20b52612877"
 )
 
-func TestRetrievePubkeyExtension_TimeoutElapsed(t *testing.T) {
+func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
-	extensionsManager := &extensionsManager{tbtcChain}
+	tbtc := &tbtc{tbtcChain}
 
-	err := extensionsManager.initializeRetrievePubkeyExtension(
+	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
@@ -71,12 +71,12 @@ func TestRetrievePubkeyExtension_TimeoutElapsed(t *testing.T) {
 	}
 }
 
-func TestRetrievePubkeyExtension_StopEventOccurred(t *testing.T) {
+func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
-	extensionsManager := &extensionsManager{tbtcChain}
+	tbtc := &tbtc{tbtcChain}
 
-	err := extensionsManager.initializeRetrievePubkeyExtension(
+	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
@@ -133,12 +133,12 @@ func TestRetrievePubkeyExtension_StopEventOccurred(t *testing.T) {
 	}
 }
 
-func TestRetrievePubkeyExtension_KeepClosedEventOccurred(t *testing.T) {
+func TestRetrievePubkey_KeepClosedEventOccurred(t *testing.T) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
-	extensionsManager := &extensionsManager{tbtcChain}
+	tbtc := &tbtc{tbtcChain}
 
-	err := extensionsManager.initializeRetrievePubkeyExtension(
+	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
@@ -193,12 +193,12 @@ func TestRetrievePubkeyExtension_KeepClosedEventOccurred(t *testing.T) {
 	}
 }
 
-func TestRetrievePubkeyExtension_KeepTerminatedEventOccurred(t *testing.T) {
+func TestRetrievePubkey_KeepTerminatedEventOccurred(t *testing.T) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
-	extensionsManager := &extensionsManager{tbtcChain}
+	tbtc := &tbtc{tbtcChain}
 
-	err := extensionsManager.initializeRetrievePubkeyExtension(
+	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
@@ -253,12 +253,12 @@ func TestRetrievePubkeyExtension_KeepTerminatedEventOccurred(t *testing.T) {
 	}
 }
 
-func TestRetrievePubkeyExtension_TransactionFailed(t *testing.T) {
+func TestRetrievePubkey_ActionFailed(t *testing.T) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
-	extensionsManager := &extensionsManager{tbtcChain}
+	tbtc := &tbtc{tbtcChain}
 
-	err := extensionsManager.initializeRetrievePubkeyExtension(
+	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
@@ -270,7 +270,7 @@ func TestRetrievePubkeyExtension_TransactionFailed(t *testing.T) {
 	tbtcChain.CreateDeposit(depositAddress)
 
 	// do not submit the keep public key intentionally to cause
-	// the transaction error
+	// the action error
 
 	// wait a bit longer than the monitoring timeout
 	// to make sure the potential transaction completes
@@ -289,12 +289,12 @@ func TestRetrievePubkeyExtension_TransactionFailed(t *testing.T) {
 	}
 }
 
-func TestRetrievePubkeyExtension_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) {
+func TestRetrievePubkey_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	tbtcChain := local.NewTBTCLocalChain()
-	extensionsManager := &extensionsManager{tbtcChain}
+	tbtc := &tbtc{tbtcChain}
 
-	err := extensionsManager.initializeRetrievePubkeyExtension(
+	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
@@ -325,12 +325,12 @@ func TestRetrievePubkeyExtension_ContextCancelled_WithoutWorkingMonitoring(t *te
 	}
 }
 
-func TestRetrievePubkeyExtension_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
+func TestRetrievePubkey_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	tbtcChain := local.NewTBTCLocalChain()
-	extensionsManager := &extensionsManager{tbtcChain}
+	tbtc := &tbtc{tbtcChain}
 
-	err := extensionsManager.initializeRetrievePubkeyExtension(
+	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,

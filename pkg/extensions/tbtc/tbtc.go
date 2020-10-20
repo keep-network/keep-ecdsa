@@ -14,29 +14,29 @@ import (
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
-var logger = log.Logger("extensions-tbtc")
+var logger = log.Logger("tbtc-extension")
 
-const maxTransactionAttempts = 3
+const maxActionAttempts = 3
 
-// InitializeExtensions initializes extensions specific to the TBTC application.
-func InitializeExtensions(ctx context.Context, handle Handle) error {
-	logger.Infof("initializing tbtc extensions")
+// Initialize initializes extension specific to the TBTC application.
+func Initialize(ctx context.Context, handle Handle) error {
+	logger.Infof("initializing tbtc extension")
 
-	manager := &extensionsManager{handle}
+	tbtc := &tbtc{handle}
 
-	err := manager.initializeRetrievePubkeyExtension(
+	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		exponentialBackoff,
 		150*time.Minute,
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"could not initialize retrieve pubkey extension: [%v]",
+			"could not initialize retrieve pubkey monitoring: [%v]",
 			err,
 		)
 	}
 
-	logger.Infof("tbtc extensions have been initialized")
+	logger.Infof("tbtc extension has been initialized")
 
 	return nil
 }
@@ -49,7 +49,7 @@ type watchDepositEventFn func(
 
 type watchKeepClosedFn func(deposit string) (
 	keepClosedChan chan struct{},
-	keepClosedCancel func(),
+	unsubscribe func(),
 	err error,
 )
 
@@ -57,29 +57,27 @@ type submitDepositTxFn func(deposit string) error
 
 type backoffFn func(iteration int) time.Duration
 
-type extensionsManager struct {
-	handle Handle
+type tbtc struct {
+	chain Handle
 }
 
-func (em *extensionsManager) initializeRetrievePubkeyExtension(
+func (t *tbtc) monitorRetrievePubKey(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
 ) error {
-	logger.Infof("initializing retrieve pubkey extension")
-
-	startEventSubscription, err := em.monitorAndAct(
+	startEventSubscription, err := t.monitorAndAct(
 		ctx,
 		"retrieve pubkey",
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			return em.handle.OnDepositCreated(handler)
+			return t.chain.OnDepositCreated(handler)
 		},
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			return em.handle.OnDepositRegisteredPubkey(handler)
+			return t.chain.OnDepositRegisteredPubkey(handler)
 		},
-		em.watchKeepClosed,
+		t.watchKeepClosed,
 		func(deposit string) error {
-			return em.handle.RetrieveSignerPubkey(deposit)
+			return t.chain.RetrieveSignerPubkey(deposit)
 		},
 		actBackoffFn,
 		timeout,
@@ -91,10 +89,10 @@ func (em *extensionsManager) initializeRetrievePubkeyExtension(
 	go func() {
 		<-ctx.Done()
 		startEventSubscription.Unsubscribe()
-		logger.Infof("retrieve pubkey extension has been disabled")
+		logger.Infof("retrieve pubkey monitoring disabled")
 	}()
 
-	logger.Infof("retrieve pubkey extension has been initialized")
+	logger.Infof("retrieve pubkey monitoring initialized")
 
 	return nil
 }
@@ -102,10 +100,10 @@ func (em *extensionsManager) initializeRetrievePubkeyExtension(
 // TODO:
 //  1. Filter incoming events by operator interest.
 //  2. Incoming events deduplication.
-//  3. Resume extensions executions after client restart.
-func (em *extensionsManager) monitorAndAct(
+//  3. Resume monitoring after client restart.
+func (t *tbtc) monitorAndAct(
 	ctx context.Context,
-	extensionName string,
+	monitoringName string,
 	monitoringStartFn watchDepositEventFn,
 	monitoringStopFn watchDepositEventFn,
 	keepClosedFn watchKeepClosedFn,
@@ -115,8 +113,8 @@ func (em *extensionsManager) monitorAndAct(
 ) (subscription.EventSubscription, error) {
 	handleStartEvent := func(deposit string) {
 		logger.Infof(
-			"triggering [%v] extension execution for deposit [%v]",
-			extensionName,
+			"starting [%v] monitoring for deposit [%v]",
+			monitoringName,
 			deposit,
 		)
 
@@ -132,8 +130,8 @@ func (em *extensionsManager) monitorAndAct(
 		if err != nil {
 			logger.Errorf(
 				"could not setup stop event handler for [%v] "+
-					"extension execution and deposit [%v]: [%v]",
-				extensionName,
+					"monitoring for deposit [%v]: [%v]",
+				monitoringName,
 				deposit,
 				err,
 			)
@@ -141,22 +139,22 @@ func (em *extensionsManager) monitorAndAct(
 		}
 		defer stopEventSubscription.Unsubscribe()
 
-		keepClosedChan, keepClosedSubscriptionCancel, err := keepClosedFn(deposit)
+		keepClosedChan, keepClosedUnsubscribe, err := keepClosedFn(deposit)
 		if err != nil {
 			logger.Errorf(
 				"could not setup keep closed handler for [%v] "+
-					"extension execution and deposit [%v]: [%v]",
-				extensionName,
+					"monitoring for deposit [%v]: [%v]",
+				monitoringName,
 				deposit,
 				err,
 			)
 			return
 		}
-		defer keepClosedSubscriptionCancel()
+		defer keepClosedUnsubscribe()
 
 		timeoutChan := time.After(timeout)
 
-		transactionAttempt := 1
+		actionAttempt := 1
 
 	monitoring:
 		for {
@@ -164,61 +162,61 @@ func (em *extensionsManager) monitorAndAct(
 			case <-ctx.Done():
 				logger.Infof(
 					"context is done for [%v] "+
-						"extension execution and deposit [%v]",
-					extensionName,
+						"monitoring for deposit [%v]",
+					monitoringName,
 					deposit,
 				)
 				break monitoring
 			case <-stopEventChan:
 				logger.Infof(
 					"stop event occurred for [%v] "+
-						"extension execution and deposit [%v]",
-					extensionName,
+						"monitoring for deposit [%v]",
+					monitoringName,
 					deposit,
 				)
 				break monitoring
 			case <-keepClosedChan:
 				logger.Infof(
 					"keep closed event occurred for [%v] "+
-						"extension execution and deposit [%v]",
-					extensionName,
+						"monitoring for deposit [%v]",
+					monitoringName,
 					deposit,
 				)
 				break monitoring
 			case <-timeoutChan:
 				err := actFn(deposit)
 				if err != nil {
-					if transactionAttempt == maxTransactionAttempts {
+					if actionAttempt == maxActionAttempts {
 						logger.Errorf(
-							"could not submit transaction "+
-								"for [%v] extension execution and "+
-								"deposit [%v]: [%v]; last attempt failed",
-							extensionName,
+							"could not perform action "+
+								"for [%v] monitoring for deposit [%v]: [%v]; "+
+								"last attempt failed",
+							monitoringName,
 							deposit,
 							err,
 						)
 						break monitoring
 					}
 
-					backoff := actBackoffFn(transactionAttempt)
+					backoff := actBackoffFn(actionAttempt)
 
 					logger.Errorf(
-						"could not submit transaction "+
-							"for [%v] extension execution and "+
-							"deposit [%v]: [%v]; retrying after: [%v]",
-						extensionName,
+						"could not perform action "+
+							"for [%v] monitoring for deposit [%v]: [%v]; "+
+							"retrying after: [%v]",
+						monitoringName,
 						deposit,
 						err,
 						backoff,
 					)
 
 					timeoutChan = time.After(backoff)
-					transactionAttempt++
+					actionAttempt++
 				} else {
 					logger.Infof(
-						"transaction for [%v] extension execution and "+
-							"deposit [%v] has been submitted successfully",
-						extensionName,
+						"action for [%v] monitoring for "+
+							"deposit [%v] has been performed successfully",
+						monitoringName,
 						deposit,
 					)
 					break monitoring
@@ -227,9 +225,9 @@ func (em *extensionsManager) monitorAndAct(
 		}
 
 		logger.Infof(
-			"[%v] extension execution for deposit [%v] "+
+			"[%v] monitoring for deposit [%v] "+
 				"has been completed",
-			extensionName,
+			monitoringName,
 			deposit,
 		)
 	}
@@ -241,17 +239,17 @@ func (em *extensionsManager) monitorAndAct(
 	)
 }
 
-func (em *extensionsManager) watchKeepClosed(
+func (t *tbtc) watchKeepClosed(
 	deposit string,
 ) (chan struct{}, func(), error) {
 	signalChan := make(chan struct{})
 
-	keepAddress, err := em.handle.KeepAddress(deposit)
+	keepAddress, err := t.chain.KeepAddress(deposit)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	keepClosedSubscription, err := em.handle.OnKeepClosed(
+	keepClosedSubscription, err := t.chain.OnKeepClosed(
 		common.HexToAddress(keepAddress),
 		func(_ *chain.KeepClosedEvent) {
 			signalChan <- struct{}{}
@@ -261,7 +259,7 @@ func (em *extensionsManager) watchKeepClosed(
 		return nil, nil, err
 	}
 
-	keepTerminatedSubscription, err := em.handle.OnKeepTerminated(
+	keepTerminatedSubscription, err := t.chain.OnKeepTerminated(
 		common.HexToAddress(keepAddress),
 		func(_ *chain.KeepTerminatedEvent) {
 			signalChan <- struct{}{}

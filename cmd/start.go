@@ -193,22 +193,22 @@ func initializeExtensions(
 	ethereumChain *ethereum.EthereumChain,
 ) {
 	if len(config.TBTC.TBTCSystem) > 0 {
-		tbtcEthereumChain, err := ethereum.WithTBTCExtensions(
+		tbtcEthereumChain, err := ethereum.WithTBTCExtension(
 			ethereumChain,
 			config.TBTC.TBTCSystem,
 		)
 		if err != nil {
 			logger.Errorf(
-				"could not initialize tbtc chain extensions: [%v]",
+				"could not initialize tbtc chain extension: [%v]",
 				err,
 			)
 			return
 		}
 
-		err = tbtc.InitializeExtensions(ctx, tbtcEthereumChain)
+		err = tbtc.Initialize(ctx, tbtcEthereumChain)
 		if err != nil {
 			logger.Errorf(
-				"could not initialize tbtc extensions: [%v]",
+				"could not initialize tbtc extension: [%v]",
 				err,
 			)
 			return

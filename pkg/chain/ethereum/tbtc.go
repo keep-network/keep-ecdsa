@@ -17,14 +17,14 @@ type TBTCEthereumChain struct {
 	tbtcSystemContract *contract.TBTCSystem
 }
 
-// WithTBTCExtensions extends the Ethereum chain handle with
+// WithTBTCExtension extends the Ethereum chain handle with
 // TBTC-specific capabilities.
-func WithTBTCExtensions(
+func WithTBTCExtension(
 	ethereumChain *EthereumChain,
 	tbtcSystemContractAddress string,
 ) (*TBTCEthereumChain, error) {
 	if !common.IsHexAddress(tbtcSystemContractAddress) {
-		return nil, fmt.Errorf("incorrect tbtc system contract address")
+		return nil, fmt.Errorf("incorrect TBTCSystem contract address")
 	}
 
 	tbtcSystemContract, err := contract.NewTBTCSystem(
