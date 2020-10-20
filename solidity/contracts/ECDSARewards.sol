@@ -90,13 +90,15 @@ contract ECDSARewards is Rewards {
     BondedECDSAKeepFactory factory;
     TokenStaking tokenStaking;
 
+    // The amount of tokens each individual beneficiary address
+    // can receive in a single interval is capped.
     // TODO: set actual value
-    uint256 internal constant operatorRewardCap = 400000 * 10**18;
-    // The total amount of rewards allocated to the given operator address,
+    uint256 internal constant beneficiaryRewardCap = 400000 * 10**18;
+    // The total amount of rewards allocated to the given beneficiary address,
     // in the given interval.
-    // `allocatedRewards[operator][interval] -> amount`
+    // `allocatedRewards[beneficiary][interval] -> amount`
     mapping(address => mapping(uint256 => uint256)) allocatedRewards;
-    // The amount of interval rewards withdrawn by the given operator.
+    // The amount of interval rewards withdrawn to the given beneficiary.
     mapping(address => mapping(uint256 => uint256)) withdrawnRewards;
 
     constructor(
@@ -197,16 +199,16 @@ contract ECDSARewards is Rewards {
         allocations[memberCount - 1] = dividend.add(remainder);
 
         for (uint256 i = 0; i < memberCount; i++) {
-            address member = members[i];
+            address beneficiary = tokenStaking.beneficiaryOf(members[i]);
             uint256 addedAllocation = allocations[i];
-            uint256 prevAllocated = allocatedRewards[member][interval];
+            uint256 prevAllocated = allocatedRewards[beneficiary][interval];
             uint256 newAllocation = prevAllocated.add(addedAllocation);
-            if (newAllocation > operatorRewardCap) {
-                uint256 deallocatedAmount = newAllocation.sub(operatorRewardCap);
-                newAllocation = operatorRewardCap;
+            if (newAllocation > beneficiaryRewardCap) {
+                uint256 deallocatedAmount = newAllocation.sub(beneficiaryRewardCap);
+                newAllocation = beneficiaryRewardCap;
                 sendToNewRewards(deallocatedAmount);
             }
-            allocatedRewards[member][interval] = newAllocation;
+            allocatedRewards[beneficiary][interval] = newAllocation;
         }
     }
 
@@ -227,21 +229,21 @@ contract ECDSARewards is Rewards {
     /// of the operator requesting the withdrawal.
     /// @param interval The interval
     function withdrawRewards(uint256 interval) external {
-        address operator = msg.sender;
-        uint256 allocatedForOperator = allocatedRewards[operator][interval];
-        uint256 alreadyWithdrawn = withdrawnRewards[operator][interval];
+        address beneficiary = tokenStaking.beneficiaryOf(msg.sender);
+        uint256 allocatedForBeneficiary = allocatedRewards[beneficiary][interval];
+        uint256 alreadyWithdrawn = withdrawnRewards[beneficiary][interval];
 
         require(
-            allocatedForOperator > alreadyWithdrawn,
+            allocatedForBeneficiary > alreadyWithdrawn,
             "No rewards to withdraw"
         );
 
-        uint256 withdrawableRewards = allocatedForOperator.sub(alreadyWithdrawn);
+        uint256 withdrawableRewards = allocatedForBeneficiary.sub(alreadyWithdrawn);
 
-        withdrawnRewards[operator][interval] = allocatedForOperator;
+        withdrawnRewards[beneficiary][interval] = allocatedForBeneficiary;
 
         token.safeTransfer(
-            tokenStaking.beneficiaryOf(operator),
+            beneficiary,
             withdrawableRewards
         );
     }
