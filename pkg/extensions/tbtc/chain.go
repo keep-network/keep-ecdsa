@@ -2,12 +2,12 @@ package tbtc
 
 import (
 	"github.com/keep-network/keep-common/pkg/subscription"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 // Handle represents a chain handle extended with TBTC-specific capabilities.
 type Handle interface {
-	eth.Handle
+	chain.Handle
 
 	Deposit
 	TBTCSystem

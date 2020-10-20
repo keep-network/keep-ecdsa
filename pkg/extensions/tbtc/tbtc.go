@@ -11,7 +11,7 @@ import (
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 var logger = log.Logger("extensions-tbtc")
@@ -253,7 +253,7 @@ func (em *extensionsManager) watchKeepClosed(
 
 	keepClosedSubscription, err := em.handle.OnKeepClosed(
 		common.HexToAddress(keepAddress),
-		func(_ *eth.KeepClosedEvent) {
+		func(_ *chain.KeepClosedEvent) {
 			signalChan <- struct{}{}
 		},
 	)
@@ -263,7 +263,7 @@ func (em *extensionsManager) watchKeepClosed(
 
 	keepTerminatedSubscription, err := em.handle.OnKeepTerminated(
 		common.HexToAddress(keepAddress),
-		func(_ *eth.KeepTerminatedEvent) {
+		func(_ *chain.KeepTerminatedEvent) {
 			signalChan <- struct{}{}
 		},
 	)
