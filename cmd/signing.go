@@ -16,6 +16,8 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-ecdsa/internal/config"
@@ -253,7 +255,11 @@ func SignDigest(c *cli.Context) error {
 			continue
 		}
 
-		signature := fmt.Sprintf("%+v", signingOutcome.signature)
+		signature := fmt.Sprintf(
+			"%064s%064s",
+			signingOutcome.signature.R.Text(16),
+			signingOutcome.signature.S.Text(16),
+		)
 		signatures[signature]++
 	}
 
@@ -270,7 +276,11 @@ func SignDigest(c *cli.Context) error {
 			)
 		}
 
-		fmt.Printf(signature)
+		publicKey, err := eth.SerializePublicKey(signers[0].PublicKey())
+		if err != nil {
+			return err
+		}
+		fmt.Println(hex.EncodeToString(publicKey[:]), "\t", signature)
 	}
 
 	return nil
