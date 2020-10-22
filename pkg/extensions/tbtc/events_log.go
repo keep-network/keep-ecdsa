@@ -16,7 +16,7 @@ func newTBTCEventsLog() *tbtcEventsLog {
 
 func (tel *tbtcEventsLog) logDepositRedemptionRequestedEvent(
 	deposit string,
-	event *DepositRedemptionRequestedEvent,
+	event *depositRedemptionRequestedEvent,
 ) {
 	tel.depositRedemptionRequestedEventStorage.storeEvent(deposit, event)
 }

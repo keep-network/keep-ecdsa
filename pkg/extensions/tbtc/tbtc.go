@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math"
@@ -55,19 +56,42 @@ func Initialize(ctx context.Context, chain Handle) error {
 	return nil
 }
 
-type depositEventHandler func(deposit string)
+type depositEvent interface {
+	getDepositAddress() string
+}
+
+type baseDepositEvent struct {
+	depositAddress string
+}
+
+func (bdd *baseDepositEvent) getDepositAddress() string {
+	return bdd.depositAddress
+}
+
+type depositRedemptionRequestedEvent struct {
+	*baseDepositEvent
+
+	digest      [32]uint8
+	blockNumber uint64
+}
+
+type depositEventHandler func(depositEvent)
 
 type watchDepositEventFn func(
 	handler depositEventHandler,
 ) (subscription.EventSubscription, error)
 
-type watchKeepClosedFn func(deposit string) (
+type watchKeepClosedFn func(depositAddress string) (
 	keepClosedChan chan struct{},
 	unsubscribe func(),
 	err error,
 )
 
-type submitDepositTxFn func(deposit string) error
+type depositMonitoringContext struct {
+	startEvent depositEvent
+}
+
+type submitDepositTxFn func(*depositMonitoringContext) error
 
 type backoffFn func(iteration int) time.Duration
 
@@ -92,14 +116,20 @@ func (t *tbtc) monitorRetrievePubKey(
 		ctx,
 		"retrieve pubkey",
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			return t.chain.OnDepositCreated(handler)
+			return t.chain.OnDepositCreated(func(depositAddress string) {
+				handler(&baseDepositEvent{depositAddress})
+			})
 		},
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			return t.chain.OnDepositRegisteredPubkey(handler)
+			return t.chain.OnDepositRegisteredPubkey(func(depositAddress string) {
+				handler(&baseDepositEvent{depositAddress})
+			})
 		},
 		t.watchKeepClosed,
-		func(deposit string) error {
-			return t.chain.RetrieveSignerPubkey(deposit)
+		func(monitoringContext *depositMonitoringContext) error {
+			return t.chain.RetrieveSignerPubkey(
+				monitoringContext.startEvent.getDepositAddress(),
+			)
 		},
 		actBackoffFn,
 		timeout,
@@ -138,35 +168,106 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 				outpoint []uint8,
 				blockNumber uint64,
 			) {
+				event := &depositRedemptionRequestedEvent{
+					&baseDepositEvent{depositAddress},
+					digest,
+					blockNumber,
+				}
+
+				// Log the event to make it available for future provide
+				// redemption proof monitoring process.
 				t.eventsLog.logDepositRedemptionRequestedEvent(
 					depositAddress,
-					&DepositRedemptionRequestedEvent{
-						DepositAddress:       depositAddress,
-						RequesterAddress:     requesterAddress,
-						Digest:               digest,
-						UtxoValue:            utxoValue,
-						RedeemerOutputScript: redeemerOutputScript,
-						RequestedFee:         requestedFee,
-						Outpoint:             outpoint,
-						BlockNumber:          blockNumber,
-					},
+					event,
 				)
-				handler(depositAddress)
+
+				handler(event)
 			},
 		)
 	}
 
-	startEventSubscription, err := t.monitorAndAct(
+	monitoringStopFn := func(
+		handler depositEventHandler,
+	) (subscription.EventSubscription, error) {
+		signatureSubscription, err := t.chain.OnDepositGotRedemptionSignature(
+			func(depositAddress string) {
+				handler(&baseDepositEvent{depositAddress})
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		redeemedSubscription, err := t.chain.OnDepositRedeemed(
+			func(depositAddress string) {
+				handler(&baseDepositEvent{depositAddress})
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return subscription.NewEventSubscription(
+			func() {
+				signatureSubscription.Unsubscribe()
+				redeemedSubscription.Unsubscribe()
+			},
+		), nil
+	}
+
+	actFn := func(monitoringContext *depositMonitoringContext) error {
+		depositRedemptionRequestedEvent, ok := monitoringContext.startEvent.(*depositRedemptionRequestedEvent)
+		if !ok {
+			return fmt.Errorf(
+				"monitoring context contains unexpected type of start event",
+			)
+		}
+
+		depositAddress := depositRedemptionRequestedEvent.depositAddress
+
+		keepAddress, err := t.chain.KeepAddress(depositAddress)
+		if err != nil {
+			return err
+		}
+
+		signatureSubmittedEvents, err := t.chain.PastSignatureSubmittedEvents(
+			keepAddress,
+			depositRedemptionRequestedEvent.blockNumber,
+		)
+		if err != nil {
+			return err
+		}
+
+		depositDigest := depositRedemptionRequestedEvent.digest
+		for _, signatureSubmittedEvent := range signatureSubmittedEvents {
+			if bytes.Equal(signatureSubmittedEvent.Digest[:], depositDigest[:]) {
+				// We add 27 to the recovery ID to align it with ethereum and
+				// bitcoin protocols where 27 is added to recovery ID to
+				// indicate usage of uncompressed public keys.
+				v := 27 + signatureSubmittedEvent.RecoveryID
+
+				return t.chain.ProvideRedemptionSignature(
+					depositAddress,
+					v,
+					signatureSubmittedEvent.R,
+					signatureSubmittedEvent.S,
+				)
+			}
+		}
+
+		return fmt.Errorf(
+			"could not find signature for digest: [%v]",
+			depositDigest,
+		)
+	}
+
+	monitoringSubscription, err := t.monitorAndAct(
 		ctx,
 		"provide redemption signature",
 		monitoringStartFn,
-		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			panic("not implemented") // TODO: Implementation
-		},
+		monitoringStopFn,
 		t.watchKeepClosed,
-		func(deposit string) error {
-			panic("not implemented") // TODO: Implementation
-		},
+		actFn,
 		actBackoffFn,
 		timeout,
 	)
@@ -176,7 +277,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 
 	go func() {
 		<-ctx.Done()
-		startEventSubscription.Unsubscribe()
+		monitoringSubscription.Unsubscribe()
 		logger.Infof("provide redemption signature monitoring disabled")
 	}()
 
@@ -199,18 +300,18 @@ func (t *tbtc) monitorAndAct(
 	actBackoffFn backoffFn,
 	timeout time.Duration,
 ) (subscription.EventSubscription, error) {
-	handleStartEvent := func(deposit string) {
+	handleStartEvent := func(startEvent depositEvent) {
 		logger.Infof(
 			"starting [%v] monitoring for deposit [%v]",
 			monitoringName,
-			deposit,
+			startEvent.getDepositAddress(),
 		)
 
 		stopEventChan := make(chan struct{})
 
 		stopEventSubscription, err := monitoringStopFn(
-			func(stopEventDeposit string) {
-				if deposit == stopEventDeposit {
+			func(stopEvent depositEvent) {
+				if startEvent.getDepositAddress() == stopEvent.getDepositAddress() {
 					stopEventChan <- struct{}{}
 				}
 			},
@@ -220,20 +321,22 @@ func (t *tbtc) monitorAndAct(
 				"could not setup stop event handler for [%v] "+
 					"monitoring for deposit [%v]: [%v]",
 				monitoringName,
-				deposit,
+				startEvent.getDepositAddress(),
 				err,
 			)
 			return
 		}
 		defer stopEventSubscription.Unsubscribe()
 
-		keepClosedChan, keepClosedUnsubscribe, err := keepClosedFn(deposit)
+		keepClosedChan, keepClosedUnsubscribe, err := keepClosedFn(
+			startEvent.getDepositAddress(),
+		)
 		if err != nil {
 			logger.Errorf(
 				"could not setup keep closed handler for [%v] "+
 					"monitoring for deposit [%v]: [%v]",
 				monitoringName,
-				deposit,
+				startEvent.getDepositAddress(),
 				err,
 			)
 			return
@@ -252,7 +355,7 @@ func (t *tbtc) monitorAndAct(
 					"context is done for [%v] "+
 						"monitoring for deposit [%v]",
 					monitoringName,
-					deposit,
+					startEvent.getDepositAddress(),
 				)
 				break monitoring
 			case <-stopEventChan:
@@ -260,7 +363,7 @@ func (t *tbtc) monitorAndAct(
 					"stop event occurred for [%v] "+
 						"monitoring for deposit [%v]",
 					monitoringName,
-					deposit,
+					startEvent.getDepositAddress(),
 				)
 				break monitoring
 			case <-keepClosedChan:
@@ -268,11 +371,11 @@ func (t *tbtc) monitorAndAct(
 					"keep closed event occurred for [%v] "+
 						"monitoring for deposit [%v]",
 					monitoringName,
-					deposit,
+					startEvent.getDepositAddress(),
 				)
 				break monitoring
 			case <-timeoutChan:
-				err := actFn(deposit)
+				err := actFn(&depositMonitoringContext{startEvent})
 				if err != nil {
 					if actionAttempt == maxActionAttempts {
 						logger.Errorf(
@@ -280,7 +383,7 @@ func (t *tbtc) monitorAndAct(
 								"for [%v] monitoring for deposit [%v]: [%v]; "+
 								"last attempt failed",
 							monitoringName,
-							deposit,
+							startEvent.getDepositAddress(),
 							err,
 						)
 						break monitoring
@@ -293,7 +396,7 @@ func (t *tbtc) monitorAndAct(
 							"for [%v] monitoring for deposit [%v]: [%v]; "+
 							"retrying after: [%v]",
 						monitoringName,
-						deposit,
+						startEvent.getDepositAddress(),
 						err,
 						backoff,
 					)
@@ -305,7 +408,7 @@ func (t *tbtc) monitorAndAct(
 						"action for [%v] monitoring for "+
 							"deposit [%v] has been performed successfully",
 						monitoringName,
-						deposit,
+						startEvent.getDepositAddress(),
 					)
 					break monitoring
 				}
@@ -316,23 +419,23 @@ func (t *tbtc) monitorAndAct(
 			"[%v] monitoring for deposit [%v] "+
 				"has been completed",
 			monitoringName,
-			deposit,
+			startEvent.getDepositAddress(),
 		)
 	}
 
 	return monitoringStartFn(
-		func(deposit string) {
-			go handleStartEvent(deposit)
+		func(startEvent depositEvent) {
+			go handleStartEvent(startEvent)
 		},
 	)
 }
 
 func (t *tbtc) watchKeepClosed(
-	deposit string,
+	depositAddress string,
 ) (chan struct{}, func(), error) {
 	signalChan := make(chan struct{})
 
-	keepAddress, err := t.chain.KeepAddress(deposit)
+	keepAddress, err := t.chain.KeepAddress(depositAddress)
 	if err != nil {
 		return nil, nil, err
 	}

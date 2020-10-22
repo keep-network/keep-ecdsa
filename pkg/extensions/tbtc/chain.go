@@ -25,6 +25,23 @@ type Deposit interface {
 	// RetrieveSignerPubkey retrieves the signer public key for the
 	// provided deposit.
 	RetrieveSignerPubkey(depositAddress string) error
+
+	// ProvideRedemptionSignature provides the redemption signature for the
+	// provided deposit.
+	ProvideRedemptionSignature(
+		depositAddress string,
+		v uint8,
+		r [32]uint8,
+		s [32]uint8,
+	) error
+
+	// IncreaseRedemptionFee increases the redemption fee for the
+	// provided deposit.
+	IncreaseRedemptionFee(
+		depositAddress string,
+		previousOutputValueBytes [8]uint8,
+		newOutputValueBytes [8]uint8,
+	) error
 }
 
 // TBTCSystem is an interface that provides ability to interact
@@ -43,7 +60,7 @@ type TBTCSystem interface {
 	) (subscription.EventSubscription, error)
 
 	// OnDepositRedemptionRequested installs a callback that is invoked when an
-	// on-chain notification of a new deposit redemption request is seen.
+	// on-chain notification of a deposit redemption request is seen.
 	OnDepositRedemptionRequested(
 		handler func(
 			depositAddress string,
@@ -56,16 +73,17 @@ type TBTCSystem interface {
 			blockNumber uint64,
 		),
 	) (subscription.EventSubscription, error)
-}
 
-// DepositRedemptionRequestedEvent represents a deposit redemption requested event.
-type DepositRedemptionRequestedEvent struct {
-	DepositAddress       string
-	RequesterAddress     string
-	Digest               [32]uint8
-	UtxoValue            *big.Int
-	RedeemerOutputScript []uint8
-	RequestedFee         *big.Int
-	Outpoint             []uint8
-	BlockNumber          uint64
+	// OnDepositGotRedemptionSignature installs a callback that is invoked
+	// when an on-chain notification of a deposit receiving a redemption
+	// signature is seen.
+	OnDepositGotRedemptionSignature(
+		handler func(depositAddress string),
+	) (subscription.EventSubscription, error)
+
+	// OnDepositRedeemed installs a callback that is invoked when an
+	// on-chain notification of a deposit redemption is seen.
+	OnDepositRedeemed(
+		handler func(depositAddress string),
+	) (subscription.EventSubscription, error)
 }

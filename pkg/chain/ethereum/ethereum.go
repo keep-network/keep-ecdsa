@@ -6,6 +6,9 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/abi"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
@@ -506,4 +509,49 @@ func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Ti
 	keepOpenTime := time.Unix(timestamp.Int64(), 0)
 
 	return keepOpenTime, nil
+}
+
+// PastSignatureSubmittedEvents returns all signature submitted events
+// for the given keep which occurred after the provided start block.
+func (ec *EthereumChain) PastSignatureSubmittedEvents(
+	keepAddress string,
+	startBlock uint64,
+) ([]*eth.SignatureSubmittedEvent, error) {
+	if !common.IsHexAddress(keepAddress) {
+		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
+	}
+
+	keepContractAbi, err := abi.NewBondedECDSAKeep(
+		common.HexToAddress(keepAddress),
+		ec.client,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	iterator, err := keepContractAbi.FilterSignatureSubmitted(
+		&bind.FilterOpts{Start: startBlock},
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*eth.SignatureSubmittedEvent, 0)
+
+	hasNext := true
+	for hasNext {
+		hasNext = iterator.Next()
+		if hasNext {
+			event := iterator.Event
+			result = append(result, &eth.SignatureSubmittedEvent{
+				Digest:     event.Digest,
+				R:          event.R,
+				S:          event.S,
+				RecoveryID: event.RecoveryID,
+			})
+		}
+	}
+
+	return result, nil
 }

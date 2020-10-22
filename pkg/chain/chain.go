@@ -143,4 +143,11 @@ type BondedECDSAKeep interface {
 
 	// GetOpenedTimestamp returns timestamp when the keep was created.
 	GetOpenedTimestamp(keepAddress common.Address) (time.Time, error)
+
+	// PastSignatureSubmittedEvents returns all signature submitted events
+	// for the given keep which occurred after the provided start block.
+	PastSignatureSubmittedEvents(
+		keepAddress string,
+		startBlock uint64,
+	) ([]*SignatureSubmittedEvent, error)
 }

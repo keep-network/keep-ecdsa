@@ -351,6 +351,13 @@ func (lc *localChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time,
 	panic("implement")
 }
 
+func (lc *localChain) PastSignatureSubmittedEvents(
+	keepAddress string,
+	startBlock uint64,
+) ([]*eth.SignatureSubmittedEvent, error) {
+	panic("implement")
+}
+
 func generateHandlerID() int {
 	// #nosec G404 (insecure random number source (rand))
 	// Local chain implementation doesn't require secure randomness.

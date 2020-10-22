@@ -122,6 +122,18 @@ func (tlc *TBTCLocalChain) OnDepositRedemptionRequested(
 	panic("not implemented") // TODO: Implementation for unit testing purposes.
 }
 
+func (tlc *TBTCLocalChain) OnDepositGotRedemptionSignature(
+	handler func(depositAddress string),
+) (subscription.EventSubscription, error) {
+	panic("not implemented") // TODO: Implementation for unit testing purposes.
+}
+
+func (tlc *TBTCLocalChain) OnDepositRedeemed(
+	handler func(depositAddress string),
+) (subscription.EventSubscription, error) {
+	panic("not implemented") // TODO: Implementation for unit testing purposes.
+}
+
 func (tlc *TBTCLocalChain) KeepAddress(depositAddress string) (string, error) {
 	tlc.mutex.Lock()
 	defer tlc.mutex.Unlock()
@@ -181,6 +193,23 @@ func (tlc *TBTCLocalChain) RetrieveSignerPubkey(depositAddress string) error {
 	}
 
 	return nil
+}
+
+func (tlc *TBTCLocalChain) ProvideRedemptionSignature(
+	depositAddress string,
+	v uint8,
+	r [32]uint8,
+	s [32]uint8,
+) error {
+	panic("not implemented") // TODO: Implementation for unit testing purposes.
+}
+
+func (tlc *TBTCLocalChain) IncreaseRedemptionFee(
+	depositAddress string,
+	previousOutputValueBytes [8]uint8,
+	newOutputValueBytes [8]uint8,
+) error {
+	panic("not implemented") // TODO: Implementation for unit testing purposes.
 }
 
 func (tlc *TBTCLocalChain) DepositPubkey(
