@@ -1,6 +1,8 @@
 package tbtc
 
 import (
+	"math/big"
+
 	"github.com/keep-network/keep-common/pkg/subscription"
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
@@ -39,4 +41,31 @@ type TBTCSystem interface {
 	OnDepositRegisteredPubkey(
 		handler func(depositAddress string),
 	) (subscription.EventSubscription, error)
+
+	// OnDepositRedemptionRequested installs a callback that is invoked when an
+	// on-chain notification of a new deposit redemption request is seen.
+	OnDepositRedemptionRequested(
+		handler func(
+			depositAddress string,
+			requesterAddress string,
+			digest [32]uint8,
+			utxoValue *big.Int,
+			redeemerOutputScript []uint8,
+			requestedFee *big.Int,
+			outpoint []uint8,
+			blockNumber uint64,
+		),
+	) (subscription.EventSubscription, error)
+}
+
+// DepositRedemptionRequestedEvent represents a deposit redemption requested event.
+type DepositRedemptionRequestedEvent struct {
+	DepositAddress       string
+	RequesterAddress     string
+	Digest               [32]uint8
+	UtxoValue            *big.Int
+	RedeemerOutputScript []uint8
+	RequestedFee         *big.Int
+	Outpoint             []uint8
+	BlockNumber          uint64
 }

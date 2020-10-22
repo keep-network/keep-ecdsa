@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"math/big"
 	"math/rand"
 	"time"
 
@@ -19,19 +20,32 @@ var logger = log.Logger("tbtc-extension")
 const maxActionAttempts = 3
 
 // Initialize initializes extension specific to the TBTC application.
-func Initialize(ctx context.Context, handle Handle) error {
+func Initialize(ctx context.Context, chain Handle) error {
 	logger.Infof("initializing tbtc extension")
 
-	tbtc := &tbtc{handle}
+	tbtc := newTBTC(chain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		exponentialBackoff,
-		150*time.Minute,
+		150*time.Minute, // 30 minutes before the 3 hours on-chain timeout
 	)
 	if err != nil {
 		return fmt.Errorf(
 			"could not initialize retrieve pubkey monitoring: [%v]",
+			err,
+		)
+	}
+
+	err = tbtc.monitorProvideRedemptionSignature(
+		ctx,
+		exponentialBackoff,
+		105*time.Minute, // 15 minutes before the 2 hours on-chain timeout
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"could not initialize provide redemption "+
+				"signature monitoring: [%v]",
 			err,
 		)
 	}
@@ -58,7 +72,15 @@ type submitDepositTxFn func(deposit string) error
 type backoffFn func(iteration int) time.Duration
 
 type tbtc struct {
-	chain Handle
+	chain     Handle
+	eventsLog *tbtcEventsLog
+}
+
+func newTBTC(chain Handle) *tbtc {
+	return &tbtc{
+		chain:     chain,
+		eventsLog: newTBTCEventsLog(),
+	}
 }
 
 func (t *tbtc) monitorRetrievePubKey(
@@ -93,6 +115,72 @@ func (t *tbtc) monitorRetrievePubKey(
 	}()
 
 	logger.Infof("retrieve pubkey monitoring initialized")
+
+	return nil
+}
+
+func (t *tbtc) monitorProvideRedemptionSignature(
+	ctx context.Context,
+	actBackoffFn backoffFn,
+	timeout time.Duration,
+) error {
+	monitoringStartFn := func(
+		handler depositEventHandler,
+	) (subscription.EventSubscription, error) {
+		return t.chain.OnDepositRedemptionRequested(
+			func(
+				depositAddress string,
+				requesterAddress string,
+				digest [32]uint8,
+				utxoValue *big.Int,
+				redeemerOutputScript []uint8,
+				requestedFee *big.Int,
+				outpoint []uint8,
+				blockNumber uint64,
+			) {
+				t.eventsLog.logDepositRedemptionRequestedEvent(
+					depositAddress,
+					&DepositRedemptionRequestedEvent{
+						DepositAddress:       depositAddress,
+						RequesterAddress:     requesterAddress,
+						Digest:               digest,
+						UtxoValue:            utxoValue,
+						RedeemerOutputScript: redeemerOutputScript,
+						RequestedFee:         requestedFee,
+						Outpoint:             outpoint,
+						BlockNumber:          blockNumber,
+					},
+				)
+				handler(depositAddress)
+			},
+		)
+	}
+
+	startEventSubscription, err := t.monitorAndAct(
+		ctx,
+		"provide redemption signature",
+		monitoringStartFn,
+		func(handler depositEventHandler) (subscription.EventSubscription, error) {
+			panic("not implemented") // TODO: Implementation
+		},
+		t.watchKeepClosed,
+		func(deposit string) error {
+			panic("not implemented") // TODO: Implementation
+		},
+		actBackoffFn,
+		timeout,
+	)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		<-ctx.Done()
+		startEventSubscription.Unsubscribe()
+		logger.Infof("provide redemption signature monitoring disabled")
+	}()
+
+	logger.Infof("provide redemption signature monitoring initialized")
 
 	return nil
 }

@@ -3,6 +3,7 @@ package local
 import (
 	"bytes"
 	"fmt"
+	"math/big"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -104,6 +105,21 @@ func (tlc *TBTCLocalChain) OnDepositRegisteredPubkey(
 
 		delete(tlc.depositRegisteredPubkeyHandlers, handlerID)
 	}), nil
+}
+
+func (tlc *TBTCLocalChain) OnDepositRedemptionRequested(
+	handler func(
+		depositAddress string,
+		requesterAddress string,
+		digest [32]uint8,
+		utxoValue *big.Int,
+		redeemerOutputScript []uint8,
+		requestedFee *big.Int,
+		outpoint []uint8,
+		blockNumber uint64,
+	),
+) (subscription.EventSubscription, error) {
+	panic("not implemented") // TODO: Implementation for unit testing purposes.
 }
 
 func (tlc *TBTCLocalChain) KeepAddress(depositAddress string) (string, error) {

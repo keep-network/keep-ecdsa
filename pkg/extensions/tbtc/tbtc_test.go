@@ -21,7 +21,7 @@ const (
 func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
-	tbtc := &tbtc{tbtcChain}
+	tbtc := newTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
@@ -74,7 +74,7 @@ func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
 func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
-	tbtc := &tbtc{tbtcChain}
+	tbtc := newTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
@@ -136,7 +136,7 @@ func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 func TestRetrievePubkey_KeepClosedEventOccurred(t *testing.T) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
-	tbtc := &tbtc{tbtcChain}
+	tbtc := newTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
@@ -196,7 +196,7 @@ func TestRetrievePubkey_KeepClosedEventOccurred(t *testing.T) {
 func TestRetrievePubkey_KeepTerminatedEventOccurred(t *testing.T) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
-	tbtc := &tbtc{tbtcChain}
+	tbtc := newTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
@@ -256,7 +256,7 @@ func TestRetrievePubkey_KeepTerminatedEventOccurred(t *testing.T) {
 func TestRetrievePubkey_ActionFailed(t *testing.T) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
-	tbtc := &tbtc{tbtcChain}
+	tbtc := newTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
@@ -292,7 +292,7 @@ func TestRetrievePubkey_ActionFailed(t *testing.T) {
 func TestRetrievePubkey_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	tbtcChain := local.NewTBTCLocalChain()
-	tbtc := &tbtc{tbtcChain}
+	tbtc := newTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
@@ -328,7 +328,7 @@ func TestRetrievePubkey_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) 
 func TestRetrievePubkey_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	tbtcChain := local.NewTBTCLocalChain()
-	tbtc := &tbtc{tbtcChain}
+	tbtc := newTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
