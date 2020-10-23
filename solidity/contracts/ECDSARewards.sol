@@ -119,6 +119,32 @@ contract ECDSARewards is Rewards {
         tokenStaking = TokenStaking(_tokenStakingAddress);
     }
 
+    /// @notice Withdraw all available rewards for the given interval.
+    /// The rewards will be paid to the beneficiary
+    /// of the operator requesting the withdrawal.
+    /// @param interval The interval
+    function withdrawRewards(uint256 interval) external {
+        address beneficiary = tokenStaking.beneficiaryOf(msg.sender);
+
+
+            uint256 allocatedForBeneficiary
+         = allocatedRewards[beneficiary][interval];
+        uint256 alreadyWithdrawn = withdrawnRewards[beneficiary][interval];
+
+        require(
+            allocatedForBeneficiary > alreadyWithdrawn,
+            "No rewards to withdraw"
+        );
+
+        uint256 withdrawableRewards = allocatedForBeneficiary.sub(
+            alreadyWithdrawn
+        );
+
+        withdrawnRewards[beneficiary][interval] = allocatedForBeneficiary;
+
+        token.safeTransfer(beneficiary, withdrawableRewards);
+    }
+
     /// @notice Stakers can receive KEEP rewards from multiple keeps of their choice
     /// in one transaction to reduce total cost comparing to single calls for rewards.
     /// It is a caller responsibility to determine the cost and consumed gas when
@@ -184,7 +210,8 @@ contract ECDSARewards is Rewards {
         internal
         isAddress(_keep)
     {
-        address[] memory members = BondedECDSAKeep(toAddress(_keep)).getMembers();
+        address[] memory members = BondedECDSAKeep(toAddress(_keep))
+            .getMembers();
         uint256 interval = intervalOf(_getCreationTime(_keep));
 
         uint256 memberCount = members.length;
@@ -204,7 +231,9 @@ contract ECDSARewards is Rewards {
             uint256 prevAllocated = allocatedRewards[beneficiary][interval];
             uint256 newAllocation = prevAllocated.add(addedAllocation);
             if (newAllocation > beneficiaryRewardCap) {
-                uint256 deallocatedAmount = newAllocation.sub(beneficiaryRewardCap);
+                uint256 deallocatedAmount = newAllocation.sub(
+                    beneficiaryRewardCap
+                );
                 newAllocation = beneficiaryRewardCap;
                 deallocate(deallocatedAmount);
             }
@@ -222,30 +251,6 @@ contract ECDSARewards is Rewards {
 
     function validAddressBytes(bytes32 keepBytes) internal pure returns (bool) {
         return fromAddress(toAddress(keepBytes)) == keepBytes;
-    }
-
-    /// @notice Withdraw all available rewards for the given interval.
-    /// The rewards will be paid to the beneficiary
-    /// of the operator requesting the withdrawal.
-    /// @param interval The interval
-    function withdrawRewards(uint256 interval) external {
-        address beneficiary = tokenStaking.beneficiaryOf(msg.sender);
-        uint256 allocatedForBeneficiary = allocatedRewards[beneficiary][interval];
-        uint256 alreadyWithdrawn = withdrawnRewards[beneficiary][interval];
-
-        require(
-            allocatedForBeneficiary > alreadyWithdrawn,
-            "No rewards to withdraw"
-        );
-
-        uint256 withdrawableRewards = allocatedForBeneficiary.sub(alreadyWithdrawn);
-
-        withdrawnRewards[beneficiary][interval] = allocatedForBeneficiary;
-
-        token.safeTransfer(
-            beneficiary,
-            withdrawableRewards
-        );
     }
 
     modifier isAddress(bytes32 _keep) {
