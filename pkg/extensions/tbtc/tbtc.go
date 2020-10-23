@@ -64,8 +64,8 @@ type baseDepositEvent struct {
 	depositAddress string
 }
 
-func (bdd *baseDepositEvent) getDepositAddress() string {
-	return bdd.depositAddress
+func (bde *baseDepositEvent) getDepositAddress() string {
+	return bde.depositAddress
 }
 
 type depositRedemptionRequestedEvent struct {

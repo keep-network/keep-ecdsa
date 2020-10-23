@@ -6,8 +6,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/abi"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/filterer"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -521,7 +520,7 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
 	}
 
-	keepContractAbi, err := abi.NewBondedECDSAKeep(
+	keepContractFilterer, err := filterer.NewBondedECDSAKeepFilterer(
 		common.HexToAddress(keepAddress),
 		ec.client,
 	)
@@ -529,22 +528,14 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 		return nil, err
 	}
 
-	iterator, err := keepContractAbi.FilterSignatureSubmitted(
-		&bind.FilterOpts{Start: startBlock},
-		nil,
-	)
+	events, err := keepContractFilterer.FilterSignatureSubmitted(startBlock, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	result := make([]*eth.SignatureSubmittedEvent, 0)
 
-	for {
-		if !iterator.Next() {
-			break
-		}
-
-		event := iterator.Event
+	for _, event := range events {
 		result = append(result, &eth.SignatureSubmittedEvent{
 			Digest:     event.Digest,
 			R:          event.R,
