@@ -216,7 +216,8 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	}
 
 	actFn := func(monitoringContext *depositMonitoringContext) error {
-		depositRedemptionRequestedEvent, ok := monitoringContext.startEvent.(*depositRedemptionRequestedEvent)
+		depositRedemptionRequestedEvent, ok := monitoringContext.
+			startEvent.(*depositRedemptionRequestedEvent)
 		if !ok {
 			return fmt.Errorf(
 				"monitoring context contains unexpected type of start event",
