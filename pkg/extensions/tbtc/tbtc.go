@@ -185,8 +185,8 @@ func (t *tbtc) monitorAndAct(
 				break monitoring
 			case <-timeoutChan:
 				logger.Infof(
-					"timeout occurred for [%v] monitoring for "+
-						"deposit [%v]; performing action",
+					"[%v] not performed in the expected time frame "+
+						"for deposit [%v]; performing the action",
 					monitoringName,
 					deposit,
 				)
