@@ -86,6 +86,8 @@ type submitDepositTxFn func(depositAddress string) error
 
 type backoffFn func(iteration int) time.Duration
 
+type timeoutFn func(depositAddress string) (time.Duration, error)
+
 type tbtc struct {
 	chain Handle
 }
@@ -113,7 +115,9 @@ func (t *tbtc) monitorRetrievePubKey(
 		t.watchKeepClosed,
 		t.chain.RetrieveSignerPubkey,
 		actBackoffFn,
-		timeout,
+		func(_ string) (time.Duration, error) {
+			return timeout, nil
+		},
 	)
 	if err != nil {
 		return err
@@ -230,7 +234,9 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		t.watchKeepClosed,
 		actFn,
 		actBackoffFn,
-		timeout,
+		func(_ string) (time.Duration, error) {
+			return timeout, nil
+		},
 	)
 	if err != nil {
 		return err
@@ -324,6 +330,49 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		)
 	}
 
+	timeoutFn := func(depositAddress string) (time.Duration, error) {
+		// Get the seconds timestamp in the moment when this function is
+		// invoked. This is when the monitoring starts in response of
+		// the `GotRedemptionSignature` event.
+		gotRedemptionSignatureTimestamp := uint64(time.Now().Unix())
+
+		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
+			depositAddress,
+			0, // TODO: Should be something better that 0
+		)
+		if err != nil {
+			return 0, err
+		}
+
+		if len(redemptionRequestedEvents) == 0 {
+			return 0, fmt.Errorf(
+				"no redemption requested events found for deposit: [%v]",
+				depositAddress,
+			)
+		}
+
+		latestRedemptionRequestedEvent :=
+			redemptionRequestedEvents[len(redemptionRequestedEvents)-1]
+
+		// Get the seconds timestamp for the latest redemption request.
+		redemptionRequestedTimestamp, err := t.chain.BlockTimestamp(
+			new(big.Int).SetUint64(latestRedemptionRequestedEvent.BlockNumber),
+		)
+		if err != nil {
+			return 0, err
+		}
+
+		// We must shift the constant timeout value by subtracting the time
+		// elapsed between the redemption request and the redemption signature.
+		// This way we obtain a value close to the redemption proof timeout
+		// and it doesn't matter when the redemption signature arrives.
+		timeoutShift := time.Duration(
+			gotRedemptionSignatureTimestamp-redemptionRequestedTimestamp,
+		) * time.Second
+
+		return timeout - timeoutShift, nil
+	}
+
 	monitoringSubscription, err := t.monitorAndAct(
 		ctx,
 		"provide redemption proof",
@@ -332,7 +381,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		t.watchKeepClosed,
 		actFn,
 		actBackoffFn,
-		timeout, // TODO: Timeout must be counted from the `RedemptionRequested` event not from the monitoring start event `GotRedemptionSignature`
+		timeoutFn,
 	)
 	if err != nil {
 		return err
@@ -361,7 +410,7 @@ func (t *tbtc) monitorAndAct(
 	keepClosedFn watchKeepClosedFn,
 	actFn submitDepositTxFn,
 	actBackoffFn backoffFn,
-	timeout time.Duration,
+	timeoutFn timeoutFn,
 ) (subscription.EventSubscription, error) {
 	handleStartEvent := func(depositAddress string) {
 		logger.Infof(
@@ -405,6 +454,18 @@ func (t *tbtc) monitorAndAct(
 			return
 		}
 		defer keepClosedUnsubscribe()
+
+		timeout, err := timeoutFn(depositAddress)
+		if err != nil {
+			logger.Errorf(
+				"could determine timeout value for [%v] "+
+					"monitoring for deposit [%v]: [%v]",
+				monitoringName,
+				depositAddress,
+				err,
+			)
+			return
+		}
 
 		timeoutChan := time.After(timeout)
 
