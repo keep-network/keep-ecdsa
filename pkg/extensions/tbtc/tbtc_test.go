@@ -96,6 +96,7 @@ func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 	// extension must have time to handle the start event
 	time.Sleep(100 * time.Millisecond)
 
+	// invoke the action which will trigger the stop event in result
 	err = tbtcChain.RetrieveSignerPubkey(depositAddress)
 	if err != nil {
 		t.Fatal(err)

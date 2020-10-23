@@ -76,7 +76,8 @@ type Extensions struct {
 	TBTC TBTC
 }
 
-// TBTC stores configuration related with TBTC-specific extensions.
+// TBTC stores configuration of application extension responsible for
+// executing signer actions specific for TBTC application.
 type TBTC struct {
 	TBTCSystem string
 }

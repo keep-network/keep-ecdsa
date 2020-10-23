@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func (c *localChain) createKeep(keepAddress common.Address) error {
@@ -28,22 +28,22 @@ func (c *localChain) createKeepWithMembers(
 	localKeep := &localKeep{
 		publicKey:                  [64]byte{},
 		members:                    members,
-		signatureRequestedHandlers: make(map[int]func(event *eth.SignatureRequestedEvent)),
-		keepClosedHandlers:         make(map[int]func(event *eth.KeepClosedEvent)),
-		keepTerminatedHandlers:     make(map[int]func(event *eth.KeepTerminatedEvent)),
+		signatureRequestedHandlers: make(map[int]func(event *chain.SignatureRequestedEvent)),
+		keepClosedHandlers:         make(map[int]func(event *chain.KeepClosedEvent)),
+		keepTerminatedHandlers:     make(map[int]func(event *chain.KeepTerminatedEvent)),
 	}
 
 	c.keeps[keepAddress] = localKeep
 	c.keepAddresses = append(c.keepAddresses, keepAddress)
 
-	keepCreatedEvent := &eth.BondedECDSAKeepCreatedEvent{
+	keepCreatedEvent := &chain.BondedECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
 	}
 
 	for _, handler := range c.keepCreatedHandlers {
 		go func(
-			handler func(event *eth.BondedECDSAKeepCreatedEvent),
-			keepCreatedEvent *eth.BondedECDSAKeepCreatedEvent,
+			handler func(event *chain.BondedECDSAKeepCreatedEvent),
+			keepCreatedEvent *chain.BondedECDSAKeepCreatedEvent,
 		) {
 			handler(keepCreatedEvent)
 		}(handler, keepCreatedEvent)
