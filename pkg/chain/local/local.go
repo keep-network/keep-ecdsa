@@ -54,9 +54,6 @@ func Connect() Chain {
 }
 
 func (lc *localChain) OpenKeep(keepAddress common.Address, members []common.Address) {
-	// #nosec G104 (errors unhandled)
-	// No need to handle that error for now as it is triggered only
-	// in case the keep already exists.
 	err := lc.createKeepWithMembers(keepAddress, members)
 	if err != nil {
 		panic(err)
