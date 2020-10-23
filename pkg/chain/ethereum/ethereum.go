@@ -539,18 +539,18 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 
 	result := make([]*eth.SignatureSubmittedEvent, 0)
 
-	hasNext := true
-	for hasNext {
-		hasNext = iterator.Next()
-		if hasNext {
-			event := iterator.Event
-			result = append(result, &eth.SignatureSubmittedEvent{
-				Digest:     event.Digest,
-				R:          event.R,
-				S:          event.S,
-				RecoveryID: event.RecoveryID,
-			})
+	for {
+		if !iterator.Next() {
+			break
 		}
+
+		event := iterator.Event
+		result = append(result, &eth.SignatureSubmittedEvent{
+			Digest:     event.Digest,
+			R:          event.R,
+			S:          event.S,
+			RecoveryID: event.RecoveryID,
+		})
 	}
 
 	return result, nil
