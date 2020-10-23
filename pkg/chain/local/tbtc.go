@@ -3,8 +3,9 @@ package local
 import (
 	"bytes"
 	"fmt"
-	"math/big"
 	"sync"
+
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -108,16 +109,7 @@ func (tlc *TBTCLocalChain) OnDepositRegisteredPubkey(
 }
 
 func (tlc *TBTCLocalChain) OnDepositRedemptionRequested(
-	handler func(
-		depositAddress string,
-		requesterAddress string,
-		digest [32]uint8,
-		utxoValue *big.Int,
-		redeemerOutputScript []uint8,
-		requestedFee *big.Int,
-		outpoint []uint8,
-		blockNumber uint64,
-	),
+	handler func(depositAddress string),
 ) (subscription.EventSubscription, error) {
 	panic("not implemented") // TODO: Implementation for unit testing purposes.
 }
@@ -131,6 +123,13 @@ func (tlc *TBTCLocalChain) OnDepositGotRedemptionSignature(
 func (tlc *TBTCLocalChain) OnDepositRedeemed(
 	handler func(depositAddress string),
 ) (subscription.EventSubscription, error) {
+	panic("not implemented") // TODO: Implementation for unit testing purposes.
+}
+
+func (tlc *TBTCLocalChain) PastDepositRedemptionRequestedEvents(
+	depositAddress string,
+	startBlock uint64,
+) ([]*eth.DepositRedemptionRequestedEvent, error) {
 	panic("not implemented") // TODO: Implementation for unit testing purposes.
 }
 

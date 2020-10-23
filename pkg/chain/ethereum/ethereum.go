@@ -546,3 +546,8 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 
 	return result, nil
 }
+
+// BlockTimestamp returns given block's timestamp.
+func (ec *EthereumChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
+	return ec.blockTimestampFn(blockNumber)
+}

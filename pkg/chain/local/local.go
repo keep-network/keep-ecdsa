@@ -355,7 +355,11 @@ func (lc *localChain) PastSignatureSubmittedEvents(
 	keepAddress string,
 	startBlock uint64,
 ) ([]*eth.SignatureSubmittedEvent, error) {
-	panic("implement")
+	panic("not implemented") // TODO: Implementation for unit testing purposes.
+}
+
+func (lc *localChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
+	panic("not implemented") // TODO: Implementation for unit testing purposes.
 }
 
 func generateHandlerID() int {

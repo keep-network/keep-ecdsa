@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sync"
@@ -41,6 +42,7 @@ type EthereumChain struct {
 	blockCounter                   *blockcounter.EthereumBlockCounter
 	miningWaiter                   *ethutil.MiningWaiter
 	nonceManager                   *ethutil.NonceManager
+	blockTimestampFn               blockTimestampFn
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -120,6 +122,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
 		transactionMutex:               transactionMutex,
+		blockTimestampFn:               createBlockTimestampFn(client),
 	}, nil
 }
 
@@ -148,4 +151,20 @@ func addClientWrappers(
 	}
 
 	return loggingBackend
+}
+
+type blockTimestampFn func(blockNumber *big.Int) (uint64, error)
+
+func createBlockTimestampFn(client *ethclient.Client) blockTimestampFn {
+	return func(blockNumber *big.Int) (uint64, error) {
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cancelCtx()
+
+		header, err := client.HeaderByNumber(ctx, blockNumber)
+		if err != nil {
+			return 0, err
+		}
+
+		return header.Time, nil
+	}
 }

@@ -20,6 +20,8 @@ type Handle interface {
 	StakeMonitor() (chain.StakeMonitor, error)
 	// BlockCounter returns a block counter.
 	BlockCounter() chain.BlockCounter
+	// BlockTimestamp returns given block's timestamp.
+	BlockTimestamp(blockNumber *big.Int) (uint64, error)
 
 	BondedECDSAKeepFactory
 	BondedECDSAKeep

@@ -3,10 +3,14 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sort"
+
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
+	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/filterer"
 )
 
 // TBTCEthereumChain represents an Ethereum chain handle with
@@ -15,6 +19,7 @@ type TBTCEthereumChain struct {
 	*EthereumChain
 
 	tbtcSystemContract *contract.TBTCSystem
+	tbtcSystemFilterer *filterer.TBTCSystemFilterer
 }
 
 // WithTBTCExtension extends the Ethereum chain handle with
@@ -39,9 +44,18 @@ func WithTBTCExtension(
 		return nil, err
 	}
 
+	tbtcSystemFilterer, err := filterer.NewTBTCSystemFilterer(
+		common.HexToAddress(tbtcSystemContractAddress),
+		ethereumChain.client,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &TBTCEthereumChain{
 		EthereumChain:      ethereumChain,
 		tbtcSystemContract: tbtcSystemContract,
+		tbtcSystemFilterer: tbtcSystemFilterer,
 	}, nil
 }
 
@@ -95,16 +109,7 @@ func (tec *TBTCEthereumChain) OnDepositRegisteredPubkey(
 // OnDepositRedemptionRequested installs a callback that is invoked when an
 // on-chain notification of a deposit redemption request is seen.
 func (tec *TBTCEthereumChain) OnDepositRedemptionRequested(
-	handler func(
-		depositAddress string,
-		requesterAddress string,
-		digest [32]uint8,
-		utxoValue *big.Int,
-		redeemerOutputScript []uint8,
-		requestedFee *big.Int,
-		outpoint []uint8,
-		blockNumber uint64,
-	),
+	handler func(depositAddress string),
 ) (subscription.EventSubscription, error) {
 	return tec.tbtcSystemContract.WatchRedemptionRequested(
 		func(
@@ -117,16 +122,7 @@ func (tec *TBTCEthereumChain) OnDepositRedemptionRequested(
 			Outpoint []uint8,
 			blockNumber uint64,
 		) {
-			handler(
-				DepositContractAddress.Hex(),
-				Requester.Hex(),
-				Digest,
-				UtxoValue,
-				RedeemerOutputScript,
-				RequestedFee,
-				Outpoint,
-				blockNumber,
-			)
+			handler(DepositContractAddress.Hex())
 		},
 		func(err error) error {
 			return fmt.Errorf(
@@ -190,6 +186,51 @@ func (tec *TBTCEthereumChain) OnDepositRedeemed(
 		nil,
 		nil,
 	)
+}
+
+// PastDepositRedemptionRequestedEvents returns all redemption requested
+// events for the given deposit which occurred after the provided start block.
+// Returned events are sorted by the block number in the ascending order.
+func (tec *TBTCEthereumChain) PastDepositRedemptionRequestedEvents(
+	depositAddress string,
+	startBlock uint64,
+) ([]*eth.DepositRedemptionRequestedEvent, error) {
+	if !common.IsHexAddress(depositAddress) {
+		return nil, fmt.Errorf("incorrect deposit contract address")
+	}
+
+	events, err := tec.tbtcSystemFilterer.FilterRedemptionRequested(
+		[]common.Address{
+			common.HexToAddress(depositAddress),
+		},
+		startBlock,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*eth.DepositRedemptionRequestedEvent, 0)
+
+	for _, event := range events {
+		result = append(result, &eth.DepositRedemptionRequestedEvent{
+			DepositAddress:       event.DepositContractAddress.Hex(),
+			RequesterAddress:     event.Requester.Hex(),
+			Digest:               event.Digest,
+			UtxoValue:            event.UtxoValue,
+			RedeemerOutputScript: event.RedeemerOutputScript,
+			RequestedFee:         event.RequestedFee,
+			Outpoint:             event.Outpoint,
+			BlockNumber:          event.BlockNumber,
+		})
+	}
+
+	// Make sure events are sorted by block number in ascending order.
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].BlockNumber < result[j].BlockNumber
+	})
+
+	return result, nil
 }
 
 // KeepAddress returns the underlying keep address for the

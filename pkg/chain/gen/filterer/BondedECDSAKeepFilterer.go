@@ -7,7 +7,7 @@ import (
 )
 
 // FIXME: This is a temporary structure allowing to access past events
-//  occurred emitted by the `BondedECDSAKeep` contract. This structure is
+//  emitted by the `BondedECDSAKeep` contract. This structure is
 //  here because the generated contract wrappers from `gen/contract`
 //  don't support `Filter*` methods yet. When the contract generator
 //  will support those methods, the below structure can be removed.
