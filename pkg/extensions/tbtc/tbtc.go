@@ -16,7 +16,7 @@ import (
 
 var logger = log.Logger("tbtc-extension")
 
-const maxActionAttempts = 3
+const maxActAttempts = 3
 
 // Initialize initializes extension specific to the TBTC application.
 func Initialize(ctx context.Context, handle Handle) error {
@@ -66,7 +66,7 @@ func (t *tbtc) monitorRetrievePubKey(
 	actBackoffFn backoffFn,
 	timeout time.Duration,
 ) error {
-	startEventSubscription, err := t.monitorAndAct(
+	monitoringSubscription, err := t.monitorAndAct(
 		ctx,
 		"retrieve pubkey",
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
@@ -88,7 +88,7 @@ func (t *tbtc) monitorRetrievePubKey(
 
 	go func() {
 		<-ctx.Done()
-		startEventSubscription.Unsubscribe()
+		monitoringSubscription.Unsubscribe()
 		logger.Infof("retrieve pubkey monitoring disabled")
 	}()
 
@@ -184,13 +184,20 @@ func (t *tbtc) monitorAndAct(
 				)
 				break monitoring
 			case <-timeoutChan:
+				logger.Infof(
+					"timeout occurred for [%v] monitoring for "+
+						"deposit [%v]; performing action",
+					monitoringName,
+					deposit,
+				)
+
 				err := actFn(deposit)
 				if err != nil {
-					if actionAttempt == maxActionAttempts {
+					if actionAttempt == maxActAttempts {
 						logger.Errorf(
 							"could not perform action "+
 								"for [%v] monitoring for deposit [%v]: [%v]; "+
-								"last attempt failed",
+								"the maximum number of attempts reached",
 							monitoringName,
 							deposit,
 							err,
@@ -213,20 +220,13 @@ func (t *tbtc) monitorAndAct(
 					timeoutChan = time.After(backoff)
 					actionAttempt++
 				} else {
-					logger.Infof(
-						"action for [%v] monitoring for "+
-							"deposit [%v] has been performed successfully",
-						monitoringName,
-						deposit,
-					)
 					break monitoring
 				}
 			}
 		}
 
 		logger.Infof(
-			"[%v] monitoring for deposit [%v] "+
-				"has been completed",
+			"stopped [%v] monitoring for deposit [%v]",
 			monitoringName,
 			deposit,
 		)
@@ -277,6 +277,12 @@ func (t *tbtc) watchKeepClosed(
 	return signalChan, unsubscribe, nil
 }
 
+// Computes the exponential backoff value for given iteration.
+// For each iteration the result value will be in range:
+// - iteration 1: [2000ms, 2100ms)
+// - iteration 2: [4000ms, 4100ms)
+// - iteration 3: [8000ms, 8100ms)
+// - iteration n: [2^n * 1000ms, (2^n * 1000ms) + 100ms)
 func exponentialBackoff(iteration int) time.Duration {
 	backoffMillis := math.Pow(2, float64(iteration)) * 1000
 	// #nosec G404 (insecure random number source (rand))
