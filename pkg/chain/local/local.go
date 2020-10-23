@@ -21,6 +21,7 @@ type Chain interface {
 
 	OpenKeep(keepAddress common.Address, members []common.Address)
 	CloseKeep(keepAddress common.Address) error
+	TerminateKeep(keepAddress common.Address) error
 	AuthorizeOperator(operatorAddress common.Address)
 }
 
@@ -53,25 +54,18 @@ func Connect() Chain {
 }
 
 func (lc *localChain) OpenKeep(keepAddress common.Address, members []common.Address) {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
-
-	lc.keeps[keepAddress] = &localKeep{
-		members: members,
+	err := lc.createKeepWithMembers(keepAddress, members)
+	if err != nil {
+		panic(err)
 	}
-	lc.keepAddresses = append(lc.keepAddresses, keepAddress)
 }
 
 func (lc *localChain) CloseKeep(keepAddress common.Address) error {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	return lc.closeKeep(keepAddress)
+}
 
-	keep, ok := lc.keeps[keepAddress]
-	if !ok {
-		return fmt.Errorf("no keep with address [%v]", keepAddress)
-	}
-	keep.status = closed
-	return nil
+func (lc *localChain) TerminateKeep(keepAddress common.Address) error {
+	return lc.terminateKeep(keepAddress)
 }
 
 func (lc *localChain) AuthorizeOperator(operator common.Address) {
@@ -255,14 +249,54 @@ func (lc *localChain) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
-	panic("implement")
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	handlerID := generateHandlerID()
+
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return nil, fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	keep.keepClosedHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		lc.handlerMutex.Lock()
+		defer lc.handlerMutex.Unlock()
+
+		delete(keep.keepClosedHandlers, handlerID)
+	}), nil
 }
 
 func (lc *localChain) OnKeepTerminated(
 	keepAddress common.Address,
 	handler func(event *eth.KeepTerminatedEvent),
 ) (subscription.EventSubscription, error) {
-	panic("implement")
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	handlerID := generateHandlerID()
+
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return nil, fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	keep.keepTerminatedHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		lc.handlerMutex.Lock()
+		defer lc.handlerMutex.Unlock()
+
+		delete(keep.keepTerminatedHandlers, handlerID)
+	}), nil
 }
 
 func (lc *localChain) OnConflictingPublicKeySubmitted(
@@ -321,4 +355,14 @@ func generateHandlerID() int {
 	// #nosec G404 (insecure random number source (rand))
 	// Local chain implementation doesn't require secure randomness.
 	return rand.Int()
+}
+
+func generateAddress() common.Address {
+	var address [20]byte
+	// #nosec G404 G104 (insecure random number source (rand) | error unhandled)
+	// Local chain implementation doesn't require secure randomness.
+	// Error can be ignored because according to the `rand.Read` docs it's
+	// always `nil`.
+	rand.Read(address[:])
+	return address
 }

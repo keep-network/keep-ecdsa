@@ -109,3 +109,11 @@
 # customized below.
 # [Diagnostics]
 	# Port = 8081
+
+# Uncomment to enable tBTC-specific extension. This extension takes care of
+# executing actions that are assumed by tBTC to be the signer's responsibility,
+# for example, retrieve public key from keep to tBTC deposit or
+# increase redemption fee on tBTC deposit.
+# [Extensions.TBTC]
+	# TBTCSystem = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
