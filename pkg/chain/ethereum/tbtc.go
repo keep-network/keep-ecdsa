@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
-	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/filterer"
+	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/eventlog"
 )
 
 // TBTCEthereumChain represents an Ethereum chain handle with
@@ -19,7 +19,7 @@ type TBTCEthereumChain struct {
 	*EthereumChain
 
 	tbtcSystemContract *contract.TBTCSystem
-	tbtcSystemFilterer *filterer.TBTCSystemFilterer
+	tbtcSystemEventLog *eventlog.TBTCSystemEventLog
 }
 
 // WithTBTCExtension extends the Ethereum chain handle with
@@ -44,7 +44,7 @@ func WithTBTCExtension(
 		return nil, err
 	}
 
-	tbtcSystemFilterer, err := filterer.NewTBTCSystemFilterer(
+	tbtcSystemEventLog, err := eventlog.NewTBTCSystemEventLog(
 		common.HexToAddress(tbtcSystemContractAddress),
 		ethereumChain.client,
 	)
@@ -55,7 +55,7 @@ func WithTBTCExtension(
 	return &TBTCEthereumChain{
 		EthereumChain:      ethereumChain,
 		tbtcSystemContract: tbtcSystemContract,
-		tbtcSystemFilterer: tbtcSystemFilterer,
+		tbtcSystemEventLog: tbtcSystemEventLog,
 	}, nil
 }
 
@@ -199,7 +199,7 @@ func (tec *TBTCEthereumChain) PastDepositRedemptionRequestedEvents(
 		return nil, fmt.Errorf("incorrect deposit contract address")
 	}
 
-	events, err := tec.tbtcSystemFilterer.FilterRedemptionRequested(
+	events, err := tec.tbtcSystemEventLog.PastRedemptionRequestedEvents(
 		[]common.Address{
 			common.HexToAddress(depositAddress),
 		},
