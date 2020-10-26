@@ -126,9 +126,8 @@ contract ECDSARewards is Rewards {
     function withdrawRewards(uint256 interval, address operator) external {
         address beneficiary = tokenStaking.beneficiaryOf(operator);
 
-
-            uint256 allocatedForBeneficiary
-         = allocatedRewards[beneficiary][interval];
+        uint256 allocatedForBeneficiary
+            = allocatedRewards[beneficiary][interval];
         uint256 alreadyWithdrawn = withdrawnRewards[beneficiary][interval];
 
         require(
