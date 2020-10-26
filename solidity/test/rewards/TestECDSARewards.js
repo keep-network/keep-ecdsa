@@ -162,6 +162,9 @@ describe("ECDSARewards", () => {
       await keep.publicMarkAsClosed()
 
       await rewardsContract.receiveReward(keepAddress)
+      for (let i = 0; i < operators.length; i++) {
+        await rewardsContract.withdrawRewards(0, {from: operators[i]})
+      }
 
       // Full allocation for the first interval would be 7,128,000 KEEP.
       // Because just 2 keeps were created, the allocation is:
@@ -198,6 +201,9 @@ describe("ECDSARewards", () => {
       await keep.publicMarkAsClosed()
 
       await rewardsContract.receiveReward(keepAddress)
+      for (let i = 0; i < operators.length; i++) {
+        await rewardsContract.withdrawRewards(0, {from: operators[i]})
+      }
 
       // Full allocation for the first interval would be
       // 178,200,000 * 4% = 7,128,000.
@@ -214,8 +220,11 @@ describe("ECDSARewards", () => {
       await keep.publicMarkAsClosed()
 
       await rewardsContract.receiveReward(keepAddress)
+      for (let i = 0; i < operators.length; i++) {
+        await rewardsContract.withdrawRewards(0, {from: operators[i]})
+      }
 
-      // 297,000 * 2 = 594,000
+      // 2,376 * 2 = 4,752
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance.muln(2))
     })
 
@@ -236,6 +245,9 @@ describe("ECDSARewards", () => {
       await keep1.publicMarkAsClosed()
 
       await rewardsContract.receiveRewards(keepAddresses)
+      for (let i = 0; i < operators.length; i++) {
+        await rewardsContract.withdrawRewards(0, {from: operators[i]})
+      }
 
       // Full allocation for the first interval would be
       // 178,200,000 * 4% = 7,128,000.
