@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/filterer"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/eventlog"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -520,7 +520,7 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
 	}
 
-	keepContractFilterer, err := filterer.NewBondedECDSAKeepFilterer(
+	keepContractEventLog, err := eventlog.NewBondedECDSAKeepEventLog(
 		common.HexToAddress(keepAddress),
 		ec.client,
 	)
@@ -528,7 +528,10 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 		return nil, err
 	}
 
-	events, err := keepContractFilterer.FilterSignatureSubmitted(startBlock, nil)
+	events, err := keepContractEventLog.PastSignatureSubmittedEvents(
+		startBlock,
+		nil,
+	)
 	if err != nil {
 		return nil, err
 	}

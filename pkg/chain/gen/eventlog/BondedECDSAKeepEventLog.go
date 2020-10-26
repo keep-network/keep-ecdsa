@@ -1,4 +1,4 @@
-package filterer
+package eventlog
 
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -11,20 +11,20 @@ import (
 //  here because the generated contract wrappers from `gen/contract`
 //  don't support `Filter*` methods yet. When the contract generator
 //  will support those methods, the below structure can be removed.
-type BondedECDSAKeepFilterer struct {
+type BondedECDSAKeepEventLog struct {
 	contract *abi.BondedECDSAKeep
 }
 
-func NewBondedECDSAKeepFilterer(
+func NewBondedECDSAKeepEventLog(
 	contractAddress common.Address,
 	backend bind.ContractBackend,
-) (*BondedECDSAKeepFilterer, error) {
+) (*BondedECDSAKeepEventLog, error) {
 	contract, err := abi.NewBondedECDSAKeep(contractAddress, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	return &BondedECDSAKeepFilterer{contract}, nil
+	return &BondedECDSAKeepEventLog{contract}, nil
 }
 
 type BondedECDSAKeepSignatureSubmitted struct {
@@ -34,11 +34,11 @@ type BondedECDSAKeepSignatureSubmitted struct {
 	RecoveryID uint8
 }
 
-func (bekf *BondedECDSAKeepFilterer) FilterSignatureSubmitted(
+func (bekel *BondedECDSAKeepEventLog) PastSignatureSubmittedEvents(
 	startBlock uint64,
 	endBlock *uint64,
 ) ([]*BondedECDSAKeepSignatureSubmitted, error) {
-	iterator, err := bekf.contract.FilterSignatureSubmitted(
+	iterator, err := bekel.contract.FilterSignatureSubmitted(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
