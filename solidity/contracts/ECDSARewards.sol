@@ -119,6 +119,41 @@ contract ECDSARewards is Rewards {
         tokenStaking = TokenStaking(_tokenStakingAddress);
     }
 
+    /// @notice Get the amount of rewards allocated
+    /// for the specified operator's beneficiary in the specified interval.
+    /// @param interval The interval
+    /// @param operator The operator
+    /// @return The amount allocated
+    function getAllocatedRewards(uint256 interval, address operator)
+        external view returns (uint256) {
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        return allocatedRewards[beneficiary][interval];
+    }
+
+    /// @notice Get the amount of rewards already withdrawn
+    /// for the specified operator's beneficiary in the specified interval.
+    /// @param interval The interval
+    /// @param operator The operator
+    /// @return The amount already withdrawn
+    function getWithdrawnRewards(uint256 interval, address operator)
+        external view returns (uint256) {
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        return withdrawnRewards[beneficiary][interval];
+    }
+
+    /// @notice Get the amount of rewards withdrawable
+    /// for the specified operator's beneficiary in the specified interval.
+    /// @param interval The interval
+    /// @param operator The operator
+    /// @return The amount withdrawable
+    function getWithdrawableRewards(uint256 interval, address operator)
+        external view returns (uint256) {
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        uint256 allocated = allocatedRewards[beneficiary][interval];
+        uint256 withdrawn = withdrawnRewards[beneficiary][interval];
+        return allocated.sub(withdrawn);
+    }
+
     /// @notice Withdraw all available rewards for the given interval.
     /// The rewards will be paid to the beneficiary of the specified operator.
     /// @param interval The interval
