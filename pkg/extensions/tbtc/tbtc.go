@@ -19,7 +19,10 @@ import (
 
 var logger = log.Logger("tbtc-extension")
 
-const maxActAttempts = 3
+const (
+	maxActAttempts           = 3
+	pastEventsLookbackBlocks = 10000
+)
 
 // Initialize initializes extension specific to the TBTC application.
 func Initialize(ctx context.Context, chain Handle) error {
@@ -160,7 +163,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 
 		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
 			depositAddress,
-			0, // TODO: Should be something better that 0
+			t.pastEventsLookupStartBlock(),
 		)
 		if err != nil {
 			return err
@@ -278,7 +281,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	actFn := func(depositAddress string) error {
 		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
 			depositAddress,
-			0, // TODO: Should be something better that 0
+			t.pastEventsLookupStartBlock(),
 		)
 		if err != nil {
 			return err
@@ -323,7 +326,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 
 		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
 			depositAddress,
-			0, // TODO: Should be something better that 0
+			t.pastEventsLookupStartBlock(),
 		)
 		if err != nil {
 			return 0, err
@@ -594,6 +597,19 @@ func (t *tbtc) watchKeepClosed(
 	}
 
 	return signalChan, unsubscribe, nil
+}
+
+func (t *tbtc) pastEventsLookupStartBlock() uint64 {
+	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
+	if err != nil {
+		return 0 // if something went wrong, start from block `0`
+	}
+
+	if currentBlock <= pastEventsLookbackBlocks {
+		return 0
+	}
+
+	return currentBlock - pastEventsLookbackBlocks
 }
 
 // Computes the exponential backoff value for given iteration.
