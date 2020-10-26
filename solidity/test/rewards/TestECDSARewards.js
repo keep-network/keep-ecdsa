@@ -199,10 +199,13 @@ describe("ECDSARewards", () => {
 
       await rewardsContract.receiveReward(keepAddress)
 
-      // reward for the first interval: 7,128,000 KEEP
-      // keeps created: 8 => 891,000 KEEP per keep
-      // member receives: 891,000 / 3 = 297,000 (3 signers per keep)
-      const expectedBeneficiaryBalance = new BN(297000)
+      // Full allocation for the first interval would be
+      // 178,200,000 * 4% = 7,128,000.
+      // Because just 0.8% of minimum keep quota is met, the allocation is
+      // 7,128,000 * 0.8% = 57,024.
+      // keeps created: 8 => 7,128 KEEP per keep
+      // member receives: 7,128 / 3 = 2,376 (3 signers per keep)
+      const expectedBeneficiaryBalance = new BN(2376)
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
 
       // verify second keep in this interval
@@ -234,11 +237,14 @@ describe("ECDSARewards", () => {
 
       await rewardsContract.receiveRewards(keepAddresses)
 
-      // reward for the first interval: 7,128,000 KEEP
-      // keeps created: 10 => 712,800 KEEP per keep
-      // member receives: 712,800 / 3 = 237,600 (3 signers per keep)
-      // member was in 2 properly closed keeps: 237,600 * 2 = 475,200
-      const expectedBeneficiaryBalance = new BN(475200)
+      // Full allocation for the first interval would be
+      // 178,200,000 * 4% = 7,128,000.
+      // Because just 1% of minimum keep quota is met, the allocation is
+      // 7,128,000 * 1% = 71,280.
+      // keeps created: 10 => 7,128 KEEP per keep
+      // member receives: 7,128 / 3 = 2,376 (3 signers per keep)
+      // member was in 2 properly closed keeps: 2,376 * 2 = 4,752
+      const expectedBeneficiaryBalance = new BN(4752)
 
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
     })
@@ -250,7 +256,7 @@ describe("ECDSARewards", () => {
     // actual value.
     const precision = 1
 
-    for (let i = 0; i < beneficiaries; i++) {
+    for (let i = 0; i < beneficiaries.length; i++) {
       const actualBalance = (await keepToken.balanceOf(beneficiaries[i])).div(
         tokenDecimalMultiplier
       )
