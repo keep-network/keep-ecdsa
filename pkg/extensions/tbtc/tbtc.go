@@ -70,24 +70,6 @@ func Initialize(ctx context.Context, chain Handle) error {
 	return nil
 }
 
-type depositEventHandler func(depositAddress string)
-
-type watchDepositEventFn func(
-	handler depositEventHandler,
-) (subscription.EventSubscription, error)
-
-type watchKeepClosedFn func(depositAddress string) (
-	keepClosedChan chan struct{},
-	unsubscribe func(),
-	err error,
-)
-
-type submitDepositTxFn func(depositAddress string) error
-
-type backoffFn func(iteration int) time.Duration
-
-type timeoutFn func(depositAddress string) (time.Duration, error)
-
 type tbtc struct {
 	chain Handle
 }
@@ -397,6 +379,24 @@ func (t *tbtc) monitorProvideRedemptionProof(
 
 	return nil
 }
+
+type depositEventHandler func(depositAddress string)
+
+type watchDepositEventFn func(
+	handler depositEventHandler,
+) (subscription.EventSubscription, error)
+
+type watchKeepClosedFn func(depositAddress string) (
+	keepClosedChan chan struct{},
+	unsubscribe func(),
+	err error,
+)
+
+type submitDepositTxFn func(depositAddress string) error
+
+type backoffFn func(iteration int) time.Duration
+
+type timeoutFn func(depositAddress string) (time.Duration, error)
 
 // TODO:
 //  1. Filter incoming events by operator interest.
