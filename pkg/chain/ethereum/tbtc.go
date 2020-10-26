@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"sort"
 
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -194,7 +194,7 @@ func (tec *TBTCEthereumChain) OnDepositRedeemed(
 func (tec *TBTCEthereumChain) PastDepositRedemptionRequestedEvents(
 	depositAddress string,
 	startBlock uint64,
-) ([]*eth.DepositRedemptionRequestedEvent, error) {
+) ([]*chain.DepositRedemptionRequestedEvent, error) {
 	if !common.IsHexAddress(depositAddress) {
 		return nil, fmt.Errorf("incorrect deposit contract address")
 	}
@@ -210,10 +210,10 @@ func (tec *TBTCEthereumChain) PastDepositRedemptionRequestedEvents(
 		return nil, err
 	}
 
-	result := make([]*eth.DepositRedemptionRequestedEvent, 0)
+	result := make([]*chain.DepositRedemptionRequestedEvent, 0)
 
 	for _, event := range events {
-		result = append(result, &eth.DepositRedemptionRequestedEvent{
+		result = append(result, &chain.DepositRedemptionRequestedEvent{
 			DepositAddress:       event.DepositContractAddress.Hex(),
 			RequesterAddress:     event.Requester.Hex(),
 			Digest:               event.Digest,
