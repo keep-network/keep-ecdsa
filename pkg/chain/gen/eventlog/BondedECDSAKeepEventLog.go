@@ -28,10 +28,11 @@ func NewBondedECDSAKeepEventLog(
 }
 
 type BondedECDSAKeepSignatureSubmitted struct {
-	Digest     [32]byte
-	R          [32]byte
-	S          [32]byte
-	RecoveryID uint8
+	Digest      [32]byte
+	R           [32]byte
+	S           [32]byte
+	RecoveryID  uint8
+	BlockNumber uint64
 }
 
 func (bekel *BondedECDSAKeepEventLog) PastSignatureSubmittedEvents(
@@ -58,10 +59,11 @@ func (bekel *BondedECDSAKeepEventLog) PastSignatureSubmittedEvents(
 
 		event := iterator.Event
 		events = append(events, &BondedECDSAKeepSignatureSubmitted{
-			Digest:     event.Digest,
-			R:          event.R,
-			S:          event.S,
-			RecoveryID: event.RecoveryID,
+			Digest:      event.Digest,
+			R:           event.R,
+			S:           event.S,
+			RecoveryID:  event.RecoveryID,
+			BlockNumber: event.Raw.BlockNumber,
 		})
 	}
 

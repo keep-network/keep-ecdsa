@@ -46,10 +46,11 @@ type KeepTerminatedEvent struct {
 
 // SignatureSubmittedEvent is an event emitted when a keep submits a signature.
 type SignatureSubmittedEvent struct {
-	Digest     [32]byte
-	R          [32]byte
-	S          [32]byte
-	RecoveryID uint8
+	Digest      [32]byte
+	R           [32]byte
+	S           [32]byte
+	RecoveryID  uint8
+	BlockNumber uint64
 }
 
 // IsMember checks if list of members contains the given address.

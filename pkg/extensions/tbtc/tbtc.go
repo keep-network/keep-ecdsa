@@ -186,7 +186,10 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 
 		depositDigest := latestRedemptionRequestedEvent.Digest
 
-		for _, signatureSubmittedEvent := range signatureSubmittedEvents {
+		// Start iterating from the latest event.
+		for i := len(signatureSubmittedEvents) - 1; i >= 0; i-- {
+			signatureSubmittedEvent := signatureSubmittedEvents[i]
+
 			if bytes.Equal(signatureSubmittedEvent.Digest[:], depositDigest[:]) {
 				// We add 27 to the recovery ID to align it with ethereum and
 				// bitcoin protocols where 27 is added to recovery ID to

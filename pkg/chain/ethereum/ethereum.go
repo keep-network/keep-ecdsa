@@ -4,6 +4,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sort"
 	"time"
 
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/eventlog"
@@ -512,6 +513,7 @@ func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Ti
 
 // PastSignatureSubmittedEvents returns all signature submitted events
 // for the given keep which occurred after the provided start block.
+// Returned events are sorted by the block number in the ascending order.
 func (ec *EthereumChain) PastSignatureSubmittedEvents(
 	keepAddress string,
 	startBlock uint64,
@@ -540,12 +542,18 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 
 	for _, event := range events {
 		result = append(result, &eth.SignatureSubmittedEvent{
-			Digest:     event.Digest,
-			R:          event.R,
-			S:          event.S,
-			RecoveryID: event.RecoveryID,
+			Digest:      event.Digest,
+			R:           event.R,
+			S:           event.S,
+			RecoveryID:  event.RecoveryID,
+			BlockNumber: event.BlockNumber,
 		})
 	}
+
+	// Make sure events are sorted by block number in ascending order.
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].BlockNumber < result[j].BlockNumber
+	})
 
 	return result, nil
 }

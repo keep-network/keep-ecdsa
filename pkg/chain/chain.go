@@ -148,6 +148,8 @@ type BondedECDSAKeep interface {
 
 	// PastSignatureSubmittedEvents returns all signature submitted events
 	// for the given keep which occurred after the provided start block.
+	// All implementations should returns those events sorted by the
+	// block number in the ascending order.
 	PastSignatureSubmittedEvents(
 		keepAddress string,
 		startBlock uint64,
