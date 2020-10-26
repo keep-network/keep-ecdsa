@@ -123,8 +123,8 @@ contract ECDSARewards is Rewards {
     /// The rewards will be paid to the beneficiary
     /// of the operator requesting the withdrawal.
     /// @param interval The interval
-    function withdrawRewards(uint256 interval) external {
-        address beneficiary = tokenStaking.beneficiaryOf(msg.sender);
+    function withdrawRewards(uint256 interval, address operator) external {
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
 
 
             uint256 allocatedForBeneficiary
