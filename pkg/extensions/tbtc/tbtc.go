@@ -402,6 +402,7 @@ type timeoutFn func(depositAddress string) (time.Duration, error)
 //  1. Filter incoming events by operator interest.
 //  2. Incoming events deduplication.
 //  3. Resume monitoring after client restart.
+//  4. Handle chain reorgs (keep-ecdsa/pull/585#discussion_r511760283)
 func (t *tbtc) monitorAndAct(
 	ctx context.Context,
 	monitoringName string,
