@@ -152,11 +152,16 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 	}
 
 	var digest [32]byte
-	rand.Read(digest[:])
+	// #nosec G404 (insecure random number source (rand))
+	// Local chain implementation doesn't require secure randomness.
+	_, err := rand.Read(digest[:])
+	if err != nil {
+		return err
+	}
 
 	deposit.digest = digest
 
-	err := tlc.requestSignature(
+	err = tlc.requestSignature(
 		common.HexToAddress(deposit.keepAddress),
 		deposit.digest,
 	)
