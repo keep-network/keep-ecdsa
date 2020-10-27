@@ -31,6 +31,7 @@ func (c *localChain) createKeepWithMembers(
 		signatureRequestedHandlers: make(map[int]func(event *chain.SignatureRequestedEvent)),
 		keepClosedHandlers:         make(map[int]func(event *chain.KeepClosedEvent)),
 		keepTerminatedHandlers:     make(map[int]func(event *chain.KeepTerminatedEvent)),
+		signatureSubmittedEvents:   make([]*chain.SignatureSubmittedEvent, 0),
 	}
 
 	c.keeps[keepAddress] = localKeep

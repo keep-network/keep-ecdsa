@@ -7,6 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain/local"
+	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -32,6 +35,8 @@ type Chain interface {
 type localChain struct {
 	handlerMutex sync.Mutex
 
+	blockCounter chain.BlockCounter
+
 	keepAddresses []common.Address
 	keeps         map[common.Address]*localKeep
 
@@ -45,7 +50,13 @@ type localChain struct {
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
 func Connect() Chain {
+	blockCounter, err := local.BlockCounter()
+	if err != nil {
+		panic(err) // should never happen
+	}
+
 	return &localChain{
+		blockCounter:        blockCounter,
 		keeps:               make(map[common.Address]*localKeep),
 		keepCreatedHandlers: make(map[int]func(event *eth.BondedECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
@@ -145,6 +156,9 @@ func (lc *localChain) SubmitKeepPublicKey(
 	keepAddress common.Address,
 	publicKey [64]byte,
 ) error {
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
 	keep, ok := lc.keeps[keepAddress]
 	if !ok {
 		return fmt.Errorf(
@@ -171,6 +185,44 @@ func (lc *localChain) SubmitSignature(
 	keepAddress common.Address,
 	signature *ecdsa.Signature,
 ) error {
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	if keep.publicKey == [64]byte{} {
+		return fmt.Errorf(
+			"keep [%s] has no public key",
+			keepAddress.String(),
+		)
+	}
+
+	rBytes, err := byteutils.BytesTo32Byte(signature.R.Bytes())
+	if err != nil {
+		return err
+	}
+
+	sBytes, err := byteutils.BytesTo32Byte(signature.S.Bytes())
+	if err != nil {
+		return err
+	}
+
+	keep.signatureSubmittedEvents = append(
+		keep.signatureSubmittedEvents,
+		&eth.SignatureSubmittedEvent{
+			Digest:     keep.latestDigest,
+			R:          rBytes,
+			S:          sBytes,
+			RecoveryID: uint8(signature.RecoveryID),
+		},
+	)
+
 	return nil
 }
 
@@ -197,7 +249,7 @@ func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
 }
 
 func (lc *localChain) BlockCounter() chain.BlockCounter {
-	panic("implement")
+	return lc.blockCounter
 }
 
 func (lc *localChain) IsRegisteredForApplication(application common.Address) (bool, error) {
@@ -355,7 +407,15 @@ func (lc *localChain) PastSignatureSubmittedEvents(
 	keepAddress string,
 	startBlock uint64,
 ) ([]*eth.SignatureSubmittedEvent, error) {
-	panic("not implemented") // TODO: Implementation for unit testing purposes.
+	lc.handlerMutex.Lock()
+	defer lc.handlerMutex.Unlock()
+
+	keep, ok := lc.keeps[common.HexToAddress(keepAddress)]
+	if !ok {
+		return nil, fmt.Errorf("no keep with address [%v]", keepAddress)
+	}
+
+	return keep.signatureSubmittedEvents, nil
 }
 
 func (lc *localChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {

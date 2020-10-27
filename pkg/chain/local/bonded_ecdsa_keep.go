@@ -16,14 +16,17 @@ const (
 )
 
 type localKeep struct {
-	publicKey [64]byte
-	members   []common.Address
-	status    keepStatus
+	publicKey    [64]byte
+	members      []common.Address
+	status       keepStatus
+	latestDigest [32]byte
 
 	signatureRequestedHandlers map[int]func(event *eth.SignatureRequestedEvent)
 
 	keepClosedHandlers     map[int]func(event *eth.KeepClosedEvent)
 	keepTerminatedHandlers map[int]func(event *eth.KeepTerminatedEvent)
+
+	signatureSubmittedEvents []*eth.SignatureSubmittedEvent
 }
 
 func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byte) error {
@@ -37,6 +40,8 @@ func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byt
 			keepAddress.String(),
 		)
 	}
+
+	keep.latestDigest = digest
 
 	signatureRequestedEvent := &eth.SignatureRequestedEvent{
 		Digest: digest,

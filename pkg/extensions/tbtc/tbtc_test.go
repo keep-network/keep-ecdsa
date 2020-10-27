@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/big"
 	"math/rand"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
@@ -367,6 +371,69 @@ func TestRetrievePubkey_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
 	}
 }
 
+func TestProvideRedemptionSignature_TimeoutElapsed(t *testing.T) {
+	ctx := context.Background()
+	tbtcChain := local.NewTBTCLocalChain()
+	tbtc := newTBTC(tbtcChain)
+
+	err := tbtc.monitorProvideRedemptionSignature(
+		ctx,
+		constantBackoff,
+		timeout,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tbtcChain.CreateDeposit(depositAddress)
+
+	_, err = submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.RedeemDeposit(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a bit longer than the monitoring timeout
+	// to make sure the potential transaction completes
+	time.Sleep(2 * timeout)
+
+	expectedProvideRedemptionSignatureCalls := 1
+	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().ProvideRedemptionSignatureCalls()
+	if expectedProvideRedemptionSignatureCalls != actualProvideRedemptionSignatureCalls {
+		t.Errorf(
+			"unexpected number of ProvideRedemptionSignature calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedProvideRedemptionSignatureCalls,
+			actualProvideRedemptionSignatureCalls,
+		)
+	}
+
+	depositSignature, err := tbtcChain.DepositSignature(depositAddress)
+	if err != nil {
+		t.Errorf("unexpected error while fetching deposit pubkey: [%v]", err)
+	}
+
+	if !areChainSignaturesEqual(keepSignature, depositSignature) {
+		t.Errorf(
+			"unexpected signature\n"+
+				"expected: [%+v]\n"+
+				"actual:   [%+v]",
+			keepSignature,
+			depositSignature,
+		)
+	}
+}
+
 func submitKeepPublicKey(
 	depositAddress string,
 	tbtcChain *local.TBTCLocalChain,
@@ -388,6 +455,68 @@ func submitKeepPublicKey(
 	}
 
 	return keepPubkey, nil
+}
+
+func submitKeepSignature(
+	depositAddress string,
+	tbtcChain *local.TBTCLocalChain,
+) (*local.Signature, error) {
+	keepAddress, err := tbtcChain.KeepAddress(depositAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	signature := &ecdsa.Signature{
+		R:          new(big.Int).SetUint64(rand.Uint64()),
+		S:          new(big.Int).SetUint64(rand.Uint64()),
+		RecoveryID: rand.Intn(4),
+	}
+
+	err = tbtcChain.SubmitSignature(
+		common.HexToAddress(keepAddress),
+		signature,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return toChainSignature(signature)
+}
+
+func toChainSignature(signature *ecdsa.Signature) (*local.Signature, error) {
+	v := uint8(27 + signature.RecoveryID)
+
+	r, err := byteutils.BytesTo32Byte(signature.R.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := byteutils.BytesTo32Byte(signature.S.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	return &local.Signature{
+		V: v,
+		R: r,
+		S: s,
+	}, nil
+}
+
+func areChainSignaturesEqual(signature1, signature2 *local.Signature) bool {
+	if signature1.V != signature2.V {
+		return false
+	}
+
+	if !bytes.Equal(signature1.R[:], signature2.R[:]) {
+		return false
+	}
+
+	if !bytes.Equal(signature1.S[:], signature2.S[:]) {
+		return false
+	}
+
+	return true
 }
 
 func closeKeep(
