@@ -230,8 +230,82 @@ describe("ECDSARewards", () => {
         })
       }
 
-      // 2,376 * 2 = 4,752
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance.muln(2))
+    })
+
+    it("should revert when rewards have been withdrawn already", async () => {
+      for (let i = 0; i < 8; i++) {
+        await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
+      }
+
+      await timeJumpToEndOfIntervalIfApplicable(0)
+
+      // mark first keep as closed
+      const keepAddress0 = await keepFactory.getKeepAtIndex(0)
+      const keep0 = await BondedECDSAKeepStub.at(keepAddress0)
+      await keep0.publicMarkAsClosed()
+
+      await rewardsContract.receiveReward(keepAddress0)
+
+      for (let i = 0; i < operators.length; i++) {
+        await rewardsContract.withdrawRewards(0, operators[i], {
+          from: operators[i],
+        })
+      }
+
+      for (let i = 0; i < operators.length; i++) {
+        await expectRevert(
+          rewardsContract.withdrawRewards(0, operators[i], {
+            from: operators[i],
+          }),
+          "No rewards to withdraw"
+        )
+      }
+    })
+
+    it("should correctly track rewards distribution", async () => {
+      for (let i = 0; i < 8; i++) {
+        await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
+      }
+
+      await timeJumpToEndOfIntervalIfApplicable(0)
+
+      // mark first keep as closed
+      const keepAddress0 = await keepFactory.getKeepAtIndex(0)
+      const keep0 = await BondedECDSAKeepStub.at(keepAddress0)
+      await keep0.publicMarkAsClosed()
+
+      // mark second keep as closed
+      const keepAddress1 = await keepFactory.getKeepAtIndex(1)
+      const keep1 = await BondedECDSAKeepStub.at(keepAddress1)
+      await keep1.publicMarkAsClosed()
+
+      await rewardsContract.receiveReward(keepAddress0)
+      await rewardsContract.receiveReward(keepAddress1)
+
+      // Full allocation for the first interval would be
+      // 178,200,000 * 4% = 7,128,000.
+      // Because just 0.8% of minimum keep quota is met, the allocation is
+      // 7,128,000 * 0.8% = 57,024.
+      // keeps created: 8 => 7,128 KEEP per keep
+      // member receives: 7,128 / 3 = 2,376 (3 signers per keep)
+      const expectedBeneficiaryBalance = new BN(2376)
+      // 2,376 * 2 = 4,752
+      const expectedBalanceFromTwoKeeps = expectedBeneficiaryBalance.muln(2)
+
+      await assertAllocatedRewards(expectedBalanceFromTwoKeeps, 0, operators)
+      await assertWithdrawableRewards(expectedBalanceFromTwoKeeps, 0, operators)
+      await assertWithdrawnRewards(new BN(0), 0, operators)
+
+      for (let i = 0; i < operators.length; i++) {
+        await rewardsContract.withdrawRewards(0, operators[i], {
+          from: operators[i],
+        })
+      }
+
+      await assertAllocatedRewards(expectedBalanceFromTwoKeeps, 0, operators)
+      await assertWithdrawableRewards(new BN(0), 0, operators)
+      await assertWithdrawnRewards(expectedBalanceFromTwoKeeps, 0, operators)
     })
 
     it("should correctly receive rewards from multiple keeps", async () => {
@@ -283,6 +357,55 @@ describe("ECDSARewards", () => {
 
       expect(actualBalance).to.gte.BN(expectedBalance.subn(precision))
       expect(actualBalance).to.lte.BN(expectedBalance.addn(precision))
+    }
+  }
+
+  async function assertAllocatedRewards(expectedBalance, interval, operators) {
+    const precision = 1
+
+    for (let i = 0; i < operators.length; i++) {
+      const actualWithdrawnRewards = await rewardsContract.getAllocatedRewards(
+        interval,
+        operators[i]
+      )
+      const actual = actualWithdrawnRewards.div(tokenDecimalMultiplier)
+
+      expect(actual).to.gte.BN(expectedBalance.subn(precision))
+      expect(actual).to.lte.BN(expectedBalance.addn(precision))
+    }
+  }
+
+  async function assertWithdrawnRewards(expectedBalance, interval, operators) {
+    const precision = 1
+
+    for (let i = 0; i < operators.length; i++) {
+      const actualWithdrawnRewards = await rewardsContract.getWithdrawnRewards(
+        interval,
+        operators[i]
+      )
+      const actual = actualWithdrawnRewards.div(tokenDecimalMultiplier)
+
+      expect(actual).to.gte.BN(expectedBalance.subn(precision))
+      expect(actual).to.lte.BN(expectedBalance.addn(precision))
+    }
+  }
+
+  async function assertWithdrawableRewards(
+    expectedBalance,
+    interval,
+    operators
+  ) {
+    const precision = 1
+
+    for (let i = 0; i < operators.length; i++) {
+      const actualWithdrawnRewards = await rewardsContract.getWithdrawableRewards(
+        interval,
+        operators[i]
+      )
+      const actual = actualWithdrawnRewards.div(tokenDecimalMultiplier)
+
+      expect(actual).to.gte.BN(expectedBalance.subn(precision))
+      expect(actual).to.lte.BN(expectedBalance.addn(precision))
     }
   }
 
