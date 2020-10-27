@@ -93,7 +93,7 @@ contract ECDSARewards is Rewards {
     // The amount of tokens each individual beneficiary address
     // can receive in a single interval is capped.
     // TODO: set actual value
-    uint256 internal constant beneficiaryRewardCap = 400000 * 10**18;
+    uint256 internal beneficiaryRewardCap = 400000 * 10**18;
     // The total amount of rewards allocated to the given beneficiary address,
     // in the given interval.
     // `allocatedRewards[beneficiary][interval] -> amount`

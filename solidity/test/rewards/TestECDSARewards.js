@@ -2,7 +2,7 @@ const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 
 const BondedECDSAKeepStub = contract.fromArtifact("BondedECDSAKeepStub")
-const ECDSARewards = contract.fromArtifact("ECDSARewards")
+const ECDSARewards = contract.fromArtifact("ECDSARewardsStub")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
 const {initialize, fund, createMembers} = require("./rewardsSetup")
 
@@ -11,7 +11,7 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe("ECDSARewards", () => {
+describe.only("ECDSARewards", () => {
   let keepToken
   let tokenStaking
   let keepFactory
@@ -306,6 +306,42 @@ describe("ECDSARewards", () => {
       await assertAllocatedRewards(expectedBalanceFromTwoKeeps, 0, operators)
       await assertWithdrawableRewards(new BN(0), 0, operators)
       await assertWithdrawnRewards(expectedBalanceFromTwoKeeps, 0, operators)
+    })
+
+    it("should cap the maximum reward per keep operator", async () => {
+      for (let i = 0; i < 10; i++) {
+        await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
+      }
+
+      await timeJumpToEndOfIntervalIfApplicable(0)
+
+      const keepAddresses = []
+      // Mark 5 keeps as properly closed
+      for (let i = 0; i < 5; i++) {
+        const keepAddress = await keepFactory.getKeepAtIndex(i)
+        keepAddresses.push(keepAddress)
+        const keep = await BondedECDSAKeepStub.at(keepAddress)
+        await keep.publicMarkAsClosed()
+      }
+
+      await rewardsContract.receiveRewards(keepAddresses)
+      for (let i = 0; i < operators.length; i++) {
+        await rewardsContract.withdrawRewards(0, operators[i], {
+          from: operators[i],
+        })
+      }
+
+      // Full allocation for the first interval would be
+      // 178,200,000 * 4% = 7,128,000.
+      // Because just 1% of minimum keep quota is met, the allocation is
+      // 7,128,000 * 1% = 71,280.
+      // keeps created: 10 => 7,128 KEEP per keep
+      // member receives: 7,128 / 3 = 2,376 (3 signers per keep)
+      // each member was in 5 properly closed keeps: 2,376 * 5 = 11,880
+      // 11,880 exceeds the maximum rewards cap per beneficiary, which is 10,000
+      // expected beneficiary balance should be equal to max cap.
+      const expectedBeneficiaryBalance = new BN(10000)
+      await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
     })
 
     it("should correctly receive rewards from multiple keeps", async () => {
