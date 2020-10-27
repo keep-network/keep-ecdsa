@@ -327,6 +327,43 @@ func (tec *TBTCEthereumChain) IncreaseRedemptionFee(
 	return nil
 }
 
+// ProvideRedemptionProof provides the redemption proof for the provided deposit.
+func (tec *TBTCEthereumChain) ProvideRedemptionProof(
+	depositAddress string,
+	txVersion [4]uint8,
+	txInputVector []uint8,
+	txOutputVector []uint8,
+	txLocktime [4]uint8,
+	merkleProof []uint8,
+	txIndexInBlock *big.Int,
+	bitcoinHeaders []uint8,
+) error {
+	deposit, err := tec.getDepositContract(depositAddress)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := deposit.ProvideRedemptionProof(
+		txVersion,
+		txInputVector,
+		txOutputVector,
+		txLocktime,
+		merkleProof,
+		txIndexInBlock,
+		bitcoinHeaders,
+	)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf(
+		"submitted ProvideRedemptionProof transaction with hash: [%x]",
+		transaction.Hash(),
+	)
+
+	return nil
+}
+
 func (tec *TBTCEthereumChain) getDepositContract(
 	address string,
 ) (*contract.Deposit, error) {

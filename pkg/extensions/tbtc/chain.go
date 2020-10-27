@@ -1,6 +1,8 @@
 package tbtc
 
 import (
+	"math/big"
+
 	"github.com/keep-network/keep-common/pkg/subscription"
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
@@ -39,6 +41,19 @@ type Deposit interface {
 		depositAddress string,
 		previousOutputValueBytes [8]uint8,
 		newOutputValueBytes [8]uint8,
+	) error
+
+	// ProvideRedemptionProof provides the redemption proof for the
+	// provided deposit.
+	ProvideRedemptionProof(
+		depositAddress string,
+		txVersion [4]uint8,
+		txInputVector []uint8,
+		txOutputVector []uint8,
+		txLocktime [4]uint8,
+		merkleProof []uint8,
+		txIndexInBlock *big.Int,
+		bitcoinHeaders []uint8,
 	) error
 }
 

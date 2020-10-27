@@ -196,9 +196,10 @@ func (lc *localChain) SubmitSignature(
 		)
 	}
 
-	if keep.publicKey == [64]byte{} {
+	// force the right workflow sequence
+	if keep.latestDigest == [32]byte{} {
 		return fmt.Errorf(
-			"keep [%s] has no public key",
+			"keep [%s] is not awaiting for a signature",
 			keepAddress.String(),
 		)
 	}

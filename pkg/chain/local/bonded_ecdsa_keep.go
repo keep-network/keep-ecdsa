@@ -41,6 +41,14 @@ func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byt
 		)
 	}
 
+	// force the right workflow sequence
+	if keep.publicKey == [64]byte{} {
+		return fmt.Errorf(
+			"public key for keep [%s] is not set",
+			keepAddress.String(),
+		)
+	}
+
 	keep.latestDigest = digest
 
 	signatureRequestedEvent := &eth.SignatureRequestedEvent{

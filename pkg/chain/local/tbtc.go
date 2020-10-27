@@ -3,6 +3,7 @@ package local
 import (
 	"bytes"
 	"fmt"
+	"math/big"
 	"math/rand"
 	"sync"
 
@@ -15,8 +16,10 @@ import (
 type localDeposit struct {
 	keepAddress string
 	pubkey      []byte
-	digest      [32]byte
-	signature   *Signature
+
+	redemptionDigest    [32]byte
+	redemptionSignature *Signature
+	redemptionProof     *TxProof
 
 	redemptionRequestedEvents []*chain.DepositRedemptionRequestedEvent
 }
@@ -26,6 +29,8 @@ type Signature struct {
 	R [32]uint8
 	S [32]uint8
 }
+
+type TxProof struct{}
 
 type localChainLogger struct {
 	retrieveSignerPubkeyCalls       int
@@ -55,6 +60,8 @@ type TBTCLocalChain struct {
 
 	logger *localChainLogger
 
+	alwaysFailingTransactions map[string]bool
+
 	deposits                              map[string]*localDeposit
 	depositCreatedHandlers                map[int]func(depositAddress string)
 	depositRegisteredPubkeyHandlers       map[int]func(depositAddress string)
@@ -67,6 +74,7 @@ func NewTBTCLocalChain() *TBTCLocalChain {
 	return &TBTCLocalChain{
 		localChain:                            Connect().(*localChain),
 		logger:                                &localChainLogger{},
+		alwaysFailingTransactions:             make(map[string]bool),
 		deposits:                              make(map[string]*localDeposit),
 		depositCreatedHandlers:                make(map[int]func(depositAddress string)),
 		depositRegisteredPubkeyHandlers:       make(map[int]func(depositAddress string)),
@@ -144,26 +152,29 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 		return fmt.Errorf("no deposit with address [%v]", depositAddress)
 	}
 
-	if !bytes.Equal(deposit.digest[:], make([]byte, len(deposit.digest))) {
+	if !bytes.Equal(
+		deposit.redemptionDigest[:],
+		make([]byte, len(deposit.redemptionDigest)),
+	) {
 		return fmt.Errorf(
 			"redemption of deposit [%v] already requested",
 			depositAddress,
 		)
 	}
 
-	var digest [32]byte
+	var randomDigest [32]byte
 	// #nosec G404 (insecure random number source (rand))
 	// Local chain implementation doesn't require secure randomness.
-	_, err := rand.Read(digest[:])
+	_, err := rand.Read(randomDigest[:])
 	if err != nil {
 		return err
 	}
 
-	deposit.digest = digest
+	deposit.redemptionDigest = randomDigest
 
 	err = tlc.requestSignature(
 		common.HexToAddress(deposit.keepAddress),
-		deposit.digest,
+		deposit.redemptionDigest,
 	)
 	if err != nil {
 		return err
@@ -179,7 +190,7 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 		deposit.redemptionRequestedEvents,
 		&chain.DepositRedemptionRequestedEvent{
 			DepositAddress:       depositAddress,
-			Digest:               deposit.digest,
+			Digest:               deposit.redemptionDigest,
 			UtxoValue:            nil,
 			RedeemerOutputScript: nil,
 			RequestedFee:         nil,
@@ -332,19 +343,23 @@ func (tlc *TBTCLocalChain) ProvideRedemptionSignature(
 
 	tlc.logger.logProvideRedemptionSignatureCall()
 
+	if _, exists := tlc.alwaysFailingTransactions["ProvideRedemptionSignature"]; exists {
+		return fmt.Errorf("always failing transaction")
+	}
+
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
 		return fmt.Errorf("no deposit with address [%v]", depositAddress)
 	}
 
-	if deposit.signature != nil {
+	if deposit.redemptionSignature != nil {
 		return fmt.Errorf(
 			"redemption signature for deposit [%v] already provided",
 			depositAddress,
 		)
 	}
 
-	deposit.signature = &Signature{
+	deposit.redemptionSignature = &Signature{
 		V: v,
 		R: r,
 		S: s,
@@ -365,6 +380,42 @@ func (tlc *TBTCLocalChain) IncreaseRedemptionFee(
 	newOutputValueBytes [8]uint8,
 ) error {
 	panic("not implemented") // TODO: Implementation for unit testing purposes.
+}
+
+func (tlc *TBTCLocalChain) ProvideRedemptionProof(
+	depositAddress string,
+	txVersion [4]uint8,
+	txInputVector []uint8,
+	txOutputVector []uint8,
+	txLocktime [4]uint8,
+	merkleProof []uint8,
+	txIndexInBlock *big.Int,
+	bitcoinHeaders []uint8,
+) error {
+	tlc.mutex.Lock()
+	defer tlc.mutex.Unlock()
+
+	deposit, ok := tlc.deposits[depositAddress]
+	if !ok {
+		return fmt.Errorf("no deposit with address [%v]", depositAddress)
+	}
+
+	if deposit.redemptionProof != nil {
+		return fmt.Errorf(
+			"redemption proof for deposit [%v] already provided",
+			depositAddress,
+		)
+	}
+
+	deposit.redemptionProof = &TxProof{}
+
+	for _, handler := range tlc.depositRedeemedHandlers {
+		go func(handler func(depositAddress string), depositAddress string) {
+			handler(depositAddress)
+		}(handler, depositAddress)
+	}
+
+	return nil
 }
 
 func (tlc *TBTCLocalChain) DepositPubkey(
@@ -388,7 +439,7 @@ func (tlc *TBTCLocalChain) DepositPubkey(
 	return deposit.pubkey, nil
 }
 
-func (tlc *TBTCLocalChain) DepositSignature(
+func (tlc *TBTCLocalChain) DepositRedemptionSignature(
 	depositAddress string,
 ) (*Signature, error) {
 	tlc.mutex.Lock()
@@ -399,14 +450,44 @@ func (tlc *TBTCLocalChain) DepositSignature(
 		return nil, fmt.Errorf("no deposit with address [%v]", depositAddress)
 	}
 
-	if deposit.signature == nil {
+	if deposit.redemptionSignature == nil {
 		return nil, fmt.Errorf(
-			"no signature for deposit [%v]",
+			"no redemption signature for deposit [%v]",
 			depositAddress,
 		)
 	}
 
-	return deposit.signature, nil
+	return deposit.redemptionSignature, nil
+}
+
+func (tlc *TBTCLocalChain) DepositRedemptionProof(
+	depositAddress string,
+) (*TxProof, error) {
+	tlc.mutex.Lock()
+	defer tlc.mutex.Unlock()
+
+	deposit, ok := tlc.deposits[depositAddress]
+	if !ok {
+		return nil, fmt.Errorf("no deposit with address [%v]", depositAddress)
+	}
+
+	if deposit.redemptionProof == nil {
+		return nil, fmt.Errorf(
+			"no redemption proof for deposit [%v]",
+			depositAddress,
+		)
+	}
+
+	return deposit.redemptionProof, nil
+}
+
+func (tlc *TBTCLocalChain) SetAlwaysFailingTransactions(transactions ...string) {
+	tlc.mutex.Lock()
+	defer tlc.mutex.Unlock()
+
+	for _, tx := range transactions {
+		tlc.alwaysFailingTransactions[tx] = true
+	}
 }
 
 func (tlc *TBTCLocalChain) Logger() *localChainLogger {
