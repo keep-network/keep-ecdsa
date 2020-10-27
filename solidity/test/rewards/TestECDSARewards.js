@@ -11,7 +11,7 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe.only("ECDSARewards", () => {
+describe("ECDSARewards", () => {
   let keepToken
   let tokenStaking
   let keepFactory
