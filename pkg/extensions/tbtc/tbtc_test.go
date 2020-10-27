@@ -48,7 +48,8 @@ func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedRetrieveSignerPubkeyCalls := 1
-	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().RetrieveSignerPubkeyCalls()
+	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().
+		RetrieveSignerPubkeyCalls()
 	if expectedRetrieveSignerPubkeyCalls != actualRetrieveSignerPubkeyCalls {
 		t.Errorf(
 			"unexpected number of RetrieveSignerPubkey calls\n"+
@@ -61,7 +62,10 @@ func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
 
 	depositPubkey, err := tbtcChain.DepositPubkey(depositAddress)
 	if err != nil {
-		t.Errorf("unexpected error while fetching deposit pubkey: [%v]", err)
+		t.Errorf(
+			"unexpected error while fetching deposit pubkey: [%v]",
+			err,
+		)
 	}
 
 	if !bytes.Equal(keepPubkey[:], depositPubkey) {
@@ -111,7 +115,8 @@ func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedRetrieveSignerPubkeyCalls := 1
-	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().RetrieveSignerPubkeyCalls()
+	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().
+		RetrieveSignerPubkeyCalls()
 	if expectedRetrieveSignerPubkeyCalls != actualRetrieveSignerPubkeyCalls {
 		t.Errorf(
 			"unexpected number of RetrieveSignerPubkey calls\n"+
@@ -124,7 +129,10 @@ func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 
 	depositPubkey, err := tbtcChain.DepositPubkey(depositAddress)
 	if err != nil {
-		t.Errorf("unexpected error while fetching deposit pubkey: [%v]", err)
+		t.Errorf(
+			"unexpected error while fetching deposit pubkey: [%v]",
+			err,
+		)
 	}
 
 	if !bytes.Equal(keepPubkey[:], depositPubkey) {
@@ -173,7 +181,8 @@ func TestRetrievePubkey_KeepClosedEventOccurred(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedRetrieveSignerPubkeyCalls := 0
-	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().RetrieveSignerPubkeyCalls()
+	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().
+		RetrieveSignerPubkeyCalls()
 	if expectedRetrieveSignerPubkeyCalls != actualRetrieveSignerPubkeyCalls {
 		t.Errorf(
 			"unexpected number of RetrieveSignerPubkey calls\n"+
@@ -186,7 +195,10 @@ func TestRetrievePubkey_KeepClosedEventOccurred(t *testing.T) {
 
 	_, err = tbtcChain.DepositPubkey(depositAddress)
 
-	expectedError := fmt.Errorf("no pubkey for deposit [%v]", depositAddress)
+	expectedError := fmt.Errorf(
+		"no pubkey for deposit [%v]",
+		depositAddress,
+	)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\n"+
@@ -233,7 +245,8 @@ func TestRetrievePubkey_KeepTerminatedEventOccurred(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedRetrieveSignerPubkeyCalls := 0
-	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().RetrieveSignerPubkeyCalls()
+	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().
+		RetrieveSignerPubkeyCalls()
 	if expectedRetrieveSignerPubkeyCalls != actualRetrieveSignerPubkeyCalls {
 		t.Errorf(
 			"unexpected number of RetrieveSignerPubkey calls\n"+
@@ -246,7 +259,10 @@ func TestRetrievePubkey_KeepTerminatedEventOccurred(t *testing.T) {
 
 	_, err = tbtcChain.DepositPubkey(depositAddress)
 
-	expectedError := fmt.Errorf("no pubkey for deposit [%v]", depositAddress)
+	expectedError := fmt.Errorf(
+		"no pubkey for deposit [%v]",
+		depositAddress,
+	)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\n"+
@@ -282,7 +298,8 @@ func TestRetrievePubkey_ActionFailed(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedRetrieveSignerPubkeyCalls := 3
-	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().RetrieveSignerPubkeyCalls()
+	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().
+		RetrieveSignerPubkeyCalls()
 	if expectedRetrieveSignerPubkeyCalls != actualRetrieveSignerPubkeyCalls {
 		t.Errorf(
 			"unexpected number of RetrieveSignerPubkey calls\n"+
@@ -318,7 +335,8 @@ func TestRetrievePubkey_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) 
 	time.Sleep(2 * timeout)
 
 	expectedRetrieveSignerPubkeyCalls := 0
-	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().RetrieveSignerPubkeyCalls()
+	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().
+		RetrieveSignerPubkeyCalls()
 	if expectedRetrieveSignerPubkeyCalls != actualRetrieveSignerPubkeyCalls {
 		t.Errorf(
 			"unexpected number of RetrieveSignerPubkey calls\n"+
@@ -359,8 +377,10 @@ func TestRetrievePubkey_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedRetrieveSignerPubkeyCalls := 0
-	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().RetrieveSignerPubkeyCalls()
-	if expectedRetrieveSignerPubkeyCalls != actualRetrieveSignerPubkeyCalls {
+	actualRetrieveSignerPubkeyCalls := tbtcChain.Logger().
+		RetrieveSignerPubkeyCalls()
+	if expectedRetrieveSignerPubkeyCalls !=
+		actualRetrieveSignerPubkeyCalls {
 		t.Errorf(
 			"unexpected number of RetrieveSignerPubkey calls\n"+
 				"expected: [%v]\n"+
@@ -407,8 +427,10 @@ func TestProvideRedemptionSignature_TimeoutElapsed(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedProvideRedemptionSignatureCalls := 1
-	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().ProvideRedemptionSignatureCalls()
-	if expectedProvideRedemptionSignatureCalls != actualProvideRedemptionSignatureCalls {
+	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().
+		ProvideRedemptionSignatureCalls()
+	if expectedProvideRedemptionSignatureCalls !=
+		actualProvideRedemptionSignatureCalls {
 		t.Errorf(
 			"unexpected number of ProvideRedemptionSignature calls\n"+
 				"expected: [%v]\n"+
@@ -418,9 +440,14 @@ func TestProvideRedemptionSignature_TimeoutElapsed(t *testing.T) {
 		)
 	}
 
-	depositSignature, err := tbtcChain.DepositRedemptionSignature(depositAddress)
+	depositSignature, err := tbtcChain.DepositRedemptionSignature(
+		depositAddress,
+	)
 	if err != nil {
-		t.Errorf("unexpected error while fetching deposit signature: [%v]", err)
+		t.Errorf(
+			"unexpected error while fetching deposit signature: [%v]",
+			err,
+		)
 	}
 
 	if !areChainSignaturesEqual(keepSignature, depositSignature) {
@@ -434,7 +461,9 @@ func TestProvideRedemptionSignature_TimeoutElapsed(t *testing.T) {
 	}
 }
 
-func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignature(t *testing.T) {
+func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignature(
+	t *testing.T,
+) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
 	tbtc := newTBTC(tbtcChain)
@@ -485,8 +514,10 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignat
 	time.Sleep(2 * timeout)
 
 	expectedProvideRedemptionSignatureCalls := 1
-	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().ProvideRedemptionSignatureCalls()
-	if expectedProvideRedemptionSignatureCalls != actualProvideRedemptionSignatureCalls {
+	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().
+		ProvideRedemptionSignatureCalls()
+	if expectedProvideRedemptionSignatureCalls !=
+		actualProvideRedemptionSignatureCalls {
 		t.Errorf(
 			"unexpected number of ProvideRedemptionSignature calls\n"+
 				"expected: [%v]\n"+
@@ -496,9 +527,14 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignat
 		)
 	}
 
-	depositSignature, err := tbtcChain.DepositRedemptionSignature(depositAddress)
+	depositSignature, err := tbtcChain.DepositRedemptionSignature(
+		depositAddress,
+	)
 	if err != nil {
-		t.Errorf("unexpected error while fetching deposit signature: [%v]", err)
+		t.Errorf(
+			"unexpected error while fetching deposit signature: [%v]",
+			err,
+		)
 	}
 
 	if !areChainSignaturesEqual(keepSignature, depositSignature) {
@@ -512,7 +548,9 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignat
 	}
 }
 
-func TestProvideRedemptionSignature_StopEventOccurred_DepositRedeemed(t *testing.T) {
+func TestProvideRedemptionSignature_StopEventOccurred_DepositRedeemed(
+	t *testing.T,
+) {
 	ctx := context.Background()
 	tbtcChain := local.NewTBTCLocalChain()
 	tbtc := newTBTC(tbtcChain)
@@ -567,8 +605,10 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositRedeemed(t *testing
 	time.Sleep(2 * timeout)
 
 	expectedProvideRedemptionSignatureCalls := 0
-	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().ProvideRedemptionSignatureCalls()
-	if expectedProvideRedemptionSignatureCalls != actualProvideRedemptionSignatureCalls {
+	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().
+		ProvideRedemptionSignatureCalls()
+	if expectedProvideRedemptionSignatureCalls !=
+		actualProvideRedemptionSignatureCalls {
 		t.Errorf(
 			"unexpected number of ProvideRedemptionSignature calls\n"+
 				"expected: [%v]\n"+
@@ -633,8 +673,10 @@ func TestProvideRedemptionSignature_KeepClosedEventOccurred(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedProvideRedemptionSignatureCalls := 0
-	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().ProvideRedemptionSignatureCalls()
-	if expectedProvideRedemptionSignatureCalls != actualProvideRedemptionSignatureCalls {
+	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().
+		ProvideRedemptionSignatureCalls()
+	if expectedProvideRedemptionSignatureCalls !=
+		actualProvideRedemptionSignatureCalls {
 		t.Errorf(
 			"unexpected number of ProvideRedemptionSignature calls\n"+
 				"expected: [%v]\n"+
@@ -706,8 +748,10 @@ func TestProvideRedemptionSignature_KeepTerminatedEventOccurred(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedProvideRedemptionSignatureCalls := 0
-	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().ProvideRedemptionSignatureCalls()
-	if expectedProvideRedemptionSignatureCalls != actualProvideRedemptionSignatureCalls {
+	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().
+		ProvideRedemptionSignatureCalls()
+	if expectedProvideRedemptionSignatureCalls !=
+		actualProvideRedemptionSignatureCalls {
 		t.Errorf(
 			"unexpected number of ProvideRedemptionSignature calls\n"+
 				"expected: [%v]\n"+
@@ -773,8 +817,10 @@ func TestProvideRedemptionSignature_ActionFailed(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedProvideRedemptionSignatureCalls := 3
-	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().ProvideRedemptionSignatureCalls()
-	if expectedProvideRedemptionSignatureCalls != actualProvideRedemptionSignatureCalls {
+	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().
+		ProvideRedemptionSignatureCalls()
+	if expectedProvideRedemptionSignatureCalls !=
+		actualProvideRedemptionSignatureCalls {
 		t.Errorf(
 			"unexpected number of ProvideRedemptionSignature calls\n"+
 				"expected: [%v]\n"+
@@ -785,7 +831,9 @@ func TestProvideRedemptionSignature_ActionFailed(t *testing.T) {
 	}
 }
 
-func TestProvideRedemptionSignature_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) {
+func TestProvideRedemptionSignature_ContextCancelled_WithoutWorkingMonitoring(
+	t *testing.T,
+) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	tbtcChain := local.NewTBTCLocalChain()
 	tbtc := newTBTC(tbtcChain)
@@ -819,8 +867,10 @@ func TestProvideRedemptionSignature_ContextCancelled_WithoutWorkingMonitoring(t 
 	time.Sleep(2 * timeout)
 
 	expectedProvideRedemptionSignatureCalls := 0
-	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().ProvideRedemptionSignatureCalls()
-	if expectedProvideRedemptionSignatureCalls != actualProvideRedemptionSignatureCalls {
+	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().
+		ProvideRedemptionSignatureCalls()
+	if expectedProvideRedemptionSignatureCalls !=
+		actualProvideRedemptionSignatureCalls {
 		t.Errorf(
 			"unexpected number of ProvideRedemptionSignature calls\n"+
 				"expected: [%v]\n"+
@@ -831,7 +881,9 @@ func TestProvideRedemptionSignature_ContextCancelled_WithoutWorkingMonitoring(t 
 	}
 }
 
-func TestProvideRedemptionSignature_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
+func TestProvideRedemptionSignature_ContextCancelled_WithWorkingMonitoring(
+	t *testing.T,
+) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	tbtcChain := local.NewTBTCLocalChain()
 	tbtc := newTBTC(tbtcChain)
@@ -870,8 +922,10 @@ func TestProvideRedemptionSignature_ContextCancelled_WithWorkingMonitoring(t *te
 	time.Sleep(2 * timeout)
 
 	expectedProvideRedemptionSignatureCalls := 0
-	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().ProvideRedemptionSignatureCalls()
-	if expectedProvideRedemptionSignatureCalls != actualProvideRedemptionSignatureCalls {
+	actualProvideRedemptionSignatureCalls := tbtcChain.Logger().
+		ProvideRedemptionSignatureCalls()
+	if expectedProvideRedemptionSignatureCalls !=
+		actualProvideRedemptionSignatureCalls {
 		t.Errorf(
 			"unexpected number of ProvideRedemptionSignature calls\n"+
 				"expected: [%v]\n"+
@@ -908,7 +962,9 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	initialDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(depositAddress)
+	initialDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(
+		depositAddress,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -933,7 +989,8 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 	time.Sleep(2 * timeout)
 
 	expectedIncreaseRedemptionFeeCalls := 1
-	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().IncreaseRedemptionFeeCalls()
+	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
+		IncreaseRedemptionFeeCalls()
 	if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
 		t.Errorf(
 			"unexpected number of IncreaseRedemptionFee calls\n"+
@@ -949,7 +1006,9 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 		initialDepositRedemptionFee,
 	)
 
-	actualDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(depositAddress)
+	actualDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(
+		depositAddress,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -961,6 +1020,578 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 				"actual:   [%v]",
 			expectedDepositRedemptionFee.Text(10),
 			actualDepositRedemptionFee.Text(10),
+		)
+	}
+}
+
+func TestProvideRedemptionProof_StopEventOccurred_DepositRedemptionRequested(
+	t *testing.T,
+) {
+	ctx := context.Background()
+	tbtcChain := local.NewTBTCLocalChain()
+	tbtc := newTBTC(tbtcChain)
+
+	err := tbtc.monitorProvideRedemptionProof(
+		ctx,
+		constantBackoff,
+		timeout,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tbtcChain.CreateDeposit(depositAddress)
+
+	_, err = submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.RedeemDeposit(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	initialDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(
+		depositAddress,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.ProvideRedemptionSignature(
+		depositAddress,
+		keepSignature.V,
+		keepSignature.R,
+		keepSignature.S,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a while before triggering the stop event because the
+	// extension must have time to handle the start event
+	time.Sleep(100 * time.Millisecond)
+
+	// invoke the action which will trigger the stop event in result
+	err = tbtcChain.IncreaseRedemptionFee(
+		depositAddress,
+		toLittleEndianBytes(big.NewInt(990)),
+		toLittleEndianBytes(big.NewInt(980)),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a bit longer than the monitoring timeout
+	// to make sure the potential transaction completes
+	time.Sleep(2 * timeout)
+
+	expectedIncreaseRedemptionFeeCalls := 1
+	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
+		IncreaseRedemptionFeeCalls()
+	if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
+		t.Errorf(
+			"unexpected number of IncreaseRedemptionFee calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedIncreaseRedemptionFeeCalls,
+			actualIncreaseRedemptionFeeCalls,
+		)
+	}
+
+	expectedDepositRedemptionFee := new(big.Int).Mul(
+		big.NewInt(2),
+		initialDepositRedemptionFee,
+	)
+
+	actualDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(
+		depositAddress,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if expectedDepositRedemptionFee.Cmp(actualDepositRedemptionFee) != 0 {
+		t.Errorf(
+			"unexpected redemption fee value\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedDepositRedemptionFee.Text(10),
+			actualDepositRedemptionFee.Text(10),
+		)
+	}
+}
+
+func TestProvideRedemptionProof_StopEventOccurred_DepositRedeemed(
+	t *testing.T,
+) {
+	ctx := context.Background()
+	tbtcChain := local.NewTBTCLocalChain()
+	tbtc := newTBTC(tbtcChain)
+
+	err := tbtc.monitorProvideRedemptionProof(
+		ctx,
+		constantBackoff,
+		timeout,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tbtcChain.CreateDeposit(depositAddress)
+
+	_, err = submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.RedeemDeposit(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.ProvideRedemptionSignature(
+		depositAddress,
+		keepSignature.V,
+		keepSignature.R,
+		keepSignature.S,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a while before triggering the stop event because the
+	// extension must have time to handle the start event
+	time.Sleep(100 * time.Millisecond)
+
+	// invoke the action which will trigger the stop event in result
+	err = tbtcChain.ProvideRedemptionProof(
+		depositAddress,
+		[4]uint8{},
+		nil,
+		nil,
+		[4]uint8{},
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a bit longer than the monitoring timeout
+	// to make sure the potential transaction completes
+	time.Sleep(2 * timeout)
+
+	expectedIncreaseRedemptionFeeCalls := 0
+	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
+		IncreaseRedemptionFeeCalls()
+	if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
+		t.Errorf(
+			"unexpected number of IncreaseRedemptionFee calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedIncreaseRedemptionFeeCalls,
+			actualIncreaseRedemptionFeeCalls,
+		)
+	}
+
+	depositProof, err := tbtcChain.DepositRedemptionProof(depositAddress)
+	if err != nil {
+		t.Errorf("unexpected error while fetching deposit proof: [%v]", err)
+	}
+
+	if depositProof == nil {
+		t.Errorf("deposit proof should be provided")
+	}
+}
+
+func TestProvideRedemptionProof_KeepClosedEventOccurred(t *testing.T) {
+	ctx := context.Background()
+	tbtcChain := local.NewTBTCLocalChain()
+	tbtc := newTBTC(tbtcChain)
+
+	err := tbtc.monitorProvideRedemptionProof(
+		ctx,
+		constantBackoff,
+		timeout,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tbtcChain.CreateDeposit(depositAddress)
+
+	_, err = submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.RedeemDeposit(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	initialDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(
+		depositAddress,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.ProvideRedemptionSignature(
+		depositAddress,
+		keepSignature.V,
+		keepSignature.R,
+		keepSignature.S,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a while before triggering the keep closed event because the
+	// extension must have time to handle the start event
+	time.Sleep(100 * time.Millisecond)
+
+	err = closeKeep(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a bit longer than the monitoring timeout
+	// to make sure the potential transaction completes
+	time.Sleep(2 * timeout)
+
+	expectedIncreaseRedemptionFeeCalls := 0
+	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
+		IncreaseRedemptionFeeCalls()
+	if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
+		t.Errorf(
+			"unexpected number of IncreaseRedemptionFee calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedIncreaseRedemptionFeeCalls,
+			actualIncreaseRedemptionFeeCalls,
+		)
+	}
+
+	actualDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(
+		depositAddress,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if initialDepositRedemptionFee.Cmp(actualDepositRedemptionFee) != 0 {
+		t.Errorf(
+			"unexpected redemption fee value\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			initialDepositRedemptionFee.Text(10),
+			actualDepositRedemptionFee.Text(10),
+		)
+	}
+}
+
+func TestProvideRedemptionProof_KeepTerminatedEventOccurred(t *testing.T) {
+	ctx := context.Background()
+	tbtcChain := local.NewTBTCLocalChain()
+	tbtc := newTBTC(tbtcChain)
+
+	err := tbtc.monitorProvideRedemptionProof(
+		ctx,
+		constantBackoff,
+		timeout,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tbtcChain.CreateDeposit(depositAddress)
+
+	_, err = submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.RedeemDeposit(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	initialDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(
+		depositAddress,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.ProvideRedemptionSignature(
+		depositAddress,
+		keepSignature.V,
+		keepSignature.R,
+		keepSignature.S,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a while before triggering the keep terminated event because the
+	// extension must have time to handle the start event
+	time.Sleep(100 * time.Millisecond)
+
+	err = terminateKeep(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a bit longer than the monitoring timeout
+	// to make sure the potential transaction completes
+	time.Sleep(2 * timeout)
+
+	expectedIncreaseRedemptionFeeCalls := 0
+	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
+		IncreaseRedemptionFeeCalls()
+	if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
+		t.Errorf(
+			"unexpected number of IncreaseRedemptionFee calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedIncreaseRedemptionFeeCalls,
+			actualIncreaseRedemptionFeeCalls,
+		)
+	}
+
+	actualDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(
+		depositAddress,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if initialDepositRedemptionFee.Cmp(actualDepositRedemptionFee) != 0 {
+		t.Errorf(
+			"unexpected redemption fee value\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			initialDepositRedemptionFee.Text(10),
+			actualDepositRedemptionFee.Text(10),
+		)
+	}
+}
+
+func TestProvideRedemptionProof_ActionFailed(t *testing.T) {
+	ctx := context.Background()
+	tbtcChain := local.NewTBTCLocalChain()
+	tbtc := newTBTC(tbtcChain)
+
+	err := tbtc.monitorProvideRedemptionProof(
+		ctx,
+		constantBackoff,
+		timeout,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tbtcChain.CreateDeposit(depositAddress)
+
+	_, err = submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.RedeemDeposit(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.ProvideRedemptionSignature(
+		depositAddress,
+		keepSignature.V,
+		keepSignature.R,
+		keepSignature.S,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// simulate a situation when `IncreaseRedemptionFee` fails on-chain
+	tbtcChain.SetAlwaysFailingTransactions("IncreaseRedemptionFee")
+
+	// wait a bit longer than the monitoring timeout
+	// to make sure the potential transaction completes
+	time.Sleep(2 * timeout)
+
+	expectedIncreaseRedemptionFeeCalls := 3
+	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
+		IncreaseRedemptionFeeCalls()
+	if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
+		t.Errorf(
+			"unexpected number of IncreaseRedemptionFee calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedIncreaseRedemptionFeeCalls,
+			actualIncreaseRedemptionFeeCalls,
+		)
+	}
+}
+
+func TestProvideRedemptionProof_ContextCancelled_WithoutWorkingMonitoring(
+	t *testing.T,
+) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	tbtcChain := local.NewTBTCLocalChain()
+	tbtc := newTBTC(tbtcChain)
+
+	err := tbtc.monitorProvideRedemptionProof(
+		ctx,
+		constantBackoff,
+		timeout,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// cancel the context before any start event occurs
+	cancelCtx()
+
+	tbtcChain.CreateDeposit(depositAddress)
+
+	_, err = submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.RedeemDeposit(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.ProvideRedemptionSignature(
+		depositAddress,
+		keepSignature.V,
+		keepSignature.R,
+		keepSignature.S,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a bit longer than the monitoring timeout
+	// to make sure the potential transaction completes
+	time.Sleep(2 * timeout)
+
+	expectedIncreaseRedemptionFeeCalls := 0
+	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
+		IncreaseRedemptionFeeCalls()
+	if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
+		t.Errorf(
+			"unexpected number of IncreaseRedemptionFee calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedIncreaseRedemptionFeeCalls,
+			actualIncreaseRedemptionFeeCalls,
+		)
+	}
+}
+
+func TestProvideRedemptionProof_ContextCancelled_WithWorkingMonitoring(
+	t *testing.T,
+) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	tbtcChain := local.NewTBTCLocalChain()
+	tbtc := newTBTC(tbtcChain)
+
+	err := tbtc.monitorProvideRedemptionProof(
+		ctx,
+		constantBackoff,
+		timeout,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tbtcChain.CreateDeposit(depositAddress)
+
+	_, err = submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.RedeemDeposit(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.ProvideRedemptionSignature(
+		depositAddress,
+		keepSignature.V,
+		keepSignature.R,
+		keepSignature.S,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a while before cancelling the context because the
+	// extension must have time to handle the start event
+	time.Sleep(100 * time.Millisecond)
+
+	// cancel the context once the start event is handled and
+	// the monitoring process is running
+	cancelCtx()
+
+	// wait a bit longer than the monitoring timeout
+	// to make sure the potential transaction completes
+	time.Sleep(2 * timeout)
+
+	expectedIncreaseRedemptionFeeCalls := 0
+	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
+		IncreaseRedemptionFeeCalls()
+	if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
+		t.Errorf(
+			"unexpected number of IncreaseRedemptionFee calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedIncreaseRedemptionFeeCalls,
+			actualIncreaseRedemptionFeeCalls,
 		)
 	}
 }

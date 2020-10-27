@@ -22,8 +22,8 @@ const (
 type localDeposit struct {
 	keepAddress string
 	pubkey      []byte
-	utxoValue   *big.Int
 
+	utxoValue           *big.Int
 	redemptionDigest    [32]byte
 	redemptionFee       *big.Int
 	redemptionSignature *Signature
@@ -411,6 +411,10 @@ func (tlc *TBTCLocalChain) IncreaseRedemptionFee(
 	defer tlc.mutex.Unlock()
 
 	tlc.logger.logIncreaseRedemptionFeeCalls()
+
+	if _, exists := tlc.alwaysFailingTransactions["IncreaseRedemptionFee"]; exists {
+		return fmt.Errorf("always failing transaction")
+	}
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
