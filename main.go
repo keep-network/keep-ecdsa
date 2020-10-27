@@ -60,10 +60,11 @@ func main() {
 	app.Commands = []cli.Command{
 		cmd.StartCommand,
 		cmd.EthereumCommand,
+		cmd.SigningCommand,
 	}
 
 	err = app.Run(os.Args)
 	if err != nil {
-		logger.Fatal(err)
+		fmt.Print(err)
 	}
 }
