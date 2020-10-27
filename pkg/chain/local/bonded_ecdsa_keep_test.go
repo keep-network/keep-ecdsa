@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func TestRequestSignatureNonexistentKeep(t *testing.T) {
@@ -39,6 +40,14 @@ func TestRequestSignatureNoHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	var keepPubkey [64]byte
+	rand.Read(keepPubkey[:])
+
+	err = chain.SubmitKeepPublicKey(keepAddress, keepPubkey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	err = chain.requestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
@@ -61,6 +70,15 @@ func TestRequestSignature(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	var keepPubkey [64]byte
+	rand.Read(keepPubkey[:])
+
+	err = chain.SubmitKeepPublicKey(keepAddress, keepPubkey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	chain.keeps[keepAddress].signatureRequestedHandlers[0] = handler
 
 	err = chain.requestSignature(keepAddress, digest)

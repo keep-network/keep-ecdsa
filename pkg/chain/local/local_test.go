@@ -3,12 +3,13 @@ package local
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func TestOnBondedECDSAKeepCreated(t *testing.T) {
@@ -58,6 +59,14 @@ func TestOnSignatureRequested(t *testing.T) {
 	digest := [32]byte{1}
 
 	err := chain.createKeep(keepAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var keepPubkey [64]byte
+	rand.Read(keepPubkey[:])
+
+	err = chain.SubmitKeepPublicKey(keepAddress, keepPubkey)
 	if err != nil {
 		t.Fatal(err)
 	}
