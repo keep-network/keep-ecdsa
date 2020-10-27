@@ -163,7 +163,9 @@ describe("ECDSARewards", () => {
 
       await rewardsContract.receiveReward(keepAddress)
       for (let i = 0; i < operators.length; i++) {
-        await rewardsContract.withdrawRewards(0, operators[i], {from: operators[i]})
+        await rewardsContract.withdrawRewards(0, operators[i], {
+          from: operators[i],
+        })
       }
 
       // Full allocation for the first interval would be 7,128,000 KEEP.
@@ -202,7 +204,9 @@ describe("ECDSARewards", () => {
 
       await rewardsContract.receiveReward(keepAddress)
       for (let i = 0; i < operators.length; i++) {
-        await rewardsContract.withdrawRewards(0, operators[i], {from: operators[i]})
+        await rewardsContract.withdrawRewards(0, operators[i], {
+          from: operators[i],
+        })
       }
 
       // Full allocation for the first interval would be
@@ -221,7 +225,9 @@ describe("ECDSARewards", () => {
 
       await rewardsContract.receiveReward(keepAddress)
       for (let i = 0; i < operators.length; i++) {
-        await rewardsContract.withdrawRewards(0, operators[i], {from: operators[i]})
+        await rewardsContract.withdrawRewards(0, operators[i], {
+          from: operators[i],
+        })
       }
 
       // 2,376 * 2 = 4,752
@@ -246,7 +252,9 @@ describe("ECDSARewards", () => {
 
       await rewardsContract.receiveRewards(keepAddresses)
       for (let i = 0; i < operators.length; i++) {
-        await rewardsContract.withdrawRewards(0, operators[i], {from: operators[i]})
+        await rewardsContract.withdrawRewards(0, operators[i], {
+          from: operators[i],
+        })
       }
 
       // Full allocation for the first interval would be
