@@ -882,6 +882,89 @@ func TestProvideRedemptionSignature_ContextCancelled_WithWorkingMonitoring(t *te
 	}
 }
 
+func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
+	ctx := context.Background()
+	tbtcChain := local.NewTBTCLocalChain()
+	tbtc := newTBTC(tbtcChain)
+
+	err := tbtc.monitorProvideRedemptionProof(
+		ctx,
+		constantBackoff,
+		timeout,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tbtcChain.CreateDeposit(depositAddress)
+
+	_, err = submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.RedeemDeposit(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	initialDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tbtcChain.ProvideRedemptionSignature(
+		depositAddress,
+		keepSignature.V,
+		keepSignature.R,
+		keepSignature.S,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait a bit longer than the monitoring timeout
+	// to make sure the potential transaction completes
+	time.Sleep(2 * timeout)
+
+	expectedIncreaseRedemptionFeeCalls := 1
+	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().IncreaseRedemptionFeeCalls()
+	if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
+		t.Errorf(
+			"unexpected number of IncreaseRedemptionFee calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedIncreaseRedemptionFeeCalls,
+			actualIncreaseRedemptionFeeCalls,
+		)
+	}
+
+	expectedDepositRedemptionFee := new(big.Int).Mul(
+		big.NewInt(2),
+		initialDepositRedemptionFee,
+	)
+
+	actualDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if expectedDepositRedemptionFee.Cmp(actualDepositRedemptionFee) != 0 {
+		t.Errorf(
+			"unexpected redemption fee value\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedDepositRedemptionFee.Text(10),
+			actualDepositRedemptionFee.Text(10),
+		)
+	}
+}
+
 func submitKeepPublicKey(
 	depositAddress string,
 	tbtcChain *local.TBTCLocalChain,

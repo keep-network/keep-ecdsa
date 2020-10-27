@@ -2,6 +2,7 @@ package local
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -13,11 +14,18 @@ import (
 	"github.com/keep-network/keep-common/pkg/subscription"
 )
 
+const (
+	defaultUTXOValue            = 1000
+	defaultInitialRedemptionFee = 10
+)
+
 type localDeposit struct {
 	keepAddress string
 	pubkey      []byte
+	utxoValue   *big.Int
 
 	redemptionDigest    [32]byte
+	redemptionFee       *big.Int
 	redemptionSignature *Signature
 	redemptionProof     *TxProof
 
@@ -35,6 +43,7 @@ type TxProof struct{}
 type localChainLogger struct {
 	retrieveSignerPubkeyCalls       int
 	provideRedemptionSignatureCalls int
+	increaseRedemptionFeeCalls      int
 }
 
 func (lcl *localChainLogger) logRetrieveSignerPubkeyCall() {
@@ -51,6 +60,14 @@ func (lcl *localChainLogger) logProvideRedemptionSignatureCall() {
 
 func (lcl *localChainLogger) ProvideRedemptionSignatureCalls() int {
 	return lcl.provideRedemptionSignatureCalls
+}
+
+func (lcl *localChainLogger) logIncreaseRedemptionFeeCalls() {
+	lcl.increaseRedemptionFeeCalls++
+}
+
+func (lcl *localChainLogger) IncreaseRedemptionFeeCalls() int {
+	return lcl.increaseRedemptionFeeCalls
 }
 
 type TBTCLocalChain struct {
@@ -97,6 +114,7 @@ func (tlc *TBTCLocalChain) CreateDeposit(depositAddress string) {
 
 	tlc.deposits[depositAddress] = &localDeposit{
 		keepAddress:               keepAddress.Hex(),
+		utxoValue:                 big.NewInt(defaultUTXOValue),
 		redemptionRequestedEvents: make([]*chain.DepositRedemptionRequestedEvent, 0),
 	}
 
@@ -171,6 +189,7 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 	}
 
 	deposit.redemptionDigest = randomDigest
+	deposit.redemptionFee = big.NewInt(defaultInitialRedemptionFee)
 
 	err = tlc.requestSignature(
 		common.HexToAddress(deposit.keepAddress),
@@ -186,16 +205,21 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 		}(handler, depositAddress)
 	}
 
+	currentBlock, err := tlc.BlockCounter().CurrentBlock()
+	if err != nil {
+		return err
+	}
+
 	deposit.redemptionRequestedEvents = append(
 		deposit.redemptionRequestedEvents,
 		&chain.DepositRedemptionRequestedEvent{
 			DepositAddress:       depositAddress,
 			Digest:               deposit.redemptionDigest,
-			UtxoValue:            nil,
+			UtxoValue:            deposit.utxoValue,
 			RedeemerOutputScript: nil,
-			RequestedFee:         nil,
+			RequestedFee:         deposit.redemptionFee,
 			Outpoint:             nil,
-			BlockNumber:          0,
+			BlockNumber:          currentBlock,
 		},
 	)
 
@@ -352,6 +376,10 @@ func (tlc *TBTCLocalChain) ProvideRedemptionSignature(
 		return fmt.Errorf("no deposit with address [%v]", depositAddress)
 	}
 
+	if deposit.redemptionDigest == [32]byte{} {
+		return fmt.Errorf("deposit [%v] is not in redemption", depositAddress)
+	}
+
 	if deposit.redemptionSignature != nil {
 		return fmt.Errorf(
 			"redemption signature for deposit [%v] already provided",
@@ -379,7 +407,86 @@ func (tlc *TBTCLocalChain) IncreaseRedemptionFee(
 	previousOutputValueBytes [8]uint8,
 	newOutputValueBytes [8]uint8,
 ) error {
-	panic("not implemented") // TODO: Implementation for unit testing purposes.
+	tlc.mutex.Lock()
+	defer tlc.mutex.Unlock()
+
+	tlc.logger.logIncreaseRedemptionFeeCalls()
+
+	deposit, ok := tlc.deposits[depositAddress]
+	if !ok {
+		return fmt.Errorf("no deposit with address [%v]", depositAddress)
+	}
+
+	if deposit.redemptionSignature == nil {
+		return fmt.Errorf(
+			"no redemption signature for deposit [%v]; could not increase fee",
+			depositAddress,
+		)
+	}
+
+	previousOutputValue := fromLittleEndianBytes(previousOutputValueBytes)
+	expectedPreviousOutputValue := new(big.Int).Sub(
+		deposit.utxoValue,
+		deposit.redemptionFee,
+	)
+
+	if expectedPreviousOutputValue.Cmp(previousOutputValue) != 0 {
+		return fmt.Errorf("wrong previous output value")
+	}
+
+	newOutputValue := fromLittleEndianBytes(newOutputValueBytes)
+
+	if new(big.Int).Sub(previousOutputValue, newOutputValue).Cmp(
+		big.NewInt(defaultInitialRedemptionFee),
+	) != 0 {
+		return fmt.Errorf("wrong increase fee step")
+	}
+
+	var randomDigest [32]byte
+	// #nosec G404 (insecure random number source (rand))
+	// Local chain implementation doesn't require secure randomness.
+	_, err := rand.Read(randomDigest[:])
+	if err != nil {
+		return err
+	}
+
+	deposit.redemptionDigest = randomDigest
+	deposit.redemptionFee = new(big.Int).Sub(deposit.utxoValue, newOutputValue)
+	deposit.redemptionSignature = nil
+
+	err = tlc.requestSignature(
+		common.HexToAddress(deposit.keepAddress),
+		deposit.redemptionDigest,
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, handler := range tlc.depositRedemptionRequestedHandlers {
+		go func(handler func(depositAddress string), depositAddress string) {
+			handler(depositAddress)
+		}(handler, depositAddress)
+	}
+
+	currentBlock, err := tlc.BlockCounter().CurrentBlock()
+	if err != nil {
+		return err
+	}
+
+	deposit.redemptionRequestedEvents = append(
+		deposit.redemptionRequestedEvents,
+		&chain.DepositRedemptionRequestedEvent{
+			DepositAddress:       depositAddress,
+			Digest:               deposit.redemptionDigest,
+			UtxoValue:            deposit.utxoValue,
+			RedeemerOutputScript: nil,
+			RequestedFee:         deposit.redemptionFee,
+			Outpoint:             nil,
+			BlockNumber:          currentBlock,
+		},
+	)
+
+	return nil
 }
 
 func (tlc *TBTCLocalChain) ProvideRedemptionProof(
@@ -481,6 +588,27 @@ func (tlc *TBTCLocalChain) DepositRedemptionProof(
 	return deposit.redemptionProof, nil
 }
 
+func (tlc *TBTCLocalChain) DepositRedemptionFee(
+	depositAddress string,
+) (*big.Int, error) {
+	tlc.mutex.Lock()
+	defer tlc.mutex.Unlock()
+
+	deposit, ok := tlc.deposits[depositAddress]
+	if !ok {
+		return nil, fmt.Errorf("no deposit with address [%v]", depositAddress)
+	}
+
+	if deposit.redemptionFee == nil {
+		return nil, fmt.Errorf(
+			"no redemption fee for deposit [%v]",
+			depositAddress,
+		)
+	}
+
+	return deposit.redemptionFee, nil
+}
+
 func (tlc *TBTCLocalChain) SetAlwaysFailingTransactions(transactions ...string) {
 	tlc.mutex.Lock()
 	defer tlc.mutex.Unlock()
@@ -492,4 +620,8 @@ func (tlc *TBTCLocalChain) SetAlwaysFailingTransactions(transactions ...string) 
 
 func (tlc *TBTCLocalChain) Logger() *localChainLogger {
 	return tlc.logger
+}
+
+func fromLittleEndianBytes(bytes [8]byte) *big.Int {
+	return new(big.Int).SetUint64(binary.LittleEndian.Uint64(bytes[:]))
 }

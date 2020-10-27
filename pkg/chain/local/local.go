@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -35,7 +36,9 @@ type Chain interface {
 type localChain struct {
 	handlerMutex sync.Mutex
 
-	blockCounter chain.BlockCounter
+	blockCounter          chain.BlockCounter
+	blocksTimestamps      map[uint64]uint64
+	blocksTimestampsMutex sync.RWMutex
 
 	keepAddresses []common.Address
 	keeps         map[common.Address]*localKeep
@@ -55,12 +58,32 @@ func Connect() Chain {
 		panic(err) // should never happen
 	}
 
-	return &localChain{
+	localChain := &localChain{
 		blockCounter:        blockCounter,
+		blocksTimestamps:    map[uint64]uint64{0: uint64(time.Now().Unix())},
 		keeps:               make(map[common.Address]*localKeep),
 		keepCreatedHandlers: make(map[int]func(event *eth.BondedECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
 		authorizations:      make(map[common.Address]bool),
+	}
+
+	go localChain.observeBlocksTimestamps(context.Background())
+
+	return localChain
+}
+
+func (lc *localChain) observeBlocksTimestamps(ctx context.Context) {
+	blockChan := lc.BlockCounter().WatchBlocks(ctx)
+
+	for {
+		select {
+		case blockNumber := <-blockChan:
+			lc.blocksTimestampsMutex.Lock()
+			lc.blocksTimestamps[blockNumber] = uint64(time.Now().Unix())
+			lc.blocksTimestampsMutex.Unlock()
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
@@ -420,7 +443,15 @@ func (lc *localChain) PastSignatureSubmittedEvents(
 }
 
 func (lc *localChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
-	panic("not implemented") // TODO: Implementation for unit testing purposes.
+	lc.blocksTimestampsMutex.RLock()
+	defer lc.blocksTimestampsMutex.RUnlock()
+
+	blockTimestamp, ok := lc.blocksTimestamps[blockNumber.Uint64()]
+	if !ok {
+		return 0, fmt.Errorf("no timestamp for block [%v]", blockNumber)
+	}
+
+	return blockTimestamp, nil
 }
 
 func generateHandlerID() int {
