@@ -308,7 +308,7 @@ describe("ECDSARewards", () => {
       await assertWithdrawnRewards(expectedBalanceFromTwoKeeps, 0, operators)
     })
 
-    it("should cap the maximum reward per keep operator", async () => {
+    it("should cap the maximum reward per keep beneficiary", async () => {
       for (let i = 0; i < 10; i++) {
         await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       }
@@ -335,13 +335,23 @@ describe("ECDSARewards", () => {
       // 178,200,000 * 4% = 7,128,000.
       // Because just 1% of minimum keep quota is met, the allocation is
       // 7,128,000 * 1% = 71,280.
-      // keeps created: 10 => 7,128 KEEP per keep
-      // member receives: 7,128 / 3 = 2,376 (3 signers per keep)
-      // each member was in 5 properly closed keeps: 2,376 * 5 = 11,880
+      // Keeps created: 10 => 7,128 KEEP per keep
+      // Member receives: 7,128 / 3 = 2,376 (3 signers per keep)
+      // Each member was in 5 properly closed keeps: 2,376 * 5 = 11,880
       // 11,880 exceeds the maximum rewards cap per beneficiary, which is 10,000
-      // expected beneficiary balance should be equal to max cap.
+      // Expected beneficiary balance should be equal to max cap.
       const expectedBeneficiaryBalance = new BN(10000)
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
+
+      // Each beneficiary has a surplus of 11,880 - 10,000 = 1,880 that has to be
+      // returned back to the unallocated pool rewards: 1,880 * 3 = 5,640
+      // Expected unallocated pool: 178,200,000 - 71,280 + 5,640 = 178,134,360
+      const expectedUnallocatedRewards = new BN(178134360)
+      const actualUnallocatedRewards = (
+        await rewardsContract.unallocatedRewards()
+      ).div(tokenDecimalMultiplier)
+
+      expect(actualUnallocatedRewards).to.eq.BN(expectedUnallocatedRewards)
     })
 
     it("should correctly receive rewards from multiple keeps", async () => {
