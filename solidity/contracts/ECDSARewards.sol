@@ -113,6 +113,15 @@ contract ECDSARewards is Rewards {
         }
     }
 
+    /// @notice Report about the terminated keeps in batch. All the allocated
+    /// rewards in these keeps will be returned to the unallocated pool.
+    /// @param keepIdentifiers An array of keep addresses.
+    function reportTerminations(bytes32[] memory keepIdentifiers) public {
+        for (uint256 i = 0; i < keepIdentifiers.length; i++) {
+            reportTermination(keepIdentifiers[i]);
+        }
+    }
+
     function _getKeepCount() internal view returns (uint256) {
         return factory.getKeepCount();
     }

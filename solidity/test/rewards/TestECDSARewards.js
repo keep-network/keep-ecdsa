@@ -185,6 +185,57 @@ describe("ECDSARewards", () => {
       expect(unallocatedInKeep).to.eq.BN(178192872) // 178,185,744 + 7,128
     })
 
+    it("should report group terminations in batch", async () => {
+      // Open 5 keeps
+      for (let i = 0; i < 5; i++) {
+        await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart + i)
+      }
+
+      await timeJumpToEndOfIntervalIfApplicable(0)
+
+      const keepTerminatedAddresses = []
+      // Mark 3 keeps as terminated
+      for (let i = 0; i < 3; i++) {
+        const keepTerminatedAddress = await keepFactory.getKeepAtIndex(i)
+        const keepTerminated = await BondedECDSAKeepStub.at(
+          keepTerminatedAddress
+        )
+        await keepTerminated.publicMarkAsTerminated()
+        keepTerminatedAddresses.push(keepTerminatedAddress)
+      }
+
+      const keepClosedAddresses = []
+      // Mark 2 keeps as closed properly
+      for (let i = 3; i < 5; i++) {
+        const keepAddress = await keepFactory.getKeepAtIndex(i)
+        const keep = await BondedECDSAKeepStub.at(keepAddress)
+        await keep.publicMarkAsClosed()
+        keepClosedAddresses.push(keepAddress)
+      }
+
+      await rewardsContract.receiveRewards(keepClosedAddresses)
+
+      // Full allocation for the first interval is 7,128,000 KEEP.
+      // Because just 5 keeps were created, the allocation is:
+      // 7,128,000 * 0.5% = 35,640.
+      // The reward per keep is 35,640 / 5 = 7,128
+      // 178,200,000 - 35,640 = 178,164,360 stays in unallocated rewards
+      let actualUnallocated = await rewardsContract.unallocatedRewards()
+      actual = actualUnallocated.div(tokenDecimalMultiplier)
+      expect(actual).to.eq.BN(178164360)
+
+      // The fact that three keeps were terminated needs to be
+      // reported to recalculate the unallocated amount.
+      await rewardsContract.reportTerminations(keepTerminatedAddresses)
+
+      // Rewards returned to the unallocated pool upon termination:
+      // 7,128 * 3 = 21,384
+      actualUnallocated = await rewardsContract.unallocatedRewards()
+      actual = actualUnallocated.div(tokenDecimalMultiplier)
+      // 178,164,360 + 21,384 = 178,185,744
+      expect(actual).to.eq.BN(178185744)
+    })
+
     it("should correctly distribute rewards between beneficiaries", async () => {
       for (let i = 0; i < 8; i++) {
         await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
