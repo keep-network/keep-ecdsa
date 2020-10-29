@@ -19,9 +19,4 @@ contract ECDSARewardsStub is ECDSARewards {
     {
         beneficiaryRewardCap = 10000 * 10**18;
     }
-
-    function getBeneficiaryRewardCap() public view returns (uint256) {
-        return beneficiaryRewardCap;
-    }
-
 }
