@@ -343,6 +343,44 @@ describe("ECDSARewards", () => {
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
     })
 
+    it("should correctly receive rewards in the same interval but not same time", async () => {
+      for (let i = 0; i < 10; i++) {
+        await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
+      }
+
+      await timeJumpToEndOfIntervalIfApplicable(0)
+
+      const keepAddress0 = await keepFactory.getKeepAtIndex(0)
+      const keep0 = await BondedECDSAKeepStub.at(keepAddress0)
+      await keep0.publicMarkAsClosed()
+
+      // Full allocation for the first interval would be
+      // 178,200,000 * 4% = 7,128,000.
+      // Because just 1% of minimum keep quota is met, the allocation is
+      // 7,128,000 * 1% = 71,280.
+      // keeps created: 10 => 7,128 KEEP per keep
+      // member receives: 7,128 / 3 = 2,376 (3 signers per keep)
+      await rewardsContract.receiveReward(keepAddress0)
+      await withdrawRewards(0, operators)
+
+      let expectedBeneficiaryBalance = new BN(2376)
+      await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
+
+      // Second keep will be closed a day later
+      await time.increase(time.duration.days(1))
+
+      const keepAddress1 = await keepFactory.getKeepAtIndex(1)
+      const keep1 = await BondedECDSAKeepStub.at(keepAddress1)
+      await keep1.publicMarkAsClosed()
+
+      await rewardsContract.receiveReward(keepAddress1)
+      await withdrawRewards(0, operators)
+
+      // each member was in 2 properly closed keeps: 2,376 * 2 = 4,752
+      expectedBeneficiaryBalance = new BN(4752)
+      await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
+    })
+
     it("should correctly track withdrawable and withdrawn amount", async () => {
       for (let i = 0; i < 8; i++) {
         await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
