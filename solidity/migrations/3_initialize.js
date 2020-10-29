@@ -3,8 +3,8 @@ const BondedECDSAKeepVendorImplV1 = artifacts.require(
   "BondedECDSAKeepVendorImplV1"
 )
 const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
-const FullyBackedBondedECDSAKeepFactory = artifacts.require(
-  "FullyBackedBondedECDSAKeepFactory"
+const FullyBackedECDSAKeepFactory = artifacts.require(
+  "FullyBackedECDSAKeepFactory"
 )
 const KeepRegistry = artifacts.require("KeepRegistry")
 
@@ -39,11 +39,9 @@ module.exports = async function (deployer) {
     `approved BondedECDSAKeepFactory operator contract [${BondedECDSAKeepFactory.address}] in registry`
   )
 
-  await registry.approveOperatorContract(
-    FullyBackedBondedECDSAKeepFactory.address
-  )
+  await registry.approveOperatorContract(FullyBackedECDSAKeepFactory.address)
   console.log(
-    `approved FullyBackedBondedECDSAKeepFactory operator contract [${FullyBackedBondedECDSAKeepFactory.address}] in registry`
+    `approved FullyBackedECDSAKeepFactory operator contract [${FullyBackedECDSAKeepFactory.address}] in registry`
   )
 
   // Set service contract owner as operator contract upgrader by default

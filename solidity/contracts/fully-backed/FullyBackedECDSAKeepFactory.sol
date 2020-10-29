@@ -14,7 +14,7 @@
 
 pragma solidity 0.5.17;
 
-import "./FullyBackedBondedECDSAKeep.sol";
+import "./FullyBackedECDSAKeep.sol";
 
 import "./FullyBackedBonding.sol";
 import "../api/IBondedECDSAKeepFactory.sol";
@@ -38,7 +38,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// Proxy delegates calls to sortition pool and therefore does not affect contract's
 /// state. This means that we only need to deploy the bonded ECDSA keep contract
 /// once. The factory provides clean state for every new bonded ECDSA keep clone.
-contract FullyBackedBondedECDSAKeepFactory is
+contract FullyBackedECDSAKeepFactory is
     IBondedECDSAKeepFactory,
     KeepCreator,
     AuthorityDelegator,
@@ -66,7 +66,7 @@ contract FullyBackedBondedECDSAKeepFactory is
     uint256 public constant bondWeightDivisor = 1e18; // 1 ETH // TODO: Decide on value
 
     // Notification that a new keep has been created.
-    event FullyBackedBondedECDSAKeepCreated(
+    event FullyBackedECDSAKeepCreated(
         address indexed keepAddress,
         address[] members,
         address indexed owner,
@@ -165,7 +165,7 @@ contract FullyBackedBondedECDSAKeepFactory is
         // in `__isRecognized` function.
         keepAddress = createKeep();
 
-        FullyBackedBondedECDSAKeep(keepAddress).initialize(
+        FullyBackedECDSAKeep(keepAddress).initialize(
             _owner,
             members,
             _honestThreshold,
@@ -183,7 +183,7 @@ contract FullyBackedBondedECDSAKeepFactory is
             );
         }
 
-        emit FullyBackedBondedECDSAKeepCreated(
+        emit FullyBackedECDSAKeepCreated(
             keepAddress,
             members,
             _owner,

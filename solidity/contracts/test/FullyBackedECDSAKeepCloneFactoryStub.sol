@@ -1,6 +1,6 @@
 pragma solidity 0.5.17;
 
-import "../../contracts/fully-backed/FullyBackedBondedECDSAKeep.sol";
+import "../../contracts/fully-backed/FullyBackedECDSAKeep.sol";
 import "../../contracts/CloneFactory.sol";
 
 import {
@@ -9,7 +9,7 @@ import {
 
 /// @title Fully Backed Bonded ECDSA Keep Factory Stub using clone factory.
 /// @dev This contract is for testing purposes only.
-contract FullyBackedBondedECDSAKeepCloneFactoryStub is
+contract FullyBackedECDSAKeepCloneFactoryStub is
     CloneFactory,
     AuthorityDelegator
 {
@@ -19,7 +19,7 @@ contract FullyBackedBondedECDSAKeepCloneFactoryStub is
         masterKeepAddress = _masterKeepAddress;
     }
 
-    event FullyBackedBondedECDSAKeepCreated(address keepAddress);
+    event FullyBackedECDSAKeepCreated(address keepAddress);
 
     function newKeep(
         address _owner,
@@ -31,9 +31,7 @@ contract FullyBackedBondedECDSAKeepCloneFactoryStub is
         keepAddress = createClone(masterKeepAddress);
         assert(isClone(masterKeepAddress, keepAddress));
 
-        FullyBackedBondedECDSAKeep keep = FullyBackedBondedECDSAKeep(
-            keepAddress
-        );
+        FullyBackedECDSAKeep keep = FullyBackedECDSAKeep(keepAddress);
         keep.initialize(
             _owner,
             _members,
@@ -42,7 +40,7 @@ contract FullyBackedBondedECDSAKeepCloneFactoryStub is
             _keepFactory
         );
 
-        emit FullyBackedBondedECDSAKeepCreated(keepAddress);
+        emit FullyBackedECDSAKeepCreated(keepAddress);
     }
 
     function __isRecognized(address _delegatedAuthorityRecipient)

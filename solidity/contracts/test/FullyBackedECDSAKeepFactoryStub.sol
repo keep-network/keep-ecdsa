@@ -1,12 +1,10 @@
 pragma solidity 0.5.17;
 
-import "../../contracts/fully-backed/FullyBackedBondedECDSAKeepFactory.sol";
+import "../../contracts/fully-backed/FullyBackedECDSAKeepFactory.sol";
 
 /// @title Fully Backed Bonded ECDSA Keep Factory Stub
 /// @dev This contract is for testing purposes only.
-contract FullyBackedBondedECDSAKeepFactoryStub is
-    FullyBackedBondedECDSAKeepFactory
-{
+contract FullyBackedECDSAKeepFactoryStub is FullyBackedECDSAKeepFactory {
     constructor(
         address _masterKeepAddress,
         address _sortitionPoolFactoryAddress,
@@ -14,7 +12,7 @@ contract FullyBackedBondedECDSAKeepFactoryStub is
         address _randomBeaconAddress
     )
         public
-        FullyBackedBondedECDSAKeepFactory(
+        FullyBackedECDSAKeepFactory(
             _masterKeepAddress,
             _sortitionPoolFactoryAddress,
             _bondingAddress,

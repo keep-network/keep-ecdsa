@@ -16,16 +16,16 @@ pragma solidity 0.5.17;
 
 import "../AbstractBondedECDSAKeep.sol";
 import "./FullyBackedBonding.sol";
-import "./FullyBackedBondedECDSAKeepFactory.sol";
+import "./FullyBackedECDSAKeepFactory.sol";
 
 /// @title Fully Backed Bonded ECDSA Keep
 /// @notice ECDSA keep with additional signer bond requirement that is fully backed
 /// by ETH only.
 /// @dev This contract is used as a master contract for clone factory in
 /// BondedECDSAKeepFactory as per EIP-1167.
-contract FullyBackedBondedECDSAKeep is AbstractBondedECDSAKeep {
+contract FullyBackedECDSAKeep is AbstractBondedECDSAKeep {
     FullyBackedBonding bonding;
-    FullyBackedBondedECDSAKeepFactory keepFactory;
+    FullyBackedECDSAKeepFactory keepFactory;
 
     /// @notice Initialization function.
     /// @dev We use clone factory to create new keep. That is why this contract
@@ -47,7 +47,7 @@ contract FullyBackedBondedECDSAKeep is AbstractBondedECDSAKeep {
         super.initialize(_owner, _members, _honestThreshold, _bonding);
 
         bonding = FullyBackedBonding(_bonding);
-        keepFactory = FullyBackedBondedECDSAKeepFactory(_keepFactory);
+        keepFactory = FullyBackedECDSAKeepFactory(_keepFactory);
 
         bonding.claimDelegatedAuthority(_keepFactory);
     }

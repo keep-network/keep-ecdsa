@@ -9,8 +9,8 @@ const truffleAssert = require("truffle-assertions")
 
 const StackLib = contract.fromArtifact("StackLib")
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
-const FullyBackedBondedECDSAKeepFactoryStub = contract.fromArtifact(
-  "FullyBackedBondedECDSAKeepFactoryStub"
+const FullyBackedECDSAKeepFactoryStub = contract.fromArtifact(
+  "FullyBackedECDSAKeepFactoryStub"
 )
 const FullyBackedBonding = contract.fromArtifact("FullyBackedBonding")
 const FullyBackedSortitionPool = contract.fromArtifact(
@@ -20,9 +20,7 @@ const FullyBackedSortitionPoolFactory = contract.fromArtifact(
   "FullyBackedSortitionPoolFactory"
 )
 const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
-const FullyBackedBondedECDSAKeep = contract.fromArtifact(
-  "FullyBackedBondedECDSAKeep"
-)
+const FullyBackedECDSAKeep = contract.fromArtifact("FullyBackedECDSAKeep")
 
 const BN = web3.utils.BN
 
@@ -31,7 +29,7 @@ chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 const assert = chai.assert
 
-describe("FullyBackedBondedECDSAKeepFactory", function () {
+describe("FullyBackedECDSAKeepFactory", function () {
   let registry
   let keepFactory
   let sortitionPoolFactory
@@ -54,7 +52,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
   const singleBond = web3.utils.toWei(new BN(20))
   const bond = singleBond.mul(groupSize)
 
-  const stakeLockDuration = 0 // parameter is ignored by FullyBackedBondedECDSAKeepFactory implementation
+  const stakeLockDuration = 0 // parameter is ignored by FullyBackedECDSAKeepFactory implementation
   const delegationInitPeriod = time.duration.hours(12)
   const delegationLockPeriod = time.duration.days(1)
 
@@ -603,7 +601,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -643,7 +641,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -683,7 +681,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -725,7 +723,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -803,7 +801,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       const keep = await openKeep()
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -991,7 +989,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -1025,7 +1023,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
         }
       )
       const recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
-      const keep = await FullyBackedBondedECDSAKeep.at(keepAddress)
+      const keep = await FullyBackedECDSAKeep.at(keepAddress)
       const keepOpenedTime = await keep.getOpenedTimestamp()
       const factoryKeepOpenedTime = await keepFactory.getKeepOpenedTimestamp(
         keepAddress
@@ -1065,7 +1063,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
         }
       )
 
-      const keep = await FullyBackedBondedECDSAKeep.at(keepAddress)
+      const keep = await FullyBackedECDSAKeep.at(keepAddress)
 
       assert.isTrue(await keep.isActive(), "keep should be active")
     })
@@ -1092,7 +1090,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -1191,8 +1189,8 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
         delegationInitPeriod
       )
       randomBeacon = accounts[1]
-      const keepMasterContract = await FullyBackedBondedECDSAKeep.new()
-      keepFactory = await FullyBackedBondedECDSAKeepFactoryStub.new(
+      const keepMasterContract = await FullyBackedECDSAKeep.new()
+      keepFactory = await FullyBackedECDSAKeepFactoryStub.new(
         keepMasterContract.address,
         sortitionPoolFactory.address,
         bonding.address,
@@ -1528,8 +1526,8 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       delegationInitPeriod
     )
     randomBeacon = await RandomBeaconStub.new()
-    const keepMasterContract = await FullyBackedBondedECDSAKeep.new()
-    keepFactory = await FullyBackedBondedECDSAKeepFactoryStub.new(
+    const keepMasterContract = await FullyBackedECDSAKeep.new()
+    keepFactory = await FullyBackedECDSAKeepFactoryStub.new(
       keepMasterContract.address,
       sortitionPoolFactory.address,
       bonding.address,
@@ -1629,6 +1627,6 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       }
     )
 
-    return await FullyBackedBondedECDSAKeep.at(keepAddress)
+    return await FullyBackedECDSAKeep.at(keepAddress)
   }
 })
