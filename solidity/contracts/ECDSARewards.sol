@@ -235,11 +235,10 @@ contract ECDSARewards is Rewards {
         return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
-    // Get the members of the specified keep,
-    // and distribute the reward amount between them.
-    // The reward isn't paid out immediately,
-    // but is instead kept in the reward contract
-    // until each operator individually requests to withdraw the rewards.
+    /// @notice Get the members of the specified keep, and distribute the reward
+    /// amount between them. The reward isn't paid out immediately,
+    /// but is instead kept in the reward contract until each operator
+    /// individually requests to withdraw the rewards.
     function _distributeReward(bytes32 _keep, uint256 amount)
         internal
         isAddress(_keep)
