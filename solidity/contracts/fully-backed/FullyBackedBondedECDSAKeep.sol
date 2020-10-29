@@ -22,8 +22,7 @@ import "./FullyBackedBondedECDSAKeepFactory.sol";
 /// @notice ECDSA keep with additional signer bond requirement that is fully backed
 /// by ETH only.
 /// @dev This contract is used as a master contract for clone factory in
-/// BondedECDSAKeepFactory as per EIP-1167. It should never be removed after
-/// initial deployment as this will break functionality for all created clones.
+/// BondedECDSAKeepFactory as per EIP-1167.
 contract FullyBackedBondedECDSAKeep is AbstractBondedECDSAKeep {
     FullyBackedBonding bonding;
     FullyBackedBondedECDSAKeepFactory keepFactory;
