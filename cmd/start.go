@@ -69,6 +69,17 @@ const (
 	routingTableRefreshPeriod = 5 * time.Minute
 )
 
+// Constants related with balance monitoring.
+const (
+	// defaultBalanceAlertThreshold determines the alert threshold below which
+	// the alert should be triggered.
+	defaultBalanceAlertThreshold = 500000000000000000 // 0.5 ETH
+
+	// defaultBalanceMonitoringTick determines how often the monitoring
+	// check should be triggered.
+	defaultBalanceMonitoringTick = 10 * time.Minute
+)
+
 func init() {
 	StartCommand =
 		cli.Command{
@@ -295,14 +306,14 @@ func initializeBalanceMonitoring(
 
 	alertThreshold := config.Ethereum.BalanceAlertThreshold
 	if alertThreshold == 0 {
-		alertThreshold = 500000000000000000 // 0.5 ETH by default.
+		alertThreshold = defaultBalanceAlertThreshold
 	}
 
 	balanceMonitor.Observe(
 		ctx,
 		ethereumAddress,
 		new(big.Int).SetUint64(alertThreshold),
-		10*time.Minute,
+		defaultBalanceMonitoringTick,
 	)
 
 	logger.Infof(
