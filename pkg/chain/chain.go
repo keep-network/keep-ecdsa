@@ -21,6 +21,7 @@ type Handle interface {
 	// BlockCounter returns a block counter.
 	BlockCounter() chain.BlockCounter
 	// BlockTimestamp returns given block's timestamp.
+	// In case the block is not yet mined, an error should be returned.
 	BlockTimestamp(blockNumber *big.Int) (uint64, error)
 
 	BondedECDSAKeepFactory
