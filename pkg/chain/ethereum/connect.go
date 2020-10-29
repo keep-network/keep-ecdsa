@@ -67,6 +67,10 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		return nil, err
 	}
 
+	// TODO: Add rate limiting to (keep-ecdsa/pull/585#discussion_r513351032):
+	//  - `createBlockTimestampFn`
+	//  - `blockCounter`
+	//  - `miningWaiter`
 	wrappedClient := addClientWrappers(config, client)
 
 	transactionMutex := &sync.Mutex{}
