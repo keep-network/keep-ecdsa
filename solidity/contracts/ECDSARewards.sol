@@ -161,20 +161,14 @@ contract ECDSARewards is Rewards {
     function withdrawRewards(uint256 interval, address operator) external {
         address beneficiary = tokenStaking.beneficiaryOf(operator);
 
-        uint256 allocatedForBeneficiary
-            = allocatedRewards[beneficiary][interval];
+        uint256 allocated = allocatedRewards[beneficiary][interval];
         uint256 alreadyWithdrawn = withdrawnRewards[beneficiary][interval];
 
-        require(
-            allocatedForBeneficiary > alreadyWithdrawn,
-            "No rewards to withdraw"
-        );
+        require(allocated > alreadyWithdrawn, "No rewards to withdraw");
 
-        uint256 withdrawableRewards = allocatedForBeneficiary.sub(
-            alreadyWithdrawn
-        );
+        uint256 withdrawableRewards = allocated.sub(alreadyWithdrawn);
 
-        withdrawnRewards[beneficiary][interval] = allocatedForBeneficiary;
+        withdrawnRewards[beneficiary][interval] = allocated;
 
         token.safeTransfer(beneficiary, withdrawableRewards);
     }
