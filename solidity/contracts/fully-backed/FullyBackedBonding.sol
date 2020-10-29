@@ -47,7 +47,7 @@ contract FullyBackedBonding is
 
     // Once a delegation to an operator is received the delegator has to wait for
     // specific time period before being able to pull out the funds.
-    uint256 public constant DELEGATION_LOCK_PERIOD = 1 days; // TODO: Decide right value
+    uint256 public constant DELEGATION_LOCK_PERIOD = 14 days; // TODO: Decide right value
 
     uint256 public initializationPeriod; // varies between mainnet and testnet
 
@@ -58,7 +58,7 @@ contract FullyBackedBonding is
     /// before being eligible for group selection.
     constructor(KeepRegistry _keepRegistry, uint256 _initializationPeriod)
         public
-        AbstractBonding(_keepRegistry)
+        AbstractBonding(address(_keepRegistry))
         Authorizations(_keepRegistry)
     {
         initializationPeriod = _initializationPeriod;

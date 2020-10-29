@@ -5,14 +5,17 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
+var logger = log.Logger("keep-registry")
+
 // Keeps represents a collection of keeps in which the given client is a member.
 type Keeps struct {
 	myKeepsMutex *sync.RWMutex
-	myKeeps      map[common.Address][]*tss.ThresholdSigner
+	myKeeps      map[common.Address]*tss.ThresholdSigner
 
 	storage storage
 }
@@ -21,7 +24,7 @@ type Keeps struct {
 func NewKeepsRegistry(persistence persistence.Handle) *Keeps {
 	return &Keeps{
 		myKeepsMutex: &sync.RWMutex{},
-		myKeeps:      make(map[common.Address][]*tss.ThresholdSigner),
+		myKeeps:      make(map[common.Address]*tss.ThresholdSigner),
 		storage:      newStorage(persistence),
 	}
 }
@@ -32,14 +35,35 @@ func (k *Keeps) RegisterSigner(
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
 ) error {
-	err := k.storage.save(keepAddress, signer)
-	if err != nil {
-		return fmt.Errorf("could not persist signer to the storage: [%v]", err)
+	k.myKeepsMutex.Lock()
+	defer k.myKeepsMutex.Unlock()
+
+	if _, exists := k.myKeeps[keepAddress]; exists {
+		return fmt.Errorf(
+			"signer for keep [%s] already registered",
+			keepAddress.String(),
+		)
 	}
 
-	k.storeSigner(keepAddress, signer)
+	err := k.storage.save(keepAddress, signer)
+	if err != nil {
+		return fmt.Errorf(
+			"could not persist signer for keep [%s] in the storage: [%v]",
+			keepAddress.String(),
+			err,
+		)
+	}
+
+	k.myKeeps[keepAddress] = signer
 
 	return nil
+}
+
+func (k *Keeps) SnapshotSigner(
+	keepAddress common.Address,
+	signer *tss.ThresholdSigner,
+) error {
+	return k.storage.snapshot(keepAddress, signer)
 }
 
 // UnregisterKeep archives threeshold signer info for the given keep address.
@@ -55,16 +79,20 @@ func (k *Keeps) UnregisterKeep(keepAddress common.Address) {
 	delete(k.myKeeps, keepAddress)
 }
 
-// GetSigners gets signers by a keep address.
-func (k *Keeps) GetSigners(keepAddress common.Address) ([]*tss.ThresholdSigner, error) {
+// GetSigner gets signer for a keep address.
+func (k *Keeps) GetSigner(keepAddress common.Address) (*tss.ThresholdSigner, error) {
 	k.myKeepsMutex.RLock()
 	defer k.myKeepsMutex.RUnlock()
 
-	signers, ok := k.myKeeps[keepAddress]
+	signer, ok := k.myKeeps[keepAddress]
 	if !ok {
-		return nil, fmt.Errorf("could not find signers for keep: [%s]", keepAddress.String())
+		return nil, fmt.Errorf(
+			"could not find signer for keep: [%s]",
+			keepAddress.String(),
+		)
 	}
-	return signers, nil
+
+	return signer, nil
 }
 
 // HasSigner returns true if at least one signer exists in the registry
@@ -94,6 +122,9 @@ func (k *Keeps) GetKeepsAddresses() []common.Address {
 // LoadExistingKeeps iterates over all signers stored on disk and loads them
 // into memory
 func (k *Keeps) LoadExistingKeeps() {
+	k.myKeepsMutex.Lock()
+	defer k.myKeepsMutex.Unlock()
+
 	keepSignersChannel, errorsChannel := k.storage.readAll()
 
 	// Two goroutines read from signers and errors channels and either adds
@@ -107,7 +138,16 @@ func (k *Keeps) LoadExistingKeeps() {
 
 	go func() {
 		for keepSigner := range keepSignersChannel {
-			k.storeSigner(keepSigner.keepAddress, keepSigner.signer)
+			if _, exists := k.myKeeps[keepSigner.keepAddress]; exists {
+				logger.Errorf(
+					"signer for keep [%s] already loaded; "+
+						"possible duplicate in the storage layer",
+					keepSigner.keepAddress.String(),
+				)
+				continue
+			}
+
+			k.myKeeps[keepSigner.keepAddress] = keepSigner.signer
 		}
 
 		wg.Done()
@@ -115,7 +155,7 @@ func (k *Keeps) LoadExistingKeeps() {
 
 	go func() {
 		for err := range errorsChannel {
-			logger.Errorf("could not load signer from disk: [%v]", err)
+			logger.Errorf("could not load signer from storage: [%v]", err)
 		}
 
 		wg.Done()
@@ -123,38 +163,15 @@ func (k *Keeps) LoadExistingKeeps() {
 
 	wg.Wait()
 
-	k.printSigners()
-}
-
-func (k *Keeps) printSigners() {
-	k.myKeepsMutex.RLock()
-	defer k.myKeepsMutex.RUnlock()
-
 	logger.Infof(
 		"loaded [%d] keeps from the local storage",
 		len(k.myKeeps),
 	)
 
-	for keepAddress, signers := range k.myKeeps {
+	for keepAddress := range k.myKeeps {
 		logger.Debugf(
-			"loaded [%d] signers for keep [%s]",
-			len(signers),
+			"loaded signer for keep [%s]",
 			keepAddress.String(),
 		)
-	}
-}
-
-func (k *Keeps) storeSigner(
-	keepAddress common.Address,
-	signer *tss.ThresholdSigner,
-) {
-	k.myKeepsMutex.Lock()
-	defer k.myKeepsMutex.Unlock()
-
-	signers, exists := k.myKeeps[keepAddress]
-	if exists {
-		k.myKeeps[keepAddress] = append(signers, signer)
-	} else {
-		k.myKeeps[keepAddress] = []*tss.ThresholdSigner{signer}
 	}
 }

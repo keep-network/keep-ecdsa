@@ -9,8 +9,8 @@ const truffleAssert = require("truffle-assertions")
 
 const StackLib = contract.fromArtifact("StackLib")
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
-const FullyBackedBondedECDSAKeepFactoryStub = contract.fromArtifact(
-  "FullyBackedBondedECDSAKeepFactoryStub"
+const FullyBackedECDSAKeepFactoryStub = contract.fromArtifact(
+  "FullyBackedECDSAKeepFactoryStub"
 )
 const FullyBackedBonding = contract.fromArtifact("FullyBackedBonding")
 const FullyBackedSortitionPool = contract.fromArtifact(
@@ -20,8 +20,8 @@ const FullyBackedSortitionPoolFactory = contract.fromArtifact(
   "FullyBackedSortitionPoolFactory"
 )
 const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
-const FullyBackedBondedECDSAKeepStub = contract.fromArtifact(
-  "FullyBackedBondedECDSAKeepStub"
+const FullyBackedECDSAKeepStub = contract.fromArtifact(
+  "FullyBackedECDSAKeepStub"
 )
 
 const BN = web3.utils.BN
@@ -32,8 +32,8 @@ const expect = chai.expect
 const assert = chai.assert
 
 // TODO: Refactor tests by pulling common parts of BondedECDSAKeepFactory and
-// FullyBackedBondedECDSAKeepFactory to one file.
-describe("FullyBackedBondedECDSAKeepFactory", function () {
+// FullyBackedECDSAKeepFactory to one file.
+describe("FullyBackedECDSAKeepFactory", function () {
   let registry
   let keepFactory
   let sortitionPoolFactory
@@ -56,7 +56,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
   const singleBond = web3.utils.toWei(new BN(20))
   const bond = singleBond.mul(groupSize)
 
-  const stakeLockDuration = 0 // parameter is ignored by FullyBackedBondedECDSAKeepFactory implementation
+  const stakeLockDuration = 0 // parameter is ignored by FullyBackedECDSAKeepFactory implementation
   const delegationInitPeriod = time.duration.hours(12)
   const delegationLockPeriod = time.duration.days(1)
 
@@ -627,7 +627,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -667,7 +667,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -707,7 +707,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -749,7 +749,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -827,7 +827,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       const keep = await openKeep()
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -1015,7 +1015,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -1049,7 +1049,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
         }
       )
       const recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
-      const keep = await FullyBackedBondedECDSAKeepStub.at(keepAddress)
+      const keep = await FullyBackedECDSAKeepStub.at(keepAddress)
       const keepOpenedTime = await keep.getOpenedTimestamp()
       const factoryKeepOpenedTime = await keepFactory.getKeepOpenedTimestamp(
         keepAddress
@@ -1089,7 +1089,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
         }
       )
 
-      const keep = await FullyBackedBondedECDSAKeepStub.at(keepAddress)
+      const keep = await FullyBackedECDSAKeepStub.at(keepAddress)
 
       assert.isTrue(await keep.isActive(), "keep should be active")
     })
@@ -1116,7 +1116,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       )
 
       const eventList = await keepFactory.getPastEvents(
-        "FullyBackedBondedECDSAKeepCreated",
+        "FullyBackedECDSAKeepCreated",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
@@ -1209,8 +1209,8 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
         delegationInitPeriod
       )
       randomBeacon = accounts[1]
-      const keepMasterContract = await FullyBackedBondedECDSAKeepStub.new()
-      keepFactory = await FullyBackedBondedECDSAKeepFactoryStub.new(
+      const keepMasterContract = await FullyBackedECDSAKeepStub.new()
+      keepFactory = await FullyBackedECDSAKeepFactoryStub.new(
         keepMasterContract.address,
         sortitionPoolFactory.address,
         bonding.address,
@@ -1645,8 +1645,8 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       delegationInitPeriod
     )
     randomBeacon = await RandomBeaconStub.new()
-    const keepMasterContract = await FullyBackedBondedECDSAKeepStub.new()
-    keepFactory = await FullyBackedBondedECDSAKeepFactoryStub.new(
+    const keepMasterContract = await FullyBackedECDSAKeepStub.new()
+    keepFactory = await FullyBackedECDSAKeepFactoryStub.new(
       keepMasterContract.address,
       sortitionPoolFactory.address,
       bonding.address,
@@ -1756,7 +1756,7 @@ describe("FullyBackedBondedECDSAKeepFactory", function () {
       }
     )
 
-    return await FullyBackedBondedECDSAKeepStub.at(keepAddress)
+    return await FullyBackedECDSAKeepStub.at(keepAddress)
   }
 
   async function newAccount(initialBalanceETH = "1") {

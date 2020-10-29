@@ -27,6 +27,7 @@ type Config struct {
 	TSS                    tss.Config
 	Metrics                Metrics
 	Diagnostics            Diagnostics
+	Extensions             Extensions
 }
 
 // SanctionedApplications contains addresses of applications approved by the
@@ -68,6 +69,17 @@ type Metrics struct {
 // Diagnostics stores diagnostics-related configuration.
 type Diagnostics struct {
 	Port int
+}
+
+// Extensions stores app-specific extensions configuration.
+type Extensions struct {
+	TBTC TBTC
+}
+
+// TBTC stores configuration of application extension responsible for
+// executing signer actions specific for TBTC application.
+type TBTC struct {
+	TBTCSystem string
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file

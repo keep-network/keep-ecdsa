@@ -30,7 +30,7 @@ const expect = chai.expect
 const assert = chai.assert
 
 // TODO: Refactor tests by pulling common parts of BondedECDSAKeepFactory and
-// FullyBackedBondedECDSAKeepFactory to one file.
+// FullyBackedECDSAKeepFactory to one file.
 describe("BondedECDSAKeepFactory", function () {
   let registry
   let tokenStaking

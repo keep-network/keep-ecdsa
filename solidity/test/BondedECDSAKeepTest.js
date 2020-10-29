@@ -32,7 +32,7 @@ const expect = chai.expect
 const assert = chai.assert
 
 // TODO: Refactor tests by pulling common parts of BondedECDSAKeep and
-// FullyBackedBondedECDSAKeep to one file.
+// FullyBackedECDSAKeep to one file.
 describe("BondedECDSAKeep", function () {
   const bondCreator = accounts[0]
   const owner = accounts[1]

@@ -11,17 +11,15 @@ const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
-const FullyBackedBondedECDSAKeep = contract.fromArtifact(
-  "FullyBackedBondedECDSAKeep"
-)
-const FullyBackedBondedECDSAKeepStub = contract.fromArtifact(
-  "FullyBackedBondedECDSAKeepStub"
+const FullyBackedECDSAKeep = contract.fromArtifact("FullyBackedECDSAKeep")
+const FullyBackedECDSAKeepStub = contract.fromArtifact(
+  "FullyBackedECDSAKeepStub"
 )
 const TestToken = contract.fromArtifact("TestToken")
 const FullyBackedBondingStub = contract.fromArtifact("FullyBackedBondingStub")
 const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
-const FullyBackedBondedECDSAKeepCloneFactoryStub = contract.fromArtifact(
-  "FullyBackedBondedECDSAKeepCloneFactoryStub"
+const FullyBackedECDSAKeepCloneFactoryStub = contract.fromArtifact(
+  "FullyBackedECDSAKeepCloneFactoryStub"
 )
 
 const truffleAssert = require("truffle-assertions")
@@ -34,8 +32,8 @@ const expect = chai.expect
 const assert = chai.assert
 
 // TODO: Refactor tests by pulling common parts of BondedECDSAKeep and
-// FullyBackedBondedECDSAKeep to one file.
-describe("FullyBackedBondedECDSAKeep", function () {
+// FullyBackedECDSAKeep to one file.
+describe("FullyBackedECDSAKeep", function () {
   const bondCreator = accounts[0]
   const owner = accounts[1]
   const nonOwner = accounts[2]
@@ -71,7 +69,7 @@ describe("FullyBackedBondedECDSAKeep", function () {
     )
 
     const events = await factoryStub.getPastEvents(
-      "FullyBackedBondedECDSAKeepCreated",
+      "FullyBackedECDSAKeepCreated",
       {
         fromBlock: startBlock,
         toBlock: "latest",
@@ -80,11 +78,11 @@ describe("FullyBackedBondedECDSAKeep", function () {
     assert.lengthOf(
       events,
       1,
-      "unexpected length of FullyBackedBondedECDSAKeepCreated events"
+      "unexpected length of FullyBackedECDSAKeepCreated events"
     )
     const keepAddress = events[0].returnValues.keepAddress
 
-    return await FullyBackedBondedECDSAKeepStub.at(keepAddress)
+    return await FullyBackedECDSAKeepStub.at(keepAddress)
   }
 
   before(async () => {
@@ -93,8 +91,8 @@ describe("FullyBackedBondedECDSAKeep", function () {
       registry.address,
       delegationInitPeriod
     )
-    keepStubMaster = await FullyBackedBondedECDSAKeepStub.new()
-    factoryStub = await FullyBackedBondedECDSAKeepCloneFactoryStub.new(
+    keepStubMaster = await FullyBackedECDSAKeepStub.new()
+    factoryStub = await FullyBackedECDSAKeepCloneFactoryStub.new(
       keepStubMaster.address
     )
 
@@ -122,7 +120,7 @@ describe("FullyBackedBondedECDSAKeep", function () {
 
   describe("initialize", async () => {
     it("succeeds", async () => {
-      keep = await FullyBackedBondedECDSAKeepStub.new()
+      keep = await FullyBackedECDSAKeepStub.new()
       await keep.initialize(
         owner,
         members,
@@ -133,7 +131,7 @@ describe("FullyBackedBondedECDSAKeep", function () {
     })
 
     it("claims bonding delegated authority", async () => {
-      keep = await FullyBackedBondedECDSAKeepStub.new()
+      keep = await FullyBackedECDSAKeepStub.new()
       await keep.initialize(
         owner,
         members,
@@ -309,7 +307,7 @@ describe("FullyBackedBondedECDSAKeep", function () {
         factoryStub.address
       )
 
-      keepWith16Signers = await FullyBackedBondedECDSAKeep.at(keepAddress)
+      keepWith16Signers = await FullyBackedECDSAKeep.at(keepAddress)
     })
 
     it("should be less than 350k if all submitted keys match", async () => {

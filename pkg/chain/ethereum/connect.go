@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
 
@@ -60,7 +59,7 @@ type EthereumChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, error) {
+func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, err

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-ecdsa/pkg/registry"
+
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/operator"
 
@@ -114,6 +116,7 @@ func (n *Node) GenerateSignerForKeep(
 	operatorPublicKey *operator.PublicKey,
 	keepAddress common.Address,
 	members []common.Address,
+	keepsRegistry *registry.Keeps,
 ) (*tss.ThresholdSigner, error) {
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
 	preParamsBox := params.NewBox(n.tssParamsPool.get())
@@ -193,6 +196,20 @@ func (n *Node) GenerateSignerForKeep(
 			logger.Errorf("failed to generate threshold signer: [%v]", err)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
+		}
+
+		// Make a snapshot of the generated signer before publishing the public
+		// key to the keep. This guarantees the signer and their key share are
+		// safely persisted before the public key is registered on-chain.
+		// Then, the snapshot can be used for signer recovery in case something
+		// bad occurs before the final signer registration will be done.
+		err = keepsRegistry.SnapshotSigner(keepAddress, signer)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"could not make snapshot of signer for keep [%s]: [%v]",
+				keepAddress.String(),
+				err,
+			)
 		}
 
 		// Serialize and publish public key to the keep.
