@@ -272,11 +272,11 @@ describe("ECDSARewards", () => {
       await timeJumpToEndOfIntervalIfApplicable(0)
 
       // mark first keep as closed
-      const keepAddress0 = await keepFactory.getKeepAtIndex(0)
-      const keep0 = await BondedECDSAKeepStub.at(keepAddress0)
-      await keep0.publicMarkAsClosed()
+      const keepAddress = await keepFactory.getKeepAtIndex(0)
+      const keep = await BondedECDSAKeepStub.at(keepAddress)
+      await keep.publicMarkAsClosed()
 
-      await rewardsContract.receiveReward(keepAddress0)
+      await rewardsContract.receiveReward(keepAddress)
 
       await withdrawRewards(0, operators)
 
@@ -288,6 +288,28 @@ describe("ECDSARewards", () => {
           "No rewards to withdraw"
         )
       }
+    })
+
+    it("should revert when rewards have been received already", async () => {
+      for (let i = 0; i < 8; i++) {
+        await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
+      }
+
+      await timeJumpToEndOfIntervalIfApplicable(0)
+
+      // mark first keep as closed
+      const keepAddress = await keepFactory.getKeepAtIndex(0)
+      const keep = await BondedECDSAKeepStub.at(keepAddress)
+      await keep.publicMarkAsClosed()
+
+      await rewardsContract.receiveReward(keepAddress)
+
+      await withdrawRewards(0, operators)
+
+      await expectRevert(
+        rewardsContract.receiveReward(keepAddress),
+        "Rewards already claimed"
+      )
     })
 
     it("should correctly receive rewards from multiple keeps", async () => {
@@ -363,7 +385,7 @@ describe("ECDSARewards", () => {
 
   async function assertKeepBalanceOfBeneficiaries(expectedBalance) {
     // Solidity is not very good when it comes to floating point precision,
-    // we are allowing for ~1 KEEP difference margin between expected and
+    // we are allowing for ~1 KEEP difference margin between expected and an
     // actual value.
     const precision = 1
 
