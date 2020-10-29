@@ -4,16 +4,14 @@ import "../../contracts/AbstractBonding.sol";
 
 import "./StakingInfoStub.sol";
 
-import "@keep-network/keep-core/contracts/KeepRegistry.sol";
-
 contract AbstractBondingStub is AbstractBonding {
     StakingInfoStub stakingInfoStub;
 
-    constructor(KeepRegistry _keepRegistry, StakingInfoStub _stakingInfoStub)
+    constructor(address registryAddress, address stakingInfoAddress)
         public
-        AbstractBonding(_keepRegistry)
+        AbstractBonding(registryAddress)
     {
-        stakingInfoStub = _stakingInfoStub;
+        stakingInfoStub = StakingInfoStub(stakingInfoAddress);
     }
 
     function withdraw(uint256 amount, address operator) public {

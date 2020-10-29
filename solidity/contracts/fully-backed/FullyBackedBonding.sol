@@ -58,7 +58,7 @@ contract FullyBackedBonding is
     /// before being eligible for group selection.
     constructor(KeepRegistry _keepRegistry, uint256 _initializationPeriod)
         public
-        AbstractBonding(_keepRegistry)
+        AbstractBonding(address(_keepRegistry))
         Authorizations(_keepRegistry)
     {
         initializationPeriod = _initializationPeriod;
