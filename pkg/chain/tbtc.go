@@ -1,15 +1,14 @@
-package tbtc
+package eth
 
 import (
 	"math/big"
 
 	"github.com/keep-network/keep-common/pkg/subscription"
-	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
-// Handle represents a chain handle extended with TBTC-specific capabilities.
-type Handle interface {
-	chain.Handle
+// TBTCHandle represents a chain handle extended with TBTC-specific capabilities.
+type TBTCHandle interface {
+	Handle
 
 	Deposit
 	TBTCSystem
@@ -98,5 +97,18 @@ type TBTCSystem interface {
 	PastDepositRedemptionRequestedEvents(
 		depositAddress string,
 		startBlock uint64,
-	) ([]*chain.DepositRedemptionRequestedEvent, error)
+	) ([]*DepositRedemptionRequestedEvent, error)
+}
+
+// DepositRedemptionRequestedEvent is an event emitted when a deposit
+// redemption has been requested or the redemption fee has been increased.
+type DepositRedemptionRequestedEvent struct {
+	DepositAddress       string
+	RequesterAddress     string
+	Digest               [32]byte
+	UtxoValue            *big.Int
+	RedeemerOutputScript []byte
+	RequestedFee         *big.Int
+	Outpoint             []byte
+	BlockNumber          uint64
 }

@@ -1,8 +1,6 @@
 package eth
 
 import (
-	"math/big"
-
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -61,20 +59,4 @@ func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
 		}
 	}
 	return false
-}
-
-// DepositRedemptionRequestedEvent is an event emitted when a deposit
-// redemption has been requested or the redemption fee has been increased.
-// FIXME: This event should be placed in `extensions/tbtc` package but
-//  this cause an import cycle. For now, there are no better option
-//  than place it right here.
-type DepositRedemptionRequestedEvent struct {
-	DepositAddress       string
-	RequesterAddress     string
-	Digest               [32]byte
-	UtxoValue            *big.Int
-	RedeemerOutputScript []byte
-	RequestedFee         *big.Int
-	Outpoint             []byte
-	BlockNumber          uint64
 }

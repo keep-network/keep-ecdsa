@@ -25,7 +25,7 @@ const (
 )
 
 // Initialize initializes extension specific to the TBTC application.
-func Initialize(ctx context.Context, chain Handle) error {
+func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
 	logger.Infof("initializing tbtc extension")
 
 	tbtc := newTBTC(chain)
@@ -74,10 +74,10 @@ func Initialize(ctx context.Context, chain Handle) error {
 }
 
 type tbtc struct {
-	chain Handle
+	chain chain.TBTCHandle
 }
 
-func newTBTC(chain Handle) *tbtc {
+func newTBTC(chain chain.TBTCHandle) *tbtc {
 	return &tbtc{
 		chain: chain,
 	}
