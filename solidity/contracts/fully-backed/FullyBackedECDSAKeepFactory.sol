@@ -63,7 +63,7 @@ contract FullyBackedECDSAKeepFactory is
     // stake divided by a constant divisor. The divisor is set to 1 ETH so that
     // all ETHs in available unbonded value matter when calculating operator's
     // eligible weight for signer selection.
-    uint256 public constant bondWeightDivisor = 1e18; // 1 ETH // TODO: Decide on value
+    uint256 public constant bondWeightDivisor = 1e18; // 1 ETH
 
     // Notification that a new keep has been created.
     event FullyBackedECDSAKeepCreated(
