@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
-	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -285,11 +284,11 @@ func initializeDiagnostics(
 
 func initializeBalanceMonitoring(
 	ctx context.Context,
-	chainHandle eth.Handle,
+	ethereumChain *ethereum.EthereumChain,
 	config *config.Config,
 	ethereumAddress string,
 ) {
-	balanceMonitor, err := chainHandle.BalanceMonitor()
+	balanceMonitor, err := ethereumChain.BalanceMonitor()
 	if err != nil {
 		logger.Errorf("error obtaining balance monitor handle [%v]", err)
 	}
