@@ -172,7 +172,7 @@ describe("ECDSARewards", () => {
       // First keep was terminated, only the second keep was closed properly.
       // Member receives: 7128 / 3 = 2376 (3 signers per keep)
       const expectedBeneficiaryAllocation = new BN(2376)
-      await assertAllocatedRewards(expectedBeneficiaryAllocation, 0, operators)
+      await assertAllocatedRewards(expectedBeneficiaryAllocation, 0)
 
       // The 178,200,000 - 14,256 = 178,185,744 stays in unallocated
       // rewards and the fact one keep was terminated needs to be reported to
@@ -205,7 +205,7 @@ describe("ECDSARewards", () => {
       }
 
       await rewardsContract.receiveRewards(keepAddresses)
-      await withdrawRewards(0, operators)
+      await withdrawRewards(0)
 
       // Full allocation for the first interval would be
       // 178,200,000 * 4% = 7,128,000.
@@ -244,7 +244,7 @@ describe("ECDSARewards", () => {
       await keep.publicMarkAsClosed()
 
       await rewardsContract.receiveReward(keepAddress)
-      await withdrawRewards(0, operators)
+      await withdrawRewards(0)
 
       // Full allocation for the first interval would be
       // 178,200,000 * 4% = 7,128,000.
@@ -261,7 +261,7 @@ describe("ECDSARewards", () => {
       await keep.publicMarkAsClosed()
 
       await rewardsContract.receiveReward(keepAddress)
-      await withdrawRewards(0, operators)
+      await withdrawRewards(0)
 
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance.muln(2))
     })
@@ -280,7 +280,7 @@ describe("ECDSARewards", () => {
 
       await rewardsContract.receiveReward(keepAddress)
 
-      await withdrawRewards(0, operators)
+      await withdrawRewards(0)
 
       for (let i = 0; i < operators.length; i++) {
         await expectRevert(
@@ -306,7 +306,7 @@ describe("ECDSARewards", () => {
 
       await rewardsContract.receiveReward(keepAddress)
 
-      await withdrawRewards(0, operators)
+      await withdrawRewards(0)
 
       await expectRevert(
         rewardsContract.receiveReward(keepAddress),
@@ -331,7 +331,7 @@ describe("ECDSARewards", () => {
       await keep1.publicMarkAsClosed()
 
       await rewardsContract.receiveRewards(keepAddresses)
-      await withdrawRewards(0, operators)
+      await withdrawRewards(0)
 
       // Full allocation for the first interval would be
       // 178,200,000 * 4% = 7,128,000.
@@ -363,7 +363,7 @@ describe("ECDSARewards", () => {
       // keeps created: 10 => 7,128 KEEP per keep
       // member receives: 7,128 / 3 = 2,376 (3 signers per keep)
       await rewardsContract.receiveReward(keepAddress0)
-      await withdrawRewards(0, operators)
+      await withdrawRewards(0)
 
       let expectedBeneficiaryBalance = new BN(2376)
       await assertKeepBalanceOfBeneficiaries(expectedBeneficiaryBalance)
@@ -376,7 +376,7 @@ describe("ECDSARewards", () => {
       await keep1.publicMarkAsClosed()
 
       await rewardsContract.receiveReward(keepAddress1)
-      await withdrawRewards(0, operators)
+      await withdrawRewards(0)
 
       // each member was in 2 properly closed keeps: 2,376 * 2 = 4,752
       expectedBeneficiaryBalance = new BN(4752)
@@ -413,13 +413,13 @@ describe("ECDSARewards", () => {
       // 2,376 * 2 = 4,752
       const expectedBalanceFromTwoKeeps = expectedBeneficiaryBalance.muln(2)
 
-      await assertWithdrawableRewards(expectedBalanceFromTwoKeeps, 0, operators)
-      await assertWithdrawnRewards(new BN(0), 0, operators)
+      await assertWithdrawableRewards(expectedBalanceFromTwoKeeps, 0)
+      await assertWithdrawnRewards(new BN(0), 0)
 
-      await withdrawRewards(0, operators)
+      await withdrawRewards(0)
 
-      await assertWithdrawableRewards(new BN(0), 0, operators)
-      await assertWithdrawnRewards(expectedBalanceFromTwoKeeps, 0, operators)
+      await assertWithdrawableRewards(new BN(0), 0)
+      await assertWithdrawnRewards(expectedBalanceFromTwoKeeps, 0)
     })
   })
 
@@ -439,7 +439,7 @@ describe("ECDSARewards", () => {
     }
   }
 
-  async function assertAllocatedRewards(expectedBalance, interval, operators) {
+  async function assertAllocatedRewards(expectedBalance, interval) {
     const precision = 1
 
     for (let i = 0; i < operators.length; i++) {
@@ -454,7 +454,7 @@ describe("ECDSARewards", () => {
     }
   }
 
-  async function assertWithdrawnRewards(expectedBalance, interval, operators) {
+  async function assertWithdrawnRewards(expectedBalance, interval) {
     const precision = 1
 
     for (let i = 0; i < operators.length; i++) {
@@ -469,11 +469,7 @@ describe("ECDSARewards", () => {
     }
   }
 
-  async function assertWithdrawableRewards(
-    expectedBalance,
-    interval,
-    operators
-  ) {
+  async function assertWithdrawableRewards(expectedBalance, interval) {
     const precision = 1
 
     for (let i = 0; i < operators.length; i++) {
@@ -488,7 +484,7 @@ describe("ECDSARewards", () => {
     }
   }
 
-  async function withdrawRewards(interval, operators) {
+  async function withdrawRewards(interval) {
     for (let i = 0; i < operators.length; i++) {
       await rewardsContract.withdrawRewards(interval, operators[i], {
         from: operators[i],
