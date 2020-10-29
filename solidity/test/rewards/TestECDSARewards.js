@@ -23,6 +23,7 @@ describe("ECDSARewards", () => {
 
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
   const firstIntervalStart = 1600041600 // Sep 14 2020
+  const beneficiaryRewardCap = 10000
 
   // 1,000,000,000 - total KEEP supply
   //   200,000,000 - 20% of the total supply goes to staker rewards
@@ -50,6 +51,7 @@ describe("ECDSARewards", () => {
     )
 
     await fund(keepToken, rewardsContract, totalRewardsAllocation)
+    await rewardsContract.setBeneficiaryRewardCap(beneficiaryRewardCap)
   })
 
   beforeEach(async () => {
