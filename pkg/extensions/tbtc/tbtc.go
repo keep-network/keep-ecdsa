@@ -404,7 +404,7 @@ type backoffFn func(iteration int) time.Duration
 
 type timeoutFn func(depositAddress string) (time.Duration, error)
 
-// TODO:
+// TODO (keep-ecdsa/pull/585#discussion_r513447505):
 //  1. Filter incoming events by operator interest.
 //  2. Incoming events deduplication.
 //  3. Resume monitoring after client restart.
