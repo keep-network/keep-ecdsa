@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-tecdsa/pkg/chain/eth"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -22,11 +22,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/keep-network/keep-ecdsa/pkg/firewall"
 
 	"github.com/keep-network/keep-ecdsa/internal/config"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
+	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
+	"github.com/keep-network/keep-ecdsa/pkg/firewall"
 
 	"github.com/urfave/cli"
 )
@@ -171,6 +172,7 @@ func Start(c *cli.Context) error {
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
+	initializeExtensions(ctx, config.Extensions, ethereumChain)
 	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(config, networkProvider)
 	initializeBalanceMonitoring(ctx, ethereumChain, config, ethereumKey.Address.Hex())
@@ -184,6 +186,35 @@ func Start(c *cli.Context) error {
 		}
 
 		return fmt.Errorf("unexpected context cancellation")
+	}
+}
+
+func initializeExtensions(
+	ctx context.Context,
+	config config.Extensions,
+	ethereumChain *ethereum.EthereumChain,
+) {
+	if len(config.TBTC.TBTCSystem) > 0 {
+		tbtcEthereumChain, err := ethereum.WithTBTCExtension(
+			ethereumChain,
+			config.TBTC.TBTCSystem,
+		)
+		if err != nil {
+			logger.Errorf(
+				"could not initialize tbtc chain extension: [%v]",
+				err,
+			)
+			return
+		}
+
+		err = tbtc.Initialize(ctx, tbtcEthereumChain)
+		if err != nil {
+			logger.Errorf(
+				"could not initialize tbtc extension: [%v]",
+				err,
+			)
+			return
+		}
 	}
 }
 
