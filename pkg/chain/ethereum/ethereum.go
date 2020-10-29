@@ -510,7 +510,7 @@ func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Ti
 	return keepOpenTime, nil
 }
 
-// WeiBalanceOf returns the given address balance in WEI.
+//WeiBalanceOf returns the wei balance of the given address from the latest known block.
 func (ec *EthereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
 	return ec.clientRPC.BalanceAt(
 		context.Background(),

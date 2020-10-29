@@ -302,6 +302,7 @@ func initializeBalanceMonitoring(
 	balanceMonitor, err := ethereumChain.BalanceMonitor()
 	if err != nil {
 		logger.Errorf("error obtaining balance monitor handle [%v]", err)
+		return
 	}
 
 	alertThreshold := config.Ethereum.BalanceAlertThreshold
@@ -318,7 +319,7 @@ func initializeBalanceMonitoring(
 
 	logger.Infof(
 		"started balance monitoring for address [%v] "+
-			"with alerting below [%v] wei",
+			"with the alert threshold set to [%v] wei",
 		ethereumAddress,
 		alertThreshold,
 	)
