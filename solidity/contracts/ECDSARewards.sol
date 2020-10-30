@@ -87,9 +87,6 @@ contract ECDSARewards is Rewards {
 
     uint256 internal constant minimumECDSAKeepsPerInterval = 1000;
 
-    BondedECDSAKeepFactory factory;
-    TokenStaking tokenStaking;
-
     // The amount of tokens each individual beneficiary address
     // can receive in a single interval is capped.
     // TODO: set actual value
@@ -97,9 +94,12 @@ contract ECDSARewards is Rewards {
     // The total amount of rewards allocated to the given beneficiary address,
     // in the given interval.
     // `allocatedRewards[beneficiary][interval] -> amount`
-    mapping(address => mapping(uint256 => uint256)) allocatedRewards;
+    mapping(address => mapping(uint256 => uint256)) internal allocatedRewards;
     // The amount of interval rewards withdrawn to the given beneficiary.
-    mapping(address => mapping(uint256 => uint256)) withdrawnRewards;
+    mapping(address => mapping(uint256 => uint256)) internal withdrawnRewards;
+
+    BondedECDSAKeepFactory internal factory;
+    TokenStaking internal tokenStaking;
 
     constructor(
         address _token,
