@@ -111,6 +111,7 @@ describe("FullyBackedBonding", function () {
         operator: operator,
         beneficiary: beneficiary,
         authorizer: authorizer,
+        value: minimumDelegationValue,
       })
     })
 

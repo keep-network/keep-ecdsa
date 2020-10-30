@@ -38,7 +38,8 @@ contract FullyBackedBonding is
     event OperatorDelegated(
         address indexed operator,
         address indexed beneficiary,
-        address indexed authorizer
+        address indexed authorizer,
+        uint256 value
     );
 
     // The ether value (in wei) that should be passed along with the delegation
@@ -101,7 +102,7 @@ contract FullyBackedBonding is
         deposit(operator);
 
         emit Delegated(owner, operator);
-        emit OperatorDelegated(operator, beneficiary, authorizer);
+        emit OperatorDelegated(operator, beneficiary, authorizer, msg.value);
     }
 
     /// @notice Checks if the operator for the given bond creator contract
