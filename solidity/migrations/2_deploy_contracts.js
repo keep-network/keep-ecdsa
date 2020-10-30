@@ -14,8 +14,6 @@ const FullyBackedECDSAKeepFactory = artifacts.require(
   "FullyBackedECDSAKeepFactory"
 )
 
-const EthBonding = artifacts.require("EthBonding")
-
 const {
   deployBondedSortitionPoolFactory,
   deployFullyBackedSortitionPoolFactory,
@@ -51,7 +49,7 @@ module.exports = async function (deployer) {
     RegistryAddress = (await deployer.deploy(KeepRegistry)).address
   }
 
-  // KEEP and ETH backed bonding
+  // KEEP staking and ETH bonding
   await deployer.deploy(
     KeepBonding,
     RegistryAddress,
@@ -84,7 +82,7 @@ module.exports = async function (deployer) {
     implInitializeCallData
   )
 
-  // ETH-only Staking
+  // ETH bonding only
   await deployer.deploy(FullyBackedBonding, RegistryAddress)
 
   await deployer.deploy(FullyBackedECDSAKeep)
@@ -96,7 +94,4 @@ module.exports = async function (deployer) {
     FullyBackedBonding.address,
     RandomBeaconAddress
   )
-
-  // ETH-only backed bonding
-  await deployer.deploy(EthBonding, RegistryAddress)
 }
