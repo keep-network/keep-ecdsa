@@ -80,6 +80,9 @@ contract FullyBackedECDSAKeepFactory is
     // Notification when operator gets banned in sortition pools.
     event OperatorBanned(address indexed operator);
 
+    // Notification when operator gets unregistered from sortition pools.
+    event OperatorUnregistered(address indexed operator);
+
     constructor(
         address _masterKeepAddress,
         address _sortitionPoolFactoryAddress,
@@ -262,6 +265,27 @@ contract FullyBackedECDSAKeepFactory is
             }
 
             emit OperatorBanned(operator);
+        }
+    }
+
+    /// @notice Unregisters members of a calling keep in all associated sortition
+    /// pools for every registered application. An operator can re-register
+    /// by calling registration function.
+    /// @dev The function can be called only by a keep created by this factory.
+    function unregisterKeepMembers() public onlyKeep() {
+        FullyBackedECDSAKeep keep = FullyBackedECDSAKeep(msg.sender);
+
+        address[] memory members = keep.getMembers();
+
+        for (uint256 i = 0; i < members.length; i++) {
+            address operator = members[i];
+
+            for (uint256 j = 0; j < applications.length; j++) {
+                FullyBackedSortitionPool(getSortitionPool(applications[j]))
+                    .unregister(operator);
+            }
+
+            emit OperatorUnregistered(operator);
         }
     }
 

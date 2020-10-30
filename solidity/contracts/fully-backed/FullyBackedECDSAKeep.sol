@@ -60,6 +60,14 @@ contract FullyBackedECDSAKeep is AbstractBondedECDSAKeep {
         keepFactory.banKeepMembers();
     }
 
+    /// @notice Terminates the keep and unregisters keep members as candidates
+    /// for future keeps.
+    function terminateKeep() internal {
+        super.terminateKeep();
+
+        keepFactory.unregisterKeepMembers();
+    }
+
     /// @notice Gets the beneficiary for the specified member address.
     /// @param _member Member address.
     /// @return Beneficiary address.

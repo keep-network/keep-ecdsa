@@ -605,6 +605,15 @@ describe("FullyBackedECDSAKeep", function () {
       )
     })
 
+    it("calls factory to unregister members", async () => {
+      await keep.seizeSignerBonds({from: owner})
+
+      assert.equal(
+        await factoryStub.unregisterKeepMembersCalledCount(keep.address),
+        1
+      )
+    })
+
     it("can be called only by owner", async () => {
       await expectRevert(
         keep.seizeSignerBonds({from: nonOwner}),
@@ -617,6 +626,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       await keep.seizeSignerBonds({from: owner})
     })
+
     it("reverts when already seized", async () => {
       await keep.seizeSignerBonds({from: owner})
 

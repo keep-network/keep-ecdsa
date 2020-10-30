@@ -16,6 +16,7 @@ contract FullyBackedECDSAKeepCloneFactoryStub is
     address public masterKeepAddress;
 
     mapping(address => uint256) public banKeepMembersCalledCount;
+    mapping(address => uint256) public unregisterKeepMembersCalledCount;
 
     constructor(address _masterKeepAddress) public {
         masterKeepAddress = _masterKeepAddress;
@@ -54,5 +55,9 @@ contract FullyBackedECDSAKeepCloneFactoryStub is
 
     function banKeepMembers() public {
         banKeepMembersCalledCount[msg.sender]++;
+    }
+
+    function unregisterKeepMembers() public {
+        unregisterKeepMembersCalledCount[msg.sender]++;
     }
 }

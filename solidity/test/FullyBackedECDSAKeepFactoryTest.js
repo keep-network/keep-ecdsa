@@ -1571,6 +1571,129 @@ describe("FullyBackedECDSAKeepFactory", function () {
     })
   })
 
+  describe("unregisterKeepMembers", async () => {
+    let allOperators
+    const application2 = "0x0000000000000000000000000000000000000002"
+    const application3 = "0x0000000000000000000000000000000000000003"
+
+    before(async () => {
+      await initializeNewFactory()
+
+      // Adding more operators to check that only keep members get unregistered.
+      allOperators = members
+
+      allOperators.push(await newAccount())
+      allOperators.push(await newAccount())
+      allOperators.push(await newAccount())
+
+      await initializeMemberCandidates(allOperators)
+      await registerMemberCandidates(allOperators)
+
+      // Register members as candidates for a second application.
+      signerPool2Address = await keepFactory.createSortitionPool.call(
+        application2
+      )
+      await keepFactory.createSortitionPool(application2)
+
+      members.forEach(async (member) => {
+        await bonding.authorizeSortitionPoolContract(
+          member,
+          signerPool2Address,
+          {
+            from: member,
+          }
+        )
+      })
+      await registerMemberCandidates(members, application2)
+
+      // Creates a new sortition pool that no members are registered.
+      signerPool3Address = await keepFactory.createSortitionPool.call(
+        application3
+      )
+      await keepFactory.createSortitionPool(application3)
+    })
+
+    it("reverts when called by non-keep", async () => {
+      await expectRevert(
+        keepFactory.unregisterKeepMembers(),
+        "Caller is not a keep created by the factory"
+      )
+    })
+
+    // In this scenario we assume 3 sortition pools to be created for the factory.
+    // Operators are registered in pool 1 and pool 2. Pool 3 doesn't have operators
+    // registered. We open a keep for pool 1. Once signer bonds are seized for
+    // the keep we expect keep members to be removed from the pool 1 but also
+    // from pool 2. Since members were not registered in pool 3 they won't be
+    // unregistered from that pool, but we want to confirm that this situation
+    // doesn't cause the function to revert due to operators missing in the pool.
+    it("unregisters keep members from all pools they are registered", async () => {
+      const keep = await openKeep()
+
+      await keep.seizeSignerBonds({from: keepOwner})
+      const keepMembers = await keep.getMembers()
+
+      const registeredApplications = [application, application2]
+
+      // Check pool 1 and pool 2.
+      for (let i = 0; i < registeredApplications.length; i++) {
+        const app = registeredApplications[i]
+
+        for (let j = 0; j < allOperators.length; j++) {
+          const operator = allOperators[j]
+
+          if (keepMembers.includes(operator)) {
+            assert.isFalse(
+              await keepFactory.isOperatorRegistered(operator, app)
+            )
+          } else {
+            assert.isTrue(await keepFactory.isOperatorRegistered(operator, app))
+          }
+        }
+      }
+
+      // Check pool 3.
+      for (let i = 0; i < allOperators.length; i++) {
+        const operator = allOperators[i]
+
+        assert.isFalse(
+          await keepFactory.isOperatorRegistered(operator, application3)
+        )
+      }
+    })
+
+    it("emits events", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
+
+      const keep = await openKeep()
+
+      await keep.seizeSignerBonds({from: keepOwner})
+      const keepMembers = await keep.getMembers()
+
+      const eventList = await keepFactory.getPastEvents(
+        "OperatorUnregistered",
+        {
+          fromBlock: blockNumber,
+          toBlock: "latest",
+        }
+      )
+
+      assert.equal(
+        eventList.length,
+        keepMembers.length,
+        "incorrect number of emitted events"
+      )
+
+      for (let i = 0; i < eventList.length; i++) {
+        assert.equal(
+          eventList[i].returnValues.operator,
+          keepMembers[i],
+          `incorrect operator address in event ${i}`
+        )
+      }
+    })
+  })
+
   describe("getSortitionPoolWeight", async () => {
     before(async () => {
       await initializeNewFactory()
