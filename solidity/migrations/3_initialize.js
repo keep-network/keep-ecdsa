@@ -12,7 +12,6 @@ const {RegistryAddress} = require("./external-contracts")
 
 module.exports = async function (deployer) {
   await BondedECDSAKeepFactory.deployed()
-  await BondedECDSAKeepFactory.deployed()
 
   let registry
   if (process.env.TEST) {
