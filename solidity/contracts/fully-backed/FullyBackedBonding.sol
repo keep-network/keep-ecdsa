@@ -48,7 +48,7 @@ contract FullyBackedBonding is
 
     // Once a delegation to an operator is received the delegator has to wait for
     // specific time period before being able to pull out the funds.
-    uint256 public constant DELEGATION_LOCK_PERIOD = 14 days; // TODO: Decide right value
+    uint256 public constant DELEGATION_LOCK_PERIOD = 12 hours;
 
     uint256 public initializationPeriod; // varies between mainnet and testnet
 
