@@ -62,10 +62,15 @@ describe("FullyBackedBonding", function () {
 
   describe("delegate", async () => {
     it("registers delegation", async () => {
-      await bonding.delegate(operator, beneficiary, authorizer, {
-        from: owner,
-        value: minimumDelegationValue,
-      })
+      const {receipt} = await bonding.delegate(
+        operator,
+        beneficiary,
+        authorizer,
+        {
+          from: owner,
+          value: minimumDelegationValue,
+        }
+      )
 
       assert.equal(
         await bonding.ownerOf(operator),
@@ -89,6 +94,21 @@ describe("FullyBackedBonding", function () {
         0,
         "incorrect delegation balance"
       )
+
+      const {timestamp: expectedCreatedAt} = await web3.eth.getBlock(
+        receipt.blockNumber
+      )
+
+      const {createdAt, undelegatedAt} = await bonding.getDelegationInfo(
+        operator
+      )
+
+      expect(createdAt).to.eq.BN(
+        expectedCreatedAt,
+        "incorrect created at value"
+      )
+
+      expect(undelegatedAt).to.eq.BN(0, "incorrect undelegated at value")
     })
 
     it("emits events", async () => {
