@@ -27,10 +27,4 @@ contract FullyBackedECDSAKeepFactoryStub is FullyBackedECDSAKeepFactory {
     function getGroupSelectionSeed() public view returns (uint256) {
         return groupSelectionSeed;
     }
-
-    function addKeep(address keep) public {
-        keeps.push(keep);
-        /* solium-disable-next-line security/no-block-members*/
-        keepOpenedTimestamp[keep] = block.timestamp;
-    }
 }
