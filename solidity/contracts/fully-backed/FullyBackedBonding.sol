@@ -44,7 +44,7 @@ contract FullyBackedBonding is
 
     // The ether value (in wei) that should be passed along with the delegation
     // and deposited for bonding.
-    uint256 public constant MINIMUM_DELEGATION_DEPOSIT = 12345; // TODO: Decide right value
+    uint256 public constant MINIMUM_DELEGATION_DEPOSIT = 40 ether;
 
     // Once a delegation to an operator is received the delegator has to wait for
     // specific time period before being able to pull out the funds.

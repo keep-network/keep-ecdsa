@@ -225,12 +225,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await keepFactory.createSortitionPool(application)
       const pool = await FullyBackedSortitionPool.at(signerPool)
 
-      await delegate(
-        members[0],
-        members[0],
-        authorizers[0],
-        minimumBondableValue
-      )
+      await delegate(members[0], members[0], authorizers[0])
 
       await time.increase(delegationInitPeriod.subn(1))
 
@@ -452,10 +447,15 @@ describe("FullyBackedECDSAKeepFactory", function () {
   })
 
   describe("updateOperatorStatus", async () => {
+    let minimumBondableValue
+
     before(async () => {
       await initializeNewFactory()
       await initializeMemberCandidates()
       await registerMemberCandidates()
+
+      const pool = await FullyBackedSortitionPool.at(signerPool)
+      minimumBondableValue = await pool.getMinimumBondableValue()
     })
 
     it("revers if operator is up to date", async () => {
@@ -466,7 +466,11 @@ describe("FullyBackedECDSAKeepFactory", function () {
     })
 
     it("removes operator if bonding value has changed below minimum", async () => {
-      bonding.withdraw(new BN(1), members[0], {from: members[0]})
+      currentValue = await bonding.unbondedValue(members[0])
+
+      const valueToWithdraw = currentValue.sub(minimumBondableValue).addn(1)
+
+      bonding.withdraw(valueToWithdraw, members[0], {from: members[0]})
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
         "unexpected status of the operator after bonding value change"
@@ -666,7 +670,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     it("rounds up members bonds", async () => {
       const requestedBond = bond.add(new BN(1))
       const unbondedAmount = singleBond.add(new BN(1))
-      const expectedMemberBond = singleBond.add(new BN(1))
+      const expectedMemberBond = unbondedAmount
 
       await depositMemberCandidates(unbondedAmount)
 
@@ -1073,7 +1077,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       // create and authorize enough operators to perform the test;
       // we need more than the default 10 accounts
-      await createDepositAndRegisterMembers(groupSize, singleBond)
+      await createDepositAndRegisterMembers(groupSize)
 
       const blockNumber = await web3.eth.getBlockNumber()
 
@@ -1461,12 +1465,9 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await initializeMemberCandidates()
       await registerMemberCandidates()
 
-      const poolAddress = await keepFactory.getSortitionPool(application)
-      const pool = await FullyBackedSortitionPool.at(poolAddress)
-
       const poolWeight = await keepFactory.getSortitionPoolWeight(application)
 
-      const expectedPoolWeight = (await pool.getMinimumBondableValue())
+      const expectedPoolWeight = minimumDelegationDeposit
         .div(await keepFactory.bondWeightDivisor.call())
         .muln(3)
       expect(poolWeight).to.eq.BN(
@@ -1540,7 +1541,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
   }
 
   async function initializeMemberCandidates(unbondedValue) {
-    const minimumBond = await keepFactory.minimumBond.call()
+    const minimumDelegationValue = await bonding.MINIMUM_DELEGATION_DEPOSIT.call()
 
     signerPool = await keepFactory.createSortitionPool.call(application)
     await keepFactory.createSortitionPool(application)
@@ -1550,7 +1551,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         members[i],
         members[i],
         authorizers[i],
-        unbondedValue || minimumBond
+        unbondedValue || minimumDelegationValue
       )
     }
 
