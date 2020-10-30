@@ -125,7 +125,10 @@ contract ECDSARewards is Rewards {
     /// @param operator The operator
     /// @return The amount allocated
     function getAllocatedRewards(uint256 interval, address operator)
-        external view returns (uint256) {
+        external
+        view
+        returns (uint256)
+    {
         address beneficiary = tokenStaking.beneficiaryOf(operator);
         return allocatedRewards[beneficiary][interval];
     }
@@ -136,7 +139,10 @@ contract ECDSARewards is Rewards {
     /// @param operator The operator
     /// @return The amount already withdrawn
     function getWithdrawnRewards(uint256 interval, address operator)
-        external view returns (uint256) {
+        external
+        view
+        returns (uint256)
+    {
         address beneficiary = tokenStaking.beneficiaryOf(operator);
         return withdrawnRewards[beneficiary][interval];
     }
@@ -147,7 +153,10 @@ contract ECDSARewards is Rewards {
     /// @param operator The operator
     /// @return The amount withdrawable
     function getWithdrawableRewards(uint256 interval, address operator)
-        external view returns (uint256) {
+        external
+        view
+        returns (uint256)
+    {
         address beneficiary = tokenStaking.beneficiaryOf(operator);
         uint256 allocated = allocatedRewards[beneficiary][interval];
         uint256 withdrawn = withdrawnRewards[beneficiary][interval];
