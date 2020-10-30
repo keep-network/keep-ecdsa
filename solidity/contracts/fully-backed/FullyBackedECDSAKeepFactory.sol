@@ -57,6 +57,17 @@ contract FullyBackedECDSAKeepFactory is
     // Anyone can create a sortition pool for an application with the default
     // minimum bond value but the application can change this value later, at
     // any point.
+    //
+    // The minimum bond value is a boundary value for an operator to remain
+    // in the sortition pool. Once operator's unbonded value drops below the
+    // minimum bond value the operator is removed from the sortition pool.
+    // Operator can top-up the unbonded value deposited in bonding contract
+    // and re-register to the sortition pool.
+    //
+    // This property is configured along with `MINIMUM_DELEGATION_DEPOSIT` defined
+    // in `FullyBackedBonding` contract. Minimum delegation deposit determines
+    // a minimum value of ether that should be transferred to the bonding contract
+    // by an owner when delegating to an operator.
     uint256 public constant minimumBond = 20 ether;
 
     // Signer candidates in bonded sortition pool are weighted by their eligible

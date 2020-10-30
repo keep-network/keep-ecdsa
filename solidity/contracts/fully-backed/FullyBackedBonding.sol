@@ -24,9 +24,8 @@ import "@keep-network/sortition-pools/contracts/api/IFullyBackedBonding.sol";
 
 /// @title Fully Backed Bonding
 /// @notice Contract holding deposits and delegations for ETH-only keeps'
-/// operators. An owner of the ETH can delegate ETH to an operator. The value
-/// of ETH the owner is willing to delegate should be deposited for the given
-/// operator.
+/// operators. An owner of the ETH can delegate ETH to an operator by depositing
+/// it in this contract.
 contract FullyBackedBonding is
     IFullyBackedBonding,
     AbstractBonding,
