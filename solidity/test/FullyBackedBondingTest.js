@@ -395,7 +395,7 @@ describe("FullyBackedBonding", function () {
         from: authorizer,
       })
 
-      await time.increase(initializationPeriod)
+      await time.increase(initializationPeriod.subn(1))
 
       assert.isFalse(await bonding.isInitialized(operator, bondCreator))
     })
