@@ -87,9 +87,6 @@ contract ECDSARewards is Rewards {
 
     uint256 internal constant minimumECDSAKeepsPerInterval = 1000;
 
-    BondedECDSAKeepFactory factory;
-    TokenStaking tokenStaking;
-
     // The amount of tokens each individual beneficiary address
     // can receive in a single interval is capped.
     // TODO: set actual value
@@ -97,9 +94,12 @@ contract ECDSARewards is Rewards {
     // The total amount of rewards allocated to the given beneficiary address,
     // in the given interval.
     // `allocatedRewards[beneficiary][interval] -> amount`
-    mapping(address => mapping(uint256 => uint256)) allocatedRewards;
+    mapping(address => mapping(uint256 => uint256)) internal allocatedRewards;
     // The amount of interval rewards withdrawn to the given beneficiary.
-    mapping(address => mapping(uint256 => uint256)) withdrawnRewards;
+    mapping(address => mapping(uint256 => uint256)) internal withdrawnRewards;
+
+    BondedECDSAKeepFactory internal factory;
+    TokenStaking internal tokenStaking;
 
     constructor(
         address _token,
@@ -125,7 +125,10 @@ contract ECDSARewards is Rewards {
     /// @param operator The operator
     /// @return The amount allocated
     function getAllocatedRewards(uint256 interval, address operator)
-        external view returns (uint256) {
+        external
+        view
+        returns (uint256)
+    {
         address beneficiary = tokenStaking.beneficiaryOf(operator);
         return allocatedRewards[beneficiary][interval];
     }
@@ -136,7 +139,10 @@ contract ECDSARewards is Rewards {
     /// @param operator The operator
     /// @return The amount already withdrawn
     function getWithdrawnRewards(uint256 interval, address operator)
-        external view returns (uint256) {
+        external
+        view
+        returns (uint256)
+    {
         address beneficiary = tokenStaking.beneficiaryOf(operator);
         return withdrawnRewards[beneficiary][interval];
     }
@@ -147,7 +153,10 @@ contract ECDSARewards is Rewards {
     /// @param operator The operator
     /// @return The amount withdrawable
     function getWithdrawableRewards(uint256 interval, address operator)
-        external view returns (uint256) {
+        external
+        view
+        returns (uint256)
+    {
         address beneficiary = tokenStaking.beneficiaryOf(operator);
         uint256 allocated = allocatedRewards[beneficiary][interval];
         uint256 withdrawn = withdrawnRewards[beneficiary][interval];
@@ -161,20 +170,14 @@ contract ECDSARewards is Rewards {
     function withdrawRewards(uint256 interval, address operator) external {
         address beneficiary = tokenStaking.beneficiaryOf(operator);
 
-        uint256 allocatedForBeneficiary
-            = allocatedRewards[beneficiary][interval];
+        uint256 allocated = allocatedRewards[beneficiary][interval];
         uint256 alreadyWithdrawn = withdrawnRewards[beneficiary][interval];
 
-        require(
-            allocatedForBeneficiary > alreadyWithdrawn,
-            "No rewards to withdraw"
-        );
+        require(allocated > alreadyWithdrawn, "No rewards to withdraw");
 
-        uint256 withdrawableRewards = allocatedForBeneficiary.sub(
-            alreadyWithdrawn
-        );
+        uint256 withdrawableRewards = allocated.sub(alreadyWithdrawn);
 
-        withdrawnRewards[beneficiary][interval] = allocatedForBeneficiary;
+        withdrawnRewards[beneficiary][interval] = allocated;
 
         token.safeTransfer(beneficiary, withdrawableRewards);
     }
@@ -235,11 +238,10 @@ contract ECDSARewards is Rewards {
         return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
-    // Get the members of the specified keep,
-    // and distribute the reward amount between them.
-    // The reward isn't paid out immediately,
-    // but is instead kept in the reward contract
-    // until each operator individually requests to withdraw the rewards.
+    /// @notice Get the members of the specified keep, and distribute the reward
+    /// amount between them. The reward isn't paid out immediately,
+    /// but is instead kept in the reward contract until each operator
+    /// individually requests to withdraw the rewards.
     function _distributeReward(bytes32 _keep, uint256 amount)
         internal
         isAddress(_keep)
