@@ -182,17 +182,6 @@ contract ECDSARewards is Rewards {
         token.safeTransfer(beneficiary, withdrawableRewards);
     }
 
-    /// @notice Stakers can receive KEEP rewards from multiple keeps of their choice
-    /// in one transaction to reduce total cost comparing to single calls for rewards.
-    /// It is a caller responsibility to determine the cost and consumed gas when
-    /// receiving rewards from multiple keeps.
-    /// @param keepIdentifiers An array of keep addresses.
-    function receiveRewards(bytes32[] memory keepIdentifiers) public {
-        for (uint256 i = 0; i < keepIdentifiers.length; i++) {
-            receiveReward(keepIdentifiers[i]);
-        }
-    }
-
     function _getKeepCount() internal view returns (uint256) {
         return factory.getKeepCount();
     }
