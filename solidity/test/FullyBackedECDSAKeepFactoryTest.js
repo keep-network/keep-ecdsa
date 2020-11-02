@@ -420,7 +420,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       )
     })
 
-    it("returns false if the operator stake dropped below minimum", async () => {
+    it("returns false if the operator bonding value dropped below minimum", async () => {
       await keepFactory.registerMemberCandidate(application, {
         from: members[0],
       })

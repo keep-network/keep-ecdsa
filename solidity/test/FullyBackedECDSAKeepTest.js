@@ -460,7 +460,7 @@ describe("FullyBackedECDSAKeep", function () {
         // as they are registered in the keep. We want to stress this scenario
         // and confirm that logic works correctly in such sophisticated scenario.
 
-        // First member submits a public key, there are not conflicts.
+        // First member submits a public key, there are no conflicts.
         let startBlock = await web3.eth.getBlockNumber()
         await keep.submitPublicKey(publicKey1, {from: members[2]})
         assert.lengthOf(
