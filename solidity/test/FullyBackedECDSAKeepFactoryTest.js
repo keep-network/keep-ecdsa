@@ -37,6 +37,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
   let randomBeacon
   let signerPool
   let minimumDelegationDeposit
+  let delegationLockPeriod
 
   const application = accounts[1]
   const members = [accounts[2], accounts[3], accounts[4]]
@@ -54,7 +55,6 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
   const stakeLockDuration = 0 // parameter is ignored by FullyBackedECDSAKeepFactory implementation
   const delegationInitPeriod = time.duration.hours(12)
-  const delegationLockPeriod = time.duration.days(14)
 
   before(async () => {
     await FullyBackedSortitionPoolFactory.detectNetwork()
@@ -1533,6 +1533,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     )
 
     minimumDelegationDeposit = await bonding.MINIMUM_DELEGATION_DEPOSIT.call()
+    delegationLockPeriod = await bonding.DELEGATION_LOCK_PERIOD.call()
 
     await registry.approveOperatorContract(keepFactory.address)
   }
