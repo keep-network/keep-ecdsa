@@ -1,4 +1,5 @@
 const KeepRegistry = artifacts.require("KeepRegistry")
+
 const KeepBonding = artifacts.require("KeepBonding")
 const BondedECDSAKeep = artifacts.require("BondedECDSAKeep")
 const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
@@ -7,12 +8,24 @@ const BondedECDSAKeepVendorImplV1 = artifacts.require(
   "BondedECDSAKeepVendorImplV1"
 )
 
+const FullyBackedBonding = artifacts.require("FullyBackedBonding")
+const FullyBackedECDSAKeep = artifacts.require("FullyBackedECDSAKeep")
+const FullyBackedECDSAKeepFactory = artifacts.require(
+  "FullyBackedECDSAKeepFactory"
+)
+
 const {
   deployBondedSortitionPoolFactory,
+  deployFullyBackedSortitionPoolFactory,
 } = require("@keep-network/sortition-pools/migrations/scripts/deployContracts")
 const BondedSortitionPoolFactory = artifacts.require(
   "BondedSortitionPoolFactory"
 )
+const FullyBackedSortitionPoolFactory = artifacts.require(
+  "FullyBackedSortitionPoolFactory"
+)
+
+let initializationPeriod = 43200 // 12 hours in seconds
 
 let {
   RandomBeaconAddress,
@@ -21,8 +34,14 @@ let {
   RegistryAddress,
 } = require("./external-contracts")
 
-module.exports = async function (deployer) {
+module.exports = async function (deployer, network) {
+  // Set the stake initialization period to 1 second for local development and testnet.
+  if (network === "local" || network === "ropsten" || network === "keep_dev") {
+    initializationPeriod = 1
+  }
+
   await deployBondedSortitionPoolFactory(artifacts, deployer)
+  await deployFullyBackedSortitionPoolFactory(artifacts, deployer)
 
   if (process.env.TEST) {
     TokenStakingStub = artifacts.require("TokenStakingStub")
@@ -37,6 +56,7 @@ module.exports = async function (deployer) {
     RegistryAddress = (await deployer.deploy(KeepRegistry)).address
   }
 
+  // KEEP staking and ETH bonding
   await deployer.deploy(
     KeepBonding,
     RegistryAddress,
@@ -67,5 +87,22 @@ module.exports = async function (deployer) {
     BondedECDSAKeepVendor,
     BondedECDSAKeepVendorImplV1.address,
     implInitializeCallData
+  )
+
+  // ETH bonding only
+  await deployer.deploy(
+    FullyBackedBonding,
+    RegistryAddress,
+    initializationPeriod
+  )
+
+  await deployer.deploy(FullyBackedECDSAKeep)
+
+  await deployer.deploy(
+    FullyBackedECDSAKeepFactory,
+    FullyBackedECDSAKeep.address,
+    FullyBackedSortitionPoolFactory.address,
+    FullyBackedBonding.address,
+    RandomBeaconAddress
   )
 }
