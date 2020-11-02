@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -36,13 +35,11 @@ func Initialize(
 	operatorPublicKey *operator.PublicKey,
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
-	persistence persistence.Handle,
+	keepsRegistry *registry.Keeps,
 	sanctionedApplications []common.Address,
 	clientConfig *Config,
 	tssConfig *tss.Config,
 ) {
-	keepsRegistry := registry.NewKeepsRegistry(persistence)
-
 	tssNode := node.NewNode(ethereumChain, networkProvider, tssConfig)
 
 	tssNode.InitializeTSSPreParamsPool()
@@ -55,9 +52,6 @@ func Initialize(
 		data:  make(map[string]map[string]bool),
 		mutex: &sync.Mutex{},
 	}
-
-	// Load current keeps' signers from storage and register for signing events.
-	keepsRegistry.LoadExistingKeeps()
 
 	confirmIsInactive := func(keepAddress common.Address) bool {
 		currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
