@@ -68,13 +68,17 @@ contract FullyBackedECDSAKeepFactory is
     // in `FullyBackedBonding` contract. Minimum delegation deposit determines
     // a minimum value of ether that should be transferred to the bonding contract
     // by an owner when delegating to an operator.
-    uint256 public constant minimumBond = 20 ether;
+    uint256 public constant defaultMinimumBond = 20 ether;
 
     // Signer candidates in bonded sortition pool are weighted by their eligible
     // stake divided by a constant divisor. The divisor is set to 1 ETH so that
     // all ETHs in available unbonded value matter when calculating operator's
     // eligible weight for signer selection.
     uint256 public constant bondWeightDivisor = 1 ether;
+
+    // Maps a keep to an application for which the keep was created.
+    // keep address -> application address
+    mapping(address => address) keepApplication;
 
     // Notification that a new keep has been created.
     event FullyBackedECDSAKeepCreated(
@@ -84,6 +88,10 @@ contract FullyBackedECDSAKeepFactory is
         address indexed application,
         uint256 honestThreshold
     );
+
+    // Notification when an operator gets banned in a sortition pool for
+    // an application.
+    event OperatorBanned(address indexed operator, address indexed application);
 
     constructor(
         address _masterKeepAddress,
@@ -194,6 +202,8 @@ contract FullyBackedECDSAKeepFactory is
             );
         }
 
+        keepApplication[keepAddress] = application;
+
         emit FullyBackedECDSAKeepCreated(
             keepAddress,
             members,
@@ -236,11 +246,34 @@ contract FullyBackedECDSAKeepFactory is
         return bonding.isAuthorizedForOperator(_operator, address(this));
     }
 
+    /// @notice Bans members of a calling keep in a sortition pool associated
+    /// with the application for which the keep was created.
+    /// @dev The function can be called only by a keep created by this factory.
+    function banKeepMembers() public onlyKeep() {
+        FullyBackedECDSAKeep keep = FullyBackedECDSAKeep(msg.sender);
+
+        address[] memory members = keep.getMembers();
+
+        address application = keepApplication[address(keep)];
+
+        FullyBackedSortitionPool sortitionPool = FullyBackedSortitionPool(
+            getSortitionPool(application)
+        );
+
+        for (uint256 i = 0; i < members.length; i++) {
+            address operator = members[i];
+
+            sortitionPool.ban(operator);
+
+            emit OperatorBanned(operator, application);
+        }
+    }
+
     function newSortitionPool(address _application) internal returns (address) {
         return
             sortitionPoolFactory.createSortitionPool(
                 IFullyBackedBonding(address(bonding)),
-                minimumBond,
+                defaultMinimumBond,
                 bondWeightDivisor
             );
     }
@@ -261,5 +294,14 @@ contract FullyBackedECDSAKeepFactory is
         // rounded up by: `(bond + groupSize - 1 ) / groupSize`
         // Ex. (100 + 3 - 1) / 3 = 34
         return (_keepBond.add(_groupSize).sub(1)).div(_groupSize);
+    }
+
+    /// @notice Checks if caller is a keep created by this factory.
+    modifier onlyKeep() {
+        require(
+            keepOpenedTimestamp[msg.sender] > 0,
+            "Caller is not a keep created by the factory"
+        );
+        _;
     }
 }

@@ -31,6 +31,8 @@ chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 const assert = chai.assert
 
+// TODO: Refactor tests by pulling common parts of BondedECDSAKeep and
+// FullyBackedBondedECDSAKeep to one file.
 describe("FullyBackedECDSAKeep", function () {
   const bondCreator = accounts[0]
   const owner = accounts[1]
@@ -834,54 +836,40 @@ describe("FullyBackedECDSAKeep", function () {
 
       assert.isTrue(res, "incorrect returned result")
 
-      // TODO: Verify that member is banned
+      assert.equal(await factoryStub.banKeepMembersCalledCount(keep.address), 1)
     })
 
-    // TODO: Modify this case after adding banning functionality.
-    // it("should prevent from slashing members multiple times for the same fradulent preimage", async () => {
-    //   await submitMembersPublicKeys(publicKey1)
+    it("should prevent from slashing members multiple times for the same fradulent preimage", async () => {
+      await submitMembersPublicKeys(publicKey1)
 
-    //   const memberStake = web3.utils.toBN("100000000000000000000000")
-    //   // setting a value other then the min stake for testing purposes
-    //   await keep.setMemberStake(memberStake)
+      assert.isFalse(
+        await keep.isFradulentPreimageSet(preimage1),
+        "fradulent preimage should not have been set"
+      )
 
-    //   assert.isFalse(
-    //     await keep.isFradulentPreimageSet(preimage1),
-    //     "fradulent preimage should not have been set"
-    //   )
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
 
-    //   await keep.submitSignatureFraud(
-    //     signature1.V,
-    //     signature1.R,
-    //     signature1.S,
-    //     hash256Digest1,
-    //     preimage1
-    //   )
+      assert.isTrue(
+        await keep.isFradulentPreimageSet(preimage1),
+        "fradulent preimage should have been set"
+      )
 
-    //   assert.isTrue(
-    //     await keep.isFradulentPreimageSet(preimage1),
-    //     "fradulent preimage should have been set"
-    //   )
+      await keep.submitSignatureFraud(
+        signature1.V,
+        signature1.R,
+        signature1.S,
+        hash256Digest1,
+        preimage1
+      )
 
-    //   await keep.submitSignatureFraud(
-    //     signature1.V,
-    //     signature1.R,
-    //     signature1.S,
-    //     hash256Digest1,
-    //     preimage1
-    //   )
-
-    //   for (let i = 0; i < members.length; i++) {
-    //     const actualStake = await tokenStaking.eligibleStake(
-    //       members[i],
-    //       constants.ZERO_ADDRESS
-    //     )
-    //     expect(actualStake).to.eq.BN(
-    //       minimumStake.sub(memberStake),
-    //       `incorrect stake for member ${i}`
-    //     )
-    //   }
-    // })
+      assert.equal(await factoryStub.banKeepMembersCalledCount(keep.address), 1)
+    })
 
     it("should revert when the signature is not fraudulent", async () => {
       await submitMembersPublicKeys(publicKey1)
@@ -899,7 +887,7 @@ describe("FullyBackedECDSAKeep", function () {
         "Signature is not fraudulent"
       )
 
-      // TODO: Verify that member has not been banned
+      assert.equal(await factoryStub.banKeepMembersCalledCount(keep.address), 0)
     })
 
     it("reverts if called for closed keep", async () => {

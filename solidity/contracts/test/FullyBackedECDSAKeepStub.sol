@@ -13,6 +13,10 @@ contract FullyBackedECDSAKeepStub is FullyBackedECDSAKeep {
         markAsTerminated();
     }
 
+    function publicSlashForSignatureFraud() public {
+        slashForSignatureFraud();
+    }
+
     function isFradulentPreimageSet(bytes memory preimage)
         public
         view
