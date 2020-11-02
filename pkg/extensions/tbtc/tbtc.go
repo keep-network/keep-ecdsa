@@ -82,14 +82,16 @@ func Initialize(
 }
 
 type tbtc struct {
-	chain         chain.TBTCHandle
-	keepsRegistry KeepsRegistry
+	chain          chain.TBTCHandle
+	keepsRegistry  KeepsRegistry
+	monitoringLock *monitoringLock
 }
 
 func newTBTC(chain chain.TBTCHandle, keepsRegistry KeepsRegistry) *tbtc {
 	return &tbtc{
-		chain:         chain,
-		keepsRegistry: keepsRegistry,
+		chain:          chain,
+		keepsRegistry:  keepsRegistry,
+		monitoringLock: newMonitoringLock(),
 	}
 }
 
@@ -419,10 +421,9 @@ type backoffFn func(iteration int) time.Duration
 
 type timeoutFn func(depositAddress string) (time.Duration, error)
 
-// TODO (keep-ecdsa/pull/585#discussion_r513447505):
-//  1. Incoming events deduplication.
-//  2. Handle chain reorgs (keep-ecdsa/pull/585#discussion_r511760283)
-//  3. Resume monitoring after client restart.
+// TODO:
+//  1. Handle chain reorgs (keep-ecdsa/pull/585#discussion_r511760283 and keep-ecdsa/pull/585#discussion_r513447505)
+//  2. Resume monitoring after client restart.
 func (t *tbtc) monitorAndAct(
 	ctx context.Context,
 	monitoringName string,
@@ -438,6 +439,17 @@ func (t *tbtc) monitorAndAct(
 		if !monitoringFilterFn(depositAddress) {
 			return
 		}
+
+		if !t.monitoringLock.tryLock(depositAddress, monitoringName) {
+			logger.Warningf(
+				"lock for [%v] monitoring for deposit [%v] has been "+
+					"already acquired; could not start the monitoring",
+				monitoringName,
+				depositAddress,
+			)
+			return
+		}
+		defer t.monitoringLock.release(depositAddress, monitoringName)
 
 		logger.Infof(
 			"starting [%v] monitoring for deposit [%v]",
