@@ -204,6 +204,54 @@ describe("FullyBackedBonding", function () {
     })
   })
 
+  describe("topUp", async () => {
+    const value = new BN(123)
+
+    let initialDeposit
+
+    before(async () => {
+      initialDeposit = minimumDelegationValue
+
+      await bonding.delegate(operator, beneficiary, authorizer, {
+        from: owner,
+        value: initialDeposit,
+      })
+    })
+
+    it("adds value to deposited on delegation", async () => {
+      const expectedFinalBalance = initialDeposit.add(value)
+
+      await bonding.topUp(operator, {
+        value: value,
+      })
+
+      expect(await bonding.unbondedValue(operator)).to.eq.BN(
+        expectedFinalBalance,
+        "invalid final unbonded value"
+      )
+    })
+
+    it("emits event", async () => {
+      const receipt = await bonding.topUp(operator, {
+        value: value,
+      })
+
+      expectEvent(receipt, "OperatorToppedUp", {
+        operator: operator,
+        value: value,
+      })
+    })
+
+    it("reverts when no delegation happened", async () => {
+      await expectRevert(
+        bonding.topUp(thirdParty, {
+          value: new BN(123),
+        }),
+        "Beneficiary not defined for the operator"
+      )
+    })
+  })
+
   describe("deposit", async () => {
     it("adds value to deposited on delegation", async () => {
       const initialDeposit = minimumDelegationValue

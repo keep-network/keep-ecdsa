@@ -41,6 +41,8 @@ contract FullyBackedBonding is
         uint256 value
     );
 
+    event OperatorToppedUp(address indexed operator, uint256 value);
+
     // The ether value (in wei) that should be passed along with the delegation
     // and deposited for bonding.
     uint256 public constant MINIMUM_DELEGATION_DEPOSIT = 40 ether;
@@ -102,6 +104,18 @@ contract FullyBackedBonding is
 
         emit Delegated(owner, operator);
         emit OperatorDelegated(operator, beneficiary, authorizer, msg.value);
+    }
+
+    /// @notice Top-ups operator's unbonded value.
+    /// @dev This function should be used to add new unbonded value to the system
+    /// for an operator. The `deposit` function defined in parent abstract contract
+    /// should be called only by applications returning value that has been already
+    /// initially deposited and seized later.
+    /// @param operator Address of the operator.
+    function topUp(address operator) public payable {
+        deposit(operator);
+
+        emit OperatorToppedUp(operator, msg.value);
     }
 
     /// @notice Checks if the operator for the given bond creator contract
