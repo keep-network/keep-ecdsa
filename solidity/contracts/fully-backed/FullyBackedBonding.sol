@@ -110,7 +110,12 @@ contract FullyBackedBonding is
     /// @dev This function should be used to add new unbonded value to the system
     /// for an operator. The `deposit` function defined in parent abstract contract
     /// should be called only by applications returning value that has been already
-    /// initially deposited and seized later.
+    /// initially deposited and seized later. As an application may seize bonds
+    /// and return them to the bonding contract with `deposit` function it makes
+    /// tracking the totally deposited value much more complicated. Functions
+    /// `delegate` and `topUps` should be used to add fresh value to the contract
+    /// and events emitted by these functions should be enough to determine total
+    /// value deposited ever for an operator.
     /// @param operator Address of the operator.
     function topUp(address operator) public payable {
         deposit(operator);
