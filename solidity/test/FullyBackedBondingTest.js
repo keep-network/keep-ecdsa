@@ -209,7 +209,7 @@ describe("FullyBackedBonding", function () {
 
     let initialDeposit
 
-    before(async () => {
+    beforeEach(async () => {
       initialDeposit = minimumDelegationValue
 
       await bonding.delegate(operator, beneficiary, authorizer, {
