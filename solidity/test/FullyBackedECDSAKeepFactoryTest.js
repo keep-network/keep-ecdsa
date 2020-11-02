@@ -351,9 +351,6 @@ describe("FullyBackedECDSAKeepFactory", function () {
       minimumBondableValue = await pool.getMinimumBondableValue()
     })
 
-    // TODO: Add a case to check if operator is initialized
-    // github.com/keep-network/sortition-pools/blob/413abd66536032ee757f190a29fda2705c7b70cf/contracts/FullyBackedSortitionPool.sol#L155
-
     it("returns true if the operator is up to date for the application", async () => {
       await keepFactory.registerMemberCandidate(application, {
         from: members[0],
