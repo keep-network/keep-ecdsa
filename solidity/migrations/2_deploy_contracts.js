@@ -25,6 +25,8 @@ const FullyBackedSortitionPoolFactory = artifacts.require(
   "FullyBackedSortitionPoolFactory"
 )
 
+let initializationPeriod = 43200 // 12 hours in seconds
+
 let {
   RandomBeaconAddress,
   TokenStakingAddress,
@@ -32,7 +34,12 @@ let {
   RegistryAddress,
 } = require("./external-contracts")
 
-module.exports = async function (deployer) {
+module.exports = async function (deployer, network) {
+  // Set the stake initialization period to 1 second for local development and testnet.
+  if (network === "local" || network === "ropsten" || network === "keep_dev") {
+    initializationPeriod = 1
+  }
+
   await deployBondedSortitionPoolFactory(artifacts, deployer)
   await deployFullyBackedSortitionPoolFactory(artifacts, deployer)
 
@@ -83,7 +90,11 @@ module.exports = async function (deployer) {
   )
 
   // ETH bonding only
-  await deployer.deploy(FullyBackedBonding, RegistryAddress)
+  await deployer.deploy(
+    FullyBackedBonding,
+    RegistryAddress,
+    initializationPeriod
+  )
 
   await deployer.deploy(FullyBackedECDSAKeep)
 
