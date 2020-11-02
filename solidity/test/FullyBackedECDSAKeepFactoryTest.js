@@ -455,9 +455,10 @@ describe("FullyBackedECDSAKeepFactory", function () {
       minimumBondableValue = await pool.getMinimumBondableValue()
 
       await setUnbondedValue(members[0], minimumBondableValue.muln(3))
+      await keepFactory.updateOperatorStatus(members[0], application)
     })
 
-    it("revers if operator is up to date", async () => {
+    it("reverts if operator is up to date", async () => {
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
         "Operator already up to date"
