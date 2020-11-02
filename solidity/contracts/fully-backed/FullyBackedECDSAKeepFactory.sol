@@ -246,7 +246,7 @@ contract FullyBackedECDSAKeepFactory is
         return bonding.isAuthorizedForOperator(_operator, address(this));
     }
 
-    /// @notice Bans members of a calling keep in an sortition pools associated
+    /// @notice Bans members of a calling keep in a sortition pool associated
     /// with the application for which the keep was created.
     /// @dev The function can be called only by a keep created by this factory.
     function banKeepMembers() public onlyKeep() {
