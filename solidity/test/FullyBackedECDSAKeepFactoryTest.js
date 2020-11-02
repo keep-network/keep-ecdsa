@@ -453,6 +453,8 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       const pool = await FullyBackedSortitionPool.at(signerPool)
       minimumBondableValue = await pool.getMinimumBondableValue()
+
+      await setUnbondedValue(members[0], minimumBondableValue.muln(3))
     })
 
     it("revers if operator is up to date", async () => {
@@ -462,7 +464,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       )
     })
 
-    it("removes operator if bonding value has changed below minimum", async () => {
+    it("removes operator if bonding value has decreased below minimum", async () => {
       currentValue = await bonding.unbondedValue(members[0])
 
       const valueToWithdraw = currentValue.sub(minimumBondableValue).addn(1)
@@ -481,7 +483,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       )
     })
 
-    it("updates operator if bonding value has changed above minimum", async () => {
+    it("does not update operator if bonding value increased insignificantly above minimum", async () => {
       bonding.deposit(members[0], {value: new BN(1)})
       assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application),
@@ -491,6 +493,58 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
         "Operator already up to date"
+      )
+    })
+
+    it("updates operator if bonding value increased significantly above minimum", async () => {
+      bonding.deposit(members[0], {value: minimumBondableValue.muln(2)})
+
+      assert.isFalse(
+        await keepFactory.isOperatorUpToDate(members[0], application),
+        "unexpected status of the operator after stake change"
+      )
+
+      await keepFactory.updateOperatorStatus(members[0], application)
+
+      assert.isTrue(
+        await keepFactory.isOperatorUpToDate(members[0], application),
+        "unexpected status of the operator after status update"
+      )
+    })
+
+    it("updates operator if bonding value decreased insignificantly above minimum", async () => {
+      bonding.withdraw(new BN(1), members[0], {from: members[0]})
+
+      assert.isFalse(
+        await keepFactory.isOperatorUpToDate(members[0], application),
+        "unexpected status of the operator after stake change"
+      )
+
+      await keepFactory.updateOperatorStatus(members[0], application)
+
+      assert.isTrue(
+        await keepFactory.isOperatorUpToDate(members[0], application),
+        "unexpected status of the operator after status update"
+      )
+    })
+
+    it("updates operator if bonding value decreased significantly above minimum", async () => {
+      currentValue = await bonding.unbondedValue(members[0])
+
+      const valueToWithdraw = currentValue.sub(minimumBondableValue).subn(1)
+
+      bonding.withdraw(valueToWithdraw, members[0], {from: members[0]})
+
+      assert.isFalse(
+        await keepFactory.isOperatorUpToDate(members[0], application),
+        "unexpected status of the operator after stake change"
+      )
+
+      await keepFactory.updateOperatorStatus(members[0], application)
+
+      assert.isTrue(
+        await keepFactory.isOperatorUpToDate(members[0], application),
+        "unexpected status of the operator after status update"
       )
     })
 
