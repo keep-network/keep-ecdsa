@@ -528,9 +528,6 @@ type backoffFn func(iteration int) time.Duration
 
 type timeoutFn func(depositAddress string) (time.Duration, error)
 
-// TODO:
-//  1. Handle chain reorgs (keep-ecdsa/pull/585#discussion_r511760283 and keep-ecdsa/pull/585#discussion_r513447505)
-//  2. Resume monitoring after client restart.
 func (t *tbtc) monitorAndAct(
 	ctx context.Context,
 	monitoringName string,
