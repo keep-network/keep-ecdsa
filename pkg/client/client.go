@@ -3,7 +3,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -60,9 +59,10 @@ func Initialize(
 			return false
 		}
 
-		isKeepActive, err := waitForChainConfirmation(
+		isKeepActive, err := eth.WaitForChainConfirmation(
 			ethereumChain,
 			currentBlock,
+			blockConfirmations,
 			func() (bool, error) {
 				return ethereumChain.IsActive(keepAddress)
 			},
@@ -531,9 +531,10 @@ func monitorSigningRequests(
 				}
 				defer requestedSignatures.remove(keepAddress, event.Digest)
 
-				isAwaitingSignature, err := waitForChainConfirmation(
+				isAwaitingSignature, err := eth.WaitForChainConfirmation(
 					ethereumChain,
 					event.BlockNumber,
+					blockConfirmations,
 					func() (bool, error) {
 						return ethereumChain.IsAwaitingSignature(keepAddress, event.Digest)
 					},
@@ -618,9 +619,10 @@ func checkAwaitingSignature(
 			return
 		}
 
-		isStillAwaitingSignature, err := waitForChainConfirmation(
+		isStillAwaitingSignature, err := eth.WaitForChainConfirmation(
 			ethereumChain,
 			startBlock,
+			blockConfirmations,
 			func() (bool, error) {
 				isAwaitingSignature, err := ethereumChain.IsAwaitingSignature(keepAddress, latestDigest)
 				if err != nil {
@@ -704,9 +706,10 @@ func monitorKeepClosedEvents(
 				event.BlockNumber,
 			)
 
-			isKeepActive, err := waitForChainConfirmation(
+			isKeepActive, err := eth.WaitForChainConfirmation(
 				ethereumChain,
 				event.BlockNumber,
+				blockConfirmations,
 				func() (bool, error) {
 					return ethereumChain.IsActive(keepAddress)
 				},
@@ -767,9 +770,10 @@ func monitorKeepTerminatedEvent(
 				event.BlockNumber,
 			)
 
-			isKeepActive, err := waitForChainConfirmation(
+			isKeepActive, err := eth.WaitForChainConfirmation(
 				ethereumChain,
 				event.BlockNumber,
+				blockConfirmations,
 				func() (bool, error) {
 					return ethereumChain.IsActive(keepAddress)
 				},
@@ -808,30 +812,4 @@ func monitorKeepTerminatedEvent(
 	<-keepTerminated
 
 	logger.Info("unsubscribing from events on keep terminated")
-}
-
-// waitForChainConfirmation ensures that after receiving specific number of block
-// confirmations the state of the chain is actually as expected. It waits for
-// predefined number of blocks since the start block number provided. After the
-// required block number is reached it performs a check of the chain state with
-// a provided function returning a boolean value.
-func waitForChainConfirmation(
-	ethereumChain eth.Handle,
-	startBlockNumber uint64,
-	stateCheck func() (bool, error),
-) (bool, error) {
-	blockHeight := startBlockNumber + blockConfirmations
-	logger.Infof("waiting for block [%d] to confirm chain state", blockHeight)
-
-	err := ethereumChain.BlockCounter().WaitForBlockHeight(blockHeight)
-	if err != nil {
-		return false, fmt.Errorf("failed to wait for block height: [%v]", err)
-	}
-
-	result, err := stateCheck()
-	if err != nil {
-		return false, fmt.Errorf("failed to get chain state confirmation: [%v]", err)
-	}
-
-	return result, nil
 }

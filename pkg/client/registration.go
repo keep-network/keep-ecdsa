@@ -286,9 +286,10 @@ func monitorSignerPoolStatus(
 					)
 				}
 
-				isRegistered, err := waitForChainConfirmation(
+				isRegistered, err := eth.WaitForChainConfirmation(
 					ethereumChain,
 					statusCheckBlock,
+					blockConfirmations,
 					func() (bool, error) {
 						return ethereumChain.IsRegisteredForApplication(
 							application,
