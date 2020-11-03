@@ -6,8 +6,6 @@ import "../../contracts/ECDSARewards.sol";
 /// @dev This contract is for testing purposes only.
 contract ECDSARewardsStub is ECDSARewards {
 
-    uint256 internal tokenDecimalMultiplier = 10**18;
-
     constructor(
         address _token,
         address payable _factoryAddress,
@@ -22,6 +20,6 @@ contract ECDSARewardsStub is ECDSARewards {
     {}
 
     function setBeneficiaryRewardCap(uint256 _beneficiaryRewardCap) public {
-        beneficiaryRewardCap = _beneficiaryRewardCap.mul(tokenDecimalMultiplier);
+        beneficiaryRewardCap = _beneficiaryRewardCap;
     }
 }

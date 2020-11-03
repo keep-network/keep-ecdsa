@@ -23,7 +23,6 @@ describe("ECDSARewards", () => {
 
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
   const firstIntervalStart = 1600041600 // Sep 14 2020
-  const beneficiaryRewardCap = 10000
 
   // 1,000,000,000 - total KEEP supply
   //   200,000,000 - 20% of the total supply goes to staker rewards
@@ -51,7 +50,6 @@ describe("ECDSARewards", () => {
     )
 
     await fund(keepToken, rewardsContract, totalRewardsAllocation)
-    await rewardsContract.setBeneficiaryRewardCap(beneficiaryRewardCap)
   })
 
   beforeEach(async () => {
@@ -240,6 +238,12 @@ describe("ECDSARewards", () => {
     })
 
     it("should cap the maximum reward per beneficiary", async () => {
+      // There is currently no way to implement a test with the original
+      // 3M KEEP cap for beneficiary given block gas limit and test execution
+      // time. Hence, we set the limit to 10k KEEP for test purposes.
+      const rewardsCap = web3.utils.toBN(10000).mul(tokenDecimalMultiplier)
+      await rewardsContract.setBeneficiaryRewardCap(rewardsCap)
+
       for (let i = 0; i < 10; i++) {
         await keepFactory.stubOpenKeep(owner, operators, firstIntervalStart)
       }
@@ -279,6 +283,11 @@ describe("ECDSARewards", () => {
       ).div(tokenDecimalMultiplier)
 
       expect(actualUnallocatedRewards).to.eq.BN(expectedUnallocatedRewards)
+    })
+
+    it("should keep per-interval beneficiary reward cap at 3M KEEP", async () => {
+      const cap = await rewardsContract.beneficiaryRewardCap()
+      expect(cap).to.eq.BN(web3.utils.toBN(3000000).mul(tokenDecimalMultiplier))
     })
   })
 
