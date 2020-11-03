@@ -20,36 +20,22 @@ func newMonitoringLockKey(
 }
 
 type monitoringLock struct {
-	locks map[monitoringLockKey]bool
-	mutex sync.Mutex
+	locks sync.Map
 }
 
 func newMonitoringLock() *monitoringLock {
-	return &monitoringLock{
-		locks: make(map[monitoringLockKey]bool),
-	}
+	return &monitoringLock{}
 }
 
 func (ml *monitoringLock) tryLock(depositAddress, monitoringName string) bool {
-	ml.mutex.Lock()
-	defer ml.mutex.Unlock()
+	_, isExistingKey := ml.locks.LoadOrStore(
+		newMonitoringLockKey(depositAddress, monitoringName),
+		true,
+	)
 
-	key := newMonitoringLockKey(depositAddress, monitoringName)
-
-	if ml.locks[key] == true {
-		return false
-	}
-
-	ml.locks[key] = true
-
-	return true
+	return !isExistingKey
 }
 
 func (ml *monitoringLock) release(depositAddress, monitoringName string) {
-	ml.mutex.Lock()
-	defer ml.mutex.Unlock()
-
-	key := newMonitoringLockKey(depositAddress, monitoringName)
-
-	delete(ml.locks, key)
+	ml.locks.Delete(newMonitoringLockKey(depositAddress, monitoringName))
 }
