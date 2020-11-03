@@ -114,7 +114,7 @@ func (t *tbtc) monitorRetrievePubKey(
 	monitoringStopFn := func(
 		handler depositEventHandler,
 	) (subscription.EventSubscription, error) {
-		handlerWithConfirmation := func(depositAddress string) {
+		return t.chain.OnDepositRegisteredPubkey(func(depositAddress string) {
 			if t.waitDepositStateConfirmation(
 				depositAddress,
 				chain.AwaitingBtcFundingProof,
@@ -122,9 +122,7 @@ func (t *tbtc) monitorRetrievePubKey(
 			) {
 				handler(depositAddress)
 			}
-		}
-
-		return t.chain.OnDepositRegisteredPubkey(handlerWithConfirmation)
+		})
 	}
 
 	actFn := func(depositAddress string) error {
@@ -138,10 +136,7 @@ func (t *tbtc) monitorRetrievePubKey(
 			chain.AwaitingBtcFundingProof,
 			blockConfirmations,
 		) {
-			return fmt.Errorf(
-				"deposit [%v] is not in desired state",
-				depositAddress,
-			)
+			return fmt.Errorf("deposit state is not confirmed")
 		}
 
 		return nil
@@ -193,13 +188,33 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		handler depositEventHandler,
 	) (subscription.EventSubscription, error) {
 		// Stop in case the redemption signature has been provided by someone else.
-		signatureSubscription, err := t.chain.OnDepositGotRedemptionSignature(handler)
+		signatureSubscription, err := t.chain.OnDepositGotRedemptionSignature(
+			func(depositAddress string) {
+				if t.waitDepositStateConfirmation(
+					depositAddress,
+					chain.AwaitingWithdrawalProof,
+					blockConfirmations,
+				) {
+					handler(depositAddress)
+				}
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
 
 		// Stop in case the redemption proof has been provided by someone else.
-		redeemedSubscription, err := t.chain.OnDepositRedeemed(handler)
+		redeemedSubscription, err := t.chain.OnDepositRedeemed(
+			func(depositAddress string) {
+				if t.waitDepositStateConfirmation(
+					depositAddress,
+					chain.Redeemed,
+					blockConfirmations,
+				) {
+					handler(depositAddress)
+				}
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -246,29 +261,45 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 
 		depositDigest := latestRedemptionRequestedEvent.Digest
 
+		var signatureSubmittedEvent *chain.SignatureSubmittedEvent
+
 		// Start iterating from the latest event.
 		for i := len(signatureSubmittedEvents) - 1; i >= 0; i-- {
-			signatureSubmittedEvent := signatureSubmittedEvents[i]
-
-			if bytes.Equal(signatureSubmittedEvent.Digest[:], depositDigest[:]) {
-				// We add 27 to the recovery ID to align it with ethereum and
-				// bitcoin protocols where 27 is added to recovery ID to
-				// indicate usage of uncompressed public keys.
-				v := 27 + signatureSubmittedEvent.RecoveryID
-
-				return t.chain.ProvideRedemptionSignature(
-					depositAddress,
-					v,
-					signatureSubmittedEvent.R,
-					signatureSubmittedEvent.S,
-				)
+			if bytes.Equal(signatureSubmittedEvents[i].Digest[:], depositDigest[:]) {
+				signatureSubmittedEvent = signatureSubmittedEvents[i]
+				break
 			}
 		}
 
-		return fmt.Errorf(
-			"could not find signature for digest: [%v]",
-			depositDigest,
+		if signatureSubmittedEvent == nil {
+			return fmt.Errorf(
+				"could not find signature for digest: [%v]",
+				depositDigest,
+			)
+		}
+
+		// We add 27 to the recovery ID to align it with ethereum and
+		// bitcoin protocols where 27 is added to recovery ID to
+		// indicate usage of uncompressed public keys.
+		err = t.chain.ProvideRedemptionSignature(
+			depositAddress,
+			27+signatureSubmittedEvent.RecoveryID,
+			signatureSubmittedEvent.R,
+			signatureSubmittedEvent.S,
 		)
+		if err != nil {
+			return err
+		}
+
+		if !t.waitDepositStateConfirmation(
+			depositAddress,
+			chain.AwaitingWithdrawalProof,
+			blockConfirmations,
+		) {
+			return fmt.Errorf("deposit state is not confirmed")
+		}
+
+		return nil
 	}
 
 	monitoringSubscription, err := t.monitorAndAct(
@@ -317,14 +348,32 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	) (subscription.EventSubscription, error) {
 		// Stop in case the redemption fee has been increased by someone else.
 		redemptionRequestedSubscription, err := t.chain.OnDepositRedemptionRequested(
-			handler,
+			func(depositAddress string) {
+				if t.waitDepositStateConfirmation(
+					depositAddress,
+					chain.AwaitingWithdrawalSignature,
+					blockConfirmations,
+				) {
+					handler(depositAddress)
+				}
+			},
 		)
 		if err != nil {
 			return nil, err
 		}
 
 		// Stop in case the redemption proof has been provided by someone else.
-		redeemedSubscription, err := t.chain.OnDepositRedeemed(handler)
+		redeemedSubscription, err := t.chain.OnDepositRedeemed(
+			func(depositAddress string) {
+				if t.waitDepositStateConfirmation(
+					depositAddress,
+					chain.Redeemed,
+					blockConfirmations,
+				) {
+					handler(depositAddress)
+				}
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -370,11 +419,24 @@ func (t *tbtc) monitorProvideRedemptionProof(
 			redemptionRequestedEvents[0].RequestedFee, // initial fee
 		)
 
-		return t.chain.IncreaseRedemptionFee(
+		err = t.chain.IncreaseRedemptionFee(
 			depositAddress,
 			toLittleEndianBytes(previousOutputValue),
 			toLittleEndianBytes(newOutputValue),
 		)
+		if err != nil {
+			return err
+		}
+
+		if !t.waitDepositStateConfirmation(
+			depositAddress,
+			chain.AwaitingWithdrawalSignature,
+			blockConfirmations,
+		) {
+			return fmt.Errorf("deposit state is not confirmed")
+		}
+
+		return nil
 	}
 
 	timeoutFn := func(depositAddress string) (time.Duration, error) {
