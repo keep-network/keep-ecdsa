@@ -54,6 +54,9 @@ type Deposit interface {
 		txIndexInBlock *big.Int,
 		bitcoinHeaders []uint8,
 	) error
+
+	// CurrentState returns the current state for the provided deposit.
+	CurrentState(depositAddress string) (DepositState, error)
 }
 
 // TBTCSystem is an interface that provides ability to interact
@@ -112,3 +115,21 @@ type DepositRedemptionRequestedEvent struct {
 	Outpoint             []byte
 	BlockNumber          uint64
 }
+
+// DepositState represents the deposit state.
+type DepositState int
+
+const (
+	Start DepositState = iota
+	AwaitingSignerSetup
+	AwaitingBtcFundingProof
+	FailedSetup
+	Active
+	AwaitingWithdrawalSignature
+	AwaitingWithdrawalProof
+	Redeemed
+	CourtesyCall
+	FraudLiquidationInProgress
+	LiquidationInProgress
+	Liquidated
+)

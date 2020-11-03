@@ -364,6 +364,23 @@ func (tec *TBTCEthereumChain) ProvideRedemptionProof(
 	return nil
 }
 
+// CurrentState returns the current state for the provided deposit.
+func (tec *TBTCEthereumChain) CurrentState(
+	depositAddress string,
+) (chain.DepositState, error) {
+	deposit, err := tec.getDepositContract(depositAddress)
+	if err != nil {
+		return 0, err
+	}
+
+	state, err := deposit.CurrentState()
+	if err != nil {
+		return 0, err
+	}
+
+	return chain.DepositState(state.Uint64()), err
+}
+
 func (tec *TBTCEthereumChain) getDepositContract(
 	address string,
 ) (*contract.Deposit, error) {

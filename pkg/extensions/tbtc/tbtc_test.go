@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	timeout        = 500 * time.Millisecond
-	depositAddress = "0xa5FA806723A7c7c8523F33c39686f20b52612877"
+	timeout                        = 500 * time.Millisecond
+	depositAddress                 = "0xa5FA806723A7c7c8523F33c39686f20b52612877"
+	defaultLocalBlockConfirmations = 0
 )
 
 func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
@@ -31,6 +32,7 @@ func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -88,6 +90,7 @@ func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -155,6 +158,7 @@ func TestRetrievePubkey_KeepClosedEventOccurred(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -219,6 +223,7 @@ func TestRetrievePubkey_KeepTerminatedEventOccurred(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -283,6 +288,7 @@ func TestRetrievePubkey_ActionFailed(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -320,6 +326,7 @@ func TestRetrievePubkey_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) 
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -357,6 +364,7 @@ func TestRetrievePubkey_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -400,6 +408,7 @@ func TestProvideRedemptionSignature_TimeoutElapsed(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -472,6 +481,7 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignat
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -559,6 +569,7 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositRedeemed(
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -637,6 +648,7 @@ func TestProvideRedemptionSignature_KeepClosedEventOccurred(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -712,6 +724,7 @@ func TestProvideRedemptionSignature_KeepTerminatedEventOccurred(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -787,6 +800,7 @@ func TestProvideRedemptionSignature_ActionFailed(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -842,6 +856,7 @@ func TestProvideRedemptionSignature_ContextCancelled_WithoutWorkingMonitoring(
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -892,6 +907,7 @@ func TestProvideRedemptionSignature_ContextCancelled_WithWorkingMonitoring(
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -945,6 +961,7 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1035,6 +1052,7 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedemptionRequested(
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1139,6 +1157,7 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedeemed(
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1226,6 +1245,7 @@ func TestProvideRedemptionProof_KeepClosedEventOccurred(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1318,6 +1338,7 @@ func TestProvideRedemptionProof_KeepTerminatedEventOccurred(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1410,6 +1431,7 @@ func TestProvideRedemptionProof_ActionFailed(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1474,6 +1496,7 @@ func TestProvideRedemptionProof_ContextCancelled_WithoutWorkingMonitoring(
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1538,6 +1561,7 @@ func TestProvideRedemptionProof_ContextCancelled_WithWorkingMonitoring(
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)

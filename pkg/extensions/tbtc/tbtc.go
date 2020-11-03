@@ -20,8 +20,9 @@ import (
 var logger = log.Logger("tbtc-extension")
 
 const (
-	maxActAttempts           = 3
-	pastEventsLookbackBlocks = 10000
+	maxActAttempts            = 3
+	pastEventsLookbackBlocks  = 10000
+	defaultBlockConfirmations = 12
 )
 
 type KeepsRegistry interface {
@@ -42,6 +43,7 @@ func Initialize(
 		ctx,
 		exponentialBackoff,
 		165*time.Minute, // 15 minutes before the 3 hours on-chain timeout
+		defaultBlockConfirmations,
 	)
 	if err != nil {
 		return fmt.Errorf(
@@ -54,6 +56,7 @@ func Initialize(
 		ctx,
 		exponentialBackoff,
 		105*time.Minute, // 15 minutes before the 2 hours on-chain timeout
+		defaultBlockConfirmations,
 	)
 	if err != nil {
 		return fmt.Errorf(
@@ -67,6 +70,7 @@ func Initialize(
 		ctx,
 		exponentialBackoff,
 		345*time.Minute, // 15 minutes before the 6 hours on-chain timeout
+		defaultBlockConfirmations,
 	)
 	if err != nil {
 		return fmt.Errorf(
@@ -99,19 +103,58 @@ func (t *tbtc) monitorRetrievePubKey(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
+	blockConfirmations uint64,
 ) error {
+	monitoringStartFn := func(
+		handler depositEventHandler,
+	) (subscription.EventSubscription, error) {
+		return t.chain.OnDepositCreated(handler)
+	}
+
+	monitoringStopFn := func(
+		handler depositEventHandler,
+	) (subscription.EventSubscription, error) {
+		handlerWithConfirmation := func(depositAddress string) {
+			if t.waitDepositStateConfirmation(
+				depositAddress,
+				chain.AwaitingBtcFundingProof,
+				blockConfirmations,
+			) {
+				handler(depositAddress)
+			}
+		}
+
+		return t.chain.OnDepositRegisteredPubkey(handlerWithConfirmation)
+	}
+
+	actFn := func(depositAddress string) error {
+		err := t.chain.RetrieveSignerPubkey(depositAddress)
+		if err != nil {
+			return err
+		}
+
+		if !t.waitDepositStateConfirmation(
+			depositAddress,
+			chain.AwaitingBtcFundingProof,
+			blockConfirmations,
+		) {
+			return fmt.Errorf(
+				"deposit [%v] is not in desired state",
+				depositAddress,
+			)
+		}
+
+		return nil
+	}
+
 	monitoringSubscription, err := t.monitorAndAct(
 		ctx,
 		"retrieve pubkey",
 		t.shouldMonitorDeposit,
-		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			return t.chain.OnDepositCreated(handler)
-		},
-		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			return t.chain.OnDepositRegisteredPubkey(handler)
-		},
+		monitoringStartFn,
+		monitoringStopFn,
 		t.watchKeepClosed,
-		t.chain.RetrieveSignerPubkey,
+		actFn,
 		actBackoffFn,
 		func(_ string) (time.Duration, error) {
 			return timeout, nil
@@ -136,6 +179,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
+	blockConfirmations uint64,
 ) error {
 	monitoringStartFn := func(
 		handler depositEventHandler,
@@ -259,6 +303,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
+	blockConfirmations uint64,
 ) error {
 	monitoringStartFn := func(
 		handler depositEventHandler,
@@ -639,6 +684,51 @@ func (t *tbtc) shouldMonitorDeposit(
 	}
 
 	return t.keepsRegistry.HasSigner(common.HexToAddress(keepAddress))
+}
+
+func (t *tbtc) waitDepositStateConfirmation(
+	depositAddress string,
+	depositState chain.DepositState,
+	blockConfirmations uint64,
+) bool {
+	stateCheck := func() (bool, error) {
+		currentState, err := t.chain.CurrentState(depositAddress)
+		if err != nil {
+			return false, err
+		}
+
+		return currentState == depositState, nil
+	}
+
+	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
+	if err != nil {
+		logger.Errorf(
+			"could not get current block while confirming "+
+				"state [%v] for deposit [%v]: [%v]",
+			depositState,
+			depositAddress,
+			err,
+		)
+		return false
+	}
+
+	confirmed, err := chain.WaitForChainConfirmation(
+		t.chain,
+		currentBlock,
+		blockConfirmations,
+		stateCheck,
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not confirm state [%v] for deposit [%v]: [%v]",
+			depositState,
+			depositAddress,
+			err,
+		)
+		return false
+	}
+
+	return confirmed
 }
 
 func (t *tbtc) pastEventsLookupStartBlock() uint64 {
