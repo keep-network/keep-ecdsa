@@ -49,6 +49,10 @@ import "./BondedECDSAKeep.sol";
 /// Reporting a terminated keep returns its allocated reward to the pool of
 /// unallocated rewards.
 contract ECDSARewards is Rewards {
+    // The amount of tokens each individual beneficiary address
+    // can receive in a single interval is capped to 3M tokens.
+    uint256 public beneficiaryRewardCap = 3000000 * 10**18;
+
     // BondedECDSAKeepFactory deployment date, Sep-14-2020 interval started.
     // https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
     uint256 internal constant ecdsaFirstIntervalStart = 1600041600;
@@ -87,10 +91,6 @@ contract ECDSARewards is Rewards {
 
     uint256 internal constant minimumECDSAKeepsPerInterval = 1000;
 
-    // The amount of tokens each individual beneficiary address
-    // can receive in a single interval is capped.
-    // TODO: set actual value
-    uint256 internal beneficiaryRewardCap = 400000 * 10**18;
     // The total amount of rewards allocated to the given beneficiary address,
     // in the given interval.
     // `allocatedRewards[beneficiary][interval] -> amount`
