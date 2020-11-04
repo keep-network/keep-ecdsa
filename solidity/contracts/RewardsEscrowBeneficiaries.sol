@@ -3,8 +3,8 @@ pragma solidity 0.5.17;
 import "@keep-network/keep-core/contracts/PhasedEscrow.sol";
 
 /// @title ECDSABackportRewardsEscrowBeneficiary
-/// @notice Trasfer the received tokens to a designated
-///         ECDSABackportRewardsEscrowBeneficiary contract.
+/// @notice Trasfer the received tokens from Phased Escrow to a designated
+///         ECDSABackportRewards contract.
 contract ECDSABackportRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
     constructor(IERC20 _token, IStakerRewards _stakerRewards)
         public
@@ -13,8 +13,8 @@ contract ECDSABackportRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
 }
 
 /// @title ECDSARewardsEscrowBeneficiary
-/// @notice Transfer the received tokens to a designated
-///         ECDSARewardsEscrowBeneficiary contract.
+/// @notice Transfer the received tokens from PhasedEscrow to a designated
+///         ECDSARewards contract.
 contract ECDSARewardsEscrowBeneficiary is StakerRewardsBeneficiary {
     constructor(IERC20 _token, IStakerRewards _stakerRewards)
         public
