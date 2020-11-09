@@ -30,12 +30,6 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
         return groupSelectionSeed;
     }
 
-    function addKeep(address keep) public {
-        keeps.push(keep);
-        /* solium-disable-next-line security/no-block-members*/
-        keepOpenedTimestamp[keep] = block.timestamp;
-    }
-
     /// @notice Opens a new ECDSA keep.
     /// @param _owner Address of the keep owner.
     /// @param _members Keep members.
@@ -75,7 +69,9 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
         for (uint256 i = 0; i < _numberOfKeeps; i++) {
             address keepAddress = address(block.timestamp.add(i));
             keeps.push(keepAddress);
-            keepOpenedTimestamp[keepAddress] = _firstKeepCreationTimestamp.add(i);
+            keepOpenedTimestamp[keepAddress] = _firstKeepCreationTimestamp.add(
+                i
+            );
         }
     }
 }
