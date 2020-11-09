@@ -540,8 +540,8 @@ func (tlc *TBTCLocalChain) ProvideRedemptionProof(
 func (tlc *TBTCLocalChain) CurrentState(
 	depositAddress string,
 ) (chain.DepositState, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
