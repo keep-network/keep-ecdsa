@@ -431,7 +431,7 @@ type timeoutFn func(depositAddress string) (time.Duration, error)
 func (t *tbtc) monitorAndAct(
 	ctx context.Context,
 	monitoringName string,
-	monitoringFilterFn depositFilterFn,
+	shouldMonitorFn depositFilterFn,
 	monitoringStartFn watchDepositEventFn,
 	monitoringStopFn watchDepositEventFn,
 	keepClosedFn watchKeepClosedFn,
@@ -440,7 +440,7 @@ func (t *tbtc) monitorAndAct(
 	timeoutFn timeoutFn,
 ) (subscription.EventSubscription, error) {
 	handleStartEvent := func(depositAddress string) {
-		if !monitoringFilterFn(depositAddress) {
+		if !shouldMonitorFn(depositAddress) {
 			return
 		}
 
