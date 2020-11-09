@@ -2,6 +2,7 @@ package local
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -87,9 +88,9 @@ type TBTCLocalChain struct {
 	depositRedeemedHandlers               map[int]func(depositAddress string)
 }
 
-func NewTBTCLocalChain() *TBTCLocalChain {
+func NewTBTCLocalChain(ctx context.Context) *TBTCLocalChain {
 	return &TBTCLocalChain{
-		localChain:                            Connect().(*localChain),
+		localChain:                            Connect(ctx).(*localChain),
 		logger:                                &localChainLogger{},
 		alwaysFailingTransactions:             make(map[string]bool),
 		deposits:                              make(map[string]*localDeposit),

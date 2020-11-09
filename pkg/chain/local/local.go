@@ -51,7 +51,7 @@ type localChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect() Chain {
+func Connect(ctx context.Context) Chain {
 	blockCounter, err := local.BlockCounter()
 	if err != nil {
 		panic(err) // should never happen
@@ -68,7 +68,7 @@ func Connect() Chain {
 	// block 0 must be stored manually as it is not delivered by the block counter
 	localChain.blocksTimestamps.Store(uint64(0), uint64(time.Now().Unix()))
 
-	go localChain.observeBlocksTimestamps(context.Background())
+	go localChain.observeBlocksTimestamps(ctx)
 
 	return localChain
 }

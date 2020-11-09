@@ -13,10 +13,10 @@ import (
 )
 
 func TestOnBondedECDSAKeepCreated(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancelCtx()
 
-	chain := initializeLocalChain()
+	chain := initializeLocalChain(ctx)
 	eventFired := make(chan *eth.BondedECDSAKeepCreatedEvent)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	expectedEvent := &eth.BondedECDSAKeepCreatedEvent{
@@ -50,10 +50,10 @@ func TestOnBondedECDSAKeepCreated(t *testing.T) {
 }
 
 func TestOnSignatureRequested(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancelCtx()
 
-	chain := initializeLocalChain()
+	chain := initializeLocalChain(ctx)
 	eventFired := make(chan *eth.SignatureRequestedEvent)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
@@ -106,7 +106,10 @@ func TestOnSignatureRequested(t *testing.T) {
 }
 
 func TestSubmitKeepPublicKey(t *testing.T) {
-	chain := initializeLocalChain()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := initializeLocalChain(ctx)
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 	expectedDuplicationError := fmt.Errorf(
@@ -148,6 +151,6 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	}
 }
 
-func initializeLocalChain() *localChain {
-	return Connect().(*localChain)
+func initializeLocalChain(ctx context.Context) *localChain {
+	return Connect(ctx).(*localChain)
 }
