@@ -428,6 +428,7 @@ func TestRetrievePubkey_NoSignerInKeepsRegistry(t *testing.T) {
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1038,6 +1039,7 @@ func TestProvideRedemptionSignature_NoSignerInKeepsRegistry(
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1778,6 +1780,7 @@ func TestProvideRedemptionProof_NoSignerInKeepsRegistry(
 		ctx,
 		constantBackoff,
 		timeout,
+		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
