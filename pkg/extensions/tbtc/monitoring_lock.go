@@ -6,17 +6,15 @@ import (
 	"sync"
 )
 
-type monitoringLockKey string
-
 func newMonitoringLockKey(
 	depositAddress string,
 	monitoringName string,
-) monitoringLockKey {
-	return monitoringLockKey(fmt.Sprintf(
+) string {
+	return fmt.Sprintf(
 		"%v-%v",
 		depositAddress,
 		strings.ReplaceAll(monitoringName, " ", ""),
-	))
+	)
 }
 
 type monitoringLock struct {
