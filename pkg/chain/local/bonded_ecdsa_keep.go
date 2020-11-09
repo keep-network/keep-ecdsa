@@ -30,8 +30,8 @@ type localKeep struct {
 }
 
 func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byte) error {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
+	c.localChainMutex.Lock()
+	defer c.localChainMutex.Unlock()
 
 	keep, ok := c.keeps[keepAddress]
 	if !ok {
@@ -65,8 +65,8 @@ func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byt
 }
 
 func (c *localChain) closeKeep(keepAddress common.Address) error {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
+	c.localChainMutex.Lock()
+	defer c.localChainMutex.Unlock()
 
 	keep, ok := c.keeps[keepAddress]
 	if !ok {
@@ -97,8 +97,8 @@ func (c *localChain) closeKeep(keepAddress common.Address) error {
 }
 
 func (c *localChain) terminateKeep(keepAddress common.Address) error {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
+	c.localChainMutex.Lock()
+	defer c.localChainMutex.Unlock()
 
 	keep, ok := c.keeps[keepAddress]
 	if !ok {
