@@ -2,6 +2,7 @@ package local
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -74,7 +75,7 @@ func (lcl *localChainLogger) IncreaseRedemptionFeeCalls() int {
 type TBTCLocalChain struct {
 	*localChain
 
-	mutex sync.Mutex
+	tbtcLocalChainMutex sync.Mutex
 
 	logger *localChainLogger
 
@@ -88,9 +89,9 @@ type TBTCLocalChain struct {
 	depositRedeemedHandlers               map[int]func(depositAddress string)
 }
 
-func NewTBTCLocalChain() *TBTCLocalChain {
+func NewTBTCLocalChain(ctx context.Context) *TBTCLocalChain {
 	return &TBTCLocalChain{
-		localChain:                            Connect().(*localChain),
+		localChain:                            Connect(ctx).(*localChain),
 		logger:                                &localChainLogger{},
 		alwaysFailingTransactions:             make(map[string]bool),
 		deposits:                              make(map[string]*localDeposit),
@@ -103,8 +104,8 @@ func NewTBTCLocalChain() *TBTCLocalChain {
 }
 
 func (tlc *TBTCLocalChain) CreateDeposit(depositAddress string) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	keepAddress := generateAddress()
 	tlc.OpenKeep(keepAddress, []common.Address{
@@ -130,16 +131,16 @@ func (tlc *TBTCLocalChain) CreateDeposit(depositAddress string) {
 func (tlc *TBTCLocalChain) OnDepositCreated(
 	handler func(depositAddress string),
 ) (subscription.EventSubscription, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
 	tlc.depositCreatedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		tlc.mutex.Lock()
-		defer tlc.mutex.Unlock()
+		tlc.tbtcLocalChainMutex.Lock()
+		defer tlc.tbtcLocalChainMutex.Unlock()
 
 		delete(tlc.depositCreatedHandlers, handlerID)
 	}), nil
@@ -148,24 +149,24 @@ func (tlc *TBTCLocalChain) OnDepositCreated(
 func (tlc *TBTCLocalChain) OnDepositRegisteredPubkey(
 	handler func(depositAddress string),
 ) (subscription.EventSubscription, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
 	tlc.depositRegisteredPubkeyHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		tlc.mutex.Lock()
-		defer tlc.mutex.Unlock()
+		tlc.tbtcLocalChainMutex.Lock()
+		defer tlc.tbtcLocalChainMutex.Unlock()
 
 		delete(tlc.depositRegisteredPubkeyHandlers, handlerID)
 	}), nil
 }
 
 func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
@@ -232,16 +233,16 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 func (tlc *TBTCLocalChain) OnDepositRedemptionRequested(
 	handler func(depositAddress string),
 ) (subscription.EventSubscription, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
 	tlc.depositRedemptionRequestedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		tlc.mutex.Lock()
-		defer tlc.mutex.Unlock()
+		tlc.tbtcLocalChainMutex.Lock()
+		defer tlc.tbtcLocalChainMutex.Unlock()
 
 		delete(tlc.depositRedemptionRequestedHandlers, handlerID)
 	}), nil
@@ -250,16 +251,16 @@ func (tlc *TBTCLocalChain) OnDepositRedemptionRequested(
 func (tlc *TBTCLocalChain) OnDepositGotRedemptionSignature(
 	handler func(depositAddress string),
 ) (subscription.EventSubscription, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
 	tlc.depositGotRedemptionSignatureHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		tlc.mutex.Lock()
-		defer tlc.mutex.Unlock()
+		tlc.tbtcLocalChainMutex.Lock()
+		defer tlc.tbtcLocalChainMutex.Unlock()
 
 		delete(tlc.depositGotRedemptionSignatureHandlers, handlerID)
 	}), nil
@@ -268,16 +269,16 @@ func (tlc *TBTCLocalChain) OnDepositGotRedemptionSignature(
 func (tlc *TBTCLocalChain) OnDepositRedeemed(
 	handler func(depositAddress string),
 ) (subscription.EventSubscription, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
 	tlc.depositRedeemedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		tlc.mutex.Lock()
-		defer tlc.mutex.Unlock()
+		tlc.tbtcLocalChainMutex.Lock()
+		defer tlc.tbtcLocalChainMutex.Unlock()
 
 		delete(tlc.depositRedeemedHandlers, handlerID)
 	}), nil
@@ -287,8 +288,8 @@ func (tlc *TBTCLocalChain) PastDepositRedemptionRequestedEvents(
 	depositAddress string,
 	startBlock uint64,
 ) ([]*chain.DepositRedemptionRequestedEvent, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
@@ -299,8 +300,8 @@ func (tlc *TBTCLocalChain) PastDepositRedemptionRequestedEvents(
 }
 
 func (tlc *TBTCLocalChain) KeepAddress(depositAddress string) (string, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
@@ -311,8 +312,8 @@ func (tlc *TBTCLocalChain) KeepAddress(depositAddress string) (string, error) {
 }
 
 func (tlc *TBTCLocalChain) RetrieveSignerPubkey(depositAddress string) error {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	tlc.logger.logRetrieveSignerPubkeyCall()
 
@@ -329,8 +330,8 @@ func (tlc *TBTCLocalChain) RetrieveSignerPubkey(depositAddress string) error {
 	}
 
 	// lock upstream mutex to access `keeps` map safely
-	tlc.handlerMutex.Lock()
-	defer tlc.handlerMutex.Unlock()
+	tlc.localChainMutex.Lock()
+	defer tlc.localChainMutex.Unlock()
 
 	keep, ok := tlc.keeps[common.HexToAddress(deposit.keepAddress)]
 	if !ok {
@@ -366,8 +367,8 @@ func (tlc *TBTCLocalChain) ProvideRedemptionSignature(
 	r [32]uint8,
 	s [32]uint8,
 ) error {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	tlc.logger.logProvideRedemptionSignatureCall()
 
@@ -412,8 +413,8 @@ func (tlc *TBTCLocalChain) IncreaseRedemptionFee(
 	previousOutputValueBytes [8]uint8,
 	newOutputValueBytes [8]uint8,
 ) error {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	tlc.logger.logIncreaseRedemptionFeeCalls()
 
@@ -509,8 +510,8 @@ func (tlc *TBTCLocalChain) ProvideRedemptionProof(
 	txIndexInBlock *big.Int,
 	bitcoinHeaders []uint8,
 ) error {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
@@ -553,8 +554,8 @@ func (tlc *TBTCLocalChain) CurrentState(
 func (tlc *TBTCLocalChain) DepositPubkey(
 	depositAddress string,
 ) ([]byte, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
@@ -574,8 +575,8 @@ func (tlc *TBTCLocalChain) DepositPubkey(
 func (tlc *TBTCLocalChain) DepositRedemptionSignature(
 	depositAddress string,
 ) (*Signature, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
@@ -595,8 +596,8 @@ func (tlc *TBTCLocalChain) DepositRedemptionSignature(
 func (tlc *TBTCLocalChain) DepositRedemptionProof(
 	depositAddress string,
 ) (*TxProof, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
@@ -616,8 +617,8 @@ func (tlc *TBTCLocalChain) DepositRedemptionProof(
 func (tlc *TBTCLocalChain) DepositRedemptionFee(
 	depositAddress string,
 ) (*big.Int, error) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
@@ -635,8 +636,8 @@ func (tlc *TBTCLocalChain) DepositRedemptionFee(
 }
 
 func (tlc *TBTCLocalChain) SetAlwaysFailingTransactions(transactions ...string) {
-	tlc.mutex.Lock()
-	defer tlc.mutex.Unlock()
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	for _, tx := range transactions {
 		tlc.alwaysFailingTransactions[tx] = true

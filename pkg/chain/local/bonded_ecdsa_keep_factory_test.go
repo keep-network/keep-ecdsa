@@ -2,6 +2,7 @@ package local
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
@@ -10,7 +11,10 @@ import (
 )
 
 func TestCreateKeepDuplicate(t *testing.T) {
-	chain := initializeLocalChain()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := initializeLocalChain(ctx)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	expectedError := fmt.Errorf("keep already exists for address [0x0000000000000000000000000000000000000001]")
 
@@ -30,7 +34,10 @@ func TestCreateKeepDuplicate(t *testing.T) {
 }
 
 func TestCreateKeep(t *testing.T) {
-	chain := initializeLocalChain()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := initializeLocalChain(ctx)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	expectedPublicKey := [64]byte{}
 

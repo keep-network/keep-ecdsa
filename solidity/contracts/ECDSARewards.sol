@@ -49,6 +49,10 @@ import "./BondedECDSAKeep.sol";
 /// Reporting a terminated keep returns its allocated reward to the pool of
 /// unallocated rewards.
 contract ECDSARewards is Rewards {
+    // The amount of tokens each individual beneficiary address
+    // can receive in a single interval is capped to 3M tokens.
+    uint256 public beneficiaryRewardCap = 3000000 * 10**18;
+
     // BondedECDSAKeepFactory deployment date, Sep-14-2020 interval started.
     // https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
     uint256 internal constant ecdsaFirstIntervalStart = 1600041600;
@@ -87,9 +91,21 @@ contract ECDSARewards is Rewards {
 
     uint256 internal constant minimumECDSAKeepsPerInterval = 1000;
 
-    BondedECDSAKeepFactory factory;
+    // The total amount of rewards allocated to the given beneficiary address,
+    // in the given interval.
+    // `allocatedRewards[beneficiary][interval] -> amount`
+    mapping(address => mapping(uint256 => uint256)) internal allocatedRewards;
+    // The amount of interval rewards withdrawn to the given beneficiary.
+    mapping(address => mapping(uint256 => uint256)) internal withdrawnRewards;
 
-    constructor(address _token, address payable _factoryAddress)
+    BondedECDSAKeepFactory internal factory;
+    TokenStaking internal tokenStaking;
+
+    constructor(
+        address _token,
+        address payable _factoryAddress,
+        address _tokenStakingAddress
+    )
         public
         Rewards(
             _token,
@@ -100,17 +116,70 @@ contract ECDSARewards is Rewards {
         )
     {
         factory = BondedECDSAKeepFactory(_factoryAddress);
+        tokenStaking = TokenStaking(_tokenStakingAddress);
     }
 
-    /// @notice Stakers can receive KEEP rewards from multiple keeps of their choice
-    /// in one transaction to reduce total cost comparing to single calls for rewards.
-    /// It is a caller responsibility to determine the cost and consumed gas when
-    /// receiving rewards from multiple keeps.
-    /// @param keepIdentifiers An array of keep addresses.
-    function receiveRewards(bytes32[] memory keepIdentifiers) public {
-        for (uint256 i = 0; i < keepIdentifiers.length; i++) {
-            receiveReward(keepIdentifiers[i]);
-        }
+    /// @notice Get the amount of rewards allocated
+    /// for the specified operator's beneficiary in the specified interval.
+    /// @param interval The interval
+    /// @param operator The operator
+    /// @return The amount allocated
+    function getAllocatedRewards(uint256 interval, address operator)
+        external
+        view
+        returns (uint256)
+    {
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        return allocatedRewards[beneficiary][interval];
+    }
+
+    /// @notice Get the amount of rewards already withdrawn
+    /// for the specified operator's beneficiary in the specified interval.
+    /// @param interval The interval
+    /// @param operator The operator
+    /// @return The amount already withdrawn
+    function getWithdrawnRewards(uint256 interval, address operator)
+        external
+        view
+        returns (uint256)
+    {
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        return withdrawnRewards[beneficiary][interval];
+    }
+
+    /// @notice Get the amount of rewards withdrawable
+    /// for the specified operator's beneficiary in the specified interval.
+    /// @param interval The interval
+    /// @param operator The operator
+    /// @return The amount withdrawable
+    function getWithdrawableRewards(uint256 interval, address operator)
+        external
+        view
+        returns (uint256)
+    {
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        uint256 allocated = allocatedRewards[beneficiary][interval];
+        uint256 withdrawn = withdrawnRewards[beneficiary][interval];
+        return allocated.sub(withdrawn);
+    }
+
+    /// @notice Withdraw all available rewards for the given interval.
+    /// The rewards will be paid to the beneficiary of the specified operator.
+    /// @param interval The interval
+    /// @param operator The operator
+    function withdrawRewards(uint256 interval, address operator) external {
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+
+        uint256 allocated = allocatedRewards[beneficiary][interval];
+        uint256 alreadyWithdrawn = withdrawnRewards[beneficiary][interval];
+
+        require(allocated > alreadyWithdrawn, "No rewards to withdraw");
+
+        uint256 withdrawableRewards = allocated.sub(alreadyWithdrawn);
+
+        withdrawnRewards[beneficiary][interval] = allocated;
+
+        token.safeTransfer(beneficiary, withdrawableRewards);
     }
 
     function _getKeepCount() internal view returns (uint256) {
@@ -158,16 +227,43 @@ contract ECDSARewards is Rewards {
         return factory.getKeepOpenedTimestamp(toAddress(_keep)) != 0;
     }
 
+    /// @notice Get the members of the specified keep, and distribute the reward
+    /// amount between them. The reward isn't paid out immediately,
+    /// but is instead kept in the reward contract until each operator
+    /// individually requests to withdraw the rewards.
     function _distributeReward(bytes32 _keep, uint256 amount)
         internal
         isAddress(_keep)
     {
-        token.approve(toAddress(_keep), amount);
+        address[] memory members = BondedECDSAKeep(toAddress(_keep))
+            .getMembers();
+        uint256 interval = intervalOf(_getCreationTime(_keep));
 
-        BondedECDSAKeep(toAddress(_keep)).distributeERC20Reward(
-            address(token),
-            amount
-        );
+        uint256 memberCount = members.length;
+        uint256 dividend = amount.div(memberCount);
+        uint256 remainder = amount.mod(memberCount);
+
+        uint256[] memory allocations = new uint256[](memberCount);
+
+        for (uint256 i = 0; i < memberCount - 1; i++) {
+            allocations[i] = dividend;
+        }
+        allocations[memberCount - 1] = dividend.add(remainder);
+
+        for (uint256 i = 0; i < memberCount; i++) {
+            address beneficiary = tokenStaking.beneficiaryOf(members[i]);
+            uint256 addedAllocation = allocations[i];
+            uint256 prevAllocated = allocatedRewards[beneficiary][interval];
+            uint256 newAllocation = prevAllocated.add(addedAllocation);
+            if (newAllocation > beneficiaryRewardCap) {
+                uint256 deallocatedAmount = newAllocation.sub(
+                    beneficiaryRewardCap
+                );
+                newAllocation = beneficiaryRewardCap;
+                deallocate(deallocatedAmount);
+            }
+            allocatedRewards[beneficiary][interval] = newAllocation;
+        }
     }
 
     function toAddress(bytes32 keepBytes) internal pure returns (address) {
