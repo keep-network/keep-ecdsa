@@ -3,10 +3,14 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sort"
+
+	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
+	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/eventlog"
 )
 
 // TBTCEthereumChain represents an Ethereum chain handle with
@@ -15,6 +19,7 @@ type TBTCEthereumChain struct {
 	*EthereumChain
 
 	tbtcSystemContract *contract.TBTCSystem
+	tbtcSystemEventLog *eventlog.TBTCSystemEventLog
 }
 
 // WithTBTCExtension extends the Ethereum chain handle with
@@ -39,9 +44,18 @@ func WithTBTCExtension(
 		return nil, err
 	}
 
+	tbtcSystemEventLog, err := eventlog.NewTBTCSystemEventLog(
+		common.HexToAddress(tbtcSystemContractAddress),
+		ethereumChain.client,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &TBTCEthereumChain{
 		EthereumChain:      ethereumChain,
 		tbtcSystemContract: tbtcSystemContract,
+		tbtcSystemEventLog: tbtcSystemEventLog,
 	}, nil
 }
 
@@ -83,10 +97,140 @@ func (tec *TBTCEthereumChain) OnDepositRegisteredPubkey(
 			handler(DepositContractAddress.Hex())
 		},
 		func(err error) error {
-			return fmt.Errorf("watch deposit created failed: [%v]", err)
+			return fmt.Errorf(
+				"watch deposit registered pubkey failed: [%v]",
+				err,
+			)
 		},
 		nil,
 	)
+}
+
+// OnDepositRedemptionRequested installs a callback that is invoked when an
+// on-chain notification of a deposit redemption request is seen.
+func (tec *TBTCEthereumChain) OnDepositRedemptionRequested(
+	handler func(depositAddress string),
+) (subscription.EventSubscription, error) {
+	return tec.tbtcSystemContract.WatchRedemptionRequested(
+		func(
+			DepositContractAddress common.Address,
+			Requester common.Address,
+			Digest [32]uint8,
+			UtxoValue *big.Int,
+			RedeemerOutputScript []uint8,
+			RequestedFee *big.Int,
+			Outpoint []uint8,
+			blockNumber uint64,
+		) {
+			handler(DepositContractAddress.Hex())
+		},
+		func(err error) error {
+			return fmt.Errorf(
+				"watch deposit redemption requested failed: [%v]",
+				err,
+			)
+		},
+		nil,
+		nil,
+		nil,
+	)
+}
+
+// OnDepositGotRedemptionSignature installs a callback that is invoked when an
+// on-chain notification of a deposit receiving a redemption signature is seen.
+func (tec *TBTCEthereumChain) OnDepositGotRedemptionSignature(
+	handler func(depositAddress string),
+) (subscription.EventSubscription, error) {
+	return tec.tbtcSystemContract.WatchGotRedemptionSignature(
+		func(
+			DepositContractAddress common.Address,
+			Digest [32]uint8,
+			R [32]uint8,
+			S [32]uint8,
+			Timestamp *big.Int,
+			blockNumber uint64,
+		) {
+			handler(DepositContractAddress.Hex())
+		},
+		func(err error) error {
+			return fmt.Errorf(
+				"watch deposit got redemption signature failed: [%v]",
+				err,
+			)
+		},
+		nil,
+		nil,
+	)
+}
+
+// OnDepositRedeemed installs a callback that is invoked when an
+// on-chain notification of a deposit redemption is seen.
+func (tec *TBTCEthereumChain) OnDepositRedeemed(
+	handler func(depositAddress string),
+) (subscription.EventSubscription, error) {
+	return tec.tbtcSystemContract.WatchRedeemed(
+		func(
+			DepositContractAddress common.Address,
+			Txid [32]uint8,
+			Timestamp *big.Int,
+			blockNumber uint64,
+		) {
+			handler(DepositContractAddress.Hex())
+		},
+		func(err error) error {
+			return fmt.Errorf(
+				"watch deposit redeemed failed: [%v]",
+				err,
+			)
+		},
+		nil,
+		nil,
+	)
+}
+
+// PastDepositRedemptionRequestedEvents returns all redemption requested
+// events for the given deposit which occurred after the provided start block.
+// Returned events are sorted by the block number in the ascending order.
+func (tec *TBTCEthereumChain) PastDepositRedemptionRequestedEvents(
+	depositAddress string,
+	startBlock uint64,
+) ([]*chain.DepositRedemptionRequestedEvent, error) {
+	if !common.IsHexAddress(depositAddress) {
+		return nil, fmt.Errorf("incorrect deposit contract address")
+	}
+
+	events, err := tec.tbtcSystemEventLog.PastRedemptionRequestedEvents(
+		[]common.Address{
+			common.HexToAddress(depositAddress),
+		},
+		startBlock,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*chain.DepositRedemptionRequestedEvent, 0)
+
+	for _, event := range events {
+		result = append(result, &chain.DepositRedemptionRequestedEvent{
+			DepositAddress:       event.DepositContractAddress.Hex(),
+			RequesterAddress:     event.Requester.Hex(),
+			Digest:               event.Digest,
+			UtxoValue:            event.UtxoValue,
+			RedeemerOutputScript: event.RedeemerOutputScript,
+			RequestedFee:         event.RequestedFee,
+			Outpoint:             event.Outpoint,
+			BlockNumber:          event.BlockNumber,
+		})
+	}
+
+	// Make sure events are sorted by block number in ascending order.
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].BlockNumber < result[j].BlockNumber
+	})
+
+	return result, nil
 }
 
 // KeepAddress returns the underlying keep address for the
@@ -124,6 +268,96 @@ func (tec *TBTCEthereumChain) RetrieveSignerPubkey(
 
 	logger.Debugf(
 		"submitted RetrieveSignerPubkey transaction with hash: [%x]",
+		transaction.Hash(),
+	)
+
+	return nil
+}
+
+// ProvideRedemptionSignature provides the redemption signature for the
+// provided deposit.
+func (tec *TBTCEthereumChain) ProvideRedemptionSignature(
+	depositAddress string,
+	v uint8,
+	r [32]uint8,
+	s [32]uint8,
+) error {
+	deposit, err := tec.getDepositContract(depositAddress)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := deposit.ProvideRedemptionSignature(v, r, s)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf(
+		"submitted ProvideRedemptionSignature transaction with hash: [%x]",
+		transaction.Hash(),
+	)
+
+	return nil
+}
+
+// IncreaseRedemptionFee increases the redemption fee for the provided deposit.
+func (tec *TBTCEthereumChain) IncreaseRedemptionFee(
+	depositAddress string,
+	previousOutputValueBytes [8]uint8,
+	newOutputValueBytes [8]uint8,
+) error {
+	deposit, err := tec.getDepositContract(depositAddress)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := deposit.IncreaseRedemptionFee(
+		previousOutputValueBytes,
+		newOutputValueBytes,
+	)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf(
+		"submitted IncreaseRedemptionFee transaction with hash: [%x]",
+		transaction.Hash(),
+	)
+
+	return nil
+}
+
+// ProvideRedemptionProof provides the redemption proof for the provided deposit.
+func (tec *TBTCEthereumChain) ProvideRedemptionProof(
+	depositAddress string,
+	txVersion [4]uint8,
+	txInputVector []uint8,
+	txOutputVector []uint8,
+	txLocktime [4]uint8,
+	merkleProof []uint8,
+	txIndexInBlock *big.Int,
+	bitcoinHeaders []uint8,
+) error {
+	deposit, err := tec.getDepositContract(depositAddress)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := deposit.ProvideRedemptionProof(
+		txVersion,
+		txInputVector,
+		txOutputVector,
+		txLocktime,
+		merkleProof,
+		txIndexInBlock,
+		bitcoinHeaders,
+	)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf(
+		"submitted ProvideRedemptionProof transaction with hash: [%x]",
 		transaction.Hash(),
 	)
 

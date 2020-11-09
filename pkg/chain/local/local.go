@@ -1,11 +1,15 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/chain/local"
+	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -30,7 +34,10 @@ type Chain interface {
 // It mocks the behaviour of a real blockchain, without the complexity of deployments,
 // accounts, async transactions and so on. For use in tests ONLY.
 type localChain struct {
-	handlerMutex sync.Mutex
+	localChainMutex sync.Mutex
+
+	blockCounter     chain.BlockCounter
+	blocksTimestamps sync.Map
 
 	keepAddresses []common.Address
 	keeps         map[common.Address]*localKeep
@@ -44,12 +51,38 @@ type localChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect() Chain {
-	return &localChain{
+func Connect(ctx context.Context) Chain {
+	blockCounter, err := local.BlockCounter()
+	if err != nil {
+		panic(err) // should never happen
+	}
+
+	localChain := &localChain{
+		blockCounter:        blockCounter,
 		keeps:               make(map[common.Address]*localKeep),
 		keepCreatedHandlers: make(map[int]func(event *eth.BondedECDSAKeepCreatedEvent)),
 		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
 		authorizations:      make(map[common.Address]bool),
+	}
+
+	// block 0 must be stored manually as it is not delivered by the block counter
+	localChain.blocksTimestamps.Store(uint64(0), uint64(time.Now().Unix()))
+
+	go localChain.observeBlocksTimestamps(ctx)
+
+	return localChain
+}
+
+func (lc *localChain) observeBlocksTimestamps(ctx context.Context) {
+	blockChan := lc.BlockCounter().WatchBlocks(ctx)
+
+	for {
+		select {
+		case blockNumber := <-blockChan:
+			lc.blocksTimestamps.Store(blockNumber, uint64(time.Now().Unix()))
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
@@ -69,8 +102,8 @@ func (lc *localChain) TerminateKeep(keepAddress common.Address) error {
 }
 
 func (lc *localChain) AuthorizeOperator(operator common.Address) {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
 
 	lc.authorizations[operator] = true
 }
@@ -95,16 +128,16 @@ func (lc *localChain) RegisterAsMemberCandidate(application common.Address) erro
 func (lc *localChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
 ) subscription.EventSubscription {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
 	lc.keepCreatedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		lc.handlerMutex.Lock()
-		defer lc.handlerMutex.Unlock()
+		lc.localChainMutex.Lock()
+		defer lc.localChainMutex.Unlock()
 
 		delete(lc.keepCreatedHandlers, handlerID)
 	})
@@ -116,8 +149,8 @@ func (lc *localChain) OnSignatureRequested(
 	keepAddress common.Address,
 	handler func(event *eth.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
@@ -132,8 +165,8 @@ func (lc *localChain) OnSignatureRequested(
 	keep.signatureRequestedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		lc.handlerMutex.Lock()
-		defer lc.handlerMutex.Unlock()
+		lc.localChainMutex.Lock()
+		defer lc.localChainMutex.Unlock()
 
 		delete(keep.signatureRequestedHandlers, handlerID)
 	}), nil
@@ -145,6 +178,9 @@ func (lc *localChain) SubmitKeepPublicKey(
 	keepAddress common.Address,
 	publicKey [64]byte,
 ) error {
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
+
 	keep, ok := lc.keeps[keepAddress]
 	if !ok {
 		return fmt.Errorf(
@@ -171,6 +207,45 @@ func (lc *localChain) SubmitSignature(
 	keepAddress common.Address,
 	signature *ecdsa.Signature,
 ) error {
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
+
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	// force the right workflow sequence
+	if keep.latestDigest == [32]byte{} {
+		return fmt.Errorf(
+			"keep [%s] is not awaiting for a signature",
+			keepAddress.String(),
+		)
+	}
+
+	rBytes, err := byteutils.BytesTo32Byte(signature.R.Bytes())
+	if err != nil {
+		return err
+	}
+
+	sBytes, err := byteutils.BytesTo32Byte(signature.S.Bytes())
+	if err != nil {
+		return err
+	}
+
+	keep.signatureSubmittedEvents = append(
+		keep.signatureSubmittedEvents,
+		&eth.SignatureSubmittedEvent{
+			Digest:     keep.latestDigest,
+			R:          rBytes,
+			S:          sBytes,
+			RecoveryID: uint8(signature.RecoveryID),
+		},
+	)
+
 	return nil
 }
 
@@ -185,8 +260,8 @@ func (lc *localChain) IsAwaitingSignature(
 
 // IsActive checks for current state of a keep on-chain.
 func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
 
 	keep, ok := lc.keeps[keepAddress]
 	if !ok {
@@ -197,7 +272,7 @@ func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
 }
 
 func (lc *localChain) BlockCounter() chain.BlockCounter {
-	panic("implement")
+	return lc.blockCounter
 }
 
 func (lc *localChain) IsRegisteredForApplication(application common.Address) (bool, error) {
@@ -217,15 +292,15 @@ func (lc *localChain) UpdateStatusForApplication(application common.Address) err
 }
 
 func (lc *localChain) IsOperatorAuthorized(operator common.Address) (bool, error) {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
 
 	return lc.authorizations[operator], nil
 }
 
 func (lc *localChain) GetKeepCount() (*big.Int, error) {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
 
 	return big.NewInt(int64(len(lc.keeps))), nil
 }
@@ -233,8 +308,8 @@ func (lc *localChain) GetKeepCount() (*big.Int, error) {
 func (lc *localChain) GetKeepAtIndex(
 	keepIndex *big.Int,
 ) (common.Address, error) {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
 
 	index := int(keepIndex.Uint64())
 
@@ -249,8 +324,8 @@ func (lc *localChain) OnKeepClosed(
 	keepAddress common.Address,
 	handler func(event *eth.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
@@ -265,8 +340,8 @@ func (lc *localChain) OnKeepClosed(
 	keep.keepClosedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		lc.handlerMutex.Lock()
-		defer lc.handlerMutex.Unlock()
+		lc.localChainMutex.Lock()
+		defer lc.localChainMutex.Unlock()
 
 		delete(keep.keepClosedHandlers, handlerID)
 	}), nil
@@ -276,8 +351,8 @@ func (lc *localChain) OnKeepTerminated(
 	keepAddress common.Address,
 	handler func(event *eth.KeepTerminatedEvent),
 ) (subscription.EventSubscription, error) {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
@@ -292,8 +367,8 @@ func (lc *localChain) OnKeepTerminated(
 	keep.keepTerminatedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		lc.handlerMutex.Lock()
-		defer lc.handlerMutex.Unlock()
+		lc.localChainMutex.Lock()
+		defer lc.localChainMutex.Unlock()
 
 		delete(keep.keepTerminatedHandlers, handlerID)
 	}), nil
@@ -331,8 +406,8 @@ func (lc *localChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) 
 func (lc *localChain) GetMembers(
 	keepAddress common.Address,
 ) ([]common.Address, error) {
-	lc.handlerMutex.Lock()
-	defer lc.handlerMutex.Unlock()
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
 
 	keep, ok := lc.keeps[keepAddress]
 	if !ok {
@@ -349,6 +424,30 @@ func (lc *localChain) GetHonestThreshold(
 
 func (lc *localChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time, error) {
 	panic("implement")
+}
+
+func (lc *localChain) PastSignatureSubmittedEvents(
+	keepAddress string,
+	startBlock uint64,
+) ([]*eth.SignatureSubmittedEvent, error) {
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
+
+	keep, ok := lc.keeps[common.HexToAddress(keepAddress)]
+	if !ok {
+		return nil, fmt.Errorf("no keep with address [%v]", keepAddress)
+	}
+
+	return keep.signatureSubmittedEvents, nil
+}
+
+func (lc *localChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
+	blockTimestamp, ok := lc.blocksTimestamps.Load(blockNumber.Uint64())
+	if !ok {
+		return 0, fmt.Errorf("no timestamp for block [%v]", blockNumber)
+	}
+
+	return blockTimestamp.(uint64), nil
 }
 
 func generateHandlerID() int {
