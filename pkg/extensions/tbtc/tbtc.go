@@ -8,6 +8,8 @@ import (
 	"math"
 	"math/big"
 	"math/rand"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -82,16 +84,15 @@ func Initialize(
 }
 
 type tbtc struct {
-	chain          chain.TBTCHandle
-	keepsRegistry  KeepsRegistry
-	monitoringLock *monitoringLock
+	chain           chain.TBTCHandle
+	keepsRegistry   KeepsRegistry
+	monitoringLocks sync.Map
 }
 
 func newTBTC(chain chain.TBTCHandle, keepsRegistry KeepsRegistry) *tbtc {
 	return &tbtc{
-		chain:          chain,
-		keepsRegistry:  keepsRegistry,
-		monitoringLock: newMonitoringLock(),
+		chain:         chain,
+		keepsRegistry: keepsRegistry,
 	}
 }
 
@@ -445,7 +446,7 @@ func (t *tbtc) monitorAndAct(
 			return
 		}
 
-		if !t.monitoringLock.tryLock(depositAddress, monitoringName) {
+		if !t.acquireMonitoringLock(depositAddress, monitoringName) {
 			logger.Warningf(
 				"[%v] monitoring for deposit [%v] is already running; "+
 					"could not start new monitoring instance",
@@ -454,7 +455,7 @@ func (t *tbtc) monitorAndAct(
 			)
 			return
 		}
-		defer t.monitoringLock.release(depositAddress, monitoringName)
+		defer t.releaseMonitoringLock(depositAddress, monitoringName)
 
 		logger.Infof(
 			"starting [%v] monitoring for deposit [%v]",
@@ -657,6 +658,30 @@ func (t *tbtc) pastEventsLookupStartBlock() uint64 {
 	}
 
 	return currentBlock - pastEventsLookbackBlocks
+}
+
+func (t *tbtc) acquireMonitoringLock(depositAddress, monitoringName string) bool {
+	_, isExistingKey := t.monitoringLocks.LoadOrStore(
+		monitoringLockKey(depositAddress, monitoringName),
+		true,
+	)
+
+	return !isExistingKey
+}
+
+func (t *tbtc) releaseMonitoringLock(depositAddress, monitoringName string) {
+	t.monitoringLocks.Delete(monitoringLockKey(depositAddress, monitoringName))
+}
+
+func monitoringLockKey(
+	depositAddress string,
+	monitoringName string,
+) string {
+	return fmt.Sprintf(
+		"%v-%v",
+		depositAddress,
+		strings.ReplaceAll(monitoringName, " ", ""),
+	)
 }
 
 // Computes the exponential backoff value for given iteration.

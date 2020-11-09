@@ -1802,6 +1802,78 @@ func TestProvideRedemptionProof_NoSignerInKeepsRegistry(
 	}
 }
 
+func TestAcquireMonitoringLock(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+	tbtc := newTBTC(tbtcChain, newMockKeepsRegistry(tbtcChain))
+
+	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
+		t.Errorf("monitoring wasn't started before; should be locked successfully")
+	}
+
+	if !tbtc.acquireMonitoringLock("0xBB", "monitoring one") {
+		t.Errorf("monitoring wasn't started before; should be locked successfully")
+	}
+
+	if !tbtc.acquireMonitoringLock("0xAA", "monitoring two") {
+		t.Errorf("monitoring wasn't started before; should be locked successfully")
+	}
+
+	if !tbtc.acquireMonitoringLock("0xBB", "monitoring two") {
+		t.Errorf("monitoring wasn't started before; should be locked successfully")
+	}
+}
+
+func TestAcquireMonitoringLock_Duplicate(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+	tbtc := newTBTC(tbtcChain, newMockKeepsRegistry(tbtcChain))
+
+	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
+		t.Errorf("monitoring wasn't started before; should be locked successfully")
+	}
+
+	if tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
+		t.Errorf("monitoring was started before; lock attempt should be rejected")
+	}
+}
+
+func TestReleaseMonitoringLock(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+	tbtc := newTBTC(tbtcChain, newMockKeepsRegistry(tbtcChain))
+
+	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
+		t.Errorf("monitoring wasn't started before; should be locked successfully")
+	}
+
+	tbtc.releaseMonitoringLock("0xAA", "monitoring one")
+
+	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
+		t.Errorf("monitoring lock has been released; should be locked successfully")
+	}
+}
+
+func TestReleaseMonitoringLock_WhenEmpty(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+	tbtc := newTBTC(tbtcChain, newMockKeepsRegistry(tbtcChain))
+
+	tbtc.releaseMonitoringLock("0xAA", "monitoring one")
+
+	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
+		t.Errorf("monitoring wasn't started before; should be locked successfully")
+	}
+}
+
 func submitKeepPublicKey(
 	depositAddress string,
 	tbtcChain *local.TBTCLocalChain,
