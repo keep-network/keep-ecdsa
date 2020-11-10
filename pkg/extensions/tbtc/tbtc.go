@@ -27,19 +27,14 @@ const (
 	defaultBlockConfirmations = 12
 )
 
-type KeepsRegistry interface {
-	HasSigner(keepAddress common.Address) bool
-}
-
 // Initialize initializes extension specific to the TBTC application.
 func Initialize(
 	ctx context.Context,
 	chain chain.TBTCHandle,
-	keepsRegistry KeepsRegistry,
 ) error {
 	logger.Infof("initializing tbtc extension")
 
-	tbtc := newTBTC(chain, keepsRegistry)
+	tbtc := newTBTC(chain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
@@ -89,14 +84,12 @@ func Initialize(
 
 type tbtc struct {
 	chain           chain.TBTCHandle
-	keepsRegistry   KeepsRegistry
 	monitoringLocks sync.Map
 }
 
-func newTBTC(chain chain.TBTCHandle, keepsRegistry KeepsRegistry) *tbtc {
+func newTBTC(chain chain.TBTCHandle) *tbtc {
 	return &tbtc{
-		chain:         chain,
-		keepsRegistry: keepsRegistry,
+		chain: chain,
 	}
 }
 
@@ -743,7 +736,18 @@ func (t *tbtc) shouldMonitorDeposit(
 		return false
 	}
 
-	return t.keepsRegistry.HasSigner(common.HexToAddress(keepAddress))
+	members, err := t.chain.GetMembers(common.HexToAddress(keepAddress))
+	if err != nil {
+		return false
+	}
+
+	for _, member := range members {
+		if member == t.chain.Address() {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (t *tbtc) waitDepositStateConfirmation(
