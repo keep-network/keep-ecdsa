@@ -102,16 +102,15 @@ func NewTBTCLocalChain(ctx context.Context) *TBTCLocalChain {
 	}
 }
 
-func (tlc *TBTCLocalChain) CreateDeposit(depositAddress string) {
+func (tlc *TBTCLocalChain) CreateDeposit(
+	depositAddress string,
+	signers []common.Address,
+) {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	keepAddress := generateAddress()
-	tlc.OpenKeep(keepAddress, []common.Address{
-		generateAddress(),
-		generateAddress(),
-		generateAddress(),
-	})
+	tlc.OpenKeep(keepAddress, signers)
 
 	tlc.deposits[depositAddress] = &localDeposit{
 		keepAddress:               keepAddress.Hex(),
@@ -625,6 +624,16 @@ func (tlc *TBTCLocalChain) SetAlwaysFailingTransactions(transactions ...string) 
 
 func (tlc *TBTCLocalChain) Logger() *localChainLogger {
 	return tlc.logger
+}
+
+func (tlc *TBTCLocalChain) RandomSigningGroup(size int) []common.Address {
+	signers := make([]common.Address, size)
+
+	for i := range signers {
+		signers[i] = generateAddress()
+	}
+
+	return signers
 }
 
 func fromLittleEndianBytes(bytes [8]byte) *big.Int {

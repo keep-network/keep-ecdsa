@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/keep-network/keep-ecdsa/pkg/registry"
-
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -160,22 +158,19 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("failed to get sanctioned applications addresses: [%v]", err)
 	}
 
-	keepsRegistry := registry.NewKeepsRegistry(persistence)
-	keepsRegistry.LoadExistingKeeps()
-
 	client.Initialize(
 		ctx,
 		operatorPublicKey,
 		ethereumChain,
 		networkProvider,
-		keepsRegistry,
+		persistence,
 		sanctionedApplications,
 		&config.Client,
 		&config.TSS,
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
-	initializeExtensions(ctx, config.Extensions, ethereumChain, keepsRegistry)
+	initializeExtensions(ctx, config.Extensions, ethereumChain)
 
 	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(config, networkProvider)
@@ -196,7 +191,6 @@ func initializeExtensions(
 	ctx context.Context,
 	config config.Extensions,
 	ethereumChain *ethereum.EthereumChain,
-	keepsRegistry *registry.Keeps,
 ) {
 	if len(config.TBTC.TBTCSystem) > 0 {
 		tbtcEthereumChain, err := ethereum.WithTBTCExtension(
@@ -211,7 +205,7 @@ func initializeExtensions(
 			return
 		}
 
-		err = tbtc.Initialize(ctx, tbtcEthereumChain, keepsRegistry)
+		err = tbtc.Initialize(ctx, tbtcEthereumChain)
 		if err != nil {
 			logger.Errorf(
 				"could not initialize tbtc extension: [%v]",
