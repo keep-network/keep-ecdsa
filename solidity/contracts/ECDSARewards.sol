@@ -91,12 +91,17 @@ contract ECDSARewards is Rewards {
 
     uint256 internal constant minimumECDSAKeepsPerInterval = 1000;
 
+    uint256 internal constant constantRewardPercentage = 5;
+    uint256 internal constant fullRewardLifespan = 100;
+
     // The total amount of rewards allocated to the given beneficiary address,
     // in the given interval.
     // `allocatedRewards[beneficiary][interval] -> amount`
     mapping(address => mapping(uint256 => uint256)) internal allocatedRewards;
     // The amount of interval rewards withdrawn to the given beneficiary.
     mapping(address => mapping(uint256 => uint256)) internal withdrawnRewards;
+
+    mapping(address => uint256) internal keepClosedTimes;
 
     BondedECDSAKeepFactory internal factory;
     TokenStaking internal tokenStaking;
@@ -182,6 +187,12 @@ contract ECDSARewards is Rewards {
         token.safeTransfer(beneficiary, withdrawableRewards);
     }
 
+    function reportClosedKeep(bytes32 _keep) mustBeClosed(_keep) public {
+        if (keepClosedTimes[_keep] == 0) {
+            keepClosedTimes[_keep] = block.timestamp;
+        }
+    }
+
     function _getKeepCount() internal view returns (uint256) {
         return factory.getKeepCount();
     }
@@ -235,13 +246,16 @@ contract ECDSARewards is Rewards {
         internal
         isAddress(_keep)
     {
+        uint256 actualReward = calculateLifespanReward(_keep, amount);
+        deallocate(amount.sub(actualReward));
+
         address[] memory members = BondedECDSAKeep(toAddress(_keep))
             .getMembers();
         uint256 interval = intervalOf(_getCreationTime(_keep));
 
         uint256 memberCount = members.length;
-        uint256 dividend = amount.div(memberCount);
-        uint256 remainder = amount.mod(memberCount);
+        uint256 dividend = actualReward.div(memberCount);
+        uint256 remainder = actualReward.mod(memberCount);
 
         uint256[] memory allocations = new uint256[](memberCount);
 
@@ -264,6 +278,22 @@ contract ECDSARewards is Rewards {
             }
             allocatedRewards[beneficiary][interval] = newAllocation;
         }
+    }
+
+    function calculateLifespanReward(bytes32 _keep, uint256 amount)
+        internal returns (uint256) {
+        uint256 createdAt = _getCreationTime(_keep);
+        uint256 closedBy = keepClosedTimes[_keep];
+        if (closedBy == 0) { return amount; }
+
+        uint256 lifespanCeiling = closedBy.sub(createdAt);
+
+        uint256 constantReward = amount.mul(100).div(constantRewardPercentage);
+        uint256 variableBase = amount.mul(100).div(100.sub(constantRewardPercentage));
+        uint256 effectiveLifespan = Math.min(lifespanCeiling, fullRewardLifespan);
+        uint256 variableReward = variableBase.mul(effectiveLifespan).div(fullRewardLifespan);
+
+        return constantReward.add(variableReward);
     }
 
     function toAddress(bytes32 keepBytes) internal pure returns (address) {
