@@ -1221,6 +1221,9 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedemptionRequested(
 	// to make sure the potential transaction completes
 	time.Sleep(2 * timeout)
 
+	// Expect exactly one call of `IncreaseRedemptionFee` coming from the
+	// explicit invocation placed above. The monitoring routine is not expected
+	// to do any calls.
 	expectedIncreaseRedemptionFeeCalls := 1
 	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
 		IncreaseRedemptionFeeCalls()
