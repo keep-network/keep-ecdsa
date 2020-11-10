@@ -1858,7 +1858,7 @@ func TestMonitorAndActDeduplication(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain, newMockKeepsRegistry(tbtcChain))
+	tbtc := newTBTC(tbtcChain)
 
 	monitoringName := "monitoring"
 
@@ -1933,7 +1933,7 @@ func TestAcquireMonitoringLock(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain, newMockKeepsRegistry(tbtcChain))
+	tbtc := newTBTC(tbtcChain)
 
 	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
 		t.Errorf("monitoring wasn't started before; should be locked successfully")
@@ -1957,7 +1957,7 @@ func TestAcquireMonitoringLock_Duplicate(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain, newMockKeepsRegistry(tbtcChain))
+	tbtc := newTBTC(tbtcChain)
 
 	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
 		t.Errorf("monitoring wasn't started before; should be locked successfully")
@@ -1973,7 +1973,7 @@ func TestReleaseMonitoringLock(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain, newMockKeepsRegistry(tbtcChain))
+	tbtc := newTBTC(tbtcChain)
 
 	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
 		t.Errorf("monitoring wasn't started before; should be locked successfully")
@@ -1991,7 +1991,7 @@ func TestReleaseMonitoringLock_WhenEmpty(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain, newMockKeepsRegistry(tbtcChain))
+	tbtc := newTBTC(tbtcChain)
 
 	tbtc.releaseMonitoringLock("0xAA", "monitoring one")
 
