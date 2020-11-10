@@ -16,6 +16,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
 
 	"github.com/ethereum/go-ethereum/common"
+	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 )
 
@@ -25,18 +26,25 @@ const (
 	defaultLocalBlockConfirmations = 0
 )
 
+func newTestTBTC(chain chain.TBTCHandle) *tbtc {
+	tbtc := newTBTC(chain)
+
+	tbtc.blockConfirmations = defaultLocalBlockConfirmations
+
+	return tbtc
+}
+
 func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -92,13 +100,12 @@ func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -164,13 +171,12 @@ func TestRetrievePubkey_KeepClosedEventOccurred(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -233,13 +239,12 @@ func TestRetrievePubkey_KeepTerminatedEventOccurred(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -302,13 +307,12 @@ func TestRetrievePubkey_ActionFailed(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -344,13 +348,12 @@ func TestRetrievePubkey_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) 
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -386,13 +389,12 @@ func TestRetrievePubkey_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -434,13 +436,12 @@ func TestRetrievePubkey_OperatorNotInSigningGroup(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorRetrievePubKey(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -474,13 +475,12 @@ func TestProvideRedemptionSignature_TimeoutElapsed(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -551,13 +551,12 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignat
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -643,13 +642,12 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositRedeemed(
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -726,13 +724,12 @@ func TestProvideRedemptionSignature_KeepClosedEventOccurred(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -806,13 +803,12 @@ func TestProvideRedemptionSignature_KeepTerminatedEventOccurred(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -886,13 +882,12 @@ func TestProvideRedemptionSignature_ActionFailed(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -946,13 +941,12 @@ func TestProvideRedemptionSignature_ContextCancelled_WithoutWorkingMonitoring(
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1001,13 +995,12 @@ func TestProvideRedemptionSignature_ContextCancelled_WithWorkingMonitoring(
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1061,13 +1054,12 @@ func TestProvideRedemptionSignature_OperatorNotInSigningGroup(
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1116,13 +1108,12 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionProof(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1211,13 +1202,12 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedemptionRequested(
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionProof(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1323,13 +1313,12 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedeemed(
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionProof(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1415,13 +1404,12 @@ func TestProvideRedemptionProof_KeepClosedEventOccurred(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionProof(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1512,13 +1500,12 @@ func TestProvideRedemptionProof_KeepTerminatedEventOccurred(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionProof(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1609,13 +1596,12 @@ func TestProvideRedemptionProof_ActionFailed(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionProof(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1678,13 +1664,12 @@ func TestProvideRedemptionProof_ContextCancelled_WithoutWorkingMonitoring(
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionProof(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1747,13 +1732,12 @@ func TestProvideRedemptionProof_ContextCancelled_WithWorkingMonitoring(
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionProof(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1821,13 +1805,12 @@ func TestProvideRedemptionProof_OperatorNotInSigningGroup(
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	err := tbtc.monitorProvideRedemptionProof(
 		ctx,
 		constantBackoff,
 		timeout,
-		defaultLocalBlockConfirmations,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1885,7 +1868,7 @@ func TestMonitorAndActDeduplication(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	monitoringName := "monitoring"
 
@@ -1960,7 +1943,7 @@ func TestAcquireMonitoringLock(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
 		t.Errorf("monitoring wasn't started before; should be locked successfully")
@@ -1984,7 +1967,7 @@ func TestAcquireMonitoringLock_Duplicate(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
 		t.Errorf("monitoring wasn't started before; should be locked successfully")
@@ -2000,7 +1983,7 @@ func TestReleaseMonitoringLock(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	if !tbtc.acquireMonitoringLock("0xAA", "monitoring one") {
 		t.Errorf("monitoring wasn't started before; should be locked successfully")
@@ -2018,7 +2001,7 @@ func TestReleaseMonitoringLock_WhenEmpty(t *testing.T) {
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
-	tbtc := newTBTC(tbtcChain)
+	tbtc := newTestTBTC(tbtcChain)
 
 	tbtc.releaseMonitoringLock("0xAA", "monitoring one")
 

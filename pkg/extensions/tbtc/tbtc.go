@@ -40,7 +40,6 @@ func Initialize(
 		ctx,
 		exponentialBackoff,
 		165*time.Minute, // 15 minutes before the 3 hours on-chain timeout
-		defaultBlockConfirmations,
 	)
 	if err != nil {
 		return fmt.Errorf(
@@ -53,7 +52,6 @@ func Initialize(
 		ctx,
 		exponentialBackoff,
 		105*time.Minute, // 15 minutes before the 2 hours on-chain timeout
-		defaultBlockConfirmations,
 	)
 	if err != nil {
 		return fmt.Errorf(
@@ -67,7 +65,6 @@ func Initialize(
 		ctx,
 		exponentialBackoff,
 		345*time.Minute, // 15 minutes before the 6 hours on-chain timeout
-		defaultBlockConfirmations,
 	)
 	if err != nil {
 		return fmt.Errorf(
@@ -83,13 +80,15 @@ func Initialize(
 }
 
 type tbtc struct {
-	chain           chain.TBTCHandle
-	monitoringLocks sync.Map
+	chain              chain.TBTCHandle
+	monitoringLocks    sync.Map
+	blockConfirmations uint64
 }
 
 func newTBTC(chain chain.TBTCHandle) *tbtc {
 	return &tbtc{
-		chain: chain,
+		chain:              chain,
+		blockConfirmations: defaultBlockConfirmations,
 	}
 }
 
@@ -97,7 +96,6 @@ func (t *tbtc) monitorRetrievePubKey(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
-	blockConfirmations uint64,
 ) error {
 	monitoringStartFn := func(
 		handler depositEventHandler,
@@ -112,7 +110,6 @@ func (t *tbtc) monitorRetrievePubKey(
 			if t.waitDepositStateConfirmation(
 				depositAddress,
 				chain.AwaitingBtcFundingProof,
-				blockConfirmations,
 			) {
 				handler(depositAddress)
 			}
@@ -128,7 +125,6 @@ func (t *tbtc) monitorRetrievePubKey(
 		if !t.waitDepositStateConfirmation(
 			depositAddress,
 			chain.AwaitingBtcFundingProof,
-			blockConfirmations,
 		) {
 			return fmt.Errorf("deposit state is not confirmed")
 		}
@@ -168,7 +164,6 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
-	blockConfirmations uint64,
 ) error {
 	monitoringStartFn := func(
 		handler depositEventHandler,
@@ -187,7 +182,6 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 				if t.waitDepositStateConfirmation(
 					depositAddress,
 					chain.AwaitingWithdrawalProof,
-					blockConfirmations,
 				) {
 					handler(depositAddress)
 				}
@@ -203,7 +197,6 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 				if t.waitDepositStateConfirmation(
 					depositAddress,
 					chain.Redeemed,
-					blockConfirmations,
 				) {
 					handler(depositAddress)
 				}
@@ -288,7 +281,6 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		if !t.waitDepositStateConfirmation(
 			depositAddress,
 			chain.AwaitingWithdrawalProof,
-			blockConfirmations,
 		) {
 			return fmt.Errorf("deposit state is not confirmed")
 		}
@@ -328,7 +320,6 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
-	blockConfirmations uint64,
 ) error {
 	monitoringStartFn := func(
 		handler depositEventHandler,
@@ -346,7 +337,6 @@ func (t *tbtc) monitorProvideRedemptionProof(
 				if t.waitDepositStateConfirmation(
 					depositAddress,
 					chain.AwaitingWithdrawalSignature,
-					blockConfirmations,
 				) {
 					handler(depositAddress)
 				}
@@ -362,7 +352,6 @@ func (t *tbtc) monitorProvideRedemptionProof(
 				if t.waitDepositStateConfirmation(
 					depositAddress,
 					chain.Redeemed,
-					blockConfirmations,
 				) {
 					handler(depositAddress)
 				}
@@ -425,7 +414,6 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		if !t.waitDepositStateConfirmation(
 			depositAddress,
 			chain.AwaitingWithdrawalSignature,
-			blockConfirmations,
 		) {
 			return fmt.Errorf("deposit state is not confirmed")
 		}
@@ -703,7 +691,9 @@ func (t *tbtc) watchKeepClosed(
 	keepClosedSubscription, err := t.chain.OnKeepClosed(
 		common.HexToAddress(keepAddress),
 		func(_ *chain.KeepClosedEvent) {
-			signalChan <- struct{}{}
+			if t.waitKeepInactivityConfirmation(keepAddress) {
+				signalChan <- struct{}{}
+			}
 		},
 	)
 	if err != nil {
@@ -713,7 +703,9 @@ func (t *tbtc) watchKeepClosed(
 	keepTerminatedSubscription, err := t.chain.OnKeepTerminated(
 		common.HexToAddress(keepAddress),
 		func(_ *chain.KeepTerminatedEvent) {
-			signalChan <- struct{}{}
+			if t.waitKeepInactivityConfirmation(keepAddress) {
+				signalChan <- struct{}{}
+			}
 		},
 	)
 	if err != nil {
@@ -753,7 +745,6 @@ func (t *tbtc) shouldMonitorDeposit(
 func (t *tbtc) waitDepositStateConfirmation(
 	depositAddress string,
 	depositState chain.DepositState,
-	blockConfirmations uint64,
 ) bool {
 	stateCheck := func() (bool, error) {
 		currentState, err := t.chain.CurrentState(depositAddress)
@@ -779,7 +770,7 @@ func (t *tbtc) waitDepositStateConfirmation(
 	confirmed, err := chain.WaitForChainConfirmation(
 		t.chain,
 		currentBlock,
-		blockConfirmations,
+		t.blockConfirmations,
 		stateCheck,
 	)
 	if err != nil {
@@ -793,6 +784,40 @@ func (t *tbtc) waitDepositStateConfirmation(
 	}
 
 	return confirmed
+}
+
+func (t *tbtc) waitKeepInactivityConfirmation(
+	keepAddress string,
+) bool {
+	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
+	if err != nil {
+		logger.Errorf(
+			"could not get current block while confirming "+
+				"inactivity for keep [%v]: [%v]",
+			keepAddress,
+			err,
+		)
+		return false
+	}
+
+	isKeepActive, err := chain.WaitForChainConfirmation(
+		t.chain,
+		currentBlock,
+		t.blockConfirmations,
+		func() (bool, error) {
+			return t.chain.IsActive(common.HexToAddress(keepAddress))
+		},
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not confirm inactivity for keep [%v]: [%v]",
+			keepAddress,
+			err,
+		)
+		return false
+	}
+
+	return !isKeepActive
 }
 
 func (t *tbtc) pastEventsLookupStartBlock() uint64 {
