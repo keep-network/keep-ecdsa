@@ -286,7 +286,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 			depositAddress,
 			initialDepositState,
 		) {
-			return fmt.Errorf("deposit state is not confirmed")
+			return fmt.Errorf("deposit state change is not confirmed")
 		}
 
 		return nil
@@ -421,7 +421,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 			depositAddress,
 			initialDepositState,
 		) {
-			return fmt.Errorf("deposit state is not confirmed")
+			return fmt.Errorf("deposit state change is not confirmed")
 		}
 
 		return nil
