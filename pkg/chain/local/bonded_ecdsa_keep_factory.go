@@ -15,8 +15,8 @@ func (c *localChain) createKeepWithMembers(
 	keepAddress common.Address,
 	members []common.Address,
 ) error {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
+	c.localChainMutex.Lock()
+	defer c.localChainMutex.Unlock()
 
 	if _, ok := c.keeps[keepAddress]; ok {
 		return fmt.Errorf(

@@ -187,25 +187,30 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 			return err
 		}
 
+		if len(signatureSubmittedEvents) == 0 {
+			return fmt.Errorf(
+				"no signature submitted events found for deposit: [%v]",
+				depositAddress,
+			)
+		}
+
+		latestSignatureSubmittedEvent :=
+			signatureSubmittedEvents[len(signatureSubmittedEvents)-1]
+
 		depositDigest := latestRedemptionRequestedEvent.Digest
 
-		// Start iterating from the latest event.
-		for i := len(signatureSubmittedEvents) - 1; i >= 0; i-- {
-			signatureSubmittedEvent := signatureSubmittedEvents[i]
+		if bytes.Equal(latestSignatureSubmittedEvent.Digest[:], depositDigest[:]) {
+			// We add 27 to the recovery ID to align it with ethereum and
+			// bitcoin protocols where 27 is added to recovery ID to
+			// indicate usage of uncompressed public keys.
+			v := 27 + latestSignatureSubmittedEvent.RecoveryID
 
-			if bytes.Equal(signatureSubmittedEvent.Digest[:], depositDigest[:]) {
-				// We add 27 to the recovery ID to align it with ethereum and
-				// bitcoin protocols where 27 is added to recovery ID to
-				// indicate usage of uncompressed public keys.
-				v := 27 + signatureSubmittedEvent.RecoveryID
-
-				return t.chain.ProvideRedemptionSignature(
-					depositAddress,
-					v,
-					signatureSubmittedEvent.R,
-					signatureSubmittedEvent.S,
-				)
-			}
+			return t.chain.ProvideRedemptionSignature(
+				depositAddress,
+				v,
+				latestSignatureSubmittedEvent.R,
+				latestSignatureSubmittedEvent.S,
+			)
 		}
 
 		return fmt.Errorf(
