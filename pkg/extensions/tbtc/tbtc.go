@@ -438,8 +438,7 @@ func (t *tbtc) monitorAndAct(
 
 		if !t.acquireMonitoringLock(depositAddress, monitoringName) {
 			logger.Warningf(
-				"[%v] monitoring for deposit [%v] is already running; "+
-					"could not start new monitoring instance",
+				"[%v] monitoring for deposit [%v] is already running",
 				monitoringName,
 				depositAddress,
 			)
