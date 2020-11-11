@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"math/rand"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1886,9 +1887,9 @@ func TestMonitorAndActDeduplication(t *testing.T) {
 		return make(chan struct{}), func() {}, nil
 	}
 
-	actCounter := 0
+	var actCounter uint64
 	actFn := func(depositAddress string) error {
-		actCounter++
+		atomic.AddUint64(&actCounter, 1)
 		return nil
 	}
 
@@ -1916,7 +1917,7 @@ func TestMonitorAndActDeduplication(t *testing.T) {
 	// to make sure the potential transaction completes
 	time.Sleep(2 * timeout)
 
-	expectedActCounter := 1
+	expectedActCounter := uint64(1)
 	if actCounter != expectedActCounter {
 		t.Errorf(
 			"unexpected number of action invocations\n"+
