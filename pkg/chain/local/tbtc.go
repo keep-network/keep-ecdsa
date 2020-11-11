@@ -647,16 +647,6 @@ func (tlc *TBTCLocalChain) Logger() *localChainLogger {
 	return tlc.logger
 }
 
-func (tlc *TBTCLocalChain) RandomSigningGroup(size int) []common.Address {
-	signers := make([]common.Address, size)
-
-	for i := range signers {
-		signers[i] = generateAddress()
-	}
-
-	return signers
-}
-
 func fromLittleEndianBytes(bytes [8]byte) *big.Int {
 	return new(big.Int).SetUint64(binary.LittleEndian.Uint64(bytes[:]))
 }

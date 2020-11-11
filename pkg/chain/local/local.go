@@ -456,6 +456,16 @@ func generateHandlerID() int {
 	return rand.Int()
 }
 
+func RandomSigningGroup(size int) []common.Address {
+	signers := make([]common.Address, size)
+
+	for i := range signers {
+		signers[i] = generateAddress()
+	}
+
+	return signers
+}
+
 func generateAddress() common.Address {
 	var address [20]byte
 	// #nosec G404 G104 (insecure random number source (rand) | error unhandled)

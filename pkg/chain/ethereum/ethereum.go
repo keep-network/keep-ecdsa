@@ -2,6 +2,7 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sort"
@@ -560,5 +561,13 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 
 // BlockTimestamp returns given block's timestamp.
 func (ec *EthereumChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
-	return ec.blockTimestampFn(blockNumber)
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancelCtx()
+
+	header, err := ec.client.HeaderByNumber(ctx, blockNumber)
+	if err != nil {
+		return 0, err
+	}
+
+	return header.Time, nil
 }

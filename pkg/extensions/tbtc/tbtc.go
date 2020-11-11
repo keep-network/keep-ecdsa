@@ -28,10 +28,7 @@ const (
 )
 
 // Initialize initializes extension specific to the TBTC application.
-func Initialize(
-	ctx context.Context,
-	chain chain.TBTCHandle,
-) error {
+func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
 	logger.Infof("initializing tbtc extension")
 
 	tbtc := newTBTC(chain)
@@ -496,7 +493,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	return nil
 }
 
-type depositFilterFn func(depositAddress string) bool
+type shouldMonitorDepositFn func(depositAddress string) bool
 
 type depositEventHandler func(depositAddress string)
 
@@ -519,7 +516,7 @@ type timeoutFn func(depositAddress string) (time.Duration, error)
 func (t *tbtc) monitorAndAct(
 	ctx context.Context,
 	monitoringName string,
-	shouldMonitorFn depositFilterFn,
+	shouldMonitorFn shouldMonitorDepositFn,
 	monitoringStartFn watchDepositEventFn,
 	monitoringStopFn watchDepositEventFn,
 	keepClosedFn watchKeepClosedFn,
@@ -534,8 +531,7 @@ func (t *tbtc) monitorAndAct(
 
 		if !t.acquireMonitoringLock(depositAddress, monitoringName) {
 			logger.Warningf(
-				"[%v] monitoring for deposit [%v] is already running; "+
-					"could not start new monitoring instance",
+				"[%v] monitoring for deposit [%v] is already running",
 				monitoringName,
 				depositAddress,
 			)
@@ -726,9 +722,7 @@ func (t *tbtc) watchKeepClosed(
 	return signalChan, unsubscribe, nil
 }
 
-func (t *tbtc) shouldMonitorDeposit(
-	depositAddress string,
-) bool {
+func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
 	keepAddress, err := t.chain.KeepAddress(depositAddress)
 	if err != nil {
 		return false

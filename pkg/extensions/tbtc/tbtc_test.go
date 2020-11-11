@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"math/rand"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -50,7 +51,7 @@ func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -111,7 +112,7 @@ func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -182,7 +183,7 @@ func TestRetrievePubkey_KeepClosedEventOccurred(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -250,7 +251,7 @@ func TestRetrievePubkey_KeepTerminatedEventOccurred(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -318,7 +319,7 @@ func TestRetrievePubkey_ActionFailed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -362,7 +363,7 @@ func TestRetrievePubkey_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) 
 	// cancel the context before any start event occurs
 	cancelCtx()
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -400,7 +401,7 @@ func TestRetrievePubkey_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -447,7 +448,7 @@ func TestRetrievePubkey_OperatorNotInSigningGroup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := tbtcChain.RandomSigningGroup(3)
+	signers := local.RandomSigningGroup(3)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -486,7 +487,7 @@ func TestProvideRedemptionSignature_TimeoutElapsed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -562,7 +563,7 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignat
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -653,7 +654,7 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositRedeemed(
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -735,7 +736,7 @@ func TestProvideRedemptionSignature_KeepClosedEventOccurred(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -814,7 +815,7 @@ func TestProvideRedemptionSignature_KeepTerminatedEventOccurred(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -893,7 +894,7 @@ func TestProvideRedemptionSignature_ActionFailed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -955,7 +956,7 @@ func TestProvideRedemptionSignature_ContextCancelled_WithoutWorkingMonitoring(
 	// cancel the context before any start event occurs
 	cancelCtx()
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1006,7 +1007,7 @@ func TestProvideRedemptionSignature_ContextCancelled_WithWorkingMonitoring(
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1065,7 +1066,7 @@ func TestProvideRedemptionSignature_OperatorNotInSigningGroup(
 		t.Fatal(err)
 	}
 
-	signers := tbtcChain.RandomSigningGroup(3)
+	signers := local.RandomSigningGroup(3)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1119,7 +1120,7 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1213,7 +1214,7 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedemptionRequested(
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1324,7 +1325,7 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedeemed(
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1415,7 +1416,7 @@ func TestProvideRedemptionProof_KeepClosedEventOccurred(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1511,7 +1512,7 @@ func TestProvideRedemptionProof_KeepTerminatedEventOccurred(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1607,7 +1608,7 @@ func TestProvideRedemptionProof_ActionFailed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1678,7 +1679,7 @@ func TestProvideRedemptionProof_ContextCancelled_WithoutWorkingMonitoring(
 	// cancel the context before any start event occurs
 	cancelCtx()
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1743,7 +1744,7 @@ func TestProvideRedemptionProof_ContextCancelled_WithWorkingMonitoring(
 		t.Fatal(err)
 	}
 
-	signers := append(tbtcChain.RandomSigningGroup(2), tbtcChain.Address())
+	signers := append(local.RandomSigningGroup(2), tbtcChain.Address())
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1816,7 +1817,7 @@ func TestProvideRedemptionProof_OperatorNotInSigningGroup(
 		t.Fatal(err)
 	}
 
-	signers := tbtcChain.RandomSigningGroup(3)
+	signers := local.RandomSigningGroup(3)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -1896,9 +1897,9 @@ func TestMonitorAndActDeduplication(t *testing.T) {
 		return make(chan struct{}), func() {}, nil
 	}
 
-	actCounter := 0
+	var actCounter uint64
 	actFn := func(depositAddress string) error {
-		actCounter++
+		atomic.AddUint64(&actCounter, 1)
 		return nil
 	}
 
@@ -1926,7 +1927,7 @@ func TestMonitorAndActDeduplication(t *testing.T) {
 	// to make sure the potential transaction completes
 	time.Sleep(2 * timeout)
 
-	expectedActCounter := 1
+	expectedActCounter := uint64(1)
 	if actCounter != expectedActCounter {
 		t.Errorf(
 			"unexpected number of action invocations\n"+
