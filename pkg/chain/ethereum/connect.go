@@ -1,13 +1,10 @@
 package ethereum
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"sync"
 	"time"
-
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -37,12 +34,11 @@ var (
 type EthereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
-	client                         bind.ContractBackend
+	client                         ethutil.EthereumClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *blockcounter.EthereumBlockCounter
 	miningWaiter                   *ethutil.MiningWaiter
 	nonceManager                   *ethutil.NonceManager
-	blockTimestampFn               blockTimestampFn
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -67,10 +63,6 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		return nil, err
 	}
 
-	// TODO: Add rate limiting to (keep-ecdsa/pull/585#discussion_r513351032):
-	//  - `createBlockTimestampFn`
-	//  - `blockCounter`
-	//  - `miningWaiter`
 	wrappedClient := addClientWrappers(config, client)
 
 	transactionMutex := &sync.Mutex{}
@@ -91,7 +83,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(wrappedClient, checkInterval, maxGasPrice)
 
 	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(BondedECDSAKeepFactoryContractName)
 	if err != nil {
@@ -109,7 +101,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		return nil, err
 	}
 
-	blockCounter, err := blockcounter.CreateBlockCounter(client)
+	blockCounter, err := blockcounter.CreateBlockCounter(wrappedClient)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
@@ -126,15 +118,14 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
 		transactionMutex:               transactionMutex,
-		blockTimestampFn:               createBlockTimestampFn(client),
 	}, nil
 }
 
 func addClientWrappers(
 	config *ethereum.Config,
-	backend bind.ContractBackend,
-) bind.ContractBackend {
-	loggingBackend := ethutil.WrapCallLogging(logger, backend)
+	client ethutil.EthereumClient,
+) ethutil.EthereumClient {
+	loggingClient := ethutil.WrapCallLogging(logger, client)
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
 		logger.Infof(
@@ -146,7 +137,7 @@ func addClientWrappers(
 		)
 
 		return ethutil.WrapRateLimiting(
-			loggingBackend,
+			loggingClient,
 			&ethutil.RateLimiterConfig{
 				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
 				ConcurrencyLimit:       config.ConcurrencyLimit,
@@ -154,21 +145,5 @@ func addClientWrappers(
 		)
 	}
 
-	return loggingBackend
-}
-
-type blockTimestampFn func(blockNumber *big.Int) (uint64, error)
-
-func createBlockTimestampFn(client *ethclient.Client) blockTimestampFn {
-	return func(blockNumber *big.Int) (uint64, error) {
-		ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
-		defer cancelCtx()
-
-		header, err := client.HeaderByNumber(ctx, blockNumber)
-		if err != nil {
-			return 0, err
-		}
-
-		return header.Time, nil
-	}
+	return loggingClient
 }
