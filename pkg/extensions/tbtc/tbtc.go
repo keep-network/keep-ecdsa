@@ -25,10 +25,7 @@ const (
 )
 
 // Initialize initializes extension specific to the TBTC application.
-func Initialize(
-	ctx context.Context,
-	chain chain.TBTCHandle,
-) error {
+func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
 	logger.Infof("initializing tbtc extension")
 
 	tbtc := newTBTC(chain)
@@ -616,9 +613,7 @@ func (t *tbtc) watchKeepClosed(
 	return signalChan, unsubscribe, nil
 }
 
-func (t *tbtc) shouldMonitorDeposit(
-	depositAddress string,
-) bool {
+func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
 	keepAddress, err := t.chain.KeepAddress(depositAddress)
 	if err != nil {
 		return false
