@@ -397,7 +397,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	return nil
 }
 
-type depositFilterFn func(depositAddress string) bool
+type shouldMonitorDepositFn func(depositAddress string) bool
 
 type depositEventHandler func(depositAddress string)
 
@@ -424,7 +424,7 @@ type timeoutFn func(depositAddress string) (time.Duration, error)
 func (t *tbtc) monitorAndAct(
 	ctx context.Context,
 	monitoringName string,
-	shouldMonitorFn depositFilterFn,
+	shouldMonitorFn shouldMonitorDepositFn,
 	monitoringStartFn watchDepositEventFn,
 	monitoringStopFn watchDepositEventFn,
 	keepClosedFn watchKeepClosedFn,
