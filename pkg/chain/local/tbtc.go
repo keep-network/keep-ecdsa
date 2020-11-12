@@ -102,16 +102,15 @@ func NewTBTCLocalChain(ctx context.Context) *TBTCLocalChain {
 	}
 }
 
-func (tlc *TBTCLocalChain) CreateDeposit(depositAddress string) {
+func (tlc *TBTCLocalChain) CreateDeposit(
+	depositAddress string,
+	signers []common.Address,
+) {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	keepAddress := generateAddress()
-	tlc.OpenKeep(keepAddress, []common.Address{
-		generateAddress(),
-		generateAddress(),
-		generateAddress(),
-	})
+	tlc.OpenKeep(keepAddress, signers)
 
 	tlc.deposits[depositAddress] = &localDeposit{
 		keepAddress:               keepAddress.Hex(),

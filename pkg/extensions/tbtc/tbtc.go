@@ -91,6 +91,7 @@ func (t *tbtc) monitorRetrievePubKey(
 	monitoringSubscription, err := t.monitorAndAct(
 		ctx,
 		"retrieve pubkey",
+		t.shouldMonitorDeposit,
 		func(handler depositEventHandler) (subscription.EventSubscription, error) {
 			return t.chain.OnDepositCreated(handler)
 		},
@@ -222,6 +223,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	monitoringSubscription, err := t.monitorAndAct(
 		ctx,
 		"provide redemption signature",
+		t.shouldMonitorDeposit,
 		monitoringStartFn,
 		monitoringStopFn,
 		t.watchKeepClosed,
@@ -369,6 +371,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	monitoringSubscription, err := t.monitorAndAct(
 		ctx,
 		"provide redemption proof",
+		t.shouldMonitorDeposit,
 		monitoringStartFn,
 		monitoringStopFn,
 		t.watchKeepClosed,
@@ -391,6 +394,8 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	return nil
 }
 
+type shouldMonitorDepositFn func(depositAddress string) bool
+
 type depositEventHandler func(depositAddress string)
 
 type watchDepositEventFn func(
@@ -410,13 +415,13 @@ type backoffFn func(iteration int) time.Duration
 type timeoutFn func(depositAddress string) (time.Duration, error)
 
 // TODO (keep-ecdsa/pull/585#discussion_r513447505):
-//  1. Filter incoming events by operator interest.
-//  2. Incoming events deduplication.
+//  1. Incoming events deduplication.
+//  2. Handle chain reorgs (keep-ecdsa/pull/585#discussion_r511760283)
 //  3. Resume monitoring after client restart.
-//  4. Handle chain reorgs (keep-ecdsa/pull/585#discussion_r511760283)
 func (t *tbtc) monitorAndAct(
 	ctx context.Context,
 	monitoringName string,
+	shouldMonitorFn shouldMonitorDepositFn,
 	monitoringStartFn watchDepositEventFn,
 	monitoringStopFn watchDepositEventFn,
 	keepClosedFn watchKeepClosedFn,
@@ -425,6 +430,10 @@ func (t *tbtc) monitorAndAct(
 	timeoutFn timeoutFn,
 ) (subscription.EventSubscription, error) {
 	handleStartEvent := func(depositAddress string) {
+		if !shouldMonitorFn(depositAddress) {
+			return
+		}
+
 		logger.Infof(
 			"starting [%v] monitoring for deposit [%v]",
 			monitoringName,
@@ -602,6 +611,26 @@ func (t *tbtc) watchKeepClosed(
 	}
 
 	return signalChan, unsubscribe, nil
+}
+
+func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
+	keepAddress, err := t.chain.KeepAddress(depositAddress)
+	if err != nil {
+		return false
+	}
+
+	members, err := t.chain.GetMembers(common.HexToAddress(keepAddress))
+	if err != nil {
+		return false
+	}
+
+	for _, member := range members {
+		if member == t.chain.Address() {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (t *tbtc) pastEventsLookupStartBlock() uint64 {
