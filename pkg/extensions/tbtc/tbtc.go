@@ -15,6 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
+
+	"github.com/keep-network/keep-common/pkg/chain/chainutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
@@ -22,10 +24,12 @@ import (
 var logger = log.Logger("tbtc-extension")
 
 const (
-	maxActAttempts           = 3
-	pastEventsLookbackBlocks = 10000
+	maxActAttempts            = 3
+	pastEventsLookbackBlocks  = 10000
+	defaultBlockConfirmations = 12
 )
 
+// TODO: Resume monitoring after client restart
 // Initialize initializes extension specific to the TBTC application.
 func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
 	logger.Infof("initializing tbtc extension")
@@ -76,13 +80,15 @@ func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
 }
 
 type tbtc struct {
-	chain           chain.TBTCHandle
-	monitoringLocks sync.Map
+	chain              chain.TBTCHandle
+	monitoringLocks    sync.Map
+	blockConfirmations uint64
 }
 
 func newTBTC(chain chain.TBTCHandle) *tbtc {
 	return &tbtc{
-		chain: chain,
+		chain:              chain,
+		blockConfirmations: defaultBlockConfirmations,
 	}
 }
 
@@ -91,18 +97,58 @@ func (t *tbtc) monitorRetrievePubKey(
 	actBackoffFn backoffFn,
 	timeout time.Duration,
 ) error {
+	initialDepositState := chain.AwaitingSignerSetup
+
+	monitoringStartFn := func(
+		handler depositEventHandler,
+	) (subscription.EventSubscription, error) {
+		return t.chain.OnDepositCreated(handler)
+	}
+
+	monitoringStopFn := func(
+		handler depositEventHandler,
+	) (subscription.EventSubscription, error) {
+		return t.chain.OnDepositRegisteredPubkey(func(depositAddress string) {
+			if t.waitDepositStateChangeConfirmation(
+				depositAddress,
+				initialDepositState,
+			) {
+				handler(depositAddress)
+			} else {
+				logger.Warningf(
+					"retrieve pubkey monitoring stop event for "+
+						"deposit [%v] is not confirmed; "+
+						"monitoring will be continued",
+					depositAddress,
+				)
+			}
+		})
+	}
+
+	actFn := func(depositAddress string) error {
+		err := t.chain.RetrieveSignerPubkey(depositAddress)
+		if err != nil {
+			return err
+		}
+
+		if !t.waitDepositStateChangeConfirmation(
+			depositAddress,
+			initialDepositState,
+		) {
+			return fmt.Errorf("deposit state change is not confirmed")
+		}
+
+		return nil
+	}
+
 	monitoringSubscription, err := t.monitorAndAct(
 		ctx,
 		"retrieve pubkey",
 		t.shouldMonitorDeposit,
-		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			return t.chain.OnDepositCreated(handler)
-		},
-		func(handler depositEventHandler) (subscription.EventSubscription, error) {
-			return t.chain.OnDepositRegisteredPubkey(handler)
-		},
+		monitoringStartFn,
+		monitoringStopFn,
 		t.watchKeepClosed,
-		t.chain.RetrieveSignerPubkey,
+		actFn,
 		actBackoffFn,
 		func(_ string) (time.Duration, error) {
 			return timeout, nil
@@ -128,6 +174,8 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	actBackoffFn backoffFn,
 	timeout time.Duration,
 ) error {
+	initialDepositState := chain.AwaitingWithdrawalSignature
+
 	monitoringStartFn := func(
 		handler depositEventHandler,
 	) (subscription.EventSubscription, error) {
@@ -140,13 +188,45 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		handler depositEventHandler,
 	) (subscription.EventSubscription, error) {
 		// Stop in case the redemption signature has been provided by someone else.
-		signatureSubscription, err := t.chain.OnDepositGotRedemptionSignature(handler)
+		signatureSubscription, err := t.chain.OnDepositGotRedemptionSignature(
+			func(depositAddress string) {
+				if t.waitDepositStateChangeConfirmation(
+					depositAddress,
+					initialDepositState,
+				) {
+					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption signature monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
+				}
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
 
 		// Stop in case the redemption proof has been provided by someone else.
-		redeemedSubscription, err := t.chain.OnDepositRedeemed(handler)
+		redeemedSubscription, err := t.chain.OnDepositRedeemed(
+			func(depositAddress string) {
+				if t.waitDepositStateChangeConfirmation(
+					depositAddress,
+					initialDepositState,
+				) {
+					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption signature monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
+				}
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -203,24 +283,34 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 
 		depositDigest := latestRedemptionRequestedEvent.Digest
 
-		if bytes.Equal(latestSignatureSubmittedEvent.Digest[:], depositDigest[:]) {
-			// We add 27 to the recovery ID to align it with ethereum and
-			// bitcoin protocols where 27 is added to recovery ID to
-			// indicate usage of uncompressed public keys.
-			v := 27 + latestSignatureSubmittedEvent.RecoveryID
-
-			return t.chain.ProvideRedemptionSignature(
-				depositAddress,
-				v,
-				latestSignatureSubmittedEvent.R,
-				latestSignatureSubmittedEvent.S,
+		if !bytes.Equal(latestSignatureSubmittedEvent.Digest[:], depositDigest[:]) {
+			return fmt.Errorf(
+				"could not find signature for digest: [%v]",
+				depositDigest,
 			)
 		}
 
-		return fmt.Errorf(
-			"could not find signature for digest: [%v]",
-			depositDigest,
+		// We add 27 to the recovery ID to align it with ethereum and
+		// bitcoin protocols where 27 is added to recovery ID to
+		// indicate usage of uncompressed public keys.
+		err = t.chain.ProvideRedemptionSignature(
+			depositAddress,
+			27+latestSignatureSubmittedEvent.RecoveryID,
+			latestSignatureSubmittedEvent.R,
+			latestSignatureSubmittedEvent.S,
 		)
+		if err != nil {
+			return err
+		}
+
+		if !t.waitDepositStateChangeConfirmation(
+			depositAddress,
+			initialDepositState,
+		) {
+			return fmt.Errorf("deposit state change is not confirmed")
+		}
+
+		return nil
 	}
 
 	monitoringSubscription, err := t.monitorAndAct(
@@ -256,6 +346,8 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	actBackoffFn backoffFn,
 	timeout time.Duration,
 ) error {
+	initialDepositState := chain.AwaitingWithdrawalProof
+
 	monitoringStartFn := func(
 		handler depositEventHandler,
 	) (subscription.EventSubscription, error) {
@@ -268,14 +360,44 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	) (subscription.EventSubscription, error) {
 		// Stop in case the redemption fee has been increased by someone else.
 		redemptionRequestedSubscription, err := t.chain.OnDepositRedemptionRequested(
-			handler,
+			func(depositAddress string) {
+				if t.waitDepositStateChangeConfirmation(
+					depositAddress,
+					initialDepositState,
+				) {
+					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption proof monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
+				}
+			},
 		)
 		if err != nil {
 			return nil, err
 		}
 
 		// Stop in case the redemption proof has been provided by someone else.
-		redeemedSubscription, err := t.chain.OnDepositRedeemed(handler)
+		redeemedSubscription, err := t.chain.OnDepositRedeemed(
+			func(depositAddress string) {
+				if t.waitDepositStateChangeConfirmation(
+					depositAddress,
+					initialDepositState,
+				) {
+					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption proof monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
+				}
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -321,11 +443,23 @@ func (t *tbtc) monitorProvideRedemptionProof(
 			redemptionRequestedEvents[0].RequestedFee, // initial fee
 		)
 
-		return t.chain.IncreaseRedemptionFee(
+		err = t.chain.IncreaseRedemptionFee(
 			depositAddress,
 			toLittleEndianBytes(previousOutputValue),
 			toLittleEndianBytes(newOutputValue),
 		)
+		if err != nil {
+			return err
+		}
+
+		if !t.waitDepositStateChangeConfirmation(
+			depositAddress,
+			initialDepositState,
+		) {
+			return fmt.Errorf("deposit state change is not confirmed")
+		}
+
+		return nil
 	}
 
 	timeoutFn := func(depositAddress string) (time.Duration, error) {
@@ -417,9 +551,6 @@ type backoffFn func(iteration int) time.Duration
 
 type timeoutFn func(depositAddress string) (time.Duration, error)
 
-// TODO:
-//  1. Handle chain reorgs (keep-ecdsa/pull/585#discussion_r511760283 and keep-ecdsa/pull/585#discussion_r513447505)
-//  2. Resume monitoring after client restart.
 func (t *tbtc) monitorAndAct(
 	ctx context.Context,
 	monitoringName string,
@@ -600,7 +731,9 @@ func (t *tbtc) watchKeepClosed(
 	keepClosedSubscription, err := t.chain.OnKeepClosed(
 		common.HexToAddress(keepAddress),
 		func(_ *chain.KeepClosedEvent) {
-			signalChan <- struct{}{}
+			if t.waitKeepNotActiveConfirmation(keepAddress) {
+				signalChan <- struct{}{}
+			}
 		},
 	)
 	if err != nil {
@@ -610,7 +743,9 @@ func (t *tbtc) watchKeepClosed(
 	keepTerminatedSubscription, err := t.chain.OnKeepTerminated(
 		common.HexToAddress(keepAddress),
 		func(_ *chain.KeepTerminatedEvent) {
-			signalChan <- struct{}{}
+			if t.waitKeepNotActiveConfirmation(keepAddress) {
+				signalChan <- struct{}{}
+			}
 		},
 	)
 	if err != nil {
@@ -643,6 +778,84 @@ func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
 	}
 
 	return false
+}
+
+func (t *tbtc) waitDepositStateChangeConfirmation(
+	depositAddress string,
+	initialDepositState chain.DepositState,
+) bool {
+	stateCheck := func() (bool, error) {
+		currentState, err := t.chain.CurrentState(depositAddress)
+		if err != nil {
+			return false, err
+		}
+
+		return currentState != initialDepositState, nil
+	}
+
+	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
+	if err != nil {
+		logger.Errorf(
+			"could not get current block while confirming "+
+				"state [%v] change for deposit [%v]: [%v]",
+			initialDepositState,
+			depositAddress,
+			err,
+		)
+		return false
+	}
+
+	confirmed, err := chainutil.WaitForBlockConfirmations(
+		t.chain.BlockCounter(),
+		currentBlock,
+		t.blockConfirmations,
+		stateCheck,
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not confirm state [%v] change for deposit [%v]: [%v]",
+			initialDepositState,
+			depositAddress,
+			err,
+		)
+		return false
+	}
+
+	return confirmed
+}
+
+func (t *tbtc) waitKeepNotActiveConfirmation(
+	keepAddress string,
+) bool {
+	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
+	if err != nil {
+		logger.Errorf(
+			"could not get current block while confirming "+
+				"keep [%v] is not active: [%v]",
+			keepAddress,
+			err,
+		)
+		return false
+	}
+
+	isKeepActive, err := chainutil.WaitForBlockConfirmations(
+		t.chain.BlockCounter(),
+		currentBlock,
+		t.blockConfirmations,
+		func() (bool, error) {
+			return t.chain.IsActive(common.HexToAddress(keepAddress))
+		},
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not confirm if keep [%v] is not active: [%v]",
+			keepAddress,
+			err,
+		)
+		return false
+	}
+
+	return !isKeepActive
 }
 
 func (t *tbtc) pastEventsLookupStartBlock() uint64 {

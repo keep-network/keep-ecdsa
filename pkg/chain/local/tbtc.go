@@ -23,6 +23,7 @@ const (
 type localDeposit struct {
 	keepAddress string
 	pubkey      []byte
+	state       chain.DepositState
 
 	utxoValue           *big.Int
 	redemptionDigest    [32]byte
@@ -114,6 +115,7 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 
 	tlc.deposits[depositAddress] = &localDeposit{
 		keepAddress:               keepAddress.Hex(),
+		state:                     chain.AwaitingSignerSetup,
 		utxoValue:                 big.NewInt(defaultUTXOValue),
 		redemptionRequestedEvents: make([]*chain.DepositRedemptionRequestedEvent, 0),
 	}
@@ -188,6 +190,7 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 		return err
 	}
 
+	deposit.state = chain.AwaitingWithdrawalSignature
 	deposit.redemptionDigest = randomDigest
 	deposit.redemptionFee = big.NewInt(defaultInitialRedemptionFee)
 
@@ -346,6 +349,7 @@ func (tlc *TBTCLocalChain) RetrieveSignerPubkey(depositAddress string) error {
 	}
 
 	deposit.pubkey = keep.publicKey[:]
+	deposit.state = chain.AwaitingBtcFundingProof
 
 	for _, handler := range tlc.depositRegisteredPubkeyHandlers {
 		go func(handler func(depositAddress string), depositAddress string) {
@@ -387,6 +391,7 @@ func (tlc *TBTCLocalChain) ProvideRedemptionSignature(
 		)
 	}
 
+	deposit.state = chain.AwaitingWithdrawalProof
 	deposit.redemptionSignature = &Signature{
 		V: v,
 		R: r,
@@ -454,6 +459,7 @@ func (tlc *TBTCLocalChain) IncreaseRedemptionFee(
 		return err
 	}
 
+	deposit.state = chain.AwaitingWithdrawalSignature
 	deposit.redemptionDigest = randomDigest
 	deposit.redemptionFee = new(big.Int).Sub(deposit.utxoValue, newOutputValue)
 	deposit.redemptionSignature = nil
@@ -518,6 +524,7 @@ func (tlc *TBTCLocalChain) ProvideRedemptionProof(
 		)
 	}
 
+	deposit.state = chain.Redeemed
 	deposit.redemptionProof = &TxProof{}
 
 	for _, handler := range tlc.depositRedeemedHandlers {
@@ -527,6 +534,20 @@ func (tlc *TBTCLocalChain) ProvideRedemptionProof(
 	}
 
 	return nil
+}
+
+func (tlc *TBTCLocalChain) CurrentState(
+	depositAddress string,
+) (chain.DepositState, error) {
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
+
+	deposit, ok := tlc.deposits[depositAddress]
+	if !ok {
+		return 0, fmt.Errorf("no deposit with address [%v]", depositAddress)
+	}
+
+	return deposit.state, nil
 }
 
 func (tlc *TBTCLocalChain) DepositPubkey(
