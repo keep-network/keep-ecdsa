@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/chain/chainutil"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
@@ -67,7 +67,7 @@ func Initialize(
 			return false
 		}
 
-		isKeepActive, err := ethutil.WaitForChainConfirmation(
+		isKeepActive, err := chainutil.WaitForBlockConfirmations(
 			ethereumChain.BlockCounter(),
 			currentBlock,
 			blockConfirmations,
@@ -539,7 +539,7 @@ func monitorSigningRequests(
 				}
 				defer requestedSignatures.remove(keepAddress, event.Digest)
 
-				isAwaitingSignature, err := ethutil.WaitForChainConfirmation(
+				isAwaitingSignature, err := chainutil.WaitForBlockConfirmations(
 					ethereumChain.BlockCounter(),
 					event.BlockNumber,
 					blockConfirmations,
@@ -627,7 +627,7 @@ func checkAwaitingSignature(
 			return
 		}
 
-		isStillAwaitingSignature, err := ethutil.WaitForChainConfirmation(
+		isStillAwaitingSignature, err := chainutil.WaitForBlockConfirmations(
 			ethereumChain.BlockCounter(),
 			startBlock,
 			blockConfirmations,
@@ -714,7 +714,7 @@ func monitorKeepClosedEvents(
 				event.BlockNumber,
 			)
 
-			isKeepActive, err := ethutil.WaitForChainConfirmation(
+			isKeepActive, err := chainutil.WaitForBlockConfirmations(
 				ethereumChain.BlockCounter(),
 				event.BlockNumber,
 				blockConfirmations,
@@ -778,7 +778,7 @@ func monitorKeepTerminatedEvent(
 				event.BlockNumber,
 			)
 
-			isKeepActive, err := ethutil.WaitForChainConfirmation(
+			isKeepActive, err := chainutil.WaitForBlockConfirmations(
 				ethereumChain.BlockCounter(),
 				event.BlockNumber,
 				blockConfirmations,

@@ -16,7 +16,7 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/chain/chainutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
@@ -805,7 +805,7 @@ func (t *tbtc) waitDepositStateChangeConfirmation(
 		return false
 	}
 
-	confirmed, err := ethutil.WaitForChainConfirmation(
+	confirmed, err := chainutil.WaitForBlockConfirmations(
 		t.chain.BlockCounter(),
 		currentBlock,
 		t.blockConfirmations,
@@ -838,7 +838,7 @@ func (t *tbtc) waitKeepNotActiveConfirmation(
 		return false
 	}
 
-	isKeepActive, err := ethutil.WaitForChainConfirmation(
+	isKeepActive, err := chainutil.WaitForBlockConfirmations(
 		t.chain.BlockCounter(),
 		currentBlock,
 		t.blockConfirmations,
