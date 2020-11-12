@@ -18,7 +18,7 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/chain/chainutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
@@ -33,6 +33,7 @@ const (
 	defaultSignerActionDelayStep = 5 * time.Minute
 )
 
+// TODO: Resume monitoring after client restart
 // Initialize initializes extension specific to the TBTC application.
 func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
 	logger.Infof("initializing tbtc extension")
@@ -123,6 +124,13 @@ func (t *tbtc) monitorRetrievePubKey(
 				initialDepositState,
 			) {
 				handler(depositAddress)
+			} else {
+				logger.Warningf(
+					"retrieve pubkey monitoring stop event for "+
+						"deposit [%v] is not confirmed; "+
+						"monitoring will be continued",
+					depositAddress,
+				)
 			}
 		})
 	}
@@ -204,6 +212,13 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 					initialDepositState,
 				) {
 					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption signature monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
 				}
 			},
 		)
@@ -219,6 +234,13 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 					initialDepositState,
 				) {
 					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption signature monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
 				}
 			},
 		)
@@ -368,6 +390,13 @@ func (t *tbtc) monitorProvideRedemptionProof(
 					initialDepositState,
 				) {
 					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption proof monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
 				}
 			},
 		)
@@ -383,6 +412,13 @@ func (t *tbtc) monitorProvideRedemptionProof(
 					initialDepositState,
 				) {
 					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption proof monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
 				}
 			},
 		)
@@ -724,7 +760,7 @@ func (t *tbtc) watchKeepClosed(
 	keepClosedSubscription, err := t.chain.OnKeepClosed(
 		common.HexToAddress(keepAddress),
 		func(_ *chain.KeepClosedEvent) {
-			if t.waitKeepInactivityConfirmation(keepAddress) {
+			if t.waitKeepNotActiveConfirmation(keepAddress) {
 				signalChan <- struct{}{}
 			}
 		},
@@ -736,7 +772,7 @@ func (t *tbtc) watchKeepClosed(
 	keepTerminatedSubscription, err := t.chain.OnKeepTerminated(
 		common.HexToAddress(keepAddress),
 		func(_ *chain.KeepTerminatedEvent) {
-			if t.waitKeepInactivityConfirmation(keepAddress) {
+			if t.waitKeepNotActiveConfirmation(keepAddress) {
 				signalChan <- struct{}{}
 			}
 		},
@@ -833,7 +869,7 @@ func (t *tbtc) waitDepositStateChangeConfirmation(
 		return false
 	}
 
-	confirmed, err := ethutil.WaitForChainConfirmation(
+	confirmed, err := chainutil.WaitForBlockConfirmations(
 		t.chain.BlockCounter(),
 		currentBlock,
 		t.blockConfirmations,
@@ -852,21 +888,21 @@ func (t *tbtc) waitDepositStateChangeConfirmation(
 	return confirmed
 }
 
-func (t *tbtc) waitKeepInactivityConfirmation(
+func (t *tbtc) waitKeepNotActiveConfirmation(
 	keepAddress string,
 ) bool {
 	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
 	if err != nil {
 		logger.Errorf(
 			"could not get current block while confirming "+
-				"inactivity for keep [%v]: [%v]",
+				"keep [%v] is not active: [%v]",
 			keepAddress,
 			err,
 		)
 		return false
 	}
 
-	isKeepActive, err := ethutil.WaitForChainConfirmation(
+	isKeepActive, err := chainutil.WaitForBlockConfirmations(
 		t.chain.BlockCounter(),
 		currentBlock,
 		t.blockConfirmations,
@@ -876,7 +912,7 @@ func (t *tbtc) waitKeepInactivityConfirmation(
 	)
 	if err != nil {
 		logger.Errorf(
-			"could not confirm inactivity for keep [%v]: [%v]",
+			"could not confirm if keep [%v] is not active: [%v]",
 			keepAddress,
 			err,
 		)
