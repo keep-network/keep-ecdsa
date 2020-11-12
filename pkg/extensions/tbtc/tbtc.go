@@ -8,6 +8,8 @@ import (
 	"math"
 	"math/big"
 	"math/rand"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -74,7 +76,8 @@ func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
 }
 
 type tbtc struct {
-	chain chain.TBTCHandle
+	chain           chain.TBTCHandle
+	monitoringLocks sync.Map
 }
 
 func newTBTC(chain chain.TBTCHandle) *tbtc {
@@ -414,10 +417,9 @@ type backoffFn func(iteration int) time.Duration
 
 type timeoutFn func(depositAddress string) (time.Duration, error)
 
-// TODO (keep-ecdsa/pull/585#discussion_r513447505):
-//  1. Incoming events deduplication.
-//  2. Handle chain reorgs (keep-ecdsa/pull/585#discussion_r511760283)
-//  3. Resume monitoring after client restart.
+// TODO:
+//  1. Handle chain reorgs (keep-ecdsa/pull/585#discussion_r511760283 and keep-ecdsa/pull/585#discussion_r513447505)
+//  2. Resume monitoring after client restart.
 func (t *tbtc) monitorAndAct(
 	ctx context.Context,
 	monitoringName string,
@@ -433,6 +435,16 @@ func (t *tbtc) monitorAndAct(
 		if !shouldMonitorFn(depositAddress) {
 			return
 		}
+
+		if !t.acquireMonitoringLock(depositAddress, monitoringName) {
+			logger.Warningf(
+				"[%v] monitoring for deposit [%v] is already running",
+				monitoringName,
+				depositAddress,
+			)
+			return
+		}
+		defer t.releaseMonitoringLock(depositAddress, monitoringName)
 
 		logger.Infof(
 			"starting [%v] monitoring for deposit [%v]",
@@ -644,6 +656,30 @@ func (t *tbtc) pastEventsLookupStartBlock() uint64 {
 	}
 
 	return currentBlock - pastEventsLookbackBlocks
+}
+
+func (t *tbtc) acquireMonitoringLock(depositAddress, monitoringName string) bool {
+	_, isExistingKey := t.monitoringLocks.LoadOrStore(
+		monitoringLockKey(depositAddress, monitoringName),
+		true,
+	)
+
+	return !isExistingKey
+}
+
+func (t *tbtc) releaseMonitoringLock(depositAddress, monitoringName string) {
+	t.monitoringLocks.Delete(monitoringLockKey(depositAddress, monitoringName))
+}
+
+func monitoringLockKey(
+	depositAddress string,
+	monitoringName string,
+) string {
+	return fmt.Sprintf(
+		"%v-%v",
+		depositAddress,
+		strings.ReplaceAll(monitoringName, " ", ""),
+	)
 }
 
 // Computes the exponential backoff value for given iteration.
