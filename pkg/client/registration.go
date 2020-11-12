@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+
 	"github.com/ethereum/go-ethereum/common"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
@@ -286,8 +288,8 @@ func monitorSignerPoolStatus(
 					)
 				}
 
-				isRegistered, err := eth.WaitForChainConfirmation(
-					ethereumChain,
+				isRegistered, err := ethutil.WaitForChainConfirmation(
+					ethereumChain.BlockCounter(),
 					statusCheckBlock,
 					blockConfirmations,
 					func() (bool, error) {
