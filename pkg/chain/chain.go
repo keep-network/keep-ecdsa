@@ -7,13 +7,10 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
-
-var logger = log.Logger("keep-chain")
 
 // Handle represents a handle to an ethereum blockchain.
 type Handle interface {
