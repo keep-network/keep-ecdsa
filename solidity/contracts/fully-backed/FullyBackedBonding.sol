@@ -83,6 +83,9 @@ contract FullyBackedBonding is
     ) external payable {
         address owner = msg.sender;
 
+        require(operator != address(0), "Invalid operator address");
+        require(authorizer != address(0), "Invalid authorizer address");
+
         require(
             operators[operator].owner == address(0),
             "Operator already in use"
