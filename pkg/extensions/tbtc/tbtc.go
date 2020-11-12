@@ -113,6 +113,13 @@ func (t *tbtc) monitorRetrievePubKey(
 				initialDepositState,
 			) {
 				handler(depositAddress)
+			} else {
+				logger.Warningf(
+					"retrieve pubkey monitoring stop event for "+
+						"deposit [%v] is not confirmed; "+
+						"monitoring will be continued",
+					depositAddress,
+				)
 			}
 		})
 	}
@@ -187,6 +194,13 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 					initialDepositState,
 				) {
 					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption signature monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
 				}
 			},
 		)
@@ -202,6 +216,13 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 					initialDepositState,
 				) {
 					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption signature monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
 				}
 			},
 		)
@@ -344,6 +365,13 @@ func (t *tbtc) monitorProvideRedemptionProof(
 					initialDepositState,
 				) {
 					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption proof monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
 				}
 			},
 		)
@@ -359,6 +387,13 @@ func (t *tbtc) monitorProvideRedemptionProof(
 					initialDepositState,
 				) {
 					handler(depositAddress)
+				} else {
+					logger.Warningf(
+						"provide redemption proof monitoring stop "+
+							"event for deposit [%v] is not confirmed; "+
+							"monitoring will be continued",
+						depositAddress,
+					)
 				}
 			},
 		)
