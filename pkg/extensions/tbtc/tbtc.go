@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/cache"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
@@ -27,6 +29,7 @@ const (
 	maxActAttempts            = 3
 	pastEventsLookbackBlocks  = 10000
 	defaultBlockConfirmations = 12
+	monitoringCachePeriod     = 24 * time.Hour
 )
 
 // Initialize initializes extension specific to the TBTC application.
@@ -79,15 +82,19 @@ func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
 }
 
 type tbtc struct {
-	chain              chain.TBTCHandle
-	monitoringLocks    sync.Map
-	blockConfirmations uint64
+	chain                     chain.TBTCHandle
+	monitoringLocks           sync.Map
+	blockConfirmations        uint64
+	monitoredDepositsCache    *cache.TimeCache
+	notMonitoredDepositsCache *cache.TimeCache
 }
 
 func newTBTC(chain chain.TBTCHandle) *tbtc {
 	return &tbtc{
-		chain:              chain,
-		blockConfirmations: defaultBlockConfirmations,
+		chain:                     chain,
+		blockConfirmations:        defaultBlockConfirmations,
+		monitoredDepositsCache:    cache.NewTimeCache(monitoringCachePeriod),
+		notMonitoredDepositsCache: cache.NewTimeCache(monitoringCachePeriod),
 	}
 }
 
@@ -725,6 +732,27 @@ func (t *tbtc) watchKeepClosed(
 }
 
 func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
+	t.monitoredDepositsCache.Sweep()
+	t.notMonitoredDepositsCache.Sweep()
+
+	if t.monitoredDepositsCache.Has(depositAddress) {
+		return true
+	}
+
+	if t.notMonitoredDepositsCache.Has(depositAddress) {
+		return false
+	}
+
+	if t.isOperatorDepositSigner(depositAddress) {
+		t.monitoredDepositsCache.Add(depositAddress)
+		return true
+	}
+
+	t.notMonitoredDepositsCache.Add(depositAddress)
+	return false
+}
+
+func (t *tbtc) isOperatorDepositSigner(depositAddress string) bool {
 	keepAddress, err := t.chain.KeepAddress(depositAddress)
 	if err != nil {
 		return false
