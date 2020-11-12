@@ -29,6 +29,7 @@ const (
 	defaultBlockConfirmations = 12
 )
 
+// TODO: Resume monitoring after client restart
 // Initialize initializes extension specific to the TBTC application.
 func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
 	logger.Infof("initializing tbtc extension")
@@ -730,7 +731,7 @@ func (t *tbtc) watchKeepClosed(
 	keepClosedSubscription, err := t.chain.OnKeepClosed(
 		common.HexToAddress(keepAddress),
 		func(_ *chain.KeepClosedEvent) {
-			if t.waitKeepInactivityConfirmation(keepAddress) {
+			if t.waitKeepNotActiveConfirmation(keepAddress) {
 				signalChan <- struct{}{}
 			}
 		},
@@ -742,7 +743,7 @@ func (t *tbtc) watchKeepClosed(
 	keepTerminatedSubscription, err := t.chain.OnKeepTerminated(
 		common.HexToAddress(keepAddress),
 		func(_ *chain.KeepTerminatedEvent) {
-			if t.waitKeepInactivityConfirmation(keepAddress) {
+			if t.waitKeepNotActiveConfirmation(keepAddress) {
 				signalChan <- struct{}{}
 			}
 		},
@@ -823,14 +824,14 @@ func (t *tbtc) waitDepositStateChangeConfirmation(
 	return confirmed
 }
 
-func (t *tbtc) waitKeepInactivityConfirmation(
+func (t *tbtc) waitKeepNotActiveConfirmation(
 	keepAddress string,
 ) bool {
 	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
 	if err != nil {
 		logger.Errorf(
 			"could not get current block while confirming "+
-				"inactivity for keep [%v]: [%v]",
+				"keep [%v] is not active: [%v]",
 			keepAddress,
 			err,
 		)
@@ -847,7 +848,7 @@ func (t *tbtc) waitKeepInactivityConfirmation(
 	)
 	if err != nil {
 		logger.Errorf(
-			"could not confirm inactivity for keep [%v]: [%v]",
+			"could not confirm if keep [%v] is not active: [%v]",
 			keepAddress,
 			err,
 		)
