@@ -26,10 +26,23 @@ import (
 var logger = log.Logger("tbtc-extension")
 
 const (
-	maxActAttempts               = 3
-	pastEventsLookbackBlocks     = 10000
-	defaultBlockConfirmations    = 12
-	monitoringCachePeriod        = 24 * time.Hour
+	// Maximum number of action attempts before giving up and returning
+	// a monitoring error.
+	maxActAttempts = 3
+
+	// Determines how many blocks from the past should be included
+	// during the past events lookup.
+	pastEventsLookbackBlocks = 10000
+
+	// Number of blocks which should elapse before confirming
+	// the given chain state expectations.
+	defaultBlockConfirmations = 12
+
+	// Determines how long the monitoring cache will maintain
+	// its entries.
+	monitoringCachePeriod = 24 * time.Hour
+
+	// Used to calculate the action delay factor for the given signer index.
 	defaultSignerActionDelayStep = 5 * time.Minute
 )
 
