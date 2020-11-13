@@ -814,7 +814,17 @@ func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
 		return false
 	}
 
-	if _, err := t.getSignerIndex(depositAddress); err != nil {
+	signerIndex, err := t.getSignerIndex(depositAddress)
+	if err != nil {
+		logger.Errorf(
+			"could not get signer index for deposit [%v]: [%v]",
+			depositAddress,
+			err,
+		)
+		return false // return false but don't cache the result in case of error
+	}
+
+	if signerIndex < 0 {
 		t.notMonitoredDepositsCache.Add(depositAddress)
 		return false
 	}
@@ -826,12 +836,12 @@ func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
 func (t *tbtc) getSignerIndex(depositAddress string) (int, error) {
 	keepAddress, err := t.chain.KeepAddress(depositAddress)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	members, err := t.chain.GetMembers(common.HexToAddress(keepAddress))
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	for index, member := range members {
@@ -840,10 +850,7 @@ func (t *tbtc) getSignerIndex(depositAddress string) (int, error) {
 		}
 	}
 
-	return 0, fmt.Errorf(
-		"operator is not a signer of deposit [%v]",
-		depositAddress,
-	)
+	return -1, nil
 }
 
 func (t *tbtc) getSignerActionDelay(
