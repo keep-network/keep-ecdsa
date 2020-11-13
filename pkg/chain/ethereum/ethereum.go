@@ -8,8 +8,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/eventlog"
-
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
@@ -516,23 +514,19 @@ func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Ti
 // for the given keep which occurred after the provided start block.
 // Returned events are sorted by the block number in the ascending order.
 func (ec *EthereumChain) PastSignatureSubmittedEvents(
-	keepAddress string,
+	keepAddress common.Address,
 	startBlock uint64,
 ) ([]*eth.SignatureSubmittedEvent, error) {
-	if !common.IsHexAddress(keepAddress) {
-		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
-	}
 
-	keepContractEventLog, err := eventlog.NewBondedECDSAKeepEventLog(
-		common.HexToAddress(keepAddress),
-		ec.client,
-	)
+	keepContract, err := ec.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	events, err := keepContractEventLog.PastSignatureSubmittedEvents(
+	// 2nd nil denotes latest block
+	events, err := keepContract.PastSignatureSubmittedEvents(
 		startBlock,
+		nil,
 		nil,
 	)
 	if err != nil {
@@ -547,7 +541,7 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 			R:           event.R,
 			S:           event.S,
 			RecoveryID:  event.RecoveryID,
-			BlockNumber: event.BlockNumber,
+			BlockNumber: event.Raw.BlockNumber,
 		})
 	}
 
