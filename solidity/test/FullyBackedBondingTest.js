@@ -6,6 +6,7 @@ const FullyBackedBonding = contract.fromArtifact("FullyBackedBonding")
 const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
 
 const {expectEvent, expectRevert, time} = require("@openzeppelin/test-helpers")
+const {ZERO_ADDRESS} = require("@openzeppelin/test-helpers/src/constants")
 
 const BN = web3.utils.BN
 
@@ -189,6 +190,36 @@ describe("FullyBackedBonding", function () {
         from: owner,
         value: minimumDelegationValue,
       })
+    })
+
+    it("reverts if zero address for operator provided", async () => {
+      await expectRevert(
+        bonding.delegate(ZERO_ADDRESS, beneficiary, authorizer, {
+          from: owner,
+          value: minimumDelegationValue,
+        }),
+        "Invalid operator address"
+      )
+    })
+
+    it("reverts if zero address for beneficiary provided", async () => {
+      await expectRevert(
+        bonding.delegate(operator, ZERO_ADDRESS, authorizer, {
+          from: owner,
+          value: minimumDelegationValue,
+        }),
+        "Beneficiary not defined for the operator"
+      )
+    })
+
+    it("reverts if zero address for authorizer provided", async () => {
+      await expectRevert(
+        bonding.delegate(operator, beneficiary, ZERO_ADDRESS, {
+          from: owner,
+          value: minimumDelegationValue,
+        }),
+        "Invalid authorizer address"
+      )
     })
 
     it("reverts if operator is already in use", async () => {
