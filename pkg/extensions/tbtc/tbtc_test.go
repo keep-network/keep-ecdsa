@@ -2080,6 +2080,135 @@ func TestReleaseMonitoringLock_WhenEmpty(t *testing.T) {
 	}
 }
 
+func TestShouldMonitorDeposit_PositiveResultCache(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+	tbtc := newTestTBTC(tbtcChain)
+
+	// create a signing group which contains the operator
+	signers := append(
+		[]common.Address{tbtcChain.Address()},
+		local.RandomSigningGroup(2)...,
+	)
+
+	tbtcChain.CreateDeposit(depositAddress, signers)
+
+	// all calls should be `true`
+	call1 := tbtc.shouldMonitorDeposit(depositAddress)
+	call2 := tbtc.shouldMonitorDeposit(depositAddress)
+	call3 := tbtc.shouldMonitorDeposit(depositAddress)
+
+	if !(call1 && call2 && call3) {
+		t.Errorf("should monitor deposit calls results are not same")
+	}
+
+	expectedChainCalls := 1
+	actualChainCalls := tbtcChain.Logger().KeepAddressCalls()
+	if expectedChainCalls != actualChainCalls {
+		t.Errorf(
+			"unexpected number of chain calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedChainCalls,
+			actualChainCalls,
+		)
+	}
+
+}
+
+func TestShouldMonitorDeposit_NegativeResultCache(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+	tbtc := newTestTBTC(tbtcChain)
+
+	// create a signing group which DOES NOT contain the operator
+	signers := local.RandomSigningGroup(3)
+
+	tbtcChain.CreateDeposit(depositAddress, signers)
+
+	// all calls should be `false`
+	call1 := tbtc.shouldMonitorDeposit(depositAddress)
+	call2 := tbtc.shouldMonitorDeposit(depositAddress)
+	call3 := tbtc.shouldMonitorDeposit(depositAddress)
+
+	if call1 || call2 || call3 {
+		t.Errorf("should monitor deposit calls results are not same")
+	}
+
+	expectedChainCalls := 1
+	actualChainCalls := tbtcChain.Logger().KeepAddressCalls()
+	if expectedChainCalls != actualChainCalls {
+		t.Errorf(
+			"unexpected number of chain calls\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedChainCalls,
+			actualChainCalls,
+		)
+	}
+
+}
+
+func TestGetSignerActionDelay(t *testing.T) {
+	var tests = map[string]struct {
+		signerIndex               int
+		signersCount              int
+		expectedSignerActionDelay time.Duration
+	}{
+		"signer index is `0`": {
+			signerIndex:               0,
+			signersCount:              3,
+			expectedSignerActionDelay: 0 * time.Minute,
+		},
+		"signer index is `1`": {
+			signerIndex:               1,
+			signersCount:              3,
+			expectedSignerActionDelay: 5 * time.Minute,
+		},
+		"signer index is `2`": {
+			signerIndex:               2,
+			signersCount:              3,
+			expectedSignerActionDelay: 10 * time.Minute,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			ctx, cancelCtx := context.WithCancel(context.Background())
+			defer cancelCtx()
+
+			tbtcChain := local.NewTBTCLocalChain(ctx)
+			tbtc := newTestTBTC(tbtcChain)
+
+			signers := local.RandomSigningGroup(test.signersCount)
+			signers[test.signerIndex] = tbtcChain.Address()
+
+			tbtcChain.CreateDeposit(depositAddress, signers)
+
+			actualSignerActionDelay, err := tbtc.getSignerActionDelay(
+				depositAddress,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if test.expectedSignerActionDelay != actualSignerActionDelay {
+				t.Errorf(
+					"unexpected signer action delay\n"+
+						"expected: [%v]\n"+
+						"actual:   [%v]",
+					test.expectedSignerActionDelay,
+					actualSignerActionDelay,
+				)
+			}
+		})
+	}
+}
+
 func submitKeepPublicKey(
 	depositAddress string,
 	tbtcChain *local.TBTCLocalChain,

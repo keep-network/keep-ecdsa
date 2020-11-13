@@ -46,6 +46,7 @@ type localChainLogger struct {
 	retrieveSignerPubkeyCalls       int
 	provideRedemptionSignatureCalls int
 	increaseRedemptionFeeCalls      int
+	keepAddressCalls                int
 }
 
 func (lcl *localChainLogger) logRetrieveSignerPubkeyCall() {
@@ -64,12 +65,20 @@ func (lcl *localChainLogger) ProvideRedemptionSignatureCalls() int {
 	return lcl.provideRedemptionSignatureCalls
 }
 
-func (lcl *localChainLogger) logIncreaseRedemptionFeeCalls() {
+func (lcl *localChainLogger) logIncreaseRedemptionFeeCall() {
 	lcl.increaseRedemptionFeeCalls++
 }
 
 func (lcl *localChainLogger) IncreaseRedemptionFeeCalls() int {
 	return lcl.increaseRedemptionFeeCalls
+}
+
+func (lcl *localChainLogger) logKeepAddressCall() {
+	lcl.keepAddressCalls++
+}
+
+func (lcl *localChainLogger) KeepAddressCalls() int {
+	return lcl.keepAddressCalls
 }
 
 type TBTCLocalChain struct {
@@ -302,6 +311,8 @@ func (tlc *TBTCLocalChain) KeepAddress(depositAddress string) (string, error) {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
+	tlc.logger.logKeepAddressCall()
+
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
 		return "", fmt.Errorf("no deposit with address [%v]", depositAddress)
@@ -415,7 +426,7 @@ func (tlc *TBTCLocalChain) IncreaseRedemptionFee(
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
-	tlc.logger.logIncreaseRedemptionFeeCalls()
+	tlc.logger.logIncreaseRedemptionFeeCall()
 
 	if _, exists := tlc.alwaysFailingTransactions["IncreaseRedemptionFee"]; exists {
 		return fmt.Errorf("always failing transaction")
