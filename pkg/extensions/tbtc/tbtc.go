@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/cache"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
@@ -24,9 +26,26 @@ import (
 var logger = log.Logger("tbtc-extension")
 
 const (
-	maxActAttempts            = 3
-	pastEventsLookbackBlocks  = 10000
+	// Maximum number of action attempts before giving up and returning
+	// a monitoring error.
+	maxActAttempts = 3
+
+	// Determines how many blocks from the past should be included
+	// during the past events lookup.
+	pastEventsLookbackBlocks = 10000
+
+	// Number of blocks which should elapse before confirming
+	// the given chain state expectations.
 	defaultBlockConfirmations = 12
+
+	// Determines how long the monitoring cache will maintain its entries about
+	// which deposits should be monitored by this client instance.
+	monitoringCachePeriod = 24 * time.Hour
+
+	// Used to calculate the action delay factor for the given signer index
+	// to avoid all signers executing the same action for deposit at the
+	// same time.
+	defaultSignerActionDelayStep = 5 * time.Minute
 )
 
 // TODO: Resume monitoring after client restart
@@ -80,15 +99,21 @@ func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
 }
 
 type tbtc struct {
-	chain              chain.TBTCHandle
-	monitoringLocks    sync.Map
-	blockConfirmations uint64
+	chain                     chain.TBTCHandle
+	monitoringLocks           sync.Map
+	blockConfirmations        uint64
+	monitoredDepositsCache    *cache.TimeCache
+	notMonitoredDepositsCache *cache.TimeCache
+	signerActionDelayStep     time.Duration
 }
 
 func newTBTC(chain chain.TBTCHandle) *tbtc {
 	return &tbtc{
-		chain:              chain,
-		blockConfirmations: defaultBlockConfirmations,
+		chain:                     chain,
+		blockConfirmations:        defaultBlockConfirmations,
+		monitoredDepositsCache:    cache.NewTimeCache(monitoringCachePeriod),
+		notMonitoredDepositsCache: cache.NewTimeCache(monitoringCachePeriod),
+		signerActionDelayStep:     defaultSignerActionDelayStep,
 	}
 }
 
@@ -141,6 +166,15 @@ func (t *tbtc) monitorRetrievePubKey(
 		return nil
 	}
 
+	timeoutFn := func(depositAddress string) (time.Duration, error) {
+		actionDelay, err := t.getSignerActionDelay(depositAddress)
+		if err != nil {
+			return 0, err
+		}
+
+		return timeout + actionDelay, nil
+	}
+
 	monitoringSubscription, err := t.monitorAndAct(
 		ctx,
 		"retrieve pubkey",
@@ -150,9 +184,7 @@ func (t *tbtc) monitorRetrievePubKey(
 		t.watchKeepClosed,
 		actFn,
 		actBackoffFn,
-		func(_ string) (time.Duration, error) {
-			return timeout, nil
-		},
+		timeoutFn,
 	)
 	if err != nil {
 		return err
@@ -313,6 +345,15 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		return nil
 	}
 
+	timeoutFn := func(depositAddress string) (time.Duration, error) {
+		actionDelay, err := t.getSignerActionDelay(depositAddress)
+		if err != nil {
+			return 0, err
+		}
+
+		return timeout + actionDelay, nil
+	}
+
 	monitoringSubscription, err := t.monitorAndAct(
 		ctx,
 		"provide redemption signature",
@@ -322,9 +363,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		t.watchKeepClosed,
 		actFn,
 		actBackoffFn,
-		func(_ string) (time.Duration, error) {
-			return timeout, nil
-		},
+		timeoutFn,
 	)
 	if err != nil {
 		return err
@@ -502,7 +541,12 @@ func (t *tbtc) monitorProvideRedemptionProof(
 			gotRedemptionSignatureTimestamp-redemptionRequestedTimestamp,
 		) * time.Second
 
-		return timeout - timeoutShift, nil
+		actionDelay, err := t.getSignerActionDelay(depositAddress)
+		if err != nil {
+			return 0, err
+		}
+
+		return (timeout - timeoutShift) + actionDelay, nil
 	}
 
 	monitoringSubscription, err := t.monitorAndAct(
@@ -761,23 +805,66 @@ func (t *tbtc) watchKeepClosed(
 }
 
 func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
+	t.monitoredDepositsCache.Sweep()
+	t.notMonitoredDepositsCache.Sweep()
+
+	if t.monitoredDepositsCache.Has(depositAddress) {
+		return true
+	}
+
+	if t.notMonitoredDepositsCache.Has(depositAddress) {
+		return false
+	}
+
+	signerIndex, err := t.getSignerIndex(depositAddress)
+	if err != nil {
+		logger.Errorf(
+			"could not check if deposit [%v] should be monitored: "+
+				"failed to get signer index: [%v]",
+			depositAddress,
+			err,
+		)
+		return false // return false but don't cache the result in case of error
+	}
+
+	if signerIndex < 0 {
+		t.notMonitoredDepositsCache.Add(depositAddress)
+		return false
+	}
+
+	t.monitoredDepositsCache.Add(depositAddress)
+	return true
+}
+
+func (t *tbtc) getSignerIndex(depositAddress string) (int, error) {
 	keepAddress, err := t.chain.KeepAddress(depositAddress)
 	if err != nil {
-		return false
+		return -1, err
 	}
 
 	members, err := t.chain.GetMembers(common.HexToAddress(keepAddress))
 	if err != nil {
-		return false
+		return -1, err
 	}
 
-	for _, member := range members {
+	for index, member := range members {
 		if member == t.chain.Address() {
-			return true
+			return index, nil
 		}
 	}
 
-	return false
+	return -1, nil
+}
+
+func (t *tbtc) getSignerActionDelay(
+	depositAddress string,
+) (time.Duration, error) {
+	signerIndex, err := t.getSignerIndex(depositAddress)
+	if err != nil {
+		return 0, err
+	}
+
+	return time.Duration(signerIndex) * t.signerActionDelayStep, nil
 }
 
 func (t *tbtc) waitDepositStateChangeConfirmation(
