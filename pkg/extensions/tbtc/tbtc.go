@@ -38,11 +38,13 @@ const (
 	// the given chain state expectations.
 	defaultBlockConfirmations = 12
 
-	// Determines how long the monitoring cache will maintain
-	// its entries.
+	// Determines how long the monitoring cache will maintain its entries about
+	// which deposits should be monitored by this client instance.
 	monitoringCachePeriod = 24 * time.Hour
 
-	// Used to calculate the action delay factor for the given signer index.
+	// Used to calculate the action delay factor for the given signer index
+	// to avoid all signers executing the same action for deposit at the
+	// same time.
 	defaultSignerActionDelayStep = 5 * time.Minute
 )
 
@@ -817,7 +819,8 @@ func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
 	signerIndex, err := t.getSignerIndex(depositAddress)
 	if err != nil {
 		logger.Errorf(
-			"could not get signer index for deposit [%v]: [%v]",
+			"could not check if deposit [%v] should be monitored: "+
+				"failed to get signer index: [%v]",
 			depositAddress,
 			err,
 		)
