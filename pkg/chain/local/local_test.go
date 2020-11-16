@@ -3,19 +3,24 @@ package local
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"math/rand"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
+
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func TestOnBondedECDSAKeepCreated(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancelCtx()
 
-	chain := initializeLocalChain()
+	chain := initializeLocalChain(ctx)
 	eventFired := make(chan *eth.BondedECDSAKeepCreatedEvent)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	expectedEvent := &eth.BondedECDSAKeepCreatedEvent{
@@ -49,15 +54,23 @@ func TestOnBondedECDSAKeepCreated(t *testing.T) {
 }
 
 func TestOnSignatureRequested(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancelCtx()
 
-	chain := initializeLocalChain()
+	chain := initializeLocalChain(ctx)
 	eventFired := make(chan *eth.SignatureRequestedEvent)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
 	err := chain.createKeep(keepAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var keepPubkey [64]byte
+	rand.Read(keepPubkey[:])
+
+	err = chain.SubmitKeepPublicKey(keepAddress, keepPubkey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +110,10 @@ func TestOnSignatureRequested(t *testing.T) {
 }
 
 func TestSubmitKeepPublicKey(t *testing.T) {
-	chain := initializeLocalChain()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := initializeLocalChain(ctx)
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 	expectedDuplicationError := fmt.Errorf(
@@ -139,6 +155,76 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	}
 }
 
-func initializeLocalChain() *localChain {
-	return Connect().(*localChain)
+func TestSubmitSignature(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := initializeLocalChain(ctx)
+
+	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
+	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
+
+	err := chain.createKeep(keepAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = chain.SubmitKeepPublicKey(
+		keepAddress,
+		keepPublicKey,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	digest := [32]byte{17, 18}
+
+	err = chain.requestSignature(keepAddress, digest)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signature := &ecdsa.Signature{
+		R:          big.NewInt(10),
+		S:          big.NewInt(11),
+		RecoveryID: 1,
+	}
+
+	err = chain.SubmitSignature(keepAddress, signature)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	events, err := chain.PastSignatureSubmittedEvents(keepAddress.Hex(), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(events) != 1 {
+		t.Errorf("there should be one signature submitted event")
+	}
+
+	expectedRBytes, _ := byteutils.BytesTo32Byte(signature.R.Bytes())
+	expectedSBytes, _ := byteutils.BytesTo32Byte(signature.S.Bytes())
+	expectedEvent := &eth.SignatureSubmittedEvent{
+		Digest:      digest,
+		R:           expectedRBytes,
+		S:           expectedSBytes,
+		RecoveryID:  1,
+		BlockNumber: 0,
+	}
+
+	lastEvent := events[len(events)-1]
+
+	if !reflect.DeepEqual(expectedEvent, lastEvent) {
+		t.Fatalf(
+			"unexpected signature submitted event\nexpected: [%+v]\nactual:   [%+v]",
+			expectedEvent,
+			lastEvent,
+		)
+	}
+}
+
+func initializeLocalChain(ctx context.Context) *localChain {
+	return Connect(ctx).(*localChain)
 }

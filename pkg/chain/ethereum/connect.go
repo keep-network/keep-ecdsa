@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -36,7 +34,7 @@ var (
 type EthereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
-	client                         bind.ContractBackend
+	client                         ethutil.EthereumClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *blockcounter.EthereumBlockCounter
 	miningWaiter                   *ethutil.MiningWaiter
@@ -85,7 +83,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(wrappedClient, checkInterval, maxGasPrice)
 
 	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(BondedECDSAKeepFactoryContractName)
 	if err != nil {
@@ -103,7 +101,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		return nil, err
 	}
 
-	blockCounter, err := blockcounter.CreateBlockCounter(client)
+	blockCounter, err := blockcounter.CreateBlockCounter(wrappedClient)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
@@ -125,9 +123,9 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 
 func addClientWrappers(
 	config *ethereum.Config,
-	backend bind.ContractBackend,
-) bind.ContractBackend {
-	loggingBackend := ethutil.WrapCallLogging(logger, backend)
+	client ethutil.EthereumClient,
+) ethutil.EthereumClient {
+	loggingClient := ethutil.WrapCallLogging(logger, client)
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
 		logger.Infof(
@@ -139,7 +137,7 @@ func addClientWrappers(
 		)
 
 		return ethutil.WrapRateLimiting(
-			loggingBackend,
+			loggingClient,
 			&ethutil.RateLimiterConfig{
 				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
 				ConcurrencyLimit:       config.ConcurrencyLimit,
@@ -147,5 +145,5 @@ func addClientWrappers(
 		)
 	}
 
-	return loggingBackend
+	return loggingClient
 }
