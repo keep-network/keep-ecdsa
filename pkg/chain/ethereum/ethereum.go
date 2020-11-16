@@ -514,11 +514,13 @@ func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Ti
 // for the given keep which occurred after the provided start block.
 // Returned events are sorted by the block number in the ascending order.
 func (ec *EthereumChain) PastSignatureSubmittedEvents(
-	keepAddress common.Address,
+	keepAddress string,
 	startBlock uint64,
 ) ([]*eth.SignatureSubmittedEvent, error) {
-
-	keepContract, err := ec.getKeepContract(keepAddress)
+	if !common.IsHexAddress(keepAddress) {	
+		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)	
+	}
+	keepContract, err := ec.getKeepContract(common.HexToAddress(keepAddress))
 	if err != nil {
 		return nil, err
 	}
