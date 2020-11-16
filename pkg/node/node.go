@@ -6,6 +6,7 @@ import (
 	cecdsa "crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
@@ -250,7 +251,101 @@ func (n *Node) publishSignerPublicKey(
 		return fmt.Errorf("failed to submit public key: [%v]", err)
 	}
 
+	// Trigger the member public key submission monitoring as separate goroutine.
+	// This way the keygen result is decoupled from the eventual outcome
+	// of the `SubmitKeepPublicKey` transaction. This is safer because
+	// keygen process will return an error only in case when the submission
+	// reverts at the dry-run stage. In other cases, keygen will return
+	// and persist the signer (and its key shares) and will treat the keep
+	// as normally operating which gives more chances to avoid serious errors.
+	go n.monitorMemberPublicKeySubmission(keepAddress, publicKey)
+
 	return nil
+}
+
+func (n *Node) monitorMemberPublicKeySubmission(
+	keepAddress common.Address,
+	publicKey [64]byte,
+) {
+	maxIterations := 3
+	blockConfirmations := uint64(12)
+
+	for iteration := 1; iteration <= maxIterations; iteration++ {
+		logger.Infof(
+			"starting iteration [%v] of member public key "+
+				"submission monitoring for keep: [%v]",
+			iteration,
+			keepAddress.Hex(),
+		)
+
+		currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+		if err != nil {
+			logger.Error(
+				"error during iteration [%v] of member public key "+
+					"submission monitoring for keep [%v]: "+
+					"[could not get current block: [%v]]",
+				iteration,
+				keepAddress.Hex(),
+				err,
+			)
+			continue
+		}
+
+		err = n.ethereumChain.BlockCounter().WaitForBlockHeight(
+			currentBlock + blockConfirmations,
+		)
+		if err != nil {
+			logger.Error(
+				"error during iteration [%v] of member public key "+
+					"submission monitoring for keep [%v]: "+
+					"[could not wait for block height: [%v]]",
+				iteration,
+				keepAddress.Hex(),
+				err,
+			)
+			continue
+		}
+
+		publicKeyAlreadySubmittedErr := "Member already submitted a public key"
+
+		// Make a blind public key submission attempt.
+		err = n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
+		if err != nil {
+			// Check if the error says about an already submitted public key.
+			// Awful, but this is the only way to check whether a particular
+			// member submitted the key.
+			if strings.Contains(err.Error(), publicKeyAlreadySubmittedErr) {
+				logger.Infof(
+					"iteration [%v] of member public key submission "+
+						"monitoring for keep [%v] confirmed the member public key",
+					iteration,
+					keepAddress.Hex(),
+				)
+				return // terminate the monitoring goroutine
+			}
+
+			// If the error is not the one we're waiting for, log it and move
+			// to the next iteration.
+			logger.Error(
+				"error during iteration [%v] of member public key "+
+					"submission monitoring for keep [%v]: "+
+					"[could not submit public key: [%v]]",
+				iteration,
+				keepAddress.Hex(),
+				err,
+			)
+			continue
+		}
+
+		// No error so the `SubmitKeepPublicKey` transaction did not revert.
+		// Move to the next iteration.
+		logger.Infof(
+			"iteration [%v] of member public key submission monitoring "+
+				"for keep [%v] resubmitted the member public key",
+			iteration,
+			keepAddress.Hex(),
+		)
+	}
 }
 
 // CalculateSignature calculates a signature over a digest with threshold
