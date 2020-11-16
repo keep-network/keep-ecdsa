@@ -49,6 +49,11 @@ import "./BondedECDSAKeep.sol";
 /// Reporting a terminated keep returns its allocated reward to the pool of
 /// unallocated rewards.
 contract ECDSARewards is Rewards {
+    struct Heartbeat {
+        uint128 timestamp;
+        uint128 bondValue;
+    }
+
     // The amount of tokens each individual beneficiary address
     // can receive in a single interval is capped to 3M tokens.
     uint256 public beneficiaryRewardCap = 3000000 * 10**18;
@@ -91,8 +96,9 @@ contract ECDSARewards is Rewards {
 
     uint256 internal constant minimumECDSAKeepsPerInterval = 1000;
 
-    uint256 internal constant constantRewardPercentage = 5;
-    uint256 internal constant fullRewardLifespan = 100;
+    uint256 internal constant assumedMinimumBond = 5;
+    uint256 internal constant assumedMinimumLifetime = 100;
+    uint256 internal constant fullRewardBondSeconds = 1000000;
 
     // The total amount of rewards allocated to the given beneficiary address,
     // in the given interval.
@@ -101,7 +107,7 @@ contract ECDSARewards is Rewards {
     // The amount of interval rewards withdrawn to the given beneficiary.
     mapping(address => mapping(uint256 => uint256)) internal withdrawnRewards;
 
-    mapping(address => uint256) internal keepClosedTimes;
+    mapping(address => Heartbeat) internal keepHeartbeats;
 
     BondedECDSAKeepFactory internal factory;
     TokenStaking internal tokenStaking;
@@ -187,10 +193,18 @@ contract ECDSARewards is Rewards {
         token.safeTransfer(beneficiary, withdrawableRewards);
     }
 
-    function reportClosedKeep(bytes32 _keep) mustBeClosed(_keep) public {
-        if (keepClosedTimes[_keep] == 0) {
-            keepClosedTimes[_keep] = block.timestamp;
-        }
+    function sendHeartbeat(bytes32 _keep) public {
+        require(!_isClosed(_keep),"Keep is closed");
+        require(!_isTerminated(_keep), "Keep is terminated");
+
+        // Assumes bonds don't change while the keep is active
+        BondedECDSAKeep keep = BondedECDSAKeep(toAddress(_keep));
+        uint128 keepBond = uint128(keep.checkBondAmount());
+
+        keepHeartbeats[address(keep)] = Heartbeat(
+            uint128(block.timestamp),
+            keepBond
+        );
     }
 
     function _getKeepCount() internal view returns (uint256) {
@@ -283,17 +297,27 @@ contract ECDSARewards is Rewards {
     function calculateLifespanReward(bytes32 _keep, uint256 amount)
         internal returns (uint256) {
         uint256 createdAt = _getCreationTime(_keep);
-        uint256 closedBy = keepClosedTimes[_keep];
-        if (closedBy == 0) { return amount; }
 
-        uint256 lifespanCeiling = closedBy.sub(createdAt);
+        Heartbeat lastHeartbeat = keepHeartbeats[toAddress(_keep)];
 
-        uint256 constantReward = amount.mul(100).div(constantRewardPercentage);
-        uint256 variableBase = amount.mul(100).div(100.sub(constantRewardPercentage));
-        uint256 effectiveLifespan = Math.min(lifespanCeiling, fullRewardLifespan);
-        uint256 variableReward = variableBase.mul(effectiveLifespan).div(fullRewardLifespan);
+        uint256 lastTimestamp = uint256(lastHeartbeat.timestamp);
+        uint256 keepBond = uint256(lastHeartbeat.bondAmount);
 
-        return constantReward.add(variableReward);
+        uint256 rewardLifespan = lastTimestamp == 0
+            ? assumedMinimumLifetime
+            : lastTimestamp.sub(createdAt);
+
+        uint256 rewardBond = keepBond == 0
+            ? assumedMinimumBond
+            : keepBond;
+
+        uint256 bondSeconds = rewardLifespan.mul(rewardBond);
+
+        if (bondSeconds >= fullRewardBondSeconds) {
+            return amount;
+        } else {
+            return amount.mul(fullRewardBondSeconds).div(bondSeconds);
+        }
     }
 
     function toAddress(bytes32 keepBytes) internal pure returns (address) {
