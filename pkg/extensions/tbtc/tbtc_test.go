@@ -1189,58 +1189,64 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Increase the fee at least 3 times to test fee increase step determination
+	// from the two latests events.
+	for i := 1; i <= 3; i++ {
+		keepSignature, err := submitKeepSignature(depositAddress, tbtcChain)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	err = tbtcChain.ProvideRedemptionSignature(
-		depositAddress,
-		keepSignature.V,
-		keepSignature.R,
-		keepSignature.S,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// wait a bit longer than the monitoring timeout
-	// to make sure the potential transaction completes
-	time.Sleep(2 * timeout)
-
-	expectedIncreaseRedemptionFeeCalls := 1
-	actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
-		IncreaseRedemptionFeeCalls()
-	if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
-		t.Errorf(
-			"unexpected number of IncreaseRedemptionFee calls\n"+
-				"expected: [%v]\n"+
-				"actual:   [%v]",
-			expectedIncreaseRedemptionFeeCalls,
-			actualIncreaseRedemptionFeeCalls,
+		err = tbtcChain.ProvideRedemptionSignature(
+			depositAddress,
+			keepSignature.V,
+			keepSignature.R,
+			keepSignature.S,
 		)
-	}
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	expectedDepositRedemptionFee := new(big.Int).Mul(
-		big.NewInt(2),
-		initialDepositRedemptionFee,
-	)
+		// wait a bit longer than the monitoring timeout
+		// to make sure the potential transaction completes
+		time.Sleep(2 * timeout)
 
-	actualDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(
-		depositAddress,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
+		expectedIncreaseRedemptionFeeCalls := i
+		actualIncreaseRedemptionFeeCalls := tbtcChain.Logger().
+			IncreaseRedemptionFeeCalls()
+		if expectedIncreaseRedemptionFeeCalls != actualIncreaseRedemptionFeeCalls {
+			t.Errorf(
+				"unexpected number of IncreaseRedemptionFee calls after [%d] increase\n"+
+					"expected: [%v]\n"+
+					"actual:   [%v]",
+				i,
+				expectedIncreaseRedemptionFeeCalls,
+				actualIncreaseRedemptionFeeCalls,
+			)
+		}
 
-	if expectedDepositRedemptionFee.Cmp(actualDepositRedemptionFee) != 0 {
-		t.Errorf(
-			"unexpected redemption fee value\n"+
-				"expected: [%v]\n"+
-				"actual:   [%v]",
-			expectedDepositRedemptionFee.Text(10),
-			actualDepositRedemptionFee.Text(10),
+		expectedDepositRedemptionFee := new(big.Int).Mul(
+			new(big.Int).Add(big.NewInt(1), big.NewInt(int64(i))),
+			initialDepositRedemptionFee,
 		)
+
+		actualDepositRedemptionFee, err := tbtcChain.DepositRedemptionFee(
+			depositAddress,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if expectedDepositRedemptionFee.Cmp(actualDepositRedemptionFee) != 0 {
+			t.Errorf(
+				"unexpected redemption fee value after [%d] increase\n"+
+					"expected: [%v]\n"+
+					"actual:   [%v]",
+				i,
+				expectedDepositRedemptionFee.Text(10),
+				actualDepositRedemptionFee.Text(10),
+			)
+		}
 	}
 }
 
