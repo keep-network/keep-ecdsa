@@ -196,12 +196,18 @@ contract ECDSARewards is Rewards {
     function sendHeartbeat(bytes32 _keep) public {
         require(!_isClosed(_keep),"Keep is closed");
         require(!_isTerminated(_keep), "Keep is terminated");
+        address keepAddress = toAddress(_keep);
 
         // Assumes bonds don't change while the keep is active
-        BondedECDSAKeep keep = BondedECDSAKeep(toAddress(_keep));
-        uint128 keepBond = uint128(keep.checkBondAmount());
+        Heartbeat previousHeartbeat = keepHeartbeats[keepAddress];
+        uint128 keepBond = previousHeartbeat.bondValue;
 
-        keepHeartbeats[address(keep)] = Heartbeat(
+        if (keepBond == 0) {
+            BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
+            keepBond = uint128(keep.checkBondAmount());
+        }
+
+        keepHeartbeats[keepAddress] = Heartbeat(
             uint128(block.timestamp),
             keepBond
         );
