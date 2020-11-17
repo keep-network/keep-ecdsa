@@ -347,6 +347,6 @@ contract AbstractBonding is IBondingManagement {
         address holder,
         uint256 referenceID
     ) internal view returns (bytes32) {
-        return  keccak256(abi.encodePacked(operator, holder, referenceID));
+        return keccak256(abi.encodePacked(operator, holder, referenceID));
     }
 }
