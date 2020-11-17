@@ -5,7 +5,10 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"sort"
 	"time"
+
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/eventlog"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -510,13 +513,72 @@ func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Ti
 	return keepOpenTime, nil
 }
 
-//WeiBalanceOf returns the wei balance of the given address from the latest known block.
-func (ec *EthereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
-	return ec.clientRPC.BalanceAt(
-		context.Background(),
-		address,
+// PastSignatureSubmittedEvents returns all signature submitted events
+// for the given keep which occurred after the provided start block.
+// Returned events are sorted by the block number in the ascending order.
+func (ec *EthereumChain) PastSignatureSubmittedEvents(
+	keepAddress string,
+	startBlock uint64,
+) ([]*eth.SignatureSubmittedEvent, error) {
+	if !common.IsHexAddress(keepAddress) {
+		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
+	}
+
+	keepContractEventLog, err := eventlog.NewBondedECDSAKeepEventLog(
+		common.HexToAddress(keepAddress),
+		ec.client,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	events, err := keepContractEventLog.PastSignatureSubmittedEvents(
+		startBlock,
 		nil,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*eth.SignatureSubmittedEvent, 0)
+
+	for _, event := range events {
+		result = append(result, &eth.SignatureSubmittedEvent{
+			Digest:      event.Digest,
+			R:           event.R,
+			S:           event.S,
+			RecoveryID:  event.RecoveryID,
+			BlockNumber: event.BlockNumber,
+		})
+	}
+
+	// Make sure events are sorted by block number in ascending order.
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].BlockNumber < result[j].BlockNumber
+	})
+
+	return result, nil
+}
+
+// BlockTimestamp returns given block's timestamp.
+func (ec *EthereumChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancelCtx()
+
+	header, err := ec.client.HeaderByNumber(ctx, blockNumber)
+	if err != nil {
+		return 0, err
+	}
+
+	return header.Time, nil
+}
+
+//WeiBalanceOf returns the wei balance of the given address from the latest known block.
+func (ec *EthereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancelCtx()
+
+	return ec.client.BalanceAt(ctx, address, nil)
 }
 
 // BalanceMonitor returns a balance monitor.

@@ -22,6 +22,9 @@ type Handle interface {
 	BalanceMonitor() (chain.BalanceMonitor, error)
 	// BlockCounter returns a block counter.
 	BlockCounter() chain.BlockCounter
+	// BlockTimestamp returns given block's timestamp.
+	// In case the block is not yet mined, an error should be returned.
+	BlockTimestamp(blockNumber *big.Int) (uint64, error)
 
 	BondedECDSAKeepFactory
 	BondedECDSAKeep
@@ -145,4 +148,13 @@ type BondedECDSAKeep interface {
 
 	// GetOpenedTimestamp returns timestamp when the keep was created.
 	GetOpenedTimestamp(keepAddress common.Address) (time.Time, error)
+
+	// PastSignatureSubmittedEvents returns all signature submitted events
+	// for the given keep which occurred after the provided start block.
+	// All implementations should returns those events sorted by the
+	// block number in the ascending order.
+	PastSignatureSubmittedEvents(
+		keepAddress string,
+		startBlock uint64,
+	) ([]*SignatureSubmittedEvent, error)
 }

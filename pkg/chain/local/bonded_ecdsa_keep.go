@@ -16,19 +16,22 @@ const (
 )
 
 type localKeep struct {
-	publicKey [64]byte
-	members   []common.Address
-	status    keepStatus
+	publicKey    [64]byte
+	members      []common.Address
+	status       keepStatus
+	latestDigest [32]byte
 
 	signatureRequestedHandlers map[int]func(event *eth.SignatureRequestedEvent)
 
 	keepClosedHandlers     map[int]func(event *eth.KeepClosedEvent)
 	keepTerminatedHandlers map[int]func(event *eth.KeepTerminatedEvent)
+
+	signatureSubmittedEvents []*eth.SignatureSubmittedEvent
 }
 
 func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byte) error {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
+	c.localChainMutex.Lock()
+	defer c.localChainMutex.Unlock()
 
 	keep, ok := c.keeps[keepAddress]
 	if !ok {
@@ -37,6 +40,16 @@ func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byt
 			keepAddress.String(),
 		)
 	}
+
+	// force the right workflow sequence
+	if keep.publicKey == [64]byte{} {
+		return fmt.Errorf(
+			"public key for keep [%s] is not set",
+			keepAddress.String(),
+		)
+	}
+
+	keep.latestDigest = digest
 
 	signatureRequestedEvent := &eth.SignatureRequestedEvent{
 		Digest: digest,
@@ -52,8 +65,8 @@ func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byt
 }
 
 func (c *localChain) closeKeep(keepAddress common.Address) error {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
+	c.localChainMutex.Lock()
+	defer c.localChainMutex.Unlock()
 
 	keep, ok := c.keeps[keepAddress]
 	if !ok {
@@ -84,8 +97,8 @@ func (c *localChain) closeKeep(keepAddress common.Address) error {
 }
 
 func (c *localChain) terminateKeep(keepAddress common.Address) error {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
+	c.localChainMutex.Lock()
+	defer c.localChainMutex.Unlock()
 
 	keep, ok := c.keeps[keepAddress]
 	if !ok {
