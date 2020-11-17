@@ -250,7 +250,7 @@ contract AbstractBonding is IBondingManagement {
 
         address payable holder = msg.sender;
         bytes32 bondID = getBondID(operator, holder, referenceID);
-        
+
         require(
             lockedBonds[bondID] >= amount,
             "Requested amount is greater than the bond"
