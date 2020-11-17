@@ -151,7 +151,6 @@ contract AbstractBonding is IBondingManagement {
 
         bytes32 bondID = getBondID(operator, holder, referenceID);
 
-
         require(
             lockedBonds[bondID] == 0,
             "Reference ID not unique for holder and operator"
@@ -343,9 +342,11 @@ contract AbstractBonding is IBondingManagement {
         emit UnbondedValueWithdrawn(operator, beneficiary, amount);
     }
 
-    function getBondID( address operator, address holder, uint256 referenceID)
-    internal view returns (bytes32) {
+    function getBondID(
+        address operator,
+        address holder,
+        uint256 referenceID
+    ) internal view returns (bytes32) {
         return  keccak256(abi.encodePacked(operator, holder, referenceID));
     }
-
 }
