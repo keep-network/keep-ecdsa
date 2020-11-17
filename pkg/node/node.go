@@ -490,22 +490,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	)
 	defer monitoringCancel()
 
-	publicKeyPublished := make(chan *eth.PublicKeyPublishedEvent)
 	conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
-
-	subscriptionPublicKeyPublished, err := n.ethereumChain.OnPublicKeyPublished(
-		keepAddress,
-		func(event *eth.PublicKeyPublishedEvent) {
-			publicKeyPublished <- event
-		},
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed on watching public key published event for keep [%s]: [%v]",
-			keepAddress.String(),
-			err,
-		)
-	}
 
 	subscriptionConflictingPublicKey, err := n.ethereumChain.OnConflictingPublicKeySubmitted(
 		keepAddress,
@@ -522,7 +507,6 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	}
 
 	defer subscriptionConflictingPublicKey.Unsubscribe()
-	defer subscriptionPublicKeyPublished.Unsubscribe()
 
 	startingBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
 	if err != nil {
@@ -550,12 +534,6 @@ func (n *Node) monitorKeepPublicKeySubmission(
 
 	for {
 		select {
-		case event := <-publicKeyPublished:
-			logger.Infof(
-				"public key [%x] has been accepted by keep: [%s]",
-				event.PublicKey,
-				keepAddress.String(),
-			)
 		case event := <-conflictingPublicKey:
 			logger.Errorf(
 				"member [%x] has submitted conflicting public key for keep [%s]: [%x]",
@@ -563,6 +541,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 				keepAddress.String(),
 				event.ConflictingPublicKey,
 			)
+			return
 		case pubkeyCheckBlock := <-pubkeyCheckTrigger:
 			logger.Infof(
 				"checking public key submission for keep [%s] "+
@@ -581,13 +560,40 @@ func (n *Node) monitorKeepPublicKeySubmission(
 				)
 			} else {
 				if len(keepPublicKey) > 0 {
-					logger.Infof(
-						"public key [%x] for keep [%s] "+
-							"has been confirmed",
-						keepPublicKey,
-						keepAddress.String(),
+					isConfirmed, err := chainutil.WaitForBlockConfirmations(
+						n.ethereumChain.BlockCounter(),
+						pubkeyCheckBlock,
+						blockConfirmations,
+						func() (bool, error) {
+							key, err := n.ethereumChain.GetPublicKey(
+								keepAddress,
+							)
+							if err != nil {
+								return false, err
+							}
+
+							return len(key) > 0, nil
+						},
 					)
-					return
+					if err != nil {
+						logger.Errorf(
+							"failed to perform keep public key "+
+								"confirmation during public key submission "+
+								"monitoring for keep [%s]: [%v]",
+							keepAddress.String(),
+							err,
+						)
+					}
+
+					if isConfirmed {
+						logger.Infof(
+							"public key [%x] for keep [%s] "+
+								"has been confirmed",
+							keepPublicKey,
+							keepAddress.String(),
+						)
+						return
+					}
 				}
 			}
 
@@ -595,10 +601,8 @@ func (n *Node) monitorKeepPublicKeySubmission(
 			if err != nil {
 				logger.Errorf(
 					"keep [%s] still does not have public key "+
-						"after [%v] blocks and resubmission by this member "+
-						"failed with: [%v]",
+						"and resubmission by this member failed with: [%v]",
 					keepAddress.String(),
-					pubkeyCheckBlock-startingBlock,
 					err,
 				)
 			}
