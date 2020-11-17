@@ -195,7 +195,7 @@ contract ECDSARewards is Rewards {
 
     function getHeartbeat(bytes32 _keep) public view returns (uint256, uint256) {
         address keepAddress = toAddress(_keep);
-        Heartbeat recordedHeartbeat = keepHeartbeats[keepAddress];
+        Heartbeat memory recordedHeartbeat = keepHeartbeats[keepAddress];
         uint256 timestamp = uint256(recordedHeartbeat.timestamp);
         uint256 bondValue = uint256(recordedHeartbeat.bondValue);
         return (timestamp, bondValue);
@@ -207,7 +207,7 @@ contract ECDSARewards is Rewards {
         address keepAddress = toAddress(_keep);
 
         // Assumes bonds don't change while the keep is active
-        Heartbeat previousHeartbeat = keepHeartbeats[keepAddress];
+        Heartbeat memory previousHeartbeat = keepHeartbeats[keepAddress];
         uint128 keepBond = previousHeartbeat.bondValue;
 
         if (keepBond == 0) {
