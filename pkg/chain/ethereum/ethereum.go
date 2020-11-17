@@ -517,18 +517,17 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 	keepAddress string,
 	startBlock uint64,
 ) ([]*eth.SignatureSubmittedEvent, error) {
-	if !common.IsHexAddress(keepAddress) {	
-		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)	
+	if !common.IsHexAddress(keepAddress) {
+		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
 	}
 	keepContract, err := ec.getKeepContract(common.HexToAddress(keepAddress))
 	if err != nil {
 		return nil, err
 	}
 
-	// 2nd nil denotes latest block
 	events, err := keepContract.PastSignatureSubmittedEvents(
 		startBlock,
-		nil,
+		nil, // latest block
 		nil,
 	)
 	if err != nil {
