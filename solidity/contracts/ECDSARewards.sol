@@ -193,6 +193,14 @@ contract ECDSARewards is Rewards {
         token.safeTransfer(beneficiary, withdrawableRewards);
     }
 
+    function getHeartbeat(bytes32 _keep) public view returns (uint256, uint256) {
+        address keepAddress = toAddress(_keep);
+        Heartbeat recordedHeartbeat = keepHeartbeats[keepAddress];
+        uint256 timestamp = uint256(recordedHeartbeat.timestamp);
+        uint256 bondValue = uint256(recordedHeartbeat.bondValue);
+        return (timestamp, bondValue);
+    }
+
     function sendHeartbeat(bytes32 _keep) public {
         require(!_isClosed(_keep),"Keep is closed");
         require(!_isTerminated(_keep), "Keep is terminated");
