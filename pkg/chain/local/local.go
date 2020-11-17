@@ -118,7 +118,7 @@ func (lc *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 }
 
 func (lc *localChain) BalanceMonitor() (chain.BalanceMonitor, error) {
-	return nil, nil // not implemented.
+	panic("not implemented")
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
