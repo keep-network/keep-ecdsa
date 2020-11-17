@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/chainutil"
+
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -28,6 +30,7 @@ var logger = log.Logger("keep-ecdsa")
 
 const monitorKeepPublicKeySubmissionTimeout = 30 * time.Minute
 const retryDelay = 1 * time.Second
+const blockConfirmations = uint64(12)
 
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
@@ -267,8 +270,7 @@ func (n *Node) monitorMemberPublicKeySubmission(
 	keepAddress common.Address,
 	publicKey [64]byte,
 ) {
-	maxIterations := 3
-	blockConfirmations := uint64(12)
+	const maxIterations = 3
 
 	for iteration := 1; iteration <= maxIterations; iteration++ {
 		logger.Infof(
@@ -516,6 +518,53 @@ func (n *Node) publishSignature(
 				submissionErr,
 			)
 			time.Sleep(1 * time.Minute)
+			continue
+		}
+
+		currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+		if err != nil {
+			logger.Errorf(
+				"could not get current block while confirming "+
+					"signature for keep [%s]: [%v] ",
+				keepAddress.String(),
+				err,
+			)
+			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
+			continue
+		}
+
+		isSignatureConfirmed, err := chainutil.WaitForBlockConfirmations(
+			n.ethereumChain.BlockCounter(),
+			currentBlock,
+			blockConfirmations,
+			func() (bool, error) {
+				isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(
+					keepAddress,
+					digest,
+				)
+				if err != nil {
+					return false, err
+				}
+
+				return !isAwaitingSignature, nil
+			},
+		)
+		if err != nil {
+			logger.Errorf(
+				"could not confirm signature for keep [%s]: [%v] ",
+				keepAddress.String(),
+				err,
+			)
+			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
+			continue
+		}
+
+		if !isSignatureConfirmed {
+			logger.Errorf(
+				"signature for keep [%s] is not confirmed",
+				keepAddress.String(),
+			)
+			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
 
