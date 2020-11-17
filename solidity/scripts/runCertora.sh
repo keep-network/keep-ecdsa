@@ -1,4 +1,5 @@
-certoraRun.py specs/harness/FullyBackedBondingHarness.sol:FullyBackedBondingHarness  \
+#run this file from the solidity folder (one level up)
+certoraRun specs/harness/FullyBackedBondingHarness.sol:FullyBackedBondingHarness  \
 specs/harness/Beneficiary.sol:Beneficiary specs/harness/OtherBeneficiary.sol:OtherBeneficiary \
 --structLink FullyBackedBondingHarness:2=Beneficiary \
 --link FullyBackedBondingHarness:otherBeneficiary=OtherBeneficiary \
