@@ -472,6 +472,21 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		latestRedemptionRequestedEvent :=
 			redemptionRequestedEvents[len(redemptionRequestedEvents)-1]
 
+		// Deposit expects that the fee is always increased by a constant value
+		// equal to the fee of the initial redemption request.
+		feeBumpStep := big.NewInt(0)
+		if len(redemptionRequestedEvents) == 1 {
+			feeBumpStep = latestRedemptionRequestedEvent.RequestedFee // initial fee
+		} else {
+			// When there are many events on-chain we don't need to get the very
+			// first one, it is enough to calculate a difference between the
+			// latest fee and the one before the latest fee.
+			feeBumpStep = new(big.Int).Sub(
+				latestRedemptionRequestedEvent.RequestedFee,
+				redemptionRequestedEvents[len(redemptionRequestedEvents)-2].RequestedFee,
+			)
+		}
+
 		previousOutputValue := new(big.Int).Sub(
 			latestRedemptionRequestedEvent.UtxoValue,
 			latestRedemptionRequestedEvent.RequestedFee,
@@ -479,7 +494,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 
 		newOutputValue := new(big.Int).Sub(
 			previousOutputValue,
-			redemptionRequestedEvents[0].RequestedFee, // initial fee
+			feeBumpStep,
 		)
 
 		err = t.chain.IncreaseRedemptionFee(
