@@ -293,8 +293,8 @@ func (tlc *TBTCLocalChain) OnDepositRedeemed(
 }
 
 func (tlc *TBTCLocalChain) PastDepositRedemptionRequestedEvents(
-	depositAddress string,
 	startBlock uint64,
+	depositAddress string,
 ) ([]*chain.DepositRedemptionRequestedEvent, error) {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()

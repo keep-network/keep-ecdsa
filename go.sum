@@ -331,14 +331,13 @@ github.com/keep-network/cli v1.20.0 h1:mEufpPsovOVdduTTkk+a2CxS3crIrGFqUsvs58gSi
 github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxKNohQWtQhA=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec h1:2pXAsi4OUUjZKr5ds5UOF2IxXN+jVW0WetVO+czkf+A=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec/go.mod h1:xR8jf3/VJAjh3nWu5tFe8Yxnt2HvWsqZHfGef1P5oDk=
-github.com/keep-network/keep-common v1.2.1-0.20201020114759-19c123cbd4f4 h1:CivupPSFswHACua5xZGKdeYxsCQ2cmRomTIBh8kfk70=
-github.com/keep-network/keep-common v1.2.1-0.20201020114759-19c123cbd4f4/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
+github.com/keep-network/keep-common v1.2.1-0.20201116151638-8af057907255/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
 github.com/keep-network/keep-common v1.2.1-0.20201117163745-878626866ba7 h1:bmyyWcrg7dZ2TcgEIPV3d5uUrpoOncz9gEGBNg9eMHA=
 github.com/keep-network/keep-common v1.2.1-0.20201117163745-878626866ba7/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
 github.com/keep-network/keep-core v1.3.2-0.20201117170744-88a808971677 h1:rOdyRpHh8pj5TW9OOk0oB2WOAfARbzkWM6AACx4StKw=
 github.com/keep-network/keep-core v1.3.2-0.20201117170744-88a808971677/go.mod h1:SlbEjr3r6alzEB5raBFCT8z7RJjEy/2MQjBWuyL1jkg=
-github.com/keep-network/tbtc v1.1.1-0.20201026093513-cb9246987718 h1:/ZNMBY7y6hfzCYA8mgtHnspGO26OmWV3sDehyGnqRyY=
-github.com/keep-network/tbtc v1.1.1-0.20201026093513-cb9246987718/go.mod h1:igBF2MPTFkzOdZ3gcwt8h0Zb5pZaHnij/iPZoMB9IKM=
+github.com/keep-network/tbtc v1.1.1-0.20201117095624-38508bdb562e h1:go3irX4olJUZOi59gaBX7iYIFFbJEV5/zbfCG4tOPaQ=
+github.com/keep-network/tbtc v1.1.1-0.20201117095624-38508bdb562e/go.mod h1:LS1zQDXTJrP5f6AHFQKw6/iJPdfV+WqUCfh6GTfC6Rs=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
