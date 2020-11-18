@@ -375,7 +375,7 @@ func (n *Node) publishSignature(
 
 		// Someone submitted the signature and it was accepted by the keep.
 		// We are fine, leaving.
-		if !isAwaitingSignature {
+		if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
 			logger.Infof(
 				"signature for keep [%s] already submitted: [%+x]",
 				keepAddress.String(),
@@ -404,7 +404,7 @@ func (n *Node) publishSignature(
 
 			// Check if we failed because someone else submitted in the meantime
 			// or because something wrong happened with our transaction.
-			if !isAwaitingSignature {
+			if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
 				logger.Infof(
 					"signature for keep [%s] already submitted: [%+x]",
 					keepAddress.String(),
@@ -425,50 +425,7 @@ func (n *Node) publishSignature(
 			continue
 		}
 
-		currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
-		if err != nil {
-			logger.Errorf(
-				"could not get current block while confirming "+
-					"signature for keep [%s]: [%v] ",
-				keepAddress.String(),
-				err,
-			)
-			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
-			continue
-		}
-
-		isSignatureConfirmed, err := chainutil.WaitForBlockConfirmations(
-			n.ethereumChain.BlockCounter(),
-			currentBlock,
-			blockConfirmations,
-			func() (bool, error) {
-				isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(
-					keepAddress,
-					digest,
-				)
-				if err != nil {
-					return false, err
-				}
-
-				return !isAwaitingSignature, nil
-			},
-		)
-		if err != nil {
-			logger.Errorf(
-				"could not confirm signature for keep [%s]: [%v] ",
-				keepAddress.String(),
-				err,
-			)
-			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
-			continue
-		}
-
-		if !isSignatureConfirmed {
-			logger.Errorf(
-				"signature submission for keep [%s] not confirmed; "+
-					"trying to submit again",
-				keepAddress.String(),
-			)
+		if !n.confirmSignature(keepAddress, digest) {
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
@@ -476,6 +433,68 @@ func (n *Node) publishSignature(
 		logger.Infof("signature submitted for keep [%s]", keepAddress.String())
 		return nil
 	}
+}
+
+func (n *Node) confirmSignature(
+	keepAddress common.Address,
+	digest [32]byte,
+) bool {
+	logger.Infof(
+		"starting confirming signature submission for keep [%s]",
+		keepAddress.String(),
+	)
+
+	currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+	if err != nil {
+		logger.Errorf(
+			"could not get current block while confirming "+
+				"signature submission for keep [%s]: [%v]",
+			keepAddress.String(),
+			err,
+		)
+		return false
+	}
+
+	isSignatureConfirmed, err := chainutil.WaitForBlockConfirmations(
+		n.ethereumChain.BlockCounter(),
+		currentBlock,
+		blockConfirmations,
+		func() (bool, error) {
+			isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(
+				keepAddress,
+				digest,
+			)
+			if err != nil {
+				return false, err
+			}
+
+			return !isAwaitingSignature, nil
+		},
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not confirm signature submission for keep [%s]: [%v]",
+			keepAddress.String(),
+			err,
+		)
+		return false
+	}
+
+	if !isSignatureConfirmed {
+		logger.Errorf(
+			"signature submission for keep [%s] not confirmed; "+
+				"trying to submit the signature again",
+			keepAddress.String(),
+		)
+		return false
+	}
+
+	logger.Infof(
+		"signature submission for keep [%s] has been confirmed",
+		keepAddress.String(),
+	)
+
+	return true
 }
 
 // monitorKeepPublicKeySubmission observes the chain until either the first
