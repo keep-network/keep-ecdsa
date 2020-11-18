@@ -373,7 +373,8 @@ func (n *Node) publishSignature(
 			continue
 		}
 
-		// Someone submitted the signature and it was accepted by the keep.
+		// Someone submitted the signature, it was accepted by the keep,
+		// and there are enough confirmations from the chain.
 		// We are fine, leaving.
 		if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
 			logger.Infof(
@@ -404,6 +405,9 @@ func (n *Node) publishSignature(
 
 			// Check if we failed because someone else submitted in the meantime
 			// or because something wrong happened with our transaction.
+			// If someone else submitted in the meantime, wait for enough
+			// confirmations from the chain before making a decision about
+			// leaving the submission process.
 			if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
 				logger.Infof(
 					"signature for keep [%s] already submitted: [%+x]",
