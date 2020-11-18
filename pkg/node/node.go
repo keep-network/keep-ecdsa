@@ -626,10 +626,17 @@ func (n *Node) monitorKeepPublicKeySubmission(
 				}
 			}
 
+			logger.Infof(
+				"keep [%s] still does not have a confirmed public key; "+
+					"re-submitting public key [%x]",
+				keepAddress.String(),
+				publicKey,
+			)
+
 			err = n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
 			if err != nil {
 				logger.Errorf(
-					"keep [%s] still does not have public key "+
+					"keep [%s] still does not have a confirmed public key "+
 						"and resubmission by this member failed with: [%v]",
 					keepAddress.String(),
 					err,
