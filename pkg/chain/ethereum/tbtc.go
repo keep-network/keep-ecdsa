@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
-	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/eventlog"
 )
 
 // TBTCEthereumChain represents an Ethereum chain handle with
@@ -19,7 +18,6 @@ type TBTCEthereumChain struct {
 	*EthereumChain
 
 	tbtcSystemContract *contract.TBTCSystem
-	tbtcSystemEventLog *eventlog.TBTCSystemEventLog
 }
 
 // WithTBTCExtension extends the Ethereum chain handle with
@@ -44,18 +42,9 @@ func WithTBTCExtension(
 		return nil, err
 	}
 
-	tbtcSystemEventLog, err := eventlog.NewTBTCSystemEventLog(
-		common.HexToAddress(tbtcSystemContractAddress),
-		ethereumChain.client,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	return &TBTCEthereumChain{
 		EthereumChain:      ethereumChain,
 		tbtcSystemContract: tbtcSystemContract,
-		tbtcSystemEventLog: tbtcSystemEventLog,
 	}, nil
 }
 
@@ -192,18 +181,19 @@ func (tec *TBTCEthereumChain) OnDepositRedeemed(
 // events for the given deposit which occurred after the provided start block.
 // Returned events are sorted by the block number in the ascending order.
 func (tec *TBTCEthereumChain) PastDepositRedemptionRequestedEvents(
-	depositAddress string,
 	startBlock uint64,
+	depositAddress string,
 ) ([]*chain.DepositRedemptionRequestedEvent, error) {
 	if !common.IsHexAddress(depositAddress) {
 		return nil, fmt.Errorf("incorrect deposit contract address")
 	}
-
-	events, err := tec.tbtcSystemEventLog.PastRedemptionRequestedEvents(
+	events, err := tec.tbtcSystemContract.PastRedemptionRequestedEvents(
+		startBlock,
+		nil,
 		[]common.Address{
 			common.HexToAddress(depositAddress),
 		},
-		startBlock,
+		nil,
 		nil,
 	)
 	if err != nil {
@@ -221,7 +211,7 @@ func (tec *TBTCEthereumChain) PastDepositRedemptionRequestedEvents(
 			RedeemerOutputScript: event.RedeemerOutputScript,
 			RequestedFee:         event.RequestedFee,
 			Outpoint:             event.Outpoint,
-			BlockNumber:          event.BlockNumber,
+			BlockNumber:          event.Raw.BlockNumber,
 		})
 	}
 

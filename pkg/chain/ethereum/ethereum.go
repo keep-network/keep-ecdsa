@@ -8,8 +8,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/eventlog"
-
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
@@ -523,17 +521,14 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 	if !common.IsHexAddress(keepAddress) {
 		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
 	}
-
-	keepContractEventLog, err := eventlog.NewBondedECDSAKeepEventLog(
-		common.HexToAddress(keepAddress),
-		ec.client,
-	)
+	keepContract, err := ec.getKeepContract(common.HexToAddress(keepAddress))
 	if err != nil {
 		return nil, err
 	}
 
-	events, err := keepContractEventLog.PastSignatureSubmittedEvents(
+	events, err := keepContract.PastSignatureSubmittedEvents(
 		startBlock,
+		nil, // latest block
 		nil,
 	)
 	if err != nil {
@@ -548,7 +543,7 @@ func (ec *EthereumChain) PastSignatureSubmittedEvents(
 			R:           event.R,
 			S:           event.S,
 			RecoveryID:  event.RecoveryID,
-			BlockNumber: event.BlockNumber,
+			BlockNumber: event.Raw.BlockNumber,
 		})
 	}
 

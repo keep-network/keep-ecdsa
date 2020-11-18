@@ -98,8 +98,8 @@ type TBTCSystem interface {
 	// All implementations should returns those events sorted by the
 	// block number in the ascending order.
 	PastDepositRedemptionRequestedEvents(
-		depositAddress string,
 		startBlock uint64,
+		depositAddress string,
 	) ([]*DepositRedemptionRequestedEvent, error)
 }
 

@@ -278,8 +278,8 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		}
 
 		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
-			depositAddress,
 			t.pastEventsLookupStartBlock(),
+			depositAddress,
 		)
 		if err != nil {
 			return err
@@ -451,8 +451,8 @@ func (t *tbtc) monitorProvideRedemptionProof(
 
 	actFn := func(depositAddress string) error {
 		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
-			depositAddress,
 			t.pastEventsLookupStartBlock(),
+			depositAddress,
 		)
 		if err != nil {
 			return err
@@ -523,8 +523,8 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		gotRedemptionSignatureTimestamp := uint64(time.Now().Unix())
 
 		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
-			depositAddress,
 			t.pastEventsLookupStartBlock(),
+			depositAddress,
 		)
 		if err != nil {
 			return 0, err
