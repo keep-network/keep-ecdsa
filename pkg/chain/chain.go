@@ -18,6 +18,8 @@ type Handle interface {
 	Address() common.Address
 	// StakeMonitor returns a stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
+	// BalanceMonitor returns a balance monitor.
+	BalanceMonitor() (chain.BalanceMonitor, error)
 	// BlockCounter returns a block counter.
 	BlockCounter() chain.BlockCounter
 	// BlockTimestamp returns given block's timestamp.

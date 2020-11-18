@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
@@ -66,6 +67,17 @@ const (
 	// as changes in the network need some time to propagate and frequent
 	// refreshes can increase resource consumption and network congestion.
 	routingTableRefreshPeriod = 5 * time.Minute
+)
+
+// Constants related with balance monitoring.
+const (
+	// defaultBalanceAlertThreshold determines the alert threshold below which
+	// the alert should be triggered.
+	defaultBalanceAlertThreshold = 500000000000000000 // 0.5 ETH
+
+	// defaultBalanceMonitoringTick determines how often the monitoring
+	// check should be triggered.
+	defaultBalanceMonitoringTick = 10 * time.Minute
 )
 
 func init() {
@@ -171,9 +183,9 @@ func Start(c *cli.Context) error {
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
 	initializeExtensions(ctx, config.Extensions, ethereumChain)
-
 	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(config, networkProvider)
+	initializeBalanceMonitoring(ctx, ethereumChain, config, ethereumKey.Address.Hex())
 
 	logger.Info("client started")
 
@@ -279,4 +291,36 @@ func initializeDiagnostics(
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
 	diagnostics.RegisterClientInfoSource(registry, netProvider)
+}
+
+func initializeBalanceMonitoring(
+	ctx context.Context,
+	ethereumChain *ethereum.EthereumChain,
+	config *config.Config,
+	ethereumAddress string,
+) {
+	balanceMonitor, err := ethereumChain.BalanceMonitor()
+	if err != nil {
+		logger.Errorf("error obtaining balance monitor handle [%v]", err)
+		return
+	}
+
+	alertThreshold := config.Ethereum.BalanceAlertThreshold
+	if alertThreshold == 0 {
+		alertThreshold = defaultBalanceAlertThreshold
+	}
+
+	balanceMonitor.Observe(
+		ctx,
+		ethereumAddress,
+		new(big.Int).SetUint64(alertThreshold),
+		defaultBalanceMonitoringTick,
+	)
+
+	logger.Infof(
+		"started balance monitoring for address [%v] "+
+			"with the alert threshold set to [%v] wei",
+		ethereumAddress,
+		alertThreshold,
+	)
 }
