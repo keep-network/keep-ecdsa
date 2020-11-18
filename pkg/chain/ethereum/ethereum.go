@@ -17,6 +17,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
@@ -570,4 +571,17 @@ func (ec *EthereumChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
 	}
 
 	return header.Time, nil
+}
+
+//WeiBalanceOf returns the wei balance of the given address from the latest known block.
+func (ec *EthereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancelCtx()
+
+	return ec.client.BalanceAt(ctx, address, nil)
+}
+
+// BalanceMonitor returns a balance monitor.
+func (ec *EthereumChain) BalanceMonitor() (chain.BalanceMonitor, error) {
+	return ethereum.NewBalanceMonitor(ec.WeiBalanceOf), nil
 }
