@@ -465,7 +465,8 @@ func (n *Node) publishSignature(
 
 		if !isSignatureConfirmed {
 			logger.Errorf(
-				"signature for keep [%s] is not confirmed",
+				"signature submission for keep [%s] not confirmed; "+
+					"trying to submit again",
 				keepAddress.String(),
 			)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -479,7 +480,23 @@ func (n *Node) publishSignature(
 
 // monitorKeepPublicKeySubmission observes the chain until either the first
 // conflicting public key is published or until keep established public key
-// or until key generation timed out.
+// or until the key generation timed out. It also tries to re-submit the public
+// key if it has not been submitted in the given time frame as a way to protect
+// against chain forks (i.e. transaction mined in a fork that has been dropped).
+//
+// When event informing about conflicting public key is emitted from the chain,
+// monitoring stops immediately. Even if this event was emitted in a minority
+// fork, it is clear that the operator who submitted the conflicting key is
+// dishonest and it is better to abandon this keep.
+//
+// Function checks the chain periodically and inspects whether the public key
+// has been registered on the chain. If the key is there, the function waits
+// for the required number of confirmations and repeats the check. If the public
+// key for the keep is still there, the monitoring exits successfully.
+// In the case when public key for the keep is not yet established during the
+// periodic check or it is gone after waiting for a certain number of
+// confirmations (chain reorganization), this function will attempt to submit
+// the public key again.
 func (n *Node) monitorKeepPublicKeySubmission(
 	keepAddress common.Address,
 	publicKey [64]byte,
@@ -524,7 +541,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed to get the check trigger while setting up "+
+			"failed to set up the check trigger while setting up "+
 				"public key submission monitoring for keep [%s]: [%v]",
 			keepAddress.String(),
 			err,
@@ -535,6 +552,14 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	for {
 		select {
 		case event := <-conflictingPublicKey:
+			// Even in the case of a fork, a transaction with a conflicting
+			// public key submitted to the chain had to be signed with the
+			// operator's pubkey. For an honest operator, this situation should
+			// never happen, and if it happened, it is better to exit the
+			// monitoring immediately and do not re-attempt to submit public
+			// key for this node. It is clear that something is wrong with the
+			// operator that published the conflicting key and it is safer to
+			// abandon this keep.
 			logger.Errorf(
 				"member [%x] has submitted conflicting public key for keep [%s]: [%x]",
 				event.SubmittingMember,
@@ -550,6 +575,10 @@ func (n *Node) monitorKeepPublicKeySubmission(
 				pubkeyCheckBlock,
 			)
 
+			// We check the public key periodically instead of relying on
+			// incoming events. The main motivation is that events could not be
+			// trusted because they may come from a forked chain or can
+			// the same event can be delivered multiple times.
 			keepPublicKey, err := n.ethereumChain.GetPublicKey(keepAddress)
 			if err != nil {
 				logger.Errorf(
