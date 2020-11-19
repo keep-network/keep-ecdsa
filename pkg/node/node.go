@@ -27,9 +27,20 @@ import (
 
 var logger = log.Logger("keep-ecdsa")
 
-const monitorKeepPublicKeySubmissionTimeout = 30 * time.Minute
-const retryDelay = 1 * time.Second
-const blockConfirmations = uint64(12)
+const (
+	// Determines the delay which should be preserved before retrying
+	// actions within the signing process.
+	retryDelay = 1 * time.Second
+
+	// Number of blocks which should elapse before confirming
+	// the given chain state expectations.
+	blockConfirmations = uint64(12)
+
+	// Used to calculate the publication delay factor for the given signer index
+	// to avoid all signers publishing the same signature for given keep at the
+	// same time.
+	signerPublicationDelayStep = 5 * time.Minute
+)
 
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
@@ -327,6 +338,8 @@ func (n *Node) publishSignature(
 	digest [32]byte,
 	signature *ecdsa.Signature,
 ) error {
+	n.waitSignerPublicationDelay(keepAddress)
+
 	attemptCounter := 0
 	for {
 		attemptCounter++
@@ -436,6 +449,50 @@ func (n *Node) publishSignature(
 
 		return nil
 	}
+}
+
+func (n *Node) waitSignerPublicationDelay(
+	keepAddress common.Address,
+) {
+	signerIndex, err := n.getSignerIndex(keepAddress)
+	if err != nil {
+		logger.Error(
+			"could not determine signer publication delay: [%v]; "+
+				"signer publication delay will not be preserved",
+			err,
+		)
+		return
+	}
+
+	// just in case this function is not invoked in the right context
+	if signerIndex < 0 {
+		logger.Error(
+			"could not determine signer publication delay: "+
+				"[signer index is less than zero]; "+
+				"signer publication delay will not be preserved",
+			err,
+		)
+		return
+	}
+
+	delay := time.Duration(signerIndex) * signerPublicationDelayStep
+
+	time.Sleep(delay)
+}
+
+func (n *Node) getSignerIndex(keepAddress common.Address) (int, error) {
+	members, err := n.ethereumChain.GetMembers(keepAddress)
+	if err != nil {
+		return -1, err
+	}
+
+	for index, member := range members {
+		if member == n.ethereumChain.Address() {
+			return index, nil
+		}
+	}
+
+	return -1, nil
 }
 
 func (n *Node) waitForSignature(
