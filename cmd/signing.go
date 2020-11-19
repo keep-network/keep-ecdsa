@@ -158,33 +158,7 @@ func DecryptKeyShare(c *cli.Context) error {
 		)
 	}
 
-	if outputFilePath := c.String("output-file"); len(outputFilePath) > 0 {
-		if _, err := os.Stat(outputFilePath); !os.IsNotExist(err) {
-			return fmt.Errorf(
-				"could not write shares to file; file [%s] already exists",
-				outputFilePath,
-			)
-		}
-
-		err = ioutil.WriteFile(outputFilePath, signerBytes, 0444) // read-only
-		if err != nil {
-			return fmt.Errorf(
-				"failed to write to file [%s]: [%v]",
-				outputFilePath,
-				err,
-			)
-		}
-	} else {
-		_, err = os.Stdout.Write(signerBytes)
-		if err != nil {
-			return fmt.Errorf(
-				"could not write signer bytes to stdout: [%v]",
-				err,
-			)
-		}
-	}
-
-	return nil
+	return outputData(c, signerBytes)
 }
 
 // SignDigest signs a given digest using key shares from the provided directory.
@@ -430,6 +404,38 @@ func EthereumVerify(c *cli.Context) error {
 		message,
 		recoveredAddress.Hex(),
 	)
+
+	return nil
+}
+
+func outputData(c *cli.Context, data []byte) error {
+	if outputFilePath := c.String("output-file"); len(outputFilePath) > 0 {
+		if _, err := os.Stat(outputFilePath); !os.IsNotExist(err) {
+			return fmt.Errorf(
+				"could not write output to a file; file [%s] already exists",
+				outputFilePath,
+			)
+		}
+
+		err := ioutil.WriteFile(outputFilePath, data, 0444) // read-only
+		if err != nil {
+			return fmt.Errorf(
+				"failed to write output to a file [%s]: [%v]",
+				outputFilePath,
+				err,
+			)
+		}
+
+		fmt.Printf("output stored to a file: %s", outputFilePath)
+	} else {
+		_, err := os.Stdout.Write(data)
+		if err != nil {
+			return fmt.Errorf(
+				"could not write bytes to stdout: [%v]",
+				err,
+			)
+		}
+	}
 
 	return nil
 }
