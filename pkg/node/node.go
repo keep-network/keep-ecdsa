@@ -434,7 +434,6 @@ func (n *Node) publishSignature(
 			continue
 		}
 
-		logger.Infof("signature submitted for keep [%s]", keepAddress.String())
 		return nil
 	}
 }
@@ -494,7 +493,7 @@ func (n *Node) confirmSignature(
 	}
 
 	logger.Infof(
-		"signature submission for keep [%s] has been confirmed",
+		"signature for keep [%s] successfully submitted and confirmed",
 		keepAddress.String(),
 	)
 
