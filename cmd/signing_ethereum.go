@@ -68,17 +68,17 @@ func EthereumSign(c *cli.Context) error {
 	}
 
 	var ethKeyFilePath, ethKeyPassword string
-	if ethKeyFile := c.String("eth-key-file"); len(ethKeyFile) > 0 {
-		ethKeyFilePath = ethKeyFile
+	// Check if `eth-key-file` flag was set. If not read the key file path from
+	// a config file.
+	if ethKeyFilePath = c.String("eth-key-file"); len(ethKeyFilePath) > 0 {
 		ethKeyPassword = os.Getenv(config.PasswordEnvVariable)
 	} else {
-
 		ethereumConfig, err := config.ReadEthereumConfig(c.GlobalString("config"))
 		if err != nil {
 			return fmt.Errorf("failed while reading config file: [%v]", err)
 		}
 
-		ethKeyFile = ethereumConfig.Account.KeyFile
+		ethKeyFilePath = ethereumConfig.Account.KeyFile
 		ethKeyPassword = ethereumConfig.Account.KeyFilePassword
 	}
 
