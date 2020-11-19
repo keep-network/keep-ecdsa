@@ -19,6 +19,7 @@ import (
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-ecdsa/internal/config"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
@@ -57,6 +58,7 @@ func init() {
 				Action:    SignDigest,
 				ArgsUsage: "[unprefixed-hex-digest] [key-shares-dir]",
 			},
+			EthereumSigningCommand,
 		},
 	}
 }
@@ -110,33 +112,7 @@ func DecryptKeyShare(c *cli.Context) error {
 		)
 	}
 
-	if outputFilePath := c.String("output-file"); len(outputFilePath) > 0 {
-		if _, err := os.Stat(outputFilePath); !os.IsNotExist(err) {
-			return fmt.Errorf(
-				"could not write shares to file; file [%s] already exists",
-				outputFilePath,
-			)
-		}
-
-		err = ioutil.WriteFile(outputFilePath, signerBytes, 0444) // read-only
-		if err != nil {
-			return fmt.Errorf(
-				"failed to write to file [%s]: [%v]",
-				outputFilePath,
-				err,
-			)
-		}
-	} else {
-		_, err = os.Stdout.Write(signerBytes)
-		if err != nil {
-			return fmt.Errorf(
-				"could not write signer bytes to stdout: [%v]",
-				err,
-			)
-		}
-	}
-
-	return nil
+	return outputData(c, signerBytes, 0444) // store to read-only file
 }
 
 // SignDigest signs a given digest using key shares from the provided directory.
@@ -281,6 +257,35 @@ func SignDigest(c *cli.Context) error {
 			return err
 		}
 		fmt.Println(hex.EncodeToString(publicKey[:]), "\t", signature)
+	}
+
+	return nil
+}
+
+// If `output-file` flag is provided stores the output in a file.
+// `fileMode` determines the access permission for the output file. Sample values:
+// 	0444 - read-only for all
+// 	0644 - readable for all, but writeable only for the user (owner)
+func outputData(c *cli.Context, data []byte, fileMode os.FileMode) error {
+	if outputFilePath := c.String("output-file"); len(outputFilePath) > 0 {
+		err := ioutil.WriteFile(outputFilePath, data, fileMode)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to write output to a file [%s]: [%v]",
+				outputFilePath,
+				err,
+			)
+		}
+
+		fmt.Printf("output stored to a file: %s", outputFilePath)
+	} else {
+		_, err := os.Stdout.Write(data)
+		if err != nil {
+			return fmt.Errorf(
+				"could not write bytes to stdout: [%v]",
+				err,
+			)
+		}
 	}
 
 	return nil
