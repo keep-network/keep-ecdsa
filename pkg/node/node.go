@@ -719,6 +719,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 					keepAddress.String(),
 					err,
 				)
+				return
 			}
 		}
 	}
