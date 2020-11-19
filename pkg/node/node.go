@@ -429,12 +429,67 @@ func (n *Node) publishSignature(
 			continue
 		}
 
-		if !n.confirmSignature(keepAddress, digest) {
+		if !(n.waitForSignature(keepAddress, digest) && n.confirmSignature(keepAddress, digest)) {
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
 
 		return nil
+	}
+}
+
+func (n *Node) waitForSignature(
+	keepAddress common.Address,
+	digest [32]byte,
+) bool {
+	const waitTimeout = 10 * time.Minute
+	const checkTick = 1 * time.Minute
+
+	ctx, cancelCtx := context.WithTimeout(context.Background(), waitTimeout)
+	defer cancelCtx()
+
+	checkTicker := time.NewTicker(checkTick)
+	defer checkTicker.Stop()
+
+	logger.Infof(
+		"starting waiting for signature for keep [%s]",
+		keepAddress.String(),
+	)
+
+	for {
+		select {
+		case <-checkTicker.C:
+			isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(
+				keepAddress,
+				digest,
+			)
+			if err != nil {
+				logger.Error(
+					"failed to perform signature check while waiting "+
+						"for signature for keep [%s]: [%v]",
+					keepAddress.String(),
+					err,
+				)
+				continue
+			}
+
+			if !isAwaitingSignature {
+				logger.Infof(
+					"signature waiter for keep [%s] has "+
+						"detected the signature",
+					keepAddress.String(),
+				)
+				return true
+			}
+		case <-ctx.Done():
+			logger.Error(
+				"stop waiting for signature for keep [%s] because "+
+					"[%v] timeout has been exceeded",
+				keepAddress.String(),
+				waitTimeout,
+			)
+			return false
+		}
 	}
 }
 
