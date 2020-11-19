@@ -597,7 +597,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	defer subscriptionConflictingPublicKey.Unsubscribe()
 
 	pubkeyChecksCounter := 0
-	const maxPubkeyChecksCount = 6
+	const maxPubkeyChecksCount = 3
 	const pubkeyCheckTick = 10 * time.Minute
 
 	pubkeyCheckTicker := time.NewTicker(pubkeyCheckTick)
@@ -635,7 +635,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 			}
 
 			logger.Infof(
-				"checking public key submission for keep [%s]",
+				"confirming public key submission for keep [%s]",
 				keepAddress.String(),
 			)
 
