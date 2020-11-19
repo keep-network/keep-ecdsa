@@ -704,6 +704,7 @@ func monitorKeepClosedEvents(
 	subscriptionOnSignatureRequested subscription.EventSubscription,
 ) {
 	keepClosed := make(chan *eth.KeepClosedEvent)
+	keepClosedTrack := getKeepClosedTrackInstance()
 
 	subscriptionOnKeepClosed, err := ethereumChain.OnKeepClosed(
 		keepAddress,
@@ -713,6 +714,14 @@ func monitorKeepClosedEvents(
 				keepAddress.String(),
 				event.BlockNumber,
 			)
+
+			if !keepClosedTrack.add(keepAddress) {
+				logger.Warningf(
+					"keep [%s] has been closed already",
+					keepAddress.String(),
+				)
+				return
+			}
 
 			isKeepActive, err := chainutil.WaitForBlockConfirmations(
 				ethereumChain.BlockCounter(),
@@ -752,6 +761,7 @@ func monitorKeepClosedEvents(
 
 	defer subscriptionOnKeepClosed.Unsubscribe()
 	defer subscriptionOnSignatureRequested.Unsubscribe()
+	defer keepClosedTrack.remove(keepAddress)
 
 	<-keepClosed
 

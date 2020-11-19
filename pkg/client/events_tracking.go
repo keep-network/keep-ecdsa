@@ -7,6 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+var once sync.Once
+
 // requestedSignersTrack is used to track signers generation started after keep
 // creation event is received. It is used to ensure that the process execution
 // is not duplicated, e.g. when the client receives the same event multiple times.
@@ -81,4 +83,45 @@ func (rst *requestedSignaturesTrack) remove(keepAddress common.Address, digest [
 			delete(rst.data, keepAddress.String())
 		}
 	}
+}
+
+type keepClosedTrack struct {
+	data  map[string]bool // <keep, bool>
+	mutex *sync.Mutex
+}
+
+var keepClosedTrackInstance *keepClosedTrack
+
+func getKeepClosedTrackInstance() *keepClosedTrack {
+	if keepClosedTrackInstance == nil {
+		once.Do(
+			func() {
+				keepClosedTrackInstance = &keepClosedTrack{
+					data:  make(map[string]bool),
+					mutex: &sync.Mutex{},
+				}
+			})
+	}
+
+	return keepClosedTrackInstance
+}
+
+func (kct *keepClosedTrack) add(keepAddress common.Address) bool {
+	kct.mutex.Lock()
+	defer kct.mutex.Unlock()
+
+	if kct.data[keepAddress.String()] {
+		return false
+	}
+
+	kct.data[keepAddress.String()] = true
+
+	return true
+}
+
+func (kct *keepClosedTrack) remove(keepAddress common.Address) {
+	kct.mutex.Lock()
+	defer kct.mutex.Unlock()
+
+	delete(kct.data, keepAddress.String())
 }
