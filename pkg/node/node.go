@@ -524,12 +524,6 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	keepAddress common.Address,
 	publicKey [64]byte,
 ) {
-	monitoringCtx, monitoringCancel := context.WithTimeout(
-		context.Background(),
-		monitorKeepPublicKeySubmissionTimeout,
-	)
-	defer monitoringCancel()
-
 	conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
 
 	subscriptionConflictingPublicKey, err := n.ethereumChain.OnConflictingPublicKeySubmitted(
@@ -548,29 +542,12 @@ func (n *Node) monitorKeepPublicKeySubmission(
 
 	defer subscriptionConflictingPublicKey.Unsubscribe()
 
-	startingBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
-	if err != nil {
-		logger.Errorf(
-			"failed to get the starting block while setting up "+
-				"public key submission monitoring for keep [%s]: [%v]",
-			keepAddress.String(),
-			err,
-		)
-		return
-	}
+	pubkeyChecksCounter := 0
+	const maxPubkeyChecksCount = 6
+	const pubkeyCheckTick = 10 * time.Minute
 
-	pubkeyCheckTrigger, err := n.ethereumChain.BlockCounter().BlockHeightWaiter(
-		startingBlock + blockConfirmations,
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed to set up the check trigger while setting up "+
-				"public key submission monitoring for keep [%s]: [%v]",
-			keepAddress.String(),
-			err,
-		)
-		return
-	}
+	pubkeyCheckTicker := time.NewTicker(pubkeyCheckTick)
+	defer pubkeyCheckTicker.Stop()
 
 	for {
 		select {
@@ -590,12 +567,22 @@ func (n *Node) monitorKeepPublicKeySubmission(
 				event.ConflictingPublicKey,
 			)
 			return
-		case pubkeyCheckBlock := <-pubkeyCheckTrigger:
+		case <-pubkeyCheckTicker.C:
+			pubkeyChecksCounter++
+
+			if pubkeyChecksCounter > maxPubkeyChecksCount {
+				logger.Infof(
+					"monitoring of public key submission for keep [%s] "+
+						"has been cancelled because maximum checks count [%v] "+
+						"has been reached",
+					keepAddress.String(),
+					maxPubkeyChecksCount,
+				)
+			}
+
 			logger.Infof(
-				"checking public key submission for keep [%s] "+
-					"at block [%v]",
+				"checking public key submission for keep [%s]",
 				keepAddress.String(),
-				pubkeyCheckBlock,
 			)
 
 			// We check the public key periodically instead of relying on
@@ -610,11 +597,24 @@ func (n *Node) monitorKeepPublicKeySubmission(
 					keepAddress.String(),
 					err,
 				)
+				continue
 			} else {
 				if len(keepPublicKey) > 0 {
+					currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+					if err != nil {
+						logger.Errorf(
+							"failed to get the current block while "+
+								"performing public key submission confirmation "+
+								"for keep [%s]: [%v]",
+							keepAddress.String(),
+							err,
+						)
+						continue
+					}
+
 					isConfirmed, err := chainutil.WaitForBlockConfirmations(
 						n.ethereumChain.BlockCounter(),
-						pubkeyCheckBlock,
+						currentBlock,
 						blockConfirmations,
 						func() (bool, error) {
 							key, err := n.ethereumChain.GetPublicKey(
@@ -635,6 +635,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 							keepAddress.String(),
 							err,
 						)
+						continue
 					}
 
 					if isConfirmed {
@@ -665,27 +666,6 @@ func (n *Node) monitorKeepPublicKeySubmission(
 					err,
 				)
 			}
-
-			pubkeyCheckTrigger, err = n.ethereumChain.BlockCounter().BlockHeightWaiter(
-				pubkeyCheckBlock + blockConfirmations,
-			)
-			if err != nil {
-				logger.Errorf(
-					"failed to update the check trigger during "+
-						"public key submission monitoring for keep [%s]: [%v]",
-					keepAddress.String(),
-					err,
-				)
-				return
-			}
-		case <-monitoringCtx.Done():
-			logger.Warningf(
-				"monitoring of public key submission for keep [%s] "+
-					"has been cancelled: [%v]",
-				keepAddress.String(),
-				monitoringCtx.Err(),
-			)
-			return
 		}
 	}
 }
