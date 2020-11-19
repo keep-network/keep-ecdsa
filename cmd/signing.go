@@ -112,7 +112,7 @@ func DecryptKeyShare(c *cli.Context) error {
 		)
 	}
 
-	return outputData(c, signerBytes, false)
+	return outputData(c, signerBytes, 0444) // store to read-only file
 }
 
 // SignDigest signs a given digest using key shares from the provided directory.
@@ -262,23 +262,12 @@ func SignDigest(c *cli.Context) error {
 	return nil
 }
 
-func outputData(c *cli.Context, data []byte, overwrite bool) error {
+// If `output-file` flag is provided stores the output in a file.
+// `fileMode` determines the access permission for the output file. Sample values:
+// 	0444 - read-only for all
+// 	0644 - readable for all, but writeable only for the user (owner)
+func outputData(c *cli.Context, data []byte, fileMode os.FileMode) error {
 	if outputFilePath := c.String("output-file"); len(outputFilePath) > 0 {
-		var fileMode os.FileMode
-
-		if !overwrite {
-			if _, err := os.Stat(outputFilePath); !os.IsNotExist(err) {
-				return fmt.Errorf(
-					"could not write output to a file; file [%s] already exists",
-					outputFilePath,
-				)
-			}
-
-			fileMode = 0444 // read-only
-		} else {
-			fileMode = 0644 // user writable
-		}
-
 		err := ioutil.WriteFile(outputFilePath, data, fileMode)
 		if err != nil {
 			return fmt.Errorf(

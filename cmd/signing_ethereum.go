@@ -153,7 +153,7 @@ func EthereumSign(c *cli.Context) error {
 		return fmt.Errorf("failed to marshal ethereum signature: [%v]", err)
 	}
 
-	return outputData(c, marshaledSignature, true)
+	return outputData(c, marshaledSignature, 0644) // store to user writeable file
 }
 
 // EthereumVerify verifies if a signature was calculated by a signer with the
