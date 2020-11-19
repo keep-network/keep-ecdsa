@@ -3,8 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -113,7 +114,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not check the stake: [%v]", err)
 	}
 	if !hasMinimumStake {
-		return fmt.Errorf(
+		logger.Errorf(
 			"no minimum KEEP stake or operator is not authorized to use it; " +
 				"please make sure the operator address in the configuration " +
 				"is correct and it has KEEP tokens delegated and the operator " +
