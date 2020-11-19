@@ -457,8 +457,9 @@ func (n *Node) waitSignerPublicationDelay(
 	signerIndex, err := n.getSignerIndex(keepAddress)
 	if err != nil {
 		logger.Error(
-			"could not determine signer publication delay: [%v]; "+
-				"signer publication delay will not be preserved",
+			"could not determine signer publication delay for keep [%s]: "+
+				"[%v]; signer publication delay will not be preserved",
+			keepAddress.String(),
 			err,
 		)
 		return
@@ -467,15 +468,22 @@ func (n *Node) waitSignerPublicationDelay(
 	// just in case this function is not invoked in the right context
 	if signerIndex < 0 {
 		logger.Error(
-			"could not determine signer publication delay: "+
+			"could not determine signer publication delay for keep [%s]: "+
 				"[signer index is less than zero]; "+
 				"signer publication delay will not be preserved",
+			keepAddress.String(),
 			err,
 		)
 		return
 	}
 
 	delay := time.Duration(signerIndex) * signerPublicationDelayStep
+
+	logger.Infof(
+		"waiting [%v] before publishing signature for keep [%s]",
+		delay,
+		keepAddress.String(),
+	)
 
 	time.Sleep(delay)
 }
