@@ -112,7 +112,7 @@ func DecryptKeyShare(c *cli.Context) error {
 		)
 	}
 
-	return outputData(c, signerBytes)
+	return outputData(c, signerBytes, false)
 }
 
 // SignDigest signs a given digest using key shares from the provided directory.
@@ -262,16 +262,24 @@ func SignDigest(c *cli.Context) error {
 	return nil
 }
 
-func outputData(c *cli.Context, data []byte) error {
+func outputData(c *cli.Context, data []byte, overwrite bool) error {
 	if outputFilePath := c.String("output-file"); len(outputFilePath) > 0 {
-		if _, err := os.Stat(outputFilePath); !os.IsNotExist(err) {
-			return fmt.Errorf(
-				"could not write output to a file; file [%s] already exists",
-				outputFilePath,
-			)
+		var fileMode os.FileMode
+
+		if !overwrite {
+			if _, err := os.Stat(outputFilePath); !os.IsNotExist(err) {
+				return fmt.Errorf(
+					"could not write output to a file; file [%s] already exists",
+					outputFilePath,
+				)
+			}
+
+			fileMode = 0444 // read-only
+		} else {
+			fileMode = 0644 // user writable
 		}
 
-		err := ioutil.WriteFile(outputFilePath, data, 0444) // read-only
+		err := ioutil.WriteFile(outputFilePath, data, fileMode)
 		if err != nil {
 			return fmt.Errorf(
 				"failed to write output to a file [%s]: [%v]",
