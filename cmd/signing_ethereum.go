@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -160,7 +161,7 @@ func EthereumSign(c *cli.Context) error {
 func EthereumVerify(c *cli.Context) error {
 	var marshaledSignature []byte
 	if inputFilePath := c.String("input-file"); len(inputFilePath) > 0 {
-		fileContent, err := ioutil.ReadFile(inputFilePath)
+		fileContent, err := ioutil.ReadFile(filepath.Clean(inputFilePath))
 		if err != nil {
 			return fmt.Errorf("failed to read a file: [%v]", err)
 		}
