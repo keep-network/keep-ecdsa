@@ -12,10 +12,11 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
+// PasswordEnvVariable environment variable name for ethereum key password.
 // #nosec G101 (look for hardcoded credentials)
 // This line doesn't contain any credentials.
 // It's just the name of the environment variable.
-const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+const PasswordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
 // Config is the top level config structure.
 type Config struct {
@@ -90,7 +91,7 @@ func ReadConfig(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode file [%s]: [%v]", filePath, err)
 	}
 
-	config.Ethereum.Account.KeyFilePassword = os.Getenv(passwordEnvVariable)
+	config.Ethereum.Account.KeyFilePassword = os.Getenv(PasswordEnvVariable)
 
 	return config, nil
 }
