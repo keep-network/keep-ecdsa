@@ -6,10 +6,12 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/keep-ecdsa/pkg/metrics"
+
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/metrics"
+	coreMetrics "github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 
 	"github.com/ipfs/go-log"
@@ -170,7 +172,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("failed to get sanctioned applications addresses: [%v]", err)
 	}
 
-	client.Initialize(
+	clientHandle := client.Initialize(
 		ctx,
 		operatorPublicKey,
 		ethereumChain,
@@ -183,7 +185,7 @@ func Start(c *cli.Context) error {
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
 	initializeExtensions(ctx, config.Extensions, ethereumChain)
-	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
+	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex(), clientHandle)
 	initializeDiagnostics(config, networkProvider)
 	initializeBalanceMonitoring(ctx, ethereumChain, config, ethereumKey.Address.Hex())
 
@@ -234,8 +236,9 @@ func initializeMetrics(
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
 	ethereumAddres string,
+	clientHandle *client.Handle,
 ) {
-	registry, isConfigured := metrics.Initialize(
+	registry, isConfigured := coreMetrics.Initialize(
 		config.Metrics.Port,
 	)
 	if !isConfigured {
@@ -248,14 +251,14 @@ func initializeMetrics(
 		config.Metrics.Port,
 	)
 
-	metrics.ObserveConnectedPeersCount(
+	coreMetrics.ObserveConnectedPeersCount(
 		ctx,
 		registry,
 		netProvider,
 		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveConnectedBootstrapCount(
+	coreMetrics.ObserveConnectedBootstrapCount(
 		ctx,
 		registry,
 		netProvider,
@@ -263,12 +266,19 @@ func initializeMetrics(
 		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveEthConnectivity(
+	coreMetrics.ObserveEthConnectivity(
 		ctx,
 		registry,
 		stakeMonitor,
 		ethereumAddres,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
+	)
+
+	metrics.ObserveTSSPreParamsPoolSize(
+		ctx,
+		registry,
+		clientHandle,
+		time.Duration(config.Metrics.ClientMetricsTick)*time.Second,
 	)
 }
 
