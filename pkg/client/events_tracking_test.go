@@ -222,6 +222,8 @@ func TestKeepClosedTrackAdd(t *testing.T) {
 	if !kct.add(keepAddress2) {
 		t.Error("event wasn't emitted before; should be added successfully")
 	}
+
+	keepClosedTrackCleanup([]common.Address{keepAddress1, keepAddress2})
 }
 
 func TestKeepClosedTrackAdd_Duplicate(t *testing.T) {
@@ -236,6 +238,8 @@ func TestKeepClosedTrackAdd_Duplicate(t *testing.T) {
 	if kct.add(keepAddress) {
 		t.Error("event was emitted before; it should not be added")
 	}
+
+	keepClosedTrackCleanup([]common.Address{keepAddress})
 }
 
 func TestKeepClosedTrackRemove(t *testing.T) {
@@ -252,6 +256,8 @@ func TestKeepClosedTrackRemove(t *testing.T) {
 	if !kct.add(keepAddress) {
 		t.Error("event was removed from tracking; should be added successfully")
 	}
+
+	keepClosedTrackCleanup([]common.Address{keepAddress})
 }
 
 func TestKeepClosedTrackRemove_WhenEmpty(t *testing.T) {
@@ -264,6 +270,8 @@ func TestKeepClosedTrackRemove_WhenEmpty(t *testing.T) {
 	if !kct.add(keepAddress) {
 		t.Error("event wasn't emitted before; should be added successfully")
 	}
+
+	keepClosedTrackCleanup([]common.Address{keepAddress})
 }
 
 func TestKeepClosedTrack_GetOneInstance(t *testing.T) {
@@ -272,5 +280,12 @@ func TestKeepClosedTrack_GetOneInstance(t *testing.T) {
 
 	if kct1 != kct2 {
 		t.Error("should be only one instance for keep closed tracking")
+	}
+}
+
+func keepClosedTrackCleanup(addresses []common.Address) {
+	kct := getKeepClosedTrackInstance()
+	for _, addr := range addresses {
+		kct.remove(addr)
 	}
 }
