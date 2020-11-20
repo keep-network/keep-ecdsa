@@ -215,7 +215,7 @@ func (n *Node) GenerateSignerForKeep(
 			)
 		}
 
-		// Serialize and publish public key to the keep.
+		// Serialize and submit public key to the keep.
 		//
 		// We don't retry in case of an error although the specific chain
 		// implementation may implement its own retry policy. This action
@@ -224,34 +224,16 @@ func (n *Node) GenerateSignerForKeep(
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 		}
-		err = n.publishSignerPublicKey(ctx, keepAddress, publicKey)
+
+		err = n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to submit public key: [%v]", err)
 		}
+
+		go n.monitorKeepPublicKeySubmission(keepAddress, publicKey)
 
 		return signer, nil // key generation succeeded.
 	}
-}
-
-func (n *Node) publishSignerPublicKey(
-	ctx context.Context,
-	keepAddress common.Address,
-	publicKey [64]byte,
-) error {
-	logger.Debugf(
-		"submitting public key to the keep [%s]: [%x]",
-		keepAddress.String(),
-		publicKey,
-	)
-
-	err := n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
-	if err != nil {
-		return fmt.Errorf("failed to submit public key: [%v]", err)
-	}
-
-	go n.monitorKeepPublicKeySubmission(keepAddress, publicKey)
-
-	return nil
 }
 
 // CalculateSignature calculates a signature over a digest with threshold
