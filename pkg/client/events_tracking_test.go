@@ -208,3 +208,69 @@ func TestRequestedSignaturesTrackRemove_WhenEmpty(t *testing.T) {
 		)
 	}
 }
+
+func TestKeepClosedTrackAdd(t *testing.T) {
+	keepAddress1 := common.BytesToAddress([]byte{1})
+	keepAddress2 := common.BytesToAddress([]byte{2})
+
+	kct := getKeepClosedTrackInstance()
+
+	if !kct.add(keepAddress1) {
+		t.Error("event wasn't emitted before; should be added successfully")
+	}
+
+	if !kct.add(keepAddress2) {
+		t.Error("event wasn't emitted before; should be added successfully")
+	}
+}
+
+func TestKeepClosedTrackAdd_Duplicate(t *testing.T) {
+	keepAddress := common.BytesToAddress([]byte{1})
+
+	kct := getKeepClosedTrackInstance()
+
+	if !kct.add(keepAddress) {
+		t.Error("event wasn't emitted before; should be added successfully")
+	}
+
+	if kct.add(keepAddress) {
+		t.Error("event was emitted before; it should not be added")
+	}
+}
+
+func TestKeepClosedTrackRemove(t *testing.T) {
+	keepAddress := common.BytesToAddress([]byte{1})
+
+	kct := getKeepClosedTrackInstance()
+
+	if !kct.add(keepAddress) {
+		t.Error("event wasn't emitted before; should be added successfully")
+	}
+
+	kct.remove(keepAddress)
+
+	if !kct.add(keepAddress) {
+		t.Error("event was removed from tracking; should be added successfully")
+	}
+}
+
+func TestKeepClosedTrackRemove_WhenEmpty(t *testing.T) {
+	keepAddress := common.BytesToAddress([]byte{1})
+
+	kct := getKeepClosedTrackInstance()
+
+	kct.remove(keepAddress)
+
+	if !kct.add(keepAddress) {
+		t.Error("event wasn't emitted before; should be added successfully")
+	}
+}
+
+func TestKeepClosedTrack_GetOneInstance(t *testing.T) {
+	kct1 := getKeepClosedTrackInstance()
+	kct2 := getKeepClosedTrackInstance()
+
+	if kct1 != kct2 {
+		t.Error("should be only one instance for keep closed tracking")
+	}
+}
