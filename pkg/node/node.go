@@ -450,7 +450,7 @@ func (n *Node) waitForSignature(
 				digest,
 			)
 			if err != nil {
-				logger.Error(
+				logger.Errorf(
 					"failed to perform signature check while waiting "+
 						"for signature for keep [%s]: [%v]",
 					keepAddress.String(),
@@ -467,9 +467,9 @@ func (n *Node) waitForSignature(
 				return true
 			}
 		case <-ctx.Done():
-			logger.Error(
-				"stop waiting for signature for keep [%s] because "+
-					"[%v] timeout has been exceeded",
+			logger.Errorf(
+				"signature for keep [%s] has not appeared on the chain "+
+					"after [%v] from submitting it",
 				keepAddress.String(),
 				waitTimeout,
 			)
