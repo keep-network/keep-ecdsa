@@ -17,7 +17,9 @@ type tssPreParamsPool struct {
 
 // InitializeTSSPreParamsPool generates TSS pre-parameters and stores them in a pool.
 func (n *Node) InitializeTSSPreParamsPool() {
-	poolSize := 20
+	poolSize := n.tssConfig.GetPreParamsTargetPoolSize()
+
+	logger.Infof("TSS pre-parameters target pool size is [%v]", poolSize)
 
 	n.tssParamsPool = &tssPreParamsPool{
 		pool: make(chan *keygen.LocalPreParams, poolSize),
