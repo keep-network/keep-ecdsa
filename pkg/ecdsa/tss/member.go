@@ -3,8 +3,10 @@ package tss
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // MemberID is an unique identifier of a member across the network.
@@ -38,6 +40,17 @@ func (id MemberID) bigInt() *big.Int {
 // Equal checks if member IDs are equal.
 func (id MemberID) Equal(memberID MemberID) bool {
 	return bytes.Equal(id, memberID)
+}
+
+// ChainAddress returns the MemberID as a chain address.
+func (id MemberID) ChainAddress() (string, error) {
+	publicKey, err := id.PublicKey()
+	if err != nil {
+		return "", err
+	}
+
+	// TODO: should be more flexible instead of sticking to the Ethereum chain
+	return crypto.PubkeyToAddress(*publicKey).String(), nil
 }
 
 // groupInfo holds information about the group selected for protocol execution.

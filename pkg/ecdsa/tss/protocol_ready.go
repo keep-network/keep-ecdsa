@@ -3,6 +3,7 @@ package tss
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -38,9 +39,9 @@ func readyProtocol(
 	}
 	broadcastChannel.Recv(ctx, handleReadyMessage)
 
-	go func() {
-		readyMembers := make(map[string]bool)
+	readyMembers := make(map[string]bool)
 
+	go func() {
 		for {
 			select {
 			case <-ctx.Done():
@@ -86,8 +87,29 @@ func readyProtocol(
 
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
+		notReadyMembers := make([]string, 0)
+		for _, memberID := range group.groupMemberIDs {
+			if _, isReady := readyMembers[memberID.String()]; !isReady {
+				memberAddress, err := memberID.ChainAddress()
+				if err != nil {
+					logger.Errorf(
+						"could not determine address of not ready "+
+							"member [%v]: [%v]",
+						memberID.String(),
+						err,
+					)
+					continue
+				}
+
+				notReadyMembers = append(notReadyMembers, memberAddress)
+			}
+		}
+
 		return fmt.Errorf(
-			"waiting for readiness timed out after: [%v]", protocolReadyTimeout,
+			"waiting for readiness timed out after: [%v]; "+
+				"still waiting for members [%v]",
+			protocolReadyTimeout,
+			strings.Join(notReadyMembers, ", "),
 		)
 	case context.Canceled:
 		logger.Infof("successfully signalled readiness")
