@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/chainutil"
+
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -27,6 +29,7 @@ var logger = log.Logger("keep-ecdsa")
 
 const monitorKeepPublicKeySubmissionTimeout = 30 * time.Minute
 const retryDelay = 1 * time.Second
+const blockConfirmations = uint64(12)
 
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
@@ -212,7 +215,7 @@ func (n *Node) GenerateSignerForKeep(
 			)
 		}
 
-		// Serialize and publish public key to the keep.
+		// Serialize and submit public key to the keep.
 		//
 		// We don't retry in case of an error although the specific chain
 		// implementation may implement its own retry policy. This action
@@ -221,36 +224,16 @@ func (n *Node) GenerateSignerForKeep(
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 		}
-		err = n.publishSignerPublicKey(ctx, keepAddress, publicKey)
+
+		err = n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to submit public key: [%v]", err)
 		}
+
+		go n.monitorKeepPublicKeySubmission(keepAddress, publicKey)
 
 		return signer, nil // key generation succeeded.
 	}
-}
-
-func (n *Node) publishSignerPublicKey(
-	ctx context.Context,
-	keepAddress common.Address,
-	publicKey [64]byte,
-) error {
-	logger.Debugf(
-		"submitting public key to the keep [%s]: [%x]",
-		keepAddress.String(),
-		publicKey,
-	)
-
-	monitoringAbort := make(chan interface{})
-	go n.monitorKeepPublicKeySubmission(monitoringAbort, keepAddress)
-
-	err := n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
-	if err != nil {
-		close(monitoringAbort)
-		return fmt.Errorf("failed to submit public key: [%v]", err)
-	}
-
-	return nil
 }
 
 // CalculateSignature calculates a signature over a digest with threshold
@@ -372,9 +355,10 @@ func (n *Node) publishSignature(
 			continue
 		}
 
-		// Someone submitted the signature and it was accepted by the keep.
+		// Someone submitted the signature, it was accepted by the keep,
+		// and there are enough confirmations from the chain.
 		// We are fine, leaving.
-		if !isAwaitingSignature {
+		if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
 			logger.Infof(
 				"signature for keep [%s] already submitted: [%+x]",
 				keepAddress.String(),
@@ -403,7 +387,10 @@ func (n *Node) publishSignature(
 
 			// Check if we failed because someone else submitted in the meantime
 			// or because something wrong happened with our transaction.
-			if !isAwaitingSignature {
+			// If someone else submitted in the meantime, wait for enough
+			// confirmations from the chain before making a decision about
+			// leaving the submission process.
+			if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
 				logger.Infof(
 					"signature for keep [%s] already submitted: [%+x]",
 					keepAddress.String(),
@@ -424,40 +411,160 @@ func (n *Node) publishSignature(
 			continue
 		}
 
-		logger.Infof("signature submitted for keep [%s]", keepAddress.String())
+		if !(n.waitForSignature(keepAddress, digest) && n.confirmSignature(keepAddress, digest)) {
+			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
+			continue
+		}
+
 		return nil
 	}
 }
 
-// monitorKeepPublicKeySubmission observes the chain until either the first
-// conflicting public key is published or until keep established public key
-// or until key generation timed out.
-func (n *Node) monitorKeepPublicKeySubmission(
-	abort chan interface{},
+func (n *Node) waitForSignature(
 	keepAddress common.Address,
-) {
-	monitoringCtx, monitoringCancel := context.WithTimeout(
-		context.Background(),
-		monitorKeepPublicKeySubmissionTimeout,
+	digest [32]byte,
+) bool {
+	const waitTimeout = 10 * time.Minute
+	const checkTick = 1 * time.Minute
+
+	ctx, cancelCtx := context.WithTimeout(context.Background(), waitTimeout)
+	defer cancelCtx()
+
+	checkTicker := time.NewTicker(checkTick)
+	defer checkTicker.Stop()
+
+	logger.Infof(
+		"waiting for signature for keep [%s] to appear on-chain",
+		keepAddress.String(),
 	)
-	defer monitoringCancel()
 
-	publicKeyPublished := make(chan *eth.PublicKeyPublishedEvent)
-	conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
+	for {
+		select {
+		case <-checkTicker.C:
+			// We check the public key periodically instead of relying on
+			// incoming events. The main motivation is that events could not be
+			// trusted here because they may come from a forked chain or
+			// the same event can be delivered multiple times.
+			isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(
+				keepAddress,
+				digest,
+			)
+			if err != nil {
+				logger.Errorf(
+					"failed to perform signature check while waiting "+
+						"for signature for keep [%s]: [%v]",
+					keepAddress.String(),
+					err,
+				)
+				continue
+			}
 
-	subscriptionPublicKeyPublished, err := n.ethereumChain.OnPublicKeyPublished(
-		keepAddress,
-		func(event *eth.PublicKeyPublishedEvent) {
-			publicKeyPublished <- event
+			if !isAwaitingSignature {
+				logger.Infof(
+					"signature for keep [%s] appeared on-chain",
+					keepAddress.String(),
+				)
+				return true
+			}
+		case <-ctx.Done():
+			logger.Errorf(
+				"signature for keep [%s] has not appeared on the chain "+
+					"after [%v] from submitting it",
+				keepAddress.String(),
+				waitTimeout,
+			)
+			return false
+		}
+	}
+}
+
+func (n *Node) confirmSignature(
+	keepAddress common.Address,
+	digest [32]byte,
+) bool {
+	logger.Infof(
+		"confirming on-chain signature submission for keep [%s]",
+		keepAddress.String(),
+	)
+
+	currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+	if err != nil {
+		logger.Errorf(
+			"could not get current block while confirming "+
+				"signature submission for keep [%s]: [%v]",
+			keepAddress.String(),
+			err,
+		)
+		return false
+	}
+
+	isSignatureConfirmed, err := chainutil.WaitForBlockConfirmations(
+		n.ethereumChain.BlockCounter(),
+		currentBlock,
+		blockConfirmations,
+		func() (bool, error) {
+			isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(
+				keepAddress,
+				digest,
+			)
+			if err != nil {
+				return false, err
+			}
+
+			return !isAwaitingSignature, nil
 		},
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed on watching public key published event for keep [%s]: [%v]",
+			"could not confirm signature submission for keep [%s]: [%v]",
 			keepAddress.String(),
 			err,
 		)
+		return false
 	}
+
+	if !isSignatureConfirmed {
+		logger.Errorf(
+			"signature submission for keep [%s] not confirmed; "+
+				"trying to submit the signature again",
+			keepAddress.String(),
+		)
+		return false
+	}
+
+	logger.Infof(
+		"signature for keep [%s] successfully submitted "+
+			"and confirmed on-chain",
+		keepAddress.String(),
+	)
+
+	return true
+}
+
+// monitorKeepPublicKeySubmission observes the chain until either the first
+// conflicting public key is published or until keep established public key
+// or until the key generation timed out. It also tries to re-submit the public
+// key if it has not been submitted in the given time frame as a way to protect
+// against chain forks (i.e. transaction mined in a fork that has been dropped).
+//
+// When event informing about conflicting public key is emitted from the chain,
+// monitoring stops immediately. Even if this event was emitted in a minority
+// fork, it is clear that the operator who submitted the conflicting key is
+// dishonest and it is better to abandon this keep.
+//
+// Function checks the chain periodically and inspects whether the public key
+// has been registered on the chain. If the key is there, the function waits
+// for the required number of confirmations and repeats the check. If the public
+// key for the keep is still there, the monitoring exits successfully.
+// In the case when public key for the keep is not yet established during the
+// periodic check or it is gone after waiting for a certain number of
+// confirmations (chain reorganization), this function will attempt to submit
+// the public key again.
+func (n *Node) monitorKeepPublicKeySubmission(
+	keepAddress common.Address,
+	publicKey [64]byte,
+) {
+	conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
 
 	subscriptionConflictingPublicKey, err := n.ethereumChain.OnConflictingPublicKeySubmitted(
 		keepAddress,
@@ -474,34 +581,140 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	}
 
 	defer subscriptionConflictingPublicKey.Unsubscribe()
-	defer subscriptionPublicKeyPublished.Unsubscribe()
 
-	select {
-	case event := <-publicKeyPublished:
-		logger.Infof(
-			"public key [%x] has been accepted by keep: [%s]",
-			event.PublicKey,
-			keepAddress.String(),
-		)
-	case event := <-conflictingPublicKey:
-		logger.Errorf(
-			"member [%x] has submitted conflicting public key for keep [%s]: [%x]",
-			event.SubmittingMember,
-			keepAddress.String(),
-			event.ConflictingPublicKey,
-		)
-	case <-monitoringCtx.Done():
-		logger.Warningf(
-			"monitoring of public key submission for keep [%s] "+
-				"has been cancelled: [%v]",
-			keepAddress.String(),
-			monitoringCtx.Err(),
-		)
-	case <-abort:
-		logger.Warningf(
-			"monitoring of public key submission for keep [%s] "+
-				"has been aborted",
-			keepAddress.String(),
-		)
+	pubkeyChecksCounter := 0
+	// There is no way to determine whether keep waits for public key submission
+	// from this client or some other client. Given that the consequences are
+	// not that serious as for not submitting a signature and to minimize gas
+	// expenditure in case the current client's pub key has been properly
+	// registered and we are waiting for someone else, we retry only three times.
+	const maxPubkeyChecksCount = 3
+	// All three operators need to submit public key to the chain so we are
+	// less aggressive with check ticks than in case of signature submission
+	// where only one signature is enough.
+	const pubkeyCheckTick = 10 * time.Minute
+
+	pubkeyCheckTicker := time.NewTicker(pubkeyCheckTick)
+	defer pubkeyCheckTicker.Stop()
+
+	for {
+		select {
+		case event := <-conflictingPublicKey:
+			// Even in the case of a fork, a transaction with a conflicting
+			// public key submitted to the chain had to be signed with the
+			// operator's pubkey. For an honest operator, this situation should
+			// never happen, and if it happened, it is better to exit the
+			// monitoring immediately and do not re-attempt to submit public
+			// key for this node. It is clear that something is wrong with the
+			// operator that published the conflicting key and it is safer to
+			// abandon this keep.
+			logger.Errorf(
+				"member [%x] has submitted conflicting public key for keep [%s]: [%x]",
+				event.SubmittingMember,
+				keepAddress.String(),
+				event.ConflictingPublicKey,
+			)
+			return
+		case <-pubkeyCheckTicker.C:
+			pubkeyChecksCounter++
+
+			if pubkeyChecksCounter > maxPubkeyChecksCount {
+				logger.Infof(
+					"monitoring of public key submission for keep [%s] "+
+						"has been cancelled because maximum checks count [%v] "+
+						"has been reached",
+					keepAddress.String(),
+					maxPubkeyChecksCount,
+				)
+			}
+
+			logger.Infof(
+				"confirming on-chain public key submission for keep [%s]",
+				keepAddress.String(),
+			)
+
+			// We check the public key periodically instead of relying on
+			// incoming events. The main motivation is that events could not be
+			// trusted here because they may come from a forked chain or
+			// the same event can be delivered multiple times.
+			keepPublicKey, err := n.ethereumChain.GetPublicKey(keepAddress)
+			if err != nil {
+				logger.Errorf(
+					"failed to get keep public key during "+
+						"public key submission monitoring for keep [%s]: [%v]",
+					keepAddress.String(),
+					err,
+				)
+				continue
+			} else {
+				if len(keepPublicKey) > 0 {
+					currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+					if err != nil {
+						logger.Errorf(
+							"failed to get the current block while "+
+								"performing public key submission confirmation "+
+								"for keep [%s]: [%v]",
+							keepAddress.String(),
+							err,
+						)
+						continue
+					}
+
+					isConfirmed, err := chainutil.WaitForBlockConfirmations(
+						n.ethereumChain.BlockCounter(),
+						currentBlock,
+						blockConfirmations,
+						func() (bool, error) {
+							key, err := n.ethereumChain.GetPublicKey(
+								keepAddress,
+							)
+							if err != nil {
+								return false, err
+							}
+
+							return len(key) > 0, nil
+						},
+					)
+					if err != nil {
+						logger.Errorf(
+							"failed to perform keep public key "+
+								"confirmation during public key submission "+
+								"monitoring for keep [%s]: [%v]",
+							keepAddress.String(),
+							err,
+						)
+						continue
+					}
+
+					if isConfirmed {
+						logger.Infof(
+							"public key [%x] for keep [%s] successfully "+
+								"submitted and confirmed on-chain",
+							keepPublicKey,
+							keepAddress.String(),
+						)
+						return
+					}
+				}
+			}
+
+			logger.Infof(
+				"keep [%s] still does not have a confirmed public key; "+
+					"re-submitting public key [%x]",
+				keepAddress.String(),
+				publicKey,
+			)
+
+			err = n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
+			if err != nil {
+				logger.Errorf(
+					"keep [%s] still does not have a confirmed public key "+
+						"and resubmission by this member failed with: [%v]",
+					keepAddress.String(),
+					err,
+				)
+				return
+			}
+		}
 	}
 }
