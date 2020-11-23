@@ -27,9 +27,20 @@ import (
 
 var logger = log.Logger("keep-ecdsa")
 
-const monitorKeepPublicKeySubmissionTimeout = 30 * time.Minute
-const retryDelay = 1 * time.Second
-const blockConfirmations = uint64(12)
+const (
+	// Determines the delay which should be preserved before retrying
+	// actions within the key generation and signing process.
+	retryDelay = 1 * time.Second
+
+	// Number of blocks which should elapse before confirming
+	// the given chain state expectations.
+	blockConfirmations = uint64(12)
+
+	// Used to calculate the publication delay factor for the given signer index
+	// to avoid all signers publishing the same signature for given keep at the
+	// same time.
+	signaturePublicationDelayStep = 5 * time.Minute
+)
 
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
@@ -309,6 +320,8 @@ func (n *Node) publishSignature(
 	digest [32]byte,
 	signature *ecdsa.Signature,
 ) error {
+	n.waitSignaturePublicationDelay(keepAddress)
+
 	attemptCounter := 0
 	for {
 		attemptCounter++
@@ -359,11 +372,6 @@ func (n *Node) publishSignature(
 		// and there are enough confirmations from the chain.
 		// We are fine, leaving.
 		if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
-			logger.Infof(
-				"signature for keep [%s] already submitted: [%+x]",
-				keepAddress.String(),
-				digest,
-			)
 			return nil
 		}
 
@@ -391,11 +399,6 @@ func (n *Node) publishSignature(
 			// confirmations from the chain before making a decision about
 			// leaving the submission process.
 			if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
-				logger.Infof(
-					"signature for keep [%s] already submitted: [%+x]",
-					keepAddress.String(),
-					digest,
-				)
 				return nil
 			}
 
@@ -418,6 +421,60 @@ func (n *Node) publishSignature(
 
 		return nil
 	}
+}
+
+// waitSignaturePublicationDelay waits a certain amount of time appropriately
+// for the given signer index to avoid all signers publishing the same signature
+// for given keep at the same time.
+func (n *Node) waitSignaturePublicationDelay(
+	keepAddress common.Address,
+) {
+	signerIndex, err := n.getSignerIndex(keepAddress)
+	if err != nil {
+		logger.Errorf(
+			"could not determine signature publication delay for keep [%s]: "+
+				"[%v]; the signature publication will not be delayed",
+			keepAddress.String(),
+			err,
+		)
+		return
+	}
+
+	// just in case this function is not invoked in the right context
+	if signerIndex < 0 {
+		logger.Errorf(
+			"could not determine signature publication delay for keep [%s], "+
+				"signer index is less than zero; the signature publication "+
+				"will not be delayed",
+			keepAddress.String(),
+		)
+		return
+	}
+
+	delay := time.Duration(signerIndex) * signaturePublicationDelayStep
+
+	logger.Infof(
+		"waiting [%v] before publishing signature for keep [%s]",
+		delay,
+		keepAddress.String(),
+	)
+
+	time.Sleep(delay)
+}
+
+func (n *Node) getSignerIndex(keepAddress common.Address) (int, error) {
+	members, err := n.ethereumChain.GetMembers(keepAddress)
+	if err != nil {
+		return -1, err
+	}
+
+	for index, member := range members {
+		if member == n.ethereumChain.Address() {
+			return index, nil
+		}
+	}
+
+	return -1, nil
 }
 
 func (n *Node) waitForSignature(
