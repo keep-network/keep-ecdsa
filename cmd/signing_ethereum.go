@@ -2,15 +2,16 @@ package cmd
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-ecdsa/internal/config"
@@ -58,9 +59,10 @@ var EthereumSigningCommand = cli.Command{
 }
 
 const ethereumSignDescription = `Calculates an ethereum signature for a given message.
-The message is expected to be provided as a string, it is later hashed with SHA-256
-and passed to Ethereum ECDSA signing. Signature is calculated in Ethereum specific
-format as a hexadecimal string representation of 65-byte {R, S, V} parameters.
+The message is expected to be provided as a string, it is later hashed with
+ethereum's hashing algorithm and passed to Ethereum ECDSA signing. Signature is
+calculated in Ethereum specific format as a hexadecimal string representation of
+65-byte {R, S, V} parameters, where V is 0 or 1.
 
 It requires an Ethereum key to be provided in an encrypted file. A path to the key file
 can be configured in a config file or specified directly with an 'eth-key-file' flag.
@@ -98,10 +100,10 @@ type EthereumSignature struct {
 	Address   common.Address `json:"address"`
 	Message   string         `json:"msg"`
 	Signature string         `json:"sig"`
-	Version   uint           `json:"version"`
+	Version   string         `json:"version"`
 }
 
-const ethSignatureVersion uint = 2
+const ethSignatureVersion = "2"
 
 // EthereumSign signs a string using operator's ethereum key.
 func EthereumSign(c *cli.Context) error {
@@ -134,18 +136,9 @@ func EthereumSign(c *cli.Context) error {
 		)
 	}
 
-	digest := sha256.Sum256([]byte(message))
-
-	signature, err := crypto.Sign(digest[:], ethereumKey.PrivateKey)
+	ethereumSignature, err := sign(ethereumKey, message)
 	if err != nil {
-		return fmt.Errorf("failed to sign: [%v]", err)
-	}
-
-	ethereumSignature := &EthereumSignature{
-		Address:   ethereumKey.Address,
-		Message:   message,
-		Signature: hex.EncodeToString(signature),
-		Version:   ethSignatureVersion,
+		return fmt.Errorf("signing failed: [%v]", err)
 	}
 
 	marshaledSignature, err := json.Marshal(ethereumSignature)
@@ -181,19 +174,50 @@ func EthereumVerify(c *cli.Context) error {
 		return fmt.Errorf("failed to unmarshal ethereum signature: [%v]", err)
 	}
 
+	err = verify(ethereumSignature)
+	if err != nil {
+		return fmt.Errorf("signature verification failed: [%v]", err)
+	}
+
+	fmt.Printf(
+		"signature verified correctly, message [%s] was signed by [%s]\n",
+		ethereumSignature.Message,
+		ethereumSignature.Address.Hex(),
+	)
+
+	return nil
+}
+
+func sign(ethereumKey *keystore.Key, message string) (*EthereumSignature, error) {
+	digest := accounts.TextHash([]byte(message))
+
+	signature, err := crypto.Sign(digest[:], ethereumKey.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign: [%v]", err)
+	}
+
+	return &EthereumSignature{
+		Address:   ethereumKey.Address,
+		Message:   message,
+		Signature: hexutil.Encode(signature),
+		Version:   ethSignatureVersion,
+	}, nil
+}
+
+func verify(ethereumSignature *EthereumSignature) error {
 	if ethereumSignature.Version != ethSignatureVersion {
 		return fmt.Errorf(
 			"unsupported ethereum signature version\n"+
-				"\texpected: %d\n"+
-				"\tactual:   %d",
+				"\texpected: %s\n"+
+				"\tactual:   %s",
 			ethSignatureVersion,
 			ethereumSignature.Version,
 		)
 	}
 
-	digest := sha256.Sum256([]byte(ethereumSignature.Message))
+	digest := accounts.TextHash([]byte(ethereumSignature.Message))
 
-	signatureBytes, err := hex.DecodeString(ethereumSignature.Signature)
+	signatureBytes, err := hexutil.Decode(ethereumSignature.Signature)
 	if err != nil {
 		return fmt.Errorf("failed to decode signature: [%v]", err)
 	}
@@ -207,19 +231,13 @@ func EthereumVerify(c *cli.Context) error {
 
 	if !bytes.Equal(recoveredAddress.Bytes(), ethereumSignature.Address.Bytes()) {
 		return fmt.Errorf(
-			"signature verification failed: invalid signer\n"+
+			"invalid signer\n"+
 				"\texpected: %s\n"+
 				"\tactual:   %s",
 			ethereumSignature.Address.Hex(),
 			recoveredAddress.Hex(),
 		)
 	}
-
-	fmt.Printf(
-		"signature verified correctly, message [%s] was signed by [%s]\n",
-		ethereumSignature.Message,
-		recoveredAddress.Hex(),
-	)
 
 	return nil
 }
