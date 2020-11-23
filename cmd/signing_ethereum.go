@@ -100,10 +100,10 @@ type EthereumSignature struct {
 	Address   common.Address `json:"address"`
 	Message   string         `json:"msg"`
 	Signature string         `json:"sig"`
-	Version   uint           `json:"version"`
+	Version   string         `json:"version"`
 }
 
-const ethSignatureVersion uint = 2
+const ethSignatureVersion = "2"
 
 // EthereumSign signs a string using operator's ethereum key.
 func EthereumSign(c *cli.Context) error {
@@ -208,8 +208,8 @@ func verify(ethereumSignature *EthereumSignature) error {
 	if ethereumSignature.Version != ethSignatureVersion {
 		return fmt.Errorf(
 			"unsupported ethereum signature version\n"+
-				"\texpected: %d\n"+
-				"\tactual:   %d",
+				"\texpected: %s\n"+
+				"\tactual:   %s",
 			ethSignatureVersion,
 			ethereumSignature.Version,
 		)

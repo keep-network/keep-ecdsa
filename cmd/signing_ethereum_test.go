@@ -17,7 +17,7 @@ var validSignature = EthereumSignature{
 	Address:   common.HexToAddress("0x4BCFC3099F12C53D01Da46695CC8776be584b946"),
 	Message:   "verySecretMessage",
 	Signature: "0xc8be189ab0ee691de7019eaa3de58558b84775085d9a0840908343ac690e02ca3f6e3d2dc70025b9b214d96c30e38c41f818cccd6f06b7a81c4afd26cbe6d6d600",
-	Version:   2,
+	Version:   "2",
 }
 
 func TestSign(t *testing.T) {
@@ -29,7 +29,7 @@ func TestSign(t *testing.T) {
 		Address:   common.HexToAddress("0x4BCFC3099F12C53D01Da46695CC8776be584b946"),
 		Message:   message,
 		Signature: "0xc8be189ab0ee691de7019eaa3de58558b84775085d9a0840908343ac690e02ca3f6e3d2dc70025b9b214d96c30e38c41f818cccd6f06b7a81c4afd26cbe6d6d600",
-		Version:   2,
+		Version:   "2",
 	}
 
 	ethereumKey, err := ethutil.DecryptKeyFile(keyFilePath, keyFilePassword)
@@ -116,7 +116,7 @@ func TestVerify_WrongSignature(t *testing.T) {
 
 func TestVerify_WrongVersion(t *testing.T) {
 	ethereumSignature := validSignature
-	ethereumSignature.Version = 1
+	ethereumSignature.Version = "1"
 
 	expectedError := fmt.Errorf("unsupported ethereum signature version\n\texpected: 2\n\tactual:   1")
 
