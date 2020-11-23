@@ -372,11 +372,6 @@ func (n *Node) publishSignature(
 		// and there are enough confirmations from the chain.
 		// We are fine, leaving.
 		if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
-			logger.Infof(
-				"signature for keep [%s] already submitted: [%+x]",
-				keepAddress.String(),
-				digest,
-			)
 			return nil
 		}
 
@@ -404,11 +399,6 @@ func (n *Node) publishSignature(
 			// confirmations from the chain before making a decision about
 			// leaving the submission process.
 			if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
-				logger.Infof(
-					"signature for keep [%s] already submitted: [%+x]",
-					keepAddress.String(),
-					digest,
-				)
 				return nil
 			}
 
