@@ -23,5 +23,5 @@ npm install
 3. Run the script and pass the interval as parameters:
 +
 ```
-node --experimental-json-modules inspect-stacker-rewards.js
+node --experimental-json-modules inspect-staker-rewards.js
 ```
