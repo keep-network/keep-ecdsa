@@ -26,5 +26,5 @@ npm install
 ETH_HOSTNAME=<eth-ws-hostname> \
 node --experimental-json-modules ./scripts/inspect-staker-rewards.js
 ```
-
++
 You can also enable the debug logs by passing the `DEBUG=on` variable.
