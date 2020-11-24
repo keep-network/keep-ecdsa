@@ -18,7 +18,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/gofuzz v1.1.0
 	github.com/ipfs/go-log v1.0.4
-	github.com/keep-network/keep-common v1.2.1-0.20201117163745-878626866ba7
+	github.com/keep-network/keep-common v1.2.1-0.20201124134759-74da3a28a835
 	github.com/keep-network/keep-core v1.3.2-0.20201117170744-88a808971677
 	github.com/keep-network/tbtc v1.1.1-0.20201117095624-38508bdb562e
 	github.com/pkg/errors v0.9.1
