@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"sync"
 	"time"
 
@@ -321,8 +320,8 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 	if config.MiningCheckInterval != 0 {
 		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
 	}
-	if config.MaxGasPrice != 0 {
-		maxGasPrice = new(big.Int).SetUint64(config.MaxGasPrice)
+	if config.MaxGasPrice != nil {
+		maxGasPrice = config.MaxGasPrice.Int
 	}
 
 	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
