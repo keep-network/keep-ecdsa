@@ -1,0 +1,27 @@
+= Staker rewards inspector
+
+== Prerequisites
+
+To run the inspector script, make sure you have the following prerequisites:
+
+- Node.js (at least v14.3.0). We recommend to use
+  the https://github.com/nvm-sh/nvm[Node Version Manager] to get the right
+  version with no troubles.
+
+== How to run
+
+1. Make sure you use the right Node.js version:
++
+```
+nvm use 14.3.0
+```
+2. Install the NPM dependencies if not done yet:
++
+```
+npm install
+```
+3. Run the script and pass the interval as parameters:
++
+```
+node --experimental-json-modules inspect-stacker-rewards.js
+```
