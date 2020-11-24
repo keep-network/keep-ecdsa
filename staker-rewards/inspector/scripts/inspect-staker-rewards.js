@@ -1,26 +1,44 @@
-const artifactsPath = "@keep-network/keep-ecdsa/artifacts"
+import clc from "cli-color";
+import Context from "./lib/context.js"
 
-const clc = require("cli-color");
-const truffleContract = require("@truffle/contract")
-const BondedECDSAKeepFactoryJson = require(`${artifactsPath}/BondedECDSAKeepFactory.json`)
-const BondedECDSAKeepJson = require(`${artifactsPath}/BondedECDSAKeep.json`)
+import { callWithRetry } from "./lib/contract-helper.js"
 
-module.exports = async function () {
+async function run(){
     try {
-        const BondedECDSAKeepFactory = truffleContract(BondedECDSAKeepFactoryJson)
-        const BondedECDSAKeep = truffleContract(BondedECDSAKeepJson)
+        if (process.env.DEBUG !== "on") {
+            console.debug = function() {}
+        }
 
-        BondedECDSAKeepFactory.setProvider(web3.currentProvider)
-        BondedECDSAKeep.setProvider(web3.currentProvider)
+        const context = await Context.initialize()
+
+        const { BondedECDSAKeepFactory, BondedECDSAKeep } = context.contracts
 
         const factory = await BondedECDSAKeepFactory.deployed()
 
-        const keepCount = await factory.getKeepCount()
+        const keepCount = await callWithRetry(factory.methods.getKeepCount())
 
-        console.log(clc.green(`created keeps count: ${keepCount}`))
+        console.log(clc.green(`Keeps count: ${keepCount}`))
 
-        process.exit()
+        const allOperators = new Set()
+
+        for (let i = 0; i < keepCount; i++) {
+            const keepAddress = await callWithRetry(factory.methods.getKeepAtIndex(i))
+            const keep = await BondedECDSAKeep.at(keepAddress)
+            const members = await callWithRetry(keep.methods.getMembers())
+
+            members.forEach((member) => allOperators.add(member))
+        }
     } catch (error) {
-        console.log(error)
+        throw new Error(error)
     }
 }
+
+run()
+    .then(result => {
+        console.log(clc.green("Inspection completed successfully"))
+        process.exit(0)
+    })
+    .catch(error => {
+        console.error(clc.red("Inspection errored out with error: "), error)
+        process.exit(1)
+    })

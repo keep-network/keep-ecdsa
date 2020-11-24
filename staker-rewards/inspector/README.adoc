@@ -23,6 +23,8 @@ npm install
 3. Run the script along with environment variables:
 +
 ```
-ETH_HOSTNAME=<ethereum-node-url> \
-npx truffle exec ./scripts/inspect-staker-rewards.js --network <mainnet|ropsten>
+ETH_HOSTNAME=<eth-ws-hostname> \
+node --experimental-json-modules ./scripts/inspect-staker-rewards.js
 ```
+
+You can also enable the debug logs by passing the `DEBUG=on` variable.
