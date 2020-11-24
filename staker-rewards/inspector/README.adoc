@@ -20,8 +20,9 @@ nvm use 14.3.0
 ```
 npm install
 ```
-3. Run the script and pass the interval as parameters:
+3. Run the script along with environment variables:
 +
 ```
-node --experimental-json-modules inspect-staker-rewards.js
+ETH_HOSTNAME=<ethereum-node-url> \
+npx truffle exec ./scripts/inspect-staker-rewards.js --network <mainnet|ropsten>
 ```
