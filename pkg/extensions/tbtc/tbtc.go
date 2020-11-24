@@ -879,6 +879,11 @@ func (t *tbtc) getSignerActionDelay(
 		return 0, err
 	}
 
+	// just in case this function is not invoked in the right context
+	if signerIndex < 0 {
+		return 0, fmt.Errorf("signer index is less than zero")
+	}
+
 	return time.Duration(signerIndex) * t.signerActionDelayStep, nil
 }
 
