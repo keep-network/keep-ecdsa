@@ -31,6 +31,15 @@ func (n *Node) InitializeTSSPreParamsPool() {
 	go n.tssParamsPool.pumpPool()
 }
 
+// TSSPreParamsPoolSize returns the current size of the TSS params pool.
+func (n *Node) TSSPreParamsPoolSize() int {
+	if n.tssParamsPool == nil {
+		return 0
+	}
+
+	return len(n.tssParamsPool.pool)
+}
+
 func (t *tssPreParamsPool) pumpPool() {
 	for {
 		logger.Info("generating new tss pre parameters")

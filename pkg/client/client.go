@@ -29,6 +29,16 @@ var logger = log.Logger("keep-ecdsa")
 // signings by adversaries in case of a chain fork.
 const blockConfirmations = 12
 
+// Handle represents a handle to the ECDSA client.
+type Handle struct {
+	tssNode *node.Node
+}
+
+// TSSPreParamsPoolSize returns the current size of the TSS params pool.
+func (h *Handle) TSSPreParamsPoolSize() int {
+	return h.tssNode.TSSPreParamsPoolSize()
+}
+
 // Initialize initializes the ECDSA client with rules related to events handling.
 // Expects a slice of sanctioned applications selected by the operator for which
 // operator will be registered as a member candidate.
@@ -41,7 +51,7 @@ func Initialize(
 	sanctionedApplications []common.Address,
 	clientConfig *Config,
 	tssConfig *tss.Config,
-) {
+) *Handle {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
 	tssNode := node.NewNode(ethereumChain, networkProvider, tssConfig)
@@ -218,6 +228,10 @@ func Initialize(
 
 	for _, application := range sanctionedApplications {
 		go checkStatusAndRegisterForApplication(ctx, ethereumChain, application)
+	}
+
+	return &Handle{
+		tssNode: tssNode,
 	}
 }
 
