@@ -103,6 +103,7 @@
     # Port = 8080
     # NetworkMetricsTick = 60
     # EthereumMetricsTick = 600
+    # ClientMetricsTick = 60
 
 # Uncomment to enable the diagnostics module which exposes information useful
 # for debugging and diagnostic client's status.
