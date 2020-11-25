@@ -3,6 +3,7 @@ import ProviderEngine from "web3-provider-engine"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket.js"
 import Subproviders from "@0x/subproviders"
 
+import Cache from "./cache.js"
 import { Contract, getDeploymentBlockNumber } from "./contract-helper.js"
 
 import BondedECDSAKeepFactoryJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
@@ -36,8 +37,8 @@ export default class Context {
             deploymentBlock: deploymentBlock,
         }
 
-        // TODO: use real cache
-        const cache = {}
+        const cache = new Cache(web3, contracts)
+        await cache.initialize()
 
         return new Context(cache, web3, contracts)
     }
