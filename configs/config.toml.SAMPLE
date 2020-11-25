@@ -121,5 +121,5 @@
 # for example, retrieve public key from keep to tBTC deposit or
 # increase redemption fee on tBTC deposit.
 # [Extensions.TBTC]
-	# TBTCSystem = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+	# TBTCSystem = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 
