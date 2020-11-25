@@ -55,7 +55,7 @@ export async function getPastEvents(web3, contract, eventName, fromBlock = 0) {
                 fromBlock: fromBlock,
             })
         } catch (error) {
-            logger.warn(
+            console.log(
                 `Switching to partial events pulls; ` +
                 `failed to get events in one request: [${error.message}]`
             )

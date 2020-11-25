@@ -3,7 +3,7 @@ import pAll from "p-all"
 import low from "lowdb"
 import FileSync from "lowdb/adapters/FileSync.js"
 
-import {callWithRetry, getPastEvents} from "./contract-helper.js";
+import { getPastEvents } from "./contract-helper.js";
 
 const DATA_DIR_PATH = path.resolve(process.env.DATA_DIR_PATH || "./data")
 const CACHE_PATH = path.resolve(DATA_DIR_PATH, "cache.json")
@@ -52,7 +52,7 @@ export default class Cache {
     const keepsOnChain = []
     keepCreatedEvents.forEach((event) => {
       keepsOnChain.push({
-        keepAddress: event.returnValues.keepAddress,
+        address: event.returnValues.keepAddress,
         members: event.returnValues.members,
         creationBlock: event.blockNumber,
       })
@@ -71,7 +71,7 @@ export default class Cache {
     keepsOnChain.forEach((keep) => {
       const currentlyCached = this.cache
         .get("keeps")
-        .find({ address: keep.keepAddress })
+        .find({ address: keep.address })
         .value()
 
       if (!currentlyCached) {
@@ -102,32 +102,20 @@ export default class Cache {
   async fetchKeep(keepData) {
     return new Promise(async (resolve, reject) => {
       try {
-        const { BondedECDSAKeepFactory } = this.contracts
-
-        const factory = await BondedECDSAKeepFactory.deployed()
-
-        const {
-          keepAddress,
-          members,
-          creationBlock
-        } = keepData
-
-        const creationTimestamp = await callWithRetry(
-            factory.methods.getKeepOpenedTimestamp(keepAddress)
-        )
+        const { address, members, creationBlock } = keepData
 
         this.cache
             .get("keeps")
             .push({
-              address: keepAddress,
+              address: address,
               members: members,
-              creationTimestamp: creationTimestamp,
               creationBlock: creationBlock,
+              status: await this.getKeepStatus(keepData)
             })
             .write()
 
         console.log(
-            `Successfully fetched information about keep ${keepAddress}`
+            `Successfully fetched information about keep ${address}`
         )
 
         return resolve()
@@ -135,5 +123,59 @@ export default class Cache {
         return reject(err)
       }
     })
+  }
+
+  async getKeepStatus(keepData) {
+    const closedTimestamp = await this.getKeepEventTimestamp(
+        keepData,
+        "KeepClosed"
+    )
+    if (closedTimestamp) {
+      return {
+        name: "closed",
+        timestamp: closedTimestamp
+      }
+    }
+
+    const terminatedTimestamp = await this.getKeepEventTimestamp(
+        keepData,
+        "KeepTerminated"
+    )
+    if (terminatedTimestamp) {
+      return {
+        name: "terminated",
+        timestamp: terminatedTimestamp
+      }
+    }
+
+    return {
+      name: "active",
+      timestamp: (await this.web3.eth.getBlock(keepData.creationBlock)).timestamp
+    }
+  }
+
+  async getKeepEventTimestamp(keepData, eventName) {
+    const { address, creationBlock } = keepData
+
+    const keepContract = await this.contracts.BondedECDSAKeep.at(address)
+
+    const events = await getPastEvents(
+        this.web3,
+        keepContract,
+        eventName,
+        creationBlock
+    )
+
+    if (events.length > 0) {
+      return (await this.web3.eth.getBlock(events[0].blockNumber)).timestamp
+    }
+  }
+
+  async getKeeps() {
+    const keeps = this.cache
+        .get("keeps")
+        .value()
+
+    return keeps
   }
 }
