@@ -14,14 +14,13 @@ func TestReadConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	filepath := "../../test/config.toml"
+	filepath := "../internal/testdata/config.toml"
 	cfg, err := ReadConfig(filepath)
 	if err != nil {
 		t.Fatalf(
 			"failed to read test config: [%v]",
 			err,
 		)
-
 	}
 
 	var configReadTests = map[string]struct {

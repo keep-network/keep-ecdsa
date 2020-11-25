@@ -52,7 +52,7 @@ RUN cd $APP_DIR/solidity && npm install
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
 # Need this to resolve imports in generated Ethereum commands.
-COPY ./internal/config $APP_DIR/config
+COPY ./config $APP_DIR/config
 RUN go generate ./.../gen
 
 # Build the application.
