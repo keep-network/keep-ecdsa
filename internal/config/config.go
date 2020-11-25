@@ -65,6 +65,7 @@ type Metrics struct {
 	Port                int
 	NetworkMetricsTick  int
 	EthereumMetricsTick int
+	ClientMetricsTick   int
 }
 
 // Diagnostics stores diagnostics-related configuration.
