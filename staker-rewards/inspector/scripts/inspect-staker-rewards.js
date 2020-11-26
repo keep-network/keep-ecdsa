@@ -11,9 +11,10 @@ async function run() {
 
         const { cache } = context
 
-        console.log("Refreshing keeps cache...")
-        await cache.refresh()
-
+        if (process.env.CACHE_REFRESH !== "off") {
+            console.log("Refreshing keeps cache...")
+            await cache.refresh()
+        }
     } catch (error) {
         throw new Error(error)
     }

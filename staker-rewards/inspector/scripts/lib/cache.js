@@ -128,10 +128,7 @@ export default class Cache {
   }
 
   async refreshActiveKeeps() {
-    const activeKeeps = this.cache
-        .get("keeps")
-        .filter(keep => keep.status.name === "active")
-        .value()
+    const activeKeeps = this.getKeeps("active")
 
     console.log(`Refreshing [${activeKeeps.length}] active keeps in the cache`)
 
@@ -206,11 +203,10 @@ export default class Cache {
     }
   }
 
-  async getKeeps() {
-    const keeps = this.cache
+  getKeeps(status) {
+    return this.cache
         .get("keeps")
+        .filter(keep => !status || keep.status.name === status)
         .value()
-
-    return keeps
   }
 }
