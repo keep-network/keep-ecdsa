@@ -27,5 +27,6 @@ abi/
 build/
 
 # Configuration files
-configs/config.toml
+configs
+!configs/config.toml.SAMPLE
 external-contracts.js-e
