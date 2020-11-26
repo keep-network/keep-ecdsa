@@ -23,7 +23,7 @@ export class Contract {
     }
 }
 
-export const getDeploymentBlockNumber = async function (artifact, web3) {
+export async function getDeploymentBlockNumber(artifact, web3) {
     const networkId = await web3.eth.net.getId()
 
     const transactionHash = artifact.networks[networkId].transactionHash
@@ -33,7 +33,7 @@ export const getDeploymentBlockNumber = async function (artifact, web3) {
     return transaction.blockNumber
 }
 
-export const callWithRetry = async function(
+export async function callWithRetry(
     contractMethod,
     params,
     totalAttempts = 3
