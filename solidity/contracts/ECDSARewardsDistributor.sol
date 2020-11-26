@@ -88,6 +88,9 @@ contract ECDSARewardsDistributor is Ownable {
         _setClaimed(index, merkleRoot);
         require(IERC20(token).transfer(account, amount), 'MerkleDistributor: Transfer failed.');
 
+        // Update KEEP amount for the give merkleRoot
+        merkleRoots[merkleRoot] -= amount;
+
         emit Claimed(index, account, amount);
     }
 }
