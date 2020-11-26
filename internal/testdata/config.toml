@@ -30,6 +30,7 @@
 
 [TSS]
 	PreParamsGenerationTimeout = "6m37s"
+	PreParamsTargetPoolSize = 36
 
 [Extensions.TBTC]
 	TBTCSystem = "0xa4888eDD97A5a3A739B4E0807C71817c8a418273"
