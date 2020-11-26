@@ -39796,7 +39796,21 @@
         "name": "active",
         "timestamp": 1606393887
       }
+    },
+    {
+      "address": "0x4B3d824Ea2A1537957129380F8e9CDe514eDC00e",
+      "members": [
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0x36C56A69c2aeA23879b59dB0e99D57eF2ff77f06",
+        "0xE5f8f4A928a39ED4D21eCfD1BFB1Eebd49663e7e"
+      ],
+      "creationBlock": 11335489,
+      "creationTimestamp": "1606413103",
+      "status": {
+        "name": "active",
+        "timestamp": 1606413103
+      }
     }
   ],
-  "lastRefreshBlock": 11334022
+  "lastRefreshBlock": 11335489
 }
