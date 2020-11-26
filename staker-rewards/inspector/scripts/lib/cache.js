@@ -6,8 +6,9 @@ import FileSync from "lowdb/adapters/FileSync.js"
 import {
   getPastEvents,
   callWithRetry,
-  KeepTerminationCause
-} from "./contract-helper.js";
+  KeepStatus,
+  KeepTerminationCause,
+} from "./contract-helper.js"
 
 const DATA_DIR_PATH = path.resolve(process.env.DATA_DIR_PATH || "./data")
 const CACHE_PATH = path.resolve(DATA_DIR_PATH, "cache.json")
@@ -138,7 +139,7 @@ export default class Cache {
   }
 
   async refreshActiveKeeps() {
-    const activeKeeps = this.getKeeps("active")
+    const activeKeeps = this.getKeeps(KeepStatus.ACTIVE)
 
     console.log(`Refreshing [${activeKeeps.length}] active keeps in the cache`)
 
@@ -174,7 +175,7 @@ export default class Cache {
     )
     if (closedTimestamp) {
       return {
-        name: "closed",
+        name: KeepStatus.CLOSED,
         timestamp: closedTimestamp
       }
     }
@@ -185,14 +186,14 @@ export default class Cache {
     )
     if (terminatedTimestamp) {
       return {
-        name: "terminated",
+        name: KeepStatus.TERMINATED,
         timestamp: terminatedTimestamp,
         cause: await this.resolveKeepTerminationCause(keepData)
       }
     }
 
     return {
-      name: "active",
+      name: KeepStatus.ACTIVE,
       timestamp: (await this.web3.eth.getBlock(keepData.creationBlock)).timestamp
     }
   }

@@ -1,7 +1,7 @@
-import clc from "cli-color";
+import clc from "cli-color"
 
 import Context from "./lib/context.js"
-import { KeepTerminationCause } from "./lib/contract-helper.js";
+import { KeepStatus, KeepTerminationCause } from "./lib/contract-helper.js"
 
 async function run() {
     try {
@@ -45,7 +45,7 @@ async function run() {
         // have been eventually terminated due to keygen fail
         const failedOpenedKeeps = openedKeeps
             .filter(keep =>
-                keep.status.name === "terminated" &&
+                keep.status.name === KeepStatus.TERMINATED &&
                 keep.status.cause === KeepTerminationCause.KEYGEN_FAIL
             )
 
@@ -63,8 +63,8 @@ async function run() {
             .filter(keep =>
                 // get keeps which are currently in the state `closed` or
                 // `terminated` due to causes other than keygen fail
-                keep.status.name === "closed" ||
-                (keep.status.name === "terminated" &&
+                keep.status.name === KeepStatus.CLOSED ||
+                (keep.status.name === KeepStatus.TERMINATED &&
                     keep.status.cause !== KeepTerminationCause.KEYGEN_FAIL)
             )
 
@@ -73,7 +73,7 @@ async function run() {
         // due to signature fail
         const failedClosedKeeps = closedKeeps
             .filter(keep =>
-                keep.status.name === "terminated" &&
+                keep.status.name === KeepStatus.TERMINATED &&
                 keep.status.cause === KeepTerminationCause.SIGNATURE_FAIL
             )
 
