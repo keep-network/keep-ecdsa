@@ -86,6 +86,14 @@
 # This is an optional parameter, if not provided timeout for TSS protocol
 # pre-parameters generation will be set to `2 minutes`.
 #  PreParamsGenerationTimeout = "2m30s"
+#
+# TSS pre-parameters target pool size. This value determines the number of
+# pre-parameters that should be generated and kept at hand ready to use.
+# That value should be set reasonably because a low target pool size may force
+# the client to generate parameters during protocol executions and cause unwanted
+# delays. On the other hand, a big target pool size can cause high CPU usage for
+# a long time. The default value of this parameter is `20`.
+#  PreParamsTargetPoolSize = 20
 
 # Uncomment to enable the metrics module which collects and exposes information
 # useful for external monitoring tools usually operating on time series data.
