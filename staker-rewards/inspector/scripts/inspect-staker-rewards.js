@@ -1,4 +1,5 @@
 import clc from "cli-color";
+
 import Context from "./lib/context.js"
 
 async function run() {
@@ -29,7 +30,14 @@ async function run() {
             await cache.refresh()
         }
 
-        const terminatedKeeps = cache.getKeeps("terminated")
+        const terminatedKeeps = cache
+            .getKeeps("terminated")
+            .filter(keep => {
+                return intervalStart <= keep.status.timestamp &&
+                    keep.status.timestamp <= intervalEnd
+            })
+
+        console.log(terminatedKeeps)
     } catch (error) {
         throw new Error(error)
     }

@@ -3,7 +3,11 @@ import pAll from "p-all"
 import low from "lowdb"
 import FileSync from "lowdb/adapters/FileSync.js"
 
-import { getPastEvents } from "./contract-helper.js";
+import {
+  getPastEvents,
+  callWithRetry,
+  KeepTerminationCause
+} from "./contract-helper.js";
 
 const DATA_DIR_PATH = path.resolve(process.env.DATA_DIR_PATH || "./data")
 const CACHE_PATH = path.resolve(DATA_DIR_PATH, "cache.json")
@@ -176,7 +180,8 @@ export default class Cache {
     if (terminatedTimestamp) {
       return {
         name: "terminated",
-        timestamp: terminatedTimestamp
+        timestamp: terminatedTimestamp,
+        cause: await this.resolveKeepTerminationCause(keepData)
       }
     }
 
@@ -201,6 +206,40 @@ export default class Cache {
     if (events.length > 0) {
       return (await this.web3.eth.getBlock(events[0].blockNumber)).timestamp
     }
+  }
+
+  async resolveKeepTerminationCause(keepData) {
+    const keepContract = await this.contracts.BondedECDSAKeep.at(keepData.address)
+
+    const publicKey = await callWithRetry(keepContract.methods.getPublicKey())
+    if (!publicKey) {
+      return KeepTerminationCause.KEYGEN_FAIL
+    }
+
+    const signatureRequestedEvents = (
+        await getPastEvents(
+            this.web3,
+            keepContract,
+            "SignatureRequested",
+            keepData.creationBlock
+        )
+    ).sort((a, b) => a.blockNumber - b.blockNumber)
+
+    const latestSignatureRequestedEvent = signatureRequestedEvents.slice(-1)[0]
+
+    if (latestSignatureRequestedEvent) {
+      const digest = latestSignatureRequestedEvent.returnValues.digest
+
+      const isAwaitingSignature = await callWithRetry(
+          keepContract.methods.isAwaitingSignature(digest)
+      )
+
+      if (isAwaitingSignature) {
+        return KeepTerminationCause.SIGNATURE_FAIL
+      }
+    }
+
+    return KeepTerminationCause.OTHER
   }
 
   getKeeps(status) {
