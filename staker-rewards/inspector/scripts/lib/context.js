@@ -16,8 +16,8 @@ export default class Context {
         this.contracts = contracts
     }
 
-    static async initialize() {
-        const web3 = await initWeb3(process.env.ETH_HOSTNAME)
+    static async initialize(ethUrl) {
+        const web3 = await initWeb3(ethUrl)
 
         const BondedECDSAKeepFactory = new Contract(
             BondedECDSAKeepFactoryJson,
