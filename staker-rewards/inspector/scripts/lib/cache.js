@@ -97,6 +97,8 @@ export default class Cache {
 
     const latestBlockNumber = keepCreatedEvents.slice(-1)[0].blockNumber
     this.cache.assign({ lastRefreshBlock: latestBlockNumber }).write()
+
+    await this.refreshActiveKeeps()
   }
 
   async fetchKeep(keepData) {
@@ -123,6 +125,39 @@ export default class Cache {
         return reject(err)
       }
     })
+  }
+
+  async refreshActiveKeeps() {
+    const activeKeeps = this.cache
+        .get("keeps")
+        .filter(keep => keep.status.name === "active")
+        .value()
+
+    console.log(`Refreshing [${activeKeeps.length}] active keeps in the cache`)
+
+    const actions = []
+    activeKeeps.forEach(keepData => {
+      actions.push(() => this.refreshKeepStatus(keepData))
+    })
+
+    await pAll(actions, {concurrency: CONCURRENCY_LIMIT})
+  }
+
+  async refreshKeepStatus(keepData) {
+    console.log(`Checking current status of keep ${keepData.address}`)
+
+    const lastStatus = keepData.status
+    const currentStatus = await this.getKeepStatus(keepData)
+
+    if (lastStatus.name !== currentStatus.name) {
+      console.log(`Updating current status of keep ${keepData.address}`)
+
+      this.cache
+          .get("keeps")
+          .find({ address: keepData.address })
+          .assign({ status: currentStatus })
+          .write()
+    }
   }
 
   async getKeepStatus(keepData) {
