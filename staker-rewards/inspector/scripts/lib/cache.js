@@ -109,6 +109,11 @@ export default class Cache {
     return new Promise(async (resolve, reject) => {
       try {
         const { address, members, creationBlock } = keepData
+        const keepContract = await this.contracts.BondedECDSAKeep.at(address)
+
+        const creationTimestamp = await callWithRetry(
+            keepContract.methods.getOpenedTimestamp()
+        )
 
         this.cache
             .get("keeps")
@@ -116,6 +121,7 @@ export default class Cache {
               address: address,
               members: members,
               creationBlock: creationBlock,
+              creationTimestamp: creationTimestamp,
               status: await this.getKeepStatus(keepData)
             })
             .write()
