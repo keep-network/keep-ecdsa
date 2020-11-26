@@ -69,19 +69,19 @@ func TestReadConfig(t *testing.T) {
 			expectedValue: []string{"/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"},
 		},
 		"Client.AwaitingKeyGenerationLookback": {
-			readValueFunc: func(c *Config) interface{} { return c.Client.AwaitingKeyGenerationLookback.Duration },
+			readValueFunc: func(c *Config) interface{} { return c.Client.GetAwaitingKeyGenerationLookback() },
 			expectedValue: time.Duration(172800000000000),
 		},
 		"Client.KeyGenerationTimeout": {
-			readValueFunc: func(c *Config) interface{} { return c.Client.KeyGenerationTimeout.Duration },
+			readValueFunc: func(c *Config) interface{} { return c.Client.GetKeyGenerationTimeout() },
 			expectedValue: time.Duration(6300000000000),
 		},
 		"Client.SigningTimeout": {
-			readValueFunc: func(c *Config) interface{} { return c.Client.SigningTimeout.Duration },
+			readValueFunc: func(c *Config) interface{} { return c.Client.GetSigningTimeout() },
 			expectedValue: time.Duration(12600000000000),
 		},
 		"TSS.PreParamsGenerationTimeout": {
-			readValueFunc: func(c *Config) interface{} { return c.TSS.PreParamsGenerationTimeout.Duration },
+			readValueFunc: func(c *Config) interface{} { return c.TSS.GetPreParamsGenerationTimeout() },
 			expectedValue: time.Duration(397000000000),
 		},
 		"TSS.PreParamsTargetPoolSize": {
