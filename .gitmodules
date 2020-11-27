@@ -1,0 +1,3 @@
+[submodule "include/merkle-distributor"]
+	path = include/merkle-distributor
+	url = https://github.com/Uniswap/merkle-distributor.git
