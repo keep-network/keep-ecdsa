@@ -1,7 +1,7 @@
 import clc from "cli-color"
 
 import Context from "./lib/context.js"
-import { KeepStatus, KeepTerminationCause } from "./lib/keep.js"
+import SLACalculator from "./lib/sla-calculator.js"
 
 async function run() {
     try {
@@ -21,7 +21,12 @@ async function run() {
             return
         }
 
-        validateIntervalTimestamps(intervalStart, intervalEnd)
+        const interval = {
+            start: intervalStart,
+            end: intervalEnd
+        }
+
+        validateIntervalTimestamps(interval)
 
         if (isDebugDisabled) {
             console.debug = function() {}
@@ -36,115 +41,17 @@ async function run() {
             await cache.refresh()
         }
 
-        // Step 1 of keygen SLA: get keeps opened within the given interval
-        const openedKeeps = cache
-            .getKeeps() // get keeps with all statuses
-            .filter(keep =>
-                // get keeps whose creation timestamps are within
-                // the given interval
-                intervalStart <= keep.creationTimestamp &&
-                keep.creationTimestamp < intervalEnd
-            )
+        const operatorsRewards = calculateOperatorsRewards(cache, interval)
 
-        // Step 2 of keygen SLA: from keeps opened within the given interval,
-        // get the ones which have been eventually terminated due to keygen fail
-        const keygenFailKeeps = openedKeeps
-            .filter(keep =>
-                keep.status.name === KeepStatus.TERMINATED &&
-                keep.status.cause === KeepTerminationCause.KEYGEN_FAIL
-            )
-
-        // Step 1 of signature SLA: get keeps closed within the given interval
-        const closedKeeps = cache
-            .getKeeps(KeepStatus.CLOSED) // get closed keeps
-            .filter(keep => {
-                // get keeps whose statuses have been changed within the
-                // given interval
-                return intervalStart <= keep.status.timestamp &&
-                    keep.status.timestamp < intervalEnd
-            })
-
-        // Step 2 of signature SLA: get keeps terminated within the
-        // given interval
-        const terminatedKeeps = cache
-            .getKeeps(KeepStatus.TERMINATED) // get terminated keeps
-            .filter(keep => {
-                // get keeps whose statuses have been changed within the
-                // given interval
-                return intervalStart <= keep.status.timestamp &&
-                    keep.status.timestamp < intervalEnd
-            })
-
-        // Step 3 of signature SLA: Concatenate keeps closed and terminated
-        // within the given interval but exclude the keeps terminated due to
-        // keygen fail as they are not relevant for the signature SLA. This way
-        // we obtain an array of keeps whose statuses have been changed from
-        // `active` to `closed`/`terminated`. Implicitly, this means a keep
-        // became not active due to one of the following causes:
-        // - keep has been closed after delivering a signature successfully
-        // - keep has been terminated after not delivering a signature
-        // - keep has been terminated from another reason not related
-        //   with the signature or keygen context
-        const deactivatedKeeps = [].concat(
-            closedKeeps,
-            terminatedKeeps.filter(
-                // get keeps which have been terminated due to causes
-                // other than keygen fail
-                keep => keep.status.cause !== KeepTerminationCause.KEYGEN_FAIL
-            )
-        )
-
-        // Step 4 of signature SLA: from keeps terminated within the given
-        // interval, get the ones which have been terminated due
-        // to signature fail
-        const signatureFailKeeps = terminatedKeeps
-            .filter(keep =>
-                // get keeps which have been terminated due to signature fail
-                keep.status.cause === KeepTerminationCause.SIGNATURE_FAIL
-            )
-
-        const allOperators = new Set()
-        cache.getKeeps().forEach(keep => {
-            keep.members.forEach(member => allOperators.add(member))
-        })
-
-        const operatorSummary = []
-
-        for (const operator of allOperators) {
-            const keygenSummary = computeSLASummary(
-                openedKeeps,
-                keygenFailKeeps,
-                operator
-            )
-
-            const signatureSummary = computeSLASummary(
-                deactivatedKeeps,
-                signatureFailKeeps,
-                operator
-            )
-
-            operatorSummary.push(
-                new OperatorSummary(
-                    operator,
-                    keygenSummary.totalCount,
-                    keygenSummary.failsCount,
-                    keygenSummary.SLA,
-                    signatureSummary.totalCount,
-                    signatureSummary.failsCount,
-                    signatureSummary.SLA
-                )
-            )
-        }
-
-        console.table(operatorSummary)
+        console.table(operatorsRewards)
     } catch (error) {
         throw new Error(error)
     }
 }
 
-function validateIntervalTimestamps(start, end) {
-    const startDate = new Date(start * 1000)
-    const endDate = new Date(end * 1000)
+function validateIntervalTimestamps(interval) {
+    const startDate = new Date(interval.start * 1000)
+    const endDate = new Date(interval.end * 1000)
 
     const isValidStartDate = startDate.getTime() > 0
     if (!isValidStartDate) {
@@ -167,37 +74,47 @@ function validateIntervalTimestamps(start, end) {
     console.log(clc.green(`Interval end: ${endDate.toISOString()}`))
 }
 
-function computeSLASummary(totalKeeps, failedKeeps, operator) {
-    const countOperatorKeeps = (keeps) =>
-        keeps.filter(keep => new Set(keep.members).has(operator)).length
+function calculateOperatorsRewards(cache, interval) {
+    const slaCalculator = SLACalculator.initialize(cache, interval)
 
-    const totalCount = countOperatorKeeps(totalKeeps)
-    const failsCount = countOperatorKeeps(failedKeeps)
+    const operatorsRewards = []
 
-    return {
-        totalCount: totalCount,
-        failsCount: failsCount,
-        SLA: (totalCount > 0) ?
-            Math.floor(100 - ((failsCount * 100) / totalCount)) : "N/A"
+    for (const operator of getOperators(cache)) {
+        const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
+        // TODO: other computations
+
+        operatorsRewards.push(
+            new OperatorRewards(
+                operator,
+                operatorSLA
+            )
+        )
     }
+
+    return operatorsRewards
 }
 
-function OperatorSummary(
-    address,
-    keygenCount,
-    keygenFailCount,
-    keygenSLA,
-    signatureCount,
-    signatureFailCount,
-    signatureSLA,
+function getOperators(cache) {
+    const operators = new Set()
+
+    cache.getKeeps().forEach(keep =>
+        keep.members.forEach(member => operators.add(member))
+    )
+
+    return operators
+}
+
+function OperatorRewards(
+    operator,
+    operatorSLA,
 ) {
-    this.address = address,
-    this.keygenCount = keygenCount,
-    this.keygenFailCount = keygenFailCount,
-    this.keygenSLA = keygenSLA,
-    this.signatureCount = signatureCount,
-    this.signatureFailCount = signatureFailCount,
-    this.signatureSLA = signatureSLA
+    this.operator = operator,
+    this.keygenCount = operatorSLA.keygenCount,
+    this.keygenFailCount = operatorSLA.keygenFailCount,
+    this.keygenSLA = operatorSLA.keygenSLA,
+    this.signatureCount = operatorSLA.signatureCount,
+    this.signatureFailCount = operatorSLA.signatureFailCount,
+    this.signatureSLA = operatorSLA.signatureSLA
 }
 
 run()
