@@ -13,8 +13,13 @@ import {
 const DATA_DIR_PATH = path.resolve(process.env.DATA_DIR_PATH || "./data")
 const CACHE_PATH = path.resolve(DATA_DIR_PATH, "cache.json")
 
-// Our expectation on how deep can chain reorganization be.
+// Our expectation on how deep can chain reorganization be. We need this
+// parameter because the previous cache refresh could store data that
+// are no longer valid due to a chain reorganization. To overcome this
+// problem we lookup `REORG_DEPTH_BLOCKS` earlier than the last refresh
+// block when starting the cache refresh.
 const REORG_DEPTH_BLOCKS = 12
+
 const CONCURRENCY_LIMIT = 3
 
 export default class Cache {
