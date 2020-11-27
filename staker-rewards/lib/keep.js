@@ -1,7 +1,7 @@
 import {
     callWithRetry,
     getPastEvents,
-} from "./contract-helper";
+} from "./contract-helper.js";
 
 export const KeepStatus = Object.freeze({
     ACTIVE: "active",
