@@ -2,18 +2,6 @@ import { EthereumHelpers } from "@keep-network/tbtc.js"
 
 const GET_PAST_EVENTS_BLOCK_INTERVAL = 50000
 
-export const KeepStatus = Object.freeze({
-    ACTIVE: "active",
-    CLOSED: "closed",
-    TERMINATED: "terminated"
-})
-
-export const KeepTerminationCause = Object.freeze({
-    KEYGEN_FAIL: "keygen-fail",
-    SIGNATURE_FAIL: "signature-fail",
-    OTHER: "other"
-})
-
 export class Contract {
     constructor(artifact, web3) {
         this.artifact = artifact

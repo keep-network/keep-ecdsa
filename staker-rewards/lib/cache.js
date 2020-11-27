@@ -3,12 +3,8 @@ import pAll from "p-all"
 import low from "lowdb"
 import FileSync from "lowdb/adapters/FileSync.js"
 
-import {
-  getPastEvents,
-  callWithRetry,
-  KeepStatus,
-  KeepTerminationCause,
-} from "./contract-helper.js"
+import { getPastEvents, callWithRetry } from "./contract-helper.js"
+import { KeepStatus, getKeepStatus } from "./keep.js"
 
 const DATA_DIR_PATH = path.resolve(process.env.DATA_DIR_PATH || "./data")
 const CACHE_PATH = path.resolve(DATA_DIR_PATH, "cache.json")
@@ -128,7 +124,7 @@ export default class Cache {
               members: members,
               creationBlock: creationBlock,
               creationTimestamp: creationTimestamp,
-              status: await this.getKeepStatus(keepData)
+              status: await getKeepStatus(keepData, this.contracts, this.web3)
             })
             .write()
 
@@ -160,7 +156,7 @@ export default class Cache {
     console.log(`Checking current status of keep ${keepData.address}`)
 
     const lastStatus = keepData.status
-    const currentStatus = await this.getKeepStatus(keepData)
+    const currentStatus = await getKeepStatus(keepData, this.contracts, this.web3)
 
     if (lastStatus.name !== currentStatus.name) {
       console.log(
@@ -174,97 +170,6 @@ export default class Cache {
           .assign({ status: currentStatus })
           .write()
     }
-  }
-
-  // Returns the status of the given keep as an object with the following fields:
-  // - `name`: The name of the status
-  // - `timestamp`: UNIX timestamp of the moment when the status has been set
-  // - `cause` (optional): Determines why the status has been set.
-  //   Currently used for the `terminated` status only.
-  async getKeepStatus(keepData) {
-    const closeTimestamp = await this.getKeepCloseTime(keepData)
-    if (closeTimestamp) {
-      return {
-        name: KeepStatus.CLOSED,
-        timestamp: closeTimestamp
-      }
-    }
-
-    const terminationTimestamp = await this.getKeepTerminationTime(keepData)
-    if (terminationTimestamp) {
-      return {
-        name: KeepStatus.TERMINATED,
-        timestamp: terminationTimestamp,
-        cause: await this.resolveKeepTerminationCause(keepData)
-      }
-    }
-
-    return {
-      name: KeepStatus.ACTIVE,
-      timestamp: (await this.web3.eth.getBlock(keepData.creationBlock)).timestamp
-    }
-  }
-
-  async getKeepCloseTime(keepData) {
-    return await this.getKeepEventTimestamp(keepData, "KeepClosed")
-  }
-
-  async getKeepTerminationTime(keepData) {
-    return await this.getKeepEventTimestamp(keepData, "KeepTerminated")
-  }
-
-  // Looks for a specific event for the given keep and returns the
-  // UNIX timestamp of the moment when the event occurred. If there
-  // are multiple events only the first one is taken into account.
-  async getKeepEventTimestamp(keepData, eventName) {
-    const { address, creationBlock } = keepData
-
-    const keepContract = await this.contracts.BondedECDSAKeep.at(address)
-
-    const events = await getPastEvents(
-        this.web3,
-        keepContract,
-        eventName,
-        creationBlock
-    )
-
-    if (events.length > 0) {
-      return (await this.web3.eth.getBlock(events[0].blockNumber)).timestamp
-    }
-  }
-
-  async resolveKeepTerminationCause(keepData) {
-    const keepContract = await this.contracts.BondedECDSAKeep.at(keepData.address)
-
-    const publicKey = await callWithRetry(keepContract.methods.getPublicKey())
-    if (!publicKey) {
-      return KeepTerminationCause.KEYGEN_FAIL
-    }
-
-    const signatureRequestedEvents = (
-        await getPastEvents(
-            this.web3,
-            keepContract,
-            "SignatureRequested",
-            keepData.creationBlock
-        )
-    ).sort((a, b) => a.blockNumber - b.blockNumber)
-
-    const latestSignatureRequestedEvent = signatureRequestedEvents.slice(-1)[0]
-
-    if (latestSignatureRequestedEvent) {
-      const digest = latestSignatureRequestedEvent.returnValues.digest
-
-      const isAwaitingSignature = await callWithRetry(
-          keepContract.methods.isAwaitingSignature(digest)
-      )
-
-      if (isAwaitingSignature) {
-        return KeepTerminationCause.SIGNATURE_FAIL
-      }
-    }
-
-    return KeepTerminationCause.OTHER
   }
 
   getKeeps(status) {

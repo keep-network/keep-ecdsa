@@ -1,7 +1,7 @@
 import clc from "cli-color"
 
 import Context from "./lib/context.js"
-import { KeepStatus, KeepTerminationCause } from "./lib/contract-helper.js"
+import { KeepStatus, KeepTerminationCause } from "./lib/keep.js"
 
 async function run() {
     try {
