@@ -177,25 +177,19 @@ export default class Cache {
   }
 
   async getKeepStatus(keepData) {
-    const closedTimestamp = await this.getKeepEventTimestamp(
-        keepData,
-        "KeepClosed"
-    )
-    if (closedTimestamp) {
+    const closeTimestamp = await this.getKeepCloseTime(keepData)
+    if (closeTimestamp) {
       return {
         name: KeepStatus.CLOSED,
-        timestamp: closedTimestamp
+        timestamp: closeTimestamp
       }
     }
 
-    const terminatedTimestamp = await this.getKeepEventTimestamp(
-        keepData,
-        "KeepTerminated"
-    )
-    if (terminatedTimestamp) {
+    const terminationTimestamp = await this.getKeepTerminationTime(keepData)
+    if (terminationTimestamp) {
       return {
         name: KeepStatus.TERMINATED,
-        timestamp: terminatedTimestamp,
+        timestamp: terminationTimestamp,
         cause: await this.resolveKeepTerminationCause(keepData)
       }
     }
@@ -204,6 +198,14 @@ export default class Cache {
       name: KeepStatus.ACTIVE,
       timestamp: (await this.web3.eth.getBlock(keepData.creationBlock)).timestamp
     }
+  }
+
+  async getKeepCloseTime(keepData) {
+    return await this.getKeepEventTimestamp(keepData, "KeepClosed")
+  }
+
+  async getKeepTerminationTime(keepData) {
+    return await this.getKeepEventTimestamp(keepData, "KeepTerminated")
   }
 
   // Looks for a specific event for the given keep and returns the
