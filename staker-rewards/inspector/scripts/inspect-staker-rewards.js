@@ -5,10 +5,15 @@ import { KeepStatus, KeepTerminationCause } from "./lib/contract-helper.js"
 
 async function run() {
     try {
+        // URL to the websocket endpoint of the Ethereum node.
         const ethHostname = process.env.ETH_HOSTNAME
+        // Start of the interval passed as UNIX timestamp.
         const intervalStart = process.argv[2]
+        // End of the interval passed as UNIX timestamp.
         const intervalEnd = process.argv[3]
+        // Determines whether debug logs should be disabled.
         const isDebugDisabled = process.env.DEBUG !== "on"
+        // Determines whether the cache refresh process should be performed.
         const isCacheRefreshEnabled = process.env.CACHE_REFRESH !== "off"
 
         if (!ethHostname) {
