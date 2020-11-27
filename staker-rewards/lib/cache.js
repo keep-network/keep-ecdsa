@@ -43,14 +43,14 @@ export default class Cache {
 
     const previousRefreshBlock = this.cache.get("lastRefreshBlock").value()
 
-    console.log(
-        `Looking for keeps created since block [${previousRefreshBlock}]...`
-    )
-
     const startBlock =
         previousRefreshBlock - REORG_DEPTH_BLOCKS > 0
             ? previousRefreshBlock - REORG_DEPTH_BLOCKS
             : 0
+
+    console.log(
+        `Looking for keeps created since block [${startBlock}]...`
+    )
 
     const keepCreatedEvents = await getPastEvents(
         this.web3,
@@ -72,7 +72,7 @@ export default class Cache {
 
     console.log(
         `Number of keeps created since block ` +
-        `[${previousRefreshBlock}]: ${newKeeps.length}`
+        `[${startBlock}]: ${newKeeps.length}`
     )
 
     console.log(`Number of keeps in the cache: ${cachedKeepsCount}`)
