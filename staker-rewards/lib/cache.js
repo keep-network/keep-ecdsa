@@ -163,7 +163,10 @@ export default class Cache {
     const currentStatus = await this.getKeepStatus(keepData)
 
     if (lastStatus.name !== currentStatus.name) {
-      console.log(`Updating current status of keep ${keepData.address}`)
+      console.log(
+          `Updating current status of keep ${keepData.address} ` +
+          `from [${lastStatus.name}] to [${currentStatus.name}]`
+      )
 
       this.cache
           .get("keeps")
@@ -203,6 +206,9 @@ export default class Cache {
     }
   }
 
+  // Looks for a specific event for the given keep and returns the
+  // UNIX timestamp of the moment when the event occurred. If there
+  // are multiple events only the first one is taken into account.
   async getKeepEventTimestamp(keepData, eventName) {
     const { address, creationBlock } = keepData
 
