@@ -43,7 +43,7 @@ async function run() {
                 // get keeps whose creation timestamps are within
                 // the given interval
                 intervalStart <= keep.creationTimestamp &&
-                keep.creationTimestamp <= intervalEnd
+                keep.creationTimestamp < intervalEnd
             )
 
         // from keeps opened within the given interval, get the ones which
@@ -63,7 +63,7 @@ async function run() {
                 // get keeps whose statuses have been changed within the
                 // given interval
                 return intervalStart <= keep.status.timestamp &&
-                    keep.status.timestamp <= intervalEnd
+                    keep.status.timestamp < intervalEnd
             })
             .filter(keep =>
                 // get keeps which are currently in the state `closed` or
