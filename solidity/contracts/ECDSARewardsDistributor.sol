@@ -29,7 +29,7 @@ contract ECDSARewardsDistributor is Ownable {
     // This event is triggered whenever a call to #claim succeeds.
     event Claimed(uint256 index, address account, uint256 amount);
 
-    event MerkleRootAdded(bytes32 merkleRoot);
+    event RewardsAllocated(bytes32 merkleRoot, uint256 amount);
 
     // merkleRoot -> total amount for distribution for a given week
     mapping(bytes32 => uint256) private merkleRoots;
@@ -59,7 +59,7 @@ contract ECDSARewardsDistributor is Ownable {
 
         merkleRoots[merkleRoot] = _amount;
 
-        emit MerkleRootAdded(merkleRoot);
+        emit RewardsAllocated(merkleRoot, _amount);
     }
 
     function isClaimed(uint256 index, bytes32 merkleRoot) public view returns (bool) {
