@@ -36,7 +36,7 @@ async function run() {
             await cache.refresh()
         }
 
-        // get keeps opened within the given interval
+        // Step 1 of keygen SLA: get keeps opened within the given interval
         const openedKeeps = cache
             .getKeeps() // get keeps with all statuses
             .filter(keep =>
@@ -46,39 +46,60 @@ async function run() {
                 keep.creationTimestamp < intervalEnd
             )
 
-        // from keeps opened within the given interval, get the ones which
-        // have been eventually terminated due to keygen fail
-        const failedOpenedKeeps = openedKeeps
+        // Step 2 of keygen SLA: from keeps opened within the given interval,
+        // get the ones which have been eventually terminated due to keygen fail
+        const keygenFailKeeps = openedKeeps
             .filter(keep =>
                 keep.status.name === KeepStatus.TERMINATED &&
                 keep.status.cause === KeepTerminationCause.KEYGEN_FAIL
             )
 
-        // get keeps closed or terminated within the given interval
-        // but without the ones terminated due to keygen fail as they
-        // are not relevant for the closed keeps SLA
+        // Step 1 of signature SLA: get keeps closed within the given interval
         const closedKeeps = cache
-            .getKeeps() // get keeps with all statuses
+            .getKeeps(KeepStatus.CLOSED) // get closed keeps
             .filter(keep => {
                 // get keeps whose statuses have been changed within the
                 // given interval
                 return intervalStart <= keep.status.timestamp &&
                     keep.status.timestamp < intervalEnd
             })
-            .filter(keep =>
-                // get keeps which are currently in the state `closed` or
-                // `terminated` due to causes other than keygen fail
-                keep.status.name === KeepStatus.CLOSED ||
-                (keep.status.name === KeepStatus.TERMINATED &&
-                    keep.status.cause !== KeepTerminationCause.KEYGEN_FAIL)
-            )
 
-        // from keeps closed or terminated (causes other than keygen fail)
-        // within the given interval, get the ones which have been terminated
-        // due to signature fail
-        const failedClosedKeeps = closedKeeps
+        // Step 2 of signature SLA: get keeps terminated within the
+        // given interval
+        const terminatedKeeps = cache
+            .getKeeps(KeepStatus.TERMINATED) // get terminated keeps
+            .filter(keep => {
+                // get keeps whose statuses have been changed within the
+                // given interval
+                return intervalStart <= keep.status.timestamp &&
+                    keep.status.timestamp < intervalEnd
+            })
+
+        // Step 3 of signature SLA: Concatenate keeps closed and terminated
+        // within the given interval but exclude the keeps terminated due to
+        // keygen fail as they are not relevant for the signature SLA. This way
+        // we obtain an array of keeps whose statuses have been changed from
+        // `active` to `closed`/`terminated`. Implicitly, this means a keep
+        // became not active due to one of the following causes:
+        // - keep has been closed after delivering a signature successfully
+        // - keep has been terminated after not delivering a signature
+        // - keep has been terminated from another reason not related
+        //   with the signature or keygen context
+        const deactivatedKeeps = [].concat(
+            closedKeeps,
+            terminatedKeeps.filter(
+                // get keeps which have been terminated due to causes
+                // other than keygen fail
+                keep => keep.status.cause !== KeepTerminationCause.KEYGEN_FAIL
+            )
+        )
+
+        // Step 4 of signature SLA: from keeps terminated within the given
+        // interval, get the ones which have been terminated due
+        // to signature fail
+        const signatureFailKeeps = terminatedKeeps
             .filter(keep =>
-                keep.status.name === KeepStatus.TERMINATED &&
+                // get keeps which have been terminated due to signature fail
                 keep.status.cause === KeepTerminationCause.SIGNATURE_FAIL
             )
 
@@ -90,27 +111,27 @@ async function run() {
         const operatorSummary = []
 
         for (const operator of allOperators) {
-            const keepOpeningsSummary = computeSLASummary(
+            const keygenSummary = computeSLASummary(
                 openedKeeps,
-                failedOpenedKeeps,
+                keygenFailKeeps,
                 operator
             )
 
-            const keepClosuresSummary = computeSLASummary(
-                closedKeeps,
-                failedClosedKeeps,
+            const signatureSummary = computeSLASummary(
+                deactivatedKeeps,
+                signatureFailKeeps,
                 operator
             )
 
             operatorSummary.push(
                 new OperatorSummary(
                     operator,
-                    keepOpeningsSummary.totalCount,
-                    keepOpeningsSummary.failsCount,
-                    keepOpeningsSummary.SLA,
-                    keepClosuresSummary.totalCount,
-                    keepClosuresSummary.failsCount,
-                    keepClosuresSummary.SLA
+                    keygenSummary.totalCount,
+                    keygenSummary.failsCount,
+                    keygenSummary.SLA,
+                    signatureSummary.totalCount,
+                    signatureSummary.failsCount,
+                    signatureSummary.SLA
                 )
             )
         }
@@ -163,20 +184,20 @@ function computeSLASummary(totalKeeps, failedKeeps, operator) {
 
 function OperatorSummary(
     address,
-    keepOpenings,
-    keepOpeningsFails,
-    keepOpeningsSLA,
-    keepClosures,
-    keepClosuresFails,
-    keepClosuresSLA,
+    keygenCount,
+    keygenFailCount,
+    keygenSLA,
+    signatureCount,
+    signatureFailCount,
+    signatureSLA,
 ) {
     this.address = address,
-    this.keepOpenings = keepOpenings,
-    this.keepOpeningsFails = keepOpeningsFails,
-    this.keepOpeningsSLA = keepOpeningsSLA,
-    this.keepClosures = keepClosures,
-    this.keepClosuresFails = keepClosuresFails,
-    this.keepClosuresSLA = keepClosuresSLA
+    this.keygenCount = keygenCount,
+    this.keygenFailCount = keygenFailCount,
+    this.keygenSLA = keygenSLA,
+    this.signatureCount = signatureCount,
+    this.signatureFailCount = signatureFailCount,
+    this.signatureSLA = signatureSLA
 }
 
 run()
