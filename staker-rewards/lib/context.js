@@ -26,7 +26,7 @@ export default class Context {
 
         const BondedECDSAKeep = new Contract(BondedECDSAKeepJson, web3)
 
-        const deploymentBlock = await getDeploymentBlockNumber(
+        const factoryDeploymentBlock = await getDeploymentBlockNumber(
             BondedECDSAKeepFactoryJson,
             web3
         )
@@ -34,7 +34,7 @@ export default class Context {
         const contracts = {
             BondedECDSAKeepFactory: BondedECDSAKeepFactory,
             BondedECDSAKeep: BondedECDSAKeep,
-            deploymentBlock: deploymentBlock,
+            factoryDeploymentBlock: factoryDeploymentBlock,
         }
 
         const cache = new Cache(web3, contracts)

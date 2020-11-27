@@ -33,7 +33,7 @@ export default class Cache {
     await this.cache
         .defaults({
           keeps: [],
-          lastRefreshBlock: this.contracts.deploymentBlock,
+          lastRefreshBlock: this.contracts.factoryDeploymentBlock,
         })
         .write()
   }
