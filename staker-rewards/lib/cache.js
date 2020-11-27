@@ -59,9 +59,9 @@ export default class Cache {
         startBlock
     )
 
-    const keepsOnChain = []
+    const newKeeps = []
     keepCreatedEvents.forEach((event) => {
-      keepsOnChain.push({
+      newKeeps.push({
         address: event.returnValues.keepAddress,
         members: event.returnValues.members,
         creationBlock: event.blockNumber,
@@ -72,13 +72,13 @@ export default class Cache {
 
     console.log(
         `Number of keeps created since block ` +
-        `[${previousRefreshBlock}]: ${keepsOnChain.length}`
+        `[${previousRefreshBlock}]: ${newKeeps.length}`
     )
 
     console.log(`Number of keeps in the cache: ${cachedKeepsCount}`)
 
     const actions = []
-    keepsOnChain.forEach((keep) => {
+    newKeeps.forEach((keep) => {
       const currentlyCached = this.cache
         .get("keeps")
         .find({ address: keep.address })
