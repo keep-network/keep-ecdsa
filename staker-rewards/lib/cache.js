@@ -176,6 +176,11 @@ export default class Cache {
     }
   }
 
+  // Returns the status of the given keep as an object with the following fields:
+  // - `name`: The name of the status
+  // - `timestamp`: UNIX timestamp of the moment when the status has been set
+  // - `cause` (optional): Determines why the status has been set.
+  //   Currently used for the `terminated` status only.
   async getKeepStatus(keepData) {
     const closeTimestamp = await this.getKeepCloseTime(keepData)
     if (closeTimestamp) {
