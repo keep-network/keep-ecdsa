@@ -1,5 +1,5 @@
 {
-  "name": "staker-rewards-inspector",
+  "name": "staker-rewards",
   "version": "1.0.0",
   "type": "module",
   "dependencies": {

@@ -24,11 +24,10 @@ npm install
 +
 ```
 ETH_HOSTNAME=<eth-ws-hostname> \
-node --experimental-json-modules ./scripts/inspect-staker-rewards.js \
+node --experimental-json-modules rewards.js \
 <interval-start-unix-timestamp> <interval-end-unix-timestamp>
 ```
 +
 You can also use several auxiliary environment variables:
 
 - `DEBUG=on` to enable debug logs
-- `CACHE_REFRESH=off` to disable the cache refresh process
