@@ -77,8 +77,8 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 	if config.MiningCheckInterval != 0 {
 		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
 	}
-	if config.MaxGasPrice != 0 {
-		maxGasPrice = new(big.Int).SetUint64(config.MaxGasPrice)
+	if config.MaxGasPrice != nil {
+		maxGasPrice = config.MaxGasPrice.Int
 	}
 
 	logger.Infof("using [%v] mining check interval", checkInterval)

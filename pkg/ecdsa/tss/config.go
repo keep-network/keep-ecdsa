@@ -3,7 +3,7 @@ package tss
 import (
 	"time"
 
-	configtime "github.com/keep-network/keep-ecdsa/internal/config/time"
+	configtime "github.com/keep-network/keep-ecdsa/config/time"
 )
 
 const (

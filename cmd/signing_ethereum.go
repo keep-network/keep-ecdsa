@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-ecdsa/internal/config"
+	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/urfave/cli"
 )
 
