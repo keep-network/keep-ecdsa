@@ -63,7 +63,6 @@ contract ECDSARewardsDistributor is Ownable {
         bytes memory _extraData
     ) public {
         require(IERC20(_token) == token, "Unsupported token");
-        require(_amount <= token.balanceOf(_from), "Sender must have enough amount");
         require(_extraData.length == 32, "Wrong lenght of merkle root");
 
         token.safeTransferFrom(_from, address(this), _amount);
