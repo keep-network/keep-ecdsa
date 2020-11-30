@@ -16,6 +16,7 @@ pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/utils/BytesLib.sol";
 import "@keep-network/keep-core/contracts/KeepToken.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/cryptography/MerkleProof.sol";
 
@@ -32,7 +33,7 @@ import "openzeppelin-solidity/contracts/cryptography/MerkleProof.sol";
 ///   merkle root has passed
 /// - changed code accordingly to process claimed rewards using a map of merkle
 ///   roots
-contract ECDSARewardsDistributor {
+contract ECDSARewardsDistributor is Ownable {
     using SafeERC20 for KeepToken;
     using BytesLib for bytes;
     using SafeMath for uint256;
@@ -90,7 +91,7 @@ contract ECDSARewardsDistributor {
         uint256 _amount,
         address _token,
         bytes memory _extraData
-    ) public {
+    ) public onlyOwner {
         require(IERC20(_token) == token, "Unsupported token");
         require(_extraData.length == 32, "Wrong length of merkle root");
 
