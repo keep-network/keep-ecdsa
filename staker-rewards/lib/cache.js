@@ -81,7 +81,7 @@ export default class Cache {
         .value()
 
       if (!isCached) {
-        actions.push(() => this.fetchKeep(keep))
+        actions.push(() => this.fetchFullKeepData(keep))
       }
     })
 
@@ -107,7 +107,7 @@ export default class Cache {
     await this.refreshActiveKeeps()
   }
 
-  async fetchKeep(keepData) {
+  async fetchFullKeepData(keepData) {
     return new Promise(async (resolve, reject) => {
       try {
         const { address, members, creationBlock } = keepData
