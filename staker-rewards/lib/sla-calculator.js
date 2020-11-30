@@ -14,14 +14,16 @@ export default class SLACalculator {
     }
 
     static initialize(cache, interval) {
+        const isInInterval = (timestamp) =>
+            interval.start <= timestamp && timestamp < interval.end
+
         // Step 1 of keygen SLA: get keeps opened within the given interval
         const openedKeeps = cache
             .getKeeps() // get keeps with all statuses
             .filter(keep =>
                 // get keeps whose creation timestamps are within
                 // the given interval
-                interval.start <= keep.creationTimestamp &&
-                keep.creationTimestamp < interval.end
+                isInInterval(keep.creationTimestamp)
             )
 
         // Step 2 of keygen SLA: from keeps opened within the given interval,
@@ -35,23 +37,21 @@ export default class SLACalculator {
         // Step 1 of signature SLA: get keeps closed within the given interval
         const closedKeeps = cache
             .getKeeps(KeepStatus.CLOSED) // get closed keeps
-            .filter(keep => {
+            .filter(keep =>
                 // get keeps whose statuses have been changed within the
                 // given interval
-                return interval.start <= keep.status.timestamp &&
-                    keep.status.timestamp < interval.end
-            })
+                isInInterval(keep.status.timestamp)
+            )
 
         // Step 2 of signature SLA: get keeps terminated within the
         // given interval
         const terminatedKeeps = cache
             .getKeeps(KeepStatus.TERMINATED) // get terminated keeps
-            .filter(keep => {
+            .filter(keep =>
                 // get keeps whose statuses have been changed within the
                 // given interval
-                return interval.start <= keep.status.timestamp &&
-                    keep.status.timestamp < interval.end
-            })
+                isInInterval(keep.status.timestamp)
+            )
 
         // Step 3 of signature SLA: Concatenate keeps closed and terminated
         // within the given interval but exclude the keeps terminated due to
