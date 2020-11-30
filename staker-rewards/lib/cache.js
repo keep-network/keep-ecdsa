@@ -35,6 +35,11 @@ export default class Cache {
   }
 
   async refresh() {
+    await this.fetchNewKeeps()
+    await this.refreshActiveKeeps()
+  }
+
+  async fetchNewKeeps() {
     const factory = await this.contracts.BondedECDSAKeepFactory.deployed()
 
     const previousRefreshBlock = this.cache.get("lastRefreshBlock").value()
@@ -76,9 +81,9 @@ export default class Cache {
     const actions = []
     newKeeps.forEach((keep) => {
       const isCached = this.cache
-        .get("keeps")
-        .find({ address: keep.address })
-        .value()
+          .get("keeps")
+          .find({ address: keep.address })
+          .value()
 
       if (!isCached) {
         actions.push(() => this.fetchFullKeepData(keep))
@@ -103,8 +108,6 @@ export default class Cache {
 
     const latestBlockNumber = keepCreatedEvents.slice(-1)[0].blockNumber
     this.cache.assign({ lastRefreshBlock: latestBlockNumber }).write()
-
-    await this.refreshActiveKeeps()
   }
 
   async fetchFullKeepData(keepData) {
