@@ -21,7 +21,9 @@ import "@keep-network/keep-core/contracts/KeepToken.sol";
 import "@openzeppelin/contracts/cryptography/MerkleProof.sol";
 
 /// @title ECDSA Rewards distributor
-/// @notice This contract is based on the Uniswap's Merkle Distributor
+/// @notice This contract can be used by stakers to claim their rewards for
+/// participation in the keep network for operating ECDSA nodes.
+/// @dev This contract is based on the Uniswap's Merkle Distributor
 /// https://github.com/Uniswap/merkle-distributor with some modifications:
 /// - added a map of merkle root keys with the amount of KEEP (value) that will
 ///   be allocated for those merkle roots
