@@ -1,0 +1,24 @@
+{
+  "name": "@keep-network/keep-ecdsa",
+  "author": {
+    "name": "Moody Salem"
+  },
+  "description": "Script for merkle object generation",
+  "version": "1.0.0",
+  "keywords": [
+    "keep-network",
+    "rewards"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com/keep-network/keep-ecdsa.git"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "devDependencies": {
+    "commander": "^6.1.0",
+    "ts-node": "^8.5.4",
+    "typescript": "^3.7.3"
+  }
+}
