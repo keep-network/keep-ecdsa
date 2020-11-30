@@ -34,6 +34,7 @@ import "@openzeppelin/contracts/cryptography/MerkleProof.sol";
 contract ECDSARewardsDistributor is Ownable {
     using SafeERC20 for KeepToken;
     using BytesLib for bytes;
+    using SafeMath for uint256;
 
     KeepToken public token;
 
@@ -63,7 +64,7 @@ contract ECDSARewardsDistributor is Ownable {
         bytes memory _extraData
     ) public {
         require(IERC20(_token) == token, "Unsupported token");
-        require(_extraData.length == 32, "Wrong lenght of merkle root");
+        require(_extraData.length == 32, "Wrong length of merkle root");
 
         token.safeTransferFrom(_from, address(this), _amount);
 
@@ -101,7 +102,7 @@ contract ECDSARewardsDistributor is Ownable {
         require(IERC20(token).transfer(account, amount), 'Transfer failed');
 
         // Update KEEP amount for the given merkleRoot
-        merkleRoots[merkleRoot] -= amount;
+        merkleRoots[merkleRoot] = merkleRoots[merkleRoot].sub(amount);
 
         emit RewardsClaimed(index, account, amount);
     }
