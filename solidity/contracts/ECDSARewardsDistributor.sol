@@ -14,11 +14,10 @@
 
 pragma solidity 0.5.17;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "@keep-network/keep-core/contracts/utils/BytesLib.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "@keep-network/keep-core/contracts/KeepToken.sol";
-import "@openzeppelin/contracts/cryptography/MerkleProof.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-solidity/contracts/cryptography/MerkleProof.sol";
 
 /// @title ECDSA Rewards distributor
 /// @notice This contract can be used by stakers to claim their rewards for
@@ -33,7 +32,7 @@ import "@openzeppelin/contracts/cryptography/MerkleProof.sol";
 ///   merkle root has passed
 /// - changed code accordingly to process claimed rewards using a map of merkle
 ///   roots
-contract ECDSARewardsDistributor is Ownable {
+contract ECDSARewardsDistributor {
     using SafeERC20 for KeepToken;
     using BytesLib for bytes;
     using SafeMath for uint256;
@@ -52,6 +51,33 @@ contract ECDSARewardsDistributor is Ownable {
 
     constructor(address _token) public {
         token = KeepToken(_token);
+    }
+
+    function claim(
+        uint256 index,
+        address account,
+        uint256 amount,
+        bytes32 merkleRoot,
+        bytes32[] calldata merkleProof
+    ) external {
+        require(!isClaimed(index, merkleRoot), "Reward already claimed");
+
+        // Verify the merkle proof.
+        bytes32 node = keccak256(abi.encodePacked(index, account, amount));
+
+        require(
+            MerkleProof.verify(merkleProof, merkleRoot, node),
+            "Invalid proof"
+        );
+
+        // Mark it claimed and send the token.
+        _setClaimed(index, merkleRoot);
+        require(IERC20(token).transfer(account, amount), "Transfer failed");
+
+        // Update KEEP amount for the given merkleRoot
+        merkleRoots[merkleRoot] = merkleRoots[merkleRoot].sub(amount);
+
+        emit RewardsClaimed(index, account, amount);
     }
 
     /// Call receiveApproval to allocate amount of KEEP for a given merkle root.
@@ -77,7 +103,11 @@ contract ECDSARewardsDistributor is Ownable {
         emit RewardsAllocated(merkleRoot, _amount);
     }
 
-    function isClaimed(uint256 index, bytes32 merkleRoot) public view returns (bool) {
+    function isClaimed(uint256 index, bytes32 merkleRoot)
+        public
+        view
+        returns (bool)
+    {
         uint256 claimedWordIndex = index / 256;
         uint256 claimedBitIndex = index % 256;
         uint256 claimedWord = claimedBitMap[merkleRoot][claimedWordIndex];
@@ -85,31 +115,15 @@ contract ECDSARewardsDistributor is Ownable {
         return claimedWord & mask == mask;
     }
 
+    function getAllocation(bytes32 merkleRoot) public view returns (uint256) {
+        return merkleRoots[merkleRoot];
+    }
+
     function _setClaimed(uint256 index, bytes32 merkleRoot) private {
         uint256 claimedWordIndex = index / 256;
         uint256 claimedBitIndex = index % 256;
-        claimedBitMap[merkleRoot][claimedWordIndex] = claimedBitMap[merkleRoot][claimedWordIndex] | (1 << claimedBitIndex);
-    }
-
-    function claim(uint256 index, address account, uint256 amount, bytes32 merkleRoot, bytes32[] calldata merkleProof) external {
-        require(!isClaimed(index, merkleRoot), 'Reward already claimed');
-
-        // Verify the merkle proof.
-        bytes32 node = keccak256(abi.encodePacked(index, account, amount));
-
-        require(MerkleProof.verify(merkleProof, merkleRoot, node), 'Invalid proof');
-
-        // Mark it claimed and send the token.
-        _setClaimed(index, merkleRoot);
-        require(IERC20(token).transfer(account, amount), 'Transfer failed');
-
-        // Update KEEP amount for the given merkleRoot
-        merkleRoots[merkleRoot] = merkleRoots[merkleRoot].sub(amount);
-
-        emit RewardsClaimed(index, account, amount);
-    }
-
-    function getAllocation(bytes32 merkleRoot) public view returns (uint256) {
-        return merkleRoots[merkleRoot];
+        claimedBitMap[merkleRoot][claimedWordIndex] =
+            claimedBitMap[merkleRoot][claimedWordIndex] |
+            (1 << claimedBitIndex);
     }
 }
