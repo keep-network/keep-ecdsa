@@ -48,7 +48,7 @@ export async function getKeepStatus(keepData, contracts, web3) {
     }
 }
 
-export async function getKeepCloseTime(keepData, contracts, web3) {
+async function getKeepCloseTime(keepData, contracts, web3) {
     return await getKeepEventTimestamp(
         keepData,
         "KeepClosed",
@@ -57,7 +57,7 @@ export async function getKeepCloseTime(keepData, contracts, web3) {
     )
 }
 
-export async function getKeepTerminationTime(keepData, contracts, web3) {
+async function getKeepTerminationTime(keepData, contracts, web3) {
     return await getKeepEventTimestamp(
         keepData,
         "KeepTerminated",
@@ -69,7 +69,7 @@ export async function getKeepTerminationTime(keepData, contracts, web3) {
 // Looks for a specific event for the given keep and returns the
 // UNIX timestamp of the moment when the event occurred. If there
 // are multiple events only the first one is taken into account.
-export async function getKeepEventTimestamp(
+async function getKeepEventTimestamp(
     keepData,
     eventName,
     contracts,
@@ -91,7 +91,7 @@ export async function getKeepEventTimestamp(
     }
 }
 
-export async function resolveKeepTerminationCause(keepData, contracts, web3) {
+async function resolveKeepTerminationCause(keepData, contracts, web3) {
     const { address, creationBlock } = keepData
 
     const keepContract = await contracts.BondedECDSAKeep.at(address)
