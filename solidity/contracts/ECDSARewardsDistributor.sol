@@ -42,7 +42,7 @@ contract ECDSARewardsDistributor is Ownable {
     // This event is triggered whenever rewards are allocated.
     event RewardsAllocated(bytes32 merkleRoot, uint256 amount);
 
-    // Merkle root -> total amount for distribution for a given interval.
+    // Merkle root -> total amount for distribution for a given timeframe.
     mapping(bytes32 => uint256) private merkleRoots;
     // Bytes32 key is a merkle root and the value is a packed array of booleans.
     mapping(bytes32 => mapping(uint256 => uint256)) private claimedBitMap;
@@ -104,5 +104,9 @@ contract ECDSARewardsDistributor is Ownable {
         merkleRoots[merkleRoot] -= amount;
 
         emit RewardsClaimed(index, account, amount);
+    }
+
+    function getAllocation(bytes32 merkleRoot) public view returns (uint256) {
+        return merkleRoots[merkleRoot];
     }
 }
