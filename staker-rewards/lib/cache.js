@@ -75,12 +75,12 @@ export default class Cache {
 
     const actions = []
     newKeeps.forEach((keep) => {
-      const currentlyCached = this.cache
+      const isCached = this.cache
         .get("keeps")
         .find({ address: keep.address })
         .value()
 
-      if (!currentlyCached) {
+      if (!isCached) {
         actions.push(() => this.fetchKeep(keep))
       }
     })
