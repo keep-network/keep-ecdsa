@@ -14,6 +14,9 @@ async function run() {
         // Determines whether debug logs should be disabled.
         const isDebugDisabled = process.env.DEBUG !== "on"
         // Determines whether the cache refresh process should be performed.
+        // This option should be used only for development purposes. If the
+        // cache refresh is disabled, rewards distribution may be calculated
+        // based on outdated information from the chain.
         const isCacheRefreshEnabled = process.env.CACHE_REFRESH !== "off"
 
         if (!ethHostname) {
