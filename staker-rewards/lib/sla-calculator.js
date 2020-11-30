@@ -57,12 +57,11 @@ export default class SLACalculator {
         // within the given interval but exclude the keeps terminated due to
         // keygen fail as they are not relevant for the signature SLA. This way
         // we obtain an array of keeps whose statuses have been changed from
-        // `active` to `closed`/`terminated`. Implicitly, this means a keep
-        // became not active due to one of the following causes:
+        // `active` to `closed` or from `active` to `terminated` due to
+        // signature fails. Implicitly, this means a keep became not active
+        // due to one of the following causes:
         // - keep has been closed after delivering a signature successfully
         // - keep has been terminated after not delivering a signature
-        // - keep has been terminated from another reason not related
-        //   with the signature or keygen context
         const deactivatedKeeps = [].concat(
             closedKeeps,
             terminatedKeeps.filter(
