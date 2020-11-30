@@ -122,10 +122,16 @@ function OperatorRewards(
 
 run()
     .then(result => {
-        console.log(clc.green("Inspection completed successfully"))
+        console.log(clc.green(
+            "Staker rewards distribution calculations completed successfully"
+        ))
+
         process.exit(0)
     })
     .catch(error => {
-        console.error(clc.red("Inspection errored out with error: "), error)
+        console.error(clc.red(
+            "Staker rewards distribution calculations errored out with error: "
+        ), error)
+
         process.exit(1)
     })
