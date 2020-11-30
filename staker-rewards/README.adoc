@@ -2,7 +2,7 @@
 
 == Prerequisites
 
-To run the inspector script, make sure you have the following prerequisites:
+To run the script, make sure you have the following prerequisites:
 
 - Node.js (at least v14.3.0). We recommend to use
   the https://github.com/nvm-sh/nvm[Node Version Manager] to get the right
