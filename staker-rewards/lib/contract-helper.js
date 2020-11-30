@@ -1,6 +1,6 @@
 import { EthereumHelpers } from "@keep-network/tbtc.js"
 
-const GET_PAST_EVENTS_BLOCK_INTERVAL = 50000
+const GET_PAST_EVENTS_BLOCK_INTERVAL = 2000
 
 export class Contract {
     constructor(artifact, web3) {
