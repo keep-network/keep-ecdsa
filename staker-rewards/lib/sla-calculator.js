@@ -43,42 +43,29 @@ export default class SLACalculator {
                 isInInterval(keep.status.timestamp)
             )
 
-        // Step 2 of signature SLA: get keeps terminated within the
-        // given interval
-        const terminatedKeeps = cache
+        // Step 2 of signature SLA: get keeps terminated due to signature fail,
+        // within the given interval
+        const signatureFailKeeps = cache
             .getKeeps(KeepStatus.TERMINATED) // get terminated keeps
             .filter(keep =>
                 // get keeps whose statuses have been changed within the
                 // given interval
                 isInInterval(keep.status.timestamp)
             )
+            .filter(keep =>
+                // get keeps which have been terminated due to signature fail
+                keep.status.cause === KeepTerminationCause.SIGNATURE_FAIL
+            )
 
         // Step 3 of signature SLA: Concatenate keeps closed and terminated
-        // within the given interval but exclude the keeps terminated due to
-        // keygen fail as they are not relevant for the signature SLA. This way
+        // due to signature fail, within the given interval. This way
         // we obtain an array of keeps whose statuses have been changed from
         // `active` to `closed` or from `active` to `terminated` due to
         // signature fails. Implicitly, this means a keep became not active
         // due to one of the following causes:
         // - keep has been closed after delivering a signature successfully
         // - keep has been terminated after not delivering a signature
-        const deactivatedKeeps = [].concat(
-            closedKeeps,
-            terminatedKeeps.filter(
-                // get keeps which have been terminated due to causes
-                // other than keygen fail
-                keep => keep.status.cause !== KeepTerminationCause.KEYGEN_FAIL
-            )
-        )
-
-        // Step 4 of signature SLA: from keeps terminated within the given
-        // interval, get the ones which have been terminated due
-        // to signature fail
-        const signatureFailKeeps = terminatedKeeps
-            .filter(keep =>
-                // get keeps which have been terminated due to signature fail
-                keep.status.cause === KeepTerminationCause.SIGNATURE_FAIL
-            )
+        const deactivatedKeeps = [].concat(closedKeeps, signatureFailKeeps)
 
         return new SLACalculator(
             openedKeeps,
