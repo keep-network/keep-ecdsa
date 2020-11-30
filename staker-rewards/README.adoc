@@ -6,7 +6,9 @@ To run the script, make sure you have the following prerequisites:
 
 - Node.js (at least v14.3.0). We recommend to use
   the https://github.com/nvm-sh/nvm[Node Version Manager] to get the right
-  version with no troubles.
+  Node.js version with no troubles. You can install this tool by running
+  `brew install nvm` on macOS or follow the https://github.com/nvm-sh/nvm#installing-and-updating[installation guide]
+  for other operating systems.
 
 == How to run
 
