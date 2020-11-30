@@ -29,3 +29,4 @@ build/
 # Configuration files
 configs/config.toml
 external-contracts.js-e
+include/

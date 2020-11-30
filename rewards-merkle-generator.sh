@@ -16,6 +16,15 @@ printf "${LOG_START}Installing dependencies...${LOG_END}"
 cd "$WORKDIR/include/merkle-distributor"
 yarn
 
-printf "${LOG_START}Generating merkle root...${LOG_END}"
+cd "$WORKDIR/staker-rewards"
+yarn
 
-yarn ts-node scripts/generate-merkle-root.ts --input "$WORKDIR/staker-rewards/staker-rewards.json"
+printf "${LOG_START}Generating merkle output object...${LOG_END}"
+
+REWARDS_INPUT_PATH="staker-rewards/example-rewards-input.json"
+if [[ $1 == *"--input"* ]]; then
+    v="${1/--/}"
+    declare REWARDS_INPUT_PATH="$2"
+fi
+
+yarn ts-node generate-merkle-root.ts --input "$WORKDIR/$REWARDS_INPUT_PATH"
