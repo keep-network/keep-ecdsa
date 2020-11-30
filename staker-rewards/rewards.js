@@ -20,7 +20,7 @@ async function run() {
         const isCacheRefreshEnabled = process.env.CACHE_REFRESH !== "off"
 
         if (!ethHostname) {
-            console.error(clc.red("Wrong ETH_HOSTNAME value"))
+            console.error(clc.red("Please provide ETH_HOSTNAME value"))
             return
         }
 
