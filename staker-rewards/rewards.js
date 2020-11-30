@@ -25,8 +25,8 @@ async function run() {
         }
 
         const interval = {
-            start: intervalStart,
-            end: intervalEnd
+            start: parseInt(intervalStart),
+            end: parseInt(intervalEnd)
         }
 
         validateIntervalTimestamps(interval)

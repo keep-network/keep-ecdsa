@@ -126,7 +126,7 @@ export default class Cache {
               address: address,
               members: members,
               creationBlock: creationBlock,
-              creationTimestamp: creationTimestamp,
+              creationTimestamp: parseInt(creationTimestamp),
               status: await getKeepStatus(keepData, this.contracts, this.web3)
             })
             .write()
