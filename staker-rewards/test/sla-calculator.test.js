@@ -16,6 +16,26 @@ const createMockContext = () => ({
   contracts: {},
 })
 
+const setupNoSignatureRequestsMock = (context) => {
+  context.contracts.BondedECDSAKeep = {
+    at: () => ({
+      getPastEvents: () => [],
+    }),
+  }
+
+  return context
+}
+
+const setupSignatureRequestsForAllKeepsMock = (context) => {
+  context.contracts.BondedECDSAKeep = {
+    at: () => ({
+      getPastEvents: () => [{}],
+    }),
+  }
+
+  return context
+}
+
 describe("SLA calculator", async () => {
   it(
     "should return keygen SLA equal to 100% " +
@@ -33,11 +53,7 @@ describe("SLA calculator", async () => {
 
       // Mock the `BondedECDSAKeep` just to make this test pass as it is not
       // relevant in the context of this scenario.
-      mockContext.contracts.BondedECDSAKeep = {
-        at: () => ({
-          getPastEvents: () => [],
-        }),
-      }
+      setupNoSignatureRequestsMock(mockContext)
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
@@ -68,11 +84,7 @@ describe("SLA calculator", async () => {
 
       // Mock the `BondedECDSAKeep` just to make this test pass as it is not
       // relevant in the context of this scenario.
-      mockContext.contracts.BondedECDSAKeep = {
-        at: () => ({
-          getPastEvents: () => [],
-        }),
-      }
+      setupNoSignatureRequestsMock(mockContext)
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
@@ -102,11 +114,7 @@ describe("SLA calculator", async () => {
 
       // Mock the `BondedECDSAKeep` just to make this test pass as it is not
       // relevant in the context of this scenario.
-      mockContext.contracts.BondedECDSAKeep = {
-        at: () => ({
-          getPastEvents: () => [],
-        }),
-      }
+      setupNoSignatureRequestsMock(mockContext)
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
@@ -144,11 +152,7 @@ describe("SLA calculator", async () => {
       // as SLA denominator. In this case, the `wasAskedForSignature`
       // will always return `true` and cause the `deactivatedAndAskedForSigning`
       // set to be non-empty.
-      mockContext.contracts.BondedECDSAKeep = {
-        at: () => ({
-          getPastEvents: () => [{}],
-        }),
-      }
+      setupSignatureRequestsForAllKeepsMock(mockContext)
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
@@ -187,11 +191,7 @@ describe("SLA calculator", async () => {
       // as SLA denominator. In this case, the `wasAskedForSignature`
       // will always return `true` and cause the `deactivatedAndAskedForSigning`
       // set to be non-empty.
-      mockContext.contracts.BondedECDSAKeep = {
-        at: () => ({
-          getPastEvents: () => [{}],
-        }),
-      }
+      setupSignatureRequestsForAllKeepsMock(mockContext)
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
@@ -228,11 +228,7 @@ describe("SLA calculator", async () => {
       // as SLA denominator. In this case, the `wasAskedForSignature`
       // will always return `false` and cause the
       // `deactivatedAndAskedForSigning` set to be empty.
-      mockContext.contracts.BondedECDSAKeep = {
-        at: () => ({
-          getPastEvents: () => [],
-        }),
-      }
+      setupNoSignatureRequestsMock(mockContext)
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
