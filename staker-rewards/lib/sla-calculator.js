@@ -75,9 +75,13 @@ export default class SLACalculator {
     const deactivatedKeeps = [].concat(closedKeeps, signatureFailKeeps)
 
     // Step 4 of signature SLA: from the deactivated keeps set, get the ones
-    // which have been asked for signing.
+    // which have been asked for signing at least one time.
     const deactivatedAndAskedForSigning = []
     for (const keep of deactivatedKeeps) {
+      if (process.env.NODE_ENV !== "test") {
+        console.log(`Checking signature requests for keep ${keep.address}`)
+      }
+
       if (await wasAskedForSignature(keep, contracts, web3)) {
         deactivatedAndAskedForSigning.push(keep)
       }
