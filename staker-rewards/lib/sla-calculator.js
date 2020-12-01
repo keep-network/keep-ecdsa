@@ -1,19 +1,25 @@
-import { KeepStatus, KeepTerminationCause } from "./keep.js"
+import {
+  KeepStatus,
+  KeepTerminationCause,
+  wasAskedForSignature,
+} from "./keep.js"
 
 export default class SLACalculator {
   constructor(
     openedKeeps,
     keygenFailKeeps,
-    deactivatedKeeps,
+    deactivatedAndAskedForSigning,
     signatureFailKeeps
   ) {
     this.openedKeeps = openedKeeps
     this.keygenFailKeeps = keygenFailKeeps
-    this.deactivatedKeeps = deactivatedKeeps
+    this.deactivatedAndAskedForSigning = deactivatedAndAskedForSigning
     this.signatureFailKeeps = signatureFailKeeps
   }
 
-  static initialize(cache, interval) {
+  static async initialize(context, interval) {
+    const { cache, contracts, web3 } = context
+
     const isInInterval = (timestamp) =>
       interval.start <= timestamp && timestamp < interval.end
 
@@ -58,7 +64,7 @@ export default class SLACalculator {
           keep.status.cause === KeepTerminationCause.SIGNATURE_FAIL
       )
 
-    // Step 3 of signature SLA: Concatenate keeps closed and terminated
+    // Step 3 of signature SLA: concatenate keeps closed and terminated
     // due to signature fail, within the given interval. This way
     // we obtain an array of keeps whose statuses have been changed from
     // `active` to `closed` or from `active` to `terminated` due to
@@ -68,10 +74,19 @@ export default class SLACalculator {
     // - keep has been terminated after not delivering a signature
     const deactivatedKeeps = [].concat(closedKeeps, signatureFailKeeps)
 
+    // Step 4 of signature SLA: from the deactivated keeps set, get the ones
+    // which have been asked for signing.
+    const deactivatedAndAskedForSigning = []
+    for (const keep of deactivatedKeeps) {
+      if (await wasAskedForSignature(keep, contracts, web3)) {
+        deactivatedAndAskedForSigning.push(keep)
+      }
+    }
+
     return new SLACalculator(
       openedKeeps,
       keygenFailKeeps,
-      deactivatedKeeps,
+      deactivatedAndAskedForSigning,
       signatureFailKeeps
     )
   }
@@ -85,7 +100,7 @@ export default class SLACalculator {
 
     const signature = this.calculateSLA(
       operator,
-      this.deactivatedKeeps,
+      this.deactivatedAndAskedForSigning,
       this.signatureFailKeeps
     )
 

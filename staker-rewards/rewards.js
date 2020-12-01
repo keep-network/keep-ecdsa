@@ -37,14 +37,12 @@ async function run() {
 
     const context = await Context.initialize(ethHostname)
 
-    const { cache } = context
-
     if (isCacheRefreshEnabled) {
       console.log("Refreshing keeps cache...")
-      await cache.refresh()
+      await context.cache.refresh()
     }
 
-    const operatorsRewards = calculateOperatorsRewards(cache, interval)
+    const operatorsRewards = await calculateOperatorsRewards(context, interval)
 
     console.table(operatorsRewards)
   } catch (error) {
@@ -77,8 +75,9 @@ function validateIntervalTimestamps(interval) {
   console.log(clc.green(`Interval end: ${endDate.toISOString()}`))
 }
 
-function calculateOperatorsRewards(cache, interval) {
-  const slaCalculator = SLACalculator.initialize(cache, interval)
+async function calculateOperatorsRewards(context, interval) {
+  const { cache } = context
+  const slaCalculator = await SLACalculator.initialize(context, interval)
 
   const operatorsRewards = []
 
