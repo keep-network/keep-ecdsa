@@ -24,6 +24,9 @@ TOKEN_GRANT_PROPERTY="TokenGrantAddress"
 RANDOM_BEACON_CONTRACT_DATA="KeepRandomBeaconService.json"
 RANDOM_BEACON_PROPERTY="RandomBeaconAddress"
 
+KEEP_TOKEN_CONTRACT_DATA="KeepToken.json"
+KEEP_TOKEN_PROPERTY="KeepTokenAddress"
+
 DESTINATION_FILE=$(realpath $(dirname $0)/../migrations/external-contracts.js)
 
 ADDRESS_REGEXP=^0[xX][0-9a-fA-F]{40}$
@@ -94,10 +97,26 @@ function fetch_random_beacon_contract_address() {
   fi
 }
 
+function fetch_keep_token_contract_address() {
+  echo "Fetching value for ${KEEP_TOKEN_PROPERTY}..."
+
+  local contractDataPath=$(realpath $KEEP_CORE_SOL_ARTIFACTS_PATH/$KEEP_TOKEN_CONTRACT_DATA)
+  local ADDRESS=$(cat ${contractDataPath} | jq "${JSON_QUERY}" | tr -d '"')
+
+  if [[ !($ADDRESS =~ $ADDRESS_REGEXP) ]]; then
+    echo "Invalid address: ${ADDRESS}"
+    FAILED=true
+  else 
+    echo "Found value for ${KEEP_TOKEN_PROPERTY} = ${ADDRESS}"
+    sed -i -e "/${KEEP_TOKEN_PROPERTY}/s/${SED_SUBSTITUTION_REGEXP}/\"${ADDRESS}\"/" $DESTINATION_FILE
+  fi
+}
+
 fetch_registry_contract_address
 fetch_token_staking_contract_address
 fetch_token_grant_contract_address
 fetch_random_beacon_contract_address
+fetch_keep_token_contract_address
 
 if $FAILED; then
 echo "Failed to fetch external contract addresses!"
