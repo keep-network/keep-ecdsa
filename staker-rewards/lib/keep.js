@@ -108,3 +108,18 @@ async function resolveKeepTerminationCause(keepData, contracts, web3) {
 
   return KeepTerminationCause.OTHER
 }
+
+export async function wasAskedForSignature(keepData, contracts, web3) {
+  const { address, creationBlock } = keepData
+
+  const keepContract = await contracts.BondedECDSAKeep.at(address)
+
+  const events = await getPastEvents(
+    web3,
+    keepContract,
+    "SignatureRequested",
+    creationBlock
+  )
+
+  return events.length > 0
+}

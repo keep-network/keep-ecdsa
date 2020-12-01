@@ -38,11 +38,9 @@ async function run() {
 
     const context = await Context.initialize(ethHostname)
 
-    const { cache } = context
-
     if (isCacheRefreshEnabled) {
       console.log("Refreshing keeps cache...")
-      await cache.refresh()
+      await context.cache.refresh()
     }
 
     const operatorsRewards = await calculateOperatorsRewards(context, interval)
@@ -81,7 +79,7 @@ function validateIntervalTimestamps(interval) {
 async function calculateOperatorsRewards(context, interval) {
   const { cache } = context
 
-  const slaCalculator = SLACalculator.initialize(cache, interval)
+  const slaCalculator = await SLACalculator.initialize(context, interval)
   const fraudDetector = await FraudDetector.initialize(context)
 
   const operatorsRewards = []
