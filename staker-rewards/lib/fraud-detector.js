@@ -59,7 +59,7 @@ export default class FraudDetector {
       )
     }
 
-    let result
+    let result = false
     for (let i = 0; i < events.length; i++) {
       // We need to determine if a slashing event had originated from Keep ECDSA
       // fraud report. A fraud can be reported by calling `Deposit` contract or

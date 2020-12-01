@@ -102,7 +102,9 @@ async function calculateOperatorsRewards(context, interval) {
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     // TODO: other computations
 
-    operatorsRewards.push(new OperatorRewards(operator, operatorSLA))
+    operatorsRewards.push(
+      new OperatorRewards(operator, isFraudulent, operatorSLA)
+    )
   }
 
   return operatorsRewards
@@ -118,8 +120,9 @@ function getOperators(cache) {
   return operators
 }
 
-function OperatorRewards(operator, operatorSLA) {
+function OperatorRewards(operator, isFraudulent, operatorSLA) {
   ;(this.operator = operator),
+    (this.isFraudulent = isFraudulent),
     (this.keygenCount = operatorSLA.keygenCount),
     (this.keygenFailCount = operatorSLA.keygenFailCount),
     (this.keygenSLA = operatorSLA.keygenSLA),
@@ -139,7 +142,7 @@ run()
     process.exit(0)
   })
   .catch((error) => {
-    console.error(
+    console.trace(
       clc.red(
         "Staker rewards distribution calculations errored out with error: "
       ),
