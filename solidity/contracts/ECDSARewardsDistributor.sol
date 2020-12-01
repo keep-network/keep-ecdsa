@@ -14,7 +14,6 @@
 
 pragma solidity 0.5.17;
 
-import "@keep-network/keep-core/contracts/utils/BytesLib.sol";
 import "@keep-network/keep-core/contracts/KeepToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
@@ -35,7 +34,6 @@ import "openzeppelin-solidity/contracts/cryptography/MerkleProof.sol";
 ///   roots
 contract ECDSARewardsDistributor is Ownable {
     using SafeERC20 for KeepToken;
-    using BytesLib for bytes;
     using SafeMath for uint256;
 
     KeepToken public token;
@@ -85,27 +83,15 @@ contract ECDSARewardsDistributor is Ownable {
         emit RewardsClaimed(index, account, amount);
     }
 
-    /// Call receiveApproval to allocate amount of KEEP for a given merkle root.
-    /// @param _from The original sender of the tokens.
-    /// @param _amount The amount of KEEP tokens to fund.
-    /// @param _token The KEEP token to fund the rewards in.
-    /// @param _extraData Merkle root (32 bytes).
-    function receiveApproval(
-        address _from,
-        uint256 _amount,
-        address _token,
-        bytes memory _extraData
-    ) public onlyOwner {
-        require(IERC20(_token) == token, "Unsupported token");
-        require(_extraData.length == 32, "Wrong length of merkle root");
+    /// Allocates amount of KEEP for a given merkle root.
+    /// @param merkleRoot Merkle root for a given timeframe.
+    /// @param amount The amount of KEEP tokens allocated for the merkle root.
+    function allocate(bytes32 merkleRoot, uint256 amount) public onlyOwner {
+        token.safeTransferFrom(msg.sender, address(this), amount);
 
-        token.safeTransferFrom(_from, address(this), _amount);
+        merkleRoots[merkleRoot] = amount;
 
-        bytes32 merkleRoot = _extraData.toBytes32();
-
-        merkleRoots[merkleRoot] = _amount;
-
-        emit RewardsAllocated(merkleRoot, _amount);
+        emit RewardsAllocated(merkleRoot, amount);
     }
 
     function isClaimed(uint256 index, bytes32 merkleRoot)
