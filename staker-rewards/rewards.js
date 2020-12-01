@@ -1,7 +1,7 @@
 import clc from "cli-color"
 
 import Context from "./lib/context.js"
-import { isOperatorKeepECDSAFraudulent } from "./lib/frauds.js"
+import FraudDetector from "./lib/fraud-detector.js"
 import SLACalculator from "./lib/sla-calculator.js"
 
 async function run() {
@@ -82,11 +82,14 @@ async function calculateOperatorsRewards(context, interval) {
   const { cache } = context
 
   const slaCalculator = SLACalculator.initialize(cache, interval)
+  const fraudDetector = await FraudDetector.initialize(context)
 
   const operatorsRewards = []
 
   for (const operator of getOperators(cache)) {
-    const isFraudulent = await isOperatorKeepECDSAFraudulent(context, operator)
+    const isFraudulent = await fraudDetector.isOperatorKeepECDSAFraudulent(
+      operator
+    )
 
     if (isFraudulent) {
       console.log(
