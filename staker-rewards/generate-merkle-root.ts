@@ -1,7 +1,7 @@
 import { program } from 'commander'
 
 import * as fs from 'fs'
-import { parseBalanceMap } from '../include/merkle-distributor/src/parse-balance-map'
+import { parseBalanceMap } from './merkle-distributor/src/parse-balance-map'
 
 program
   .version('0.0.0')
