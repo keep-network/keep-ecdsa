@@ -2,6 +2,7 @@ import clc from "cli-color"
 
 import Context from "./lib/context.js"
 import SLACalculator from "./lib/sla-calculator.js"
+import AssetsCalculator from "./lib/assets-calculator.js";
 
 async function run() {
     try {
@@ -37,14 +38,12 @@ async function run() {
 
         const context = await Context.initialize(ethHostname)
 
-        const { cache } = context
-
         if (isCacheRefreshEnabled) {
             console.log("Refreshing keeps cache...")
-            await cache.refresh()
+            await context.cache.refresh()
         }
 
-        const operatorsRewards = calculateOperatorsRewards(cache, interval)
+        const operatorsRewards = await calculateOperatorsRewards(context, interval)
 
         console.table(operatorsRewards)
     } catch (error) {
@@ -77,19 +76,25 @@ function validateIntervalTimestamps(interval) {
     console.log(clc.green(`Interval end: ${endDate.toISOString()}`))
 }
 
-function calculateOperatorsRewards(cache, interval) {
+async function calculateOperatorsRewards(context, interval) {
+    const { cache } = context
     const slaCalculator = SLACalculator.initialize(cache, interval)
+    const assetsCalculator = await AssetsCalculator.initialize(context, interval)
 
     const operatorsRewards = []
 
     for (const operator of getOperators(cache)) {
+        console.log(`Calculating summary for operator ${operator}`)
+
         const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
+        const operatorAssets = await assetsCalculator.calculateOperatorAssets(operator)
         // TODO: other computations
 
         operatorsRewards.push(
             new OperatorRewards(
                 operator,
-                operatorSLA
+                operatorSLA,
+                operatorAssets
             )
         )
     }
@@ -110,6 +115,7 @@ function getOperators(cache) {
 function OperatorRewards(
     operator,
     operatorSLA,
+    operatorAssets
 ) {
     this.operator = operator,
     this.keygenCount = operatorSLA.keygenCount,
@@ -117,7 +123,8 @@ function OperatorRewards(
     this.keygenSLA = operatorSLA.keygenSLA,
     this.signatureCount = operatorSLA.signatureCount,
     this.signatureFailCount = operatorSLA.signatureFailCount,
-    this.signatureSLA = operatorSLA.signatureSLA
+    this.signatureSLA = operatorSLA.signatureSLA,
+    this.keepStaked = operatorAssets.keepStaked
 }
 
 run()

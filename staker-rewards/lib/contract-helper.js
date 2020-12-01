@@ -35,10 +35,16 @@ export async function getDeploymentBlockNumber(artifact, web3) {
 
 export async function callWithRetry(
     contractMethod,
-    params,
-    totalAttempts = 3
+    block = "latest",
+    params = undefined,
+    totalAttempts = 3,
 ) {
-    return EthereumHelpers.callWithRetry(contractMethod, params, totalAttempts)
+    return EthereumHelpers.callWithRetry(
+        contractMethod,
+        params,
+        totalAttempts,
+        block
+    )
 }
 
 export async function getPastEvents(web3, contract, eventName, fromBlock = 0) {
