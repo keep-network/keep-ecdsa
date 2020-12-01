@@ -4,6 +4,9 @@ executors:
   docker-node:
     docker:
       - image: circleci/node:11
+  docker-node-14:
+    docker:
+      - image: circleci/node:14
   docker-node-gcloud:
     docker:
       - image: appfarm/node-gcloud-base
@@ -35,6 +38,30 @@ jobs:
           command: |
             set -ex
             npm run lint
+  lint_staker_rewards_script:
+    executor: docker-node-14
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          working_directory: ~/project/staker-rewards
+          command: npm ci
+      - run:
+          name: Lint Implementation
+          working_directory: ~/project/staker-rewards
+          command: npm run lint
+  test_staker_rewards_script:
+    executor: docker-node-14
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          working_directory: ~/project/staker-rewards
+          command: npm ci
+      - run:
+          name: Run tests
+          working_directory: ~/project/staker-rewards
+          command: npm test
   build_and_test_solidity:
     executor: docker-node
     steps:
@@ -278,6 +305,10 @@ workflows:
   solidity:
     jobs:
       - build_and_test_solidity
+  staker-rewards:
+    jobs:
+      - lint_staker_rewards_script
+      - test_staker_rewards_script
   build-test-publish-keep-dev:
     jobs:
       - build_client_and_test_go

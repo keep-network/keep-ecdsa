@@ -1,0 +1,35 @@
+= Staker rewards
+
+== Prerequisites
+
+To run the script, make sure you have the following prerequisites:
+
+- Node.js (at least v14.3.0). We recommend to use
+  the https://github.com/nvm-sh/nvm[Node Version Manager] to get the right
+  Node.js version with no troubles. You can install this tool by running
+  `brew install nvm` on macOS or follow the https://github.com/nvm-sh/nvm#installing-and-updating[installation guide]
+  for other operating systems.
+
+== How to run
+
+1. Make sure you use the right Node.js version:
++
+```
+nvm use 14.3.0
+```
+2. Install the NPM dependencies if not done yet:
++
+```
+npm install
+```
+3. Run the script along with environment variables:
++
+```
+ETH_HOSTNAME=<eth-ws-hostname> \
+node --experimental-json-modules rewards.js \
+<interval-start-unix-timestamp> <interval-end-unix-timestamp>
+```
++
+You can also use several auxiliary environment variables:
+
+- `DEBUG=on` to enable debug logs
