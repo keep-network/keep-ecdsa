@@ -1,6 +1,7 @@
 import clc from "cli-color"
 
 import Context from "./lib/context.js"
+import { isOperatorKeepECDSAFraudulent } from "./lib/frauds.js"
 import SLACalculator from "./lib/sla-calculator.js"
 
 async function run() {
@@ -44,7 +45,7 @@ async function run() {
       await cache.refresh()
     }
 
-    const operatorsRewards = calculateOperatorsRewards(cache, interval)
+    const operatorsRewards = await calculateOperatorsRewards(context, interval)
 
     console.table(operatorsRewards)
   } catch (error) {
@@ -77,12 +78,24 @@ function validateIntervalTimestamps(interval) {
   console.log(clc.green(`Interval end: ${endDate.toISOString()}`))
 }
 
-function calculateOperatorsRewards(cache, interval) {
+async function calculateOperatorsRewards(context, interval) {
+  const { cache } = context
+
   const slaCalculator = SLACalculator.initialize(cache, interval)
 
   const operatorsRewards = []
 
   for (const operator of getOperators(cache)) {
+    const isFraudulent = await isOperatorKeepECDSAFraudulent(context, operator)
+
+    if (isFraudulent) {
+      console.log(
+        clc.red(`operator [${operator}] has been fraudulent in Keep ECDSA`)
+      )
+
+      // TODO: Handle discovered Keep ECDSA fraud.
+    }
+
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     // TODO: other computations
 

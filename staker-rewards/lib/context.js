@@ -6,8 +6,10 @@ import Subproviders from "@0x/subproviders"
 import Cache from "./cache.js"
 import { Contract, getDeploymentBlockNumber } from "./contract-helper.js"
 
+import TokenStakingJson from "@keep-network/keep-core/artifacts/TokenStaking.json"
 import BondedECDSAKeepFactoryJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import BondedECDSAKeepJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
+import TBTCSystemJson from "@keep-network/tbtc/artifacts/TBTCSystem.json"
 
 export default class Context {
   constructor(cache, web3, contracts) {
@@ -19,6 +21,8 @@ export default class Context {
   static async initialize(ethUrl) {
     const web3 = await initWeb3(ethUrl)
 
+    const TokenStaking = new Contract(TokenStakingJson, web3)
+
     const BondedECDSAKeepFactory = new Contract(
       BondedECDSAKeepFactoryJson,
       web3
@@ -26,14 +30,18 @@ export default class Context {
 
     const BondedECDSAKeep = new Contract(BondedECDSAKeepJson, web3)
 
+    const TBTCSystem = new Contract(TBTCSystemJson, web3)
+
     const factoryDeploymentBlock = await getDeploymentBlockNumber(
       BondedECDSAKeepFactoryJson,
       web3
     )
 
     const contracts = {
+      TokenStaking: TokenStaking,
       BondedECDSAKeepFactory: BondedECDSAKeepFactory,
       BondedECDSAKeep: BondedECDSAKeep,
+      TBTCSystem: TBTCSystem,
       factoryDeploymentBlock: factoryDeploymentBlock,
     }
 
