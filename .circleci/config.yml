@@ -38,12 +38,24 @@ jobs:
           command: |
             set -ex
             npm run lint
+  lint_staker_rewards_script:
+    executor: docker-node-14
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          working_directory: ~/project/staker-rewards
+          command: npm ci
+      - run:
+          name: Lint Implementation
+          working_directory: ~/project/staker-rewards
+          command: npm run lint
   test_staker_rewards_script:
     executor: docker-node-14
     steps:
       - checkout
       - run:
-          name: Install NPM dependencies
+          name: Install dependencies
           working_directory: ~/project/staker-rewards
           command: npm ci
       - run:
@@ -295,6 +307,7 @@ workflows:
       - build_and_test_solidity
   staker-rewards:
     jobs:
+      - lint_staker_rewards_script
       - test_staker_rewards_script
   build-test-publish-keep-dev:
     jobs:
