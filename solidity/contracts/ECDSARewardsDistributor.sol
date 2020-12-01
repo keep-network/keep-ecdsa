@@ -39,11 +39,16 @@ contract ECDSARewardsDistributor is Ownable {
     KeepToken public token;
 
     // This event is triggered whenever a call to #claim succeeds.
-    event RewardsClaimed(uint256 index, address account, uint256 amount);
+    event RewardsClaimed(
+        uint256 index,
+        address account,
+        uint256 amount,
+        bytes32 merkleRoot
+    );
     // This event is triggered whenever rewards are allocated.
     event RewardsAllocated(bytes32 merkleRoot, uint256 amount);
 
-    // Merkle root -> total amount for distribution for a given timeframe.
+    // Merkle root -> total amount for distribution for a given interval.
     mapping(bytes32 => uint256) private merkleRoots;
     // Bytes32 key is a merkle root and the value is a packed array of booleans.
     mapping(bytes32 => mapping(uint256 => uint256)) private claimedBitMap;
@@ -80,11 +85,11 @@ contract ECDSARewardsDistributor is Ownable {
         // Update KEEP amount for the given merkleRoot
         merkleRoots[merkleRoot] = merkleRoots[merkleRoot].sub(amount);
 
-        emit RewardsClaimed(index, account, amount);
+        emit RewardsClaimed(index, account, amount, merkleRoot);
     }
 
     /// Allocates amount of KEEP for a given merkle root.
-    /// @param merkleRoot Merkle root for a given timeframe.
+    /// @param merkleRoot Merkle root for a given interval.
     /// @param amount The amount of KEEP tokens allocated for the merkle root.
     function allocate(bytes32 merkleRoot, uint256 amount) public onlyOwner {
         token.safeTransferFrom(msg.sender, address(this), amount);
