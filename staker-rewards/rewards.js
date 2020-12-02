@@ -1,4 +1,5 @@
 import clc from "cli-color"
+import BlockByDate from "ethereum-block-by-date"
 
 import Context from "./lib/context.js"
 import SLACalculator from "./lib/sla-calculator.js"
@@ -38,6 +39,8 @@ async function run() {
 
     const context = await Context.initialize(ethHostname)
 
+    await determineIntervalBlockspan(context, interval)
+
     if (isCacheRefreshEnabled) {
       console.log("Refreshing keeps cache...")
       await context.cache.refresh()
@@ -72,8 +75,18 @@ function validateIntervalTimestamps(interval) {
     )
   }
 
-  console.log(clc.green(`Interval start: ${startDate.toISOString()}`))
-  console.log(clc.green(`Interval end: ${endDate.toISOString()}`))
+  console.log(clc.green(`Interval start timestamp: ${startDate.toISOString()}`))
+  console.log(clc.green(`Interval end timestamp: ${endDate.toISOString()}`))
+}
+
+async function determineIntervalBlockspan(context, interval) {
+  const blockByDate = new BlockByDate(context.web3)
+
+  interval.startBlock = (await blockByDate.getDate(interval.start * 1000)).block
+  interval.endBlock = (await blockByDate.getDate(interval.end * 1000)).block
+
+  console.log(clc.green(`Interval start block: ${interval.startBlock}`))
+  console.log(clc.green(`Interval end block: ${interval.endBlock}`))
 }
 
 async function calculateOperatorsRewards(context, interval) {
