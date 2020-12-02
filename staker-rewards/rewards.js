@@ -2,7 +2,7 @@ import clc from "cli-color"
 
 import Context from "./lib/context.js"
 import SLACalculator from "./lib/sla-calculator.js"
-import AssetsCalculator from "./lib/assets-calculator.js";
+import AssetsCalculator from "./lib/assets-calculator.js"
 
 async function run() {
   try {
@@ -87,10 +87,14 @@ async function calculateOperatorsRewards(context, interval) {
     console.log(`Calculating summary for operator ${operator}`)
 
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
-    const operatorAssets = await assetsCalculator.calculateOperatorAssets(operator)
+    const operatorAssets = await assetsCalculator.calculateOperatorAssets(
+      operator
+    )
     // TODO: other computations
 
-    operatorsRewards.push(new OperatorRewards(operator, operatorSLA, operatorAssets))
+    operatorsRewards.push(
+      new OperatorRewards(operator, operatorSLA, operatorAssets)
+    )
   }
 
   return operatorsRewards

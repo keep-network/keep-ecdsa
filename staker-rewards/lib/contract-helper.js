@@ -37,13 +37,13 @@ export async function callWithRetry(
   contractMethod,
   block = "latest",
   params = undefined,
-  totalAttempts = 3,
+  totalAttempts = 3
 ) {
   return EthereumHelpers.callWithRetry(
-      contractMethod,
-      params,
-      totalAttempts,
-      block
+    contractMethod,
+    params,
+    totalAttempts,
+    block
   )
 }
 

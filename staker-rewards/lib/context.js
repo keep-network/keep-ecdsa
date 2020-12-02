@@ -24,8 +24,8 @@ export default class Context {
     const TokenStaking = new Contract(TokenStakingJson, web3)
 
     const KeepRandomBeaconOperator = new Contract(
-        KeepRandomBeaconOperatorJson,
-        web3
+      KeepRandomBeaconOperatorJson,
+      web3
     )
 
     const BondedECDSAKeepFactory = new Contract(
