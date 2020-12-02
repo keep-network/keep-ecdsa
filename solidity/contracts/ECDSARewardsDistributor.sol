@@ -40,10 +40,10 @@ contract ECDSARewardsDistributor is Ownable {
 
     // This event is triggered whenever a call to #claim succeeds.
     event RewardsClaimed(
+        bytes32 merkleRoot,
         uint256 index,
         address account,
-        uint256 amount,
-        bytes32 merkleRoot
+        uint256 amount
     );
     // This event is triggered whenever rewards are allocated.
     event RewardsAllocated(bytes32 merkleRoot, uint256 amount);
@@ -58,13 +58,13 @@ contract ECDSARewardsDistributor is Ownable {
     }
 
     function claim(
+        bytes32 merkleRoot,
         uint256 index,
         address account,
         uint256 amount,
-        bytes32 merkleRoot,
         bytes32[] calldata merkleProof
     ) external {
-        require(!isClaimed(index, merkleRoot), "Reward already claimed");
+        require(!isClaimed(merkleRoot, index), "Reward already claimed");
         require(
             merkleRoots[merkleRoot] > 0,
             "Rewards must be allocated for a given merkle root"
@@ -79,13 +79,13 @@ contract ECDSARewardsDistributor is Ownable {
         );
 
         // Mark it claimed and send the token.
-        _setClaimed(index, merkleRoot);
+        _setClaimed(merkleRoot, index);
         require(IERC20(token).transfer(account, amount), "Transfer failed");
 
         // Update KEEP amount for the given merkleRoot
         merkleRoots[merkleRoot] = merkleRoots[merkleRoot].sub(amount);
 
-        emit RewardsClaimed(index, account, amount, merkleRoot);
+        emit RewardsClaimed(merkleRoot, index, account, amount);
     }
 
     /// Allocates amount of KEEP for a given merkle root.
@@ -99,7 +99,7 @@ contract ECDSARewardsDistributor is Ownable {
         emit RewardsAllocated(merkleRoot, amount);
     }
 
-    function isClaimed(uint256 index, bytes32 merkleRoot)
+    function isClaimed(bytes32 merkleRoot, uint256 index)
         public
         view
         returns (bool)
@@ -115,7 +115,7 @@ contract ECDSARewardsDistributor is Ownable {
         return merkleRoots[merkleRoot];
     }
 
-    function _setClaimed(uint256 index, bytes32 merkleRoot) private {
+    function _setClaimed(bytes32 merkleRoot, uint256 index) private {
         uint256 claimedWordIndex = index / 256;
         uint256 claimedBitIndex = index % 256;
         claimedBitMap[merkleRoot][claimedWordIndex] =
