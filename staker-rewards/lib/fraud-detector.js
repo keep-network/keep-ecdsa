@@ -1,5 +1,3 @@
-import clc from "cli-color"
-
 export default class FraudDetector {
   constructor(context, tokenStaking, factoryDeploymentBlock) {
     this.context = context
