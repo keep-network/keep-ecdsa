@@ -79,8 +79,8 @@ function validateIntervalTimestamps(interval) {
 async function calculateOperatorsRewards(context, interval) {
   const { cache } = context
 
-  const slaCalculator = await SLACalculator.initialize(context, interval)
   const fraudDetector = await FraudDetector.initialize(context)
+  const slaCalculator = await SLACalculator.initialize(context, interval)
 
   const operatorsRewards = []
 
