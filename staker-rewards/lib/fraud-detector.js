@@ -34,7 +34,7 @@ export default class FraudDetector {
     if (events.length > 0) {
       console.log(
         clc.yellow(
-          `found slashing event for operator [${operator}];` +
+          `Found slashing event for operator [${operator}];` +
             ` please double check correctness of a calculation result`
         )
       )

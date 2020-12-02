@@ -89,7 +89,7 @@ async function calculateOperatorsRewards(context, interval) {
 
     if (isFraudulent) {
       console.log(
-        clc.red(`operator [${operator}] has been fraudulent in Keep ECDSA`)
+        clc.red(`Operator [${operator}] has been fraudulent in Keep ECDSA`)
       )
 
       // TODO: Handle discovered Keep ECDSA fraud.
