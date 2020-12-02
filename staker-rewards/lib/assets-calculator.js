@@ -22,8 +22,7 @@ export default class AssetsCalculator {
   }
 
   async calculateKeepStaked(operator) {
-    // TODO: Check at interval end block
-    const block = "latest"
+    const block = this.interval.endBlock
 
     return await callWithRetry(
       this.tokenStaking.methods.activeStake(
