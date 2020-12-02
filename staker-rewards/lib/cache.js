@@ -27,11 +27,11 @@ export default class Cache {
   async initialize() {
     this.cache = low(new FileSync(CACHE_PATH))
     await this.cache
-        .defaults({
-          keeps: [],
-          lastRefreshBlock: this.contracts.factoryDeploymentBlock,
-        })
-        .write()
+      .defaults({
+        keeps: [],
+        lastRefreshBlock: this.contracts.factoryDeploymentBlock,
+      })
+      .write()
   }
 
   async refresh() {
@@ -45,19 +45,17 @@ export default class Cache {
     const previousRefreshBlock = this.cache.get("lastRefreshBlock").value()
 
     const startBlock =
-        previousRefreshBlock - REORG_DEPTH_BLOCKS > 0
-            ? previousRefreshBlock - REORG_DEPTH_BLOCKS
-            : 0
+      previousRefreshBlock - REORG_DEPTH_BLOCKS > 0
+        ? previousRefreshBlock - REORG_DEPTH_BLOCKS
+        : 0
 
-    console.log(
-        `Looking for keeps created since block [${startBlock}]...`
-    )
+    console.log(`Looking for keeps created since block [${startBlock}]...`)
 
     const keepCreatedEvents = await getPastEvents(
-        this.web3,
-        factory,
-        "BondedECDSAKeepCreated",
-        startBlock
+      this.web3,
+      factory,
+      "BondedECDSAKeepCreated",
+      startBlock
     )
 
     const newKeeps = []
@@ -72,7 +70,7 @@ export default class Cache {
     const cachedKeepsCount = this.cache.get("keeps").value().length
 
     console.log(
-        `Number of keeps created since block ` +
+      `Number of keeps created since block ` +
         `[${startBlock}]: ${newKeeps.length}`
     )
 
@@ -81,9 +79,9 @@ export default class Cache {
     const actions = []
     newKeeps.forEach((keep) => {
       const isCached = this.cache
-          .get("keeps")
-          .find({ address: keep.address })
-          .value()
+        .get("keeps")
+        .find({ address: keep.address })
+        .value()
 
       if (!isCached) {
         actions.push(() => this.fetchFullKeepData(keep))
@@ -93,16 +91,14 @@ export default class Cache {
     if (actions.length === 0) {
       console.log("Cached keeps list is up to date")
     } else {
-      console.log(
-          `Fetching information about [${actions.length}] new keeps...`
-      )
+      console.log(`Fetching information about [${actions.length}] new keeps...`)
 
       const results = await pAll(actions, {
         concurrency: CONCURRENCY_LIMIT,
       })
 
       console.log(
-          `Successfully fetched information about [${results.length}] new keeps`
+        `Successfully fetched information about [${results.length}] new keeps`
       )
     }
 
@@ -117,23 +113,21 @@ export default class Cache {
         const keepContract = await this.contracts.BondedECDSAKeep.at(address)
 
         const creationTimestamp = await callWithRetry(
-            keepContract.methods.getOpenedTimestamp()
+          keepContract.methods.getOpenedTimestamp()
         )
 
         this.cache
-            .get("keeps")
-            .push({
-              address: address,
-              members: members,
-              creationBlock: creationBlock,
-              creationTimestamp: parseInt(creationTimestamp),
-              status: await getKeepStatus(keepData, this.contracts, this.web3)
-            })
-            .write()
+          .get("keeps")
+          .push({
+            address: address,
+            members: members,
+            creationBlock: creationBlock,
+            creationTimestamp: parseInt(creationTimestamp),
+            status: await getKeepStatus(keepData, this.contracts, this.web3),
+          })
+          .write()
 
-        console.log(
-            `Successfully fetched information about keep ${address}`
-        )
+        console.log(`Successfully fetched information about keep ${address}`)
 
         return resolve()
       } catch (err) {
@@ -148,37 +142,41 @@ export default class Cache {
     console.log(`Refreshing [${activeKeeps.length}] active keeps in the cache`)
 
     const actions = []
-    activeKeeps.forEach(keepData => {
+    activeKeeps.forEach((keepData) => {
       actions.push(() => this.refreshKeepStatus(keepData))
     })
 
-    await pAll(actions, {concurrency: CONCURRENCY_LIMIT})
+    await pAll(actions, { concurrency: CONCURRENCY_LIMIT })
   }
 
   async refreshKeepStatus(keepData) {
     console.log(`Checking current status of keep ${keepData.address}`)
 
     const lastStatus = keepData.status
-    const currentStatus = await getKeepStatus(keepData, this.contracts, this.web3)
+    const currentStatus = await getKeepStatus(
+      keepData,
+      this.contracts,
+      this.web3
+    )
 
     if (lastStatus.name !== currentStatus.name) {
       console.log(
-          `Updating current status of keep ${keepData.address} ` +
+        `Updating current status of keep ${keepData.address} ` +
           `from [${lastStatus.name}] to [${currentStatus.name}]`
       )
 
       this.cache
-          .get("keeps")
-          .find({ address: keepData.address })
-          .assign({ status: currentStatus })
-          .write()
+        .get("keeps")
+        .find({ address: keepData.address })
+        .assign({ status: currentStatus })
+        .write()
     }
   }
 
   getKeeps(status) {
     return this.cache
-        .get("keeps")
-        .filter(keep => !status || keep.status.name === status)
-        .value()
+      .get("keeps")
+      .filter((keep) => !status || keep.status.name === status)
+      .value()
   }
 }

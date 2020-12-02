@@ -144,6 +144,20 @@
         "name": "active",
         "timestamp": 10000
       }
+    },
+    {
+      "address": "0x5907339b339136EE062A5921114013a66FeA713e",
+      "members": [
+        "0xd1F2A77a0dAD76Ef8B87002763134f4863C870A4",
+        "0xb038a8B2975cD5dE392683f5CD4989d3b1E75648",
+        "0x855A951162B1B93D70724484d5bdc9D00B56236B"
+      ],
+      "creationBlock": 11,
+      "creationTimestamp": 11000,
+      "status": {
+        "name": "active",
+        "timestamp": 11000
+      }
     }
   ]
 }
