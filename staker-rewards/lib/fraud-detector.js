@@ -16,7 +16,7 @@ export default class FraudDetector {
   }
 
   async isOperatorFraudulent(operator) {
-    console.log(`Checking fraudulent activity for operator: ${operator}`)
+    console.log(`Checking fraudulent activity for operator ${operator}`)
 
     // Get all slashing events for the operator.
     const events = await this.tokenStaking.getPastEvents("TokensSlashed", {
