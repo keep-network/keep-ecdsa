@@ -87,14 +87,6 @@ async function calculateOperatorsRewards(context, interval) {
   for (const operator of getOperators(cache)) {
     const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
 
-    if (isFraudulent) {
-      console.log(
-        clc.red(`Operator [${operator}] has been fraudulent in Keep ECDSA`)
-      )
-
-      // TODO: Handle discovered Keep ECDSA fraud.
-    }
-
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     // TODO: other computations
 
