@@ -48,8 +48,9 @@ contract ECDSARewardsDistributor is Ownable {
     // This event is triggered whenever rewards are allocated.
     event RewardsAllocated(bytes32 merkleRoot, uint256 amount);
 
-    // Merkle root -> total amount for distribution for a given interval.
-    mapping(bytes32 => uint256) private merkleRoots;
+    // Map of merkle roots indicating whether a given interval was allocated with
+    // KEEP token rewards.
+    mapping(bytes32 => bool) private merkleRoots;
     // Bytes32 key is a merkle root and the value is a packed array of booleans.
     mapping(bytes32 => mapping(uint256 => uint256)) private claimedBitMap;
 
@@ -66,7 +67,7 @@ contract ECDSARewardsDistributor is Ownable {
     ) external {
         require(!isClaimed(merkleRoot, index), "Reward already claimed");
         require(
-            merkleRoots[merkleRoot] > 0,
+            merkleRoots[merkleRoot],
             "Rewards must be allocated for a given merkle root"
         );
 
@@ -82,9 +83,6 @@ contract ECDSARewardsDistributor is Ownable {
         _setClaimed(merkleRoot, index);
         require(IERC20(token).transfer(account, amount), "Transfer failed");
 
-        // Update KEEP amount for the given merkleRoot
-        merkleRoots[merkleRoot] = merkleRoots[merkleRoot].sub(amount);
-
         emit RewardsClaimed(merkleRoot, index, account, amount);
     }
 
@@ -94,7 +92,7 @@ contract ECDSARewardsDistributor is Ownable {
     function allocate(bytes32 merkleRoot, uint256 amount) public onlyOwner {
         token.safeTransferFrom(msg.sender, address(this), amount);
 
-        merkleRoots[merkleRoot] = amount;
+        merkleRoots[merkleRoot] = true;
 
         emit RewardsAllocated(merkleRoot, amount);
     }
@@ -109,10 +107,6 @@ contract ECDSARewardsDistributor is Ownable {
         uint256 claimedWord = claimedBitMap[merkleRoot][claimedWordIndex];
         uint256 mask = (1 << claimedBitIndex);
         return claimedWord & mask == mask;
-    }
-
-    function getAllocation(bytes32 merkleRoot) public view returns (uint256) {
-        return merkleRoots[merkleRoot];
     }
 
     function _setClaimed(bytes32 merkleRoot, uint256 index) private {
