@@ -85,9 +85,7 @@ async function calculateOperatorsRewards(context, interval) {
   const operatorsRewards = []
 
   for (const operator of getOperators(cache)) {
-    const isFraudulent = await fraudDetector.isOperatorKeepECDSAFraudulent(
-      operator
-    )
+    const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
 
     if (isFraudulent) {
       console.log(
