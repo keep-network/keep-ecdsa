@@ -10,6 +10,8 @@ import TokenStakingJson from "@keep-network/keep-core/artifacts/TokenStaking.jso
 import KeepRandomBeaconOperatorJson from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
 import BondedECDSAKeepFactoryJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import BondedECDSAKeepJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
+import KeepBondingJson from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
+import TBTCSystemJson from "@keep-network/tbtc/artifacts/TBTCSystem.json"
 
 export default class Context {
   constructor(cache, web3, contracts) {
@@ -35,6 +37,10 @@ export default class Context {
 
     const BondedECDSAKeep = new Contract(BondedECDSAKeepJson, web3)
 
+    const KeepBonding = new Contract(KeepBondingJson, web3)
+
+    const TBTCSystem = new Contract(TBTCSystemJson, web3)
+
     const factoryDeploymentBlock = await getDeploymentBlockNumber(
       BondedECDSAKeepFactoryJson,
       web3
@@ -45,6 +51,8 @@ export default class Context {
       KeepRandomBeaconOperator: KeepRandomBeaconOperator,
       BondedECDSAKeepFactory: BondedECDSAKeepFactory,
       BondedECDSAKeep: BondedECDSAKeep,
+      KeepBonding: KeepBonding,
+      TBTCSystem: TBTCSystem,
       factoryDeploymentBlock: factoryDeploymentBlock,
     }
 

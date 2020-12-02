@@ -131,7 +131,10 @@ function OperatorRewards(operator, operatorSLA, operatorAssets) {
     (this.signatureCount = operatorSLA.signatureCount),
     (this.signatureFailCount = operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorSLA.signatureSLA),
-    (this.keepStaked = operatorAssets.keepStaked)
+    (this.keepStaked = operatorAssets.keepStaked),
+    (this.ethBonded = operatorAssets.ethBonded),
+    (this.ethUnbonded = operatorAssets.ethUnbonded),
+    (this.ethTotal = operatorAssets.ethTotal)
 }
 
 run()
