@@ -18,6 +18,8 @@ export default class FraudDetector {
   }
 
   async isOperatorFraudulent(operator) {
+    console.log(`Checking fraudulent activity for operator: ${operator}`)
+
     // Get all slashing events for the operator.
     const events = await this.tokenStaking.getPastEvents("TokensSlashed", {
       fromBlock: this.factoryDeploymentBlock,
@@ -32,13 +34,6 @@ export default class FraudDetector {
     // This section has to be revisited in case of implementing additional usage
     // of slashing function.
     if (events.length > 0) {
-      console.log(
-        clc.yellow(
-          `Found slashing event for operator [${operator}];` +
-            ` please double check correctness of a calculation result`
-        )
-      )
-
       return true
     } else {
       return false
