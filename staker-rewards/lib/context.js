@@ -6,6 +6,7 @@ import Subproviders from "@0x/subproviders"
 import Cache from "./cache.js"
 import { Contract, getDeploymentBlockNumber } from "./contract-helper.js"
 
+import TokenStakingJson from "@keep-network/keep-core/artifacts/TokenStaking.json"
 import BondedECDSAKeepFactoryJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import BondedECDSAKeepJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 
@@ -18,6 +19,8 @@ export default class Context {
 
   static async initialize(ethUrl) {
     const web3 = await initWeb3(ethUrl)
+
+    const TokenStaking = new Contract(TokenStakingJson, web3)
 
     const BondedECDSAKeepFactory = new Contract(
       BondedECDSAKeepFactoryJson,
@@ -32,6 +35,7 @@ export default class Context {
     )
 
     const contracts = {
+      TokenStaking: TokenStaking,
       BondedECDSAKeepFactory: BondedECDSAKeepFactory,
       BondedECDSAKeep: BondedECDSAKeep,
       factoryDeploymentBlock: factoryDeploymentBlock,

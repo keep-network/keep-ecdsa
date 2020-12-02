@@ -1,6 +1,7 @@
 import clc from "cli-color"
 
 import Context from "./lib/context.js"
+import FraudDetector from "./lib/fraud-detector.js"
 import SLACalculator from "./lib/sla-calculator.js"
 
 async function run() {
@@ -77,15 +78,21 @@ function validateIntervalTimestamps(interval) {
 
 async function calculateOperatorsRewards(context, interval) {
   const { cache } = context
+
+  const fraudDetector = await FraudDetector.initialize(context)
   const slaCalculator = await SLACalculator.initialize(context, interval)
 
   const operatorsRewards = []
 
   for (const operator of getOperators(cache)) {
+    const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
+
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     // TODO: other computations
 
-    operatorsRewards.push(new OperatorRewards(operator, operatorSLA))
+    operatorsRewards.push(
+      new OperatorRewards(operator, isFraudulent, operatorSLA)
+    )
   }
 
   return operatorsRewards
@@ -101,8 +108,9 @@ function getOperators(cache) {
   return operators
 }
 
-function OperatorRewards(operator, operatorSLA) {
+function OperatorRewards(operator, isFraudulent, operatorSLA) {
   ;(this.operator = operator),
+    (this.isFraudulent = isFraudulent),
     (this.keygenCount = operatorSLA.keygenCount),
     (this.keygenFailCount = operatorSLA.keygenFailCount),
     (this.keygenSLA = operatorSLA.keygenSLA),
@@ -122,7 +130,7 @@ run()
     process.exit(0)
   })
   .catch((error) => {
-    console.error(
+    console.trace(
       clc.red(
         "Staker rewards distribution calculations errored out with error: "
       ),
