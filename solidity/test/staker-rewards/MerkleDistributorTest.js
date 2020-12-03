@@ -128,6 +128,8 @@ describe("MerkleDistributor", () => {
           amount,
           proof
         )
+
+        expect(await keepToken.balanceOf(account)).to.eq.BN(amount)
       }
 
       const actualBalance = await keepToken.balanceOf(
