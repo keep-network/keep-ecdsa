@@ -1,7 +1,7 @@
-const { contract, web3 } = require("@openzeppelin/test-environment")
-const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers")
-const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
-const { testValues } = require("./rewardsData.js")
+const {contract, web3} = require("@openzeppelin/test-environment")
+const {expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
+const {testValues} = require("./rewardsData.js")
 
 const ECDSARewardsDistributor = contract.fromArtifact("ECDSARewardsDistributor")
 const KeepToken = contract.fromArtifact("KeepToken")
@@ -11,7 +11,7 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe.only("MerkleDistributor", () => {
+describe("MerkleDistributor", () => {
   let keepToken
   let rewardsDistributor
 
