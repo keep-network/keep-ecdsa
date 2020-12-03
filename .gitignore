@@ -30,4 +30,3 @@ build/
 configs
 !configs/config.toml.SAMPLE
 external-contracts.js-e
-include/

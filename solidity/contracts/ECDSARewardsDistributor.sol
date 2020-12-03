@@ -34,7 +34,6 @@ import "openzeppelin-solidity/contracts/cryptography/MerkleProof.sol";
 ///   roots
 contract ECDSARewardsDistributor is Ownable {
     using SafeERC20 for KeepToken;
-    using SafeMath for uint256;
 
     KeepToken public token;
 
