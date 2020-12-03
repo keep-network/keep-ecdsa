@@ -11,15 +11,21 @@ repos:
     - id: check-added-large-files
  - repo: local
    hooks:
-    - id: lint-js
-      name: 'lint js'
+    - id: solidity-lint-js
+      name: 'solidity lint js'
       entry: /usr/bin/env bash -c "cd solidity && npm run lint:js"
       files: '\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"
-    - id: lint-sol
-      name: 'lint solidity'
+    - id: solidity-lint-sol
+      name: 'solidity lint solidity'
       entry: /usr/bin/env bash -c "cd solidity && npm run lint:sol"
       files: '\.sol$'
       language: script
       description: "Checks Solidity code according to the package's linter configuration"
+    - id: staker-rewards-lint-js
+      name: 'staker rewards lint js'
+      entry: /usr/bin/env bash -c "cd staker-rewards && npm run lint:js"
+      files: '\.js$'
+      language: script
+      description: "Checks JS code according to the package's linter configuration"

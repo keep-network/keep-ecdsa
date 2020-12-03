@@ -2,6 +2,7 @@ import clc from "cli-color"
 import BlockByDate from "ethereum-block-by-date"
 
 import Context from "./lib/context.js"
+import FraudDetector from "./lib/fraud-detector.js"
 import SLACalculator from "./lib/sla-calculator.js"
 import AssetsCalculator from "./lib/assets-calculator.js"
 
@@ -91,6 +92,8 @@ async function determineIntervalBlockspan(context, interval) {
 
 async function calculateOperatorsRewards(context, interval) {
   const { cache } = context
+
+  const fraudDetector = await FraudDetector.initialize(context)
   const slaCalculator = await SLACalculator.initialize(context, interval)
   const assetsCalculator = await AssetsCalculator.initialize(context, interval)
 
@@ -99,14 +102,17 @@ async function calculateOperatorsRewards(context, interval) {
   for (const operator of getOperators(cache)) {
     console.log(`Calculating summary for operator ${operator}`)
 
+    const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
+
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
+
     const operatorAssets = await assetsCalculator.calculateOperatorAssets(
       operator
     )
     // TODO: other computations
 
     operatorsRewards.push(
-      new OperatorRewards(operator, operatorSLA, operatorAssets)
+      new OperatorRewards(operator, isFraudulent, operatorSLA, operatorAssets)
     )
   }
 
@@ -123,8 +129,9 @@ function getOperators(cache) {
   return operators
 }
 
-function OperatorRewards(operator, operatorSLA, operatorAssets) {
+function OperatorRewards(operator, isFraudulent, operatorSLA, operatorAssets) {
   ;(this.operator = operator),
+    (this.isFraudulent = isFraudulent),
     (this.keygenCount = operatorSLA.keygenCount),
     (this.keygenFailCount = operatorSLA.keygenFailCount),
     (this.keygenSLA = operatorSLA.keygenSLA),
@@ -148,7 +155,7 @@ run()
     process.exit(0)
   })
   .catch((error) => {
-    console.error(
+    console.trace(
       clc.red(
         "Staker rewards distribution calculations errored out with error: "
       ),
