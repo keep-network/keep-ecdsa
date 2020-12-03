@@ -34,23 +34,23 @@ describe("MerkleDistributor", () => {
       expect(balance).to.eq.BN(0)
 
       await allocateTokens(
-        testValues.merkleObject0.merkleRoot,
-        testValues.merkleObject0.amountToAllocate
+        testValues.interval0.merkleRoot,
+        testValues.interval0.amountToAllocate
       )
 
       balance = await keepToken.balanceOf(rewardsDistributor.address)
-      expect(balance).to.eq.BN(testValues.merkleObject0.amountToAllocate)
+      expect(balance).to.eq.BN(testValues.interval0.amountToAllocate)
     })
 
-    it("should successfuly emit RewardsAllocated event after rewards allocation", async () => {
-      const merkleRoot = testValues.merkleObject0.merkleRoot
-      const value = testValues.merkleObject0.amountToAllocate
+    it("should successfuly emit RewardsAllocated event after rewards were allocated", async () => {
+      const merkleRoot = testValues.interval0.merkleRoot
+      const value = testValues.interval0.amountToAllocate
 
       await keepToken.approve(rewardsDistributor.address, value)
-      const allocated = await rewardsDistributor.allocate(merkleRoot, value)
+      const receipt = await rewardsDistributor.allocate(merkleRoot, value)
 
       const amount = new BN(value)
-      expectEvent(allocated, "RewardsAllocated", {
+      expectEvent(receipt, "RewardsAllocated", {
         merkleRoot,
         amount,
       })
@@ -59,8 +59,8 @@ describe("MerkleDistributor", () => {
     it("should fail allocating KEEP tokens without prior approval", async () => {
       await expectRevert(
         rewardsDistributor.allocate(
-          testValues.merkleObject0.merkleRoot,
-          testValues.merkleObject0.amountToAllocate
+          testValues.interval0.merkleRoot,
+          testValues.interval0.amountToAllocate
         ),
         "SafeERC20: low-level call failed"
       )
@@ -68,17 +68,17 @@ describe("MerkleDistributor", () => {
   })
 
   describe("claiming rewards", () => {
-    const merkle0 = testValues.merkleObject0
-    const merkle1 = testValues.merkleObject1
+    const merkle0 = testValues.interval0
+    const merkle1 = testValues.interval1
     beforeEach(async () => {
       await allocateTokens(
-        testValues.merkleObject0.merkleRoot,
-        testValues.merkleObject0.amountToAllocate
+        testValues.interval0.merkleRoot,
+        testValues.interval0.amountToAllocate
       )
 
       await allocateTokens(
-        testValues.merkleObject1.merkleRoot,
-        testValues.merkleObject1.amountToAllocate
+        testValues.interval1.merkleRoot,
+        testValues.interval1.amountToAllocate
       )
     })
 
@@ -105,7 +105,7 @@ describe("MerkleDistributor", () => {
       })
     })
 
-    it("should successfuly claim rewards and updated contract balance", async () => {
+    it("should successfuly claim multiple rewards and update contract balance", async () => {
       const initialBalance = await keepToken.balanceOf(
         rewardsDistributor.address
       )

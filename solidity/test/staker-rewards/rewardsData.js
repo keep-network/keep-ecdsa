@@ -1,5 +1,5 @@
 const testValues = {
-  merkleObject0: {
+  interval0: {
     amountToAllocate: 128,
     merkleRoot:
       "0x65b315f4565a40f738cbaaef7dbab4ddefa14620407507d0f2d5cdbd1d8063f6",
@@ -48,7 +48,7 @@ const testValues = {
       },
     ],
   },
-  merkleObject1: {
+  interval1: {
     amountToAllocate: 160,
     merkleRoot:
       "0x226999926d79bc999598889f80858deefe48c9570cebdd887fe038947c67313a",
