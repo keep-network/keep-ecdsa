@@ -72,11 +72,11 @@ contract ECDSARewardsDistributor is Ownable {
         uint256 amount,
         bytes32[] calldata merkleProof
     ) external {
-        require(!isClaimed(merkleRoot, index), "Reward already claimed");
         require(
             merkleRoots[merkleRoot],
             "Rewards must be allocated for a given merkle root"
         );
+        require(!isClaimed(merkleRoot, index), "Reward already claimed");
 
         // Verify the merkle proof.
         bytes32 node = keccak256(abi.encodePacked(index, account, amount));
