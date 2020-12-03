@@ -5,7 +5,6 @@ export default class AssetsCalculator {
     context,
     interval,
     tokenStaking,
-    keepRandomBeaconOperator,
     bondedECDSAKeepFactory,
     keepBonding,
     sortitionPoolAddress
@@ -13,7 +12,6 @@ export default class AssetsCalculator {
     this.context = context
     this.interval = interval
     this.tokenStaking = tokenStaking
-    this.keepRandomBeaconOperator = keepRandomBeaconOperator
     this.bondedECDSAKeepFactory = bondedECDSAKeepFactory
     this.keepBonding = keepBonding
     this.sortitionPoolAddress = sortitionPoolAddress
@@ -35,7 +33,6 @@ export default class AssetsCalculator {
       context,
       interval,
       await contracts.TokenStaking.deployed(),
-      await contracts.KeepRandomBeaconOperator.deployed(),
       bondedECDSAKeepFactory,
       await contracts.KeepBonding.deployed(),
       sortitionPoolAddress
@@ -93,7 +90,7 @@ export default class AssetsCalculator {
   async calculateKeepStaked(operator) {
     const block = this.interval.endBlock
 
-    const operatorContract = this.keepRandomBeaconOperator.options.address
+    const operatorContract = this.bondedECDSAKeepFactory.options.address
 
     const keepStaked = await callWithRetry(
       this.tokenStaking.methods.activeStake(operator, operatorContract),

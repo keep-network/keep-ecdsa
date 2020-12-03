@@ -7,7 +7,6 @@ import Cache from "./cache.js"
 import { Contract, getDeploymentBlockNumber } from "./contract-helper.js"
 
 import TokenStakingJson from "@keep-network/keep-core/artifacts/TokenStaking.json"
-import KeepRandomBeaconOperatorJson from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
 import BondedECDSAKeepFactoryJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import BondedECDSAKeepJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import KeepBondingJson from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
@@ -24,11 +23,6 @@ export default class Context {
     const web3 = await initWeb3(ethUrl)
 
     const TokenStaking = new Contract(TokenStakingJson, web3)
-
-    const KeepRandomBeaconOperator = new Contract(
-      KeepRandomBeaconOperatorJson,
-      web3
-    )
 
     const BondedECDSAKeepFactory = new Contract(
       BondedECDSAKeepFactoryJson,
@@ -48,7 +42,6 @@ export default class Context {
 
     const contracts = {
       TokenStaking: TokenStaking,
-      KeepRandomBeaconOperator: KeepRandomBeaconOperator,
       BondedECDSAKeepFactory: BondedECDSAKeepFactory,
       BondedECDSAKeep: BondedECDSAKeep,
       KeepBonding: KeepBonding,
