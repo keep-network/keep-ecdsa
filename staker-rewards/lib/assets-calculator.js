@@ -59,10 +59,11 @@ export default class AssetsCalculator {
   }
 
   async fetchBondEvents() {
-    // According to the specification, ETH bonded parameter should be calculated
-    // at interval start . Because of that, we should fetch all `Bond*`
-    // events starting from the deployment block but limiting the blockspan
-    // to the interval start block.
+    // The amount of ETH under the system management
+    // (the sum of bonded and unbonded ETH) for the operator is captured based
+    // on the state at the beginning of the interval. To calculate this state,
+    // we take all past BondCreated events from the moment the reward interval
+    // started and cross-check them with BondReleased and BondSeized events.
     const fromBlock = this.context.contracts.factoryDeploymentBlock
     const toBlock = this.interval.startBlock
 
