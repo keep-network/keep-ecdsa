@@ -1,0 +1,68 @@
+[
+  {
+    "blockNumber": 1000,
+    "contracts": [
+      {
+        "address": "0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab",
+        "events": [
+          {
+            "name": "BondCreated",
+            "returnValues": {
+              "referenceID": "0x62f68c710615F2c86c2d224A1101112076FfcB7E",
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "sortitionPool": "0xf876aE82E3Ef9a67ad4E9eA23eFa4de2D85DA6fb",
+              "amount": "20000000000000000000"
+            }
+          },
+          {
+            "name": "BondCreated",
+            "returnValues": {
+              "referenceID": "0xEF833365aF1c921ED60491839F2dDCbc3cCE3630",
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "sortitionPool": "0xf876aE82E3Ef9a67ad4E9eA23eFa4de2D85DA6fb",
+              "amount": "30000000000000000000"
+            }
+          },
+          {
+            "name": "BondReleased",
+            "returnValues": {
+              "referenceID": "0x62f68c710615F2c86c2d224A1101112076FfcB7E",
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
+            }
+          },
+          {
+            "name": "BondSeized",
+            "returnValues": {
+              "referenceID": "0xEF833365aF1c921ED60491839F2dDCbc3cCE3630",
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "amount": "15000000000000000000"
+            }
+          }
+        ],
+        "unbondedValues": [
+          {
+            "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+            "operatorContract": "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426",
+            "sortitionPool": "0xf876aE82E3Ef9a67ad4E9eA23eFa4de2D85DA6fb",
+            "amount": "40000000000000000000"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "blockNumber": 2000,
+    "contracts": [
+      {
+        "address": "0x186E82df0a09534537d0D8680D03b548628ab288",
+        "activeStakes": [
+          {
+            "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+            "operatorContract": "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426",
+            "activeStake": "500000"
+          }
+        ]
+      }
+    ]
+  }
+]
