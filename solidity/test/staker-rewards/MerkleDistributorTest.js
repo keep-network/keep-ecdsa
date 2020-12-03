@@ -42,6 +42,20 @@ describe("MerkleDistributor", () => {
       expect(balance).to.eq.BN(testValues.merkleObject0.amountToAllocate)
     })
 
+    it("should successfuly emit RewardsAllocated event after rewards allocation", async () => {
+      const merkleRoot = testValues.merkleObject0.merkleRoot
+      const value = testValues.merkleObject0.amountToAllocate
+
+      await keepToken.approve(rewardsDistributor.address, value)
+      const allocated = await rewardsDistributor.allocate(merkleRoot, value)
+
+      const amount = new BN(value)
+      expectEvent(allocated, "RewardsAllocated", {
+        merkleRoot,
+        amount,
+      })
+    })
+
     it("should fail allocating KEEP tokens without prior approval", async () => {
       await expectRevert(
         rewardsDistributor.allocate(
@@ -199,12 +213,6 @@ describe("MerkleDistributor", () => {
 
   async function allocateTokens(merkleRoot, amount) {
     await keepToken.approve(rewardsDistributor.address, amount)
-    const allocated = await rewardsDistributor.allocate(merkleRoot, amount)
-
-    amount = new BN(amount)
-    expectEvent(allocated, "RewardsAllocated", {
-      merkleRoot,
-      amount,
-    })
+    await rewardsDistributor.allocate(merkleRoot, amount)
   }
 })
