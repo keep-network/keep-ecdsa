@@ -100,16 +100,11 @@ async function calculateOperatorsRewards(context, interval) {
   const operatorsRewards = []
 
   for (const operator of getOperators(cache)) {
-    console.log(`Calculating summary for operator ${operator}`)
-
     const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
-
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
-
     const operatorAssets = await assetsCalculator.calculateOperatorAssets(
       operator
     )
-    // TODO: other computations
 
     operatorsRewards.push(
       new OperatorRewards(operator, isFraudulent, operatorSLA, operatorAssets)

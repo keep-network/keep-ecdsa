@@ -43,6 +43,10 @@ export default class AssetsCalculator {
   }
 
   async calculateOperatorAssets(operator) {
+    console.log(
+      `Calculating KEEP and ETH under management for operator ${operator}`
+    )
+
     const keepStaked = await this.calculateKeepStaked(operator)
     const ethBonded = await this.calculateETHBonded(operator)
     const ethUnbonded = await this.calculateETHUnbonded(operator)

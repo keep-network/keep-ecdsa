@@ -96,6 +96,8 @@ export default class SLACalculator {
   }
 
   calculateOperatorSLA(operator) {
+    console.log(`Calculating SLA parameters for operator ${operator}`)
+
     const keygen = this.calculateSLA(
       operator,
       this.openedKeeps,
