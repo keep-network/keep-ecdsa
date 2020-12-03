@@ -21,11 +21,10 @@ export default class AssetsCalculator {
     const { contracts } = context
 
     const bondedECDSAKeepFactory = await contracts.BondedECDSAKeepFactory.deployed()
-    const tbtcSystem = await contracts.TBTCSystem.deployed()
 
     const sortitionPoolAddress = await callWithRetry(
       bondedECDSAKeepFactory.methods.getSortitionPool(
-        tbtcSystem.options.address
+        contracts.SanctionedApplication
       )
     )
 

@@ -10,7 +10,8 @@ import TokenStakingJson from "@keep-network/keep-core/artifacts/TokenStaking.jso
 import BondedECDSAKeepFactoryJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import BondedECDSAKeepJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import KeepBondingJson from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
-import TBTCSystemJson from "@keep-network/tbtc/artifacts/TBTCSystem.json"
+
+const SanctionedApplication = "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a"
 
 export default class Context {
   constructor(cache, web3, contracts) {
@@ -33,8 +34,6 @@ export default class Context {
 
     const KeepBonding = new Contract(KeepBondingJson, web3)
 
-    const TBTCSystem = new Contract(TBTCSystemJson, web3)
-
     const factoryDeploymentBlock = await getDeploymentBlockNumber(
       BondedECDSAKeepFactoryJson,
       web3
@@ -45,7 +44,7 @@ export default class Context {
       BondedECDSAKeepFactory: BondedECDSAKeepFactory,
       BondedECDSAKeep: BondedECDSAKeep,
       KeepBonding: KeepBonding,
-      TBTCSystem: TBTCSystem,
+      SanctionedApplication: SanctionedApplication,
       factoryDeploymentBlock: factoryDeploymentBlock,
     }
 
