@@ -24,9 +24,9 @@ import "openzeppelin-solidity/contracts/cryptography/MerkleProof.sol";
 /// participation in the keep network for operating ECDSA nodes.
 /// @dev This contract is based on the Uniswap's Merkle Distributor
 /// https://github.com/Uniswap/merkle-distributor with some modifications:
-/// - added a map of merkle root keys with the amount of KEEP (value) that will
-///   be allocated for those merkle roots
-/// - added receiveApproval() function that will be called each time to allocate
+/// - added a map of merkle root keys. Whenever a new merkle root is put in the
+///   map, we assign 'true' value to this key
+/// - added 'allocate()' function that will be called each time to allocate
 ///   new KEEP rewards for a given merkle root. Merkle root is going to be generated
 ///   regulary (ex. every week) and it is also means that an interval for that
 ///   merkle root has passed
@@ -49,7 +49,8 @@ contract ECDSARewardsDistributor is Ownable {
     event RewardsAllocated(bytes32 merkleRoot, uint256 amount);
 
     // Map of merkle roots indicating whether a given interval was allocated with
-    // KEEP token rewards.
+    // KEEP token rewards. For each interval there is always created a new merkle
+    // tree including a root, rewarded accounts along with their amounts and proofs.
     mapping(bytes32 => bool) private merkleRoots;
     // Bytes32 key is a merkle root and the value is a packed array of booleans.
     mapping(bytes32 => mapping(uint256 => uint256)) private claimedBitMap;
@@ -58,6 +59,12 @@ contract ECDSARewardsDistributor is Ownable {
         token = KeepToken(_token);
     }
 
+    /// Claim KEEP rewards for a given merkle root (interval) and the given address.
+    /// @param merkleRoot Merkle root for a given interval.
+    /// @param index Index of the account in the merkle tree.
+    /// @param account Account address that reward will be sent to.
+    /// @param amount The amount of KEEP reward to be claimed.
+    /// @param merkleProof Array of merkle proofs.
     function claim(
         bytes32 merkleRoot,
         uint256 index,
@@ -73,7 +80,6 @@ contract ECDSARewardsDistributor is Ownable {
 
         // Verify the merkle proof.
         bytes32 node = keccak256(abi.encodePacked(index, account, amount));
-
         require(
             MerkleProof.verify(merkleProof, merkleRoot, node),
             "Invalid proof"
