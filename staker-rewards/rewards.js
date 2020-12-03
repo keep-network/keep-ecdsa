@@ -139,9 +139,13 @@ function OperatorRewards(operator, isFraudulent, operatorSLA, operatorAssets) {
     (this.signatureFailCount = operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorSLA.signatureSLA),
     (this.keepStaked = operatorAssets.keepStaked),
-    (this.ethBonded = operatorAssets.ethBonded),
-    (this.ethUnbonded = operatorAssets.ethUnbonded),
-    (this.ethTotal = operatorAssets.ethTotal)
+    (this.ethBonded = roundFloat(operatorAssets.ethBonded)),
+    (this.ethUnbonded = roundFloat(operatorAssets.ethUnbonded)),
+    (this.ethTotal = roundFloat(operatorAssets.ethTotal))
+}
+
+function roundFloat(number) {
+  return Math.round(number * 100) / 100
 }
 
 run()

@@ -46,7 +46,7 @@ export default class AssetsCalculator {
     const keepStaked = await this.calculateKeepStaked(operator)
     const ethBonded = await this.calculateETHBonded(operator)
     const ethUnbonded = await this.calculateETHUnbonded(operator)
-    const ethTotal = Math.round((ethBonded + ethUnbonded) * 100) / 100
+    const ethTotal = ethBonded + ethUnbonded
 
     return new OperatorAssets(
       operator,
@@ -147,7 +147,7 @@ export default class AssetsCalculator {
 
     const ethBonded = this.context.web3.utils.fromWei(weiBonded, "ether")
 
-    return Math.round(parseFloat(ethBonded) * 100) / 100
+    return parseFloat(ethBonded)
   }
 
   async calculateETHUnbonded(operator) {
@@ -166,7 +166,7 @@ export default class AssetsCalculator {
 
     const ethUnbonded = this.context.web3.utils.fromWei(weiUnbonded, "ether")
 
-    return Math.round(parseFloat(ethUnbonded) * 100) / 100
+    return parseFloat(ethUnbonded)
   }
 }
 
