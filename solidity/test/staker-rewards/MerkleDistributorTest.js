@@ -118,8 +118,7 @@ describe("MerkleDistributor", () => {
         const amount = merkle0.claims[i].amount
         const proof = merkle0.claims[i].proof
 
-        const value = new BN(amount)
-        claimedAmounts = claimedAmounts.add(value)
+        claimedAmounts = claimedAmounts.addn(parseInt(amount))
 
         await rewardsDistributor.claim(
           merkleRoot,
@@ -171,8 +170,7 @@ describe("MerkleDistributor", () => {
       let amount = merkle0.claims[0].amount
       let proof = merkle0.claims[0].proof
 
-      let value = new BN(amount)
-      claimedAmounts = claimedAmounts.add(value)
+      claimedAmounts = claimedAmounts.addn(parseInt(amount))
 
       await rewardsDistributor.claim(merkleRoot, index, account, amount, proof)
 
@@ -182,8 +180,7 @@ describe("MerkleDistributor", () => {
       amount = merkle1.claims[1].amount
       proof = merkle1.claims[1].proof
 
-      value = new BN(amount)
-      claimedAmounts = claimedAmounts.add(value)
+      claimedAmounts = claimedAmounts.addn(parseInt(amount))
 
       await rewardsDistributor.claim(merkleRoot, index, account, amount, proof)
 
