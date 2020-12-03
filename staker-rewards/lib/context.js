@@ -9,6 +9,9 @@ import { Contract, getDeploymentBlockNumber } from "./contract-helper.js"
 import TokenStakingJson from "@keep-network/keep-core/artifacts/TokenStaking.json"
 import BondedECDSAKeepFactoryJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import BondedECDSAKeepJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
+import KeepBondingJson from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
+
+const SanctionedApplication = "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a"
 
 export default class Context {
   constructor(cache, web3, contracts) {
@@ -29,6 +32,8 @@ export default class Context {
 
     const BondedECDSAKeep = new Contract(BondedECDSAKeepJson, web3)
 
+    const KeepBonding = new Contract(KeepBondingJson, web3)
+
     const factoryDeploymentBlock = await getDeploymentBlockNumber(
       BondedECDSAKeepFactoryJson,
       web3
@@ -38,6 +43,8 @@ export default class Context {
       TokenStaking: TokenStaking,
       BondedECDSAKeepFactory: BondedECDSAKeepFactory,
       BondedECDSAKeep: BondedECDSAKeep,
+      KeepBonding: KeepBonding,
+      SanctionedApplication: SanctionedApplication,
       factoryDeploymentBlock: factoryDeploymentBlock,
     }
 
