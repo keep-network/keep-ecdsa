@@ -107,6 +107,10 @@ describe("ECDSARewardsDistributorEscrow", () => {
       const event2 = eventList[1].returnValues
       expect(event2.merkleRoot).to.equal(merkleRoot2, "unexpected merkle root")
       expect(event2.amount).to.eq.BN(amount2)
+
+      expect(await token.balanceOf(rewardsDistributor.address)).to.eq.BN(
+        amount.add(amount2)
+      )
     })
   })
 
