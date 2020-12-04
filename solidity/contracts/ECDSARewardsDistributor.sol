@@ -40,7 +40,7 @@ contract ECDSARewardsDistributor is Ownable {
     // This event is triggered whenever a call to #claim succeeds.
     event RewardsClaimed(
         bytes32 indexed merkleRoot,
-        uint256 index,
+        uint256 indexed index,
         address indexed account,
         uint256 amount
     );
