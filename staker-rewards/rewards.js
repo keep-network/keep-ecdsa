@@ -24,6 +24,10 @@ async function run() {
     // cache refresh is disabled, rewards distribution may be calculated
     // based on outdated information from the chain.
     const isCacheRefreshEnabled = process.env.CACHE_REFRESH !== "off"
+    // Access key to Tenderly API used to fetch transactions from the chain.
+    // Setting it is optional. If not set the script won't call Tenderly API
+    // and rely on cached transactions.
+    const tenderlyApiKey = process.env.TENDERLY_API_KEY
 
     if (!ethHostname) {
       console.error(clc.red("Please provide ETH_HOSTNAME value"))
@@ -43,7 +47,7 @@ async function run() {
       console.debug = function () {}
     }
 
-    const context = await Context.initialize(ethHostname)
+    const context = await Context.initialize(ethHostname, tenderlyApiKey)
 
     await determineIntervalBlockspan(context, interval)
 
