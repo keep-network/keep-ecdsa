@@ -25,26 +25,25 @@ async function run() {
     // based on outdated information from the chain.
     const isCacheRefreshEnabled = process.env.CACHE_REFRESH !== "off"
 
+    if (isDebugDisabled) {
+      console.debug = function () {}
+    }
+
     if (!ethHostname) {
       console.error(clc.red("Please provide ETH_HOSTNAME value"))
       return
     }
 
+    const context = await Context.initialize(ethHostname)
+
     const interval = {
       start: parseInt(intervalStart),
       end: parseInt(intervalEnd),
-      totalRewards: intervalTotalRewards,
+      totalRewards: parseInt(intervalTotalRewards),
     }
 
     validateIntervalTimestamps(interval)
     validateIntervalTotalRewards(interval)
-
-    if (isDebugDisabled) {
-      console.debug = function () {}
-    }
-
-    const context = await Context.initialize(ethHostname)
-
     await determineIntervalBlockspan(context, interval)
 
     if (isCacheRefreshEnabled) {
@@ -131,16 +130,17 @@ async function calculateOperatorsRewards(context, interval) {
     )
   }
 
-  const rewardsCalculator = RewardsCalculator.initialize(
-    operatorsParameters,
-    interval
+  const rewardsCalculator = await RewardsCalculator.initialize(
+    context,
+    interval,
+    operatorsParameters
   )
 
   const operatorsSummary = []
 
   for (const operatorParameters of operatorsParameters) {
     const { operator } = operatorParameters
-    const operatorRewards = rewardsCalculator.calculateOperatorRewards(operator)
+    const operatorRewards = rewardsCalculator.getOperatorRewards(operator)
 
     operatorsSummary.push(
       new OperatorSummary(
@@ -190,10 +190,7 @@ function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
     (this.signatureFailCount =
       operatorParameters.operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorParameters.operatorSLA.signatureSLA),
-    (this.keepStaked = roundKeepValue(
-      web3,
-      operatorParameters.operatorAssets.keepStaked
-    )),
+    (this.keepStaked = operatorParameters.operatorAssets.keepStaked),
     (this.ethBonded = roundFloat(operatorParameters.operatorAssets.ethBonded)),
     (this.ethUnbonded = roundFloat(
       operatorParameters.operatorAssets.ethUnbonded
@@ -203,10 +200,6 @@ function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
     (this.boost = operatorRewards.boost),
     (this.rewardWeight = operatorRewards.rewardWeight),
     (this.totalRewards = operatorRewards.totalRewards)
-}
-
-function roundKeepValue(web3, value) {
-  return web3.utils.toBN(value).div(web3.utils.toBN(1e18)).toNumber()
 }
 
 function roundFloat(number) {

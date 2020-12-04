@@ -1,14 +1,99 @@
-export default class RewardsCalculator {
-  constructor() {}
+import { callWithRetry } from "./contract-helper.js"
 
-  static initialize(operatorsParameters, interval) {
-    // TODO: Calculate all rewards
-    return new RewardsCalculator()
+export default class RewardsCalculator {
+  constructor(context, interval, minimumStake) {
+    this.context = context
+    this.interval = interval
+    this.ethScoreThreshold = 3000
   }
 
-  calculateOperatorRewards(operator) {
-    // TODO: Fetch rewards for given operator
-    return new OperatorRewards()
+  static async initialize(context, interval, operatorsParameters) {
+    const rewardsCalculator = new RewardsCalculator(context, interval)
+
+    await rewardsCalculator.calculateOperatorsRewards(operatorsParameters)
+
+    return rewardsCalculator
+  }
+
+  async calculateOperatorsRewards(operatorsParameters) {
+    const minimumStake = await this.getMinimumStake()
+
+    const operatorsRewardsFactors = []
+
+    for (const operatorParameters of operatorsParameters) {
+      const { keepStaked, ethTotal } = operatorParameters.operatorAssets
+
+      const ethScore = this.calculateETHScore(ethTotal)
+      const boost = this.calculateBoost(keepStaked, ethTotal, minimumStake)
+      const rewardWeight = ethScore * boost
+
+      operatorsRewardsFactors.push({
+        operator: operatorParameters.operator,
+        ethScore,
+        boost,
+        rewardWeight,
+      })
+    }
+
+    const rewardWeightSum = operatorsRewardsFactors.reduce(
+      (accumulator, factors) => accumulator + factors.rewardWeight,
+      0
+    )
+
+    console.log(`Rewards weight sum ${rewardWeightSum}`)
+
+    const totalRewardsDenominator = this.interval.totalRewards * rewardWeightSum
+
+    const operatorsRewards = []
+
+    for (const operatorRewardsFactors of operatorsRewardsFactors) {
+      const { rewardWeight } = operatorRewardsFactors
+      const totalRewards = rewardWeight / totalRewardsDenominator
+
+      operatorsRewards.push(
+        new OperatorRewards(
+          operatorRewardsFactors.operator,
+          operatorRewardsFactors.ethScore,
+          operatorRewardsFactors.boost,
+          rewardWeight,
+          totalRewards
+        )
+      )
+    }
+
+    this.operatorsRewards = operatorsRewards
+  }
+
+  async getMinimumStake() {
+    const { contracts, web3 } = this.context
+
+    const minimumStake = await callWithRetry(
+      contracts.TokenStaking.minimumStake()
+    )
+
+    return web3.utils.toBN(minimumStake).div(web3.utils.toBN(1e18)).toNumber()
+  }
+
+  calculateETHScore(ethTotal) {
+    if (ethTotal < this.ethScoreThreshold) {
+      return ethTotal
+    }
+
+    return (
+      2 * Math.sqrt(this.ethScoreThreshold * ethTotal) - this.ethScoreThreshold
+    )
+  }
+
+  calculateBoost(keepStaked, ethTotal, minimumStake) {
+    const firstFactor = keepStaked / minimumStake
+    const secondFactor = Math.sqrt(keepStaked / (ethTotal * 500))
+    return 1 + Math.min(firstFactor, secondFactor)
+  }
+
+  getOperatorRewards(operator) {
+    return this.operatorsRewards.find(
+      (operatorRewards) => operatorRewards.operator === operator
+    )
   }
 }
 

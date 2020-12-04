@@ -94,6 +94,7 @@ export default class AssetsCalculator {
   }
 
   async calculateKeepStaked(operator) {
+    const { web3 } = this.context
     const block = this.interval.endBlock
 
     const operatorContract = this.bondedECDSAKeepFactory.options.address
@@ -103,7 +104,7 @@ export default class AssetsCalculator {
       block
     )
 
-    return keepStaked
+    return web3.utils.toBN(keepStaked).div(web3.utils.toBN(1e18)).toNumber()
   }
 
   async calculateETHBonded(operator) {
