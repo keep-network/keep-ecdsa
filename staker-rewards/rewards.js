@@ -3,6 +3,7 @@ import BlockByDate from "ethereum-block-by-date"
 
 import Context from "./lib/context.js"
 import FraudDetector from "./lib/fraud-detector.js"
+import Conditions from "./lib/conditions.js"
 import SLACalculator from "./lib/sla-calculator.js"
 import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
@@ -113,13 +114,19 @@ async function calculateOperatorsRewards(context, interval) {
   const { cache } = context
 
   const fraudDetector = await FraudDetector.initialize(context)
+  const conditions = await Conditions.initialize(context, interval)
   const slaCalculator = await SLACalculator.initialize(context, interval)
   const assetsCalculator = await AssetsCalculator.initialize(context, interval)
+
+  await conditions.checkDeauthorizations()
 
   const operatorsParameters = []
 
   for (const operator of getOperators(cache)) {
     const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
+    const operatorAuthorizations = await conditions.checkAuthorizations(
+      operator
+    )
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     const operatorAssets = await assetsCalculator.calculateOperatorAssets(
       operator
@@ -129,6 +136,7 @@ async function calculateOperatorsRewards(context, interval) {
       new OperatorParameters(
         operator,
         isFraudulent,
+        operatorAuthorizations,
         operatorSLA,
         operatorAssets
       )
@@ -175,18 +183,25 @@ function getOperators(cache) {
 function OperatorParameters(
   operator,
   isFraudulent,
+  authorizations,
   operatorSLA,
   operatorAssets
 ) {
   ;(this.operator = operator),
     (this.isFraudulent = isFraudulent),
-    (this.operatorSLA = operatorSLA),
+    (this.authorizations = authorizations)((this.operatorSLA = operatorSLA)),
     (this.operatorAssets = operatorAssets)
 }
 
 function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
   ;(this.operator = operator),
     (this.isFraudulent = operatorParameters.isFraudulent),
+    (this.factoryAuthorizedAtStart =
+      operatorParameters.authorizations.factoryAuthorizedAtStart),
+    (this.poolAuthorizedAtStart =
+      operatorParameters.authorizations.poolAuthorizedAtStart),
+    (this.poolDeauthorizedInInterval =
+      operatorParameters.authorizations.poolDeauthorizedInInterval),
     (this.keygenCount = operatorParameters.operatorSLA.keygenCount),
     (this.keygenFailCount = operatorParameters.operatorSLA.keygenFailCount),
     (this.keygenSLA = operatorParameters.operatorSLA.keygenSLA),
