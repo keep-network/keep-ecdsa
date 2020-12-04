@@ -12,7 +12,8 @@ import BondedECDSAKeepFactoryJson from "@keep-network/keep-ecdsa/artifacts/Bonde
 import BondedECDSAKeepJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import KeepBondingJson from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
 
-const SanctionedApplication = "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a"
+const sanctionedApplicationAddress =
+  "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a"
 
 export default class Context {
   constructor(cache, web3, contracts, tenderly) {
@@ -46,7 +47,7 @@ export default class Context {
       BondedECDSAKeepFactory: BondedECDSAKeepFactory,
       BondedECDSAKeep: BondedECDSAKeep,
       KeepBonding: KeepBonding,
-      SanctionedApplication: SanctionedApplication,
+      sanctionedApplicationAddress: sanctionedApplicationAddress,
       factoryDeploymentBlock: factoryDeploymentBlock,
     }
 
