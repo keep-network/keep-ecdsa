@@ -96,6 +96,10 @@ export default class SLACalculator {
   }
 
   calculateOperatorSLA(operator) {
+    if (process.env.NODE_ENV !== "test") {
+      console.log(`Calculating SLA parameters for operator ${operator}`)
+    }
+
     const keygen = this.calculateSLA(
       operator,
       this.openedKeeps,

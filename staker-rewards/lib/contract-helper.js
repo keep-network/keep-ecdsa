@@ -33,15 +33,40 @@ export async function getDeploymentBlockNumber(artifact, web3) {
   return transaction.blockNumber
 }
 
-export async function callWithRetry(contractMethod, params, totalAttempts = 3) {
-  return EthereumHelpers.callWithRetry(contractMethod, params, totalAttempts)
+export async function callWithRetry(
+  contractMethod,
+  block = "latest",
+  params = undefined,
+  totalAttempts = 3
+) {
+  return EthereumHelpers.callWithRetry(
+    contractMethod,
+    params,
+    totalAttempts,
+    block
+  )
 }
 
-export async function getPastEvents(web3, contract, eventName, fromBlock = 0) {
+export async function getPastEvents(
+  web3,
+  contract,
+  eventName,
+  fromBlock = 0,
+  toBlock = "latest"
+) {
   if (fromBlock < 0) {
     throw new Error(
       `FromBlock cannot be less than 0, current value: ${fromBlock}`
     )
+  }
+
+  if (toBlock !== "latest") {
+    if (!Number.isInteger(toBlock) || toBlock < fromBlock) {
+      throw new Error(
+        `ToBlock should be \'latest'\ or an integer greater ` +
+          `than FromBlock, current value: ${toBlock}`
+      )
+    }
   }
 
   return new Promise(async (resolve, reject) => {
@@ -49,6 +74,7 @@ export async function getPastEvents(web3, contract, eventName, fromBlock = 0) {
     try {
       resultEvents = await contract.getPastEvents(eventName, {
         fromBlock: fromBlock,
+        toBlock: toBlock,
       })
     } catch (error) {
       console.log(
@@ -57,21 +83,25 @@ export async function getPastEvents(web3, contract, eventName, fromBlock = 0) {
       )
 
       try {
-        const endBlock = await web3.eth.getBlockNumber()
+        if (toBlock === "latest") {
+          toBlock = await web3.eth.getBlockNumber()
+        }
 
-        while (fromBlock <= endBlock) {
-          let toBlock = fromBlock + GET_PAST_EVENTS_BLOCK_INTERVAL
-          if (toBlock > endBlock) {
-            toBlock = endBlock
+        let batchStartBlock = fromBlock
+
+        while (batchStartBlock <= toBlock) {
+          let batchEndBlock = batchStartBlock + GET_PAST_EVENTS_BLOCK_INTERVAL
+          if (batchEndBlock > toBlock) {
+            batchEndBlock = toBlock
           }
           const foundEvents = await contract.getPastEvents(eventName, {
-            fromBlock: fromBlock,
-            toBlock: toBlock,
+            fromBlock: batchStartBlock,
+            toBlock: batchEndBlock,
           })
 
           resultEvents = resultEvents.concat(foundEvents)
 
-          fromBlock = toBlock + 1
+          batchStartBlock = batchEndBlock + 1
         }
       } catch (error) {
         return reject(error)

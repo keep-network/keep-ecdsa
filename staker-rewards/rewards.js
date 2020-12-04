@@ -1,8 +1,10 @@
 import clc from "cli-color"
+import BlockByDate from "ethereum-block-by-date"
 
 import Context from "./lib/context.js"
 import FraudDetector from "./lib/fraud-detector.js"
 import SLACalculator from "./lib/sla-calculator.js"
+import AssetsCalculator from "./lib/assets-calculator.js"
 
 async function run() {
   try {
@@ -38,6 +40,8 @@ async function run() {
 
     const context = await Context.initialize(ethHostname)
 
+    await determineIntervalBlockspan(context, interval)
+
     if (isCacheRefreshEnabled) {
       console.log("Refreshing keeps cache...")
       await context.cache.refresh()
@@ -72,8 +76,18 @@ function validateIntervalTimestamps(interval) {
     )
   }
 
-  console.log(clc.green(`Interval start: ${startDate.toISOString()}`))
-  console.log(clc.green(`Interval end: ${endDate.toISOString()}`))
+  console.log(clc.green(`Interval start timestamp: ${startDate.toISOString()}`))
+  console.log(clc.green(`Interval end timestamp: ${endDate.toISOString()}`))
+}
+
+async function determineIntervalBlockspan(context, interval) {
+  const blockByDate = new BlockByDate(context.web3)
+
+  interval.startBlock = (await blockByDate.getDate(interval.start * 1000)).block
+  interval.endBlock = (await blockByDate.getDate(interval.end * 1000)).block
+
+  console.log(clc.green(`Interval start block: ${interval.startBlock}`))
+  console.log(clc.green(`Interval end block: ${interval.endBlock}`))
 }
 
 async function calculateOperatorsRewards(context, interval) {
@@ -81,17 +95,19 @@ async function calculateOperatorsRewards(context, interval) {
 
   const fraudDetector = await FraudDetector.initialize(context)
   const slaCalculator = await SLACalculator.initialize(context, interval)
+  const assetsCalculator = await AssetsCalculator.initialize(context, interval)
 
   const operatorsRewards = []
 
   for (const operator of getOperators(cache)) {
     const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
-
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
-    // TODO: other computations
+    const operatorAssets = await assetsCalculator.calculateOperatorAssets(
+      operator
+    )
 
     operatorsRewards.push(
-      new OperatorRewards(operator, isFraudulent, operatorSLA)
+      new OperatorRewards(operator, isFraudulent, operatorSLA, operatorAssets)
     )
   }
 
@@ -108,7 +124,7 @@ function getOperators(cache) {
   return operators
 }
 
-function OperatorRewards(operator, isFraudulent, operatorSLA) {
+function OperatorRewards(operator, isFraudulent, operatorSLA, operatorAssets) {
   ;(this.operator = operator),
     (this.isFraudulent = isFraudulent),
     (this.keygenCount = operatorSLA.keygenCount),
@@ -116,7 +132,15 @@ function OperatorRewards(operator, isFraudulent, operatorSLA) {
     (this.keygenSLA = operatorSLA.keygenSLA),
     (this.signatureCount = operatorSLA.signatureCount),
     (this.signatureFailCount = operatorSLA.signatureFailCount),
-    (this.signatureSLA = operatorSLA.signatureSLA)
+    (this.signatureSLA = operatorSLA.signatureSLA),
+    (this.keepStaked = operatorAssets.keepStaked),
+    (this.ethBonded = roundFloat(operatorAssets.ethBonded)),
+    (this.ethUnbonded = roundFloat(operatorAssets.ethUnbonded)),
+    (this.ethTotal = roundFloat(operatorAssets.ethTotal))
+}
+
+function roundFloat(number) {
+  return Math.round(number * 100) / 100
 }
 
 run()
