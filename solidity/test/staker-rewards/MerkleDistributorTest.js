@@ -194,18 +194,47 @@ describe("MerkleDistributor", () => {
       )
     })
 
-    it("should revert when claiming a reward twice", async () => {
-      const merkleRoot = merkle0.merkleRoot
-      const index = merkle0.claims[0].index
-      const account = merkle0.claims[0].account
-      const amount = merkle0.claims[0].amount
-      const proof = merkle0.claims[0].proof
+    it("should revert when claiming a reward twice from multiple merkle roots", async () => {
+      let merkleRoot = merkle0.merkleRoot
+      let index = merkle0.claims[0].index
+      let account = merkle0.claims[0].account
+      let amount = merkle0.claims[0].amount
+      let proof = merkle0.claims[0].proof
 
       await rewardsDistributor.claim(merkleRoot, index, account, amount, proof)
 
       await expectRevert(
         rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
         "Reward already claimed"
+      )
+
+      merkleRoot = merkle1.merkleRoot
+      index = merkle1.claims[1].index
+      account = merkle1.claims[1].account
+      amount = merkle1.claims[1].amount
+      proof = merkle1.claims[1].proof
+
+      await rewardsDistributor.claim(merkleRoot, index, account, amount, proof)
+
+      await expectRevert(
+        rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
+        "Reward already claimed"
+      )
+    })
+
+    it("should revert when there are no rewards for a given merkle root", async () => {
+      const merkleRoot =
+        "0x1111111111111111111111111111111111111111111111111111111111111111"
+      const index = "0"
+      const account = "0x012ed55a0876Ea9e58277197DC14CbA47571CE28"
+      const amount = "42"
+      const proof = [
+        "0x2222222222222222222222222222222222222222222222222222222222222222",
+      ]
+
+      await expectRevert(
+        rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
+        "Rewards must be allocated for a given merkle root"
       )
     })
   })
