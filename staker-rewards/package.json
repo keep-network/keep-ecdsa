@@ -1,13 +1,19 @@
 {
   "name": "staker-rewards",
+  "description": "Staker KEEP rewards",
   "version": "1.0.0",
   "type": "module",
+  "keywords": [
+    "keep-network",
+    "rewards"
+  ],
   "scripts": {
     "test": "NODE_ENV=test node --experimental-json-modules node_modules/mocha/bin/mocha",
     "lint": "npm run lint:js",
     "lint:fix": "npm run lint:fix:js",
     "lint:js": "eslint .",
-    "lint:fix:js": "eslint --fix ."
+    "lint:fix:js": "eslint --fix .",
+    "generate-merkle-root": "ts-node generate-merkle-root.ts"
   },
   "dependencies": {
     "@0x/subproviders": "^6.2.0",
@@ -26,7 +32,10 @@
     "chai": "^4.2.0",
     "eslint": "^6.8.0",
     "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git",
-    "mocha": "^8.2.1",
-    "prettier": "^2.0.2"
+    "prettier": "^2.0.2",
+    "commander": "^6.1.0",
+    "ts-node": "^8.5.4",
+    "typescript": "^3.7.3",
+    "mocha": "^8.2.1"
   }
 }
