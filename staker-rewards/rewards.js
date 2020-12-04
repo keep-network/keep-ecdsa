@@ -5,6 +5,7 @@ import Context from "./lib/context.js"
 import FraudDetector from "./lib/fraud-detector.js"
 import SLACalculator from "./lib/sla-calculator.js"
 import AssetsCalculator from "./lib/assets-calculator.js"
+import RewardsCalculator from "./lib/rewards-calculator.js"
 
 async function run() {
   try {
@@ -14,6 +15,8 @@ async function run() {
     const intervalStart = process.argv[2]
     // End of the interval passed as UNIX timestamp.
     const intervalEnd = process.argv[3]
+    // Total KEEP rewards distributed within the given interval.
+    const intervalTotalRewards = process.argv[4]
     // Determines whether debug logs should be disabled.
     const isDebugDisabled = process.env.DEBUG !== "on"
     // Determines whether the cache refresh process should be performed.
@@ -30,9 +33,11 @@ async function run() {
     const interval = {
       start: parseInt(intervalStart),
       end: parseInt(intervalEnd),
+      totalRewards: intervalTotalRewards,
     }
 
     validateIntervalTimestamps(interval)
+    validateIntervalTotalRewards(interval)
 
     if (isDebugDisabled) {
       console.debug = function () {}
@@ -80,6 +85,16 @@ function validateIntervalTimestamps(interval) {
   console.log(clc.green(`Interval end timestamp: ${endDate.toISOString()}`))
 }
 
+function validateIntervalTotalRewards(interval) {
+  if (!interval.totalRewards) {
+    throw new Error("Interval total rewards should be set")
+  }
+
+  console.log(
+    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`)
+  )
+}
+
 async function determineIntervalBlockspan(context, interval) {
   const blockByDate = new BlockByDate(context.web3)
 
@@ -97,7 +112,7 @@ async function calculateOperatorsRewards(context, interval) {
   const slaCalculator = await SLACalculator.initialize(context, interval)
   const assetsCalculator = await AssetsCalculator.initialize(context, interval)
 
-  const operatorsRewards = []
+  const operatorsParameters = []
 
   for (const operator of getOperators(cache)) {
     const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
@@ -106,14 +121,43 @@ async function calculateOperatorsRewards(context, interval) {
       operator
     )
 
-    operatorsRewards.push(
-      new OperatorRewards(operator, isFraudulent, operatorSLA, operatorAssets)
+    operatorsParameters.push(
+      new OperatorParameters(
+        operator,
+        isFraudulent,
+        operatorSLA,
+        operatorAssets
+      )
     )
   }
 
-  return operatorsRewards
+  const rewardsCalculator = RewardsCalculator.initialize(
+    operatorsParameters,
+    interval
+  )
+
+  const operatorsSummary = []
+
+  for (const operatorParameters of operatorsParameters) {
+    const { operator } = operatorParameters
+    const operatorRewards = rewardsCalculator.calculateOperatorRewards(operator)
+
+    operatorsSummary.push(
+      new OperatorSummary(
+        context.web3,
+        operator,
+        operatorParameters,
+        operatorRewards
+      )
+    )
+  }
+
+  return operatorsSummary
 }
 
+// TODO: Change the way operators are fetched. Currently only the ones which
+//  have members in existing keeps are taken into account. Instead of that,
+//  we should take all operators which are registered in the sorition pool.
 function getOperators(cache) {
   const operators = new Set()
 
@@ -124,19 +168,45 @@ function getOperators(cache) {
   return operators
 }
 
-function OperatorRewards(operator, isFraudulent, operatorSLA, operatorAssets) {
+function OperatorParameters(
+  operator,
+  isFraudulent,
+  operatorSLA,
+  operatorAssets
+) {
   ;(this.operator = operator),
     (this.isFraudulent = isFraudulent),
-    (this.keygenCount = operatorSLA.keygenCount),
-    (this.keygenFailCount = operatorSLA.keygenFailCount),
-    (this.keygenSLA = operatorSLA.keygenSLA),
-    (this.signatureCount = operatorSLA.signatureCount),
-    (this.signatureFailCount = operatorSLA.signatureFailCount),
-    (this.signatureSLA = operatorSLA.signatureSLA),
-    (this.keepStaked = operatorAssets.keepStaked),
-    (this.ethBonded = roundFloat(operatorAssets.ethBonded)),
-    (this.ethUnbonded = roundFloat(operatorAssets.ethUnbonded)),
-    (this.ethTotal = roundFloat(operatorAssets.ethTotal))
+    (this.operatorSLA = operatorSLA),
+    (this.operatorAssets = operatorAssets)
+}
+
+function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
+  ;(this.operator = operator),
+    (this.isFraudulent = operatorParameters.isFraudulent),
+    (this.keygenCount = operatorParameters.operatorSLA.keygenCount),
+    (this.keygenFailCount = operatorParameters.operatorSLA.keygenFailCount),
+    (this.keygenSLA = operatorParameters.operatorSLA.keygenSLA),
+    (this.signatureCount = operatorParameters.operatorSLA.signatureCount),
+    (this.signatureFailCount =
+      operatorParameters.operatorSLA.signatureFailCount),
+    (this.signatureSLA = operatorParameters.operatorSLA.signatureSLA),
+    (this.keepStaked = roundKeepValue(
+      web3,
+      operatorParameters.operatorAssets.keepStaked
+    )),
+    (this.ethBonded = roundFloat(operatorParameters.operatorAssets.ethBonded)),
+    (this.ethUnbonded = roundFloat(
+      operatorParameters.operatorAssets.ethUnbonded
+    )),
+    (this.ethTotal = roundFloat(operatorParameters.operatorAssets.ethTotal)),
+    (this.ethScore = operatorRewards.ethScore),
+    (this.boost = operatorRewards.boost),
+    (this.rewardWeight = operatorRewards.rewardWeight),
+    (this.totalRewards = operatorRewards.totalRewards)
+}
+
+function roundKeepValue(web3, value) {
+  return web3.utils.toBN(value).div(web3.utils.toBN(1e18)).toNumber()
 }
 
 function roundFloat(number) {
