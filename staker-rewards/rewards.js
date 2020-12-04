@@ -25,24 +25,26 @@ async function run() {
     // based on outdated information from the chain.
     const isCacheRefreshEnabled = process.env.CACHE_REFRESH !== "off"
 
-    if (isDebugDisabled) {
-      console.debug = function () {}
-    }
-
     if (!ethHostname) {
       console.error(clc.red("Please provide ETH_HOSTNAME value"))
       return
     }
 
-    const context = await Context.initialize(ethHostname)
-
     const interval = {
       start: parseInt(intervalStart),
       end: parseInt(intervalEnd),
-      totalRewards: expandKEEPValue(context.web3, intervalTotalRewards),
+      totalRewards: intervalTotalRewards,
     }
 
     validateIntervalTimestamps(interval)
+    validateIntervalTotalRewards(interval)
+
+    if (isDebugDisabled) {
+      console.debug = function () {}
+    }
+
+    const context = await Context.initialize(ethHostname)
+
     await determineIntervalBlockspan(context, interval)
 
     if (isCacheRefreshEnabled) {
@@ -81,6 +83,16 @@ function validateIntervalTimestamps(interval) {
 
   console.log(clc.green(`Interval start timestamp: ${startDate.toISOString()}`))
   console.log(clc.green(`Interval end timestamp: ${endDate.toISOString()}`))
+}
+
+function validateIntervalTotalRewards(interval) {
+  if (!interval.totalRewards) {
+    throw new Error("Interval total rewards should be set")
+  }
+
+  console.log(
+    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`)
+  )
 }
 
 async function determineIntervalBlockspan(context, interval) {
@@ -178,7 +190,7 @@ function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
     (this.signatureFailCount =
       operatorParameters.operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorParameters.operatorSLA.signatureSLA),
-    (this.keepStaked = shrinkKEEPValue(
+    (this.keepStaked = roundKeepValue(
       web3,
       operatorParameters.operatorAssets.keepStaked
     )),
@@ -193,12 +205,8 @@ function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
     (this.totalRewards = operatorRewards.totalRewards)
 }
 
-function expandKEEPValue(web3, value) {
-  return web3.utils.toBN(value).mul(web3.utils.toBN(1e18)).toString()
-}
-
-function shrinkKEEPValue(web3, value) {
-  return web3.utils.toBN(value).div(web3.utils.toBN(1e18)).toString()
+function roundKeepValue(web3, value) {
+  return web3.utils.toBN(value).div(web3.utils.toBN(1e18)).toNumber()
 }
 
 function roundFloat(number) {
