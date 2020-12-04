@@ -1,7 +1,7 @@
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
 const {expectRevert} = require("@openzeppelin/test-helpers")
-const {assert, expect} = require("chai")
+const {expect} = require("chai")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const PhasedEscrow = contract.fromArtifact("PhasedEscrow")
@@ -78,10 +78,10 @@ describe("ECDSARewardsDistributorEscrow", () => {
         }
       )
 
-      assert.equal(eventList.length, 1, "incorrect number of emitted events")
+      expect(eventList.length).to.equal(1, "incorrect number of emitted events")
       const event = eventList[0].returnValues
-      assert.equal(event.merkleRoot, merkleRoot)
-      assert.equal(event.amount, amount)
+      expect(event.merkleRoot).to.equal(merkleRoot, "unexpected merkle root")
+      expect(event.amount).to.eq.BN(amount)
     })
 
     it("allocates multiple reward distributions", async () => {
@@ -100,13 +100,13 @@ describe("ECDSARewardsDistributorEscrow", () => {
         }
       )
 
-      assert.equal(eventList.length, 2, "incorrect number of emitted events")
+      expect(eventList.length).to.equal(2, "incorrect number of emitted events")
       const event1 = eventList[0].returnValues
-      assert.equal(event1.merkleRoot, merkleRoot)
-      assert.equal(event1.amount, amount)
+      expect(event1.merkleRoot).to.equal(merkleRoot, "unexpected merkle root")
+      expect(event1.amount).to.eq.BN(amount)
       const event2 = eventList[1].returnValues
-      assert.equal(event2.merkleRoot, merkleRoot2)
-      assert.equal(event2.amount, amount2)
+      expect(event2.merkleRoot).to.equal(merkleRoot2, "unexpected merkle root")
+      expect(event2.amount).to.eq.BN(amount2)
     })
   })
 
