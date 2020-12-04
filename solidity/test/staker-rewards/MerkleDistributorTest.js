@@ -196,7 +196,7 @@ describe("MerkleDistributor", () => {
       )
     })
 
-    it("should revert when claiming a reward twice from multiple merkle roots", async () => {
+    it("should revert when claiming a reward twice", async () => {
       let merkleRoot = merkle0.merkleRoot
       let index = merkle0.claims[0].index
       let account = merkle0.claims[0].account
@@ -222,6 +222,25 @@ describe("MerkleDistributor", () => {
         rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
         "Reward already claimed"
       )
+    })
+
+    it("should check if the reward was claimed", async () => {
+      const merkleRoot = merkle0.merkleRoot
+      const index = merkle0.claims[0].index
+      const account = merkle0.claims[0].account
+      const amount = merkle0.claims[0].amount
+      const proof = merkle0.claims[0].proof
+
+      let isRewardClaimed = await rewardsDistributor.isClaimed(
+        merkleRoot,
+        index
+      )
+      expect(isRewardClaimed).to.be.false
+
+      await rewardsDistributor.claim(merkleRoot, index, account, amount, proof)
+
+      isRewardClaimed = await rewardsDistributor.isClaimed(merkleRoot, index)
+      expect(isRewardClaimed).to.be.true
     })
 
     it("should revert when there are no rewards for a given merkle root", async () => {
