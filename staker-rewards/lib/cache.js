@@ -8,6 +8,7 @@ import { KeepStatus, getKeepStatus } from "./keep.js"
 
 const DATA_DIR_PATH = path.resolve(process.env.DATA_DIR_PATH || "./data")
 const KEEP_CACHE_PATH = path.resolve(DATA_DIR_PATH, "cache-keeps.json")
+const TX_CACHE_PATH = path.resolve(DATA_DIR_PATH, "cache-transactions.json")
 
 // Our expectation on how deep can chain reorganization be. We need this
 // parameter because the previous cache refresh could store data that
@@ -26,12 +27,16 @@ export default class Cache {
 
   async initialize() {
     this.keeps = low(new FileSync(KEEP_CACHE_PATH))
+    this.transactions = low(new FileSync(TX_CACHE_PATH))
+
     await this.keeps
       .defaults({
         keeps: [],
         lastRefreshBlock: this.contracts.factoryDeploymentBlock,
       })
       .write()
+
+    await this.transactions.defaults({ transactions: [] }).write()
   }
 
   async refresh() {
@@ -173,10 +178,32 @@ export default class Cache {
     }
   }
 
+  async storeTransactions(transactions) {
+    transactions.forEach((transaction) => {
+      const isCached = this.transactions
+        .get("transactions")
+        .find({ hash: transaction.hash })
+        .value()
+
+      if (!isCached) {
+        this.transactions.get("transactions").push(transaction).write()
+      }
+    })
+  }
+
   getKeeps(status) {
     return this.keeps
       .get("keeps")
       .filter((keep) => !status || keep.status.name === status)
+      .value()
+  }
+
+  getFunctionCalls(to, method) {
+    return this.transactions
+      .get("transactions")
+      .filter(
+        (tx) => tx.to.toLowerCase() === to.toLowerCase() && tx.method === method
+      )
       .value()
   }
 }
