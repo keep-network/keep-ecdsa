@@ -97,6 +97,8 @@ describe("MerkleDistributor", () => {
         proof
       )
 
+      expect(await keepToken.balanceOf(account)).to.eq.BN(amount)
+
       expectEvent(claimed, "RewardsClaimed", {
         merkleRoot,
         index,
