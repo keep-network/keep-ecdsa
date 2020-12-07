@@ -196,10 +196,10 @@ function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
       operatorParameters.operatorAssets.ethUnbonded
     )),
     (this.ethTotal = roundFloat(operatorParameters.operatorAssets.ethTotal)),
-    (this.ethScore = operatorRewards.ethScore),
-    (this.boost = operatorRewards.boost),
-    (this.rewardWeight = operatorRewards.rewardWeight),
-    (this.totalRewards = operatorRewards.totalRewards)
+    (this.ethScore = roundFloat(operatorRewards.ethScore)),
+    (this.boost = roundFloat(operatorRewards.boost)),
+    (this.rewardWeight = roundFloat(operatorRewards.rewardWeight)),
+    (this.totalRewards = roundFloat(operatorRewards.totalRewards))
 }
 
 function roundFloat(number) {

@@ -40,15 +40,16 @@ export default class RewardsCalculator {
       0
     )
 
-    console.log(`Rewards weight sum ${rewardWeightSum}`)
-
-    const totalRewardsDenominator = this.interval.totalRewards * rewardWeightSum
+    console.log(`Rewards weight sum ${Math.round(rewardWeightSum * 100) / 100}`)
 
     const operatorsRewards = []
 
     for (const operatorRewardsFactors of operatorsRewardsFactors) {
       const { rewardWeight } = operatorRewardsFactors
-      const totalRewards = rewardWeight / totalRewardsDenominator
+      const rewardRatio =
+        rewardWeightSum > 0 ? rewardWeight / rewardWeightSum : 0
+
+      const totalRewards = this.interval.totalRewards * rewardRatio
 
       operatorsRewards.push(
         new OperatorRewards(
@@ -90,7 +91,8 @@ export default class RewardsCalculator {
 
   calculateBoost(keepStaked, ethTotal, minimumStake) {
     const firstFactor = keepStaked / minimumStake
-    const secondFactor = Math.sqrt(keepStaked / (ethTotal * 500))
+    const secondFactor =
+      ethTotal > 0 ? Math.sqrt(keepStaked / (ethTotal * 500)) : 0
     return 1 + Math.min(firstFactor, secondFactor)
   }
 
