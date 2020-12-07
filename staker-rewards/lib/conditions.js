@@ -64,8 +64,8 @@ export default class Conditions {
         console.debug(`Checking transaction ${transaction.hash}`)
 
         if (
-          transaction.block_number <= this.interval.startBlock ||
-          transaction.block_number >= this.interval.endBlock
+          transaction.block_number < this.interval.startBlock ||
+          transaction.block_number > this.interval.endBlock
         ) {
           console.debug(
             `Skipping transaction made in block ${transaction.block_number}`
