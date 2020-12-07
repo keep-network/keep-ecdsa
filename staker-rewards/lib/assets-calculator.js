@@ -104,7 +104,10 @@ export default class AssetsCalculator {
       block
     )
 
-    return web3.utils.toBN(keepStaked).div(web3.utils.toBN(1e18)).toNumber()
+    return web3.utils
+      .toBN(keepStaked)
+      .div(web3.utils.toBN("1000000000000000000"))
+      .toNumber()
   }
 
   async calculateETHBonded(operator) {

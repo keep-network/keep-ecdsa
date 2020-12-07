@@ -59,7 +59,7 @@
           {
             "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
             "operatorContract": "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426",
-            "activeStake": "500000"
+            "activeStake": "500000000000000000000000"
           }
         ]
       }

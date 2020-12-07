@@ -124,7 +124,7 @@ describe("assets calculator", async () => {
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
-    assert.equal(assets.keepStaked, "500000")
+    assert.equal(assets.keepStaked, 500000)
   })
 
   it("should return the right value of ETH unbonded", async () => {

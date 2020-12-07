@@ -66,12 +66,16 @@ export default class RewardsCalculator {
 
   async getMinimumStake() {
     const { contracts, web3 } = this.context
+    const tokenStaking = await contracts.TokenStaking.deployed()
 
     const minimumStake = await callWithRetry(
-      contracts.TokenStaking.minimumStake()
+      tokenStaking.methods.minimumStake()
     )
 
-    return web3.utils.toBN(minimumStake).div(web3.utils.toBN(1e18)).toNumber()
+    return web3.utils
+      .toBN(minimumStake)
+      .div(web3.utils.toBN("1000000000000000000"))
+      .toNumber()
   }
 
   calculateETHScore(ethTotal) {
