@@ -1,5 +1,6 @@
 import clc from "cli-color"
 import BlockByDate from "ethereum-block-by-date"
+import BigNumber from "bignumber.js"
 
 import Context from "./lib/context.js"
 import FraudDetector from "./lib/fraud-detector.js"
@@ -16,7 +17,8 @@ async function run() {
     const intervalStart = process.argv[2]
     // End of the interval passed as UNIX timestamp.
     const intervalEnd = process.argv[3]
-    // Total KEEP rewards distributed within the given interval.
+    // Total KEEP rewards distributed within the given interval passed as
+    // 18-decimals number.
     const intervalTotalRewards = process.argv[4]
     // Determines whether debug logs should be disabled.
     const isDebugDisabled = process.env.DEBUG !== "on"
@@ -30,26 +32,25 @@ async function run() {
     // and rely on cached transactions.
     const tenderlyApiKey = process.env.TENDERLY_API_KEY
 
+    if (isDebugDisabled) {
+      console.debug = function () {}
+    }
+
     if (!ethHostname) {
       console.error(clc.red("Please provide ETH_HOSTNAME value"))
       return
     }
 
+    const context = await Context.initialize(ethHostname, tenderlyApiKey)
+
     const interval = {
       start: parseInt(intervalStart),
       end: parseInt(intervalEnd),
-      totalRewards: intervalTotalRewards,
+      totalRewards: new BigNumber(intervalTotalRewards),
     }
 
     validateIntervalTimestamps(interval)
     validateIntervalTotalRewards(interval)
-
-    if (isDebugDisabled) {
-      console.debug = function () {}
-    }
-
-    const context = await Context.initialize(ethHostname, tenderlyApiKey)
-
     await determineIntervalBlockspan(context, interval)
 
     if (isCacheRefreshEnabled) {
@@ -91,12 +92,16 @@ function validateIntervalTimestamps(interval) {
 }
 
 function validateIntervalTotalRewards(interval) {
-  if (!interval.totalRewards) {
+  if (interval.totalRewards.isLessThanOrEqualTo(new BigNumber(0))) {
     throw new Error("Interval total rewards should be set")
   }
 
   console.log(
-    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`)
+    clc.green(
+      `Interval total rewards: ${display18DecimalsValue(
+        interval.totalRewards
+      )} KEEP`
+    )
   )
 }
 
@@ -143,24 +148,20 @@ async function calculateOperatorsRewards(context, interval) {
     )
   }
 
-  const rewardsCalculator = RewardsCalculator.initialize(
-    operatorsParameters,
-    interval
+  const rewardsCalculator = await RewardsCalculator.initialize(
+    context,
+    interval,
+    operatorsParameters
   )
 
   const operatorsSummary = []
 
   for (const operatorParameters of operatorsParameters) {
     const { operator } = operatorParameters
-    const operatorRewards = rewardsCalculator.calculateOperatorRewards(operator)
+    const operatorRewards = rewardsCalculator.getOperatorRewards(operator)
 
     operatorsSummary.push(
-      new OperatorSummary(
-        context.web3,
-        operator,
-        operatorParameters,
-        operatorRewards
-      )
+      new OperatorSummary(operator, operatorParameters, operatorRewards)
     )
   }
 
@@ -193,7 +194,7 @@ function OperatorParameters(
     (this.operatorAssets = operatorAssets)
 }
 
-function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
+function OperatorSummary(operator, operatorParameters, operatorRewards) {
   ;(this.operator = operator),
     (this.isFraudulent = operatorParameters.isFraudulent),
     (this.factoryAuthorizedAtStart =
@@ -209,27 +210,26 @@ function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
     (this.signatureFailCount =
       operatorParameters.operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorParameters.operatorSLA.signatureSLA),
-    (this.keepStaked = roundKeepValue(
-      web3,
+    (this.keepStaked = display18DecimalsValue(
       operatorParameters.operatorAssets.keepStaked
     )),
-    (this.ethBonded = roundFloat(operatorParameters.operatorAssets.ethBonded)),
-    (this.ethUnbonded = roundFloat(
+    (this.ethBonded = display18DecimalsValue(
+      operatorParameters.operatorAssets.ethBonded
+    )),
+    (this.ethUnbonded = display18DecimalsValue(
       operatorParameters.operatorAssets.ethUnbonded
     )),
-    (this.ethTotal = roundFloat(operatorParameters.operatorAssets.ethTotal)),
-    (this.ethScore = operatorRewards.ethScore),
-    (this.boost = operatorRewards.boost),
-    (this.rewardWeight = operatorRewards.rewardWeight),
-    (this.totalRewards = operatorRewards.totalRewards)
+    (this.ethTotal = display18DecimalsValue(
+      operatorParameters.operatorAssets.ethTotal
+    )),
+    (this.ethScore = display18DecimalsValue(operatorRewards.ethScore)),
+    (this.boost = operatorRewards.boost.toFixed(2)),
+    (this.rewardWeight = display18DecimalsValue(operatorRewards.rewardWeight)),
+    (this.totalRewards = display18DecimalsValue(operatorRewards.totalRewards))
 }
 
-function roundKeepValue(web3, value) {
-  return web3.utils.toBN(value).div(web3.utils.toBN(1e18)).toNumber()
-}
-
-function roundFloat(number) {
-  return Math.round(number * 100) / 100
+function display18DecimalsValue(value) {
+  return value.dividedBy(new BigNumber(1e18)).toFixed(2)
 }
 
 run()
