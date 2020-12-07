@@ -61,9 +61,11 @@ export default class Requirements {
 
         console.debug(`Checking transaction ${transaction.hash}`)
 
+        // Starting block is included in the interval, end block is not included
+        // to avoid overlapping: `start <= interval < end`.
         if (
           transaction.block_number < this.interval.startBlock ||
-          transaction.block_number > this.interval.endBlock
+          transaction.block_number >= this.interval.endBlock
         ) {
           console.debug(
             `Skipping transaction made in block ${transaction.block_number}`

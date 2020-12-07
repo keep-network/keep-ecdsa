@@ -83,14 +83,13 @@ describe("requirements", async () => {
       //   5. made on interval end for the sortition pool
       //   6. made after interval end for the sortition pool
       //
-      // We assume the check to find operators 2, 4 and 5.
+      // We assume the check to find operators 2 and 4.
 
       await requirements.checkDeauthorizations()
 
       expect(requirements.operatorsDeauthorizedInInterval).to.have.members([
         "0xa000000000000000000000000000000000000002",
         "0xa000000000000000000000000000000000000004",
-        "0xa000000000000000000000000000000000000005",
       ])
     })
   })
