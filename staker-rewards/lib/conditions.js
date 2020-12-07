@@ -48,7 +48,7 @@ export default class Conditions {
     // We expect only successful transactions to be returned, which means we don't
     // need to double check authorizer vs operator as this was already handled
     // by the contract on the function call.
-    const deauthorizations = this.context.cache.getFunctionCalls(
+    const deauthorizations = this.context.cache.getTransactionFunctionCalls(
       this.keepBonding.options.address,
       "deauthorizeSortitionPoolContract"
     )

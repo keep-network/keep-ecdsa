@@ -198,7 +198,7 @@ export default class Cache {
       .value()
   }
 
-  getFunctionCalls(to, method) {
+  getTransactionFunctionCalls(to, method) {
     return this.transactionsCache
       .get("transactions")
       .filter(
