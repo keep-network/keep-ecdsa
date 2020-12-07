@@ -1,6 +1,9 @@
 import chai from "chai"
-import RewardsCalculator from "../lib/rewards-calculator.js"
 import BigNumber from "bignumber.js"
+
+import { createMockContext } from "./helpers/mock.js"
+
+import RewardsCalculator from "../lib/rewards-calculator.js"
 
 const { assert } = chai
 
@@ -19,10 +22,6 @@ const createOperatorParameters = (operator, keepStaked, ethTotal) => ({
     keepStaked: new BigNumber(keepStaked).multipliedBy(1e18),
     ethTotal: new BigNumber(ethTotal).multipliedBy(1e18),
   },
-})
-
-const createMockContext = () => ({
-  contracts: {},
 })
 
 const setupContractsMock = (context) => {
