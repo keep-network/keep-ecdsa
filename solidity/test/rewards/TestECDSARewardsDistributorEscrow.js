@@ -43,16 +43,43 @@ describe("ECDSARewardsDistributorEscrow", () => {
     await restoreSnapshot()
   })
 
+  describe("funding", async () => {
+    it("can be done from phased escrow", async () => {
+      const fundingEscrow = await PhasedEscrow.new(token.address, {from: owner})
+      const allTokens = await token.balanceOf(owner)
+      await token.approveAndCall(fundingEscrow.address, allTokens, "0x0", {
+        from: owner,
+      })
+
+      const beneficiary = await ECDSARewardsEscrowBeneficiary.new(
+        token.address,
+        escrow.address,
+        {from: owner}
+      )
+      await beneficiary.transferOwnership(fundingEscrow.address, {from: owner})
+      await fundingEscrow.setBeneficiary(beneficiary.address, {from: owner})
+
+      await fundingEscrow.withdraw(allTokens, {from: owner})
+      expect(await token.balanceOf(escrow.address)).to.eq.BN(allTokens)
+    })
+  })
+
   describe("allocateInterval", async () => {
     const merkleRoot =
       "0x65b315f4565a40f738cbaaef7dbab4ddefa14620407507d0f2d5cdbd1d8063f6"
     const amount = web3.utils.toBN(999998997)
 
     beforeEach(async () => {
+      // The initial state set up with approveAndCall and confirmed with the
+      // assertion below is the escrow state after getting funded from
+      // another PhasedEscrow, as demonstrated in "funding" describe.
+      // This reflects the flow of funds on mainnet for the updated ECDSA
+      // staker rewards deployment.
       const allTokens = await token.balanceOf(owner)
       await token.approveAndCall(escrow.address, allTokens, "0x0", {
         from: owner,
       })
+      expect(await token.balanceOf(escrow.address)).to.eq.BN(allTokens)
     })
 
     it("can not be called by non-owner", async () => {
@@ -111,27 +138,6 @@ describe("ECDSARewardsDistributorEscrow", () => {
       expect(await token.balanceOf(rewardsDistributor.address)).to.eq.BN(
         amount.add(amount2)
       )
-    })
-  })
-
-  describe("funding", async () => {
-    it("can be done from phased escrow", async () => {
-      const fundingEscrow = await PhasedEscrow.new(token.address, {from: owner})
-      const allTokens = await token.balanceOf(owner)
-      await token.approveAndCall(fundingEscrow.address, allTokens, "0x0", {
-        from: owner,
-      })
-
-      const beneficiary = await ECDSARewardsEscrowBeneficiary.new(
-        token.address,
-        escrow.address,
-        {from: owner}
-      )
-      await beneficiary.transferOwnership(fundingEscrow.address, {from: owner})
-      await fundingEscrow.setBeneficiary(beneficiary.address, {from: owner})
-
-      await fundingEscrow.withdraw(allTokens, {from: owner})
-      expect(await token.balanceOf(escrow.address)).to.eq.BN(allTokens)
     })
   })
 })
