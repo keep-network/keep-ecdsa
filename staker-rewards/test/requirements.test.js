@@ -9,8 +9,8 @@ import {
   BondedECDSAKeepFactoryAddress,
 } from "./helpers/constants.js"
 
-import Conditions from "../lib/conditions.js"
-import { OperatorAuthorizations } from "../lib/conditions.js"
+import Requirements from "../lib/requirements.js"
+import { OperatorAuthorizations } from "../lib/requirements.js"
 
 const { expect } = chai
 
@@ -58,11 +58,11 @@ const setupContext = (context) => {
   return context
 }
 
-describe("conditions checks", async () => {
+describe("requirements", async () => {
   const interval = { startBlock: 1000, endBlock: 2000 }
 
   let mockContext
-  let conditions
+  let requirements
 
   before(() => {
     mockContext = createMockContext()
@@ -70,7 +70,7 @@ describe("conditions checks", async () => {
   })
 
   beforeEach(async () => {
-    conditions = await Conditions.initialize(mockContext, interval)
+    requirements = await Requirements.initialize(mockContext, interval)
   })
 
   describe("deauthorizations check", async () => {
@@ -85,9 +85,9 @@ describe("conditions checks", async () => {
       //
       // We assume the check to find operators 2, 4 and 5.
 
-      await conditions.checkDeauthorizations()
+      await requirements.checkDeauthorizations()
 
-      expect(conditions.operatorsDeauthorizedInInterval).to.have.members([
+      expect(requirements.operatorsDeauthorizedInInterval).to.have.members([
         "0xa000000000000000000000000000000000000002",
         "0xa000000000000000000000000000000000000004",
         "0xa000000000000000000000000000000000000005",
@@ -97,13 +97,13 @@ describe("conditions checks", async () => {
 
   describe("operator's authorizations check", async () => {
     beforeEach(async () => {
-      await conditions.checkDeauthorizations()
+      await requirements.checkDeauthorizations()
     })
 
     it("discovers authorizations on interval start", async () => {
       const operator = "0xA000000000000000000000000000000000000001"
 
-      const result = await conditions.checkAuthorizations(operator)
+      const result = await requirements.checkAuthorizations(operator)
 
       expect(result).deep.equal(
         new OperatorAuthorizations(operator, true, true, false)
@@ -113,7 +113,7 @@ describe("conditions checks", async () => {
     it("finds if deauthorized during interval", async () => {
       const operator = "0xA000000000000000000000000000000000000002"
 
-      const result = await conditions.checkAuthorizations(operator)
+      const result = await requirements.checkAuthorizations(operator)
 
       expect(result).deep.equal(
         new OperatorAuthorizations(operator, true, false, true)

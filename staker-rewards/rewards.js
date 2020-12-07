@@ -3,7 +3,7 @@ import BlockByDate from "ethereum-block-by-date"
 
 import Context from "./lib/context.js"
 import FraudDetector from "./lib/fraud-detector.js"
-import Conditions from "./lib/conditions.js"
+import Requirements from "./lib/requirements.js"
 import SLACalculator from "./lib/sla-calculator.js"
 import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
@@ -114,17 +114,17 @@ async function calculateOperatorsRewards(context, interval) {
   const { cache } = context
 
   const fraudDetector = await FraudDetector.initialize(context)
-  const conditions = await Conditions.initialize(context, interval)
+  const requirements = await Requirements.initialize(context, interval)
   const slaCalculator = await SLACalculator.initialize(context, interval)
   const assetsCalculator = await AssetsCalculator.initialize(context, interval)
 
-  await conditions.checkDeauthorizations()
+  await requirements.checkDeauthorizations()
 
   const operatorsParameters = []
 
   for (const operator of getOperators(cache)) {
     const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
-    const operatorAuthorizations = await conditions.checkAuthorizations(
+    const operatorAuthorizations = await requirements.checkAuthorizations(
       operator
     )
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)

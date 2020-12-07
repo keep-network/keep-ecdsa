@@ -1,6 +1,6 @@
 import { callWithRetry } from "./contract-helper.js"
 
-export default class Conditions {
+export default class Requirements {
   constructor(
     context,
     interval,
@@ -27,15 +27,13 @@ export default class Conditions {
       )
     )
 
-    const conditions = new Conditions(
+    return new Requirements(
       context,
       interval,
       bondedECDSAKeepFactory,
       await contracts.KeepBonding.deployed(),
       sortitionPoolAddress
     )
-
-    return conditions
   }
 
   async checkDeauthorizations() {
