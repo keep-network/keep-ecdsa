@@ -47,6 +47,33 @@
               "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
               "output": "40000000000000000000"
             }
+          ],
+          "hasSecondaryAuthorization": [
+            {
+              "operator": "0xA000000000000000000000000000000000000001",
+              "poolAddress": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
+              "output": true
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000002",
+              "poolAddress": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
+              "output": false
+            }
+          ]
+        }
+      },
+      {
+        "address": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
+        "methods": {
+          "isOperatorAuthorized": [
+            {
+              "operator": "0xA000000000000000000000000000000000000001",
+              "output": true
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000002",
+              "output": true
+            }
           ]
         }
       }

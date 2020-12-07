@@ -167,7 +167,7 @@ export default class Conditions {
   }
 }
 
-function OperatorAuthorizations(
+export function OperatorAuthorizations(
   address,
   factoryAuthorizedAtStart,
   poolAuthorizedAtStart,
