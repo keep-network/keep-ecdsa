@@ -1,5 +1,6 @@
 import clc from "cli-color"
 import BlockByDate from "ethereum-block-by-date"
+import BigNumber from "bignumber.js"
 
 import Context from "./lib/context.js"
 import FraudDetector from "./lib/fraud-detector.js"
@@ -39,7 +40,7 @@ async function run() {
     const interval = {
       start: parseInt(intervalStart),
       end: parseInt(intervalEnd),
-      totalRewards: parseInt(intervalTotalRewards),
+      totalRewards: new BigNumber(intervalTotalRewards),
     }
 
     validateIntervalTimestamps(interval)
@@ -85,12 +86,16 @@ function validateIntervalTimestamps(interval) {
 }
 
 function validateIntervalTotalRewards(interval) {
-  if (!interval.totalRewards) {
+  if (interval.totalRewards.isLessThanOrEqualTo(new BigNumber(0))) {
     throw new Error("Interval total rewards should be set")
   }
 
   console.log(
-    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`)
+    clc.green(
+      `Interval total rewards: ${display18DecimalsValue(
+        interval.totalRewards
+      )} KEEP`
+    )
   )
 }
 
@@ -143,12 +148,7 @@ async function calculateOperatorsRewards(context, interval) {
     const operatorRewards = rewardsCalculator.getOperatorRewards(operator)
 
     operatorsSummary.push(
-      new OperatorSummary(
-        context.web3,
-        operator,
-        operatorParameters,
-        operatorRewards
-      )
+      new OperatorSummary(operator, operatorParameters, operatorRewards)
     )
   }
 
@@ -180,7 +180,7 @@ function OperatorParameters(
     (this.operatorAssets = operatorAssets)
 }
 
-function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
+function OperatorSummary(operator, operatorParameters, operatorRewards) {
   ;(this.operator = operator),
     (this.isFraudulent = operatorParameters.isFraudulent),
     (this.keygenCount = operatorParameters.operatorSLA.keygenCount),
@@ -190,20 +190,26 @@ function OperatorSummary(web3, operator, operatorParameters, operatorRewards) {
     (this.signatureFailCount =
       operatorParameters.operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorParameters.operatorSLA.signatureSLA),
-    (this.keepStaked = operatorParameters.operatorAssets.keepStaked),
-    (this.ethBonded = roundFloat(operatorParameters.operatorAssets.ethBonded)),
-    (this.ethUnbonded = roundFloat(
+    (this.keepStaked = display18DecimalsValue(
+      operatorParameters.operatorAssets.keepStaked
+    )),
+    (this.ethBonded = display18DecimalsValue(
+      operatorParameters.operatorAssets.ethBonded
+    )),
+    (this.ethUnbonded = display18DecimalsValue(
       operatorParameters.operatorAssets.ethUnbonded
     )),
-    (this.ethTotal = roundFloat(operatorParameters.operatorAssets.ethTotal)),
-    (this.ethScore = roundFloat(operatorRewards.ethScore)),
-    (this.boost = roundFloat(operatorRewards.boost)),
-    (this.rewardWeight = roundFloat(operatorRewards.rewardWeight)),
-    (this.totalRewards = roundFloat(operatorRewards.totalRewards))
+    (this.ethTotal = display18DecimalsValue(
+      operatorParameters.operatorAssets.ethTotal
+    )),
+    (this.ethScore = display18DecimalsValue(operatorRewards.ethScore)),
+    (this.boost = operatorRewards.boost.toFixed(2)),
+    (this.rewardWeight = display18DecimalsValue(operatorRewards.rewardWeight)),
+    (this.totalRewards = display18DecimalsValue(operatorRewards.totalRewards))
 }
 
-function roundFloat(number) {
-  return Math.round(number * 100) / 100
+function display18DecimalsValue(value) {
+  return value.dividedBy(new BigNumber(1e18)).toFixed(2)
 }
 
 run()

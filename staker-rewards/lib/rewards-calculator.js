@@ -1,10 +1,13 @@
 import { callWithRetry } from "./contract-helper.js"
+import BigNumber from "bignumber.js"
 
 export default class RewardsCalculator {
   constructor(context, interval, minimumStake) {
     this.context = context
     this.interval = interval
-    this.ethScoreThreshold = 3000
+    this.ethScoreThreshold = new BigNumber(3000).multipliedBy(
+      new BigNumber(1e18)
+    ) // 3000 ETH
   }
 
   static async initialize(context, interval, operatorsParameters) {
@@ -25,7 +28,7 @@ export default class RewardsCalculator {
 
       const ethScore = this.calculateETHScore(ethTotal)
       const boost = this.calculateBoost(keepStaked, ethTotal, minimumStake)
-      const rewardWeight = ethScore * boost
+      const rewardWeight = ethScore.multipliedBy(boost)
 
       operatorsRewardsFactors.push({
         operator: operatorParameters.operator,
@@ -36,20 +39,25 @@ export default class RewardsCalculator {
     }
 
     const rewardWeightSum = operatorsRewardsFactors.reduce(
-      (accumulator, factors) => accumulator + factors.rewardWeight,
-      0
+      (accumulator, factors) => accumulator.plus(factors.rewardWeight),
+      new BigNumber(0)
     )
 
-    console.log(`Rewards weight sum ${Math.round(rewardWeightSum * 100) / 100}`)
+    console.log(
+      `Rewards weight sum ${rewardWeightSum
+        .dividedBy(new BigNumber(1e18))
+        .toFixed(2)}`
+    )
 
     const operatorsRewards = []
 
     for (const operatorRewardsFactors of operatorsRewardsFactors) {
       const { rewardWeight } = operatorRewardsFactors
-      const rewardRatio =
-        rewardWeightSum > 0 ? rewardWeight / rewardWeightSum : 0
+      const rewardRatio = rewardWeightSum.isGreaterThan(new BigNumber(0))
+        ? rewardWeight.dividedBy(rewardWeightSum)
+        : new BigNumber(0)
 
-      const totalRewards = this.interval.totalRewards * rewardRatio
+      const totalRewards = this.interval.totalRewards.multipliedBy(rewardRatio)
 
       operatorsRewards.push(
         new OperatorRewards(
@@ -66,34 +74,34 @@ export default class RewardsCalculator {
   }
 
   async getMinimumStake() {
-    const { contracts, web3 } = this.context
-    const tokenStaking = await contracts.TokenStaking.deployed()
+    const tokenStaking = await this.context.contracts.TokenStaking.deployed()
 
     const minimumStake = await callWithRetry(
       tokenStaking.methods.minimumStake()
     )
 
-    return web3.utils
-      .toBN(minimumStake)
-      .div(web3.utils.toBN("1000000000000000000"))
-      .toNumber()
+    return new BigNumber(minimumStake)
   }
 
   calculateETHScore(ethTotal) {
-    if (ethTotal < this.ethScoreThreshold) {
+    if (ethTotal.isLessThan(this.ethScoreThreshold)) {
       return ethTotal
     }
 
-    return (
-      2 * Math.sqrt(this.ethScoreThreshold * ethTotal) - this.ethScoreThreshold
-    )
+    const sqrt = this.ethScoreThreshold.multipliedBy(ethTotal).squareRoot()
+
+    return new BigNumber(2).multipliedBy(sqrt).minus(this.ethScoreThreshold)
   }
 
   calculateBoost(keepStaked, ethTotal, minimumStake) {
-    const firstFactor = keepStaked / minimumStake
-    const secondFactor =
-      ethTotal > 0 ? Math.sqrt(keepStaked / (ethTotal * 500)) : 0
-    return 1 + Math.min(firstFactor, secondFactor)
+    const a = keepStaked.dividedBy(minimumStake)
+    const b = ethTotal.isGreaterThan(new BigNumber(0))
+      ? keepStaked
+          .dividedBy(ethTotal.multipliedBy(new BigNumber(500)))
+          .squareRoot()
+      : new BigNumber(0)
+
+    return new BigNumber(1).plus(BigNumber.minimum(a, b))
   }
 
   getOperatorRewards(operator) {
