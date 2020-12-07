@@ -73,20 +73,22 @@ export default class Requirements {
           continue
         }
 
-        const operator = transaction.decoded_input[0].value
-        const inputSortitionPool = transaction.decoded_input[1].value
+        const transactionOperator = transaction.decoded_input[0].value
+        const transactionSortitionPool = transaction.decoded_input[1].value
 
         if (
-          inputSortitionPool.toLowerCase() !=
+          transactionSortitionPool.toLowerCase() !=
           this.sortitionPoolAddress.toLowerCase()
         ) {
           console.debug(
-            `Skipping transaction for sortition pool ${inputSortitionPool}`
+            `Skipping transaction for sortition pool ${transactionSortitionPool}`
           )
           continue
         }
 
-        this.operatorsDeauthorizedInInterval.push(operator.toLowerCase())
+        this.operatorsDeauthorizedInInterval.push(
+          transactionOperator.toLowerCase()
+        )
       }
     }
 
