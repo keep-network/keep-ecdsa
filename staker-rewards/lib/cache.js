@@ -7,7 +7,7 @@ import { getPastEvents, callWithRetry } from "./contract-helper.js"
 import { KeepStatus, getKeepStatus } from "./keep.js"
 
 const DATA_DIR_PATH = path.resolve(process.env.DATA_DIR_PATH || "./data")
-const KEEP_CACHE_PATH = path.resolve(DATA_DIR_PATH, "cache-keeps.json")
+const KEEPS_CACHE_PATH = path.resolve(DATA_DIR_PATH, "cache-keeps.json")
 const TX_CACHE_PATH = path.resolve(DATA_DIR_PATH, "cache-transactions.json")
 
 // Our expectation on how deep can chain reorganization be. We need this
@@ -26,17 +26,17 @@ export default class Cache {
   }
 
   async initialize() {
-    this.keeps = low(new FileSync(KEEP_CACHE_PATH))
-    this.transactions = low(new FileSync(TX_CACHE_PATH))
+    this.keepsCache = low(new FileSync(KEEPS_CACHE_PATH))
+    this.transactionsCache = low(new FileSync(TX_CACHE_PATH))
 
-    await this.keeps
+    await this.keepsCache
       .defaults({
         keeps: [],
         lastRefreshBlock: this.contracts.factoryDeploymentBlock,
       })
       .write()
 
-    await this.transactions.defaults({ transactions: [] }).write()
+    await this.transactionsCache.defaults({ transactions: [] }).write()
   }
 
   async refresh() {
@@ -47,7 +47,7 @@ export default class Cache {
   async fetchNewKeeps() {
     const factory = await this.contracts.BondedECDSAKeepFactory.deployed()
 
-    const previousRefreshBlock = this.keeps.get("lastRefreshBlock").value()
+    const previousRefreshBlock = this.keepsCache.get("lastRefreshBlock").value()
 
     const startBlock =
       previousRefreshBlock - REORG_DEPTH_BLOCKS > 0
@@ -72,7 +72,7 @@ export default class Cache {
       })
     })
 
-    const cachedKeepsCount = this.keeps.get("keeps").value().length
+    const cachedKeepsCount = this.keepsCache.get("keeps").value().length
 
     console.log(
       `Number of keeps created since block ` +
@@ -83,7 +83,7 @@ export default class Cache {
 
     const actions = []
     newKeeps.forEach((keep) => {
-      const isCached = this.keeps
+      const isCached = this.keepsCache
         .get("keeps")
         .find({ address: keep.address })
         .value()
@@ -108,7 +108,7 @@ export default class Cache {
     }
 
     const latestBlockNumber = keepCreatedEvents.slice(-1)[0].blockNumber
-    this.keeps.assign({ lastRefreshBlock: latestBlockNumber }).write()
+    this.keepsCache.assign({ lastRefreshBlock: latestBlockNumber }).write()
   }
 
   async fetchFullKeepData(keepData) {
@@ -121,7 +121,7 @@ export default class Cache {
           keepContract.methods.getOpenedTimestamp()
         )
 
-        this.keeps
+        this.keepsCache
           .get("keeps")
           .push({
             address: address,
@@ -170,7 +170,7 @@ export default class Cache {
           `from [${lastStatus.name}] to [${currentStatus.name}]`
       )
 
-      this.keeps
+      this.keepsCache
         .get("keeps")
         .find({ address: keepData.address })
         .assign({ status: currentStatus })
@@ -180,26 +180,26 @@ export default class Cache {
 
   async storeTransactions(transactions) {
     transactions.forEach((transaction) => {
-      const isCached = this.transactions
+      const isCached = this.transactionsCache
         .get("transactions")
         .find({ hash: transaction.hash })
         .value()
 
       if (!isCached) {
-        this.transactions.get("transactions").push(transaction).write()
+        this.transactionsCache.get("transactions").push(transaction).write()
       }
     })
   }
 
   getKeeps(status) {
-    return this.keeps
+    return this.keepsCache
       .get("keeps")
       .filter((keep) => !status || keep.status.name === status)
       .value()
   }
 
   getFunctionCalls(to, method) {
-    return this.transactions
+    return this.transactionsCache
       .get("transactions")
       .filter(
         (tx) => tx.to.toLowerCase() === to.toLowerCase() && tx.method === method
