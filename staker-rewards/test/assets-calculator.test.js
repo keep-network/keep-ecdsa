@@ -1,6 +1,14 @@
 import chai from "chai"
 import BN from "bn.js"
+
 import testBlockchain from "./data/test-blockchain.json"
+import {
+  SortitionPoolAddress,
+  TokenStakingAddress,
+  BondedECDSAKeepFactoryAddress,
+  KeepBondingAddress,
+} from "./helpers/constants.js"
+
 import AssetsCalculator from "../lib/assets-calculator.js"
 
 const { assert } = chai
@@ -13,10 +21,6 @@ const interval = {
 }
 
 const operator = "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
-const SortitionPoolAddress = "0xf876aE82E3Ef9a67ad4E9eA23eFa4de2D85DA6fb"
-const TokenStakingAddress = "0x186E82df0a09534537d0D8680D03b548628ab288"
-const KeepFactoryAddress = "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426"
-const KeepBondingAddress = "0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab"
 
 const createMockContext = () => ({
   contracts: {},
@@ -49,7 +53,7 @@ const setupContractsMock = (context) => {
         }),
       },
       options: {
-        address: KeepFactoryAddress,
+        address: BondedECDSAKeepFactoryAddress,
       },
     }),
   }
