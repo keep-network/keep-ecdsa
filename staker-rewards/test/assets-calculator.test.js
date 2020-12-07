@@ -1,8 +1,8 @@
 import chai from "chai"
 
 import { createMockContext } from "./helpers/mock.js"
+import { mockMethod, mockEvents } from "./helpers/blockchain.js"
 
-import testBlockchain from "./data/test-blockchain.json"
 import {
   SortitionPoolAddress,
   TokenStakingAddress,
@@ -23,17 +23,6 @@ const interval = {
 
 const operator = "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
 
-const getStateAtBlock = (contractAddress, blockNumber) => {
-  const block = testBlockchain.find(
-    (block) => block.blockNumber === blockNumber
-  )
-
-  return (
-    block &&
-    block.contracts.find((contract) => contract.address === contractAddress)
-  )
-}
-
 const setupContractsMock = (context) => {
   context.contracts.BondedECDSAKeepFactory = {
     deployed: () => ({
@@ -52,19 +41,13 @@ const setupContractsMock = (context) => {
     deployed: () => ({
       methods: {
         activeStake: (operator, operatorContract) => ({
-          call: async (_, blockNumber) => {
-            const state = getStateAtBlock(TokenStakingAddress, blockNumber)
-
-            const stake =
-              state &&
-              state.activeStakes.find(
-                (stake) =>
-                  stake.operator === operator &&
-                  stake.operatorContract === operatorContract
-              )
-
-            return (stake && stake.activeStake) || "0"
-          },
+          call: mockMethod(
+            TokenStakingAddress,
+            "activeStake",
+            (inputs) =>
+              inputs.operator === operator &&
+              inputs.operatorContract === operatorContract
+          ),
         }),
       },
     }),
@@ -78,27 +61,17 @@ const setupContractsMock = (context) => {
           bondCreator,
           sortitionPoolAddress
         ) => ({
-          call: async (_, blockNumber) => {
-            const state = getStateAtBlock(KeepBondingAddress, blockNumber)
-
-            const unbonded =
-              state &&
-              state.unbondedValues.find(
-                (value) =>
-                  value.operator === operator &&
-                  value.operatorContract === bondCreator &&
-                  value.sortitionPool === sortitionPoolAddress
-              )
-
-            return (unbonded && unbonded.amount) || "0"
-          },
+          call: mockMethod(
+            KeepBondingAddress,
+            "availableUnbondedValue",
+            (inputs) =>
+              inputs.operator === operator &&
+              inputs.operatorContract === bondCreator &&
+              inputs.sortitionPool === sortitionPoolAddress
+          ),
         }),
       },
-      getPastEvents: async (eventName, options) => {
-        const state = getStateAtBlock(KeepBondingAddress, options.toBlock)
-
-        return state && state.events.filter((event) => event.name === eventName)
-      },
+      getPastEvents: mockEvents(KeepBondingAddress),
     }),
   }
 

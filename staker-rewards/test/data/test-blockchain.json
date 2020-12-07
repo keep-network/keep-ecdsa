@@ -39,14 +39,16 @@
             }
           }
         ],
-        "unbondedValues": [
-          {
-            "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
-            "operatorContract": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
-            "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
-            "amount": "40000000000000000000"
-          }
-        ]
+        "methods": {
+          "availableUnbondedValue": [
+            {
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "operatorContract": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
+              "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
+              "output": "40000000000000000000"
+            }
+          ]
+        }
       }
     ]
   },
@@ -55,13 +57,15 @@
     "contracts": [
       {
         "address": "0x1293a54e160D1cd7075487898d65266081A15458",
-        "activeStakes": [
-          {
-            "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
-            "operatorContract": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
-            "activeStake": "500000"
-          }
-        ]
+        "methods": {
+          "activeStake": [
+            {
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "operatorContract": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
+              "output": "500000"
+            }
+          ]
+        }
       }
     ]
   }
