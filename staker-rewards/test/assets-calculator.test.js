@@ -1,5 +1,6 @@
 import chai from "chai"
-import BN from "bn.js"
+
+import { createMockContext } from "./helpers/mock.js"
 
 import testBlockchain from "./data/test-blockchain.json"
 import {
@@ -21,17 +22,6 @@ const interval = {
 }
 
 const operator = "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
-
-const createMockContext = () => ({
-  contracts: {},
-  web3: {
-    utils: {
-      toBN: (value) => new BN(value),
-      fromWei: (value) =>
-        new BN(value).div(new BN("1000000000000000000")).toString(),
-    },
-  },
-})
 
 const getStateAtBlock = (contractAddress, blockNumber) => {
   const block = testBlockchain.find(
