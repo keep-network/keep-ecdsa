@@ -16,7 +16,8 @@ async function run() {
     const intervalStart = process.argv[2]
     // End of the interval passed as UNIX timestamp.
     const intervalEnd = process.argv[3]
-    // Total KEEP rewards distributed within the given interval.
+    // Total KEEP rewards distributed within the given interval passed as
+    // 18-decimals number.
     const intervalTotalRewards = process.argv[4]
     // Determines whether debug logs should be disabled.
     const isDebugDisabled = process.env.DEBUG !== "on"
