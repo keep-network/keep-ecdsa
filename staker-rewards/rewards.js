@@ -8,6 +8,8 @@ import SLACalculator from "./lib/sla-calculator.js"
 import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
 
+import * as fs from "fs"
+
 async function run() {
   try {
     // URL to the websocket endpoint of the Ethereum node.
@@ -56,6 +58,8 @@ async function run() {
     const operatorsRewards = await calculateOperatorsRewards(context, interval)
 
     console.table(operatorsRewards)
+
+    writeOperatorsRewardsToFile(operatorsRewards)
   } catch (error) {
     throw new Error(error)
   }
@@ -211,6 +215,17 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
 
 function display18DecimalsValue(value) {
   return value.dividedBy(new BigNumber(1e18)).toFixed(2)
+}
+
+function writeOperatorsRewardsToFile(operatorsRewards) {
+  const rewards = {}
+  for (const reward of operatorsRewards) {
+    if (reward.totalRewards != 0) {
+      rewards[reward.operator] = parseInt(reward.totalRewards)
+    } 
+  }
+
+  fs.writeFileSync("./rewards-input.json", JSON.stringify(rewards, null, 2))
 }
 
 run()
