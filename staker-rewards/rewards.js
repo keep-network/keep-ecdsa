@@ -218,7 +218,8 @@ function OperatorParameters(
 ) {
   ;(this.operator = operator),
     (this.isFraudulent = isFraudulent),
-    (this.authorizations = authorizations)((this.operatorSLA = operatorSLA)),
+    (this.authorizations = authorizations),
+    (this.operatorSLA = operatorSLA),
     (this.operatorAssets = operatorAssets)
 }
 
