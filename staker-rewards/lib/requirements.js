@@ -86,16 +86,15 @@ export default class Requirements {
           continue
         }
 
+        console.log(
+          `Discovered deauthorization for operator ${transactionOperator}` +
+            ` in transaction ${transaction.hash} in the current interval`
+        )
+
         this.operatorsDeauthorizedInInterval.push(
           transactionOperator.toLowerCase()
         )
       }
-    }
-
-    if (this.operatorsDeauthorizedInInterval.length > 0) {
-      console.log(
-        `Discovered deauthorizations in the current interval for operators [${this.operatorsDeauthorizedInInterval}]`
-      )
     }
   }
 
