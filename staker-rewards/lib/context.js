@@ -23,7 +23,7 @@ export default class Context {
     this.tenderly = tenderly
   }
 
-  static async initialize(ethUrl, tenderlyProjectURL, tenderlyApiKey) {
+  static async initialize(ethUrl, tenderlyProjectURL, tenderlyAccessToken) {
     const web3 = await initWeb3(ethUrl)
 
     const TokenStaking = new Contract(TokenStakingJson, web3)
@@ -55,8 +55,12 @@ export default class Context {
     await cache.initialize()
 
     let tenderly
-    if (tenderlyApiKey) {
-      tenderly = Tenderly.initialize(web3, tenderlyProjectURL, tenderlyApiKey)
+    if (tenderlyAccessToken) {
+      tenderly = Tenderly.initialize(
+        web3,
+        tenderlyProjectURL,
+        tenderlyAccessToken
+      )
     }
 
     return new Context(cache, web3, contracts, tenderly)

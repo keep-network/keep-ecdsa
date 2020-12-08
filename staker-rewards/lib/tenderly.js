@@ -6,14 +6,14 @@ export default class Tenderly {
     this.options = options
   }
 
-  static initialize(web3, projectUrl, apiAccessKey) {
+  static initialize(web3, projectUrl, accessToken) {
     const options = {
       baseUrl:
         projectUrl ||
         "https://api.tenderly.co/api/v1/account/thesis/project/keep",
       headers: {
         "Content-Type": "application/json",
-        "X-Access-Key": apiAccessKey,
+        "X-Access-Key": accessToken,
       },
     }
 

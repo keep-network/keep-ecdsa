@@ -33,7 +33,7 @@ async function run() {
     // Access Token for Tenderly API used to fetch transactions from the chain.
     // Setting it is optional. If not set the script won't call Tenderly API
     // and rely on cached transactions.
-    const tenderlyApiKey = process.env.TENDERLY_API_KEY
+    const tenderlyAccessToken = process.env.TENDERLY_ACCESS_TOKEN
 
     if (isDebugDisabled) {
       console.debug = function () {}
@@ -47,7 +47,7 @@ async function run() {
     const context = await Context.initialize(
       ethHostname,
       tenderlyProjectUrl,
-      tenderlyApiKey
+      tenderlyAccessToken
     )
 
     const interval = {
