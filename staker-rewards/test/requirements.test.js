@@ -30,6 +30,24 @@ const setupContext = (context) => {
             false
           ),
         }),
+        hasMinimumStake: (operator) => ({
+          call: mockMethod(
+            BondedECDSAKeepFactoryAddress,
+            "hasMinimumStake",
+            (inputs) => inputs.operator === operator,
+            false
+          ),
+        }),
+        isOperatorRegistered: (operator, application) => ({
+          call: mockMethod(
+            BondedECDSAKeepFactoryAddress,
+            "isOperatorRegistered",
+            (inputs) =>
+              inputs.operator === operator &&
+              inputs.application === application,
+            false
+          ),
+        }),
       },
     }),
   }
@@ -48,6 +66,14 @@ const setupContext = (context) => {
               inputs.operator === operator &&
               inputs.poolAddress === sortitionPool,
             false
+          ),
+        }),
+        unbondedValue: (operator) => ({
+          call: mockMethod(
+            KeepBondingAddress,
+            "unbondedValue",
+            (inputs) => inputs.operator === operator,
+            "0"
           ),
         }),
       },
@@ -146,6 +172,103 @@ describe("requirements", async () => {
         poolAuthorizedAtStart: false,
         poolDeauthorizedInInterval: false,
       })
+    })
+  })
+
+  describe("checks minimum stake at interval start", async () => {
+    it("for operator that has minimum stake", async () => {
+      const operator = "0xA000000000000000000000000000000000000001"
+
+      const result = await requirements.checkMinimumStakeAtIntervalStart(
+        operator
+      )
+
+      expect(result).to.be.true
+    })
+
+    it("for operator that has no minimum stake", async () => {
+      const operator = "0xA000000000000000000000000000000000000002"
+
+      const result = await requirements.checkMinimumStakeAtIntervalStart(
+        operator
+      )
+
+      expect(result).to.be.false
+    })
+  })
+
+  describe("checks unbonded value registration at interval start", async () => {
+    // We defined mocks of `unbondedValue` and `isOperatorRegistered` functions
+    // responses for operators used in tests:
+    //  | operator | unbondedValue | isOperatorRegistered
+    //  |  1       |  < minimum    |  false
+    //  |  2       |  = minimum    |  true
+    //  |  3       |  = minimum    |  false (*)
+    //  |  4       |  > minimum    |  true
+    //  |  5       |  > minimum    |  false
+    //  |  6       |  2000 ether   |  false
+    //
+    // (*) Operator 3 is registered for another application but isn't registered
+    //   for the sanctioned application we use in test context.
+
+    it("for operator that has no minimum unbonded value", async () => {
+      const operator = "0xA000000000000000000000000000000000000001"
+
+      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+        operator
+      )
+
+      expect(result).to.be.true
+    })
+
+    it("for operator that has exactly minimum unbonded value and is registered", async () => {
+      const operator = "0xA000000000000000000000000000000000000002"
+
+      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+        operator
+      )
+
+      expect(result).to.be.true
+    })
+
+    it("for operator that has exactly minimum unbonded value and is not registered", async () => {
+      const operator = "0xA000000000000000000000000000000000000003"
+
+      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+        operator
+      )
+
+      expect(result).to.be.false
+    })
+
+    it("for operator that has more than minimum unbonded value and is registered", async () => {
+      const operator = "0xA000000000000000000000000000000000000004"
+
+      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+        operator
+      )
+
+      expect(result).to.be.true
+    })
+
+    it("for operator that has more than minimum unbonded value and is not registered", async () => {
+      const operator = "0xA000000000000000000000000000000000000005"
+
+      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+        operator
+      )
+
+      expect(result).to.be.false
+    })
+
+    it("for operator that has very high unbonded value and is not registered", async () => {
+      const operator = "0xA000000000000000000000000000000000000006"
+
+      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+        operator
+      )
+
+      expect(result).to.be.false
     })
   })
 })
