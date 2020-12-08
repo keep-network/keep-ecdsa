@@ -27,7 +27,10 @@ async function run() {
     // cache refresh is disabled, rewards distribution may be calculated
     // based on outdated information from the chain.
     const isCacheRefreshEnabled = process.env.CACHE_REFRESH !== "off"
-    // Access key to Tenderly API used to fetch transactions from the chain.
+    // Tenderly API project URL. If not provided a default value for Thesis
+    // Keep project will be used.
+    const tenderlyProjectUrl = process.env.TENDERLY_PROJECT_URL
+    // Access Token for Tenderly API used to fetch transactions from the chain.
     // Setting it is optional. If not set the script won't call Tenderly API
     // and rely on cached transactions.
     const tenderlyApiKey = process.env.TENDERLY_API_KEY
@@ -41,7 +44,11 @@ async function run() {
       return
     }
 
-    const context = await Context.initialize(ethHostname, tenderlyApiKey)
+    const context = await Context.initialize(
+      ethHostname,
+      tenderlyProjectUrl,
+      tenderlyApiKey
+    )
 
     const interval = {
       start: parseInt(intervalStart),

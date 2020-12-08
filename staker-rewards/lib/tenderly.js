@@ -6,8 +6,11 @@ export default class Tenderly {
     this.options = options
   }
 
-  static initialize(web3, apiAccessKey) {
+  static initialize(web3, projectUrl, apiAccessKey) {
     const options = {
+      baseUrl:
+        projectUrl ||
+        "https://api.tenderly.co/api/v1/account/thesis/project/keep",
       headers: {
         "Content-Type": "application/json",
         "X-Access-Key": apiAccessKey,
@@ -26,14 +29,13 @@ export default class Tenderly {
       functionSignature
     )
 
+    const uri = `/transactions?contractId[]=eth:1:${contractAddress}&functionSelector=${functionSelector}`
+
     return new Promise((resolve, reject) => {
-      request.get(
-        `https://api.tenderly.co/api/v1/account/thesis/project/keep/transactions?contractId[]=eth:1:${contractAddress}&functionSelector=${functionSelector}`,
-        this.options,
-        (err, res, body) => {
-          if (err) {
-            return reject(err)
-          }
+      request.get(uri, this.options, (err, res, body) => {
+        if (err) {
+          return reject(err)
+        }
 
           return resolve(JSON.parse(body))
         }
