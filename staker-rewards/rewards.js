@@ -225,7 +225,7 @@ function writeOperatorsRewardsToFile(operatorsRewards) {
     } 
   }
 
-  fs.writeFileSync("./rewards-input.json", JSON.stringify(rewards, null, 2))
+  fs.writeFileSync("./generated-rewards/rewards-input.json", JSON.stringify(rewards, null, 2))
 }
 
 run()

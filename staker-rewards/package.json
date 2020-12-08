@@ -12,8 +12,7 @@
     "lint": "npm run lint:js",
     "lint:fix": "npm run lint:fix:js",
     "lint:js": "eslint .",
-    "lint:fix:js": "eslint --fix .",
-    "generate-merkle-root": "ts-node generate-merkle-root.ts"
+    "lint:fix:js": "eslint --fix ."
   },
   "dependencies": {
     "@0x/subproviders": "^6.2.0",
@@ -34,9 +33,6 @@
     "eslint": "^6.8.0",
     "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git",
     "prettier": "^2.0.2",
-    "commander": "^6.1.0",
-    "ts-node": "^8.5.4",
-    "typescript": "^3.7.3",
     "mocha": "^8.2.1"
   }
 }

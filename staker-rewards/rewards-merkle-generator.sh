@@ -58,8 +58,11 @@ ETH_HOSTNAME="$eth_host" node --experimental-json-modules rewards.js "$start" "$
 
 printf "${LOG_START}Generating merkle output object...${LOG_END}"
 
+cd "$WORKDIR/generated-rewards"
+npm i
+
 # default file name
-REWARDS_INPUT_PATH="rewards-input.json"
+REWARDS_INPUT_PATH="generated-rewards/rewards-input.json"
 
 npm run generate-merkle-root -- --input="$WORKDIR/$REWARDS_INPUT_PATH"
 
