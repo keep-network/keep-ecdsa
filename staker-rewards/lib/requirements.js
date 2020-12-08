@@ -39,7 +39,7 @@ export default class Requirements {
   async checkDeauthorizations() {
     // If Tenderly API is available refresh cached data.
     if (this.context.tenderly) {
-      this.refreshDeauthorizationsCache()
+      await this.refreshDeauthorizationsCache()
     }
 
     // Fetch deauthorization transactions from cache.
