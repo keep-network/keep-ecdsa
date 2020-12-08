@@ -13,7 +13,7 @@ import BondedECDSAKeepJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAK
 import KeepBondingJson from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
 import BondedSortitionPoolJson from "@keep-network/keep-ecdsa/artifacts/BondedSortitionPool.json"
 
-const sanctionedApplicationAddress =
+export const SANCTIONED_APPLICATION_ADDRESS =
   "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a"
 
 export default class Context {
@@ -51,7 +51,7 @@ export default class Context {
       BondedECDSAKeep: BondedECDSAKeep,
       KeepBonding: KeepBonding,
       BondedSortitionPool: BondedSortitionPool,
-      sanctionedApplicationAddress: sanctionedApplicationAddress,
+      sanctionedApplicationAddress: SANCTIONED_APPLICATION_ADDRESS,
       factoryDeploymentBlock: factoryDeploymentBlock,
     }
 
