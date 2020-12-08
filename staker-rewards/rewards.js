@@ -77,6 +77,11 @@ async function run() {
       console.log(
         `${operatorRewards.operator}
            ${operatorRewards.isFraudulent} 
+           ${operatorRewards.factoryAuthorizedAtStart} 
+           ${operatorRewards.poolAuthorizedAtStart} 
+           ${operatorRewards.poolDeauthorizedInInterval} 
+           ${operatorRewards.minimumStakeAtStart} 
+           ${operatorRewards.minimumUnbondedValueRegisteredAtStart} 
            ${operatorRewards.keygenCount}
            ${operatorRewards.keygenFailCount} 
            ${operatorRewards.keygenSLA} 
@@ -156,9 +161,7 @@ async function calculateOperatorsRewards(context, interval) {
 
   for (const operator of getOperators(cache)) {
     const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
-    const operatorAuthorizations = await requirements.checkAuthorizations(
-      operator
-    )
+    const operatorRequirements = await requirements.check(operator)
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     const operatorAssets = await assetsCalculator.calculateOperatorAssets(
       operator
@@ -168,7 +171,7 @@ async function calculateOperatorsRewards(context, interval) {
       new OperatorParameters(
         operator,
         isFraudulent,
-        operatorAuthorizations,
+        operatorRequirements,
         operatorSLA,
         operatorAssets
       )
@@ -211,13 +214,13 @@ function getOperators(cache) {
 function OperatorParameters(
   operator,
   isFraudulent,
-  authorizations,
+  requirements,
   operatorSLA,
   operatorAssets
 ) {
   ;(this.operator = operator),
     (this.isFraudulent = isFraudulent),
-    (this.authorizations = authorizations),
+    (this.requirements = requirements),
     (this.operatorSLA = operatorSLA),
     (this.operatorAssets = operatorAssets)
 }
@@ -226,11 +229,15 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
   ;(this.operator = operator),
     (this.isFraudulent = operatorParameters.isFraudulent),
     (this.factoryAuthorizedAtStart =
-      operatorParameters.authorizations.factoryAuthorizedAtStart),
+      operatorParameters.requirements.factoryAuthorizedAtStart),
     (this.poolAuthorizedAtStart =
-      operatorParameters.authorizations.poolAuthorizedAtStart),
+      operatorParameters.requirements.poolAuthorizedAtStart),
     (this.poolDeauthorizedInInterval =
-      operatorParameters.authorizations.poolDeauthorizedInInterval),
+      operatorParameters.requirements.poolDeauthorizedInInterval),
+    (this.minimumStakeAtStart =
+      operatorParameters.requirements.minimumStakeAtStart),
+    (this.minimumUnbondedValueRegisteredAtStart =
+      operatorParameters.requirements.minimumUnbondedValueRegisteredAtStart),
     (this.keygenCount = operatorParameters.operatorSLA.keygenCount),
     (this.keygenFailCount = operatorParameters.operatorSLA.keygenFailCount),
     (this.keygenSLA = operatorParameters.operatorSLA.keygenSLA),

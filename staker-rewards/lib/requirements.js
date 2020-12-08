@@ -161,9 +161,34 @@ export default class Requirements {
     this.context.cache.storeTransactions(transactions)
   }
 
-  async checkAuthorizations(operator) {
-    console.debug(`Checking authorizations for operator ${operator}`)
+  async check(operator) {
+    console.log(`Checking requirements for operator ${operator}`)
 
+    const {
+      factoryAuthorizedAtStart,
+      poolAuthorizedAtStart,
+      poolDeauthorizedInInterval,
+    } = await this.checkAuthorizations(operator)
+
+    const minimumStakeAtStart = await this.checkMinimumStakeAtIntervalStart(
+      operator
+    )
+
+    const minimumUnbondedValueRegisteredAtStart = await this.checkUnbondedValueRegisteredAtIntervalStart(
+      operator
+    )
+
+    return new OperatorRequirements(
+      operator,
+      factoryAuthorizedAtStart,
+      poolAuthorizedAtStart,
+      poolDeauthorizedInInterval,
+      minimumStakeAtStart,
+      minimumUnbondedValueRegisteredAtStart
+    )
+  }
+
+  async checkAuthorizations(operator) {
     // Authorizations at the interval start.
     const {
       wasFactoryAuthorized: factoryAuthorizedAtStart,
@@ -175,12 +200,11 @@ export default class Requirements {
       operator
     )
 
-    return new OperatorAuthorizations(
-      operator,
+    return {
       factoryAuthorizedAtStart,
       poolAuthorizedAtStart,
-      poolDeauthorizedInInterval
-    )
+      poolDeauthorizedInInterval,
+    }
   }
 
   async checkAuthorizationsAtIntervalStart(operator) {
@@ -245,14 +269,18 @@ export default class Requirements {
   }
 }
 
-export function OperatorAuthorizations(
+export function OperatorRequirements(
   address,
   factoryAuthorizedAtStart,
   poolAuthorizedAtStart,
-  poolDeauthorizedInInterval
+  poolDeauthorizedInInterval,
+  minimumStakeAtStart,
+  minimumUnbondedValueRegisteredAtStart
 ) {
   ;(this.address = address),
     (this.factoryAuthorizedAtStart = factoryAuthorizedAtStart),
     (this.poolAuthorizedAtStart = poolAuthorizedAtStart),
+    (this.minimumStakeAtStart = minimumStakeAtStart),
+    (this.minimumUnbondedValueRegisteredAtStart = minimumUnbondedValueRegisteredAtStart),
     (this.poolDeauthorizedInInterval = poolDeauthorizedInInterval)
 }
