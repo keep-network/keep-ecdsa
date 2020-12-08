@@ -96,6 +96,7 @@ async function run() {
            ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
            ${operatorRewards.rewardWeight.toFormat(decimalPlaces, format)} 
            ${operatorRewards.totalRewards.toFormat(decimalPlaces, format)}
+           ${operatorRewards.requirementsViolations}
           `.replace(/\s+/gm, " ")
       )
     )
@@ -252,7 +253,8 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
     (this.ethScore = operatorRewards.ethScore),
     (this.boost = operatorRewards.boost),
     (this.rewardWeight = operatorRewards.rewardWeight),
-    (this.totalRewards = operatorRewards.totalRewards)
+    (this.totalRewards = operatorRewards.totalRewards),
+    (this.requirementsViolations = operatorRewards.requirementsViolations)
 }
 
 function shortenSummaryValues(summary) {

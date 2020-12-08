@@ -26,6 +26,10 @@ export default class RewardsCalculator {
     for (const operatorParameters of operatorsParameters) {
       const { keepStaked, ethTotal } = operatorParameters.operatorAssets
 
+      const requirementsViolations = this.checkRequirementsViolations(
+        operatorParameters
+      )
+
       const ethScore = this.calculateETHScore(ethTotal)
       const boost = this.calculateBoost(keepStaked, ethTotal, minimumStake)
       const rewardWeight = ethScore.multipliedBy(boost)
@@ -35,6 +39,7 @@ export default class RewardsCalculator {
         ethScore,
         boost,
         rewardWeight,
+        requirementsViolations,
       })
     }
 
@@ -52,12 +57,15 @@ export default class RewardsCalculator {
     const operatorsRewards = []
 
     for (const operatorRewardsFactors of operatorsRewardsFactors) {
-      const { rewardWeight } = operatorRewardsFactors
+      const { rewardWeight, requirementsViolations } = operatorRewardsFactors
       const rewardRatio = rewardWeightSum.isGreaterThan(new BigNumber(0))
         ? rewardWeight.dividedBy(rewardWeightSum)
         : new BigNumber(0)
 
-      const totalRewards = this.interval.totalRewards.multipliedBy(rewardRatio)
+      const totalRewards =
+        requirementsViolations.length > 0
+          ? new BigNumber(0)
+          : this.interval.totalRewards.multipliedBy(rewardRatio)
 
       operatorsRewards.push(
         new OperatorRewards(
@@ -65,7 +73,8 @@ export default class RewardsCalculator {
           operatorRewardsFactors.ethScore,
           operatorRewardsFactors.boost,
           rewardWeight,
-          totalRewards
+          totalRewards,
+          requirementsViolations
         )
       )
     }
@@ -81,6 +90,45 @@ export default class RewardsCalculator {
     )
 
     return new BigNumber(minimumStake)
+  }
+
+  checkRequirementsViolations(operatorParameters) {
+    const violations = []
+    const { isFraudulent, requirements, operatorSLA } = operatorParameters
+
+    if (isFraudulent === true) {
+      violations.push("isFraudulent")
+    }
+
+    if (requirements.factoryAuthorizedAtStart === false) {
+      violations.push("factoryAuthorizedAtStart")
+    }
+
+    if (requirements.poolAuthorizedAtStart === false) {
+      violations.push("poolAuthorizedAtStart")
+    }
+
+    if (requirements.poolDeauthorizedInInterval === true) {
+      violations.push("poolDeauthorizedInInterval")
+    }
+
+    if (requirements.minimumStakeAtStart === false) {
+      violations.push("minimumStakeAtStart")
+    }
+
+    if (requirements.minimumUnbondedValueRegisteredAtStart === false) {
+      violations.push("minimumUnbondedValueRegisteredAtStart")
+    }
+
+    if (operatorSLA.keygenSLA !== "N/A" && operatorSLA.keygenSLA < 90) {
+      violations.push("keygenSLA")
+    }
+
+    if (operatorSLA.signatureSLA !== "N/A" && operatorSLA.signatureSLA < 95) {
+      violations.push("signatureSLA")
+    }
+
+    return violations
   }
 
   calculateETHScore(ethTotal) {
@@ -116,11 +164,13 @@ function OperatorRewards(
   ethScore,
   boost,
   rewardWeight,
-  totalRewards
+  totalRewards,
+  requirementsViolations
 ) {
   ;(this.operator = operator),
     (this.ethScore = ethScore),
     (this.boost = boost),
     (this.rewardWeight = rewardWeight),
-    (this.totalRewards = totalRewards)
+    (this.totalRewards = totalRewards),
+    (this.requirementsViolations = requirementsViolations)
 }
