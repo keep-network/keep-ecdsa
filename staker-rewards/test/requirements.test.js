@@ -10,7 +10,6 @@ import {
 } from "./helpers/constants.js"
 
 import Requirements from "../lib/requirements.js"
-import { OperatorAuthorizations } from "../lib/requirements.js"
 
 const { expect } = chai
 
@@ -50,6 +49,16 @@ const setupContext = (context) => {
               inputs.poolAddress === sortitionPool,
             false
           ),
+        }),
+      },
+    }),
+  }
+
+  context.contracts.BondedSortitionPool = {
+    at: (_) => ({
+      methods: {
+        getMinimumBondableValue: () => ({
+          call: () => "100000000000000000", // 0.1 ether
         }),
       },
     }),
@@ -103,18 +112,16 @@ describe("requirements", async () => {
   })
 
   describe("operator's authorizations check", async () => {
-    beforeEach(async () => {
-      await requirements.checkDeauthorizations()
-    })
-
     it("discovers authorizations on interval start", async () => {
       const operator = "0xA000000000000000000000000000000000000001"
 
       const result = await requirements.checkAuthorizations(operator)
 
-      expect(result).deep.equal(
-        new OperatorAuthorizations(operator, true, true, false)
-      )
+      expect(result).deep.equal({
+        factoryAuthorizedAtStart: true,
+        poolAuthorizedAtStart: true,
+        poolDeauthorizedInInterval: false,
+      })
     })
 
     it("finds if deauthorized during interval", async () => {
@@ -122,9 +129,11 @@ describe("requirements", async () => {
 
       const result = await requirements.checkAuthorizations(operator)
 
-      expect(result).deep.equal(
-        new OperatorAuthorizations(operator, true, false, true)
-      )
+      expect(result).deep.equal({
+        factoryAuthorizedAtStart: true,
+        poolAuthorizedAtStart: false,
+        poolDeauthorizedInInterval: true,
+      })
     })
 
     it("finds missing authorizations on interval start", async () => {
@@ -132,9 +141,11 @@ describe("requirements", async () => {
 
       const result = await requirements.checkAuthorizations(operator)
 
-      expect(result).deep.equal(
-        new OperatorAuthorizations(operator, false, false, false)
-      )
+      expect(result).deep.equal({
+        factoryAuthorizedAtStart: false,
+        poolAuthorizedAtStart: false,
+        poolDeauthorizedInInterval: false,
+      })
     })
   })
 })
