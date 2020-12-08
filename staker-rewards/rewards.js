@@ -126,8 +126,6 @@ async function calculateOperatorsRewards(context, interval) {
   const slaCalculator = await SLACalculator.initialize(context, interval)
   const assetsCalculator = await AssetsCalculator.initialize(context, interval)
 
-  await requirements.checkDeauthorizations()
-
   const operatorsParameters = []
 
   for (const operator of getOperators(cache)) {

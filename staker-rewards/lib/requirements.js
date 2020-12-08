@@ -27,13 +27,17 @@ export default class Requirements {
       )
     )
 
-    return new Requirements(
+    const requirements = new Requirements(
       context,
       interval,
       bondedECDSAKeepFactory,
       await contracts.KeepBonding.deployed(),
       sortitionPoolAddress
     )
+
+    await requirements.checkDeauthorizations()
+
+    return requirements
   }
 
   async checkDeauthorizations() {
