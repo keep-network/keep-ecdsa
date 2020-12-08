@@ -22,6 +22,18 @@ const createOperatorParameters = (operator, keepStaked, ethTotal) => ({
     keepStaked: new BigNumber(keepStaked).multipliedBy(1e18),
     ethTotal: new BigNumber(ethTotal).multipliedBy(1e18),
   },
+  isFraudulent: false,
+  requirements: {
+    factoryAuthorizedAtStart: true,
+    poolAuthorizedAtStart: true,
+    poolDeauthorizedInInterval: false,
+    minimumStakeAtStart: true,
+    minimumUnbondedValueRegisteredAtStart: true,
+  },
+  operatorSLA: {
+    keygenSLA: 90,
+    signatureSLA: 95,
+  },
 })
 
 const setupContractsMock = (context) => {
@@ -163,5 +175,165 @@ describe("rewards calculator", async () => {
       rewards.totalRewards.isEqualTo(new BigNumber(1800000).multipliedBy(1e18)),
       true
     )
+  })
+
+  it("should set total rewards to zero if operator is fraudulent", async () => {
+    const mockContext = createMockContext()
+
+    setupContractsMock(mockContext)
+
+    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+    operatorParameters.isFraudulent = true
+
+    const rewardsCalculator = await RewardsCalculator.initialize(
+      mockContext,
+      interval,
+      [operatorParameters]
+    )
+
+    const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+  })
+
+  it("should set total rewards to zero if factory is not authorized at start", async () => {
+    const mockContext = createMockContext()
+
+    setupContractsMock(mockContext)
+
+    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+    operatorParameters.requirements.factoryAuthorizedAtStart = false
+
+    const rewardsCalculator = await RewardsCalculator.initialize(
+      mockContext,
+      interval,
+      [operatorParameters]
+    )
+
+    const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+  })
+
+  it("should set total rewards to zero if pool is not authorized at start", async () => {
+    const mockContext = createMockContext()
+
+    setupContractsMock(mockContext)
+
+    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+    operatorParameters.requirements.poolAuthorizedAtStart = false
+
+    const rewardsCalculator = await RewardsCalculator.initialize(
+      mockContext,
+      interval,
+      [operatorParameters]
+    )
+
+    const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+  })
+
+  it("should set total rewards to zero if pool is deauthorized in interval", async () => {
+    const mockContext = createMockContext()
+
+    setupContractsMock(mockContext)
+
+    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+    operatorParameters.requirements.poolDeauthorizedInInterval = true
+
+    const rewardsCalculator = await RewardsCalculator.initialize(
+      mockContext,
+      interval,
+      [operatorParameters]
+    )
+
+    const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+  })
+
+  it("should set total rewards to zero if no minimum stake at start", async () => {
+    const mockContext = createMockContext()
+
+    setupContractsMock(mockContext)
+
+    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+    operatorParameters.requirements.minimumStakeAtStart = false
+
+    const rewardsCalculator = await RewardsCalculator.initialize(
+      mockContext,
+      interval,
+      [operatorParameters]
+    )
+
+    const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+  })
+
+  it("should set total rewards to zero if no minimum unbonded value registered at start", async () => {
+    const mockContext = createMockContext()
+
+    setupContractsMock(mockContext)
+
+    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+    operatorParameters.requirements.minimumUnbondedValueRegisteredAtStart = false
+
+    const rewardsCalculator = await RewardsCalculator.initialize(
+      mockContext,
+      interval,
+      [operatorParameters]
+    )
+
+    const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+  })
+
+  it("should set total rewards to zero if keygen SLA is not met", async () => {
+    const mockContext = createMockContext()
+
+    setupContractsMock(mockContext)
+
+    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+    operatorParameters.operatorSLA.keygenSLA = 89.99
+
+    const rewardsCalculator = await RewardsCalculator.initialize(
+      mockContext,
+      interval,
+      [operatorParameters]
+    )
+
+    const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+  })
+
+  it("should set total rewards to zero if signature SLA is not met", async () => {
+    const mockContext = createMockContext()
+
+    setupContractsMock(mockContext)
+
+    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+    operatorParameters.operatorSLA.signatureSLA = 94.99
+
+    const rewardsCalculator = await RewardsCalculator.initialize(
+      mockContext,
+      interval,
+      [operatorParameters]
+    )
+
+    const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
   })
 })
