@@ -85,9 +85,17 @@ describe("requirements", async () => {
       //
       // We assume the check to find operators 2 and 4.
 
+      expect(requirements.operatorsDeauthorizedInInterval).to.have.deep.keys([
+        "0xa000000000000000000000000000000000000002",
+        "0xa000000000000000000000000000000000000004",
+      ])
+    })
+
+    it("does not duplicate operators entries", async () => {
+      await requirements.checkDeauthorizations()
       await requirements.checkDeauthorizations()
 
-      expect(requirements.operatorsDeauthorizedInInterval).to.have.members([
+      expect(requirements.operatorsDeauthorizedInInterval).to.have.deep.keys([
         "0xa000000000000000000000000000000000000002",
         "0xa000000000000000000000000000000000000004",
       ])

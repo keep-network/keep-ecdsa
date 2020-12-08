@@ -13,7 +13,7 @@ export default class Requirements {
     this.bondedECDSAKeepFactory = bondedECDSAKeepFactory
     this.keepBonding = keepBonding
     this.sortitionPoolAddress = sortitionPoolAddress
-    this.operatorsDeauthorizedInInterval = []
+    this.operatorsDeauthorizedInInterval = new Set()
   }
 
   static async initialize(context, interval) {
@@ -95,7 +95,7 @@ export default class Requirements {
             ` in transaction ${transaction.hash} in the current interval`
         )
 
-        this.operatorsDeauthorizedInInterval.push(
+        this.operatorsDeauthorizedInInterval.add(
           transactionOperator.toLowerCase()
         )
       }
@@ -177,7 +177,7 @@ export default class Requirements {
   }
 
   async wasSortitionPoolDeauthorized(operator) {
-    return this.operatorsDeauthorizedInInterval.includes(operator.toLowerCase())
+    return this.operatorsDeauthorizedInInterval.has(operator.toLowerCase())
   }
 }
 

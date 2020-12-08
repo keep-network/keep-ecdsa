@@ -54,6 +54,19 @@
     },
     {
       "to": "0x27321f84704a599ab740281e285cc4463d89a3d5",
+      "block_number": 1950,
+      "method": "deauthorizeSortitionPoolContract",
+      "decoded_input": [
+        {
+          "value": "0xa000000000000000000000000000000000000004"
+        },
+        {
+          "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
+        }
+      ]
+    },
+    {
+      "to": "0x27321f84704a599ab740281e285cc4463d89a3d5",
       "block_number": 2000,
       "method": "deauthorizeSortitionPoolContract",
       "decoded_input": [
