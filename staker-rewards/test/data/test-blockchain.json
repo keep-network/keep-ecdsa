@@ -62,6 +62,25 @@
             "activeStake": "500000000000000000000000"
           }
         ]
+      },
+      {
+        "address": "0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab",
+        "events": [
+          {
+            "name": "UnbondedValueWithdrawn",
+            "returnValues": {
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "amount": "10000000000000000000"
+            }
+          },
+          {
+            "name": "UnbondedValueWithdrawn",
+            "returnValues": {
+              "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+              "amount": "20000000000000000000"
+            }
+          }
+        ]
       }
     ]
   }

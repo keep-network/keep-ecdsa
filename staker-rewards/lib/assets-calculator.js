@@ -39,6 +39,7 @@ export default class AssetsCalculator {
     )
 
     await assetsCalculator.fetchBondEvents()
+    await assetsCalculator.fetchUnbondedValueWithdrawnEvents()
 
     return assetsCalculator
   }
@@ -92,6 +93,21 @@ export default class AssetsCalculator {
       bondReleasedEvents: await getBondEvents("BondReleased"),
       bondSeizedEvents: await getBondEvents("BondSeized"),
     }
+  }
+
+  async fetchUnbondedValueWithdrawnEvents() {
+    // We are interested in all unbonded value withdrawals which occured
+    // within the given interval.
+    const fromBlock = this.interval.startBlock
+    const toBlock = this.interval.endBlock
+
+    this.unbondedValueWithdrawnEvents = await getPastEvents(
+      this.context.web3,
+      this.keepBonding,
+      "UnbondedValueWithdrawn",
+      fromBlock,
+      toBlock
+    )
   }
 
   async calculateKeepStaked(operator) {
@@ -156,7 +172,7 @@ export default class AssetsCalculator {
 
     const bondCreator = this.bondedECDSAKeepFactory.options.address
 
-    const weiUnbonded = await callWithRetry(
+    const initialWeiUnbonded = await callWithRetry(
       this.keepBonding.methods.availableUnbondedValue(
         operator,
         bondCreator,
@@ -165,7 +181,21 @@ export default class AssetsCalculator {
       block
     )
 
-    return new BigNumber(weiUnbonded)
+    const eventByOperator = (event) => event.returnValues.operator === operator
+    const valueWithdrawnEvents = this.unbondedValueWithdrawnEvents.filter(
+      eventByOperator
+    )
+
+    let weiUnbonded = new BigNumber(initialWeiUnbonded)
+
+    for (const valueWithdrawnEvent of valueWithdrawnEvents) {
+      const withdrawnAmount = new BigNumber(
+        valueWithdrawnEvent.returnValues.amount
+      )
+      weiUnbonded = weiUnbonded.minus(withdrawnAmount)
+    }
+
+    return weiUnbonded
   }
 }
 
