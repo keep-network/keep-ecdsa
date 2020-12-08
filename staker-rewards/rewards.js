@@ -8,6 +8,8 @@ import SLACalculator from "./lib/sla-calculator.js"
 import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
 
+const decimalPlaces = 2
+
 async function run() {
   try {
     // URL to the websocket endpoint of the Ethereum node.
@@ -56,6 +58,11 @@ async function run() {
     const operatorsRewards = await calculateOperatorsRewards(context, interval)
 
     if (process.env.OUTPUT_MODE === "text") {
+      const format = {
+        groupSeparator: "",
+        decimalSeparator: ".",
+      }
+
       operatorsRewards.forEach((operatorRewards) =>
         console.log(
           `${operatorRewards.operator}
@@ -66,14 +73,14 @@ async function run() {
            ${operatorRewards.signatureCount} 
            ${operatorRewards.signatureFailCount}
            ${operatorRewards.signatureSLA} 
-           ${operatorRewards.keepStaked} 
-           ${operatorRewards.ethBonded} 
-           ${operatorRewards.ethUnbonded}
-           ${operatorRewards.ethTotal} 
-           ${operatorRewards.ethScore} 
-           ${operatorRewards.boost} 
-           ${operatorRewards.rewardWeight} 
-           ${operatorRewards.totalRewards}
+           ${operatorRewards.keepStaked.toFormat(format)} 
+           ${operatorRewards.ethBonded.toFormat(format)} 
+           ${operatorRewards.ethUnbonded.toFormat(format)}
+           ${operatorRewards.ethTotal.toFormat(format)} 
+           ${operatorRewards.ethScore.toFormat(format)} 
+           ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
+           ${operatorRewards.rewardWeight.toFormat(decimalPlaces, format)} 
+           ${operatorRewards.totalRewards.toFormat(decimalPlaces, format)}
           `.replace(/\s+/gm, " ")
         )
       )
@@ -222,7 +229,6 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
 }
 
 function shortenSummaryValues(summary) {
-  const decimalPlaces = 2
   const shorten18Decimals = (value) =>
     value.dividedBy(new BigNumber(1e18)).toFixed(decimalPlaces)
 
