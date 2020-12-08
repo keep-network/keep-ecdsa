@@ -11,7 +11,9 @@ const getStateAtBlock = (contractAddress, blockNumber) => {
   )
 }
 
-// inputCheck is expected to be a function executed to match input parameters
+// `inputCheck` is expected to be a function executed to match input parameters.
+// Matching is done based on the rules defined in `test-blockchain.json` file in
+// each contract's `methods` property.
 export function mockMethod(
   contractAddress,
   method,
