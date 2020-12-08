@@ -55,7 +55,31 @@ async function run() {
 
     const operatorsRewards = await calculateOperatorsRewards(context, interval)
 
-    console.table(operatorsRewards)
+    if (process.env.OUTPUT_MODE === "text") {
+      operatorsRewards.forEach((operatorRewards) =>
+        console.log(
+          `${operatorRewards.operator}
+           ${operatorRewards.isFraudulent} 
+           ${operatorRewards.keygenCount}
+           ${operatorRewards.keygenFailCount} 
+           ${operatorRewards.keygenSLA} 
+           ${operatorRewards.signatureCount} 
+           ${operatorRewards.signatureFailCount}
+           ${operatorRewards.signatureSLA} 
+           ${operatorRewards.keepStaked} 
+           ${operatorRewards.ethBonded} 
+           ${operatorRewards.ethUnbonded}
+           ${operatorRewards.ethTotal} 
+           ${operatorRewards.ethScore} 
+           ${operatorRewards.boost} 
+           ${operatorRewards.rewardWeight} 
+           ${operatorRewards.totalRewards}
+          `.replace(/\s+/gm, " ")
+        )
+      )
+    } else {
+      console.table(operatorsRewards.map(shortenSummaryValues))
+    }
   } catch (error) {
     throw new Error(error)
   }
@@ -92,11 +116,7 @@ function validateIntervalTotalRewards(interval) {
   }
 
   console.log(
-    clc.green(
-      `Interval total rewards: ${display18DecimalsValue(
-        interval.totalRewards
-      )} KEEP`
-    )
+    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`)
   )
 }
 
@@ -191,26 +211,31 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
     (this.signatureFailCount =
       operatorParameters.operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorParameters.operatorSLA.signatureSLA),
-    (this.keepStaked = display18DecimalsValue(
-      operatorParameters.operatorAssets.keepStaked
-    )),
-    (this.ethBonded = display18DecimalsValue(
-      operatorParameters.operatorAssets.ethBonded
-    )),
-    (this.ethUnbonded = display18DecimalsValue(
-      operatorParameters.operatorAssets.ethUnbonded
-    )),
-    (this.ethTotal = display18DecimalsValue(
-      operatorParameters.operatorAssets.ethTotal
-    )),
-    (this.ethScore = display18DecimalsValue(operatorRewards.ethScore)),
-    (this.boost = operatorRewards.boost.toFixed(2)),
-    (this.rewardWeight = display18DecimalsValue(operatorRewards.rewardWeight)),
-    (this.totalRewards = display18DecimalsValue(operatorRewards.totalRewards))
+    (this.keepStaked = operatorParameters.operatorAssets.keepStaked),
+    (this.ethBonded = operatorParameters.operatorAssets.ethBonded),
+    (this.ethUnbonded = operatorParameters.operatorAssets.ethUnbonded),
+    (this.ethTotal = operatorParameters.operatorAssets.ethTotal),
+    (this.ethScore = operatorRewards.ethScore),
+    (this.boost = operatorRewards.boost),
+    (this.rewardWeight = operatorRewards.rewardWeight),
+    (this.totalRewards = operatorRewards.totalRewards)
 }
 
-function display18DecimalsValue(value) {
-  return value.dividedBy(new BigNumber(1e18)).toFixed(2)
+function shortenSummaryValues(summary) {
+  const decimalPlaces = 2
+  const shorten18Decimals = (value) =>
+    value.dividedBy(new BigNumber(1e18)).toFixed(decimalPlaces)
+
+  summary.keepStaked = shorten18Decimals(summary.keepStaked)
+  summary.ethBonded = shorten18Decimals(summary.ethBonded)
+  summary.ethUnbonded = shorten18Decimals(summary.ethUnbonded)
+  summary.ethTotal = shorten18Decimals(summary.ethTotal)
+  summary.ethScore = shorten18Decimals(summary.ethScore)
+  summary.boost = summary.boost.toFixed(decimalPlaces)
+  summary.rewardWeight = shorten18Decimals(summary.rewardWeight)
+  summary.totalRewards = shorten18Decimals(summary.totalRewards)
+
+  return summary
 }
 
 run()
