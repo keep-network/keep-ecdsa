@@ -77,7 +77,7 @@ async function run() {
            ${operatorRewards.ethBonded.toFormat(format)} 
            ${operatorRewards.ethUnbonded.toFormat(format)}
            ${operatorRewards.ethTotal.toFormat(format)} 
-           ${operatorRewards.ethScore.toFormat(format)} 
+           ${operatorRewards.ethScore.toFormat(decimalPlaces, format)} 
            ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
            ${operatorRewards.rewardWeight.toFormat(decimalPlaces, format)} 
            ${operatorRewards.totalRewards.toFormat(decimalPlaces, format)}
