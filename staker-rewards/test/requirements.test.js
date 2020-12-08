@@ -126,5 +126,15 @@ describe("requirements", async () => {
         new OperatorAuthorizations(operator, true, false, true)
       )
     })
+
+    it("finds missing authorizations on interval start", async () => {
+      const operator = "0xA000000000000000000000000000000000000003"
+
+      const result = await requirements.checkAuthorizations(operator)
+
+      expect(result).deep.equal(
+        new OperatorAuthorizations(operator, false, false, false)
+      )
+    })
   })
 })
