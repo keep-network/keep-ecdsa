@@ -37,9 +37,14 @@ export default class Tenderly {
           return reject(err)
         }
 
-          return resolve(JSON.parse(body))
+        const bodyJSON = JSON.parse(body)
+
+        if (bodyJSON.error) {
+          return reject(bodyJSON.error)
         }
-      )
+
+        return resolve(bodyJSON)
+      })
     })
   }
 }

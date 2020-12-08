@@ -102,10 +102,19 @@ export default class Requirements {
   async refreshDeauthorizationsCache() {
     console.log("Refreshing cached sortition pool deauthorization transactions")
 
-    const data = await this.context.tenderly.getFunctionCalls(
-      this.keepBonding.options.address,
-      "deauthorizeSortitionPoolContract(address,address)"
-    )
+    let data
+    try {
+      data = await this.context.tenderly.getFunctionCalls(
+        this.keepBonding.options.address,
+        "deauthorizeSortitionPoolContract(address,address)"
+      )
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch function calls from Tenderly: ${error.message}`
+      )
+    }
+
+    console.debug(`Fetched ${data.length} transactions from Tenderly`)
 
     const transactions = data
       .filter((tx) => tx.status === true) // filter only successful transactions
