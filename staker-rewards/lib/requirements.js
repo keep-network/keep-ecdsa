@@ -239,7 +239,7 @@ export default class Requirements {
 
   // If the operator has at least minimum unbonded value available they have
   // to be registered in the sortition pool. Operators who are not in the sortition
-  // pool because all of their ether is locked are still getting rewards because
+  // pool because all of their ether is bonded are still getting rewards because
   // that ether is still under the system’s management.
   async checkWasInPoolIfRequiredAtIntervalStart(operator) {
     const unbondedValueAtStart = new BigNumber(
