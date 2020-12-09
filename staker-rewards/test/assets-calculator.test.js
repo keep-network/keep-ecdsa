@@ -136,7 +136,7 @@ describe("assets calculator", async () => {
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
-      assets.ethUnbonded.isEqualTo(new BigNumber(30).multipliedBy(1e18)),
+      assets.ethUnbonded.isEqualTo(new BigNumber(25).multipliedBy(1e18)),
       true
     )
   })
@@ -172,7 +172,7 @@ describe("assets calculator", async () => {
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
-      assets.ethTotal.isEqualTo(new BigNumber(45).multipliedBy(1e18)),
+      assets.ethTotal.isEqualTo(new BigNumber(40).multipliedBy(1e18)),
       true
     )
   })
