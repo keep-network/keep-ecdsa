@@ -1,5 +1,3 @@
-import BN from "bn.js"
-
 import testCache from "../data/test-cache.json"
 import transactionsCache from "../data/test-transactions.json"
 import { SANCTIONED_APPLICATION_ADDRESS } from "../../lib/context.js"
@@ -12,13 +10,6 @@ export const createMockContext = () => ({
       transactionsCache.transactions.filter(
         (tx) => tx.to.toLowerCase() === to.toLowerCase() && tx.method === method
       ),
-  },
-  web3: {
-    utils: {
-      toBN: (value) => new BN(value),
-      fromWei: (value) =>
-        new BN(value).div(new BN("1000000000000000000")).toString(),
-    },
   },
   contracts: { sanctionedApplicationAddress: SANCTIONED_APPLICATION_ADDRESS },
 })
