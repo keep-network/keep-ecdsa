@@ -25,7 +25,7 @@ export default class AssetsCalculator {
 
     const sortitionPoolAddress = await callWithRetry(
       bondedECDSAKeepFactory.methods.getSortitionPool(
-        contracts.SanctionedApplication
+        contracts.sanctionedApplicationAddress
       )
     )
 

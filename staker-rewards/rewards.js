@@ -4,6 +4,7 @@ import BigNumber from "bignumber.js"
 
 import Context from "./lib/context.js"
 import FraudDetector from "./lib/fraud-detector.js"
+import Requirements from "./lib/requirements.js"
 import SLACalculator from "./lib/sla-calculator.js"
 import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
@@ -15,95 +16,102 @@ const decimalPlaces = 2
 const noDecimalPlaces = 0
 
 async function run() {
-  try {
-    // URL to the websocket endpoint of the Ethereum node.
-    const ethHostname = process.env.ETH_HOSTNAME
-    // Start of the interval passed as UNIX timestamp.
-    const intervalStart = process.argv[2]
-    // End of the interval passed as UNIX timestamp.
-    const intervalEnd = process.argv[3]
-    // Total KEEP rewards distributed within the given interval passed as
-    // 18-decimals number.
-    const intervalTotalRewards = process.argv[4]
-    // Determines whether debug logs should be disabled.
-    const isDebugDisabled = process.env.DEBUG !== "on"
-    // Determines whether the cache refresh process should be performed.
-    // This option should be used only for development purposes. If the
-    // cache refresh is disabled, rewards distribution may be calculated
-    // based on outdated information from the chain.
-    const isCacheRefreshEnabled = process.env.CACHE_REFRESH !== "off"
+  // URL to the websocket endpoint of the Ethereum node.
+  const ethHostname = process.env.ETH_HOSTNAME
+  // Start of the interval passed as UNIX timestamp.
+  const intervalStart = process.argv[2]
+  // End of the interval passed as UNIX timestamp.
+  const intervalEnd = process.argv[3]
+  // Total KEEP rewards distributed within the given interval passed as
+  // 18-decimals number.
+  const intervalTotalRewards = process.argv[4]
+  // Determines whether debug logs should be disabled.
+  const isDebugDisabled = process.env.DEBUG !== "on"
+  // Determines whether the cache refresh process should be performed.
+  // This option should be used only for development purposes. If the
+  // cache refresh is disabled, rewards distribution may be calculated
+  // based on outdated information from the chain.
+  const isCacheRefreshEnabled = process.env.CACHE_REFRESH !== "off"
+  // Tenderly API project URL. If not provided a default value for Thesis
+  // Keep project will be used.
+  const tenderlyProjectUrl = process.env.TENDERLY_PROJECT_URL
+  // Access Token for Tenderly API used to fetch transactions from the chain.
+  // Setting it is optional. If not set the script won't call Tenderly API
+  // and rely on cached transactions.
+  const tenderlyAccessToken = process.env.TENDERLY_ACCESS_TOKEN
 
-    if (isDebugDisabled) {
-      console.debug = function () {}
+  if (isDebugDisabled) {
+    console.debug = function () {}
+  }
+
+  if (!ethHostname) {
+    console.error(clc.red("Please provide ETH_HOSTNAME value"))
+    return
+  }
+
+  const context = await Context.initialize(
+    ethHostname,
+    tenderlyProjectUrl,
+    tenderlyAccessToken
+  )
+
+  const interval = {
+    start: parseInt(intervalStart),
+    end: parseInt(intervalEnd),
+    totalRewards: new BigNumber(intervalTotalRewards),
+  }
+
+  validateIntervalTimestamps(interval)
+  validateIntervalTotalRewards(interval)
+  await determineIntervalBlockspan(context, interval)
+
+  if (isCacheRefreshEnabled) {
+    console.log("Refreshing keeps cache...")
+    await context.cache.refresh()
+  }
+
+  const operatorsRewards = await calculateOperatorsRewards(context, interval)
+
+  if (process.env.OUTPUT_MODE === "text") {
+    const format = {
+      groupSeparator: "",
+      decimalSeparator: ".",
     }
 
-    if (!ethHostname) {
-      console.error(clc.red("Please provide ETH_HOSTNAME value"))
-      return
-    }
+    const rewards = {}
 
-    const context = await Context.initialize(ethHostname)
+    for (const operatorReward of operatorsRewards) {
+      console.log(
+        `${operatorReward.operator}
+            ${operatorReward.isFraudulent} 
+            ${operatorReward.keygenCount}
+            ${operatorReward.keygenFailCount} 
+            ${operatorReward.keygenSLA} 
+            ${operatorReward.signatureCount} 
+            ${operatorReward.signatureFailCount}
+            ${operatorReward.signatureSLA} 
+            ${operatorReward.keepStaked.toFormat(format)} 
+            ${operatorReward.ethBonded.toFormat(format)} 
+            ${operatorReward.ethUnbonded.toFormat(format)}
+            ${operatorReward.ethTotal.toFormat(format)} 
+            ${operatorReward.ethScore.toFormat(noDecimalPlaces, format)} 
+            ${operatorReward.boost.toFormat(decimalPlaces, format)} 
+            ${operatorReward.rewardWeight.toFormat(noDecimalPlaces, format)} 
+            ${operatorReward.totalRewards.toFormat(noDecimalPlaces, format)}
+            `.replace(/\n/g, "\t")
+      )
 
-    const interval = {
-      start: parseInt(intervalStart),
-      end: parseInt(intervalEnd),
-      totalRewards: new BigNumber(intervalTotalRewards),
-    }
-
-    validateIntervalTimestamps(interval)
-    validateIntervalTotalRewards(interval)
-    await determineIntervalBlockspan(context, interval)
-
-    if (isCacheRefreshEnabled) {
-      console.log("Refreshing keeps cache...")
-      await context.cache.refresh()
-    }
-
-    const operatorsRewards = await calculateOperatorsRewards(context, interval)
-
-    if (process.env.OUTPUT_MODE === "text") {
-      const format = {
-        groupSeparator: "",
-        decimalSeparator: ".",
-      }
-
-      const rewards = {}
-
-      for (const operatorReward of operatorsRewards) {
-        console.log(
-          `${operatorReward.operator}
-           ${operatorReward.isFraudulent} 
-           ${operatorReward.keygenCount}
-           ${operatorReward.keygenFailCount} 
-           ${operatorReward.keygenSLA} 
-           ${operatorReward.signatureCount} 
-           ${operatorReward.signatureFailCount}
-           ${operatorReward.signatureSLA} 
-           ${operatorReward.keepStaked.toFormat(format)} 
-           ${operatorReward.ethBonded.toFormat(format)} 
-           ${operatorReward.ethUnbonded.toFormat(format)}
-           ${operatorReward.ethTotal.toFormat(format)} 
-           ${operatorReward.ethScore.toFormat(noDecimalPlaces, format)} 
-           ${operatorReward.boost.toFormat(decimalPlaces, format)} 
-           ${operatorReward.rewardWeight.toFormat(noDecimalPlaces, format)} 
-           ${operatorReward.totalRewards.toFormat(noDecimalPlaces, format)}
-          `.replace(/\n/g, "\t")
+      if (operatorReward.totalRewards != 0) {
+        const rewardsBN = new BigNumber(
+          operatorReward.totalRewards.toFormat(noDecimalPlaces, format)
         )
-
-        if (operatorReward.totalRewards != 0) {
-          const rewardsBN = new BigNumber(
-            operatorReward.totalRewards.toFormat(noDecimalPlaces, format)
-          )
-          rewards[operatorReward.operator] = rewardsBN.toString(16) // convert BN to hex
-        }
+        rewards[operatorReward.operator] = rewardsBN.toString(16) // convert BN to hex
       }
-
-      writeOperatorsRewardsToFile(rewards)
-    } else {
-      console.table(operatorsRewards.map(shortenSummaryValues))
     }
-  } catch (error) {
-    throw new Error(error)
+
+    writeOperatorsRewardsToFile(rewards)
+  } else {
+    console.table(operatorsRewards.map(shortenSummaryValues))
   }
 }
 
@@ -154,6 +162,7 @@ async function determineIntervalBlockspan(context, interval) {
 
 async function calculateOperatorsRewards(context, interval) {
   const fraudDetector = await FraudDetector.initialize(context)
+  const requirements = await Requirements.initialize(context, interval)
   const slaCalculator = await SLACalculator.initialize(context, interval)
   const assetsCalculator = await AssetsCalculator.initialize(context, interval)
 
@@ -161,6 +170,9 @@ async function calculateOperatorsRewards(context, interval) {
 
   for (const operator of await getOperators(context)) {
     const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
+    const operatorAuthorizations = await requirements.checkAuthorizations(
+      operator
+    )
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     const operatorAssets = await assetsCalculator.calculateOperatorAssets(
       operator
@@ -170,6 +182,7 @@ async function calculateOperatorsRewards(context, interval) {
       new OperatorParameters(
         operator,
         isFraudulent,
+        operatorAuthorizations,
         operatorSLA,
         operatorAssets
       )
@@ -216,11 +229,13 @@ async function getOperators(context) {
 function OperatorParameters(
   operator,
   isFraudulent,
+  authorizations,
   operatorSLA,
   operatorAssets
 ) {
   ;(this.operator = operator),
     (this.isFraudulent = isFraudulent),
+    (this.authorizations = authorizations),
     (this.operatorSLA = operatorSLA),
     (this.operatorAssets = operatorAssets)
 }
@@ -228,6 +243,12 @@ function OperatorParameters(
 function OperatorSummary(operator, operatorParameters, operatorRewards) {
   ;(this.operator = operator),
     (this.isFraudulent = operatorParameters.isFraudulent),
+    (this.factoryAuthorizedAtStart =
+      operatorParameters.authorizations.factoryAuthorizedAtStart),
+    (this.poolAuthorizedAtStart =
+      operatorParameters.authorizations.poolAuthorizedAtStart),
+    (this.poolDeauthorizedInInterval =
+      operatorParameters.authorizations.poolDeauthorizedInInterval),
     (this.keygenCount = operatorParameters.operatorSLA.keygenCount),
     (this.keygenFailCount = operatorParameters.operatorSLA.keygenFailCount),
     (this.keygenSLA = operatorParameters.operatorSLA.keygenSLA),
