@@ -1,7 +1,11 @@
 import clc from "cli-color"
 import BlockByDate from "ethereum-block-by-date"
 import BigNumber from "bignumber.js"
-import { decimalPlaces, shorten18Decimals } from "./lib/numbers.js"
+import {
+  decimalPlaces,
+  noDecimalPlaces,
+  shorten18Decimals,
+} from "./lib/numbers.js"
 
 import Context from "./lib/context.js"
 import FraudDetector from "./lib/fraud-detector.js"
@@ -10,8 +14,6 @@ import SLACalculator from "./lib/sla-calculator.js"
 import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
 import { getPastEvents } from "./lib/contract-helper.js"
-
-const noDecimalPlaces = 0
 
 async function run() {
   // URL to the websocket endpoint of the Ethereum node.
