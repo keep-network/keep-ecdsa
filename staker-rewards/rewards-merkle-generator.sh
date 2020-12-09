@@ -54,7 +54,7 @@ fi
 
 printf "${LOG_START}Calculating staker rewards...${LOG_END}"
 
-ETH_HOSTNAME="$eth_host" node --experimental-json-modules rewards.js "$start" "$end" "$rewards"
+ETH_HOSTNAME="$eth_host" OUTPUT_MODE="text" node --experimental-json-modules rewards.js "$start" "$end" "$rewards"
 
 printf "${LOG_START}Generating merkle output object...${LOG_END}"
 

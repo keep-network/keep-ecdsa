@@ -65,28 +65,36 @@ async function run() {
         decimalSeparator: ".",
       }
 
-      operatorsRewards.forEach((operatorRewards) =>
+      const rewards = {}
+
+      for (const operatorReward of operatorsRewards) {
         console.log(
-          `${operatorRewards.operator}
-           ${operatorRewards.isFraudulent} 
-           ${operatorRewards.keygenCount}
-           ${operatorRewards.keygenFailCount} 
-           ${operatorRewards.keygenSLA} 
-           ${operatorRewards.signatureCount} 
-           ${operatorRewards.signatureFailCount}
-           ${operatorRewards.signatureSLA} 
-           ${operatorRewards.keepStaked.toFormat(format)} 
-           ${operatorRewards.ethBonded.toFormat(format)} 
-           ${operatorRewards.ethUnbonded.toFormat(format)}
-           ${operatorRewards.ethTotal.toFormat(format)} 
-           ${operatorRewards.ethScore.toFormat(decimalPlaces, format)} 
-           ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
-           ${operatorRewards.rewardWeight.toFormat(decimalPlaces, format)} 
-           ${operatorRewards.totalRewards.toFormat(decimalPlaces, format)}
+          `${operatorReward.operator}
+           ${operatorReward.isFraudulent} 
+           ${operatorReward.keygenCount}
+           ${operatorReward.keygenFailCount} 
+           ${operatorReward.keygenSLA} 
+           ${operatorReward.signatureCount} 
+           ${operatorReward.signatureFailCount}
+           ${operatorReward.signatureSLA} 
+           ${operatorReward.keepStaked.toFormat(format)} 
+           ${operatorReward.ethBonded.toFormat(format)} 
+           ${operatorReward.ethUnbonded.toFormat(format)}
+           ${operatorReward.ethTotal.toFormat(format)} 
+           ${operatorReward.ethScore.toFormat(decimalPlaces, format)} 
+           ${operatorReward.boost.toFormat(decimalPlaces, format)} 
+           ${operatorReward.rewardWeight.toFormat(decimalPlaces, format)} 
+           ${operatorReward.totalRewards.toFormat(decimalPlaces, format)}
           `.replace(/\s+/gm, " ")
         )
-      )
-      writeOperatorsRewardsToFile(operatorsRewards)
+
+        if (operatorReward.totalRewards != 0) {
+          let rewardsBN = new BigNumber(operatorReward.totalRewards.toFormat(0, format))
+          rewards[operatorReward.operator] = rewardsBN.toString(16) // convert BN to hex
+        }
+      }
+
+      writeOperatorsRewardsToFile(rewards)
     } else {
       console.table(operatorsRewards.map(shortenSummaryValues))
     }
@@ -247,14 +255,7 @@ function shortenSummaryValues(summary) {
   return summary
 }
 
-function writeOperatorsRewardsToFile(operatorsRewards) {
-  const rewards = {}
-  for (const reward of operatorsRewards) {
-    if (reward.totalRewards != 0) {
-      rewards[reward.operator] = parseInt(reward.totalRewards)
-    } 
-  }
-
+function writeOperatorsRewardsToFile(rewards) {
   fs.writeFileSync("./generated-rewards/rewards-input.json", JSON.stringify(rewards, null, 2))
 }
 
