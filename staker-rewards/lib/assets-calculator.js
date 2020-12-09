@@ -1,4 +1,5 @@
 import { callWithRetry, getPastEvents } from "./contract-helper.js"
+import BigNumber from "bignumber.js"
 
 export default class AssetsCalculator {
   constructor(
@@ -52,7 +53,7 @@ export default class AssetsCalculator {
     const keepStaked = await this.calculateKeepStaked(operator)
     const ethBonded = await this.calculateETHBonded(operator)
     const ethUnbonded = await this.calculateETHUnbonded(operator)
-    const ethTotal = ethBonded + ethUnbonded
+    const ethTotal = ethBonded.plus(ethUnbonded)
 
     return new OperatorAssets(
       operator,
@@ -103,12 +104,10 @@ export default class AssetsCalculator {
       block
     )
 
-    return keepStaked
+    return new BigNumber(keepStaked)
   }
 
   async calculateETHBonded(operator) {
-    const { web3 } = this.context
-
     const eventByOperator = (event) => event.returnValues.operator === operator
     const eventByReferenceID = (referenceID) => {
       return (event) => event.returnValues.referenceID === referenceID
@@ -124,10 +123,10 @@ export default class AssetsCalculator {
       eventByOperator
     )
 
-    let weiBonded = web3.utils.toBN(0)
+    let weiBonded = new BigNumber(0)
 
     for (const bondCreatedEvent of bondCreatedEvents) {
-      let bondAmount = web3.utils.toBN(bondCreatedEvent.returnValues.amount)
+      let bondAmount = new BigNumber(bondCreatedEvent.returnValues.amount)
       const referenceID = bondCreatedEvent.returnValues.referenceID
 
       // Check if the bond has been released.
@@ -142,18 +141,14 @@ export default class AssetsCalculator {
       )
       if (bondSeizedEvent) {
         // If the bond has been seized, subtract the seized amount
-        const seizedAmount = web3.utils.toBN(
-          bondSeizedEvent.returnValues.amount
-        )
-        bondAmount = bondAmount.sub(seizedAmount)
+        const seizedAmount = new BigNumber(bondSeizedEvent.returnValues.amount)
+        bondAmount = bondAmount.minus(seizedAmount)
       }
 
-      weiBonded = weiBonded.add(bondAmount)
+      weiBonded = weiBonded.plus(bondAmount)
     }
 
-    const ethBonded = this.context.web3.utils.fromWei(weiBonded, "ether")
-
-    return parseFloat(ethBonded)
+    return weiBonded
   }
 
   async calculateETHUnbonded(operator) {
@@ -170,9 +165,7 @@ export default class AssetsCalculator {
       block
     )
 
-    const ethUnbonded = this.context.web3.utils.fromWei(weiUnbonded, "ether")
-
-    return parseFloat(ethUnbonded)
+    return new BigNumber(weiUnbonded)
   }
 }
 

@@ -1,7 +1,7 @@
 import chai from "chai"
-import BN from "bn.js"
 import testBlockchain from "./data/test-blockchain.json"
 import AssetsCalculator from "../lib/assets-calculator.js"
+import BigNumber from "bignumber.js"
 
 const { assert } = chai
 
@@ -20,13 +20,6 @@ const KeepBondingAddress = "0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab"
 
 const createMockContext = () => ({
   contracts: {},
-  web3: {
-    utils: {
-      toBN: (value) => new BN(value),
-      fromWei: (value) =>
-        new BN(value).div(new BN("1000000000000000000")).toString(),
-    },
-  },
 })
 
 const getStateAtBlock = (contractAddress, blockNumber) => {
@@ -124,7 +117,10 @@ describe("assets calculator", async () => {
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
-    assert.equal(assets.keepStaked, "500000")
+    assert.equal(
+      assets.keepStaked.isEqualTo(new BigNumber(500000).multipliedBy(1e18)),
+      true
+    )
   })
 
   it("should return the right value of ETH unbonded", async () => {
@@ -139,7 +135,10 @@ describe("assets calculator", async () => {
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
-    assert.equal(assets.ethUnbonded, 40)
+    assert.equal(
+      assets.ethUnbonded.isEqualTo(new BigNumber(40).multipliedBy(1e18)),
+      true
+    )
   })
 
   it("should return the right value of ETH bonded", async () => {
@@ -154,7 +153,10 @@ describe("assets calculator", async () => {
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
-    assert.equal(assets.ethBonded, 15)
+    assert.equal(
+      assets.ethBonded.isEqualTo(new BigNumber(15).multipliedBy(1e18)),
+      true
+    )
   })
 
   it("should return the right value of ETH total", async () => {
@@ -169,6 +171,9 @@ describe("assets calculator", async () => {
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
-    assert.equal(assets.ethTotal, 55)
+    assert.equal(
+      assets.ethTotal.isEqualTo(new BigNumber(55).multipliedBy(1e18)),
+      true
+    )
   })
 })
