@@ -71,27 +71,27 @@ async function run() {
 
       for (const operatorReward of operatorsRewards) {
         console.log(
-          `${operatorRewards.operator}
-           ${operatorRewards.isFraudulent} 
-           ${operatorRewards.keygenCount}
-           ${operatorRewards.keygenFailCount} 
-           ${operatorRewards.keygenSLA} 
-           ${operatorRewards.signatureCount} 
-           ${operatorRewards.signatureFailCount}
-           ${operatorRewards.signatureSLA} 
-           ${operatorRewards.keepStaked.toFormat(format)} 
-           ${operatorRewards.ethBonded.toFormat(format)} 
-           ${operatorRewards.ethUnbonded.toFormat(format)}
-           ${operatorRewards.ethTotal.toFormat(format)} 
-           ${operatorRewards.ethScore.toFormat(noDecimalPlaces, format)} 
-           ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
-           ${operatorRewards.rewardWeight.toFormat(noDecimalPlaces, format)} 
-           ${operatorRewards.totalRewards.toFormat(noDecimalPlaces, format)}
+          `${operatorReward.operator}
+           ${operatorReward.isFraudulent} 
+           ${operatorReward.keygenCount}
+           ${operatorReward.keygenFailCount} 
+           ${operatorReward.keygenSLA} 
+           ${operatorReward.signatureCount} 
+           ${operatorReward.signatureFailCount}
+           ${operatorReward.signatureSLA} 
+           ${operatorReward.keepStaked.toFormat(format)} 
+           ${operatorReward.ethBonded.toFormat(format)} 
+           ${operatorReward.ethUnbonded.toFormat(format)}
+           ${operatorReward.ethTotal.toFormat(format)} 
+           ${operatorReward.ethScore.toFormat(noDecimalPlaces, format)} 
+           ${operatorReward.boost.toFormat(decimalPlaces, format)} 
+           ${operatorReward.rewardWeight.toFormat(noDecimalPlaces, format)} 
+           ${operatorReward.totalRewards.toFormat(noDecimalPlaces, format)}
           `.replace(/\n/g, "\t")
         )
 
         if (operatorReward.totalRewards != 0) {
-          let rewardsBN = new BigNumber(operatorReward.totalRewards.toFormat(noDecimalPlaces, format))
+          const rewardsBN = new BigNumber(operatorReward.totalRewards.toFormat(noDecimalPlaces, format))
           rewards[operatorReward.operator] = rewardsBN.toString(16) // convert BN to hex
         }
       }
@@ -260,7 +260,8 @@ function shortenSummaryValues(summary) {
 }
 
 function writeOperatorsRewardsToFile(rewards) {
-  fs.writeFileSync("./generated-rewards/rewards-input.json", JSON.stringify(rewards, null, 2))
+  fs.writeFileSync(
+    "./generated-rewards/rewards-input.json", JSON.stringify(rewards, null, 2))
 }
 
 run()
