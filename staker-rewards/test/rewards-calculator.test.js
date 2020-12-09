@@ -89,7 +89,7 @@ describe("rewards calculator", async () => {
     }
   )
 
-  it("should return the right value of boost if parameter A is smaller", async () => {
+  it("should return the right value of boost if KEEP_staked/KEEP_minStake is smaller", async () => {
     const mockContext = createMockContext()
 
     setupContractsMock(mockContext)
@@ -105,7 +105,7 @@ describe("rewards calculator", async () => {
     assert.equal(rewards.boost.isEqualTo(new BigNumber(2)), true)
   })
 
-  it("should return the right value of boost if parameter B is smaller", async () => {
+  it("should return the right value of boost if KEEP_staked/KEEP_minStake is greater", async () => {
     const mockContext = createMockContext()
 
     setupContractsMock(mockContext)
