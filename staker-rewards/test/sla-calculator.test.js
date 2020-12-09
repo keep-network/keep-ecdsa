@@ -1,20 +1,12 @@
 import chai from "chai"
-import testCache from "./data/test-cache.json"
+
+import { createMockContext } from "./helpers/mock.js"
+
 import SLACalculator from "../lib/sla-calculator.js"
 
 const { assert } = chai
 
 const operator = "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
-
-const mockCache = {
-  getKeeps: (status) =>
-    testCache.keeps.filter((keep) => !status || keep.status.name === status),
-}
-
-const createMockContext = () => ({
-  cache: mockCache,
-  contracts: {},
-})
 
 const setupNoSignatureRequestsMock = (context) => {
   context.contracts.BondedECDSAKeep = {
