@@ -96,7 +96,7 @@ export default class AssetsCalculator {
   }
 
   async fetchUnbondedValueWithdrawnEvents() {
-    // We are interested in all unbonded value withdrawals which occured
+    // We are interested in all unbonded value withdrawals which occurred
     // within the given interval.
     const fromBlock = this.interval.startBlock
     const toBlock = this.interval.endBlock
