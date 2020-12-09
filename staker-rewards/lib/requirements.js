@@ -174,7 +174,7 @@ export default class Requirements {
       operator
     )
 
-    const minimumUnbondedValueRegisteredAtStart = await this.checkUnbondedValueRegisteredAtIntervalStart(
+    const inPoolIfRequired = await this.checkWasInPoolIfRequiredAtIntervalStart(
       operator
     )
 
@@ -184,7 +184,7 @@ export default class Requirements {
       poolAuthorizedAtStart,
       poolDeauthorizedInInterval,
       minimumStakeAtStart,
-      minimumUnbondedValueRegisteredAtStart
+      inPoolIfRequired
     )
   }
 
@@ -241,7 +241,7 @@ export default class Requirements {
   // to be registered in the sortition pool. Operators who are not in the sortition
   // pool because all of their ether is locked are still getting rewards because
   // that ether is still under the system’s management.
-  async checkUnbondedValueRegisteredAtIntervalStart(operator) {
+  async checkWasInPoolIfRequiredAtIntervalStart(operator) {
     const unbondedValueAtStart = new BigNumber(
       await callWithRetry(
         this.keepBonding.methods.unbondedValue(operator),
@@ -275,12 +275,12 @@ export function OperatorRequirements(
   poolAuthorizedAtStart,
   poolDeauthorizedInInterval,
   minimumStakeAtStart,
-  minimumUnbondedValueRegisteredAtStart
+  wasInPoolIfRequiredAtIntervalStart
 ) {
   ;(this.address = address),
     (this.factoryAuthorizedAtStart = factoryAuthorizedAtStart),
     (this.poolAuthorizedAtStart = poolAuthorizedAtStart),
     (this.minimumStakeAtStart = minimumStakeAtStart),
-    (this.minimumUnbondedValueRegisteredAtStart = minimumUnbondedValueRegisteredAtStart),
+    (this.wasInPoolIfRequiredAtIntervalStart = wasInPoolIfRequiredAtIntervalStart),
     (this.poolDeauthorizedInInterval = poolDeauthorizedInInterval)
 }

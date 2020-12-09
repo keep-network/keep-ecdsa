@@ -214,7 +214,7 @@ describe("requirements", async () => {
     it("for operator that has no minimum unbonded value", async () => {
       const operator = "0xA000000000000000000000000000000000000001"
 
-      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+      const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
         operator
       )
 
@@ -224,7 +224,7 @@ describe("requirements", async () => {
     it("for operator that has exactly minimum unbonded value and is registered", async () => {
       const operator = "0xA000000000000000000000000000000000000002"
 
-      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+      const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
         operator
       )
 
@@ -234,7 +234,7 @@ describe("requirements", async () => {
     it("for operator that has exactly minimum unbonded value and is not registered", async () => {
       const operator = "0xA000000000000000000000000000000000000003"
 
-      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+      const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
         operator
       )
 
@@ -244,7 +244,7 @@ describe("requirements", async () => {
     it("for operator that has more than minimum unbonded value and is registered", async () => {
       const operator = "0xA000000000000000000000000000000000000004"
 
-      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+      const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
         operator
       )
 
@@ -254,7 +254,7 @@ describe("requirements", async () => {
     it("for operator that has more than minimum unbonded value and is not registered", async () => {
       const operator = "0xA000000000000000000000000000000000000005"
 
-      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+      const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
         operator
       )
 
@@ -264,7 +264,7 @@ describe("requirements", async () => {
     it("for operator that has very high unbonded value and is not registered", async () => {
       const operator = "0xA000000000000000000000000000000000000006"
 
-      const result = await requirements.checkUnbondedValueRegisteredAtIntervalStart(
+      const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
         operator
       )
 
