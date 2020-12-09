@@ -80,8 +80,8 @@ async function run() {
            ${operatorRewards.ethScore.toFormat(decimalPlaces, format)} 
            ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
            ${operatorRewards.rewardWeight.toFormat(decimalPlaces, format)} 
-           ${operatorRewards.totalRewards.toFormat(decimalPlaces, format)}
-          `.replace(/\s+/gm, " ")
+           ${operatorRewards.totalRewards.toFormat(0, format)}
+          `.replace(/\n/g, "\t")
         )
       )
     } else {
