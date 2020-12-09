@@ -91,7 +91,9 @@ async function run() {
         )
 
         if (operatorReward.totalRewards != 0) {
-          const rewardsBN = new BigNumber(operatorReward.totalRewards.toFormat(noDecimalPlaces, format))
+          const rewardsBN = new BigNumber(
+            operatorReward.totalRewards.toFormat(noDecimalPlaces, format)
+          )
           rewards[operatorReward.operator] = rewardsBN.toString(16) // convert BN to hex
         }
       }
@@ -261,7 +263,9 @@ function shortenSummaryValues(summary) {
 
 function writeOperatorsRewardsToFile(rewards) {
   fs.writeFileSync(
-    "./generated-rewards/rewards-input.json", JSON.stringify(rewards, null, 2))
+    "./generated-rewards/rewards-input.json",
+    JSON.stringify(rewards, null, 2)
+  )
 }
 
 run()
