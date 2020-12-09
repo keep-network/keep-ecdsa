@@ -9,6 +9,7 @@ import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
 
 const decimalPlaces = 2
+const noDecimalPlaces = 0
 
 async function run() {
   try {
@@ -77,10 +78,10 @@ async function run() {
            ${operatorRewards.ethBonded.toFormat(format)} 
            ${operatorRewards.ethUnbonded.toFormat(format)}
            ${operatorRewards.ethTotal.toFormat(format)} 
-           ${operatorRewards.ethScore.toFormat(decimalPlaces, format)} 
+           ${operatorRewards.ethScore.toFormat(noDecimalPlaces, format)} 
            ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
-           ${operatorRewards.rewardWeight.toFormat(decimalPlaces, format)} 
-           ${operatorRewards.totalRewards.toFormat(0, format)}
+           ${operatorRewards.rewardWeight.toFormat(noDecimalPlaces, format)} 
+           ${operatorRewards.totalRewards.toFormat(noDecimalPlaces, format)}
           `.replace(/\n/g, "\t")
         )
       )
