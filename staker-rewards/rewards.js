@@ -7,10 +7,12 @@ import FraudDetector from "./lib/fraud-detector.js"
 import SLACalculator from "./lib/sla-calculator.js"
 import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
+import { getPastEvents } from "./lib/contract-helper.js"
 
 import * as fs from "fs"
 
 const decimalPlaces = 2
+const noDecimalPlaces = 0
 
 async function run() {
   try {
@@ -69,27 +71,27 @@ async function run() {
 
       for (const operatorReward of operatorsRewards) {
         console.log(
-          `${operatorReward.operator}
-           ${operatorReward.isFraudulent} 
-           ${operatorReward.keygenCount}
-           ${operatorReward.keygenFailCount} 
-           ${operatorReward.keygenSLA} 
-           ${operatorReward.signatureCount} 
-           ${operatorReward.signatureFailCount}
-           ${operatorReward.signatureSLA} 
-           ${operatorReward.keepStaked.toFormat(format)} 
-           ${operatorReward.ethBonded.toFormat(format)} 
-           ${operatorReward.ethUnbonded.toFormat(format)}
-           ${operatorReward.ethTotal.toFormat(format)} 
-           ${operatorReward.ethScore.toFormat(decimalPlaces, format)} 
-           ${operatorReward.boost.toFormat(decimalPlaces, format)} 
-           ${operatorReward.rewardWeight.toFormat(decimalPlaces, format)} 
-           ${operatorReward.totalRewards.toFormat(decimalPlaces, format)}
-          `.replace(/\s+/gm, " ")
+          `${operatorRewards.operator}
+           ${operatorRewards.isFraudulent} 
+           ${operatorRewards.keygenCount}
+           ${operatorRewards.keygenFailCount} 
+           ${operatorRewards.keygenSLA} 
+           ${operatorRewards.signatureCount} 
+           ${operatorRewards.signatureFailCount}
+           ${operatorRewards.signatureSLA} 
+           ${operatorRewards.keepStaked.toFormat(format)} 
+           ${operatorRewards.ethBonded.toFormat(format)} 
+           ${operatorRewards.ethUnbonded.toFormat(format)}
+           ${operatorRewards.ethTotal.toFormat(format)} 
+           ${operatorRewards.ethScore.toFormat(noDecimalPlaces, format)} 
+           ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
+           ${operatorRewards.rewardWeight.toFormat(noDecimalPlaces, format)} 
+           ${operatorRewards.totalRewards.toFormat(noDecimalPlaces, format)}
+          `.replace(/\n/g, "\t")
         )
 
         if (operatorReward.totalRewards != 0) {
-          let rewardsBN = new BigNumber(operatorReward.totalRewards.toFormat(0, format))
+          let rewardsBN = new BigNumber(operatorReward.totalRewards.toFormat(noDecimalPlaces, format))
           rewards[operatorReward.operator] = rewardsBN.toString(16) // convert BN to hex
         }
       }
@@ -149,15 +151,13 @@ async function determineIntervalBlockspan(context, interval) {
 }
 
 async function calculateOperatorsRewards(context, interval) {
-  const { cache } = context
-
   const fraudDetector = await FraudDetector.initialize(context)
   const slaCalculator = await SLACalculator.initialize(context, interval)
   const assetsCalculator = await AssetsCalculator.initialize(context, interval)
 
   const operatorsParameters = []
 
-  for (const operator of getOperators(cache)) {
+  for (const operator of await getOperators(context)) {
     const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     const operatorAssets = await assetsCalculator.calculateOperatorAssets(
@@ -194,15 +194,19 @@ async function calculateOperatorsRewards(context, interval) {
   return operatorsSummary
 }
 
-// TODO: Change the way operators are fetched. Currently only the ones which
-//  have members in existing keeps are taken into account. Instead of that,
-//  we should take all operators which are registered in the sorition pool.
-function getOperators(cache) {
+async function getOperators(context) {
+  console.log(`Fetching operators list...`)
+
   const operators = new Set()
 
-  cache
-    .getKeeps()
-    .forEach((keep) => keep.members.forEach((member) => operators.add(member)))
+  const events = await getPastEvents(
+    context.web3,
+    await context.contracts.KeepBonding.deployed(),
+    "UnbondedValueDeposited",
+    context.contracts.factoryDeploymentBlock
+  )
+
+  events.forEach((event) => operators.add(event.returnValues.operator))
 
   return operators
 }
