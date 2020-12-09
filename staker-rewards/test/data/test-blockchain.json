@@ -3,14 +3,14 @@
     "blockNumber": 1000,
     "contracts": [
       {
-        "address": "0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab",
+        "address": "0x27321f84704a599aB740281E285cc4463d89A3D5",
         "events": [
           {
             "name": "BondCreated",
             "returnValues": {
               "referenceID": "0x62f68c710615F2c86c2d224A1101112076FfcB7E",
               "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
-              "sortitionPool": "0xf876aE82E3Ef9a67ad4E9eA23eFa4de2D85DA6fb",
+              "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
               "amount": "20000000000000000000"
             }
           },
@@ -19,7 +19,7 @@
             "returnValues": {
               "referenceID": "0xEF833365aF1c921ED60491839F2dDCbc3cCE3630",
               "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
-              "sortitionPool": "0xf876aE82E3Ef9a67ad4E9eA23eFa4de2D85DA6fb",
+              "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
               "amount": "30000000000000000000"
             }
           },
@@ -39,14 +39,57 @@
             }
           }
         ],
-        "unbondedValues": [
-          {
-            "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
-            "operatorContract": "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426",
-            "sortitionPool": "0xf876aE82E3Ef9a67ad4E9eA23eFa4de2D85DA6fb",
-            "amount": "40000000000000000000"
-          }
-        ]
+        "methods": {
+          "availableUnbondedValue": [
+            {
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "operatorContract": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
+              "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
+              "output": "40000000000000000000"
+            }
+          ],
+          "hasSecondaryAuthorization": [
+            {
+              "operator": "0xA000000000000000000000000000000000000001",
+              "poolAddress": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
+              "output": true
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000002",
+              "poolAddress": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
+              "output": false
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000003",
+              "poolAddress": "0x735761349aD6612471487D637B526Ba44c87d158",
+              "output": true
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000003",
+              "poolAddress": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
+              "output": false
+            }
+          ]
+        }
+      },
+      {
+        "address": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
+        "methods": {
+          "isOperatorAuthorized": [
+            {
+              "operator": "0xA000000000000000000000000000000000000001",
+              "output": true
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000002",
+              "output": true
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000003",
+              "output": false
+            }
+          ]
+        }
       }
     ]
   },
@@ -54,14 +97,16 @@
     "blockNumber": 2000,
     "contracts": [
       {
-        "address": "0x186E82df0a09534537d0D8680D03b548628ab288",
-        "activeStakes": [
-          {
-            "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
-            "operatorContract": "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426",
-            "activeStake": "500000000000000000000000"
-          }
-        ]
+        "address": "0x1293a54e160D1cd7075487898d65266081A15458",
+        "methods": {
+          "activeStake": [
+            {
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "operatorContract": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
+              "output": "500000000000000000000000"
+            }
+          ]
+        }
       }
     ]
   }
