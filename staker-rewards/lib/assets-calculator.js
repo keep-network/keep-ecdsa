@@ -195,6 +195,10 @@ export default class AssetsCalculator {
       weiUnbonded = weiUnbonded.minus(withdrawnAmount)
     }
 
+    if (weiUnbonded.isLessThan(new BigNumber(0))) {
+      weiUnbonded = new BigNumber(0)
+    }
+
     return weiUnbonded
   }
 }
