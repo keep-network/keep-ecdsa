@@ -2,7 +2,7 @@ import { callWithRetry } from "./contract-helper.js"
 import BigNumber from "bignumber.js"
 
 export default class RewardsCalculator {
-  constructor(context, interval, minimumStake) {
+  constructor(context, interval) {
     this.context = context
     this.interval = interval
     this.ethScoreThreshold = new BigNumber(3000).multipliedBy(
