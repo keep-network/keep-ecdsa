@@ -135,12 +135,28 @@ export default class RewardsCalculator {
       violations.push("poolRequirementFulfilledAtStart")
     }
 
-    if (operatorSLA.keygenSLA !== "N/A" && operatorSLA.keygenSLA < 90) {
-      violations.push("keygenSLA")
+    if (operatorSLA.keygenSLA !== "N/A") {
+      if (operatorSLA.keygenCount < 10) {
+        if (operatorSLA.keygenFailCount > 1) {
+          violations.push("keygenSLA")
+        }
+      } else {
+        if (operatorSLA.keygenSLA < 90) {
+          violations.push("keygenSLA")
+        }
+      }
     }
 
-    if (operatorSLA.signatureSLA !== "N/A" && operatorSLA.signatureSLA < 95) {
-      violations.push("signatureSLA")
+    if (operatorSLA.signatureSLA !== "N/A") {
+      if (operatorSLA.signatureCount < 20) {
+        if (operatorSLA.signatureFailCount > 1) {
+          violations.push("signatureSLA")
+        }
+      } else {
+        if (operatorSLA.signatureSLA < 95) {
+          violations.push("signatureSLA")
+        }
+      }
     }
 
     return violations

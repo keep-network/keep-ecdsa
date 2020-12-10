@@ -31,8 +31,12 @@ const createOperatorParameters = (operator, keepStaked, ethTotal) => ({
     poolRequirementFulfilledAtStart: true,
   },
   operatorSLA: {
-    keygenSLA: 90,
-    signatureSLA: 95,
+    keygenCount: 10,
+    keygenFailCount: 0,
+    keygenSLA: 100,
+    signatureCount: 20,
+    signatureFailCount: 0,
+    signatureSLA: 100,
   },
 })
 
@@ -297,43 +301,211 @@ describe("rewards calculator", async () => {
     assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
   })
 
-  it("should set total rewards to zero if keygen SLA is not met", async () => {
-    const mockContext = createMockContext()
+  it(
+    "should NOT set total rewards to zero if keygenCount >= 10 and " +
+      "failures percentage doesn't exceed 10%",
+    async () => {
+      const mockContext = createMockContext()
 
-    setupContractsMock(mockContext)
+      setupContractsMock(mockContext)
 
-    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
 
-    operatorParameters.operatorSLA.keygenSLA = 89.99
+      operatorParameters.operatorSLA.keygenCount = 10
+      operatorParameters.operatorSLA.keygenFailCount = 1
+      operatorParameters.operatorSLA.keygenSLA = 90
 
-    const rewardsCalculator = await RewardsCalculator.initialize(
-      mockContext,
-      interval,
-      [operatorParameters]
-    )
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
 
-    const rewards = rewardsCalculator.getOperatorRewards(operator)
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
 
-    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
-  })
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
+    }
+  )
 
-  it("should set total rewards to zero if signature SLA is not met", async () => {
-    const mockContext = createMockContext()
+  it(
+    "should set total rewards to zero if keygenCount >= 10 and " +
+      "failures percentage exceeds 10%",
+    async () => {
+      const mockContext = createMockContext()
 
-    setupContractsMock(mockContext)
+      setupContractsMock(mockContext)
 
-    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
 
-    operatorParameters.operatorSLA.signatureSLA = 94.99
+      operatorParameters.operatorSLA.keygenCount = 10
+      operatorParameters.operatorSLA.keygenFailCount = 2
+      operatorParameters.operatorSLA.keygenSLA = 80
 
-    const rewardsCalculator = await RewardsCalculator.initialize(
-      mockContext,
-      interval,
-      [operatorParameters]
-    )
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
 
-    const rewards = rewardsCalculator.getOperatorRewards(operator)
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
 
-    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
-  })
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+    }
+  )
+
+  it(
+    "should NOT set total rewards to zero if keygenCount < 10 and " +
+      "there is no more than 1 failure",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+      operatorParameters.operatorSLA.keygenCount = 9
+      operatorParameters.operatorSLA.keygenFailCount = 1
+      operatorParameters.operatorSLA.keygenSLA = 88.88
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
+    }
+  )
+
+  it(
+    "should set total rewards to zero if keygenCount < 10 and " +
+      "there is more than 1 failure",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+      operatorParameters.operatorSLA.keygenCount = 9
+      operatorParameters.operatorSLA.keygenFailCount = 2
+      operatorParameters.operatorSLA.keygenSLA = 77.77
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+    }
+  )
+
+  it(
+    "should NOT set total rewards to zero if signatureCount >= 20 and " +
+      "failures percentage doesn't exceed 5%",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+      operatorParameters.operatorSLA.signatureCount = 20
+      operatorParameters.operatorSLA.signatureFailCount = 1
+      operatorParameters.operatorSLA.signatureSLA = 95
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
+    }
+  )
+
+  it(
+    "should set total rewards to zero if signatureCount >= 20 and " +
+      "failures percentage exceeds 5%",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+      operatorParameters.operatorSLA.signatureCount = 20
+      operatorParameters.operatorSLA.signatureFailCount = 2
+      operatorParameters.operatorSLA.signatureSLA = 90
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+    }
+  )
+
+  it(
+    "should NOT set total rewards to zero if signatureCount < 20 and " +
+      "there is no more than 1 failure",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+      operatorParameters.operatorSLA.signatureCount = 19
+      operatorParameters.operatorSLA.signatureFailCount = 1
+      operatorParameters.operatorSLA.signatureSLA = 94.73
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
+    }
+  )
+
+  it(
+    "should set total rewards to zero if signatureCount < 20 and " +
+      "there is more than 1 failure",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+      operatorParameters.operatorSLA.signatureCount = 19
+      operatorParameters.operatorSLA.signatureFailCount = 2
+      operatorParameters.operatorSLA.signatureSLA = 89.47
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+    }
+  )
 })
