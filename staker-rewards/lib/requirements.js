@@ -174,7 +174,7 @@ export default class Requirements {
       operator
     )
 
-    const inPoolIfRequired = await this.checkWasInPoolIfRequiredAtIntervalStart(
+    const poolRequirementFulfilledAtStart = await this.checkWasInPoolIfRequiredAtIntervalStart(
       operator
     )
 
@@ -184,7 +184,7 @@ export default class Requirements {
       poolAuthorizedAtStart,
       poolDeauthorizedInInterval,
       minimumStakeAtStart,
-      inPoolIfRequired
+      poolRequirementFulfilledAtStart
     )
   }
 
@@ -275,12 +275,12 @@ export function OperatorRequirements(
   poolAuthorizedAtStart,
   poolDeauthorizedInInterval,
   minimumStakeAtStart,
-  wasInPoolIfRequiredAtStart
+  poolRequirementFulfilledAtStart
 ) {
   ;(this.address = address),
     (this.factoryAuthorizedAtStart = factoryAuthorizedAtStart),
     (this.poolAuthorizedAtStart = poolAuthorizedAtStart),
     (this.minimumStakeAtStart = minimumStakeAtStart),
-    (this.wasInPoolIfRequiredAtStart = wasInPoolIfRequiredAtStart),
+    (this.poolRequirementFulfilledAtStart = poolRequirementFulfilledAtStart),
     (this.poolDeauthorizedInInterval = poolDeauthorizedInInterval)
 }
