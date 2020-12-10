@@ -69,6 +69,32 @@
               "poolAddress": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
               "output": false
             }
+          ],
+          "unbondedValue": [
+            {
+              "operator": "0xA000000000000000000000000000000000000001",
+              "output": "99999999999999999"
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000002",
+              "output": "100000000000000000"
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000003",
+              "output": "100000000000000000"
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000004",
+              "output": "100000000000000001"
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000005",
+              "output": "100000000000000001"
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000006",
+              "output": "2000000000000000000000"
+            }
           ]
         }
       },
@@ -86,6 +112,53 @@
             },
             {
               "operator": "0xA000000000000000000000000000000000000003",
+              "output": false
+            }
+          ],
+          "hasMinimumStake": [
+            {
+              "operator": "0xA000000000000000000000000000000000000001",
+              "output": true
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000002",
+              "output": false
+            }
+          ],
+          "isOperatorRegistered": [
+            {
+              "operator": "0xA000000000000000000000000000000000000001",
+              "application": "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a",
+              "output": false
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000002",
+              "application": "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a",
+              "output": true
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000003",
+              "application": "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a",
+              "output": false
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000003",
+              "application": "0x0000000000000000ea61b1966ea0d08F55f2CEAC",
+              "output": true
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000004",
+              "application": "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a",
+              "output": true
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000005",
+              "application": "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a",
+              "output": false
+            },
+            {
+              "operator": "0xA000000000000000000000000000000000000006",
+              "application": "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a",
               "output": false
             }
           ]
@@ -107,6 +180,32 @@
             }
           ]
         }
+      },
+      {
+        "address": "0x27321f84704a599aB740281E285cc4463d89A3D5",
+        "events": [
+          {
+            "name": "UnbondedValueWithdrawn",
+            "returnValues": {
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "amount": "10000000000000000000"
+            }
+          },
+          {
+            "name": "UnbondedValueWithdrawn",
+            "returnValues": {
+              "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+              "amount": "20000000000000000000"
+            }
+          },
+          {
+            "name": "UnbondedValueWithdrawn",
+            "returnValues": {
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "amount": "5000000000000000000"
+            }
+          }
+        ]
       }
     ]
   }

@@ -1,8 +1,10 @@
+import clc from "cli-color"
 import { callWithRetry } from "./contract-helper.js"
 import BigNumber from "bignumber.js"
+import { noDecimalPlaces } from "./numbers.js"
 
 export default class RewardsCalculator {
-  constructor(context, interval, minimumStake) {
+  constructor(context, interval) {
     this.context = context
     this.interval = interval
     this.ethScoreThreshold = new BigNumber(3000).multipliedBy(
@@ -49,9 +51,12 @@ export default class RewardsCalculator {
     )
 
     console.log(
-      `Rewards weight sum ${rewardWeightSum
-        .dividedBy(new BigNumber(1e18))
-        .toFixed(2)}`
+      clc.yellow(
+        `Rewards weight sum ${rewardWeightSum.toFixed(
+          noDecimalPlaces,
+          BigNumber.ROUND_DOWN
+        )}`
+      )
     )
 
     const operatorsRewards = []
@@ -78,6 +83,16 @@ export default class RewardsCalculator {
         )
       )
     }
+
+    const totalRewardsSum = operatorsRewards.reduce(
+      (accumulator, rewards) =>
+        accumulator.plus(
+          rewards.totalRewards.toFixed(noDecimalPlaces, BigNumber.ROUND_DOWN)
+        ),
+      new BigNumber(0)
+    )
+
+    console.log(clc.yellow(`Total rewards sum ${totalRewardsSum}`))
 
     this.operatorsRewards = operatorsRewards
   }
