@@ -5,6 +5,14 @@ set -e
 LOG_START='\n\e[1;36m' # new line + bold + color
 LOG_END='\n\e[0m' # new line + reset color
 
+NODE_CURRENT_VER="$(node --version)"
+NODE_REQUIRED_VER="v14.3.0"
+ if [ "$(printf '%s\n' "$NODE_REQUIRED_VER" "$NODE_CURRENT_VER" | sort -V | head -n1)" != "$NODE_REQUIRED_VER" ]; 
+ then 
+        echo "Required node version must be at least ${NODE_REQUIRED_VER}" 
+        exit
+ fi
+
 WORKDIR=$PWD
 
 printf "${LOG_START}Initializing merkle-distributor submodule...${LOG_END}"
