@@ -60,18 +60,18 @@ then
    help
 fi
 
+# default file name
+STAKER_REWARD="generated-rewards/staker-reward-allocation.json"
+
 printf "${LOG_START}Calculating staker rewards...${LOG_END}"
 
-ETH_HOSTNAME="$eth_host" OUTPUT_MODE="text" node --experimental-json-modules rewards.js "$start" "$end" "$rewards"
+ETH_HOSTNAME="$eth_host" OUTPUT_MODE="text" REWARDS_PATH="$WORKDIR/$STAKER_REWARD" node --experimental-json-modules rewards.js "$start" "$end" "$rewards"
 
 printf "${LOG_START}Generating merkle output object...${LOG_END}"
 
 cd "$WORKDIR/generated-rewards"
 npm i
 
-# default file name
-REWARDS_INPUT_PATH="generated-rewards/rewards-input.json"
-
-npm run generate-merkle-root -- --input="$WORKDIR/$REWARDS_INPUT_PATH"
+npm run generate-merkle-root -- --input="$WORKDIR/$STAKER_REWARD"
 
 printf "${LOG_START}Script finished successfully${LOG_END}"

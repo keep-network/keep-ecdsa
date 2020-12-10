@@ -284,10 +284,11 @@ function shortenSummaryValues(summary) {
 }
 
 function writeOperatorsRewardsToFile(rewards) {
-  fs.writeFileSync(
-    "./generated-rewards/rewards-input.json",
-    JSON.stringify(rewards, null, 2)
-  )
+  let path = "./generated-rewards/staker-reward-allocation.json"
+  if (process.env.REWARDS_PATH) {
+    path = process.env.REWARDS_PATH
+  }
+  fs.writeFileSync(path, JSON.stringify(rewards, null, 2))
 }
 
 run()
