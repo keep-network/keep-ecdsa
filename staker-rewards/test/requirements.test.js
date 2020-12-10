@@ -150,7 +150,7 @@ describe("requirements", async () => {
       })
     })
 
-    it("finds if deauthorized during interval", async () => {
+    it("finds if the pool was unauthorized during interval", async () => {
       const operator = "0xA000000000000000000000000000000000000002"
 
       const result = await requirements.checkAuthorizations(operator)
