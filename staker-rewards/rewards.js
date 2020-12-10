@@ -140,7 +140,9 @@ function validateIntervalTotalRewards(interval) {
   }
 
   console.log(
-    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`)
+    clc.green(
+      `Interval total rewards: ${shorten18Decimals(interval.totalRewards)} KEEP`
+    )
   )
 }
 
