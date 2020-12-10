@@ -14,8 +14,8 @@ const ECDSARewardsDistributorEscrow = contract.fromArtifact(
 )
 
 describe("ECDSARewardsDistributorEscrow", () => {
-  const owner = accounts[0]
-  const thirdParty = accounts[1]
+  const owner = accounts[1]
+  const thirdParty = accounts[2]
 
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
   const totalRewards = web3.utils.toBN(178200000).mul(tokenDecimalMultiplier)
