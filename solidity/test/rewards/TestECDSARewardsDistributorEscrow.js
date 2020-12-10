@@ -17,6 +17,9 @@ describe("ECDSARewardsDistributorEscrow", () => {
   const owner = accounts[0]
   const thirdParty = accounts[1]
 
+  const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
+  const totalRewards = web3.utils.toBN(178200000).mul(tokenDecimalMultiplier)
+
   let token
   let rewardsDistributor
   let escrow
@@ -46,8 +49,7 @@ describe("ECDSARewardsDistributorEscrow", () => {
   describe("funding", async () => {
     it("can be done from phased escrow", async () => {
       const fundingEscrow = await PhasedEscrow.new(token.address, {from: owner})
-      const allTokens = await token.balanceOf(owner)
-      await token.approveAndCall(fundingEscrow.address, allTokens, "0x0", {
+      await token.approveAndCall(fundingEscrow.address, totalRewards, "0x0", {
         from: owner,
       })
 
@@ -59,8 +61,8 @@ describe("ECDSARewardsDistributorEscrow", () => {
       await beneficiary.transferOwnership(fundingEscrow.address, {from: owner})
       await fundingEscrow.setBeneficiary(beneficiary.address, {from: owner})
 
-      await fundingEscrow.withdraw(allTokens, {from: owner})
-      expect(await token.balanceOf(escrow.address)).to.eq.BN(allTokens)
+      await fundingEscrow.withdraw(totalRewards, {from: owner})
+      expect(await token.balanceOf(escrow.address)).to.eq.BN(totalRewards)
     })
   })
 
@@ -75,11 +77,10 @@ describe("ECDSARewardsDistributorEscrow", () => {
       // another PhasedEscrow, as demonstrated in "funding" describe.
       // This reflects the flow of funds on mainnet for the updated ECDSA
       // staker rewards deployment.
-      const allTokens = await token.balanceOf(owner)
-      await token.approveAndCall(escrow.address, allTokens, "0x0", {
+      await token.approveAndCall(escrow.address, totalRewards, "0x0", {
         from: owner,
       })
-      expect(await token.balanceOf(escrow.address)).to.eq.BN(allTokens)
+      expect(await token.balanceOf(escrow.address)).to.eq.BN(totalRewards)
     })
 
     it("can not be called by non-owner", async () => {
