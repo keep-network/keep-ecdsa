@@ -96,11 +96,24 @@ async function run() {
            ${operatorRewards.keepStaked.toFormat(format)} 
            ${operatorRewards.ethBonded.toFormat(format)} 
            ${operatorRewards.ethUnbonded.toFormat(format)}
+           ${operatorRewards.ethWithdrawn.toFormat(format)}
            ${operatorRewards.ethTotal.toFormat(format)} 
-           ${operatorRewards.ethScore.toFormat(noDecimalPlaces, format)} 
+           ${operatorRewards.ethScore.toFormat(
+             noDecimalPlaces,
+             BigNumber.ROUND_DOWN,
+             format
+           )} 
            ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
-           ${operatorRewards.rewardWeight.toFormat(noDecimalPlaces, format)} 
-           ${operatorRewards.totalRewards.toFormat(noDecimalPlaces, format)}
+           ${operatorRewards.rewardWeight.toFormat(
+             noDecimalPlaces,
+             BigNumber.ROUND_DOWN,
+             format
+           )} 
+           ${operatorRewards.totalRewards.toFormat(
+             noDecimalPlaces,
+             BigNumber.ROUND_DOWN,
+             format
+           )}
           `.replace(/\n/g, "\t")
       )
     )
@@ -257,6 +270,7 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
     (this.keepStaked = operatorParameters.operatorAssets.keepStaked),
     (this.ethBonded = operatorParameters.operatorAssets.ethBonded),
     (this.ethUnbonded = operatorParameters.operatorAssets.ethUnbonded),
+    (this.ethWithdrawn = operatorParameters.operatorAssets.ethWithdrawn),
     (this.ethTotal = operatorParameters.operatorAssets.ethTotal),
     (this.ethScore = operatorRewards.ethScore),
     (this.boost = operatorRewards.boost),
@@ -268,6 +282,7 @@ function shortenSummaryValues(summary) {
   summary.keepStaked = shorten18Decimals(summary.keepStaked)
   summary.ethBonded = shorten18Decimals(summary.ethBonded)
   summary.ethUnbonded = shorten18Decimals(summary.ethUnbonded)
+  summary.ethWithdrawn = shorten18Decimals(summary.ethWithdrawn)
   summary.ethTotal = shorten18Decimals(summary.ethTotal)
   summary.ethScore = shorten18Decimals(summary.ethScore)
   summary.boost = summary.boost.toFixed(decimalPlaces)
