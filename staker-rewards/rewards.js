@@ -91,10 +91,22 @@ async function run() {
            ${operatorRewards.ethUnbonded.toFormat(format)}
            ${operatorRewards.ethWithdrawn.toFormat(format)}
            ${operatorRewards.ethTotal.toFormat(format)} 
-           ${operatorRewards.ethScore.toFormat(noDecimalPlaces, format)} 
+           ${operatorRewards.ethScore.toFormat(
+             noDecimalPlaces,
+             BigNumber.ROUND_DOWN,
+             format
+           )} 
            ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
-           ${operatorRewards.rewardWeight.toFormat(noDecimalPlaces, format)} 
-           ${operatorRewards.totalRewards.toFormat(noDecimalPlaces, format)}
+           ${operatorRewards.rewardWeight.toFormat(
+             noDecimalPlaces,
+             BigNumber.ROUND_DOWN,
+             format
+           )} 
+           ${operatorRewards.totalRewards.toFormat(
+             noDecimalPlaces,
+             BigNumber.ROUND_DOWN,
+             format
+           )}
           `.replace(/\n/g, "\t")
       )
     )

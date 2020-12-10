@@ -44,7 +44,11 @@ export default class RewardsCalculator {
       new BigNumber(0)
     )
 
-    console.log(clc.yellow(`Rewards weight sum ${rewardWeightSum.toFixed(2)}`))
+    console.log(
+      clc.yellow(
+        `Rewards weight sum ${rewardWeightSum.toFixed(0, BigNumber.ROUND_DOWN)}`
+      )
+    )
 
     const operatorsRewards = []
 
@@ -69,7 +73,7 @@ export default class RewardsCalculator {
 
     const totalRewardsSum = operatorsRewards.reduce(
       (accumulator, rewards) =>
-        accumulator.plus(rewards.totalRewards.toFixed(0)),
+        accumulator.plus(rewards.totalRewards.toFixed(0, BigNumber.ROUND_DOWN)),
       new BigNumber(0)
     )
 
