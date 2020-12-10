@@ -1,6 +1,7 @@
 import clc from "cli-color"
 import { callWithRetry } from "./contract-helper.js"
 import BigNumber from "bignumber.js"
+import { decimalPlaces, noDecimalPlaces } from "./numbers.js"
 
 export default class RewardsCalculator {
   constructor(context, interval) {
@@ -44,7 +45,9 @@ export default class RewardsCalculator {
       new BigNumber(0)
     )
 
-    console.log(clc.yellow(`Rewards weight sum ${rewardWeightSum.toFixed(2)}`))
+    console.log(
+      clc.yellow(`Rewards weight sum ${rewardWeightSum.toFixed(decimalPlaces)}`)
+    )
 
     const operatorsRewards = []
 
@@ -69,7 +72,7 @@ export default class RewardsCalculator {
 
     const totalRewardsSum = operatorsRewards.reduce(
       (accumulator, rewards) =>
-        accumulator.plus(rewards.totalRewards.toFixed(0)),
+        accumulator.plus(rewards.totalRewards.toFixed(noDecimalPlaces)),
       new BigNumber(0)
     )
 

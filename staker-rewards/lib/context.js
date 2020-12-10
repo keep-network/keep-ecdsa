@@ -11,8 +11,9 @@ import TokenStakingJson from "@keep-network/keep-core/artifacts/TokenStaking.jso
 import BondedECDSAKeepFactoryJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import BondedECDSAKeepJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import KeepBondingJson from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
+import BondedSortitionPoolJson from "@keep-network/keep-ecdsa/artifacts/BondedSortitionPool.json"
 
-const sanctionedApplicationAddress =
+export const SANCTIONED_APPLICATION_ADDRESS =
   "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a"
 
 export default class Context {
@@ -37,6 +38,8 @@ export default class Context {
 
     const KeepBonding = new Contract(KeepBondingJson, web3)
 
+    const BondedSortitionPool = new Contract(BondedSortitionPoolJson, web3)
+
     const factoryDeploymentBlock = await getDeploymentBlockNumber(
       BondedECDSAKeepFactoryJson,
       web3
@@ -47,7 +50,8 @@ export default class Context {
       BondedECDSAKeepFactory: BondedECDSAKeepFactory,
       BondedECDSAKeep: BondedECDSAKeep,
       KeepBonding: KeepBonding,
-      sanctionedApplicationAddress: sanctionedApplicationAddress,
+      BondedSortitionPool: BondedSortitionPool,
+      sanctionedApplicationAddress: SANCTIONED_APPLICATION_ADDRESS,
       factoryDeploymentBlock: factoryDeploymentBlock,
     }
 

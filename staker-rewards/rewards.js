@@ -1,6 +1,11 @@
 import clc from "cli-color"
 import BlockByDate from "ethereum-block-by-date"
 import BigNumber from "bignumber.js"
+import {
+  decimalPlaces,
+  noDecimalPlaces,
+  shorten18Decimals,
+} from "./lib/numbers.js"
 
 import Context from "./lib/context.js"
 import FraudDetector from "./lib/fraud-detector.js"
@@ -9,9 +14,6 @@ import SLACalculator from "./lib/sla-calculator.js"
 import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
 import { getPastEvents } from "./lib/contract-helper.js"
-
-const decimalPlaces = 2
-const noDecimalPlaces = 0
 
 async function run() {
   // URL to the websocket endpoint of the Ethereum node.
@@ -80,6 +82,11 @@ async function run() {
       console.log(
         `${operatorRewards.operator}
            ${operatorRewards.isFraudulent} 
+           ${operatorRewards.factoryAuthorizedAtStart} 
+           ${operatorRewards.poolAuthorizedAtStart} 
+           ${operatorRewards.poolDeauthorizedInInterval} 
+           ${operatorRewards.minimumStakeAtStart} 
+           ${operatorRewards.poolRequirementFulfilledAtStart} 
            ${operatorRewards.keygenCount}
            ${operatorRewards.keygenFailCount} 
            ${operatorRewards.keygenSLA} 
@@ -133,7 +140,9 @@ function validateIntervalTotalRewards(interval) {
   }
 
   console.log(
-    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`)
+    clc.green(
+      `Interval total rewards: ${shorten18Decimals(interval.totalRewards)} KEEP`
+    )
   )
 }
 
@@ -157,9 +166,7 @@ async function calculateOperatorsRewards(context, interval) {
 
   for (const operator of await getOperators(context)) {
     const isFraudulent = await fraudDetector.isOperatorFraudulent(operator)
-    const operatorAuthorizations = await requirements.checkAuthorizations(
-      operator
-    )
+    const operatorRequirements = await requirements.check(operator)
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     const operatorAssets = await assetsCalculator.calculateOperatorAssets(
       operator
@@ -169,7 +176,7 @@ async function calculateOperatorsRewards(context, interval) {
       new OperatorParameters(
         operator,
         isFraudulent,
-        operatorAuthorizations,
+        operatorRequirements,
         operatorSLA,
         operatorAssets
       )
@@ -216,13 +223,13 @@ async function getOperators(context) {
 function OperatorParameters(
   operator,
   isFraudulent,
-  authorizations,
+  requirements,
   operatorSLA,
   operatorAssets
 ) {
   ;(this.operator = operator),
     (this.isFraudulent = isFraudulent),
-    (this.authorizations = authorizations),
+    (this.requirements = requirements),
     (this.operatorSLA = operatorSLA),
     (this.operatorAssets = operatorAssets)
 }
@@ -231,11 +238,15 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
   ;(this.operator = operator),
     (this.isFraudulent = operatorParameters.isFraudulent),
     (this.factoryAuthorizedAtStart =
-      operatorParameters.authorizations.factoryAuthorizedAtStart),
+      operatorParameters.requirements.factoryAuthorizedAtStart),
     (this.poolAuthorizedAtStart =
-      operatorParameters.authorizations.poolAuthorizedAtStart),
+      operatorParameters.requirements.poolAuthorizedAtStart),
     (this.poolDeauthorizedInInterval =
-      operatorParameters.authorizations.poolDeauthorizedInInterval),
+      operatorParameters.requirements.poolDeauthorizedInInterval),
+    (this.minimumStakeAtStart =
+      operatorParameters.requirements.minimumStakeAtStart),
+    (this.poolRequirementFulfilledAtStart =
+      operatorParameters.requirements.poolRequirementFulfilledAtStart),
     (this.keygenCount = operatorParameters.operatorSLA.keygenCount),
     (this.keygenFailCount = operatorParameters.operatorSLA.keygenFailCount),
     (this.keygenSLA = operatorParameters.operatorSLA.keygenSLA),
@@ -254,9 +265,6 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
 }
 
 function shortenSummaryValues(summary) {
-  const shorten18Decimals = (value) =>
-    value.dividedBy(new BigNumber(1e18)).toFixed(decimalPlaces)
-
   summary.keepStaked = shorten18Decimals(summary.keepStaked)
   summary.ethBonded = shorten18Decimals(summary.ethBonded)
   summary.ethUnbonded = shorten18Decimals(summary.ethUnbonded)
