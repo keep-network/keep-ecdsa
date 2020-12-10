@@ -86,7 +86,7 @@ async function run() {
            ${operatorRewards.poolAuthorizedAtStart} 
            ${operatorRewards.poolDeauthorizedInInterval} 
            ${operatorRewards.minimumStakeAtStart} 
-           ${operatorRewards.wasInPoolIfRequiredAtIntervalStart} 
+           ${operatorRewards.wasInPoolIfRequiredAtStart} 
            ${operatorRewards.keygenCount}
            ${operatorRewards.keygenFailCount} 
            ${operatorRewards.keygenSLA} 
@@ -243,8 +243,8 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
       operatorParameters.requirements.poolDeauthorizedInInterval),
     (this.minimumStakeAtStart =
       operatorParameters.requirements.minimumStakeAtStart),
-    (this.wasInPoolIfRequiredAtIntervalStart =
-      operatorParameters.requirements.wasInPoolIfRequiredAtIntervalStart),
+    (this.wasInPoolIfRequiredAtStart =
+      operatorParameters.requirements.wasInPoolIfRequiredAtStart),
     (this.keygenCount = operatorParameters.operatorSLA.keygenCount),
     (this.keygenFailCount = operatorParameters.operatorSLA.keygenFailCount),
     (this.keygenSLA = operatorParameters.operatorSLA.keygenSLA),

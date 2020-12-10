@@ -275,12 +275,12 @@ export function OperatorRequirements(
   poolAuthorizedAtStart,
   poolDeauthorizedInInterval,
   minimumStakeAtStart,
-  wasInPoolIfRequiredAtIntervalStart
+  wasInPoolIfRequiredAtStart
 ) {
   ;(this.address = address),
     (this.factoryAuthorizedAtStart = factoryAuthorizedAtStart),
     (this.poolAuthorizedAtStart = poolAuthorizedAtStart),
     (this.minimumStakeAtStart = minimumStakeAtStart),
-    (this.wasInPoolIfRequiredAtIntervalStart = wasInPoolIfRequiredAtIntervalStart),
+    (this.wasInPoolIfRequiredAtStart = wasInPoolIfRequiredAtStart),
     (this.poolDeauthorizedInInterval = poolDeauthorizedInInterval)
 }
