@@ -12,8 +12,23 @@ program
 
 program.parse(process.argv)
 
-const json = JSON.parse(fs.readFileSync(program.input, { encoding: 'utf8' }))
+const output_merkle_objects = './output-merkle-objects.json'
 
+// read existing merkle objects if any
+let merkleObjects = {}
+if (fs.existsSync(output_merkle_objects)) {
+  merkleObjects = JSON.parse(fs.readFileSync(output_merkle_objects, { encoding: 'utf8' }))
+}
+
+// new rewards for merkle interval
+const json = JSON.parse(fs.readFileSync(program.input, { encoding: 'utf8' }))
 if (typeof json !== 'object') throw new Error('Invalid JSON')
 
-fs.writeFileSync('./output-merkle-object.json', JSON.stringify(parseBalanceMap(json), null, 2))
+const merkleObject = parseBalanceMap(json)
+const totalAndClaims = {
+  tokenTotal: merkleObject.tokenTotal,
+  claims: merkleObject.claims
+}
+merkleObjects[merkleObject.merkleRoot] = totalAndClaims
+
+fs.writeFileSync(output_merkle_objects, JSON.stringify(merkleObjects, null, 2))
