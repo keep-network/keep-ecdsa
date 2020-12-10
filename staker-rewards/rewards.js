@@ -93,6 +93,7 @@ async function run() {
            ${operatorRewards.signatureCount} 
            ${operatorRewards.signatureFailCount}
            ${operatorRewards.signatureSLA} 
+           ${operatorRewards.SLAViolated}
            ${operatorRewards.keepStaked.toFormat(format)} 
            ${operatorRewards.ethBonded.toFormat(format)} 
            ${operatorRewards.ethUnbonded.toFormat(format)}
@@ -153,9 +154,7 @@ function validateIntervalTotalRewards(interval) {
   }
 
   console.log(
-    clc.green(
-      `Interval total rewards: ${shorten18Decimals(interval.totalRewards)} KEEP`
-    )
+    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`)
   )
 }
 
@@ -267,6 +266,7 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
     (this.signatureFailCount =
       operatorParameters.operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorParameters.operatorSLA.signatureSLA),
+    (this.SLAViolated = operatorRewards.SLAViolated),
     (this.keepStaked = operatorParameters.operatorAssets.keepStaked),
     (this.ethBonded = operatorParameters.operatorAssets.ethBonded),
     (this.ethUnbonded = operatorParameters.operatorAssets.ethUnbonded),
