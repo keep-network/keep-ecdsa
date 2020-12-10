@@ -5,22 +5,25 @@ import Subproviders from "@0x/subproviders"
 
 import Cache from "./cache.js"
 import { Contract, getDeploymentBlockNumber } from "./contract-helper.js"
+import Tenderly from "./tenderly.js"
 
 import TokenStakingJson from "@keep-network/keep-core/artifacts/TokenStaking.json"
 import BondedECDSAKeepFactoryJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import BondedECDSAKeepJson from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import KeepBondingJson from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
 
-const SanctionedApplication = "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a"
+const sanctionedApplicationAddress =
+  "0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a"
 
 export default class Context {
-  constructor(cache, web3, contracts) {
+  constructor(cache, web3, contracts, tenderly) {
     this.cache = cache
     this.web3 = web3
     this.contracts = contracts
+    this.tenderly = tenderly
   }
 
-  static async initialize(ethUrl) {
+  static async initialize(ethUrl, tenderlyProjectURL, tenderlyAccessToken) {
     const web3 = await initWeb3(ethUrl)
 
     const TokenStaking = new Contract(TokenStakingJson, web3)
@@ -44,14 +47,23 @@ export default class Context {
       BondedECDSAKeepFactory: BondedECDSAKeepFactory,
       BondedECDSAKeep: BondedECDSAKeep,
       KeepBonding: KeepBonding,
-      SanctionedApplication: SanctionedApplication,
+      sanctionedApplicationAddress: sanctionedApplicationAddress,
       factoryDeploymentBlock: factoryDeploymentBlock,
     }
 
     const cache = new Cache(web3, contracts)
     await cache.initialize()
 
-    return new Context(cache, web3, contracts)
+    let tenderly
+    if (tenderlyAccessToken) {
+      tenderly = Tenderly.initialize(
+        web3,
+        tenderlyProjectURL,
+        tenderlyAccessToken
+      )
+    }
+
+    return new Context(cache, web3, contracts, tenderly)
   }
 }
 

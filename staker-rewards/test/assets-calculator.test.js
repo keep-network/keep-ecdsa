@@ -1,7 +1,17 @@
 import chai from "chai"
-import BN from "bn.js"
-import testBlockchain from "./data/test-blockchain.json"
+
+import { createMockContext } from "./helpers/mock.js"
+import { mockMethod, mockEvents } from "./helpers/blockchain.js"
+
+import {
+  SortitionPoolAddress,
+  TokenStakingAddress,
+  BondedECDSAKeepFactoryAddress,
+  KeepBondingAddress,
+} from "./helpers/constants.js"
+
 import AssetsCalculator from "../lib/assets-calculator.js"
+import BigNumber from "bignumber.js"
 
 const { assert } = chai
 
@@ -13,32 +23,6 @@ const interval = {
 }
 
 const operator = "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
-const SortitionPoolAddress = "0xf876aE82E3Ef9a67ad4E9eA23eFa4de2D85DA6fb"
-const TokenStakingAddress = "0x186E82df0a09534537d0D8680D03b548628ab288"
-const KeepFactoryAddress = "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426"
-const KeepBondingAddress = "0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab"
-
-const createMockContext = () => ({
-  contracts: {},
-  web3: {
-    utils: {
-      toBN: (value) => new BN(value),
-      fromWei: (value) =>
-        new BN(value).div(new BN("1000000000000000000")).toString(),
-    },
-  },
-})
-
-const getStateAtBlock = (contractAddress, blockNumber) => {
-  const block = testBlockchain.find(
-    (block) => block.blockNumber === blockNumber
-  )
-
-  return (
-    block &&
-    block.contracts.find((contract) => contract.address === contractAddress)
-  )
-}
 
 const setupContractsMock = (context) => {
   context.contracts.BondedECDSAKeepFactory = {
@@ -49,7 +33,7 @@ const setupContractsMock = (context) => {
         }),
       },
       options: {
-        address: KeepFactoryAddress,
+        address: BondedECDSAKeepFactoryAddress,
       },
     }),
   }
@@ -58,19 +42,13 @@ const setupContractsMock = (context) => {
     deployed: () => ({
       methods: {
         activeStake: (operator, operatorContract) => ({
-          call: async (_, blockNumber) => {
-            const state = getStateAtBlock(TokenStakingAddress, blockNumber)
-
-            const stake =
-              state &&
-              state.activeStakes.find(
-                (stake) =>
-                  stake.operator === operator &&
-                  stake.operatorContract === operatorContract
-              )
-
-            return (stake && stake.activeStake) || "0"
-          },
+          call: mockMethod(
+            TokenStakingAddress,
+            "activeStake",
+            (inputs) =>
+              inputs.operator === operator &&
+              inputs.operatorContract === operatorContract
+          ),
         }),
       },
     }),
@@ -84,27 +62,17 @@ const setupContractsMock = (context) => {
           bondCreator,
           sortitionPoolAddress
         ) => ({
-          call: async (_, blockNumber) => {
-            const state = getStateAtBlock(KeepBondingAddress, blockNumber)
-
-            const unbonded =
-              state &&
-              state.unbondedValues.find(
-                (value) =>
-                  value.operator === operator &&
-                  value.operatorContract === bondCreator &&
-                  value.sortitionPool === sortitionPoolAddress
-              )
-
-            return (unbonded && unbonded.amount) || "0"
-          },
+          call: mockMethod(
+            KeepBondingAddress,
+            "availableUnbondedValue",
+            (inputs) =>
+              inputs.operator === operator &&
+              inputs.operatorContract === bondCreator &&
+              inputs.sortitionPool === sortitionPoolAddress
+          ),
         }),
       },
-      getPastEvents: async (eventName, options) => {
-        const state = getStateAtBlock(KeepBondingAddress, options.toBlock)
-
-        return state && state.events.filter((event) => event.name === eventName)
-      },
+      getPastEvents: mockEvents(KeepBondingAddress),
     }),
   }
 
@@ -124,7 +92,10 @@ describe("assets calculator", async () => {
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
-    assert.equal(assets.keepStaked, "500000")
+    assert.equal(
+      assets.keepStaked.isEqualTo(new BigNumber(500000).multipliedBy(1e18)),
+      true
+    )
   })
 
   it("should return the right value of ETH unbonded", async () => {
@@ -139,7 +110,10 @@ describe("assets calculator", async () => {
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
-    assert.equal(assets.ethUnbonded, 40)
+    assert.equal(
+      assets.ethUnbonded.isEqualTo(new BigNumber(40).multipliedBy(1e18)),
+      true
+    )
   })
 
   it("should return the right value of ETH bonded", async () => {
@@ -154,7 +128,10 @@ describe("assets calculator", async () => {
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
-    assert.equal(assets.ethBonded, 15)
+    assert.equal(
+      assets.ethBonded.isEqualTo(new BigNumber(15).multipliedBy(1e18)),
+      true
+    )
   })
 
   it("should return the right value of ETH total", async () => {
@@ -169,6 +146,9 @@ describe("assets calculator", async () => {
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
-    assert.equal(assets.ethTotal, 55)
+    assert.equal(
+      assets.ethTotal.isEqualTo(new BigNumber(55).multipliedBy(1e18)),
+      true
+    )
   })
 })

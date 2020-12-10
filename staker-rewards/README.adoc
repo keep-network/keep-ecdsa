@@ -27,7 +27,7 @@ npm install
 ```
 ETH_HOSTNAME=<eth-ws-hostname> \
 node --experimental-json-modules rewards.js \
-<interval-start-unix-timestamp> <interval-end-unix-timestamp>
+<interval-start-unix-timestamp> <interval-end-unix-timestamp> <interval-total-rewards-18-decimals-number>
 ```
 +
 You can also use several auxiliary environment variables:
