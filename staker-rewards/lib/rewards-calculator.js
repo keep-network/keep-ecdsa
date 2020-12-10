@@ -203,5 +203,7 @@ function OperatorRewards(
     (this.boost = boost),
     (this.rewardWeight = rewardWeight),
     (this.totalRewards = totalRewards),
-    (this.requirementsViolations = requirementsViolations)
+    (this.requirementsViolations = requirementsViolations),
+    (this.SLAViolated =
+      requirementsViolations.filter((r) => r.includes("SLA")).length > 0)
 }

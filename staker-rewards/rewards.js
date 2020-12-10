@@ -93,6 +93,7 @@ async function run() {
            ${operatorRewards.signatureCount} 
            ${operatorRewards.signatureFailCount}
            ${operatorRewards.signatureSLA} 
+           ${operatorRewards.SLAViolated}
            ${operatorRewards.keepStaked.toFormat(format)} 
            ${operatorRewards.ethBonded.toFormat(format)} 
            ${operatorRewards.ethUnbonded.toFormat(format)}
@@ -114,7 +115,6 @@ async function run() {
              BigNumber.ROUND_DOWN,
              format
            )}
-           ${operatorRewards.requirementsViolations}
           `.replace(/\n/g, "\t")
       )
     )
@@ -266,6 +266,7 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
     (this.signatureFailCount =
       operatorParameters.operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorParameters.operatorSLA.signatureSLA),
+    (this.SLAViolated = operatorRewards.SLAViolated),
     (this.keepStaked = operatorParameters.operatorAssets.keepStaked),
     (this.ethBonded = operatorParameters.operatorAssets.ethBonded),
     (this.ethUnbonded = operatorParameters.operatorAssets.ethUnbonded),
@@ -274,8 +275,7 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
     (this.ethScore = operatorRewards.ethScore),
     (this.boost = operatorRewards.boost),
     (this.rewardWeight = operatorRewards.rewardWeight),
-    (this.totalRewards = operatorRewards.totalRewards),
-    (this.requirementsViolations = operatorRewards.requirementsViolations)
+    (this.totalRewards = operatorRewards.totalRewards)
 }
 
 function shortenSummaryValues(summary) {
