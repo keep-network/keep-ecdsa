@@ -131,8 +131,8 @@ export default class RewardsCalculator {
       violations.push("minimumStakeAtStart")
     }
 
-    if (requirements.minimumUnbondedValueRegisteredAtStart === false) {
-      violations.push("minimumUnbondedValueRegisteredAtStart")
+    if (requirements.poolRequirementFulfilledAtStart === false) {
+      violations.push("poolRequirementFulfilledAtStart")
     }
 
     if (operatorSLA.keygenSLA !== "N/A" && operatorSLA.keygenSLA < 90) {

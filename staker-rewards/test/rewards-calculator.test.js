@@ -28,7 +28,7 @@ const createOperatorParameters = (operator, keepStaked, ethTotal) => ({
     poolAuthorizedAtStart: true,
     poolDeauthorizedInInterval: false,
     minimumStakeAtStart: true,
-    minimumUnbondedValueRegisteredAtStart: true,
+    poolRequirementFulfilledAtStart: true,
   },
   operatorSLA: {
     keygenSLA: 90,
@@ -277,14 +277,14 @@ describe("rewards calculator", async () => {
     assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
   })
 
-  it("should set total rewards to zero if no minimum unbonded value registered at start", async () => {
+  it("should set total rewards to zero if pool requirement is not fulfilled at start", async () => {
     const mockContext = createMockContext()
 
     setupContractsMock(mockContext)
 
     const operatorParameters = createOperatorParameters(operator, 70000, 100)
 
-    operatorParameters.requirements.minimumUnbondedValueRegisteredAtStart = false
+    operatorParameters.requirements.poolRequirementFulfilledAtStart = false
 
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
