@@ -39,6 +39,7 @@ export default class AssetsCalculator {
     )
 
     await assetsCalculator.fetchBondEvents()
+    await assetsCalculator.fetchUnbondedValueWithdrawnEvents()
 
     return assetsCalculator
   }
@@ -53,13 +54,19 @@ export default class AssetsCalculator {
     const keepStaked = await this.calculateKeepStaked(operator)
     const ethBonded = await this.calculateETHBonded(operator)
     const ethUnbonded = await this.calculateETHUnbonded(operator)
-    const ethTotal = ethBonded.plus(ethUnbonded)
+    const ethWithdrawn = await this.calculateETHWithdrawn(operator)
+    let ethTotal = ethBonded.plus(ethUnbonded).minus(ethWithdrawn)
+
+    if (ethTotal.isLessThan(new BigNumber(0))) {
+      ethTotal = new BigNumber(0)
+    }
 
     return new OperatorAssets(
       operator,
       keepStaked,
       ethBonded,
       ethUnbonded,
+      ethWithdrawn,
       ethTotal
     )
   }
@@ -92,6 +99,21 @@ export default class AssetsCalculator {
       bondReleasedEvents: await getBondEvents("BondReleased"),
       bondSeizedEvents: await getBondEvents("BondSeized"),
     }
+  }
+
+  async fetchUnbondedValueWithdrawnEvents() {
+    // We are interested in all unbonded value withdrawals which occurred
+    // within the given interval.
+    const fromBlock = this.interval.startBlock
+    const toBlock = this.interval.endBlock
+
+    this.unbondedValueWithdrawnEvents = await getPastEvents(
+      this.context.web3,
+      this.keepBonding,
+      "UnbondedValueWithdrawn",
+      fromBlock,
+      toBlock
+    )
   }
 
   async calculateKeepStaked(operator) {
@@ -167,12 +189,30 @@ export default class AssetsCalculator {
 
     return new BigNumber(weiUnbonded)
   }
+
+  async calculateETHWithdrawn(operator) {
+    return this.unbondedValueWithdrawnEvents
+      .filter((event) => event.returnValues.operator === operator)
+      .reduce(
+        (accumulator, event) =>
+          accumulator.plus(new BigNumber(event.returnValues.amount)),
+        new BigNumber(0)
+      )
+  }
 }
 
-function OperatorAssets(address, keepStaked, ethBonded, ethUnbonded, ethTotal) {
+function OperatorAssets(
+  address,
+  keepStaked,
+  ethBonded,
+  ethUnbonded,
+  ethWithdrawn,
+  ethTotal
+) {
   ;(this.address = address),
     (this.keepStaked = keepStaked),
     (this.ethBonded = ethBonded),
     (this.ethUnbonded = ethUnbonded),
+    (this.ethWithdrawn = ethWithdrawn),
     (this.ethTotal = ethTotal)
 }

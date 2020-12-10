@@ -24,7 +24,10 @@ export function mockMethod(
     const state = getStateAtBlock(contractAddress, blockNumber)
 
     const result =
-      state && state.methods && state.methods[method].find(inputCheck)
+      state &&
+      state.methods &&
+      state.methods[method] &&
+      state.methods[method].find(inputCheck)
 
     return (result && result.output) || defaultOutput
   }

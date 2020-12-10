@@ -1,5 +1,6 @@
 import testCache from "../data/test-cache.json"
 import transactionsCache from "../data/test-transactions.json"
+import { SANCTIONED_APPLICATION_ADDRESS } from "../../lib/context.js"
 
 export const createMockContext = () => ({
   cache: {
@@ -10,5 +11,5 @@ export const createMockContext = () => ({
         (tx) => tx.to.toLowerCase() === to.toLowerCase() && tx.method === method
       ),
   },
-  contracts: {},
+  contracts: { sanctionedApplicationAddress: SANCTIONED_APPLICATION_ADDRESS },
 })

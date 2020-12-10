@@ -1,4 +1,6 @@
 import { callWithRetry } from "./contract-helper.js"
+import BigNumber from "bignumber.js"
+import { shorten18Decimals } from "./numbers.js"
 
 export default class Requirements {
   constructor(
@@ -6,25 +8,47 @@ export default class Requirements {
     interval,
     bondedECDSAKeepFactory,
     keepBonding,
-    sortitionPoolAddress
+    sanctionedApplicationAddress,
+    sortitionPoolAddress,
+    minimumBondableValueAtStart
   ) {
     this.context = context
     this.interval = interval
     this.bondedECDSAKeepFactory = bondedECDSAKeepFactory
     this.keepBonding = keepBonding
+    this.sanctionedApplicationAddress = sanctionedApplicationAddress
     this.sortitionPoolAddress = sortitionPoolAddress
+    this.minimumBondableValueAtStart = minimumBondableValueAtStart
     this.operatorsDeauthorizedInInterval = new Set()
   }
 
   static async initialize(context, interval) {
     const { contracts } = context
 
+    const sanctionedApplicationAddress = contracts.sanctionedApplicationAddress
+
     const bondedECDSAKeepFactory = await contracts.BondedECDSAKeepFactory.deployed()
 
     const sortitionPoolAddress = await callWithRetry(
       bondedECDSAKeepFactory.methods.getSortitionPool(
-        contracts.sanctionedApplicationAddress
+        sanctionedApplicationAddress
       )
+    )
+
+    const bondedSortitionPool = await contracts.BondedSortitionPool.at(
+      sortitionPoolAddress
+    )
+    const minimumBondableValueAtStart = new BigNumber(
+      await callWithRetry(
+        bondedSortitionPool.methods.getMinimumBondableValue(),
+        interval.startBlock
+      )
+    )
+
+    console.log(
+      `Minimum Bondable Value at interval start: ${shorten18Decimals(
+        minimumBondableValueAtStart
+      ).toString()} ether`
     )
 
     const requirements = new Requirements(
@@ -32,7 +56,9 @@ export default class Requirements {
       interval,
       bondedECDSAKeepFactory,
       await contracts.KeepBonding.deployed(),
-      sortitionPoolAddress
+      sanctionedApplicationAddress,
+      sortitionPoolAddress,
+      minimumBondableValueAtStart
     )
 
     await requirements.checkDeauthorizations()
@@ -135,9 +161,34 @@ export default class Requirements {
     this.context.cache.storeTransactions(transactions)
   }
 
-  async checkAuthorizations(operator) {
-    console.debug(`Checking authorizations for operator ${operator}`)
+  async check(operator) {
+    console.log(`Checking requirements for operator ${operator}`)
 
+    const {
+      factoryAuthorizedAtStart,
+      poolAuthorizedAtStart,
+      poolDeauthorizedInInterval,
+    } = await this.checkAuthorizations(operator)
+
+    const minimumStakeAtStart = await this.checkMinimumStakeAtIntervalStart(
+      operator
+    )
+
+    const poolRequirementFulfilledAtStart = await this.checkWasInPoolIfRequiredAtIntervalStart(
+      operator
+    )
+
+    return new OperatorRequirements(
+      operator,
+      factoryAuthorizedAtStart,
+      poolAuthorizedAtStart,
+      poolDeauthorizedInInterval,
+      minimumStakeAtStart,
+      poolRequirementFulfilledAtStart
+    )
+  }
+
+  async checkAuthorizations(operator) {
     // Authorizations at the interval start.
     const {
       wasFactoryAuthorized: factoryAuthorizedAtStart,
@@ -149,12 +200,11 @@ export default class Requirements {
       operator
     )
 
-    return new OperatorAuthorizations(
-      operator,
+    return {
       factoryAuthorizedAtStart,
       poolAuthorizedAtStart,
-      poolDeauthorizedInInterval
-    )
+      poolDeauthorizedInInterval,
+    }
   }
 
   async checkAuthorizationsAtIntervalStart(operator) {
@@ -179,16 +229,58 @@ export default class Requirements {
   async wasSortitionPoolDeauthorized(operator) {
     return this.operatorsDeauthorizedInInterval.has(operator.toLowerCase())
   }
+
+  async checkMinimumStakeAtIntervalStart(operator) {
+    return await callWithRetry(
+      this.bondedECDSAKeepFactory.methods.hasMinimumStake(operator),
+      this.interval.startBlock
+    )
+  }
+
+  // If the operator has at least minimum unbonded value available they have
+  // to be registered in the sortition pool. Operators who are not in the sortition
+  // pool because all of their ether is bonded are still getting rewards because
+  // that ether is still under the system’s management.
+  async checkWasInPoolIfRequiredAtIntervalStart(operator) {
+    const unbondedValueAtStart = new BigNumber(
+      await callWithRetry(
+        this.keepBonding.methods.unbondedValue(operator),
+        this.interval.startBlock
+      )
+    )
+
+    const hadMinimumBondableValueAtStart = unbondedValueAtStart.gte(
+      this.minimumBondableValueAtStart
+    )
+
+    if (hadMinimumBondableValueAtStart) {
+      const wasRegisteredAtStart = await callWithRetry(
+        this.bondedECDSAKeepFactory.methods.isOperatorRegistered(
+          operator,
+          this.sanctionedApplicationAddress
+        ),
+        this.interval.startBlock
+      )
+
+      return wasRegisteredAtStart
+    } else {
+      return true
+    }
+  }
 }
 
-export function OperatorAuthorizations(
+export function OperatorRequirements(
   address,
   factoryAuthorizedAtStart,
   poolAuthorizedAtStart,
-  poolDeauthorizedInInterval
+  poolDeauthorizedInInterval,
+  minimumStakeAtStart,
+  poolRequirementFulfilledAtStart
 ) {
   ;(this.address = address),
     (this.factoryAuthorizedAtStart = factoryAuthorizedAtStart),
     (this.poolAuthorizedAtStart = poolAuthorizedAtStart),
+    (this.minimumStakeAtStart = minimumStakeAtStart),
+    (this.poolRequirementFulfilledAtStart = poolRequirementFulfilledAtStart),
     (this.poolDeauthorizedInInterval = poolDeauthorizedInInterval)
 }
