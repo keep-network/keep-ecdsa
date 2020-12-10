@@ -111,7 +111,25 @@ describe("assets calculator", async () => {
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
-      assets.ethUnbonded.isEqualTo(new BigNumber(25).multipliedBy(1e18)),
+      assets.ethUnbonded.isEqualTo(new BigNumber(40).multipliedBy(1e18)),
+      true
+    )
+  })
+
+  it("should return the right value of ETH withdrawn", async () => {
+    const mockContext = createMockContext()
+
+    setupContractsMock(mockContext)
+
+    const assetsCalculator = await AssetsCalculator.initialize(
+      mockContext,
+      interval
+    )
+
+    const assets = await assetsCalculator.calculateOperatorAssets(operator)
+
+    assert.equal(
+      assets.ethWithdrawn.isEqualTo(new BigNumber(15).multipliedBy(1e18)),
       true
     )
   })
