@@ -10,7 +10,7 @@ NODE_REQUIRED_VER="v14.3.0"
  if [ "$(printf '%s\n' "$NODE_REQUIRED_VER" "$NODE_CURRENT_VER" | sort -V | head -n1)" != "$NODE_REQUIRED_VER" ]; 
  then 
         echo "Required node version must be at least ${NODE_REQUIRED_VER}" 
-        exit
+        exit 1
  fi
 
 WORKDIR=$PWD

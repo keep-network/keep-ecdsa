@@ -101,11 +101,12 @@ async function run() {
             `.replace(/\n/g, "\t")
       )
 
-      if (operatorReward.totalRewards != 0) {
-        const rewardsBN = new BigNumber(
-          operatorReward.totalRewards.toFormat(noDecimalPlaces, format)
-        )
-        rewards[operatorReward.operator] = rewardsBN.toString(16) // convert BN to hex
+      if (!operatorReward.totalRewards.isZero()) {
+        rewards[
+          operatorReward.operator
+        ] = operatorReward.totalRewards
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString(16) // convert BN to hex
       }
     }
 
