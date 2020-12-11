@@ -22,9 +22,9 @@ fi
 help()
 {
    echo ""
-   echo "Usage: $0 -v -h <eth_host> -s <start_interval> -e <end_interval> -r <rewards> -u <tenderly_url> -t <tenderly_token>"
+   echo "Usage: $0 -v -w <eth_host> -s <start_interval> -e <end_interval> -r <rewards> -u <tenderly_url> -t <tenderly_token>"
    echo -e "\t-v Optional verify flag just to display the results without generation of a merkle tree"
-   echo -e "\t-h Websocket endpoint of the Ethereum node"
+   echo -e "\t-w Websocket endpoint of the Ethereum node"
    echo -e "\t-s Start of the interval passed as UNIX timestamp"
    echo -e "\t-e End of the interval passed as UNIX timestamp"
    echo -e "\t-r Total KEEP rewards distributed within the given interval passed as 18-decimals number"
@@ -39,11 +39,11 @@ fi
 
 printf "${LOG_START}Processing input parameters...${LOG_END}"
 
-while getopts "vh:s:e:r:u:t:" opt
+while getopts "vw:s:e:r:u:t:" opt
 do
    case "$opt" in
       v ) verify=true ;;
-      h ) eth_host="$OPTARG" ;;
+      w ) eth_host="$OPTARG" ;;
       s ) start="$OPTARG" ;;
       e ) end="$OPTARG" ;;
       r ) rewards="$OPTARG" ;;
