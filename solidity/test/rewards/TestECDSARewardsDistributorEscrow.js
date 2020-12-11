@@ -4,6 +4,7 @@ const {expectRevert} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
 
 const KeepToken = contract.fromArtifact("KeepToken")
+const TokenStakingStub = contract.fromArtifact("TokenStakingStub")
 const PhasedEscrow = contract.fromArtifact("PhasedEscrow")
 const ECDSARewardsEscrowBeneficiary = contract.fromArtifact(
   "ECDSARewardsEscrowBeneficiary"
@@ -26,9 +27,14 @@ describe("ECDSARewardsDistributorEscrow", () => {
 
   before(async () => {
     token = await KeepToken.new({from: owner})
-    rewardsDistributor = await ECDSARewardsDistributor.new(token.address, {
-      from: owner,
-    })
+    tokenStaking = await TokenStakingStub.new({from: owner})
+    rewardsDistributor = await ECDSARewardsDistributor.new(
+      token.address,
+      tokenStaking.address,
+      {
+        from: owner,
+      }
+    )
     escrow = await ECDSARewardsDistributorEscrow.new(
       token.address,
       rewardsDistributor.address,
