@@ -92,7 +92,7 @@ To run the script, make sure you have the following prerequisites:
 
 To verify operator rewards and display summary in a table, run:
 ```
-./rewards-merkle-generator.sh -v -h <eth_host> -s <start_timestamp> -e <end_timestamp> -r <reward_allocation>
+./rewards-merkle-generator.sh -v -w <eth_host> -s <start_timestamp> -e <end_timestamp> -r <reward_allocation>
 ```
 
 This command runs all calculations against mainnet data and displays operator 
@@ -102,7 +102,7 @@ places.
 To calculate operator rewards and calculate merkle tree, drop option `-v`, and run:
 
 ```
-./rewards-merkle-generator.sh -h <eth_host> -s <start_timestamp> -e <end_timestamp> -r <reward_allocation>
+./rewards-merkle-generator.sh -w <eth_host> -s <start_timestamp> -e <end_timestamp> -r <reward_allocation>
 ```
 
 Merkle tree output will be written to `distributor/output-merkle-objects.json`.
