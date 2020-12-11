@@ -5,15 +5,58 @@ set -e
 LOG_START='\n\e[1;36m' # new line + bold + color
 LOG_END='\n\e[0m' # new line + reset color
 
+WORKDIR=$PWD
+
+# default file for calculated staker reward allocation
+STAKER_REWARD="distributor/staker-reward-allocation.json"
+
 NODE_CURRENT_VER="$(node --version)"
 NODE_REQUIRED_VER="v14.3.0"
- if [ "$(printf '%s\n' "$NODE_REQUIRED_VER" "$NODE_CURRENT_VER" | sort -V | head -n1)" != "$NODE_REQUIRED_VER" ]; 
- then 
-        echo "Required node version must be at least ${NODE_REQUIRED_VER}" 
-        exit 1
- fi
 
-WORKDIR=$PWD
+if [ "$(printf '%s\n' "$NODE_REQUIRED_VER" "$NODE_CURRENT_VER" | sort -V | head -n1)" != "$NODE_REQUIRED_VER" ]; 
+then
+      echo "Required node version must be at least ${NODE_REQUIRED_VER}" 
+      exit 1
+fi
+
+help()
+{
+   echo ""
+   echo "Usage: $0 -h <eth_host> -s <start_interval> -e <end_interval> -r <rewards> -u <tenderly_url> -t <tenderly_token>"
+   echo -e "\t-h Websocket endpoint of the Ethereum node"
+   echo -e "\t-s Start of the interval passed as UNIX timestamp"
+   echo -e "\t-e End of the interval passed as UNIX timestamp"
+   echo -e "\t-r Total KEEP rewards distributed within the given interval passed as 18-decimals number"
+   echo -e "\t-u Optional Tenderly API project URL"
+   echo -e "\t-t Optional access token for Tenderly API used to fetch transactions from the chain"
+   exit 1 # Exit script after printing help
+}
+
+if [ "$1" == "-help" ]; then
+  help
+fi
+
+printf "${LOG_START}Processing input parameters...${LOG_END}"
+
+while getopts "h:s:e:r:u:t:" opt
+do
+   case "$opt" in
+      h ) eth_host="$OPTARG" ;;
+      s ) start="$OPTARG" ;;
+      e ) end="$OPTARG" ;;
+      r ) rewards="$OPTARG" ;;
+      u ) tenderly_url="$OPTARG" ;;
+      t ) tenderly_token="$OPTARG" ;;
+      ? ) help ;; # Print help in case parameter is non-existent
+   esac
+done
+
+#Print help in case required parameters are empty
+if [ -z "$eth_host" ] || [ -z "$start" ] || [ -z "$end" ] || [ -z "$rewards" ]
+then
+   echo "Some or all of the required parameters are empty";
+   help
+fi
 
 printf "${LOG_START}Initializing merkle-distributor submodule...${LOG_END}"
 
@@ -29,43 +72,14 @@ printf "${LOG_START}Installing dependencies for staker-rewards...${LOG_END}"
 cd "$WORKDIR"
 npm i
 
-printf "${LOG_START}Processing input parameters...${LOG_END}"
-
-help()
-{
-   echo ""
-   echo "Usage: $0 -h <eth_host> -s <start_interval> -e <end_interval> -r <rewards>"
-   echo -e "\t-h Websocket endpoint of the Ethereum node"
-   echo -e "\t-s Start of the interval passed as UNIX timestamp"
-   echo -e "\t-e End of the interval passed as UNIX timestamp"
-   echo -e "\t-r Total KEEP rewards distributed within the given interval passed as 18-decimals number"
-   exit 1 # Exit script after printing help
-}
-
-while getopts "h:s:e:r:" opt
-do
-   case "$opt" in
-      h ) eth_host="$OPTARG" ;;
-      s ) start="$OPTARG" ;;
-      e ) end="$OPTARG" ;;
-      r ) rewards="$OPTARG" ;;
-      ? ) help ;; # Print help in case parameter is non-existent
-   esac
-done
-
-#Print help in case parameters are empty
-if [ -z "$eth_host" ] || [ -z "$start" ] || [ -z "$end" ] || [ -z "$rewards" ]
-then
-   echo "Some or all of the parameters are empty";
-   help
-fi
-
-# default file name
-STAKER_REWARD="distributor/staker-reward-allocation.json"
-
 printf "${LOG_START}Calculating staker rewards...${LOG_END}"
 
-ETH_HOSTNAME="$eth_host" OUTPUT_MODE="text" REWARDS_PATH="$WORKDIR/$STAKER_REWARD" node --experimental-json-modules rewards.js "$start" "$end" "$rewards"
+ETH_HOSTNAME="$eth_host" \
+OUTPUT_MODE="text" \
+TENDERLY_PROJECT_URL="$tenderly_url" \
+TENDERLY_ACCESS_TOKEN="$tenderly_token" \
+REWARDS_PATH="$WORKDIR/$STAKER_REWARD" \
+node --experimental-json-modules rewards.js "$start" "$end" "$rewards"
 
 printf "${LOG_START}Generating merkle output object...${LOG_END}"
 
