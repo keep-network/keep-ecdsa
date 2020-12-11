@@ -15,6 +15,8 @@ import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
 import { getPastEvents } from "./lib/contract-helper.js"
 
+import * as fs from "fs"
+
 async function run() {
   // URL to the websocket endpoint of the Ethereum node.
   const ethHostname = process.env.ETH_HOSTNAME
