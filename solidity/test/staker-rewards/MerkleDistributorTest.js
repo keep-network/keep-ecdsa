@@ -1,10 +1,12 @@
 const {contract, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
+const {ZERO_ADDRESS} = require("@openzeppelin/test-helpers/src/constants")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
 const {testValues} = require("./rewardsData.js")
 
 const ECDSARewardsDistributor = contract.fromArtifact("ECDSARewardsDistributor")
 const KeepToken = contract.fromArtifact("KeepToken")
+const TokenStakingStub = contract.fromArtifact("TokenStakingStub")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -17,7 +19,18 @@ describe("MerkleDistributor", () => {
 
   before(async () => {
     keepToken = await KeepToken.new()
-    rewardsDistributor = await ECDSARewardsDistributor.new(keepToken.address)
+    tokenStaking = await TokenStakingStub.new()
+    rewardsDistributor = await ECDSARewardsDistributor.new(
+      keepToken.address,
+      tokenStaking.address
+    )
+
+    for (claim of [].concat(
+      testValues.interval0.claims,
+      testValues.interval1.claims
+    )) {
+      await tokenStaking.setBeneficiary(claim.account, claim.beneficiary)
+    }
   })
 
   beforeEach(async () => {
@@ -70,6 +83,7 @@ describe("MerkleDistributor", () => {
   describe("claiming rewards", () => {
     const merkle0 = testValues.interval0
     const merkle1 = testValues.interval1
+
     beforeEach(async () => {
       await allocateTokens(
         testValues.interval0.merkleRoot,
@@ -88,6 +102,7 @@ describe("MerkleDistributor", () => {
       const account = merkle0.claims[0].account
       const amount = merkle0.claims[0].amount
       const proof = merkle0.claims[0].proof
+      const beneficiary = merkle0.claims[0].beneficiary
 
       const claimed = await rewardsDistributor.claim(
         merkleRoot,
@@ -97,12 +112,13 @@ describe("MerkleDistributor", () => {
         proof
       )
 
-      expect(await keepToken.balanceOf(account)).to.eq.BN(amount)
+      expect(await keepToken.balanceOf(beneficiary)).to.eq.BN(amount)
 
       expectEvent(claimed, "RewardsClaimed", {
         merkleRoot,
         index,
         account,
+        beneficiary,
         amount,
       })
     })
@@ -119,6 +135,7 @@ describe("MerkleDistributor", () => {
         const account = merkle0.claims[i].account
         const amount = merkle0.claims[i].amount
         const proof = merkle0.claims[i].proof
+        const beneficiary = merkle0.claims[i].beneficiary
 
         claimedAmounts = claimedAmounts.addn(parseInt(amount))
 
@@ -130,7 +147,7 @@ describe("MerkleDistributor", () => {
           proof
         )
 
-        expect(await keepToken.balanceOf(account)).to.eq.BN(amount)
+        expect(await keepToken.balanceOf(beneficiary)).to.eq.BN(amount)
       }
 
       const actualBalance = await keepToken.balanceOf(
@@ -256,6 +273,21 @@ describe("MerkleDistributor", () => {
       await expectRevert(
         rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
         "Rewards must be allocated for a given merkle root"
+      )
+    })
+
+    it("should revert when beneficiary is not set for a given account", async () => {
+      const merkleRoot = merkle0.merkleRoot
+      const index = merkle0.claims[0].index
+      const account = merkle0.claims[0].account
+      const amount = merkle0.claims[0].amount
+      const proof = merkle0.claims[0].proof
+
+      await tokenStaking.setBeneficiary(account, ZERO_ADDRESS)
+
+      await expectRevert(
+        rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
+        "Beneficiary address not set"
       )
     })
   })

@@ -17,6 +17,7 @@ const testValues = {
           "0x023527b3cb4eb23b75f8554373ef468c6cc5a446a5bbf5b26133d684a82dc8ee",
           "0xa8390642d0b4fcbcfd25bd2787f9e498ce1f24c3d630f57a1560354a5b4dd06e",
         ],
+        beneficiary: "0x82Eda22AE1d4B16C11261F770C07092b0A62136a",
       },
       {
         index: "6",
@@ -31,6 +32,7 @@ const testValues = {
           "0x023527b3cb4eb23b75f8554373ef468c6cc5a446a5bbf5b26133d684a82dc8ee",
           "0xa8390642d0b4fcbcfd25bd2787f9e498ce1f24c3d630f57a1560354a5b4dd06e",
         ],
+        beneficiary: "0x6ab392c2134a6cE826cFBb0045175fAcCF504F69",
       },
       {
         index: "77",
@@ -45,6 +47,7 @@ const testValues = {
           "0x023527b3cb4eb23b75f8554373ef468c6cc5a446a5bbf5b26133d684a82dc8ee",
           "0xa8390642d0b4fcbcfd25bd2787f9e498ce1f24c3d630f57a1560354a5b4dd06e",
         ],
+        beneficiary: "0xfc8437956EeaCCE97996Ad01af59b828F3F5A808",
       },
     ],
   },
@@ -63,6 +66,7 @@ const testValues = {
           "0x162ab1201ce6d116732a2a8793945a23244afb8f79242255d3c34fea6aeceb73",
           "0x172864ef2714d9feaf400fe1342b595b61fc740234de3a7cd4e3d4eb8be3fc36",
         ],
+        beneficiary: "0x5Ab6DE7b08baF7A5d6Cb475b48E9055685E5C346",
       },
       {
         index: "1",
@@ -74,6 +78,7 @@ const testValues = {
           "0x20779de3e5a9a44f012cedf6f56e78af493fcb441d19cd884471e28457bbf697",
           "0x172864ef2714d9feaf400fe1342b595b61fc740234de3a7cd4e3d4eb8be3fc36",
         ],
+        beneficiary: "0x5664bc69ABeb9CB25c0CAA0C9326C8217E8AF6B4",
       },
       {
         index: "7",
@@ -85,6 +90,7 @@ const testValues = {
           "0x20779de3e5a9a44f012cedf6f56e78af493fcb441d19cd884471e28457bbf697",
           "0x172864ef2714d9feaf400fe1342b595b61fc740234de3a7cd4e3d4eb8be3fc36",
         ],
+        beneficiary: "0xfc8437956EeaCCE97996Ad01af59b828F3F5A808",
       },
     ],
   },

@@ -15,6 +15,7 @@
 pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/KeepToken.sol";
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/cryptography/MerkleProof.sol";
@@ -36,12 +37,14 @@ contract ECDSARewardsDistributor is Ownable {
     using SafeERC20 for KeepToken;
 
     KeepToken public token;
+    TokenStaking public tokenStaking;
 
     // This event is triggered whenever a call to #claim succeeds.
     event RewardsClaimed(
         bytes32 indexed merkleRoot,
         uint256 indexed index,
         address indexed account,
+        address beneficiary,
         uint256 amount
     );
     // This event is triggered whenever rewards are allocated.
@@ -54,8 +57,9 @@ contract ECDSARewardsDistributor is Ownable {
     // Bytes32 key is a merkle root and the value is a packed array of booleans.
     mapping(bytes32 => mapping(uint256 => uint256)) private claimedBitMap;
 
-    constructor(address _token) public {
+    constructor(address _token, address _tokenStaking) public {
         token = KeepToken(_token);
+        tokenStaking = TokenStaking(_tokenStaking);
     }
 
     /// Claim KEEP rewards for a given merkle root (interval) and the given address.
@@ -86,9 +90,13 @@ contract ECDSARewardsDistributor is Ownable {
 
         // Mark it claimed and send the token.
         _setClaimed(merkleRoot, index);
-        require(IERC20(token).transfer(account, amount), "Transfer failed");
 
-        emit RewardsClaimed(merkleRoot, index, account, amount);
+        address beneficiary = tokenStaking.beneficiaryOf(account);
+        require(beneficiary != address(0), "Beneficiary address not set");
+
+        require(IERC20(token).transfer(beneficiary, amount), "Transfer failed");
+
+        emit RewardsClaimed(merkleRoot, index, account, beneficiary, amount);
     }
 
     /// Allocates amount of KEEP for a given merkle root.
