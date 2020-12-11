@@ -18,7 +18,8 @@ in this repository is described in this section.
 
 * Interval `T` ends at `T_end`.
 
-* All operators who have ever bonded ETH are taken into account.
+* All operators who have ever deposited ETH into the bonding contract are taken 
+  into account.
 
 === Operator Parameters
 For each Operator:
@@ -50,9 +51,9 @@ are deallocated and remains in the pool for future intervals.
 * If the operator has more `ETH_unbonded` than the minimum unbonded value and is
   not in the sortition pool at `T_start`, they are not getting any rewards for
   interval `T`. In other words, if the operator is eligible to be in the
-  sortition pool, they have to be in the sortition pool. Operators who are not
-  in the sortition pool because all of their ETH is bonded are still getting
-  rewards because that ETH is still under the system’s management.
+  sortition pool, they have to be registered in the sortition pool. Operators who
+  are not registered in the sortition pool because all of their ETH is bonded are
+  still getting rewards because that ETH is still under the system’s management.
   
 * If the operator deauthorized tBTC sortition pool between `T_start` and `T_end`, 
   they are not getting any rewards for interval `T`.
@@ -108,5 +109,7 @@ Merkle tree output will be written to `distributor/output-merkle-objects.json`.
 Allocation for each operator will be written to `distributor/staker-reward-allocation.js`
 The script will output information used to calculate rewards for each operator in a tabulated
 text format that can be easily imported to a spreadsheet for inspection but is harder to verify
-just by looking at the output. To enable additional operator authorization checks against Tenderly
+just by looking at the output. 
+
+To enable additional operator authorization checks against Tenderly
 API, please use `-u <tenderly_url> -t <tenderly_token>` for running the script.
