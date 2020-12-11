@@ -287,7 +287,7 @@ describe("MerkleDistributor", () => {
 
       await expectRevert(
         rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
-        "Beneficiary address not set"
+        "ERC20: transfer to the zero address"
       )
     })
   })

@@ -93,8 +93,6 @@ contract ECDSARewardsDistributor is Ownable {
         _setClaimed(merkleRoot, index);
 
         address beneficiary = tokenStaking.beneficiaryOf(operator);
-        require(beneficiary != address(0), "Beneficiary address not set");
-
         require(IERC20(token).transfer(beneficiary, amount), "Transfer failed");
 
         emit RewardsClaimed(merkleRoot, index, operator, beneficiary, amount);
