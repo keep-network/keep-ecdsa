@@ -22,7 +22,8 @@ fi
 help()
 {
    echo ""
-   echo "Usage: $0 -h <eth_host> -s <start_interval> -e <end_interval> -r <rewards> -u <tenderly_url> -t <tenderly_token>"
+   echo "Usage: $0 -v -h <eth_host> -s <start_interval> -e <end_interval> -r <rewards> -u <tenderly_url> -t <tenderly_token>"
+   echo -e "\t-v Optional verify flag just to display the results without generation of a merkle tree"
    echo -e "\t-h Websocket endpoint of the Ethereum node"
    echo -e "\t-s Start of the interval passed as UNIX timestamp"
    echo -e "\t-e End of the interval passed as UNIX timestamp"
@@ -38,9 +39,10 @@ fi
 
 printf "${LOG_START}Processing input parameters...${LOG_END}"
 
-while getopts "h:s:e:r:u:t:" opt
+while getopts "vh:s:e:r:u:t:" opt
 do
    case "$opt" in
+      v ) verify=true ;;
       h ) eth_host="$OPTARG" ;;
       s ) start="$OPTARG" ;;
       e ) end="$OPTARG" ;;
@@ -74,8 +76,12 @@ npm i
 
 printf "${LOG_START}Calculating staker rewards...${LOG_END}"
 
+export OUTPUT_MODE="text"
+if [ "$verify" == true ]; then
+   OUTPUT_MODE=""
+fi
+
 ETH_HOSTNAME="$eth_host" \
-OUTPUT_MODE="text" \
 TENDERLY_PROJECT_URL="$tenderly_url" \
 TENDERLY_ACCESS_TOKEN="$tenderly_token" \
 REWARDS_PATH="$WORKDIR/$STAKER_REWARD" \
