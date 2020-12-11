@@ -2,11 +2,11 @@
 
 ECDSA staker rewards are based on ETH locked and KEEP staked over time. The
 rewards calculations are performed weekly off-chain, and committed for
-distribution using a variant of Uniswap’s Merkle distributor This repository
-contains scripts used to calculate rewards and generate Merkle tree used by
-stakers to claim their rewards. Anyone can use tho scripts to validate reward
-distribution or to generate reward estimates for a reward interval still
-pending.
+distribution using a variant of Uniswap’s Merkle distributor. This repository
+contains scripts for calculating rewards and generation of Merkle tree which
+can be used by stakers to claim their rewards for a given interval. Anyone
+can use these scripts to validate reward distribution or to generate reward
+estimates for a pending interval.
 
 == Algorithm
 
