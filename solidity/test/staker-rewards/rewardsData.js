@@ -7,7 +7,7 @@ const testValues = {
       {
         index: "0",
         amount: "85",
-        account: "0x012ed55a0876Ea9e58277197DC14CbA47571CE28",
+        operator: "0x012ed55a0876Ea9e58277197DC14CbA47571CE28",
         proof: [
           "0x1419d8cdecc66122fdd450e7322c82dbd1a183b4abad7ed01637042fcbbb1231",
           "0x79be08e672b91905bbbfa785ba28cf962112aae1bc30911e74e1af3939e7501f",
@@ -22,7 +22,7 @@ const testValues = {
       {
         index: "6",
         amount: "42",
-        account: "0x162F49fE6F365d04Db07F77377699aeFE2E8A2cf",
+        operator: "0x162F49fE6F365d04Db07F77377699aeFE2E8A2cf",
         proof: [
           "0x098f41b175b4374631df722f58f4bc63fca57851682d6dcc911a975f4582f385",
           "0xf4b6ad879c695dbdb0376fca8b9548cc4718bd08e0e657732b3b9df595a71dba",
@@ -37,7 +37,7 @@ const testValues = {
       {
         index: "77",
         amount: "1",
-        account: "0xF3c6F5F265F503f53EAD8aae90FC257A5aa49AC1",
+        operator: "0xF3c6F5F265F503f53EAD8aae90FC257A5aa49AC1",
         proof: [
           "0x081122f7920ab9553b71a84d1f9961256379ed7ff5257c8bd9749155e3dddeff",
           "0xb335096692ef570690f2d858f2d52c268728d60b12a2a856f2691155ccf36377",
@@ -59,7 +59,7 @@ const testValues = {
       {
         index: "0",
         amount: "80",
-        account: "0x05fc93DeFFFe436822100E795F376228470FB514",
+        operator: "0x05fc93DeFFFe436822100E795F376228470FB514",
         proof: [
           "0x54fce5fe1df9254fa00885de1ee9455b85f7dadc4b3192c33e5c3be9bea8d060",
           "0xeddbf7ea36eda7b37bd9314041a68b1c8adc2d5351ee1b373ab5fc464d20b02a",
@@ -71,7 +71,7 @@ const testValues = {
       {
         index: "1",
         amount: "70",
-        account: "0x57E7c6B647C004CFB7A38E08fDDef09Af5Ea55eD",
+        operator: "0x57E7c6B647C004CFB7A38E08fDDef09Af5Ea55eD",
         proof: [
           "0xc5d54b41f2c330a898fa1773bc4e8355b9bcc6e382c055f549b845af3814790c",
           "0x303ed1284f356d779e4a0a48644f5c4a210f7ea3f250d14ad811767cfe059a39",
@@ -83,7 +83,7 @@ const testValues = {
       {
         index: "7",
         amount: "10",
-        account: "0xF3c6F5F265F503f53EAD8aae90FC257A5aa49AC1",
+        operator: "0xF3c6F5F265F503f53EAD8aae90FC257A5aa49AC1",
         proof: [
           "0x92a4eaf5cccec93f36a5e27edf10b095949c5517f6a4896295f18b34652fbf03",
           "0xd7c0e1ce86eac4aec04c6f30dbd9d9215d1d30a640cd92c09cbcf68648711ea0",

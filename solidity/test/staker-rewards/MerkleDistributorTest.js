@@ -29,7 +29,7 @@ describe("MerkleDistributor", () => {
       testValues.interval0.claims,
       testValues.interval1.claims
     )) {
-      await tokenStaking.setBeneficiary(claim.account, claim.beneficiary)
+      await tokenStaking.setBeneficiary(claim.operator, claim.beneficiary)
     }
   })
 
@@ -99,7 +99,7 @@ describe("MerkleDistributor", () => {
     it("should successfuly claim rewards and emit an event", async () => {
       const merkleRoot = merkle0.merkleRoot
       const index = merkle0.claims[0].index
-      const account = merkle0.claims[0].account
+      const operator = merkle0.claims[0].operator
       const amount = merkle0.claims[0].amount
       const proof = merkle0.claims[0].proof
       const beneficiary = merkle0.claims[0].beneficiary
@@ -107,7 +107,7 @@ describe("MerkleDistributor", () => {
       const claimed = await rewardsDistributor.claim(
         merkleRoot,
         index,
-        account,
+        operator,
         amount,
         proof
       )
@@ -117,7 +117,7 @@ describe("MerkleDistributor", () => {
       expectEvent(claimed, "RewardsClaimed", {
         merkleRoot,
         index,
-        account,
+        operator,
         beneficiary,
         amount,
       })
@@ -132,7 +132,7 @@ describe("MerkleDistributor", () => {
       for (let i = 0; i < merkle0.claims.length; i++) {
         const merkleRoot = merkle0.merkleRoot
         const index = merkle0.claims[i].index
-        const account = merkle0.claims[i].account
+        const operator = merkle0.claims[i].operator
         const amount = merkle0.claims[i].amount
         const proof = merkle0.claims[i].proof
         const beneficiary = merkle0.claims[i].beneficiary
@@ -142,7 +142,7 @@ describe("MerkleDistributor", () => {
         await rewardsDistributor.claim(
           merkleRoot,
           index,
-          account,
+          operator,
           amount,
           proof
         )
@@ -163,7 +163,7 @@ describe("MerkleDistributor", () => {
     it("should revert claiming transaction when proof is not valid", async () => {
       const merkleRoot = merkle0.merkleRoot
       const index = merkle0.claims[0].index
-      const account = merkle0.claims[0].account
+      const operator = merkle0.claims[0].operator
       const amount = merkle0.claims[0].amount
       const proof = [
         "0x1111111111111111111111111111111111111111111111111111111111111111",
@@ -171,7 +171,7 @@ describe("MerkleDistributor", () => {
       ]
 
       await expectRevert(
-        rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
+        rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
         "Invalid proof"
       )
     })
@@ -185,23 +185,23 @@ describe("MerkleDistributor", () => {
 
       let merkleRoot = merkle0.merkleRoot
       let index = merkle0.claims[0].index
-      let account = merkle0.claims[0].account
+      let operator = merkle0.claims[0].operator
       let amount = merkle0.claims[0].amount
       let proof = merkle0.claims[0].proof
 
       claimedAmounts = claimedAmounts.addn(parseInt(amount))
 
-      await rewardsDistributor.claim(merkleRoot, index, account, amount, proof)
+      await rewardsDistributor.claim(merkleRoot, index, operator, amount, proof)
 
       merkleRoot = merkle1.merkleRoot
       index = merkle1.claims[1].index
-      account = merkle1.claims[1].account
+      operator = merkle1.claims[1].operator
       amount = merkle1.claims[1].amount
       proof = merkle1.claims[1].proof
 
       claimedAmounts = claimedAmounts.addn(parseInt(amount))
 
-      await rewardsDistributor.claim(merkleRoot, index, account, amount, proof)
+      await rewardsDistributor.claim(merkleRoot, index, operator, amount, proof)
 
       const actualBalance = await keepToken.balanceOf(
         rewardsDistributor.address
@@ -216,27 +216,27 @@ describe("MerkleDistributor", () => {
     it("should revert when claiming a reward twice", async () => {
       let merkleRoot = merkle0.merkleRoot
       let index = merkle0.claims[0].index
-      let account = merkle0.claims[0].account
+      let operator = merkle0.claims[0].operator
       let amount = merkle0.claims[0].amount
       let proof = merkle0.claims[0].proof
 
-      await rewardsDistributor.claim(merkleRoot, index, account, amount, proof)
+      await rewardsDistributor.claim(merkleRoot, index, operator, amount, proof)
 
       await expectRevert(
-        rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
+        rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
         "Reward already claimed"
       )
 
       merkleRoot = merkle1.merkleRoot
       index = merkle1.claims[1].index
-      account = merkle1.claims[1].account
+      operator = merkle1.claims[1].operator
       amount = merkle1.claims[1].amount
       proof = merkle1.claims[1].proof
 
-      await rewardsDistributor.claim(merkleRoot, index, account, amount, proof)
+      await rewardsDistributor.claim(merkleRoot, index, operator, amount, proof)
 
       await expectRevert(
-        rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
+        rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
         "Reward already claimed"
       )
     })
@@ -244,7 +244,7 @@ describe("MerkleDistributor", () => {
     it("should check if the reward was claimed", async () => {
       const merkleRoot = merkle0.merkleRoot
       const index = merkle0.claims[0].index
-      const account = merkle0.claims[0].account
+      const operator = merkle0.claims[0].operator
       const amount = merkle0.claims[0].amount
       const proof = merkle0.claims[0].proof
 
@@ -254,7 +254,7 @@ describe("MerkleDistributor", () => {
       )
       expect(isRewardClaimed).to.be.false
 
-      await rewardsDistributor.claim(merkleRoot, index, account, amount, proof)
+      await rewardsDistributor.claim(merkleRoot, index, operator, amount, proof)
 
       isRewardClaimed = await rewardsDistributor.isClaimed(merkleRoot, index)
       expect(isRewardClaimed).to.be.true
@@ -264,29 +264,29 @@ describe("MerkleDistributor", () => {
       const merkleRoot =
         "0x1111111111111111111111111111111111111111111111111111111111111111"
       const index = "0"
-      const account = "0x012ed55a0876Ea9e58277197DC14CbA47571CE28"
+      const operator = "0x012ed55a0876Ea9e58277197DC14CbA47571CE28"
       const amount = "42"
       const proof = [
         "0x2222222222222222222222222222222222222222222222222222222222222222",
       ]
 
       await expectRevert(
-        rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
+        rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
         "Rewards must be allocated for a given merkle root"
       )
     })
 
-    it("should revert when beneficiary is not set for a given account", async () => {
+    it("should revert when beneficiary is not set for a given operator", async () => {
       const merkleRoot = merkle0.merkleRoot
       const index = merkle0.claims[0].index
-      const account = merkle0.claims[0].account
+      const operator = merkle0.claims[0].operator
       const amount = merkle0.claims[0].amount
       const proof = merkle0.claims[0].proof
 
-      await tokenStaking.setBeneficiary(account, ZERO_ADDRESS)
+      await tokenStaking.setBeneficiary(operator, ZERO_ADDRESS)
 
       await expectRevert(
-        rewardsDistributor.claim(merkleRoot, index, account, amount, proof),
+        rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
         "Beneficiary address not set"
       )
     })
