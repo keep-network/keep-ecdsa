@@ -61,7 +61,7 @@ then
 fi
 
 # default file name
-STAKER_REWARD="generated-rewards/staker-reward-allocation.json"
+STAKER_REWARD="distributor/staker-reward-allocation.json"
 
 printf "${LOG_START}Calculating staker rewards...${LOG_END}"
 
@@ -69,7 +69,7 @@ ETH_HOSTNAME="$eth_host" OUTPUT_MODE="text" REWARDS_PATH="$WORKDIR/$STAKER_REWAR
 
 printf "${LOG_START}Generating merkle output object...${LOG_END}"
 
-cd "$WORKDIR/generated-rewards"
+cd "$WORKDIR/distributor"
 npm i
 
 npm run generate-merkle-root -- --input="$WORKDIR/$STAKER_REWARD"

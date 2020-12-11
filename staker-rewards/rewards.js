@@ -307,7 +307,7 @@ function shortenSummaryValues(summary) {
 }
 
 function writeOperatorsRewardsToFile(rewards) {
-  let path = "./generated-rewards/staker-reward-allocation.json"
+  let path = "./distributor/staker-reward-allocation.json"
   if (process.env.REWARDS_PATH) {
     path = process.env.REWARDS_PATH
   }
