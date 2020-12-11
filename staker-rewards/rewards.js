@@ -15,6 +15,8 @@ import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
 import { getPastEvents } from "./lib/contract-helper.js"
 
+import * as fs from "fs"
+
 async function run() {
   // URL to the websocket endpoint of the Ethereum node.
   const ethHostname = process.env.ETH_HOSTNAME
@@ -78,7 +80,9 @@ async function run() {
       decimalSeparator: ".",
     }
 
-    operatorsRewards.forEach((operatorRewards) =>
+    const rewards = {}
+
+    for (const operatorRewards of operatorsRewards) {
       console.log(
         `${operatorRewards.operator}
            ${operatorRewards.isFraudulent} 
@@ -117,7 +121,19 @@ async function run() {
            )}
           `.replace(/\n/g, "\t")
       )
-    )
+
+      if (!operatorRewards.totalRewards.isZero()) {
+        // Amount of KEEP reward is converted to hex format to avoid problems with
+        // precision during generation of a merkle tree.
+        rewards[
+          operatorRewards.operator
+        ] = operatorRewards.totalRewards
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString(16)
+      }
+    }
+
+    writeOperatorsRewardsToFile(rewards)
   } else {
     console.table(operatorsRewards.map(shortenSummaryValues))
   }
@@ -290,6 +306,14 @@ function shortenSummaryValues(summary) {
   summary.totalRewards = shorten18Decimals(summary.totalRewards)
 
   return summary
+}
+
+function writeOperatorsRewardsToFile(rewards) {
+  let path = "./distributor/staker-reward-allocation.json"
+  if (process.env.REWARDS_PATH) {
+    path = process.env.REWARDS_PATH
+  }
+  fs.writeFileSync(path, JSON.stringify(rewards, null, 2))
 }
 
 run()
