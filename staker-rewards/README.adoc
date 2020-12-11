@@ -97,7 +97,8 @@ To verify operator rewards and display summary in a table, run:
 
 This command runs all calculations against mainnet data and displays operator 
 rewards in a human-friendly way in a table with numbers rounded to two decimal
-places.
+places. Rewards are allocated per operator but upon claiming they are transferred
+to a beneficiary.
 
 To calculate operator rewards and calculate merkle tree, drop option `-v`, and run:
 
