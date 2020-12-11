@@ -68,8 +68,9 @@ For each Operator:
   10 key generations, one of them can fail. F For more than 10 key generations,
   no more than 10% can fail.
   
+=== The Formula
 
-
+image::rewards.png[staker rewards formula]
 
 == Generating Reward Distribution
 === Prerequisites
