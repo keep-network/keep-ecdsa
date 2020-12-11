@@ -79,14 +79,12 @@ image::rewards.png[staker rewards formula]
 == Generating Reward Distribution
 === Prerequisites
 
-To run the script, make sure you have the following prerequisites:
-
-* Node.js (at least v14.3.0). We recommend to use
-  the https://github.com/nvm-sh/nvm[Node Version Manager] to get the right
-  Node.js version with no troubles. You can install this tool by running
-  `brew install nvm` on macOS or follow the https://github.com/nvm-sh/nvm#installing-and-updating[installation guide]
-  for other operating systems. To make sure you use the right Node.js version,
-  you can run `nvm use 14.3.0`.
+Node.js in version at least v14.3.0 is required to run scripts. We recommend to use
+https://github.com/nvm-sh/nvm[Node Version Manager] to get the right
+Node.js version with no troubles. You can install this tool by running
+`brew install nvm` on macOS or follow the https://github.com/nvm-sh/nvm#installing-and-updating[installation guide]
+for other operating systems. To make sure you use the right Node.js version,
+you can run `nvm use 14.3.0`.
 
 === How to run
 
