@@ -123,11 +123,13 @@ async function run() {
       )
 
       if (!operatorRewards.totalRewards.isZero()) {
+        // Amount of KEEP reward is converted to hex format to avoid problems with
+        // precision during generation of a merkle tree.
         rewards[
           operatorRewards.operator
         ] = operatorRewards.totalRewards
           .integerValue(BigNumber.ROUND_DOWN)
-          .toString(16) // convert BN to hex
+          .toString(16)
       }
     }
 
