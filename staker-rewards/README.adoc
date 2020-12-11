@@ -1,35 +1,115 @@
 = Staker rewards
 
-== Prerequisites
+ECDSA staker rewards are based on ETH locked and KEEP staked over time. The
+rewards calculations are performed weekly off-chain, and committed for
+distribution using a variant of Uniswap’s Merkle distributor. This repository
+contains scripts for calculating rewards and generation of Merkle tree which
+can be used by stakers to claim their rewards for a given interval. Anyone
+can use these scripts to validate reward distribution or to generate reward
+estimates for a pending interval.
 
-To run the script, make sure you have the following prerequisites:
+== Algorithm
 
-- Node.js (at least v14.3.0). We recommend to use
-  the https://github.com/nvm-sh/nvm[Node Version Manager] to get the right
-  Node.js version with no troubles. You can install this tool by running
-  `brew install nvm` on macOS or follow the https://github.com/nvm-sh/nvm#installing-and-updating[installation guide]
-  for other operating systems.
+The algorithm for calculating ECDSA staker rewards as implemented in the scripts 
+in this repository is described in this section.
 
-== How to run
+=== Input
+* Interval `T` starts at `T_start`.
 
-1. Make sure you use the right Node.js version:
-+
-```
-nvm use 14.3.0
-```
-2. Install the NPM dependencies if not done yet:
-+
-```
-npm install
-```
-3. Run the script along with environment variables:
-+
-```
-ETH_HOSTNAME=<eth-ws-hostname> \
-node --experimental-json-modules rewards.js \
-<interval-start-unix-timestamp> <interval-end-unix-timestamp> <interval-total-rewards-18-decimals-number>
-```
-+
-You can also use several auxiliary environment variables:
+* Interval `T` ends at `T_end`.
 
-- `DEBUG=on` to enable debug logs
+* All operators who have ever deposited ETH into the bonding contract are taken 
+  into account.
+
+=== Operator Parameters
+For each Operator:
+
+* Calculate the amount of KEEP staked at `T_end` as `KEEP_staked`.
+
+* Calculate the total amount of ETH bonded at `T_start` as `ETH_bonded`.
+
+* Read the amount of ETH unbonded at `T_start` as `ETH_unbonded`.
+
+* Calculate the sum of ETH unbonded and withdrawn for the entire interval
+  as `ETH_withdrawn`.
+  
+* Calculate the total ETH under management as 
+  `ETH_locked = ETH_bonded + ETH_unbonded - ETH_withdrawn`.
+
+=== Requirements
+
+Operator not meeting all requirements listed in this section is not getting any
+rewards for interval `T`. Rewards proportional to the operator's reward weight
+are deallocated and remains in the pool for future intervals. 
+
+* If the operator does not have `BondedECDSAKeepFactory` contract or tBTC sortition
+  pool authorized at `T_start`, they are not getting any rewards for interval `T`.
+  
+* If the operator does not have a minimum KEEP stake at `T_start`, they are not
+  getting any rewards for interval `T`.
+  
+* If the operator has more `ETH_unbonded` than the minimum unbonded value and is
+  not in the sortition pool at `T_start`, they are not getting any rewards for
+  interval `T`. In other words, if the operator is eligible to be in the
+  sortition pool, they have to be registered in the sortition pool. Operators who
+  are not registered in the sortition pool because all of their ETH is bonded are
+  still getting rewards because that ETH is still under the system’s management.
+  
+* If the operator deauthorized tBTC sortition pool between `T_start` and `T_end`, 
+  they are not getting any rewards for interval `T`.
+  
+* If the operator ever committed a fraud, they are not getting any rewards for
+  interval `T`. 
+  
+* If the operator did not meet the signature SLA between `T_start` and `T_end`,
+  they are not getting any rewards for interval `T`. For less than 20
+  closed/terminated keeps, no more than one could be terminated with a signature
+  timeout. For 20 or more closed/terminated keeps no more than 5% could be
+  terminated with a signature timeout. Signature SLA does not include not
+  answered courtesy calls.
+  
+* If the operator did not meet the key generation SLA between `T_start` and
+  `T_end` , they are not getting any rewards for interval `T` . For less than
+  10 key generations, one of them can fail. For 10 or more key generations,
+  no more than 10% can fail.
+  
+=== The Formula
+
+image::rewards.png[staker rewards formula]
+
+== Generating Reward Distribution
+=== Prerequisites
+
+Node.js in version at least v14.3.0 is required to run scripts. We recommend to use
+https://github.com/nvm-sh/nvm[Node Version Manager] to get the right
+Node.js version with no troubles. You can install this tool by running
+`brew install nvm` on macOS or follow the https://github.com/nvm-sh/nvm#installing-and-updating[installation guide]
+for other operating systems. To make sure you use the right Node.js version,
+you can run `nvm use 14.3.0`.
+
+=== How to run
+
+To verify operator rewards and display summary in a table, run:
+```
+./rewards-merkle-generator.sh -v -w <eth_host> -s <start_timestamp> -e <end_timestamp> -r <reward_allocation>
+```
+
+This command runs all calculations against mainnet data and displays operator 
+rewards in a human-friendly way in a table with numbers rounded to two decimal
+places. Rewards are allocated per operator but upon claiming they are transferred
+to a beneficiary.
+
+To calculate operator rewards and calculate merkle tree, drop option `-v`, and run:
+
+```
+./rewards-merkle-generator.sh -w <eth_host> -s <start_timestamp> -e <end_timestamp> -r <reward_allocation>
+```
+
+Merkle tree output will be written to `distributor/output-merkle-objects.json`.
+Allocation for each operator will be written to `distributor/staker-reward-allocation.js`
+The script will output information used to calculate rewards for each operator in a tabulated
+text format that can be easily imported to a spreadsheet for inspection but is harder to verify
+just by looking at the output. 
+
+To enable additional operator authorization checks against Tenderly
+API, please use `-u <tenderly_url> -t <tenderly_token>` for running the script.
