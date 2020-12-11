@@ -1,6 +1,6 @@
 {
   "name": "staker-rewards",
-  "description": "Staker KEEP rewards",
+  "description": "Generates merkle objects for rewards distribution",
   "version": "1.0.0",
   "keywords": [
     "keep-network",
