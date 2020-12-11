@@ -33,7 +33,7 @@ For each Operator:
   as `ETH_withdrawn`.
   
 * Calculate the total ETH under management as 
-  `ETH_total = ETH_bonded + ETH_unbonded - ETH_withdrawn`.
+  `ETH_locked = ETH_bonded + ETH_unbonded - ETH_withdrawn`.
 
 === Requirements
 
