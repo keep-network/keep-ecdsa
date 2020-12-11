@@ -96,7 +96,8 @@ To verify operator rewards and display summary in a table, run:
 ```
 
 This command runs all calculations against mainnet data and displays operator 
-rewards in a human-readable form in a table.
+rewards in a human-friendly way in a table with numbers rounded to two decimal
+places.
 
 To calculate operator rewards and calculate merkle tree, drop option `-v`, and run:
 
