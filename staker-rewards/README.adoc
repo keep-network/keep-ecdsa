@@ -37,6 +37,10 @@ For each Operator:
 
 === Requirements
 
+Operator not meeting all requirements listed in this section is not getting any
+rewards for interval `T`. Rewards proportional to the operator's reward weight
+are deallocated and remains in the pool for future intervals. 
+
 * If the operator does not have `BondedECDSAKeepFactory` contract or tBTC sortition
   pool authorized at `T_start`, they are not getting any rewards for interval `T`.
   
@@ -57,15 +61,15 @@ For each Operator:
   interval `T`. 
   
 * If the operator did not meet the signature SLA between `T_start` and `T_end`,
-  they are not getting any rewards for interval `T`. For 20 or less
+  they are not getting any rewards for interval `T`. For less than 20
   closed/terminated keeps, no more than one could be terminated with a signature
-  timeout. For more than 20 closed/terminated keeps no more than 5% could be
+  timeout. For 20 or more closed/terminated keeps no more than 5% could be
   terminated with a signature timeout. Signature SLA does not include not
   answered courtesy calls.
   
 * If the operator did not meet the key generation SLA between `T_start` and
   `T_end` , they are not getting any rewards for interval `T` . For less than
-  10 key generations, one of them can fail. F For more than 10 key generations,
+  10 key generations, one of them can fail. For 10 or more key generations,
   no more than 10% can fail.
   
 === The Formula
