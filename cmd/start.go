@@ -6,10 +6,12 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/keep-ecdsa/pkg/metrics"
+
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/metrics"
+	coreMetrics "github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 
 	"github.com/ipfs/go-log"
@@ -22,7 +24,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
 
-	"github.com/keep-network/keep-ecdsa/internal/config"
+	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
@@ -69,16 +71,13 @@ const (
 	routingTableRefreshPeriod = 5 * time.Minute
 )
 
-// Constants related with balance monitoring.
-const (
-	// defaultBalanceAlertThreshold determines the alert threshold below which
-	// the alert should be triggered.
-	defaultBalanceAlertThreshold = 500000000000000000 // 0.5 ETH
-
-	// defaultBalanceMonitoringTick determines how often the monitoring
-	// check should be triggered.
-	defaultBalanceMonitoringTick = 10 * time.Minute
-)
+// Values related with balance monitoring.
+// defaultBalanceAlertThreshold determines the alert threshold below which
+// the alert should be triggered.
+var defaultBalanceAlertThreshold = big.NewInt(500000000000000000) // 0.5 ether
+// defaultBalanceMonitoringTick determines how often the monitoring
+// check should be triggered.
+const defaultBalanceMonitoringTick = 10 * time.Minute
 
 func init() {
 	StartCommand =
@@ -170,7 +169,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("failed to get sanctioned applications addresses: [%v]", err)
 	}
 
-	client.Initialize(
+	clientHandle := client.Initialize(
 		ctx,
 		operatorPublicKey,
 		ethereumChain,
@@ -183,7 +182,7 @@ func Start(c *cli.Context) error {
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
 
 	initializeExtensions(ctx, config.Extensions, ethereumChain)
-	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex())
+	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex(), clientHandle)
 	initializeDiagnostics(config, networkProvider)
 	initializeBalanceMonitoring(ctx, ethereumChain, config, ethereumKey.Address.Hex())
 
@@ -234,8 +233,9 @@ func initializeMetrics(
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
 	ethereumAddres string,
+	clientHandle *client.Handle,
 ) {
-	registry, isConfigured := metrics.Initialize(
+	registry, isConfigured := coreMetrics.Initialize(
 		config.Metrics.Port,
 	)
 	if !isConfigured {
@@ -248,14 +248,14 @@ func initializeMetrics(
 		config.Metrics.Port,
 	)
 
-	metrics.ObserveConnectedPeersCount(
+	coreMetrics.ObserveConnectedPeersCount(
 		ctx,
 		registry,
 		netProvider,
 		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveConnectedBootstrapCount(
+	coreMetrics.ObserveConnectedBootstrapCount(
 		ctx,
 		registry,
 		netProvider,
@@ -263,12 +263,19 @@ func initializeMetrics(
 		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveEthConnectivity(
+	coreMetrics.ObserveEthConnectivity(
 		ctx,
 		registry,
 		stakeMonitor,
 		ethereumAddres,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
+	)
+
+	metrics.ObserveTSSPreParamsPoolSize(
+		ctx,
+		registry,
+		clientHandle,
+		time.Duration(config.Metrics.ClientMetricsTick)*time.Second,
 	)
 }
 
@@ -305,15 +312,15 @@ func initializeBalanceMonitoring(
 		return
 	}
 
-	alertThreshold := config.Ethereum.BalanceAlertThreshold
-	if alertThreshold == 0 {
-		alertThreshold = defaultBalanceAlertThreshold
+	alertThreshold := defaultBalanceAlertThreshold
+	if config.Ethereum.BalanceAlertThreshold != nil {
+		alertThreshold = config.Ethereum.BalanceAlertThreshold.Int
 	}
 
 	balanceMonitor.Observe(
 		ctx,
 		ethereumAddress,
-		new(big.Int).SetUint64(alertThreshold),
+		alertThreshold,
 		defaultBalanceMonitoringTick,
 	)
 
