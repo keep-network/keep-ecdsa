@@ -40,14 +40,16 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
-
 contract IRewardDistributionRecipient is Ownable {
     address rewardDistribution;
 
     function notifyRewardAmount(uint256 reward) external;
 
     modifier onlyRewardDistribution() {
-        require(msg.sender == rewardDistribution, "Caller is not reward distribution");
+        require(
+            msg.sender == rewardDistribution,
+            "Caller is not reward distribution"
+        );
         _;
     }
 
@@ -69,7 +71,7 @@ contract LPTokenWrapper {
     IERC20 public wrapped; // Uni pair KEEP/ETH, TBTC/ETH, KEEP/TBTC
 
     constructor(IERC20 _wrapped) public {
-        wrapped= _wrapped;
+        wrapped = _wrapped;
     }
 
     function totalSupply() public view returns (uint256) {
@@ -110,10 +112,10 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
 
-    constructor(
-        IERC20 _rewardToken,
-        IERC20 _wrapped
-    ) LPTokenWrapper(_wrapped) public {
+    constructor(IERC20 _rewardToken, IERC20 _wrapped)
+        public
+        LPTokenWrapper(_wrapped)
+    {
         rewardToken = _rewardToken;
     }
 
