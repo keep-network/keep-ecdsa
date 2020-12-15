@@ -95,9 +95,8 @@ contract LPTokenWrapper {
     }
 }
 
-// Or LPTokenRewards?
 contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
-    IERC20 public rewardToken; // KEEP in our case. |||| snx in Unipool case
+    IERC20 public rewardToken; // KEEP
     uint256 public constant DURATION = 7 days;
 
     uint256 public periodFinish = 0;
