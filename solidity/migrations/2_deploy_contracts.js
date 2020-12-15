@@ -26,6 +26,7 @@ const FullyBackedSortitionPoolFactory = artifacts.require(
 )
 
 const ECDSARewards = artifacts.require("ECDSARewards")
+const ECDSARewardsDistributor = artifacts.require("ECDSARewardsDistributor")
 
 let initializationPeriod = 43200 // 12 hours in seconds
 
@@ -113,6 +114,12 @@ module.exports = async function (deployer, network) {
     ECDSARewards,
     KeepTokenAddress,
     BondedECDSAKeepFactory.address,
+    TokenStakingAddress
+  )
+
+  await deployer.deploy(
+    ECDSARewardsDistributor,
+    KeepTokenAddress,
     TokenStakingAddress
   )
 }
