@@ -33,7 +33,6 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 */
 
-
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/Math.sol";
@@ -128,6 +127,28 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
         _;
     }
 
+    function exit() external {
+        withdraw(balanceOf(msg.sender));
+        getReward();
+    }
+
+    function notifyRewardAmount(uint256 reward)
+        external
+        onlyRewardDistribution
+        updateReward(address(0))
+    {
+        if (block.timestamp >= periodFinish) {
+            rewardRate = reward.div(DURATION);
+        } else {
+            uint256 remaining = periodFinish.sub(block.timestamp);
+            uint256 leftover = remaining.mul(rewardRate);
+            rewardRate = reward.add(leftover).div(DURATION);
+        }
+        lastUpdateTime = block.timestamp;
+        periodFinish = block.timestamp.add(DURATION);
+        emit RewardAdded(reward);
+    }
+
     function lastTimeRewardApplicable() public view returns (uint256) {
         return Math.min(block.timestamp, periodFinish);
     }
@@ -167,11 +188,6 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
         emit Withdrawn(msg.sender, amount);
     }
 
-    function exit() external {
-        withdraw(balanceOf(msg.sender));
-        getReward();
-    }
-
     function getReward() public updateReward(msg.sender) {
         uint256 reward = earned(msg.sender);
         if (reward > 0) {
@@ -179,22 +195,5 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
             rewardToken.safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
-    }
-
-    function notifyRewardAmount(uint256 reward)
-        external
-        onlyRewardDistribution
-        updateReward(address(0))
-    {
-        if (block.timestamp >= periodFinish) {
-            rewardRate = reward.div(DURATION);
-        } else {
-            uint256 remaining = periodFinish.sub(block.timestamp);
-            uint256 leftover = remaining.mul(rewardRate);
-            rewardRate = reward.add(leftover).div(DURATION);
-        }
-        lastUpdateTime = block.timestamp;
-        periodFinish = block.timestamp.add(DURATION);
-        emit RewardAdded(reward);
     }
 }
