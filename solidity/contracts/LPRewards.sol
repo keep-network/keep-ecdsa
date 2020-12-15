@@ -35,35 +35,10 @@
 
 // OpenZeppelin - Math, SafeMath, tokens
 
-pragma solidity ^0.5.0;
+pragma solidity 0.5.17;
 
-/**
- * @dev Standard math utilities missing in the Solidity language.
- */
-library Math {
-    /**
-     * @dev Returns the largest of two numbers.
-     */
-    function max(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a >= b ? a : b;
-    }
+import "openzeppelin-solidity/contracts/math/Math.sol";
 
-    /**
-     * @dev Returns the smallest of two numbers.
-     */
-    function min(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
-    }
-
-    /**
-     * @dev Returns the average of two numbers. The result is rounded towards
-     * zero.
-     */
-    function average(uint256 a, uint256 b) internal pure returns (uint256) {
-        // (a + b) / 2 can overflow, so we distribute
-        return (a / 2) + (b / 2) + ((a % 2 + b % 2) / 2);
-    }
-}
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -562,7 +537,7 @@ contract LPTokenWrapper {
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
 
-    IERC20 public wrapped;
+    IERC20 public wrapped; // Uni pair KEEP/ETH, TBTC/ETH, KEEP/TBTC
 
     constructor(IERC20 _wrapped) public {
         wrapped= _wrapped;
@@ -589,8 +564,9 @@ contract LPTokenWrapper {
     }
 }
 
+// Or LPTokenRewards?
 contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
-    IERC20 public rewardToken;
+    IERC20 public rewardToken; // KEEP in our case. |||| snx in Unipool case
     uint256 public constant DURATION = 7 days;
 
     uint256 public periodFinish = 0;
