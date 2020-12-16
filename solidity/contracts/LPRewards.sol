@@ -68,7 +68,7 @@ contract LPTokenWrapper {
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
 
-    IERC20 public wrapped; // Uni pair KEEP/ETH, TBTC/ETH, KEEP/TBTC
+    IERC20 public wrapped; // LPToken pair KEEP/ETH, TBTC/ETH, KEEP/TBTC
 
     constructor(IERC20 _wrapped) public {
         wrapped = _wrapped;
@@ -174,6 +174,17 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
                 .mul(rewardPerToken().sub(userRewardPerTokenPaid[account]))
                 .div(1e18)
                 .add(rewards[account]);
+    }
+
+    function receiveApproval(
+        address from,
+        uint256 value,
+        address token,
+        bytes memory
+    ) public {
+        require(IERC20(token) == rewardToken, "Unsupported token");
+
+        rewardToken.safeTransferFrom(from, address(this), value);
     }
 
     // stake visibility is public as overriding LPTokenWrapper's stake() function
