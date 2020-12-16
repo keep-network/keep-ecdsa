@@ -1,5 +1,4 @@
 import clc from "cli-color"
-import BlockByDate from "ethereum-block-by-date"
 import BigNumber from "bignumber.js"
 import {
   decimalPlaces,
@@ -24,9 +23,13 @@ async function run() {
   const intervalStart = process.argv[2]
   // End of the interval passed as UNIX timestamp.
   const intervalEnd = process.argv[3]
+  // Start block of the interval.
+  const intervalStartBlock = process.argv[4]
+  // End block of the interval.
+  const intervalEndBlock = process.argv[5]
   // Total KEEP rewards distributed within the given interval passed as
   // 18-decimals number.
-  const intervalTotalRewards = process.argv[4]
+  const intervalTotalRewards = process.argv[6]
   // Determines whether debug logs should be disabled.
   const isDebugDisabled = process.env.DEBUG !== "on"
   // Determines whether the cache refresh process should be performed.
@@ -60,12 +63,14 @@ async function run() {
   const interval = {
     start: parseInt(intervalStart),
     end: parseInt(intervalEnd),
+    startBlock: parseInt(intervalStartBlock),
+    endBlock: parseInt(intervalEndBlock),
     totalRewards: new BigNumber(intervalTotalRewards),
   }
 
   validateIntervalTimestamps(interval)
+  validateIntervalBlockspan(context, interval)
   validateIntervalTotalRewards(interval)
-  await determineIntervalBlockspan(context, interval)
 
   if (isCacheRefreshEnabled) {
     console.log("Refreshing keeps cache...")
@@ -174,11 +179,21 @@ function validateIntervalTotalRewards(interval) {
   )
 }
 
-async function determineIntervalBlockspan(context, interval) {
-  const blockByDate = new BlockByDate(context.web3)
+function validateIntervalBlockspan(context, interval) {
+  if (!interval.startBlock) {
+    throw new Error("Invalid interval start block")
+  }
 
-  interval.startBlock = (await blockByDate.getDate(interval.start * 1000)).block
-  interval.endBlock = (await blockByDate.getDate(interval.end * 1000)).block
+  if (!interval.endBlock) {
+    throw new Error("Invalid interval end block")
+  }
+
+  const isEndAfterStart = interval.endBlock > interval.startBlock
+  if (!isEndAfterStart) {
+    throw new Error(
+      "Interval end block should be bigger than the interval start block"
+    )
+  }
 
   console.log(clc.green(`Interval start block: ${interval.startBlock}`))
   console.log(clc.green(`Interval end block: ${interval.endBlock}`))
