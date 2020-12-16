@@ -22,7 +22,7 @@ fi
 help()
 {
    echo ""
-   echo "Usage: $0 -v -w <eth_host> -s <start_interval> -e <end_interval> -r <rewards> -u <tenderly_url> -t <tenderly_token>"
+   echo "Usage: $0 -v -w <eth_host> -s <start_interval> -e <end_interval> -x <start_block> -y <end_block> -r <rewards> -u <tenderly_url> -t <tenderly_token>"
    echo -e "\t-v Optional verify flag just to display the results without generation of a merkle tree"
    echo -e "\t-w Websocket endpoint of the Ethereum node"
    echo -e "\t-s Start of the interval passed as UNIX timestamp"
@@ -39,13 +39,15 @@ fi
 
 printf "${LOG_START}Processing input parameters...${LOG_END}"
 
-while getopts "vw:s:e:r:u:t:" opt
+while getopts "vw:s:e:x:y:r:u:t:" opt
 do
    case "$opt" in
       v ) verify=true ;;
       w ) eth_host="$OPTARG" ;;
       s ) start="$OPTARG" ;;
       e ) end="$OPTARG" ;;
+      x ) start_block="$OPTARG" ;;
+      y ) end_block="$OPTARG" ;;
       r ) rewards="$OPTARG" ;;
       u ) tenderly_url="$OPTARG" ;;
       t ) tenderly_token="$OPTARG" ;;
@@ -54,7 +56,7 @@ do
 done
 
 #Print help in case required parameters are empty
-if [ -z "$eth_host" ] || [ -z "$start" ] || [ -z "$end" ] || [ -z "$rewards" ]
+if [ -z "$eth_host" ] || [ -z "$start" ] || [ -z "$end" ] || [ -z "$start_block" ] || [ -z "$end_block" ] || [ -z "$rewards" ]
 then
    echo "Some or all of the required parameters are empty";
    help
@@ -85,7 +87,7 @@ ETH_HOSTNAME="$eth_host" \
 TENDERLY_PROJECT_URL="$tenderly_url" \
 TENDERLY_ACCESS_TOKEN="$tenderly_token" \
 REWARDS_PATH="$WORKDIR/$STAKER_REWARD" \
-node --experimental-json-modules rewards.js "$start" "$end" "$rewards"
+node --experimental-json-modules rewards.js "$start" "$end" "$start_block" "$end_block" "$rewards"
 
 printf "${LOG_START}Generating merkle output object...${LOG_END}"
 
