@@ -11,6 +11,8 @@ import AssetsCalculator from "./lib/assets-calculator.js"
 import RewardsCalculator from "./lib/rewards-calculator.js"
 import { getPastEvents } from "./lib/contract-helper.js"
 
+import * as fs from "fs"
+
 async function run() {
   // URL to the websocket endpoint of the Ethereum node.
   const ethHostname = process.env.ETH_HOSTNAME
@@ -69,7 +71,9 @@ async function run() {
   const operatorsRewards = await calculateOperatorsRewards(context, interval)
 
   if (process.env.OUTPUT_MODE === "text") {
-    operatorsRewards.forEach((operatorRewards) =>
+    const rewards = {}
+
+    for (const operatorRewards of operatorsRewards) {
       console.log(
         `${operatorRewards.operator}
            ${operatorRewards.isFraudulent} 
@@ -82,8 +86,9 @@ async function run() {
            ${operatorRewards.keygenFailCount} 
            ${operatorRewards.keygenSLA} 
            ${operatorRewards.signatureCount} 
-           ${operatorRewards.signatureFailCount}
+           ${operatorRewards.signatureFailCount} 
            ${operatorRewards.signatureSLA} 
+           ${operatorRewards.SLAViolated} 
            ${toFormat(operatorRewards.keepStaked)} 
            ${toFormat(operatorRewards.ethBonded)} 
            ${toFormat(operatorRewards.ethUnbonded)}
@@ -103,7 +108,19 @@ async function run() {
            )}
           `.replace(/\n/g, "\t")
       )
-    )
+
+      if (!operatorRewards.totalRewards.isZero()) {
+        // Amount of KEEP reward is converted to hex format to avoid problems with
+        // precision during generation of a merkle tree.
+        rewards[
+          operatorRewards.operator
+        ] = operatorRewards.totalRewards
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString(16)
+      }
+    }
+
+    writeOperatorsRewardsToFile(rewards)
   } else {
     console.table(operatorsRewards.map(shortenSummaryValues))
   }
@@ -140,9 +157,7 @@ function validateIntervalTotalRewards(interval) {
   }
 
   console.log(
-    clc.green(
-      `Interval total rewards: ${shorten18Decimals(interval.totalRewards)} KEEP`
-    )
+    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`)
   )
 }
 
@@ -254,6 +269,7 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
     (this.signatureFailCount =
       operatorParameters.operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorParameters.operatorSLA.signatureSLA),
+    (this.SLAViolated = operatorRewards.SLAViolated),
     (this.keepStaked = operatorParameters.operatorAssets.keepStaked),
     (this.ethBonded = operatorParameters.operatorAssets.ethBonded),
     (this.ethUnbonded = operatorParameters.operatorAssets.ethUnbonded),
@@ -277,6 +293,14 @@ function shortenSummaryValues(summary) {
   summary.totalRewards = shorten18Decimals(summary.totalRewards)
 
   return summary
+}
+
+function writeOperatorsRewardsToFile(rewards) {
+  let path = "./distributor/staker-reward-allocation.json"
+  if (process.env.REWARDS_PATH) {
+    path = process.env.REWARDS_PATH
+  }
+  fs.writeFileSync(path, JSON.stringify(rewards, null, 2))
 }
 
 run()

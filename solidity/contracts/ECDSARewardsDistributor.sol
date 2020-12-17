@@ -15,6 +15,7 @@
 pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/KeepToken.sol";
+import "@keep-network/keep-core/contracts/TokenStaking.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/cryptography/MerkleProof.sol";
@@ -36,12 +37,14 @@ contract ECDSARewardsDistributor is Ownable {
     using SafeERC20 for KeepToken;
 
     KeepToken public token;
+    TokenStaking public tokenStaking;
 
     // This event is triggered whenever a call to #claim succeeds.
     event RewardsClaimed(
         bytes32 indexed merkleRoot,
         uint256 indexed index,
-        address indexed account,
+        address indexed operator,
+        address beneficiary,
         uint256 amount
     );
     // This event is triggered whenever rewards are allocated.
@@ -49,25 +52,27 @@ contract ECDSARewardsDistributor is Ownable {
 
     // Map of merkle roots indicating whether a given interval was allocated with
     // KEEP token rewards. For each interval there is always created a new merkle
-    // tree including a root, rewarded accounts along with their amounts and proofs.
+    // tree including a root, rewarded operators along with their amounts and proofs.
     mapping(bytes32 => bool) private merkleRoots;
     // Bytes32 key is a merkle root and the value is a packed array of booleans.
     mapping(bytes32 => mapping(uint256 => uint256)) private claimedBitMap;
 
-    constructor(address _token) public {
+    constructor(address _token, address _tokenStaking) public {
         token = KeepToken(_token);
+        tokenStaking = TokenStaking(_tokenStaking);
     }
 
-    /// Claim KEEP rewards for a given merkle root (interval) and the given address.
+    /// Claim KEEP rewards for a given merkle root (interval) and the given operator
+    /// address. Rewards will be sent to a beneficiary assigned to the operator.
     /// @param merkleRoot Merkle root for a given interval.
-    /// @param index Index of the account in the merkle tree.
-    /// @param account Account address that reward will be sent to.
+    /// @param index Index of the operator in the merkle tree.
+    /// @param operator Operator address that reward will be claimed.
     /// @param amount The amount of KEEP reward to be claimed.
     /// @param merkleProof Array of merkle proofs.
     function claim(
         bytes32 merkleRoot,
         uint256 index,
-        address account,
+        address operator,
         uint256 amount,
         bytes32[] calldata merkleProof
     ) external {
@@ -78,7 +83,7 @@ contract ECDSARewardsDistributor is Ownable {
         require(!isClaimed(merkleRoot, index), "Reward already claimed");
 
         // Verify the merkle proof.
-        bytes32 node = keccak256(abi.encodePacked(index, account, amount));
+        bytes32 node = keccak256(abi.encodePacked(index, operator, amount));
         require(
             MerkleProof.verify(merkleProof, merkleRoot, node),
             "Invalid proof"
@@ -86,9 +91,11 @@ contract ECDSARewardsDistributor is Ownable {
 
         // Mark it claimed and send the token.
         _setClaimed(merkleRoot, index);
-        require(IERC20(token).transfer(account, amount), "Transfer failed");
 
-        emit RewardsClaimed(merkleRoot, index, account, amount);
+        address beneficiary = tokenStaking.beneficiaryOf(operator);
+        require(IERC20(token).transfer(beneficiary, amount), "Transfer failed");
+
+        emit RewardsClaimed(merkleRoot, index, operator, beneficiary, amount);
     }
 
     /// Allocates amount of KEEP for a given merkle root.
