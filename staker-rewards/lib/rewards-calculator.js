@@ -72,7 +72,9 @@ export default class RewardsCalculator {
 
     const totalRewardsSum = operatorsRewards.reduce(
       (accumulator, rewards) =>
-        accumulator.plus(toFormat(rewards.totalRewards, false)),
+        accumulator.plus(
+          toFormat(rewards.totalRewards, false, BigNumber.ROUND_DOWN)
+        ),
       new BigNumber(0)
     )
 

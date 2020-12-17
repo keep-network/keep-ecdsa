@@ -10,9 +10,9 @@ const format = {
 export const shorten18Decimals = (value) =>
   toFormat(new BigNumber(value).dividedBy(new BigNumber(1e18)))
 
-export const toFormat = (value, decimals = true) =>
+export const toFormat = (value, decimals = true, rounding) =>
   new BigNumber(value).toFormat(
     decimals ? decimalPlaces : noDecimalPlaces,
-    BigNumber.ROUND_DOWN,
+    rounding,
     format
   )
