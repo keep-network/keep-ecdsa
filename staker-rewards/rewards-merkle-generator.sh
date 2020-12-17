@@ -22,14 +22,25 @@ fi
 help()
 {
    echo ""
-   echo "Usage: $0 -v -w <eth_host> -s <start_interval> -e <end_interval> -x <start_block> -y <end_block> -r <rewards> -u <tenderly_url> -t <tenderly_token>"
-   echo -e "\t-v Optional verify flag just to display the results without generation of a merkle tree"
-   echo -e "\t-w Websocket endpoint of the Ethereum node"
-   echo -e "\t-s Start of the interval passed as UNIX timestamp"
-   echo -e "\t-e End of the interval passed as UNIX timestamp"
-   echo -e "\t-r Total KEEP rewards distributed within the given interval passed as 18-decimals number"
-   echo -e "\t-u Optional Tenderly API project URL"
-   echo -e "\t-t Optional access token for Tenderly API used to fetch transactions from the chain"
+   echo "Usage: $0"\
+        "--verify"\
+        "--eth-host <eth_host>"\
+        "--start-timestamp <start_timestamp>"\
+        "--end-timestamp <end_timestamp>"\
+        "--start-block <start_block>"\
+        "--end-block <end_block>"\
+        "--allocation <allocation>"\
+        "--tenderly-url <tenderly_url>"\
+        "--tenderly-token <tenderly_token>"
+   echo -e "\t--verify Optional verify flag just to display the results without generation of a merkle tree"
+   echo -e "\t--eth-host Websocket endpoint of the Ethereum node"
+   echo -e "\t--start-timestamp Start of the interval passed as UNIX timestamp"
+   echo -e "\t--end-timestamp End of the interval passed as UNIX timestamp"
+   echo -e "\t--start-block Start block of the interval"
+   echo -e "\t--end-block End block of the interval"
+   echo -e "\t--allocation Total KEEP rewards distributed within the given interval passed as 18-decimals number"
+   echo -e "\t--tenderly-url Optional Tenderly API project URL"
+   echo -e "\t--tenderly-token Optional access token for Tenderly API used to fetch transactions from the chain"
    exit 1 # Exit script after printing help
 }
 
@@ -39,21 +50,41 @@ fi
 
 printf "${LOG_START}Processing input parameters...${LOG_END}"
 
-while getopts "vw:s:e:x:y:r:u:t:" opt
+# Transform long options to short ones
+for arg in "$@"; do
+  shift
+  case "$arg" in
+    "--verify")          set -- "$@" "-v" ;;
+    "--eth-host")        set -- "$@" "-h" ;;
+    "--start-timestamp") set -- "$@" "-s" ;;
+    "--end-timestamp")   set -- "$@" "-e" ;;
+    "--start-block")     set -- "$@" "-x" ;;
+    "--end-block")       set -- "$@" "-y" ;;
+    "--allocation")      set -- "$@" "-a" ;;
+    "--tenderly-url")    set -- "$@" "-u" ;;
+    "--tenderly-token")  set -- "$@" "-t" ;;
+    *)                   set -- "$@" "$arg"
+  esac
+done
+
+# Parse short options
+OPTIND=1
+while getopts "vh:s:e:x:y:a:u:t:" opt
 do
    case "$opt" in
       v ) verify=true ;;
-      w ) eth_host="$OPTARG" ;;
+      h ) eth_host="$OPTARG" ;;
       s ) start="$OPTARG" ;;
       e ) end="$OPTARG" ;;
       x ) start_block="$OPTARG" ;;
       y ) end_block="$OPTARG" ;;
-      r ) rewards="$OPTARG" ;;
+      a ) rewards="$OPTARG" ;;
       u ) tenderly_url="$OPTARG" ;;
       t ) tenderly_token="$OPTARG" ;;
       ? ) help ;; # Print help in case parameter is non-existent
    esac
 done
+shift $(expr $OPTIND - 1) # remove options from positional parameters
 
 #Print help in case required parameters are empty
 if [ -z "$eth_host" ] || [ -z "$start" ] || [ -z "$end" ] || [ -z "$start_block" ] || [ -z "$end_block" ] || [ -z "$rewards" ]
