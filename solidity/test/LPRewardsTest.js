@@ -4,7 +4,7 @@ const {accounts} = require("@openzeppelin/test-environment")
 
 const LPRewards = contract.fromArtifact("LPRewards")
 const KeepToken = contract.fromArtifact("KeepToken")
-const LPToken = contract.fromArtifact("TestToken")
+const WrappedToken = contract.fromArtifact("TestToken")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -16,7 +16,7 @@ describe("LPRewards", () => {
 
   let keepToken
   let lpRewards
-  let lpToken
+  let wrappedToken
   let wallet1
   let wallet2
 
@@ -31,8 +31,8 @@ describe("LPRewards", () => {
     // - KEEP/ETH (https://info.uniswap.org/pair/0xe6f19dab7d43317344282f803f8e8d240708174a)
     // - TBTC/ETH (https://info.uniswap.org/pair/0x854056fd40c1b52037166285b2e54fee774d33f6)
     // - KEEP/TBTC (tbd)
-    lpToken = await LPToken.new()
-    lpRewards = await LPRewards.new(keepToken.address, lpToken.address)
+    wrappedToken = await WrappedToken.new()
+    lpRewards = await LPRewards.new(keepToken.address, wrappedToken.address)
   })
 
   beforeEach(async () => {
@@ -56,30 +56,30 @@ describe("LPRewards", () => {
       expect(keepBalance).to.eq.BN(rewards)
     })
 
-    it("should successfully allocate LP tokens", async () => {
+    it("should successfully allocate wrapped tokens", async () => {
       const walletBallance1 = web3.utils.toBN(10000).mul(tokenDecimalMultiplier)
       const walletBallance2 = web3.utils.toBN(20000).mul(tokenDecimalMultiplier)
 
-      await mintAndApproveLPTokens(
-        lpToken,
+      await mintAndApproveWrappedTokens(
+        wrappedToken,
         lpRewards.address,
         wallet1,
         walletBallance1
       )
-      await mintAndApproveLPTokens(
-        lpToken,
+      await mintAndApproveWrappedTokens(
+        wrappedToken,
         lpRewards.address,
         wallet2,
         walletBallance2
       )
 
-      let lpTokenBalance = await lpToken.balanceOf(lpRewards.address)
-      expect(lpTokenBalance).to.eq.BN(0)
+      let wrappedTokenBalance = await wrappedToken.balanceOf(lpRewards.address)
+      expect(wrappedTokenBalance).to.eq.BN(0)
 
-      let lpTokenWalletBalance1 = await lpToken.balanceOf(wallet1)
-      expect(lpTokenWalletBalance1).to.eq.BN(walletBallance1)
-      let lpTokenWalletBalance2 = await lpToken.balanceOf(wallet2)
-      expect(lpTokenWalletBalance2).to.eq.BN(walletBallance2)
+      let wrappedTokenWalletBalance1 = await wrappedToken.balanceOf(wallet1)
+      expect(wrappedTokenWalletBalance1).to.eq.BN(walletBallance1)
+      let wrappedTokenWalletBalance2 = await wrappedToken.balanceOf(wallet2)
+      expect(wrappedTokenWalletBalance2).to.eq.BN(walletBallance2)
 
       await lpRewards.stake(web3.utils.toBN(4000).mul(tokenDecimalMultiplier), {
         from: wallet1,
@@ -88,27 +88,27 @@ describe("LPRewards", () => {
         from: wallet2,
       })
 
-      lpTokenBalance = await lpToken.balanceOf(lpRewards.address)
+      wrappedTokenBalance = await wrappedToken.balanceOf(lpRewards.address)
       // 4,000 + 5,000 = 9,000
-      expect(lpTokenBalance).to.eq.BN(
+      expect(wrappedTokenBalance).to.eq.BN(
         web3.utils.toBN(9000).mul(tokenDecimalMultiplier)
       )
 
-      lpTokenWalletBalance1 = await lpToken.balanceOf(wallet1)
+      wrappedTokenWalletBalance1 = await wrappedToken.balanceOf(wallet1)
       // 1,000 - 4,000 = 6,000
-      expect(lpTokenWalletBalance1).to.eq.BN(
+      expect(wrappedTokenWalletBalance1).to.eq.BN(
         web3.utils.toBN(6000).mul(tokenDecimalMultiplier)
       )
 
-      lpTokenWalletBalance2 = await lpToken.balanceOf(wallet2)
+      wrappedTokenWalletBalance2 = await wrappedToken.balanceOf(wallet2)
       // 20,000 - 5,000 = 15,000
-      expect(lpTokenWalletBalance2).to.eq.BN(
+      expect(wrappedTokenWalletBalance2).to.eq.BN(
         web3.utils.toBN(15000).mul(tokenDecimalMultiplier)
       )
     })
   })
 
-  async function mintAndApproveLPTokens(token, address, wallet, amount) {
+  async function mintAndApproveWrappedTokens(token, address, wallet, amount) {
     await token.mint(wallet, amount)
     await token.approve(address, amount, {from: wallet})
   }
