@@ -129,3 +129,12 @@ To enable additional operator authorization checks against Tenderly API, please 
 --tenderly-token <tenderly_token>
 ```
 flags for running the script.
+
+=== Determining block number for a timestamp
+
+In order to determine the block number for an arbitrary timestamp, run:
+```
+./block-by-date.sh --eth-host <eth_host> --timestamp <timestamp>
+```
+The corresponding block number will be returned. We recommend to double-check
+the result on http://etherscan.io[Etherscan].
