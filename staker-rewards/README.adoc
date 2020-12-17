@@ -134,7 +134,7 @@ flags for running the script.
 
 In order to determine the block number for an arbitrary timestamp, run:
 ```
-./block-by-date.sh --eth-host <eth_host> --timestamp <timestamp>
+./block-by-date.sh --etherscan-token <etherscan_token> --timestamp <timestamp>
 ```
 The corresponding block number will be returned. We recommend to double-check
 the result on http://etherscan.io[Etherscan].
