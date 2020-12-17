@@ -1,6 +1,6 @@
-const {contract, web3} = require("@openzeppelin/test-environment")
+const {contract, web3, accounts} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
-const {accounts} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 
 const LPRewards = contract.fromArtifact("LPRewards")
 const KeepToken = contract.fromArtifact("KeepToken")
@@ -17,20 +17,22 @@ describe("LPRewards", () => {
   let keepToken
   let lpRewards
   let wrappedToken
+  let owner
   let wallet1
   let wallet2
 
   before(async () => {
+    owner = accounts[0]
     wallet1 = accounts[1]
     wallet2 = accounts[2]
     keepToken = await KeepToken.new()
     // This is a "Pair" Uniswap Token which is created here:
     // https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/UniswapV2Factory.sol#L23
     //
-    // Before the deployment, we need to have 3 addresses for the following pairs:
+    // There are 3 addresses for the following pairs:
     // - KEEP/ETH (https://info.uniswap.org/pair/0xe6f19dab7d43317344282f803f8e8d240708174a)
     // - TBTC/ETH (https://info.uniswap.org/pair/0x854056fd40c1b52037166285b2e54fee774d33f6)
-    // - KEEP/TBTC (tbd)
+    // - KEEP/TBTC (https://info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081)
     wrappedToken = await WrappedToken.new()
     lpRewards = await LPRewards.new(keepToken.address, wrappedToken.address)
   })
@@ -43,10 +45,9 @@ describe("LPRewards", () => {
     await restoreSnapshot()
   })
 
-  describe("allocating tokens", () => {
+  describe("tokens allocation", () => {
     it("should successfully allocate KEEP tokens", async () => {
       let keepBalance = await keepToken.balanceOf(lpRewards.address)
-
       expect(keepBalance).to.eq.BN(0)
 
       const rewards = web3.utils.toBN(1000042).mul(tokenDecimalMultiplier)
@@ -95,7 +96,7 @@ describe("LPRewards", () => {
       )
 
       wrappedTokenWalletBalance1 = await wrappedToken.balanceOf(wallet1)
-      // 1,000 - 4,000 = 6,000
+      // 10,000 - 4,000 = 6,000
       expect(wrappedTokenWalletBalance1).to.eq.BN(
         web3.utils.toBN(6000).mul(tokenDecimalMultiplier)
       )
@@ -108,6 +109,100 @@ describe("LPRewards", () => {
     })
   })
 
+  describe("tokens distribution", () => {
+    const precision = 1
+
+    it("should be possible to check earned rewards", async () => {
+      const amount = new BN(10000)
+      const keepRewards = amount.mul(tokenDecimalMultiplier)
+      const wrappedTokenWalletBallance = web3.utils
+        .toBN(10000)
+        .mul(tokenDecimalMultiplier)
+
+      await fundKEEPReward(lpRewards.address, keepRewards)
+      await mintAndApproveWrappedTokens(
+        wrappedToken,
+        lpRewards.address,
+        wallet1,
+        wrappedTokenWalletBallance
+      )
+
+      await lpRewards.setRewardDistribution(owner)
+      await lpRewards.notifyRewardAmount(keepRewards, {from: owner})
+
+      const wrappedTokensToStake = web3.utils
+        .toBN(2000)
+        .mul(tokenDecimalMultiplier)
+      await lpRewards.stake(wrappedTokensToStake, {from: wallet1})
+
+      const future = (await time.latest()).add(time.duration.days(7))
+      await timeIncreaseTo(future)
+
+      const actualEarnings = (await lpRewards.earned(wallet1)).div(
+        tokenDecimalMultiplier
+      )
+      const expectedEarnings = amount
+      expect(actualEarnings).to.gte.BN(expectedEarnings.subn(precision))
+      expect(actualEarnings).to.lte.BN(expectedEarnings.addn(precision))
+
+      // 10,000 / 2,000 = 5 KEEP,
+      // Contract function will return 4999999999999999881 KEEP. Solidity
+      // does not have floating numbers and when dividing by 10^18, precision will
+      // not be on point.
+      const actualRewardPerToken = (await lpRewards.rewardPerToken()).div(
+        tokenDecimalMultiplier
+      )
+      const expectedRewardPerWrappedToken = new BN(5)
+      expect(actualRewardPerToken).to.gte.BN(
+        expectedRewardPerWrappedToken.subn(precision)
+      )
+      expect(actualRewardPerToken).to.lte.BN(
+        expectedRewardPerWrappedToken.addn(precision)
+      )
+    })
+
+    it("should be possible to withdraw rewards after staking wrapped tokens", async () => {
+      const rewardsAmount = new BN(5000)
+      const keepAllocated = rewardsAmount.mul(tokenDecimalMultiplier)
+      const wrappedTokenWalletBallance = web3.utils
+        .toBN(10000)
+        .mul(tokenDecimalMultiplier)
+
+      await fundKEEPReward(lpRewards.address, keepAllocated)
+      await mintAndApproveWrappedTokens(
+        wrappedToken,
+        lpRewards.address,
+        wallet1,
+        wrappedTokenWalletBallance
+      )
+
+      await lpRewards.setRewardDistribution(owner)
+      await lpRewards.notifyRewardAmount(keepAllocated, {from: owner})
+
+      const wrappedTokensToStake = web3.utils
+        .toBN(2000)
+        .mul(tokenDecimalMultiplier)
+      await lpRewards.stake(wrappedTokensToStake, {from: wallet1})
+
+      const future = (await time.latest()).add(time.duration.days(7))
+      await timeIncreaseTo(future)
+
+      // Withdraw wrapped tokens and KEEP rewards
+      await lpRewards.exit({from: wallet1})
+
+      // Earned KEEP rewards for adding liquidity
+      const keepEarnedRewards = (await keepToken.balanceOf(wallet1)).div(
+        tokenDecimalMultiplier
+      )
+      expect(keepEarnedRewards).to.gte.BN(rewardsAmount.subn(precision))
+      expect(keepEarnedRewards).to.lte.BN(rewardsAmount.addn(precision))
+
+      // Check that all wrapped tokens were transferred back to the wallet
+      const wrappedTokenWalletBalance = await wrappedToken.balanceOf(wallet1)
+      expect(wrappedTokenWalletBalance).to.eq.BN(wrappedTokenWalletBallance)
+    })
+  })
+
   async function mintAndApproveWrappedTokens(token, address, wallet, amount) {
     await token.mint(wallet, amount)
     await token.approve(address, amount, {from: wallet})
@@ -115,5 +210,11 @@ describe("LPRewards", () => {
 
   async function fundKEEPReward(address, amount) {
     await keepToken.approveAndCall(address, amount, "0x0")
+  }
+
+  async function timeIncreaseTo(seconds) {
+    const delay = 10 - new Date().getMilliseconds()
+    await new Promise((resolve) => setTimeout(resolve, delay))
+    await time.increaseTo(seconds)
   }
 })
