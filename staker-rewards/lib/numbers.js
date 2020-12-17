@@ -1,7 +1,18 @@
 import BigNumber from "bignumber.js"
 
-export const decimalPlaces = 2
-export const noDecimalPlaces = 0
+const decimalPlaces = 2
+const noDecimalPlaces = 0
+const format = {
+  groupSeparator: "",
+  decimalSeparator: ".",
+}
 
 export const shorten18Decimals = (value) =>
-  new BigNumber(value).dividedBy(new BigNumber(1e18)).toFixed(decimalPlaces)
+  toFormat(new BigNumber(value).dividedBy(new BigNumber(1e18)))
+
+export const toFormat = (value, decimals = true, rounding) =>
+  new BigNumber(value).toFormat(
+    decimals ? decimalPlaces : noDecimalPlaces,
+    rounding,
+    format
+  )
