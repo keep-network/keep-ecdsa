@@ -91,7 +91,13 @@ you can run `nvm use 14.3.0`.
 
 To verify operator rewards and display summary in a table, run:
 ```
-./rewards-merkle-generator.sh -v -w <eth_host> -s <start_timestamp> -e <end_timestamp> -r <reward_allocation>
+./rewards-merkle-generator.sh --verify \
+    --eth-host <eth_host> \
+    --start-timestamp <start_timestamp> \
+    --end-timestamp <end_timestamp> \
+    --start-block <start_block> \
+    --end-block <end_block> \
+    --allocation <reward_allocation>
 ```
 
 This command runs all calculations against mainnet data and displays operator 
@@ -99,10 +105,16 @@ rewards in a human-friendly way in a table with numbers rounded to two decimal
 places. Rewards are allocated per operator but upon claiming they are transferred
 to a beneficiary.
 
-To calculate operator rewards and calculate merkle tree, drop option `-v`, and run:
+To calculate operator rewards and calculate merkle tree, drop option `--verify`, and run:
 
 ```
-./rewards-merkle-generator.sh -w <eth_host> -s <start_timestamp> -e <end_timestamp> -r <reward_allocation>
+./rewards-merkle-generator.sh \
+    --eth-host <eth_host> \
+    --start-timestamp <start_timestamp> \
+    --end-timestamp <end_timestamp> \
+    --start-block <start_block> \
+    --end-block <end_block> \
+    --allocation <reward_allocation>
 ```
 
 Merkle tree output will be written to `distributor/output-merkle-objects.json`.
@@ -111,5 +123,18 @@ The script will output information used to calculate rewards for each operator i
 text format that can be easily imported to a spreadsheet for inspection but is harder to verify
 just by looking at the output. 
 
-To enable additional operator authorization checks against Tenderly
-API, please use `-u <tenderly_url> -t <tenderly_token>` for running the script.
+To enable additional operator authorization checks against Tenderly API, please use:
+```
+--tenderly-url <tenderly_url>
+--tenderly-token <tenderly_token>
+```
+flags for running the script.
+
+=== Determining block number for a timestamp
+
+In order to determine the block number for an arbitrary timestamp, run:
+```
+./block-by-date.sh --eth-host <eth_host> --timestamp <timestamp>
+```
+The corresponding block number will be returned. We recommend to double-check
+the result on http://etherscan.io[Etherscan].
