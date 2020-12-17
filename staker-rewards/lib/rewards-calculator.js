@@ -51,7 +51,13 @@ export default class RewardsCalculator {
     )
 
     console.log(
-      clc.yellow(`Rewards weight sum ${toFormat(rewardWeightSum, false)}`)
+      clc.yellow(
+        `Rewards weight sum ${toFormat(
+          rewardWeightSum,
+          false,
+          BigNumber.ROUND_DOWN
+        )}`
+      )
     )
 
     const operatorsRewards = []
