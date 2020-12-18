@@ -58,8 +58,12 @@ describe("LPRewards", () => {
     })
 
     it("should successfully allocate wrapped tokens", async () => {
-      const initialWrappedTokenStakerBallance1 = web3.utils.toBN(10000).mul(tokenDecimalMultiplier)
-      const initialWrappedTokenStakerBallance2 = web3.utils.toBN(20000).mul(tokenDecimalMultiplier)
+      const initialWrappedTokenStakerBallance1 = web3.utils
+        .toBN(10000)
+        .mul(tokenDecimalMultiplier)
+      const initialWrappedTokenStakerBallance2 = web3.utils
+        .toBN(20000)
+        .mul(tokenDecimalMultiplier)
 
       await mintAndApproveWrappedTokens(
         wrappedToken,
@@ -78,9 +82,13 @@ describe("LPRewards", () => {
       expect(wrappedTokenBalance).to.eq.BN(0)
 
       let wrappedTokenStakerBalance1 = await wrappedToken.balanceOf(staker1)
-      expect(wrappedTokenStakerBalance1).to.eq.BN(initialWrappedTokenStakerBallance1)
+      expect(wrappedTokenStakerBalance1).to.eq.BN(
+        initialWrappedTokenStakerBallance1
+      )
       let wrappedTokenStakerBalance2 = await wrappedToken.balanceOf(staker2)
-      expect(wrappedTokenStakerBalance2).to.eq.BN(initialWrappedTokenStakerBallance2)
+      expect(wrappedTokenStakerBalance2).to.eq.BN(
+        initialWrappedTokenStakerBallance2
+      )
 
       await lpRewards.stake(web3.utils.toBN(4000).mul(tokenDecimalMultiplier), {
         from: staker1,
@@ -127,7 +135,9 @@ describe("LPRewards", () => {
       )
 
       await lpRewards.setRewardDistribution(rewardDistribution)
-      await lpRewards.notifyRewardAmount(keepRewards, {from: rewardDistribution})
+      await lpRewards.notifyRewardAmount(keepRewards, {
+        from: rewardDistribution,
+      })
 
       const wrappedTokensToStake = web3.utils
         .toBN(2000)
@@ -176,7 +186,9 @@ describe("LPRewards", () => {
       )
 
       await lpRewards.setRewardDistribution(rewardDistribution)
-      await lpRewards.notifyRewardAmount(keepAllocated, {from: rewardDistribution})
+      await lpRewards.notifyRewardAmount(keepAllocated, {
+        from: rewardDistribution,
+      })
 
       const wrappedTokensToStake = web3.utils
         .toBN(2000)
