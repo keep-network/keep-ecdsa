@@ -11,7 +11,7 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe("LPRewards", () => {
+describe.only("LPRewards", () => {
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
 
   let keepToken
@@ -47,14 +47,14 @@ describe("LPRewards", () => {
 
   describe("tokens allocation", () => {
     it("should successfully allocate KEEP tokens", async () => {
-      let keepBalance = await keepToken.balanceOf(lpRewards.address)
-      expect(keepBalance).to.eq.BN(0)
+      const initialBalance = await keepToken.balanceOf(lpRewards.address)
 
       const rewards = web3.utils.toBN(1000042).mul(tokenDecimalMultiplier)
+
       await keepToken.approveAndCall(lpRewards.address, rewards, "0x0")
 
-      keepBalance = await keepToken.balanceOf(lpRewards.address)
-      expect(keepBalance).to.eq.BN(rewards)
+      const finalBalance = await keepToken.balanceOf(lpRewards.address)
+      expect(finalBalance).to.eq.BN(rewards.add(initialBalance))
     })
 
     it("should successfully allocate wrapped tokens", async () => {
