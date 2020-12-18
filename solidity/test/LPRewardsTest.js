@@ -113,8 +113,7 @@ describe("LPRewards", () => {
     const precision = 1
 
     it("should be possible to check earned rewards", async () => {
-      const amount = new BN(10000)
-      const keepRewards = amount.mul(tokenDecimalMultiplier)
+      const keepRewards = new BN(10000).mul(tokenDecimalMultiplier)
       const wrappedTokenWalletBallance = web3.utils
         .toBN(10000)
         .mul(tokenDecimalMultiplier)
@@ -141,7 +140,7 @@ describe("LPRewards", () => {
       const actualEarnings = (await lpRewards.earned(wallet1)).div(
         tokenDecimalMultiplier
       )
-      const expectedEarnings = amount
+      const expectedEarnings = new BN(10000)
       expect(actualEarnings).to.gte.BN(expectedEarnings.subn(precision))
       expect(actualEarnings).to.lte.BN(expectedEarnings.addn(precision))
 
