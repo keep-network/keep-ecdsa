@@ -68,10 +68,10 @@ contract LPTokenWrapper {
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
 
-    IERC20 public wrapped; // LPToken pair KEEP/ETH, TBTC/ETH, KEEP/TBTC
+    IERC20 public wrappedToken; // Pairs: KEEP/ETH, TBTC/ETH, KEEP/TBTC
 
-    constructor(IERC20 _wrapped) public {
-        wrapped = _wrapped;
+    constructor(IERC20 _wrappedToken) public {
+        wrappedToken = _wrappedToken;
     }
 
     function totalSupply() public view returns (uint256) {
@@ -85,13 +85,13 @@ contract LPTokenWrapper {
     function stake(uint256 amount) public {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
-        wrapped.safeTransferFrom(msg.sender, address(this), amount);
+        wrappedToken.safeTransferFrom(msg.sender, address(this), amount);
     }
 
     function withdraw(uint256 amount) public {
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        wrapped.safeTransfer(msg.sender, amount);
+        wrappedToken.safeTransfer(msg.sender, amount);
     }
 }
 
@@ -111,9 +111,9 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
 
-    constructor(IERC20 _rewardToken, IERC20 _wrapped)
+    constructor(IERC20 _rewardToken, IERC20 _wrappedToken)
         public
-        LPTokenWrapper(_wrapped)
+        LPTokenWrapper(_wrappedToken)
     {
         rewardToken = _rewardToken;
     }
