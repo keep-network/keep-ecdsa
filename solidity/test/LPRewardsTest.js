@@ -5,9 +5,14 @@ const {time} = require("@openzeppelin/test-helpers")
 const LPRewards = contract.fromArtifact("LPRewards")
 const KeepToken = contract.fromArtifact("KeepToken")
 const WrappedToken = contract.fromArtifact("TestToken")
+
 const LPRewardsTBTCETH = contract.fromArtifact("LPRewardsTBTCETH")
 const LPRewardsKEEPETH = contract.fromArtifact("LPRewardsKEEPETH")
 const LPRewardsKEEPTBTC = contract.fromArtifact("LPRewardsKEEPTBTC")
+const BatchedPhasedEscrow = contract.fromArtifact("BatchedPhasedEscrow")
+const LPRewardsEscrowBeneficiary = contract.fromArtifact(
+  "LPRewardsEscrowBeneficiary"
+)
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -233,6 +238,8 @@ describe("LPRewards", () => {
   })
 
   describe("dedicated rewards contracts", () => {
+    const owner = accounts[1]
+
     it("deploys contract for TBTC-ETH pair", async () => {
       const lpRewards = await LPRewardsTBTCETH.new(
         keepToken.address,
@@ -262,6 +269,115 @@ describe("LPRewards", () => {
       expect(await lpRewards.keepToken.call()).equal(keepToken.address)
       expect(await lpRewards.wrappedToken.call()).equal(wrappedToken.address)
     })
+
+    it("got funded from batched escrow", async () => {
+      // Here we want to test funding of LP Rewards contracts from Batched Phased
+      // Escrow. It is a type of Phased Escrow that allows batched withdrawals
+      // in a one function call. This way of funding requires intermediary
+      // Escrow Beneficiary contracts, that will automatically transfer funds
+      // to the correct LP Rewards contract.
+      //
+      // Tokens are transferred in the following way:
+      //                        |-> LPRewardsEscrowBeneficiary -> LPRewardsTBTCETH
+      // Batched Phased Escrow -|-> LPRewardsEscrowBeneficiary -> LPRewardsKEEPETH
+      //                        |-> LPRewardsEscrowBeneficiary -> LPRewardsKEEPTBTC
+      //
+      // It is expected that one call of `BatchedPhasedEscrow.batchedWithdrawal`
+      // function will transfer specific number of tokens to dedicated LP Rewards
+      // contracts.
+
+      const rewards = [
+        web3.utils.toBN(1001).mul(tokenDecimalMultiplier),
+        web3.utils.toBN(2010).mul(tokenDecimalMultiplier),
+        web3.utils.toBN(3100).mul(tokenDecimalMultiplier),
+      ]
+      const totalRewards = web3.utils.toBN(6111).mul(tokenDecimalMultiplier)
+
+      // Deploy BatchedPhasedEscrow contract and fund it.
+      const fundingEscrow = await BatchedPhasedEscrow.new(keepToken.address, {
+        from: owner,
+      })
+      await keepToken.approveAndCall(
+        fundingEscrow.address,
+        totalRewards,
+        "0x0",
+        {
+          from: keepTokenContractOwner,
+        }
+      )
+
+      // Deploy LP Rewards contracts for each pair.
+      const lpReward1 = await LPRewardsTBTCETH.new(
+        keepToken.address,
+        wrappedToken.address
+      )
+      const lpReward2 = await LPRewardsKEEPETH.new(
+        keepToken.address,
+        wrappedToken.address
+      )
+
+      const lpReward3 = await LPRewardsKEEPTBTC.new(
+        keepToken.address,
+        wrappedToken.address
+      )
+
+      // Deploy beneficiaries contracts for each LP Rewards contract.
+      const beneficiary1 = await newLPRewardsBeneficiary(
+        lpReward1.address,
+        fundingEscrow.address
+      )
+
+      const beneficiary2 = await newLPRewardsBeneficiary(
+        lpReward2.address,
+        fundingEscrow.address
+      )
+
+      const beneficiary3 = await newLPRewardsBeneficiary(
+        lpReward3.address,
+        fundingEscrow.address
+      )
+
+      const beneficiaries = [
+        beneficiary1.address,
+        beneficiary2.address,
+        beneficiary3.address,
+      ]
+
+      // Perform batched withdrawal from Phased Escrow contract.
+      await fundingEscrow.batchedWithdraw(beneficiaries, rewards, {
+        from: owner,
+      })
+
+      // Verify funds got transferred to the LP Rewards contracts.
+      expect(
+        await keepToken.balanceOf(lpReward1.address),
+        "invalid balance of LP Rewards 1"
+      ).to.eq.BN(rewards[0])
+      expect(
+        await keepToken.balanceOf(lpReward2.address),
+        "invalid balance of LP Rewards 2"
+      ).to.eq.BN(rewards[1])
+      expect(
+        await keepToken.balanceOf(lpReward3.address),
+        "invalid balance of LP Rewards 3"
+      ).to.eq.BN(rewards[2])
+    })
+
+    async function newLPRewardsBeneficiary(
+      destinationRewardsContractAddress,
+      fundingEscrowAddress
+    ) {
+      const beneficiary = await LPRewardsEscrowBeneficiary.new(
+        keepToken.address,
+        destinationRewardsContractAddress,
+        {from: owner}
+      )
+      await beneficiary.transferOwnership(fundingEscrowAddress, {
+        from: owner,
+      })
+
+      return beneficiary
+    }
   })
 
   async function mintAndApproveWrappedTokens(token, address, staker, amount) {

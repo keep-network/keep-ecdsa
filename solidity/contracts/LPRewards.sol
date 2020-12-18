@@ -41,6 +41,7 @@
 pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/KeepToken.sol";
+import "@keep-network/keep-core/contracts/PhasedEscrow.sol";
 
 import "openzeppelin-solidity/contracts/math/Math.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -102,7 +103,11 @@ contract LPTokenWrapper {
     }
 }
 
-contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
+contract LPRewards is
+    LPTokenWrapper,
+    IRewardDistributionRecipient,
+    IStakerRewards
+{
     IERC20 public keepToken;
     uint256 public constant DURATION = 7 days;
 
