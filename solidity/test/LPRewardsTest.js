@@ -17,12 +17,12 @@ describe("LPRewards", () => {
   let keepToken
   let lpRewards
   let wrappedToken
-  let owner
+  let rewardDistribution
   let staker1
   let staker2
 
   before(async () => {
-    owner = accounts[0]
+    rewardDistribution = accounts[5]
     staker1 = accounts[1]
     staker2 = accounts[2]
     keepToken = await KeepToken.new()
@@ -126,8 +126,8 @@ describe("LPRewards", () => {
         wrappedTokenStakerBallance
       )
 
-      await lpRewards.setRewardDistribution(owner)
-      await lpRewards.notifyRewardAmount(keepRewards, {from: owner})
+      await lpRewards.setRewardDistribution(rewardDistribution)
+      await lpRewards.notifyRewardAmount(keepRewards, {from: rewardDistribution})
 
       const wrappedTokensToStake = web3.utils
         .toBN(2000)
@@ -175,8 +175,8 @@ describe("LPRewards", () => {
         wrappedTokenStakerBallance
       )
 
-      await lpRewards.setRewardDistribution(owner)
-      await lpRewards.notifyRewardAmount(keepAllocated, {from: owner})
+      await lpRewards.setRewardDistribution(rewardDistribution)
+      await lpRewards.notifyRewardAmount(keepAllocated, {from: rewardDistribution})
 
       const wrappedTokensToStake = web3.utils
         .toBN(2000)
