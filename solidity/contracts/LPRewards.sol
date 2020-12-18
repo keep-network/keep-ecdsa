@@ -96,7 +96,7 @@ contract LPTokenWrapper {
 }
 
 contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
-    IERC20 public rewardToken; // KEEP
+    IERC20 public keepToken;
     uint256 public constant DURATION = 7 days;
 
     uint256 public periodFinish = 0;
@@ -111,11 +111,11 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
 
-    constructor(IERC20 _rewardToken, IERC20 _wrappedToken)
+    constructor(IERC20 _keepToken, IERC20 _wrappedToken)
         public
         LPTokenWrapper(_wrappedToken)
     {
-        rewardToken = _rewardToken;
+        keepToken = _keepToken;
     }
 
     modifier updateReward(address account) {
@@ -182,9 +182,9 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
         address token,
         bytes memory
     ) public {
-        require(IERC20(token) == rewardToken, "Unsupported token");
+        require(IERC20(token) == keepToken, "Unsupported token");
 
-        rewardToken.safeTransferFrom(from, address(this), value);
+        keepToken.safeTransferFrom(from, address(this), value);
     }
 
     // stake visibility is public as overriding LPTokenWrapper's stake() function
@@ -204,7 +204,7 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
         uint256 reward = earned(msg.sender);
         if (reward > 0) {
             rewards[msg.sender] = 0;
-            rewardToken.safeTransfer(msg.sender, reward);
+            keepToken.safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
     }
