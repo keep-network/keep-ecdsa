@@ -33,6 +33,11 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 */
 
+/// @notice These contracts reward users for adding liquidity to Uniswap https://uniswap.org/
+/// @dev These contracts were obtained from Synthetix and added some minor changes.
+/// You can find the original contracts here: 
+/// https://etherscan.io/address/0x48d7f315fedcad332f68aafa017c7c158bc54760#code
+
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/Math.sol";
