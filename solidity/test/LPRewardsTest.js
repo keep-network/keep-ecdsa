@@ -46,7 +46,7 @@ describe.only("LPRewards", () => {
   })
 
   describe("tokens allocation", () => {
-    it("should successfully allocate KEEP tokens", async () => {
+    it("should successfully allocate KEEP tokens via receiveApproval function", async () => {
       const initialBalance = await keepToken.balanceOf(lpRewards.address)
 
       const rewards = web3.utils.toBN(1000042).mul(tokenDecimalMultiplier)
