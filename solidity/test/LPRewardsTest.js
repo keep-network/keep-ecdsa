@@ -11,28 +11,25 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe.only("LPRewards", () => {
+describe("LPRewards", () => {
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
+  const allocationForDistribution = web3.utils
+    .toBN(10000000)
+    .mul(tokenDecimalMultiplier)
+
+  const staker1 = accounts[1]
+  const staker2 = accounts[2]
+  const rewardDistribution = accounts[3]
+  const wrappedTokenOwner = accounts[4]
+  const lpRewardsOwner = accounts[5]
+  const keepTokenOwner = accounts[6]
 
   let keepToken
   let lpRewards
   let wrappedToken
-  let rewardDistribution
-  let staker1
-  let staker2
-  let keepTokenContractOwner
-  let wrappedTokenContractOwner
-  let lpRewardsContractOwner
 
   before(async () => {
-    staker1 = accounts[1]
-    staker2 = accounts[2]
-    keepTokenContractOwner = accounts[3]
-    wrappedTokenContractOwner = accounts[4]
-    lpRewardsContractOwner = accounts[5]
-    rewardDistribution = accounts[6]
-    
-    keepToken = await KeepToken.new({from: keepTokenContractOwner})
+    keepToken = await KeepToken.new({from: keepTokenOwner})
     // This is a "Pair" Uniswap Token which is created here:
     // https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/UniswapV2Factory.sol#L23
     //
@@ -40,8 +37,17 @@ describe.only("LPRewards", () => {
     // - KEEP/ETH (https://info.uniswap.org/pair/0xe6f19dab7d43317344282f803f8e8d240708174a)
     // - TBTC/ETH (https://info.uniswap.org/pair/0x854056fd40c1b52037166285b2e54fee774d33f6)
     // - KEEP/TBTC (https://info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081)
-    wrappedToken = await WrappedToken.new({from: wrappedTokenContractOwner})
-    lpRewards = await LPRewards.new(keepToken.address, wrappedToken.address, {from: lpRewardsContractOwner})
+    wrappedToken = await WrappedToken.new({from: wrappedTokenOwner})
+    lpRewards = await LPRewards.new(keepToken.address, wrappedToken.address, {
+      from: lpRewardsOwner,
+    })
+
+    await keepToken.approve(rewardDistribution, allocationForDistribution, {
+      from: keepTokenOwner,
+    })
+    await keepToken.transfer(rewardDistribution, allocationForDistribution, {
+      from: keepTokenOwner,
+    })
   })
 
   beforeEach(async () => {
@@ -53,12 +59,19 @@ describe.only("LPRewards", () => {
   })
 
   describe("tokens allocation", () => {
-    it("should successfully allocate KEEP tokens via receiveApproval function", async () => {
+    it("should successfully transfer KEEP and notify LPRewards contract on rewards distribution", async () => {
       const initialBalance = await keepToken.balanceOf(lpRewards.address)
+      const rewards = web3.utils.toBN(1042).mul(tokenDecimalMultiplier)
 
-      const rewards = web3.utils.toBN(1000042).mul(tokenDecimalMultiplier)
-
-      await keepToken.approveAndCall(lpRewards.address, rewards, "0x0", {from: keepTokenContractOwner})
+      await lpRewards.setRewardDistribution(rewardDistribution, {
+        from: lpRewardsOwner,
+      })
+      await keepToken.approve(lpRewards.address, rewards, {
+        from: rewardDistribution,
+      })
+      await lpRewards.notifyRewardAmount(rewards, {
+        from: rewardDistribution,
+      })
 
       const finalBalance = await keepToken.balanceOf(lpRewards.address)
       expect(finalBalance).to.eq.BN(rewards.add(initialBalance))
@@ -133,7 +146,6 @@ describe.only("LPRewards", () => {
         .toBN(10000)
         .mul(tokenDecimalMultiplier)
 
-      await fundKEEPReward(lpRewards.address, keepRewards)
       await mintAndApproveWrappedTokens(
         wrappedToken,
         lpRewards.address,
@@ -141,10 +153,7 @@ describe.only("LPRewards", () => {
         wrappedTokenStakerBallance
       )
 
-      await lpRewards.setRewardDistribution(rewardDistribution, {from: lpRewardsContractOwner})
-      await lpRewards.notifyRewardAmount(keepRewards, {
-        from: rewardDistribution,
-      })
+      await fundAndNotifyLPRewards(lpRewards.address, keepRewards)
 
       const wrappedTokensToStake = web3.utils
         .toBN(2000)
@@ -184,7 +193,6 @@ describe.only("LPRewards", () => {
         .toBN(10000)
         .mul(tokenDecimalMultiplier)
 
-      await fundKEEPReward(lpRewards.address, keepAllocated)
       await mintAndApproveWrappedTokens(
         wrappedToken,
         lpRewards.address,
@@ -192,10 +200,7 @@ describe.only("LPRewards", () => {
         wrappedTokenStakerBallance
       )
 
-      await lpRewards.setRewardDistribution(rewardDistribution, {from: lpRewardsContractOwner})
-      await lpRewards.notifyRewardAmount(keepAllocated, {
-        from: rewardDistribution,
-      })
+      await fundAndNotifyLPRewards(lpRewards.address, keepAllocated)
 
       const wrappedTokensToStake = web3.utils
         .toBN(2000)
@@ -221,13 +226,19 @@ describe.only("LPRewards", () => {
     })
   })
 
+  async function fundAndNotifyLPRewards(address, amount) {
+    await lpRewards.setRewardDistribution(rewardDistribution, {
+      from: lpRewardsOwner,
+    })
+    await keepToken.approve(address, amount, {from: rewardDistribution})
+    await lpRewards.notifyRewardAmount(amount, {
+      from: rewardDistribution,
+    })
+  }
+
   async function mintAndApproveWrappedTokens(token, address, staker, amount) {
     await token.mint(staker, amount)
     await token.approve(address, amount, {from: staker})
-  }
-
-  async function fundKEEPReward(address, amount) {
-    await keepToken.approveAndCall(address, amount, "0x0", {from: keepTokenContractOwner})
   }
 
   async function timeIncreaseTo(seconds) {
