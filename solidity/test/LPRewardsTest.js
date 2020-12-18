@@ -5,13 +5,16 @@ const {time} = require("@openzeppelin/test-helpers")
 const LPRewards = contract.fromArtifact("LPRewards")
 const KeepToken = contract.fromArtifact("KeepToken")
 const WrappedToken = contract.fromArtifact("TestToken")
+const LPRewardsTBTCETH = contract.fromArtifact("LPRewardsTBTCETH")
+const LPRewardsKEEPETH = contract.fromArtifact("LPRewardsKEEPETH")
+const LPRewardsKEEPTBTC = contract.fromArtifact("LPRewardsKEEPTBTC")
 
 const BN = web3.utils.BN
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe.only("LPRewards", () => {
+describe("LPRewards", () => {
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
 
   let keepToken
@@ -31,7 +34,7 @@ describe.only("LPRewards", () => {
     wrappedTokenContractOwner = accounts[4]
     lpRewardsContractOwner = accounts[5]
     rewardDistribution = accounts[6]
-    
+
     keepToken = await KeepToken.new({from: keepTokenContractOwner})
     // This is a "Pair" Uniswap Token which is created here:
     // https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/UniswapV2Factory.sol#L23
@@ -41,7 +44,9 @@ describe.only("LPRewards", () => {
     // - TBTC/ETH (https://info.uniswap.org/pair/0x854056fd40c1b52037166285b2e54fee774d33f6)
     // - KEEP/TBTC (https://info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081)
     wrappedToken = await WrappedToken.new({from: wrappedTokenContractOwner})
-    lpRewards = await LPRewards.new(keepToken.address, wrappedToken.address, {from: lpRewardsContractOwner})
+    lpRewards = await LPRewards.new(keepToken.address, wrappedToken.address, {
+      from: lpRewardsContractOwner,
+    })
   })
 
   beforeEach(async () => {
@@ -58,7 +63,9 @@ describe.only("LPRewards", () => {
 
       const rewards = web3.utils.toBN(1000042).mul(tokenDecimalMultiplier)
 
-      await keepToken.approveAndCall(lpRewards.address, rewards, "0x0", {from: keepTokenContractOwner})
+      await keepToken.approveAndCall(lpRewards.address, rewards, "0x0", {
+        from: keepTokenContractOwner,
+      })
 
       const finalBalance = await keepToken.balanceOf(lpRewards.address)
       expect(finalBalance).to.eq.BN(rewards.add(initialBalance))
@@ -141,7 +148,9 @@ describe.only("LPRewards", () => {
         wrappedTokenStakerBallance
       )
 
-      await lpRewards.setRewardDistribution(rewardDistribution, {from: lpRewardsContractOwner})
+      await lpRewards.setRewardDistribution(rewardDistribution, {
+        from: lpRewardsContractOwner,
+      })
       await lpRewards.notifyRewardAmount(keepRewards, {
         from: rewardDistribution,
       })
@@ -192,7 +201,9 @@ describe.only("LPRewards", () => {
         wrappedTokenStakerBallance
       )
 
-      await lpRewards.setRewardDistribution(rewardDistribution, {from: lpRewardsContractOwner})
+      await lpRewards.setRewardDistribution(rewardDistribution, {
+        from: lpRewardsContractOwner,
+      })
       await lpRewards.notifyRewardAmount(keepAllocated, {
         from: rewardDistribution,
       })
@@ -221,13 +232,47 @@ describe.only("LPRewards", () => {
     })
   })
 
+  describe("dedicated rewards contracts", () => {
+    it("deploys contract for TBTC-ETH pair", async () => {
+      const lpRewards = await LPRewardsTBTCETH.new(
+        keepToken.address,
+        wrappedToken.address
+      )
+
+      expect(await lpRewards.keepToken.call()).equal(keepToken.address)
+      expect(await lpRewards.wrappedToken.call()).equal(wrappedToken.address)
+    })
+
+    it("deploys contract for KEEP-ETH pair", async () => {
+      const lpRewards = await LPRewardsKEEPETH.new(
+        keepToken.address,
+        wrappedToken.address
+      )
+
+      expect(await lpRewards.keepToken.call()).equal(keepToken.address)
+      expect(await lpRewards.wrappedToken.call()).equal(wrappedToken.address)
+    })
+
+    it("deploys contract for KEEP-TBTC pair", async () => {
+      const lpRewards = await LPRewardsKEEPTBTC.new(
+        keepToken.address,
+        wrappedToken.address
+      )
+
+      expect(await lpRewards.keepToken.call()).equal(keepToken.address)
+      expect(await lpRewards.wrappedToken.call()).equal(wrappedToken.address)
+    })
+  })
+
   async function mintAndApproveWrappedTokens(token, address, staker, amount) {
     await token.mint(staker, amount)
     await token.approve(address, amount, {from: staker})
   }
 
   async function fundKEEPReward(address, amount) {
-    await keepToken.approveAndCall(address, amount, "0x0", {from: keepTokenContractOwner})
+    await keepToken.approveAndCall(address, amount, "0x0", {
+      from: keepTokenContractOwner,
+    })
   }
 
   async function timeIncreaseTo(seconds) {

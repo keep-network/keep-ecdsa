@@ -40,6 +40,8 @@
 
 pragma solidity 0.5.17;
 
+import "@keep-network/keep-core/contracts/KeepToken.sol";
+
 import "openzeppelin-solidity/contracts/math/Math.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -213,4 +215,28 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
             emit RewardPaid(msg.sender, reward);
         }
     }
+}
+
+/// @title KEEP rewards for TBTC-ETH liquidity pool.
+contract LPRewardsTBTCETH is LPRewards {
+    constructor(KeepToken keepToken, IERC20 tbtcEthUniswapPair)
+        public
+        LPRewards(keepToken, tbtcEthUniswapPair)
+    {}
+}
+
+/// @title KEEP rewards for KEEP-ETH liquidity pool.
+contract LPRewardsKEEPETH is LPRewards {
+    constructor(KeepToken keepToken, IERC20 keepEthUniswapPair)
+        public
+        LPRewards(keepToken, keepEthUniswapPair)
+    {}
+}
+
+/// @title KEEP rewards for KEEP-TBTC liquidity pool.
+contract LPRewardsKEEPTBTC is LPRewards {
+    constructor(KeepToken keepToken, IERC20 keepTbtcUniswapPair)
+        public
+        LPRewards(keepToken, keepTbtcUniswapPair)
+    {}
 }
