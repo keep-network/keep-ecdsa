@@ -11,7 +11,7 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe.only("LPRewards", () => {
+describe("LPRewards", () => {
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
   const allocationForDistribution = web3.utils.toWei("10000000")
 
@@ -78,21 +78,11 @@ describe.only("LPRewards", () => {
     })
 
     it("should successfully stake wrapped tokens", async () => {
-      const initialWrappedTokenStakerBallance1 = web3.utils.toWei("10000")
-      const initialWrappedTokenStakerBallance2 = web3.utils.toWei("20000")
+      const wrappedTokenStakerBallance1 = web3.utils.toWei("10000")
+      const wrappedTokenStakerBallance2 = web3.utils.toWei("20000")
 
-      await mintAndApproveWrappedTokens(
-        wrappedToken,
-        lpRewards.address,
-        staker1,
-        initialWrappedTokenStakerBallance1
-      )
-      await mintAndApproveWrappedTokens(
-        wrappedToken,
-        lpRewards.address,
-        staker2,
-        initialWrappedTokenStakerBallance2
-      )
+      await mintAndApproveWrappedTokens(staker1, wrappedTokenStakerBallance1)
+      await mintAndApproveWrappedTokens(staker2, wrappedTokenStakerBallance2)
 
       let wrappedTokenBalance = await wrappedToken.balanceOf(lpRewards.address)
       expect(wrappedTokenBalance).to.eq.BN(0)
@@ -134,12 +124,7 @@ describe.only("LPRewards", () => {
       const keepRewards = web3.utils.toWei("10000")
       const wrappedTokenStakerBallance = web3.utils.toWei("10000")
 
-      await mintAndApproveWrappedTokens(
-        wrappedToken,
-        lpRewards.address,
-        staker1,
-        wrappedTokenStakerBallance
-      )
+      await mintAndApproveWrappedTokens(staker1, wrappedTokenStakerBallance)
 
       await fundAndNotifyLPRewards(lpRewards.address, keepRewards)
 
@@ -177,12 +162,7 @@ describe.only("LPRewards", () => {
       const keepAllocated = rewardsAmount.mul(tokenDecimalMultiplier)
       const wrappedTokenStakerBallance = web3.utils.toWei("10000")
 
-      await mintAndApproveWrappedTokens(
-        wrappedToken,
-        lpRewards.address,
-        staker1,
-        wrappedTokenStakerBallance
-      )
+      await mintAndApproveWrappedTokens(staker1, wrappedTokenStakerBallance)
 
       await fundAndNotifyLPRewards(lpRewards.address, keepAllocated)
 
@@ -218,9 +198,9 @@ describe.only("LPRewards", () => {
     })
   }
 
-  async function mintAndApproveWrappedTokens(token, address, staker, amount) {
-    await token.mint(staker, amount)
-    await token.approve(address, amount, {from: staker})
+  async function mintAndApproveWrappedTokens(staker, amount) {
+    await wrappedToken.mint(staker, amount)
+    await wrappedToken.approve(lpRewards.address, amount, {from: staker})
   }
 
   async function timeIncreaseTo(seconds) {
