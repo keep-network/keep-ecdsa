@@ -77,15 +77,15 @@ describe("LPRewards", () => {
     })
 
     it("should successfully stake wrapped tokens", async () => {
-      const wrappedTokenStakerBallance1 = web3.utils
+      const wrappedTokenStakerBalance1 = web3.utils
         .toBN(10000)
         .mul(tokenDecimalMultiplier)
-      const wrappedTokenStakerBallance2 = web3.utils
+      const wrappedTokenStakerBalance2 = web3.utils
         .toBN(20000)
         .mul(tokenDecimalMultiplier)
 
-      await mintAndApproveWrappedTokens(staker1, wrappedTokenStakerBallance1)
-      await mintAndApproveWrappedTokens(staker2, wrappedTokenStakerBallance2)
+      await mintAndApproveWrappedTokens(staker1, wrappedTokenStakerBalance1)
+      await mintAndApproveWrappedTokens(staker2, wrappedTokenStakerBalance2)
 
       let wrappedTokenBalance = await wrappedToken.balanceOf(lpRewards.address)
       expect(wrappedTokenBalance).to.eq.BN(0)
@@ -137,11 +137,11 @@ describe("LPRewards", () => {
 
     it("should be possible to check earned rewards", async () => {
       const keepRewards = new BN(10000).mul(tokenDecimalMultiplier)
-      const wrappedTokenStakerBallance = web3.utils
+      const wrappedTokenStakerBalance = web3.utils
         .toBN(10000)
         .mul(tokenDecimalMultiplier)
 
-      await mintAndApproveWrappedTokens(staker1, wrappedTokenStakerBallance)
+      await mintAndApproveWrappedTokens(staker1, wrappedTokenStakerBalance)
 
       await fundAndNotifyLPRewards(lpRewards.address, keepRewards)
 
