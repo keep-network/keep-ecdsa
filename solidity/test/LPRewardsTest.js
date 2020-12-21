@@ -11,7 +11,7 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe.only("LPRewards", () => {
+describe("LPRewards", () => {
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
   const allocationForDistribution = web3.utils
     .toBN(10000000)
@@ -115,13 +115,17 @@ describe.only("LPRewards", () => {
         web3.utils.toBN(5000).mul(tokenDecimalMultiplier)
       )
 
-      const actualWrappedTokenStakerBalance1 = await wrappedToken.balanceOf(staker1)
+      const actualWrappedTokenStakerBalance1 = await wrappedToken.balanceOf(
+        staker1
+      )
       // 10,000 - 4,000 = 6,000
       expect(actualWrappedTokenStakerBalance1).to.eq.BN(
         web3.utils.toBN(6000).mul(tokenDecimalMultiplier)
       )
 
-      const actualWrappedTokenStakerBalance2 = await wrappedToken.balanceOf(staker2)
+      const actualWrappedTokenStakerBalance2 = await wrappedToken.balanceOf(
+        staker2
+      )
       // 20,000 - 5,000 = 15,000
       expect(actualWrappedTokenStakerBalance2).to.eq.BN(
         web3.utils.toBN(15000).mul(tokenDecimalMultiplier)
