@@ -114,6 +114,21 @@ describe("LPRewards", () => {
         web3.utils.toBN(9000).mul(tokenDecimalMultiplier)
       )
 
+      const totalSupply = await lpRewards.totalSupply()
+      expect(totalSupply).to.eq.BN(
+        web3.utils.toBN(9000).mul(tokenDecimalMultiplier)
+      )
+
+      const balanceStaker1 = await lpRewards.balanceOf(staker1)
+      expect(balanceStaker1).to.eq.BN(
+        web3.utils.toBN(4000).mul(tokenDecimalMultiplier)
+      )
+
+      const balanceStaker2 = await lpRewards.balanceOf(staker2)
+      expect(balanceStaker2).to.eq.BN(
+        web3.utils.toBN(5000).mul(tokenDecimalMultiplier)
+      )
+
       wrappedTokenStakerBalance1 = await wrappedToken.balanceOf(staker1)
       // 10,000 - 4,000 = 6,000
       expect(wrappedTokenStakerBalance1).to.eq.BN(
