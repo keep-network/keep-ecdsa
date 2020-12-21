@@ -6,6 +6,14 @@ const LPRewards = contract.fromArtifact("LPRewards")
 const KeepToken = contract.fromArtifact("KeepToken")
 const WrappedToken = contract.fromArtifact("TestToken")
 
+const LPRewardsTBTCETH = contract.fromArtifact("LPRewardsTBTCETH")
+const LPRewardsKEEPETH = contract.fromArtifact("LPRewardsKEEPETH")
+const LPRewardsKEEPTBTC = contract.fromArtifact("LPRewardsKEEPTBTC")
+const BatchedPhasedEscrow = contract.fromArtifact("BatchedPhasedEscrow")
+const StakingPoolRewardsEscrowBeneficiary = contract.fromArtifact(
+  "StakingPoolRewardsEscrowBeneficiary"
+)
+
 const BN = web3.utils.BN
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
@@ -220,6 +228,163 @@ describe("LPRewards", () => {
         actualWrappedTokenStakerBalance
       )
     })
+  })
+
+  describe("dedicated rewards contracts", () => {
+    const owner = accounts[1]
+
+    it("deploys contract for TBTC-ETH pair", async () => {
+      const lpRewards = await LPRewardsTBTCETH.new(
+        keepToken.address,
+        wrappedToken.address
+      )
+
+      expect(await lpRewards.keepToken.call()).equal(keepToken.address)
+      expect(await lpRewards.wrappedToken.call()).equal(wrappedToken.address)
+    })
+
+    it("deploys contract for KEEP-ETH pair", async () => {
+      const lpRewards = await LPRewardsKEEPETH.new(
+        keepToken.address,
+        wrappedToken.address
+      )
+
+      expect(await lpRewards.keepToken.call()).equal(keepToken.address)
+      expect(await lpRewards.wrappedToken.call()).equal(wrappedToken.address)
+    })
+
+    it("deploys contract for KEEP-TBTC pair", async () => {
+      const lpRewards = await LPRewardsKEEPTBTC.new(
+        keepToken.address,
+        wrappedToken.address
+      )
+
+      expect(await lpRewards.keepToken.call()).equal(keepToken.address)
+      expect(await lpRewards.wrappedToken.call()).equal(wrappedToken.address)
+    })
+
+    it("got funded from batched escrow", async () => {
+      // Here we want to test funding of LP Rewards contracts from Batched Phased
+      // Escrow. It is a type of Phased Escrow that allows batched withdrawals
+      // in a one function call. This way of funding requires intermediary
+      // Escrow Beneficiary contracts, that will automatically transfer funds
+      // to the correct LP Rewards contract.
+      //
+      // Tokens are transferred in the following way:
+      //                        |-> StakingPoolRewardsEscrowBeneficiary -> LPRewardsTBTCETH
+      // Batched Phased Escrow -|-> StakingPoolRewardsEscrowBeneficiary -> LPRewardsKEEPETH
+      //                        |-> StakingPoolRewardsEscrowBeneficiary -> LPRewardsKEEPTBTC
+      //
+      // It is expected that one call of `BatchedPhasedEscrow.batchedWithdrawal`
+      // function will transfer specific number of tokens to dedicated LP Rewards
+      // contracts.
+
+      const rewards = [
+        web3.utils.toBN(1001).mul(tokenDecimalMultiplier),
+        web3.utils.toBN(2010).mul(tokenDecimalMultiplier),
+        web3.utils.toBN(3100).mul(tokenDecimalMultiplier),
+      ]
+      const totalRewards = web3.utils.toBN(6111).mul(tokenDecimalMultiplier)
+
+      // Deploy BatchedPhasedEscrow contract and fund it.
+      const fundingEscrow = await BatchedPhasedEscrow.new(keepToken.address, {
+        from: owner,
+      })
+      await keepToken.approveAndCall(
+        fundingEscrow.address,
+        totalRewards,
+        "0x0",
+        {
+          from: keepTokenOwner,
+        }
+      )
+
+      // Deploy LP Rewards contracts for each pair.
+      const lpReward1 = await LPRewardsTBTCETH.new(
+        keepToken.address,
+        wrappedToken.address,
+        {from: lpRewardsOwner}
+      )
+      const lpReward2 = await LPRewardsKEEPETH.new(
+        keepToken.address,
+        wrappedToken.address,
+        {from: lpRewardsOwner}
+      )
+
+      const lpReward3 = await LPRewardsKEEPTBTC.new(
+        keepToken.address,
+        wrappedToken.address,
+        {from: lpRewardsOwner}
+      )
+
+      // Deploy beneficiaries contracts for each LP Rewards contract.
+      const beneficiary1 = await newRewardsEscrowBeneficiary(
+        lpReward1,
+        fundingEscrow
+      )
+
+      const beneficiary2 = await newRewardsEscrowBeneficiary(
+        lpReward2,
+        fundingEscrow
+      )
+
+      const beneficiary3 = await newRewardsEscrowBeneficiary(
+        lpReward3,
+        fundingEscrow
+      )
+
+      const beneficiaries = [
+        beneficiary1.address,
+        beneficiary2.address,
+        beneficiary3.address,
+      ]
+
+      // Perform batched withdrawal from Phased Escrow contract.
+      await fundingEscrow.batchedWithdraw(beneficiaries, rewards, {
+        from: owner,
+      })
+
+      // Verify funds got transferred to the LP Rewards contracts.
+      expect(
+        await keepToken.balanceOf(lpReward1.address),
+        "invalid balance of LP Rewards 1"
+      ).to.eq.BN(rewards[0])
+      expect(
+        await keepToken.balanceOf(lpReward2.address),
+        "invalid balance of LP Rewards 2"
+      ).to.eq.BN(rewards[1])
+      expect(
+        await keepToken.balanceOf(lpReward3.address),
+        "invalid balance of LP Rewards 3"
+      ).to.eq.BN(rewards[2])
+    })
+
+    async function newRewardsEscrowBeneficiary(
+      destinationRewardsContract,
+      fundingEscrow
+    ) {
+      const beneficiary = await StakingPoolRewardsEscrowBeneficiary.new(
+        keepToken.address,
+        destinationRewardsContract.address,
+        {from: owner}
+      )
+      await beneficiary.transferOwnership(fundingEscrow.address, {
+        from: owner,
+      })
+
+      await fundingEscrow.approveBeneficiary(beneficiary.address, {
+        from: owner,
+      })
+
+      await destinationRewardsContract.setRewardDistribution(
+        beneficiary.address,
+        {
+          from: lpRewardsOwner,
+        }
+      )
+
+      return beneficiary
+    }
   })
 
   async function fundAndNotifyLPRewards(address, amount) {
