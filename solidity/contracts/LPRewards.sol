@@ -106,7 +106,7 @@ contract LPTokenWrapper {
 contract LPRewards is
     LPTokenWrapper,
     IRewardDistributionRecipient,
-    IStakerRewards
+    IStakingPoolRewards
 {
     IERC20 public keepToken;
     uint256 public constant DURATION = 7 days;

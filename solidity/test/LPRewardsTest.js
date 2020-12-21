@@ -10,8 +10,8 @@ const LPRewardsTBTCETH = contract.fromArtifact("LPRewardsTBTCETH")
 const LPRewardsKEEPETH = contract.fromArtifact("LPRewardsKEEPETH")
 const LPRewardsKEEPTBTC = contract.fromArtifact("LPRewardsKEEPTBTC")
 const BatchedPhasedEscrow = contract.fromArtifact("BatchedPhasedEscrow")
-const LPRewardsEscrowBeneficiary = contract.fromArtifact(
-  "LPRewardsEscrowBeneficiary"
+const StakingPoolRewardsEscrowBeneficiary = contract.fromArtifact(
+  "StakingPoolRewardsEscrowBeneficiary"
 )
 
 const BN = web3.utils.BN
@@ -271,9 +271,9 @@ describe("LPRewards", () => {
       // to the correct LP Rewards contract.
       //
       // Tokens are transferred in the following way:
-      //                        |-> LPRewardsEscrowBeneficiary -> LPRewardsTBTCETH
-      // Batched Phased Escrow -|-> LPRewardsEscrowBeneficiary -> LPRewardsKEEPETH
-      //                        |-> LPRewardsEscrowBeneficiary -> LPRewardsKEEPTBTC
+      //                        |-> StakingPoolRewardsEscrowBeneficiary -> LPRewardsTBTCETH
+      // Batched Phased Escrow -|-> StakingPoolRewardsEscrowBeneficiary -> LPRewardsKEEPETH
+      //                        |-> StakingPoolRewardsEscrowBeneficiary -> LPRewardsKEEPTBTC
       //
       // It is expected that one call of `BatchedPhasedEscrow.batchedWithdrawal`
       // function will transfer specific number of tokens to dedicated LP Rewards
@@ -295,39 +295,42 @@ describe("LPRewards", () => {
         totalRewards,
         "0x0",
         {
-          from: keepTokenContractOwner,
+          from: keepTokenOwner,
         }
       )
 
       // Deploy LP Rewards contracts for each pair.
       const lpReward1 = await LPRewardsTBTCETH.new(
         keepToken.address,
-        wrappedToken.address
+        wrappedToken.address,
+        {from: lpRewardsOwner}
       )
       const lpReward2 = await LPRewardsKEEPETH.new(
         keepToken.address,
-        wrappedToken.address
+        wrappedToken.address,
+        {from: lpRewardsOwner}
       )
 
       const lpReward3 = await LPRewardsKEEPTBTC.new(
         keepToken.address,
-        wrappedToken.address
+        wrappedToken.address,
+        {from: lpRewardsOwner}
       )
 
       // Deploy beneficiaries contracts for each LP Rewards contract.
-      const beneficiary1 = await newLPRewardsBeneficiary(
-        lpReward1.address,
-        fundingEscrow.address
+      const beneficiary1 = await newRewardsEscrowBeneficiary(
+        lpReward1,
+        fundingEscrow
       )
 
-      const beneficiary2 = await newLPRewardsBeneficiary(
-        lpReward2.address,
-        fundingEscrow.address
+      const beneficiary2 = await newRewardsEscrowBeneficiary(
+        lpReward2,
+        fundingEscrow
       )
 
-      const beneficiary3 = await newLPRewardsBeneficiary(
-        lpReward3.address,
-        fundingEscrow.address
+      const beneficiary3 = await newRewardsEscrowBeneficiary(
+        lpReward3,
+        fundingEscrow
       )
 
       const beneficiaries = [
@@ -356,18 +359,29 @@ describe("LPRewards", () => {
       ).to.eq.BN(rewards[2])
     })
 
-    async function newLPRewardsBeneficiary(
-      destinationRewardsContractAddress,
-      fundingEscrowAddress
+    async function newRewardsEscrowBeneficiary(
+      destinationRewardsContract,
+      fundingEscrow
     ) {
-      const beneficiary = await LPRewardsEscrowBeneficiary.new(
+      const beneficiary = await StakingPoolRewardsEscrowBeneficiary.new(
         keepToken.address,
-        destinationRewardsContractAddress,
+        destinationRewardsContract.address,
         {from: owner}
       )
-      await beneficiary.transferOwnership(fundingEscrowAddress, {
+      await beneficiary.transferOwnership(fundingEscrow.address, {
         from: owner,
       })
+
+      await fundingEscrow.approveBeneficiary(beneficiary.address, {
+        from: owner,
+      })
+
+      await destinationRewardsContract.setRewardDistribution(
+        beneficiary.address,
+        {
+          from: lpRewardsOwner,
+        }
+      )
 
       return beneficiary
     }
