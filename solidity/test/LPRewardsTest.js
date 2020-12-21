@@ -42,9 +42,6 @@ describe.only("LPRewards", () => {
       from: lpRewardsOwner,
     })
 
-    await keepToken.approve(rewardDistribution, allocationForDistribution, {
-      from: keepTokenOwner,
-    })
     await keepToken.transfer(rewardDistribution, allocationForDistribution, {
       from: keepTokenOwner,
     })
