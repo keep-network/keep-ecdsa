@@ -21,26 +21,23 @@ const expect = chai.expect
 
 describe("LPRewards", () => {
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
+  const allocationForDistribution = web3.utils
+    .toBN(10000000)
+    .mul(tokenDecimalMultiplier)
+
+  const staker1 = accounts[1]
+  const staker2 = accounts[2]
+  const rewardDistribution = accounts[3]
+  const wrappedTokenOwner = accounts[4]
+  const lpRewardsOwner = accounts[5]
+  const keepTokenOwner = accounts[6]
 
   let keepToken
   let lpRewards
   let wrappedToken
-  let rewardDistribution
-  let staker1
-  let staker2
-  let keepTokenContractOwner
-  let wrappedTokenContractOwner
-  let lpRewardsContractOwner
 
   before(async () => {
-    staker1 = accounts[1]
-    staker2 = accounts[2]
-    keepTokenContractOwner = accounts[3]
-    wrappedTokenContractOwner = accounts[4]
-    lpRewardsContractOwner = accounts[5]
-    rewardDistribution = accounts[6]
-
-    keepToken = await KeepToken.new({from: keepTokenContractOwner})
+    keepToken = await KeepToken.new({from: keepTokenOwner})
     // This is a "Pair" Uniswap Token which is created here:
     // https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/UniswapV2Factory.sol#L23
     //
@@ -48,9 +45,13 @@ describe("LPRewards", () => {
     // - KEEP/ETH (https://info.uniswap.org/pair/0xe6f19dab7d43317344282f803f8e8d240708174a)
     // - TBTC/ETH (https://info.uniswap.org/pair/0x854056fd40c1b52037166285b2e54fee774d33f6)
     // - KEEP/TBTC (https://info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081)
-    wrappedToken = await WrappedToken.new({from: wrappedTokenContractOwner})
+    wrappedToken = await WrappedToken.new({from: wrappedTokenOwner})
     lpRewards = await LPRewards.new(keepToken.address, wrappedToken.address, {
-      from: lpRewardsContractOwner,
+      from: lpRewardsOwner,
+    })
+
+    await keepToken.transfer(rewardDistribution, allocationForDistribution, {
+      from: keepTokenOwner,
     })
   })
 
@@ -63,51 +64,36 @@ describe("LPRewards", () => {
   })
 
   describe("tokens allocation", () => {
-    it("should successfully allocate KEEP tokens via receiveApproval function", async () => {
-      const initialBalance = await keepToken.balanceOf(lpRewards.address)
+    it("should successfully transfer KEEP and notify LPRewards contract on rewards distribution", async () => {
+      const rewards = web3.utils.toBN(1042).mul(tokenDecimalMultiplier)
 
-      const rewards = web3.utils.toBN(1000042).mul(tokenDecimalMultiplier)
-
-      await keepToken.approveAndCall(lpRewards.address, rewards, "0x0", {
-        from: keepTokenContractOwner,
+      await lpRewards.setRewardDistribution(rewardDistribution, {
+        from: lpRewardsOwner,
+      })
+      await keepToken.approve(lpRewards.address, rewards, {
+        from: rewardDistribution,
+      })
+      await lpRewards.notifyRewardAmount(rewards, {
+        from: rewardDistribution,
       })
 
       const finalBalance = await keepToken.balanceOf(lpRewards.address)
-      expect(finalBalance).to.eq.BN(rewards.add(initialBalance))
+      expect(finalBalance).to.eq.BN(rewards)
     })
 
-    it("should successfully allocate wrapped tokens", async () => {
-      const initialWrappedTokenStakerBallance1 = web3.utils
+    it("should successfully stake wrapped tokens", async () => {
+      const wrappedTokenStakerBalance1 = web3.utils
         .toBN(10000)
         .mul(tokenDecimalMultiplier)
-      const initialWrappedTokenStakerBallance2 = web3.utils
+      const wrappedTokenStakerBalance2 = web3.utils
         .toBN(20000)
         .mul(tokenDecimalMultiplier)
 
-      await mintAndApproveWrappedTokens(
-        wrappedToken,
-        lpRewards.address,
-        staker1,
-        initialWrappedTokenStakerBallance1
-      )
-      await mintAndApproveWrappedTokens(
-        wrappedToken,
-        lpRewards.address,
-        staker2,
-        initialWrappedTokenStakerBallance2
-      )
+      await mintAndApproveWrappedTokens(staker1, wrappedTokenStakerBalance1)
+      await mintAndApproveWrappedTokens(staker2, wrappedTokenStakerBalance2)
 
       let wrappedTokenBalance = await wrappedToken.balanceOf(lpRewards.address)
       expect(wrappedTokenBalance).to.eq.BN(0)
-
-      let wrappedTokenStakerBalance1 = await wrappedToken.balanceOf(staker1)
-      expect(wrappedTokenStakerBalance1).to.eq.BN(
-        initialWrappedTokenStakerBallance1
-      )
-      let wrappedTokenStakerBalance2 = await wrappedToken.balanceOf(staker2)
-      expect(wrappedTokenStakerBalance2).to.eq.BN(
-        initialWrappedTokenStakerBallance2
-      )
 
       await lpRewards.stake(web3.utils.toBN(4000).mul(tokenDecimalMultiplier), {
         from: staker1,
@@ -122,15 +108,34 @@ describe("LPRewards", () => {
         web3.utils.toBN(9000).mul(tokenDecimalMultiplier)
       )
 
-      wrappedTokenStakerBalance1 = await wrappedToken.balanceOf(staker1)
+      const totalSupply = await lpRewards.totalSupply()
+      expect(totalSupply).to.eq.BN(
+        web3.utils.toBN(9000).mul(tokenDecimalMultiplier)
+      )
+
+      const balanceStaker1 = await lpRewards.balanceOf(staker1)
+      expect(balanceStaker1).to.eq.BN(
+        web3.utils.toBN(4000).mul(tokenDecimalMultiplier)
+      )
+
+      const balanceStaker2 = await lpRewards.balanceOf(staker2)
+      expect(balanceStaker2).to.eq.BN(
+        web3.utils.toBN(5000).mul(tokenDecimalMultiplier)
+      )
+
+      const actualWrappedTokenStakerBalance1 = await wrappedToken.balanceOf(
+        staker1
+      )
       // 10,000 - 4,000 = 6,000
-      expect(wrappedTokenStakerBalance1).to.eq.BN(
+      expect(actualWrappedTokenStakerBalance1).to.eq.BN(
         web3.utils.toBN(6000).mul(tokenDecimalMultiplier)
       )
 
-      wrappedTokenStakerBalance2 = await wrappedToken.balanceOf(staker2)
+      const actualWrappedTokenStakerBalance2 = await wrappedToken.balanceOf(
+        staker2
+      )
       // 20,000 - 5,000 = 15,000
-      expect(wrappedTokenStakerBalance2).to.eq.BN(
+      expect(actualWrappedTokenStakerBalance2).to.eq.BN(
         web3.utils.toBN(15000).mul(tokenDecimalMultiplier)
       )
     })
@@ -141,32 +146,21 @@ describe("LPRewards", () => {
 
     it("should be possible to check earned rewards", async () => {
       const keepRewards = new BN(10000).mul(tokenDecimalMultiplier)
-      const wrappedTokenStakerBallance = web3.utils
+      const wrappedTokenStakerBalance = web3.utils
         .toBN(10000)
         .mul(tokenDecimalMultiplier)
 
-      await fundKEEPReward(lpRewards.address, keepRewards)
-      await mintAndApproveWrappedTokens(
-        wrappedToken,
-        lpRewards.address,
-        staker1,
-        wrappedTokenStakerBallance
-      )
+      await mintAndApproveWrappedTokens(staker1, wrappedTokenStakerBalance)
 
-      await lpRewards.setRewardDistribution(rewardDistribution, {
-        from: lpRewardsContractOwner,
-      })
-      await lpRewards.notifyRewardAmount(keepRewards, {
-        from: rewardDistribution,
-      })
+      await fundAndNotifyLPRewards(lpRewards.address, keepRewards)
 
       const wrappedTokensToStake = web3.utils
         .toBN(2000)
         .mul(tokenDecimalMultiplier)
       await lpRewards.stake(wrappedTokensToStake, {from: staker1})
 
-      const future = (await time.latest()).add(time.duration.days(7))
-      await timeIncreaseTo(future)
+      const periodFinish = (await time.latest()).add(time.duration.days(7))
+      await time.increaseTo(periodFinish)
 
       const actualEarnings = (await lpRewards.earned(staker1)).div(
         tokenDecimalMultiplier
@@ -175,14 +169,20 @@ describe("LPRewards", () => {
       expect(actualEarnings).to.gte.BN(expectedEarnings.subn(precision))
       expect(actualEarnings).to.lte.BN(expectedEarnings.addn(precision))
 
-      // 10,000 / 2,000 = 5 KEEP,
-      // Contract function will return 4999999999999999881 KEEP. Solidity
-      // does not have floating numbers and when dividing by 10^18, precision will
-      // not be on point.
+      // duration = 7 days = 604,800 sec
+      // rewardRate = keep rewards / duration
+      // rewardRate = 10,000 / 604,800 = 0,016534391534391534
+      // expected reward per wrapped token = rewardRate * duration / staked amount
+      // expected reward per wrapped token = 5 KEEP
+      // Contract function rewardPerToken() will return 4999999999999999881 KEEP wei.
+      // Solidity does not have floating numbers and when dividing by 10^18,
+      // precision will not be on point.
+      const expectedRewardPerWrappedToken = new BN(5)
+
       const actualRewardPerToken = (await lpRewards.rewardPerToken()).div(
         tokenDecimalMultiplier
       )
-      const expectedRewardPerWrappedToken = new BN(5)
+
       expect(actualRewardPerToken).to.gte.BN(
         expectedRewardPerWrappedToken.subn(precision)
       )
@@ -194,24 +194,13 @@ describe("LPRewards", () => {
     it("should be possible to withdraw rewards after staking wrapped tokens", async () => {
       const rewardsAmount = new BN(5000)
       const keepAllocated = rewardsAmount.mul(tokenDecimalMultiplier)
-      const wrappedTokenStakerBallance = web3.utils
+      const wrappedTokenStakerBalance = web3.utils
         .toBN(10000)
         .mul(tokenDecimalMultiplier)
 
-      await fundKEEPReward(lpRewards.address, keepAllocated)
-      await mintAndApproveWrappedTokens(
-        wrappedToken,
-        lpRewards.address,
-        staker1,
-        wrappedTokenStakerBallance
-      )
+      await mintAndApproveWrappedTokens(staker1, wrappedTokenStakerBalance)
 
-      await lpRewards.setRewardDistribution(rewardDistribution, {
-        from: lpRewardsContractOwner,
-      })
-      await lpRewards.notifyRewardAmount(keepAllocated, {
-        from: rewardDistribution,
-      })
+      await fundAndNotifyLPRewards(lpRewards.address, keepAllocated)
 
       const wrappedTokensToStake = web3.utils
         .toBN(2000)
@@ -219,7 +208,7 @@ describe("LPRewards", () => {
       await lpRewards.stake(wrappedTokensToStake, {from: staker1})
 
       const future = (await time.latest()).add(time.duration.days(7))
-      await timeIncreaseTo(future)
+      await time.increaseTo(future)
 
       // Withdraw wrapped tokens and KEEP rewards
       await lpRewards.exit({from: staker1})
@@ -232,8 +221,12 @@ describe("LPRewards", () => {
       expect(keepEarnedRewards).to.lte.BN(rewardsAmount.addn(precision))
 
       // Check that all wrapped tokens were transferred back to the staker
-      const wrappedTokenStakerBalance = await wrappedToken.balanceOf(staker1)
-      expect(wrappedTokenStakerBalance).to.eq.BN(wrappedTokenStakerBallance)
+      const actualWrappedTokenStakerBalance = await wrappedToken.balanceOf(
+        staker1
+      )
+      expect(wrappedTokenStakerBalance).to.eq.BN(
+        actualWrappedTokenStakerBalance
+      )
     })
   })
 
@@ -385,15 +378,18 @@ describe("LPRewards", () => {
     await token.approve(address, amount, {from: staker})
   }
 
-  async function fundKEEPReward(address, amount) {
-    await keepToken.approveAndCall(address, amount, "0x0", {
-      from: keepTokenContractOwner,
+  async function fundAndNotifyLPRewards(address, amount) {
+    await lpRewards.setRewardDistribution(rewardDistribution, {
+      from: lpRewardsOwner,
+    })
+    await keepToken.approve(address, amount, {from: rewardDistribution})
+    await lpRewards.notifyRewardAmount(amount, {
+      from: rewardDistribution,
     })
   }
 
-  async function timeIncreaseTo(seconds) {
-    const delay = 10 - new Date().getMilliseconds()
-    await new Promise((resolve) => setTimeout(resolve, delay))
-    await time.increaseTo(seconds)
+  async function mintAndApproveWrappedTokens(staker, amount) {
+    await wrappedToken.mint(staker, amount)
+    await wrappedToken.approve(lpRewards.address, amount, {from: staker})
   }
 })
