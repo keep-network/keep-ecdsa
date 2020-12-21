@@ -387,11 +387,6 @@ describe("LPRewards", () => {
     }
   })
 
-  async function mintAndApproveWrappedTokens(token, address, staker, amount) {
-    await token.mint(staker, amount)
-    await token.approve(address, amount, {from: staker})
-  }
-
   async function fundAndNotifyLPRewards(address, amount) {
     await lpRewards.setRewardDistribution(rewardDistribution, {
       from: lpRewardsOwner,
