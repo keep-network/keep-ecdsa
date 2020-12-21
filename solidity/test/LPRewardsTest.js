@@ -77,7 +77,7 @@ describe("LPRewards", () => {
       expect(finalBalance).to.eq.BN(rewards.add(initialBalance))
     })
 
-    it("should successfully allocate wrapped tokens", async () => {
+    it("should successfully stake wrapped tokens", async () => {
       const initialWrappedTokenStakerBallance1 = web3.utils
         .toBN(10000)
         .mul(tokenDecimalMultiplier)
