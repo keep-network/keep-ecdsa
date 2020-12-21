@@ -138,6 +138,14 @@ contract LPRewards is LPTokenWrapper, IRewardDistributionRecipient {
         getReward();
     }
 
+
+const initialWrappedTokenStakerBallance1 = web3.utils
+        .toBN(10000)
+        .mul(tokenDecimalMultiplier)
+      const initialWrappedTokenStakerBallance2 = web3.utils
+        .toBN(20000)
+        .mul(tokenDecimalMultiplier)
+
     function notifyRewardAmount(uint256 reward)
         external
         onlyRewardDistribution
