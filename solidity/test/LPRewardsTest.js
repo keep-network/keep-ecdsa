@@ -212,8 +212,12 @@ describe("LPRewards", () => {
       expect(keepEarnedRewards).to.lte.BN(rewardsAmount.addn(precision))
 
       // Check that all wrapped tokens were transferred back to the staker
-      const actualWrappedTokenStakerBalance = await wrappedToken.balanceOf(staker1)
-      expect(wrappedTokenStakerBalance).to.eq.BN(actualWrappedTokenStakerBalance)
+      const actualWrappedTokenStakerBalance = await wrappedToken.balanceOf(
+        staker1
+      )
+      expect(wrappedTokenStakerBalance).to.eq.BN(
+        actualWrappedTokenStakerBalance
+      )
     })
   })
 
