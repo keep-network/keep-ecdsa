@@ -21,7 +21,6 @@
     "@keep-network/tbtc.js": "git://github.com/keep-network/tbtc.js.git#4da9d668f589310c2b5ff985143f27d29a7f7e61",
     "bignumber.js": "^9.0.1",
     "cli-color": "^2.0.0",
-    "ethereum-block-by-date": "^1.2.5",
     "lowdb": "^1.0.0",
     "p-all": "^3.0.0",
     "request": "^2.88.2",
