@@ -24,6 +24,9 @@ TOKEN_GRANT_PROPERTY="TokenGrantAddress"
 RANDOM_BEACON_CONTRACT_DATA="KeepRandomBeaconService.json"
 RANDOM_BEACON_PROPERTY="RandomBeaconAddress"
 
+KEEP_TOKEN_CONTRACT_DATA="KeepToken.json"
+KEEP_TOKEN_PROPERTY="KeepTokenAddress"
+
 DESTINATION_FILE=$(realpath $(dirname $0)/../migrations/external-contracts.js)
 
 ADDRESS_REGEXP=^0[xX][0-9a-fA-F]{40}$
