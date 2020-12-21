@@ -141,14 +141,20 @@ describe("LPRewards", () => {
       expect(actualEarnings).to.gte.BN(expectedEarnings.subn(precision))
       expect(actualEarnings).to.lte.BN(expectedEarnings.addn(precision))
 
-      // 10,000 / 2,000 = 5 KEEP,
-      // Contract function will return 4999999999999999881 KEEP. Solidity
-      // does not have floating numbers and when dividing by 10^18, precision will
-      // not be on point.
+      // duration = 7 days = 604,800 sec
+      // rewardRate = keep rewards / duration
+      // rewardRate = 10,000 / 604,800 = 0,016534391534391534
+      // expected reward per wrapped token = rewardRate * duration / staked amount
+      // expected reward per wrapped token = 5 KEEP
+      // Contract function rewardPerToken() will return 4999999999999999881 KEEP wei.
+      // Solidity does not have floating numbers and when dividing by 10^18,
+      // precision will not be on point.
+      const expectedRewardPerWrappedToken = new BN(5)
+
       const actualRewardPerToken = (await lpRewards.rewardPerToken()).div(
         tokenDecimalMultiplier
       )
-      const expectedRewardPerWrappedToken = new BN(5)
+
       expect(actualRewardPerToken).to.gte.BN(
         expectedRewardPerWrappedToken.subn(precision)
       )
