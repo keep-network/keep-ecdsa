@@ -19,6 +19,9 @@ const initLPRewardContract = async (
   await KEEPTokenContract.approve(LPRewardsContract.address, reward, {
     from: lprewardsOwner,
   })
+  await KEEPTokenContract.transfer(LPRewardsContract.address, reward, {
+    from: lprewardsOwner,
+  })
   await LPRewardsContract.notifyRewardAmount(reward, {
     from: lprewardsOwner,
   })
