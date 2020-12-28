@@ -1,6 +1,6 @@
 // Package eth contains interface for interaction with an ethereum blockchain
 // along with structures reflecting events emitted on an ethereum blockchain.
-package eth
+package eth // TODO: rename; this can be any host chain
 
 import (
 	"math/big"
@@ -15,13 +15,17 @@ import (
 // Handle represents a handle to an ethereum blockchain.
 type Handle interface {
 	// Address returns client's ethereum address.
-	Address() common.Address
+	Address() common.Address // TODO: use implementation-agnostic type
 	// StakeMonitor returns a stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
 	// BalanceMonitor returns a balance monitor.
 	BalanceMonitor() (chain.BalanceMonitor, error)
 	// BlockCounter returns a block counter.
 	BlockCounter() chain.BlockCounter
+	// Signing returns a signer interface allowing to sign and verify messages
+	// using the chain implementation-specific mechanism as well as to
+	// convert between public key and address.
+	Signing() chain.Signing
 	// BlockTimestamp returns given block's timestamp.
 	// In case the block is not yet mined, an error should be returned.
 	BlockTimestamp(blockNumber *big.Int) (uint64, error)
