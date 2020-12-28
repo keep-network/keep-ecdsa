@@ -51,7 +51,8 @@ func AnnounceProtocol(
 				pubKey, err := msg.SenderID.PublicKey()
 				if err != nil {
 					logger.Errorf(
-						"could not get public key for member of keep [%v]",
+						"could not get public key for member [%s] of keep [%v]: [%v]",
+						msg.SenderID.String(),
 						keepAddress,
 						err,
 					)
