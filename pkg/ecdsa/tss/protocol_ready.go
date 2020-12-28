@@ -118,7 +118,7 @@ func readyProtocol(
 					group.groupID,
 					err,
 				)
-				break
+				continue
 			}
 			if ok := readyMembers[memberAddress]; !ok {
 				logger.Errorf(
