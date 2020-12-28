@@ -109,14 +109,12 @@ func readyProtocol(
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
 		for _, memberID := range group.groupMemberIDs {
-			memberAddress, err := memberIDToAddress(
-				memberID,
-				group.groupID,
-				pubKeyToAddressFn,
-			)
+			memberAddress, err := memberIDToAddress(memberID, pubKeyToAddressFn)
 			if err != nil {
 				logger.Errorf(
-					"could not convert member ID to address: [%v]",
+					"could not convert member ID to address for a member of "+
+						"keep [%v]: [%v]",
+					group.groupID,
 					err,
 				)
 				break
@@ -146,15 +144,12 @@ func readyProtocol(
 
 func memberIDToAddress(
 	memberID MemberID,
-	groupID string,
 	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) (string, error) {
 	pubKey, err := memberID.PublicKey()
 	if err != nil {
 		return "", fmt.Errorf(
-			"could not get public key for member of keep [%v]"+
-				" with member ID [%v]: [%v]",
-			groupID,
+			"could not get public key for member with ID [%v]: [%v]",
 			memberID.String(),
 			err,
 		)
