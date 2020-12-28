@@ -48,7 +48,7 @@ func AnnounceProtocol(
 			case msg := <-announceInChan:
 				// Since broadcast channel has an address filter, we can
 				// assume each message come from a valid group member.
-				pubKey, err := msg.SenderID.PublicKey()
+				publicKey, err := msg.SenderID.PublicKey()
 				if err != nil {
 					logger.Errorf(
 						"could not get public key for member [%s] of keep [%v]: [%v]",
@@ -57,7 +57,7 @@ func AnnounceProtocol(
 						err,
 					)
 				}
-				memberAddress := hex.EncodeToString(pubKeyToAddressFn(*pubKey))
+				memberAddress := hex.EncodeToString(pubKeyToAddressFn(*publicKey))
 				receivedMemberIDs[memberAddress] = msg.SenderID
 
 				logger.Infof(
