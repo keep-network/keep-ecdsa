@@ -2,6 +2,8 @@ package tss
 
 import (
 	"context"
+	cecdsa "crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -14,8 +16,10 @@ const protocolAnnounceTimeout = 2 * time.Minute
 func AnnounceProtocol(
 	parentCtx context.Context,
 	publicKey *operator.PublicKey,
-	membersCount int,
+	keepAddress string,
+	keepMemberAddresses []string,
 	broadcastChannel net.BroadcastChannel,
+	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) (
 	[]MemberID,
 	error,
@@ -25,7 +29,7 @@ func AnnounceProtocol(
 	ctx, cancel := context.WithTimeout(parentCtx, protocolAnnounceTimeout)
 	defer cancel()
 
-	announceInChan := make(chan *AnnounceMessage, membersCount)
+	announceInChan := make(chan *AnnounceMessage, len(keepMemberAddresses))
 	handleAnnounceMessage := func(netMsg net.Message) {
 		switch msg := netMsg.Payload().(type) {
 		case *AnnounceMessage:
@@ -34,7 +38,7 @@ func AnnounceProtocol(
 	}
 	broadcastChannel.Recv(ctx, handleAnnounceMessage)
 
-	receivedMemberIDs := make(map[string]MemberID)
+	receivedMemberIDs := make(map[string]MemberID) // member address -> memberID
 
 	go func() {
 		for {
@@ -44,9 +48,24 @@ func AnnounceProtocol(
 			case msg := <-announceInChan:
 				// Since broadcast channel has an address filter, we can
 				// assume each message come from a valid group member.
-				receivedMemberIDs[msg.SenderID.String()] = msg.SenderID
+				pubKey, err := msg.SenderID.PublicKey()
+				if err != nil {
+					logger.Errorf(
+						"could not get public key for member of keep [%v]",
+						keepAddress,
+						err,
+					)
+				}
+				memberAddress := hex.EncodeToString(pubKeyToAddressFn(*pubKey))
+				receivedMemberIDs[memberAddress] = msg.SenderID
 
-				if len(receivedMemberIDs) == membersCount {
+				logger.Infof(
+					"member [%v] from keep [%v] announced its presence",
+					memberAddress,
+					keepAddress,
+				)
+
+				if len(receivedMemberIDs) == len(keepMemberAddresses) {
 					cancel()
 				}
 			}
@@ -81,6 +100,18 @@ func AnnounceProtocol(
 
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
+		for _, member := range keepMemberAddresses {
+			_, announcedPresence := receivedMemberIDs[member]
+			if !announcedPresence {
+				logger.Errorf(
+					"member [%v] has not announced its presence for keep [%v]; "+
+						"check if keep client for that operator is active and "+
+						"connected",
+					member,
+					keepAddress,
+				)
+			}
+		}
 		return nil, fmt.Errorf(
 			"waiting for announcements timed out after: [%v]",
 			protocolAnnounceTimeout,
