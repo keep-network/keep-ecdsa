@@ -19,7 +19,7 @@ func AnnounceProtocol(
 	keepAddress string,
 	keepMemberAddresses []string,
 	broadcastChannel net.BroadcastChannel,
-	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
+	publicKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) (
 	[]MemberID,
 	error,
@@ -57,7 +57,7 @@ func AnnounceProtocol(
 						err,
 					)
 				}
-				memberAddress := hex.EncodeToString(pubKeyToAddressFn(*publicKey))
+				memberAddress := hex.EncodeToString(publicKeyToAddressFn(*publicKey))
 				receivedMemberIDs[memberAddress] = msg.SenderID
 
 				logger.Infof(

@@ -25,7 +25,7 @@ func readyProtocol(
 	parentCtx context.Context,
 	group *groupInfo,
 	broadcastChannel net.BroadcastChannel,
-	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
+	publicKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) error {
 	logger.Infof("signalling readiness")
 
@@ -53,7 +53,7 @@ func readyProtocol(
 					if msg.SenderID.Equal(memberID) {
 						memberAddress, err := memberIDToAddress(
 							memberID,
-							pubKeyToAddressFn,
+							publicKeyToAddressFn,
 						)
 						if err != nil {
 							logger.Errorf(
@@ -110,7 +110,7 @@ func readyProtocol(
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
 		for _, memberID := range group.groupMemberIDs {
-			memberAddress, err := memberIDToAddress(memberID, pubKeyToAddressFn)
+			memberAddress, err := memberIDToAddress(memberID, publicKeyToAddressFn)
 			if err != nil {
 				logger.Errorf(
 					"could not convert member ID to address for a member of "+
@@ -144,7 +144,7 @@ func readyProtocol(
 
 func memberIDToAddress(
 	memberID MemberID,
-	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
+	publicKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) (string, error) {
 	pubKey, err := memberID.PublicKey()
 	if err != nil {
@@ -155,5 +155,5 @@ func memberIDToAddress(
 		)
 	}
 
-	return hex.EncodeToString(pubKeyToAddressFn(*pubKey)), nil
+	return hex.EncodeToString(publicKeyToAddressFn(*pubKey)), nil
 }
