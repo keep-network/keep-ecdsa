@@ -2,6 +2,8 @@ package tss
 
 import (
 	"context"
+	cecdsa "crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -23,6 +25,7 @@ func readyProtocol(
 	parentCtx context.Context,
 	group *groupInfo,
 	broadcastChannel net.BroadcastChannel,
+	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) error {
 	logger.Infof("signalling readiness")
 
@@ -38,8 +41,8 @@ func readyProtocol(
 	}
 	broadcastChannel.Recv(ctx, handleReadyMessage)
 
+	readyMembers := make(map[string]bool) // member address -> ready?
 	go func() {
-		readyMembers := make(map[string]bool)
 
 		for {
 			select {
@@ -48,7 +51,26 @@ func readyProtocol(
 			case msg := <-readyInChan:
 				for _, memberID := range group.groupMemberIDs {
 					if msg.SenderID.Equal(memberID) {
-						readyMembers[msg.SenderID.String()] = true
+						memberAddress, err := memberIDToAddress(
+							memberID,
+							group.groupID,
+							pubKeyToAddressFn,
+						)
+						if err != nil {
+							logger.Errorf(
+								"could not convert member ID to address: [%v]",
+								err,
+							)
+							break
+						}
+						readyMembers[memberAddress] = true
+
+						logger.Infof(
+							"member [%v] from keep [%v] announced its readiness",
+							memberAddress,
+							group.groupID,
+						)
+
 						break
 					}
 				}
@@ -86,6 +108,30 @@ func readyProtocol(
 
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
+		for _, memberID := range group.groupMemberIDs {
+			memberAddress, err := memberIDToAddress(
+				memberID,
+				group.groupID,
+				pubKeyToAddressFn,
+			)
+			if err != nil {
+				logger.Errorf(
+					"could not convert member ID to address: [%v]",
+					err,
+				)
+				break
+			}
+			_, announcedReadiness := readyMembers[memberAddress]
+			if !announcedReadiness {
+				logger.Errorf(
+					"member [%v] has not announced its readiness for keep [%v]; "+
+						"check if keep client for that operator is active and "+
+						"connected",
+					memberAddress,
+					group.groupID,
+				)
+			}
+		}
 		return fmt.Errorf(
 			"waiting for readiness timed out after: [%v]", protocolReadyTimeout,
 		)
@@ -96,4 +142,23 @@ func readyProtocol(
 	default:
 		return fmt.Errorf("unexpected context error: [%v]", ctx.Err())
 	}
+}
+
+func memberIDToAddress(
+	memberID MemberID,
+	groupID string,
+	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
+) (string, error) {
+	pubKey, err := memberID.PublicKey()
+	if err != nil {
+		return "", fmt.Errorf(
+			"could not get public key for member of keep [%v]"+
+				" with member ID [%v]: [%v]",
+			groupID,
+			memberID.String(),
+			err,
+		)
+	}
+
+	return hex.EncodeToString(pubKeyToAddressFn(*pubKey)), nil
 }

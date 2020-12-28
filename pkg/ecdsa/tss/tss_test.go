@@ -3,6 +3,7 @@ package tss
 import (
 	"context"
 	cecdsa "crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/sha256"
 	"fmt"
 	"math/rand"
@@ -35,6 +36,10 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	err := log.SetLogLevel("*", "DEBUG")
 	if err != nil {
 		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
+	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
+		return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 	}
 
 	errChan := make(chan error)
@@ -93,6 +98,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 					groupMemberIDs,
 					dishonestThreshold,
 					network,
+					pubKeyToAddressFn,
 					params.NewBox(&preParams),
 				)
 				if err != nil {
@@ -166,6 +172,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 					ctx,
 					digest[:],
 					networkProvider,
+					pubKeyToAddressFn,
 				)
 				if err != nil {
 					errChan <- fmt.Errorf("failed to sign: [%v]", err)

@@ -216,6 +216,7 @@ func (n *Node) GenerateSignerForKeep(
 			memberIDs,
 			uint(len(memberIDs)-1),
 			n.networkProvider,
+			n.ethereumChain.Signing().PublicKeyToAddress,
 			preParamsBox,
 		)
 		if err != nil {
@@ -291,7 +292,12 @@ func (n *Node) CalculateSignature(
 		// other keep members.
 		//
 		// If threshold signing fails, we retry from the beginning.
-		signature, err := signer.CalculateSignature(ctx, digest[:], n.networkProvider)
+		signature, err := signer.CalculateSignature(
+			ctx,
+			digest[:],
+			n.networkProvider,
+			n.ethereumChain.Signing().PublicKeyToAddress,
+		)
 		if err != nil {
 			logger.Errorf(
 				"failed to calculate signature for keep [%s]: [%v]",
