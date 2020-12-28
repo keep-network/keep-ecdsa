@@ -93,7 +93,7 @@ func (n *Node) AnnounceSignerPresence(
 	// To do not propagate ethereum-specific types any further, we convert
 	// addresses to strings before passing them to AnnounceProtocol.
 	keepAddressString := keepAddress.Hex()
-	keepMembersAddressesStrings := make([]string, len(keepAddress))
+	keepMembersAddressesStrings := make([]string, len(keepMembersAddresses))
 	for i, address := range keepMembersAddresses {
 		keepMembersAddressesStrings[i] = address.Hex()
 	}
