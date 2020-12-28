@@ -53,12 +53,13 @@ func readyProtocol(
 					if msg.SenderID.Equal(memberID) {
 						memberAddress, err := memberIDToAddress(
 							memberID,
-							group.groupID,
 							pubKeyToAddressFn,
 						)
 						if err != nil {
 							logger.Errorf(
-								"could not convert member ID to address: [%v]",
+								"could not convert member ID to address for "+
+									"a member of keep [%v]: [%v]",
+								group.groupID,
 								err,
 							)
 							break
@@ -119,8 +120,7 @@ func readyProtocol(
 				)
 				break
 			}
-			_, announcedReadiness := readyMembers[memberAddress]
-			if !announcedReadiness {
+			if ok := readyMembers[memberAddress]; !ok {
 				logger.Errorf(
 					"member [%v] has not announced its readiness for keep [%v]; "+
 						"check if keep client for that operator is active and "+

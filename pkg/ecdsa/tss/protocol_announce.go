@@ -102,8 +102,7 @@ func AnnounceProtocol(
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
 		for _, member := range keepMemberAddresses {
-			_, announcedPresence := receivedMemberIDs[member]
-			if !announcedPresence {
+			if _, ok := receivedMemberIDs[member]; !ok {
 				logger.Errorf(
 					"member [%v] has not announced its presence for keep [%v]; "+
 						"check if keep client for that operator is active and "+
