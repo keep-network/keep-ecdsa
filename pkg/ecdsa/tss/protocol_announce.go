@@ -5,6 +5,7 @@ import (
 	cecdsa "crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -40,6 +41,14 @@ func AnnounceProtocol(
 
 	receivedMemberIDs := make(map[string]MemberID) // member address -> memberID
 
+	markAnnounced := func(memberID MemberID, memberAddress string) {
+		receivedMemberIDs[strings.ToLower(memberAddress)] = memberID
+	}
+	hasAnnounced := func(memberAddress string) bool {
+		_, ok := receivedMemberIDs[strings.ToLower(memberAddress)]
+		return ok
+	}
+
 	go func() {
 		for {
 			select {
@@ -56,16 +65,17 @@ func AnnounceProtocol(
 						keepAddress,
 						err,
 					)
+					continue
 				}
-				memberAddress := hex.EncodeToString(publicKeyToAddressFn(*publicKey))
-				receivedMemberIDs[memberAddress] = msg.SenderID
 
+				memberAddress := "0x" + hex.EncodeToString(publicKeyToAddressFn(*publicKey))
 				logger.Infof(
-					"member [0x%v] from keep [%v] announced its presence",
+					"member [%s] from keep [%s] announced its presence",
 					memberAddress,
 					keepAddress,
 				)
 
+				markAnnounced(msg.SenderID, memberAddress)
 				if len(receivedMemberIDs) == len(keepMemberAddresses) {
 					cancel()
 				}
@@ -102,9 +112,9 @@ func AnnounceProtocol(
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
 		for _, member := range keepMemberAddresses {
-			if _, ok := receivedMemberIDs[member]; !ok {
+			if !hasAnnounced(member) {
 				logger.Errorf(
-					"member [0x%v] has not announced its presence for keep [%v]; "+
+					"member [%s] has not announced its presence for keep [%s]; "+
 						"check if keep client for that operator is active and "+
 						"connected",
 					member,
