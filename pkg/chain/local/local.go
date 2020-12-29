@@ -2,6 +2,9 @@ package local
 
 import (
 	"context"
+	cecdsa "crypto/ecdsa"
+	"crypto/elliptic"
+	crand "crypto/rand"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -16,6 +19,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+
+	commonLocal "github.com/keep-network/keep-common/pkg/chain/local"
 )
 
 // Chain is an extention of eth.Handle interface which exposes
@@ -44,7 +49,8 @@ type localChain struct {
 
 	keepCreatedHandlers map[int]func(event *eth.BondedECDSAKeepCreatedEvent)
 
-	clientAddress common.Address
+	operatorKey *cecdsa.PrivateKey
+	signer      chain.Signing
 
 	authorizations map[common.Address]bool
 }
@@ -57,11 +63,19 @@ func Connect(ctx context.Context) Chain {
 		panic(err) // should never happen
 	}
 
+	operatorKey, err := cecdsa.GenerateKey(elliptic.P256(), crand.Reader)
+	if err != nil {
+		panic(err)
+	}
+
+	signer := commonLocal.NewSigner(operatorKey)
+
 	localChain := &localChain{
 		blockCounter:        blockCounter,
 		keeps:               make(map[common.Address]*localKeep),
 		keepCreatedHandlers: make(map[int]func(event *eth.BondedECDSAKeepCreatedEvent)),
-		clientAddress:       common.HexToAddress("6299496199d99941193Fdd2d717ef585F431eA05"),
+		operatorKey:         operatorKey,
+		signer:              signer,
 		authorizations:      make(map[common.Address]bool),
 	}
 
@@ -86,6 +100,14 @@ func (lc *localChain) observeBlocksTimestamps(ctx context.Context) {
 	}
 }
 
+func (lc *localChain) Address() common.Address {
+	return common.BytesToAddress(lc.signer.PublicKey())
+}
+
+func (lc *localChain) Signing() chain.Signing {
+	return commonLocal.NewSigner(lc.operatorKey)
+}
+
 func (lc *localChain) OpenKeep(keepAddress common.Address, members []common.Address) {
 	err := lc.createKeepWithMembers(keepAddress, members)
 	if err != nil {
@@ -106,11 +128,6 @@ func (lc *localChain) AuthorizeOperator(operator common.Address) {
 	defer lc.localChainMutex.Unlock()
 
 	lc.authorizations[operator] = true
-}
-
-// Address returns client's ethereum address.
-func (lc *localChain) Address() common.Address {
-	return lc.clientAddress
 }
 
 func (lc *localChain) StakeMonitor() (chain.StakeMonitor, error) {

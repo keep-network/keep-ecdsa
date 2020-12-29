@@ -29,6 +29,16 @@ func (ec *EthereumChain) Address() common.Address {
 	return ec.accountKey.Address
 }
 
+// Signing returns signing interface for creating and verifying signatures.
+func (ec *EthereumChain) Signing() chain.Signing {
+	return ethutil.NewSigner(ec.accountKey.PrivateKey)
+}
+
+// BlockCounter returns a block counter.
+func (ec *EthereumChain) BlockCounter() chain.BlockCounter {
+	return ec.blockCounter
+}
+
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
 func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) error {
@@ -353,11 +363,6 @@ func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
 // BalanceOf returns the stake balance of the specified address.
 func (ec *EthereumChain) BalanceOf(address common.Address) (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
-}
-
-// BlockCounter returns a block counter.
-func (ec *EthereumChain) BlockCounter() chain.BlockCounter {
-	return ec.blockCounter
 }
 
 // IsRegisteredForApplication checks if the operator is registered
