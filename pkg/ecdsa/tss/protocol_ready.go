@@ -67,7 +67,7 @@ func readyProtocol(
 						readyMembers[memberAddress] = true
 
 						logger.Infof(
-							"member [%v] from keep [%v] announced its readiness",
+							"member [0x%v] from keep [%v] announced its readiness",
 							memberAddress,
 							group.groupID,
 						)

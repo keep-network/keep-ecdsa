@@ -61,7 +61,7 @@ func AnnounceProtocol(
 				receivedMemberIDs[memberAddress] = msg.SenderID
 
 				logger.Infof(
-					"member [%v] from keep [%v] announced its presence",
+					"member [0x%v] from keep [%v] announced its presence",
 					memberAddress,
 					keepAddress,
 				)
