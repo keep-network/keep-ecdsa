@@ -122,7 +122,7 @@ func readyProtocol(
 			}
 			if ok := readyMembers[memberAddress]; !ok {
 				logger.Errorf(
-					"member [%v] has not announced its readiness for keep [%v]; "+
+					"member [0x%v] has not announced its readiness for keep [%v]; "+
 						"check if keep client for that operator is active and "+
 						"connected",
 					memberAddress,

@@ -104,7 +104,7 @@ func AnnounceProtocol(
 		for _, member := range keepMemberAddresses {
 			if _, ok := receivedMemberIDs[member]; !ok {
 				logger.Errorf(
-					"member [%v] has not announced its presence for keep [%v]; "+
+					"member [0x%v] has not announced its presence for keep [%v]; "+
 						"check if keep client for that operator is active and "+
 						"connected",
 					member,
