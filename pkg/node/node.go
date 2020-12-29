@@ -39,7 +39,7 @@ const (
 	// Used to calculate the publication delay factor for the given signer index
 	// to avoid all signers publishing the same signature for given keep at the
 	// same time.
-	signaturePublicationDelayStep = 5 * time.Minute
+	signaturePublicationDelayStep = 90 * time.Second
 )
 
 // Node holds interfaces to interact with the blockchain and network messages
