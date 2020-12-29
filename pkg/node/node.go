@@ -683,6 +683,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 					keepAddress.String(),
 					maxPubkeyChecksCount,
 				)
+				return
 			}
 
 			logger.Infof(
