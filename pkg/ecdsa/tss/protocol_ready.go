@@ -58,7 +58,7 @@ func readyProtocol(
 						if err != nil {
 							logger.Errorf(
 								"could not convert member ID to address for "+
-									"a member of keep [%v]: [%v]",
+									"a member of keep [%s]: [%v]",
 								group.groupID,
 								err,
 							)
@@ -67,7 +67,7 @@ func readyProtocol(
 						readyMembers[memberAddress] = true
 
 						logger.Infof(
-							"member [0x%v] from keep [%v] announced its readiness",
+							"member [%s] from keep [%s] announced its readiness",
 							memberAddress,
 							group.groupID,
 						)
@@ -114,15 +114,15 @@ func readyProtocol(
 			if err != nil {
 				logger.Errorf(
 					"could not convert member ID to address for a member of "+
-						"keep [%v]: [%v]",
+						"keep [%s]: [%v]",
 					group.groupID,
 					err,
 				)
 				continue
 			}
-			if ok := readyMembers[memberAddress]; !ok {
+			if !readyMembers[memberAddress] {
 				logger.Errorf(
-					"member [0x%v] has not announced its readiness for keep [%v]; "+
+					"member [%s] has not announced its readiness for keep [%s]; "+
 						"check if keep client for that operator is active and "+
 						"connected",
 					memberAddress,
@@ -149,11 +149,11 @@ func memberIDToAddress(
 	pubKey, err := memberID.PublicKey()
 	if err != nil {
 		return "", fmt.Errorf(
-			"could not get public key for member with ID [%v]: [%v]",
-			memberID.String(),
+			"could not get public key for member with ID [%s]: [%v]",
+			memberID,
 			err,
 		)
 	}
 
-	return hex.EncodeToString(publicKeyToAddressFn(*pubKey)), nil
+	return "0x" + hex.EncodeToString(publicKeyToAddressFn(*pubKey)), nil
 }
