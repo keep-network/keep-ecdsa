@@ -332,10 +332,10 @@ github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxK
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec h1:2pXAsi4OUUjZKr5ds5UOF2IxXN+jVW0WetVO+czkf+A=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec/go.mod h1:xR8jf3/VJAjh3nWu5tFe8Yxnt2HvWsqZHfGef1P5oDk=
 github.com/keep-network/keep-common v1.2.1-0.20201116151638-8af057907255/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
-github.com/keep-network/keep-common v1.2.1-0.20201228084818-798145525aa2 h1:gUCt1wP4tuNeCcMX6gQspPjdhOcs54hz0YikAdRm91c=
-github.com/keep-network/keep-common v1.2.1-0.20201228084818-798145525aa2/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
-github.com/keep-network/keep-core v1.3.2-0.20201228085845-e9291a9eb71c h1:W68N3L9K0DqvIHM/AC58C8M+pmEQzo1SAYEqZg47j0Y=
-github.com/keep-network/keep-core v1.3.2-0.20201228085845-e9291a9eb71c/go.mod h1:jqazyZchhchmHYx0Qt4zyOHT0N2T4KFM9fKb7BKJhGo=
+github.com/keep-network/keep-common v1.3.0 h1:4aWCznDfzk0kZS+bzlRxYqq5ffvuFlA/DvD+viptHfQ=
+github.com/keep-network/keep-common v1.3.0/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
+github.com/keep-network/keep-core v1.3.2-0.20201229154408-59ac640ed0cb h1:pDhLagUiOYWOn72UiG3jSDVDXZ4dYlsfRa0ToF/ru18=
+github.com/keep-network/keep-core v1.3.2-0.20201229154408-59ac640ed0cb/go.mod h1:4KezOJWc//c5lbtAE1ob7qYE/Gs5+a1QTjGBzzv2tu8=
 github.com/keep-network/tbtc v1.1.1-0.20201117095624-38508bdb562e h1:go3irX4olJUZOi59gaBX7iYIFFbJEV5/zbfCG4tOPaQ=
 github.com/keep-network/tbtc v1.1.1-0.20201117095624-38508bdb562e/go.mod h1:LS1zQDXTJrP5f6AHFQKw6/iJPdfV+WqUCfh6GTfC6Rs=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
