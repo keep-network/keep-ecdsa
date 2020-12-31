@@ -48,9 +48,6 @@ jobs:
           # Fix resolved dependency versions.
           npm update
 
-      - uses: actions/setup-node@v1
-        with:
-          registry-url: "https://npm.pkg.github.com" # Publishing to GitHub Package Repository
       - name: Publish package
         run: npm publish
         working-directory: ./solidity
