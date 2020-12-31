@@ -149,9 +149,8 @@ contract AbstractBonding is IBondingManagement {
             "Insufficient unbonded value"
         );
 
-        bytes32 bondID = keccak256(
-            abi.encodePacked(operator, holder, referenceID)
-        );
+        bytes32 bondID =
+            keccak256(abi.encodePacked(operator, holder, referenceID));
 
         require(
             lockedBonds[bondID] == 0,
@@ -180,9 +179,8 @@ contract AbstractBonding is IBondingManagement {
         address holder,
         uint256 referenceID
     ) public view returns (uint256) {
-        bytes32 bondID = keccak256(
-            abi.encodePacked(operator, holder, referenceID)
-        );
+        bytes32 bondID =
+            keccak256(abi.encodePacked(operator, holder, referenceID));
 
         return lockedBonds[bondID];
     }
@@ -201,15 +199,13 @@ contract AbstractBonding is IBondingManagement {
         uint256 newReferenceID
     ) public {
         address holder = msg.sender;
-        bytes32 bondID = keccak256(
-            abi.encodePacked(operator, holder, referenceID)
-        );
+        bytes32 bondID =
+            keccak256(abi.encodePacked(operator, holder, referenceID));
 
         require(lockedBonds[bondID] > 0, "Bond not found");
 
-        bytes32 newBondID = keccak256(
-            abi.encodePacked(operator, newHolder, newReferenceID)
-        );
+        bytes32 newBondID =
+            keccak256(abi.encodePacked(operator, newHolder, newReferenceID));
 
         require(
             lockedBonds[newBondID] == 0,
@@ -230,9 +226,8 @@ contract AbstractBonding is IBondingManagement {
     /// @param referenceID Reference ID of the bond.
     function freeBond(address operator, uint256 referenceID) public {
         address holder = msg.sender;
-        bytes32 bondID = keccak256(
-            abi.encodePacked(operator, holder, referenceID)
-        );
+        bytes32 bondID =
+            keccak256(abi.encodePacked(operator, holder, referenceID));
 
         require(lockedBonds[bondID] > 0, "Bond not found");
 
@@ -260,9 +255,8 @@ contract AbstractBonding is IBondingManagement {
         require(amount > 0, "Requested amount should be greater than zero");
 
         address payable holder = msg.sender;
-        bytes32 bondID = keccak256(
-            abi.encodePacked(operator, holder, referenceID)
-        );
+        bytes32 bondID =
+            keccak256(abi.encodePacked(operator, holder, referenceID));
 
         require(
             lockedBonds[bondID] >= amount,

@@ -24,33 +24,33 @@ contract BondedECDSAKeepVendor is Proxy {
     /// @dev Storage slot with the admin of the contract.
     /// This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1, and is
     /// validated in the constructor.
-    bytes32
-        internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
+    bytes32 internal constant ADMIN_SLOT =
+        0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
     /// @dev Storage slot with the address of the current implementation.
     /// This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1, and is
     /// validated in the constructor.
-    bytes32
-        internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+    bytes32 internal constant IMPLEMENTATION_SLOT =
+        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     /// @dev Storage slot with the upgrade time delay. Upgrade time delay defines a
     /// period for implementation upgrade.
     /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeTimeDelay"
     /// subtracted by 1, and is validated in the constructor.
-    bytes32
-        internal constant UPGRADE_TIME_DELAY_SLOT = 0x3ca583dafde9ce8bdb41fe825f85984a83b08ecf90ffaccbc4b049e8d8703563;
+    bytes32 internal constant UPGRADE_TIME_DELAY_SLOT =
+        0x3ca583dafde9ce8bdb41fe825f85984a83b08ecf90ffaccbc4b049e8d8703563;
 
     /// @dev Storage slot with the new implementation address.
     /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeImplementation"
     /// subtracted by 1, and is validated in the constructor.
-    bytes32
-        internal constant UPGRADE_IMPLEMENTATION_SLOT = 0x4e06287250f0fdd90b4a096f346c06d4e706d470a14747ab56a0156d48a6883f;
+    bytes32 internal constant UPGRADE_IMPLEMENTATION_SLOT =
+        0x4e06287250f0fdd90b4a096f346c06d4e706d470a14747ab56a0156d48a6883f;
 
     /// @dev Storage slot with the implementation address upgrade initiation.
     /// This is the keccak-256 hash of "network.keep.bondedecdsavendor.proxy.upgradeInitiatedTimestamp"
     /// subtracted by 1, and is validated in the constructor.
-    bytes32
-        internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0x0816e8d9eeb2554df0d0b7edc58e2d957e6ce18adf92c138b50dd78a420bebaf;
+    bytes32 internal constant UPGRADE_INIT_TIMESTAMP_SLOT =
+        0x0816e8d9eeb2554df0d0b7edc58e2d957e6ce18adf92c138b50dd78a420bebaf;
 
     /// @notice Details of initialization data to be called on the second step
     /// of upgrade.
@@ -171,8 +171,8 @@ contract BondedECDSAKeepVendor is Proxy {
         bytes memory _data
     ) internal {
         /* solium-disable-next-line security/no-low-level-calls */
-        (bool success, bytes memory returnData) = _implementationAddress
-            .delegatecall(_data);
+        (bool success, bytes memory returnData) =
+            _implementationAddress.delegatecall(_data);
 
         require(success, string(returnData));
     }
