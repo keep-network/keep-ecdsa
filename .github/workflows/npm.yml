@@ -11,38 +11,48 @@ on:
 
 jobs:
   publish-contracts:
-    # Don't run the job if commit message starts with `[CI]`.
-    if: startsWith(github.event.commits[0].message, '[CI]') == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
         with:
           node-version: "11.x"
-          registry-url: "https://npm.pkg.github.com"
+      - name: Bump up version
+        working-directory: ./solidity
+        run: |
+          name=$(jq --raw-output .name package.json)
+          version=$(jq --raw-output .version package.json)
+          preid=$(echo $version | sed -e s/^.*-\\\([^.]*\\\).*$/\\1/)
+
+          # Find the latest published package version matching this preid.
+          # Note that in jq, we wrap the result in an array and then flatten;
+          # this is because npm show json contains a single string if there
+          # is only one matching version, or an array if there are multiple,
+          # and we want to look at an array always.
+          latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | .[-1]")
+          latest_version=${latest_version:-$version}
+          if [ -z $latest_version ]; then
+            echo "Latest version calculation failed. Resolved info:"
+            echo "$name@$version ; preid $preid"
+            exit 1
+          fi
+
+          # Update package.json with the latest published package version matching this
+          # preid to prepare for bumping.
+          echo $(jq -M ".version=\"${latest_version}\"" package.json) > package.json
+
+          # Bump without doing any git work. Versioning is a build-time action for us.
+          # Consider including commit id? Would be +<commit id>.
+          npm version prerelease --preid=$preid --no-git-tag-version
+
+          # Fix resolved dependency versions.
+          npm update
+
+      - uses: actions/setup-node@v1
+        with:
+          registry-url: "https://npm.pkg.github.com" # Publishing to GitHub Package Repository
       - name: Publish package
-        working-directory: ./solidity
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Bump version
-        working-directory: ./solidity
-        run: |
-          PACKAGE_VERSION=$(npm version prerelease --preid=pre)
-          echo "::set-env name=PACKAGE_VERSION::$PACKAGE_VERSION"
-      - name: Setup git
-        run: |
-          git remote set-url origin https://${{ secrets.CI_GITHUB_TOKEN }}@github.com/keep-network/keep-ecdsa.git
-          git config user.email "thesis-heimdall@users.noreply.github.com"
-          git config user.name "Heimdall"
-      - name: Commit
         working-directory: ./solidity
         env:
-          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-        run: |
-          GITHUB_REF=${{ github.ref }}
-          BRANCH=${GITHUB_REF#refs/heads/} # strip branch name from github reference, branch name is prefixed with `refs/heads`
-          git checkout $BRANCH
-          git add package.json package-lock.json
-          git commit -m "[CI] Auto-bump pre-release package to $PACKAGE_VERSION"
-          git push origin $BRANCH
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
