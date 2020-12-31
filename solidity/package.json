@@ -57,7 +57,7 @@
     "ethlint": "^1.2.5",
     "mocha": "^7.1.1",
     "prettier": "^2.0.2",
-    "prettier-plugin-solidity": "^1.0.0-alpha.47",
+    "prettier-plugin-solidity": "^1.0.0-beta.2",
     "solc": "0.5.17",
     "solium-config-keep": "github:keep-network/solium-config-keep#0.1.2",
     "toml": "^3.0.0",
