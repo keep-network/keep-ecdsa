@@ -29,7 +29,7 @@ jobs:
         working-directory: ./solidity
         run: |
           PACKAGE_VERSION=$(npm version prerelease --preid=pre)
-          echo "::set-env name=PACKAGE_VERSION::$PACKAGE_VERSION"
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
       - name: Setup git
         run: |
           git remote set-url origin https://${{ secrets.CI_GITHUB_TOKEN }}@github.com/keep-network/keep-ecdsa.git
