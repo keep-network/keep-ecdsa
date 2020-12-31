@@ -1,10 +1,10 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 
 const BondedECDSAKeepStub = contract.fromArtifact("BondedECDSAKeepStub")
 const ECDSARewards = contract.fromArtifact("ECDSARewardsStub")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
-const {initialize, fund, createMembers} = require("./rewardsSetup")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
+const { initialize, fund, createMembers } = require("./rewardsSetup")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -46,7 +46,7 @@ describe("ECDSARewards", () => {
       keepToken.address,
       keepFactory.address,
       tokenStaking.address,
-      {from: owner}
+      { from: owner }
     )
 
     await fund(keepToken, rewardsContract, totalRewardsAllocation)

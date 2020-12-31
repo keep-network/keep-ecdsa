@@ -1,12 +1,16 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const FullyBackedBonding = contract.fromArtifact("FullyBackedBonding")
 const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
 
-const {expectEvent, expectRevert, time} = require("@openzeppelin/test-helpers")
-const {ZERO_ADDRESS} = require("@openzeppelin/test-helpers/src/constants")
+const {
+  expectEvent,
+  expectRevert,
+  time,
+} = require("@openzeppelin/test-helpers")
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
 
 const BN = web3.utils.BN
 
@@ -63,7 +67,7 @@ describe("FullyBackedBonding", function () {
 
   describe("delegate", async () => {
     it("registers delegation", async () => {
-      const {receipt} = await bonding.delegate(
+      const { receipt } = await bonding.delegate(
         operator,
         beneficiary,
         authorizer,
@@ -96,11 +100,11 @@ describe("FullyBackedBonding", function () {
         "incorrect delegation balance"
       )
 
-      const {timestamp: expectedCreatedAt} = await web3.eth.getBlock(
+      const { timestamp: expectedCreatedAt } = await web3.eth.getBlock(
         receipt.blockNumber
       )
 
-      const {createdAt, undelegatedAt} = await bonding.getDelegationInfo(
+      const { createdAt, undelegatedAt } = await bonding.getDelegationInfo(
         operator
       )
 
@@ -349,12 +353,12 @@ describe("FullyBackedBonding", function () {
     })
 
     it("can be called by operator", async () => {
-      await bonding.withdraw(value, operator, {from: operator})
+      await bonding.withdraw(value, operator, { from: operator })
       // ok, no reverts
     })
 
     it("can be called by delegation owner", async () => {
-      await bonding.withdraw(value, operator, {from: owner})
+      await bonding.withdraw(value, operator, { from: owner })
       // ok, no reverts
     })
 
@@ -373,21 +377,21 @@ describe("FullyBackedBonding", function () {
       await time.increase(delegationLockPeriod.subn(1))
 
       await expectRevert(
-        bonding.withdraw(value, operator2, {from: owner}),
+        bonding.withdraw(value, operator2, { from: owner }),
         "Delegation lock period has not passed yet"
       )
     })
 
     it("cannot be called by authorizer", async () => {
       await expectRevert(
-        bonding.withdraw(value, operator, {from: authorizer}),
+        bonding.withdraw(value, operator, { from: authorizer }),
         "Only operator or the owner is allowed to withdraw bond"
       )
     })
 
     it("cannot be called by beneficiary", async () => {
       await expectRevert(
-        bonding.withdraw(value, operator, {from: beneficiary}),
+        bonding.withdraw(value, operator, { from: beneficiary }),
         "Only operator or the owner is allowed to withdraw bond"
       )
     })
@@ -396,7 +400,7 @@ describe("FullyBackedBonding", function () {
       const thirdParty = accounts[7]
 
       await expectRevert(
-        bonding.withdraw(value, operator, {from: thirdParty}),
+        bonding.withdraw(value, operator, { from: thirdParty }),
         "Only operator or the owner is allowed to withdraw bond"
       )
     })
@@ -413,7 +417,7 @@ describe("FullyBackedBonding", function () {
         "invalid unbonded value"
       )
 
-      await bonding.withdraw(value, operator, {from: operator})
+      await bonding.withdraw(value, operator, { from: operator })
 
       expect(await bonding.unbondedValue(operator)).to.eq.BN(
         expectedUnbonded,
@@ -444,7 +448,7 @@ describe("FullyBackedBonding", function () {
       const invalidValue = initialDeposit.addn(1)
 
       await expectRevert(
-        bonding.withdraw(invalidValue, operator, {from: operator}),
+        bonding.withdraw(invalidValue, operator, { from: operator }),
         "Insufficient unbonded value"
       )
     })
@@ -462,7 +466,7 @@ describe("FullyBackedBonding", function () {
       await time.increase(delegationLockPeriod.addn(1))
 
       await expectRevert(
-        bonding.withdraw(value, operator2, {from: operator2}),
+        bonding.withdraw(value, operator2, { from: operator2 }),
         "Transfer failed"
       )
     })

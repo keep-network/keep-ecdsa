@@ -1,4 +1,4 @@
-const {web3} = require("@openzeppelin/test-environment")
+const { web3 } = require("@openzeppelin/test-environment")
 
 // Increases testrpc time by the passed duration in seconds
 function increaseTime(duration) {
