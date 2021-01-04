@@ -2,12 +2,12 @@ name: NPM
 
 on:
   push:
-    # branches:
-    #   - master
-    # paths:
-    #   - "solidity/contracts/**"
-    #   - "solidity/package.json"
-    #   - "solidity/package-lock.json"
+    branches:
+      - master
+    paths:
+      - "solidity/contracts/**"
+      - "solidity/package.json"
+      - "solidity/package-lock.json"
 
 jobs:
   publish-contracts:
