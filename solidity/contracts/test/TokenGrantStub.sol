@@ -3,9 +3,11 @@ pragma solidity 0.5.17;
 contract TokenGrantStub {
     mapping(address => address[]) granteeOperators;
 
-    function getGranteeOperators(
-        address grantee
-    ) public view returns(address[] memory) {
+    function getGranteeOperators(address grantee)
+        public
+        view
+        returns (address[] memory)
+    {
         return granteeOperators[grantee];
     }
 

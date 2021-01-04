@@ -169,12 +169,12 @@ contract FullyBackedECDSAKeepFactory is
             "Insufficient payment for opening a new keep"
         );
 
-        address[] memory members = FullyBackedSortitionPool(pool)
-            .selectSetGroup(
-            _groupSize,
-            bytes32(groupSelectionSeed),
-            memberBond
-        );
+        address[] memory members =
+            FullyBackedSortitionPool(pool).selectSetGroup(
+                _groupSize,
+                bytes32(groupSelectionSeed),
+                memberBond
+            );
 
         newGroupSelectionSeed();
 
@@ -256,9 +256,8 @@ contract FullyBackedECDSAKeepFactory is
 
         address application = keepApplication[address(keep)];
 
-        FullyBackedSortitionPool sortitionPool = FullyBackedSortitionPool(
-            getSortitionPool(application)
-        );
+        FullyBackedSortitionPool sortitionPool =
+            FullyBackedSortitionPool(getSortitionPool(application));
 
         for (uint256 i = 0; i < members.length; i++) {
             address operator = members[i];

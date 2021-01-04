@@ -2,7 +2,6 @@ pragma solidity 0.5.17;
 
 import "@keep-network/keep-core/contracts/KeepToken.sol";
 
-
 // This file contains a workaround for a truffle bug described in [truffle#1250].
 // We are not able to directly require artifacts from other packages, e.g.:
 // `artifacts.require("@keep-network/keep-core/KeepTokenIntegration")`.
