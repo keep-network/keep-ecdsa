@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: "11.x"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@keep-network"
       - name: Bump up version
         working-directory: ./solidity
         run: |
