@@ -34,7 +34,7 @@
   },
   "homepage": "https://github.com/keep-network/keep-ecdsa",
   "dependencies": {
-    "@keep-network/keep-core": "1.6.0-rc.0",
+    "@keep-network/keep-core": "1.6.1-rc.0",
     "@keep-network/sortition-pools": "1.2.0-pre.3",
     "@openzeppelin/upgrades": "^2.7.2",
     "openzeppelin-solidity": "2.3.0"
