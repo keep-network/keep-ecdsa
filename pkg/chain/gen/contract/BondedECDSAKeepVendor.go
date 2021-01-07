@@ -111,122 +111,6 @@ func NewBondedECDSAKeepVendor(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgrade(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	becdsakvLogger.Debug(
-		"submitting transaction completeFactoryUpgrade",
-	)
-
-	becdsakv.transactionMutex.Lock()
-	defer becdsakv.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *becdsakv.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := becdsakv.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := becdsakv.contract.CompleteFactoryUpgrade(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, becdsakv.errorResolver.ResolveError(
-			err,
-			becdsakv.transactorOptions.From,
-			nil,
-			"completeFactoryUpgrade",
-		)
-	}
-
-	becdsakvLogger.Infof(
-		"submitted transaction completeFactoryUpgrade with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go becdsakv.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := becdsakv.contract.CompleteFactoryUpgrade(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, becdsakv.errorResolver.ResolveError(
-					err,
-					becdsakv.transactorOptions.From,
-					nil,
-					"completeFactoryUpgrade",
-				)
-			}
-
-			becdsakvLogger.Infof(
-				"submitted transaction completeFactoryUpgrade with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	becdsakv.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (becdsakv *BondedECDSAKeepVendor) CallCompleteFactoryUpgrade(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		becdsakv.transactorOptions.From,
-		blockNumber, nil,
-		becdsakv.contractABI,
-		becdsakv.caller,
-		becdsakv.errorResolver,
-		becdsakv.contractAddress,
-		"completeFactoryUpgrade",
-		&result,
-	)
-
-	return err
-}
-
-func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgradeGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		becdsakv.callerOptions.From,
-		becdsakv.contractAddress,
-		"completeFactoryUpgrade",
-		becdsakv.contractABI,
-		becdsakv.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
 func (becdsakv *BondedECDSAKeepVendor) Initialize(
 	registryAddress common.Address,
 	factory common.Address,
@@ -496,6 +380,122 @@ func (becdsakv *BondedECDSAKeepVendor) UpgradeFactoryGasEstimate(
 	return result, err
 }
 
+// Transaction submission.
+func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgrade(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	becdsakvLogger.Debug(
+		"submitting transaction completeFactoryUpgrade",
+	)
+
+	becdsakv.transactionMutex.Lock()
+	defer becdsakv.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *becdsakv.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := becdsakv.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := becdsakv.contract.CompleteFactoryUpgrade(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, becdsakv.errorResolver.ResolveError(
+			err,
+			becdsakv.transactorOptions.From,
+			nil,
+			"completeFactoryUpgrade",
+		)
+	}
+
+	becdsakvLogger.Infof(
+		"submitted transaction completeFactoryUpgrade with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go becdsakv.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := becdsakv.contract.CompleteFactoryUpgrade(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, becdsakv.errorResolver.ResolveError(
+					err,
+					becdsakv.transactorOptions.From,
+					nil,
+					"completeFactoryUpgrade",
+				)
+			}
+
+			becdsakvLogger.Infof(
+				"submitted transaction completeFactoryUpgrade with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	becdsakv.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (becdsakv *BondedECDSAKeepVendor) CallCompleteFactoryUpgrade(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		becdsakv.transactorOptions.From,
+		blockNumber, nil,
+		becdsakv.contractABI,
+		becdsakv.caller,
+		becdsakv.errorResolver,
+		becdsakv.contractAddress,
+		"completeFactoryUpgrade",
+		&result,
+	)
+
+	return err
+}
+
+func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgradeGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		becdsakv.callerOptions.From,
+		becdsakv.contractAddress,
+		"completeFactoryUpgrade",
+		becdsakv.contractABI,
+		becdsakv.transactor,
+	)
+
+	return result, err
+}
+
 // ----- Const Methods ------
 
 func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeTimeDelay() (*big.Int, error) {
@@ -673,10 +673,9 @@ func (becdsakv *BondedECDSAKeepVendor) WatchFactoryUpgradeCompleted(
 					violation,
 				)
 			case err := <-subscriptionFailed:
-				becdsakvLogger.Warningf(
-					"subscription to event FactoryUpgradeCompleted failed "+
-						"with error: [%v]; resubscription attempt will be "+
-						"performed",
+				becdsakvLogger.Errorf(
+					"subscription to event FactoryUpgradeCompleted failed: [%v]; "+
+						"resubscription attempt will be performed",
 					err,
 				)
 			}
@@ -765,10 +764,9 @@ func (becdsakv *BondedECDSAKeepVendor) WatchFactoryUpgradeStarted(
 					violation,
 				)
 			case err := <-subscriptionFailed:
-				becdsakvLogger.Warningf(
-					"subscription to event FactoryUpgradeStarted failed "+
-						"with error: [%v]; resubscription attempt will be "+
-						"performed",
+				becdsakvLogger.Errorf(
+					"subscription to event FactoryUpgradeStarted failed: [%v]; "+
+						"resubscription attempt will be performed",
 					err,
 				)
 			}
