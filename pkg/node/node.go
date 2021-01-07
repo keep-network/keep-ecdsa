@@ -12,10 +12,10 @@ import (
 
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -39,7 +39,7 @@ const (
 	// Used to calculate the publication delay factor for the given signer index
 	// to avoid all signers publishing the same signature for given keep at the
 	// same time.
-	signaturePublicationDelayStep = 5 * time.Minute
+	signaturePublicationDelayStep = 90 * time.Second
 )
 
 // Node holds interfaces to interact with the blockchain and network messages
@@ -87,11 +87,23 @@ func (n *Node) AnnounceSignerPresence(
 		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
 	}
 
+	// TODO: Use generic type for representing address in node.go instead of
+	// common.Address from go-ethereum. The current implementation is not
+	// host-chain implementation agnostic.
+	// To do not propagate ethereum-specific types any further, we convert
+	// addresses to strings before passing them to AnnounceProtocol.
+	keepAddressString := keepAddress.Hex()
+	keepMembersAddressesStrings := make([]string, len(keepMembersAddresses))
+	for i, address := range keepMembersAddresses {
+		keepMembersAddressesStrings[i] = address.Hex()
+	}
 	return tss.AnnounceProtocol(
 		ctx,
 		operatorPublicKey,
-		len(keepMembersAddresses),
+		keepAddressString,
+		keepMembersAddressesStrings,
 		broadcastChannel,
+		n.ethereumChain.Signing().PublicKeyToAddress,
 	)
 }
 
@@ -204,6 +216,7 @@ func (n *Node) GenerateSignerForKeep(
 			memberIDs,
 			uint(len(memberIDs)-1),
 			n.networkProvider,
+			n.ethereumChain.Signing().PublicKeyToAddress,
 			preParamsBox,
 		)
 		if err != nil {
@@ -279,7 +292,12 @@ func (n *Node) CalculateSignature(
 		// other keep members.
 		//
 		// If threshold signing fails, we retry from the beginning.
-		signature, err := signer.CalculateSignature(ctx, digest[:], n.networkProvider)
+		signature, err := signer.CalculateSignature(
+			ctx,
+			digest[:],
+			n.networkProvider,
+			n.ethereumChain.Signing().PublicKeyToAddress,
+		)
 		if err != nil {
 			logger.Errorf(
 				"failed to calculate signature for keep [%s]: [%v]",
@@ -683,6 +701,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 					keepAddress.String(),
 					maxPubkeyChecksCount,
 				)
+				return
 			}
 
 			logger.Infof(

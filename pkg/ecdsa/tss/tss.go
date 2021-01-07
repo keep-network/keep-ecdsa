@@ -8,6 +8,7 @@ package tss
 
 import (
 	"context"
+	cecdsa "crypto/ecdsa"
 	"fmt"
 	"time"
 
@@ -46,6 +47,7 @@ func GenerateThresholdSigner(
 	groupMemberIDs []MemberID,
 	dishonestThreshold uint,
 	networkProvider net.Provider,
+	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 	paramsBox *params.Box,
 ) (*ThresholdSigner, error) {
 	if len(groupMemberIDs) < 2 {
@@ -99,7 +101,12 @@ func GenerateThresholdSigner(
 		return nil, err
 	}
 
-	if err := readyProtocol(ctx, group, broadcastChannel); err != nil {
+	if err := readyProtocol(
+		ctx,
+		group,
+		broadcastChannel,
+		pubKeyToAddressFn,
+	); err != nil {
 		return nil, fmt.Errorf("readiness signaling protocol failed: [%v]", err)
 	}
 
@@ -126,6 +133,7 @@ func (s *ThresholdSigner) CalculateSignature(
 	parentCtx context.Context,
 	digest []byte,
 	networkProvider net.Provider,
+	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) (*ecdsa.Signature, error) {
 	netBridge, err := newNetworkBridge(s.groupInfo, networkProvider)
 	if err != nil {
@@ -145,7 +153,12 @@ func (s *ThresholdSigner) CalculateSignature(
 		return nil, err
 	}
 
-	if err := readyProtocol(ctx, s.groupInfo, broadcastChannel); err != nil {
+	if err := readyProtocol(
+		ctx,
+		s.groupInfo,
+		broadcastChannel,
+		pubKeyToAddressFn,
+	); err != nil {
 		return nil, fmt.Errorf("readiness signaling protocol failed: [%v]", err)
 	}
 

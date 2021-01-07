@@ -2,10 +2,13 @@ package tss
 
 import (
 	"context"
-	"github.com/keep-network/keep-core/pkg/net"
+	cecdsa "crypto/ecdsa"
+	"crypto/elliptic"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/net"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -24,6 +27,10 @@ func TestReadyProtocol(t *testing.T) {
 	groupMembers, err := generateMemberKeys(groupSize)
 	if err != nil {
 		t.Fatalf("failed to generate members keys: [%v]", err)
+	}
+
+	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
+		return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 	}
 
 	errChan := make(chan error)
@@ -63,7 +70,12 @@ func TestReadyProtocol(t *testing.T) {
 
 			defer waitGroup.Done()
 
-			if err := readyProtocol(ctx, groupInfo, broadcastChannel); err != nil {
+			if err := readyProtocol(
+				ctx,
+				groupInfo,
+				broadcastChannel,
+				pubKeyToAddressFn,
+			); err != nil {
 				errChan <- err
 				return
 			}

@@ -48,7 +48,7 @@ export default class Requirements {
     console.log(
       `Minimum Bondable Value at interval start: ${shorten18Decimals(
         minimumBondableValueAtStart
-      ).toString()} ether`
+      )} ether`
     )
 
     const requirements = new Requirements(
