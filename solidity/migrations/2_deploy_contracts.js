@@ -134,7 +134,7 @@ module.exports = async function (deployer, network) {
     KeepTokenAddress,
     WrappedTokenKEEPTBTC.address
   )
-  
+
   await deployer.deploy(
     ECDSARewards,
     KeepTokenAddress,
