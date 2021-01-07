@@ -74,7 +74,7 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
 ) subscription.EventSubscription {
-	subscription, err := ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
+	subscription := ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
 		func(
 			KeepAddress common.Address,
 			Members []common.Address,
@@ -89,16 +89,10 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 				HonestThreshold: HonestThreshold.Uint64(),
 			})
 		},
-		func(err error) error {
-			return fmt.Errorf("watch keep created failed: [%v]", err)
-		},
 		nil,
 		nil,
 		nil,
 	)
-	if err != nil {
-		logger.Errorf("could not watch BondedECDSAKeepCreated event: [%v]", err)
-	}
 
 	return subscription
 }
@@ -116,10 +110,7 @@ func (ec *EthereumChain) OnKeepClosed(
 		func(blockNumber uint64) {
 			handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
 		},
-		func(err error) error {
-			return fmt.Errorf("keep closed callback failed: [%v]", err)
-		},
-	)
+	), nil
 }
 
 // OnKeepTerminated installs a callback that is invoked on-chain when keep
@@ -136,10 +127,7 @@ func (ec *EthereumChain) OnKeepTerminated(
 		func(blockNumber uint64) {
 			handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
 		},
-		func(err error) error {
-			return fmt.Errorf("keep terminated callback failed: [%v]", err)
-		},
-	)
+	), nil
 }
 
 // OnPublicKeyPublished installs a callback that is invoked when an on-chain
@@ -162,10 +150,7 @@ func (ec *EthereumChain) OnPublicKeyPublished(
 				PublicKey: PublicKey,
 			})
 		},
-		func(err error) error {
-			return fmt.Errorf("keep created callback failed: [%v]", err)
-		},
-	)
+	), nil
 }
 
 // OnConflictingPublicKeySubmitted installs a callback that is invoked when an
@@ -190,11 +175,8 @@ func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 				ConflictingPublicKey: ConflictingPublicKey,
 			})
 		},
-		func(err error) error {
-			return fmt.Errorf("keep created callback failed: [%v]", err)
-		},
 		nil,
-	)
+	), nil
 }
 
 // OnSignatureRequested installs a callback that is invoked on-chain
@@ -218,11 +200,8 @@ func (ec *EthereumChain) OnSignatureRequested(
 				BlockNumber: blockNumber,
 			})
 		},
-		func(err error) error {
-			return fmt.Errorf("keep signature requested callback failed: [%v]", err)
-		},
 		nil,
-	)
+	), nil
 }
 
 // SubmitKeepPublicKey submits a public key to a keep contract deployed under
