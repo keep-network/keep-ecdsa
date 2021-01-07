@@ -4,6 +4,7 @@ const TokenStakingAddress = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 const TokenGrantAddress = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 const RandomBeaconAddress = "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
 const TBTCSystemAddress = "0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
+const KeepTokenAddress = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 
 module.exports = {
   RegistryAddress,
@@ -11,4 +12,5 @@ module.exports = {
   TokenGrantAddress,
   RandomBeaconAddress,
   TBTCSystemAddress,
+  KeepTokenAddress,
 }
