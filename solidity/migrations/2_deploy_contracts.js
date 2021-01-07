@@ -114,6 +114,7 @@ module.exports = async function (deployer, network) {
     RandomBeaconAddress
   )
 
+  // Liquidity Rewards
   const WrappedTokenKEEPETH = await deployer.deploy(TestToken)
   await deployer.deploy(
     LPRewardsKEEPETH,
@@ -135,6 +136,7 @@ module.exports = async function (deployer, network) {
     WrappedTokenKEEPTBTC.address
   )
 
+  // ECDSA Rewards
   await deployer.deploy(
     ECDSARewards,
     KeepTokenAddress,
