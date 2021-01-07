@@ -29,6 +29,8 @@ const LPRewardsTBTCETH = artifacts.require("LPRewardsTBTCETH")
 const LPRewardsKEEPETH = artifacts.require("LPRewardsKEEPETH")
 const LPRewardsKEEPTBTC = artifacts.require("LPRewardsKEEPTBTC")
 const TestToken = artifacts.require("./test/TestToken")
+const ECDSARewards = artifacts.require("ECDSARewards")
+const ECDSARewardsDistributor = artifacts.require("ECDSARewardsDistributor")
 
 let initializationPeriod = 43200 // 12 hours in seconds
 
@@ -131,5 +133,18 @@ module.exports = async function (deployer, network) {
     LPRewardsKEEPTBTC,
     KeepTokenAddress,
     WrappedTokenKEEPTBTC.address
+  )
+  
+  await deployer.deploy(
+    ECDSARewards,
+    KeepTokenAddress,
+    BondedECDSAKeepFactory.address,
+    TokenStakingAddress
+  )
+
+  await deployer.deploy(
+    ECDSARewardsDistributor,
+    KeepTokenAddress,
+    TokenStakingAddress
   )
 }
