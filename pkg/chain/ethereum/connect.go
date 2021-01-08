@@ -12,7 +12,6 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
 
@@ -28,14 +27,14 @@ var (
 	// gas price can not be higher than the max gas price value. If the maximum
 	// allowed gas price is reached, no further resubmission attempts are
 	// performed. This value can be overwritten in the configuration file.
-	DefaultMaxGasPrice = big.NewInt(50000000000) // 50 Gwei
+	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
 // EthereumChain is an implementation of ethereum blockchain interface.
 type EthereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
-	client                         *ethclient.Client
+	client                         ethutil.EthereumClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *blockcounter.EthereumBlockCounter
 	miningWaiter                   *ethutil.MiningWaiter
@@ -58,17 +57,19 @@ type EthereumChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, error) {
+func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
 	}
 
+	wrappedClient := addClientWrappers(config, client)
+
 	transactionMutex := &sync.Mutex{}
 
 	nonceManager := ethutil.NewNonceManager(
 		accountKey.Address,
-		client,
+		wrappedClient,
 	)
 
 	checkInterval := DefaultMiningCheckInterval
@@ -76,13 +77,13 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 	if config.MiningCheckInterval != 0 {
 		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
 	}
-	if config.MaxGasPrice != 0 {
-		maxGasPrice = new(big.Int).SetUint64(config.MaxGasPrice)
+	if config.MaxGasPrice != nil {
+		maxGasPrice = config.MaxGasPrice.Int
 	}
 
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(wrappedClient, checkInterval, maxGasPrice)
 
 	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(BondedECDSAKeepFactoryContractName)
 	if err != nil {
@@ -91,7 +92,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
 		*bondedECDSAKeepFactoryContractAddress,
 		accountKey,
-		client,
+		wrappedClient,
 		nonceManager,
 		miningWaiter,
 		transactionMutex,
@@ -100,7 +101,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 		return nil, err
 	}
 
-	blockCounter, err := blockcounter.CreateBlockCounter(client)
+	blockCounter, err := blockcounter.CreateBlockCounter(wrappedClient)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
@@ -111,11 +112,38 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (eth.Handle, err
 	return &EthereumChain{
 		config:                         config,
 		accountKey:                     accountKey,
-		client:                         client,
+		client:                         wrappedClient,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
 		transactionMutex:               transactionMutex,
 	}, nil
+}
+
+func addClientWrappers(
+	config *ethereum.Config,
+	client ethutil.EthereumClient,
+) ethutil.EthereumClient {
+	loggingClient := ethutil.WrapCallLogging(logger, client)
+
+	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
+		logger.Infof(
+			"enabled ethereum rate limiter; "+
+				"rps limit [%v]; "+
+				"concurrency limit [%v]",
+			config.RequestsPerSecondLimit,
+			config.ConcurrencyLimit,
+		)
+
+		return ethutil.WrapRateLimiting(
+			loggingClient,
+			&ethutil.RateLimiterConfig{
+				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
+				ConcurrencyLimit:       config.ConcurrencyLimit,
+			},
+		)
+	}
+
+	return loggingClient
 }

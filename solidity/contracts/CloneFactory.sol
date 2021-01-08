@@ -1,6 +1,5 @@
 pragma solidity 0.5.17;
 
-
 /*
 The MIT License (MIT)
 Copyright (c) 2018 Murray Software, LLC.

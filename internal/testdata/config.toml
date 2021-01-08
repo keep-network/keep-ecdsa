@@ -1,0 +1,36 @@
+[ethereum]
+	URL                     = "ws://192.168.0.158:8546"
+	URLRPC                  = "http://192.168.0.158:8545"
+	MaxGasPrice             = "140 Gwei"
+	BalanceAlertThreshold   = "2.5 ether"
+	
+[ethereum.account]
+	KeyFile            = "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b"
+
+[ethereum.ContractAddresses]
+	BondedECDSAKeepFactory = "0x2BBE98119100D664eb6dEe5b8DB978aEEeAf42D6"
+
+[SanctionedApplications]
+  Addresses = [
+    "0x15095EA15759f4C7d09cA2fcEd179527487ae81b",
+    "0xda4c869B9073deac021344fd592c1BB0DC6Fc9a5"
+  ]
+
+[Storage]
+	DataDir = "/my/secure/location"
+
+[LibP2P]
+	Port = 27001
+	Peers = ["/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"]
+
+[Client]
+	AwaitingKeyGenerationLookback = "48h"
+	KeyGenerationTimeout = "1h45m"
+	SigningTimeout = "3h30m"
+
+[TSS]
+	PreParamsGenerationTimeout = "6m37s"
+	PreParamsTargetPoolSize = 36
+
+[Extensions.TBTC]
+	TBTCSystem = "0xa4888eDD97A5a3A739B4E0807C71817c8a418273"

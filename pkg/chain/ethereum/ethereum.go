@@ -2,8 +2,10 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
+	"sort"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -13,6 +15,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
@@ -26,11 +29,36 @@ func (ec *EthereumChain) Address() common.Address {
 	return ec.accountKey.Address
 }
 
+// Signing returns signing interface for creating and verifying signatures.
+func (ec *EthereumChain) Signing() chain.Signing {
+	return ethutil.NewSigner(ec.accountKey.PrivateKey)
+}
+
+// BlockCounter returns a block counter.
+func (ec *EthereumChain) BlockCounter() chain.BlockCounter {
+	return ec.blockCounter
+}
+
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
 func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) error {
+	gasEstimate, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidateGasEstimate(application)
+	if err != nil {
+		return fmt.Errorf("failed to estimate gas [%v]", err)
+	}
+
+	// If we have multiple sortition pool join transactions queued - and that
+	// happens when multiple operators become eligible to join at the same time,
+	// e.g. after lowering the minimum bond requirement, transactions mined at
+	// the end may no longer have valid gas limits as they were estimated based
+	// on a different state of the pool. We add 20% safety margin to the original
+	// gas estimation to account for that.
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
 	transaction, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidate(
 		application,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
 	)
 	if err != nil {
 		return err
@@ -45,8 +73,8 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
-) (subscription.EventSubscription, error) {
-	return ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
+) subscription.EventSubscription {
+	subscription, err := ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
 		func(
 			KeepAddress common.Address,
 			Members []common.Address,
@@ -68,6 +96,11 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 		nil,
 		nil,
 	)
+	if err != nil {
+		logger.Errorf("could not watch BondedECDSAKeepCreated event: [%v]", err)
+	}
+
+	return subscription
 }
 
 // OnKeepClosed installs a callback that is invoked on-chain when keep is closed.
@@ -207,7 +240,7 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 		transaction, err := keepContract.SubmitPublicKey(
 			publicKey[:],
 			ethutil.TransactionOptions{
-				GasLimit: 3000000, // enough for a group size of 16
+				GasLimit: 350000, // enough for a group size of 16
 			},
 		)
 		if err != nil {
@@ -222,7 +255,7 @@ func (ec *EthereumChain) SubmitKeepPublicKey(
 	// a new cloned contract has not been registered by the ethereum node. Common
 	// case is when Ethereum nodes are behind a load balancer and not fully synced
 	// with each other. To mitigate this issue, a client will retry submitting
-	// a public key up to 4 times with a 250ms interval.
+	// a public key up to 10 times with a 250ms interval.
 	if err := ec.withRetry(submitPubKey); err != nil {
 		return err
 	}
@@ -330,11 +363,6 @@ func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
 // BalanceOf returns the stake balance of the specified address.
 func (ec *EthereumChain) BalanceOf(address common.Address) (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
-}
-
-// BlockCounter returns a block counter.
-func (ec *EthereumChain) BlockCounter() chain.BlockCounter {
-	return ec.blockCounter
 }
 
 // IsRegisteredForApplication checks if the operator is registered
@@ -486,4 +514,74 @@ func (ec *EthereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Ti
 	keepOpenTime := time.Unix(timestamp.Int64(), 0)
 
 	return keepOpenTime, nil
+}
+
+// PastSignatureSubmittedEvents returns all signature submitted events
+// for the given keep which occurred after the provided start block.
+// Returned events are sorted by the block number in the ascending order.
+func (ec *EthereumChain) PastSignatureSubmittedEvents(
+	keepAddress string,
+	startBlock uint64,
+) ([]*eth.SignatureSubmittedEvent, error) {
+	if !common.IsHexAddress(keepAddress) {
+		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
+	}
+	keepContract, err := ec.getKeepContract(common.HexToAddress(keepAddress))
+	if err != nil {
+		return nil, err
+	}
+
+	events, err := keepContract.PastSignatureSubmittedEvents(
+		startBlock,
+		nil, // latest block
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*eth.SignatureSubmittedEvent, 0)
+
+	for _, event := range events {
+		result = append(result, &eth.SignatureSubmittedEvent{
+			Digest:      event.Digest,
+			R:           event.R,
+			S:           event.S,
+			RecoveryID:  event.RecoveryID,
+			BlockNumber: event.Raw.BlockNumber,
+		})
+	}
+
+	// Make sure events are sorted by block number in ascending order.
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].BlockNumber < result[j].BlockNumber
+	})
+
+	return result, nil
+}
+
+// BlockTimestamp returns given block's timestamp.
+func (ec *EthereumChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancelCtx()
+
+	header, err := ec.client.HeaderByNumber(ctx, blockNumber)
+	if err != nil {
+		return 0, err
+	}
+
+	return header.Time, nil
+}
+
+//WeiBalanceOf returns the wei balance of the given address from the latest known block.
+func (ec *EthereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancelCtx()
+
+	return ec.client.BalanceAt(ctx, address, nil)
+}
+
+// BalanceMonitor returns a balance monitor.
+func (ec *EthereumChain) BalanceMonitor() (chain.BalanceMonitor, error) {
+	return ethereum.NewBalanceMonitor(ec.WeiBalanceOf), nil
 }

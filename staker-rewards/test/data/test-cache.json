@@ -1,0 +1,163 @@
+{
+  "keeps": [
+    {
+      "address": "0x1f1aCDA5311Cf7948A533346615Fc889f28EBEeF",
+      "members": [
+        "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+        "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+        "0x855A951162B1B93D70724484d5bdc9D00B56236B"
+      ],
+      "creationBlock": 1,
+      "creationTimestamp": 1000,
+      "status": {
+        "name": "terminated",
+        "timestamp": 1100,
+        "cause": "signature-fail"
+      }
+    },
+    {
+      "address": "0x952812546c53B9322a8bB70DA510EeE68a5cA8D2",
+      "members": [
+        "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+        "0x855A951162B1B93D70724484d5bdc9D00B56236B",
+        "0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab"
+      ],
+      "creationBlock": 2,
+      "creationTimestamp": 2000,
+      "status": {
+        "name": "terminated",
+        "timestamp": 2100,
+        "cause": "other"
+      }
+    },
+    {
+      "address": "0xe56Db688D4C75444dE8eBF2031C36806C4425286",
+      "members": [
+        "0xd1F2A77a0dAD76Ef8B87002763134f4863C870A4",
+        "0xb038a8B2975cD5dE392683f5CD4989d3b1E75648",
+        "0x855A951162B1B93D70724484d5bdc9D00B56236B"
+      ],
+      "creationBlock": 3,
+      "creationTimestamp": 3000,
+      "status": {
+        "name": "closed",
+        "timestamp": 3100
+      }
+    },
+    {
+      "address": "0xC6f0a8726EB67910A24074e3FbB4e1aEF1671C8a",
+      "members": [
+        "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+        "0xd1F2A77a0dAD76Ef8B87002763134f4863C870A4",
+        "0x855A951162B1B93D70724484d5bdc9D00B56236B"
+      ],
+      "creationBlock": 4,
+      "creationTimestamp": 4000,
+      "status": {
+        "name": "closed",
+        "timestamp": 4100
+      }
+    },
+    {
+      "address": "0xf876aE82E3Ef9a67ad4E9eA23eFa4de2D85DA6fb",
+      "members": [
+        "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+        "0x855A951162B1B93D70724484d5bdc9D00B56236B",
+        "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426"
+      ],
+      "creationBlock": 5,
+      "creationTimestamp": 5000,
+      "status": {
+        "name": "closed",
+        "timestamp": 5100
+      }
+    },
+    {
+      "address": "0x6A1074025E942138Ac634613deC0E5828e51820c",
+      "members": [
+        "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+        "0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab",
+        "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426"
+      ],
+      "creationBlock": 6,
+      "creationTimestamp": 6000,
+      "status": {
+        "name": "terminated",
+        "timestamp": 6100,
+        "cause": "keygen-fail"
+      }
+    },
+    {
+      "address": "0x6EAD0C3A59B4b5258f72317Fa24c5D759886158B",
+      "members": [
+        "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426",
+        "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+        "0x9d0Cc9194EfD1F9Bf02a7AFC57Ae9769c1207Aa4"
+      ],
+      "creationBlock": 7,
+      "creationTimestamp": 7000,
+      "status": {
+        "name": "terminated",
+        "timestamp": 7100,
+        "cause": "signature-fail"
+      }
+    },
+    {
+      "address": "0x060341C3fAE3929B96Afcc1449Ac51D34A3639f8",
+      "members": [
+        "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+        "0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab",
+        "0x186E82df0a09534537d0D8680D03b548628ab288"
+      ],
+      "creationBlock": 8,
+      "creationTimestamp": 8000,
+      "status": {
+        "name": "terminated",
+        "timestamp": 8100,
+        "cause": "other"
+      }
+    },
+    {
+      "address": "0x475666ECE72d4e53Fa2F1EDEc21564e0dBFf3665",
+      "members": [
+        "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+        "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+        "0xb038a8B2975cD5dE392683f5CD4989d3b1E75648"
+      ],
+      "creationBlock": 9,
+      "creationTimestamp": 9000,
+      "status": {
+        "name": "active",
+        "timestamp": 9000
+      }
+    },
+    {
+      "address": "0x58F27644aBE7eFF3AC06ba2FF44f0091eef43655",
+      "members": [
+        "0xe76c773C18d0D305A488B16CF6Ef14273B57665d",
+        "0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab",
+        "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
+      ],
+      "creationBlock": 10,
+      "creationTimestamp": 10000,
+      "status": {
+        "name": "active",
+        "timestamp": 10000
+      }
+    },
+    {
+      "address": "0x5907339b339136EE062A5921114013a66FeA713e",
+      "members": [
+        "0xd1F2A77a0dAD76Ef8B87002763134f4863C870A4",
+        "0xb038a8B2975cD5dE392683f5CD4989d3b1E75648",
+        "0x855A951162B1B93D70724484d5bdc9D00B56236B"
+      ],
+      "creationBlock": 11,
+      "creationTimestamp": 11000,
+      "status": {
+        "name": "active",
+        "timestamp": 11000
+      }
+    }
+  ]
+}

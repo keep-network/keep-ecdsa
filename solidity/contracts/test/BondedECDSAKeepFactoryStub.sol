@@ -30,9 +30,48 @@ contract BondedECDSAKeepFactoryStub is BondedECDSAKeepFactory {
         return groupSelectionSeed;
     }
 
-    function addKeep(address keep) public {
-        keeps.push(keep);
-        /* solium-disable-next-line security/no-block-members*/
-        keepOpenedTimestamp[keep] = block.timestamp;
+    /// @notice Opens a new ECDSA keep.
+    /// @param _owner Address of the keep owner.
+    /// @param _members Keep members.
+    /// @param _creationTimestamp Keep creation timestamp.
+    ///
+    /// @return Created keep address.
+    function stubOpenKeep(
+        address _owner,
+        address[] memory _members,
+        uint256 _creationTimestamp
+    ) public returns (address keepAddress) {
+        keepAddress = createClone(masterKeepAddress);
+        BondedECDSAKeep keep = BondedECDSAKeep(keepAddress);
+        keep.initialize(
+            _owner,
+            _members,
+            0,
+            0,
+            0,
+            address(tokenStaking),
+            address(keepBonding),
+            address(this)
+        );
+        keeps.push(keepAddress);
+        keepOpenedTimestamp[keepAddress] = _creationTimestamp;
+    }
+
+    /// @notice Mocks opening `_numberOfKeeps` with the opening timestamp of
+    /// the first keep starting at `_firstKeepCreationTimestamp`.
+    /// IMPORTANT! This function does not actually create new keep instances!
+    /// It would not be possible to create 100 keeps in one block because of
+    /// gas limits.
+    function stubBatchOpenFakeKeeps(
+        uint256 _numberOfKeeps,
+        uint256 _firstKeepCreationTimestamp
+    ) public {
+        for (uint256 i = 0; i < _numberOfKeeps; i++) {
+            address keepAddress = address(block.timestamp.add(i));
+            keeps.push(keepAddress);
+            keepOpenedTimestamp[keepAddress] = _firstKeepCreationTimestamp.add(
+                i
+            );
+        }
     }
 }
