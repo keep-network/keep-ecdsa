@@ -26,11 +26,23 @@ export default class RewardsCalculator {
     const operatorsRewardsFactors = []
 
     for (const operatorParameters of operatorsParameters) {
-      const { keepStaked, ethTotal } = operatorParameters.operatorAssets
+      let ethTotal = operatorParameters.operatorAssets
+      const { keepStaked } = operatorParameters.operatorAssets
 
-      const requirementsViolations = this.checkRequirementsViolations(
+      let requirementsViolations = this.checkRequirementsViolations(
         operatorParameters
       )
+
+      if (
+        requirementsViolations.includes("poolRequirementFulfilledAtStart") &&
+        this.isUndelegatingOperator(operatorParameters.operator)
+      ) {
+        requirementsViolations = requirementsViolations.filter(
+          (item) => item !== "poolRequirementFulfilledAtStart"
+        )
+
+        ethTotal = operatorParameters.operatorAssets.ethBonded
+      }
 
       const ethScore = this.calculateETHScore(ethTotal)
       const boost = this.calculateBoost(keepStaked, ethTotal, minimumStake)
@@ -105,6 +117,18 @@ export default class RewardsCalculator {
     )
 
     return new BigNumber(minimumStake)
+  }
+
+  async isUndelegatingOperator(operatorAddress) {
+    const tokenStaking = await this.context.contracts.TokenStaking.deployed()
+
+    const undelegatedAt = (
+      await tokenStaking.getDelegationInfo(operatorAddress)
+    ).undelegatedAt.toNumber()
+
+    const now = Math.floor(Date.now() / 1000)
+
+    return undelegatedAt !== 0 && now > undelegatedAt
   }
 
   checkRequirementsViolations(operatorParameters) {
