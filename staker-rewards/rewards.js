@@ -1,10 +1,6 @@
 import clc from "cli-color"
 import BigNumber from "bignumber.js"
-import {
-  decimalPlaces,
-  noDecimalPlaces,
-  shorten18Decimals,
-} from "./lib/numbers.js"
+import { toFormat, shorten18Decimals } from "./lib/numbers.js"
 
 import Context from "./lib/context.js"
 import FraudDetector from "./lib/fraud-detector.js"
@@ -80,11 +76,6 @@ async function run() {
   const operatorsRewards = await calculateOperatorsRewards(context, interval)
 
   if (process.env.OUTPUT_MODE === "text") {
-    const format = {
-      groupSeparator: "",
-      decimalSeparator: ".",
-    }
-
     const rewards = {}
 
     for (const operatorRewards of operatorsRewards) {
@@ -100,29 +91,25 @@ async function run() {
            ${operatorRewards.keygenFailCount} 
            ${operatorRewards.keygenSLA} 
            ${operatorRewards.signatureCount} 
-           ${operatorRewards.signatureFailCount}
+           ${operatorRewards.signatureFailCount} 
            ${operatorRewards.signatureSLA} 
-           ${operatorRewards.SLAViolated}
-           ${operatorRewards.keepStaked.toFormat(format)} 
-           ${operatorRewards.ethBonded.toFormat(format)} 
-           ${operatorRewards.ethUnbonded.toFormat(format)}
-           ${operatorRewards.ethWithdrawn.toFormat(format)}
-           ${operatorRewards.ethTotal.toFormat(format)} 
-           ${operatorRewards.ethScore.toFormat(
-             noDecimalPlaces,
-             BigNumber.ROUND_DOWN,
-             format
+           ${operatorRewards.SLAViolated} 
+           ${toFormat(operatorRewards.keepStaked)} 
+           ${toFormat(operatorRewards.ethBonded)} 
+           ${toFormat(operatorRewards.ethUnbonded)}
+           ${toFormat(operatorRewards.ethWithdrawn)}
+           ${toFormat(operatorRewards.ethTotal)} 
+           ${toFormat(operatorRewards.ethScore, false, BigNumber.ROUND_DOWN)} 
+           ${toFormat(operatorRewards.boost)} 
+           ${toFormat(
+             operatorRewards.rewardWeight,
+             false,
+             BigNumber.ROUND_DOWN
            )} 
-           ${operatorRewards.boost.toFormat(decimalPlaces, format)} 
-           ${operatorRewards.rewardWeight.toFormat(
-             noDecimalPlaces,
-             BigNumber.ROUND_DOWN,
-             format
-           )} 
-           ${operatorRewards.totalRewards.toFormat(
-             noDecimalPlaces,
-             BigNumber.ROUND_DOWN,
-             format
+           ${toFormat(
+             operatorRewards.totalRewards,
+             false,
+             BigNumber.ROUND_DOWN
            )}
           `.replace(/\n/g, "\t")
       )
@@ -316,7 +303,7 @@ function shortenSummaryValues(summary) {
   summary.ethWithdrawn = shorten18Decimals(summary.ethWithdrawn)
   summary.ethTotal = shorten18Decimals(summary.ethTotal)
   summary.ethScore = shorten18Decimals(summary.ethScore)
-  summary.boost = summary.boost.toFixed(decimalPlaces)
+  summary.boost = toFormat(summary.boost)
   summary.rewardWeight = shorten18Decimals(summary.rewardWeight)
   summary.totalRewards = shorten18Decimals(summary.totalRewards)
 
