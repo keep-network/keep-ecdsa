@@ -26,7 +26,7 @@ export default class RewardsCalculator {
     const operatorsRewardsFactors = []
 
     for (const operatorParameters of operatorsParameters) {
-      let ethTotal = operatorParameters.operatorAssets
+      let ethTotal = operatorParameters.operatorAssets.ethTotal
       const { keepStaked } = operatorParameters.operatorAssets
 
       let requirementsViolations = this.checkRequirementsViolations(
@@ -35,7 +35,7 @@ export default class RewardsCalculator {
 
       if (
         requirementsViolations.includes("poolRequirementFulfilledAtStart") &&
-        this.isUndelegatingOperator(operatorParameters.operator)
+        (await this.isUndelegatingOperator(operatorParameters.operator))
       ) {
         requirementsViolations = requirementsViolations.filter(
           (item) => item !== "poolRequirementFulfilledAtStart"
@@ -121,15 +121,18 @@ export default class RewardsCalculator {
   }
 
   async isUndelegatingOperator(operatorAddress) {
+    const block = this.interval.startBlock
+
     const tokenStaking = await this.context.contracts.TokenStaking.deployed()
 
-    const undelegatedAt = (
-      await tokenStaking.getDelegationInfo(operatorAddress)
-    ).undelegatedAt.toNumber()
+    const delegationInfo = await callWithRetry(
+      tokenStaking.methods.getDelegationInfo(operatorAddress),
+      block
+    )
 
-    const now = Math.floor(Date.now() / 1000)
+    const undelegatedAt = new BigNumber(delegationInfo.undelegatedAt).toNumber()
 
-    return undelegatedAt !== 0 && now > undelegatedAt
+    return undelegatedAt !== 0 && this.interval.start > undelegatedAt
   }
 
   checkRequirementsViolations(operatorParameters) {

@@ -4,6 +4,8 @@ import BigNumber from "bignumber.js"
 import { createMockContext } from "./helpers/mock.js"
 
 import RewardsCalculator from "../lib/rewards-calculator.js"
+import { mockMethod } from "./helpers/blockchain.js"
+import { TokenStakingAddress } from "./helpers/constants.js"
 
 const { assert } = chai
 
@@ -11,16 +13,26 @@ console.debug = function () {}
 console.log = function () {}
 
 const interval = {
+  start: 1609459200,
+  end: 1610064000,
+  startBlock: 1000,
+  endBlock: 2000,
   totalRewards: new BigNumber(18000000).multipliedBy(1e18), // 18M KEEP
 }
 
 const operator = "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
 
-const createOperatorParameters = (operator, keepStaked, ethTotal) => ({
+const createOperatorParameters = (
+  operator,
+  keepStaked,
+  ethTotal,
+  ethBonded = 0
+) => ({
   operator: operator,
   operatorAssets: {
     keepStaked: new BigNumber(keepStaked).multipliedBy(1e18),
     ethTotal: new BigNumber(ethTotal).multipliedBy(1e18),
+    ethBonded: new BigNumber(ethBonded).multipliedBy(1e18),
   },
   isFraudulent: false,
   requirements: {
@@ -49,6 +61,13 @@ const setupContractsMock = (context) => {
             // 70k KEEP
             return new BigNumber(70000).multipliedBy(1e18).toString()
           },
+        }),
+        getDelegationInfo: (operator) => ({
+          call: mockMethod(
+            TokenStakingAddress,
+            "getDelegationInfo",
+            (inputs) => inputs.operator === operator
+          ),
         }),
       },
     }),
@@ -300,6 +319,37 @@ describe("rewards calculator", async () => {
 
     assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
   })
+
+  it(
+    "should NOT set total rewards to zero if pool requirement is not " +
+      "fulfilled at start but operator is undelegating",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(
+        "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+        70000,
+        100,
+        50
+      )
+
+      operatorParameters.requirements.poolRequirementFulfilledAtStart = false
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(
+        "0x88Ed51f84c21Ae246c23137D090cdF441009D916"
+      )
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
+    }
+  )
 
   it(
     "should NOT set total rewards to zero if keygenCount >= 10 and " +

@@ -163,6 +163,25 @@
             }
           ]
         }
+      },
+      {
+        "address": "0x1293a54e160D1cd7075487898d65266081A15458",
+        "methods": {
+          "getDelegationInfo": [
+            {
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "output": {
+                "undelegatedAt": "0"
+              }
+            },
+            {
+              "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+              "output": {
+                "undelegatedAt": "1609459100"
+              }
+            }
+          ]
+        }
       }
     ]
   },
