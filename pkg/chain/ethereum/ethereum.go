@@ -73,6 +73,7 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 // notification of a new ECDSA keep creation is seen.
 func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
+	// TODO: deduplicator
 ) subscription.EventSubscription {
 	subscription := ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
 		func(

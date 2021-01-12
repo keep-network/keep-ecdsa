@@ -2099,15 +2099,6 @@ func (becdsakf *BondedECDSAKeepFactory) IsOperatorAuthorizedAtBlock(
 
 // ------ Events -------
 
-type bondedECDSAKeepFactoryBondedECDSAKeepCreatedFunc func(
-	KeepAddress common.Address,
-	Members []common.Address,
-	Owner common.Address,
-	Application common.Address,
-	HonestThreshold *big.Int,
-	blockNumber uint64,
-)
-
 func (becdsakf *BondedECDSAKeepFactory) PastBondedECDSAKeepCreatedEvents(
 	startBlock uint64,
 	endBlock *uint64,
@@ -2142,12 +2133,11 @@ func (becdsakf *BondedECDSAKeepFactory) PastBondedECDSAKeepCreatedEvents(
 }
 
 func (becdsakf *BondedECDSAKeepFactory) WatchBondedECDSAKeepCreated(
-	success bondedECDSAKeepFactoryBondedECDSAKeepCreatedFunc,
+	onEvent chan<- *abi.BondedECDSAKeepFactoryBondedECDSAKeepCreated,
 	keepAddressFilter []common.Address,
 	ownerFilter []common.Address,
 	applicationFilter []common.Address,
 ) subscription.EventSubscription {
-	eventOccurred := make(chan *abi.BondedECDSAKeepFactoryBondedECDSAKeepCreated)
 	thresholdViolated := make(chan time.Duration)
 	subscriptionFailed := make(chan error)
 
@@ -2158,15 +2148,6 @@ func (becdsakf *BondedECDSAKeepFactory) WatchBondedECDSAKeepCreated(
 			select {
 			case <-ctx.Done():
 				return
-			case event := <-eventOccurred:
-				success(
-					event.KeepAddress,
-					event.Members,
-					event.Owner,
-					event.Application,
-					event.HonestThreshold,
-					event.Raw.BlockNumber,
-				)
 			case violation := <-thresholdViolated:
 				becdsakfLogger.Errorf(
 					"subscription to event BondedECDSAKeepCreated had to be "+
@@ -2187,7 +2168,7 @@ func (becdsakf *BondedECDSAKeepFactory) WatchBondedECDSAKeepCreated(
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
 		return becdsakf.contract.WatchBondedECDSAKeepCreated(
 			&bind.WatchOpts{Context: ctx},
-			eventOccurred,
+			onEvent,
 			keepAddressFilter,
 			ownerFilter,
 			applicationFilter,

@@ -13,6 +13,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/event"
 )
 
 var (
@@ -108,6 +109,11 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 			err,
 		)
 	}
+
+	event.NewBondedECDSAKeepFactorySubscription(
+		bondedECDSAKeepFactoryContract,
+		blockCounter,
+	)
 
 	return &EthereumChain{
 		config:                         config,
