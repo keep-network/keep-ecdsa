@@ -42,7 +42,7 @@ const (
 	// subscription required before the subscription failure happens and
 	// resubscription follows so that the resubscription does not emit an error
 	// to the logs alerting about potential problems with Ethereum client.
-	becdsakvSubscriptionAlertThreshold = 5 * time.Minute
+	becdsakvSubscriptionAlertThreshold = 15 * time.Minute
 )
 
 type BondedECDSAKeepVendor struct {
@@ -650,11 +650,11 @@ func (becdsakv *BondedECDSAKeepVendor) WatchFactoryUpgradeCompleted(
 	success bondedECDSAKeepVendorFactoryUpgradeCompletedFunc,
 ) subscription.EventSubscription {
 	eventOccurred := make(chan *abi.BondedECDSAKeepVendorImplV1FactoryUpgradeCompleted)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
 	go func() {
 		for {
 			select {
@@ -664,19 +664,6 @@ func (becdsakv *BondedECDSAKeepVendor) WatchFactoryUpgradeCompleted(
 				success(
 					event.Factory,
 					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakvLogger.Errorf(
-					"subscription to event FactoryUpgradeCompleted had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakvLogger.Errorf(
-					"subscription to event FactoryUpgradeCompleted failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
 				)
 			}
 		}
@@ -693,8 +680,22 @@ func (becdsakv *BondedECDSAKeepVendor) WatchFactoryUpgradeCompleted(
 		becdsakvSubscriptionBackoffMax,
 		subscribeFn,
 		becdsakvSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
+		func(elapsed time.Duration) {
+			becdsakvLogger.Errorf(
+				"subscription to event FactoryUpgradeCompleted had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
+		},
+		func(err error) {
+			becdsakvLogger.Errorf(
+				"subscription to event FactoryUpgradeCompleted failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
+		},
 	)
 
 	return subscription.NewEventSubscription(func() {
@@ -740,11 +741,11 @@ func (becdsakv *BondedECDSAKeepVendor) WatchFactoryUpgradeStarted(
 	success bondedECDSAKeepVendorFactoryUpgradeStartedFunc,
 ) subscription.EventSubscription {
 	eventOccurred := make(chan *abi.BondedECDSAKeepVendorImplV1FactoryUpgradeStarted)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
 	go func() {
 		for {
 			select {
@@ -755,19 +756,6 @@ func (becdsakv *BondedECDSAKeepVendor) WatchFactoryUpgradeStarted(
 					event.Factory,
 					event.Timestamp,
 					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakvLogger.Errorf(
-					"subscription to event FactoryUpgradeStarted had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakvLogger.Errorf(
-					"subscription to event FactoryUpgradeStarted failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
 				)
 			}
 		}
@@ -784,8 +772,22 @@ func (becdsakv *BondedECDSAKeepVendor) WatchFactoryUpgradeStarted(
 		becdsakvSubscriptionBackoffMax,
 		subscribeFn,
 		becdsakvSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
+		func(elapsed time.Duration) {
+			becdsakvLogger.Errorf(
+				"subscription to event FactoryUpgradeStarted had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
+		},
+		func(err error) {
+			becdsakvLogger.Errorf(
+				"subscription to event FactoryUpgradeStarted failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
+		},
 	)
 
 	return subscription.NewEventSubscription(func() {

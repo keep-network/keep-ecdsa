@@ -42,7 +42,7 @@ const (
 	// subscription required before the subscription failure happens and
 	// resubscription follows so that the resubscription does not emit an error
 	// to the logs alerting about potential problems with Ethereum client.
-	becdsakSubscriptionAlertThreshold = 5 * time.Minute
+	becdsakSubscriptionAlertThreshold = 15 * time.Minute
 )
 
 type BondedECDSAKeep struct {
@@ -111,30 +111,16 @@ func NewBondedECDSAKeep(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (becdsak *BondedECDSAKeep) Initialize(
-	_owner common.Address,
-	_members []common.Address,
-	_honestThreshold *big.Int,
-	_memberStake *big.Int,
-	_stakeLockDuration *big.Int,
-	_tokenStaking common.Address,
-	_keepBonding common.Address,
-	_keepFactory common.Address,
+func (becdsak *BondedECDSAKeep) Sign(
+	_digest [32]uint8,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	becdsakLogger.Debug(
-		"submitting transaction initialize",
+		"submitting transaction sign",
 		"params: ",
 		fmt.Sprint(
-			_owner,
-			_members,
-			_honestThreshold,
-			_memberStake,
-			_stakeLockDuration,
-			_tokenStaking,
-			_keepBonding,
-			_keepFactory,
+			_digest,
 		),
 	)
 
@@ -160,36 +146,22 @@ func (becdsak *BondedECDSAKeep) Initialize(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := becdsak.contract.Initialize(
+	transaction, err := becdsak.contract.Sign(
 		transactorOptions,
-		_owner,
-		_members,
-		_honestThreshold,
-		_memberStake,
-		_stakeLockDuration,
-		_tokenStaking,
-		_keepBonding,
-		_keepFactory,
+		_digest,
 	)
 	if err != nil {
 		return transaction, becdsak.errorResolver.ResolveError(
 			err,
 			becdsak.transactorOptions.From,
 			nil,
-			"initialize",
-			_owner,
-			_members,
-			_honestThreshold,
-			_memberStake,
-			_stakeLockDuration,
-			_tokenStaking,
-			_keepBonding,
-			_keepFactory,
+			"sign",
+			_digest,
 		)
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction initialize with id: [%v] and nonce [%v]",
+		"submitted transaction sign with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -200,36 +172,22 @@ func (becdsak *BondedECDSAKeep) Initialize(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := becdsak.contract.Initialize(
+			transaction, err := becdsak.contract.Sign(
 				transactorOptions,
-				_owner,
-				_members,
-				_honestThreshold,
-				_memberStake,
-				_stakeLockDuration,
-				_tokenStaking,
-				_keepBonding,
-				_keepFactory,
+				_digest,
 			)
 			if err != nil {
 				return transaction, becdsak.errorResolver.ResolveError(
 					err,
 					becdsak.transactorOptions.From,
 					nil,
-					"initialize",
-					_owner,
-					_members,
-					_honestThreshold,
-					_memberStake,
-					_stakeLockDuration,
-					_tokenStaking,
-					_keepBonding,
-					_keepFactory,
+					"sign",
+					_digest,
 				)
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction initialize with id: [%v] and nonce [%v]",
+				"submitted transaction sign with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -244,15 +202,8 @@ func (becdsak *BondedECDSAKeep) Initialize(
 }
 
 // Non-mutating call, not a transaction submission.
-func (becdsak *BondedECDSAKeep) CallInitialize(
-	_owner common.Address,
-	_members []common.Address,
-	_honestThreshold *big.Int,
-	_memberStake *big.Int,
-	_stakeLockDuration *big.Int,
-	_tokenStaking common.Address,
-	_keepBonding common.Address,
-	_keepFactory common.Address,
+func (becdsak *BondedECDSAKeep) CallSign(
+	_digest [32]uint8,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -264,409 +215,26 @@ func (becdsak *BondedECDSAKeep) CallInitialize(
 		becdsak.caller,
 		becdsak.errorResolver,
 		becdsak.contractAddress,
-		"initialize",
+		"sign",
 		&result,
-		_owner,
-		_members,
-		_honestThreshold,
-		_memberStake,
-		_stakeLockDuration,
-		_tokenStaking,
-		_keepBonding,
-		_keepFactory,
+		_digest,
 	)
 
 	return err
 }
 
-func (becdsak *BondedECDSAKeep) InitializeGasEstimate(
-	_owner common.Address,
-	_members []common.Address,
-	_honestThreshold *big.Int,
-	_memberStake *big.Int,
-	_stakeLockDuration *big.Int,
-	_tokenStaking common.Address,
-	_keepBonding common.Address,
-	_keepFactory common.Address,
+func (becdsak *BondedECDSAKeep) SignGasEstimate(
+	_digest [32]uint8,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		becdsak.callerOptions.From,
 		becdsak.contractAddress,
-		"initialize",
+		"sign",
 		becdsak.contractABI,
 		becdsak.transactor,
-		_owner,
-		_members,
-		_honestThreshold,
-		_memberStake,
-		_stakeLockDuration,
-		_tokenStaking,
-		_keepBonding,
-		_keepFactory,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (becdsak *BondedECDSAKeep) SeizeSignerBonds(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	becdsakLogger.Debug(
-		"submitting transaction seizeSignerBonds",
-	)
-
-	becdsak.transactionMutex.Lock()
-	defer becdsak.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *becdsak.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := becdsak.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := becdsak.contract.SeizeSignerBonds(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.transactorOptions.From,
-			nil,
-			"seizeSignerBonds",
-		)
-	}
-
-	becdsakLogger.Infof(
-		"submitted transaction seizeSignerBonds with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go becdsak.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := becdsak.contract.SeizeSignerBonds(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, becdsak.errorResolver.ResolveError(
-					err,
-					becdsak.transactorOptions.From,
-					nil,
-					"seizeSignerBonds",
-				)
-			}
-
-			becdsakLogger.Infof(
-				"submitted transaction seizeSignerBonds with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	becdsak.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (becdsak *BondedECDSAKeep) CallSeizeSignerBonds(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		becdsak.transactorOptions.From,
-		blockNumber, nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"seizeSignerBonds",
-		&result,
-	)
-
-	return err
-}
-
-func (becdsak *BondedECDSAKeep) SeizeSignerBondsGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		becdsak.callerOptions.From,
-		becdsak.contractAddress,
-		"seizeSignerBonds",
-		becdsak.contractABI,
-		becdsak.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (becdsak *BondedECDSAKeep) SubmitPublicKey(
-	_publicKey []uint8,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	becdsakLogger.Debug(
-		"submitting transaction submitPublicKey",
-		"params: ",
-		fmt.Sprint(
-			_publicKey,
-		),
-	)
-
-	becdsak.transactionMutex.Lock()
-	defer becdsak.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *becdsak.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := becdsak.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := becdsak.contract.SubmitPublicKey(
-		transactorOptions,
-		_publicKey,
-	)
-	if err != nil {
-		return transaction, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.transactorOptions.From,
-			nil,
-			"submitPublicKey",
-			_publicKey,
-		)
-	}
-
-	becdsakLogger.Infof(
-		"submitted transaction submitPublicKey with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go becdsak.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := becdsak.contract.SubmitPublicKey(
-				transactorOptions,
-				_publicKey,
-			)
-			if err != nil {
-				return transaction, becdsak.errorResolver.ResolveError(
-					err,
-					becdsak.transactorOptions.From,
-					nil,
-					"submitPublicKey",
-					_publicKey,
-				)
-			}
-
-			becdsakLogger.Infof(
-				"submitted transaction submitPublicKey with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	becdsak.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (becdsak *BondedECDSAKeep) CallSubmitPublicKey(
-	_publicKey []uint8,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		becdsak.transactorOptions.From,
-		blockNumber, nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"submitPublicKey",
-		&result,
-		_publicKey,
-	)
-
-	return err
-}
-
-func (becdsak *BondedECDSAKeep) SubmitPublicKeyGasEstimate(
-	_publicKey []uint8,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		becdsak.callerOptions.From,
-		becdsak.contractAddress,
-		"submitPublicKey",
-		becdsak.contractABI,
-		becdsak.transactor,
-		_publicKey,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (becdsak *BondedECDSAKeep) CloseKeep(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	becdsakLogger.Debug(
-		"submitting transaction closeKeep",
-	)
-
-	becdsak.transactionMutex.Lock()
-	defer becdsak.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *becdsak.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := becdsak.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := becdsak.contract.CloseKeep(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.transactorOptions.From,
-			nil,
-			"closeKeep",
-		)
-	}
-
-	becdsakLogger.Infof(
-		"submitted transaction closeKeep with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go becdsak.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := becdsak.contract.CloseKeep(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, becdsak.errorResolver.ResolveError(
-					err,
-					becdsak.transactorOptions.From,
-					nil,
-					"closeKeep",
-				)
-			}
-
-			becdsakLogger.Infof(
-				"submitted transaction closeKeep with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	becdsak.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (becdsak *BondedECDSAKeep) CallCloseKeep(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		becdsak.transactorOptions.From,
-		blockNumber, nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"closeKeep",
-		&result,
-	)
-
-	return err
-}
-
-func (becdsak *BondedECDSAKeep) CloseKeepGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		becdsak.callerOptions.From,
-		becdsak.contractAddress,
-		"closeKeep",
-		becdsak.contractABI,
-		becdsak.transactor,
+		_digest,
 	)
 
 	return result, err
@@ -807,127 +375,6 @@ func (becdsak *BondedECDSAKeep) DistributeERC20RewardGasEstimate(
 		becdsak.transactor,
 		_tokenAddress,
 		_value,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (becdsak *BondedECDSAKeep) DistributeETHReward(
-	value *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	becdsakLogger.Debug(
-		"submitting transaction distributeETHReward",
-		"value: ", value,
-	)
-
-	becdsak.transactionMutex.Lock()
-	defer becdsak.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *becdsak.transactorOptions
-
-	transactorOptions.Value = value
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := becdsak.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := becdsak.contract.DistributeETHReward(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.transactorOptions.From,
-			value,
-			"distributeETHReward",
-		)
-	}
-
-	becdsakLogger.Infof(
-		"submitted transaction distributeETHReward with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go becdsak.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := becdsak.contract.DistributeETHReward(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, becdsak.errorResolver.ResolveError(
-					err,
-					becdsak.transactorOptions.From,
-					value,
-					"distributeETHReward",
-				)
-			}
-
-			becdsakLogger.Infof(
-				"submitted transaction distributeETHReward with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	becdsak.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (becdsak *BondedECDSAKeep) CallDistributeETHReward(
-	value *big.Int,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		becdsak.transactorOptions.From,
-		blockNumber, value,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"distributeETHReward",
-		&result,
-	)
-
-	return err
-}
-
-func (becdsak *BondedECDSAKeep) DistributeETHRewardGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		becdsak.callerOptions.From,
-		becdsak.contractAddress,
-		"distributeETHReward",
-		becdsak.contractABI,
-		becdsak.transactor,
 	)
 
 	return result, err
@@ -1185,6 +632,359 @@ func (becdsak *BondedECDSAKeep) WithdrawGasEstimate(
 }
 
 // Transaction submission.
+func (becdsak *BondedECDSAKeep) SeizeSignerBonds(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	becdsakLogger.Debug(
+		"submitting transaction seizeSignerBonds",
+	)
+
+	becdsak.transactionMutex.Lock()
+	defer becdsak.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *becdsak.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := becdsak.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := becdsak.contract.SeizeSignerBonds(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.transactorOptions.From,
+			nil,
+			"seizeSignerBonds",
+		)
+	}
+
+	becdsakLogger.Infof(
+		"submitted transaction seizeSignerBonds with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go becdsak.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := becdsak.contract.SeizeSignerBonds(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, becdsak.errorResolver.ResolveError(
+					err,
+					becdsak.transactorOptions.From,
+					nil,
+					"seizeSignerBonds",
+				)
+			}
+
+			becdsakLogger.Infof(
+				"submitted transaction seizeSignerBonds with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	becdsak.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (becdsak *BondedECDSAKeep) CallSeizeSignerBonds(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		becdsak.transactorOptions.From,
+		blockNumber, nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"seizeSignerBonds",
+		&result,
+	)
+
+	return err
+}
+
+func (becdsak *BondedECDSAKeep) SeizeSignerBondsGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		becdsak.callerOptions.From,
+		becdsak.contractAddress,
+		"seizeSignerBonds",
+		becdsak.contractABI,
+		becdsak.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (becdsak *BondedECDSAKeep) CloseKeep(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	becdsakLogger.Debug(
+		"submitting transaction closeKeep",
+	)
+
+	becdsak.transactionMutex.Lock()
+	defer becdsak.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *becdsak.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := becdsak.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := becdsak.contract.CloseKeep(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.transactorOptions.From,
+			nil,
+			"closeKeep",
+		)
+	}
+
+	becdsakLogger.Infof(
+		"submitted transaction closeKeep with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go becdsak.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := becdsak.contract.CloseKeep(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, becdsak.errorResolver.ResolveError(
+					err,
+					becdsak.transactorOptions.From,
+					nil,
+					"closeKeep",
+				)
+			}
+
+			becdsakLogger.Infof(
+				"submitted transaction closeKeep with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	becdsak.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (becdsak *BondedECDSAKeep) CallCloseKeep(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		becdsak.transactorOptions.From,
+		blockNumber, nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"closeKeep",
+		&result,
+	)
+
+	return err
+}
+
+func (becdsak *BondedECDSAKeep) CloseKeepGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		becdsak.callerOptions.From,
+		becdsak.contractAddress,
+		"closeKeep",
+		becdsak.contractABI,
+		becdsak.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (becdsak *BondedECDSAKeep) DistributeETHReward(
+	value *big.Int,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	becdsakLogger.Debug(
+		"submitting transaction distributeETHReward",
+		"value: ", value,
+	)
+
+	becdsak.transactionMutex.Lock()
+	defer becdsak.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *becdsak.transactorOptions
+
+	transactorOptions.Value = value
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := becdsak.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := becdsak.contract.DistributeETHReward(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.transactorOptions.From,
+			value,
+			"distributeETHReward",
+		)
+	}
+
+	becdsakLogger.Infof(
+		"submitted transaction distributeETHReward with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go becdsak.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := becdsak.contract.DistributeETHReward(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, becdsak.errorResolver.ResolveError(
+					err,
+					becdsak.transactorOptions.From,
+					value,
+					"distributeETHReward",
+				)
+			}
+
+			becdsakLogger.Infof(
+				"submitted transaction distributeETHReward with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	becdsak.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (becdsak *BondedECDSAKeep) CallDistributeETHReward(
+	value *big.Int,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		becdsak.transactorOptions.From,
+		blockNumber, value,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"distributeETHReward",
+		&result,
+	)
+
+	return err
+}
+
+func (becdsak *BondedECDSAKeep) DistributeETHRewardGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		becdsak.callerOptions.From,
+		becdsak.contractAddress,
+		"distributeETHReward",
+		becdsak.contractABI,
+		becdsak.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (becdsak *BondedECDSAKeep) SubmitSignature(
 	_r [32]uint8,
 	_s [32]uint8,
@@ -1329,136 +1129,6 @@ func (becdsak *BondedECDSAKeep) SubmitSignatureGasEstimate(
 		_r,
 		_s,
 		_recoveryID,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (becdsak *BondedECDSAKeep) Sign(
-	_digest [32]uint8,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	becdsakLogger.Debug(
-		"submitting transaction sign",
-		"params: ",
-		fmt.Sprint(
-			_digest,
-		),
-	)
-
-	becdsak.transactionMutex.Lock()
-	defer becdsak.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *becdsak.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := becdsak.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := becdsak.contract.Sign(
-		transactorOptions,
-		_digest,
-	)
-	if err != nil {
-		return transaction, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.transactorOptions.From,
-			nil,
-			"sign",
-			_digest,
-		)
-	}
-
-	becdsakLogger.Infof(
-		"submitted transaction sign with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go becdsak.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := becdsak.contract.Sign(
-				transactorOptions,
-				_digest,
-			)
-			if err != nil {
-				return transaction, becdsak.errorResolver.ResolveError(
-					err,
-					becdsak.transactorOptions.From,
-					nil,
-					"sign",
-					_digest,
-				)
-			}
-
-			becdsakLogger.Infof(
-				"submitted transaction sign with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	becdsak.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (becdsak *BondedECDSAKeep) CallSign(
-	_digest [32]uint8,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		becdsak.transactorOptions.From,
-		blockNumber, nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"sign",
-		&result,
-		_digest,
-	)
-
-	return err
-}
-
-func (becdsak *BondedECDSAKeep) SignGasEstimate(
-	_digest [32]uint8,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		becdsak.callerOptions.From,
-		becdsak.contractAddress,
-		"sign",
-		becdsak.contractABI,
-		becdsak.transactor,
-		_digest,
 	)
 
 	return result, err
@@ -1634,11 +1304,341 @@ func (becdsak *BondedECDSAKeep) SubmitSignatureFraudGasEstimate(
 	return result, err
 }
 
+// Transaction submission.
+func (becdsak *BondedECDSAKeep) Initialize(
+	_owner common.Address,
+	_members []common.Address,
+	_honestThreshold *big.Int,
+	_memberStake *big.Int,
+	_stakeLockDuration *big.Int,
+	_tokenStaking common.Address,
+	_keepBonding common.Address,
+	_keepFactory common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	becdsakLogger.Debug(
+		"submitting transaction initialize",
+		"params: ",
+		fmt.Sprint(
+			_owner,
+			_members,
+			_honestThreshold,
+			_memberStake,
+			_stakeLockDuration,
+			_tokenStaking,
+			_keepBonding,
+			_keepFactory,
+		),
+	)
+
+	becdsak.transactionMutex.Lock()
+	defer becdsak.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *becdsak.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := becdsak.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := becdsak.contract.Initialize(
+		transactorOptions,
+		_owner,
+		_members,
+		_honestThreshold,
+		_memberStake,
+		_stakeLockDuration,
+		_tokenStaking,
+		_keepBonding,
+		_keepFactory,
+	)
+	if err != nil {
+		return transaction, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.transactorOptions.From,
+			nil,
+			"initialize",
+			_owner,
+			_members,
+			_honestThreshold,
+			_memberStake,
+			_stakeLockDuration,
+			_tokenStaking,
+			_keepBonding,
+			_keepFactory,
+		)
+	}
+
+	becdsakLogger.Infof(
+		"submitted transaction initialize with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go becdsak.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := becdsak.contract.Initialize(
+				transactorOptions,
+				_owner,
+				_members,
+				_honestThreshold,
+				_memberStake,
+				_stakeLockDuration,
+				_tokenStaking,
+				_keepBonding,
+				_keepFactory,
+			)
+			if err != nil {
+				return transaction, becdsak.errorResolver.ResolveError(
+					err,
+					becdsak.transactorOptions.From,
+					nil,
+					"initialize",
+					_owner,
+					_members,
+					_honestThreshold,
+					_memberStake,
+					_stakeLockDuration,
+					_tokenStaking,
+					_keepBonding,
+					_keepFactory,
+				)
+			}
+
+			becdsakLogger.Infof(
+				"submitted transaction initialize with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	becdsak.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (becdsak *BondedECDSAKeep) CallInitialize(
+	_owner common.Address,
+	_members []common.Address,
+	_honestThreshold *big.Int,
+	_memberStake *big.Int,
+	_stakeLockDuration *big.Int,
+	_tokenStaking common.Address,
+	_keepBonding common.Address,
+	_keepFactory common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		becdsak.transactorOptions.From,
+		blockNumber, nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"initialize",
+		&result,
+		_owner,
+		_members,
+		_honestThreshold,
+		_memberStake,
+		_stakeLockDuration,
+		_tokenStaking,
+		_keepBonding,
+		_keepFactory,
+	)
+
+	return err
+}
+
+func (becdsak *BondedECDSAKeep) InitializeGasEstimate(
+	_owner common.Address,
+	_members []common.Address,
+	_honestThreshold *big.Int,
+	_memberStake *big.Int,
+	_stakeLockDuration *big.Int,
+	_tokenStaking common.Address,
+	_keepBonding common.Address,
+	_keepFactory common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		becdsak.callerOptions.From,
+		becdsak.contractAddress,
+		"initialize",
+		becdsak.contractABI,
+		becdsak.transactor,
+		_owner,
+		_members,
+		_honestThreshold,
+		_memberStake,
+		_stakeLockDuration,
+		_tokenStaking,
+		_keepBonding,
+		_keepFactory,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (becdsak *BondedECDSAKeep) SubmitPublicKey(
+	_publicKey []uint8,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	becdsakLogger.Debug(
+		"submitting transaction submitPublicKey",
+		"params: ",
+		fmt.Sprint(
+			_publicKey,
+		),
+	)
+
+	becdsak.transactionMutex.Lock()
+	defer becdsak.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *becdsak.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := becdsak.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := becdsak.contract.SubmitPublicKey(
+		transactorOptions,
+		_publicKey,
+	)
+	if err != nil {
+		return transaction, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.transactorOptions.From,
+			nil,
+			"submitPublicKey",
+			_publicKey,
+		)
+	}
+
+	becdsakLogger.Infof(
+		"submitted transaction submitPublicKey with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go becdsak.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := becdsak.contract.SubmitPublicKey(
+				transactorOptions,
+				_publicKey,
+			)
+			if err != nil {
+				return transaction, becdsak.errorResolver.ResolveError(
+					err,
+					becdsak.transactorOptions.From,
+					nil,
+					"submitPublicKey",
+					_publicKey,
+				)
+			}
+
+			becdsakLogger.Infof(
+				"submitted transaction submitPublicKey with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	becdsak.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (becdsak *BondedECDSAKeep) CallSubmitPublicKey(
+	_publicKey []uint8,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		becdsak.transactorOptions.From,
+		blockNumber, nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"submitPublicKey",
+		&result,
+		_publicKey,
+	)
+
+	return err
+}
+
+func (becdsak *BondedECDSAKeep) SubmitPublicKeyGasEstimate(
+	_publicKey []uint8,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		becdsak.callerOptions.From,
+		becdsak.contractAddress,
+		"submitPublicKey",
+		becdsak.contractABI,
+		becdsak.transactor,
+		_publicKey,
+	)
+
+	return result, err
+}
+
 // ----- Const Methods ------
 
-func (becdsak *BondedECDSAKeep) GetPublicKey() ([]uint8, error) {
-	var result []uint8
-	result, err := becdsak.contract.GetPublicKey(
+func (becdsak *BondedECDSAKeep) GetOpenedTimestamp() (*big.Int, error) {
+	var result *big.Int
+	result, err := becdsak.contract.GetOpenedTimestamp(
 		becdsak.callerOptions,
 	)
 
@@ -1647,14 +1647,134 @@ func (becdsak *BondedECDSAKeep) GetPublicKey() ([]uint8, error) {
 			err,
 			becdsak.callerOptions.From,
 			nil,
-			"getPublicKey",
+			"getOpenedTimestamp",
 		)
 	}
 
 	return result, err
 }
 
-func (becdsak *BondedECDSAKeep) GetPublicKeyAtBlock(
+func (becdsak *BondedECDSAKeep) GetOpenedTimestampAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		becdsak.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"getOpenedTimestamp",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) Members(
+	arg0 *big.Int,
+) (common.Address, error) {
+	var result common.Address
+	result, err := becdsak.contract.Members(
+		becdsak.callerOptions,
+		arg0,
+	)
+
+	if err != nil {
+		return result, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.callerOptions.From,
+			nil,
+			"members",
+			arg0,
+		)
+	}
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) MembersAtBlock(
+	arg0 *big.Int,
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := ethutil.CallAtBlock(
+		becdsak.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"members",
+		&result,
+		arg0,
+	)
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) GetOwner() (common.Address, error) {
+	var result common.Address
+	result, err := becdsak.contract.GetOwner(
+		becdsak.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.callerOptions.From,
+			nil,
+			"getOwner",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) GetOwnerAtBlock(
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := ethutil.CallAtBlock(
+		becdsak.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"getOwner",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) PublicKey() ([]uint8, error) {
+	var result []uint8
+	result, err := becdsak.contract.PublicKey(
+		becdsak.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.callerOptions.From,
+			nil,
+			"publicKey",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) PublicKeyAtBlock(
 	blockNumber *big.Int,
 ) ([]uint8, error) {
 	var result []uint8
@@ -1667,7 +1787,159 @@ func (becdsak *BondedECDSAKeep) GetPublicKeyAtBlock(
 		becdsak.caller,
 		becdsak.errorResolver,
 		becdsak.contractAddress,
-		"getPublicKey",
+		"publicKey",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) IsClosed() (bool, error) {
+	var result bool
+	result, err := becdsak.contract.IsClosed(
+		becdsak.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.callerOptions.From,
+			nil,
+			"isClosed",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) IsClosedAtBlock(
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		becdsak.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"isClosed",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) Digest() ([32]uint8, error) {
+	var result [32]uint8
+	result, err := becdsak.contract.Digest(
+		becdsak.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.callerOptions.From,
+			nil,
+			"digest",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) DigestAtBlock(
+	blockNumber *big.Int,
+) ([32]uint8, error) {
+	var result [32]uint8
+
+	err := ethutil.CallAtBlock(
+		becdsak.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"digest",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) HonestThreshold() (*big.Int, error) {
+	var result *big.Int
+	result, err := becdsak.contract.HonestThreshold(
+		becdsak.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.callerOptions.From,
+			nil,
+			"honestThreshold",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) HonestThresholdAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		becdsak.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"honestThreshold",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) IsActive() (bool, error) {
+	var result bool
+	result, err := becdsak.contract.IsActive(
+		becdsak.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.callerOptions.From,
+			nil,
+			"isActive",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) IsActiveAtBlock(
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		becdsak.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"isActive",
 		&result,
 	)
 
@@ -1756,13 +2028,10 @@ func (becdsak *BondedECDSAKeep) IsTerminatedAtBlock(
 	return result, err
 }
 
-func (becdsak *BondedECDSAKeep) Members(
-	arg0 *big.Int,
-) (common.Address, error) {
+func (becdsak *BondedECDSAKeep) Owner() (common.Address, error) {
 	var result common.Address
-	result, err := becdsak.contract.Members(
+	result, err := becdsak.contract.Owner(
 		becdsak.callerOptions,
-		arg0,
 	)
 
 	if err != nil {
@@ -1770,16 +2039,14 @@ func (becdsak *BondedECDSAKeep) Members(
 			err,
 			becdsak.callerOptions.From,
 			nil,
-			"members",
-			arg0,
+			"owner",
 		)
 	}
 
 	return result, err
 }
 
-func (becdsak *BondedECDSAKeep) MembersAtBlock(
-	arg0 *big.Int,
+func (becdsak *BondedECDSAKeep) OwnerAtBlock(
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
@@ -1792,56 +2059,28 @@ func (becdsak *BondedECDSAKeep) MembersAtBlock(
 		becdsak.caller,
 		becdsak.errorResolver,
 		becdsak.contractAddress,
-		"members",
-		&result,
-		arg0,
-	)
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) Digest() ([32]uint8, error) {
-	var result [32]uint8
-	result, err := becdsak.contract.Digest(
-		becdsak.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.callerOptions.From,
-			nil,
-			"digest",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) DigestAtBlock(
-	blockNumber *big.Int,
-) ([32]uint8, error) {
-	var result [32]uint8
-
-	err := ethutil.CallAtBlock(
-		becdsak.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"digest",
+		"owner",
 		&result,
 	)
 
 	return result, err
 }
 
-func (becdsak *BondedECDSAKeep) IsClosed() (bool, error) {
+func (becdsak *BondedECDSAKeep) CheckSignatureFraud(
+	_v uint8,
+	_r [32]uint8,
+	_s [32]uint8,
+	_signedDigest [32]uint8,
+	_preimage []uint8,
+) (bool, error) {
 	var result bool
-	result, err := becdsak.contract.IsClosed(
+	result, err := becdsak.contract.CheckSignatureFraud(
 		becdsak.callerOptions,
+		_v,
+		_r,
+		_s,
+		_signedDigest,
+		_preimage,
 	)
 
 	if err != nil {
@@ -1849,14 +2088,24 @@ func (becdsak *BondedECDSAKeep) IsClosed() (bool, error) {
 			err,
 			becdsak.callerOptions.From,
 			nil,
-			"isClosed",
+			"checkSignatureFraud",
+			_v,
+			_r,
+			_s,
+			_signedDigest,
+			_preimage,
 		)
 	}
 
 	return result, err
 }
 
-func (becdsak *BondedECDSAKeep) IsClosedAtBlock(
+func (becdsak *BondedECDSAKeep) CheckSignatureFraudAtBlock(
+	_v uint8,
+	_r [32]uint8,
+	_s [32]uint8,
+	_signedDigest [32]uint8,
+	_preimage []uint8,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
@@ -1869,8 +2118,13 @@ func (becdsak *BondedECDSAKeep) IsClosedAtBlock(
 		becdsak.caller,
 		becdsak.errorResolver,
 		becdsak.contractAddress,
-		"isClosed",
+		"checkSignatureFraud",
 		&result,
+		_v,
+		_r,
+		_s,
+		_signedDigest,
+		_preimage,
 	)
 
 	return result, err
@@ -1920,13 +2174,10 @@ func (becdsak *BondedECDSAKeep) DigestsAtBlock(
 	return result, err
 }
 
-func (becdsak *BondedECDSAKeep) GetMemberETHBalance(
-	_member common.Address,
-) (*big.Int, error) {
-	var result *big.Int
-	result, err := becdsak.contract.GetMemberETHBalance(
+func (becdsak *BondedECDSAKeep) GetMembers() ([]common.Address, error) {
+	var result []common.Address
+	result, err := becdsak.contract.GetMembers(
 		becdsak.callerOptions,
-		_member,
 	)
 
 	if err != nil {
@@ -1934,19 +2185,17 @@ func (becdsak *BondedECDSAKeep) GetMemberETHBalance(
 			err,
 			becdsak.callerOptions.From,
 			nil,
-			"getMemberETHBalance",
-			_member,
+			"getMembers",
 		)
 	}
 
 	return result, err
 }
 
-func (becdsak *BondedECDSAKeep) GetMemberETHBalanceAtBlock(
-	_member common.Address,
+func (becdsak *BondedECDSAKeep) GetMembersAtBlock(
 	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
+) ([]common.Address, error) {
+	var result []common.Address
 
 	err := ethutil.CallAtBlock(
 		becdsak.callerOptions.From,
@@ -1956,9 +2205,46 @@ func (becdsak *BondedECDSAKeep) GetMemberETHBalanceAtBlock(
 		becdsak.caller,
 		becdsak.errorResolver,
 		becdsak.contractAddress,
-		"getMemberETHBalance",
+		"getMembers",
 		&result,
-		_member,
+	)
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) GetPublicKey() ([]uint8, error) {
+	var result []uint8
+	result, err := becdsak.contract.GetPublicKey(
+		becdsak.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsak.errorResolver.ResolveError(
+			err,
+			becdsak.callerOptions.From,
+			nil,
+			"getPublicKey",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsak *BondedECDSAKeep) GetPublicKeyAtBlock(
+	blockNumber *big.Int,
+) ([]uint8, error) {
+	var result []uint8
+
+	err := ethutil.CallAtBlock(
+		becdsak.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsak.contractABI,
+		becdsak.caller,
+		becdsak.errorResolver,
+		becdsak.contractAddress,
+		"getPublicKey",
+		&result,
 	)
 
 	return result, err
@@ -2040,188 +2326,13 @@ func (becdsak *BondedECDSAKeep) CheckBondAmountAtBlock(
 	return result, err
 }
 
-func (becdsak *BondedECDSAKeep) GetMembers() ([]common.Address, error) {
-	var result []common.Address
-	result, err := becdsak.contract.GetMembers(
-		becdsak.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.callerOptions.From,
-			nil,
-			"getMembers",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) GetMembersAtBlock(
-	blockNumber *big.Int,
-) ([]common.Address, error) {
-	var result []common.Address
-
-	err := ethutil.CallAtBlock(
-		becdsak.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"getMembers",
-		&result,
-	)
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) IsActive() (bool, error) {
-	var result bool
-	result, err := becdsak.contract.IsActive(
-		becdsak.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.callerOptions.From,
-			nil,
-			"isActive",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) IsActiveAtBlock(
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		becdsak.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"isActive",
-		&result,
-	)
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) PublicKey() ([]uint8, error) {
-	var result []uint8
-	result, err := becdsak.contract.PublicKey(
-		becdsak.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.callerOptions.From,
-			nil,
-			"publicKey",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) PublicKeyAtBlock(
-	blockNumber *big.Int,
-) ([]uint8, error) {
-	var result []uint8
-
-	err := ethutil.CallAtBlock(
-		becdsak.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"publicKey",
-		&result,
-	)
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) CheckSignatureFraud(
-	_v uint8,
-	_r [32]uint8,
-	_s [32]uint8,
-	_signedDigest [32]uint8,
-	_preimage []uint8,
-) (bool, error) {
-	var result bool
-	result, err := becdsak.contract.CheckSignatureFraud(
-		becdsak.callerOptions,
-		_v,
-		_r,
-		_s,
-		_signedDigest,
-		_preimage,
-	)
-
-	if err != nil {
-		return result, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.callerOptions.From,
-			nil,
-			"checkSignatureFraud",
-			_v,
-			_r,
-			_s,
-			_signedDigest,
-			_preimage,
-		)
-	}
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) CheckSignatureFraudAtBlock(
-	_v uint8,
-	_r [32]uint8,
-	_s [32]uint8,
-	_signedDigest [32]uint8,
-	_preimage []uint8,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		becdsak.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"checkSignatureFraud",
-		&result,
-		_v,
-		_r,
-		_s,
-		_signedDigest,
-		_preimage,
-	)
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) GetOpenedTimestamp() (*big.Int, error) {
+func (becdsak *BondedECDSAKeep) GetMemberETHBalance(
+	_member common.Address,
+) (*big.Int, error) {
 	var result *big.Int
-	result, err := becdsak.contract.GetOpenedTimestamp(
+	result, err := becdsak.contract.GetMemberETHBalance(
 		becdsak.callerOptions,
+		_member,
 	)
 
 	if err != nil {
@@ -2229,14 +2340,16 @@ func (becdsak *BondedECDSAKeep) GetOpenedTimestamp() (*big.Int, error) {
 			err,
 			becdsak.callerOptions.From,
 			nil,
-			"getOpenedTimestamp",
+			"getMemberETHBalance",
+			_member,
 		)
 	}
 
 	return result, err
 }
 
-func (becdsak *BondedECDSAKeep) GetOpenedTimestampAtBlock(
+func (becdsak *BondedECDSAKeep) GetMemberETHBalanceAtBlock(
+	_member common.Address,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -2249,308 +2362,15 @@ func (becdsak *BondedECDSAKeep) GetOpenedTimestampAtBlock(
 		becdsak.caller,
 		becdsak.errorResolver,
 		becdsak.contractAddress,
-		"getOpenedTimestamp",
+		"getMemberETHBalance",
 		&result,
-	)
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) GetOwner() (common.Address, error) {
-	var result common.Address
-	result, err := becdsak.contract.GetOwner(
-		becdsak.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.callerOptions.From,
-			nil,
-			"getOwner",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) GetOwnerAtBlock(
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		becdsak.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"getOwner",
-		&result,
-	)
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) HonestThreshold() (*big.Int, error) {
-	var result *big.Int
-	result, err := becdsak.contract.HonestThreshold(
-		becdsak.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.callerOptions.From,
-			nil,
-			"honestThreshold",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) HonestThresholdAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		becdsak.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"honestThreshold",
-		&result,
-	)
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) Owner() (common.Address, error) {
-	var result common.Address
-	result, err := becdsak.contract.Owner(
-		becdsak.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsak.errorResolver.ResolveError(
-			err,
-			becdsak.callerOptions.From,
-			nil,
-			"owner",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsak *BondedECDSAKeep) OwnerAtBlock(
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		becdsak.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsak.contractABI,
-		becdsak.caller,
-		becdsak.errorResolver,
-		becdsak.contractAddress,
-		"owner",
-		&result,
+		_member,
 	)
 
 	return result, err
 }
 
 // ------ Events -------
-
-type bondedECDSAKeepSignatureRequestedFunc func(
-	Digest [32]uint8,
-	blockNumber uint64,
-)
-
-func (becdsak *BondedECDSAKeep) PastSignatureRequestedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	digestFilter [][32]uint8,
-) ([]*abi.BondedECDSAKeepSignatureRequested, error) {
-	iterator, err := becdsak.contract.FilterSignatureRequested(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		digestFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past SignatureRequested events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.BondedECDSAKeepSignatureRequested, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (becdsak *BondedECDSAKeep) WatchSignatureRequested(
-	success bondedECDSAKeepSignatureRequestedFunc,
-	digestFilter [][32]uint8,
-) subscription.EventSubscription {
-	eventOccurred := make(chan *abi.BondedECDSAKeepSignatureRequested)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventOccurred:
-				success(
-					event.Digest,
-					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakLogger.Errorf(
-					"subscription to event SignatureRequested had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakLogger.Errorf(
-					"subscription to event SignatureRequested failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
-				)
-			}
-		}
-	}()
-
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return becdsak.contract.WatchSignatureRequested(
-			&bind.WatchOpts{Context: ctx},
-			eventOccurred,
-			digestFilter,
-		)
-	}
-
-	sub := ethutil.WithResubscription(
-		becdsakSubscriptionBackoffMax,
-		subscribeFn,
-		becdsakSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancel()
-	})
-}
-
-type bondedECDSAKeepSlashingFailedFunc func(
-	blockNumber uint64,
-)
-
-func (becdsak *BondedECDSAKeep) PastSlashingFailedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.BondedECDSAKeepSlashingFailed, error) {
-	iterator, err := becdsak.contract.FilterSlashingFailed(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past SlashingFailed events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.BondedECDSAKeepSlashingFailed, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (becdsak *BondedECDSAKeep) WatchSlashingFailed(
-	success bondedECDSAKeepSlashingFailedFunc,
-) subscription.EventSubscription {
-	eventOccurred := make(chan *abi.BondedECDSAKeepSlashingFailed)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventOccurred:
-				success(
-					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakLogger.Errorf(
-					"subscription to event SlashingFailed had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakLogger.Errorf(
-					"subscription to event SlashingFailed failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
-				)
-			}
-		}
-	}()
-
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return becdsak.contract.WatchSlashingFailed(
-			&bind.WatchOpts{Context: ctx},
-			eventOccurred,
-		)
-	}
-
-	sub := ethutil.WithResubscription(
-		becdsakSubscriptionBackoffMax,
-		subscribeFn,
-		becdsakSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancel()
-	})
-}
 
 type bondedECDSAKeepConflictingPublicKeySubmittedFunc func(
 	SubmittingMember common.Address,
@@ -2592,11 +2412,11 @@ func (becdsak *BondedECDSAKeep) WatchConflictingPublicKeySubmitted(
 	submittingMemberFilter []common.Address,
 ) subscription.EventSubscription {
 	eventOccurred := make(chan *abi.BondedECDSAKeepConflictingPublicKeySubmitted)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
 	go func() {
 		for {
 			select {
@@ -2607,19 +2427,6 @@ func (becdsak *BondedECDSAKeep) WatchConflictingPublicKeySubmitted(
 					event.SubmittingMember,
 					event.ConflictingPublicKey,
 					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakLogger.Errorf(
-					"subscription to event ConflictingPublicKeySubmitted had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakLogger.Errorf(
-					"subscription to event ConflictingPublicKeySubmitted failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
 				)
 			}
 		}
@@ -2637,8 +2444,22 @@ func (becdsak *BondedECDSAKeep) WatchConflictingPublicKeySubmitted(
 		becdsakSubscriptionBackoffMax,
 		subscribeFn,
 		becdsakSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
+		func(elapsed time.Duration) {
+			becdsakLogger.Errorf(
+				"subscription to event ConflictingPublicKeySubmitted had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
+		},
+		func(err error) {
+			becdsakLogger.Errorf(
+				"subscription to event ConflictingPublicKeySubmitted failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
+		},
 	)
 
 	return subscription.NewEventSubscription(func() {
@@ -2687,11 +2508,11 @@ func (becdsak *BondedECDSAKeep) WatchERC20RewardDistributed(
 	tokenFilter []common.Address,
 ) subscription.EventSubscription {
 	eventOccurred := make(chan *abi.BondedECDSAKeepERC20RewardDistributed)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
 	go func() {
 		for {
 			select {
@@ -2702,19 +2523,6 @@ func (becdsak *BondedECDSAKeep) WatchERC20RewardDistributed(
 					event.Token,
 					event.Amount,
 					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakLogger.Errorf(
-					"subscription to event ERC20RewardDistributed had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakLogger.Errorf(
-					"subscription to event ERC20RewardDistributed failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
 				)
 			}
 		}
@@ -2732,8 +2540,200 @@ func (becdsak *BondedECDSAKeep) WatchERC20RewardDistributed(
 		becdsakSubscriptionBackoffMax,
 		subscribeFn,
 		becdsakSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
+		func(elapsed time.Duration) {
+			becdsakLogger.Errorf(
+				"subscription to event ERC20RewardDistributed had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
+		},
+		func(err error) {
+			becdsakLogger.Errorf(
+				"subscription to event ERC20RewardDistributed failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
+		},
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancel()
+	})
+}
+
+type bondedECDSAKeepETHRewardDistributedFunc func(
+	Amount *big.Int,
+	blockNumber uint64,
+)
+
+func (becdsak *BondedECDSAKeep) PastETHRewardDistributedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.BondedECDSAKeepETHRewardDistributed, error) {
+	iterator, err := becdsak.contract.FilterETHRewardDistributed(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past ETHRewardDistributed events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BondedECDSAKeepETHRewardDistributed, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (becdsak *BondedECDSAKeep) WatchETHRewardDistributed(
+	success bondedECDSAKeepETHRewardDistributedFunc,
+) subscription.EventSubscription {
+	eventOccurred := make(chan *abi.BondedECDSAKeepETHRewardDistributed)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventOccurred:
+				success(
+					event.Amount,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return becdsak.contract.WatchETHRewardDistributed(
+			&bind.WatchOpts{Context: ctx},
+			eventOccurred,
+		)
+	}
+
+	sub := ethutil.WithResubscription(
+		becdsakSubscriptionBackoffMax,
+		subscribeFn,
+		becdsakSubscriptionAlertThreshold,
+		func(elapsed time.Duration) {
+			becdsakLogger.Errorf(
+				"subscription to event ETHRewardDistributed had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
+		},
+		func(err error) {
+			becdsakLogger.Errorf(
+				"subscription to event ETHRewardDistributed failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
+		},
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancel()
+	})
+}
+
+type bondedECDSAKeepSlashingFailedFunc func(
+	blockNumber uint64,
+)
+
+func (becdsak *BondedECDSAKeep) PastSlashingFailedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.BondedECDSAKeepSlashingFailed, error) {
+	iterator, err := becdsak.contract.FilterSlashingFailed(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past SlashingFailed events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BondedECDSAKeepSlashingFailed, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (becdsak *BondedECDSAKeep) WatchSlashingFailed(
+	success bondedECDSAKeepSlashingFailedFunc,
+) subscription.EventSubscription {
+	eventOccurred := make(chan *abi.BondedECDSAKeepSlashingFailed)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventOccurred:
+				success(
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return becdsak.contract.WatchSlashingFailed(
+			&bind.WatchOpts{Context: ctx},
+			eventOccurred,
+		)
+	}
+
+	sub := ethutil.WithResubscription(
+		becdsakSubscriptionBackoffMax,
+		subscribeFn,
+		becdsakSubscriptionAlertThreshold,
+		func(elapsed time.Duration) {
+			becdsakLogger.Errorf(
+				"subscription to event SlashingFailed had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
+		},
+		func(err error) {
+			becdsakLogger.Errorf(
+				"subscription to event SlashingFailed failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
+		},
 	)
 
 	return subscription.NewEventSubscription(func() {
@@ -2777,11 +2777,11 @@ func (becdsak *BondedECDSAKeep) WatchKeepClosed(
 	success bondedECDSAKeepKeepClosedFunc,
 ) subscription.EventSubscription {
 	eventOccurred := make(chan *abi.BondedECDSAKeepKeepClosed)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
 	go func() {
 		for {
 			select {
@@ -2790,19 +2790,6 @@ func (becdsak *BondedECDSAKeep) WatchKeepClosed(
 			case event := <-eventOccurred:
 				success(
 					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakLogger.Errorf(
-					"subscription to event KeepClosed had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakLogger.Errorf(
-					"subscription to event KeepClosed failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
 				)
 			}
 		}
@@ -2819,8 +2806,294 @@ func (becdsak *BondedECDSAKeep) WatchKeepClosed(
 		becdsakSubscriptionBackoffMax,
 		subscribeFn,
 		becdsakSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
+		func(elapsed time.Duration) {
+			becdsakLogger.Errorf(
+				"subscription to event KeepClosed had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
+		},
+		func(err error) {
+			becdsakLogger.Errorf(
+				"subscription to event KeepClosed failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
+		},
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancel()
+	})
+}
+
+type bondedECDSAKeepKeepTerminatedFunc func(
+	blockNumber uint64,
+)
+
+func (becdsak *BondedECDSAKeep) PastKeepTerminatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.BondedECDSAKeepKeepTerminated, error) {
+	iterator, err := becdsak.contract.FilterKeepTerminated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past KeepTerminated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BondedECDSAKeepKeepTerminated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (becdsak *BondedECDSAKeep) WatchKeepTerminated(
+	success bondedECDSAKeepKeepTerminatedFunc,
+) subscription.EventSubscription {
+	eventOccurred := make(chan *abi.BondedECDSAKeepKeepTerminated)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventOccurred:
+				success(
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return becdsak.contract.WatchKeepTerminated(
+			&bind.WatchOpts{Context: ctx},
+			eventOccurred,
+		)
+	}
+
+	sub := ethutil.WithResubscription(
+		becdsakSubscriptionBackoffMax,
+		subscribeFn,
+		becdsakSubscriptionAlertThreshold,
+		func(elapsed time.Duration) {
+			becdsakLogger.Errorf(
+				"subscription to event KeepTerminated had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
+		},
+		func(err error) {
+			becdsakLogger.Errorf(
+				"subscription to event KeepTerminated failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
+		},
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancel()
+	})
+}
+
+type bondedECDSAKeepPublicKeyPublishedFunc func(
+	PublicKey []uint8,
+	blockNumber uint64,
+)
+
+func (becdsak *BondedECDSAKeep) PastPublicKeyPublishedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.BondedECDSAKeepPublicKeyPublished, error) {
+	iterator, err := becdsak.contract.FilterPublicKeyPublished(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past PublicKeyPublished events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BondedECDSAKeepPublicKeyPublished, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (becdsak *BondedECDSAKeep) WatchPublicKeyPublished(
+	success bondedECDSAKeepPublicKeyPublishedFunc,
+) subscription.EventSubscription {
+	eventOccurred := make(chan *abi.BondedECDSAKeepPublicKeyPublished)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventOccurred:
+				success(
+					event.PublicKey,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return becdsak.contract.WatchPublicKeyPublished(
+			&bind.WatchOpts{Context: ctx},
+			eventOccurred,
+		)
+	}
+
+	sub := ethutil.WithResubscription(
+		becdsakSubscriptionBackoffMax,
+		subscribeFn,
+		becdsakSubscriptionAlertThreshold,
+		func(elapsed time.Duration) {
+			becdsakLogger.Errorf(
+				"subscription to event PublicKeyPublished had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
+		},
+		func(err error) {
+			becdsakLogger.Errorf(
+				"subscription to event PublicKeyPublished failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
+		},
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancel()
+	})
+}
+
+type bondedECDSAKeepSignatureRequestedFunc func(
+	Digest [32]uint8,
+	blockNumber uint64,
+)
+
+func (becdsak *BondedECDSAKeep) PastSignatureRequestedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	digestFilter [][32]uint8,
+) ([]*abi.BondedECDSAKeepSignatureRequested, error) {
+	iterator, err := becdsak.contract.FilterSignatureRequested(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		digestFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past SignatureRequested events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BondedECDSAKeepSignatureRequested, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (becdsak *BondedECDSAKeep) WatchSignatureRequested(
+	success bondedECDSAKeepSignatureRequestedFunc,
+	digestFilter [][32]uint8,
+) subscription.EventSubscription {
+	eventOccurred := make(chan *abi.BondedECDSAKeepSignatureRequested)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventOccurred:
+				success(
+					event.Digest,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return becdsak.contract.WatchSignatureRequested(
+			&bind.WatchOpts{Context: ctx},
+			eventOccurred,
+			digestFilter,
+		)
+	}
+
+	sub := ethutil.WithResubscription(
+		becdsakSubscriptionBackoffMax,
+		subscribeFn,
+		becdsakSubscriptionAlertThreshold,
+		func(elapsed time.Duration) {
+			becdsakLogger.Errorf(
+				"subscription to event SignatureRequested had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
+		},
+		func(err error) {
+			becdsakLogger.Errorf(
+				"subscription to event SignatureRequested failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
+		},
 	)
 
 	return subscription.NewEventSubscription(func() {
@@ -2871,11 +3144,11 @@ func (becdsak *BondedECDSAKeep) WatchSignatureSubmitted(
 	digestFilter [][32]uint8,
 ) subscription.EventSubscription {
 	eventOccurred := make(chan *abi.BondedECDSAKeepSignatureSubmitted)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// TODO: Watch* function will soon accept channel as a parameter instead
+	// of the callback. This loop will be eliminated then.
 	go func() {
 		for {
 			select {
@@ -2888,19 +3161,6 @@ func (becdsak *BondedECDSAKeep) WatchSignatureSubmitted(
 					event.S,
 					event.RecoveryID,
 					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakLogger.Errorf(
-					"subscription to event SignatureSubmitted had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakLogger.Errorf(
-					"subscription to event SignatureSubmitted failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
 				)
 			}
 		}
@@ -2918,273 +3178,22 @@ func (becdsak *BondedECDSAKeep) WatchSignatureSubmitted(
 		becdsakSubscriptionBackoffMax,
 		subscribeFn,
 		becdsakSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancel()
-	})
-}
-
-type bondedECDSAKeepETHRewardDistributedFunc func(
-	Amount *big.Int,
-	blockNumber uint64,
-)
-
-func (becdsak *BondedECDSAKeep) PastETHRewardDistributedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.BondedECDSAKeepETHRewardDistributed, error) {
-	iterator, err := becdsak.contract.FilterETHRewardDistributed(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
+		func(elapsed time.Duration) {
+			becdsakLogger.Errorf(
+				"subscription to event SignatureSubmitted had to be "+
+					"retried [%v] since the last attempt; please inspect "+
+					"Ethereum client connectivity",
+				elapsed,
+			)
 		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past ETHRewardDistributed events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.BondedECDSAKeepETHRewardDistributed, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (becdsak *BondedECDSAKeep) WatchETHRewardDistributed(
-	success bondedECDSAKeepETHRewardDistributedFunc,
-) subscription.EventSubscription {
-	eventOccurred := make(chan *abi.BondedECDSAKeepETHRewardDistributed)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventOccurred:
-				success(
-					event.Amount,
-					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakLogger.Errorf(
-					"subscription to event ETHRewardDistributed had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakLogger.Errorf(
-					"subscription to event ETHRewardDistributed failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
-				)
-			}
-		}
-	}()
-
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return becdsak.contract.WatchETHRewardDistributed(
-			&bind.WatchOpts{Context: ctx},
-			eventOccurred,
-		)
-	}
-
-	sub := ethutil.WithResubscription(
-		becdsakSubscriptionBackoffMax,
-		subscribeFn,
-		becdsakSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancel()
-	})
-}
-
-type bondedECDSAKeepKeepTerminatedFunc func(
-	blockNumber uint64,
-)
-
-func (becdsak *BondedECDSAKeep) PastKeepTerminatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.BondedECDSAKeepKeepTerminated, error) {
-	iterator, err := becdsak.contract.FilterKeepTerminated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
+		func(err error) {
+			becdsakLogger.Errorf(
+				"subscription to event SignatureSubmitted failed "+
+					"with error: [%v]; resubscription attempt will be "+
+					"performed",
+				err,
+			)
 		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past KeepTerminated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.BondedECDSAKeepKeepTerminated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (becdsak *BondedECDSAKeep) WatchKeepTerminated(
-	success bondedECDSAKeepKeepTerminatedFunc,
-) subscription.EventSubscription {
-	eventOccurred := make(chan *abi.BondedECDSAKeepKeepTerminated)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventOccurred:
-				success(
-					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakLogger.Errorf(
-					"subscription to event KeepTerminated had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakLogger.Errorf(
-					"subscription to event KeepTerminated failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
-				)
-			}
-		}
-	}()
-
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return becdsak.contract.WatchKeepTerminated(
-			&bind.WatchOpts{Context: ctx},
-			eventOccurred,
-		)
-	}
-
-	sub := ethutil.WithResubscription(
-		becdsakSubscriptionBackoffMax,
-		subscribeFn,
-		becdsakSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancel()
-	})
-}
-
-type bondedECDSAKeepPublicKeyPublishedFunc func(
-	PublicKey []uint8,
-	blockNumber uint64,
-)
-
-func (becdsak *BondedECDSAKeep) PastPublicKeyPublishedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.BondedECDSAKeepPublicKeyPublished, error) {
-	iterator, err := becdsak.contract.FilterPublicKeyPublished(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past PublicKeyPublished events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.BondedECDSAKeepPublicKeyPublished, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (becdsak *BondedECDSAKeep) WatchPublicKeyPublished(
-	success bondedECDSAKeepPublicKeyPublishedFunc,
-) subscription.EventSubscription {
-	eventOccurred := make(chan *abi.BondedECDSAKeepPublicKeyPublished)
-	thresholdViolated := make(chan time.Duration)
-	subscriptionFailed := make(chan error)
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventOccurred:
-				success(
-					event.PublicKey,
-					event.Raw.BlockNumber,
-				)
-			case violation := <-thresholdViolated:
-				becdsakLogger.Errorf(
-					"subscription to event PublicKeyPublished had to be "+
-						"retried [%v] since the last attempt; please inspect "+
-						"Ethereum client connectivity",
-					violation,
-				)
-			case err := <-subscriptionFailed:
-				becdsakLogger.Errorf(
-					"subscription to event PublicKeyPublished failed: [%v]; "+
-						"resubscription attempt will be performed",
-					err,
-				)
-			}
-		}
-	}()
-
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return becdsak.contract.WatchPublicKeyPublished(
-			&bind.WatchOpts{Context: ctx},
-			eventOccurred,
-		)
-	}
-
-	sub := ethutil.WithResubscription(
-		becdsakSubscriptionBackoffMax,
-		subscribeFn,
-		becdsakSubscriptionAlertThreshold,
-		thresholdViolated,
-		subscriptionFailed,
 	)
 
 	return subscription.NewEventSubscription(func() {
