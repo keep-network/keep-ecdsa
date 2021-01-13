@@ -57,6 +57,11 @@ export default class AssetsCalculator {
     const ethWithdrawn = await this.calculateETHWithdrawn(operator)
     let ethTotal = ethBonded.plus(ethUnbonded).minus(ethWithdrawn)
 
+    const isUndelegating = await this.isUndelegatingOperator(operator)
+    if (isUndelegating) {
+      ethTotal = ethBonded.minus(ethWithdrawn)
+    }
+
     if (ethTotal.isLessThan(new BigNumber(0))) {
       ethTotal = new BigNumber(0)
     }
@@ -67,7 +72,8 @@ export default class AssetsCalculator {
       ethBonded,
       ethUnbonded,
       ethWithdrawn,
-      ethTotal
+      ethTotal,
+      isUndelegating
     )
   }
 
@@ -199,6 +205,17 @@ export default class AssetsCalculator {
         new BigNumber(0)
       )
   }
+
+  async isUndelegatingOperator(operator) {
+    const tokenStaking = await this.context.contracts.TokenStaking.deployed()
+
+    const delegationInfo = await callWithRetry(
+      tokenStaking.methods.getDelegationInfo(operator),
+      this.interval.startBlock
+    )
+
+    return delegationInfo.undelegatedAt !== "0"
+  }
 }
 
 function OperatorAssets(
@@ -207,12 +224,14 @@ function OperatorAssets(
   ethBonded,
   ethUnbonded,
   ethWithdrawn,
-  ethTotal
+  ethTotal,
+  isUndelegating
 ) {
   ;(this.address = address),
     (this.keepStaked = keepStaked),
     (this.ethBonded = ethBonded),
     (this.ethUnbonded = ethUnbonded),
     (this.ethWithdrawn = ethWithdrawn),
-    (this.ethTotal = ethTotal)
+    (this.ethTotal = ethTotal),
+    (this.isUndelegating = isUndelegating)
 }
