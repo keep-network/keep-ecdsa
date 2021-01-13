@@ -1,0 +1,16 @@
+{
+  "name": "staker-rewards",
+  "description": "Generates merkle objects for rewards distribution",
+  "version": "1.0.0",
+  "keywords": [
+    "keep-network",
+    "rewards"
+  ],
+  "scripts": {
+    "generate-merkle-root": "ts-node generate-merkle-root.ts"
+  },
+  "devDependencies": {
+    "commander": "^6.1.0",
+    "ts-node": "^8.5.4"
+  }
+}

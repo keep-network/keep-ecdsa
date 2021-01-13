@@ -3,8 +3,6 @@ pragma solidity 0.5.17;
 /// @title Bonded ECDSA Keep Vendor Implementation V2 Stub
 /// @dev This contract is for testing purposes only.
 contract BondedECDSAKeepVendorImplV2Stub {
-    address private _owner;
-
     mapping(string => bool) internal _initialized;
 
     function version() public view returns (string memory) {

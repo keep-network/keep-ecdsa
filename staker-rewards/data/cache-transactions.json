@@ -1,0 +1,43 @@
+{
+  "transactions": [
+    {
+      "hash": "0xc00626a9541466079ea12662ad5356311cbccb2a478a11fcb01c6bc769fc4aa5",
+      "from": "0x13aba80a5bf56720ec44e26c06e88a21f4d0a6d9",
+      "to": "0x27321f84704a599ab740281e285cc4463d89a3d5",
+      "block_number": 11092262,
+      "method": "deauthorizeSortitionPoolContract",
+      "decoded_input": [
+        {
+          "soltype": {
+            "name": "_operator",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0x13aba80a5bf56720ec44e26c06e88a21f4d0a6d9"
+        },
+        {
+          "soltype": {
+            "name": "_poolAddress",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
+        }
+      ]
+    }
+  ]
+}

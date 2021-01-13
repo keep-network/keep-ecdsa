@@ -4,6 +4,12 @@ executors:
   docker-node:
     docker:
       - image: circleci/node:11
+  docker-node-14:
+    docker:
+      - image: circleci/node:14
+  docker-node-gcloud:
+    docker:
+      - image: appfarm/node-gcloud-base
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
@@ -32,6 +38,30 @@ jobs:
           command: |
             set -ex
             npm run lint
+  lint_staker_rewards_script:
+    executor: docker-node-14
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          working_directory: ~/project/staker-rewards
+          command: npm ci
+      - run:
+          name: Lint Implementation
+          working_directory: ~/project/staker-rewards
+          command: npm run lint
+  test_staker_rewards_script:
+    executor: docker-node-14
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          working_directory: ~/project/staker-rewards
+          command: npm ci
+      - run:
+          name: Run tests
+          working_directory: ~/project/staker-rewards
+          command: npm test
   build_and_test_solidity:
     executor: docker-node
     steps:
@@ -133,13 +163,11 @@ jobs:
           paths:
             - docker-images
   migrate_contracts:
-    executor: docker-thesis-buildpack
+    executor: docker-node-gcloud
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
-      - attach_workspace:
-          at: solidity
       - run:
           name: Set Gcloud Auth for bucket access
           command: |
@@ -148,18 +176,15 @@ jobs:
       - run:
           name: Fetch external contracts artifacts
           command: |
+            # This needs to be part of a base docker image, not installed here.
+            apt-get update
+            apt-get install jq -y
             solidity/scripts/circleci-provision-external-contracts.sh
-      - run:
-          name: Set Gcloud Auth for jumphost SSH
-          command: |
-            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
-            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
       - run:
           name: Migrate Contracts
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
-            mkdir -p /tmp/keep-ecdsa/contracts
             solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/keep-ecdsa
@@ -280,6 +305,10 @@ workflows:
   solidity:
     jobs:
       - build_and_test_solidity
+  staker-rewards:
+    jobs:
+      - lint_staker_rewards_script
+      - test_staker_rewards_script
   build-test-publish-keep-dev:
     jobs:
       - build_client_and_test_go

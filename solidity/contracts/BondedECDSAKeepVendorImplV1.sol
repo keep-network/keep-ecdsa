@@ -20,7 +20,6 @@ import "@keep-network/keep-core/contracts/KeepRegistry.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-
 /// @title Bonded ECDSA Keep Vendor
 /// @notice The contract is used to obtain a new Bonded ECDSA keep factory.
 contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {

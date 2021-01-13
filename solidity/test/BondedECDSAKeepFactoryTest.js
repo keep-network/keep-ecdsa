@@ -29,6 +29,8 @@ chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 const assert = chai.assert
 
+// TODO: Refactor tests by pulling common parts of BondedECDSAKeepFactory and
+// FullyBackedBondedECDSAKeepFactory to one file.
 describe("BondedECDSAKeepFactory", function () {
   let registry
   let tokenStaking
@@ -51,7 +53,7 @@ describe("BondedECDSAKeepFactory", function () {
   const groupSize = new BN(members.length)
   const threshold = new BN(groupSize - 1)
 
-  const singleBond = new BN(1)
+  const singleBond = web3.utils.toWei(new BN("20"), "ether")
   const bond = singleBond.mul(groupSize)
 
   const stakeLockDuration = time.duration.days(180)
@@ -76,6 +78,16 @@ describe("BondedECDSAKeepFactory", function () {
     before(async () => {
       await initializeNewFactory()
       await initializeMemberCandidates()
+    })
+
+    it("reverts for unknown application", async () => {
+      const unknownApplication = "0xCfd27747D1583feb1eCbD7c4e66C848Db0aA82FB"
+      await expectRevert(
+        keepFactory.registerMemberCandidate(unknownApplication, {
+          from: members[0],
+        }),
+        "No pool found for the application"
+      )
     })
 
     it("inserts operator with the correct staking weight in the pool", async () => {
@@ -540,7 +552,7 @@ describe("BondedECDSAKeepFactory", function () {
             value: feeEstimate,
           }
         ),
-        "No signer pool for this application"
+        "No pool found for the application"
       )
     })
 
@@ -1168,10 +1180,12 @@ describe("BondedECDSAKeepFactory", function () {
         web3.eth.sendTransaction({
           from: accounts[0],
           to: operator,
-          value: web3.utils.toWei("1", "ether"),
+          value: web3.utils.toWei("21", "ether"),
         })
 
         await tokenStaking.setBalance(operator, stakeBalance)
+        await tokenStaking.setAuthorizer(operator, operator)
+
         await tokenStaking.authorizeOperatorContract(
           operator,
           keepFactory.address
@@ -1491,6 +1505,41 @@ describe("BondedECDSAKeepFactory", function () {
     })
   })
 
+  describe("setMinimumBondableValue", async () => {
+    before(async () => {
+      await initializeNewFactory()
+      await initializeMemberCandidates()
+    })
+
+    it("reverts for unknown application", async () => {
+      await expectRevert(
+        keepFactory.setMinimumBondableValue(10, 3, 3),
+        "No pool found for the application"
+      )
+    })
+
+    it("sets the minimum bond value for the application", async () => {
+      await keepFactory.setMinimumBondableValue(12, 3, 3, {from: application})
+      const poolAddress = await keepFactory.getSortitionPool(application)
+      const pool = await BondedSortitionPool.at(poolAddress)
+      expect(await pool.getMinimumBondableValue()).to.eq.BN(4)
+    })
+
+    it("rounds up member bonds", async () => {
+      await keepFactory.setMinimumBondableValue(10, 3, 3, {from: application})
+      const poolAddress = await keepFactory.getSortitionPool(application)
+      const pool = await BondedSortitionPool.at(poolAddress)
+      expect(await pool.getMinimumBondableValue()).to.eq.BN(4)
+    })
+
+    it("rounds up members bonds when calculated bond per member equals zero", async () => {
+      await keepFactory.setMinimumBondableValue(2, 3, 3, {from: application})
+      const poolAddress = await keepFactory.getSortitionPool(application)
+      const pool = await BondedSortitionPool.at(poolAddress)
+      expect(await pool.getMinimumBondableValue()).to.eq.BN(1)
+    })
+  })
+
   async function initializeNewFactory() {
     registry = await KeepRegistry.new()
     bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new()
@@ -1530,6 +1579,8 @@ describe("BondedECDSAKeepFactory", function () {
     await keepFactory.createSortitionPool(application)
 
     for (let i = 0; i < members.length; i++) {
+      await tokenStaking.setAuthorizer(members[i], authorizers[i])
+
       await tokenStaking.authorizeOperatorContract(
         members[i],
         keepFactory.address

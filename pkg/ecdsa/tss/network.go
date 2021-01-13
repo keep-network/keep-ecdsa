@@ -263,7 +263,10 @@ func (b *networkBridge) sendTSSMessage(
 	}
 
 	if routing.To == nil {
-		b.broadcast(ctx, protocolMessage)
+		err = b.broadcast(ctx, protocolMessage)
+		if err != nil {
+			logger.Errorf("could not broadcast message: [%v]", err)
+		}
 	} else {
 		for _, destination := range routing.To {
 			destinationMemberID, err := MemberIDFromString(destination.GetId())
@@ -271,12 +274,21 @@ func (b *networkBridge) sendTSSMessage(
 				logger.Errorf("failed to get destination member id: [%v]", err)
 				return
 			}
+
 			destinationTransportID, err := b.getTransportIdentifier(destinationMemberID)
 			if err != nil {
 				logger.Errorf("failed to get transport identifier: [%v]", err)
 				return
 			}
-			b.sendTo(destinationTransportID, protocolMessage)
+
+			err = b.sendTo(destinationTransportID, protocolMessage)
+			if err != nil {
+				logger.Errorf(
+					"could not send message to [%v]: [%v]",
+					destinationTransportID.String(),
+					err,
+				)
+			}
 		}
 	}
 }
@@ -291,7 +303,7 @@ func (b *networkBridge) broadcast(
 
 	}
 
-	if broadcastChannel.Send(ctx, msg); err != nil {
+	if err = broadcastChannel.Send(ctx, msg); err != nil {
 		return fmt.Errorf("failed to send broadcast message: [%v]", err)
 	}
 

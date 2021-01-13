@@ -12,7 +12,11 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
-const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+// PasswordEnvVariable environment variable name for ethereum key password.
+// #nosec G101 (look for hardcoded credentials)
+// This line doesn't contain any credentials.
+// It's just the name of the environment variable.
+const PasswordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
 // Config is the top level config structure.
 type Config struct {
@@ -23,6 +27,8 @@ type Config struct {
 	Client                 client.Config
 	TSS                    tss.Config
 	Metrics                Metrics
+	Diagnostics            Diagnostics
+	Extensions             Extensions
 }
 
 // SanctionedApplications contains addresses of applications approved by the
@@ -59,6 +65,23 @@ type Metrics struct {
 	Port                int
 	NetworkMetricsTick  int
 	EthereumMetricsTick int
+	ClientMetricsTick   int
+}
+
+// Diagnostics stores diagnostics-related configuration.
+type Diagnostics struct {
+	Port int
+}
+
+// Extensions stores app-specific extensions configuration.
+type Extensions struct {
+	TBTC TBTC
+}
+
+// TBTC stores configuration of application extension responsible for
+// executing signer actions specific for TBTC application.
+type TBTC struct {
+	TBTCSystem string
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file
@@ -69,7 +92,7 @@ func ReadConfig(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode file [%s]: [%v]", filePath, err)
 	}
 
-	config.Ethereum.Account.KeyFilePassword = os.Getenv(passwordEnvVariable)
+	config.Ethereum.Account.KeyFilePassword = os.Getenv(PasswordEnvVariable)
 
 	return config, nil
 }

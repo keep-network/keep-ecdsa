@@ -73,14 +73,14 @@ async function provisionKeepTecdsa() {
     console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`)
     await fundOperator(operatorAddress, purse, '10')
 
-    console.log(`\n<<<<<<<<<<<< Deposit to KeepBondingContract ${keepBondingContract.address} >>>>>>>>>>>>`)
+    console.log(`\n<<<<<<<<<<<< Deposit to KeepBondingContract ${keepBondingContract.options.address} >>>>>>>>>>>>`)
     await depositUnbondedValue(operatorAddress, purse, '10')
 
     console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`)
     await stakeOperator(operatorAddress, contractOwnerAddress, authorizer)
 
-    console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${bondedECDSAKeepFactory.address} >>>>>>>>>>>>`)
-    await authorizeOperatorContract(operatorAddress, bondedECDSAKeepFactory.address, authorizer)
+    console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${bondedECDSAKeepFactory.options.address} >>>>>>>>>>>>`)
+    await authorizeOperatorContract(operatorAddress, bondedECDSAKeepFactory.options.address, authorizer)
 
     
     for (let i = 0; i < sanctionedApplications.length; i++) {
@@ -184,7 +184,7 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
   ])
 
   await keepTokenContract.methods.approveAndCall(
-    tokenStakingContract.address,
+    tokenStakingContract.options.address,
     formatAmount(2000000, 18),
     delegation).send({ from: contractOwnerAddress })
 
@@ -213,7 +213,7 @@ async function authorizeSortitionPoolContract(operatorAddress, sortitionPoolCont
 async function getSortitionPool(applicationAddress) {
   let sortitionPoolContractAddress
   
-const sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call()
+  const sortitionPoolContractAddress = await bondedECDSAKeepFactory.methods.getSortitionPool(applicationAddress).call()
 
   console.log(`sortition pool contract address: ${sortitionPoolContractAddress}`)
   return sortitionPoolContractAddress
@@ -227,7 +227,7 @@ async function createKeepTecdsaConfig() {
 
   parsedConfigFile.ethereum.account.KeyFile = operatorKeyFile
 
-  parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactory.address
+  parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory = bondedECDSAKeepFactory.options.address
 
   parsedConfigFile.SanctionedApplications.Addresses = [].concat(sanctionedApplications)
 

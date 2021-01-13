@@ -10,6 +10,7 @@
         "timestamp"
       ]
     ],
+    "indentation": "off",
     "security/no-call-value": "off",
     "security/no-inline-assembly": "off"
   }

@@ -1,0 +1,4 @@
+
+[submodule "staker-rewards/merkle-distributor"]
+	path = staker-rewards/merkle-distributor
+	url = https://github.com/keep-network/merkle-distributor.git
