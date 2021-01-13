@@ -122,18 +122,14 @@ export default class RewardsCalculator {
   }
 
   async isUndelegatingOperator(operatorAddress) {
-    const block = this.interval.startBlock
-
     const tokenStaking = await this.context.contracts.TokenStaking.deployed()
 
     const delegationInfo = await callWithRetry(
       tokenStaking.methods.getDelegationInfo(operatorAddress),
-      block
+      this.interval.startBlock
     )
 
-    const undelegatedAt = new BigNumber(delegationInfo.undelegatedAt).toNumber()
-
-    return undelegatedAt !== 0
+    return delegationInfo.undelegatedAt !== "0"
   }
 
   checkRequirementsViolations(operatorParameters) {
