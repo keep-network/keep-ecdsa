@@ -86,8 +86,8 @@ async function provisionKeepTecdsa() {
     for (let i = 0; i < sanctionedApplications.length; i++) {
       const sanctionedApplicationAddress = sanctionedApplications[i]
 
+      console.log(`\n<<<<<<<<<<<< Check Sortition Pool for Sanctioned Application: ${sanctionedApplicationAddress} >>>>>>>>>>>>`)
       const sortitionPoolContractAddress = await getSortitionPool(sanctionedApplicationAddress)
-      
   if (!sortitionPoolContractAddress || sortitionPoolContractAddress == ADDRESS_ZERO) {
     console.error(`missing sortition pool for application: [${applicationAddress}]`)
     continue
