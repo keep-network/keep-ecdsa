@@ -194,6 +194,11 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
 async function authorizeOperatorContract(operatorAddress, operatorContractAddress, authorizer) {
   console.log(`Authorizing Operator Contract ${operatorContractAddress} for operator account ${operatorAddress}`)
 
+  if (await tokenStakingContract.methods.isAuthorizedForOperator(operatorAddress, operatorContractAddress).call()) {
+    console.log('Already authorized!')
+    return
+  }
+
   await tokenStakingContract.methods.authorizeOperatorContract(operatorAddress, operatorContractAddress)
     .send({ from: authorizer })
 
@@ -201,8 +206,12 @@ async function authorizeOperatorContract(operatorAddress, operatorContractAddres
 }
 
 async function authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress, authorizer) {
-
   console.log(`Authorizing Sortition Pool Contract ${sortitionPoolContractAddress} for operator account ${operatorAddress}`)
+
+  if (await keepBondingContract.methods.hasSecondaryAuthorization(operatorAddress, sortitionPoolContractAddress).call()) {
+    console.log('Already authorized!')
+    return
+  }
 
   await keepBondingContract.methods.authorizeSortitionPoolContract(operatorAddress, sortitionPoolContractAddress)
     .send({ from: authorizer })
