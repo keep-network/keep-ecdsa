@@ -30,13 +30,14 @@ export default class RewardsCalculator {
         operatorParameters
       )
 
-      if (
-        requirementsViolations.includes("poolRequirementFulfilledAtStart") &&
-        (await this.isUndelegatingOperator(operatorParameters.operator))
-      ) {
-        requirementsViolations = requirementsViolations.filter(
-          (item) => item !== "poolRequirementFulfilledAtStart"
-        )
+      if (await this.isUndelegatingOperator(operatorParameters.operator)) {
+        if (
+          requirementsViolations.includes("poolRequirementFulfilledAtStart")
+        ) {
+          requirementsViolations = requirementsViolations.filter(
+            (item) => item !== "poolRequirementFulfilledAtStart"
+          )
+        }
 
         operatorParameters.operatorAssets.ethTotal =
           operatorParameters.operatorAssets.ethBonded
