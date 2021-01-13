@@ -110,7 +110,12 @@ export default class RewardsCalculator {
 
   checkRequirementsViolations(operatorParameters) {
     const violations = []
-    const { isFraudulent, requirements, operatorSLA } = operatorParameters
+    const {
+      isFraudulent,
+      requirements,
+      operatorSLA,
+      operatorAssets,
+    } = operatorParameters
 
     if (isFraudulent === true) {
       violations.push("isFraudulent")
@@ -132,7 +137,10 @@ export default class RewardsCalculator {
       violations.push("minimumStakeAtStart")
     }
 
-    if (requirements.poolRequirementFulfilledAtStart === false) {
+    if (
+      requirements.poolRequirementFulfilledAtStart === false &&
+      operatorAssets.isUndelegating === false
+    ) {
       violations.push("poolRequirementFulfilledAtStart")
     }
 
