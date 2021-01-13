@@ -132,7 +132,7 @@ export default class RewardsCalculator {
 
     const undelegatedAt = new BigNumber(delegationInfo.undelegatedAt).toNumber()
 
-    return undelegatedAt !== 0 && this.interval.start > undelegatedAt
+    return undelegatedAt !== 0
   }
 
   checkRequirementsViolations(operatorParameters) {
