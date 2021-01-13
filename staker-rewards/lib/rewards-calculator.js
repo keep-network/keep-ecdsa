@@ -26,9 +26,6 @@ export default class RewardsCalculator {
     const operatorsRewardsFactors = []
 
     for (const operatorParameters of operatorsParameters) {
-      let ethTotal = operatorParameters.operatorAssets.ethTotal
-      const { keepStaked } = operatorParameters.operatorAssets
-
       let requirementsViolations = this.checkRequirementsViolations(
         operatorParameters
       )
@@ -41,8 +38,11 @@ export default class RewardsCalculator {
           (item) => item !== "poolRequirementFulfilledAtStart"
         )
 
-        ethTotal = operatorParameters.operatorAssets.ethBonded
+        operatorParameters.operatorAssets.ethTotal =
+          operatorParameters.operatorAssets.ethBonded
       }
+
+      const { keepStaked, ethTotal } = operatorParameters.operatorAssets
 
       const ethScore = this.calculateETHScore(ethTotal)
       const boost = this.calculateBoost(keepStaked, ethTotal, minimumStake)
