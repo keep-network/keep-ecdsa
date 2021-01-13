@@ -94,7 +94,7 @@ async function run() {
            ${operatorRewards.signatureFailCount} 
            ${operatorRewards.signatureSLA} 
            ${operatorRewards.SLAViolated} 
-           ${operatorRewards.isUndelegating} 
+           ${operatorRewards.undelegated} 
            ${toFormat(operatorRewards.keepStaked)} 
            ${toFormat(operatorRewards.ethBonded)} 
            ${toFormat(operatorRewards.ethUnbonded)}
@@ -286,7 +286,7 @@ function OperatorSummary(operator, operatorParameters, operatorRewards) {
       operatorParameters.operatorSLA.signatureFailCount),
     (this.signatureSLA = operatorParameters.operatorSLA.signatureSLA),
     (this.SLAViolated = operatorRewards.SLAViolated),
-    (this.isUndelegating = operatorParameters.operatorAssets.isUndelegating),
+    (this.undelegated = operatorParameters.operatorAssets.isUndelegating),
     (this.keepStaked = operatorParameters.operatorAssets.keepStaked),
     (this.ethBonded = operatorParameters.operatorAssets.ethBonded),
     (this.ethUnbonded = operatorParameters.operatorAssets.ethUnbonded),
