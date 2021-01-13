@@ -4,8 +4,6 @@ import BigNumber from "bignumber.js"
 import { createMockContext } from "./helpers/mock.js"
 
 import RewardsCalculator from "../lib/rewards-calculator.js"
-import { mockMethod } from "./helpers/blockchain.js"
-import { TokenStakingAddress } from "./helpers/constants.js"
 
 const { assert } = chai
 
@@ -13,26 +11,16 @@ console.debug = function () {}
 console.log = function () {}
 
 const interval = {
-  start: 1609459200,
-  end: 1610064000,
-  startBlock: 1000,
-  endBlock: 2000,
   totalRewards: new BigNumber(18000000).multipliedBy(1e18), // 18M KEEP
 }
 
 const operator = "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
 
-const createOperatorParameters = (
-  operator,
-  keepStaked,
-  ethTotal,
-  ethBonded = 0
-) => ({
+const createOperatorParameters = (operator, keepStaked, ethTotal) => ({
   operator: operator,
   operatorAssets: {
     keepStaked: new BigNumber(keepStaked).multipliedBy(1e18),
     ethTotal: new BigNumber(ethTotal).multipliedBy(1e18),
-    ethBonded: new BigNumber(ethBonded).multipliedBy(1e18),
   },
   isFraudulent: false,
   requirements: {
@@ -61,13 +49,6 @@ const setupContractsMock = (context) => {
             // 70k KEEP
             return new BigNumber(70000).multipliedBy(1e18).toString()
           },
-        }),
-        getDelegationInfo: (operator) => ({
-          call: mockMethod(
-            TokenStakingAddress,
-            "getDelegationInfo",
-            (inputs) => inputs.operator === operator
-          ),
         }),
       },
     }),
@@ -300,25 +281,30 @@ describe("rewards calculator", async () => {
     assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
   })
 
-  it("should set total rewards to zero if pool requirement is not fulfilled at start", async () => {
-    const mockContext = createMockContext()
+  it(
+    "should set total rewards to zero if pool requirement is not " +
+      "fulfilled at start and operator is not undelegating",
+    async () => {
+      const mockContext = createMockContext()
 
-    setupContractsMock(mockContext)
+      setupContractsMock(mockContext)
 
-    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
 
-    operatorParameters.requirements.poolRequirementFulfilledAtStart = false
+      operatorParameters.requirements.poolRequirementFulfilledAtStart = false
+      operatorParameters.operatorAssets.isUndelegating = false
 
-    const rewardsCalculator = await RewardsCalculator.initialize(
-      mockContext,
-      interval,
-      [operatorParameters]
-    )
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
 
-    const rewards = rewardsCalculator.getOperatorRewards(operator)
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
 
-    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
-  })
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+    }
+  )
 
   it(
     "should NOT set total rewards to zero if pool requirement is not " +
@@ -328,14 +314,10 @@ describe("rewards calculator", async () => {
 
       setupContractsMock(mockContext)
 
-      const operatorParameters = createOperatorParameters(
-        "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
-        70000,
-        100,
-        50
-      )
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
 
       operatorParameters.requirements.poolRequirementFulfilledAtStart = false
+      operatorParameters.operatorAssets.isUndelegating = true
 
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
@@ -343,9 +325,7 @@ describe("rewards calculator", async () => {
         [operatorParameters]
       )
 
-      const rewards = rewardsCalculator.getOperatorRewards(
-        "0x88Ed51f84c21Ae246c23137D090cdF441009D916"
-      )
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
     }

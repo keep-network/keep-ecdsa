@@ -26,24 +26,11 @@ export default class RewardsCalculator {
     const operatorsRewardsFactors = []
 
     for (const operatorParameters of operatorsParameters) {
-      let requirementsViolations = this.checkRequirementsViolations(
+      const { keepStaked, ethTotal } = operatorParameters.operatorAssets
+
+      const requirementsViolations = this.checkRequirementsViolations(
         operatorParameters
       )
-
-      if (await this.isUndelegatingOperator(operatorParameters.operator)) {
-        if (
-          requirementsViolations.includes("poolRequirementFulfilledAtStart")
-        ) {
-          requirementsViolations = requirementsViolations.filter(
-            (item) => item !== "poolRequirementFulfilledAtStart"
-          )
-        }
-
-        operatorParameters.operatorAssets.ethTotal =
-          operatorParameters.operatorAssets.ethBonded
-      }
-
-      const { keepStaked, ethTotal } = operatorParameters.operatorAssets
 
       const ethScore = this.calculateETHScore(ethTotal)
       const boost = this.calculateBoost(keepStaked, ethTotal, minimumStake)
@@ -121,20 +108,14 @@ export default class RewardsCalculator {
     return new BigNumber(minimumStake)
   }
 
-  async isUndelegatingOperator(operatorAddress) {
-    const tokenStaking = await this.context.contracts.TokenStaking.deployed()
-
-    const delegationInfo = await callWithRetry(
-      tokenStaking.methods.getDelegationInfo(operatorAddress),
-      this.interval.startBlock
-    )
-
-    return delegationInfo.undelegatedAt !== "0"
-  }
-
   checkRequirementsViolations(operatorParameters) {
     const violations = []
-    const { isFraudulent, requirements, operatorSLA } = operatorParameters
+    const {
+      isFraudulent,
+      requirements,
+      operatorSLA,
+      operatorAssets,
+    } = operatorParameters
 
     if (isFraudulent === true) {
       violations.push("isFraudulent")
@@ -156,7 +137,10 @@ export default class RewardsCalculator {
       violations.push("minimumStakeAtStart")
     }
 
-    if (requirements.poolRequirementFulfilledAtStart === false) {
+    if (
+      requirements.poolRequirementFulfilledAtStart === false &&
+      operatorAssets.isUndelegating === false
+    ) {
       violations.push("poolRequirementFulfilledAtStart")
     }
 
