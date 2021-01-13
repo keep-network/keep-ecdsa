@@ -34,7 +34,7 @@ For each Operator:
   as `ETH_withdrawn`.
   
 * Calculate the total ETH under management as 
-  `ETH_locked = ETH_bonded + ETH_unbonded - ETH_withdrawn`.
+  `ETH_locked = ETH_bonded + ETH_unbonded - ETH_withdrawn`. In case the operator is undelegating, `ETH_locked = ETH_bonded - ETH_withdrawn`.
 
 === Requirements
 
@@ -48,12 +48,15 @@ are deallocated and remains in the pool for future intervals.
 * If the operator does not have a minimum KEEP stake at `T_start`, they are not
   getting any rewards for interval `T`.
   
-* If the operator has more `ETH_unbonded` than the minimum unbonded value and is
-  not in the sortition pool at `T_start`, they are not getting any rewards for
-  interval `T`. In other words, if the operator is eligible to be in the
-  sortition pool, they have to be registered in the sortition pool. Operators who
-  are not registered in the sortition pool because all of their ETH is bonded are
-  still getting rewards because that ETH is still under the system’s management.
+* If the operator has more `ETH_unbonded` than the minimum unbonded value, is not
+  undelegating, and is not in the sortition pool at `T_start`, they are not getting
+  any rewards for interval `T`. In other words, if the operator is eligible to be
+  in the sortition pool, they have to be registered in the sortition pool. Operators
+  who are not registered in the sortition pool because all of their ETH is bonded
+  are getting rewards because their ETH is still under the system’s management.
+  Operators who are not registered in the sortition pool because they are undelegating
+  their stake, are still getting rewards for bonded ETH because that ETH is still 
+  under the system's management.
   
 * If the operator deauthorized tBTC sortition pool between `T_start` and `T_end`, 
   they are not getting any rewards for interval `T`.
