@@ -267,6 +267,7 @@ func (ec *EthereumChain) getKeepContract(address common.Address) (*contract.Bond
 		ec.client,
 		ec.nonceManager,
 		ec.miningWaiter,
+		ec.blockCounter,
 		ec.transactionMutex,
 	)
 	if err != nil {
