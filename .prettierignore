@@ -1,0 +1,3 @@
+# Directories that have individual linting and formatting configuration:
+solidity/
+staker-rewards/

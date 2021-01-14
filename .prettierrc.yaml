@@ -1,0 +1,7 @@
+semi: false
+plugins: [prettier-plugin-sh, prettier-plugin-toml]
+
+overrides:
+  - files: ['*.yaml', '*.yml']
+    options:
+      singleQuote: true
