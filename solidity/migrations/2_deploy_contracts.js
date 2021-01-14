@@ -14,10 +14,7 @@ const FullyBackedECDSAKeepFactory = artifacts.require(
   "FullyBackedECDSAKeepFactory"
 )
 
-const {
-  deployBondedSortitionPoolFactory,
-  deployFullyBackedSortitionPoolFactory,
-} = require("@keep-network/sortition-pools/migrations/scripts/deployContracts")
+const SortitionPoolsDeployer = require("@keep-network/sortition-pools/migrations/scripts/deployContracts")
 const BondedSortitionPoolFactory = artifacts.require(
   "BondedSortitionPoolFactory"
 )
@@ -48,8 +45,9 @@ module.exports = async function (deployer, network) {
     initializationPeriod = 1
   }
 
-  await deployBondedSortitionPoolFactory(artifacts, deployer)
-  await deployFullyBackedSortitionPoolFactory(artifacts, deployer)
+  const sortitionPoolsDeployer = new SortitionPoolsDeployer(deployer, artifacts)
+  await sortitionPoolsDeployer.deployBondedSortitionPoolFactory()
+  await sortitionPoolsDeployer.deployFullyBackedSortitionPoolFactory()
 
   if (process.env.TEST) {
     TokenStakingStub = artifacts.require("TokenStakingStub")
