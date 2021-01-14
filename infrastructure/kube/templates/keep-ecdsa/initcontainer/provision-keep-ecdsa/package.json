@@ -1,8 +1,16 @@
 {
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix ."
+  },
   "dependencies": {
     "toml": "^3.0.0",
     "tomlify-j0.4": "^3.0.0",
     "@truffle/hdwallet-provider": "^1.0.38",
     "web3": "1.2.9"
+  },
+  "devDependencies": {
+    "eslint": "^7.17.0",
+    "eslint-config-keep": "github:keep-network/eslint-config-keep"
   }
 }
