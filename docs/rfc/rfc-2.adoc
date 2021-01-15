@@ -1,0 +1,172 @@
+:toc: macro
+
+= RFC 2: tBTC liquidation recovery functionality
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+The Keep ECDSA client is a generic client for ECDSA keeps, which are on-chain
+smart contract representations of a signing group that can provide on-demand
+key generation and signature services for a consumer application (represented
+by another smart contract). These applications occasionally require
+application-specific functionality that is best handled by the ECDSA client.
+tBTC is one such application that requires certain functionality specific to
+it implemented in the ECDSA client. RFC 1 describes an approach for handling
+certain, but not all, tBTC-specific functionality.
+
+In the Ethereum deployment of the tBTC system, the ECDSA keeps secure their
+correct operation by putting up collateral in the form of ETH on Ethereum. In
+cases where the collateral becomes insufficient for the tBTC system to
+guarantee its invariants (an amount that is controllable in the tBTC contracts),
+the tBTC system is authorized to _seize_ this collateral, and begin an auction
+process to bring itself back into balance.
+
+In these scenarios, the ECDSA keep signers are in control of BTC that can be
+split among their owners. This RFC seeks to outline a tBTC-specific
+functionality that would allow the clients in the signer group to
+automatically recover the BTC to designated addresses on the Bitcoin chain.
+
+=== Current Functionality
+
+ECDSA clients currently monitor the chain for notifications that a Keep has
+closed abnormally, in particular in the function
+https://github.com/keep-network/keep-ecdsa/blob/b916eaa491b886fb6c7cde2706d225b5b85ac2a2/pkg/client/client.go#L778[`monitorKeepTerminatedEvent`].
+For tBTC, a termination indicates that the keep backing a deposit has been
+closed without a successful redemption, meaning that the keep still holds
+BTC. Upon receiving a termination event, the client waits for a set number of
+block confirmations to occur in order to be sure the event will not be
+reorged away, then archives its key material, removes the keep from the local
+list of active keeps, and finally stops monitoring for any other events
+related to that keep.
+
+Notably absent in the current ECDSA client's feature set is any interaction
+with the Bitcoin chain. In particular, the ECDSA client does not contain any
+functionality for connecting to a Bitcoin node, nor does it at any point
+assemble Bitcoin data.
+
+== Proposal
+
+=== Goal
+
+This proposal is focused on achieveing a "least effort" implementation of a
+recovery protocol that can handle happy paths for BTC distribution. Where
+relevant, it points out _unhappy_ paths and may outline how they might be
+dealt with in the future, but these unhappy paths are explicitly considered
+out of scope for this RFC.
+
+Additionally, this proposal avoids _strictly requiring_ a connection to a
+Bitcoin node, as that is an additional piece of infrastructure that triggers
+additional requirements for larger staking providers that may be operating
+many nodes on behalf of multiple stakers.
+
+=== Implementation
+
+It is important to observe that interaction with the Bitcoin chain is
+_strictly unnecessary_ to construct and sign a Bitcoin transaction that
+transmits the BTC held by a keep to n addresses, split evenly.
+
+==== Bitcoin Transaction Requirements
+
+The specific goal to recover BTC from a terminated keep is an N-way split of
+the BTC, ~1/N going to each of the N signers in the signing group. To do this, a
+Bitcoin transaction can be constructed with a single input (the UTXO that funded
+the tBTC deposit) and N outputs (one for each signer). A fee, F, is subtracted
+from the deposit's lot size, L, and (L-F)/N BTC is sent to each signer.
+
+To compute the per-signer amount, the client needs to know:
+
+- N, the number of signers in the group.
+- F, the desired fee.
+- L, the deposit lot size.
+
+Once the amount is known, the Bitcoin sighash must be computed in order to
+construct a transaction that can spend the tBTC deposit's UTXO; see the tBTC
+spec's section on https://docs.keep.network/tbtc/#sighash[Standardized
+Sighash Construction] for an introduction to this process. Computing the sighash
+requires two additional pieces of data:
+
+- The previous outpoint, which is the concatenation of the funding UTXO's
+  32-byte little-endian transaction hash followed by the 4-byte little-endian
+  index of the output pointing to the funding UTXO.
+- The previous output script, which is to say the address of the deposit.
+
+Notably, both of these pieces of data can be retrieved or computed solely
+from data available on the tBTC deposit contract (the previous outpoint
+cannot be retrieved solely from the ECDSA keep contract, but requires the
+associated tBTC deposit contract).
+
+Finally, once the per-signer amount and sighash are both known, constructing the
+signed Bitcoin transaction requires a few more pieces of information:
+
+- The signature of the sighash, which must be generated via the threshold ECDSA
+  functionality of the keep.
+- The public key of the current holder, which in this case is the keep and
+  should be computable locally by each signer.
+- For each of the signers, a Bitcoin address to receive the split amount.
+
+==== Required Inputs
+
+From this, we reach the full set of required inputs and where they can be
+procured or computed:
+
+- N, the number of signers in the group, available on the Keep contract
+  from the `getMembers` view method, but also tracked locally on the client
+  alongside the members of the keep.
+- L, the deposit lot size, available on the tBTC deposit contract from the
+  `lotSizeSatoshis` view method.
+- The previous outpoint describing the deposit UTXO, available on the tBTC
+  deposit contract from the `fundingInfo` view method, which returns it as
+  the third `utxoOutpoint` entry in its 3-part return tuple.
+- The keep's public key, available on the Keep contract from the
+  `getPublicKey` view method.
+- The deposit redemption script, straightforwardly computable from the keep's
+  public key in a way detailed in the section on <<output-script>>.
+- One Bitcoin address per signer, specified on the client in a way detailed
+  in the section on <<recovery-address>>.
+- The keep's signature on the sighash produced by the previous items,
+  computed via the threshold ECDSA protocol in a way detailed in the section on
+  <<signing>>.
+- F, the desired fee, which is a function of the going feerate on the Bitcoin
+  network and the number of bytes in the final transaction.
+
+The desired fee is the most problematic one to procure under the goal of not
+strictly requiring a Bitcoin node connection, as generally a Bitcoin node
+provides estimates of the feerates that will achieve transaction confirmation
+within a certain amount of time. A short-term solution is proposed in the
+section on <<bitcoin-fee>>.
+
+[[output-script]]
+===== Computing the Deposit Output Script
+
+[[recovery-address]]
+===== Specifying an Operator's Bitcoin Recovery Address
+
+[[signing]]
+===== Signing 
+
+// Round 1: exchange addresses. Reminder that underlying transport ensures the
+//          messages are from the correct peers.
+// Code to generate sighash
+// Signing
+
+[[bitcoin-fee]]
+===== Dealing with the Bitcoin Fee
+
+==== Submitting the Signed Transaction
+
+=== Limitations
+
+Bitcoin fees, additional dependencies, transaction submission.
+
+== Open Questions
+
+Why not invert this? A single loop monitoring for each of these
+events and checking against locally handled keeps.
+
+[bibliography]
+== Related Links
+
+- https://docs.keep.network/tbtc/[tBTC specification]
