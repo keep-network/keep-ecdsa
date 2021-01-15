@@ -203,7 +203,7 @@ func Initialize(
 				defer requestedSigners.remove(event.KeepAddress)
 
 				if keepsRegistry.HasSigner(event.KeepAddress) {
-					logger.Warning(
+					logger.Warningf(
 						"signer for keep [%s] already registered;",
 						event.KeepAddress.String(),
 					)
