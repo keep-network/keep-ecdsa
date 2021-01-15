@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-ecdsa/config"
@@ -50,6 +51,13 @@ func init() {
 		Usage:       `Provides access to the BondedECDSAKeepVendor contract.`,
 		Description: bondedECDSAKeepVendorDescription,
 		Subcommands: []cli.Command{{
+			Name:      "factory-upgrade-time-delay",
+			Usage:     "Calls the constant method factoryUpgradeTimeDelay on the BondedECDSAKeepVendor contract.",
+			ArgsUsage: "",
+			Action:    becdsakvFactoryUpgradeTimeDelay,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "initialized",
 			Usage:     "Calls the constant method initialized on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "",
@@ -61,13 +69,6 @@ func init() {
 			Usage:     "Calls the constant method selectFactory on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "",
 			Action:    becdsakvSelectFactory,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "factory-upgrade-time-delay",
-			Usage:     "Calls the constant method factoryUpgradeTimeDelay on the BondedECDSAKeepVendor contract.",
-			ArgsUsage: "",
-			Action:    becdsakvFactoryUpgradeTimeDelay,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -97,6 +98,26 @@ func init() {
 
 /// ------------------- Const methods -------------------
 
+func becdsakvFactoryUpgradeTimeDelay(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepVendor(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.FactoryUpgradeTimeDelayAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
 func becdsakvInitialized(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
 	if err != nil {
@@ -124,26 +145,6 @@ func becdsakvSelectFactory(c *cli.Context) error {
 	}
 
 	result, err := contract.SelectFactoryAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakvFactoryUpgradeTimeDelay(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepVendor(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.FactoryUpgradeTimeDelayAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -326,6 +327,14 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 
 	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
 
+	blockCounter, err := blockcounter.CreateBlockCounter(client)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create Ethereum blockcounter: [%v]",
+			err,
+		)
+	}
+
 	address := common.HexToAddress(config.ContractAddresses["BondedECDSAKeepVendor"])
 
 	return contract.NewBondedECDSAKeepVendor(
@@ -334,6 +343,7 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 		client,
 		ethutil.NewNonceManager(key.Address, client),
 		miningWaiter,
+		blockCounter,
 		&sync.Mutex{},
 	)
 }
