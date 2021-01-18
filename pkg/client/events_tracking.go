@@ -31,6 +31,13 @@ func (rst *requestedSignersTrack) add(keepAddress common.Address) bool {
 	return true
 }
 
+func (rst *requestedSignersTrack) has(keepAddress common.Address) bool {
+	rst.mutex.Lock()
+	defer rst.mutex.Unlock()
+
+	return rst.data[keepAddress.String()]
+}
+
 func (rst *requestedSignersTrack) remove(keepAddress common.Address) {
 	rst.mutex.Lock()
 	defer rst.mutex.Unlock()
@@ -67,6 +74,19 @@ func (rst *requestedSignaturesTrack) add(keepAddress common.Address, digest [32]
 	keepSignaturesRequests[digestString] = true
 	return true
 
+}
+
+func (rst *requestedSignaturesTrack) has(keepAddress common.Address, digest [32]byte) bool {
+	rst.mutex.Lock()
+	defer rst.mutex.Unlock()
+
+	keepSignaturesRequests, ok := rst.data[keepAddress.String()]
+	if !ok {
+		return false
+	}
+
+	digestString := hex.EncodeToString(digest[:])
+	return keepSignaturesRequests[digestString]
 }
 
 func (rst *requestedSignaturesTrack) remove(keepAddress common.Address, digest [32]byte) {

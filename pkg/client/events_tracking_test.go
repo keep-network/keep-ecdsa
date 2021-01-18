@@ -76,6 +76,30 @@ func TestRequestedSignersTrackRemove_WhenEmpty(t *testing.T) {
 	}
 }
 
+func TestRequestedSignersTrackHas(t *testing.T) {
+	keepAddress1 := common.BytesToAddress([]byte{1})
+	keepAddress2 := common.BytesToAddress([]byte{2})
+
+	rs := &requestedSignersTrack{
+		data:  make(map[string]bool),
+		mutex: &sync.Mutex{},
+	}
+
+	rs.add(keepAddress1)
+
+	if !rs.has(keepAddress1) {
+		t.Error("event was emitted and should be tracked")
+	}
+	if rs.has(keepAddress2) {
+		t.Error("event was not emitted and should not be tracked")
+	}
+
+	rs.remove(keepAddress1)
+	if rs.has(keepAddress1) {
+		t.Error("event was removed and should no longer be tracked")
+	}
+}
+
 func TestRequestedSignaturesTrackAdd_SameKeep(t *testing.T) {
 	keepAddress := common.BytesToAddress([]byte{1})
 
@@ -206,5 +230,35 @@ func TestRequestedSignaturesTrackRemove_WhenEmpty(t *testing.T) {
 			"signature from the first keep wasn't requested before; " +
 				"event should be added successfully",
 		)
+	}
+}
+
+func TestRequestedSignaturesTrackHas(t *testing.T) {
+	keepAddress1 := common.BytesToAddress([]byte{1})
+	keepAddress2 := common.BytesToAddress([]byte{2})
+
+	digest1 := [32]byte{9}
+	digest2 := [32]byte{10}
+
+	rs := &requestedSignaturesTrack{
+		data:  make(map[string]map[string]bool),
+		mutex: &sync.Mutex{},
+	}
+
+	rs.add(keepAddress1, digest1)
+
+	if !rs.has(keepAddress1, digest1) {
+		t.Errorf("event was emitted and should be tracked")
+	}
+	if rs.has(keepAddress1, digest2) {
+		t.Errorf("event with this digest was not emitted and should not be tracked")
+	}
+	if rs.has(keepAddress2, digest1) {
+		t.Errorf("event for this keep was not emitted and should not be tracked")
+	}
+
+	rs.remove(keepAddress1, digest1)
+	if rs.has(keepAddress1, digest1) {
+		t.Errorf("event was removed and should no longer be tracked")
 	}
 }
