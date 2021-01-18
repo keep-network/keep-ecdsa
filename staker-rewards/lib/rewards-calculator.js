@@ -150,7 +150,7 @@ export default class RewardsCalculator {
           violations.push("keygenSLA")
         }
       } else {
-        if (operatorSLA.keygenSLA < 90) {
+        if (operatorSLA.keygenSLA < 80) {
           violations.push("keygenSLA")
         }
       }
