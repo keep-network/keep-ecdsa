@@ -28,10 +28,10 @@ import (
 type Chain interface {
 	eth.Handle
 
-	RequestSignature(keepAddress common.Address, digest [32]byte) error
 	OpenKeep(keepAddress common.Address, members []common.Address)
 	CloseKeep(keepAddress common.Address) error
 	TerminateKeep(keepAddress common.Address) error
+	RequestSignature(keepAddress common.Address, digest [32]byte) error
 	AuthorizeOperator(operatorAddress common.Address)
 }
 
@@ -277,7 +277,33 @@ func (lc *localChain) IsAwaitingSignature(
 	keepAddress common.Address,
 	digest [32]byte,
 ) (bool, error) {
-	panic("implement")
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
+
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return false, fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	return keep.latestDigest != [32]byte{}, nil
+}
+
+func (lc *localChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
+
+	keep, ok := lc.keeps[keepAddress]
+	if !ok {
+		return nil, fmt.Errorf(
+			"failed to find keep with address: [%s]",
+			keepAddress.String(),
+		)
+	}
+
+	return keep.publicKey[:], nil
 }
 
 // IsActive checks for current state of a keep on-chain.
@@ -418,10 +444,6 @@ func (lc *localChain) SignatureRequestedBlock(
 	keepAddress common.Address,
 	digest [32]byte,
 ) (uint64, error) {
-	panic("implement")
-}
-
-func (lc *localChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
 	panic("implement")
 }
 
