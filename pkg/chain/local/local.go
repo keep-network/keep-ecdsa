@@ -28,6 +28,7 @@ import (
 type Chain interface {
 	eth.Handle
 
+	RequestSignature(keepAddress common.Address, digest [32]byte) error
 	OpenKeep(keepAddress common.Address, members []common.Address)
 	CloseKeep(keepAddress common.Address) error
 	TerminateKeep(keepAddress common.Address) error

@@ -22,7 +22,7 @@ func TestRequestSignatureNonexistentKeep(t *testing.T) {
 	digest := [32]byte{1}
 	expectedError := fmt.Errorf("failed to find keep with address: [0x0000000000000000000000000000000000000001]")
 
-	err := chain.requestSignature(keepAddress, digest)
+	err := chain.RequestSignature(keepAddress, digest)
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf(
@@ -54,7 +54,7 @@ func TestRequestSignatureNoHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +87,7 @@ func TestRequestSignature(t *testing.T) {
 
 	chain.keeps[keepAddress].signatureRequestedHandlers[0] = handler
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}

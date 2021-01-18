@@ -86,7 +86,7 @@ func TestOnSignatureRequested(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +179,7 @@ func TestSubmitSignature(t *testing.T) {
 
 	digest := [32]byte{17, 18}
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
