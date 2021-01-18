@@ -144,18 +144,65 @@ section on <<bitcoin-fee>>.
 [[recovery-address]]
 ===== Specifying an Operator's Bitcoin Recovery Address
 
-[[signing]]
-===== Signing 
+To specify a given operator's Bitcoin Recovery Address, this proposal suggests
+adding a single key to the `Extensions.TBTC` config entry, `BTCRefundTarget`.
+The value for this key should be one of:
 
-// Round 1: exchange addresses. Reminder that underlying transport ensures the
-//          messages are from the correct peers.
-// Code to generate sighash
-// Signing
+- A simple BTC address.
+- An xpub, ypub, or zpub that allows the client to derive new addresses for
+  each refund.
+
+The challenge with a *pub is that, to avoid reuse, it needs to do one of two
+things:
+
+- Be able to check, on-chain, whether a given address has been used; or,
+- Have a *pub that is only meant for use by the client, and have the client
+  track the latest address generated (as an index starting at 0).
+
+To avoid _strictly requiring_ a connection to a Bitcoin node, this RFC proposes
+tracking the latest address generated, and allowing an additional config key,
+`BTCRefundTargetDerivationStartIndex`, that sets a starting point. The client
+should write the updated index to the `current/` directory that tracks
+active key shares, to an encrypted file named
+`current-btc-refund-derivation-index`. The operator should then seek to obtain
+from the staker an extended public key that is only used for this purpose.
+
+If an optional Bitcoin node connection is available, the client should
+additionally check a derived address for a balance before publishing. A fallback
+could be implemented that checks
+`https://blockstream.info/api/address/<address>` for a given derived address to
+ensure `tx_count` is 0.
 
 [[bitcoin-fee]]
 ===== Dealing with the Bitcoin Fee
 
+// Each client sets a max fee per vbyte in config. Signing exchanges each
+// client's max fee. The minimum of all the max fees is used. A default that
+// would overpay for confirmation in 100 (?) blocks under most circumstances
+// should be used if the operator does not specify another maximum. If an
+// optional Bitcoin node connection is present, the client should override the
+// max fee in config using the suggested fee from the Bitcoin node. Possible
+// default fallback if no Bitcoin node available: attempt to GET fee estimates
+// from `https://blockstream.info/api/fee-estimates`.
+
+[[signing]]
+===== Signing 
+
+// Round 1: exchange addresses and max fees. Reminder that underlying transport
+//          ensures the messages are from the correct peers.
+// Generate sighash;
+// https://github.com/summa-tx/bitcoin-spv/blob/v2.0.0/contracts/CheckBitcoinSigs.sol#L137-L159
+// for one-input-one-output in Solidity,
+// https://github.com/keep-network/tbtc.js/blob/b91560f579cb41e414fba3a80678bf61659e3061/bin/commands/bitcoin.js#L142-L208 for variable-output in JavaScript.
+// Signing via tss
+// Signing starts `blockConfirmations` after a termination event is seen.
+
 ==== Submitting the Signed Transaction
+
+// Log signed transaction on WARN level. If an optional Bitcoin node connection
+// is present, the client should submit the transaction, even if other clients
+// also submit it. Possible default fallback if no Bitcoin node available:
+// attempt to POST signed transaction hex to `https://blockstream.info/api/tx`.
 
 === Limitations
 
@@ -170,3 +217,4 @@ events and checking against locally handled keeps.
 == Related Links
 
 - https://docs.keep.network/tbtc/[tBTC specification]
+- https://github.com/Blockstream/esplora/blob/master/API.md[Blockstream API docs]
