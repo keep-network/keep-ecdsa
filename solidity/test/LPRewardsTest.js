@@ -421,7 +421,7 @@ describe("LPRewardsTBTCSaddle", () => {
   let keepToken
   let lpToken
   let lpRewards
-  let lpRewardsStaker
+  let stakerContract
 
   before(async () => {
     keepToken = await KeepToken.new({from: keepTokenOwner})
@@ -431,7 +431,7 @@ describe("LPRewardsTBTCSaddle", () => {
       lpToken.address,
       {from: lpRewardsOwner}
     )
-    lpRewardsStaker = await LPRewardsStaker.new(
+    stakerContract = await LPRewardsStaker.new(
       lpToken.address,
       lpRewards.address
     )
@@ -497,8 +497,8 @@ describe("LPRewardsTBTCSaddle", () => {
       // ok, no did not revert
 
       // can contract stake?
-      await lpToken.mint(lpRewardsStaker.address, lpTokenAmount)
-      await lpRewardsStaker.stake(lpTokenAmount, {from: stakerEOA})
+      await lpToken.mint(stakerContract.address, lpTokenAmount)
+      await stakerContract.stake(lpTokenAmount, {from: stakerEOA})
       // ok, did not revert
     })
 
@@ -514,9 +514,9 @@ describe("LPRewardsTBTCSaddle", () => {
       // ok, no did not revert
 
       // can contract stake?
-      await lpToken.mint(lpRewardsStaker.address, lpTokenAmount)
+      await lpToken.mint(stakerContract.address, lpTokenAmount)
       await expectRevert(
-        lpRewardsStaker.stake(lpTokenAmount, {from: stakerEOA}),
+        stakerContract.stake(lpTokenAmount, {from: stakerEOA}),
         "Only Externally Owned Account can stake"
       )
     })
