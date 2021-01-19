@@ -248,8 +248,11 @@ contract LPRewardsTBTCSaddle is LPRewards {
 
     // if the pool is gated, disallow tx's that didn't come from msg.sender.
     function stake(uint256 amount) public {
-        // solium-disable-next-line security/no-tx-origin
-        require(!_gated || msg.sender == tx.origin, "Only EOA can stake");
+        require(
+            // solium-disable-next-line security/no-tx-origin
+            !_gated || msg.sender == tx.origin,
+            "Only Externally Owned Account can stake"
+        );
         super.stake(amount);
     }
 

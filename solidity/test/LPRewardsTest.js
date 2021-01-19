@@ -503,7 +503,7 @@ describe("LPRewardsTBTCSaddle", () => {
       await lpToken.mint(lpRewardsStaker.address, lpTokenAmount)
       await expectRevert(
         lpRewardsStaker.stake(lpTokenAmount, {from: stakerEOA}),
-        "Only EOA can stake"
+        "Only Externally Owned Account can stake"
       )
     })
 
