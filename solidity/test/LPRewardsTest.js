@@ -456,6 +456,12 @@ describe("LPRewardsTBTCSaddle", () => {
     await restoreSnapshot()
   })
 
+  describe("constructor", () => {
+    it("enables gated state", async () => {
+      expect(await lpRewards.gated()).to.be.true
+    })
+  })
+
   describe("setGated", () => {
     it("can be called by owner", async () => {
       await lpRewards.setGated(false, {from: lpRewardsOwner})
