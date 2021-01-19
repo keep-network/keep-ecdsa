@@ -15,45 +15,45 @@ import (
 var keepAddress = common.HexToAddress("0x4e09cadc7037afa36603138d1c0b76fe2aa5039c")
 var digest = sha256.Sum256([]byte("Do or do not. There is no try."))
 
-func TestDoGenerateNewSigner(t *testing.T) {
+func TestDoGenerateKey(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	deduplicator, _, _ := newDeduplicator(ctx)
 
-	canGenerate := deduplicator.generateKeyIfAllowed(keepAddress)
+	canGenerate := deduplicator.notifyKeyGenStarted(keepAddress)
 	if !canGenerate {
-		t.Fatal("should be allowed to generate a signer")
+		t.Fatal("should be allowed to generate a key")
 	}
 }
 
-func TestDoNotGenerateSignerIfCurrentlyGenerating(t *testing.T) {
+func TestDoNotGenerateKeyIfCurrentlyGenerating(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	deduplicator, _, _ := newDeduplicator(ctx)
 
-	deduplicator.generateKeyIfAllowed(keepAddress)
+	deduplicator.notifyKeyGenStarted(keepAddress)
 
-	canGenerate := deduplicator.generateKeyIfAllowed(keepAddress)
+	canGenerate := deduplicator.notifyKeyGenStarted(keepAddress)
 	if canGenerate {
-		t.Fatal("should not be allowed to generate a signer")
+		t.Fatal("should not be allowed to generate a key")
 	}
 }
 
-func TestDoNotGenerateSignerIfAlreadyGenerated(t *testing.T) {
+func TestDoNotGenerateKeyIfAlreadyGenerated(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	deduplicator, registry, _ := newDeduplicator(ctx)
 
-	deduplicator.generateKeyIfAllowed(keepAddress)
+	deduplicator.notifyKeyGenStarted(keepAddress)
 	registry.AddSigner(keepAddress)
-	deduplicator.notifyKeyGenerated(keepAddress)
+	deduplicator.notifyKeyGenCompleted(keepAddress)
 
-	canGenerate := deduplicator.generateKeyIfAllowed(keepAddress)
+	canGenerate := deduplicator.notifyKeyGenStarted(keepAddress)
 	if canGenerate {
-		t.Fatal("should not be allowed to generate a signer")
+		t.Fatal("should not be allowed to generate a key")
 	}
 }
 
@@ -78,7 +78,7 @@ func TestDoSign(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	canSign, err := deduplicator.signIfAllowed(keepAddress, digest)
+	canSign, err := deduplicator.notifySigningStarted(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,9 +108,9 @@ func TestDoNotSignIfCurrentlySigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deduplicator.signIfAllowed(keepAddress, digest)
+	deduplicator.notifySigningStarted(keepAddress, digest)
 
-	canSign, err := deduplicator.signIfAllowed(keepAddress, digest)
+	canSign, err := deduplicator.notifySigningStarted(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +135,7 @@ func TestDoNotSignIfNotAwaitingASignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	canSign, err := deduplicator.signIfAllowed(keepAddress, digest)
+	canSign, err := deduplicator.notifySigningStarted(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +168,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	canSign, err := deduplicator.signIfAllowed(keepAddress, digest)
+	canSign, err := deduplicator.notifySigningStarted(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,12 +197,94 @@ func TestDoSignOneMoreTime(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	canSign, err = deduplicator.signIfAllowed(keepAddress, digest)
+	canSign, err = deduplicator.notifySigningStarted(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !canSign {
 		t.Errorf("should be allowed to sign")
+	}
+}
+
+func TestDoClose(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	deduplicator, registry, _ := newDeduplicator(ctx)
+	registry.AddSigner(keepAddress)
+
+	canClose := deduplicator.notifyClosingStarted(keepAddress)
+	if !canClose {
+		t.Fatal("should be allowed to close a keep")
+	}
+}
+
+func TestDoNotCloseIfCurrentlyClosing(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	deduplicator, registry, _ := newDeduplicator(ctx)
+	registry.AddSigner(keepAddress)
+
+	deduplicator.notifyClosingStarted(keepAddress)
+
+	canClose := deduplicator.notifyClosingStarted(keepAddress)
+	if canClose {
+		t.Fatal("should not be allowed to close a keep")
+	}
+}
+
+func TestDoNotCloseIfAlreadyClosed(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	deduplicator, _, _ := newDeduplicator(ctx)
+	// keep not in the registry
+
+	canClose := deduplicator.notifyClosingStarted(keepAddress)
+	if canClose {
+		t.Fatal("should not be allowed to close a keep")
+	}
+}
+
+func TestDoTerminate(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	deduplicator, registry, _ := newDeduplicator(ctx)
+	registry.AddSigner(keepAddress)
+
+	canTerminate := deduplicator.notifyTerminatingStarted(keepAddress)
+	if !canTerminate {
+		t.Fatal("should be allowed to terminate a keep")
+	}
+}
+
+func TestDoNotTerminateIfCurrentlyTerminating(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	deduplicator, registry, _ := newDeduplicator(ctx)
+	registry.AddSigner(keepAddress)
+
+	deduplicator.notifyTerminatingStarted(keepAddress)
+
+	canTerminate := deduplicator.notifyTerminatingStarted(keepAddress)
+	if canTerminate {
+		t.Fatal("should not be allowed to terminate a keep")
+	}
+}
+
+func TestDoNotTerminateIfAlreadyTerminated(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	deduplicator, _, _ := newDeduplicator(ctx)
+	// keep not in the registry
+
+	canTerminate := deduplicator.notifyTerminatingStarted(keepAddress)
+	if canTerminate {
+		t.Fatal("should not be allowed to terminate a keep")
 	}
 }
 

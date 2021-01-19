@@ -58,7 +58,7 @@ func Initialize(
 
 	tssNode.InitializeTSSPreParamsPool()
 
-	requestedSigners := &requestedSignersTrack{
+	requestedSigners := &keyGenKeepTrack{
 		&keepEventTrack{
 			data:  make(map[string]bool),
 			mutex: &sync.Mutex{},

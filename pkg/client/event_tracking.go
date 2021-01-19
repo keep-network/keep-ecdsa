@@ -7,31 +7,31 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// requestedSignersTrack is used to track signers generation started after keep
-// creation event is received. It is used to ensure that the process execution
-// is not duplicated, e.g. when the client receives the same event multiple times.
-// When event is received, it should be noted in this struct. When the signer
-// generation process completes (no matter if it succeeded or failed), it should
-// be removed from this struct.
-type requestedSignersTrack struct {
+// keyGenKeepTrack is used to track key generation after keep opened event is
+// received. It is used to ensure that the process execution is not duplicated,
+// e.g. when the client receives the same event multiple times. When event is
+// received, it should be noted in this struct. When the signer generation
+// process completes (no matter if it succeeded or failed), it should be removed
+// from this struct.
+type keyGenKeepTrack struct {
 	*keepEventTrack
 }
 
-// closeKeepTrack is used to track keep close request events. It is used to
-// ensure that the process execution is not duplicated, e.g. when the client
-// receives the same event multiple times. When event is received, it should be
-// noted in this struct. When the signer generation process completes (no matter
+// closeKeepTrack is used to track keep close events. It is used to ensure
+// that the process execution is not duplicated, e.g. when the client receives
+// the same event multiple times. When event is received, it should be noted
+// in this struct. When the signer generation process completes (no matter
 // if it succeeded or failed), it should be removed from this struct.
 type closeKeepTrack struct {
 	*keepEventTrack
 }
 
-// archiveKeepTrack is used to track keep close request events. It is used to
+// terminateKeepTrack is used to track keep terminate events. It is used to
 // ensure that the process execution is not duplicated, e.g. when the client
 // receives the same event multiple times. When event is received, it should be
 // noted in this struct. When the signer generation process completes (no matter
 // if it succeeded or failed), it should be removed from this struct.
-type archiveKeepTrack struct {
+type terminateKeepTrack struct {
 	*keepEventTrack
 }
 
