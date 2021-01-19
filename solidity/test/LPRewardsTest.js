@@ -485,35 +485,43 @@ describe("LPRewardsTBTCSaddle", () => {
   })
 
   describe("stake", () => {
-    it("allows anyone to stake in a non-gated state", async () => {
+    it("in the non-gated state allows an externally owned account to stake", async () => {
       await lpRewards.setGated(false, {from: lpRewardsOwner})
 
       const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
 
-      // can EOA stake?
       await lpToken.mint(stakerEOA, lpTokenAmount)
       await lpToken.approve(lpRewards.address, lpTokenAmount, {from: stakerEOA})
       await lpRewards.stake(lpTokenAmount, {from: stakerEOA})
       // ok, no did not revert
+    })
 
-      // can contract stake?
+    it("in the non-gated state allows a contract to stake", async () => {
+      await lpRewards.setGated(false, {from: lpRewardsOwner})
+
+      const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
+
       await lpToken.mint(stakerContract.address, lpTokenAmount)
       await stakerContract.stake(lpTokenAmount, {from: stakerEOA})
       // ok, did not revert
     })
 
-    it("allows only EOA to stake in a gated state", async () => {
+    it("in the gated state allows an externally owned account to stake", async () => {
       await lpRewards.setGated(true, {from: lpRewardsOwner})
 
       const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
 
-      // can EOA stake?
       await lpToken.mint(stakerEOA, lpTokenAmount)
       await lpToken.approve(lpRewards.address, lpTokenAmount, {from: stakerEOA})
       await lpRewards.stake(lpTokenAmount, {from: stakerEOA})
       // ok, no did not revert
+    })
 
-      // can contract stake?
+    it("in the gated state does not allow a contract to stake", async () => {
+      await lpRewards.setGated(true, {from: lpRewardsOwner})
+
+      const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
+
       await lpToken.mint(stakerContract.address, lpTokenAmount)
       await expectRevert(
         stakerContract.stake(lpTokenAmount, {from: stakerEOA}),
