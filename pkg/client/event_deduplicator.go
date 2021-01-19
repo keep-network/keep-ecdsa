@@ -8,6 +8,10 @@ import (
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
+// TODO: naming sucks. generate* - we are not generating...
+// OnKeepClosed
+// OnKeepTerminated
+
 type eventDeduplicator struct {
 	keepRegistry keepRegistry
 	chain        chain.Handle
@@ -25,8 +29,10 @@ func newEventDeduplicator(
 	chain chain.Handle,
 ) *eventDeduplicator {
 	requestedSigners := &requestedSignersTrack{
-		data:  make(map[string]bool),
-		mutex: &sync.Mutex{},
+		&keepEventTrack{
+			data:  make(map[string]bool),
+			mutex: &sync.Mutex{},
+		},
 	}
 	requestedSignatures := &requestedSignaturesTrack{
 		data:  make(map[string]map[string]bool),

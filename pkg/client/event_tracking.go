@@ -14,35 +14,69 @@ import (
 // generation process completes (no matter if it succeeded or failed), it should
 // be removed from this struct.
 type requestedSignersTrack struct {
+	*keepEventTrack
+}
+
+// closeKeepTrack is used to track keep close request events. It is used to
+// ensure that the process execution is not duplicated, e.g. when the client
+// receives the same event multiple times. When event is received, it should be
+// noted in this struct. When the signer generation process completes (no matter
+// if it succeeded or failed), it should be removed from this struct.
+type closeKeepTrack struct {
+	*keepEventTrack
+}
+
+// archiveKeepTrack is used to track keep close request events. It is used to
+// ensure that the process execution is not duplicated, e.g. when the client
+// receives the same event multiple times. When event is received, it should be
+// noted in this struct. When the signer generation process completes (no matter
+// if it succeeded or failed), it should be removed from this struct.
+type archiveKeepTrack struct {
+	*keepEventTrack
+}
+
+// keepEventTrack is a simple event track implementation allowing to track
+// events that are happening once in the entire keep history, for example:
+// - keep opened, generating signer
+// - keep getting closed
+// - keep getting archived
+//
+// Those events do not require any special tracking or additional fields to
+// distinguish them. It is used to ensure that the process execution is not
+// duplicated, e.g. when the client receives the same event multiple times. When
+// event is received, it should be noted in this struct. When the signer
+// generation process completes (no matter if it succeeded or failed), it should
+// be removed from this struct.
+type keepEventTrack struct {
 	data  map[string]bool // <keep, bool>
 	mutex *sync.Mutex
 }
 
-func (rst *requestedSignersTrack) add(keepAddress common.Address) bool {
-	rst.mutex.Lock()
-	defer rst.mutex.Unlock()
+func (ket *keepEventTrack) add(keepAddress common.Address) bool {
+	ket.mutex.Lock()
+	defer ket.mutex.Unlock()
 
-	if rst.data[keepAddress.String()] == true {
+	if ket.data[keepAddress.String()] == true {
 		return false
 	}
 
-	rst.data[keepAddress.String()] = true
+	ket.data[keepAddress.String()] = true
 
 	return true
 }
 
-func (rst *requestedSignersTrack) has(keepAddress common.Address) bool {
-	rst.mutex.Lock()
-	defer rst.mutex.Unlock()
+func (ket *keepEventTrack) has(keepAddress common.Address) bool {
+	ket.mutex.Lock()
+	defer ket.mutex.Unlock()
 
-	return rst.data[keepAddress.String()]
+	return ket.data[keepAddress.String()]
 }
 
-func (rst *requestedSignersTrack) remove(keepAddress common.Address) {
-	rst.mutex.Lock()
-	defer rst.mutex.Unlock()
+func (ket *keepEventTrack) remove(keepAddress common.Address) {
+	ket.mutex.Lock()
+	defer ket.mutex.Unlock()
 
-	delete(rst.data, keepAddress.String())
+	delete(ket.data, keepAddress.String())
 }
 
 // requestedSignaturesTrack is used to track signature calculation started after

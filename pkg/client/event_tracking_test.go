@@ -7,11 +7,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func TestRequestedSignersTrackAdd(t *testing.T) {
+func TestKeepEventTrackAdd(t *testing.T) {
 	keepAddress1 := common.BytesToAddress([]byte{1})
 	keepAddress2 := common.BytesToAddress([]byte{2})
 
-	rs := &requestedSignersTrack{
+	rs := &keepEventTrack{
 		data:  make(map[string]bool),
 		mutex: &sync.Mutex{},
 	}
@@ -25,10 +25,10 @@ func TestRequestedSignersTrackAdd(t *testing.T) {
 	}
 }
 
-func TestRequestedSignersTrackAdd_Duplicate(t *testing.T) {
+func TestKeepEventTrackAdd_Duplicate(t *testing.T) {
 	keepAddress := common.BytesToAddress([]byte{1})
 
-	rs := &requestedSignersTrack{
+	rs := &keepEventTrack{
 		data:  make(map[string]bool),
 		mutex: &sync.Mutex{},
 	}
@@ -42,10 +42,10 @@ func TestRequestedSignersTrackAdd_Duplicate(t *testing.T) {
 	}
 }
 
-func TestRequestedSignersTrackRemove(t *testing.T) {
+func TestKeepEventTrackRemove(t *testing.T) {
 	keepAddress := common.BytesToAddress([]byte{1})
 
-	rs := &requestedSignersTrack{
+	rs := &keepEventTrack{
 		data:  make(map[string]bool),
 		mutex: &sync.Mutex{},
 	}
@@ -61,10 +61,10 @@ func TestRequestedSignersTrackRemove(t *testing.T) {
 	}
 }
 
-func TestRequestedSignersTrackRemove_WhenEmpty(t *testing.T) {
+func TestKeepEventTrackRemove_WhenEmpty(t *testing.T) {
 	keepAddress := common.BytesToAddress([]byte{1})
 
-	rs := &requestedSignersTrack{
+	rs := &keepEventTrack{
 		data:  make(map[string]bool),
 		mutex: &sync.Mutex{},
 	}
@@ -76,11 +76,11 @@ func TestRequestedSignersTrackRemove_WhenEmpty(t *testing.T) {
 	}
 }
 
-func TestRequestedSignersTrackHas(t *testing.T) {
+func TestKeepEventTrackHas(t *testing.T) {
 	keepAddress1 := common.BytesToAddress([]byte{1})
 	keepAddress2 := common.BytesToAddress([]byte{2})
 
-	rs := &requestedSignersTrack{
+	rs := &keepEventTrack{
 		data:  make(map[string]bool),
 		mutex: &sync.Mutex{},
 	}
