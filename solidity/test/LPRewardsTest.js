@@ -468,6 +468,14 @@ describe("LPRewardsTBTCSaddle", () => {
         "Ownable: caller is not the owner"
       )
     })
+
+    it("updates gated state", async () => {
+      await lpRewards.setGated(false, {from: lpRewardsOwner})
+      expect(await lpRewards.gated()).to.be.false
+
+      await lpRewards.setGated(true, {from: lpRewardsOwner})
+      expect(await lpRewards.gated()).to.be.true
+    })
   })
 
   describe("stake", () => {
