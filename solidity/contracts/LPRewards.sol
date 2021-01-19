@@ -236,3 +236,27 @@ contract LPRewardsKEEPTBTC is LPRewards {
         LPRewards(keepToken, keepTbtcUniswapPair)
     {}
 }
+
+/// @title KEEP rewards for the tBTC Saddle liquidity pool.
+contract LPRewardsTBTCSaddle is LPRewards {
+    bool public gated = true;
+
+    constructor(KeepToken keepToken, IERC20 tbtcSaddleLPToken)
+        public
+        LPRewards(keepToken, tbtcSaddleLPToken)
+    {}
+
+    // if the pool is gated, disallow tx's that didn't come from msg.sender.
+    function stake(uint256 amount) public {
+        require(
+            // solium-disable-next-line security/no-tx-origin
+            !gated || msg.sender == tx.origin,
+            "Only Externally Owned Account can stake"
+        );
+        super.stake(amount);
+    }
+
+    function setGated(bool _gated) public onlyOwner {
+        gated = _gated;
+    }
+}
