@@ -1,6 +1,6 @@
-const {contract, web3, accounts} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
-const {time, expectRevert} = require("@openzeppelin/test-helpers")
+const { contract, web3, accounts } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
+const { time, expectRevert } = require("@openzeppelin/test-helpers")
 
 const LPRewards = contract.fromArtifact("LPRewards")
 const KeepToken = contract.fromArtifact("KeepToken")
@@ -424,12 +424,12 @@ describe("LPRewardsTBTCSaddle", () => {
   let stakerContract
 
   before(async () => {
-    keepToken = await KeepToken.new({from: keepTokenOwner})
-    lpToken = await WrappedToken.new({from: lpTokenOwner})
+    keepToken = await KeepToken.new({ from: keepTokenOwner })
+    lpToken = await WrappedToken.new({ from: lpTokenOwner })
     lpRewards = await LPRewardsTBTCSaddle.new(
       keepToken.address,
       lpToken.address,
-      {from: lpRewardsOwner}
+      { from: lpRewardsOwner }
     )
     stakerContract = await LPRewardsStaker.new(
       lpToken.address,
@@ -464,67 +464,71 @@ describe("LPRewardsTBTCSaddle", () => {
 
   describe("setGated", () => {
     it("can be called by owner", async () => {
-      await lpRewards.setGated(false, {from: lpRewardsOwner})
+      await lpRewards.setGated(false, { from: lpRewardsOwner })
       // ok, did not revert
     })
 
     it("can not be called by non-owner", async () => {
       await expectRevert(
-        lpRewards.setGated(false, {from: thirdParty}),
+        lpRewards.setGated(false, { from: thirdParty }),
         "Ownable: caller is not the owner"
       )
     })
 
     it("updates gated state", async () => {
-      await lpRewards.setGated(false, {from: lpRewardsOwner})
+      await lpRewards.setGated(false, { from: lpRewardsOwner })
       expect(await lpRewards.gated()).to.be.false
 
-      await lpRewards.setGated(true, {from: lpRewardsOwner})
+      await lpRewards.setGated(true, { from: lpRewardsOwner })
       expect(await lpRewards.gated()).to.be.true
     })
   })
 
   describe("stake", () => {
     it("in the non-gated state allows an externally owned account to stake", async () => {
-      await lpRewards.setGated(false, {from: lpRewardsOwner})
+      await lpRewards.setGated(false, { from: lpRewardsOwner })
 
       const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
 
       await lpToken.mint(stakerEOA, lpTokenAmount)
-      await lpToken.approve(lpRewards.address, lpTokenAmount, {from: stakerEOA})
-      await lpRewards.stake(lpTokenAmount, {from: stakerEOA})
+      await lpToken.approve(lpRewards.address, lpTokenAmount, {
+        from: stakerEOA,
+      })
+      await lpRewards.stake(lpTokenAmount, { from: stakerEOA })
       // ok, no did not revert
     })
 
     it("in the non-gated state allows a contract to stake", async () => {
-      await lpRewards.setGated(false, {from: lpRewardsOwner})
+      await lpRewards.setGated(false, { from: lpRewardsOwner })
 
       const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
 
       await lpToken.mint(stakerContract.address, lpTokenAmount)
-      await stakerContract.stake(lpTokenAmount, {from: stakerEOA})
+      await stakerContract.stake(lpTokenAmount, { from: stakerEOA })
       // ok, did not revert
     })
 
     it("in the gated state allows an externally owned account to stake", async () => {
-      await lpRewards.setGated(true, {from: lpRewardsOwner})
+      await lpRewards.setGated(true, { from: lpRewardsOwner })
 
       const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
 
       await lpToken.mint(stakerEOA, lpTokenAmount)
-      await lpToken.approve(lpRewards.address, lpTokenAmount, {from: stakerEOA})
-      await lpRewards.stake(lpTokenAmount, {from: stakerEOA})
+      await lpToken.approve(lpRewards.address, lpTokenAmount, {
+        from: stakerEOA,
+      })
+      await lpRewards.stake(lpTokenAmount, { from: stakerEOA })
       // ok, no did not revert
     })
 
     it("in the gated state does not allow a contract to stake", async () => {
-      await lpRewards.setGated(true, {from: lpRewardsOwner})
+      await lpRewards.setGated(true, { from: lpRewardsOwner })
 
       const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
 
       await lpToken.mint(stakerContract.address, lpTokenAmount)
       await expectRevert(
-        stakerContract.stake(lpTokenAmount, {from: stakerEOA}),
+        stakerContract.stake(lpTokenAmount, { from: stakerEOA }),
         "Only Externally Owned Account can stake"
       )
     })
@@ -537,8 +541,10 @@ describe("LPRewardsTBTCSaddle", () => {
 
       const lpTokenAmount = web3.utils.toBN(9999).mul(tokenDecimalMultiplier)
       await lpToken.mint(stakerEOA, lpTokenAmount)
-      await lpToken.approve(lpRewards.address, lpTokenAmount, {from: stakerEOA})
-      await lpRewards.stake(lpTokenAmount, {from: stakerEOA})
+      await lpToken.approve(lpRewards.address, lpTokenAmount, {
+        from: stakerEOA,
+      })
+      await lpRewards.stake(lpTokenAmount, { from: stakerEOA })
 
       lpTokenBalance = await lpToken.balanceOf(lpRewards.address)
       expect(lpTokenBalance).to.eq.BN(lpTokenAmount)

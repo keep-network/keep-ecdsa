@@ -5,7 +5,7 @@ const TestToken = artifacts.require("./test/TestToken")
 const KeepToken = artifacts.require(
   "@keep-network/keep-core/build/truffle/KeepToken"
 )
-const {KeepTokenAddress} = require("../migrations/external-contracts")
+const { KeepTokenAddress } = require("../migrations/external-contracts")
 
 const initLPRewardContract = async (
   LPRewardsContract,
@@ -34,7 +34,9 @@ const mintAndApproveLPReward = async (
   amount
 ) => {
   await WrappedTokenContract.mint(address, amount)
-  await WrappedTokenContract.approve(lpRewardsAddress, amount, {from: address})
+  await WrappedTokenContract.approve(lpRewardsAddress, amount, {
+    from: address,
+  })
 }
 
 module.exports = async function () {
@@ -128,14 +130,14 @@ module.exports = async function () {
       staker2WrappedTokenBalance
     )
 
-    await lpRewardsKEEPETH.stake(staker1WrappedTokenBalance, {from: staker1})
-    await lpRewardsKEEPETH.stake(staker2WrappedTokenBalance, {from: staker2})
+    await lpRewardsKEEPETH.stake(staker1WrappedTokenBalance, { from: staker1 })
+    await lpRewardsKEEPETH.stake(staker2WrappedTokenBalance, { from: staker2 })
 
-    await lpRewardsTBTCETH.stake(staker1WrappedTokenBalance, {from: staker1})
-    await lpRewardsTBTCETH.stake(staker2WrappedTokenBalance, {from: staker2})
+    await lpRewardsTBTCETH.stake(staker1WrappedTokenBalance, { from: staker1 })
+    await lpRewardsTBTCETH.stake(staker2WrappedTokenBalance, { from: staker2 })
 
-    await lpRewardsKEEPTBTC.stake(staker1WrappedTokenBalance, {from: staker1})
-    await lpRewardsKEEPTBTC.stake(staker2WrappedTokenBalance, {from: staker2})
+    await lpRewardsKEEPTBTC.stake(staker1WrappedTokenBalance, { from: staker1 })
+    await lpRewardsKEEPTBTC.stake(staker2WrappedTokenBalance, { from: staker2 })
   } catch (err) {
     console.error(err)
     process.exit(1)
