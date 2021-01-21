@@ -144,9 +144,9 @@ section on <<bitcoin-fee>>.
 [[recovery-address]]
 ===== Specifying an Operator's Bitcoin Recovery Address
 
-To specify a given operator's Bitcoin Recovery Address, this proposal suggests
-adding a single key to the `Extensions.TBTC` config entry, `BTCRefundTarget`.
-The value for this key should be one of:
+To specify a given operator's Bitcoin Recovery Address, this proposal
+suggests adding a single key to the `Extensions.TBTC.BTCRefunds` config
+entry, `BeneficiaryAddress`. The value for this key should be one of:
 
 - A simple BTC address.
 - An xpub, ypub, or zpub that allows the client to derive new addresses for
@@ -159,31 +159,46 @@ things:
 - Have a *pub that is only meant for use by the client, and have the client
   track the latest address generated (as an index starting at 0).
 
-To avoid _strictly requiring_ a connection to a Bitcoin node, this RFC proposes
-tracking the latest address generated, and allowing an additional config key,
-`BTCRefundTargetDerivationStartIndex`, that sets a starting point. The client
-should write the updated index to the `current/` directory that tracks
-active key shares, to an encrypted file named
-`current-btc-refund-derivation-index`. The operator should then seek to obtain
-from the staker an extended public key that is only used for this purpose.
+To avoid _strictly requiring_ a connection to a Bitcoin node, this RFC
+proposes tracking the latest address generated, and allowing an additional
+config key, `TargetDerivationStartIndex`, that sets a starting point for such
+derivations. The client should write the updated index to the `current/`
+directory that tracks active key shares, to an encrypted file named
+`current-btc-refund-derivation-index`. The operator should then seek to
+obtain from the staker an extended public key that is only used for this
+purpose.
 
-If an optional Bitcoin node connection is available, the client should
-additionally check a derived address for a balance before publishing. A fallback
-could be implemented that checks
-`https://blockstream.info/api/address/<address>` for a given derived address to
-ensure `tx_count` is 0.
+If an optional Bitcoin node connection is available (see <<electrs>>), the
+client should additionally check a derived address for a balance before
+publishing. A fallback could be implemented that checks
+`https://blockstream.info/api/address/<address>` for a given derived address
+to ensure `tx_count` is 0.
 
 [[bitcoin-fee]]
 ===== Dealing with the Bitcoin Fee
 
-// Each client sets a max fee per vbyte in config. Signing exchanges each
-// client's max fee. The minimum of all the max fees is used. A default that
-// would overpay for confirmation in 100 (?) blocks under most circumstances
-// should be used if the operator does not specify another maximum. If an
-// optional Bitcoin node connection is present, the client should override the
-// max fee in config using the suggested fee from the Bitcoin node. Possible
-// default fallback if no Bitcoin node available: attempt to GET fee estimates
-// from `https://blockstream.info/api/fee-estimates`.
+The Bitcoin fee used for clients is something all three signers must agree
+on, since it is part of the sighash. To agree on a fee, this proposal
+suggests adding a single key to the `Extensions.TBTC.BTCRefunds` config
+entry, `MaxFeePerVByte`, which is a value in sats per vByte that represents
+the maximum fee per vByte this client is willing to pay in refund
+transactions. The default for this value should be 75 sats per vByte.
+
+In addition to this configuration-based max fee, if an optional Bitcoin
+connection is available (see <<electrs>>), the client should look up the
+25-block suggested fee per vByte and, if it is available and nonzero, should
+replace the hardcoded max fee with this value. 25 blocks means confirmation
+within ~4 hours. The default of 75 sats per vByte is aimed to be slightly
+higher than a reasonable value for 25 blocks, though of course fee market
+fluctuation can change this at a moment's notice. The 25-block suggested fee
+per vByte should be available at the `/fee-estimates` endpoint of the REST
+API, which returns a JSON object with the key `"25"` corresponding to this
+fee.
+
+Once each client has its max fee, it will enter the <<signing>> protocol.
+This protocol involves exchanging the max fees of all clients and choosing
+the lowest max fee acceptable to all clients, and using that as the fee for
+the final transaction.
 
 [[signing]]
 ===== Signing 
@@ -196,6 +211,13 @@ ensure `tx_count` is 0.
 // https://github.com/keep-network/tbtc.js/blob/b91560f579cb41e414fba3a80678bf61659e3061/bin/commands/bitcoin.js#L142-L208 for variable-output in JavaScript.
 // Signing via tss
 // Signing starts `blockConfirmations` after a termination event is seen.
+//
+// A keep should not be considered archived until its refund has been handled or
+// times out. Timeout for refund handling TBD, but could be extended (e.g.,
+// 48-72 hours, or even 1 week) with backoffs or similar. On restart, a keep
+// that is in `current` but seen as `terminated` should attempt to go through
+// its refund handling. Optionally, it could check a Bitcoin node or the
+// Blockstream API for 
 
 ==== Submitting the Signed Transaction
 
@@ -212,6 +234,25 @@ Bitcoin fees, additional dependencies, transaction submission.
 
 Why not invert this? A single loop monitoring for each of these
 events and checking against locally handled keeps.
+
+[[electrs]]
+[appendix]
+== Optional Electrs REST API Server
+
+The proposal <<Goal>> section proposes avoiding a strict requirement for a
+Bitcoin node; however, several parts of the proposal feature an optional
+dependency on an Electrs REST API server. This server should be expected to
+adhere to the
+https://github.com/Blockstream/esplora/blob/master/API.md[Blockstream electrs
+REST API], currently implemented by the
+https://github.com/Blockstream/electrs/[Blockstream fork of electrs]. This fork
+is open source and has a Docker image available; it must be connected to a
+bitcoind instance.
+
+To configure this, the `Extensions.TBTC.ElectrsURL` key can be set to the
+appropriate URL. This configuration option defaults to
+`https://blockstream.info/api/`, but can be explicitly set to a blank string to
+disable integration altogether.
 
 [bibliography]
 == Related Links
