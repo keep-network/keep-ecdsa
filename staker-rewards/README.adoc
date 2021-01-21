@@ -74,7 +74,7 @@ are deallocated and remains in the pool for future intervals.
 * If the operator did not meet the key generation SLA between `T_start` and
   `T_end` , they are not getting any rewards for interval `T` . For less than
   10 key generations, one of them can fail. For 10 or more key generations,
-  no more than 10% can fail.
+  no more than 20% can fail.
   
 === The Formula
 

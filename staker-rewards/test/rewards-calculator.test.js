@@ -359,7 +359,7 @@ describe("rewards calculator", async () => {
 
   it(
     "should set total rewards to zero if keygenCount >= 10 and " +
-      "failures percentage exceeds 10%",
+      "failures percentage exceeds 20%",
     async () => {
       const mockContext = createMockContext()
 
@@ -368,8 +368,8 @@ describe("rewards calculator", async () => {
       const operatorParameters = createOperatorParameters(operator, 70000, 100)
 
       operatorParameters.operatorSLA.keygenCount = 10
-      operatorParameters.operatorSLA.keygenFailCount = 2
-      operatorParameters.operatorSLA.keygenSLA = 80
+      operatorParameters.operatorSLA.keygenFailCount = 3
+      operatorParameters.operatorSLA.keygenSLA = 70
 
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
