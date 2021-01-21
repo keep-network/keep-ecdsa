@@ -23,6 +23,7 @@ const interval = {
 }
 
 const operator = "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
+const undelegatingOperator = "0x88Ed51f84c21Ae246c23137D090cdF441009D916"
 
 const setupContractsMock = (context) => {
   context.contracts.BondedECDSAKeepFactory = {
@@ -48,6 +49,13 @@ const setupContractsMock = (context) => {
             (inputs) =>
               inputs.operator === operator &&
               inputs.operatorContract === operatorContract
+          ),
+        }),
+        getDelegationInfo: (operator) => ({
+          call: mockMethod(
+            TokenStakingAddress,
+            "getDelegationInfo",
+            (inputs) => inputs.operator === operator
           ),
         }),
       },
@@ -169,4 +177,28 @@ describe("assets calculator", async () => {
       true
     )
   })
+
+  it(
+    "should return the right value of ETH total " +
+      "for an undelegating operator",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const assetsCalculator = await AssetsCalculator.initialize(
+        mockContext,
+        interval
+      )
+
+      const assets = await assetsCalculator.calculateOperatorAssets(
+        undelegatingOperator
+      )
+
+      assert.equal(
+        assets.ethTotal.isEqualTo(new BigNumber(10).multipliedBy(1e18)),
+        true
+      )
+    }
+  )
 })
