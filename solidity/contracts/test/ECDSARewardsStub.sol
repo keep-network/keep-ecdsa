@@ -15,7 +15,11 @@ contract ECDSARewardsStub is ECDSARewards {
         beneficiaryRewardCap = _beneficiaryRewardCap;
     }
 
-    function allocateReward(address operator, uint256 interval, uint256 amount) public {
+    function allocateReward(
+        address operator,
+        uint256 interval,
+        uint256 amount
+    ) public {
         address beneficiary = tokenStaking.beneficiaryOf(operator);
         allocatedRewards[beneficiary][interval] = amount;
     }
