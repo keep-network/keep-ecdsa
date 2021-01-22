@@ -49,7 +49,6 @@ func WithRetry(
 				return nil
 			}
 
-			fmt.Printf("waiting [%v]\n", backoffTime)
 			ok := backoffWait(ctx, backoffTime)
 			if !ok {
 				return fmt.Errorf("retry timeout [%v] exceeded", timeout)
