@@ -765,42 +765,44 @@ func monitorKeepClosedEvents(
 				event.BlockNumber,
 			)
 
-			if ok := eventDeduplicator.notifyClosingStarted(keepAddress); !ok {
-				logger.Infof(
-					"closing request for keep [%s] already handled",
-					keepAddress.String(),
+			go func(event *eth.KeepClosedEvent) {
+				if ok := eventDeduplicator.notifyClosingStarted(keepAddress); !ok {
+					logger.Infof(
+						"close request for keep [%s] already handled",
+						keepAddress.String(),
+					)
+
+					// currently handling or already handled in the past
+					// in case this event is a duplicate.
+					return
+				}
+				defer eventDeduplicator.notifyClosingCompleted(keepAddress)
+
+				isKeepActive, err := chainutil.WaitForBlockConfirmations(
+					ethereumChain.BlockCounter(),
+					event.BlockNumber,
+					blockConfirmations,
+					func() (bool, error) {
+						return ethereumChain.IsActive(keepAddress)
+					},
 				)
+				if err != nil {
+					logger.Errorf(
+						"failed to confirm keep [%s] closure: [%v]",
+						keepAddress.String(),
+						err,
+					)
+					return
+				}
 
-				// currently handling or already handled in the past
-				// in case this event is a duplicate.
-				return
-			}
-			defer eventDeduplicator.notifyClosingCompleted(keepAddress)
+				if isKeepActive {
+					logger.Warningf("keep [%s] has not been closed", keepAddress.String())
+					return
+				}
 
-			isKeepActive, err := chainutil.WaitForBlockConfirmations(
-				ethereumChain.BlockCounter(),
-				event.BlockNumber,
-				blockConfirmations,
-				func() (bool, error) {
-					return ethereumChain.IsActive(keepAddress)
-				},
-			)
-			if err != nil {
-				logger.Errorf(
-					"failed to confirm keep [%s] closure: [%v]",
-					keepAddress.String(),
-					err,
-				)
-				return
-			}
-
-			if isKeepActive {
-				logger.Warningf("keep [%s] has not been closed", keepAddress.String())
-				return
-			}
-
-			keepsRegistry.UnregisterKeep(keepAddress)
-			keepClosed <- event
+				keepsRegistry.UnregisterKeep(keepAddress)
+				keepClosed <- event
+			}(event)
 		},
 	)
 	if err != nil {
@@ -842,42 +844,44 @@ func monitorKeepTerminatedEvent(
 				event.BlockNumber,
 			)
 
-			if ok := eventDeduplicator.notifyTerminatingStarted(keepAddress); !ok {
-				logger.Infof(
-					"termination request for keep [%s] already handled",
-					keepAddress.String(),
+			go func(event *eth.KeepTerminatedEvent) {
+				if ok := eventDeduplicator.notifyTerminatingStarted(keepAddress); !ok {
+					logger.Infof(
+						"terminate request for keep [%s] already handled",
+						keepAddress.String(),
+					)
+
+					// currently handling or already handled in the past
+					// in case this event is a duplicate.
+					return
+				}
+				defer eventDeduplicator.notifyTerminatingCompleted(keepAddress)
+
+				isKeepActive, err := chainutil.WaitForBlockConfirmations(
+					ethereumChain.BlockCounter(),
+					event.BlockNumber,
+					blockConfirmations,
+					func() (bool, error) {
+						return ethereumChain.IsActive(keepAddress)
+					},
 				)
+				if err != nil {
+					logger.Errorf(
+						"failed to confirm keep [%s] termination: [%v]",
+						keepAddress.String(),
+						err,
+					)
+					return
+				}
 
-				// currently handling or already handled in the past
-				// in case this event is a duplicate.
-				return
-			}
-			defer eventDeduplicator.notifyTerminatingCompleted(keepAddress)
+				if isKeepActive {
+					logger.Warningf("keep [%s] has not been terminated", keepAddress.String())
+					return
+				}
 
-			isKeepActive, err := chainutil.WaitForBlockConfirmations(
-				ethereumChain.BlockCounter(),
-				event.BlockNumber,
-				blockConfirmations,
-				func() (bool, error) {
-					return ethereumChain.IsActive(keepAddress)
-				},
-			)
-			if err != nil {
-				logger.Errorf(
-					"failed to confirm keep [%s] termination: [%v]",
-					keepAddress.String(),
-					err,
-				)
-				return
-			}
-
-			if isKeepActive {
-				logger.Warningf("keep [%s] has not been terminated", keepAddress.String())
-				return
-			}
-
-			keepsRegistry.UnregisterKeep(keepAddress)
-			keepTerminated <- event
+				keepsRegistry.UnregisterKeep(keepAddress)
+				keepTerminated <- event
+			}(event)
 		},
 	)
 	if err != nil {
