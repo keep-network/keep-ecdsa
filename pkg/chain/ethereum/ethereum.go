@@ -86,6 +86,7 @@ func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 			KeepAddress:     KeepAddress,
 			Members:         Members,
 			HonestThreshold: HonestThreshold.Uint64(),
+			BlockNumber:     blockNumber,
 		})
 	}
 
@@ -146,7 +147,8 @@ func (ec *EthereumChain) OnPublicKeyPublished(
 		blockNumber uint64,
 	) {
 		handler(&eth.PublicKeyPublishedEvent{
-			PublicKey: PublicKey,
+			PublicKey:   PublicKey,
+			BlockNumber: blockNumber,
 		})
 	}
 	return keepContract.PublicKeyPublished(nil).OnEvent(onEvent), nil
@@ -171,6 +173,7 @@ func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 		handler(&eth.ConflictingPublicKeySubmittedEvent{
 			SubmittingMember:     SubmittingMember,
 			ConflictingPublicKey: ConflictingPublicKey,
+			BlockNumber:          blockNumber,
 		})
 	}
 	return keepContract.ConflictingPublicKeySubmitted(
