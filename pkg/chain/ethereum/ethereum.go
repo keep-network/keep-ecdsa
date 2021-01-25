@@ -111,7 +111,10 @@ func (ec *EthereumChain) OnKeepClosed(
 	onEvent := func(blockNumber uint64) {
 		handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
 	}
-	return keepContract.KeepClosed(nil).OnEvent(onEvent), nil
+	return keepContract.KeepClosed(&ethutil.SubscribeOpts{
+		TickDuration: 4 * time.Hour,
+		BlocksBack:   2000,
+	}).OnEvent(onEvent), nil
 }
 
 // OnKeepTerminated installs a callback that is invoked on-chain when keep
@@ -128,7 +131,10 @@ func (ec *EthereumChain) OnKeepTerminated(
 	onEvent := func(blockNumber uint64) {
 		handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
 	}
-	return keepContract.KeepTerminated(nil).OnEvent(onEvent), nil
+	return keepContract.KeepTerminated(&ethutil.SubscribeOpts{
+		TickDuration: 4 * time.Hour,
+		BlocksBack:   2000,
+	}).OnEvent(onEvent), nil
 }
 
 // OnPublicKeyPublished installs a callback that is invoked when an on-chain
