@@ -768,7 +768,7 @@ func monitorKeepClosedEvents(
 			go func(event *eth.KeepClosedEvent) {
 				if ok := eventDeduplicator.notifyClosingStarted(keepAddress); !ok {
 					logger.Infof(
-						"close request for keep [%s] already handled",
+						"close event for keep [%s] already handled",
 						keepAddress.String(),
 					)
 
@@ -788,7 +788,7 @@ func monitorKeepClosedEvents(
 				)
 				if err != nil {
 					logger.Errorf(
-						"failed to confirm keep [%s] closure: [%v]",
+						"failed to confirm keep [%s] closed: [%v]",
 						keepAddress.String(),
 						err,
 					)
@@ -847,7 +847,7 @@ func monitorKeepTerminatedEvent(
 			go func(event *eth.KeepTerminatedEvent) {
 				if ok := eventDeduplicator.notifyTerminatingStarted(keepAddress); !ok {
 					logger.Infof(
-						"terminate request for keep [%s] already handled",
+						"terminate event for keep [%s] already handled",
 						keepAddress.String(),
 					)
 
