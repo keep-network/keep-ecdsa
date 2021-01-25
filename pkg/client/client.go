@@ -532,6 +532,13 @@ func monitorSigningRequests(
 	return ethereumChain.OnSignatureRequested(
 		keepAddress,
 		func(event *eth.SignatureRequestedEvent) {
+			logger.Infof(
+				"new signature requested from keep [%s] for digest [%+x] at block [%d]",
+				keepAddress.String(),
+				event.Digest,
+				event.BlockNumber,
+			)
+
 			go func(event *eth.SignatureRequestedEvent) {
 				utils.WithDefaultRetry(
 					clientConfig.GetSigningTimeout(),
@@ -557,13 +564,6 @@ func monitorSigningRequests(
 						}
 
 						defer eventDeduplicator.notifySigningCompleted(keepAddress, event.Digest)
-
-						logger.Infof(
-							"new signature requested from keep [%s] for digest [%+x] at block [%d]",
-							keepAddress.String(),
-							event.Digest,
-							event.BlockNumber,
-						)
 
 						isAwaitingSignature, err := chainutil.WaitForBlockConfirmations(
 							ethereumChain.BlockCounter(),
