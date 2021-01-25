@@ -158,12 +158,14 @@ func Initialize(
 				keepAddress,
 				keepsRegistry,
 				subscriptionOnSignatureRequested,
+				eventDeduplicator,
 			)
 			go monitorKeepTerminatedEvent(
 				ethereumChain,
 				keepAddress,
 				keepsRegistry,
 				subscriptionOnSignatureRequested,
+				eventDeduplicator,
 			)
 
 		}(keepAddress)
@@ -480,12 +482,14 @@ func generateKeyForKeep(
 		keepAddress,
 		keepsRegistry,
 		subscriptionOnSignatureRequested,
+		eventDeduplicator,
 	)
 	go monitorKeepTerminatedEvent(
 		ethereumChain,
 		keepAddress,
 		keepsRegistry,
 		subscriptionOnSignatureRequested,
+		eventDeduplicator,
 	)
 }
 
@@ -748,6 +752,7 @@ func monitorKeepClosedEvents(
 	keepAddress common.Address,
 	keepsRegistry *registry.Keeps,
 	subscriptionOnSignatureRequested subscription.EventSubscription,
+	eventDeduplicator *eventDeduplicator,
 ) {
 	keepClosed := make(chan *eth.KeepClosedEvent)
 
@@ -759,6 +764,18 @@ func monitorKeepClosedEvents(
 				keepAddress.String(),
 				event.BlockNumber,
 			)
+
+			if ok := eventDeduplicator.notifyClosingStarted(keepAddress); !ok {
+				logger.Infof(
+					"closing request for keep [%s] already handled",
+					keepAddress.String(),
+				)
+
+				// currently handling or already handled in the past
+				// in case this event is a duplicate.
+				return
+			}
+			defer eventDeduplicator.notifyClosingCompleted(keepAddress)
 
 			isKeepActive, err := chainutil.WaitForBlockConfirmations(
 				ethereumChain.BlockCounter(),
@@ -812,6 +829,7 @@ func monitorKeepTerminatedEvent(
 	keepAddress common.Address,
 	keepsRegistry *registry.Keeps,
 	subscriptionOnSignatureRequested subscription.EventSubscription,
+	eventDeduplicator *eventDeduplicator,
 ) {
 	keepTerminated := make(chan *eth.KeepTerminatedEvent)
 
@@ -823,6 +841,18 @@ func monitorKeepTerminatedEvent(
 				keepAddress.String(),
 				event.BlockNumber,
 			)
+
+			if ok := eventDeduplicator.notifyTerminatingStarted(keepAddress); !ok {
+				logger.Infof(
+					"termination request for keep [%s] already handled",
+					keepAddress.String(),
+				)
+
+				// currently handling or already handled in the past
+				// in case this event is a duplicate.
+				return
+			}
+			defer eventDeduplicator.notifyTerminatingCompleted(keepAddress)
 
 			isKeepActive, err := chainutil.WaitForBlockConfirmations(
 				ethereumChain.BlockCounter(),
