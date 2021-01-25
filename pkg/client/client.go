@@ -182,9 +182,10 @@ func Initialize(
 	// Watch for new keeps creation.
 	_ = ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(
-			"new keep [%s] created with members: [%x]",
+			"new keep [%s] created with members: [%x] at block [%d]",
 			event.KeepAddress.String(),
 			event.Members,
+			event.BlockNumber,
 		)
 
 		if event.IsMember(ethereumChain.Address()) {
@@ -214,6 +215,11 @@ func Initialize(
 					event.HonestThreshold,
 				)
 			}(event)
+		} else {
+			logger.Infof(
+				"not a signing group member in keep [%s], skipping",
+				event.KeepAddress.String(),
+			)
 		}
 	})
 
