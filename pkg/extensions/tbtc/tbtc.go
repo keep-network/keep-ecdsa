@@ -50,52 +50,30 @@ const (
 
 // TODO: Resume monitoring after client restart
 // Initialize initializes extension specific to the TBTC application.
-func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
+func Initialize(ctx context.Context, chain chain.TBTCHandle) {
 	logger.Infof("initializing tbtc extension")
 
 	tbtc := newTBTC(chain)
 
-	err := tbtc.monitorRetrievePubKey(
+	tbtc.monitorRetrievePubKey(
 		ctx,
 		exponentialBackoff,
 		165*time.Minute, // 15 minutes before the 3 hours on-chain timeout
 	)
-	if err != nil {
-		return fmt.Errorf(
-			"could not initialize retrieve pubkey monitoring: [%v]",
-			err,
-		)
-	}
 
-	err = tbtc.monitorProvideRedemptionSignature(
+	tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		exponentialBackoff,
 		105*time.Minute, // 15 minutes before the 2 hours on-chain timeout
 	)
-	if err != nil {
-		return fmt.Errorf(
-			"could not initialize provide redemption "+
-				"signature monitoring: [%v]",
-			err,
-		)
-	}
 
-	err = tbtc.monitorProvideRedemptionProof(
+	tbtc.monitorProvideRedemptionProof(
 		ctx,
 		exponentialBackoff,
 		345*time.Minute, // 15 minutes before the 6 hours on-chain timeout
 	)
-	if err != nil {
-		return fmt.Errorf(
-			"could not initialize provide redemption "+
-				"proof monitoring: [%v]",
-			err,
-		)
-	}
 
 	logger.Infof("tbtc extension has been initialized")
-
-	return nil
 }
 
 type tbtc struct {
@@ -121,18 +99,18 @@ func (t *tbtc) monitorRetrievePubKey(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
-) error {
+) {
 	initialDepositState := chain.AwaitingSignerSetup
 
 	monitoringStartFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		return t.chain.OnDepositCreated(handler)
 	}
 
 	monitoringStopFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		return t.chain.OnDepositRegisteredPubkey(func(depositAddress string) {
 			if t.waitDepositStateChangeConfirmation(
 				depositAddress,
@@ -175,7 +153,7 @@ func (t *tbtc) monitorRetrievePubKey(
 		return timeout + actionDelay, nil
 	}
 
-	monitoringSubscription, err := t.monitorAndAct(
+	monitoringSubscription := t.monitorAndAct(
 		ctx,
 		"retrieve pubkey",
 		t.shouldMonitorDeposit,
@@ -186,9 +164,6 @@ func (t *tbtc) monitorRetrievePubKey(
 		actBackoffFn,
 		timeoutFn,
 	)
-	if err != nil {
-		return err
-	}
 
 	go func() {
 		<-ctx.Done()
@@ -197,20 +172,18 @@ func (t *tbtc) monitorRetrievePubKey(
 	}()
 
 	logger.Infof("retrieve pubkey monitoring initialized")
-
-	return nil
 }
 
 func (t *tbtc) monitorProvideRedemptionSignature(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
-) error {
+) {
 	initialDepositState := chain.AwaitingWithdrawalSignature
 
 	monitoringStartFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		// Start right after a redemption has been requested or the redemption
 		// fee has been increased.
 		return t.chain.OnDepositRedemptionRequested(handler)
@@ -218,9 +191,9 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 
 	monitoringStopFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		// Stop in case the redemption signature has been provided by someone else.
-		signatureSubscription, err := t.chain.OnDepositGotRedemptionSignature(
+		signatureSubscription := t.chain.OnDepositGotRedemptionSignature(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -237,12 +210,9 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 				}
 			},
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		// Stop in case the redemption proof has been provided by someone else.
-		redeemedSubscription, err := t.chain.OnDepositRedeemed(
+		redeemedSubscription := t.chain.OnDepositRedeemed(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -259,16 +229,13 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 				}
 			},
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		return subscription.NewEventSubscription(
 			func() {
 				signatureSubscription.Unsubscribe()
 				redeemedSubscription.Unsubscribe()
 			},
-		), nil
+		)
 	}
 
 	actFn := func(depositAddress string) error {
@@ -354,7 +321,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		return timeout + actionDelay, nil
 	}
 
-	monitoringSubscription, err := t.monitorAndAct(
+	monitoringSubscription := t.monitorAndAct(
 		ctx,
 		"provide redemption signature",
 		t.shouldMonitorDeposit,
@@ -365,9 +332,6 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		actBackoffFn,
 		timeoutFn,
 	)
-	if err != nil {
-		return err
-	}
 
 	go func() {
 		<-ctx.Done()
@@ -376,29 +340,27 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	}()
 
 	logger.Infof("provide redemption signature monitoring initialized")
-
-	return nil
 }
 
 func (t *tbtc) monitorProvideRedemptionProof(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
-) error {
+) {
 	initialDepositState := chain.AwaitingWithdrawalProof
 
 	monitoringStartFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		// Start right after a redemption signature has been provided.
 		return t.chain.OnDepositGotRedemptionSignature(handler)
 	}
 
 	monitoringStopFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		// Stop in case the redemption fee has been increased by someone else.
-		redemptionRequestedSubscription, err := t.chain.OnDepositRedemptionRequested(
+		redemptionRequestedSubscription := t.chain.OnDepositRedemptionRequested(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -415,12 +377,9 @@ func (t *tbtc) monitorProvideRedemptionProof(
 				}
 			},
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		// Stop in case the redemption proof has been provided by someone else.
-		redeemedSubscription, err := t.chain.OnDepositRedeemed(
+		redeemedSubscription := t.chain.OnDepositRedeemed(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -437,16 +396,13 @@ func (t *tbtc) monitorProvideRedemptionProof(
 				}
 			},
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		return subscription.NewEventSubscription(
 			func() {
 				redemptionRequestedSubscription.Unsubscribe()
 				redeemedSubscription.Unsubscribe()
 			},
-		), nil
+		)
 	}
 
 	actFn := func(depositAddress string) error {
@@ -564,7 +520,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		return (timeout - timeoutShift) + actionDelay, nil
 	}
 
-	monitoringSubscription, err := t.monitorAndAct(
+	monitoringSubscription := t.monitorAndAct(
 		ctx,
 		"provide redemption proof",
 		t.shouldMonitorDeposit,
@@ -575,9 +531,6 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		actBackoffFn,
 		timeoutFn,
 	)
-	if err != nil {
-		return err
-	}
 
 	go func() {
 		<-ctx.Done()
@@ -586,8 +539,6 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	}()
 
 	logger.Infof("provide redemption proof monitoring initialized")
-
-	return nil
 }
 
 type shouldMonitorDepositFn func(depositAddress string) bool
@@ -596,7 +547,7 @@ type depositEventHandler func(depositAddress string)
 
 type watchDepositEventFn func(
 	handler depositEventHandler,
-) (subscription.EventSubscription, error)
+) subscription.EventSubscription
 
 type watchKeepClosedFn func(depositAddress string) (
 	keepClosedChan chan struct{},
@@ -620,7 +571,7 @@ func (t *tbtc) monitorAndAct(
 	actFn submitDepositTxFn,
 	actBackoffFn backoffFn,
 	timeoutFn timeoutFn,
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	handleStartEvent := func(depositAddress string) {
 		if !shouldMonitorFn(depositAddress) {
 			return
@@ -644,23 +595,13 @@ func (t *tbtc) monitorAndAct(
 
 		stopEventChan := make(chan struct{})
 
-		stopEventSubscription, err := monitoringStopFn(
+		stopEventSubscription := monitoringStopFn(
 			func(stopEventDepositAddress string) {
 				if depositAddress == stopEventDepositAddress {
 					stopEventChan <- struct{}{}
 				}
 			},
 		)
-		if err != nil {
-			logger.Errorf(
-				"could not setup stop event handler for [%v] "+
-					"monitoring for deposit [%v]: [%v]",
-				monitoringName,
-				depositAddress,
-				err,
-			)
-			return
-		}
 		defer stopEventSubscription.Unsubscribe()
 
 		keepClosedChan, keepClosedUnsubscribe, err := keepClosedFn(

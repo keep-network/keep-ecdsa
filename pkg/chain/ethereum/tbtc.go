@@ -36,6 +36,7 @@ func WithTBTCExtension(
 		ethereumChain.client,
 		ethereumChain.nonceManager,
 		ethereumChain.miningWaiter,
+		ethereumChain.blockCounter,
 		ethereumChain.transactionMutex,
 	)
 	if err != nil {
@@ -52,129 +53,109 @@ func WithTBTCExtension(
 // on-chain notification of a new deposit creation is seen.
 func (tec *TBTCEthereumChain) OnDepositCreated(
 	handler func(depositAddress string),
-) (subscription.EventSubscription, error) {
-	return tec.tbtcSystemContract.WatchCreated(
-		func(
-			DepositContractAddress common.Address,
-			KeepAddress common.Address,
-			Timestamp *big.Int,
-			blockNumber uint64,
-		) {
-			handler(DepositContractAddress.Hex())
-		},
-		func(err error) error {
-			return fmt.Errorf("watch deposit created failed: [%v]", err)
-		},
+) subscription.EventSubscription {
+	onEvent := func(
+		DepositContractAddress common.Address,
+		KeepAddress common.Address,
+		Timestamp *big.Int,
+		blockNumber uint64,
+	) {
+		handler(DepositContractAddress.Hex())
+	}
+
+	return tec.tbtcSystemContract.Created(
 		nil,
 		nil,
-	)
+		nil,
+	).OnEvent(onEvent)
 }
 
 // OnDepositRegisteredPubkey installs a callback that is invoked when an
 // on-chain notification of a deposit's pubkey registration is seen.
 func (tec *TBTCEthereumChain) OnDepositRegisteredPubkey(
 	handler func(depositAddress string),
-) (subscription.EventSubscription, error) {
-	return tec.tbtcSystemContract.WatchRegisteredPubkey(
-		func(
-			DepositContractAddress common.Address,
-			SigningGroupPubkeyX [32]uint8,
-			SigningGroupPubkeyY [32]uint8,
-			Timestamp *big.Int,
-			blockNumber uint64,
-		) {
-			handler(DepositContractAddress.Hex())
-		},
-		func(err error) error {
-			return fmt.Errorf(
-				"watch deposit registered pubkey failed: [%v]",
-				err,
-			)
-		},
-		nil,
-	)
+) subscription.EventSubscription {
+	onEvent := func(
+		DepositContractAddress common.Address,
+		SigningGroupPubkeyX [32]uint8,
+		SigningGroupPubkeyY [32]uint8,
+		Timestamp *big.Int,
+		blockNumber uint64,
+	) {
+		handler(DepositContractAddress.Hex())
+	}
+
+	return tec.tbtcSystemContract.RegisteredPubkey(nil, nil).OnEvent(onEvent)
 }
 
 // OnDepositRedemptionRequested installs a callback that is invoked when an
 // on-chain notification of a deposit redemption request is seen.
 func (tec *TBTCEthereumChain) OnDepositRedemptionRequested(
 	handler func(depositAddress string),
-) (subscription.EventSubscription, error) {
-	return tec.tbtcSystemContract.WatchRedemptionRequested(
-		func(
-			DepositContractAddress common.Address,
-			Requester common.Address,
-			Digest [32]uint8,
-			UtxoValue *big.Int,
-			RedeemerOutputScript []uint8,
-			RequestedFee *big.Int,
-			Outpoint []uint8,
-			blockNumber uint64,
-		) {
-			handler(DepositContractAddress.Hex())
-		},
-		func(err error) error {
-			return fmt.Errorf(
-				"watch deposit redemption requested failed: [%v]",
-				err,
-			)
-		},
+) subscription.EventSubscription {
+	onEvent := func(
+		DepositContractAddress common.Address,
+		Requester common.Address,
+		Digest [32]uint8,
+		UtxoValue *big.Int,
+		RedeemerOutputScript []uint8,
+		RequestedFee *big.Int,
+		Outpoint []uint8,
+		blockNumber uint64,
+	) {
+		handler(DepositContractAddress.Hex())
+	}
+
+	return tec.tbtcSystemContract.RedemptionRequested(
 		nil,
 		nil,
 		nil,
-	)
+		nil,
+	).OnEvent(onEvent)
 }
 
 // OnDepositGotRedemptionSignature installs a callback that is invoked when an
 // on-chain notification of a deposit receiving a redemption signature is seen.
 func (tec *TBTCEthereumChain) OnDepositGotRedemptionSignature(
 	handler func(depositAddress string),
-) (subscription.EventSubscription, error) {
-	return tec.tbtcSystemContract.WatchGotRedemptionSignature(
-		func(
-			DepositContractAddress common.Address,
-			Digest [32]uint8,
-			R [32]uint8,
-			S [32]uint8,
-			Timestamp *big.Int,
-			blockNumber uint64,
-		) {
-			handler(DepositContractAddress.Hex())
-		},
-		func(err error) error {
-			return fmt.Errorf(
-				"watch deposit got redemption signature failed: [%v]",
-				err,
-			)
-		},
+) subscription.EventSubscription {
+	onEvent := func(
+		DepositContractAddress common.Address,
+		Digest [32]uint8,
+		R [32]uint8,
+		S [32]uint8,
+		Timestamp *big.Int,
+		blockNumber uint64,
+	) {
+		handler(DepositContractAddress.Hex())
+	}
+
+	return tec.tbtcSystemContract.GotRedemptionSignature(
 		nil,
 		nil,
-	)
+		nil,
+	).OnEvent(onEvent)
 }
 
 // OnDepositRedeemed installs a callback that is invoked when an
 // on-chain notification of a deposit redemption is seen.
 func (tec *TBTCEthereumChain) OnDepositRedeemed(
 	handler func(depositAddress string),
-) (subscription.EventSubscription, error) {
-	return tec.tbtcSystemContract.WatchRedeemed(
-		func(
-			DepositContractAddress common.Address,
-			Txid [32]uint8,
-			Timestamp *big.Int,
-			blockNumber uint64,
-		) {
-			handler(DepositContractAddress.Hex())
-		},
-		func(err error) error {
-			return fmt.Errorf(
-				"watch deposit redeemed failed: [%v]",
-				err,
-			)
-		},
+) subscription.EventSubscription {
+	onEvent := func(
+		DepositContractAddress common.Address,
+		Txid [32]uint8,
+		Timestamp *big.Int,
+		blockNumber uint64,
+	) {
+		handler(DepositContractAddress.Hex())
+	}
+
+	return tec.tbtcSystemContract.Redeemed(
 		nil,
 		nil,
-	)
+		nil,
+	).OnEvent(onEvent)
 }
 
 // PastDepositRedemptionRequestedEvents returns all redemption requested
@@ -384,6 +365,7 @@ func (tec *TBTCEthereumChain) getDepositContract(
 		tec.client,
 		tec.nonceManager,
 		tec.miningWaiter,
+		tec.blockCounter,
 		tec.transactionMutex,
 	)
 	if err != nil {
