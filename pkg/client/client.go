@@ -544,7 +544,7 @@ func monitorSigningRequests(
 			)
 
 			go func(event *eth.SignatureRequestedEvent) {
-				utils.WithDefaultRetry(
+				utils.DoWithDefaultRetry(
 					clientConfig.GetSigningTimeout(),
 					func(ctx context.Context) error {
 						shouldHandle, err := eventDeduplicator.notifySigningStarted(keepAddress, event.Digest)
@@ -651,7 +651,7 @@ func checkAwaitingSignature(
 			latestDigest,
 		)
 
-		utils.WithDefaultRetry(
+		utils.DoWithDefaultRetry(
 			clientConfig.GetSigningTimeout(),
 			func(ctx context.Context) error {
 				shouldHandle, err := eventDeduplicator.notifySigningStarted(keepAddress, latestDigest)

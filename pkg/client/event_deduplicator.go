@@ -1,11 +1,14 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
 // eventDeduplicator decides whether the given event should be handled by the
@@ -115,12 +118,25 @@ func (ed *eventDeduplicator) notifySigningStarted(
 		return false, nil
 	}
 
-	isAwaiting, err := ed.chain.IsAwaitingSignature(keepAddress, digest)
+	// repeat the check in case of a small chain reorg or if chain nodes
+	// are out of sync
+	isAwaitingSignature, err := utils.ConfirmWithTimeout(
+		10*time.Second,
+		10*time.Second,
+		30*time.Second,
+		func(ctx context.Context) (bool, error) {
+			return ed.chain.IsAwaitingSignature(keepAddress, digest)
+		},
+	)
 	if err != nil {
-		return false, fmt.Errorf("could not deduplicate events: [%v]", err)
+		return false, fmt.Errorf(
+			"could not check if keep is awaiting for a signature "+
+				"when deduplicating events: [%v]",
+			err,
+		)
 	}
 
-	if !isAwaiting {
+	if !isAwaitingSignature {
 		return false, nil
 	}
 
