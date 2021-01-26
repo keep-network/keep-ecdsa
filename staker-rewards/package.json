@@ -11,8 +11,8 @@
     "test": "NODE_ENV=test node --experimental-json-modules node_modules/mocha/bin/mocha",
     "lint": "npm run lint:js",
     "lint:fix": "npm run lint:fix:js",
-    "lint:js": "eslint ${npm_package_config_eslintPaths}",
-    "lint:fix:js": "eslint --fix ${npm_package_config_eslintPaths}"
+    "lint:js": "eslint .",
+    "lint:fix:js": "eslint --fix ."
   },
   "dependencies": {
     "@0x/subproviders": "^6.2.0",
