@@ -21,6 +21,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/chainutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
 var logger = log.Logger("tbtc-extension")
@@ -46,6 +47,10 @@ const (
 	// to avoid all signers executing the same action for deposit at the
 	// same time.
 	defaultSignerActionDelayStep = 5 * time.Minute
+
+	// The timeout for confirming initial state of the deposit upon receiving
+	// start signal but before setting up monitoring.
+	confirmInitialStateTimeout = 30 * time.Second
 )
 
 // TODO: Resume monitoring after client restart
@@ -108,6 +113,14 @@ func (t *tbtc) monitorRetrievePubKey(
 		return t.chain.OnDepositCreated(handler)
 	}
 
+	shouldMonitorFn := func(depositAddress string) bool {
+		return t.shouldMonitorDeposit(
+			confirmInitialStateTimeout,
+			depositAddress,
+			initialDepositState,
+		)
+	}
+
 	monitoringStopFn := func(
 		handler depositEventHandler,
 	) subscription.EventSubscription {
@@ -156,7 +169,7 @@ func (t *tbtc) monitorRetrievePubKey(
 	monitoringSubscription := t.monitorAndAct(
 		ctx,
 		"retrieve pubkey",
-		t.shouldMonitorDeposit,
+		shouldMonitorFn,
 		monitoringStartFn,
 		monitoringStopFn,
 		t.watchKeepClosed,
@@ -187,6 +200,14 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		// Start right after a redemption has been requested or the redemption
 		// fee has been increased.
 		return t.chain.OnDepositRedemptionRequested(handler)
+	}
+
+	shouldMonitorFn := func(depositAddress string) bool {
+		return t.shouldMonitorDeposit(
+			confirmInitialStateTimeout,
+			depositAddress,
+			initialDepositState,
+		)
 	}
 
 	monitoringStopFn := func(
@@ -324,7 +345,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	monitoringSubscription := t.monitorAndAct(
 		ctx,
 		"provide redemption signature",
-		t.shouldMonitorDeposit,
+		shouldMonitorFn,
 		monitoringStartFn,
 		monitoringStopFn,
 		t.watchKeepClosed,
@@ -354,6 +375,14 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	) subscription.EventSubscription {
 		// Start right after a redemption signature has been provided.
 		return t.chain.OnDepositGotRedemptionSignature(handler)
+	}
+
+	shouldMonitorFn := func(depositAddress string) bool {
+		return t.shouldMonitorDeposit(
+			confirmInitialStateTimeout,
+			depositAddress,
+			initialDepositState,
+		)
 	}
 
 	monitoringStopFn := func(
@@ -523,7 +552,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	monitoringSubscription := t.monitorAndAct(
 		ctx,
 		"provide redemption proof",
-		t.shouldMonitorDeposit,
+		shouldMonitorFn,
 		monitoringStartFn,
 		monitoringStopFn,
 		t.watchKeepClosed,
@@ -760,7 +789,11 @@ func (t *tbtc) watchKeepClosed(
 	return signalChan, unsubscribe, nil
 }
 
-func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
+func (t *tbtc) shouldMonitorDeposit(
+	confirmStateTimeout time.Duration,
+	depositAddress string,
+	expectedInitialState chain.DepositState,
+) bool {
 	t.monitoredDepositsCache.Sweep()
 	t.notMonitoredDepositsCache.Sweep()
 
@@ -780,7 +813,39 @@ func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
 			depositAddress,
 			err,
 		)
-		return false // return false but don't cache the result in case of error
+		// return false but don't cache the result in case of an error;
+		// it gives a chance to retry the monitoring later but sooner
+		// than notMonitoredDepositsCache caching period.
+		return false
+	}
+
+	hasInitialState, err := utils.ConfirmWithTimeoutDefaultBackoff(
+		confirmStateTimeout,
+		func(ctx context.Context) (bool, error) {
+			currentState, err := t.chain.CurrentState(depositAddress)
+			if err != nil {
+				return false, err
+			}
+
+			return currentState == expectedInitialState, nil
+		},
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not check if deposit [%v] should be monitored: "+
+				"failed to confirm initial state: [%v]",
+			depositAddress,
+			err,
+		)
+		// return false but don't cache the result in case of an error;
+		// it gives a chance to retry the monitoring later but sooner
+		// than notMonitoredDepositsCache caching period.
+		return false
+	}
+	if !hasInitialState {
+		// false start signal, probably an old event
+		t.notMonitoredDepositsCache.Add(depositAddress)
+		return false
 	}
 
 	if signerIndex < 0 {

@@ -2005,6 +2005,67 @@ func TestReleaseMonitoringLock_WhenEmpty(t *testing.T) {
 	}
 }
 
+func TestShouldMonitorDeposit_ExpectedInitialState(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+	tbtc := newTestTBTC(tbtcChain)
+
+	// create a signing group which contains the operator
+	signers := append(
+		[]common.Address{tbtcChain.Address()},
+		local.RandomSigningGroup(2)...,
+	)
+
+	tbtcChain.CreateDeposit(depositAddress, signers)
+	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tbtcChain.RetrieveSignerPubkey(depositAddress)
+
+	shouldMonitor := tbtc.shouldMonitorDeposit(
+		5*time.Second,
+		depositAddress,
+		chain.AwaitingBtcFundingProof,
+	)
+	if !shouldMonitor {
+		t.Errorf("should monitor the deposit")
+	}
+}
+
+func TestShouldMonitorDeposit_UnexpectedInitialState(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+	tbtc := newTestTBTC(tbtcChain)
+
+	// create a signing group which contains the operator
+	signers := append(
+		[]common.Address{tbtcChain.Address()},
+		local.RandomSigningGroup(2)...,
+	)
+
+	tbtcChain.CreateDeposit(depositAddress, signers)
+
+	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tbtcChain.RetrieveSignerPubkey(depositAddress)
+
+	shouldMonitor := tbtc.shouldMonitorDeposit(
+		5*time.Second,
+		depositAddress,
+		chain.AwaitingSignerSetup,
+	)
+	if shouldMonitor {
+		t.Errorf("should not monitor the deposit")
+	}
+}
+
 func TestShouldMonitorDeposit_PositiveResultCache(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
@@ -2021,9 +2082,22 @@ func TestShouldMonitorDeposit_PositiveResultCache(t *testing.T) {
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
 	// all calls should be `true`
-	call1 := tbtc.shouldMonitorDeposit(depositAddress)
-	call2 := tbtc.shouldMonitorDeposit(depositAddress)
-	call3 := tbtc.shouldMonitorDeposit(depositAddress)
+	const stateConfirmTimeout = 1 * time.Second
+	call1 := tbtc.shouldMonitorDeposit(
+		stateConfirmTimeout,
+		depositAddress,
+		chain.AwaitingSignerSetup,
+	)
+	call2 := tbtc.shouldMonitorDeposit(
+		stateConfirmTimeout,
+		depositAddress,
+		chain.AwaitingSignerSetup,
+	)
+	call3 := tbtc.shouldMonitorDeposit(
+		stateConfirmTimeout,
+		depositAddress,
+		chain.AwaitingSignerSetup,
+	)
 
 	if !(call1 && call2 && call3) {
 		t.Errorf("should monitor deposit calls results are not same")
@@ -2040,7 +2114,6 @@ func TestShouldMonitorDeposit_PositiveResultCache(t *testing.T) {
 			actualChainCalls,
 		)
 	}
-
 }
 
 func TestShouldMonitorDeposit_NegativeResultCache(t *testing.T) {
@@ -2056,9 +2129,22 @@ func TestShouldMonitorDeposit_NegativeResultCache(t *testing.T) {
 	tbtcChain.CreateDeposit(depositAddress, signers)
 
 	// all calls should be `false`
-	call1 := tbtc.shouldMonitorDeposit(depositAddress)
-	call2 := tbtc.shouldMonitorDeposit(depositAddress)
-	call3 := tbtc.shouldMonitorDeposit(depositAddress)
+	const stateConfirmTimeout = 1 * time.Second
+	call1 := tbtc.shouldMonitorDeposit(
+		stateConfirmTimeout,
+		depositAddress,
+		chain.AwaitingSignerSetup,
+	)
+	call2 := tbtc.shouldMonitorDeposit(
+		stateConfirmTimeout,
+		depositAddress,
+		chain.AwaitingSignerSetup,
+	)
+	call3 := tbtc.shouldMonitorDeposit(
+		stateConfirmTimeout,
+		depositAddress,
+		chain.AwaitingSignerSetup,
+	)
 
 	if call1 || call2 || call3 {
 		t.Errorf("should monitor deposit calls results are not same")
@@ -2075,7 +2161,6 @@ func TestShouldMonitorDeposit_NegativeResultCache(t *testing.T) {
 			actualChainCalls,
 		)
 	}
-
 }
 
 func TestGetSignerActionDelay(t *testing.T) {
