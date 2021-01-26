@@ -547,7 +547,11 @@ func monitorSigningRequests(
 				utils.DoWithDefaultRetry(
 					clientConfig.GetSigningTimeout(),
 					func(ctx context.Context) error {
-						shouldHandle, err := eventDeduplicator.notifySigningStarted(keepAddress, event.Digest)
+						shouldHandle, err := eventDeduplicator.notifySigningStarted(
+							60*time.Second,
+							keepAddress,
+							event.Digest,
+						)
 						if err != nil {
 							logger.Errorf(
 								"could not deduplicate signing request event: [%v]",
@@ -654,7 +658,11 @@ func checkAwaitingSignature(
 		utils.DoWithDefaultRetry(
 			clientConfig.GetSigningTimeout(),
 			func(ctx context.Context) error {
-				shouldHandle, err := eventDeduplicator.notifySigningStarted(keepAddress, latestDigest)
+				shouldHandle, err := eventDeduplicator.notifySigningStarted(
+					60*time.Second,
+					keepAddress,
+					latestDigest,
+				)
 				if err != nil {
 					logger.Errorf(
 						"could not deduplicate signing request event: [%v]",

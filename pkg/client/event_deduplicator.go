@@ -111,6 +111,7 @@ func (ed *eventDeduplicator) notifyKeyGenCompleted(keepAddress common.Address) {
 // notifySigningCompleted once the protocol completes, no matter if it failed or
 // succeeded.
 func (ed *eventDeduplicator) notifySigningStarted(
+	timeout time.Duration,
 	keepAddress common.Address,
 	digest [32]byte,
 ) (bool, error) {
@@ -120,10 +121,8 @@ func (ed *eventDeduplicator) notifySigningStarted(
 
 	// repeat the check in case of a small chain reorg or if chain nodes
 	// are out of sync
-	isAwaitingSignature, err := utils.ConfirmWithTimeout(
-		10*time.Second,
-		10*time.Second,
-		30*time.Second,
+	isAwaitingSignature, err := utils.ConfirmWithTimeoutDefaultBackoff(
+		timeout,
 		func(ctx context.Context) (bool, error) {
 			return ed.chain.IsAwaitingSignature(keepAddress, digest)
 		},
