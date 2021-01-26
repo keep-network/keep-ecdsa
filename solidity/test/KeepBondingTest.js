@@ -1,5 +1,5 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const TokenStaking = contract.fromArtifact("TokenStakingStub")
@@ -8,7 +8,7 @@ const ManagedGrant = contract.fromArtifact("ManagedGrantStub")
 const KeepBonding = contract.fromArtifact("KeepBonding")
 const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
 
-const {expectEvent, expectRevert} = require("@openzeppelin/test-helpers")
+const { expectEvent, expectRevert } = require("@openzeppelin/test-helpers")
 
 const BN = web3.utils.BN
 
@@ -69,14 +69,14 @@ describe("KeepBonding", function () {
 
     beforeEach(async () => {
       await tokenStaking.setBeneficiary(operator, beneficiary)
-      await keepBonding.deposit(operator, {value: value})
+      await keepBonding.deposit(operator, { value: value })
     })
 
     it("can be called by operator", async () => {
       const tokenOwner = accounts[2]
       await tokenStaking.setOwner(operator, tokenOwner)
 
-      await keepBonding.withdraw(value, operator, {from: operator})
+      await keepBonding.withdraw(value, operator, { from: operator })
       // ok, no reverts
     })
 
@@ -84,7 +84,7 @@ describe("KeepBonding", function () {
       const tokenOwner = accounts[2]
       await tokenStaking.setOwner(operator, tokenOwner)
 
-      await keepBonding.withdraw(value, operator, {from: tokenOwner})
+      await keepBonding.withdraw(value, operator, { from: tokenOwner })
       // ok, no reverts
     })
 
@@ -92,7 +92,7 @@ describe("KeepBonding", function () {
       const grantee = accounts[2]
       await tokenGrant.setGranteeOperator(grantee, operator)
 
-      await keepBonding.withdraw(value, operator, {from: grantee})
+      await keepBonding.withdraw(value, operator, { from: grantee })
       // ok, no reverts
     })
 
@@ -100,7 +100,7 @@ describe("KeepBonding", function () {
       const thirdParty = accounts[2]
 
       await expectRevert(
-        keepBonding.withdraw(value, operator, {from: thirdParty}),
+        keepBonding.withdraw(value, operator, { from: thirdParty }),
         "Only operator or the owner is allowed to withdraw bond"
       )
     })
@@ -112,7 +112,7 @@ describe("KeepBonding", function () {
         .toBN(await web3.eth.getBalance(beneficiary))
         .add(value)
 
-      await keepBonding.withdraw(value, operator, {from: operator})
+      await keepBonding.withdraw(value, operator, { from: operator })
 
       const unbonded = await keepBonding.availableUnbondedValue(
         operator,
@@ -145,7 +145,7 @@ describe("KeepBonding", function () {
       const invalidValue = value.add(new BN(1))
 
       await expectRevert(
-        keepBonding.withdraw(invalidValue, operator, {from: operator}),
+        keepBonding.withdraw(invalidValue, operator, { from: operator }),
         "Insufficient unbonded value"
       )
     })
@@ -155,7 +155,7 @@ describe("KeepBonding", function () {
       await tokenStaking.setBeneficiary(operator, etherReceiver.address)
 
       await expectRevert(
-        keepBonding.withdraw(value, operator, {from: operator}),
+        keepBonding.withdraw(value, operator, { from: operator }),
         "Transfer failed"
       )
     })
@@ -168,7 +168,7 @@ describe("KeepBonding", function () {
 
     beforeEach(async () => {
       await tokenStaking.setBeneficiary(operator, beneficiary)
-      await keepBonding.deposit(operator, {value: value})
+      await keepBonding.deposit(operator, { value: value })
 
       managedGrant = await ManagedGrant.new(managedGrantee)
       await tokenGrant.setGranteeOperator(managedGrant.address, operator)
@@ -179,7 +179,7 @@ describe("KeepBonding", function () {
         value,
         operator,
         managedGrant.address,
-        {from: managedGrantee}
+        { from: managedGrantee }
       )
       // ok, no reverts
     })
@@ -190,7 +190,7 @@ describe("KeepBonding", function () {
           value,
           operator,
           managedGrant.address,
-          {from: operator}
+          { from: operator }
         ),
         "Not a grantee of the provided contract"
       )
@@ -205,7 +205,7 @@ describe("KeepBonding", function () {
           value,
           operator,
           managedGrant.address,
-          {from: tokenOwner}
+          { from: tokenOwner }
         ),
         "Not a grantee of the provided contract"
       )
@@ -220,7 +220,7 @@ describe("KeepBonding", function () {
           value,
           operator,
           managedGrant.address,
-          {from: standardGrantee}
+          { from: standardGrantee }
         ),
         "Not a grantee of the provided contract"
       )
@@ -234,7 +234,7 @@ describe("KeepBonding", function () {
           value,
           operator,
           managedGrant.address,
-          {from: thirdParty}
+          { from: thirdParty }
         ),
         "Not a grantee of the provided contract"
       )
@@ -251,7 +251,7 @@ describe("KeepBonding", function () {
         value,
         operator,
         managedGrant.address,
-        {from: managedGrantee}
+        { from: managedGrantee }
       )
 
       const unbonded = await keepBonding.availableUnbondedValue(
@@ -275,7 +275,7 @@ describe("KeepBonding", function () {
         value,
         operator,
         managedGrant.address,
-        {from: managedGrantee}
+        { from: managedGrantee }
       )
       expectEvent(receipt, "UnbondedValueWithdrawn", {
         operator: operator,
@@ -291,7 +291,7 @@ describe("KeepBonding", function () {
           invalidValue,
           operator,
           managedGrant.address,
-          {from: managedGrantee}
+          { from: managedGrantee }
         ),
         "Insufficient unbonded value"
       )
@@ -306,7 +306,7 @@ describe("KeepBonding", function () {
           value,
           operator,
           managedGrant.address,
-          {from: managedGrantee}
+          { from: managedGrantee }
         ),
         "Transfer failed"
       )

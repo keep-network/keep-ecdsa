@@ -159,9 +159,8 @@ contract BondedECDSAKeepVendorImplV1 is IBondedECDSAKeepVendor {
             "KeepRegistry address is not registered"
         );
 
-        address operatorContractUpgrader = registry.operatorContractUpgraderFor(
-            address(this)
-        );
+        address operatorContractUpgrader =
+            registry.operatorContractUpgraderFor(address(this));
         require(
             operatorContractUpgrader == msg.sender,
             "Caller is not operator contract upgrader"

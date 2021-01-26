@@ -3,7 +3,6 @@ pragma solidity 0.5.17;
 import "../../contracts/BondedECDSAKeep.sol";
 import "../../contracts/CloneFactory.sol";
 
-
 /// @title Bonded ECDSA Keep Factory Stub using clone factory.
 /// @dev This contract is for testing purposes only.
 contract BondedECDSAKeepCloneFactory is CloneFactory {

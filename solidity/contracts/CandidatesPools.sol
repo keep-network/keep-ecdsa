@@ -39,9 +39,8 @@ contract CandidatesPools {
     /// @dev If caller is already registered it returns without any changes.
     /// @param _application Address of the application.
     function registerMemberCandidate(address _application) external {
-        AbstractSortitionPool candidatesPool = AbstractSortitionPool(
-            getSortitionPool(_application)
-        );
+        AbstractSortitionPool candidatesPool =
+            AbstractSortitionPool(getSortitionPool(_application));
 
         address operator = msg.sender;
         if (!candidatesPool.isOperatorInPool(operator)) {
@@ -107,9 +106,8 @@ contract CandidatesPools {
             return false;
         }
 
-        AbstractSortitionPool candidatesPool = AbstractSortitionPool(
-            candidatesPools[_application]
-        );
+        AbstractSortitionPool candidatesPool =
+            AbstractSortitionPool(candidatesPools[_application]);
 
         return candidatesPool.isOperatorRegistered(_operator);
     }
@@ -126,9 +124,8 @@ contract CandidatesPools {
             return false;
         }
 
-        AbstractSortitionPool candidatesPool = AbstractSortitionPool(
-            candidatesPools[_application]
-        );
+        AbstractSortitionPool candidatesPool =
+            AbstractSortitionPool(candidatesPools[_application]);
 
         return candidatesPool.isOperatorEligible(_operator);
     }

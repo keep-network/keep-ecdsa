@@ -2,7 +2,6 @@ pragma solidity 0.5.17;
 
 import "../../contracts/BondedECDSAKeep.sol";
 
-
 /// @title Bonded ECDSA Keep Stub
 /// @dev This contract is for testing purposes only.
 contract BondedECDSAKeepStub is BondedECDSAKeep {
@@ -14,7 +13,11 @@ contract BondedECDSAKeepStub is BondedECDSAKeep {
         markAsTerminated();
     }
 
-    function isFradulentPreimageSet(bytes memory preimage) public view returns (bool) {
+    function isFradulentPreimageSet(bytes memory preimage)
+        public
+        view
+        returns (bool)
+    {
         return fraudulentPreimages[preimage];
     }
 

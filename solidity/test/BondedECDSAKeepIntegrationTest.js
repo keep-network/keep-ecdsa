@@ -1,9 +1,9 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 
-const {time} = require("@openzeppelin/test-helpers")
+const { time } = require("@openzeppelin/test-helpers")
 
-const {mineBlocks} = require("./helpers/mineBlocks")
+const { mineBlocks } = require("./helpers/mineBlocks")
 
 const KeepToken = contract.fromArtifact("KeepTokenIntegration")
 const KeepTokenGrant = contract.fromArtifact("TokenGrant")
@@ -91,7 +91,7 @@ describe("BondedECDSAKeepFactory", function () {
         keepOwner,
         bond,
         stakeLockDuration,
-        {from: application, value: feeEstimate}
+        { from: application, value: feeEstimate }
       )
 
       await keepFactory.openKeep(
@@ -132,7 +132,9 @@ describe("BondedECDSAKeepFactory", function () {
       )
 
       for (let i = 0; i < members.length; i++) {
-        const {creators, expirations} = await tokenStaking.getLocks(members[i])
+        const { creators, expirations } = await tokenStaking.getLocks(
+          members[i]
+        )
 
         assert.deepEqual(
           creators,
@@ -149,12 +151,14 @@ describe("BondedECDSAKeepFactory", function () {
 
   describe("closeKeep", async () => {
     it("releases locks on member stakes", async () => {
-      const keep = await openKeep({from: keepOwner})
+      const keep = await openKeep({ from: keepOwner })
 
-      await keep.closeKeep({from: keepOwner})
+      await keep.closeKeep({ from: keepOwner })
 
       for (let i = 0; i < members.length; i++) {
-        const {creators, expirations} = await tokenStaking.getLocks(members[i])
+        const { creators, expirations } = await tokenStaking.getLocks(
+          members[i]
+        )
 
         assert.isEmpty(creators, "incorrect token lock creator")
 
@@ -165,12 +169,14 @@ describe("BondedECDSAKeepFactory", function () {
 
   describe("seizeSignerBonds", async () => {
     it("releases locks on member stakes", async () => {
-      const keep = await openKeep({from: keepOwner})
+      const keep = await openKeep({ from: keepOwner })
 
-      await keep.seizeSignerBonds({from: keepOwner})
+      await keep.seizeSignerBonds({ from: keepOwner })
 
       for (let i = 0; i < members.length; i++) {
-        const {creators, expirations} = await tokenStaking.getLocks(members[i])
+        const { creators, expirations } = await tokenStaking.getLocks(
+          members[i]
+        )
 
         assert.isEmpty(creators, "incorrect token lock creator")
 
@@ -334,7 +340,7 @@ describe("BondedECDSAKeepFactory", function () {
       await tokenStaking.authorizeOperatorContract(
         members[i],
         keepFactory.address,
-        {from: authorizers[i]}
+        { from: authorizers[i] }
       )
       await keepBonding.authorizeSortitionPoolContract(members[i], signerPool, {
         from: authorizers[i],
@@ -349,7 +355,7 @@ describe("BondedECDSAKeepFactory", function () {
 
   async function depositMemberCandidates(unbondedAmount) {
     for (let i = 0; i < members.length; i++) {
-      await keepBonding.deposit(members[i], {value: unbondedAmount})
+      await keepBonding.deposit(members[i], { value: unbondedAmount })
     }
   }
 
@@ -372,7 +378,7 @@ describe("BondedECDSAKeepFactory", function () {
       keepOwner,
       bond,
       stakeLockDuration,
-      {from: application, value: feeEstimate}
+      { from: application, value: feeEstimate }
     )
 
     await keepFactory.openKeep(
@@ -391,8 +397,8 @@ describe("BondedECDSAKeepFactory", function () {
   }
 
   async function submitMembersPublicKeys(keep, publicKey) {
-    await keep.submitPublicKey(publicKey, {from: members[0]})
-    await keep.submitPublicKey(publicKey, {from: members[1]})
-    await keep.submitPublicKey(publicKey, {from: members[2]})
+    await keep.submitPublicKey(publicKey, { from: members[0] })
+    await keep.submitPublicKey(publicKey, { from: members[1] })
+    await keep.submitPublicKey(publicKey, { from: members[2] })
   }
 })

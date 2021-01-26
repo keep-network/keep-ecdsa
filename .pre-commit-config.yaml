@@ -6,7 +6,7 @@ repos:
     - id: go-vet
     - id: go-lint
  - repo: https://github.com/keep-network/pre-commit-hooks.git
-   rev: 63e729f
+   rev: v1.3.0
    hooks:
     - id: check-added-large-files
  - repo: local
@@ -14,7 +14,7 @@ repos:
     - id: solidity-lint-js
       name: 'solidity lint js'
       entry: /usr/bin/env bash -c "cd solidity && npm run lint:js"
-      files: '\.js$'
+      files: 'solidity\/.*\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"
     - id: solidity-lint-sol
@@ -26,6 +26,6 @@ repos:
     - id: staker-rewards-lint-js
       name: 'staker rewards lint js'
       entry: /usr/bin/env bash -c "cd staker-rewards && npm run lint:js"
-      files: '\.js$'
+      files: 'staker-rewards\/.*\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"

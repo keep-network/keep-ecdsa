@@ -1,5 +1,5 @@
-const {accounts, contract} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { accounts, contract } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 
 const {
   BN,
@@ -47,7 +47,7 @@ describe("BondedECDSAKeepVendor", function () {
     keepVendor = await BondedECDSAKeepVendor.new(
       bondedECDSAKeepVendorImplV1.address,
       initializeCallData,
-      {from: proxyAdmin}
+      { from: proxyAdmin }
     )
 
     currentAddress = bondedECDSAKeepVendorImplV1.address
@@ -56,7 +56,7 @@ describe("BondedECDSAKeepVendor", function () {
   describe("constructor", async () => {
     it("reverts when initialization fails", async () => {
       const bondedECDSAKeepVendorImplV1 = await BondedECDSAKeepVendorImplV1.new(
-        {from: implOwner}
+        { from: implOwner }
       )
 
       const initializeCallData = bondedECDSAKeepVendorImplV1.contract.methods
@@ -67,7 +67,7 @@ describe("BondedECDSAKeepVendor", function () {
         BondedECDSAKeepVendor.new(
           bondedECDSAKeepVendorImplV1.address,
           initializeCallData,
-          {from: proxyAdmin}
+          { from: proxyAdmin }
         ),
         "Incorrect factory address"
       )
@@ -203,7 +203,7 @@ describe("BondedECDSAKeepVendor", function () {
 
     it("reverts when upgrade not initiated", async () => {
       await expectRevert(
-        keepVendor.completeUpgrade({from: proxyAdmin}),
+        keepVendor.completeUpgrade({ from: proxyAdmin }),
         "Upgrade not initiated"
       )
     })
@@ -216,7 +216,7 @@ describe("BondedECDSAKeepVendor", function () {
       await time.increase((await keepVendor.upgradeTimeDelay()).subn(2))
 
       await expectRevert(
-        keepVendor.completeUpgrade({from: proxyAdmin}),
+        keepVendor.completeUpgrade({ from: proxyAdmin }),
         "Timer not elapsed"
       )
     })
@@ -227,7 +227,7 @@ describe("BondedECDSAKeepVendor", function () {
       })
       await time.increase(await keepVendor.upgradeTimeDelay())
 
-      await keepVendor.completeUpgrade({from: proxyAdmin})
+      await keepVendor.completeUpgrade({ from: proxyAdmin })
 
       expect(await keepVendor.upgradeInitiatedTimestamp()).to.eq.BN(0)
     })
@@ -238,9 +238,9 @@ describe("BondedECDSAKeepVendor", function () {
       })
       await time.increase(await keepVendor.upgradeTimeDelay())
 
-      await keepVendor.completeUpgrade({from: proxyAdmin})
+      await keepVendor.completeUpgrade({ from: proxyAdmin })
       assert.equal(
-        await keepVendor.implementation.call({from: proxyAdmin}),
+        await keepVendor.implementation.call({ from: proxyAdmin }),
         address1
       )
     })
@@ -251,7 +251,7 @@ describe("BondedECDSAKeepVendor", function () {
       })
       await time.increase(await keepVendor.upgradeTimeDelay())
 
-      const receipt = await keepVendor.completeUpgrade({from: proxyAdmin})
+      const receipt = await keepVendor.completeUpgrade({ from: proxyAdmin })
 
       expectEvent(receipt, "UpgradeCompleted", {
         implementation: address1,
@@ -264,7 +264,7 @@ describe("BondedECDSAKeepVendor", function () {
       })
       await time.increase(await keepVendor.upgradeTimeDelay())
 
-      await keepVendor.completeUpgrade({from: proxyAdmin})
+      await keepVendor.completeUpgrade({ from: proxyAdmin })
     })
 
     it("reverts when called by non-admin", async () => {
@@ -287,7 +287,7 @@ describe("BondedECDSAKeepVendor", function () {
       await time.increase(await keepVendor.upgradeTimeDelay())
 
       await expectRevert(
-        keepVendor.completeUpgrade({from: proxyAdmin}),
+        keepVendor.completeUpgrade({ from: proxyAdmin }),
         "Incorrect factory address"
       )
     })
@@ -303,7 +303,7 @@ describe("BondedECDSAKeepVendor", function () {
     })
 
     it("sets new admin when called by admin", async () => {
-      await keepVendor.updateAdmin(newAdmin, {from: proxyAdmin})
+      await keepVendor.updateAdmin(newAdmin, { from: proxyAdmin })
 
       assert.equal(await keepVendor.admin(), newAdmin, "Unexpected admin")
     })
@@ -316,10 +316,10 @@ describe("BondedECDSAKeepVendor", function () {
     })
 
     it("reverts when called by admin after role transfer", async () => {
-      await keepVendor.updateAdmin(newAdmin, {from: proxyAdmin})
+      await keepVendor.updateAdmin(newAdmin, { from: proxyAdmin })
 
       await expectRevert(
-        keepVendor.updateAdmin(accounts[0], {from: proxyAdmin}),
+        keepVendor.updateAdmin(accounts[0], { from: proxyAdmin }),
         "Caller is not the admin"
       )
     })
