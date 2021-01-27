@@ -24,10 +24,11 @@ contract RandomBeaconStub is IRandomBeacon {
         return feeEstimate;
     }
 
-    function requestRelayEntry(
-        address callbackContract,
-        uint256 callbackGas
-    ) public payable returns (uint256) {
+    function requestRelayEntry(address callbackContract, uint256 callbackGas)
+        public
+        payable
+        returns (uint256)
+    {
         requestCount++;
 
         if (shouldFail) {

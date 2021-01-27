@@ -79,7 +79,8 @@ export async function getPastEvents(
     } catch (error) {
       console.log(
         `Switching to partial events pulls; ` +
-          `failed to get events in one request: [${error.message}]`
+          `failed to get events in one request for event [${eventName}], ` +
+          `fromBlock: [${fromBlock}], toBlock: [${toBlock}]: [${error.message}]`
       )
 
       try {
@@ -94,12 +95,20 @@ export async function getPastEvents(
           if (batchEndBlock > toBlock) {
             batchEndBlock = toBlock
           }
+          console.log(
+            `Executing partial events pull for event [${eventName}], ` +
+              `fromBlock: [${batchStartBlock}], toBlock: [${batchEndBlock}]`
+          )
           const foundEvents = await contract.getPastEvents(eventName, {
             fromBlock: batchStartBlock,
             toBlock: batchEndBlock,
           })
 
           resultEvents = resultEvents.concat(foundEvents)
+          console.log(
+            `Fetched [${foundEvents.length}] events, has ` +
+              `[${resultEvents.length}] total`
+          )
 
           batchStartBlock = batchEndBlock + 1
         }

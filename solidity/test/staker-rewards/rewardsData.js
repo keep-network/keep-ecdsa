@@ -96,4 +96,4 @@ const testValues = {
   },
 }
 
-module.exports = {testValues}
+module.exports = { testValues }

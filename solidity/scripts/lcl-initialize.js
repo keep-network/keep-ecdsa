@@ -33,13 +33,13 @@ module.exports = async function () {
         await tokenStaking.authorizeOperatorContract(
           operator,
           operatorContract,
-          {from: operator}
+          { from: operator }
         )
 
         await keepBonding.authorizeSortitionPoolContract(
           operator,
           sortitionPoolAddress,
-          {from: operator}
+          { from: operator }
         ) // this function should be called by authorizer but it's currently set to operator in demo.js
       } catch (err) {
         console.error(err)
@@ -52,7 +52,7 @@ module.exports = async function () {
 
     const depositUnbondedValue = async (operator) => {
       try {
-        await keepBonding.deposit(operator, {value: bondingValue})
+        await keepBonding.deposit(operator, { value: bondingValue })
         console.log(
           `deposited ${web3.utils.fromWei(
             bondingValue

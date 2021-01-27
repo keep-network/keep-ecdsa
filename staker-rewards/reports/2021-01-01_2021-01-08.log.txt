@@ -1,0 +1,1427 @@
+$ date -r 1609459200
+Fri  1 Jan 2021 01:00:00 CET
+
+$ date -r 1610064000
+Fri  8 Jan 2021 01:00:00 CET
+
+$ ./block-by-date.sh --timestamp 1610064000 --etherscan-token "<removed>"
+Block 11610611
+
+$ ./rewards-merkle-generator.sh --start-timestamp 1609459200 --end-timestamp 1610064000 --start-block 11565019 --end-block 11610611 --allocation 4249428480000000000000000 --eth-host "<removed>" --tenderly-token "<removed>"
+
+
+Processing input parameters...
+
+Initializing merkle-distributor submodule...
+HEAD is up to date.
+Submodule path 'merkle-distributor': rebased into 'dc79d225511d5378e5cbee389e4313e80a6347e6'
+
+Installing dependencies for merkle-distributor...
+npm WARN read-shrinkwrap This version of npm is compatible with lockfileVersion@1, but npm-shrinkwrap.json was generated for lockfileVersion@2. I'll try to do my best with it!
+npm WARN @uniswap/merkle-distributor@1.0.1 No license field.
+
+audited 1403 packages in 9.743s
+
+68 packages are looking for funding
+  run `npm fund` for details
+
+found 11 vulnerabilities (10 low, 1 high)
+  run `npm audit fix` to fix them, or `npm audit` for details
+
+Installing dependencies for staker-rewards...
+npm WARN read-shrinkwrap This version of npm is compatible with lockfileVersion@1, but npm-shrinkwrap.json was generated for lockfileVersion@2. I'll try to do my best with it!
+npm WARN @babel/plugin-transform-runtime@7.12.1 requires a peer of @babel/core@^7.0.0-0 but none is installed. You must install peer dependencies yourself.
+npm WARN @keep-network/tbtc.js@0.18.2 requires a peer of web3-eth-contract@^1.2.11 but none is installed. You must install peer dependencies yourself.
+npm WARN @keep-network/tbtc.js@0.18.2 requires a peer of web3-provider-engine@^15.0.7 but none is installed. You must install peer dependencies yourself.
+npm WARN staker-rewards@1.0.0 No repository field.
+npm WARN staker-rewards@1.0.0 No license field.
+
+up to date in 12.654s
+
+70 packages are looking for funding
+  run `npm fund` for details
+
+
+Calculating staker rewards...
+(node:73650) ExperimentalWarning: Importing JSON modules is an experimental feature. This feature could change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Interval start timestamp: 2021-01-01T00:00:00.000Z
+Interval end timestamp: 2021-01-08T00:00:00.000Z
+Interval start block: 11565019
+Interval end block: 11610611
+Interval total rewards: 4249428480000000000000000 KEEP
+Refreshing keeps cache...
+Looking for keeps created since block [11567580]...
+Number of keeps created since block [11567580]: 63
+Number of keeps in the cache: 3552
+Fetching information about [62] new keeps...
+Successfully fetched information about keep 0x49c15aF2D7b6B3467eEB55199F2a228C4CCF8d74
+Successfully fetched information about keep 0x22aC83496E4CdE69C126869698a49e1621cfEE72
+Successfully fetched information about keep 0x55734099D36FBD3C88e57C499D9a2fDBfec90501
+Successfully fetched information about keep 0xB2f9fc6F8930Cc599b768de71b49C4aB9b3e4109
+Successfully fetched information about keep 0xC7e318251f158d82aA6847295DCDC99f5E05cd06
+Successfully fetched information about keep 0x320d1Fd32a2EFdCf2C632F03A7a7D8AbD281100a
+Successfully fetched information about keep 0xE630cB4E114D0AF321F7D8aF418f5B695631E7C0
+Successfully fetched information about keep 0x9E0D0e37E7D6DBa8024d9bD77f75cb74E62a8a62
+Successfully fetched information about keep 0x9d909e87Cec94b479990fA903Fab1522f57e52D9
+Successfully fetched information about keep 0xf2A27c815a4C4BBf0beef4d8492Efa8410A28f40
+Successfully fetched information about keep 0x8B1A3808cAa9e38917f12c2FaD90ab104aCA4942
+Successfully fetched information about keep 0x53811A5489D0939462CBA88CF60e46B839DdDFd7
+Successfully fetched information about keep 0x44c32f9e178d16C5a9aCf4d48FFa843CF3799e1b
+Successfully fetched information about keep 0x9B56b296Efd1F0Ae28894d6CE7f5837F89198FD3
+Successfully fetched information about keep 0x0564282Cb81b0f4f7Af6fa78CA6bA882ECaC6285
+Successfully fetched information about keep 0x042F74bFc96c5d916832A30579a7Ff6eCc961B50
+Successfully fetched information about keep 0x6Ec330B056de1Bc5aC15B30863243AD9229e7c3A
+Successfully fetched information about keep 0xAeb520152Eba2179f4F5B0C5b5580F857e23E74B
+Successfully fetched information about keep 0x63C4ef9CA1E06D0F78787219CE91Fc1D8926De01
+Successfully fetched information about keep 0x76922e394C13Ec1d75722eA0B9bDf33582D59908
+Successfully fetched information about keep 0x40083D16807AeF1AF38cDF105FB907Ef89b7948c
+Successfully fetched information about keep 0x4272bB235666Dbd9E1c296964F631d92E2163C21
+Successfully fetched information about keep 0xEa3b4d036C79161DBEA7E607A58125BDC888eb98
+Successfully fetched information about keep 0xffE6104912027C3c0B7594C75496510a6298192d
+Successfully fetched information about keep 0xcADeF4287a573C7e0500866813a920BE5d91CCf2
+Successfully fetched information about keep 0x4fe01cdd8b882C8d176895599E9F2C2714fCBB8f
+Successfully fetched information about keep 0x9cAe704f61E38eF4470E8D15CF9839DA4fE85906
+Successfully fetched information about keep 0x51A13Aae0EcAC417AAf82bf30a20fF939b81C343
+Successfully fetched information about keep 0x5a567600112E1137Cd9d55D37D69b9dEe5A818CF
+Successfully fetched information about keep 0x330683eF50A05712bC068b0782c8F8FeF320e226
+Successfully fetched information about keep 0x279Fd9CC25ae900DDe67DD76e28EAcDE285e6E10
+Successfully fetched information about keep 0xa83879082b177f0Bd2adDb4527E7a201d555e0f3
+Successfully fetched information about keep 0xD3066794cF7e1c41b66f83e850EAB658b3Ee2e45
+Successfully fetched information about keep 0x24dCB9ebd522e45F895382A3Bc4D9D291C5F91e1
+Successfully fetched information about keep 0x9bBFAac61B15f92BB35E49be2bd859255A79bCd5
+Successfully fetched information about keep 0xb74e917c3f614F88501d8762F390A1e64D34946F
+Successfully fetched information about keep 0x12Fcc9bCbB38D857fFA7dBc342e1F1F749D72305
+Successfully fetched information about keep 0x228665ae8861297125Ed2902284c74606a21777a
+Successfully fetched information about keep 0x95Dd7F157620eE71A9f45964348EFd7538DfF03F
+Successfully fetched information about keep 0xC1693d7d27db8A017E137EDa947df116CA8E35b6
+Successfully fetched information about keep 0xb9E4495B0047595B3861AA2465684F234b38384a
+Successfully fetched information about keep 0xc332A8432C21C0f5A5Fc1cCeac5352c8588cf79C
+Successfully fetched information about keep 0x41BaAb2F38F7DEfE6D34C1D945Db6dAd0f630d23
+Successfully fetched information about keep 0x66208B911e523C1F18298b6883f80D7fcb6527Ff
+Successfully fetched information about keep 0x24DdDD2F66A3ba1e5c37d7089bB36A7019124Db9
+Successfully fetched information about keep 0xe06a4C6094CEF9ad0F66D17D6E018294813bBd7e
+Successfully fetched information about keep 0x8C7c8ae2131323B559a3254B68a0c3cbe26C1588
+Successfully fetched information about keep 0x05107B31A59711279a388E5a55F38c99b2B39c28
+Successfully fetched information about keep 0xDD6fea6526f618CB7F8F848fB2284e150294a0Eb
+Successfully fetched information about keep 0x1e0ba49839eF94e1F6f9D429552bF47bA460A255
+Successfully fetched information about keep 0xFA4FCDe1477A26bbCf20949De367ec74A348BF29
+Successfully fetched information about keep 0xbC5D4908b7934fe7e7a90F34D4B2f7c015C622de
+Successfully fetched information about keep 0x32e010D05E3A005152Ef8c66a780c0594EE840d1
+Successfully fetched information about keep 0x021a8afc03Fea422c11525155dAC5Df52488aaBA
+Successfully fetched information about keep 0x18e153116e0A067B96362917fA8cBBa0B96643c6
+Successfully fetched information about keep 0xb480021bdd4Ff5A4A0e2FDF2913c6Ac99f4D3f24
+Successfully fetched information about keep 0x290DB68D59c1B11d95f1c87824CBBE14dACC4b26
+Successfully fetched information about keep 0xaA32503D52C90393Bae5b2a73f239DC4a79b9d60
+Successfully fetched information about keep 0xb6fe4De5082f8799648f402f1E4ab7621C371743
+Successfully fetched information about keep 0xc20Cc601c7A80873CdcFFF7E1FE64bD43F02EEC1
+Successfully fetched information about keep 0xE3478cc083b8d11EE89AB1848aEe8233a50A0E07
+Successfully fetched information about keep 0x8D65C6289f1EcAAf56a4B0F7Fe13f6cE05437EE5
+Successfully fetched information about [62] new keeps
+Refreshing [508] active keeps in the cache
+Checking current status of keep 0x7eC074061E37982db7dC5449E82541Cd0EB65E41
+Checking current status of keep 0xB8229b79c83b20c068239ad08554C235fE3FE9E1
+Checking current status of keep 0x510Fd6F738b9Ff41f3498C5fcb5903Ed0C2B7307
+Checking current status of keep 0x128b9393725804bB7C1a91E45D37feA759d230F6
+Checking current status of keep 0x77dD8EC79bC212ca10a26Ef6CdAC79Bc4f48827F
+Checking current status of keep 0x28Cc6C010c082bFA2955D3b36369919483c67BF9
+Updating current status of keep 0x77dD8EC79bC212ca10a26Ef6CdAC79Bc4f48827F from [active] to [closed]
+Checking current status of keep 0x723E0507C7332bA0cA2159462640Db12Ee1d78A3
+Updating current status of keep 0x28Cc6C010c082bFA2955D3b36369919483c67BF9 from [active] to [closed]
+Checking current status of keep 0xEe6D2ef2efaD5e49176724F543b38F2e81dB258a
+Updating current status of keep 0x723E0507C7332bA0cA2159462640Db12Ee1d78A3 from [active] to [closed]
+Checking current status of keep 0x0cDF638Ed6c29FDd00D4061953Df689C6FBD4439
+Checking current status of keep 0x93c600aE595AA72B77b976923f8Eab1c01A38EC3
+Checking current status of keep 0x2Ed699Ef3eFbb90033A4398e56596DF00FfA1A70
+Checking current status of keep 0xbF82306a44B90fC70850e92499a7CCFe2c4e1371
+Updating current status of keep 0x2Ed699Ef3eFbb90033A4398e56596DF00FfA1A70 from [active] to [closed]
+Checking current status of keep 0x3f2e61d4b0c7Bc6e62fce5db8Bfc18EC82eDe1F3
+Checking current status of keep 0x074D61fF6FF165BfDe153af909F2641cf6807500
+Checking current status of keep 0xb3065E0482F06B102Bc8bd36fe8485FCdD54f491
+Checking current status of keep 0xaA2b0F33C7a56689685b3517672158AE60DCEdc7
+Checking current status of keep 0xf1B9bfd684122bf2293aa8Dd10a332ceFedD3ac7
+Checking current status of keep 0x5d9bBCa26730855Cc9009cB28a0Fb61Ff43104b1
+Updating current status of keep 0xf1B9bfd684122bf2293aa8Dd10a332ceFedD3ac7 from [active] to [closed]
+Checking current status of keep 0xdD5107B10760E47A91f69d1b9aea6d721945b8fe
+Checking current status of keep 0xCdC5a6ac0a6B94C80f8cdf9E9D10bBC85CF79154
+Updating current status of keep 0x5d9bBCa26730855Cc9009cB28a0Fb61Ff43104b1 from [active] to [closed]
+Checking current status of keep 0x88B69569336d5F1DE0333eE7Ec583015f8CD476b
+Updating current status of keep 0xdD5107B10760E47A91f69d1b9aea6d721945b8fe from [active] to [closed]
+Checking current status of keep 0x8115cC7ddC71529a86fBA732C327159445554C09
+Checking current status of keep 0x240753f722B80984D15992C845639a3AD0f3d7fe
+Updating current status of keep 0x88B69569336d5F1DE0333eE7Ec583015f8CD476b from [active] to [closed]
+Checking current status of keep 0x99e110d3E9026f21cB13bBD162beCd74D5Ec3652
+Checking current status of keep 0xB835fC0e5a4b1525A3b86E3a1B9986afAA403316
+Checking current status of keep 0xf57C5100ACb7B2ac7E0270D411f0E1d66cf7d058
+Updating current status of keep 0x8115cC7ddC71529a86fBA732C327159445554C09 from [active] to [terminated]
+Checking current status of keep 0xEf4FA11384C6F7EFD6437C054b81580e98DFe377
+Checking current status of keep 0x5D318f80c32b1A4606E2264103628F2f226f5D62
+Checking current status of keep 0xDc591E9012900eA2A3FC66a99f115a11fD1524E4
+Checking current status of keep 0xd7E09FbB9156f1619176a6FDCF48C7743ba31938
+Checking current status of keep 0xF817c1eA9c1b5F28f644e3f07dD99Bc4384F2540
+Updating current status of keep 0xDc591E9012900eA2A3FC66a99f115a11fD1524E4 from [active] to [closed]
+Checking current status of keep 0xf77dC3906A6e7F98b5A2Df7E4A475cAaB33F5C04
+Updating current status of keep 0xd7E09FbB9156f1619176a6FDCF48C7743ba31938 from [active] to [closed]
+Checking current status of keep 0xcd5F2cB55bcdAEC59c7e2850CdCba69f6eE8DC3B
+Updating current status of keep 0xF817c1eA9c1b5F28f644e3f07dD99Bc4384F2540 from [active] to [closed]
+Checking current status of keep 0x380db38d16EAAcFB2570f1d04961155eCcf283c4
+Updating current status of keep 0xf77dC3906A6e7F98b5A2Df7E4A475cAaB33F5C04 from [active] to [closed]
+Checking current status of keep 0x2C2854efF87aAa04b8151344014C601C1967eCA3
+Updating current status of keep 0x380db38d16EAAcFB2570f1d04961155eCcf283c4 from [active] to [closed]
+Checking current status of keep 0x808B7B272c44790DaCb32C38135cB504c2936c2f
+Checking current status of keep 0x822728F5f0E6790FB0f6ab543B54bf80c23cba85
+Updating current status of keep 0x2C2854efF87aAa04b8151344014C601C1967eCA3 from [active] to [closed]
+Checking current status of keep 0x3D449f4898083900ABD717B67A8e3b8748f04747
+Checking current status of keep 0xf7D1A61569E2E652c078C4b424E9B9fD68E53D6A
+Checking current status of keep 0x8a98AAA9ae474fFc1Cd5950Ce8DD78a76563B408
+Checking current status of keep 0xFEfbf5C81B28F0b57ac18418Cf0817D25d86D303
+Checking current status of keep 0x2201334F5FCF07285e06d7c7C923f84861Ff1572
+Checking current status of keep 0xB73604e777E61970bEf71db92fC06cD955a8c18E
+Checking current status of keep 0x1bFba059639493196267969c79277B8A8cfF4c4f
+Updating current status of keep 0x2201334F5FCF07285e06d7c7C923f84861Ff1572 from [active] to [closed]
+Checking current status of keep 0x94dc85f6715De3bC98F40A63e76f18Dae3e0d3AA
+Updating current status of keep 0xB73604e777E61970bEf71db92fC06cD955a8c18E from [active] to [closed]
+Checking current status of keep 0x17a4C779c5473465513B89db9ab91B8Feb2EfD48
+Checking current status of keep 0x0331e9471CB64a99C3B523E4Ce93Ed2739aC65f3
+Updating current status of keep 0x94dc85f6715De3bC98F40A63e76f18Dae3e0d3AA from [active] to [closed]
+Checking current status of keep 0x168FFb5e8C891b1d4FF49b1B41BcE725A9451663
+Checking current status of keep 0x6b0eD1c8385CDDD14bff878bD59BeF891294eae4
+Checking current status of keep 0xbF834C003fF9c4863C8D434f2445bC87C9B8Df5e
+Checking current status of keep 0x5Ec5A1B1A31abf6ABE8dDCB25C401113D30A8191
+Updating current status of keep 0xbF834C003fF9c4863C8D434f2445bC87C9B8Df5e from [active] to [closed]
+Checking current status of keep 0x7b48532B899B6778413D3568118AfF235763aDcd
+Checking current status of keep 0x297c0A966be354d9c421F818bBAF91001b441f82
+Checking current status of keep 0x378D77905541C19bB7AAAce470c0eD11563A71aa
+Checking current status of keep 0x25EB62287518d3a5575cFb204ed8f235656ddab3
+Updating current status of keep 0x378D77905541C19bB7AAAce470c0eD11563A71aa from [active] to [closed]
+Checking current status of keep 0xf609C891E9c1637280AADF42C20A681f4aa9f6C5
+Checking current status of keep 0x047b44bCB16D4F363c2A1cbeEd1913cDaEf34BE5
+Checking current status of keep 0xd456D0db44373E57a831Df7dDAfd46769e8E758b
+Checking current status of keep 0x70a6CEf1A104C02EF197Bbcd73ED724685bD7A41
+Checking current status of keep 0xb4787C1ED81D0e2A08F51Aaa0D9Cc25A3b6F1612
+Checking current status of keep 0xb0E1541c4dad79370971164696f1fA8cDc612B15
+Checking current status of keep 0x1AFB633De9796b543A83EbF242Ff05d35FBD4C8C
+Checking current status of keep 0x7f25D506B2ef27945B96b5Df6b4409D5c256dAAA
+Updating current status of keep 0xb0E1541c4dad79370971164696f1fA8cDc612B15 from [active] to [closed]
+Checking current status of keep 0x0d905A993011c20a67Cb400559F286E2D841b595
+Updating current status of keep 0x1AFB633De9796b543A83EbF242Ff05d35FBD4C8C from [active] to [closed]
+Checking current status of keep 0x0f898cC4B5da87CFAbC7DC5bDFF4439CF3b190aB
+Checking current status of keep 0x0e4E5f657E37Eaa17Cc6c4d4c8dd15490b6cD37a
+Checking current status of keep 0x65689bd2c6c4A8Db76835E35C1E6B91ce742F7BB
+Checking current status of keep 0x5649C2A98De563ebdAD3cc697b588609835a9C70
+Updating current status of keep 0x0e4E5f657E37Eaa17Cc6c4d4c8dd15490b6cD37a from [active] to [closed]
+Checking current status of keep 0x79293286d96E9C27df9cCc1C0f4B058C46f71705
+Checking current status of keep 0xfa9b2c53e1Dfa30c285ca0A451eC08e63b8326b6
+Checking current status of keep 0x0E5fCB2EdE307cE9da6cf3D3221ADC48cEAa493E
+Checking current status of keep 0x832141707ED62Fa61a7350DdF4400cbBB7bBE465
+Updating current status of keep 0x0E5fCB2EdE307cE9da6cf3D3221ADC48cEAa493E from [active] to [closed]
+Checking current status of keep 0xc8Ad34388395536e9da55bC1533Ae235145A86D1
+Checking current status of keep 0x8eBc5561291c2C3662E5a55793416057D743A80B
+Checking current status of keep 0xd09a946594E87A7380Af773fD1534aA1d20A5cDB
+Checking current status of keep 0xCCf01314A0654557289cd577E6818cb72C7fF974
+Checking current status of keep 0xB80b74Ac816FAddc8Da178df42A8f292699676cB
+Checking current status of keep 0xA0cFd33737a652a764e98303D0a2852b95c5dd5A
+Checking current status of keep 0x02DB7f62b0115c77CEd52f0F2098d7c560757Dba
+Checking current status of keep 0xEaBC7db2914089ae8d3B526479eA917B2F909C88
+Checking current status of keep 0x23e2726aC7163C3D751c4cEd34aC176cEC1D25BE
+Checking current status of keep 0xE059677bC156529d73D01F64bCFC8851C6f536D1
+Checking current status of keep 0x8F1a71c86b2e1bEa70391178F15aC96c201d76e9
+Checking current status of keep 0x98E1478053f10b4259e414677ec565E3Ef4AEdfc
+Checking current status of keep 0x1E18c74579b0D3A97Edf0e91EF13dCcdac5f926b
+Checking current status of keep 0x79A66f8C829a0a5012412D3a97aD7b3ceF7eF4cB
+Checking current status of keep 0x0d926Da53bc136553278416524012B5659E6C354
+Checking current status of keep 0x45814068C134730e47d05aefFd5b67020DbADF50
+Checking current status of keep 0x04771a608a75ADEcCBB99d2862c1385A4a5f09cE
+Checking current status of keep 0xDD3cCe7f69A8dbD625895E95F0aFAAD40B74dEdc
+Checking current status of keep 0xd2704bfd37AFdc642a36cB57B710aB645c2D636e
+Checking current status of keep 0x965801B2fEad8e6fb1245775B9fbb6Ca80FBE869
+Updating current status of keep 0xd2704bfd37AFdc642a36cB57B710aB645c2D636e from [active] to [closed]
+Checking current status of keep 0xb03EeeeE56D56628fE4219a7527f9C584E755502
+Checking current status of keep 0x8171E0D47ce531999F1608667f170B5e98315B6b
+Updating current status of keep 0x965801B2fEad8e6fb1245775B9fbb6Ca80FBE869 from [active] to [closed]
+Checking current status of keep 0xf51ce58f36D579FB3D090188daD9aA9f535e67Cf
+Checking current status of keep 0xFF0ad418a22ad868369cbdC26E8C694F5dAB3a93
+Checking current status of keep 0x7068E044d73ce066D0173CAdcFF3440fDB183048
+Updating current status of keep 0x8171E0D47ce531999F1608667f170B5e98315B6b from [active] to [closed]
+Checking current status of keep 0x29F0c68C3bb6296ae2969D6E9746AC3606304c3b
+Checking current status of keep 0x4D427d16142d2D69301A83150172D6B09feA2104
+Updating current status of keep 0x29F0c68C3bb6296ae2969D6E9746AC3606304c3b from [active] to [closed]
+Checking current status of keep 0x4a5D2F654FD45df903E440C37D2a50996a70B760
+Checking current status of keep 0x8BFa69fc2C6c90a6B6E7536C09cEceA3841aB29C
+Checking current status of keep 0xD02bdb1d36572539cE8fb83456CDD742F6A27179
+Checking current status of keep 0x896449325454FBe4fd147b4c77F2Fe3843a938c3
+Checking current status of keep 0x3e897FbfE1025f02fd04b67b1D80717Ec092843C
+Checking current status of keep 0x4DE06e8019fEfa503c25081A2B62058b14087E46
+Checking current status of keep 0x9dCB0Dbb0818D532f3171b13aF79B06c70679398
+Checking current status of keep 0xcf8d2461A6B15fC69d27cA72DCb53231b1E87D46
+Checking current status of keep 0x53a326fBF45691c14E99e4377Ed0e4E4835247d2
+Checking current status of keep 0x6E00Ef57Fd455fE65927E36d11720151067ecA48
+Checking current status of keep 0xcca6128ca70AEb96aEFDC6DDdb80366C1d1dE4F9
+Checking current status of keep 0x1398B58347D1167F10aE6C0897439E658aD9A90C
+Checking current status of keep 0xbc28CA14E341ab940d98855E7984D73e6218CeAD
+Checking current status of keep 0xC5BCD032e3E99770C9dd7f03f4e391cc53077e04
+Checking current status of keep 0x11CA77A25892901c7Aae47694EfE22D415932Eb2
+Checking current status of keep 0xB9D3ce3701D396D87325ebBBb5f4499007f79f2D
+Checking current status of keep 0xB37D26b99A5AAE9ff96ED1050512bbE367C5e531
+Checking current status of keep 0x9faB19d4f5b084EB8e479745FBDA3FC7f787cEA0
+Checking current status of keep 0x1C823B63C1a5adA59cbf5b1Cda58C40A884ba6c9
+Checking current status of keep 0x158FA4bE3d4Cc0dcdcedc8cF351aa05778D2dd09
+Checking current status of keep 0x2AfFc3e93ff8ABD4f69C1563CD805378Df4c53B5
+Checking current status of keep 0xf884270DF20D1ecaE03F0290802299545b91B604
+Checking current status of keep 0x43eb1Dde832029b3474b0f87520654E273fEEe21
+Checking current status of keep 0xDeB2ecF65bB074D0092C1C0Ed63a1301402C516B
+Checking current status of keep 0x8D8b357Bfc7BD3E46e16CF6c8D3d45877870D177
+Checking current status of keep 0xe9895860C2bB1df999eBEE37821064de40C9d6ab
+Checking current status of keep 0xc829178C4d9d6201e1f265771032A5Ee1550cE33
+Checking current status of keep 0x7157127EbD4DA07ACC18956403244584C3d049Ee
+Updating current status of keep 0xc829178C4d9d6201e1f265771032A5Ee1550cE33 from [active] to [closed]
+Checking current status of keep 0xd8C0F41Af7cf4D1D93063d84B0CAEaA3b3BCddC0
+Checking current status of keep 0xA3Ed58B16B1FC1Da6Bf0B15A42a9434594FA525c
+Updating current status of keep 0xd8C0F41Af7cf4D1D93063d84B0CAEaA3b3BCddC0 from [active] to [closed]
+Checking current status of keep 0xBef71D7C4ad2D731Fd81E7ddB4C70Fbb72C8c606
+Checking current status of keep 0x6102c4CFFaABB0a8a1b3411e566e97f4e7b18eE7
+Updating current status of keep 0xA3Ed58B16B1FC1Da6Bf0B15A42a9434594FA525c from [active] to [closed]
+Checking current status of keep 0x0d4c10c45cCCc117f892CD5Ede4A491e2571035f
+Checking current status of keep 0x08D1843A4633cc626ebd94A30c1331758bf31AD1
+Checking current status of keep 0xE1487E83E972a47872fdd7a38d85ED8cA8e479c7
+Checking current status of keep 0x15bF6BF3cFf61d573dB55C2C0abA0aCcCbdd916e
+Checking current status of keep 0x79867b2B9f36Fa13296F1bb2D61f0496AD8C0D09
+Checking current status of keep 0xD477E692cF6CF17C3fc58BCAAb778609024aF340
+Checking current status of keep 0x84b90d66253c8B4781Bd6CCaCf8863DcF4433a03
+Checking current status of keep 0x1f1D9F266Ea7a84c1CFC2933AFD4ad625bC596d9
+Checking current status of keep 0x965532D1Dc719ce13259BE1E7805c9fff891AeBe
+Checking current status of keep 0xABF58604Db9ca62C079a506096C556bCddfC06e6
+Checking current status of keep 0xc1882e5005a705Eb27B6373e9DAEe8Acb76Ba6C5
+Checking current status of keep 0xb7005c4Dffe5EB1A2A825C82669d094C5A6041f8
+Checking current status of keep 0x8FC07e79a29d651F3395995E8832C9D56937B373
+Checking current status of keep 0x3FcD2bDC101350b3AB6271Ecc846d47cB88Ea68E
+Checking current status of keep 0x33Be20B7b47daeF3202C8E741EBFa9749c38482C
+Checking current status of keep 0x5188E0a926C40651CEF0A123a1C0D85925535b23
+Checking current status of keep 0x9Ad63228738D43ec24852D4aDcA9a5598a819E15
+Checking current status of keep 0x768407aD8Ad1c2Def26546DCb496c16d78E94fA4
+Checking current status of keep 0xa91C66d61dD7888207d2253B590e93683828726D
+Checking current status of keep 0xdad900Dc61A3C0b9a5eD6340f4E34F90b05C3F9e
+Checking current status of keep 0xbf676f168CD9D33D6b60bB5FF2e4EDF80caC02CA
+Checking current status of keep 0x7bE8eE53b2E673E704415D3E355b93901a20e39b
+Checking current status of keep 0xaEBDe4BFD3B734fE3dB07C5545612F42e163f23F
+Checking current status of keep 0x07BCbf065c16D9Bb2Bf2199d8064Bb2431555fDc
+Checking current status of keep 0x953DA7245e53720f7cD7ebad5D965E8eeC498e2f
+Checking current status of keep 0x5f568fc2071D7aAf760A112952caE1efc5E24f6e
+Checking current status of keep 0x349490B55630B7FeE2de8c63955Dd1EF505bA69c
+Checking current status of keep 0xB9c5e8de75eA4FD6c85B7fc2D093fFB404761A1e
+Checking current status of keep 0x32c84Db5e47353105355A396F6E96fD729C73bfa
+Checking current status of keep 0xD24eC40B8A4FEfAC36Ee49E001e5E232C7F70c7D
+Checking current status of keep 0x89AffecB0699CF281e898c8A1727CdaF59d8Fe3C
+Checking current status of keep 0xAafA040bf7031cde10209b83C0e6c71aEedde34B
+Checking current status of keep 0x0731c7b342080344Bf1906a6E7F8321bfc28ED20
+Checking current status of keep 0xb5224ea4d8034ea9F505334C506E992a2aD8A061
+Checking current status of keep 0x88d30EE6C7621e6910e6231967E6A90ea64e8C25
+Checking current status of keep 0x368A7947a62a05b8e339b4eE5cFE955d21FDD4EB
+Checking current status of keep 0xEc1CA3274fa6a892Ded3133DD343B9764C68122a
+Checking current status of keep 0xb8E8f5162E51F972f35892E556c5079CDE2561eD
+Checking current status of keep 0xe0033aEFEEfB7814Abc67861F92A86E478f67693
+Checking current status of keep 0x7d84B58D50399766bCfC576cDcBF81798d768226
+Checking current status of keep 0x303D9cFe386F1D02234Eb3032836817E878e00b6
+Checking current status of keep 0x879e27dE0DEa9151469CD2Ba1f93F6346156c8E7
+Checking current status of keep 0x9c14219185465adf883C1e440e71cdc4FA4dE267
+Checking current status of keep 0xe9e3CA59B89EBCe22E5B7829ACA9De88bfcFF2ad
+Checking current status of keep 0x20fCEBFC710b848cE851B3a8045Cd0cB0C75f893
+Checking current status of keep 0x1e336a0A7A3fd0eb12fb95Fc9BaAaA1E6ec8924f
+Checking current status of keep 0x2c1262493b70bb79569657faeADB6405EeBeAe5e
+Checking current status of keep 0xb707BaF0403eA6C726533dccA011Ee883808F6A6
+Checking current status of keep 0x2B69eFea02807f67Ed588eA12DaA7F0928c8Fb2B
+Checking current status of keep 0x234Fe54844155DC6204608019fBc8304e1ff3170
+Checking current status of keep 0xAA8F28f9ed93187f1e17C2B1AC78A60b305500Da
+Checking current status of keep 0xFfac033d404e6a7D743d2F10Ef0a718864Cc0ac5
+Checking current status of keep 0xe9eC4f2C7bDd16579C05512Cf30919630Af54fe4
+Checking current status of keep 0x1D311bdbfEACA5DDB0A3502C48d4d7a0bc105792
+Checking current status of keep 0x8237fE0BAc33242986530D3ac84A12f6122D49e0
+Checking current status of keep 0xeE618490C9aa0Ac7D8F142f13E55C27dD09A849E
+Checking current status of keep 0x34582a3f48F17c414415959054266D166FBC3d8d
+Checking current status of keep 0x24aD68A2947fE031Bf4C8766DA7D733c3aE74731
+Checking current status of keep 0xd9D17FdA316C4F8526EA683e1a06e008205396F8
+Checking current status of keep 0x445F608aD7F53FcB0002c7344f8f189121dcf5Fc
+Checking current status of keep 0x6537E15adBd756d0054a9F442AD0f5C8127Cce3f
+Checking current status of keep 0x17632715e926B8bdC0BEF6FdFdA1BD5E70c27f2B
+Checking current status of keep 0x9D1034bF547DE8Fd1058866280f4c1f65bfC5824
+Checking current status of keep 0xC516F6F5119Beb2aFD569FDa1916990e0Ff2D005
+Checking current status of keep 0x397D38c225F9B24F24B5799a9935e5b5e499ba3C
+Checking current status of keep 0xa62D58D06Bf912539FE1cC6c07A58b42118E8E01
+Checking current status of keep 0x57341AE3a9Ba7a5300c24c34b5B856413ADB1E3E
+Checking current status of keep 0x8584f042fB3789Cc5513b5115364e982B58A4Ce7
+Checking current status of keep 0xe437c0b2F8197c118DF302f94731Fe086D36B7Ea
+Checking current status of keep 0x2995FBA754B28e2dE163ff7E89898A31C9597DE5
+Updating current status of keep 0xe437c0b2F8197c118DF302f94731Fe086D36B7Ea from [active] to [closed]
+Checking current status of keep 0x83a48a7aaf0E2Fb7638C81109Cb284a373bb5433
+Checking current status of keep 0x6f55a9B043f3b04bC69842E5248BdcF8817b074D
+Checking current status of keep 0x250f2253877245CaECca14728379fD7F7E7d5866
+Checking current status of keep 0xD801c49CC85255D3A2D78552ad2e64047880d026
+Checking current status of keep 0x9b4351f07C1cDD9c5551Ada400a8d09F6c97fDe9
+Checking current status of keep 0x66F983F701aDC91b296b95786C69248610160703
+Checking current status of keep 0xe9A25453FC24274dAa22349CABa5089CD84fF502
+Checking current status of keep 0x16F2980DCc1F8312c3cC94E4CdD4B615e7556c92
+Checking current status of keep 0x4A65dB0173D3b2B0CdDa87468136bDA047687d62
+Checking current status of keep 0xb9473Cdd34546e69e696b550cc7cEd8b258a2675
+Checking current status of keep 0xE04Af8a1D0c1443380561E185853DA8B297D3ed6
+Checking current status of keep 0xB22d756e68d8bBbE3e8B9c6bef30b3648515f4B0
+Checking current status of keep 0x266bF37c71075026B2319cFD952F99Ae97516778
+Checking current status of keep 0x23A3317105d668a98c38A3bce449a694b0d15094
+Checking current status of keep 0xC9e16733389619a6BEebac9Cb6DF5ef865e02345
+Checking current status of keep 0x1bE2dfF5AbCEBAC228360bEe728408C64Cf3aFea
+Checking current status of keep 0x14B5C0546065C68BE9fc0e893aAC4263FeDB4e1D
+Checking current status of keep 0x4e63745020A78eD7Eb9B010fE9953cF11E1D8503
+Checking current status of keep 0x96c41b3D310251003b2d843b467926C54258Ec71
+Checking current status of keep 0x38Bc94993E3Afb14F7e8572BbE00A0dC70345888
+Checking current status of keep 0x46c1A41d5fDDd91bcF68672f74b62c1072d8347C
+Updating current status of keep 0x46c1A41d5fDDd91bcF68672f74b62c1072d8347C from [active] to [closed]
+Checking current status of keep 0x7a78D4DE7798BABE612C29f9D5B48b409240D2b7
+Checking current status of keep 0x36C38a4841387f6ac1812c44AE6d06faCA5a9F25
+Checking current status of keep 0xff10Acdc23202Ea7AB193368D516C400f09b5AEF
+Checking current status of keep 0xD3003Ac40a1a5002c302694cE41eDE3370803530
+Checking current status of keep 0x93d9545c509602939675Ad73f8753656b75F1762
+Checking current status of keep 0xE82e1cA777E331E291635C66B1099775f40A0673
+Checking current status of keep 0xf575fB28407F468Ba521dB3ba54f0538b75fb2e9
+Checking current status of keep 0x37d3E06C23506A3fB09d1e065a36747a61de4a2e
+Updating current status of keep 0xf575fB28407F468Ba521dB3ba54f0538b75fb2e9 from [active] to [closed]
+Checking current status of keep 0x831229A77436bc027b78Cb98748BE4E6616d76d9
+Checking current status of keep 0x6b3871956C60239e5ebEFa0bAa611f3e2ea2f432
+Checking current status of keep 0x18D9f8B908bB446D5630Edf06447b953DBC4e844
+Checking current status of keep 0xFDb7B29fe5A6180c24CA9228F828942BF1CCC32F
+Checking current status of keep 0xA0c96D2edead43D6C3a09A0e6552aF0818E6b982
+Checking current status of keep 0xb456f812C6C74876B335FC024955f88A32088A2a
+Checking current status of keep 0x7a8808CB0900A916d16e472Fa9F208F26f82F05D
+Checking current status of keep 0xFbB0A1c9f9E80c1C9811437Bdd7E0ECFd71226ce
+Checking current status of keep 0x8f9108e5aa6205f84E392e37051f215B82F20527
+Checking current status of keep 0xDF447f3BF952130363D38E3a976081c801bC6609
+Checking current status of keep 0xb5C64FC3f825fa6db466Eedab7b00DCeec9aC231
+Checking current status of keep 0xCf964B3fA36D16e5350CeDf2122B195409829a8C
+Checking current status of keep 0x1D3f729Ca96bF1333240e0374C80c2904DB79677
+Checking current status of keep 0xEc16bAD1faC885fB9e865344b824B0af6e472fe3
+Checking current status of keep 0x8F08D4deD2B2219090e28551169e27dAdb3353B1
+Checking current status of keep 0x89f96b4027016Aba9e40dFeFE43c3187b83B95b2
+Checking current status of keep 0x53A2Ec16A0e455Ca3A47F8e7a1eD5227B7566aD5
+Checking current status of keep 0x8f55714411Db2A105B87Fc0f9ab7cdE0cd4f5Bfa
+Checking current status of keep 0x0dad716681700Dd11241c421Dd5E444404443475
+Checking current status of keep 0x2216c2F031b2fa14BBFF5Cc900Ba350485b3B828
+Checking current status of keep 0xDB1617D1F090a66BC88C16eD481Dc519F51c8791
+Checking current status of keep 0xd8c767fe119F2520f4dAF64a3D1710E319ef4540
+Checking current status of keep 0x3654F2221e0f83bA29DF408C898c244De4120d07
+Checking current status of keep 0x73Da1253bbC569d751738063fbc374FD8eE966b4
+Checking current status of keep 0x33B2fbb6fD286Fac2648731B937aA6D8D92C3988
+Checking current status of keep 0x113CC7bCe69FB500C8cE987B1f29258eDED55BFF
+Checking current status of keep 0x8D11a95f5b9C848a476BAE8CEda3aeD25b40502b
+Checking current status of keep 0xb2a738899BA180f4B39843734E5B777b602cf31C
+Checking current status of keep 0x12e29E2fe6aeC1207E314A03F492Fb166518051E
+Checking current status of keep 0xF70d3EdCfbee8267a460Dd7D31379638A0B3Cc2a
+Checking current status of keep 0xD98932790a542F62B181546dff759964231b5c8c
+Checking current status of keep 0x250bA3d43028b2c5d5173aF4AaB230CB3b7A6122
+Checking current status of keep 0xE687Ad44C8230C950600D69D6582b7fBd104008e
+Checking current status of keep 0x2AEe054b1BCeFac927BbB91150C806ca8f9E8BAF
+Checking current status of keep 0x9c6C317840F6d4Baf98E3E31b1dd19368E0186Fb
+Checking current status of keep 0xbE1beE830c643F77990EB811391AfD34bc8C4a01
+Updating current status of keep 0xbE1beE830c643F77990EB811391AfD34bc8C4a01 from [active] to [closed]
+Checking current status of keep 0xE85e6C461348D9b4c17Fb30C00A4ede101e84C28
+Checking current status of keep 0x644CA181ca302647BfE4C680Ad4476f5A7b5b8d4
+Checking current status of keep 0x536cCAB3f3EF94F23AA177f1022bD000C5A9f4b3
+Checking current status of keep 0x696e899a53ED1eE14Ae243524Bb066fc22BA8b24
+Checking current status of keep 0x5DDa158cBe3039730C842492d66AA66ee827E697
+Checking current status of keep 0xCBF38C2aB0d68d26630504f2A2813270101Ae46F
+Checking current status of keep 0x2d4251886b76dDC161179fDE4ad1c4c97b58e66C
+Checking current status of keep 0xc96205FBcb6b45bf13C59995a2D9Cb063A8645E0
+Checking current status of keep 0xBfbAbDdDC5a17D4163C617011507E5981AD414F6
+Updating current status of keep 0x2d4251886b76dDC161179fDE4ad1c4c97b58e66C from [active] to [closed]
+Checking current status of keep 0x5961173Be8f742bEC68dD141F2f06631112e4273
+Checking current status of keep 0xba6e8895490610A5c45c5fBD7358eDBF7720E9E9
+Checking current status of keep 0x3cfc5240E1eD9f98531460b65855f155202812B3
+Checking current status of keep 0xF9139Dd38bD3C71232E32E49f8585dA750Cba79E
+Checking current status of keep 0x316f441a2c4a64A63aeE4588a3433248367a5e30
+Checking current status of keep 0x1Db0d38f2654a3012F0E7595114aEFA85D7Aab47
+Checking current status of keep 0x487ee0C9cc7a7b50F98e65cb65cf0dB0d00447dc
+Checking current status of keep 0xc7a4D757A5c75437EDbb77Aa47fE53bE03B6Bfc3
+Checking current status of keep 0xdFc417905b6f4fd5dF115c54b5A6A5F58aFa00Cb
+Checking current status of keep 0x64D8273F3F9aE1171804c3b70FEE523bb5A4736B
+Checking current status of keep 0xF3396C16FF3f99589f5749Ad477ba6896015553D
+Checking current status of keep 0x9E01e018B9e9E99391307CDBCc85222AC388F259
+Checking current status of keep 0xE316a40A96C5b8677dC69d4aB2294a272190D371
+Checking current status of keep 0x75A32a6BE924f3E619b51210ecc2Fd11A8B43d0A
+Checking current status of keep 0xF5B29d8DFA55DB9976292BF06De8EA3A91C236f9
+Checking current status of keep 0xb794564333952772dE5c3Eef268829181Cdd53E9
+Checking current status of keep 0xedB012e07132236490e19a0a8A7dB5726375E669
+Checking current status of keep 0xb75708856a5987dd8986B4F3161cEf8C6798B5Bf
+Updating current status of keep 0xedB012e07132236490e19a0a8A7dB5726375E669 from [active] to [closed]
+Checking current status of keep 0x04A5c429BB5e699d5DD0ea21ee7Ad0Fa1303c758
+Checking current status of keep 0xeF4131F71DE7932a6e030D7E6a890499341c21dC
+Updating current status of keep 0xb75708856a5987dd8986B4F3161cEf8C6798B5Bf from [active] to [closed]
+Checking current status of keep 0x8e08c97ec19AfCB054FE1a2451F7EbA3546C3816
+Updating current status of keep 0x04A5c429BB5e699d5DD0ea21ee7Ad0Fa1303c758 from [active] to [closed]
+Checking current status of keep 0xdB545fab9325A0d498a09B436C0b4B7D356E52cd
+Checking current status of keep 0x6e4F30EC82169fa86aec280b000D3a9C248d6471
+Checking current status of keep 0x9548c50a953Cae6b87f04aE4b1fa81E607A249Cf
+Checking current status of keep 0xCf4195d313D7A539F45FC067bCf1A9A797e990dd
+Checking current status of keep 0x46144236299f5EefD8620cBb8C02449C2D642611
+Checking current status of keep 0xfbB451cF8b7B288Fc7Fb6A43a73e33fFe03606D6
+Checking current status of keep 0x562eec79fdc4ae9011a720A35c46AF33f19C3127
+Checking current status of keep 0x08E7E3651a27522B4FeC0fEEA2DB9b67f805abcf
+Checking current status of keep 0xAe3A931b61248a82369021B720e48630A02E1B6B
+Checking current status of keep 0x9b17b491F16E3BEEeFB2c4441e2037ab2C112c7d
+Checking current status of keep 0x224448A3419F235D096Ec494E5e5063b0dc1967E
+Checking current status of keep 0x0906716bCd10099E0Ed2f35c299e2c64e68B07DA
+Checking current status of keep 0x9CF7547273D1461D5A81aae9D1f182dcaa00b9E7
+Checking current status of keep 0x22B4f36f2675e7BC19eAB3A130e8605E4e62f069
+Checking current status of keep 0xB5167c4908D6E45e467d91548d3FAea79d739721
+Checking current status of keep 0x7309670a6112760661Cc5Bd3aeCe7F572bf57b7a
+Checking current status of keep 0xBa5aE44dB7FBa37D3A49Fe16EfAf74d5318D48F4
+Updating current status of keep 0xB5167c4908D6E45e467d91548d3FAea79d739721 from [active] to [closed]
+Checking current status of keep 0xAB85D432A7f52ed7fCc3b0877B1ff4A25690269A
+Checking current status of keep 0x82caEAC434647ED2c797eC5861b5D14Ce6439f01
+Checking current status of keep 0xF6be13B1F8Acf2D9B380b7b723a44d89b7956a59
+Checking current status of keep 0x9e24c7a047B3fE96e0eF247e392a09751477ECbF
+Checking current status of keep 0x8c700007F83Db392dA5B9c11904fd8A32AB81fA9
+Checking current status of keep 0x89C525a0D98e20f92938747346f6458Ba00b8d70
+Checking current status of keep 0xc26506b7e63391FfC5b182642fcaaEF637981bfd
+Checking current status of keep 0x084604AadeDf05D5e4A4eb018E2E0c7274387BAF
+Checking current status of keep 0x0e32ab853752daC1BAeB78E7fad0Cbd4a7d7732a
+Checking current status of keep 0xe07642132f36E192254B6Ea8B4db47B3D5F597Be
+Checking current status of keep 0x7c300d8B2ebb4551FcbEc4139405fE0877a70a62
+Checking current status of keep 0xFD6F621C6Ac03A5E330F684981A794675B6C917b
+Checking current status of keep 0xe5F9cfC8A9E8cd49DabAd5191DaA5e7FD2517220
+Checking current status of keep 0xAFbfE7b27A14D7E5396ABf3684701bfd5C210783
+Checking current status of keep 0x2b5a6Acf9a7F027e3Feb1f122FC4D9F6D2Ab192B
+Checking current status of keep 0x259069D664c0127C1E2D041A5a5E00DdaBE03ff3
+Checking current status of keep 0xA283403b2a035DFDd05Df42F14Ea65F4234685e9
+Checking current status of keep 0x3E67497D1E80998eaf442Ac1Fc83AF14b31C46a7
+Checking current status of keep 0xd426F56Ef25fD1868992D6271633dBBD2c8E52EC
+Checking current status of keep 0x9D1B57bc2DDAc12155de35a44dac3656970eFFD6
+Checking current status of keep 0x9F3A7e095dB90fbC5280625b1A4995BE209fe60C
+Checking current status of keep 0x31e4D70ef3B10b85ac3430AEe28340066A700364
+Checking current status of keep 0x8f69F515d92677899ae56a3B416254931155BEe7
+Checking current status of keep 0xfe5CcAc9cc599023Fb7Bef1d770f1DDdF5F9Ab29
+Checking current status of keep 0x4539152E03615F81189D33d885Efe40461491C38
+Checking current status of keep 0x38e55DbA0E3693DFFfA0dD8688B96741a153f91e
+Checking current status of keep 0x0025D0757967a0025b845D1775C0b3615760B77d
+Checking current status of keep 0x980245224cA2D74bb8411e443d0fDe422DE78486
+Checking current status of keep 0x918857a4A37f242E8AA7b91F98D6bda37dbdb412
+Checking current status of keep 0x50652E0c1Cb2C18C96CcF65a7926CACdd72c43cA
+Checking current status of keep 0xE267E774CFe5A2565132Ef2f537b509973473cA8
+Updating current status of keep 0x918857a4A37f242E8AA7b91F98D6bda37dbdb412 from [active] to [closed]
+Checking current status of keep 0x9ba2F3340aeB5F92e6f262B7c081783E01773137
+Checking current status of keep 0xE68aBf65F3E41325bdb1f5a98246b07E498d2912
+Checking current status of keep 0xcab2a6062b18D2a030D2E6520E4a15f327c885c9
+Checking current status of keep 0x5956c9194B80dB131e5c85067a8b4dAF37ED0622
+Checking current status of keep 0x20216AD9D2a179AF74433A155501d427f15C4590
+Checking current status of keep 0x79a577f0559F45962F16166153479E9ed687de2B
+Checking current status of keep 0xA615032139797e6FD862A7CeF44301Ba8ffb984f
+Updating current status of keep 0x79a577f0559F45962F16166153479E9ed687de2B from [active] to [closed]
+Checking current status of keep 0xBc301248d8F7E3eD4027F08fbFDfCf43494CBcE1
+Checking current status of keep 0x810D4F8fA6c449E024F20bfFb1c8A54f6346F913
+Checking current status of keep 0x1F45d53Dea13B440CdbbBd9b93aF84636AC63811
+Checking current status of keep 0x1e974979705e330cD945897c8b33ae850FEB8cAa
+Checking current status of keep 0x8A9E2FDA3794619ff492800487BC1D7EB674f4c1
+Checking current status of keep 0x4451EF01f44Eb289E148a53829EBAAD75DD3251f
+Checking current status of keep 0x856877bF85b9508eB0587d2e90EE9782A7B85B16
+Checking current status of keep 0x33DB6790ff4af67286f3f5f7C095b45015629554
+Updating current status of keep 0x4451EF01f44Eb289E148a53829EBAAD75DD3251f from [active] to [closed]
+Checking current status of keep 0x76719B45E141524f536E8962d20659005E55fB09
+Checking current status of keep 0xEc6895994543eae14A656623085eC6B4C23A58A5
+Checking current status of keep 0xe20b76a495B540Da83ED24a4D140333AC21bdE0E
+Checking current status of keep 0xB06ecF929C36645ddC1932536c37Dc547eE85771
+Checking current status of keep 0x69F3Fb737B4814aF9125313860bAEDA636d8ba12
+Updating current status of keep 0xe20b76a495B540Da83ED24a4D140333AC21bdE0E from [active] to [closed]
+Checking current status of keep 0xaC48f6De659c909451f1Bdb91233C41560BdBa56
+Updating current status of keep 0xB06ecF929C36645ddC1932536c37Dc547eE85771 from [active] to [closed]
+Checking current status of keep 0xfb96a71f687322Dc081B0a3295746334890F9333
+Checking current status of keep 0xA6b954F8b9900E2919800f5ADF4A2AC37d62dD49
+Checking current status of keep 0x9ebc5DF3B9446252AA6d1436ea837DD7d1a3FADf
+Checking current status of keep 0x40De1B25d92740c8A8EFa529E1e3A8bB058e03E7
+Updating current status of keep 0x9ebc5DF3B9446252AA6d1436ea837DD7d1a3FADf from [active] to [closed]
+Checking current status of keep 0xF4d116f950E7C253FeaAfF574CFe02061FdaEB82
+Updating current status of keep 0x40De1B25d92740c8A8EFa529E1e3A8bB058e03E7 from [active] to [closed]
+Checking current status of keep 0xcAb0DE0A10f87bD5a77b908593B3Bac9BEC7c02f
+Checking current status of keep 0xD6291696a20DD8852c989f9b20D04a489331FdF2
+Checking current status of keep 0xcaCCD20A147d378159a7F7E42999aC568271ad3f
+Checking current status of keep 0x666125Bb7D0309ea1b9DCCe43489F3f821f89Db6
+Checking current status of keep 0x93A644AA5d2e5e2B0a11228A7C1c38f4717Eb2Cd
+Updating current status of keep 0xcaCCD20A147d378159a7F7E42999aC568271ad3f from [active] to [closed]
+Checking current status of keep 0x3F84f1d9DF6F9113B7490BB296cd6d231a98e8d5
+Checking current status of keep 0x0Ec496299B6b395eAE81c6bE11E302a8f3C4b853
+Checking current status of keep 0xcb92c4De002D4a903a3F7e6f2cb8ADB260E493bb
+Checking current status of keep 0x84bdb9c562dE1DbbC9329c9107571f2b1554318D
+Checking current status of keep 0x6Ea4ebb98830E6fAb09C825a02417E6F3C5249dF
+Checking current status of keep 0xD6315fAbac0A296cfd55B254949d2ED0F1ea61C5
+Updating current status of keep 0x84bdb9c562dE1DbbC9329c9107571f2b1554318D from [active] to [closed]
+Checking current status of keep 0x055ca4F8729C075DaDEa6c4242A1FfCe7466de66
+Checking current status of keep 0xDA9caB9fAAcE3a318d9c2F3e12a32Cd0DEF434e0
+Checking current status of keep 0x8040C1EABa5d8203Bacd396e844D46fE5d3C5e4E
+Checking current status of keep 0x61868765ec7F617fcBb0096F1291acbb37845547
+Checking current status of keep 0x181B26B1DbaBb4ce1BC556E65ba19d45448c6707
+Checking current status of keep 0xDBa296d930E2797D39e8D1219ceaD66168792Aa4
+Checking current status of keep 0x3C67929B7E3F3754C34E9603Cfb7fE03caf9a04e
+Updating current status of keep 0x181B26B1DbaBb4ce1BC556E65ba19d45448c6707 from [active] to [closed]
+Checking current status of keep 0x32CB6614eC0C28688603299b0C128100C2aC3999
+Checking current status of keep 0x2ca3c819F7B22f97738AB4D50A7B9e7CCc7A2c79
+Checking current status of keep 0xfbDfC8939E9eb9c53Bc2fD94930Bc84894C6518D
+Checking current status of keep 0x66CD35D46D590baDa787a8e9a6DD49D627001EE3
+Checking current status of keep 0xE9E4e556DEFDc26a3a133dBE0Ff157C278bee518
+Checking current status of keep 0x0086d0Fd2b70e45488E2e2c7DDF3c634799374c1
+Checking current status of keep 0x367a51F8C44CB35E846a76Ccd45843D07d52Bb61
+Checking current status of keep 0x45CDb72D1d21e20048266D773EFfB393f422e47E
+Checking current status of keep 0x0193319c6e9947ebCBC1D521CA4B674DaCa973Ec
+Checking current status of keep 0xad34655d9B402bDe1E7C9CcB1d1160F77AA721b4
+Checking current status of keep 0x67A223b2673879b4FF7AD7e5cDf326578427e13C
+Checking current status of keep 0x9aE6571585eBe772C002db850aA6F4F1C199D6e3
+Checking current status of keep 0xA36E9c463B2dB129F11E1f388B99404f867EA0d3
+Checking current status of keep 0xe4472Bce4BC72E04fd023ce13729020aef33C3E6
+Checking current status of keep 0x183309886Bbc60E87aab95682d974DA2A4031a6a
+Checking current status of keep 0xEfa51F55FBB45c5248A4b637181CacA002163306
+Checking current status of keep 0x2150B42b233d0C59657ADa1209dDB34bdFA2Ca67
+Checking current status of keep 0x926AEaB77E1728d1326edD5c30F13608920adf23
+Checking current status of keep 0x15Cd5B7B6C10281de62Fc994791146795c763071
+Updating current status of keep 0x15Cd5B7B6C10281de62Fc994791146795c763071 from [active] to [closed]
+Checking current status of keep 0x3c9349360AbF71e71BEa26b9d010Ee4319Bb4Bc5
+Checking current status of keep 0xc0a96E523E99D65623A883c02883d83A35D86B9F
+Checking current status of keep 0x611e6862b845FbF62F1Accda83591B6f7444834B
+Checking current status of keep 0x0CCCF3513A380780f930095a50FCA4c07b6b858F
+Checking current status of keep 0x33A44FB8EF8c616C13520Fa670D69D00C1DF9Ef3
+Checking current status of keep 0x106e48aaC02dEab0bC6b372dd15B4F3410863135
+Checking current status of keep 0x89e495282504ce9cc8A7750fd6E0b6e7bC87F43E
+Checking current status of keep 0x268Dfc6bEC5BCc30282d302E5BB6869D88C4A7f6
+Checking current status of keep 0x0080Bb21f9d2523Fd77858887D01Aa98a88467E3
+Checking current status of keep 0x2a25a935AA000D42DC149ABf02002683840F39e3
+Checking current status of keep 0x6664eAcA9919e1eB468A2D549212ff538616dd87
+Checking current status of keep 0x1A98212Cf01d97D5017c180dbf6Ca3992DcD0ac1
+Checking current status of keep 0x3618047e4822b444D835C3c5832756649Dc7bf43
+Updating current status of keep 0x6664eAcA9919e1eB468A2D549212ff538616dd87 from [active] to [closed]
+Checking current status of keep 0xe339dd1f718DB714BA8FB616143eFB32f33d23AD
+Updating current status of keep 0x1A98212Cf01d97D5017c180dbf6Ca3992DcD0ac1 from [active] to [closed]
+Checking current status of keep 0x0bc4C8501ABB6E2B2AC16e5693a3Bf3d48EA83B4
+Updating current status of keep 0x3618047e4822b444D835C3c5832756649Dc7bf43 from [active] to [closed]
+Checking current status of keep 0x2908EEA5c6bEBF5615b9B9A859c6E9ce279a73B9
+Updating current status of keep 0xe339dd1f718DB714BA8FB616143eFB32f33d23AD from [active] to [closed]
+Checking current status of keep 0x938e3bd892358B7618bDF46A8A126086241A0E48
+Checking current status of keep 0xeaEd68c94f8e033878D98b4786DbEC6D3742d125
+Checking current status of keep 0x6Fb9cd79F7bc3b7F445A79c62c387a412a8416F4
+Checking current status of keep 0xCAc3cF0099CA8cAe9f335eaD91F1d6AE9b57Ecc0
+Checking current status of keep 0x9826Fb754df0f5cfE42917e0eC996a976Ed21498
+Checking current status of keep 0x97B633BD864563C666768ae08BF9ebA059D79509
+Updating current status of keep 0x9826Fb754df0f5cfE42917e0eC996a976Ed21498 from [active] to [closed]
+Checking current status of keep 0xE5A842cb2eb353509466F8557342276fF2473b77
+Checking current status of keep 0x419E409Af4c5a59087019C2515316fe73Fe631C0
+Checking current status of keep 0xB6a263e2AD9001045bc5eb7fF34927244E2D1b42
+Updating current status of keep 0xE5A842cb2eb353509466F8557342276fF2473b77 from [active] to [closed]
+Checking current status of keep 0x7fF4D2998F04033F05f7e41858438fce88aB86F1
+Checking current status of keep 0x9d6b9e4ceeFDc9Fe42C9a3c9041937ED0DA655D5
+Updating current status of keep 0x7fF4D2998F04033F05f7e41858438fce88aB86F1 from [active] to [closed]
+Checking current status of keep 0xeB90300949Ea50367503fF528d9fa0d08e5E54FF
+Checking current status of keep 0xaD952922c39CB8590A058ff317B4DF9dc72b8e38
+Updating current status of keep 0xB6a263e2AD9001045bc5eb7fF34927244E2D1b42 from [active] to [terminated]
+Checking current status of keep 0x9E6De63CB450090f40B034C6E949E5ee552782e6
+Updating current status of keep 0xaD952922c39CB8590A058ff317B4DF9dc72b8e38 from [active] to [closed]
+Checking current status of keep 0x1041325D15580cc942CA1924176C1325c224521d
+Updating current status of keep 0xeB90300949Ea50367503fF528d9fa0d08e5E54FF from [active] to [terminated]
+Checking current status of keep 0xE66aAE47E5Ff9c0E9E96a3ab129cD6c8472f1edB
+Checking current status of keep 0x70F3daCb17e82a73032d063A3f967150d73F163C
+Checking current status of keep 0x1e8A1b0D37b3EaBaB634fDB796CE41795d269f47
+Updating current status of keep 0x70F3daCb17e82a73032d063A3f967150d73F163C from [active] to [closed]
+Checking current status of keep 0x9dFea5F9240c799636F2304785fE6DD39EB3a3f4
+Checking current status of keep 0x2E16019459B4BF32dCB42E8EFe2C94150E5Ec705
+Updating current status of keep 0x1e8A1b0D37b3EaBaB634fDB796CE41795d269f47 from [active] to [closed]
+Checking current status of keep 0x265b567E4aeA8e5eF8c7fC2cBD48b15DBC7d7Df2
+Updating current status of keep 0x2E16019459B4BF32dCB42E8EFe2C94150E5Ec705 from [active] to [terminated]
+Checking current status of keep 0xE9d89e0E5de0672f45ec06e999B8348E114A9aF6
+Checking current status of keep 0x889FacdbfB5B615A89f5C28f184472d52f955D91
+Checking current status of keep 0x32e3323E5679A1A40b5Ce3621eb9aaEfd2Fb5D9E
+Checking current status of keep 0x41Acf7347F3b3f2941C2573689E19ba7a9bE994D
+Checking current status of keep 0xC4851Fa6c9B9287a829220c2A879A7Dc46fF45a3
+Checking current status of keep 0x7737A1EDEC90661f9f489a9befA95D29650D08b9
+Checking current status of keep 0x1c26cF70ACe8d72D8015f5FB21932b30EC95f540
+Checking current status of keep 0x9AB76dc2a88F0C9EDf0C848d5CF67ac71F46Ac36
+Checking current status of keep 0xDd3A99882DE1C48Ef85A39c9a32B5cd7aC985F5b
+Checking current status of keep 0x66059DF9ed5dAd347d182960e6aaB1cE4Fc274e5
+Checking current status of keep 0x96cB1F129FF9783C2F2d7B9b0a749d1073091728
+Checking current status of keep 0x0Da92CBC9Df5b7D21dB493Ce9B3021003537d189
+Checking current status of keep 0xc7C069b7055b54F30b24F914e97CbCCA7Abb9063
+Checking current status of keep 0xce916D3c1Aef7347289eBd8fFBBCC021E72F549a
+Checking current status of keep 0xD88777D675A1f1D5B8441395aF2A1d3AaFbc8bE1
+Checking current status of keep 0x22aC83496E4CdE69C126869698a49e1621cfEE72
+Checking current status of keep 0x55734099D36FBD3C88e57C499D9a2fDBfec90501
+Checking current status of keep 0xB2f9fc6F8930Cc599b768de71b49C4aB9b3e4109
+Checking current status of keep 0xC7e318251f158d82aA6847295DCDC99f5E05cd06
+Checking current status of keep 0x320d1Fd32a2EFdCf2C632F03A7a7D8AbD281100a
+Checking current status of keep 0xE630cB4E114D0AF321F7D8aF418f5B695631E7C0
+Checking current status of keep 0x9E0D0e37E7D6DBa8024d9bD77f75cb74E62a8a62
+Checking current status of keep 0x9d909e87Cec94b479990fA903Fab1522f57e52D9
+Checking current status of keep 0x8B1A3808cAa9e38917f12c2FaD90ab104aCA4942
+Checking current status of keep 0x53811A5489D0939462CBA88CF60e46B839DdDFd7
+Checking current status of keep 0x44c32f9e178d16C5a9aCf4d48FFa843CF3799e1b
+Checking current status of keep 0x9B56b296Efd1F0Ae28894d6CE7f5837F89198FD3
+Checking current status of keep 0x0564282Cb81b0f4f7Af6fa78CA6bA882ECaC6285
+Checking current status of keep 0x042F74bFc96c5d916832A30579a7Ff6eCc961B50
+Checking current status of keep 0xAeb520152Eba2179f4F5B0C5b5580F857e23E74B
+Checking current status of keep 0x63C4ef9CA1E06D0F78787219CE91Fc1D8926De01
+Checking current status of keep 0x76922e394C13Ec1d75722eA0B9bDf33582D59908
+Checking current status of keep 0x40083D16807AeF1AF38cDF105FB907Ef89b7948c
+Checking current status of keep 0x4272bB235666Dbd9E1c296964F631d92E2163C21
+Checking current status of keep 0xEa3b4d036C79161DBEA7E607A58125BDC888eb98
+Checking current status of keep 0xffE6104912027C3c0B7594C75496510a6298192d
+Checking current status of keep 0xcADeF4287a573C7e0500866813a920BE5d91CCf2
+Checking current status of keep 0x4fe01cdd8b882C8d176895599E9F2C2714fCBB8f
+Checking current status of keep 0x51A13Aae0EcAC417AAf82bf30a20fF939b81C343
+Checking current status of keep 0x279Fd9CC25ae900DDe67DD76e28EAcDE285e6E10
+Checking current status of keep 0xa83879082b177f0Bd2adDb4527E7a201d555e0f3
+Checking current status of keep 0xD3066794cF7e1c41b66f83e850EAB658b3Ee2e45
+Checking current status of keep 0x24dCB9ebd522e45F895382A3Bc4D9D291C5F91e1
+Checking current status of keep 0x9bBFAac61B15f92BB35E49be2bd859255A79bCd5
+Checking current status of keep 0xb74e917c3f614F88501d8762F390A1e64D34946F
+Checking current status of keep 0x12Fcc9bCbB38D857fFA7dBc342e1F1F749D72305
+Checking current status of keep 0x228665ae8861297125Ed2902284c74606a21777a
+Checking current status of keep 0x95Dd7F157620eE71A9f45964348EFd7538DfF03F
+Checking current status of keep 0xC1693d7d27db8A017E137EDa947df116CA8E35b6
+Checking current status of keep 0xc332A8432C21C0f5A5Fc1cCeac5352c8588cf79C
+Checking current status of keep 0x41BaAb2F38F7DEfE6D34C1D945Db6dAd0f630d23
+Checking current status of keep 0xe06a4C6094CEF9ad0F66D17D6E018294813bBd7e
+Checking current status of keep 0x1e0ba49839eF94e1F6f9D429552bF47bA460A255
+Checking current status of keep 0xFA4FCDe1477A26bbCf20949De367ec74A348BF29
+Checking current status of keep 0xbC5D4908b7934fe7e7a90F34D4B2f7c015C622de
+Checking current status of keep 0x021a8afc03Fea422c11525155dAC5Df52488aaBA
+Checking current status of keep 0x18e153116e0A067B96362917fA8cBBa0B96643c6
+Checking current status of keep 0xb480021bdd4Ff5A4A0e2FDF2913c6Ac99f4D3f24
+Checking current status of keep 0x290DB68D59c1B11d95f1c87824CBBE14dACC4b26
+Checking current status of keep 0xaA32503D52C90393Bae5b2a73f239DC4a79b9d60
+Checking current status of keep 0xb6fe4De5082f8799648f402f1E4ab7621C371743
+Checking current status of keep 0xc20Cc601c7A80873CdcFFF7E1FE64bD43F02EEC1
+Checking current status of keep 0xE3478cc083b8d11EE89AB1848aEe8233a50A0E07
+Checking current status of keep 0x8D65C6289f1EcAAf56a4B0F7Fe13f6cE05437EE5
+Minimum Bondable Value at interval start: 0.15 ether
+Refreshing cached sortition pool deauthorization transactions
+Checking signature requests for keep 0x77dD8EC79bC212ca10a26Ef6CdAC79Bc4f48827F
+Checking signature requests for keep 0x28Cc6C010c082bFA2955D3b36369919483c67BF9
+Checking signature requests for keep 0x723E0507C7332bA0cA2159462640Db12Ee1d78A3
+Checking signature requests for keep 0x2Ed699Ef3eFbb90033A4398e56596DF00FfA1A70
+Checking signature requests for keep 0xf1B9bfd684122bf2293aa8Dd10a332ceFedD3ac7
+Checking signature requests for keep 0x5d9bBCa26730855Cc9009cB28a0Fb61Ff43104b1
+Checking signature requests for keep 0xdD5107B10760E47A91f69d1b9aea6d721945b8fe
+Checking signature requests for keep 0x88B69569336d5F1DE0333eE7Ec583015f8CD476b
+Checking signature requests for keep 0xDc591E9012900eA2A3FC66a99f115a11fD1524E4
+Checking signature requests for keep 0xd7E09FbB9156f1619176a6FDCF48C7743ba31938
+Checking signature requests for keep 0xF817c1eA9c1b5F28f644e3f07dD99Bc4384F2540
+Checking signature requests for keep 0xf77dC3906A6e7F98b5A2Df7E4A475cAaB33F5C04
+Checking signature requests for keep 0x380db38d16EAAcFB2570f1d04961155eCcf283c4
+Checking signature requests for keep 0x2C2854efF87aAa04b8151344014C601C1967eCA3
+Checking signature requests for keep 0x2201334F5FCF07285e06d7c7C923f84861Ff1572
+Checking signature requests for keep 0xB73604e777E61970bEf71db92fC06cD955a8c18E
+Checking signature requests for keep 0x94dc85f6715De3bC98F40A63e76f18Dae3e0d3AA
+Checking signature requests for keep 0xbF834C003fF9c4863C8D434f2445bC87C9B8Df5e
+Checking signature requests for keep 0x378D77905541C19bB7AAAce470c0eD11563A71aa
+Checking signature requests for keep 0xb0E1541c4dad79370971164696f1fA8cDc612B15
+Checking signature requests for keep 0x1AFB633De9796b543A83EbF242Ff05d35FBD4C8C
+Checking signature requests for keep 0x0e4E5f657E37Eaa17Cc6c4d4c8dd15490b6cD37a
+Checking signature requests for keep 0x0E5fCB2EdE307cE9da6cf3D3221ADC48cEAa493E
+Checking signature requests for keep 0xd2704bfd37AFdc642a36cB57B710aB645c2D636e
+Checking signature requests for keep 0x965801B2fEad8e6fb1245775B9fbb6Ca80FBE869
+Checking signature requests for keep 0x8171E0D47ce531999F1608667f170B5e98315B6b
+Checking signature requests for keep 0x29F0c68C3bb6296ae2969D6E9746AC3606304c3b
+Checking signature requests for keep 0xc829178C4d9d6201e1f265771032A5Ee1550cE33
+Checking signature requests for keep 0xd8C0F41Af7cf4D1D93063d84B0CAEaA3b3BCddC0
+Checking signature requests for keep 0xA3Ed58B16B1FC1Da6Bf0B15A42a9434594FA525c
+Checking signature requests for keep 0xe437c0b2F8197c118DF302f94731Fe086D36B7Ea
+Checking signature requests for keep 0x46c1A41d5fDDd91bcF68672f74b62c1072d8347C
+Checking signature requests for keep 0xf575fB28407F468Ba521dB3ba54f0538b75fb2e9
+Checking signature requests for keep 0xbE1beE830c643F77990EB811391AfD34bc8C4a01
+Checking signature requests for keep 0x2d4251886b76dDC161179fDE4ad1c4c97b58e66C
+Checking signature requests for keep 0xedB012e07132236490e19a0a8A7dB5726375E669
+Checking signature requests for keep 0xb75708856a5987dd8986B4F3161cEf8C6798B5Bf
+Checking signature requests for keep 0x04A5c429BB5e699d5DD0ea21ee7Ad0Fa1303c758
+Checking signature requests for keep 0xB5167c4908D6E45e467d91548d3FAea79d739721
+Checking signature requests for keep 0x79a577f0559F45962F16166153479E9ed687de2B
+Checking signature requests for keep 0xB06ecF929C36645ddC1932536c37Dc547eE85771
+Checking signature requests for keep 0x40De1B25d92740c8A8EFa529E1e3A8bB058e03E7
+Checking signature requests for keep 0xcaCCD20A147d378159a7F7E42999aC568271ad3f
+Checking signature requests for keep 0x84bdb9c562dE1DbbC9329c9107571f2b1554318D
+Checking signature requests for keep 0x181B26B1DbaBb4ce1BC556E65ba19d45448c6707
+Checking signature requests for keep 0x15Cd5B7B6C10281de62Fc994791146795c763071
+Checking signature requests for keep 0x6664eAcA9919e1eB468A2D549212ff538616dd87
+Checking signature requests for keep 0x1A98212Cf01d97D5017c180dbf6Ca3992DcD0ac1
+Checking signature requests for keep 0x3618047e4822b444D835C3c5832756649Dc7bf43
+Checking signature requests for keep 0xe339dd1f718DB714BA8FB616143eFB32f33d23AD
+Checking signature requests for keep 0x9826Fb754df0f5cfE42917e0eC996a976Ed21498
+Checking signature requests for keep 0xE5A842cb2eb353509466F8557342276fF2473b77
+Checking signature requests for keep 0x7fF4D2998F04033F05f7e41858438fce88aB86F1
+Checking signature requests for keep 0xaD952922c39CB8590A058ff317B4DF9dc72b8e38
+Checking signature requests for keep 0x70F3daCb17e82a73032d063A3f967150d73F163C
+Checking signature requests for keep 0x1e8A1b0D37b3EaBaB634fDB796CE41795d269f47
+Checking signature requests for keep 0x49c15aF2D7b6B3467eEB55199F2a228C4CCF8d74
+Checking signature requests for keep 0x6Ec330B056de1Bc5aC15B30863243AD9229e7c3A
+Checking signature requests for keep 0x9cAe704f61E38eF4470E8D15CF9839DA4fE85906
+Checking signature requests for keep 0x5a567600112E1137Cd9d55D37D69b9dEe5A818CF
+Checking signature requests for keep 0x66208B911e523C1F18298b6883f80D7fcb6527Ff
+Checking signature requests for keep 0x24DdDD2F66A3ba1e5c37d7089bB36A7019124Db9
+Checking signature requests for keep 0x8C7c8ae2131323B559a3254B68a0c3cbe26C1588
+Checking signature requests for keep 0x32e010D05E3A005152Ef8c66a780c0594EE840d1
+Checking signature requests for keep 0x8115cC7ddC71529a86fBA732C327159445554C09
+Checking signature requests for keep 0xB6a263e2AD9001045bc5eb7fF34927244E2D1b42
+Checking signature requests for keep 0xeB90300949Ea50367503fF528d9fa0d08e5E54FF
+Switching to partial events pulls; failed to get events in one request: [Log response size exceeded. You can make eth_getLogs requests with up to a 2K block range and no limit on the response size, or you can request any block range with a cap of 10K logs in the response.]
+Fetching operators list...
+Checking fraudulent activity for operator 0xb038a8B2975cD5dE392683f5CD4989d3b1E75648
+Checking requirements for operator 0xb038a8B2975cD5dE392683f5CD4989d3b1E75648
+Calculating SLA parameters for operator 0xb038a8B2975cD5dE392683f5CD4989d3b1E75648
+Calculating KEEP and ETH under management for operator 0xb038a8B2975cD5dE392683f5CD4989d3b1E75648
+Checking fraudulent activity for operator 0x3D1c06ffF8a8e2BA890a5633022BaF78aFcB4d06
+Checking requirements for operator 0x3D1c06ffF8a8e2BA890a5633022BaF78aFcB4d06
+Calculating SLA parameters for operator 0x3D1c06ffF8a8e2BA890a5633022BaF78aFcB4d06
+Calculating KEEP and ETH under management for operator 0x3D1c06ffF8a8e2BA890a5633022BaF78aFcB4d06
+Checking fraudulent activity for operator 0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181
+Checking requirements for operator 0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181
+Calculating SLA parameters for operator 0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181
+Calculating KEEP and ETH under management for operator 0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181
+Checking fraudulent activity for operator 0x6dAfE16b14c95eB99c64e8d4E5435F7574B2825c
+Checking requirements for operator 0x6dAfE16b14c95eB99c64e8d4E5435F7574B2825c
+Calculating SLA parameters for operator 0x6dAfE16b14c95eB99c64e8d4E5435F7574B2825c
+Calculating KEEP and ETH under management for operator 0x6dAfE16b14c95eB99c64e8d4E5435F7574B2825c
+Checking fraudulent activity for operator 0xd1F2A77a0dAD76Ef8B87002763134f4863C870A4
+Checking requirements for operator 0xd1F2A77a0dAD76Ef8B87002763134f4863C870A4
+Calculating SLA parameters for operator 0xd1F2A77a0dAD76Ef8B87002763134f4863C870A4
+Calculating KEEP and ETH under management for operator 0xd1F2A77a0dAD76Ef8B87002763134f4863C870A4
+Checking fraudulent activity for operator 0x186E82df0a09534537d0D8680D03b548628ab288
+Checking requirements for operator 0x186E82df0a09534537d0D8680D03b548628ab288
+Calculating SLA parameters for operator 0x186E82df0a09534537d0D8680D03b548628ab288
+Calculating KEEP and ETH under management for operator 0x186E82df0a09534537d0D8680D03b548628ab288
+Checking fraudulent activity for operator 0x91af3Fd2ebd3A39310A69E60197566538171514e
+Checking requirements for operator 0x91af3Fd2ebd3A39310A69E60197566538171514e
+Calculating SLA parameters for operator 0x91af3Fd2ebd3A39310A69E60197566538171514e
+Calculating KEEP and ETH under management for operator 0x91af3Fd2ebd3A39310A69E60197566538171514e
+Checking fraudulent activity for operator 0x9d0Cc9194EfD1F9Bf02a7AFC57Ae9769c1207Aa4
+Checking requirements for operator 0x9d0Cc9194EfD1F9Bf02a7AFC57Ae9769c1207Aa4
+Calculating SLA parameters for operator 0x9d0Cc9194EfD1F9Bf02a7AFC57Ae9769c1207Aa4
+Calculating KEEP and ETH under management for operator 0x9d0Cc9194EfD1F9Bf02a7AFC57Ae9769c1207Aa4
+Checking fraudulent activity for operator 0x88Ed51f84c21Ae246c23137D090cdF441009D916
+Checking requirements for operator 0x88Ed51f84c21Ae246c23137D090cdF441009D916
+Calculating SLA parameters for operator 0x88Ed51f84c21Ae246c23137D090cdF441009D916
+Calculating KEEP and ETH under management for operator 0x88Ed51f84c21Ae246c23137D090cdF441009D916
+Checking fraudulent activity for operator 0x855A951162B1B93D70724484d5bdc9D00B56236B
+Checking requirements for operator 0x855A951162B1B93D70724484d5bdc9D00B56236B
+Calculating SLA parameters for operator 0x855A951162B1B93D70724484d5bdc9D00B56236B
+Calculating KEEP and ETH under management for operator 0x855A951162B1B93D70724484d5bdc9D00B56236B
+Checking fraudulent activity for operator 0x4c21541f95a00C03C75F38C71DC220bd27cbbEd9
+Checking requirements for operator 0x4c21541f95a00C03C75F38C71DC220bd27cbbEd9
+Calculating SLA parameters for operator 0x4c21541f95a00C03C75F38C71DC220bd27cbbEd9
+Calculating KEEP and ETH under management for operator 0x4c21541f95a00C03C75F38C71DC220bd27cbbEd9
+Checking fraudulent activity for operator 0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab
+Checking requirements for operator 0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab
+Calculating SLA parameters for operator 0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab
+Calculating KEEP and ETH under management for operator 0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab
+Checking fraudulent activity for operator 0x174592063ed3B10065a2a00b4ee8bF87FF3AAc21
+Checking requirements for operator 0x174592063ed3B10065a2a00b4ee8bF87FF3AAc21
+Calculating SLA parameters for operator 0x174592063ed3B10065a2a00b4ee8bF87FF3AAc21
+Calculating KEEP and ETH under management for operator 0x174592063ed3B10065a2a00b4ee8bF87FF3AAc21
+Checking fraudulent activity for operator 0xc74D5EDAf50C15f5C64683D9CC6644121a4923f9
+Checking requirements for operator 0xc74D5EDAf50C15f5C64683D9CC6644121a4923f9
+Calculating SLA parameters for operator 0xc74D5EDAf50C15f5C64683D9CC6644121a4923f9
+Calculating KEEP and ETH under management for operator 0xc74D5EDAf50C15f5C64683D9CC6644121a4923f9
+Checking fraudulent activity for operator 0x85D548b251cEb537f62AED0b6f6f4C48d3C822c8
+Checking requirements for operator 0x85D548b251cEb537f62AED0b6f6f4C48d3C822c8
+Calculating SLA parameters for operator 0x85D548b251cEb537f62AED0b6f6f4C48d3C822c8
+Calculating KEEP and ETH under management for operator 0x85D548b251cEb537f62AED0b6f6f4C48d3C822c8
+Checking fraudulent activity for operator 0x5CA1F949c75833432d6BC8E3cb6FB23386F63426
+Checking requirements for operator 0x5CA1F949c75833432d6BC8E3cb6FB23386F63426
+Calculating SLA parameters for operator 0x5CA1F949c75833432d6BC8E3cb6FB23386F63426
+Calculating KEEP and ETH under management for operator 0x5CA1F949c75833432d6BC8E3cb6FB23386F63426
+Checking fraudulent activity for operator 0xe76c773C18d0D305A488B16CF6Ef14273B57665d
+Checking requirements for operator 0xe76c773C18d0D305A488B16CF6Ef14273B57665d
+Calculating SLA parameters for operator 0xe76c773C18d0D305A488B16CF6Ef14273B57665d
+Calculating KEEP and ETH under management for operator 0xe76c773C18d0D305A488B16CF6Ef14273B57665d
+Checking fraudulent activity for operator 0x404EE198baB25b71b64776dFB96531e059456b3e
+Checking requirements for operator 0x404EE198baB25b71b64776dFB96531e059456b3e
+Calculating SLA parameters for operator 0x404EE198baB25b71b64776dFB96531e059456b3e
+Calculating KEEP and ETH under management for operator 0x404EE198baB25b71b64776dFB96531e059456b3e
+Checking fraudulent activity for operator 0x0CF6F3D138236fbc7B831a976942bF8D3907C550
+Checking requirements for operator 0x0CF6F3D138236fbc7B831a976942bF8D3907C550
+Calculating SLA parameters for operator 0x0CF6F3D138236fbc7B831a976942bF8D3907C550
+Calculating KEEP and ETH under management for operator 0x0CF6F3D138236fbc7B831a976942bF8D3907C550
+Checking fraudulent activity for operator 0x692a84140091e1FF6D5B8c138fB184aFFBeE8Ae8
+Checking requirements for operator 0x692a84140091e1FF6D5B8c138fB184aFFBeE8Ae8
+Calculating SLA parameters for operator 0x692a84140091e1FF6D5B8c138fB184aFFBeE8Ae8
+Calculating KEEP and ETH under management for operator 0x692a84140091e1FF6D5B8c138fB184aFFBeE8Ae8
+Checking fraudulent activity for operator 0x8Bd660A764Ca14155F3411a4526a028b6316CB3E
+Checking requirements for operator 0x8Bd660A764Ca14155F3411a4526a028b6316CB3E
+Calculating SLA parameters for operator 0x8Bd660A764Ca14155F3411a4526a028b6316CB3E
+Calculating KEEP and ETH under management for operator 0x8Bd660A764Ca14155F3411a4526a028b6316CB3E
+Checking fraudulent activity for operator 0xa620a7ea64202FEF1d60466b8d496dB656454728
+Checking requirements for operator 0xa620a7ea64202FEF1d60466b8d496dB656454728
+Calculating SLA parameters for operator 0xa620a7ea64202FEF1d60466b8d496dB656454728
+Calculating KEEP and ETH under management for operator 0xa620a7ea64202FEF1d60466b8d496dB656454728
+Checking fraudulent activity for operator 0x00Cef852246b08B9215772c3f409D28408Bb21bD
+Checking requirements for operator 0x00Cef852246b08B9215772c3f409D28408Bb21bD
+Calculating SLA parameters for operator 0x00Cef852246b08B9215772c3f409D28408Bb21bD
+Calculating KEEP and ETH under management for operator 0x00Cef852246b08B9215772c3f409D28408Bb21bD
+Checking fraudulent activity for operator 0x70164FF765Be63011E783866e334293A6fe92DcB
+Checking requirements for operator 0x70164FF765Be63011E783866e334293A6fe92DcB
+Calculating SLA parameters for operator 0x70164FF765Be63011E783866e334293A6fe92DcB
+Calculating KEEP and ETH under management for operator 0x70164FF765Be63011E783866e334293A6fe92DcB
+Checking fraudulent activity for operator 0xd66cAE89FfBc6E50e6b019e45c1aEc93Dec54781
+Checking requirements for operator 0xd66cAE89FfBc6E50e6b019e45c1aEc93Dec54781
+Calculating SLA parameters for operator 0xd66cAE89FfBc6E50e6b019e45c1aEc93Dec54781
+Calculating KEEP and ETH under management for operator 0xd66cAE89FfBc6E50e6b019e45c1aEc93Dec54781
+Checking fraudulent activity for operator 0xA79827813Da962f5A4C95AF40550259EE868d202
+Checking requirements for operator 0xA79827813Da962f5A4C95AF40550259EE868d202
+Calculating SLA parameters for operator 0xA79827813Da962f5A4C95AF40550259EE868d202
+Calculating KEEP and ETH under management for operator 0xA79827813Da962f5A4C95AF40550259EE868d202
+Checking fraudulent activity for operator 0x581B54952b65cb619389BB4D90F5acF04e3D697a
+Checking requirements for operator 0x581B54952b65cb619389BB4D90F5acF04e3D697a
+Calculating SLA parameters for operator 0x581B54952b65cb619389BB4D90F5acF04e3D697a
+Calculating KEEP and ETH under management for operator 0x581B54952b65cb619389BB4D90F5acF04e3D697a
+Checking fraudulent activity for operator 0x9AF71bc32f2Ca72C68ba26584cA4dBf5e349FAb9
+Checking requirements for operator 0x9AF71bc32f2Ca72C68ba26584cA4dBf5e349FAb9
+Calculating SLA parameters for operator 0x9AF71bc32f2Ca72C68ba26584cA4dBf5e349FAb9
+Calculating KEEP and ETH under management for operator 0x9AF71bc32f2Ca72C68ba26584cA4dBf5e349FAb9
+Checking fraudulent activity for operator 0x2eBE08379f4fD866E871A9b9E1d5C695154C6A9F
+Checking requirements for operator 0x2eBE08379f4fD866E871A9b9E1d5C695154C6A9F
+Calculating SLA parameters for operator 0x2eBE08379f4fD866E871A9b9E1d5C695154C6A9F
+Calculating KEEP and ETH under management for operator 0x2eBE08379f4fD866E871A9b9E1d5C695154C6A9F
+Checking fraudulent activity for operator 0xA97c34278162b556A527CFc01B53eb4DDeDFD223
+Checking requirements for operator 0xA97c34278162b556A527CFc01B53eb4DDeDFD223
+Calculating SLA parameters for operator 0xA97c34278162b556A527CFc01B53eb4DDeDFD223
+Calculating KEEP and ETH under management for operator 0xA97c34278162b556A527CFc01B53eb4DDeDFD223
+Checking fraudulent activity for operator 0x6C76d49322C9f8761A1623CEd89A31490cdB649d
+Checking requirements for operator 0x6C76d49322C9f8761A1623CEd89A31490cdB649d
+Calculating SLA parameters for operator 0x6C76d49322C9f8761A1623CEd89A31490cdB649d
+Calculating KEEP and ETH under management for operator 0x6C76d49322C9f8761A1623CEd89A31490cdB649d
+Checking fraudulent activity for operator 0x003428E767ece053974bdC155BC129cae491EBe2
+Checking requirements for operator 0x003428E767ece053974bdC155BC129cae491EBe2
+Calculating SLA parameters for operator 0x003428E767ece053974bdC155BC129cae491EBe2
+Calculating KEEP and ETH under management for operator 0x003428E767ece053974bdC155BC129cae491EBe2
+Checking fraudulent activity for operator 0x4a41c7a884d119eaaefE471D0B3a638226408382
+Checking requirements for operator 0x4a41c7a884d119eaaefE471D0B3a638226408382
+Calculating SLA parameters for operator 0x4a41c7a884d119eaaefE471D0B3a638226408382
+Calculating KEEP and ETH under management for operator 0x4a41c7a884d119eaaefE471D0B3a638226408382
+Checking fraudulent activity for operator 0xD072bB639cA5933f5CA6DC4deebD259066547087
+Checking requirements for operator 0xD072bB639cA5933f5CA6DC4deebD259066547087
+Calculating SLA parameters for operator 0xD072bB639cA5933f5CA6DC4deebD259066547087
+Calculating KEEP and ETH under management for operator 0xD072bB639cA5933f5CA6DC4deebD259066547087
+Checking fraudulent activity for operator 0x0ee446643973b3F5FeD132D0455fEa23fbad0D1E
+Checking requirements for operator 0x0ee446643973b3F5FeD132D0455fEa23fbad0D1E
+Calculating SLA parameters for operator 0x0ee446643973b3F5FeD132D0455fEa23fbad0D1E
+Calculating KEEP and ETH under management for operator 0x0ee446643973b3F5FeD132D0455fEa23fbad0D1E
+Checking fraudulent activity for operator 0x1b3aCBbE36316ae74D4BeC49865660b59ff69c7b
+Checking requirements for operator 0x1b3aCBbE36316ae74D4BeC49865660b59ff69c7b
+Calculating SLA parameters for operator 0x1b3aCBbE36316ae74D4BeC49865660b59ff69c7b
+Calculating KEEP and ETH under management for operator 0x1b3aCBbE36316ae74D4BeC49865660b59ff69c7b
+Checking fraudulent activity for operator 0x5Df67a14Bf26981543A2Ea33C2EE454CFA42aDA5
+Checking requirements for operator 0x5Df67a14Bf26981543A2Ea33C2EE454CFA42aDA5
+Calculating SLA parameters for operator 0x5Df67a14Bf26981543A2Ea33C2EE454CFA42aDA5
+Calculating KEEP and ETH under management for operator 0x5Df67a14Bf26981543A2Ea33C2EE454CFA42aDA5
+Checking fraudulent activity for operator 0x2acE976116c36a524B6bEa125B6fdFB897490941
+Checking requirements for operator 0x2acE976116c36a524B6bEa125B6fdFB897490941
+Calculating SLA parameters for operator 0x2acE976116c36a524B6bEa125B6fdFB897490941
+Calculating KEEP and ETH under management for operator 0x2acE976116c36a524B6bEa125B6fdFB897490941
+Checking fraudulent activity for operator 0xB7a764884a2fBcfC7177b5c53A7797EE7fF4Bb39
+Checking requirements for operator 0xB7a764884a2fBcfC7177b5c53A7797EE7fF4Bb39
+Calculating SLA parameters for operator 0xB7a764884a2fBcfC7177b5c53A7797EE7fF4Bb39
+Calculating KEEP and ETH under management for operator 0xB7a764884a2fBcfC7177b5c53A7797EE7fF4Bb39
+Checking fraudulent activity for operator 0xaaFab076DA8d1C885F492bad4e2C259F0b6448F8
+Checking requirements for operator 0xaaFab076DA8d1C885F492bad4e2C259F0b6448F8
+Calculating SLA parameters for operator 0xaaFab076DA8d1C885F492bad4e2C259F0b6448F8
+Calculating KEEP and ETH under management for operator 0xaaFab076DA8d1C885F492bad4e2C259F0b6448F8
+Checking fraudulent activity for operator 0x0000000000058fDe63cA64995c9A7E40196Af9F9
+Checking requirements for operator 0x0000000000058fDe63cA64995c9A7E40196Af9F9
+Calculating SLA parameters for operator 0x0000000000058fDe63cA64995c9A7E40196Af9F9
+Calculating KEEP and ETH under management for operator 0x0000000000058fDe63cA64995c9A7E40196Af9F9
+Checking fraudulent activity for operator 0xABFB52f4CfAC3e6631c19a7e4Aa752110E1187B5
+Checking requirements for operator 0xABFB52f4CfAC3e6631c19a7e4Aa752110E1187B5
+Calculating SLA parameters for operator 0xABFB52f4CfAC3e6631c19a7e4Aa752110E1187B5
+Calculating KEEP and ETH under management for operator 0xABFB52f4CfAC3e6631c19a7e4Aa752110E1187B5
+Checking fraudulent activity for operator 0xa62E990E0229A3247270d6206adf3d883dbED919
+Checking requirements for operator 0xa62E990E0229A3247270d6206adf3d883dbED919
+Calculating SLA parameters for operator 0xa62E990E0229A3247270d6206adf3d883dbED919
+Calculating KEEP and ETH under management for operator 0xa62E990E0229A3247270d6206adf3d883dbED919
+Checking fraudulent activity for operator 0x9c06Feb7Ebc8065ee11Cd5E8EEdaAFb2909A7087
+Checking requirements for operator 0x9c06Feb7Ebc8065ee11Cd5E8EEdaAFb2909A7087
+Calculating SLA parameters for operator 0x9c06Feb7Ebc8065ee11Cd5E8EEdaAFb2909A7087
+Calculating KEEP and ETH under management for operator 0x9c06Feb7Ebc8065ee11Cd5E8EEdaAFb2909A7087
+Checking fraudulent activity for operator 0x2495512e37f9B2A8fd9B071eA477e282D51508c6
+Checking requirements for operator 0x2495512e37f9B2A8fd9B071eA477e282D51508c6
+Calculating SLA parameters for operator 0x2495512e37f9B2A8fd9B071eA477e282D51508c6
+Calculating KEEP and ETH under management for operator 0x2495512e37f9B2A8fd9B071eA477e282D51508c6
+Checking fraudulent activity for operator 0xAA7B9D0Fe0867B227C9fC33B6022E9fD6e848EE1
+Checking requirements for operator 0xAA7B9D0Fe0867B227C9fC33B6022E9fD6e848EE1
+Calculating SLA parameters for operator 0xAA7B9D0Fe0867B227C9fC33B6022E9fD6e848EE1
+Calculating KEEP and ETH under management for operator 0xAA7B9D0Fe0867B227C9fC33B6022E9fD6e848EE1
+Checking fraudulent activity for operator 0x8DDD2077415D58f7047fc9143b4146b342055f1b
+Checking requirements for operator 0x8DDD2077415D58f7047fc9143b4146b342055f1b
+Calculating SLA parameters for operator 0x8DDD2077415D58f7047fc9143b4146b342055f1b
+Calculating KEEP and ETH under management for operator 0x8DDD2077415D58f7047fc9143b4146b342055f1b
+Checking fraudulent activity for operator 0x36C56A69c2aeA23879b59dB0e99D57eF2ff77f06
+Checking requirements for operator 0x36C56A69c2aeA23879b59dB0e99D57eF2ff77f06
+Calculating SLA parameters for operator 0x36C56A69c2aeA23879b59dB0e99D57eF2ff77f06
+Calculating KEEP and ETH under management for operator 0x36C56A69c2aeA23879b59dB0e99D57eF2ff77f06
+Checking fraudulent activity for operator 0xD52BfE62a163eB4eC8FC98f06eD3f02695ae491d
+Checking requirements for operator 0xD52BfE62a163eB4eC8FC98f06eD3f02695ae491d
+Calculating SLA parameters for operator 0xD52BfE62a163eB4eC8FC98f06eD3f02695ae491d
+Calculating KEEP and ETH under management for operator 0xD52BfE62a163eB4eC8FC98f06eD3f02695ae491d
+Checking fraudulent activity for operator 0x80D43312D0D13237F2D75ae7c1292200Ba59036a
+Checking requirements for operator 0x80D43312D0D13237F2D75ae7c1292200Ba59036a
+Calculating SLA parameters for operator 0x80D43312D0D13237F2D75ae7c1292200Ba59036a
+Calculating KEEP and ETH under management for operator 0x80D43312D0D13237F2D75ae7c1292200Ba59036a
+Checking fraudulent activity for operator 0xd1F560e0CdB488CD0F646642b3247136ff12FA10
+Checking requirements for operator 0xd1F560e0CdB488CD0F646642b3247136ff12FA10
+Calculating SLA parameters for operator 0xd1F560e0CdB488CD0F646642b3247136ff12FA10
+Calculating KEEP and ETH under management for operator 0xd1F560e0CdB488CD0F646642b3247136ff12FA10
+Checking fraudulent activity for operator 0x1d803c89760F8B4057DB15BCb3B8929E0498D310
+Checking requirements for operator 0x1d803c89760F8B4057DB15BCb3B8929E0498D310
+Calculating SLA parameters for operator 0x1d803c89760F8B4057DB15BCb3B8929E0498D310
+Calculating KEEP and ETH under management for operator 0x1d803c89760F8B4057DB15BCb3B8929E0498D310
+Checking fraudulent activity for operator 0xe02b7BD9a4E57500BB490e0b0035bE49BA7c83e6
+Checking requirements for operator 0xe02b7BD9a4E57500BB490e0b0035bE49BA7c83e6
+Calculating SLA parameters for operator 0xe02b7BD9a4E57500BB490e0b0035bE49BA7c83e6
+Calculating KEEP and ETH under management for operator 0xe02b7BD9a4E57500BB490e0b0035bE49BA7c83e6
+Checking fraudulent activity for operator 0x9bD818Ab6ACC974f2Cf2BD2EBA7a250126Accb9F
+Checking requirements for operator 0x9bD818Ab6ACC974f2Cf2BD2EBA7a250126Accb9F
+Calculating SLA parameters for operator 0x9bD818Ab6ACC974f2Cf2BD2EBA7a250126Accb9F
+Calculating KEEP and ETH under management for operator 0x9bD818Ab6ACC974f2Cf2BD2EBA7a250126Accb9F
+Checking fraudulent activity for operator 0xc010B84528b0809295Fcd21CB37415E8c532343A
+Checking requirements for operator 0xc010B84528b0809295Fcd21CB37415E8c532343A
+Calculating SLA parameters for operator 0xc010B84528b0809295Fcd21CB37415E8c532343A
+Calculating KEEP and ETH under management for operator 0xc010B84528b0809295Fcd21CB37415E8c532343A
+Checking fraudulent activity for operator 0x44f07be8D08a7Ec1b4BDB92685dA64C02622CFc5
+Checking requirements for operator 0x44f07be8D08a7Ec1b4BDB92685dA64C02622CFc5
+Calculating SLA parameters for operator 0x44f07be8D08a7Ec1b4BDB92685dA64C02622CFc5
+Calculating KEEP and ETH under management for operator 0x44f07be8D08a7Ec1b4BDB92685dA64C02622CFc5
+Checking fraudulent activity for operator 0x3101927DEeC27A2bfA6c4a6316e3A221f631dB91
+Checking requirements for operator 0x3101927DEeC27A2bfA6c4a6316e3A221f631dB91
+Calculating SLA parameters for operator 0x3101927DEeC27A2bfA6c4a6316e3A221f631dB91
+Calculating KEEP and ETH under management for operator 0x3101927DEeC27A2bfA6c4a6316e3A221f631dB91
+Checking fraudulent activity for operator 0x884e30892B185330478D0D18d0aE665113B98027
+Checking requirements for operator 0x884e30892B185330478D0D18d0aE665113B98027
+Calculating SLA parameters for operator 0x884e30892B185330478D0D18d0aE665113B98027
+Calculating KEEP and ETH under management for operator 0x884e30892B185330478D0D18d0aE665113B98027
+Checking fraudulent activity for operator 0x6e9D6BA71C5c313cc4d22791720943D65A5495da
+Checking requirements for operator 0x6e9D6BA71C5c313cc4d22791720943D65A5495da
+Calculating SLA parameters for operator 0x6e9D6BA71C5c313cc4d22791720943D65A5495da
+Calculating KEEP and ETH under management for operator 0x6e9D6BA71C5c313cc4d22791720943D65A5495da
+Checking fraudulent activity for operator 0x0ebB4fA9Dabe68Ad18E845d1f915010203e16191
+Checking requirements for operator 0x0ebB4fA9Dabe68Ad18E845d1f915010203e16191
+Calculating SLA parameters for operator 0x0ebB4fA9Dabe68Ad18E845d1f915010203e16191
+Calculating KEEP and ETH under management for operator 0x0ebB4fA9Dabe68Ad18E845d1f915010203e16191
+Checking fraudulent activity for operator 0xe26E2d93Bbc8fde0e1E3B290Fc927Fb374E7e34e
+Checking requirements for operator 0xe26E2d93Bbc8fde0e1E3B290Fc927Fb374E7e34e
+Calculating SLA parameters for operator 0xe26E2d93Bbc8fde0e1E3B290Fc927Fb374E7e34e
+Calculating KEEP and ETH under management for operator 0xe26E2d93Bbc8fde0e1E3B290Fc927Fb374E7e34e
+Checking fraudulent activity for operator 0x5d84DEB482E770479154028788Df79aA7C563aA4
+Checking requirements for operator 0x5d84DEB482E770479154028788Df79aA7C563aA4
+Calculating SLA parameters for operator 0x5d84DEB482E770479154028788Df79aA7C563aA4
+Calculating KEEP and ETH under management for operator 0x5d84DEB482E770479154028788Df79aA7C563aA4
+Checking fraudulent activity for operator 0x3a0495aD7EFdAe541455846fFe4a6D3858211C4E
+Checking requirements for operator 0x3a0495aD7EFdAe541455846fFe4a6D3858211C4E
+Calculating SLA parameters for operator 0x3a0495aD7EFdAe541455846fFe4a6D3858211C4E
+Calculating KEEP and ETH under management for operator 0x3a0495aD7EFdAe541455846fFe4a6D3858211C4E
+Checking fraudulent activity for operator 0x65aB6C2262bf24973D746D18af1794dA52183187
+Checking requirements for operator 0x65aB6C2262bf24973D746D18af1794dA52183187
+Calculating SLA parameters for operator 0x65aB6C2262bf24973D746D18af1794dA52183187
+Calculating KEEP and ETH under management for operator 0x65aB6C2262bf24973D746D18af1794dA52183187
+Checking fraudulent activity for operator 0x78c0eF874Df6cb2cD7E724bdF3Ce68f431b79748
+Checking requirements for operator 0x78c0eF874Df6cb2cD7E724bdF3Ce68f431b79748
+Calculating SLA parameters for operator 0x78c0eF874Df6cb2cD7E724bdF3Ce68f431b79748
+Calculating KEEP and ETH under management for operator 0x78c0eF874Df6cb2cD7E724bdF3Ce68f431b79748
+Checking fraudulent activity for operator 0x04Cb8D907FdA121FD3Dd70bD2eF9C7841f70Ed3f
+Checking requirements for operator 0x04Cb8D907FdA121FD3Dd70bD2eF9C7841f70Ed3f
+Calculating SLA parameters for operator 0x04Cb8D907FdA121FD3Dd70bD2eF9C7841f70Ed3f
+Calculating KEEP and ETH under management for operator 0x04Cb8D907FdA121FD3Dd70bD2eF9C7841f70Ed3f
+Checking fraudulent activity for operator 0xC6325112d6d0a1bb44B3EE2Da080a79e99fe4cfe
+Checking requirements for operator 0xC6325112d6d0a1bb44B3EE2Da080a79e99fe4cfe
+Calculating SLA parameters for operator 0xC6325112d6d0a1bb44B3EE2Da080a79e99fe4cfe
+Calculating KEEP and ETH under management for operator 0xC6325112d6d0a1bb44B3EE2Da080a79e99fe4cfe
+Checking fraudulent activity for operator 0x7cec09487d293ABE8fEd007222cD6aD6F1ecDdA1
+Checking requirements for operator 0x7cec09487d293ABE8fEd007222cD6aD6F1ecDdA1
+Calculating SLA parameters for operator 0x7cec09487d293ABE8fEd007222cD6aD6F1ecDdA1
+Calculating KEEP and ETH under management for operator 0x7cec09487d293ABE8fEd007222cD6aD6F1ecDdA1
+Checking fraudulent activity for operator 0xB352A86CF41506D0CB2e762A5F1118FFA25f2dab
+Checking requirements for operator 0xB352A86CF41506D0CB2e762A5F1118FFA25f2dab
+Calculating SLA parameters for operator 0xB352A86CF41506D0CB2e762A5F1118FFA25f2dab
+Calculating KEEP and ETH under management for operator 0xB352A86CF41506D0CB2e762A5F1118FFA25f2dab
+Checking fraudulent activity for operator 0x062D1D3E1BdC9c567B1982da7A83D48958D617d2
+Checking requirements for operator 0x062D1D3E1BdC9c567B1982da7A83D48958D617d2
+Calculating SLA parameters for operator 0x062D1D3E1BdC9c567B1982da7A83D48958D617d2
+Calculating KEEP and ETH under management for operator 0x062D1D3E1BdC9c567B1982da7A83D48958D617d2
+Checking fraudulent activity for operator 0x650A9eD18Df873cad98C88dcaC8170531cAD2399
+Checking requirements for operator 0x650A9eD18Df873cad98C88dcaC8170531cAD2399
+Calculating SLA parameters for operator 0x650A9eD18Df873cad98C88dcaC8170531cAD2399
+Calculating KEEP and ETH under management for operator 0x650A9eD18Df873cad98C88dcaC8170531cAD2399
+Checking fraudulent activity for operator 0x4F4f0D0dfd93513B3f4Cb116Fe9d0A005466F725
+Checking requirements for operator 0x4F4f0D0dfd93513B3f4Cb116Fe9d0A005466F725
+Calculating SLA parameters for operator 0x4F4f0D0dfd93513B3f4Cb116Fe9d0A005466F725
+Calculating KEEP and ETH under management for operator 0x4F4f0D0dfd93513B3f4Cb116Fe9d0A005466F725
+Checking fraudulent activity for operator 0x3d7764aE9aC8259E5A5d224F5F56414f9749902a
+Checking requirements for operator 0x3d7764aE9aC8259E5A5d224F5F56414f9749902a
+Calculating SLA parameters for operator 0x3d7764aE9aC8259E5A5d224F5F56414f9749902a
+Calculating KEEP and ETH under management for operator 0x3d7764aE9aC8259E5A5d224F5F56414f9749902a
+Checking fraudulent activity for operator 0x64A8856cBD255765D16B901a0B899daefC78FB13
+Checking requirements for operator 0x64A8856cBD255765D16B901a0B899daefC78FB13
+Calculating SLA parameters for operator 0x64A8856cBD255765D16B901a0B899daefC78FB13
+Calculating KEEP and ETH under management for operator 0x64A8856cBD255765D16B901a0B899daefC78FB13
+Checking fraudulent activity for operator 0xAcDC9AD09e565170194625911BF9B1A445A9736e
+Checking requirements for operator 0xAcDC9AD09e565170194625911BF9B1A445A9736e
+Calculating SLA parameters for operator 0xAcDC9AD09e565170194625911BF9B1A445A9736e
+Calculating KEEP and ETH under management for operator 0xAcDC9AD09e565170194625911BF9B1A445A9736e
+Checking fraudulent activity for operator 0x63eB4c3DD0751F9BE7070A01156513C227fa1eF6
+Checking requirements for operator 0x63eB4c3DD0751F9BE7070A01156513C227fa1eF6
+Calculating SLA parameters for operator 0x63eB4c3DD0751F9BE7070A01156513C227fa1eF6
+Calculating KEEP and ETH under management for operator 0x63eB4c3DD0751F9BE7070A01156513C227fa1eF6
+Checking fraudulent activity for operator 0x71b1a9096Bc1AF4863505765B431618FFfd96279
+Checking requirements for operator 0x71b1a9096Bc1AF4863505765B431618FFfd96279
+Calculating SLA parameters for operator 0x71b1a9096Bc1AF4863505765B431618FFfd96279
+Calculating KEEP and ETH under management for operator 0x71b1a9096Bc1AF4863505765B431618FFfd96279
+Checking fraudulent activity for operator 0x2222aa7722Aa77287E6Db2eBC66D0EfEB7e131b0
+Checking requirements for operator 0x2222aa7722Aa77287E6Db2eBC66D0EfEB7e131b0
+Calculating SLA parameters for operator 0x2222aa7722Aa77287E6Db2eBC66D0EfEB7e131b0
+Calculating KEEP and ETH under management for operator 0x2222aa7722Aa77287E6Db2eBC66D0EfEB7e131b0
+Checking fraudulent activity for operator 0x428df09f1Ae54234B550518665FB75Dd4Bd60C50
+Checking requirements for operator 0x428df09f1Ae54234B550518665FB75Dd4Bd60C50
+Calculating SLA parameters for operator 0x428df09f1Ae54234B550518665FB75Dd4Bd60C50
+Calculating KEEP and ETH under management for operator 0x428df09f1Ae54234B550518665FB75Dd4Bd60C50
+Checking fraudulent activity for operator 0xb6C5DFee1b565e8009351D692a729b5546249786
+Checking requirements for operator 0xb6C5DFee1b565e8009351D692a729b5546249786
+Calculating SLA parameters for operator 0xb6C5DFee1b565e8009351D692a729b5546249786
+Calculating KEEP and ETH under management for operator 0xb6C5DFee1b565e8009351D692a729b5546249786
+Checking fraudulent activity for operator 0x045E511f53DeBF55c9C0B4522f14F602f7C7cA81
+Checking requirements for operator 0x045E511f53DeBF55c9C0B4522f14F602f7C7cA81
+Calculating SLA parameters for operator 0x045E511f53DeBF55c9C0B4522f14F602f7C7cA81
+Calculating KEEP and ETH under management for operator 0x045E511f53DeBF55c9C0B4522f14F602f7C7cA81
+Checking fraudulent activity for operator 0xd977144724Bc77FaeFAe219F958AE3947205d0b5
+Checking requirements for operator 0xd977144724Bc77FaeFAe219F958AE3947205d0b5
+Calculating SLA parameters for operator 0xd977144724Bc77FaeFAe219F958AE3947205d0b5
+Calculating KEEP and ETH under management for operator 0xd977144724Bc77FaeFAe219F958AE3947205d0b5
+Checking fraudulent activity for operator 0x07C9a8f8264221906b7b8958951Ce4753D39628B
+Checking requirements for operator 0x07C9a8f8264221906b7b8958951Ce4753D39628B
+Calculating SLA parameters for operator 0x07C9a8f8264221906b7b8958951Ce4753D39628B
+Calculating KEEP and ETH under management for operator 0x07C9a8f8264221906b7b8958951Ce4753D39628B
+Checking fraudulent activity for operator 0xB8A3AE209d153560993BFd8178E60F09B1c682E8
+Checking requirements for operator 0xB8A3AE209d153560993BFd8178E60F09B1c682E8
+Calculating SLA parameters for operator 0xB8A3AE209d153560993BFd8178E60F09B1c682E8
+Calculating KEEP and ETH under management for operator 0xB8A3AE209d153560993BFd8178E60F09B1c682E8
+Checking fraudulent activity for operator 0x0ae20e11a065a7E750482E6a7E9eB7eaB7A8137f
+Checking requirements for operator 0x0ae20e11a065a7E750482E6a7E9eB7eaB7A8137f
+Calculating SLA parameters for operator 0x0ae20e11a065a7E750482E6a7E9eB7eaB7A8137f
+Calculating KEEP and ETH under management for operator 0x0ae20e11a065a7E750482E6a7E9eB7eaB7A8137f
+Checking fraudulent activity for operator 0x2BAF3650263348f3304c18900A674bB0BF830801
+Checking requirements for operator 0x2BAF3650263348f3304c18900A674bB0BF830801
+Calculating SLA parameters for operator 0x2BAF3650263348f3304c18900A674bB0BF830801
+Calculating KEEP and ETH under management for operator 0x2BAF3650263348f3304c18900A674bB0BF830801
+Checking fraudulent activity for operator 0x12db4c07251d40FBD73b0a3CEF48b5CBa16A673d
+Checking requirements for operator 0x12db4c07251d40FBD73b0a3CEF48b5CBa16A673d
+Calculating SLA parameters for operator 0x12db4c07251d40FBD73b0a3CEF48b5CBa16A673d
+Calculating KEEP and ETH under management for operator 0x12db4c07251d40FBD73b0a3CEF48b5CBa16A673d
+Checking fraudulent activity for operator 0xF35343299a4f80Dd5D917bbe5ddd54eBB820eBd4
+Checking requirements for operator 0xF35343299a4f80Dd5D917bbe5ddd54eBB820eBd4
+Calculating SLA parameters for operator 0xF35343299a4f80Dd5D917bbe5ddd54eBB820eBd4
+Calculating KEEP and ETH under management for operator 0xF35343299a4f80Dd5D917bbe5ddd54eBB820eBd4
+Checking fraudulent activity for operator 0x13aBA80a5BF56720EC44E26c06E88a21f4d0a6d9
+Checking requirements for operator 0x13aBA80a5BF56720EC44E26c06E88a21f4d0a6d9
+Calculating SLA parameters for operator 0x13aBA80a5BF56720EC44E26c06E88a21f4d0a6d9
+Calculating KEEP and ETH under management for operator 0x13aBA80a5BF56720EC44E26c06E88a21f4d0a6d9
+Checking fraudulent activity for operator 0x7f746e790e97996AC9fE892d48eB8660DeE6786D
+Checking requirements for operator 0x7f746e790e97996AC9fE892d48eB8660DeE6786D
+Calculating SLA parameters for operator 0x7f746e790e97996AC9fE892d48eB8660DeE6786D
+Calculating KEEP and ETH under management for operator 0x7f746e790e97996AC9fE892d48eB8660DeE6786D
+Checking fraudulent activity for operator 0xa39F6Ca62303229873D06395237307Cd59de806d
+Checking requirements for operator 0xa39F6Ca62303229873D06395237307Cd59de806d
+Calculating SLA parameters for operator 0xa39F6Ca62303229873D06395237307Cd59de806d
+Calculating KEEP and ETH under management for operator 0xa39F6Ca62303229873D06395237307Cd59de806d
+Checking fraudulent activity for operator 0x1fe5b2817B7f2d0bbc87b293FB2272737D37061E
+Checking requirements for operator 0x1fe5b2817B7f2d0bbc87b293FB2272737D37061E
+Calculating SLA parameters for operator 0x1fe5b2817B7f2d0bbc87b293FB2272737D37061E
+Calculating KEEP and ETH under management for operator 0x1fe5b2817B7f2d0bbc87b293FB2272737D37061E
+Checking fraudulent activity for operator 0x4199b03322b067A3264b40A7Ab5E3b6b6B1e046B
+Checking requirements for operator 0x4199b03322b067A3264b40A7Ab5E3b6b6B1e046B
+Calculating SLA parameters for operator 0x4199b03322b067A3264b40A7Ab5E3b6b6B1e046B
+Calculating KEEP and ETH under management for operator 0x4199b03322b067A3264b40A7Ab5E3b6b6B1e046B
+Checking fraudulent activity for operator 0xE5f8f4A928a39ED4D21eCfD1BFB1Eebd49663e7e
+Checking requirements for operator 0xE5f8f4A928a39ED4D21eCfD1BFB1Eebd49663e7e
+Calculating SLA parameters for operator 0xE5f8f4A928a39ED4D21eCfD1BFB1Eebd49663e7e
+Calculating KEEP and ETH under management for operator 0xE5f8f4A928a39ED4D21eCfD1BFB1Eebd49663e7e
+Checking fraudulent activity for operator 0x1147ccFB4AEFc6e587a23b78724Ef20Ec6e474D4
+Checking requirements for operator 0x1147ccFB4AEFc6e587a23b78724Ef20Ec6e474D4
+Calculating SLA parameters for operator 0x1147ccFB4AEFc6e587a23b78724Ef20Ec6e474D4
+Calculating KEEP and ETH under management for operator 0x1147ccFB4AEFc6e587a23b78724Ef20Ec6e474D4
+Checking fraudulent activity for operator 0x0F5c422328Cba4421361A6AEd428ACaF7BAb9046
+Checking requirements for operator 0x0F5c422328Cba4421361A6AEd428ACaF7BAb9046
+Calculating SLA parameters for operator 0x0F5c422328Cba4421361A6AEd428ACaF7BAb9046
+Calculating KEEP and ETH under management for operator 0x0F5c422328Cba4421361A6AEd428ACaF7BAb9046
+Checking fraudulent activity for operator 0xA543441313F7FA7F9215B84854E6DC8386B93383
+Checking requirements for operator 0xA543441313F7FA7F9215B84854E6DC8386B93383
+Calculating SLA parameters for operator 0xA543441313F7FA7F9215B84854E6DC8386B93383
+Calculating KEEP and ETH under management for operator 0xA543441313F7FA7F9215B84854E6DC8386B93383
+Checking fraudulent activity for operator 0x81e1B56db174a935fe81E4b9839d6D92528090f4
+Checking requirements for operator 0x81e1B56db174a935fe81E4b9839d6D92528090f4
+Calculating SLA parameters for operator 0x81e1B56db174a935fe81E4b9839d6D92528090f4
+Calculating KEEP and ETH under management for operator 0x81e1B56db174a935fe81E4b9839d6D92528090f4
+Checking fraudulent activity for operator 0xea889F67e54CC5bf1BCb2B77A4e2ED2334176e55
+Checking requirements for operator 0xea889F67e54CC5bf1BCb2B77A4e2ED2334176e55
+Calculating SLA parameters for operator 0xea889F67e54CC5bf1BCb2B77A4e2ED2334176e55
+Calculating KEEP and ETH under management for operator 0xea889F67e54CC5bf1BCb2B77A4e2ED2334176e55
+Checking fraudulent activity for operator 0x5b0e39cc641FaF1cF00AEEf886803eA85DC9E351
+Checking requirements for operator 0x5b0e39cc641FaF1cF00AEEf886803eA85DC9E351
+Calculating SLA parameters for operator 0x5b0e39cc641FaF1cF00AEEf886803eA85DC9E351
+Calculating KEEP and ETH under management for operator 0x5b0e39cc641FaF1cF00AEEf886803eA85DC9E351
+Checking fraudulent activity for operator 0x527848609CBd3082626068d612699f0CC67A2AD7
+Checking requirements for operator 0x527848609CBd3082626068d612699f0CC67A2AD7
+Calculating SLA parameters for operator 0x527848609CBd3082626068d612699f0CC67A2AD7
+Calculating KEEP and ETH under management for operator 0x527848609CBd3082626068d612699f0CC67A2AD7
+Checking fraudulent activity for operator 0x08df5Bc0DbE3ED798DC25ab8d206028371eC4E53
+Checking requirements for operator 0x08df5Bc0DbE3ED798DC25ab8d206028371eC4E53
+Calculating SLA parameters for operator 0x08df5Bc0DbE3ED798DC25ab8d206028371eC4E53
+Calculating KEEP and ETH under management for operator 0x08df5Bc0DbE3ED798DC25ab8d206028371eC4E53
+Checking fraudulent activity for operator 0x575f7BFD3d5eABaEb6cd1e2710819a5b19753a84
+Checking requirements for operator 0x575f7BFD3d5eABaEb6cd1e2710819a5b19753a84
+Calculating SLA parameters for operator 0x575f7BFD3d5eABaEb6cd1e2710819a5b19753a84
+Calculating KEEP and ETH under management for operator 0x575f7BFD3d5eABaEb6cd1e2710819a5b19753a84
+Checking fraudulent activity for operator 0xF2f5E0a3365c385A3ADCA4F614eD0984dFff52a3
+Checking requirements for operator 0xF2f5E0a3365c385A3ADCA4F614eD0984dFff52a3
+Calculating SLA parameters for operator 0xF2f5E0a3365c385A3ADCA4F614eD0984dFff52a3
+Calculating KEEP and ETH under management for operator 0xF2f5E0a3365c385A3ADCA4F614eD0984dFff52a3
+Checking fraudulent activity for operator 0x7a9654B888dEa4Fed7bf4c1cD104Bd45217427dA
+Checking requirements for operator 0x7a9654B888dEa4Fed7bf4c1cD104Bd45217427dA
+Calculating SLA parameters for operator 0x7a9654B888dEa4Fed7bf4c1cD104Bd45217427dA
+Calculating KEEP and ETH under management for operator 0x7a9654B888dEa4Fed7bf4c1cD104Bd45217427dA
+Checking fraudulent activity for operator 0x4bFa10B1538E8E765E995688D8EEc39C717B6797
+Checking requirements for operator 0x4bFa10B1538E8E765E995688D8EEc39C717B6797
+Calculating SLA parameters for operator 0x4bFa10B1538E8E765E995688D8EEc39C717B6797
+Calculating KEEP and ETH under management for operator 0x4bFa10B1538E8E765E995688D8EEc39C717B6797
+Checking fraudulent activity for operator 0xe3a2d16dA142E6B190A5d9F7e0C07cc460B58A5F
+Checking requirements for operator 0xe3a2d16dA142E6B190A5d9F7e0C07cc460B58A5F
+Calculating SLA parameters for operator 0xe3a2d16dA142E6B190A5d9F7e0C07cc460B58A5F
+Calculating KEEP and ETH under management for operator 0xe3a2d16dA142E6B190A5d9F7e0C07cc460B58A5F
+Checking fraudulent activity for operator 0x190059F25D91afFB092D145CEBb907817414bCf0
+Checking requirements for operator 0x190059F25D91afFB092D145CEBb907817414bCf0
+Calculating SLA parameters for operator 0x190059F25D91afFB092D145CEBb907817414bCf0
+Calculating KEEP and ETH under management for operator 0x190059F25D91afFB092D145CEBb907817414bCf0
+Checking fraudulent activity for operator 0xC05e7327F7BF188badD27E31066E6F74bD266A4E
+Checking requirements for operator 0xC05e7327F7BF188badD27E31066E6F74bD266A4E
+Calculating SLA parameters for operator 0xC05e7327F7BF188badD27E31066E6F74bD266A4E
+Calculating KEEP and ETH under management for operator 0xC05e7327F7BF188badD27E31066E6F74bD266A4E
+Checking fraudulent activity for operator 0x02A4dDE42Cb1188C8b44C70B0cC126ABE6dC817a
+Checking requirements for operator 0x02A4dDE42Cb1188C8b44C70B0cC126ABE6dC817a
+Calculating SLA parameters for operator 0x02A4dDE42Cb1188C8b44C70B0cC126ABE6dC817a
+Calculating KEEP and ETH under management for operator 0x02A4dDE42Cb1188C8b44C70B0cC126ABE6dC817a
+Checking fraudulent activity for operator 0x860EF3f83B6adFEF757F98345c3B8DdcFCA9d152
+Checking requirements for operator 0x860EF3f83B6adFEF757F98345c3B8DdcFCA9d152
+Calculating SLA parameters for operator 0x860EF3f83B6adFEF757F98345c3B8DdcFCA9d152
+Calculating KEEP and ETH under management for operator 0x860EF3f83B6adFEF757F98345c3B8DdcFCA9d152
+Checking fraudulent activity for operator 0x0Af25F243E72cb08d3702603f1c8b626638181EC
+Checking requirements for operator 0x0Af25F243E72cb08d3702603f1c8b626638181EC
+Calculating SLA parameters for operator 0x0Af25F243E72cb08d3702603f1c8b626638181EC
+Calculating KEEP and ETH under management for operator 0x0Af25F243E72cb08d3702603f1c8b626638181EC
+Checking fraudulent activity for operator 0x1e5801DB6779b44A90104AE856602424D8853807
+Checking requirements for operator 0x1e5801DB6779b44A90104AE856602424D8853807
+Calculating SLA parameters for operator 0x1e5801DB6779b44A90104AE856602424D8853807
+Calculating KEEP and ETH under management for operator 0x1e5801DB6779b44A90104AE856602424D8853807
+Checking fraudulent activity for operator 0x4399c27E9C639492b8f8bEa9EB0770392BD0B4Ef
+Checking requirements for operator 0x4399c27E9C639492b8f8bEa9EB0770392BD0B4Ef
+Calculating SLA parameters for operator 0x4399c27E9C639492b8f8bEa9EB0770392BD0B4Ef
+Calculating KEEP and ETH under management for operator 0x4399c27E9C639492b8f8bEa9EB0770392BD0B4Ef
+Checking fraudulent activity for operator 0x16D2896Fe510456862e5bB98FA07D47404c4A51d
+Checking requirements for operator 0x16D2896Fe510456862e5bB98FA07D47404c4A51d
+Calculating SLA parameters for operator 0x16D2896Fe510456862e5bB98FA07D47404c4A51d
+Calculating KEEP and ETH under management for operator 0x16D2896Fe510456862e5bB98FA07D47404c4A51d
+Checking fraudulent activity for operator 0xc5795fa1EADF77FCDa0C6D9F9B340D634C2ba546
+Checking requirements for operator 0xc5795fa1EADF77FCDa0C6D9F9B340D634C2ba546
+Calculating SLA parameters for operator 0xc5795fa1EADF77FCDa0C6D9F9B340D634C2ba546
+Calculating KEEP and ETH under management for operator 0xc5795fa1EADF77FCDa0C6D9F9B340D634C2ba546
+Checking fraudulent activity for operator 0x9767795d399E86fCc0F600dB6F302F5C0692e0cF
+Checking requirements for operator 0x9767795d399E86fCc0F600dB6F302F5C0692e0cF
+Calculating SLA parameters for operator 0x9767795d399E86fCc0F600dB6F302F5C0692e0cF
+Calculating KEEP and ETH under management for operator 0x9767795d399E86fCc0F600dB6F302F5C0692e0cF
+Checking fraudulent activity for operator 0xF4823B1C060b52d9840A2eC92C40973CB8a8f4D6
+Checking requirements for operator 0xF4823B1C060b52d9840A2eC92C40973CB8a8f4D6
+Calculating SLA parameters for operator 0xF4823B1C060b52d9840A2eC92C40973CB8a8f4D6
+Calculating KEEP and ETH under management for operator 0xF4823B1C060b52d9840A2eC92C40973CB8a8f4D6
+Checking fraudulent activity for operator 0x7E6332d18719a5463d3867a1a892359509589a3d
+Checking requirements for operator 0x7E6332d18719a5463d3867a1a892359509589a3d
+Calculating SLA parameters for operator 0x7E6332d18719a5463d3867a1a892359509589a3d
+Calculating KEEP and ETH under management for operator 0x7E6332d18719a5463d3867a1a892359509589a3d
+Checking fraudulent activity for operator 0x0d0271d1B2906Cc472A8e75148937967Be788F09
+Checking requirements for operator 0x0d0271d1B2906Cc472A8e75148937967Be788F09
+Calculating SLA parameters for operator 0x0d0271d1B2906Cc472A8e75148937967Be788F09
+Calculating KEEP and ETH under management for operator 0x0d0271d1B2906Cc472A8e75148937967Be788F09
+Checking fraudulent activity for operator 0xBDE07f1cA107Ef319b0Bb26eBF1d0a5b4c97ffc1
+Checking requirements for operator 0xBDE07f1cA107Ef319b0Bb26eBF1d0a5b4c97ffc1
+Calculating SLA parameters for operator 0xBDE07f1cA107Ef319b0Bb26eBF1d0a5b4c97ffc1
+Calculating KEEP and ETH under management for operator 0xBDE07f1cA107Ef319b0Bb26eBF1d0a5b4c97ffc1
+Checking fraudulent activity for operator 0x3B9e5ae72d068448bB96786989c0d86FBC0551D1
+Checking requirements for operator 0x3B9e5ae72d068448bB96786989c0d86FBC0551D1
+Calculating SLA parameters for operator 0x3B9e5ae72d068448bB96786989c0d86FBC0551D1
+Calculating KEEP and ETH under management for operator 0x3B9e5ae72d068448bB96786989c0d86FBC0551D1
+Checking fraudulent activity for operator 0xE86181D6b672d78D33e83029fF3D0ef4A601B4C4
+Checking requirements for operator 0xE86181D6b672d78D33e83029fF3D0ef4A601B4C4
+Calculating SLA parameters for operator 0xE86181D6b672d78D33e83029fF3D0ef4A601B4C4
+Calculating KEEP and ETH under management for operator 0xE86181D6b672d78D33e83029fF3D0ef4A601B4C4
+Checking fraudulent activity for operator 0xf259b53481b942028D1D19802b6c35473dC5Be37
+Checking requirements for operator 0xf259b53481b942028D1D19802b6c35473dC5Be37
+Calculating SLA parameters for operator 0xf259b53481b942028D1D19802b6c35473dC5Be37
+Calculating KEEP and ETH under management for operator 0xf259b53481b942028D1D19802b6c35473dC5Be37
+Checking fraudulent activity for operator 0x60164cd72D5E3E91dE369e7C33b95B63d07b9e57
+Checking requirements for operator 0x60164cd72D5E3E91dE369e7C33b95B63d07b9e57
+Calculating SLA parameters for operator 0x60164cd72D5E3E91dE369e7C33b95B63d07b9e57
+Calculating KEEP and ETH under management for operator 0x60164cd72D5E3E91dE369e7C33b95B63d07b9e57
+Checking fraudulent activity for operator 0xcAbf2B72f64f164349BE122600b9E88AB4C3C3DC
+Checking requirements for operator 0xcAbf2B72f64f164349BE122600b9E88AB4C3C3DC
+Calculating SLA parameters for operator 0xcAbf2B72f64f164349BE122600b9E88AB4C3C3DC
+Calculating KEEP and ETH under management for operator 0xcAbf2B72f64f164349BE122600b9E88AB4C3C3DC
+Checking fraudulent activity for operator 0x790179A92B2752C51670CfF6a99E18354A96b558
+Checking requirements for operator 0x790179A92B2752C51670CfF6a99E18354A96b558
+Calculating SLA parameters for operator 0x790179A92B2752C51670CfF6a99E18354A96b558
+Calculating KEEP and ETH under management for operator 0x790179A92B2752C51670CfF6a99E18354A96b558
+Checking fraudulent activity for operator 0xECe1B561F3250397aeBB37C36b736a921529A633
+Checking requirements for operator 0xECe1B561F3250397aeBB37C36b736a921529A633
+Calculating SLA parameters for operator 0xECe1B561F3250397aeBB37C36b736a921529A633
+Calculating KEEP and ETH under management for operator 0xECe1B561F3250397aeBB37C36b736a921529A633
+Checking fraudulent activity for operator 0x8434C97B9880cDeFc3B09B31853C8D8D5118b74b
+Checking requirements for operator 0x8434C97B9880cDeFc3B09B31853C8D8D5118b74b
+Calculating SLA parameters for operator 0x8434C97B9880cDeFc3B09B31853C8D8D5118b74b
+Calculating KEEP and ETH under management for operator 0x8434C97B9880cDeFc3B09B31853C8D8D5118b74b
+Rewards weight sum 205929176616648734081184
+Total rewards sum 3921263317994578300758236
+0xb038a8B2975cD5dE392683f5CD4989d3b1E75648                 false                   true                    true                    false                   true                    true                    0               0               N/A             1             0               100             false                   101000000000000000000000.00             547898650505850000000.00                1502235125726248255.00                  19000000000000000000.00                 530400885631576248255.00              530400885631576248255                   1.62                    857724851905936308514                   17699485199603298991704                
+0x3D1c06ffF8a8e2BA890a5633022BaF78aFcB4d06                 false                   true                    true                    false                   false                   true                    0               0               N/A             0             0               N/A             false                   0.00                    0.00                    0.00            0.00            0.00                    0               1.00                    0               0              
+0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181                 false                   true                    true                    false                   true                    true                    0               0               N/A             1             0               100             false                   1340800000000000000000000.00                    448368736385450000000.00                1130615350867370000.00                  0.00            449499351736317370000.00             449499351736317370000                    3.44                    1547396187334320475653                  31931120865610570165721                
+0x6dAfE16b14c95eB99c64e8d4E5435F7574B2825c                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   749033000000000000000000.00             498592542563750000000.00                2308139436250000000.00                  0.00            500900682000000000000.00                500900682000000000000                 2.73                    1367146767752202403566                  28211604138257244802379                
+0xd1F2A77a0dAD76Ef8B87002763134f4863C870A4                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             196544593123450000000.00                20352248053394250000.00                 0.00            216896841176844250000.00                216896841176844250000                 1.96                    425173984030708197467                   8773630169262216014100                 
+0x186E82df0a09534537d0D8680D03b548628ab288                 false                   true                    true                    false                   true                    true                    0               0               N/A             1             0               100             false                   99200000000000000000000.00              187333094934800000000.00                15555356517957500000.00                 0.00            202888451452757500000.00                202888451452757500000                 1.99                    403520125841990188774                   8326794401738536851477                 
+0x91af3Fd2ebd3A39310A69E60197566538171514e                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             215466011450650000000.00                1197980624048055000.00                  0.00            216663992074698055000.00                216663992074698055000                 1.96                    424829307184923877173                   8766517628781373612671                 
+0x9d0Cc9194EfD1F9Bf02a7AFC57Ae9769c1207Aa4                 false                   true                    true                    false                   true                    true                    2               0               100             0             0               N/A             false                   99200000000000000000000.00              138955934459800000000.00                56829739690221000000.00                 0.00            195785674150021000000.00                195785674150021000000                 2.01                    392874176481750555410                   8107111105027959760525                 
+0x88Ed51f84c21Ae246c23137D090cdF441009D916                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   99200000000000000000000.00              165714539396550000000.00                9414931558848000000.00                  0.00            175129470955398000000.00                175129470955398000000                 2.06                    361531421153219061316                   7460341184791384662371                 
+0x855A951162B1B93D70724484d5bdc9D00B56236B                 false                   true                    true                    false                   true                    true                    0               0               N/A             3             0               100             false                   1249013000000000000000000.00                    543688946046800000000.00                13602204029907500000.00                 71959000000000000000.00                 485332150076707500000.00              485332150076707500000                   3.27                    1586409953652602553286                  32736185074717738059059                
+0x4c21541f95a00C03C75F38C71DC220bd27cbbEd9                 false                   true                    true                    false                   true                    true                    1               0               100             0             0               N/A             false                   100000000000000000000000.00             79009189008000000000.00                 30990810992000000000.00                 0.00            110000000000000000000.00                110000000000000000000                 2.35                    258323969741913258974                   5330615370406897720697                 
+0x39d2aCBCD80d80080541C6eed7e9feBb8127B2Ab                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   298400000000000000000000.00             301581162294700000000.00                15199543205300000000.00                 0.00            316780705500000000000.00                316780705500000000000                 2.37                    751584943108604730120                   15509246988979974119507                
+0x174592063ed3B10065a2a00b4ee8bF87FF3AAc21                 false                   true                    true                    false                   true                    true                    1               0               100             0             0               N/A             false                   450000000000000000000000.00             177657375395000000000.00                22342624605000000000.00                 0.00            200000000000000000000.00                200000000000000000000                 3.12                    624264068711928514640                   12881931332942930325023                
+0xc74D5EDAf50C15f5C64683D9CC6644121a4923f9                 false                   false                   false                   false                   false                   true                    0               0               N/A             0             0               N/A             false                   0.00                    0.00                    0.00            0.00            0.00                    0               1.00                    0               0              
+0x85D548b251cEb537f62AED0b6f6f4C48d3C822c8                 false                   true                    true                    false                   true                    true                    1               0               100             3             0               100             false                   798011000000000000000000.00             566060052520100000000.00                2764390411134370000.00                  0.00            568824442931234370000.00                568824442931234370000                 2.68                    1521639390891222318087                  31399619374869334505310                
+0x5CA1F949c75833432d6BC8E3cb6FB23386F63426                 false                   true                    true                    false                   true                    true                    2               0               100             1             0               100             false                   499200000000000000000000.00             770523283265150000000.00                37890867257272510000.00                 0.00            808414150522422510000.00                808414150522422510000                 2.11                    1706813108603734308436                  35220750905249143256483                
+0xe76c773C18d0D305A488B16CF6Ef14273B57665d                 false                   true                    true                    false                   true                    false                   0               0               N/A             1             0               100             false                   101000000000000000000000.00             58757737329100000000.00                 48243798319850000000.00                 0.00            107001535648950000000.00                107001535648950000000                 2.37                    254019596447914084282                   0              
+0x404EE198baB25b71b64776dFB96531e059456b3e                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   150000000000000000000000.00             0.00                    0.00            0.00            0.00                    0               1.00                    0               0            
+0x0CF6F3D138236fbc7B831a976942bF8D3907C550                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   150000000000000000000000.00             37834009568850000000.00                 18665990431150000000.00                 0.00            56500000000000000000.00                 56500000000000000000                  3.14                    177571428571428571428                   3664255343527212806300                 
+0x692a84140091e1FF6D5B8c138fB184aFFBeE8Ae8                 false                   true                    true                    false                   true                    true                    0               0               N/A             1             0               100             false                   278221000000000000000000.00             194374158339500000000.00                5476159160500000000.00                  90000000000000000000.00                 109850317500000000000.00              109850317500000000000                   3.25                    357085691931603132595                   7368601836928738883599                 
+0x8Bd660A764Ca14155F3411a4526a028b6316CB3E                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   832533000000000000000000.00             78280850464550000000.00                 11321677535450000000.00                 0.00            89602528000000000000.00                 89602528000000000000                  5.31                    475859078607038896339                   9819536766582822135869                 
+0xa620a7ea64202FEF1d60466b8d496dB656454728                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   498400000000000000000000.00             0.00                    3436136479353500000.00                  3400000000000000000.00                  36136479353500000.00                 36136479353500000                8.12                    293428212350420000              6055005040488052527            
+0x00Cef852246b08B9215772c3f409D28408Bb21bD                 false                   true                    true                    false                   true                    true                    2               1               50              0             0               N/A             false                   705718000000000000000000.00             171918371575073500000.00                60994094083329500000.00                 0.00            232912465658403000000.00                232912465658403000000                 3.46                    806271898195301006780                   16637733531042417129325                
+0x70164FF765Be63011E783866e334293A6fe92DcB                 false                   true                    true                    false                   true                    true                    1               0               100             1             0               100             false                   101000000000000000000000.00             19046701396990000000.00                 36060565590464000000.00                 0.00            55107266987454000000.00                 55107266987454000000                  2.44                    134619180783637628571                   2777919040783508000692                 
+0xd66cAE89FfBc6E50e6b019e45c1aEc93Dec54781                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             99488634529400000000.00                 16912094470600000000.00                 0.00            116400729000000000000.00                116400729000000000000                 2.31                    268979055770219891542                   5550487205808951685336                 
+0xA79827813Da962f5A4C95AF40550259EE868d202                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             212734228362500000000.00                35095281954187000000.00                 0.00            247829510316687000000.00                247829510316687000000                 1.90                    470463519541103115485                   9708197311256431810155                 
+0x581B54952b65cb619389BB4D90F5acF04e3D697a                 false                   true                    true                    false                   true                    true                    2               1               50              0             0               N/A             false                   100000000000000000000000.00             122973061930950000000.00                91524391069050000000.00                 0.00            214497453000000000000.00                214497453000000000000                 1.97                    421619375065241563362                   8700279433726394643910                 
+0x9AF71bc32f2Ca72C68ba26584cA4dBf5e349FAb9                 false                   true                    true                    false                   true                    true                    1               1               0               1             1               0               false                   100000000000000000000000.00             113198235505200000000.00                52702493494800000000.00                 0.00            165900729000000000000.00                165900729000000000000                 2.10                    348054910395871338367                   7182248155118823507370                 
+0x2eBE08379f4fD866E871A9b9E1d5C695154C6A9F                 false                   true                    true                    false                   true                    true                    0               0               N/A             1             0               100             false                   908054000000000000000000.00             254249582515265000000.00                4487545250944350000.00                  0.00            258737127766209350000.00                258737127766209350000                 3.65                    944225689037099507958                   19484463544528555034520                
+0xA97c34278162b556A527CFc01B53eb4DDeDFD223                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   90000000000000000000000.00              150398556173500000.00                   11957256431280500000.00                 0.00            12107654987454000000.00                 12107654987454000000                  2.29                    27674639971323428571                    571076936255668263625                  
+0x6C76d49322C9f8761A1623CEd89A31490cdB649d                 false                   true                    true                    false                   true                    true                    1               0               100             0             0               N/A             false                   90000000000000000000000.00              0.00                    26000000000000000000.00                 0.00            26000000000000000000.00                 26000000000000000000                  2.29                    59428571428571428571                    1226331635484570014015                 
+0x003428E767ece053974bdC155BC129cae491EBe2                 false                   true                    true                    false                   true                    true                    0               0               N/A             3             0               100             false                   1066064000000000000000000.00                    841566541002100000000.00                10054610591350000000.00                 302151588158850000000.00                549469563434600000000.00              549469563434600000000                   2.97                    1631846319165563962389                  33673782110799211019465                
+0x4a41c7a884d119eaaefE471D0B3a638226408382                 false                   true                    true                    false                   true                    true                    1               0               100             2             0               100             false                   1274801000000000000000000.00                    270453887628280000000.00                13871197550017500000.00                 0.00            284325085178297500000.00             284325085178297500000                    3.99                    1135744961514736842462                  23436538060178102941619                
+0xD072bB639cA5933f5CA6DC4deebD259066547087                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   99200000000000000000000.00              0.00                    71581259250000.00               0.00            71581259250000.00               71581259250000                  2.42                  173022129501428                 3570378791648004               
+0x0ee446643973b3F5FeD132D0455fEa23fbad0D1E                 false                   true                    true                    false                   true                    true                    6               0               100             3             0               100             false                   3324533000000000000000000.00                    268395829082600000000.00                203680717283000000.00                   0.00            268599509799883000000.00             268599509799883000000                    5.98                    1604988625374785031414                  33119563176033518827597                
+0x1b3aCBbE36316ae74D4BeC49865660b59ff69c7b                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   115000000000000000000000.00             19719976336000000000.00                 15280023664000000000.00                 0.00            35000000000000000000.00                 35000000000000000000                  2.64                    92499999999999999999                    1908773398981392029025                 
+0x5Df67a14Bf26981543A2Ea33C2EE454CFA42aDA5                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   4120827308472856418061897.00                    407670028716750000000.00                0.00            0.00            407670028716750000000.00                407670028716750000000                 5.50                    2240666366510089393195                  46237020069045933450080                
+0x2acE976116c36a524B6bEa125B6fdFB897490941                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   325575000000000000000000.00             203688857391450000000.00                781664389393749999.00                   0.00            204470521780843749999.00                204470521780843749999                 2.78                    569355408091028441665                   11748869811138917957801                
+0xB7a764884a2fBcfC7177b5c53A7797EE7fF4Bb39                 false                   true                    true                    false                   true                    true                    6               0               100             2             0               100             false                   873943000000000000000000.00             2024537879720200000000.00               7955560737800000000.00                  0.00            2032493440458000000000.00               2032493440458000000000                1.93                    3917318851382940758079                  80835394798357819739803                
+0xaaFab076DA8d1C885F492bad4e2C259F0b6448F8                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             0.00                    0.00            0.00            0.00                    0               1.00                    0               0            
+0x0000000000058fDe63cA64995c9A7E40196Af9F9                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             19169912132750000000.00                 830087867250000000.00                   0.00            20000000000000000000.00                 20000000000000000000                  2.43                    48571428571428571428                    1002290279001812030685                 
+0xABFB52f4CfAC3e6631c19a7e4Aa752110E1187B5                 false                   true                    true                    false                   true                    true                    2               0               100             0             0               N/A             false                   445297000000000000000000.00             135545227813150000000.00                49064430602850000000.00                 0.00            184609658416000000000.00                184609658416000000000                 3.20                    590087468076823614348                   12176683914998078627093                
+0xa62E990E0229A3247270d6206adf3d883dbED919                 false                   true                    true                    false                   true                    true                    5               0               100             4             0               100             false                   415866670000000000000000.00             1719216804410450000000.00               18504745650643749915.00                 0.00            1737721550061093749915.00               1737721550061093749915                1.69                    2939936567777263650809                  60666732056928596317358                
+0x9c06Feb7Ebc8065ee11Cd5E8EEdaAFb2909A7087                 false                   true                    true                    false                   true                    true                    2               0               100             1             0               100             false                   3424796000000000000000000.00                    621927486039498000000.00                13210748304061555000.00                 0.00            635138234343559555000.00             635138234343559555000                    4.28                    2720908540214695208092                  56147003704033528377942                
+0x2495512e37f9B2A8fd9B071eA477e282D51508c6                 false                   true                    true                    false                   false                   true                    0               0               N/A             0             0               N/A             false                   0.00                    0.00                    0.00            0.00            0.00                    0               1.00                    0               0              
+0xAA7B9D0Fe0867B227C9fC33B6022E9fD6e848EE1                 false                   true                    true                    false                   false                   true                    0               0               N/A             0             0               N/A             false                   0.00                    0.00                    0.00            0.00            0.00                    0               1.00                    0               0              
+0x8DDD2077415D58f7047fc9143b4146b342055f1b                 false                   true                    true                    false                   false                   true                    0               0               N/A             0             0               N/A             false                   0.00                    0.00                    0.00            0.00            0.00                    0               1.00                    0               0              
+0x36C56A69c2aeA23879b59dB0e99D57eF2ff77f06                 false                   true                    true                    false                   true                    true                    15              1               93              10                    0               100             false                   200000000000000000000000.00             6342620327522750000000.00               82286000354385000000.00                 0.00            6424906327877135000000.00            5780596559148223386730                   1.25                    7222941898649560029281                  149048209281410053121609               
+0xD52BfE62a163eB4eC8FC98f06eD3f02695ae491d                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   99200000000000000000000.00              276862849145250000000.00                2949709334423500000.00                  0.00            279812558479673500000.00                279812558479673500000                 1.84                    515428372045671702080                   10636064493416889533327                
+0x80D43312D0D13237F2D75ae7c1292200Ba59036a                 false                   true                    true                    false                   false                   true                    0               0               N/A             0             0               N/A             false                   0.00                    0.00                    0.00            0.00            0.00                    0               1.00                    0               0              
+0xd1F560e0CdB488CD0F646642b3247136ff12FA10                 false                   true                    true                    false                   true                    true                    2               0               100             3             0               100             false                   149200000000000000000000.00             76024853699950000000.00                 1775146300050000000.00                  0.00            77800000000000000000.00                 77800000000000000000                  2.96                    230166400495647333514                   4749573001139341792407                 
+0x1d803c89760F8B4057DB15BCb3B8929E0498D310                 false                   true                    true                    false                   true                    true                    1               0               100             0             0               N/A             false                   90000000000000000000000.00              0.00                    26000000000000000000.00                 0.00            26000000000000000000.00                 26000000000000000000                  2.29                    59428571428571428571                    1226331635484570014015                 
+0xe02b7BD9a4E57500BB490e0b0035bE49BA7c83e6                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   90000000000000000000000.00              0.00                    26000000000000000000.00                 0.00            26000000000000000000.00                 26000000000000000000                  2.29                    59428571428571428571                    1226331635484570014015                 
+0x9bD818Ab6ACC974f2Cf2BD2EBA7a250126Accb9F                 false                   true                    true                    false                   true                    true                    1               0               100             0             0               N/A             false                   5000000000000000000000000.00                    218669906966700000000.00                11377710812420400000.00                 0.00            230047617779120400000.00             230047617779120400000                    7.59                    1746779689633343439063                  36045476815709167504361                
+0xc010B84528b0809295Fcd21CB37415E8c532343A                 false                   true                    true                    false                   true                    true                    4               0               100             6             0               100             false                   9276934000000000000000000.00                    3158641451039511000000.00               12334674247212792500.00                 0.00            3170976125286723792500.00            3168607095888072972996                   3.42                    10833200756392872448749                 223547301941922272844780               
+0x44f07be8D08a7Ec1b4BDB92685dA64C02622CFc5                 false                   true                    true                    false                   true                    true                    6               0               100             2             0               100             false                   1010095000000000000000000.00                    188118183805500000000.00                29008183363447500000.00                 0.00            217126367168947500000.00             217126367168947500000                    4.05                    879422762818988804091                   18147230012190354682001                
+0x3101927DEeC27A2bfA6c4a6316e3A221f631dB91                 false                   true                    true                    false                   true                    true                    0               0               N/A             1             0               100             false                   598400000000000000000000.00             303284952008850000000.00                7673677273958810000.00                  0.00            310958629282808810000.00                310958629282808810000                 2.96                    921003945243570518238                   19005273849057750987186                
+0x884e30892B185330478D0D18d0aE665113B98027                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   647600000000000000000000.00             316995618046400000000.00                1753568298018500000.00                  0.00            318749186344418500000.00                318749186344418500000                 3.02                    961278521202595104636                   19836355354418200893817                
+0x6e9D6BA71C5c313cc4d22791720943D65A5495da                 false                   true                    true                    false                   true                    true                    1               0               100             0             0               N/A             false                   133000000000000000000000.00             61127881334200000000.00                 36872118665800000000.00                 0.00            98000000000000000000.00                 98000000000000000000                  2.65                    259455876325391142450                   5353972702046621984485                 
+0x0ebB4fA9Dabe68Ad18E845d1f915010203e16191                 false                   true                    true                    false                   true                    true                    1               0               100             0             0               N/A             false                   90000000000000000000000.00              300652485313500000.00                   25649712014686500000.00                 0.00            25950364500000000000.00                 25950364500000000000                  2.29                    59315118857142857142                    1223990497642527922671                 
+0xe26E2d93Bbc8fde0e1E3B290Fc927Fb374E7e34e                 false                   true                    true                    false                   true                    true                    1               0               100             0             0               N/A             false                   700000000000000000000000.00             104995763002800000000.00                11775975150298750000.00                 0.00            116771738153098750000.00                116771738153098750000                 4.46                    521098874781767602941                   10753077518081873923879                
+0x5d84DEB482E770479154028788Df79aA7C563aA4                 false                   true                    true                    false                   true                    true                    1               0               100             1             0               100             false                   399370000000000000000000.00             41232505931723500000.00                 8668223068276500000.00                  0.00            49900729000000000000.00                 49900729000000000000                  5.00                    249544682781375508001                   5149451376760425752310                 
+0x3a0495aD7EFdAe541455846fFe4a6D3858211C4E                 false                   true                    true                    false                   true                    true                    10              0               100             18                    2               88              true                    1191459000000000000000000.00                    5692002024516300000000.00               2515460457805000000.00                  218091043908262750000.00                5476426441065842250000.00             5106609481946821089265                  1.66                    8475125112479305114990                  0              
+0x65aB6C2262bf24973D746D18af1794dA52183187                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   90000000000000000000000.00              124510310089850000000.00                6383778390598000000.00                  0.00            130894088480448000000.00                130894088480448000000                 2.17                    284389808050997067477                   5868494059990998059832                 
+0x78c0eF874Df6cb2cD7E724bdF3Ce68f431b79748                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   116009000000000000000000.00             100000000000000000000.00                18659418080000000000.00                 0.00            118659418080000000000.00                118659418080000000000                 2.40                    284584464001601118597                   5872510861077121828557                 
+0x04Cb8D907FdA121FD3Dd70bD2eF9C7841f70Ed3f                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   101000000000000000000000.00             0.00                    2000000000000000000.00                  0.00            2000000000000000000.00                  2000000000000000000                   2.44                    4885714285714285714             100818610417241092498                  
+0xC6325112d6d0a1bb44B3EE2Da080a79e99fe4cfe                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   80000000000000000000000.00              370178846990150000000.00                11522931009850000000.00                 0.00            381701778000000000000.00                381701778000000000000                 1.65                    628829851030969106045                   12976148023063192510211                
+0x7cec09487d293ABE8fEd007222cD6aD6F1ecDdA1                 false                   false                   false                   false                   false                   true                    0               0               N/A             0             0               N/A             false                   0.00                    0.00                    0.00            0.00            0.00                    0               1.00                    0               0              
+0xB352A86CF41506D0CB2e762A5F1118FFA25f2dab                 false                   false                   false                   false                   false                   true                    0               0               N/A             0             0               N/A             false                   0.00                    0.00                    0.00            0.00            0.00                    0               1.00                    0               0              
+0x062D1D3E1BdC9c567B1982da7A83D48958D617d2                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   200000000000000000000000.00             19397889509600000000.00                 8652785855516000000.00                  0.00            28050675365116000000.00                 28050675365116000000                  3.86                    108195462122590285714                   2232655351244314771119                 
+0x650A9eD18Df873cad98C88dcaC8170531cAD2399                 false                   true                    true                    false                   true                    true                    2               0               100             2             0               100             false                   6417600456621004566210046.00                    988767709960150000000.00                10934477039850000000.00                 0.00            999702187000000000000.00             999702187000000000000                    4.58                    4581793534739813542840                  94547087770121952385849                
+0x4F4f0D0dfd93513B3f4Cb116Fe9d0A005466F725                 false                   true                    true                    false                   true                    true                    8               0               100             10                    0               100             false                   2306742000000000000000000.00                    4786553705569250000000.00               12015454984390000000.00                 0.00            4798569160553640000000.00             4588335122188771652141                  1.98                    9087311992661563315638                  187520209727967338690298               
+0x3d7764aE9aC8259E5A5d224F5F56414f9749902a                 false                   true                    true                    false                   true                    true                    5               1               80              2             0               100             false                   2470000000000000000000000.00                    1498950197416450000000.00               329637740085622500.00                   0.00            1499279835156535622500.00            1499279835156535622500                   2.82                    4220757813328191887712                  87096975541878060466524                
+0x64A8856cBD255765D16B901a0B899daefC78FB13                 false                   true                    true                    false                   true                    true                    9               1               88              3             0               100             false                   3000000000000000000000000.00                    1498079104312350000000.00               12626330986470720000.00                 0.00            1510705435298820720000.00            1510705435298820720000                   2.99                    4521391837399332469677                  93300675303777786274644                
+0xAcDC9AD09e565170194625911BF9B1A445A9736e                 false                   true                    true                    false                   true                    true                    10              0               100             12                    0               100             false                   1083760000000000000000000.00                    5981368074928700000000.00               10468796476405000000.00                 335009174840864500000.00                5656827696564240500000.00             5239049238763589644384                  1.62                    8482053815486622250821                  175030472343021459259795               
+0x63eB4c3DD0751F9BE7070A01156513C227fa1eF6                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   198400000000000000000000.00             0.00                    0.00            0.00            0.00                    0               1.00                    0               0            
+0x71b1a9096Bc1AF4863505765B431618FFfd96279                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   200000000000000000000000.00             237621458256700000000.00                2328906243300000000.00                  0.00            239950364500000000000.00                239950364500000000000                 2.29                    549756990962378948257                   11344448867600459287146                
+0x2222aa7722Aa77287E6Db2eBC66D0EfEB7e131b0                 false                   true                    true                    false                   true                    true                    1               0               100             1             1               0               false                   200000000000000000000000.00             19169912132750000000.00                 830087867250000000.00                   0.00            20000000000000000000.00                 20000000000000000000                  3.86                    77142857142857142857                    1591872796061701460500                 
+0x428df09f1Ae54234B550518665FB75Dd4Bd60C50                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   200000000000000000000000.00             0.00                    8150364500000000000.00                  0.00            8150364500000000000.00                  8150364500000000000                   3.86                    31437120214285714285                    648717176276851569663                  
+0xb6C5DFee1b565e8009351D692a729b5546249786                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             0.00                    18500000000000000000.00                 0.00            18500000000000000000.00                 18500000000000000000                  2.43                    44928571428571428571                    927118508076676128384                  
+0x045E511f53DeBF55c9C0B4522f14F602f7C7cA81                 false                   true                    true                    false                   true                    true                    3               0               100             3             0               100             false                   1152813000000000000000000.00                    790241722578100000000.00                9758277421900000000.00                  0.00            800000000000000000000.00             800000000000000000000                    2.70                    2158124000229728655096                  44533726306398028508980                
+0xd977144724Bc77FaeFAe219F958AE3947205d0b5                 false                   true                    true                    false                   true                    true                    2               0               100             3             0               100             false                   2705680000000000000000000.00                    759539477873600000000.00                1848617119170500000.00                  0.00            761388094992770500000.00             761388094992770500000                    3.67                    2791202146013227539362                  57597539540430529954093                
+0x07C9a8f8264221906b7b8958951Ce4753D39628B                 false                   true                    true                    false                   true                    true                    1               0               100             1             0               100             false                   500000000000000000000000.00             790465836092650000000.00                9534163907350000000.00                  0.00            800000000000000000000.00                800000000000000000000                 2.12                    1694427190999915878563                  34965162688555695008133                
+0xB8A3AE209d153560993BFd8178E60F09B1c682E8                 false                   true                    true                    false                   true                    true                    4               0               100             4             0               100             false                   541097000000000000000000.00             7731731751979350000000.00               11111701550856250000.00                 0.00            7742843453530206250000.00               6639197136813961592544                1.37                    9121289199729570667288                  188221342582271068094454               
+0x0ae20e11a065a7E750482E6a7E9eB7eaB7A8137f                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   200000000000000000000000.00             0.00                    2400729000000000000.00                  0.00            2400729000000000000.00                  2400729000000000000                   3.86                    9259954714285714285             191082759290820624278                  
+0x2BAF3650263348f3304c18900A674bB0BF830801                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             0.00                    4000000000000000000.00                  0.00            4000000000000000000.00                  4000000000000000000                   2.43                    9714285714285714285             200458055800362406137                  
+0x12db4c07251d40FBD73b0a3CEF48b5CBa16A673d                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   150000000000000000000000.00             0.00                    0.00            0.00            0.00                    0               1.00                    0               0            
+0xF35343299a4f80Dd5D917bbe5ddd54eBB820eBd4                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             0.00                    4628478132510500000.00                  0.00            4628478132510500000.00                  4628478132510500000                   2.43                    11240589750382642857                    231953931939386747991                  
+0x13aBA80a5BF56720EC44E26c06E88a21f4d0a6d9                 false                   true                    false                   false                   false                   true                    0               0               N/A             0             0               N/A             false                   0.00                    0.00                    0.00            0.00            0.00                    0               1.00                    0               0              
+0x7f746e790e97996AC9fE892d48eB8660DeE6786D                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             19849934495200000000.00                 150065504800000000.00                   0.00            20000000000000000000.00                 20000000000000000000                  2.43                    48571428571428571428                    1002290279001812030685                 
+0xa39F6Ca62303229873D06395237307Cd59de806d                 false                   true                    true                    false                   true                    true                    0               0               N/A             1             1               0               false                   100000000000000000000000.00             19169912132750000000.00                 3330087867250000000.00                  0.00            22500000000000000000.00                 22500000000000000000                  2.43                    54642857142857142857                    1127576563877038534521                 
+0x1fe5b2817B7f2d0bbc87b293FB2272737D37061E                 false                   true                    true                    false                   true                    true                    6               0               100             5             1               80              false                   827733000000000000000000.00             2374762259729200000000.00               631291080499999450.00                   65000000000000000000.00                 2310393550809699999450.00             2310393550809699999450                  1.85                    4266097508464009911924                  88032577747209687028582                
+0x4199b03322b067A3264b40A7Ab5E3b6b6B1e046B                 false                   true                    true                    false                   true                    true                    1               0               100             1             0               100             false                   546600000000000000000000.00             582461497485400000000.00                16217055972600000000.00                 0.00            598678553458000000000.00                598678553458000000000                 2.35                    1407675089074986186856                  29047921777676704568275                
+0xE5f8f4A928a39ED4D21eCfD1BFB1Eebd49663e7e                 false                   true                    true                    false                   true                    true                    2               0               100             3             0               100             false                   81010000000000000000000.00              1294381931848150000000.00               5618068151850000000.00                  13685048346350000000.00                 1286314951653650000000.00             1286314951653650000000                  1.35                    1742833021905994308009                  35964035795465033810707                
+0x1147ccFB4AEFc6e587a23b78724Ef20Ec6e474D4                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   101000000000000000000000.00             0.00                    8000000000000000000.00                  0.00            8000000000000000000.00                  8000000000000000000                   2.44                    19542857142857142857                    403274441668964369993                  
+0x0F5c422328Cba4421361A6AEd428ACaF7BAb9046                 false                   true                    true                    false                   true                    true                    6               0               100             5             0               100             false                   5300575000000000000000000.00                    4512951423752046000000.00               765198752445250000.00                   112000000000000000000.00                4401716622504491250000.00             4267778165990889336948                  2.55                    10890969283517529844800                 224739377918937203001471               
+0xA543441313F7FA7F9215B84854E6DC8386B93383                 false                   true                    true                    false                   true                    true                    11              2               81              9             0               100             true                    200000000000000000000000.00             6351654918034450000000.00               7294582018925000000.00                  0.00            6358949500053375000000.00               5735410351016173069589                1.25                    7173883645145851299269                  0              
+0x81e1B56db174a935fe81E4b9839d6D92528090f4                 false                   true                    true                    false                   true                    true                    7               0               100             7             0               100             false                   100000000000000000000000.00             6512766719470900000000.00               4423670845475000000.00                  0.00            6517190390316375000000.00               5843431725512245961549                1.18                    6867084735341892971556                  141704958609424626605192               
+0xea889F67e54CC5bf1BCb2B77A4e2ED2334176e55                 false                   true                    true                    false                   true                    true                    1               0               100             10                    1               90              false                   432533000000000000000000.00             857509042636400000000.00                10616640334100000000.00                 742000000000000000000.00                126125682970500000000.00              126125682970500000000                   3.62                    456439231079805611933                   9418800676071930704713                 
+0x5b0e39cc641FaF1cF00AEEf886803eA85DC9E351                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   118813000000000000000000.00             39753006125900000000.00                 3246993874100000000.00                  0.00            43000000000000000000.00                 43000000000000000000                  2.70                    115985128571428571428                   2393398141563021412600                 
+0x527848609CBd3082626068d612699f0CC67A2AD7                 false                   true                    true                    false                   true                    true                    5               1               80              13                    0               100             false                   399200000000000000000000.00             576690666126480000000.00                11476492937220000000.00                 588000000000000000000.00                167159063700000000.00                 167159063700000000              6.70                    1120443324114857142             23120782833910544412           
+0x08df5Bc0DbE3ED798DC25ab8d206028371eC4E53                 false                   true                    true                    false                   true                    true                    0               0               N/A             1             1               0               false                   115650000000000000000000.00             37831537977550000000.00                 10218462022450000000.00                 0.00            48050000000000000000.00                 48050000000000000000                  2.65                    127435464285714285714                   2629680262869347555299                 
+0x575f7BFD3d5eABaEb6cd1e2710819a5b19753a84                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             162244158208450000000.00                15684759749550000000.00                 0.00            177928917958000000000.00                177928917958000000000                 2.06                    366570863430368366369                   7564332031973274448764                 
+0xF2f5E0a3365c385A3ADCA4F614eD0984dFff52a3                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   258097000000000000000000.00             19687752249300000000.00                 17312247750700000000.00                 0.00            37000000000000000000.00                 37000000000000000000                  4.69                    173422700000000000000                   3578644719346273031699                 
+0x7a9654B888dEa4Fed7bf4c1cD104Bd45217427dA                 false                   true                    true                    false                   true                    true                    1               0               100             0             0               N/A             false                   100000000000000000000000.00             97979110149950000000.00                 1770704374865000000.00                  0.00            99749814524815000000.00                 99749814524815000000                  2.42                    240994152128001769308                   4973007858291941709106                 
+0x4bFa10B1538E8E765E995688D8EEc39C717B6797                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   317133000000000000000000.00             178582638509150000000.00                1417361490850000000.00                  0.00            180000000000000000000.00                180000000000000000000                 2.88                    517887377686707912335                   10686807029152620385482                
+0xe3a2d16dA142E6B190A5d9F7e0C07cc460B58A5F                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             97230917432850000000.00                 8770615653701250000.00                  0.00            106001533086551250000.00                106001533086551250000                 2.37                    251604783796520805954                   5191962360727170688014                 
+0x190059F25D91afFB092D145CEBb907817414bCf0                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   80008000000000000000000.00              90596073240000000000.00                 14203926760000000000.00                 0.00            104800000000000000000.00                104800000000000000000                 2.14                    224583405714285714285                   4634365737081882423994                 
+0xC05e7327F7BF188badD27E31066E6F74bD266A4E                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   354690000000000000000000.00             588050968563700000000.00                18949031436300000000.00                 0.00            607000000000000000000.00                607000000000000000000                 2.08                    1263196357807630626900                  26066547086198765174974                
+0x02A4dDE42Cb1188C8b44C70B0cC126ABE6dC817a                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   83172000000000000000000.00              0.00                    16486700000000000000.00                 0.00            16486700000000000000.00                 16486700000000000000                  2.19                    36075725891428571428                    744436604654087818282                  
+0x860EF3f83B6adFEF757F98345c3B8DdcFCA9d152                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   100000000000000000000000.00             78207360129750000000.00                 3792639870250000000.00                  0.00            82000000000000000000.00                 82000000000000000000                  2.43                    199142857142857142857                   4109390143907429325810                 
+0x0Af25F243E72cb08d3702603f1c8b626638181EC                 false                   true                    true                    false                   true                    true                    0               0               N/A             2             0               100             false                   706432000000000000000000.00             3983832947557400000000.00               16145605900600000000.00                 54620537338350000000.00                 3945358016119650000000.00             3880719162517519868785                  1.60                    6203023778513051894634                  128001803045132492371485               
+0x1e5801DB6779b44A90104AE856602424D8853807                 false                   true                    true                    false                   true                    true                    2               0               100             1             0               100             false                   249200000000000000000000.00             271426220775050000000.00                28573779224950000000.00                 0.00            300000000000000000000.00                300000000000000000000                 2.29                    686678160748703261957                   14169870344849654301462                
+0x4399c27E9C639492b8f8bEa9EB0770392BD0B4Ef                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   80000000000000000000000.00              19397889509600000000.00                 602110490400000000.00                   0.00            20000000000000000000.00                 20000000000000000000                  2.14                    42857142857142857142                    884373775589834144722                  
+0x16D2896Fe510456862e5bB98FA07D47404c4A51d                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   70000000000000000000000.00              189666357027800000000.00                10333642972200000000.00                 0.00            200000000000000000000.00                200000000000000000000                 1.84                    367332005306815109595                   7580038489990704987187                 
+0xc5795fa1EADF77FCDa0C6D9F9B340D634C2ba546                 false                   true                    true                    false                   true                    true                    2               0               100             2             0               100             false                   938059000000000000000000.00             2868924337459150000000.00               19218515998850000000.00                 0.00            2888142853458000000000.00               2888142853458000000000                1.81                    5215909335290728006428                  107632313412990876329729               
+0x9767795d399E86fCc0F600dB6F302F5C0692e0cF                 false                   true                    true                    false                   true                    true                    4               0               100             2             0               100             false                   938311000000000000000000.00             2829006820943000000000.00               1265632515000000000.00                  0.00            2830272453458000000000.00               2830272453458000000000                1.81                    5134909420998280274586                  105960848745734693701814               
+0xF4823B1C060b52d9840A2eC92C40973CB8a8f4D6                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   400000000000000000000000.00             96687337130000000000.00                 3312662870000000000.00                  0.00            100000000000000000000.00                100000000000000000000                 3.83                    382842712474619009760                   7900107952058749215231                 
+0x7E6332d18719a5463d3867a1a892359509589a3d                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   249200000000000000000000.00             297394691452700000000.00                2583862005300000000.00                  0.00            299978553458000000000.00                299978553458000000000                 2.29                    686642892443983035016                   14169142569694225771187                
+0x0d0271d1B2906Cc472A8e75148937967Be788F09                 false                   true                    true                    false                   true                    true                    2               0               100             1             0               100             false                   250000000000000000000000.00             574469099262430000000.00                25488007653570000000.00                 0.00            599957106916000000000.00                599957106916000000000                 1.91                    1147660086146531482052                  23682411281180454956613                
+0xBDE07f1cA107Ef319b0Bb26eBF1d0a5b4c97ffc1                 false                   true                    true                    false                   true                    true                    0               0               N/A             2             0               100             false                   1000000000000000000000000.00                    587371693018600000000.00                12585413897400000000.00                 0.00            599957106916000000000.00             599957106916000000000                    2.83                    1695363065377062964104                  34984474819538253231574                
+0x3B9e5ae72d068448bB96786989c0d86FBC0551D1                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   450244000000000000000000.00             94263144995500000000.00                 5736855004500000000.00                  0.00            100000000000000000000.00                100000000000000000000                 4.00                    400081322311136185782                   8255833356289700013565                 
+0xE86181D6b672d78D33e83029fF3D0ef4A601B4C4                 false                   true                    true                    false                   true                    true                    0               0               N/A             1             0               100             false                   400000000000000000000000.00             283240020592750000000.00                16738532865250000000.00                 0.00            299978553458000000000.00                299978553458000000000                 2.63                    789858990673449541367                   16299046814527263859025                
+0xf259b53481b942028D1D19802b6c35473dC5Be37                 false                   true                    true                    false                   true                    true                    3               0               100             2             0               100             false                   1000000000000000000000000.00                    2457779630768650000000.00               5220369231350000000.00                  0.00            2463000000000000000000.00            2463000000000000000000                   1.90                    4682459393636207078061                  96624366836576550112175                
+0x60164cd72D5E3E91dE369e7C33b95B63d07b9e57                 false                   true                    true                    false                   true                    true                    3               0               100             2             0               100             false                   1111300000000000000000000.00                    2486561586918550000000.00               13416966539450000000.00                 0.00            2499978553458000000000.00            2499978553458000000000                   1.94                    4857191384942622391478                  100230029290162857144315               
+0xcAbf2B72f64f164349BE122600b9E88AB4C3C3DC                 false                   true                    true                    false                   true                    true                    0               0               N/A             0             0               N/A             false                   1113000000000000000000000.00                    2969018427122100000000.00               14396377347192000000.00                 0.00            2983414804469292000000.00            2983414804469292000000                   1.86                    5560444364786488670398                  114741927459680360014359               
+0x790179A92B2752C51670CfF6a99E18354A96b558                 false                   true                    true                    false                   true                    true                    2               0               100             4             0               100             false                   1000000000000000000000000.00                    2389900675083700000000.00               10099324916300000000.00                 0.00            2400000000000000000000.00            2400000000000000000000                   1.91                    4590890230020664453827                  94734801607643333812176                
+0xECe1B561F3250397aeBB37C36b736a921529A633                 false                   true                    true                    false                   true                    true                    2               0               100             4             0               100             false                   1000000000000000000000000.00                    2986165602261100000000.00               13834397738900000000.00                 0.00            3000000000000000000000.00            3000000000000000000000                   1.82                    5449489742783178098197                  112452335773475444665528               
+0x8434C97B9880cDeFc3B09B31853C8D8D5118b74b                 false                   true                    true                    false                   true                    true                    2               0               100             5             1               80              false                   1000000000000000000000000.00                    2971452227087000000000.00               11962577382292000000.00                 0.00            2983414804469292000000.00            2983414804469292000000                   1.82                    5426124285545292572700                  111970180495305573072823               
+Staker rewards distribution calculations completed successfully
+
+Generating merkle output object...
+npm WARN ts-node@8.10.2 requires a peer of typescript@>=2.7 but none is installed. You must install peer dependencies yourself.
+npm WARN staker-rewards@1.0.0 No repository field.
+npm WARN staker-rewards@1.0.0 No license field.
+
+audited 9 packages in 0.574s
+found 0 vulnerabilities
+
+
+> staker-rewards@1.0.0 generate-merkle-root /Users/piotr/go/src/github.com/keep-network/keep-ecdsa/staker-rewards/distributor
+> ts-node generate-merkle-root.ts "--input=/Users/piotr/go/src/github.com/keep-network/keep-ecdsa/staker-rewards/distributor/staker-reward-allocation.json"
+
+
+Script finished successfully

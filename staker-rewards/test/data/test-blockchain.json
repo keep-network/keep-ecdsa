@@ -17,6 +17,15 @@
           {
             "name": "BondCreated",
             "returnValues": {
+              "referenceID": "0x63f68c710615F2c86c2d224A1101112076FfcB7E",
+              "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+              "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
+              "amount": "20000000000000000000"
+            }
+          },
+          {
+            "name": "BondCreated",
+            "returnValues": {
               "referenceID": "0xEF833365aF1c921ED60491839F2dDCbc3cCE3630",
               "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
               "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
@@ -43,6 +52,12 @@
           "availableUnbondedValue": [
             {
               "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "operatorContract": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
+              "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
+              "output": "40000000000000000000"
+            },
+            {
+              "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
               "operatorContract": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
               "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
               "output": "40000000000000000000"
@@ -163,6 +178,25 @@
             }
           ]
         }
+      },
+      {
+        "address": "0x1293a54e160D1cd7075487898d65266081A15458",
+        "methods": {
+          "getDelegationInfo": [
+            {
+              "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
+              "output": {
+                "undelegatedAt": "0"
+              }
+            },
+            {
+              "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+              "output": {
+                "undelegatedAt": "1609459100"
+              }
+            }
+          ]
+        }
       }
     ]
   },
@@ -195,7 +229,7 @@
             "name": "UnbondedValueWithdrawn",
             "returnValues": {
               "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
-              "amount": "20000000000000000000"
+              "amount": "10000000000000000000"
             }
           },
           {

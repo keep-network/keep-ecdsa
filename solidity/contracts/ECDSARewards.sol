@@ -235,8 +235,8 @@ contract ECDSARewards is Rewards {
         internal
         isAddress(_keep)
     {
-        address[] memory members = BondedECDSAKeep(toAddress(_keep))
-            .getMembers();
+        address[] memory members =
+            BondedECDSAKeep(toAddress(_keep)).getMembers();
         uint256 interval = intervalOf(_getCreationTime(_keep));
 
         uint256 memberCount = members.length;
@@ -256,9 +256,8 @@ contract ECDSARewards is Rewards {
             uint256 prevAllocated = allocatedRewards[beneficiary][interval];
             uint256 newAllocation = prevAllocated.add(addedAllocation);
             if (newAllocation > beneficiaryRewardCap) {
-                uint256 deallocatedAmount = newAllocation.sub(
-                    beneficiaryRewardCap
-                );
+                uint256 deallocatedAmount =
+                    newAllocation.sub(beneficiaryRewardCap);
                 newAllocation = beneficiaryRewardCap;
                 deallocate(deallocatedAmount);
             }
