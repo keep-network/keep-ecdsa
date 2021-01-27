@@ -40,8 +40,10 @@ let {
 } = require("./external-contracts")
 
 module.exports = async function (deployer, network) {
+  const testNetworks = ['local', 'ropsten', 'keep_dev', 'alfajores']
+
   // Set the stake initialization period to 1 second for local development and testnet.
-  if (network === "local" || network === "ropsten" || network === "keep_dev") {
+  if (testNetworks.includes(network)) {
     initializationPeriod = 1
   }
 
