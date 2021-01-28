@@ -545,7 +545,7 @@ func monitorSigningRequests(
 			)
 
 			go func(event *eth.SignatureRequestedEvent) {
-				utils.DoWithDefaultRetry(
+				err := utils.DoWithDefaultRetry(
 					clientConfig.GetSigningTimeout(),
 					func(ctx context.Context) error {
 						shouldHandle, err := eventDeduplicator.NotifySigningStarted(keepAddress, event.Digest)
@@ -612,7 +612,11 @@ func monitorSigningRequests(
 						}
 
 						return err
-					})
+					},
+				)
+				if err != nil {
+					logger.Errorf("failed to generate a signature: [%v]", err)
+				}
 			}(event)
 		},
 	)
@@ -652,7 +656,7 @@ func checkAwaitingSignature(
 			latestDigest,
 		)
 
-		utils.DoWithDefaultRetry(
+		err := utils.DoWithDefaultRetry(
 			clientConfig.GetSigningTimeout(),
 			func(ctx context.Context) error {
 				shouldHandle, err := eventDeduplicator.NotifySigningStarted(keepAddress, latestDigest)
@@ -742,6 +746,9 @@ func checkAwaitingSignature(
 				return err
 			},
 		)
+		if err != nil {
+			logger.Errorf("failed to generate a signature: [%v]", err)
+		}
 	}
 }
 
