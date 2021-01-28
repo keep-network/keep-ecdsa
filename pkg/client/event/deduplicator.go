@@ -73,12 +73,12 @@ func NewDeduplicator(
 // In case the client proceeds with the key generation, it should call
 // notifyKeyGenCompleted once the protocol completes, no matter if it failed or
 // succeeded.
-func (d *Deduplicator) NotifyKeyGenStarted(keepAddress common.Address) bool {
+func (d *Deduplicator) NotifyKeyGenStarted(keepAddress string) bool {
 	if d.keyGenKeeps.has(keepAddress) {
 		return false
 	}
 
-	if d.keepRegistry.HasSigner(keepAddress) {
+	if d.keepRegistry.HasSigner(common.HexToAddress(keepAddress)) {
 		return false
 	}
 
@@ -87,7 +87,7 @@ func (d *Deduplicator) NotifyKeyGenStarted(keepAddress common.Address) bool {
 
 // NotifyKeyGenCompleted should be called once client completed key generation
 // protocol, no matter if it succeeded or not.
-func (d *Deduplicator) NotifyKeyGenCompleted(keepAddress common.Address) {
+func (d *Deduplicator) NotifyKeyGenCompleted(keepAddress string) {
 	d.keyGenKeeps.remove(keepAddress)
 }
 
@@ -100,7 +100,7 @@ func (d *Deduplicator) NotifyKeyGenCompleted(keepAddress common.Address) {
 // notifySigningCompleted once the protocol completes, no matter if it failed or
 // succeeded.
 func (d *Deduplicator) NotifySigningStarted(
-	keepAddress common.Address,
+	keepAddress string,
 	digest [32]byte,
 ) (bool, error) {
 	if d.requestedSignatures.has(keepAddress, digest) {
@@ -114,7 +114,10 @@ func (d *Deduplicator) NotifySigningStarted(
 		10*time.Second,
 		30*time.Second,
 		func(ctx context.Context) (bool, error) {
-			return d.chain.IsAwaitingSignature(keepAddress, digest)
+			return d.chain.IsAwaitingSignature(
+				common.HexToAddress(keepAddress),
+				digest,
+			)
 		},
 	)
 	if err != nil {
@@ -136,7 +139,7 @@ func (d *Deduplicator) NotifySigningStarted(
 // generation for the given keep and digest, no matter if the protocol succeeded
 // or not.
 func (d *Deduplicator) NotifySigningCompleted(
-	keepAddress common.Address,
+	keepAddress string,
 	digest [32]byte,
 ) {
 	d.requestedSignatures.remove(keepAddress, digest)
@@ -149,12 +152,12 @@ func (d *Deduplicator) NotifySigningCompleted(
 // In case the client proceeds with closing the keep, it should call
 // notifyClosingCompleted once the protocol completes, no matter if it failed or
 // succeeded.
-func (d *Deduplicator) NotifyClosingStarted(keepAddress common.Address) bool {
+func (d *Deduplicator) NotifyClosingStarted(keepAddress string) bool {
 	if d.closingKeeps.has(keepAddress) {
 		return false
 	}
 
-	if !d.keepRegistry.HasSigner(keepAddress) {
+	if !d.keepRegistry.HasSigner(common.HexToAddress(keepAddress)) {
 		return false
 	}
 
@@ -163,7 +166,7 @@ func (d *Deduplicator) NotifyClosingStarted(keepAddress common.Address) bool {
 
 // NotifyClosingCompleted should be called once client completed closing
 // the keep, no matter if the execution succeeded or failed.
-func (d *Deduplicator) NotifyClosingCompleted(keepAddress common.Address) {
+func (d *Deduplicator) NotifyClosingCompleted(keepAddress string) {
 	d.closingKeeps.remove(keepAddress)
 }
 
@@ -174,12 +177,12 @@ func (d *Deduplicator) NotifyClosingCompleted(keepAddress common.Address) {
 // In case the client proceeds with terminating the keep, it should call
 // notifyTerminatingCompleted once the protocol completes, no matter if it
 // failed or succeeded.
-func (d *Deduplicator) NotifyTerminatingStarted(keepAddress common.Address) bool {
+func (d *Deduplicator) NotifyTerminatingStarted(keepAddress string) bool {
 	if d.terminatingKeeps.has(keepAddress) {
 		return false
 	}
 
-	if !d.keepRegistry.HasSigner(keepAddress) {
+	if !d.keepRegistry.HasSigner(common.HexToAddress(keepAddress)) {
 		return false
 	}
 
@@ -188,6 +191,6 @@ func (d *Deduplicator) NotifyTerminatingStarted(keepAddress common.Address) bool
 
 // NotifyTerminatingCompleted should be called once client completed terminating
 // the keep, no matter if the execution succeeded or failed.
-func (d *Deduplicator) NotifyTerminatingCompleted(keepAddress common.Address) {
+func (d *Deduplicator) NotifyTerminatingCompleted(keepAddress string) {
 	d.terminatingKeeps.remove(keepAddress)
 }

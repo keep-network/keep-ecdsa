@@ -3,8 +3,6 @@ package event
 import (
 	"encoding/hex"
 	"sync"
-
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // keepEventTrack is a simple event track implementation allowing to track
@@ -24,31 +22,31 @@ type keepEventTrack struct {
 	mutex sync.Mutex
 }
 
-func (ket *keepEventTrack) add(keepAddress common.Address) bool {
+func (ket *keepEventTrack) add(keepAddress string) bool {
 	ket.mutex.Lock()
 	defer ket.mutex.Unlock()
 
-	if ket.data[keepAddress.String()] == true {
+	if ket.data[keepAddress] == true {
 		return false
 	}
 
-	ket.data[keepAddress.String()] = true
+	ket.data[keepAddress] = true
 
 	return true
 }
 
-func (ket *keepEventTrack) has(keepAddress common.Address) bool {
+func (ket *keepEventTrack) has(keepAddress string) bool {
 	ket.mutex.Lock()
 	defer ket.mutex.Unlock()
 
-	return ket.data[keepAddress.String()]
+	return ket.data[keepAddress]
 }
 
-func (ket *keepEventTrack) remove(keepAddress common.Address) {
+func (ket *keepEventTrack) remove(keepAddress string) {
 	ket.mutex.Lock()
 	defer ket.mutex.Unlock()
 
-	delete(ket.data, keepAddress.String())
+	delete(ket.data, keepAddress)
 }
 
 // requestedSignaturesTrack is used to track signature calculation started after
@@ -62,15 +60,15 @@ type requestedSignaturesTrack struct {
 	mutex sync.Mutex
 }
 
-func (rst *requestedSignaturesTrack) add(keepAddress common.Address, digest [32]byte) bool {
+func (rst *requestedSignaturesTrack) add(keepAddress string, digest [32]byte) bool {
 	rst.mutex.Lock()
 	defer rst.mutex.Unlock()
 
 	digestString := hex.EncodeToString(digest[:])
 
-	keepSignaturesRequests, ok := rst.data[keepAddress.String()]
+	keepSignaturesRequests, ok := rst.data[keepAddress]
 	if !ok {
-		rst.data[keepAddress.String()] = map[string]bool{digestString: true}
+		rst.data[keepAddress] = map[string]bool{digestString: true}
 		return true
 	}
 	if keepSignaturesRequests[digestString] == true {
@@ -82,11 +80,11 @@ func (rst *requestedSignaturesTrack) add(keepAddress common.Address, digest [32]
 
 }
 
-func (rst *requestedSignaturesTrack) has(keepAddress common.Address, digest [32]byte) bool {
+func (rst *requestedSignaturesTrack) has(keepAddress string, digest [32]byte) bool {
 	rst.mutex.Lock()
 	defer rst.mutex.Unlock()
 
-	keepSignaturesRequests, ok := rst.data[keepAddress.String()]
+	keepSignaturesRequests, ok := rst.data[keepAddress]
 	if !ok {
 		return false
 	}
@@ -95,16 +93,16 @@ func (rst *requestedSignaturesTrack) has(keepAddress common.Address, digest [32]
 	return keepSignaturesRequests[digestString]
 }
 
-func (rst *requestedSignaturesTrack) remove(keepAddress common.Address, digest [32]byte) {
+func (rst *requestedSignaturesTrack) remove(keepAddress string, digest [32]byte) {
 	rst.mutex.Lock()
 	defer rst.mutex.Unlock()
 
-	if keepSignatures, ok := rst.data[keepAddress.String()]; ok {
+	if keepSignatures, ok := rst.data[keepAddress]; ok {
 		digestString := hex.EncodeToString(digest[:])
 		delete(keepSignatures, digestString)
 
 		if len(keepSignatures) == 0 {
-			delete(rst.data, keepAddress.String())
+			delete(rst.data, keepAddress)
 		}
 	}
 }

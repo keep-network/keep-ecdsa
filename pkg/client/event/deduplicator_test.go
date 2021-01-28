@@ -12,7 +12,11 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
-var keepAddress = common.HexToAddress("0x4e09cadc7037afa36603138d1c0b76fe2aa5039c")
+var keepAddress = "0x4e09cadc7037afa36603138d1c0b76fe2aa5039c"
+
+// TODO: Get rid of it as soon as we replace common.Address references in the
+// client with just a string.
+var ethereumKeepAddress = common.HexToAddress(keepAddress)
 var digest = sha256.Sum256([]byte("Do or do not. There is no try."))
 
 func TestDoGenerateKey(t *testing.T) {
@@ -48,7 +52,7 @@ func TestDoNotGenerateKeyIfAlreadyGenerated(t *testing.T) {
 	deduplicator, registry, _ := newDeduplicator(ctx)
 
 	deduplicator.NotifyKeyGenStarted(keepAddress)
-	registry.AddSigner(keepAddress)
+	registry.AddSigner(ethereumKeepAddress)
 	deduplicator.NotifyKeyGenCompleted(keepAddress)
 
 	canGenerate := deduplicator.NotifyKeyGenStarted(keepAddress)
@@ -63,17 +67,17 @@ func TestDoSign(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	chain.OpenKeep(ethereumKeepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := chain.SubmitKeepPublicKey(ethereumKeepAddress, keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = chain.RequestSignature(keepAddress, digest)
+	err = chain.RequestSignature(ethereumKeepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,17 +97,17 @@ func TestDoNotSignIfCurrentlySigning(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	chain.OpenKeep(ethereumKeepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := chain.SubmitKeepPublicKey(ethereumKeepAddress, keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = chain.RequestSignature(keepAddress, digest)
+	err = chain.RequestSignature(ethereumKeepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,12 +129,12 @@ func TestDoNotSignIfNotAwaitingASignature(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	chain.OpenKeep(ethereumKeepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := chain.SubmitKeepPublicKey(ethereumKeepAddress, keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,12 +154,12 @@ func TestDoSignOneMoreTime(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	chain.OpenKeep(ethereumKeepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := chain.SubmitKeepPublicKey(ethereumKeepAddress, keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,7 +167,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 	//
 	// request and provide a signature, notify it's been provided
 	//
-	err = chain.RequestSignature(keepAddress, digest)
+	err = chain.RequestSignature(ethereumKeepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +186,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 		RecoveryID: 1,
 	}
 
-	err = chain.SubmitSignature(keepAddress, signature)
+	err = chain.SubmitSignature(ethereumKeepAddress, signature)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -192,7 +196,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 	//
 	// request signature with the same digest one more time - should work
 	//
-	err = chain.RequestSignature(keepAddress, digest)
+	err = chain.RequestSignature(ethereumKeepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +215,7 @@ func TestDoClose(t *testing.T) {
 	defer cancel()
 
 	deduplicator, registry, _ := newDeduplicator(ctx)
-	registry.AddSigner(keepAddress)
+	registry.AddSigner(ethereumKeepAddress)
 
 	canClose := deduplicator.NotifyClosingStarted(keepAddress)
 	if !canClose {
@@ -224,7 +228,7 @@ func TestDoNotCloseIfCurrentlyClosing(t *testing.T) {
 	defer cancel()
 
 	deduplicator, registry, _ := newDeduplicator(ctx)
-	registry.AddSigner(keepAddress)
+	registry.AddSigner(ethereumKeepAddress)
 
 	deduplicator.NotifyClosingStarted(keepAddress)
 
@@ -252,7 +256,7 @@ func TestDoTerminate(t *testing.T) {
 	defer cancel()
 
 	deduplicator, registry, _ := newDeduplicator(ctx)
-	registry.AddSigner(keepAddress)
+	registry.AddSigner(ethereumKeepAddress)
 
 	canTerminate := deduplicator.NotifyTerminatingStarted(keepAddress)
 	if !canTerminate {
@@ -265,7 +269,7 @@ func TestDoNotTerminateIfCurrentlyTerminating(t *testing.T) {
 	defer cancel()
 
 	deduplicator, registry, _ := newDeduplicator(ctx)
-	registry.AddSigner(keepAddress)
+	registry.AddSigner(ethereumKeepAddress)
 
 	deduplicator.NotifyTerminatingStarted(keepAddress)
 

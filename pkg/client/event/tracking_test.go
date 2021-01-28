@@ -2,13 +2,11 @@ package event
 
 import (
 	"testing"
-
-	"github.com/ethereum/go-ethereum/common"
 )
 
 func TestKeepEventTrackAdd(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	keepAddress2 := common.BytesToAddress([]byte{2})
+	keepAddress1 := "0x3bcf58fc7b242285c692b7568406f9adf22703b0"
+	keepAddress2 := "0xc5f1d05d25b1a296d2c545ef98b296b7dc110132"
 
 	rs := &keepEventTrack{
 		data: make(map[string]bool),
@@ -24,7 +22,7 @@ func TestKeepEventTrackAdd(t *testing.T) {
 }
 
 func TestKeepEventTrackAdd_Duplicate(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
+	keepAddress := "0x3bcf58fc7b242285c692b7568406f9adf22703b0"
 
 	rs := &keepEventTrack{
 		data: make(map[string]bool),
@@ -40,7 +38,7 @@ func TestKeepEventTrackAdd_Duplicate(t *testing.T) {
 }
 
 func TestKeepEventTrackRemove(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
+	keepAddress := "0x3bcf58fc7b242285c692b7568406f9adf22703b0"
 
 	rs := &keepEventTrack{
 		data: make(map[string]bool),
@@ -58,7 +56,7 @@ func TestKeepEventTrackRemove(t *testing.T) {
 }
 
 func TestKeepEventTrackRemove_WhenEmpty(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
+	keepAddress := "0x3bcf58fc7b242285c692b7568406f9adf22703b0"
 
 	rs := &keepEventTrack{
 		data: make(map[string]bool),
@@ -72,8 +70,8 @@ func TestKeepEventTrackRemove_WhenEmpty(t *testing.T) {
 }
 
 func TestKeepEventTrackHas(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	keepAddress2 := common.BytesToAddress([]byte{2})
+	keepAddress1 := "0x3bcf58fc7b242285c692b7568406f9adf22703b0"
+	keepAddress2 := "0xc5f1d05d25b1a296d2c545ef98b296b7dc110132"
 
 	rs := &keepEventTrack{
 		data: make(map[string]bool),
@@ -95,7 +93,7 @@ func TestKeepEventTrackHas(t *testing.T) {
 }
 
 func TestRequestedSignaturesTrackAdd_SameKeep(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
+	keepAddress := "0xc5f1d05d25b1a296d2c545ef98b296b7dc110132"
 
 	digest1 := [32]byte{9}
 	digest2 := [32]byte{8}
@@ -119,8 +117,8 @@ func TestRequestedSignaturesTrackAdd_SameKeep(t *testing.T) {
 }
 
 func TestRequestedSignaturesTrackAdd_DifferentKeeps(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	keepAddress2 := common.BytesToAddress([]byte{2})
+	keepAddress1 := "0x3bcf58fc7b242285c692b7568406f9adf22703b0"
+	keepAddress2 := "0xc5f1d05d25b1a296d2c545ef98b296b7dc110132"
 
 	digest1 := [32]byte{9}
 	digest2 := [32]byte{8}
@@ -145,7 +143,7 @@ func TestRequestedSignaturesTrackAdd_DifferentKeeps(t *testing.T) {
 }
 
 func TestRequestedSignaturesTrackAdd_Duplicate(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
+	keepAddress := "0x3bcf58fc7b242285c692b7568406f9adf22703b0"
 	digest := [32]byte{9}
 
 	rs := &requestedSignaturesTrack{
@@ -164,8 +162,8 @@ func TestRequestedSignaturesTrackAdd_Duplicate(t *testing.T) {
 }
 
 func TestRequestedSignaturesTrackRemove(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	keepAddress2 := common.BytesToAddress([]byte{2})
+	keepAddress1 := "0x3bcf58fc7b242285c692b7568406f9adf22703b0"
+	keepAddress2 := "0xc5f1d05d25b1a296d2c545ef98b296b7dc110132"
 
 	digest := [32]byte{9}
 
@@ -205,7 +203,7 @@ func TestRequestedSignaturesTrackRemove(t *testing.T) {
 }
 
 func TestRequestedSignaturesTrackRemove_WhenEmpty(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
+	keepAddress := "0xc5f1d05d25b1a296d2c545ef98b296b7dc110132"
 	digest := [32]byte{9}
 
 	rs := &requestedSignaturesTrack{
@@ -223,8 +221,8 @@ func TestRequestedSignaturesTrackRemove_WhenEmpty(t *testing.T) {
 }
 
 func TestRequestedSignaturesTrackHas(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	keepAddress2 := common.BytesToAddress([]byte{2})
+	keepAddress1 := "0x3bcf58fc7b242285c692b7568406f9adf22703b0"
+	keepAddress2 := "0xc5f1d05d25b1a296d2c545ef98b296b7dc110132"
 
 	digest1 := [32]byte{9}
 	digest2 := [32]byte{10}
