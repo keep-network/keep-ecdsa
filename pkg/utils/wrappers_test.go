@@ -181,3 +181,45 @@ func TestConfirmWithTimeoutFailure(t *testing.T) {
 		)
 	}
 }
+
+func TestCalculateBackoff(t *testing.T) {
+	backoffInitial := 120 * time.Second
+	backoffMax := 300 * time.Second
+
+	expectedMin := 240 * time.Second // 2 * backoffInitial
+	expectedMax := 265 * time.Second // 2 * backoffInitial * 110% + 1
+
+	for i := 0; i < 100; i++ {
+		backoff := calculateBackoff(backoffInitial, backoffMax)
+
+		if backoff < expectedMin {
+			t.Errorf(
+				"backoff [%v] shorter than the expected minimum [%v]",
+				backoff,
+				expectedMin,
+			)
+		}
+
+		if backoff > expectedMax {
+			t.Errorf(
+				"backoff [%v] longer than the expected maximum [%v]",
+				backoff,
+				expectedMax,
+			)
+		}
+	}
+}
+
+func TestCalculateBackoffMax(t *testing.T) {
+	backoffInitial := 220 * time.Second
+	backoffMax := 300 * time.Second
+
+	backoff := calculateBackoff(backoffInitial, backoffMax)
+	if backoff != backoffMax {
+		t.Errorf(
+			"expected max backoff of [%v]; has [%v]",
+			backoffMax,
+			backoff,
+		)
+	}
+}
