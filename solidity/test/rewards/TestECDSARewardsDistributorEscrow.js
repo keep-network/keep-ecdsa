@@ -1,7 +1,7 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
-const {expectRevert} = require("@openzeppelin/test-helpers")
-const {expect} = require("chai")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
+const { expectRevert } = require("@openzeppelin/test-helpers")
+const { expect } = require("chai")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const TokenStakingStub = contract.fromArtifact("TokenStakingStub")
@@ -26,8 +26,8 @@ describe("ECDSARewardsDistributorEscrow", () => {
   let escrow
 
   before(async () => {
-    token = await KeepToken.new({from: owner})
-    tokenStaking = await TokenStakingStub.new({from: owner})
+    token = await KeepToken.new({ from: owner })
+    tokenStaking = await TokenStakingStub.new({ from: owner })
     rewardsDistributor = await ECDSARewardsDistributor.new(
       token.address,
       tokenStaking.address,
@@ -38,10 +38,10 @@ describe("ECDSARewardsDistributorEscrow", () => {
     escrow = await ECDSARewardsDistributorEscrow.new(
       token.address,
       rewardsDistributor.address,
-      {from: owner}
+      { from: owner }
     )
 
-    await rewardsDistributor.transferOwnership(escrow.address, {from: owner})
+    await rewardsDistributor.transferOwnership(escrow.address, { from: owner })
   })
 
   beforeEach(async () => {
@@ -54,7 +54,9 @@ describe("ECDSARewardsDistributorEscrow", () => {
 
   describe("funding", async () => {
     it("can be done from phased escrow", async () => {
-      const fundingEscrow = await PhasedEscrow.new(token.address, {from: owner})
+      const fundingEscrow = await PhasedEscrow.new(token.address, {
+        from: owner,
+      })
       await token.approveAndCall(fundingEscrow.address, totalRewards, "0x0", {
         from: owner,
       })
@@ -62,12 +64,14 @@ describe("ECDSARewardsDistributorEscrow", () => {
       const beneficiary = await ECDSARewardsEscrowBeneficiary.new(
         token.address,
         escrow.address,
-        {from: owner}
+        { from: owner }
       )
-      await beneficiary.transferOwnership(fundingEscrow.address, {from: owner})
-      await fundingEscrow.setBeneficiary(beneficiary.address, {from: owner})
+      await beneficiary.transferOwnership(fundingEscrow.address, {
+        from: owner,
+      })
+      await fundingEscrow.setBeneficiary(beneficiary.address, { from: owner })
 
-      await fundingEscrow.withdraw(totalRewards, {from: owner})
+      await fundingEscrow.withdraw(totalRewards, { from: owner })
       expect(await token.balanceOf(escrow.address)).to.eq.BN(totalRewards)
     })
   })
@@ -91,18 +95,18 @@ describe("ECDSARewardsDistributorEscrow", () => {
 
     it("can not be called by non-owner", async () => {
       await expectRevert(
-        escrow.allocateInterval(merkleRoot, amount, {from: thirdParty}),
+        escrow.allocateInterval(merkleRoot, amount, { from: thirdParty }),
         "Ownable: caller is not the owner"
       )
     })
 
     it("can be called by owner", async () => {
-      await escrow.allocateInterval(merkleRoot, amount, {from: owner})
+      await escrow.allocateInterval(merkleRoot, amount, { from: owner })
       // ok, no reverts
     })
 
     it("allocates reward distribution", async () => {
-      await escrow.allocateInterval(merkleRoot, amount, {from: owner})
+      await escrow.allocateInterval(merkleRoot, amount, { from: owner })
 
       const eventList = await rewardsDistributor.getPastEvents(
         "RewardsAllocated",
@@ -123,8 +127,8 @@ describe("ECDSARewardsDistributorEscrow", () => {
         "0xa7418520411d369b511eabb10ffb214c72b521ca0f6bd021fa83d9c47e65227e"
       const amount2 = web3.utils.toBN(1337)
 
-      await escrow.allocateInterval(merkleRoot, amount, {from: owner})
-      await escrow.allocateInterval(merkleRoot2, amount2, {from: owner})
+      await escrow.allocateInterval(merkleRoot, amount, { from: owner })
+      await escrow.allocateInterval(merkleRoot2, amount2, { from: owner })
 
       const eventList = await rewardsDistributor.getPastEvents(
         "RewardsAllocated",

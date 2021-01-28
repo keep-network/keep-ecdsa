@@ -1,4 +1,4 @@
-const {contract, web3} = require("@openzeppelin/test-environment")
+const { contract, web3 } = require("@openzeppelin/test-environment")
 
 const BondedECDSAKeepFactory = contract.fromArtifact("BondedECDSAKeepFactory")
 const BondedECDSAKeep = contract.fromArtifact("BondedECDSAKeep")
@@ -53,7 +53,7 @@ async function requestSignature(keep, keepOwner, digest) {
 
   console.log("signing digest:", digest)
 
-  await keep.sign(digest, {from: keepOwner}).catch((err) => {
+  await keep.sign(digest, { from: keepOwner }).catch((err) => {
     throw new Error(`failed signing: [${err}]`)
   })
 

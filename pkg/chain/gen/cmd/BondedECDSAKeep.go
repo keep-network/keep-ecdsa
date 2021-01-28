@@ -52,10 +52,66 @@ func init() {
 		Usage:       `Provides access to the BondedECDSAKeep contract.`,
 		Description: bondedECDSAKeepDescription,
 		Subcommands: []cli.Command{{
-			Name:      "member-stake",
-			Usage:     "Calls the constant method memberStake on the BondedECDSAKeep contract.",
+			Name:      "digest",
+			Usage:     "Calls the constant method digest on the BondedECDSAKeep contract.",
 			ArgsUsage: "",
-			Action:    becdsakMemberStake,
+			Action:    becdsakDigest,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "honest-threshold",
+			Usage:     "Calls the constant method honestThreshold on the BondedECDSAKeep contract.",
+			ArgsUsage: "",
+			Action:    becdsakHonestThreshold,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-owner",
+			Usage:     "Calls the constant method getOwner on the BondedECDSAKeep contract.",
+			ArgsUsage: "",
+			Action:    becdsakGetOwner,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "members",
+			Usage:     "Calls the constant method members on the BondedECDSAKeep contract.",
+			ArgsUsage: "[arg0] ",
+			Action:    becdsakMembers,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "is-active",
+			Usage:     "Calls the constant method isActive on the BondedECDSAKeep contract.",
+			ArgsUsage: "",
+			Action:    becdsakIsActive,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "public-key",
+			Usage:     "Calls the constant method publicKey on the BondedECDSAKeep contract.",
+			ArgsUsage: "",
+			Action:    becdsakPublicKey,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-opened-timestamp",
+			Usage:     "Calls the constant method getOpenedTimestamp on the BondedECDSAKeep contract.",
+			ArgsUsage: "",
+			Action:    becdsakGetOpenedTimestamp,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "is-terminated",
+			Usage:     "Calls the constant method isTerminated on the BondedECDSAKeep contract.",
+			ArgsUsage: "",
+			Action:    becdsakIsTerminated,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "owner",
+			Usage:     "Calls the constant method owner on the BondedECDSAKeep contract.",
+			ArgsUsage: "",
+			Action:    becdsakOwner,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -66,17 +122,17 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
+			Name:      "get-public-key",
+			Usage:     "Calls the constant method getPublicKey on the BondedECDSAKeep contract.",
+			ArgsUsage: "",
+			Action:    becdsakGetPublicKey,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "is-closed",
 			Usage:     "Calls the constant method isClosed on the BondedECDSAKeep contract.",
 			ArgsUsage: "",
 			Action:    becdsakIsClosed,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "public-key",
-			Usage:     "Calls the constant method publicKey on the BondedECDSAKeep contract.",
-			ArgsUsage: "",
-			Action:    becdsakPublicKey,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -94,82 +150,12 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-opened-timestamp",
-			Usage:     "Calls the constant method getOpenedTimestamp on the BondedECDSAKeep contract.",
+			Name:      "member-stake",
+			Usage:     "Calls the constant method memberStake on the BondedECDSAKeep contract.",
 			ArgsUsage: "",
-			Action:    becdsakGetOpenedTimestamp,
+			Action:    becdsakMemberStake,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "members",
-			Usage:     "Calls the constant method members on the BondedECDSAKeep contract.",
-			ArgsUsage: "[arg0] ",
-			Action:    becdsakMembers,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-owner",
-			Usage:     "Calls the constant method getOwner on the BondedECDSAKeep contract.",
-			ArgsUsage: "",
-			Action:    becdsakGetOwner,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "owner",
-			Usage:     "Calls the constant method owner on the BondedECDSAKeep contract.",
-			ArgsUsage: "",
-			Action:    becdsakOwner,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "digest",
-			Usage:     "Calls the constant method digest on the BondedECDSAKeep contract.",
-			ArgsUsage: "",
-			Action:    becdsakDigest,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "honest-threshold",
-			Usage:     "Calls the constant method honestThreshold on the BondedECDSAKeep contract.",
-			ArgsUsage: "",
-			Action:    becdsakHonestThreshold,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-active",
-			Usage:     "Calls the constant method isActive on the BondedECDSAKeep contract.",
-			ArgsUsage: "",
-			Action:    becdsakIsActive,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-terminated",
-			Usage:     "Calls the constant method isTerminated on the BondedECDSAKeep contract.",
-			ArgsUsage: "",
-			Action:    becdsakIsTerminated,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-public-key",
-			Usage:     "Calls the constant method getPublicKey on the BondedECDSAKeep contract.",
-			ArgsUsage: "",
-			Action:    becdsakGetPublicKey,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "seize-signer-bonds",
-			Usage:     "Calls the method seizeSignerBonds on the BondedECDSAKeep contract.",
-			ArgsUsage: "",
-			Action:    becdsakSeizeSignerBonds,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "withdraw",
-			Usage:     "Calls the method withdraw on the BondedECDSAKeep contract.",
-			ArgsUsage: "[_member] ",
-			Action:    becdsakWithdraw,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "distribute-e-t-h-reward",
 			Usage:     "Calls the payable method distributeETHReward on the BondedECDSAKeep contract.",
@@ -178,10 +164,10 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.PayableFlags,
 		}, {
-			Name:      "submit-public-key",
-			Usage:     "Calls the method submitPublicKey on the BondedECDSAKeep contract.",
-			ArgsUsage: "[_publicKey] ",
-			Action:    becdsakSubmitPublicKey,
+			Name:      "withdraw",
+			Usage:     "Calls the method withdraw on the BondedECDSAKeep contract.",
+			ArgsUsage: "[_member] ",
+			Action:    becdsakWithdraw,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -205,19 +191,201 @@ func init() {
 			Action:    becdsakReturnPartialSignerBonds,
 			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.PayableFlags,
+		}, {
+			Name:      "seize-signer-bonds",
+			Usage:     "Calls the method seizeSignerBonds on the BondedECDSAKeep contract.",
+			ArgsUsage: "",
+			Action:    becdsakSeizeSignerBonds,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "submit-public-key",
+			Usage:     "Calls the method submitPublicKey on the BondedECDSAKeep contract.",
+			ArgsUsage: "[_publicKey] ",
+			Action:    becdsakSubmitPublicKey,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
 		}},
 	})
 }
 
 /// ------------------- Const methods -------------------
 
-func becdsakMemberStake(c *cli.Context) error {
+func becdsakDigest(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeep(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.MemberStakeAtBlock(
+	result, err := contract.DigestAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakHonestThreshold(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeep(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.HonestThresholdAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakGetOwner(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeep(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetOwnerAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakMembers(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeep(c)
+	if err != nil {
+		return err
+	}
+	arg0, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.MembersAtBlock(
+		arg0,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakIsActive(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeep(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.IsActiveAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakPublicKey(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeep(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.PublicKeyAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakGetOpenedTimestamp(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeep(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetOpenedTimestampAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakIsTerminated(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeep(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.IsTerminatedAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakOwner(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeep(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.OwnerAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -259,13 +427,13 @@ func becdsakGetMemberETHBalance(c *cli.Context) error {
 	return nil
 }
 
-func becdsakIsClosed(c *cli.Context) error {
+func becdsakGetPublicKey(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeep(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.IsClosedAtBlock(
+	result, err := contract.GetPublicKeyAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -279,13 +447,13 @@ func becdsakIsClosed(c *cli.Context) error {
 	return nil
 }
 
-func becdsakPublicKey(c *cli.Context) error {
+func becdsakIsClosed(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeep(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.PublicKeyAtBlock(
+	result, err := contract.IsClosedAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -339,181 +507,13 @@ func becdsakGetMembers(c *cli.Context) error {
 	return nil
 }
 
-func becdsakGetOpenedTimestamp(c *cli.Context) error {
+func becdsakMemberStake(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeep(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.GetOpenedTimestampAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakMembers(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeep(c)
-	if err != nil {
-		return err
-	}
-	arg0, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg0, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.MembersAtBlock(
-		arg0,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakGetOwner(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeep(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetOwnerAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakOwner(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeep(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.OwnerAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakDigest(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeep(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.DigestAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakHonestThreshold(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeep(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.HonestThresholdAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakIsActive(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeep(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.IsActiveAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakIsTerminated(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeep(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.IsTerminatedAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakGetPublicKey(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeep(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetPublicKeyAtBlock(
+	result, err := contract.MemberStakeAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -529,7 +529,7 @@ func becdsakGetPublicKey(c *cli.Context) error {
 
 /// ------------------- Non-const methods -------------------
 
-func becdsakSeizeSignerBonds(c *cli.Context) error {
+func becdsakDistributeETHReward(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeep(c)
 	if err != nil {
 		return err
@@ -541,7 +541,8 @@ func becdsakSeizeSignerBonds(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.SeizeSignerBonds()
+		transaction, err = contract.DistributeETHReward(
+			cmd.ValueFlagValue.Uint)
 		if err != nil {
 			return err
 		}
@@ -549,8 +550,8 @@ func becdsakSeizeSignerBonds(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallSeizeSignerBonds(
-			cmd.BlockFlagValue.Uint,
+		err = contract.CallDistributeETHReward(
+			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
 			return err
@@ -594,84 +595,6 @@ func becdsakWithdraw(c *cli.Context) error {
 		// Do a call.
 		err = contract.CallWithdraw(
 			_member,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func becdsakDistributeETHReward(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeep(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.DistributeETHReward(
-			cmd.ValueFlagValue.Uint)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallDistributeETHReward(
-			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func becdsakSubmitPublicKey(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeep(c)
-	if err != nil {
-		return err
-	}
-
-	_publicKey, err := hexutil.Decode(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _publicKey, a bytes, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.SubmitPublicKey(
-			_publicKey,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallSubmitPublicKey(
-			_publicKey,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -794,6 +717,83 @@ func becdsakReturnPartialSignerBonds(c *cli.Context) error {
 		// Do a call.
 		err = contract.CallReturnPartialSignerBonds(
 			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func becdsakSeizeSignerBonds(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeep(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SeizeSignerBonds()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallSeizeSignerBonds(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func becdsakSubmitPublicKey(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeep(c)
+	if err != nil {
+		return err
+	}
+
+	_publicKey, err := hexutil.Decode(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _publicKey, a bytes, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SubmitPublicKey(
+			_publicKey,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallSubmitPublicKey(
+			_publicKey,
+			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
 			return err

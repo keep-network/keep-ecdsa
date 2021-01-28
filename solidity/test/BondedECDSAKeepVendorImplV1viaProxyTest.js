@@ -1,5 +1,5 @@
-const {accounts, contract} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { accounts, contract } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 
 const {
   BN,
@@ -78,7 +78,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
 
   describe("upgradeFactory", async () => {
     it("sets timestamp", async () => {
-      await keepVendor.upgradeFactory(address2, {from: upgrader})
+      await keepVendor.upgradeFactory(address2, { from: upgrader })
 
       const expectedTimestamp = await time.latest()
 
@@ -88,7 +88,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     })
 
     it("sets new factory address", async () => {
-      await keepVendor.upgradeFactory(address2, {from: upgrader})
+      await keepVendor.upgradeFactory(address2, { from: upgrader })
 
       assert.equal(
         await keepVendor.getNewKeepFactory(),
@@ -98,17 +98,17 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     })
 
     it("allows new value overwrite", async () => {
-      await keepVendor.upgradeFactory(address2, {from: upgrader})
+      await keepVendor.upgradeFactory(address2, { from: upgrader })
 
-      await keepVendor.upgradeFactory(address3, {from: upgrader})
+      await keepVendor.upgradeFactory(address3, { from: upgrader })
 
       assert.equal(await keepVendor.getNewKeepFactory(), address3)
     })
 
     it("allows change back to current factory", async () => {
-      await keepVendor.upgradeFactory(address2, {from: upgrader})
+      await keepVendor.upgradeFactory(address2, { from: upgrader })
 
-      await keepVendor.upgradeFactory(address1, {from: upgrader})
+      await keepVendor.upgradeFactory(address1, { from: upgrader })
 
       assert.equal(await keepVendor.getNewKeepFactory(), address1)
     })
@@ -128,7 +128,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
 
     it("does not register factory with zero address", async () => {
       await expectRevert(
-        keepVendor.upgradeFactory(address0, {from: upgrader}),
+        keepVendor.upgradeFactory(address0, { from: upgrader }),
         "Incorrect factory address"
       )
     })
@@ -137,34 +137,34 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
       const keepVendor = await newVendor(registry.address, address2)
 
       await expectRevert(
-        keepVendor.upgradeFactory(address2, {from: upgrader}),
+        keepVendor.upgradeFactory(address2, { from: upgrader }),
         "Factory already registered"
       )
     })
 
     it("does not register factory not approved in registry", async () => {
       await expectRevert(
-        keepVendor.upgradeFactory(address4, {from: upgrader}),
+        keepVendor.upgradeFactory(address4, { from: upgrader }),
         "Factory contract is not approved"
       )
     })
 
     it("does not update current factory address", async () => {
-      await keepVendor.upgradeFactory(address2, {from: upgrader})
+      await keepVendor.upgradeFactory(address2, { from: upgrader })
 
       assert.equal(await keepVendor.getKeepFactory(), address1)
     })
 
     it("cannot be called by proxy admin", async () => {
       await expectRevert(
-        keepVendor.completeFactoryUpgrade({from: proxyAdmin}),
+        keepVendor.completeFactoryUpgrade({ from: proxyAdmin }),
         "Upgrade not initiated"
       )
     })
 
     it("cannot be called by implementation owner", async () => {
       await expectRevert(
-        keepVendor.completeFactoryUpgrade({from: implOwner}),
+        keepVendor.completeFactoryUpgrade({ from: implOwner }),
         "Upgrade not initiated"
       )
     })
@@ -186,7 +186,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     })
 
     it("reverts when timer not elapsed", async () => {
-      await keepVendor.upgradeFactory(address2, {from: upgrader})
+      await keepVendor.upgradeFactory(address2, { from: upgrader })
 
       await time.increase((await keepVendor.factoryUpgradeTimeDelay()).subn(2))
 
@@ -197,7 +197,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     })
 
     it("clears new factory", async () => {
-      await keepVendor.upgradeFactory(address2, {from: upgrader})
+      await keepVendor.upgradeFactory(address2, { from: upgrader })
       await time.increase(await keepVendor.factoryUpgradeTimeDelay())
 
       await keepVendor.completeFactoryUpgrade()
@@ -206,7 +206,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     })
 
     it("clears timestamp", async () => {
-      await keepVendor.upgradeFactory(address2, {from: upgrader})
+      await keepVendor.upgradeFactory(address2, { from: upgrader })
       await time.increase(await keepVendor.factoryUpgradeTimeDelay())
 
       await keepVendor.completeFactoryUpgrade()
@@ -217,7 +217,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     })
 
     it("sets factory address", async () => {
-      await keepVendor.upgradeFactory(address2, {from: upgrader})
+      await keepVendor.upgradeFactory(address2, { from: upgrader })
       await time.increase(await keepVendor.factoryUpgradeTimeDelay())
 
       await keepVendor.completeFactoryUpgrade()
@@ -226,7 +226,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     })
 
     it("emits an event", async () => {
-      await keepVendor.upgradeFactory(address2, {from: upgrader})
+      await keepVendor.upgradeFactory(address2, { from: upgrader })
       await time.increase(await keepVendor.factoryUpgradeTimeDelay())
 
       const receipt = await keepVendor.completeFactoryUpgrade()
@@ -239,7 +239,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
 
   async function deployVendorProxy(registryAddress, factoryAddress) {
     const bondedECDSAKeepVendorImplV1Stub = await BondedECDSAKeepVendorImplV1Stub.new(
-      {from: implOwner}
+      { from: implOwner }
     )
 
     const initializeCallData = bondedECDSAKeepVendorImplV1Stub.contract.methods
@@ -249,7 +249,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     const bondedECDSAKeepVendorProxy = await BondedECDSAKeepVendor.new(
       bondedECDSAKeepVendorImplV1Stub.address,
       initializeCallData,
-      {from: proxyAdmin}
+      { from: proxyAdmin }
     )
     const keepVendor = await BondedECDSAKeepVendorImplV1Stub.at(
       bondedECDSAKeepVendorProxy.address

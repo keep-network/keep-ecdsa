@@ -6,7 +6,7 @@ const BondedECDSAKeepFactory = artifacts.require("./BondedECDSAKeepFactory.sol")
 const BondedECDSAKeep = artifacts.require("./BondedECDSAKeep.sol")
 
 const RandomBeaconService = artifacts.require("IRandomBeacon")
-const {RandomBeaconAddress} = require("../migrations/external-contracts")
+const { RandomBeaconAddress } = require("../migrations/external-contracts")
 
 // This test validates integration between on-chain contracts and off-chain client.
 // It also validates integration with the random beacon by verifying update of
@@ -128,7 +128,7 @@ module.exports = async function () {
     const signatureSubmittedEvent = watchSignatureSubmitted(keep)
 
     setTimeout(async () => {
-      await keep.sign(digest, {from: keepOwner})
+      await keep.sign(digest, { from: keepOwner })
     }, 2000)
 
     const signature = (await signatureSubmittedEvent).returnValues

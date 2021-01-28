@@ -1,9 +1,9 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 
-const {mineBlocks} = require("./helpers/mineBlocks")
+const { mineBlocks } = require("./helpers/mineBlocks")
 
 const truffleAssert = require("truffle-assertions")
 
@@ -164,7 +164,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await setUnbondedValue(members[0], minimumBondableValue.sub(new BN(1)))
 
       await expectRevert(
-        keepFactory.registerMemberCandidate(application, {from: members[0]}),
+        keepFactory.registerMemberCandidate(application, { from: members[0] }),
         "Operator not eligible"
       )
     })
@@ -185,12 +185,12 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await bonding.authorizeSortitionPoolContract(
         members[0],
         signerPool1Address,
-        {from: authorizers[0]}
+        { from: authorizers[0] }
       )
       await bonding.authorizeSortitionPoolContract(
         members[1],
         signerPool2Address,
-        {from: authorizers[1]}
+        { from: authorizers[1] }
       )
 
       await keepFactory.registerMemberCandidate(application1, {
@@ -496,7 +496,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       const valueToWithdraw = currentValue.sub(minimumBondableValue).addn(1)
 
-      bonding.withdraw(valueToWithdraw, members[0], {from: members[0]})
+      bonding.withdraw(valueToWithdraw, members[0], { from: members[0] })
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
         "unexpected status of the operator after bonding value change"
@@ -511,7 +511,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     })
 
     it("does not update operator if bonding value increased insignificantly above minimum", async () => {
-      bonding.deposit(members[0], {value: new BN(1)})
+      bonding.deposit(members[0], { value: new BN(1) })
       assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application),
         "unexpected status of the operator after bonding value change"
@@ -524,7 +524,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     })
 
     it("updates operator if bonding value increased significantly above minimum", async () => {
-      bonding.deposit(members[0], {value: minimumBondableValue.muln(2)})
+      bonding.deposit(members[0], { value: minimumBondableValue.muln(2) })
 
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
@@ -540,7 +540,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     })
 
     it("updates operator if bonding value decreased insignificantly above minimum", async () => {
-      bonding.withdraw(new BN(1), members[0], {from: members[0]})
+      bonding.withdraw(new BN(1), members[0], { from: members[0] })
 
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
@@ -560,7 +560,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       const valueToWithdraw = currentValue.sub(minimumBondableValue).subn(1)
 
-      bonding.withdraw(valueToWithdraw, members[0], {from: members[0]})
+      bonding.withdraw(valueToWithdraw, members[0], { from: members[0] })
 
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
@@ -759,7 +759,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepOwner,
         requestedBond,
         stakeLockDuration,
-        {from: application, value: feeEstimate}
+        { from: application, value: feeEstimate }
       )
 
       const eventList = await keepFactory.getPastEvents(
@@ -801,7 +801,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepOwner,
         requestedBond,
         stakeLockDuration,
-        {from: application, value: feeEstimate}
+        { from: application, value: feeEstimate }
       )
 
       const eventList = await keepFactory.getPastEvents(
@@ -1090,7 +1090,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepOwner,
         bond,
         stakeLockDuration,
-        {from: application, value: feeEstimate}
+        { from: application, value: feeEstimate }
       )
 
       await keepFactory.openKeep(
@@ -1130,7 +1130,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepOwner,
         bond,
         stakeLockDuration,
-        {from: application, value: feeEstimate}
+        { from: application, value: feeEstimate }
       )
 
       await keepFactory.openKeep(
@@ -1365,7 +1365,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await randomBeacon.setEntry(expectedNewEntry)
 
       const reseedFee = await keepFactory.newGroupSelectionSeedFee()
-      await keepFactory.requestNewGroupSelectionSeed({value: reseedFee})
+      await keepFactory.requestNewGroupSelectionSeed({ value: reseedFee })
 
       assert.equal(
         await randomBeacon.requestCount.call(),
@@ -1390,7 +1390,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         value: poolValue,
       })
 
-      await keepFactory.requestNewGroupSelectionSeed({value: 0})
+      await keepFactory.requestNewGroupSelectionSeed({ value: 0 })
 
       assert.equal(
         await randomBeacon.requestCount.call(),
@@ -1414,7 +1414,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         value: poolValue,
       })
 
-      await keepFactory.requestNewGroupSelectionSeed({value: 0})
+      await keepFactory.requestNewGroupSelectionSeed({ value: 0 })
 
       const expectedPoolValue = poolValue.sub(newEntryFee)
       expect(await keepFactory.reseedPool()).to.eq.BN(
@@ -1434,7 +1434,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       })
 
       const valueSent = new BN(10)
-      await keepFactory.requestNewGroupSelectionSeed({value: 10})
+      await keepFactory.requestNewGroupSelectionSeed({ value: 10 })
 
       const expectedPoolValue = poolValue.sub(newEntryFee).add(valueSent)
       expect(await keepFactory.reseedPool()).to.eq.BN(
@@ -1452,7 +1452,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       })
 
       await expectRevert(
-        keepFactory.requestNewGroupSelectionSeed({value: 1}),
+        keepFactory.requestNewGroupSelectionSeed({ value: 1 }),
         "Not enough funds to trigger reseed"
       )
     })
@@ -1462,7 +1462,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       const reseedFee = await keepFactory.newGroupSelectionSeedFee()
       await expectRevert(
-        keepFactory.requestNewGroupSelectionSeed({value: reseedFee}),
+        keepFactory.requestNewGroupSelectionSeed({ value: reseedFee }),
         "request relay entry failed"
       )
     })
@@ -1670,21 +1670,21 @@ describe("FullyBackedECDSAKeepFactory", function () {
     })
 
     it("sets the minimum bond value for the application", async () => {
-      await keepFactory.setMinimumBondableValue(12, 3, 3, {from: application})
+      await keepFactory.setMinimumBondableValue(12, 3, 3, { from: application })
       const poolAddress = await keepFactory.getSortitionPool(application)
       const pool = await FullyBackedSortitionPool.at(poolAddress)
       expect(await pool.getMinimumBondableValue()).to.eq.BN(4)
     })
 
     it("rounds up member bonds", async () => {
-      await keepFactory.setMinimumBondableValue(10, 3, 3, {from: application})
+      await keepFactory.setMinimumBondableValue(10, 3, 3, { from: application })
       const poolAddress = await keepFactory.getSortitionPool(application)
       const pool = await FullyBackedSortitionPool.at(poolAddress)
       expect(await pool.getMinimumBondableValue()).to.eq.BN(4)
     })
 
     it("rounds up members bonds when calculated bond per member equals zero", async () => {
-      await keepFactory.setMinimumBondableValue(2, 3, 3, {from: application})
+      await keepFactory.setMinimumBondableValue(2, 3, 3, { from: application })
       const poolAddress = await keepFactory.getSortitionPool(application)
       const pool = await FullyBackedSortitionPool.at(poolAddress)
       expect(await pool.getMinimumBondableValue()).to.eq.BN(1)
@@ -1796,7 +1796,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       keepOwner,
       bond,
       stakeLockDuration,
-      {from: application, value: feeEstimate}
+      { from: application, value: feeEstimate }
     )
 
     await keepFactory.openKeep(
