@@ -122,6 +122,9 @@ func calculateBackoff(
 
 	backoff *= 2
 
+	// #nosec G404
+	// we are fine with not using cryptographically secure random integer,
+	// it is just exponential backoff jitter
 	r := rand.Int63n(backoff.Nanoseconds()/10 + 1)
 	jitter := time.Duration(r) * time.Nanosecond
 	backoff += jitter
