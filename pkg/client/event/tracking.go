@@ -7,34 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// keyGenKeepTrack is used to track key generation after keep opened event is
-// received. It is used to ensure that the process execution is not duplicated,
-// e.g. when the client receives the same event multiple times. When event is
-// received, it should be noted in this struct. When the signer generation
-// process completes (no matter if it succeeded or failed), it should be removed
-// from this struct.
-type keyGenKeepTrack struct {
-	*keepEventTrack
-}
-
-// closeKeepTrack is used to track keep close events. It is used to ensure
-// that the process execution is not duplicated, e.g. when the client receives
-// the same event multiple times. When event is received, it should be noted
-// in this struct. When the signer generation process completes (no matter
-// if it succeeded or failed), it should be removed from this struct.
-type closeKeepTrack struct {
-	*keepEventTrack
-}
-
-// terminateKeepTrack is used to track keep terminate events. It is used to
-// ensure that the process execution is not duplicated, e.g. when the client
-// receives the same event multiple times. When event is received, it should be
-// noted in this struct. When the signer generation process completes (no matter
-// if it succeeded or failed), it should be removed from this struct.
-type terminateKeepTrack struct {
-	*keepEventTrack
-}
-
 // keepEventTrack is a simple event track implementation allowing to track
 // events that are happening once in the entire keep history, for example:
 // - keep opened, generating signer
