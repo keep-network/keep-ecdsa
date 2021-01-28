@@ -1,7 +1,6 @@
 package event
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -12,8 +11,7 @@ func TestKeepEventTrackAdd(t *testing.T) {
 	keepAddress2 := common.BytesToAddress([]byte{2})
 
 	rs := &keepEventTrack{
-		data:  make(map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]bool),
 	}
 
 	if !rs.add(keepAddress1) {
@@ -29,8 +27,7 @@ func TestKeepEventTrackAdd_Duplicate(t *testing.T) {
 	keepAddress := common.BytesToAddress([]byte{1})
 
 	rs := &keepEventTrack{
-		data:  make(map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]bool),
 	}
 
 	if !rs.add(keepAddress) {
@@ -46,8 +43,7 @@ func TestKeepEventTrackRemove(t *testing.T) {
 	keepAddress := common.BytesToAddress([]byte{1})
 
 	rs := &keepEventTrack{
-		data:  make(map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]bool),
 	}
 
 	if !rs.add(keepAddress) {
@@ -65,8 +61,7 @@ func TestKeepEventTrackRemove_WhenEmpty(t *testing.T) {
 	keepAddress := common.BytesToAddress([]byte{1})
 
 	rs := &keepEventTrack{
-		data:  make(map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]bool),
 	}
 
 	rs.remove(keepAddress)
@@ -81,8 +76,7 @@ func TestKeepEventTrackHas(t *testing.T) {
 	keepAddress2 := common.BytesToAddress([]byte{2})
 
 	rs := &keepEventTrack{
-		data:  make(map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]bool),
 	}
 
 	rs.add(keepAddress1)
@@ -107,8 +101,7 @@ func TestRequestedSignaturesTrackAdd_SameKeep(t *testing.T) {
 	digest2 := [32]byte{8}
 
 	rs := &requestedSignaturesTrack{
-		data:  make(map[string]map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]map[string]bool),
 	}
 
 	if !rs.add(keepAddress, digest1) {
@@ -133,8 +126,7 @@ func TestRequestedSignaturesTrackAdd_DifferentKeeps(t *testing.T) {
 	digest2 := [32]byte{8}
 
 	rs := &requestedSignaturesTrack{
-		data:  make(map[string]map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]map[string]bool),
 	}
 
 	if !rs.add(keepAddress1, digest1) {
@@ -157,8 +149,7 @@ func TestRequestedSignaturesTrackAdd_Duplicate(t *testing.T) {
 	digest := [32]byte{9}
 
 	rs := &requestedSignaturesTrack{
-		data:  make(map[string]map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]map[string]bool),
 	}
 
 	if !rs.add(keepAddress, digest) {
@@ -179,8 +170,7 @@ func TestRequestedSignaturesTrackRemove(t *testing.T) {
 	digest := [32]byte{9}
 
 	rs := &requestedSignaturesTrack{
-		data:  make(map[string]map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]map[string]bool),
 	}
 
 	if !rs.add(keepAddress1, digest) {
@@ -219,8 +209,7 @@ func TestRequestedSignaturesTrackRemove_WhenEmpty(t *testing.T) {
 	digest := [32]byte{9}
 
 	rs := &requestedSignaturesTrack{
-		data:  make(map[string]map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]map[string]bool),
 	}
 
 	rs.remove(keepAddress, digest)
@@ -241,8 +230,7 @@ func TestRequestedSignaturesTrackHas(t *testing.T) {
 	digest2 := [32]byte{10}
 
 	rs := &requestedSignaturesTrack{
-		data:  make(map[string]map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]map[string]bool),
 	}
 
 	rs.add(keepAddress1, digest1)

@@ -3,7 +3,6 @@ package event
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -45,20 +44,16 @@ func NewDeduplicator(
 	chain chain.Handle,
 ) *Deduplicator {
 	keyGenKeeps := &keepEventTrack{
-		data:  make(map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]bool),
 	}
 	requestedSignatures := &requestedSignaturesTrack{
-		data:  make(map[string]map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]map[string]bool),
 	}
 	closingKeeps := &keepEventTrack{
-		data:  make(map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]bool),
 	}
 	terminatingKeeps := &keepEventTrack{
-		data:  make(map[string]bool),
-		mutex: &sync.Mutex{},
+		data: make(map[string]bool),
 	}
 
 	return &Deduplicator{

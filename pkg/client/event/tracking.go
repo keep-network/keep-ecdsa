@@ -21,7 +21,7 @@ import (
 // be removed from this struct.
 type keepEventTrack struct {
 	data  map[string]bool // <keep, bool>
-	mutex *sync.Mutex
+	mutex sync.Mutex
 }
 
 func (ket *keepEventTrack) add(keepAddress common.Address) bool {
@@ -59,7 +59,7 @@ func (ket *keepEventTrack) remove(keepAddress common.Address) {
 // be removed from this struct.
 type requestedSignaturesTrack struct {
 	data  map[string]map[string]bool // <keep, <digest, bool>>
-	mutex *sync.Mutex
+	mutex sync.Mutex
 }
 
 func (rst *requestedSignaturesTrack) add(keepAddress common.Address, digest [32]byte) bool {
