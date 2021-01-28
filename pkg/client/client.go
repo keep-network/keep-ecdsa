@@ -547,6 +547,9 @@ func monitorSigningRequests(
 			go func(event *eth.SignatureRequestedEvent) {
 				err := utils.DoWithDefaultRetry(
 					clientConfig.GetSigningTimeout(),
+					// TODO: extract the code into a separate function and see if
+					// there is a way to deduplicate common parts with
+					// checkAwaitingSignature function.
 					func(ctx context.Context) error {
 						shouldHandle, err := eventDeduplicator.NotifySigningStarted(keepAddress, event.Digest)
 						if err != nil {
