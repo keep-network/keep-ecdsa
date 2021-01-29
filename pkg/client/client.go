@@ -193,7 +193,7 @@ func Initialize(
 
 		if event.IsMember(ethereumChain.Address()) {
 			go func(event *eth.BondedECDSAKeepCreatedEvent) {
-				if ok := eventDeduplicator.NotifyKeyGenStarted(event.KeepAddress); !ok {
+				if shouldHandle := eventDeduplicator.NotifyKeyGenStarted(event.KeepAddress); !shouldHandle {
 					logger.Infof(
 						"key generation request for keep [%s] already handled",
 						event.KeepAddress.String(),
@@ -777,7 +777,7 @@ func monitorKeepClosedEvents(
 			)
 
 			go func(event *eth.KeepClosedEvent) {
-				if ok := eventDeduplicator.NotifyClosingStarted(keepAddress); !ok {
+				if shouldHandle := eventDeduplicator.NotifyClosingStarted(keepAddress); !shouldHandle {
 					logger.Infof(
 						"close event for keep [%s] already handled",
 						keepAddress.String(),
@@ -856,7 +856,7 @@ func monitorKeepTerminatedEvent(
 			)
 
 			go func(event *eth.KeepTerminatedEvent) {
-				if ok := eventDeduplicator.NotifyTerminatingStarted(keepAddress); !ok {
+				if shouldHandle := eventDeduplicator.NotifyTerminatingStarted(keepAddress); !shouldHandle {
 					logger.Infof(
 						"terminate event for keep [%s] already handled",
 						keepAddress.String(),
