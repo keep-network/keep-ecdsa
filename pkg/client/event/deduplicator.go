@@ -71,7 +71,7 @@ func NewDeduplicator(
 // client should proceed with the execution or ignore the event as a duplicate.
 //
 // In case the client proceeds with the key generation, it should call
-// notifyKeyGenCompleted once the protocol completes, no matter if it failed or
+// NotifyKeyGenCompleted once the protocol completes, no matter if it failed or
 // succeeded.
 func (d *Deduplicator) NotifyKeyGenStarted(keepAddress common.Address) bool {
 	if d.keyGenKeeps.has(keepAddress) {
@@ -97,7 +97,7 @@ func (d *Deduplicator) NotifyKeyGenCompleted(keepAddress common.Address) {
 // event as a duplicate.
 //
 // In case the client proceeds with signing, it should call
-// notifySigningCompleted once the protocol completes, no matter if it failed or
+// NotifySigningCompleted once the protocol completes, no matter if it failed or
 // succeeded.
 func (d *Deduplicator) NotifySigningStarted(
 	keepAddress common.Address,
@@ -147,7 +147,7 @@ func (d *Deduplicator) NotifySigningCompleted(
 // with the execution or ignore the event as a duplicate.
 //
 // In case the client proceeds with closing the keep, it should call
-// notifyClosingCompleted once the protocol completes, no matter if it failed or
+// NotifyClosingCompleted once the protocol completes, no matter if it failed or
 // succeeded.
 func (d *Deduplicator) NotifyClosingStarted(keepAddress common.Address) bool {
 	if d.closingKeeps.has(keepAddress) {
@@ -172,7 +172,7 @@ func (d *Deduplicator) NotifyClosingCompleted(keepAddress common.Address) {
 // proceed with the execution or ignore the event as a duplicate.
 //
 // In case the client proceeds with terminating the keep, it should call
-// notifyTerminatingCompleted once the protocol completes, no matter if it
+// NotifyTerminatingCompleted once the protocol completes, no matter if it
 // failed or succeeded.
 func (d *Deduplicator) NotifyTerminatingStarted(keepAddress common.Address) bool {
 	if d.terminatingKeeps.has(keepAddress) {
