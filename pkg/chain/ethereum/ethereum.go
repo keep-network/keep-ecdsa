@@ -74,33 +74,28 @@ func (ec *EthereumChain) RegisterAsMemberCandidate(application common.Address) e
 func (ec *EthereumChain) OnBondedECDSAKeepCreated(
 	handler func(event *eth.BondedECDSAKeepCreatedEvent),
 ) subscription.EventSubscription {
-	subscription, err := ec.bondedECDSAKeepFactoryContract.WatchBondedECDSAKeepCreated(
-		func(
-			KeepAddress common.Address,
-			Members []common.Address,
-			Owner common.Address,
-			Application common.Address,
-			HonestThreshold *big.Int,
-			blockNumber uint64,
-		) {
-			handler(&eth.BondedECDSAKeepCreatedEvent{
-				KeepAddress:     KeepAddress,
-				Members:         Members,
-				HonestThreshold: HonestThreshold.Uint64(),
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf("watch keep created failed: [%v]", err)
-		},
-		nil,
-		nil,
-		nil,
-	)
-	if err != nil {
-		logger.Errorf("could not watch BondedECDSAKeepCreated event: [%v]", err)
+	onEvent := func(
+		KeepAddress common.Address,
+		Members []common.Address,
+		Owner common.Address,
+		Application common.Address,
+		HonestThreshold *big.Int,
+		blockNumber uint64,
+	) {
+		handler(&eth.BondedECDSAKeepCreatedEvent{
+			KeepAddress:     KeepAddress,
+			Members:         Members,
+			HonestThreshold: HonestThreshold.Uint64(),
+			BlockNumber:     blockNumber,
+		})
 	}
 
-	return subscription
+	return ec.bondedECDSAKeepFactoryContract.BondedECDSAKeepCreated(
+		nil,
+		nil,
+		nil,
+		nil,
+	).OnEvent(onEvent)
 }
 
 // OnKeepClosed installs a callback that is invoked on-chain when keep is closed.
@@ -112,14 +107,14 @@ func (ec *EthereumChain) OnKeepClosed(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
-	return keepContract.WatchKeepClosed(
-		func(blockNumber uint64) {
-			handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
-		},
-		func(err error) error {
-			return fmt.Errorf("keep closed callback failed: [%v]", err)
-		},
-	)
+
+	onEvent := func(blockNumber uint64) {
+		handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
+	}
+	return keepContract.KeepClosed(&ethutil.SubscribeOpts{
+		Tick:       4 * time.Hour,
+		PastBlocks: 2000,
+	}).OnEvent(onEvent), nil
 }
 
 // OnKeepTerminated installs a callback that is invoked on-chain when keep
@@ -132,14 +127,14 @@ func (ec *EthereumChain) OnKeepTerminated(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
-	return keepContract.WatchKeepTerminated(
-		func(blockNumber uint64) {
-			handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
-		},
-		func(err error) error {
-			return fmt.Errorf("keep terminated callback failed: [%v]", err)
-		},
-	)
+
+	onEvent := func(blockNumber uint64) {
+		handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
+	}
+	return keepContract.KeepTerminated(&ethutil.SubscribeOpts{
+		Tick:       4 * time.Hour,
+		PastBlocks: 2000,
+	}).OnEvent(onEvent), nil
 }
 
 // OnPublicKeyPublished installs a callback that is invoked when an on-chain
@@ -153,19 +148,16 @@ func (ec *EthereumChain) OnPublicKeyPublished(
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
 
-	return keepContract.WatchPublicKeyPublished(
-		func(
-			PublicKey []byte,
-			blockNumber uint64,
-		) {
-			handler(&eth.PublicKeyPublishedEvent{
-				PublicKey: PublicKey,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf("keep created callback failed: [%v]", err)
-		},
-	)
+	onEvent := func(
+		PublicKey []byte,
+		blockNumber uint64,
+	) {
+		handler(&eth.PublicKeyPublishedEvent{
+			PublicKey:   PublicKey,
+			BlockNumber: blockNumber,
+		})
+	}
+	return keepContract.PublicKeyPublished(nil).OnEvent(onEvent), nil
 }
 
 // OnConflictingPublicKeySubmitted installs a callback that is invoked when an
@@ -179,22 +171,21 @@ func (ec *EthereumChain) OnConflictingPublicKeySubmitted(
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
 
-	return keepContract.WatchConflictingPublicKeySubmitted(
-		func(
-			SubmittingMember common.Address,
-			ConflictingPublicKey []byte,
-			blockNumber uint64,
-		) {
-			handler(&eth.ConflictingPublicKeySubmittedEvent{
-				SubmittingMember:     SubmittingMember,
-				ConflictingPublicKey: ConflictingPublicKey,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf("keep created callback failed: [%v]", err)
-		},
+	onEvent := func(
+		SubmittingMember common.Address,
+		ConflictingPublicKey []byte,
+		blockNumber uint64,
+	) {
+		handler(&eth.ConflictingPublicKeySubmittedEvent{
+			SubmittingMember:     SubmittingMember,
+			ConflictingPublicKey: ConflictingPublicKey,
+			BlockNumber:          blockNumber,
+		})
+	}
+	return keepContract.ConflictingPublicKeySubmitted(
 		nil,
-	)
+		nil,
+	).OnEvent(onEvent), nil
 }
 
 // OnSignatureRequested installs a callback that is invoked on-chain
@@ -208,21 +199,19 @@ func (ec *EthereumChain) OnSignatureRequested(
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
 
-	return keepContract.WatchSignatureRequested(
-		func(
-			Digest [32]uint8,
-			blockNumber uint64,
-		) {
-			handler(&eth.SignatureRequestedEvent{
-				Digest:      Digest,
-				BlockNumber: blockNumber,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf("keep signature requested callback failed: [%v]", err)
-		},
+	onEvent := func(
+		Digest [32]uint8,
+		blockNumber uint64,
+	) {
+		handler(&eth.SignatureRequestedEvent{
+			Digest:      Digest,
+			BlockNumber: blockNumber,
+		})
+	}
+	return keepContract.SignatureRequested(
 		nil,
-	)
+		nil,
+	).OnEvent(onEvent), nil
 }
 
 // SubmitKeepPublicKey submits a public key to a keep contract deployed under
@@ -288,6 +277,7 @@ func (ec *EthereumChain) getKeepContract(address common.Address) (*contract.Bond
 		ec.client,
 		ec.nonceManager,
 		ec.miningWaiter,
+		ec.blockCounter,
 		ec.transactionMutex,
 	)
 	if err != nil {

@@ -4,6 +4,7 @@
 package contract
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"strings"
@@ -15,9 +16,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/event"
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/abi"
@@ -39,6 +42,7 @@ type BondedECDSAKeepVendor struct {
 	errorResolver     *ethutil.ErrorResolver
 	nonceManager      *ethutil.NonceManager
 	miningWaiter      *ethutil.MiningWaiter
+	blockCounter      *blockcounter.EthereumBlockCounter
 
 	transactionMutex *sync.Mutex
 }
@@ -49,6 +53,7 @@ func NewBondedECDSAKeepVendor(
 	backend bind.ContractBackend,
 	nonceManager *ethutil.NonceManager,
 	miningWaiter *ethutil.MiningWaiter,
+	blockCounter *blockcounter.EthereumBlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*BondedECDSAKeepVendor, error) {
 	callerOptions := &bind.CallOpts{
@@ -87,6 +92,7 @@ func NewBondedECDSAKeepVendor(
 		errorResolver:     ethutil.NewErrorResolver(backend, &contractABI, &contractAddress),
 		nonceManager:      nonceManager,
 		miningWaiter:      miningWaiter,
+		blockCounter:      blockCounter,
 		transactionMutex:  transactionMutex,
 	}, nil
 }
@@ -597,10 +603,157 @@ func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeTimeDelayAtBlock(
 
 // ------ Events -------
 
+func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeCompleted(
+	opts *ethutil.SubscribeOpts,
+) *FactoryUpgradeCompletedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &FactoryUpgradeCompletedSubscription{
+		becdsakv,
+		opts,
+	}
+}
+
+type FactoryUpgradeCompletedSubscription struct {
+	contract *BondedECDSAKeepVendor
+	opts     *ethutil.SubscribeOpts
+}
+
 type bondedECDSAKeepVendorFactoryUpgradeCompletedFunc func(
 	Factory common.Address,
 	blockNumber uint64,
 )
+
+func (fucs *FactoryUpgradeCompletedSubscription) OnEvent(
+	handler bondedECDSAKeepVendorFactoryUpgradeCompletedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.BondedECDSAKeepVendorImplV1FactoryUpgradeCompleted)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Factory,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := fucs.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (fucs *FactoryUpgradeCompletedSubscription) Pipe(
+	sink chan *abi.BondedECDSAKeepVendorImplV1FactoryUpgradeCompleted,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(fucs.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := fucs.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					becdsakvLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - fucs.opts.PastBlocks
+
+				becdsakvLogger.Infof(
+					"subscription monitoring fetching past FactoryUpgradeCompleted events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := fucs.contract.PastFactoryUpgradeCompletedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					becdsakvLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				becdsakvLogger.Infof(
+					"subscription monitoring fetched [%v] past FactoryUpgradeCompleted events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := fucs.contract.watchFactoryUpgradeCompleted(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (becdsakv *BondedECDSAKeepVendor) watchFactoryUpgradeCompleted(
+	sink chan *abi.BondedECDSAKeepVendorImplV1FactoryUpgradeCompleted,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return becdsakv.contract.WatchFactoryUpgradeCompleted(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		becdsakvLogger.Errorf(
+			"subscription to event FactoryUpgradeCompleted had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		becdsakvLogger.Errorf(
+			"subscription to event FactoryUpgradeCompleted failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
 
 func (becdsakv *BondedECDSAKeepVendor) PastFactoryUpgradeCompletedEvents(
 	startBlock uint64,
@@ -629,118 +782,28 @@ func (becdsakv *BondedECDSAKeepVendor) PastFactoryUpgradeCompletedEvents(
 	return events, nil
 }
 
-func (becdsakv *BondedECDSAKeepVendor) WatchFactoryUpgradeCompleted(
-	success bondedECDSAKeepVendorFactoryUpgradeCompletedFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := becdsakv.subscribeFactoryUpgradeCompleted(
-			success,
-			failCallback,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
+func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeStarted(
+	opts *ethutil.SubscribeOpts,
+) *FactoryUpgradeStartedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				becdsakvLogger.Warning(
-					"subscription to event FactoryUpgradeCompleted terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
+	return &FactoryUpgradeStartedSubscription{
+		becdsakv,
+		opts,
 	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
-func (becdsakv *BondedECDSAKeepVendor) subscribeFactoryUpgradeCompleted(
-	success bondedECDSAKeepVendorFactoryUpgradeCompletedFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.BondedECDSAKeepVendorImplV1FactoryUpgradeCompleted)
-	eventSubscription, err := becdsakv.contract.WatchFactoryUpgradeCompleted(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for FactoryUpgradeCompleted events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Factory,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
+type FactoryUpgradeStartedSubscription struct {
+	contract *BondedECDSAKeepVendor
+	opts     *ethutil.SubscribeOpts
 }
 
 type bondedECDSAKeepVendorFactoryUpgradeStartedFunc func(
@@ -748,6 +811,130 @@ type bondedECDSAKeepVendorFactoryUpgradeStartedFunc func(
 	Timestamp *big.Int,
 	blockNumber uint64,
 )
+
+func (fuss *FactoryUpgradeStartedSubscription) OnEvent(
+	handler bondedECDSAKeepVendorFactoryUpgradeStartedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.BondedECDSAKeepVendorImplV1FactoryUpgradeStarted)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Factory,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := fuss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (fuss *FactoryUpgradeStartedSubscription) Pipe(
+	sink chan *abi.BondedECDSAKeepVendorImplV1FactoryUpgradeStarted,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(fuss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := fuss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					becdsakvLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - fuss.opts.PastBlocks
+
+				becdsakvLogger.Infof(
+					"subscription monitoring fetching past FactoryUpgradeStarted events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := fuss.contract.PastFactoryUpgradeStartedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					becdsakvLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				becdsakvLogger.Infof(
+					"subscription monitoring fetched [%v] past FactoryUpgradeStarted events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := fuss.contract.watchFactoryUpgradeStarted(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (becdsakv *BondedECDSAKeepVendor) watchFactoryUpgradeStarted(
+	sink chan *abi.BondedECDSAKeepVendorImplV1FactoryUpgradeStarted,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return becdsakv.contract.WatchFactoryUpgradeStarted(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		becdsakvLogger.Errorf(
+			"subscription to event FactoryUpgradeStarted had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		becdsakvLogger.Errorf(
+			"subscription to event FactoryUpgradeStarted failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
 
 func (becdsakv *BondedECDSAKeepVendor) PastFactoryUpgradeStartedEvents(
 	startBlock uint64,
@@ -774,119 +961,4 @@ func (becdsakv *BondedECDSAKeepVendor) PastFactoryUpgradeStartedEvents(
 	}
 
 	return events, nil
-}
-
-func (becdsakv *BondedECDSAKeepVendor) WatchFactoryUpgradeStarted(
-	success bondedECDSAKeepVendorFactoryUpgradeStartedFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := becdsakv.subscribeFactoryUpgradeStarted(
-			success,
-			failCallback,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				becdsakvLogger.Warning(
-					"subscription to event FactoryUpgradeStarted terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (becdsakv *BondedECDSAKeepVendor) subscribeFactoryUpgradeStarted(
-	success bondedECDSAKeepVendorFactoryUpgradeStartedFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.BondedECDSAKeepVendorImplV1FactoryUpgradeStarted)
-	eventSubscription, err := becdsakv.contract.WatchFactoryUpgradeStarted(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for FactoryUpgradeStarted events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Factory,
-					event.Timestamp,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
