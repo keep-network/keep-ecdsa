@@ -17,7 +17,7 @@ module.exports = async function () {
     // Here we set the bonding value to bigger value so members can handle
     // multiple keeps.
     let bonding = "50"
-    
+
     const networkID = await web3.eth.net.getId()
     // NetworkID 44787 is Celo Alfajores testnet. Bonding is lower becuase
     // Alfajores faucet funds 10cUSD and 5 CELO at a time.
@@ -27,7 +27,7 @@ module.exports = async function () {
     const bondingValue = web3.utils.toWei(bonding, "ether")
 
     const accounts = await web3.eth.getAccounts()
-    let numberOfAccounts = 1;
+    let numberOfAccounts = 1
     let iter = 0
     if (accounts.length > 1 && accounts.length <= 5) {
       numberOfAccounts = accounts.length
@@ -37,7 +37,7 @@ module.exports = async function () {
       iter = 1
     }
 
-    let operators = []
+    const operators = []
     for (let i = iter; i < numberOfAccounts; i++) {
       operators.push(accounts[i])
     }

@@ -9,7 +9,7 @@
 require("@babel/register")
 require("@babel/polyfill")
 const HDWalletProvider = require("@truffle/hdwallet-provider")
-const Kit = require('@celo/contractkit')
+const Kit = require("@celo/contractkit")
 
 module.exports = {
   /**
@@ -55,13 +55,13 @@ module.exports = {
       skipDryRun: true,
     },
     alfajores: {
-      provider: function() {
-        const kit = Kit.newKit('https://alfajores-forno.celo-testnet.org')
+      provider: function () {
+        const kit = Kit.newKit("https://alfajores-forno.celo-testnet.org")
         kit.addAccount(process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY)
         return kit.web3.currentProvider
       },
-      network_id: 44787
-    }
+      network_id: 44787,
+    },
   },
   // Configure your compilers
   compilers: {
