@@ -16,10 +16,32 @@ module.exports = async function () {
     // 50 ETH / 3 members = 16,67 ETH of unbonded value for each member.
     // Here we set the bonding value to bigger value so members can handle
     // multiple keeps.
-    const bondingValue = web3.utils.toWei("50", "ether")
+    let bonding = "50"
+    
+    const networkID = await web3.eth.net.getId()
+    // NetworkID 44787 is Celo Alfajores testnet. Bonding is lower becuase
+    // Alfajores faucet funds 10cUSD and 5 CELO at a time.
+    if (networkID == 44787) {
+      bonding = "2"
+    }
+    const bondingValue = web3.utils.toWei(bonding, "ether")
 
     const accounts = await web3.eth.getAccounts()
-    const operators = [accounts[1], accounts[2], accounts[3], accounts[4]]
+    let numberOfAccounts = 1;
+    let iter = 0
+    if (accounts.length > 1 && accounts.length <= 5) {
+      numberOfAccounts = accounts.length
+      iter = 1
+    } else if (accounts.length > 5) {
+      numberOfAccounts = 5
+      iter = 1
+    }
+
+    let operators = []
+    for (let i = iter; i < numberOfAccounts; i++) {
+      operators.push(accounts[i])
+    }
+
     const application = TBTCSystemAddress
 
     let sortitionPoolAddress
