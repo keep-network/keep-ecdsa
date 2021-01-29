@@ -1,8 +1,8 @@
-const {contract, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
-const {ZERO_ADDRESS} = require("@openzeppelin/test-helpers/src/constants")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
-const {testValues} = require("./rewardsData.js")
+const { contract, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers")
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
+const { testValues } = require("./rewardsData.js")
 
 const ECDSARewardsDistributor = contract.fromArtifact("ECDSARewardsDistributor")
 const KeepToken = contract.fromArtifact("KeepToken")

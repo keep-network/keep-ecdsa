@@ -1,14 +1,14 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
 const {
   getETHBalancesFromList,
   getERC20BalancesFromList,
   addToBalances,
 } = require("./helpers/listBalanceUtils")
 
-const {mineBlocks} = require("./helpers/mineBlocks")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { mineBlocks } = require("./helpers/mineBlocks")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const FullyBackedECDSAKeep = contract.fromArtifact("FullyBackedECDSAKeep")
@@ -170,7 +170,7 @@ describe("FullyBackedECDSAKeep", function () {
 
     it("reverts if public key was not set", async () => {
       await expectRevert(
-        keep.sign(digest, {from: owner}),
+        keep.sign(digest, { from: owner }),
         "Public key was not set yet"
       )
     })
@@ -178,7 +178,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("emits event", async () => {
       await submitMembersPublicKeys(publicKey)
 
-      const res = await keep.sign(digest, {from: owner})
+      const res = await keep.sign(digest, { from: owner })
       truffleAssert.eventEmitted(res, "SignatureRequested", (ev) => {
         return ev.digest == digest
       })
@@ -187,7 +187,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("sets block number for digest", async () => {
       await submitMembersPublicKeys(publicKey)
 
-      const signTx = await keep.sign(digest, {from: owner})
+      const signTx = await keep.sign(digest, { from: owner })
 
       const blockNumber = await keep.digests.call(digest)
 
@@ -199,9 +199,12 @@ describe("FullyBackedECDSAKeep", function () {
     it("cannot be requested if keep is closed", async () => {
       await createMembersBonds(keep)
 
-      await keep.closeKeep({from: owner})
+      await keep.closeKeep({ from: owner })
 
-      await expectRevert(keep.sign(digest, {from: owner}), "Keep is not active")
+      await expectRevert(
+        keep.sign(digest, { from: owner }),
+        "Keep is not active"
+      )
     })
 
     it("cannot be called by non-owner", async () => {
@@ -210,7 +213,7 @@ describe("FullyBackedECDSAKeep", function () {
 
     it("cannot be called by non-owner member", async () => {
       await expectRevert(
-        keep.sign(digest, {from: members[0]}),
+        keep.sign(digest, { from: members[0] }),
         "Caller is not the keep owner"
       )
     })
@@ -218,9 +221,9 @@ describe("FullyBackedECDSAKeep", function () {
     it("cannot be requested if already in progress", async () => {
       await submitMembersPublicKeys(publicKey)
 
-      await keep.sign(digest, {from: owner})
+      await keep.sign(digest, { from: owner })
 
-      await expectRevert(keep.sign("0x02", {from: owner}), "Signer is busy")
+      await expectRevert(keep.sign("0x02", { from: owner }), "Signer is busy")
     })
   })
 
@@ -247,19 +250,19 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     it("returns true if signing was requested for the digest", async () => {
-      await keep.sign(digest1, {from: owner})
+      await keep.sign(digest1, { from: owner })
 
       assert.isTrue(await keep.isAwaitingSignature(digest1))
     })
 
     it("returns false if signing was requested for other digest", async () => {
-      await keep.sign(digest2, {from: owner})
+      await keep.sign(digest2, { from: owner })
 
       assert.isFalse(await keep.isAwaitingSignature(digest1))
     })
 
     it("returns false if valid signature has been already submitted", async () => {
-      await keep.sign(digest1, {from: owner})
+      await keep.sign(digest1, { from: owner })
 
       await keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
         from: members[0],
@@ -269,10 +272,10 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     it("returns true if invalid signature was submitted before", async () => {
-      await keep.sign(digest1, {from: owner})
+      await keep.sign(digest1, { from: owner })
 
       await expectRevert(
-        keep.submitSignature(signatureR, signatureS, 0, {from: members[0]}),
+        keep.submitSignature(signatureR, signatureS, 0, { from: members[0] }),
         "Invalid signature"
       )
 
@@ -365,7 +368,7 @@ describe("FullyBackedECDSAKeep", function () {
 
     describe("submitPublicKey", async () => {
       it("does not emit an event nor sets the key when keys were not submitted by all members", async () => {
-        const res = await keep.submitPublicKey(publicKey1, {from: members[1]})
+        const res = await keep.submitPublicKey(publicKey1, { from: members[1] })
         truffleAssert.eventNotEmitted(res, "PublicKeyPublished")
 
         const publicKey = await keep.getPublicKey.call()
@@ -375,9 +378,9 @@ describe("FullyBackedECDSAKeep", function () {
       it("does not emit an event nor sets the key when inconsistent keys were submitted by all members", async () => {
         const startBlock = await web3.eth.getBlockNumber()
 
-        await keep.submitPublicKey(publicKey1, {from: members[0]})
-        await keep.submitPublicKey(publicKey2, {from: members[1]})
-        await keep.submitPublicKey(publicKey3, {from: members[2]})
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
+        await keep.submitPublicKey(publicKey2, { from: members[1] })
+        await keep.submitPublicKey(publicKey3, { from: members[2] })
 
         assert.isNull(await keep.getPublicKey(), "incorrect public key")
 
@@ -393,9 +396,9 @@ describe("FullyBackedECDSAKeep", function () {
       it("does not emit an event nor sets the key when just one inconsistent key was submitted", async () => {
         const startBlock = await web3.eth.getBlockNumber()
 
-        await keep.submitPublicKey(publicKey1, {from: members[0]})
-        await keep.submitPublicKey(publicKey2, {from: members[1]})
-        await keep.submitPublicKey(publicKey1, {from: members[2]})
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
+        await keep.submitPublicKey(publicKey2, { from: members[1] })
+        await keep.submitPublicKey(publicKey1, { from: members[2] })
 
         assert.isNull(await keep.getPublicKey(), "incorrect public key")
 
@@ -409,16 +412,16 @@ describe("FullyBackedECDSAKeep", function () {
       })
 
       it("emits event and sets a key when all submitted keys are the same", async () => {
-        let res = await keep.submitPublicKey(publicKey1, {from: members[2]})
+        let res = await keep.submitPublicKey(publicKey1, { from: members[2] })
         truffleAssert.eventNotEmitted(res, "PublicKeyPublished")
 
-        res = await keep.submitPublicKey(publicKey1, {from: members[0]})
+        res = await keep.submitPublicKey(publicKey1, { from: members[0] })
         truffleAssert.eventNotEmitted(res, "PublicKeyPublished")
 
         const actualPublicKey = await keep.getPublicKey()
         assert.isNull(actualPublicKey, "incorrect public key")
 
-        res = await keep.submitPublicKey(publicKey1, {from: members[1]})
+        res = await keep.submitPublicKey(publicKey1, { from: members[1] })
         truffleAssert.eventEmitted(res, "PublicKeyPublished", {
           publicKey: publicKey1,
         })
@@ -431,22 +434,22 @@ describe("FullyBackedECDSAKeep", function () {
       })
 
       it("does not allow submitting public key more than once", async () => {
-        await keep.submitPublicKey(publicKey0, {from: members[0]})
+        await keep.submitPublicKey(publicKey0, { from: members[0] })
 
         await expectRevert(
-          keep.submitPublicKey(publicKey1, {from: members[0]}),
+          keep.submitPublicKey(publicKey1, { from: members[0] }),
           "Member already submitted a public key"
         )
       })
 
       it("does not emit conflict event for first all zero key ", async () => {
         // Event should not be emitted as other keys are not yet submitted.
-        const res = await keep.submitPublicKey(publicKey0, {from: members[2]})
+        const res = await keep.submitPublicKey(publicKey0, { from: members[2] })
         truffleAssert.eventNotEmitted(res, "ConflictingPublicKeySubmitted")
 
         // One event should be emitted as just one other key is submitted.
         const startBlock = await web3.eth.getBlockNumber()
-        await keep.submitPublicKey(publicKey1, {from: members[0]})
+        await keep.submitPublicKey(publicKey1, { from: members[0] })
         assert.lengthOf(
           await keep.getPastEvents("ConflictingPublicKeySubmitted", {
             fromBlock: startBlock,
@@ -464,7 +467,7 @@ describe("FullyBackedECDSAKeep", function () {
 
         // First member submits a public key, there are no conflicts.
         let startBlock = await web3.eth.getBlockNumber()
-        await keep.submitPublicKey(publicKey1, {from: members[2]})
+        await keep.submitPublicKey(publicKey1, { from: members[2] })
         assert.lengthOf(
           await keep.getPastEvents("ConflictingPublicKeySubmitted", {
             fromBlock: startBlock,
@@ -477,7 +480,7 @@ describe("FullyBackedECDSAKeep", function () {
 
         // Second member submits another public key, there is one conflict.
         startBlock = await web3.eth.getBlockNumber()
-        await keep.submitPublicKey(publicKey2, {from: members[1]})
+        await keep.submitPublicKey(publicKey2, { from: members[1] })
         assert.lengthOf(
           await keep.getPastEvents("ConflictingPublicKeySubmitted", {
             fromBlock: startBlock,
@@ -490,7 +493,7 @@ describe("FullyBackedECDSAKeep", function () {
 
         // Third member submits yet another public key, there are two conflicts.
         startBlock = await web3.eth.getBlockNumber()
-        await keep.submitPublicKey(publicKey3, {from: members[0]})
+        await keep.submitPublicKey(publicKey3, { from: members[0] })
         assert.lengthOf(
           await keep.getPastEvents("ConflictingPublicKeySubmitted", {
             fromBlock: startBlock,
@@ -507,7 +510,7 @@ describe("FullyBackedECDSAKeep", function () {
         await submitMembersPublicKeys(publicKey1)
 
         await expectRevert(
-          keep.submitPublicKey(publicKey1, {from: members[0]}),
+          keep.submitPublicKey(publicKey1, { from: members[0] }),
           "Member already submitted a public key"
         )
       })
@@ -521,7 +524,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       it("cannot be called by non-member owner", async () => {
         await expectRevert(
-          keep.submitPublicKey(publicKey1, {from: owner}),
+          keep.submitPublicKey(publicKey1, { from: owner }),
           "Caller is not the keep member"
         )
       })
@@ -529,9 +532,9 @@ describe("FullyBackedECDSAKeep", function () {
       it("cannot be different than 64 bytes", async () => {
         const badPublicKey =
           "0x9b9539de2a6345dc2ebd14010fe6bcd5d38db9ed75cef4afc6fc68a4c45a4901970bbff307e69048b4d6edf960a6dd7bc5ba9b1cf1b4e0a1e319f68e0741a"
-        await keep.submitPublicKey(publicKey1, {from: members[1]})
+        await keep.submitPublicKey(publicKey1, { from: members[1] })
         await expectRevert(
-          keep.submitPublicKey(badPublicKey, {from: members[2]}),
+          keep.submitPublicKey(badPublicKey, { from: members[2] }),
           "Public key must be 64 bytes long"
         )
       })
@@ -572,7 +575,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       const gasPrice = await web3.eth.getGasPrice()
 
-      const txHash = await keep.seizeSignerBonds({from: owner})
+      const txHash = await keep.seizeSignerBonds({ from: owner })
       const seizedSignerBondsFee = new BN(txHash.receipt.gasUsed).mul(
         new BN(gasPrice)
       )
@@ -592,7 +595,7 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     it("terminates a keep", async () => {
-      await keep.seizeSignerBonds({from: owner})
+      await keep.seizeSignerBonds({ from: owner })
       assert.isTrue(await keep.isTerminated(), "keep should be terminated")
       assert.isFalse(await keep.isActive(), "keep should no longer be active")
       assert.isFalse(await keep.isClosed(), "keep should not be closed")
@@ -600,37 +603,37 @@ describe("FullyBackedECDSAKeep", function () {
 
     it("emits an event", async () => {
       truffleAssert.eventEmitted(
-        await keep.seizeSignerBonds({from: owner}),
+        await keep.seizeSignerBonds({ from: owner }),
         "KeepTerminated"
       )
     })
 
     it("can be called only by owner", async () => {
       await expectRevert(
-        keep.seizeSignerBonds({from: nonOwner}),
+        keep.seizeSignerBonds({ from: nonOwner }),
         "Caller is not the keep owner"
       )
     })
 
     it("succeeds when signing is in progress", async () => {
-      keep.sign(digest, {from: owner})
+      keep.sign(digest, { from: owner })
 
-      await keep.seizeSignerBonds({from: owner})
+      await keep.seizeSignerBonds({ from: owner })
     })
     it("reverts when already seized", async () => {
-      await keep.seizeSignerBonds({from: owner})
+      await keep.seizeSignerBonds({ from: owner })
 
       await expectRevert(
-        keep.seizeSignerBonds({from: owner}),
+        keep.seizeSignerBonds({ from: owner }),
         "Keep is not active"
       )
     })
 
     it("reverts when already closed", async () => {
-      await keep.closeKeep({from: owner})
+      await keep.closeKeep({ from: owner })
 
       await expectRevert(
-        keep.seizeSignerBonds({from: owner}),
+        keep.seizeSignerBonds({ from: owner }),
         "Keep is not active"
       )
     })
@@ -679,7 +682,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("should return true when signature is valid but was not requested", async () => {
       await submitMembersPublicKeys(publicKey1)
 
-      await keep.sign(hash256Digest2, {from: owner})
+      await keep.sign(hash256Digest2, { from: owner })
 
       const res = await keep.checkSignatureFraud.call(
         signature1.V,
@@ -698,7 +701,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("should return an error when preimage does not match digest", async () => {
       await submitMembersPublicKeys(publicKey1)
 
-      await keep.sign(hash256Digest2, {from: owner})
+      await keep.sign(hash256Digest2, { from: owner })
 
       await expectRevert(
         keep.checkSignatureFraud.call(
@@ -733,7 +736,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("should return false when signature is invalid and was not requested", async () => {
       await submitMembersPublicKeys(publicKey1)
 
-      await keep.sign(hash256Digest2, {from: owner})
+      await keep.sign(hash256Digest2, { from: owner })
       const badSignatureR =
         "0x1112c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2"
 
@@ -752,7 +755,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("should return false when signature is valid and was requested", async () => {
       await submitMembersPublicKeys(publicKey1)
 
-      await keep.sign(hash256Digest1, {from: owner})
+      await keep.sign(hash256Digest1, { from: owner })
 
       assert.isFalse(
         await keep.checkSignatureFraud.call(
@@ -769,7 +772,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("should return false when signature is valid, was requested and was submitted", async () => {
       await submitMembersPublicKeys(publicKey1)
 
-      await keep.sign(hash256Digest1, {from: owner})
+      await keep.sign(hash256Digest1, { from: owner })
       await keep.submitSignature(
         signature1.R,
         signature1.S,
@@ -874,7 +877,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("should revert when the signature is not fraudulent", async () => {
       await submitMembersPublicKeys(publicKey1)
 
-      await keep.sign(hash256Digest1, {from: owner})
+      await keep.sign(hash256Digest1, { from: owner })
 
       await expectRevert(
         keep.submitSignatureFraud(
@@ -946,13 +949,13 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     it("emits an event", async () => {
-      await keep.sign(digest, {from: owner})
+      await keep.sign(digest, { from: owner })
 
       const res = await keep.submitSignature(
         signatureR,
         signatureS,
         signatureRecoveryID,
-        {from: members[0]}
+        { from: members[0] }
       )
 
       truffleAssert.eventEmitted(res, "SignatureSubmitted", (ev) => {
@@ -966,13 +969,13 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     it("clears signing lock after submission", async () => {
-      await keep.sign(digest, {from: owner})
+      await keep.sign(digest, { from: owner })
 
       await keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
         from: members[0],
       })
 
-      await keep.sign(digest, {from: owner})
+      await keep.sign(digest, { from: owner })
     })
 
     it("cannot be submitted if signing was not requested", async () => {
@@ -986,19 +989,19 @@ describe("FullyBackedECDSAKeep", function () {
 
     describe("validates signature", async () => {
       beforeEach(async () => {
-        await keep.sign(digest, {from: owner})
+        await keep.sign(digest, { from: owner })
       })
 
       it("rejects recovery ID out of allowed range", async () => {
         await expectRevert(
-          keep.submitSignature(signatureR, signatureS, 4, {from: members[0]}),
+          keep.submitSignature(signatureR, signatureS, 4, { from: members[0] }),
           "Recovery ID must be one of {0, 1, 2, 3}"
         )
       })
 
       it("rejects invalid signature", async () => {
         await expectRevert(
-          keep.submitSignature(signatureR, signatureS, 0, {from: members[0]}),
+          keep.submitSignature(signatureR, signatureS, 0, { from: members[0] }),
           "Invalid signature"
         )
       })
@@ -1009,7 +1012,7 @@ describe("FullyBackedECDSAKeep", function () {
             signatureR,
             malleableS,
             malleableRecoveryID,
-            {from: members[0]}
+            { from: members[0] }
           )
           assert(false, "Test call did not error as expected")
         } catch (e) {
@@ -1022,7 +1025,7 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     it("cannot be called by non-member", async () => {
-      await keep.sign(digest, {from: owner})
+      await keep.sign(digest, { from: owner })
 
       await expectRevert(
         keep.submitSignature(signatureR, signatureS, signatureRecoveryID),
@@ -1031,7 +1034,7 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     it("cannot be called by non-member owner", async () => {
-      await keep.sign(digest, {from: owner})
+      await keep.sign(digest, { from: owner })
 
       await expectRevert(
         keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
@@ -1059,20 +1062,20 @@ describe("FullyBackedECDSAKeep", function () {
 
     it("emits an event", async () => {
       truffleAssert.eventEmitted(
-        await keep.closeKeep({from: owner}),
+        await keep.closeKeep({ from: owner }),
         "KeepClosed"
       )
     })
 
     it("marks keep as closed", async () => {
-      await keep.closeKeep({from: owner})
+      await keep.closeKeep({ from: owner })
       assert.isTrue(await keep.isClosed(), "keep should be closed")
       assert.isFalse(await keep.isActive(), "keep should no longer be active")
       assert.isFalse(await keep.isTerminated(), "keep should not be terminated")
     })
 
     it("frees members bonds", async () => {
-      await keep.closeKeep({from: owner})
+      await keep.closeKeep({ from: owner })
 
       expect(await keep.checkBondAmount()).to.eq.BN(
         0,
@@ -1105,9 +1108,9 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     it("succeeds when signing is in progress", async () => {
-      keep.sign(digest, {from: owner})
+      keep.sign(digest, { from: owner })
 
-      await keep.closeKeep({from: owner})
+      await keep.closeKeep({ from: owner })
     })
 
     it("cannot be called by non-owner", async () => {
@@ -1115,15 +1118,15 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     it("reverts when already closed", async () => {
-      await keep.closeKeep({from: owner})
+      await keep.closeKeep({ from: owner })
 
-      await expectRevert(keep.closeKeep({from: owner}), "Keep is not active")
+      await expectRevert(keep.closeKeep({ from: owner }), "Keep is not active")
     })
 
     it("reverts when already seized", async () => {
-      await keep.seizeSignerBonds({from: owner})
+      await keep.seizeSignerBonds({ from: owner })
 
-      await expectRevert(keep.closeKeep({from: owner}), "Keep is not active")
+      await expectRevert(keep.closeKeep({ from: owner }), "Keep is not active")
     })
   })
 
@@ -1146,7 +1149,7 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     it("correctly distributes ETH", async () => {
-      await keep.returnPartialSignerBonds({value: allReturnedBondsValue})
+      await keep.returnPartialSignerBonds({ value: allReturnedBondsValue })
 
       const member1UnbondedAfter = await bonding.availableUnbondedValue(
         members[0],
@@ -1217,14 +1220,14 @@ describe("FullyBackedECDSAKeep", function () {
 
     it("reverts with zero value", async () => {
       await expectRevert(
-        keep.returnPartialSignerBonds({value: 0}),
+        keep.returnPartialSignerBonds({ value: 0 }),
         "Partial signer bond must be non-zero"
       )
     })
 
     it("reverts with zero value per member", async () => {
       await expectRevert(
-        keep.returnPartialSignerBonds({value: members.length - 1}),
+        keep.returnPartialSignerBonds({ value: members.length - 1 }),
         "Partial signer bond must be non-zero"
       )
     })
@@ -1237,7 +1240,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("emits event", async () => {
       const startBlock = await web3.eth.getBlockNumber()
 
-      const res = await keep.distributeETHReward({value: ethValue})
+      const res = await keep.distributeETHReward({ value: ethValue })
       truffleAssert.eventEmitted(res, "ETHRewardDistributed", (event) => {
         return web3.utils.toBN(event.amount).eq(ethValue)
       })
@@ -1255,7 +1258,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("correctly distributes ETH", async () => {
       const initialBalances = await getETHBalancesFromList(members)
 
-      await keep.distributeETHReward({value: ethValue})
+      await keep.distributeETHReward({ value: ethValue })
 
       const newBalances = await getETHBalancesFromList(members)
 
@@ -1286,7 +1289,7 @@ describe("FullyBackedECDSAKeep", function () {
       const expectedRemainder = new BN(members.length - 1)
       const valueWithRemainder = ethValue.add(expectedRemainder)
 
-      await keep.distributeETHReward({value: valueWithRemainder})
+      await keep.distributeETHReward({ value: valueWithRemainder })
 
       expect(
         await web3.eth.getBalance(keep.address),
@@ -1319,7 +1322,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("reverts with zero dividend", async () => {
       const msgValue = members.length - 1
       await expectRevert(
-        keep.distributeETHReward({value: msgValue}),
+        keep.distributeETHReward({ value: msgValue }),
         "Dividend value must be non-zero"
       )
     })
@@ -1330,7 +1333,7 @@ describe("FullyBackedECDSAKeep", function () {
     const ethValue = singleValue.mul(new BN(members.length))
 
     beforeEach(async () => {
-      await keep.distributeETHReward({value: ethValue})
+      await keep.distributeETHReward({ value: ethValue })
     })
 
     it("correctly transfers value", async () => {
@@ -1393,7 +1396,7 @@ describe("FullyBackedECDSAKeep", function () {
         factoryStub.address
       )
 
-      await keep.distributeETHReward({value: valueWithRemainder})
+      await keep.distributeETHReward({ value: valueWithRemainder })
 
       await keep.withdraw(member1)
       expect(
@@ -1441,7 +1444,7 @@ describe("FullyBackedECDSAKeep", function () {
         factoryStub.address
       )
 
-      await keep.distributeETHReward({value: ethValue})
+      await keep.distributeETHReward({ value: ethValue })
 
       await expectRevert(keep.withdraw(member), "Transfer failed")
 
@@ -1613,15 +1616,15 @@ describe("FullyBackedECDSAKeep", function () {
     })
 
     async function initializeTokens(token, keep, account, amount) {
-      await token.mint(account, amount, {from: account})
-      await token.approve(keep.address, amount, {from: account})
+      await token.mint(account, amount, { from: account })
+      await token.approve(keep.address, amount, { from: account })
     }
   })
 
   async function submitMembersPublicKeys(publicKey) {
-    await keep.submitPublicKey(publicKey, {from: members[0]})
-    await keep.submitPublicKey(publicKey, {from: members[1]})
-    await keep.submitPublicKey(publicKey, {from: members[2]})
+    await keep.submitPublicKey(publicKey, { from: members[0] })
+    await keep.submitPublicKey(publicKey, { from: members[1] })
+    await keep.submitPublicKey(publicKey, { from: members[2] })
   }
 
   async function delegateOperators() {
@@ -1683,7 +1686,7 @@ describe("FullyBackedECDSAKeep", function () {
       referenceID,
       bondValue1,
       signingPool,
-      {from: bondCreator}
+      { from: bondCreator }
     )
     await bonding.createBond(
       members[1],
@@ -1691,7 +1694,7 @@ describe("FullyBackedECDSAKeep", function () {
       referenceID,
       bondValue2,
       signingPool,
-      {from: bondCreator}
+      { from: bondCreator }
     )
     await bonding.createBond(
       members[2],
@@ -1699,7 +1702,7 @@ describe("FullyBackedECDSAKeep", function () {
       referenceID,
       bondValue3,
       signingPool,
-      {from: bondCreator}
+      { from: bondCreator }
     )
 
     return bondValue1.add(bondValue2).add(bondValue3)

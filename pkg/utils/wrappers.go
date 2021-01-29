@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 )
 
@@ -34,10 +35,10 @@ func DoWithRetry(
 				return fmt.Errorf("retry timeout [%v] exceeded", timeout)
 			}
 
-			backoffTime *= 2
-			if backoffTime > backoffMax {
-				backoffTime = backoffMax
-			}
+			backoffTime = calculateBackoff(
+				backoffTime,
+				backoffMax,
+			)
 		}
 	}
 }
@@ -105,10 +106,10 @@ func ConfirmWithTimeout(
 				return false, nil
 			}
 
-			backoffTime *= 2
-			if backoffTime > backoffMax {
-				backoffTime = backoffMax
-			}
+			backoffTime = calculateBackoff(
+				backoffTime,
+				backoffMax,
+			)
 		}
 	}
 }
@@ -143,6 +144,28 @@ func ConfirmWithTimeoutDefaultBackoff(
 		timeout,
 		confirmFn,
 	)
+}
+
+func calculateBackoff(
+	backoffPrev time.Duration,
+	backoffMax time.Duration,
+) time.Duration {
+	backoff := backoffPrev
+
+	backoff *= 2
+
+	// #nosec G404
+	// we are fine with not using cryptographically secure random integer,
+	// it is just exponential backoff jitter
+	r := rand.Int63n(backoff.Nanoseconds()/10 + 1)
+	jitter := time.Duration(r) * time.Nanosecond
+	backoff += jitter
+
+	if backoff > backoffMax {
+		backoff = backoffMax
+	}
+
+	return backoff
 }
 
 func backoffWait(ctx context.Context, waitTime time.Duration) bool {

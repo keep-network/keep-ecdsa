@@ -156,12 +156,13 @@ contract BondedECDSAKeepFactory is
 
         uint256 minimumStake = tokenStaking.minimumStake();
 
-        address[] memory members = BondedSortitionPool(pool).selectSetGroup(
-            _groupSize,
-            bytes32(groupSelectionSeed),
-            minimumStake,
-            memberBond
-        );
+        address[] memory members =
+            BondedSortitionPool(pool).selectSetGroup(
+                _groupSize,
+                bytes32(groupSelectionSeed),
+                minimumStake,
+                memberBond
+            );
 
         newGroupSelectionSeed();
 

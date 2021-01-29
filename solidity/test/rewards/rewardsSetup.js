@@ -1,4 +1,4 @@
-const {accounts, contract} = require("@openzeppelin/test-environment")
+const { accounts, contract } = require("@openzeppelin/test-environment")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const StackLib = contract.fromArtifact("StackLib")
@@ -27,12 +27,12 @@ async function initialize() {
   await BondedSortitionPoolFactory.detectNetwork()
   await BondedSortitionPoolFactory.link(
     "StackLib",
-    (await StackLib.new({from: owner})).address
+    (await StackLib.new({ from: owner })).address
   )
 
-  keepToken = await KeepToken.new({from: owner})
+  keepToken = await KeepToken.new({ from: owner })
   const keepTokenGrant = await KeepTokenGrant.new(keepToken.address)
-  const registry = await KeepRegistry.new({from: owner})
+  const registry = await KeepRegistry.new({ from: owner })
 
   const bondedSortitionPoolFactory = await BondedSortitionPoolFactory.new({
     from: owner,
@@ -40,19 +40,19 @@ async function initialize() {
   await TokenStaking.detectNetwork()
   await TokenStaking.link(
     "MinimumStakeSchedule",
-    (await MinimumStakeSchedule.new({from: owner})).address
+    (await MinimumStakeSchedule.new({ from: owner })).address
   )
   await TokenStaking.link(
     "GrantStaking",
-    (await GrantStaking.new({from: owner})).address
+    (await GrantStaking.new({ from: owner })).address
   )
-  await TokenStaking.link("Locks", (await Locks.new({from: owner})).address)
-  await TokenStaking.link("TopUps", (await TopUps.new({from: owner})).address)
+  await TokenStaking.link("Locks", (await Locks.new({ from: owner })).address)
+  await TokenStaking.link("TopUps", (await TopUps.new({ from: owner })).address)
 
   const stakingEscrow = await TokenStakingEscrow.new(
     keepToken.address,
     keepTokenGrant.address,
-    {from: owner}
+    { from: owner }
   )
 
   const stakeInitializationPeriod = 30 // In seconds
@@ -63,17 +63,17 @@ async function initialize() {
     stakingEscrow.address,
     registry.address,
     stakeInitializationPeriod,
-    {from: owner}
+    { from: owner }
   )
-  const tokenGrant = await TokenGrant.new(keepToken.address, {from: owner})
+  const tokenGrant = await TokenGrant.new(keepToken.address, { from: owner })
 
   const keepBonding = await KeepBonding.new(
     registry.address,
     tokenStaking.address,
     tokenGrant.address,
-    {from: owner}
+    { from: owner }
   )
-  const randomBeacon = await RandomBeaconStub.new({from: owner})
+  const randomBeacon = await RandomBeaconStub.new({ from: owner })
   const bondedECDSAKeepMasterContract = await BondedECDSAKeepStub.new({
     from: owner,
   })
@@ -83,10 +83,10 @@ async function initialize() {
     tokenStaking.address,
     keepBonding.address,
     randomBeacon.address,
-    {from: owner}
+    { from: owner }
   )
 
-  await registry.approveOperatorContract(keepFactory.address, {from: owner})
+  await registry.approveOperatorContract(keepFactory.address, { from: owner })
 
   return {
     tokenStaking: tokenStaking,
@@ -101,7 +101,7 @@ async function fund(keepToken, rewardsContract, amount) {
   await keepToken.approveAndCall(rewardsContract.address, amount, "0x0", {
     from: owner,
   })
-  await rewardsContract.markAsFunded({from: owner})
+  await rewardsContract.markAsFunded({ from: owner })
 }
 
 async function createMembers(tokenStaking) {

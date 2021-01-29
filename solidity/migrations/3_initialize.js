@@ -8,7 +8,7 @@ const FullyBackedECDSAKeepFactory = artifacts.require(
 )
 const KeepRegistry = artifacts.require("KeepRegistry")
 
-const {RegistryAddress} = require("./external-contracts")
+const { RegistryAddress } = require("./external-contracts")
 
 module.exports = async function (deployer) {
   let registry

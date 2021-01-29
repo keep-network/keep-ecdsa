@@ -51,13 +51,6 @@ func init() {
 		Usage:       `Provides access to the BondedECDSAKeepVendor contract.`,
 		Description: bondedECDSAKeepVendorDescription,
 		Subcommands: []cli.Command{{
-			Name:      "factory-upgrade-time-delay",
-			Usage:     "Calls the constant method factoryUpgradeTimeDelay on the BondedECDSAKeepVendor contract.",
-			ArgsUsage: "",
-			Action:    becdsakvFactoryUpgradeTimeDelay,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
 			Name:      "initialized",
 			Usage:     "Calls the constant method initialized on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "",
@@ -69,6 +62,13 @@ func init() {
 			Usage:     "Calls the constant method selectFactory on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "",
 			Action:    becdsakvSelectFactory,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "factory-upgrade-time-delay",
+			Usage:     "Calls the constant method factoryUpgradeTimeDelay on the BondedECDSAKeepVendor contract.",
+			ArgsUsage: "",
+			Action:    becdsakvFactoryUpgradeTimeDelay,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -98,26 +98,6 @@ func init() {
 
 /// ------------------- Const methods -------------------
 
-func becdsakvFactoryUpgradeTimeDelay(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepVendor(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.FactoryUpgradeTimeDelayAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
 func becdsakvInitialized(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
 	if err != nil {
@@ -145,6 +125,26 @@ func becdsakvSelectFactory(c *cli.Context) error {
 	}
 
 	result, err := contract.SelectFactoryAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakvFactoryUpgradeTimeDelay(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepVendor(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.FactoryUpgradeTimeDelayAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)

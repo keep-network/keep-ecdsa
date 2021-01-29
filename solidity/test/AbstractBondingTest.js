@@ -1,5 +1,5 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const StakingInfoStub = contract.fromArtifact("StakingInfoStub")
@@ -75,7 +75,7 @@ describe("AbstractBonding", function () {
 
     it("registers unbonded value", async () => {
       await stakingInfoStub.setBeneficiary(operator, beneficiary)
-      await abstractBonding.deposit(operator, {value: value})
+      await abstractBonding.deposit(operator, { value: value })
       const unbonded = await abstractBonding.availableUnbondedValue(
         operator,
         bondCreator,
@@ -91,7 +91,7 @@ describe("AbstractBonding", function () {
 
       await stakingInfoStub.setBeneficiary(operator, beneficiary)
 
-      await abstractBonding.deposit(operator, {value: value1})
+      await abstractBonding.deposit(operator, { value: value1 })
       expect(
         await abstractBonding.availableUnbondedValue(
           operator,
@@ -100,7 +100,7 @@ describe("AbstractBonding", function () {
         )
       ).to.eq.BN(value1, "invalid unbonded value after first deposit")
 
-      await abstractBonding.deposit(operator, {value: value2})
+      await abstractBonding.deposit(operator, { value: value2 })
       expect(
         await abstractBonding.availableUnbondedValue(
           operator,
@@ -115,7 +115,7 @@ describe("AbstractBonding", function () {
 
     it("emits event", async () => {
       await stakingInfoStub.setBeneficiary(operator, beneficiary)
-      const receipt = await abstractBonding.deposit(operator, {value: value})
+      const receipt = await abstractBonding.deposit(operator, { value: value })
       expectEvent(receipt, "UnbondedValueDeposited", {
         operator: operator,
         beneficiary: beneficiary,
@@ -127,7 +127,7 @@ describe("AbstractBonding", function () {
       await stakingInfoStub.setBeneficiary(operator, constants.ZERO_ADDRESS)
 
       await expectRevert(
-        abstractBonding.deposit(operator, {value: value}),
+        abstractBonding.deposit(operator, { value: value }),
         "Beneficiary not defined for the operator"
       )
     })
@@ -138,7 +138,7 @@ describe("AbstractBonding", function () {
 
     beforeEach(async () => {
       await stakingInfoStub.setBeneficiary(operator, beneficiary)
-      await abstractBonding.deposit(operator, {value: value})
+      await abstractBonding.deposit(operator, { value: value })
     })
 
     it("returns zero for operator with no deposit", async () => {
@@ -198,7 +198,7 @@ describe("AbstractBonding", function () {
 
     beforeEach(async () => {
       await stakingInfoStub.setBeneficiary(operator, beneficiary)
-      await abstractBonding.deposit(operator, {value: value})
+      await abstractBonding.deposit(operator, { value: value })
     })
 
     it("creates bond", async () => {
@@ -212,7 +212,7 @@ describe("AbstractBonding", function () {
         reference,
         value,
         sortitionPool,
-        {from: bondCreator}
+        { from: bondCreator }
       )
 
       const unbonded = await abstractBonding.availableUnbondedValue(
@@ -239,7 +239,7 @@ describe("AbstractBonding", function () {
         reference,
         value,
         sortitionPool,
-        {from: bondCreator}
+        { from: bondCreator }
       )
 
       expectEvent(receipt, "BondCreated", {
@@ -262,13 +262,13 @@ describe("AbstractBonding", function () {
       await stakingInfoStub.setBeneficiary(operator2, etherReceiver.address)
       await stakingInfoStub.setAuthorizer(operator2, authorizer2)
 
-      await abstractBonding.deposit(operator2, {value: value})
+      await abstractBonding.deposit(operator2, { value: value })
 
       await stakingInfoStub.authorizeOperatorContract(operator2, bondCreator)
       await abstractBonding.authorizeSortitionPoolContract(
         operator2,
         sortitionPool,
-        {from: authorizer2}
+        { from: authorizer2 }
       )
       await abstractBonding.createBond(
         operator,
@@ -276,7 +276,7 @@ describe("AbstractBonding", function () {
         reference,
         bondValue,
         sortitionPool,
-        {from: bondCreator}
+        { from: bondCreator }
       )
       await abstractBonding.createBond(
         operator2,
@@ -284,7 +284,7 @@ describe("AbstractBonding", function () {
         reference,
         bondValue,
         sortitionPool,
-        {from: bondCreator}
+        { from: bondCreator }
       )
 
       const unbonded1 = await abstractBonding.availableUnbondedValue(
@@ -326,7 +326,7 @@ describe("AbstractBonding", function () {
         reference,
         bondValue,
         sortitionPool,
-        {from: bondCreator}
+        { from: bondCreator }
       )
 
       await expectRevert(
@@ -336,7 +336,7 @@ describe("AbstractBonding", function () {
           reference,
           bondValue,
           sortitionPool,
-          {from: bondCreator}
+          { from: bondCreator }
         ),
         "Reference ID not unique for holder and operator"
       )
@@ -370,14 +370,14 @@ describe("AbstractBonding", function () {
 
     beforeEach(async () => {
       await stakingInfoStub.setBeneficiary(operator, beneficiary)
-      await abstractBonding.deposit(operator, {value: bondValue})
+      await abstractBonding.deposit(operator, { value: bondValue })
       await abstractBonding.createBond(
         operator,
         holder,
         reference,
         bondValue,
         sortitionPool,
-        {from: bondCreator}
+        { from: bondCreator }
       )
     })
 
@@ -387,7 +387,7 @@ describe("AbstractBonding", function () {
         reference,
         newHolder,
         newReference,
-        {from: holder}
+        { from: holder }
       )
 
       let lockedBonds = await abstractBonding.bondAmount(
@@ -425,7 +425,7 @@ describe("AbstractBonding", function () {
         reference,
         holder,
         newReference,
-        {from: holder}
+        { from: holder }
       )
 
       let lockedBonds = await abstractBonding.bondAmount(
@@ -449,7 +449,7 @@ describe("AbstractBonding", function () {
         reference,
         newHolder,
         reference,
-        {from: holder}
+        { from: holder }
       )
 
       let lockedBonds = await abstractBonding.bondAmount(
@@ -473,7 +473,7 @@ describe("AbstractBonding", function () {
         reference,
         newHolder,
         newReference,
-        {from: holder}
+        { from: holder }
       )
 
       expectEvent(receipt, "BondReassigned", {
@@ -500,14 +500,14 @@ describe("AbstractBonding", function () {
     })
 
     it("fails if reassigned to the same holder and the same reference", async () => {
-      await abstractBonding.deposit(operator, {value: bondValue})
+      await abstractBonding.deposit(operator, { value: bondValue })
       await abstractBonding.createBond(
         operator,
         holder,
         newReference,
         bondValue,
         sortitionPool,
-        {from: bondCreator}
+        { from: bondCreator }
       )
 
       await expectRevert(
@@ -533,19 +533,19 @@ describe("AbstractBonding", function () {
 
     beforeEach(async () => {
       await stakingInfoStub.setBeneficiary(operator, beneficiary)
-      await abstractBonding.deposit(operator, {value: initialUnboundedValue})
+      await abstractBonding.deposit(operator, { value: initialUnboundedValue })
       await abstractBonding.createBond(
         operator,
         holder,
         reference,
         bondValue,
         sortitionPool,
-        {from: bondCreator}
+        { from: bondCreator }
       )
     })
 
     it("releases bond amount to operator's available bonding value", async () => {
-      await abstractBonding.freeBond(operator, reference, {from: holder})
+      await abstractBonding.freeBond(operator, reference, { from: holder })
 
       const lockedBonds = await abstractBonding.bondAmount(
         operator,
@@ -578,7 +578,7 @@ describe("AbstractBonding", function () {
 
     it("fails if sender is not the holder", async () => {
       await expectRevert(
-        abstractBonding.freeBond(operator, reference, {from: accounts[0]}),
+        abstractBonding.freeBond(operator, reference, { from: accounts[0] }),
         "Bond not found"
       )
     })
@@ -592,14 +592,14 @@ describe("AbstractBonding", function () {
 
     beforeEach(async () => {
       await stakingInfoStub.setBeneficiary(operator, beneficiary)
-      await abstractBonding.deposit(operator, {value: bondValue})
+      await abstractBonding.deposit(operator, { value: bondValue })
       await abstractBonding.createBond(
         operator,
         holder,
         reference,
         bondValue,
         sortitionPool,
-        {from: bondCreator}
+        { from: bondCreator }
       )
     })
 
@@ -754,7 +754,7 @@ describe("AbstractBonding", function () {
       await abstractBonding.authorizeSortitionPoolContract(
         operator,
         sortitionPool,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       assert.isTrue(
@@ -787,12 +787,12 @@ describe("AbstractBonding", function () {
       await abstractBonding.authorizeSortitionPoolContract(
         operator,
         sortitionPool,
-        {from: authorizer}
+        { from: authorizer }
       )
       await abstractBonding.deauthorizeSortitionPoolContract(
         operator,
         sortitionPool,
-        {from: authorizer}
+        { from: authorizer }
       )
       assert.isFalse(
         await abstractBonding.hasSecondaryAuthorization(
@@ -808,7 +808,7 @@ describe("AbstractBonding", function () {
 
       beforeEach(async () => {
         await stakingInfoStub.setBeneficiary(operator, beneficiary)
-        await abstractBonding.deposit(operator, {value: value})
+        await abstractBonding.deposit(operator, { value: value })
       })
 
       it("transfers unbonded value to beneficiary", async () => {

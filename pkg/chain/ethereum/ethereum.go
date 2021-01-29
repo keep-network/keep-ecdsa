@@ -112,8 +112,8 @@ func (ec *EthereumChain) OnKeepClosed(
 		handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
 	}
 	return keepContract.KeepClosed(&ethutil.SubscribeOpts{
-		TickDuration: 4 * time.Hour,
-		BlocksBack:   2000,
+		Tick:       4 * time.Hour,
+		PastBlocks: 2000,
 	}).OnEvent(onEvent), nil
 }
 
@@ -132,8 +132,8 @@ func (ec *EthereumChain) OnKeepTerminated(
 		handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
 	}
 	return keepContract.KeepTerminated(&ethutil.SubscribeOpts{
-		TickDuration: 4 * time.Hour,
-		BlocksBack:   2000,
+		Tick:       4 * time.Hour,
+		PastBlocks: 2000,
 	}).OnEvent(onEvent), nil
 }
 

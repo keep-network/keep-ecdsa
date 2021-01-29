@@ -1,7 +1,11 @@
-const {accounts, contract} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { accounts, contract } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 
-const {expectEvent, expectRevert, time} = require("@openzeppelin/test-helpers")
+const {
+  expectEvent,
+  expectRevert,
+  time,
+} = require("@openzeppelin/test-helpers")
 
 const BondedECDSAKeepVendor = contract.fromArtifact("BondedECDSAKeepVendor")
 const BondedECDSAKeepVendorImplV1Stub = contract.fromArtifact(
@@ -36,7 +40,7 @@ describe("BondedECDSAKeepVendorUpgrade", function () {
     keepVendorProxy = await BondedECDSAKeepVendor.new(
       implV1.address,
       initializeCallData,
-      {from: proxyAdmin}
+      { from: proxyAdmin }
     )
   })
 
@@ -91,7 +95,7 @@ describe("BondedECDSAKeepVendorUpgrade", function () {
       await time.increase(await keepVendorProxy.upgradeTimeDelay())
 
       await expectRevert(
-        keepVendorProxy.completeUpgrade({from: proxyAdmin}),
+        keepVendorProxy.completeUpgrade({ from: proxyAdmin }),
         "revert"
       )
     })
@@ -110,7 +114,7 @@ describe("BondedECDSAKeepVendorUpgrade", function () {
       })
       await time.increase(await keepVendorProxy.upgradeTimeDelay())
 
-      await keepVendorProxy.completeUpgrade({from: proxyAdmin})
+      await keepVendorProxy.completeUpgrade({ from: proxyAdmin })
 
       await keepVendorProxy.upgradeTo(implV1.address, initializeCallData1, {
         from: proxyAdmin,
@@ -118,7 +122,7 @@ describe("BondedECDSAKeepVendorUpgrade", function () {
       await time.increase(await keepVendorProxy.upgradeTimeDelay())
 
       await expectRevert(
-        keepVendorProxy.completeUpgrade({from: proxyAdmin}),
+        keepVendorProxy.completeUpgrade({ from: proxyAdmin }),
         "Contract is already initialized"
       )
     })

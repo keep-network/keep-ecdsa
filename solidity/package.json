@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/keep-ecdsa",
-  "version": "1.6.0-pre.0",
+  "version": "1.7.0-pre.0",
   "description": "Smart contracts for ECDSA Keep",
   "repository": {
     "type": "git",
@@ -19,13 +19,10 @@
     "test:quick": "mocha --exit --recursive --timeout 45000",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:fix": "npm run lint:fix:js && npm run lint:fix:sol",
-    "lint:js": "eslint ${npm_package_config_eslintPaths}",
-    "lint:fix:js": "eslint --fix ${npm_package_config_eslintPaths}",
-    "lint:sol": "solium -d contracts/ && prettier --list-different **/*.sol",
-    "lint:fix:sol": "solium -d contracts/ --fix && prettier --write **/*.sol"
-  },
-  "config": {
-    "eslintPaths": "test/ migrations/ scripts/ integration/"
+    "lint:js": "eslint .",
+    "lint:fix:js": "eslint --fix .",
+    "lint:sol": "solium -d contracts/ && prettier --check '**/*.sol'",
+    "lint:fix:sol": "solium -d contracts/ --fix && prettier --write '**/*.sol'"
   },
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
@@ -57,7 +54,7 @@
     "ethlint": "^1.2.5",
     "mocha": "^7.1.1",
     "prettier": "^2.0.2",
-    "prettier-plugin-solidity": "^1.0.0-alpha.47",
+    "prettier-plugin-solidity": "^1.0.0-beta.2",
     "solc": "0.5.17",
     "solium-config-keep": "github:keep-network/solium-config-keep#0.1.2",
     "toml": "^3.0.0",

@@ -1,6 +1,6 @@
-const {contract, web3, accounts} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
-const {time} = require("@openzeppelin/test-helpers")
+const { contract, web3, accounts } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
+const { time, expectRevert } = require("@openzeppelin/test-helpers")
 
 const LPRewards = contract.fromArtifact("LPRewards")
 const KeepToken = contract.fromArtifact("KeepToken")
@@ -9,6 +9,10 @@ const WrappedToken = contract.fromArtifact("TestToken")
 const LPRewardsTBTCETH = contract.fromArtifact("LPRewardsTBTCETH")
 const LPRewardsKEEPETH = contract.fromArtifact("LPRewardsKEEPETH")
 const LPRewardsKEEPTBTC = contract.fromArtifact("LPRewardsKEEPTBTC")
+const LPRewardsTBTCSaddle = contract.fromArtifact("LPRewardsTBTCSaddle")
+
+const LPRewardsStaker = contract.fromArtifact("LPRewardsStaker")
+
 const BatchedPhasedEscrow = contract.fromArtifact("BatchedPhasedEscrow")
 const StakingPoolRewardsEscrowBeneficiary = contract.fromArtifact(
   "StakingPoolRewardsEscrowBeneficiary"
@@ -37,7 +41,7 @@ describe("LPRewards", () => {
   let wrappedToken
 
   before(async () => {
-    keepToken = await KeepToken.new({from: keepTokenOwner})
+    keepToken = await KeepToken.new({ from: keepTokenOwner })
     // This is a "Pair" Uniswap Token which is created here:
     // https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/UniswapV2Factory.sol#L23
     //
@@ -45,7 +49,7 @@ describe("LPRewards", () => {
     // - KEEP/ETH (https://info.uniswap.org/pair/0xe6f19dab7d43317344282f803f8e8d240708174a)
     // - TBTC/ETH (https://info.uniswap.org/pair/0x854056fd40c1b52037166285b2e54fee774d33f6)
     // - KEEP/TBTC (https://info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081)
-    wrappedToken = await WrappedToken.new({from: wrappedTokenOwner})
+    wrappedToken = await WrappedToken.new({ from: wrappedTokenOwner })
     lpRewards = await LPRewards.new(keepToken.address, wrappedToken.address, {
       from: lpRewardsOwner,
     })
@@ -157,7 +161,7 @@ describe("LPRewards", () => {
       const wrappedTokensToStake = web3.utils
         .toBN(2000)
         .mul(tokenDecimalMultiplier)
-      await lpRewards.stake(wrappedTokensToStake, {from: staker1})
+      await lpRewards.stake(wrappedTokensToStake, { from: staker1 })
 
       const periodFinish = (await time.latest()).add(time.duration.days(7))
       await time.increaseTo(periodFinish)
@@ -205,13 +209,13 @@ describe("LPRewards", () => {
       const wrappedTokensToStake = web3.utils
         .toBN(2000)
         .mul(tokenDecimalMultiplier)
-      await lpRewards.stake(wrappedTokensToStake, {from: staker1})
+      await lpRewards.stake(wrappedTokensToStake, { from: staker1 })
 
       const future = (await time.latest()).add(time.duration.days(7))
       await time.increaseTo(future)
 
       // Withdraw wrapped tokens and KEEP rewards
-      await lpRewards.exit({from: staker1})
+      await lpRewards.exit({ from: staker1 })
 
       // Earned KEEP rewards for adding liquidity
       const keepEarnedRewards = (await keepToken.balanceOf(staker1)).div(
@@ -303,18 +307,18 @@ describe("LPRewards", () => {
       const lpReward1 = await LPRewardsTBTCETH.new(
         keepToken.address,
         wrappedToken.address,
-        {from: lpRewardsOwner}
+        { from: lpRewardsOwner }
       )
       const lpReward2 = await LPRewardsKEEPETH.new(
         keepToken.address,
         wrappedToken.address,
-        {from: lpRewardsOwner}
+        { from: lpRewardsOwner }
       )
 
       const lpReward3 = await LPRewardsKEEPTBTC.new(
         keepToken.address,
         wrappedToken.address,
-        {from: lpRewardsOwner}
+        { from: lpRewardsOwner }
       )
 
       // Deploy beneficiaries contracts for each LP Rewards contract.
@@ -366,7 +370,7 @@ describe("LPRewards", () => {
       const beneficiary = await StakingPoolRewardsEscrowBeneficiary.new(
         keepToken.address,
         destinationRewardsContract.address,
-        {from: owner}
+        { from: owner }
       )
       await beneficiary.transferOwnership(fundingEscrow.address, {
         from: owner,
@@ -391,7 +395,7 @@ describe("LPRewards", () => {
     await lpRewards.setRewardDistribution(rewardDistribution, {
       from: lpRewardsOwner,
     })
-    await keepToken.approve(address, amount, {from: rewardDistribution})
+    await keepToken.approve(address, amount, { from: rewardDistribution })
     await lpRewards.notifyRewardAmount(amount, {
       from: rewardDistribution,
     })
@@ -399,6 +403,151 @@ describe("LPRewards", () => {
 
   async function mintAndApproveWrappedTokens(staker, amount) {
     await wrappedToken.mint(staker, amount)
-    await wrappedToken.approve(lpRewards.address, amount, {from: staker})
+    await wrappedToken.approve(lpRewards.address, amount, { from: staker })
   }
+})
+
+describe("LPRewardsTBTCSaddle", () => {
+  const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
+
+  const keepTokenOwner = accounts[1]
+  const lpTokenOwner = accounts[2]
+
+  const lpRewardsOwner = accounts[3]
+
+  const stakerEOA = accounts[4]
+  const thirdParty = accounts[5]
+
+  let keepToken
+  let lpToken
+  let lpRewards
+  let stakerContract
+
+  before(async () => {
+    keepToken = await KeepToken.new({ from: keepTokenOwner })
+    lpToken = await WrappedToken.new({ from: lpTokenOwner })
+    lpRewards = await LPRewardsTBTCSaddle.new(
+      keepToken.address,
+      lpToken.address,
+      { from: lpRewardsOwner }
+    )
+    stakerContract = await LPRewardsStaker.new(
+      lpToken.address,
+      lpRewards.address
+    )
+
+    const keepRewardsAmount = web3.utils.toBN(2016).mul(tokenDecimalMultiplier)
+    await lpRewards.setRewardDistribution(keepTokenOwner, {
+      from: lpRewardsOwner,
+    })
+    await keepToken.approve(lpRewards.address, keepRewardsAmount, {
+      from: keepTokenOwner,
+    })
+    await lpRewards.notifyRewardAmount(keepRewardsAmount, {
+      from: keepTokenOwner,
+    })
+  })
+
+  beforeEach(async () => {
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot()
+  })
+
+  describe("constructor", () => {
+    it("enables gated state", async () => {
+      expect(await lpRewards.gated()).to.be.true
+    })
+  })
+
+  describe("setGated", () => {
+    it("can be called by owner", async () => {
+      await lpRewards.setGated(false, { from: lpRewardsOwner })
+      // ok, did not revert
+    })
+
+    it("can not be called by non-owner", async () => {
+      await expectRevert(
+        lpRewards.setGated(false, { from: thirdParty }),
+        "Ownable: caller is not the owner"
+      )
+    })
+
+    it("updates gated state", async () => {
+      await lpRewards.setGated(false, { from: lpRewardsOwner })
+      expect(await lpRewards.gated()).to.be.false
+
+      await lpRewards.setGated(true, { from: lpRewardsOwner })
+      expect(await lpRewards.gated()).to.be.true
+    })
+  })
+
+  describe("stake", () => {
+    it("in the non-gated state allows an externally owned account to stake", async () => {
+      await lpRewards.setGated(false, { from: lpRewardsOwner })
+
+      const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
+
+      await lpToken.mint(stakerEOA, lpTokenAmount)
+      await lpToken.approve(lpRewards.address, lpTokenAmount, {
+        from: stakerEOA,
+      })
+      await lpRewards.stake(lpTokenAmount, { from: stakerEOA })
+      // ok, no did not revert
+    })
+
+    it("in the non-gated state allows a contract to stake", async () => {
+      await lpRewards.setGated(false, { from: lpRewardsOwner })
+
+      const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
+
+      await lpToken.mint(stakerContract.address, lpTokenAmount)
+      await stakerContract.stake(lpTokenAmount, { from: stakerEOA })
+      // ok, did not revert
+    })
+
+    it("in the gated state allows an externally owned account to stake", async () => {
+      await lpRewards.setGated(true, { from: lpRewardsOwner })
+
+      const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
+
+      await lpToken.mint(stakerEOA, lpTokenAmount)
+      await lpToken.approve(lpRewards.address, lpTokenAmount, {
+        from: stakerEOA,
+      })
+      await lpRewards.stake(lpTokenAmount, { from: stakerEOA })
+      // ok, no did not revert
+    })
+
+    it("in the gated state does not allow a contract to stake", async () => {
+      await lpRewards.setGated(true, { from: lpRewardsOwner })
+
+      const lpTokenAmount = web3.utils.toBN(1987).mul(tokenDecimalMultiplier)
+
+      await lpToken.mint(stakerContract.address, lpTokenAmount)
+      await expectRevert(
+        stakerContract.stake(lpTokenAmount, { from: stakerEOA }),
+        "Only Externally Owned Account can stake"
+      )
+    })
+
+    // Just a simple check that parent LPRewards stake() is called.
+    // Detailed behavior already covered by LPRewards unit tests.
+    it("updates balance sheet", async () => {
+      let lpTokenBalance = await lpToken.balanceOf(lpRewards.address)
+      expect(lpTokenBalance).to.eq.BN(0)
+
+      const lpTokenAmount = web3.utils.toBN(9999).mul(tokenDecimalMultiplier)
+      await lpToken.mint(stakerEOA, lpTokenAmount)
+      await lpToken.approve(lpRewards.address, lpTokenAmount, {
+        from: stakerEOA,
+      })
+      await lpRewards.stake(lpTokenAmount, { from: stakerEOA })
+
+      lpTokenBalance = await lpToken.balanceOf(lpRewards.address)
+      expect(lpTokenBalance).to.eq.BN(lpTokenAmount)
+    })
+  })
 })

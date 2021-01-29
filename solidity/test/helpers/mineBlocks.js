@@ -1,4 +1,4 @@
-const {web3} = require("@openzeppelin/test-environment")
+const { web3 } = require("@openzeppelin/test-environment")
 
 /**
  *  Mines specific number of blocks.
