@@ -4,7 +4,6 @@ package client
 import (
 	"context"
 	"math/big"
-	"sync"
 	"time"
 
 	"github.com/keep-network/keep-common/pkg/chain/chainutil"
@@ -17,9 +16,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/client/event"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
+	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
 var logger = log.Logger("keep-ecdsa")
@@ -58,14 +59,10 @@ func Initialize(
 
 	tssNode.InitializeTSSPreParamsPool()
 
-	requestedSigners := &requestedSignersTrack{
-		data:  make(map[string]bool),
-		mutex: &sync.Mutex{},
-	}
-	requestedSignatures := &requestedSignaturesTrack{
-		data:  make(map[string]map[string]bool),
-		mutex: &sync.Mutex{},
-	}
+	eventDeduplicator := event.NewDeduplicator(
+		keepsRegistry,
+		ethereumChain,
+	)
 
 	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
@@ -144,7 +141,7 @@ func Initialize(
 				tssNode,
 				keepAddress,
 				signer,
-				requestedSignatures,
+				eventDeduplicator,
 			)
 			if err != nil {
 				logger.Errorf(
@@ -162,12 +159,14 @@ func Initialize(
 				keepAddress,
 				keepsRegistry,
 				subscriptionOnSignatureRequested,
+				eventDeduplicator,
 			)
 			go monitorKeepTerminatedEvent(
 				ethereumChain,
 				keepAddress,
 				keepsRegistry,
 				subscriptionOnSignatureRequested,
+				eventDeduplicator,
 			)
 
 		}(keepAddress)
@@ -180,35 +179,31 @@ func Initialize(
 		tssNode,
 		operatorPublicKey,
 		keepsRegistry,
-		requestedSignatures,
+		eventDeduplicator,
 	)
 
 	// Watch for new keeps creation.
 	_ = ethereumChain.OnBondedECDSAKeepCreated(func(event *eth.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(
-			"new keep [%s] created with members: [%x]\n",
+			"new keep [%s] created with members: [%x] at block [%d]",
 			event.KeepAddress.String(),
 			event.Members,
+			event.BlockNumber,
 		)
 
 		if event.IsMember(ethereumChain.Address()) {
 			go func(event *eth.BondedECDSAKeepCreatedEvent) {
-				if ok := requestedSigners.add(event.KeepAddress); !ok {
-					logger.Warningf(
-						"keep creation event for keep [%s] already registered",
+				if shouldHandle := eventDeduplicator.NotifyKeyGenStarted(event.KeepAddress); !shouldHandle {
+					logger.Infof(
+						"key generation request for keep [%s] already handled",
 						event.KeepAddress.String(),
 					)
-					return
-				}
-				defer requestedSigners.remove(event.KeepAddress)
 
-				if keepsRegistry.HasSigner(event.KeepAddress) {
-					logger.Warning(
-						"signer for keep [%s] already registered;",
-						event.KeepAddress.String(),
-					)
+					// currently handling or already handled in the past
+					// in case this event is a duplicate.
 					return
 				}
+				defer eventDeduplicator.NotifyKeyGenCompleted(event.KeepAddress)
 
 				generateKeyForKeep(
 					ctx,
@@ -217,12 +212,17 @@ func Initialize(
 					tssNode,
 					operatorPublicKey,
 					keepsRegistry,
-					requestedSignatures,
+					eventDeduplicator,
 					event.KeepAddress,
 					event.Members,
 					event.HonestThreshold,
 				)
 			}(event)
+		} else {
+			logger.Infof(
+				"not a signing group member in keep [%s], skipping",
+				event.KeepAddress.String(),
+			)
 		}
 	})
 
@@ -242,7 +242,7 @@ func checkAwaitingKeyGeneration(
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
-	requestedSignatures *requestedSignaturesTrack,
+	eventDeduplicator *event.Deduplicator,
 ) {
 	keepCount, err := ethereumChain.GetKeepCount()
 	if err != nil {
@@ -302,7 +302,7 @@ func checkAwaitingKeyGeneration(
 			tssNode,
 			operatorPublicKey,
 			keepsRegistry,
-			requestedSignatures,
+			eventDeduplicator,
 			keep,
 		)
 		if err != nil {
@@ -322,7 +322,7 @@ func checkAwaitingKeyGenerationForKeep(
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
-	requestedSignatures *requestedSignaturesTrack,
+	eventDeduplicator *event.Deduplicator,
 	keep common.Address,
 ) error {
 	publicKey, err := ethereumChain.GetPublicKey(keep)
@@ -369,7 +369,7 @@ func checkAwaitingKeyGenerationForKeep(
 				tssNode,
 				operatorPublicKey,
 				keepsRegistry,
-				requestedSignatures,
+				eventDeduplicator,
 				keep,
 				members,
 				honestThreshold,
@@ -389,7 +389,7 @@ func generateKeyForKeep(
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
-	requestedSignatures *requestedSignaturesTrack,
+	eventDeduplicator *event.Deduplicator,
 	keepAddress common.Address,
 	members []common.Address,
 	honestThreshold uint64,
@@ -462,7 +462,7 @@ func generateKeyForKeep(
 		tssNode,
 		keepAddress,
 		signer,
-		requestedSignatures,
+		eventDeduplicator,
 	)
 	if err != nil {
 		logger.Errorf(
@@ -483,12 +483,14 @@ func generateKeyForKeep(
 		keepAddress,
 		keepsRegistry,
 		subscriptionOnSignatureRequested,
+		eventDeduplicator,
 	)
 	go monitorKeepTerminatedEvent(
 		ethereumChain,
 		keepAddress,
 		keepsRegistry,
 		subscriptionOnSignatureRequested,
+		eventDeduplicator,
 	)
 }
 
@@ -521,7 +523,7 @@ func monitorSigningRequests(
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
-	requestedSignatures *requestedSignaturesTrack,
+	eventDeduplicator *event.Deduplicator,
 ) (subscription.EventSubscription, error) {
 	go checkAwaitingSignature(
 		ethereumChain,
@@ -529,7 +531,7 @@ func monitorSigningRequests(
 		tssNode,
 		keepAddress,
 		signer,
-		requestedSignatures,
+		eventDeduplicator,
 	)
 
 	return ethereumChain.OnSignatureRequested(
@@ -543,44 +545,81 @@ func monitorSigningRequests(
 			)
 
 			go func(event *eth.SignatureRequestedEvent) {
-				if ok := requestedSignatures.add(keepAddress, event.Digest); !ok {
-					logger.Warningf(
-						"signature requested event for keep [%s] and digest [%x] already registered",
-						keepAddress.String(),
-						event.Digest,
-					)
-					return
-				}
-				defer requestedSignatures.remove(keepAddress, event.Digest)
+				err := utils.DoWithDefaultRetry(
+					clientConfig.GetSigningTimeout(),
+					// TODO: extract the code into a separate function and see if
+					// there is a way to deduplicate common parts with
+					// checkAwaitingSignature function.
+					func(ctx context.Context) error {
+						shouldHandle, err := eventDeduplicator.NotifySigningStarted(keepAddress, event.Digest)
+						if err != nil {
+							logger.Errorf(
+								"could not deduplicate signing request event: [%v]",
+								err,
+							)
+							return err
+						}
 
-				isAwaitingSignature, err := chainutil.WaitForBlockConfirmations(
-					ethereumChain.BlockCounter(),
-					event.BlockNumber,
-					blockConfirmations,
-					func() (bool, error) {
-						return ethereumChain.IsAwaitingSignature(keepAddress, event.Digest)
+						if !shouldHandle {
+							logger.Infof(
+								"signing request for keep [%s] and digest [%+x] already handled",
+								keepAddress.String(),
+								event.Digest,
+							)
+							// currently handling or already handled in the past
+							// in case this event is a duplicate.
+							return nil
+						}
+
+						defer eventDeduplicator.NotifySigningCompleted(keepAddress, event.Digest)
+
+						isAwaitingSignature, err := chainutil.WaitForBlockConfirmations(
+							ethereumChain.BlockCounter(),
+							event.BlockNumber,
+							blockConfirmations,
+							func() (bool, error) {
+								return ethereumChain.IsAwaitingSignature(keepAddress, event.Digest)
+							},
+						)
+						if err != nil {
+							logger.Errorf(
+								"failed to confirm signing request for keep [%s] and digest [%+x]: [%v]",
+								keepAddress.String(),
+								event.Digest,
+								err,
+							)
+							return err
+						}
+
+						if !isAwaitingSignature {
+							logger.Warningf(
+								"keep [%s] is not awaiting a signature for digest [%+x]",
+								keepAddress.String(),
+								event.Digest,
+							)
+
+							// deeper chain reorg, nothing we should do
+							return nil
+						}
+
+						if err := tssNode.CalculateSignature(
+							ctx,
+							signer,
+							event.Digest,
+						); err != nil {
+							logger.Errorf(
+								"signature calculation failed for keep [%s]: [%v]",
+								keepAddress.String(),
+								err,
+							)
+						}
+
+						return err
 					},
 				)
 				if err != nil {
-					logger.Errorf(
-						"failed to confirm signing request for digest [%+x] and keep [%s]: [%v]",
-						event.Digest,
-						keepAddress.String(),
-						err,
-					)
-					return
+					logger.Errorf("failed to generate a signature: [%v]", err)
 				}
-
-				if !isAwaitingSignature {
-					logger.Warningf(
-						"keep [%s] is not awaiting a signature for digest [%+x]",
-						keepAddress.String(),
-						event.Digest,
-					)
-					return
-				}
-
-				generateSignatureForKeep(clientConfig, tssNode, keepAddress, signer, event.Digest)
 			}(event)
 		},
 	)
@@ -592,7 +631,7 @@ func checkAwaitingSignature(
 	tssNode *node.Node,
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,
-	requestedSignatures *requestedSignaturesTrack,
+	eventDeduplicator *event.Deduplicator,
 ) {
 	logger.Debugf("checking awaiting signature for keep [%s]", keepAddress.String())
 
@@ -620,91 +659,99 @@ func checkAwaitingSignature(
 			latestDigest,
 		)
 
-		if ok := requestedSignatures.add(keepAddress, latestDigest); !ok {
-			logger.Warningf(
-				"signature requested event for keep [%s] and digest [%x] already registered",
-				keepAddress.String(),
-				latestDigest,
-			)
-			return
-		}
-		defer requestedSignatures.remove(keepAddress, latestDigest)
-
-		startBlock, err := ethereumChain.SignatureRequestedBlock(keepAddress, latestDigest)
-		if err != nil {
-			logger.Errorf(
-				"failed to get signature request block height for keep [%s] and digest [%x]: [%v]",
-				keepAddress.String(),
-				latestDigest,
-				err,
-			)
-			return
-		}
-
-		isStillAwaitingSignature, err := chainutil.WaitForBlockConfirmations(
-			ethereumChain.BlockCounter(),
-			startBlock,
-			blockConfirmations,
-			func() (bool, error) {
-				isAwaitingSignature, err := ethereumChain.IsAwaitingSignature(keepAddress, latestDigest)
+		err := utils.DoWithDefaultRetry(
+			clientConfig.GetSigningTimeout(),
+			func(ctx context.Context) error {
+				shouldHandle, err := eventDeduplicator.NotifySigningStarted(keepAddress, latestDigest)
 				if err != nil {
-					return false, err
+					logger.Errorf(
+						"could not deduplicate signing request event: [%v]",
+						err,
+					)
+					return err
 				}
 
-				isActive, err := ethereumChain.IsActive(keepAddress)
-				if err != nil {
-					return false, err
+				if !shouldHandle {
+					logger.Infof(
+						"signing request for keep [%s] and digest [%+x] already handled",
+						keepAddress.String(),
+						latestDigest,
+					)
+					// currently handling - it is possible that event
+					// subscription also received this event
+					return nil
 				}
 
-				return (isAwaitingSignature && isActive), nil
+				defer eventDeduplicator.NotifySigningCompleted(keepAddress, latestDigest)
+
+				startBlock, err := ethereumChain.SignatureRequestedBlock(keepAddress, latestDigest)
+				if err != nil {
+					logger.Errorf(
+						"failed to get signature request block height for keep [%s] and digest [%x]: [%v]",
+						keepAddress.String(),
+						latestDigest,
+						err,
+					)
+					return err
+				}
+
+				isStillAwaitingSignature, err := chainutil.WaitForBlockConfirmations(
+					ethereumChain.BlockCounter(),
+					startBlock,
+					blockConfirmations,
+					func() (bool, error) {
+						isAwaitingSignature, err := ethereumChain.IsAwaitingSignature(keepAddress, latestDigest)
+						if err != nil {
+							return false, err
+						}
+
+						isActive, err := ethereumChain.IsActive(keepAddress)
+						if err != nil {
+							return false, err
+						}
+
+						return (isAwaitingSignature && isActive), nil
+					},
+				)
+				if err != nil {
+					logger.Errorf(
+						"failed to confirm signing request for keep [%s] and digest [%+x]: [%v]",
+						keepAddress.String(),
+						latestDigest,
+						err,
+					)
+					return err
+				}
+
+				if !isStillAwaitingSignature {
+					logger.Warningf(
+						"keep [%s] is not awaiting a signature for digest [%+x]",
+						keepAddress.String(),
+						latestDigest,
+					)
+
+					// deeper chain reorg, nothing we should do
+					return nil
+				}
+
+				if err := tssNode.CalculateSignature(
+					ctx,
+					signer,
+					latestDigest,
+				); err != nil {
+					logger.Errorf(
+						"signature calculation failed for keep [%s]: [%v]",
+						keepAddress.String(),
+						err,
+					)
+				}
+
+				return err
 			},
 		)
 		if err != nil {
-			logger.Errorf(
-				"failed to confirm signing request for digest [%+x] and keep [%s]: [%v]",
-				latestDigest,
-				keepAddress.String(),
-				err,
-			)
-			return
+			logger.Errorf("failed to generate a signature: [%v]", err)
 		}
-
-		if !isStillAwaitingSignature {
-			logger.Warningf(
-				"keep [%s] is not awaiting a signature for digest [%+x]",
-				keepAddress.String(),
-				latestDigest,
-			)
-			return
-		}
-
-		generateSignatureForKeep(clientConfig, tssNode, keepAddress, signer, latestDigest)
-	}
-}
-
-func generateSignatureForKeep(
-	clientConfig *Config,
-	tssNode *node.Node,
-	keepAddress common.Address,
-	signer *tss.ThresholdSigner,
-	digest [32]byte,
-) {
-	signingCtx, cancel := context.WithTimeout(
-		context.Background(),
-		clientConfig.GetSigningTimeout(),
-	)
-	defer cancel()
-
-	if err := tssNode.CalculateSignature(
-		signingCtx,
-		signer,
-		digest,
-	); err != nil {
-		logger.Errorf(
-			"signature calculation failed for keep [%s]: [%v]",
-			keepAddress.String(),
-			err,
-		)
 	}
 }
 
@@ -716,6 +763,7 @@ func monitorKeepClosedEvents(
 	keepAddress common.Address,
 	keepsRegistry *registry.Keeps,
 	subscriptionOnSignatureRequested subscription.EventSubscription,
+	eventDeduplicator *event.Deduplicator,
 ) {
 	keepClosed := make(chan *eth.KeepClosedEvent)
 
@@ -728,30 +776,44 @@ func monitorKeepClosedEvents(
 				event.BlockNumber,
 			)
 
-			isKeepActive, err := chainutil.WaitForBlockConfirmations(
-				ethereumChain.BlockCounter(),
-				event.BlockNumber,
-				blockConfirmations,
-				func() (bool, error) {
-					return ethereumChain.IsActive(keepAddress)
-				},
-			)
-			if err != nil {
-				logger.Errorf(
-					"failed to confirm keep [%s] closure: [%v]",
-					keepAddress.String(),
-					err,
+			go func(event *eth.KeepClosedEvent) {
+				if shouldHandle := eventDeduplicator.NotifyClosingStarted(keepAddress); !shouldHandle {
+					logger.Infof(
+						"close event for keep [%s] already handled",
+						keepAddress.String(),
+					)
+
+					// currently handling or already handled in the past
+					// in case this event is a duplicate.
+					return
+				}
+				defer eventDeduplicator.NotifyClosingCompleted(keepAddress)
+
+				isKeepActive, err := chainutil.WaitForBlockConfirmations(
+					ethereumChain.BlockCounter(),
+					event.BlockNumber,
+					blockConfirmations,
+					func() (bool, error) {
+						return ethereumChain.IsActive(keepAddress)
+					},
 				)
-				return
-			}
+				if err != nil {
+					logger.Errorf(
+						"failed to confirm keep [%s] closed: [%v]",
+						keepAddress.String(),
+						err,
+					)
+					return
+				}
 
-			if isKeepActive {
-				logger.Warningf("keep [%s] has not been closed", keepAddress.String())
-				return
-			}
+				if isKeepActive {
+					logger.Warningf("keep [%s] has not been closed", keepAddress.String())
+					return
+				}
 
-			keepsRegistry.UnregisterKeep(keepAddress)
-			keepClosed <- event
+				keepsRegistry.UnregisterKeep(keepAddress)
+				keepClosed <- event
+			}(event)
 		},
 	)
 	if err != nil {
@@ -780,6 +842,7 @@ func monitorKeepTerminatedEvent(
 	keepAddress common.Address,
 	keepsRegistry *registry.Keeps,
 	subscriptionOnSignatureRequested subscription.EventSubscription,
+	eventDeduplicator *event.Deduplicator,
 ) {
 	keepTerminated := make(chan *eth.KeepTerminatedEvent)
 
@@ -792,30 +855,44 @@ func monitorKeepTerminatedEvent(
 				event.BlockNumber,
 			)
 
-			isKeepActive, err := chainutil.WaitForBlockConfirmations(
-				ethereumChain.BlockCounter(),
-				event.BlockNumber,
-				blockConfirmations,
-				func() (bool, error) {
-					return ethereumChain.IsActive(keepAddress)
-				},
-			)
-			if err != nil {
-				logger.Errorf(
-					"failed to confirm keep [%s] termination: [%v]",
-					keepAddress.String(),
-					err,
+			go func(event *eth.KeepTerminatedEvent) {
+				if shouldHandle := eventDeduplicator.NotifyTerminatingStarted(keepAddress); !shouldHandle {
+					logger.Infof(
+						"terminate event for keep [%s] already handled",
+						keepAddress.String(),
+					)
+
+					// currently handling or already handled in the past
+					// in case this event is a duplicate.
+					return
+				}
+				defer eventDeduplicator.NotifyTerminatingCompleted(keepAddress)
+
+				isKeepActive, err := chainutil.WaitForBlockConfirmations(
+					ethereumChain.BlockCounter(),
+					event.BlockNumber,
+					blockConfirmations,
+					func() (bool, error) {
+						return ethereumChain.IsActive(keepAddress)
+					},
 				)
-				return
-			}
+				if err != nil {
+					logger.Errorf(
+						"failed to confirm keep [%s] termination: [%v]",
+						keepAddress.String(),
+						err,
+					)
+					return
+				}
 
-			if isKeepActive {
-				logger.Warningf("keep [%s] has not been terminated", keepAddress.String())
-				return
-			}
+				if isKeepActive {
+					logger.Warningf("keep [%s] has not been terminated", keepAddress.String())
+					return
+				}
 
-			keepsRegistry.UnregisterKeep(keepAddress)
-			keepTerminated <- event
+				keepsRegistry.UnregisterKeep(keepAddress)
+				keepTerminated <- event
+			}(event)
 		},
 	)
 	if err != nil {

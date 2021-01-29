@@ -85,6 +85,14 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
 	miningWaiter := ethutil.NewMiningWaiter(wrappedClient, checkInterval, maxGasPrice)
 
+	blockCounter, err := blockcounter.CreateBlockCounter(wrappedClient)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create Ethereum blockcounter: [%v]",
+			err,
+		)
+	}
+
 	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(BondedECDSAKeepFactoryContractName)
 	if err != nil {
 		return nil, err
@@ -95,18 +103,11 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		wrappedClient,
 		nonceManager,
 		miningWaiter,
+		blockCounter,
 		transactionMutex,
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	blockCounter, err := blockcounter.CreateBlockCounter(wrappedClient)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to create Ethereum blockcounter: [%v]",
-			err,
-		)
 	}
 
 	return &EthereumChain{

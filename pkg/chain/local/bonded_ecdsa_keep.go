@@ -29,7 +29,7 @@ type localKeep struct {
 	signatureSubmittedEvents []*eth.SignatureSubmittedEvent
 }
 
-func (c *localChain) requestSignature(keepAddress common.Address, digest [32]byte) error {
+func (c *localChain) RequestSignature(keepAddress common.Address, digest [32]byte) error {
 	c.localChainMutex.Lock()
 	defer c.localChainMutex.Unlock()
 

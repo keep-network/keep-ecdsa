@@ -2,6 +2,7 @@ package local
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -86,7 +87,7 @@ func TestOnSignatureRequested(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,11 +135,15 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(keepPublicKey, chain.keeps[keepAddress].publicKey) {
+	onChainPubKey, err := chain.GetPublicKey(keepAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hex.EncodeToString(keepPublicKey[:]) != hex.EncodeToString(onChainPubKey) {
 		t.Errorf(
 			"unexpected result\nexpected: [%+v]\nactual:   [%+v]",
-			keepPublicKey,
-			chain.keeps[keepAddress].publicKey,
+			hex.EncodeToString(keepPublicKey[:]),
+			hex.EncodeToString(onChainPubKey),
 		)
 	}
 
@@ -179,7 +184,7 @@ func TestSubmitSignature(t *testing.T) {
 
 	digest := [32]byte{17, 18}
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,6 +227,63 @@ func TestSubmitSignature(t *testing.T) {
 			expectedEvent,
 			lastEvent,
 		)
+	}
+}
+
+func TestIsAwaitingSignature(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := initializeLocalChain(ctx)
+
+	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
+	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
+
+	err := chain.createKeep(keepAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = chain.SubmitKeepPublicKey(
+		keepAddress,
+		keepPublicKey,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	digest := [32]byte{17, 18}
+
+	err = chain.RequestSignature(keepAddress, digest)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isAwaitingSignature, err := chain.IsAwaitingSignature(keepAddress, digest)
+	if !isAwaitingSignature {
+		t.Error("keep should be awaiting for a signature for requested digest")
+	}
+
+	anotherDigest := [32]byte{18, 17}
+	isAwaitingSignature, err = chain.IsAwaitingSignature(keepAddress, anotherDigest)
+	if !isAwaitingSignature {
+		t.Error("keep should not be awaiting for a signature for a not requested digest")
+	}
+
+	signature := &ecdsa.Signature{
+		R:          big.NewInt(10),
+		S:          big.NewInt(11),
+		RecoveryID: 1,
+	}
+
+	err = chain.SubmitSignature(keepAddress, signature)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isAwaitingSignature, err = chain.IsAwaitingSignature(keepAddress, digest)
+	if !isAwaitingSignature {
+		t.Error("keep should be awaiting for already provided signature")
 	}
 }
 

@@ -203,7 +203,7 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 	deposit.redemptionDigest = randomDigest
 	deposit.redemptionFee = big.NewInt(defaultInitialRedemptionFee)
 
-	err = tlc.requestSignature(
+	err = tlc.RequestSignature(
 		common.HexToAddress(deposit.keepAddress),
 		deposit.redemptionDigest,
 	)
@@ -475,7 +475,7 @@ func (tlc *TBTCLocalChain) IncreaseRedemptionFee(
 	deposit.redemptionFee = new(big.Int).Sub(deposit.utxoValue, newOutputValue)
 	deposit.redemptionSignature = nil
 
-	err = tlc.requestSignature(
+	err = tlc.RequestSignature(
 		common.HexToAddress(deposit.keepAddress),
 		deposit.redemptionDigest,
 	)
