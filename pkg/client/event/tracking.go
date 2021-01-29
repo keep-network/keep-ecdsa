@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// keepEventTrack is a simple event track implementation allowing to track
+// uniqueEventTrack is a simple event track implementation allowing to track
 // events that are happening once in the entire keep history, for example:
 // - keep opened, generating signer
 // - keep getting closed
@@ -19,36 +19,36 @@ import (
 // event is received, it should be noted in this struct. When the signer
 // generation process completes (no matter if it succeeded or failed), it should
 // be removed from this struct.
-type keepEventTrack struct {
+type uniqueEventTrack struct {
 	data  map[string]bool // <keep, bool>
 	mutex sync.Mutex
 }
 
-func (ket *keepEventTrack) add(keepAddress common.Address) bool {
-	ket.mutex.Lock()
-	defer ket.mutex.Unlock()
+func (uet *uniqueEventTrack) add(keepAddress common.Address) bool {
+	uet.mutex.Lock()
+	defer uet.mutex.Unlock()
 
-	if ket.data[keepAddress.String()] == true {
+	if uet.data[keepAddress.String()] == true {
 		return false
 	}
 
-	ket.data[keepAddress.String()] = true
+	uet.data[keepAddress.String()] = true
 
 	return true
 }
 
-func (ket *keepEventTrack) has(keepAddress common.Address) bool {
-	ket.mutex.Lock()
-	defer ket.mutex.Unlock()
+func (uet *uniqueEventTrack) has(keepAddress common.Address) bool {
+	uet.mutex.Lock()
+	defer uet.mutex.Unlock()
 
-	return ket.data[keepAddress.String()]
+	return uet.data[keepAddress.String()]
 }
 
-func (ket *keepEventTrack) remove(keepAddress common.Address) {
-	ket.mutex.Lock()
-	defer ket.mutex.Unlock()
+func (uet *uniqueEventTrack) remove(keepAddress common.Address) {
+	uet.mutex.Lock()
+	defer uet.mutex.Unlock()
 
-	delete(ket.data, keepAddress.String())
+	delete(uet.data, keepAddress.String())
 }
 
 // requestedSignaturesTrack is used to track signature calculation started after

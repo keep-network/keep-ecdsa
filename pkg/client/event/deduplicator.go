@@ -29,10 +29,10 @@ type Deduplicator struct {
 	keepRegistry keepRegistry
 	chain        chain.Handle
 
-	keyGenKeeps         *keepEventTrack
+	keyGenKeeps         *uniqueEventTrack
 	requestedSignatures *requestedSignaturesTrack
-	closingKeeps        *keepEventTrack
-	terminatingKeeps    *keepEventTrack
+	closingKeeps        *uniqueEventTrack
+	terminatingKeeps    *uniqueEventTrack
 }
 
 type keepRegistry interface {
@@ -43,16 +43,16 @@ func NewDeduplicator(
 	keepRegistry keepRegistry,
 	chain chain.Handle,
 ) *Deduplicator {
-	keyGenKeeps := &keepEventTrack{
+	keyGenKeeps := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 	requestedSignatures := &requestedSignaturesTrack{
 		data: make(map[string]map[string]bool),
 	}
-	closingKeeps := &keepEventTrack{
+	closingKeeps := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
-	terminatingKeeps := &keepEventTrack{
+	terminatingKeeps := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 

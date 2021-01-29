@@ -6,11 +6,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func TestKeepEventTrackAdd(t *testing.T) {
+func TestUniqueEventTrackAdd(t *testing.T) {
 	keepAddress1 := common.BytesToAddress([]byte{1})
 	keepAddress2 := common.BytesToAddress([]byte{2})
 
-	rs := &keepEventTrack{
+	rs := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 
@@ -23,10 +23,10 @@ func TestKeepEventTrackAdd(t *testing.T) {
 	}
 }
 
-func TestKeepEventTrackAdd_Duplicate(t *testing.T) {
+func TestUniqueEventTrackAdd_Duplicate(t *testing.T) {
 	keepAddress := common.BytesToAddress([]byte{1})
 
-	rs := &keepEventTrack{
+	rs := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 
@@ -39,10 +39,10 @@ func TestKeepEventTrackAdd_Duplicate(t *testing.T) {
 	}
 }
 
-func TestKeepEventTrackRemove(t *testing.T) {
+func TestUniqueEventTrackRemove(t *testing.T) {
 	keepAddress := common.BytesToAddress([]byte{1})
 
-	rs := &keepEventTrack{
+	rs := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 
@@ -57,10 +57,10 @@ func TestKeepEventTrackRemove(t *testing.T) {
 	}
 }
 
-func TestKeepEventTrackRemove_WhenEmpty(t *testing.T) {
+func TestUniqueEventTrackRemove_WhenEmpty(t *testing.T) {
 	keepAddress := common.BytesToAddress([]byte{1})
 
-	rs := &keepEventTrack{
+	rs := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 
@@ -71,11 +71,11 @@ func TestKeepEventTrackRemove_WhenEmpty(t *testing.T) {
 	}
 }
 
-func TestKeepEventTrackHas(t *testing.T) {
+func TestUniqueEventTrackHas(t *testing.T) {
 	keepAddress1 := common.BytesToAddress([]byte{1})
 	keepAddress2 := common.BytesToAddress([]byte{2})
 
-	rs := &keepEventTrack{
+	rs := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 
