@@ -36,6 +36,9 @@ type Deduplicator struct {
 }
 
 type keepRegistry interface {
+	// HasSigner returns true if keep with the given address already exists
+	// in the registry. In the context of event deduplicator, it means that
+	// the key for the given keep has already been generated.
 	HasSigner(keepAddress common.Address) bool
 }
 
@@ -78,6 +81,9 @@ func (d *Deduplicator) NotifyKeyGenStarted(keepAddress common.Address) bool {
 		return false
 	}
 
+	// If the event is not currently being handled but keep with the given
+	// address already exists in the registry, the event should be rejected
+	// as a duplicate. It is an old event that has already been handled.
 	if d.keepRegistry.HasSigner(keepAddress) {
 		return false
 	}
@@ -107,8 +113,11 @@ func (d *Deduplicator) NotifySigningStarted(
 		return false, nil
 	}
 
-	// repeat the check in case of a small chain reorg or if chain nodes
-	// are out of sync
+	// If the event is not currently being handled, we need to confirm on-chain
+	// if signing is pending. The event could be an old one that has already
+	// been handled.
+	// Repeat the check in case of a small chain reorg or if chain nodes
+	// are out of sync.
 	isAwaitingSignature, err := utils.ConfirmWithTimeout(
 		10*time.Second,
 		10*time.Second,
@@ -154,6 +163,10 @@ func (d *Deduplicator) NotifyClosingStarted(keepAddress common.Address) bool {
 		return false
 	}
 
+	// If the event is not currently being handled but keep with the given
+	// address does no longer exist in the registry, the event should be
+	// rejected as a duplicate. It is an old event that has already been
+	// handled.
 	if !d.keepRegistry.HasSigner(keepAddress) {
 		return false
 	}
@@ -179,6 +192,10 @@ func (d *Deduplicator) NotifyTerminatingStarted(keepAddress common.Address) bool
 		return false
 	}
 
+	// If the event is not currently being handled but keep with the given
+	// address does no longer exist in the registry, the event should be
+	// rejected as a duplicate. It is an old event that has already been
+	// handled.
 	if !d.keepRegistry.HasSigner(keepAddress) {
 		return false
 	}
