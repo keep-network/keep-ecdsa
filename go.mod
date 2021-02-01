@@ -20,7 +20,7 @@ require (
 	github.com/ipfs/go-log v1.0.4
 	github.com/keep-network/keep-common v1.3.1-0.20210128152700-34905d2fe019
 	github.com/keep-network/keep-core v1.3.2-0.20201229154408-59ac640ed0cb
-	github.com/keep-network/tbtc v1.1.1-0.20210125121025-bc83d3a40e12
+	github.com/keep-network/tbtc v1.1.1-0.20210128164215-c03b8cf351f0
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
 )
