@@ -125,7 +125,7 @@ const (
 )
 
 // ConfirmWithTimeoutDefaultBackoff executed the provided confirmFn until it
-//  returnstrue or until it fails or until timeout is hit. It applies
+// returns true or until it fails or until timeout is hit. It applies
 // backoff wait of DefaultConfirmBackoffTime * 2^n before nth execution of
 // confirmFn. In case the calculated backoff is longer than
 // DefaultConfirmMaxBackoffTime, DefaultConfirmMaxBackoffTime is applied.
