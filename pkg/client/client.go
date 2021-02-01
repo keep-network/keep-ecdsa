@@ -30,6 +30,13 @@ var logger = log.Logger("keep-ecdsa")
 // signings by adversaries in case of a chain fork.
 const blockConfirmations = 12
 
+// The timeout for executing repeated on-chain check for a keep awaiting
+// a signature. Once the client receives a signature requested event, it needs
+// to deduplicate it and execute on-chain check. This action is repeated with
+// a timeout to address problems with minor chain re-orgs and chain clients not
+// being perfectly in sync yet.
+const awaitingSignatureEventCheckTimeout = 60 * time.Second
+
 // Handle represents a handle to the ECDSA client.
 type Handle struct {
 	tssNode *node.Node
@@ -552,7 +559,7 @@ func monitorSigningRequests(
 					// checkAwaitingSignature function.
 					func(ctx context.Context) error {
 						shouldHandle, err := eventDeduplicator.NotifySigningStarted(
-							60*time.Second,
+							awaitingSignatureEventCheckTimeout,
 							keepAddress,
 							event.Digest,
 						)
@@ -667,7 +674,7 @@ func checkAwaitingSignature(
 			clientConfig.GetSigningTimeout(),
 			func(ctx context.Context) error {
 				shouldHandle, err := eventDeduplicator.NotifySigningStarted(
-					60*time.Second,
+					awaitingSignatureEventCheckTimeout,
 					keepAddress,
 					latestDigest,
 				)
