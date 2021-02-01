@@ -9,6 +9,7 @@ type BondedECDSAKeepCreatedEvent struct {
 	KeepAddress     common.Address   // keep contract address
 	Members         []common.Address // keep members addresses
 	HonestThreshold uint64
+	BlockNumber     uint64
 }
 
 // ConflictingPublicKeySubmittedEvent is an event emitted each time when one of
@@ -17,12 +18,14 @@ type BondedECDSAKeepCreatedEvent struct {
 type ConflictingPublicKeySubmittedEvent struct {
 	SubmittingMember     common.Address
 	ConflictingPublicKey []byte
+	BlockNumber          uint64
 }
 
 // PublicKeyPublishedEvent is an event emitted once all the members have submitted
 // the same public key and it was accepted by keep as its public key.
 type PublicKeyPublishedEvent struct {
-	PublicKey []byte
+	PublicKey   []byte
+	BlockNumber uint64
 }
 
 // SignatureRequestedEvent is an event emitted when a user requests
