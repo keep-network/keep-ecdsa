@@ -85,8 +85,8 @@ type tbtc struct {
 	chain                     chain.TBTCHandle
 	monitoringLocks           sync.Map
 	blockConfirmations        uint64
-	monitoredDepositsCache    *cache.TimeCache
-	notMonitoredDepositsCache *cache.TimeCache
+	memberDepositsCache       *cache.TimeCache 
+	notMemberDepositsCache    *cache.TimeCache
 	signerActionDelayStep     time.Duration
 }
 
@@ -94,8 +94,8 @@ func newTBTC(chain chain.TBTCHandle) *tbtc {
 	return &tbtc{
 		chain:                     chain,
 		blockConfirmations:        defaultBlockConfirmations,
-		monitoredDepositsCache:    cache.NewTimeCache(monitoringCachePeriod),
-		notMonitoredDepositsCache: cache.NewTimeCache(monitoringCachePeriod),
+		memberDepositsCache:       cache.NewTimeCache(monitoringCachePeriod),
+		notMemberDepositsCache:    cache.NewTimeCache(monitoringCachePeriod),
 		signerActionDelayStep:     defaultSignerActionDelayStep,
 	}
 }
@@ -794,28 +794,10 @@ func (t *tbtc) shouldMonitorDeposit(
 	depositAddress string,
 	expectedInitialState chain.DepositState,
 ) bool {
-	t.monitoredDepositsCache.Sweep()
-	t.notMonitoredDepositsCache.Sweep()
+	t.memberDepositsCache.Sweep()
+	t.notMemberDepositsCache.Sweep()
 
-	if t.monitoredDepositsCache.Has(depositAddress) {
-		return true
-	}
-
-	if t.notMonitoredDepositsCache.Has(depositAddress) {
-		return false
-	}
-
-	signerIndex, err := t.getSignerIndex(depositAddress)
-	if err != nil {
-		logger.Errorf(
-			"could not check if deposit [%v] should be monitored: "+
-				"failed to get signer index: [%v]",
-			depositAddress,
-			err,
-		)
-		// return false but don't cache the result in case of an error;
-		// it gives a chance to retry the monitoring later but sooner
-		// than notMonitoredDepositsCache caching period.
+	if t.notMemberDepositsCache.Has(depositAddress) {
 		return false
 	}
 
@@ -837,23 +819,36 @@ func (t *tbtc) shouldMonitorDeposit(
 			depositAddress,
 			err,
 		)
-		// return false but don't cache the result in case of an error;
-		// it gives a chance to retry the monitoring later but sooner
-		// than notMonitoredDepositsCache caching period.
+		// return false but don't cache the result in case of an error
 		return false
 	}
 	if !hasInitialState {
 		// false start signal, probably an old event
-		t.notMonitoredDepositsCache.Add(depositAddress)
+		return false
+	}
+
+	if t.memberDepositsCache.Has(depositAddress) {
+		return true
+	}
+
+	signerIndex, err := t.getSignerIndex(depositAddress)
+	if err != nil {
+		logger.Errorf(
+			"could not check if deposit [%v] should be monitored: "+
+				"failed to get signer index: [%v]",
+			depositAddress,
+			err,
+		)
+		// return false but don't cache the result in case of an error
 		return false
 	}
 
 	if signerIndex < 0 {
-		t.notMonitoredDepositsCache.Add(depositAddress)
+		t.notMemberDepositsCache.Add(depositAddress)
 		return false
 	}
 
-	t.monitoredDepositsCache.Add(depositAddress)
+	t.memberDepositsCache.Add(depositAddress)
 	return true
 }
 

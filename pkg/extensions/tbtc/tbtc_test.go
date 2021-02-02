@@ -2025,6 +2025,9 @@ func TestShouldMonitorDeposit_ExpectedInitialState(t *testing.T) {
 	}
 	tbtcChain.RetrieveSignerPubkey(depositAddress)
 
+	// Deposit has just retrieved signer public key and is in
+	// AwaitingSignerSetup state. shouldMonitorDeposit should return false for
+	// any other state than AwaitingSignerSetup.
 	shouldMonitor := tbtc.shouldMonitorDeposit(
 		5*time.Second,
 		depositAddress,
@@ -2056,6 +2059,9 @@ func TestShouldMonitorDeposit_UnexpectedInitialState(t *testing.T) {
 	}
 	tbtcChain.RetrieveSignerPubkey(depositAddress)
 
+	// Deposit has just retrieved signer public key and is in
+	// AwaitingSignerSetup state. shouldMonitorDeposit should return true
+	// for this state.
 	shouldMonitor := tbtc.shouldMonitorDeposit(
 		5*time.Second,
 		depositAddress,
@@ -2066,7 +2072,62 @@ func TestShouldMonitorDeposit_UnexpectedInitialState(t *testing.T) {
 	}
 }
 
-func TestShouldMonitorDeposit_PositiveResultCache(t *testing.T) {
+func TestShouldMonitorDeposit_InitialStateChange(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+	tbtc := newTestTBTC(tbtcChain)
+
+	// create a signing group which contains the operator
+	signers := append(
+		[]common.Address{tbtcChain.Address()},
+		local.RandomSigningGroup(2)...,
+	)
+
+	tbtcChain.CreateDeposit(depositAddress, signers)
+	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Deposit has just been created and it is in AwaitingSignerSetup state.
+	// This first check will setup *some* caching in shouldMonitorDeposit and
+	// further checks will make sure this caching works as expected when the
+	// state changed.
+	shouldMonitor := tbtc.shouldMonitorDeposit(
+		5*time.Second,
+		depositAddress,
+		chain.AwaitingSignerSetup,
+	)
+	if !shouldMonitor {
+		t.Errorf("should monitor the deposit for AwaitingSignerSetup state")
+	}
+
+	tbtcChain.RetrieveSignerPubkey(depositAddress)
+
+	// Deposit state has changed and it is now in AwaitingBtcFundingProof.
+	// Those checks make sure the caching inside shouldMonitorDeposit does not
+	// affect the result for changed state.
+	shouldMonitor = tbtc.shouldMonitorDeposit(
+		5*time.Second,
+		depositAddress,
+		chain.AwaitingBtcFundingProof,
+	)
+	if !shouldMonitor {
+		t.Errorf("should monitor the deposit for AwaitingBtcFundingProof state")
+	}
+	shouldMonitor = tbtc.shouldMonitorDeposit(
+		5*time.Second,
+		depositAddress,
+		chain.AwaitingSignerSetup,
+	)
+	if shouldMonitor {
+		t.Errorf("should not monitor the deposit for AwaitingSignerSetup state")
+	}
+}
+
+func TestShouldMonitorDeposit_MemberCache(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
@@ -2116,7 +2177,7 @@ func TestShouldMonitorDeposit_PositiveResultCache(t *testing.T) {
 	}
 }
 
-func TestShouldMonitorDeposit_NegativeResultCache(t *testing.T) {
+func TestShouldMonitorDeposit_NotMemberCache(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
