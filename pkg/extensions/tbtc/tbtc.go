@@ -21,6 +21,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/chainutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
 var logger = log.Logger("tbtc-extension")
@@ -46,64 +47,46 @@ const (
 	// to avoid all signers executing the same action for deposit at the
 	// same time.
 	defaultSignerActionDelayStep = 5 * time.Minute
+
+	// The timeout for confirming initial state of the deposit upon receiving
+	// start signal but before setting up monitoring.
+	confirmInitialStateTimeout = 30 * time.Second
 )
 
 // TODO: Resume monitoring after client restart
 // Initialize initializes extension specific to the TBTC application.
-func Initialize(ctx context.Context, chain chain.TBTCHandle) error {
+func Initialize(ctx context.Context, chain chain.TBTCHandle) {
 	logger.Infof("initializing tbtc extension")
 
 	tbtc := newTBTC(chain)
 
-	err := tbtc.monitorRetrievePubKey(
+	tbtc.monitorRetrievePubKey(
 		ctx,
 		exponentialBackoff,
 		165*time.Minute, // 15 minutes before the 3 hours on-chain timeout
 	)
-	if err != nil {
-		return fmt.Errorf(
-			"could not initialize retrieve pubkey monitoring: [%v]",
-			err,
-		)
-	}
 
-	err = tbtc.monitorProvideRedemptionSignature(
+	tbtc.monitorProvideRedemptionSignature(
 		ctx,
 		exponentialBackoff,
 		105*time.Minute, // 15 minutes before the 2 hours on-chain timeout
 	)
-	if err != nil {
-		return fmt.Errorf(
-			"could not initialize provide redemption "+
-				"signature monitoring: [%v]",
-			err,
-		)
-	}
 
-	err = tbtc.monitorProvideRedemptionProof(
+	tbtc.monitorProvideRedemptionProof(
 		ctx,
 		exponentialBackoff,
 		345*time.Minute, // 15 minutes before the 6 hours on-chain timeout
 	)
-	if err != nil {
-		return fmt.Errorf(
-			"could not initialize provide redemption "+
-				"proof monitoring: [%v]",
-			err,
-		)
-	}
 
 	logger.Infof("tbtc extension has been initialized")
-
-	return nil
 }
 
 type tbtc struct {
 	chain                     chain.TBTCHandle
 	monitoringLocks           sync.Map
 	blockConfirmations        uint64
-	monitoredDepositsCache    *cache.TimeCache
-	notMonitoredDepositsCache *cache.TimeCache
+	memberDepositsCache       *cache.TimeCache 
+	notMemberDepositsCache    *cache.TimeCache
 	signerActionDelayStep     time.Duration
 }
 
@@ -111,8 +94,8 @@ func newTBTC(chain chain.TBTCHandle) *tbtc {
 	return &tbtc{
 		chain:                     chain,
 		blockConfirmations:        defaultBlockConfirmations,
-		monitoredDepositsCache:    cache.NewTimeCache(monitoringCachePeriod),
-		notMonitoredDepositsCache: cache.NewTimeCache(monitoringCachePeriod),
+		memberDepositsCache:       cache.NewTimeCache(monitoringCachePeriod),
+		notMemberDepositsCache:    cache.NewTimeCache(monitoringCachePeriod),
 		signerActionDelayStep:     defaultSignerActionDelayStep,
 	}
 }
@@ -121,18 +104,26 @@ func (t *tbtc) monitorRetrievePubKey(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
-) error {
+) {
 	initialDepositState := chain.AwaitingSignerSetup
 
 	monitoringStartFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		return t.chain.OnDepositCreated(handler)
+	}
+
+	shouldMonitorFn := func(depositAddress string) bool {
+		return t.shouldMonitorDeposit(
+			confirmInitialStateTimeout,
+			depositAddress,
+			initialDepositState,
+		)
 	}
 
 	monitoringStopFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		return t.chain.OnDepositRegisteredPubkey(func(depositAddress string) {
 			if t.waitDepositStateChangeConfirmation(
 				depositAddress,
@@ -175,10 +166,10 @@ func (t *tbtc) monitorRetrievePubKey(
 		return timeout + actionDelay, nil
 	}
 
-	monitoringSubscription, err := t.monitorAndAct(
+	monitoringSubscription := t.monitorAndAct(
 		ctx,
 		"retrieve pubkey",
-		t.shouldMonitorDeposit,
+		shouldMonitorFn,
 		monitoringStartFn,
 		monitoringStopFn,
 		t.watchKeepClosed,
@@ -186,9 +177,6 @@ func (t *tbtc) monitorRetrievePubKey(
 		actBackoffFn,
 		timeoutFn,
 	)
-	if err != nil {
-		return err
-	}
 
 	go func() {
 		<-ctx.Done()
@@ -197,30 +185,36 @@ func (t *tbtc) monitorRetrievePubKey(
 	}()
 
 	logger.Infof("retrieve pubkey monitoring initialized")
-
-	return nil
 }
 
 func (t *tbtc) monitorProvideRedemptionSignature(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
-) error {
+) {
 	initialDepositState := chain.AwaitingWithdrawalSignature
 
 	monitoringStartFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		// Start right after a redemption has been requested or the redemption
 		// fee has been increased.
 		return t.chain.OnDepositRedemptionRequested(handler)
 	}
 
+	shouldMonitorFn := func(depositAddress string) bool {
+		return t.shouldMonitorDeposit(
+			confirmInitialStateTimeout,
+			depositAddress,
+			initialDepositState,
+		)
+	}
+
 	monitoringStopFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		// Stop in case the redemption signature has been provided by someone else.
-		signatureSubscription, err := t.chain.OnDepositGotRedemptionSignature(
+		signatureSubscription := t.chain.OnDepositGotRedemptionSignature(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -237,12 +231,9 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 				}
 			},
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		// Stop in case the redemption proof has been provided by someone else.
-		redeemedSubscription, err := t.chain.OnDepositRedeemed(
+		redeemedSubscription := t.chain.OnDepositRedeemed(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -259,16 +250,13 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 				}
 			},
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		return subscription.NewEventSubscription(
 			func() {
 				signatureSubscription.Unsubscribe()
 				redeemedSubscription.Unsubscribe()
 			},
-		), nil
+		)
 	}
 
 	actFn := func(depositAddress string) error {
@@ -354,10 +342,10 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		return timeout + actionDelay, nil
 	}
 
-	monitoringSubscription, err := t.monitorAndAct(
+	monitoringSubscription := t.monitorAndAct(
 		ctx,
 		"provide redemption signature",
-		t.shouldMonitorDeposit,
+		shouldMonitorFn,
 		monitoringStartFn,
 		monitoringStopFn,
 		t.watchKeepClosed,
@@ -365,9 +353,6 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		actBackoffFn,
 		timeoutFn,
 	)
-	if err != nil {
-		return err
-	}
 
 	go func() {
 		<-ctx.Done()
@@ -376,29 +361,35 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	}()
 
 	logger.Infof("provide redemption signature monitoring initialized")
-
-	return nil
 }
 
 func (t *tbtc) monitorProvideRedemptionProof(
 	ctx context.Context,
 	actBackoffFn backoffFn,
 	timeout time.Duration,
-) error {
+) {
 	initialDepositState := chain.AwaitingWithdrawalProof
 
 	monitoringStartFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		// Start right after a redemption signature has been provided.
 		return t.chain.OnDepositGotRedemptionSignature(handler)
 	}
 
+	shouldMonitorFn := func(depositAddress string) bool {
+		return t.shouldMonitorDeposit(
+			confirmInitialStateTimeout,
+			depositAddress,
+			initialDepositState,
+		)
+	}
+
 	monitoringStopFn := func(
 		handler depositEventHandler,
-	) (subscription.EventSubscription, error) {
+	) subscription.EventSubscription {
 		// Stop in case the redemption fee has been increased by someone else.
-		redemptionRequestedSubscription, err := t.chain.OnDepositRedemptionRequested(
+		redemptionRequestedSubscription := t.chain.OnDepositRedemptionRequested(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -415,12 +406,9 @@ func (t *tbtc) monitorProvideRedemptionProof(
 				}
 			},
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		// Stop in case the redemption proof has been provided by someone else.
-		redeemedSubscription, err := t.chain.OnDepositRedeemed(
+		redeemedSubscription := t.chain.OnDepositRedeemed(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -437,16 +425,13 @@ func (t *tbtc) monitorProvideRedemptionProof(
 				}
 			},
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		return subscription.NewEventSubscription(
 			func() {
 				redemptionRequestedSubscription.Unsubscribe()
 				redeemedSubscription.Unsubscribe()
 			},
-		), nil
+		)
 	}
 
 	actFn := func(depositAddress string) error {
@@ -564,10 +549,10 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		return (timeout - timeoutShift) + actionDelay, nil
 	}
 
-	monitoringSubscription, err := t.monitorAndAct(
+	monitoringSubscription := t.monitorAndAct(
 		ctx,
 		"provide redemption proof",
-		t.shouldMonitorDeposit,
+		shouldMonitorFn,
 		monitoringStartFn,
 		monitoringStopFn,
 		t.watchKeepClosed,
@@ -575,9 +560,6 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		actBackoffFn,
 		timeoutFn,
 	)
-	if err != nil {
-		return err
-	}
 
 	go func() {
 		<-ctx.Done()
@@ -586,8 +568,6 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	}()
 
 	logger.Infof("provide redemption proof monitoring initialized")
-
-	return nil
 }
 
 type shouldMonitorDepositFn func(depositAddress string) bool
@@ -596,7 +576,7 @@ type depositEventHandler func(depositAddress string)
 
 type watchDepositEventFn func(
 	handler depositEventHandler,
-) (subscription.EventSubscription, error)
+) subscription.EventSubscription
 
 type watchKeepClosedFn func(depositAddress string) (
 	keepClosedChan chan struct{},
@@ -620,7 +600,7 @@ func (t *tbtc) monitorAndAct(
 	actFn submitDepositTxFn,
 	actBackoffFn backoffFn,
 	timeoutFn timeoutFn,
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	handleStartEvent := func(depositAddress string) {
 		if !shouldMonitorFn(depositAddress) {
 			return
@@ -644,23 +624,13 @@ func (t *tbtc) monitorAndAct(
 
 		stopEventChan := make(chan struct{})
 
-		stopEventSubscription, err := monitoringStopFn(
+		stopEventSubscription := monitoringStopFn(
 			func(stopEventDepositAddress string) {
 				if depositAddress == stopEventDepositAddress {
 					stopEventChan <- struct{}{}
 				}
 			},
 		)
-		if err != nil {
-			logger.Errorf(
-				"could not setup stop event handler for [%v] "+
-					"monitoring for deposit [%v]: [%v]",
-				monitoringName,
-				depositAddress,
-				err,
-			)
-			return
-		}
 		defer stopEventSubscription.Unsubscribe()
 
 		keepClosedChan, keepClosedUnsubscribe, err := keepClosedFn(
@@ -819,16 +789,46 @@ func (t *tbtc) watchKeepClosed(
 	return signalChan, unsubscribe, nil
 }
 
-func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
-	t.monitoredDepositsCache.Sweep()
-	t.notMonitoredDepositsCache.Sweep()
+func (t *tbtc) shouldMonitorDeposit(
+	confirmStateTimeout time.Duration,
+	depositAddress string,
+	expectedInitialState chain.DepositState,
+) bool {
+	t.memberDepositsCache.Sweep()
+	t.notMemberDepositsCache.Sweep()
 
-	if t.monitoredDepositsCache.Has(depositAddress) {
-		return true
+	if t.notMemberDepositsCache.Has(depositAddress) {
+		return false
 	}
 
-	if t.notMonitoredDepositsCache.Has(depositAddress) {
+	hasInitialState, err := utils.ConfirmWithTimeoutDefaultBackoff(
+		confirmStateTimeout,
+		func(ctx context.Context) (bool, error) {
+			currentState, err := t.chain.CurrentState(depositAddress)
+			if err != nil {
+				return false, err
+			}
+
+			return currentState == expectedInitialState, nil
+		},
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not check if deposit [%v] should be monitored: "+
+				"failed to confirm initial state: [%v]",
+			depositAddress,
+			err,
+		)
+		// return false but don't cache the result in case of an error
 		return false
+	}
+	if !hasInitialState {
+		// false start signal, probably an old event
+		return false
+	}
+
+	if t.memberDepositsCache.Has(depositAddress) {
+		return true
 	}
 
 	signerIndex, err := t.getSignerIndex(depositAddress)
@@ -839,15 +839,16 @@ func (t *tbtc) shouldMonitorDeposit(depositAddress string) bool {
 			depositAddress,
 			err,
 		)
-		return false // return false but don't cache the result in case of error
-	}
-
-	if signerIndex < 0 {
-		t.notMonitoredDepositsCache.Add(depositAddress)
+		// return false but don't cache the result in case of an error
 		return false
 	}
 
-	t.monitoredDepositsCache.Add(depositAddress)
+	if signerIndex < 0 {
+		t.notMemberDepositsCache.Add(depositAddress)
+		return false
+	}
+
+	t.memberDepositsCache.Add(depositAddress)
 	return true
 }
 

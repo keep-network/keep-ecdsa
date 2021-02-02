@@ -30,6 +30,13 @@ var logger = log.Logger("keep-ecdsa")
 // signings by adversaries in case of a chain fork.
 const blockConfirmations = 12
 
+// The timeout for executing repeated on-chain check for a keep awaiting
+// a signature. Once the client receives a signature requested event, it needs
+// to deduplicate it and execute on-chain check. This action is repeated with
+// a timeout to address problems with minor chain re-orgs and chain clients not
+// being perfectly in sync yet.
+const awaitingSignatureEventCheckTimeout = 60 * time.Second
+
 // Handle represents a handle to the ECDSA client.
 type Handle struct {
 	tssNode *node.Node
@@ -551,7 +558,11 @@ func monitorSigningRequests(
 					// there is a way to deduplicate common parts with
 					// checkAwaitingSignature function.
 					func(ctx context.Context) error {
-						shouldHandle, err := eventDeduplicator.NotifySigningStarted(keepAddress, event.Digest)
+						shouldHandle, err := eventDeduplicator.NotifySigningStarted(
+							awaitingSignatureEventCheckTimeout,
+							keepAddress,
+							event.Digest,
+						)
 						if err != nil {
 							logger.Errorf(
 								"could not deduplicate signing request event: [%v]",
@@ -662,7 +673,11 @@ func checkAwaitingSignature(
 		err := utils.DoWithDefaultRetry(
 			clientConfig.GetSigningTimeout(),
 			func(ctx context.Context) error {
-				shouldHandle, err := eventDeduplicator.NotifySigningStarted(keepAddress, latestDigest)
+				shouldHandle, err := eventDeduplicator.NotifySigningStarted(
+					awaitingSignatureEventCheckTimeout,
+					keepAddress,
+					latestDigest,
+				)
 				if err != nil {
 					logger.Errorf(
 						"could not deduplicate signing request event: [%v]",

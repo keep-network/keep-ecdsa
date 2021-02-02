@@ -6,11 +6,14 @@ import (
 	"crypto/sha256"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
+
+const signStateConfirmTimeout = 10 * time.Second
 
 var keepAddress = common.HexToAddress("0x4e09cadc7037afa36603138d1c0b76fe2aa5039c")
 var digest = sha256.Sum256([]byte("Do or do not. There is no try."))
@@ -78,7 +81,11 @@ func TestDoSign(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	canSign, err := deduplicator.NotifySigningStarted(keepAddress, digest)
+	canSign, err := deduplicator.NotifySigningStarted(
+		signStateConfirmTimeout,
+		keepAddress,
+		digest,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,9 +115,17 @@ func TestDoNotSignIfCurrentlySigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deduplicator.NotifySigningStarted(keepAddress, digest)
+	deduplicator.NotifySigningStarted(
+		signStateConfirmTimeout,
+		keepAddress,
+		digest,
+	)
 
-	canSign, err := deduplicator.NotifySigningStarted(keepAddress, digest)
+	canSign, err := deduplicator.NotifySigningStarted(
+		signStateConfirmTimeout,
+		keepAddress,
+		digest,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +150,11 @@ func TestDoNotSignIfNotAwaitingASignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	canSign, err := deduplicator.NotifySigningStarted(keepAddress, digest)
+	canSign, err := deduplicator.NotifySigningStarted(
+		signStateConfirmTimeout,
+		keepAddress,
+		digest,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +187,11 @@ func TestDoSignOneMoreTime(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	canSign, err := deduplicator.NotifySigningStarted(keepAddress, digest)
+	canSign, err := deduplicator.NotifySigningStarted(
+		signStateConfirmTimeout,
+		keepAddress,
+		digest,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,7 +220,11 @@ func TestDoSignOneMoreTime(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	canSign, err = deduplicator.NotifySigningStarted(keepAddress, digest)
+	canSign, err = deduplicator.NotifySigningStarted(
+		signStateConfirmTimeout,
+		keepAddress,
+		digest,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

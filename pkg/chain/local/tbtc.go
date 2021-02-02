@@ -138,7 +138,7 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 
 func (tlc *TBTCLocalChain) OnDepositCreated(
 	handler func(depositAddress string),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
@@ -151,12 +151,12 @@ func (tlc *TBTCLocalChain) OnDepositCreated(
 		defer tlc.tbtcLocalChainMutex.Unlock()
 
 		delete(tlc.depositCreatedHandlers, handlerID)
-	}), nil
+	})
 }
 
 func (tlc *TBTCLocalChain) OnDepositRegisteredPubkey(
 	handler func(depositAddress string),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
@@ -169,7 +169,7 @@ func (tlc *TBTCLocalChain) OnDepositRegisteredPubkey(
 		defer tlc.tbtcLocalChainMutex.Unlock()
 
 		delete(tlc.depositRegisteredPubkeyHandlers, handlerID)
-	}), nil
+	})
 }
 
 func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
@@ -240,7 +240,7 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 
 func (tlc *TBTCLocalChain) OnDepositRedemptionRequested(
 	handler func(depositAddress string),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
@@ -253,12 +253,12 @@ func (tlc *TBTCLocalChain) OnDepositRedemptionRequested(
 		defer tlc.tbtcLocalChainMutex.Unlock()
 
 		delete(tlc.depositRedemptionRequestedHandlers, handlerID)
-	}), nil
+	})
 }
 
 func (tlc *TBTCLocalChain) OnDepositGotRedemptionSignature(
 	handler func(depositAddress string),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
@@ -271,12 +271,12 @@ func (tlc *TBTCLocalChain) OnDepositGotRedemptionSignature(
 		defer tlc.tbtcLocalChainMutex.Unlock()
 
 		delete(tlc.depositGotRedemptionSignatureHandlers, handlerID)
-	}), nil
+	})
 }
 
 func (tlc *TBTCLocalChain) OnDepositRedeemed(
 	handler func(depositAddress string),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
@@ -289,7 +289,7 @@ func (tlc *TBTCLocalChain) OnDepositRedeemed(
 		defer tlc.tbtcLocalChainMutex.Unlock()
 
 		delete(tlc.depositRedeemedHandlers, handlerID)
-	}), nil
+	})
 }
 
 func (tlc *TBTCLocalChain) PastDepositRedemptionRequestedEvents(
