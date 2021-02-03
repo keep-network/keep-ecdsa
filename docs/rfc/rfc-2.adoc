@@ -129,7 +129,7 @@ procured or computed:
   in the section on <<recovery-address>>.
 - The keep's signature on the sighash produced by the previous items,
   computed via the threshold ECDSA protocol in a way detailed in the section on
-  <<signing>>.
+  the <<signing-protocol>>.
 - F, the desired fee, which is a function of the going feerate on the Bitcoin
   network and the number of bytes in the final transaction.
 
@@ -192,30 +192,48 @@ per vByte should be available at the `/fee-estimates` endpoint of the REST
 API, which returns a JSON object with the key `"25"` corresponding to this
 fee.
 
-Once each client has its max fee, it will enter the <<signing>> protocol.
-This protocol involves exchanging the max fees of all clients and choosing
-the lowest max fee acceptable to all clients, and using that as the fee for
-the final transaction.
+Once each client has its max fee, it will proceed with the
+<<signing-protocol>>. This protocol involves exchanging the max fees of all
+clients and choosing the lowest max fee acceptable to all clients, and using
+that as the fee for the final transaction.
 
-[[signing]]
-===== Signing 
 
-// Round 1: exchange addresses and max fees. Reminder that underlying transport
-//          ensures the messages are from the correct peers.
-// Generate sighash;
-// https://github.com/summa-tx/bitcoin-spv/blob/v2.0.0/contracts/CheckBitcoinSigs.sol#L137-L159
-// for one-input-one-output in Solidity,
-// https://github.com/keep-network/tbtc.js/blob/b91560f579cb41e414fba3a80678bf61659e3061/bin/commands/bitcoin.js#L142-L208 for variable-output in JavaScript.
-// Signing via tss
-// Signing starts `blockConfirmations` after a termination event is seen.
-//
-// A keep should not be considered archived until its refund has been handled or
-// times out. Timeout for refund handling TBD, but could be extended (e.g.,
-// 48-72 hours, or even 1 week) with backoffs or similar. On restart, a keep
-// that is in `current` but seen as `terminated` should attempt to go through
-// its refund handling. Optionally, it could check a Bitcoin node or the
-// Blockstream API for 
+[[signing-protocol]]
+===== Signing Protocol
 
+The signing protocol proceeds very much like the standard ECDSA signing
+protocol, but starts in a different place. In the standard ECDSA signing
+protocol, an on-chain `SignatureRequested` event triggers the client to
+https://github.com/keep-network/keep-ecdsa/blob/87716e91f225a3c01501ae73a75db83f79230497/pkg/ecdsa/tss/tss.go#L132[join
+a broadcast channel] and perform a
+https://github.com/keep-network/keep-ecdsa/blob/87716e91f225a3c01501ae73a75db83f79230497/pkg/ecdsa/tss/protocol_ready.go#L24[ready
+protocol] to ensure all signers are ready to sign.
+
+During standard signing, the ready protocol communicates a Ready message that
+solely carries the sender ID. Once all three clients have received each other's
+ready messages, the ready protocol completes and the signing protocol starts.
+For liquidation recovery purposes, this ready protocol is the one that is
+adjusted. Instead of only announcing sender IDs, the three signers announce a
+ready message with three components:
+
+- The sender ID.
+- The BTC address to which the sender's share will be sent.
+- The max fee per vByte the sender is willing to pay.
+
+Once each client receives the ready messages from the two other nodes, it can
+immediately choose the correct fee per vByte from the provided values (see
+<<bitcoin-fee>>), construct the sighash (see <<sighash-construction>>) and
+proceed into the signing process to sign that sighash. Once a signature is
+computed, each client should construct the final transaction (see
+<<final-transaction-construction>>) and submit it (see
+<<transaction-submission>>).
+
+The retry mechanism for the signing process for liquidation recovery should be
+identical to regular signing, repeating every 2 minutes that a signature has
+not been completed successfully until the liquidation recovery timeout. Unlike
+standard signing, the liquidation recovery timeout should be very long to allow
+for node malfunctions to recover cleanly: this RFC recommends a default timeout
+of 7 days.
 ==== Submitting the Signed Transaction
 
 // Log signed transaction on WARN level. If an optional Bitcoin node connection
