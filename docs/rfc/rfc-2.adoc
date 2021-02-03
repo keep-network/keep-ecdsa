@@ -214,16 +214,15 @@ entry, `MaxFeePerVByte`, which is a value in sats per vByte that represents
 the maximum fee per vByte this client is willing to pay in refund
 transactions. The default for this value should be 75 sats per vByte.
 
-In addition to this configuration-based max fee, if an optional Bitcoin
-connection is available (see <<electrs>>), the client should look up the
-25-block suggested fee per vByte and, if it is available and nonzero, should
-replace the hardcoded max fee with this value. 25 blocks means confirmation
-within ~4 hours. The default of 75 sats per vByte is aimed to be slightly
-higher than a reasonable value for 25 blocks, though of course fee market
-fluctuation can change this at a moment's notice. The 25-block suggested fee
-per vByte should be available at the `/fee-estimates` endpoint of the REST
-API, which returns a JSON object with the key `"25"` corresponding to this
-fee.
+If an optional Bitcoin connection is available (see <<electrs>>), the client
+should look up the 25-block suggested fee per vByte and, if it is available
+and nonzero, should replace the hardcoded max fee with this value. 25 blocks
+means confirmation within ~4 hours. The default of 75 sats per vByte is aimed
+to be slightly higher than a reasonable value for 25 blocks, though of course
+fee market fluctuation can change this at a moment's notice. The 25-block
+suggested fee per vByte should be available at the `/fee-estimates` endpoint
+of the REST API, which returns a JSON object with the key `"25"`
+corresponding to this fee.
 
 Once each client has its max fee, it will proceed with the
 <<signing-protocol>>. This protocol involves exchanging the max fees of all
@@ -698,9 +697,8 @@ as such, it relies entirely on the cooperation of the operators. Since there
 is a value-positive outcome for each operator for cooperating, this should be
 sufficient in the 3-of-3 signing groups that operate tBTC v1.
 
-
-[[electrs]]
 [appendix]
+[[electrs]]
 == Optional Electrs REST API Server
 
 The proposal <<Goal>> section proposes avoiding a strict requirement for a
@@ -777,3 +775,15 @@ payments.
 
 - https://docs.keep.network/tbtc/[tBTC specification]
 - https://github.com/Blockstream/esplora/blob/master/API.md[Blockstream API docs]
+- https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki[BIP32:
+  Hierarchical Deterministic Wallets]
+- https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki[BIP44:
+  Multi-Account Hierarchy for Deterministic Wallets]
+- https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki[BIP49:
+  Derivation scheme for P2WPKH-nested-in-P2SH based accounts]
+- https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki[BIP84:
+  Derivation scheme for P2WPKH based accounts]
+- https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki[BIP141:
+  Segregated Witness (Consensus layer)]
+- https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki[BIP143:
+  Transaction Signature Verification for Version 0 Witness Program]
