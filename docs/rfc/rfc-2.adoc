@@ -689,12 +689,15 @@ func BuildTransactionHexString(
 
 === Limitations
 
-Bitcoin fees, additional dependencies, transaction submission.
+The biggest limitation is trusting the operator to manage the return BTC
+address. This limitation is described in more detail in the appendix on
+<<recovery-address-ownership>>.
 
-== Open Questions
+Additionally, this approach is not mediated by a smart contract in any way;
+as such, it relies entirely on the cooperation of the operators. Since there
+is a value-positive outcome for each operator for cooperating, this should be
+sufficient in the 3-of-3 signing groups that operate tBTC v1.
 
-Why not invert this? A single loop monitoring for each of these
-events and checking against locally handled keeps.
 
 [[electrs]]
 [appendix]
@@ -714,6 +717,60 @@ To configure this, the `Extensions.TBTC.ElectrsURL` key can be set to the
 appropriate URL. This configuration option should default to
 `https://blockstream.info/api/`, but the operator should be allowed to be set
 it to a blank string to disable integration altogether.
+
+[appendix]
+[[recovery-address-ownership]]
+== Recovery Address Ownership
+
+The Keep staking model designates four roles in a token delegation relationship,
+which is used to stake the KEEP token to make it eligible for work in the
+network:
+
+staker:: The token holder staking the KEEP token.
+authorizer:: The role responsible for authorizing new contracts that may
+  interact with the staked KEEP, making the staked KEEP eligible for use in
+  new applications built on the network.
+operator:: The role responsible for actually performing the duties required by
+  authorized contracts in order to fulfill the obligations of the staked KEEP
+  on the network.
+beneficiary:: The role that receives rewards and fee payments for work done by
+  the operator in a given delegation relationship.
+
+The Keep network does not explicitly provide for operators to be paid for their
+work; indeed, the staker, authorizer, operator, and beneficiary may all be the
+same Ethereum account, may all be separate accounts, or may be distributed among
+2 or 3 accounts. The staker ultimately decides how to distribute the roles at
+the time that tokens are delegated.
+
+Notably, all of these roles are specified as Ethereum addresses, which leaves
+open the question of who designates the Bitcoin address that will receive
+recovered BTC. Generally the system design favors the beneficiary address as
+the sink to which all outgoing funds are routed in a delegation relationship,
+and gives the staker the final say in what beneficiary address to use.
+
+This RFC is a slight departure from this mechanism, in that it is ultimately
+the operator who designates the beneficiary for liquidation recovery purposes
+(this beneficiary is on the Bitcoin chain rather than the Ethereum chain, of
+course). At any time, if the staker notes misbehavior by the operator, including
+designating an inappropriate beneficiary address, they can undelegate their
+stake, thus preventing the operator from being able to do further work on their
+behalf.
+
+One way to adapt this approach would be to allow the beneficiary address to sign
+the desired Bitcoin beneficiary information, and have the ECDSA client verify
+this signature before using it. Unfortunately, a malicious operator can simply
+create a build of the client that omits this check. Though a complex cross-chain
+protocol could be devised for committing to an address, we instead make the
+assumption that the operator and staker have coordinated solid enough terms to
+ensure that the operator will not send liquidation recovery BTC to a bad
+address.
+
+As a special case, for a DAO staker that may not have straightforward legal
+recourse, an agreement to send BTC to a particular address can be enforced
+on-chain via an operator bond or other mechanism attached to the same SPV
+proof mechanism that powers tBTC itself, to prove that an operator authorized
+dispensation of BTC to a different address and punish them, or withhold future
+payments.
 
 [bibliography]
 == Related Links
