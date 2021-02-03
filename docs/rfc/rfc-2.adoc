@@ -548,6 +548,112 @@ func ConstructSighash(
   return doubleSha256(sigHashPreimageBuffer.Bytes()), nil
 }
 ```
+
+[[final-transaction-construction]]
+==== Construction of Final Transaction
+
+The final transaction can be constructed from information about the
+previous transaction, a fee per vbyte, a set of recipient addresses,
+and a precomputed signature and public key for the funding UTXO. The
+sample function below shows the various inputs as well as how they can
+be combined to produce the final transaction hex string that can then
+be submitted to the chain:
+
+```go
+func BuildTransactionHexString(
+	previousOutputTransactionHashHex string, // <1>
+	previousOutputIndex uint32,
+	previousOutputValue int64, // <2>
+	feePerVbyte int64, // <3>
+	recipientAddresses []string,
+	signature *ecdsa.Signature, // <4>
+	publicKey *ecdsa.PublicKey, // <5>
+	chainParams *chaincfg.Params, // <6>
+) (string, error) {
+    // If the previous output transaction hash is passed as a []byte, can use
+    // chainhash.NewHash.
+	previousOutputTransactionHash, err := chainhash.NewHashFromStr(
+		previousOutputTransactionHashHex,
+	)
+	if err != nil {
+		return "", fmt.Errorf(
+			"error extracting outpoint transaction hash: [%s]",
+			previousOutputTransactionHash,
+		)
+	}
+
+	// Construct witness script.
+	signatureDERBytes := (&btcec.Signature{R: signature.R, S: signature.S}).Serialize()
+	hashType := uint8(txscript.SigHashAll)
+
+	// The witness signature field is the DER signature followed by the hash type.
+	signatureForWitnessBuffer := &bytes.Buffer{}
+	signatureForWitnessBuffer.Write(signatureDERBytes)
+	binary.Write(signatureForWitnessBuffer, binary.LittleEndian, hashType)
+
+	tx := wire.NewMsgTx(wire.TxVersion)
+	txIn := wire.NewTxIn(
+		wire.NewOutPoint(previousOutputTransactionHash, previousOutputIndex),
+		nil, // scriptSig is empty here
+		[][]byte{signatureForWitnessBuffer.Bytes(), compressedPublicKeyBytes((publicKey))},
+	)
+	txIn.Sequence = 0
+	tx.AddTxIn(txIn)
+
+	for _, recipientAddress := range recipientAddresses {
+		address, err := btcutil.DecodeAddress(recipientAddress, chainParams)
+		if err != nil {
+			return "", fmt.Errorf(
+				"error decoding output address [%s]: [%s]",
+				recipientAddress,
+				err,
+			)
+		}
+		outputScript, err := txscript.PayToAddrScript(address)
+		if err != nil {
+			return "", fmt.Errorf(
+				"error constructing script from output address [%s]: [%s]",
+				recipientAddress,
+				err,
+			)
+		}
+
+		tx.AddTxOut(wire.NewTxOut(
+			int64(0), // value is filled in after fee is computed below
+			outputScript,
+		))
+	}
+
+	// Compute weight and vsize per [BIP141], except vsize is truncated
+	// instead of rounded up, then compute the final fee and set the
+	// per-recipient value. Could result in a slightly low fee.
+	weight := tx.SerializeSizeStripped()*3 + tx.SerializeSize()
+	vsize := weight / 4
+	fee := feePerVbyte * int64(vsize)
+	perRecipientValue := (previousOutputValue - fee) / int64(len(recipientAddresses))
+	for _, txOut := range tx.TxOut {
+		txOut.Value = perRecipientValue
+	}
+
+	// BtcEncode writes bytes, we wrap it in an hex encoder wrapped
+	// around a strings.Builder to get a hex string.
+	txBuilder := &strings.Builder{}
+	txWriter := hex.NewEncoder(txBuilder)
+	tx.BtcEncode(txWriter, wire.ProtocolVersion, wire.WitnessEncoding)
+
+	return txBuilder.String(), nil
+}
+```
+<1> These two come from `fundingInfo().utxoOutpoint`, which has the transaction
+    id as the first 32 little-endian bytes and the previous output index as
+    its last 4 little-endian bytes.
+<2> Comes from `fundingInfo().utxoValue`, a little-endian unsigned int.
+<3> Derived as part of the <<signing-protocol>>.
+<4> Computed via the <<signing-protocol>>.
+<5> Available on the signer directly (see
+    https://github.com/keep-network/keep-ecdsa/blob/f240e81002a7b26eb6326be068dbf80b53bc0a18/pkg/ecdsa/tss/signer.go#L33[`ThresholdSigner.PublicKey()`]).
+<6> e.g. &chaincfg.MainNetParams or TestNet3Params
+
 === Limitations
 
 Bitcoin fees, additional dependencies, transaction submission.
