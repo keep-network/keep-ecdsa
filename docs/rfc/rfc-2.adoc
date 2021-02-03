@@ -139,9 +139,6 @@ provides estimates of the feerates that will achieve transaction confirmation
 within a certain amount of time. A short-term solution is proposed in the
 section on <<bitcoin-fee>>.
 
-[[output-script]]
-===== Computing the Deposit Output Script
-
 [[recovery-address]]
 ===== Specifying an Operator's Bitcoin Recovery Address
 
@@ -226,6 +223,72 @@ the final transaction.
 // is present, the client should submit the transaction, even if other clients
 // also submit it. Possible default fallback if no Bitcoin node available:
 // attempt to POST signed transaction hex to `https://blockstream.info/api/tx`.
+=== Implementation
+
+There are a few implementation details that are worth calling out; in
+particular, the *pub address derivation, the deposit output script
+construction, the Bitcoin sighash construction, the Bitcoin transaction
+construction, and the attachment of the signature to the Bitcoin transaction.
+This proposal suggests this be done using the `btcsuite` series of Go
+libraries, and each one is detailed below with draft code using those
+libraries.
+
+[[output-script]]
+==== Deposit Output Script Construction
+
+tBTC deposits always use Witness PubKeyHash in their funding UTXO. This means
+that, to spend the funding UTXO, the deposit signing group must sign a sighash
+that allows spending that UTXO. The signing process does this by including a
+`scriptCode` as part of the the sighash (see <<sighash-construction>>). The
+`scriptCode`, for Witness PubKeyHash transactions, is defined in BIP143.
+
+This function constructs the relevant `scriptCode` bytes from the deposit's
+public key:
+
+```go
+// import "github.com/btcsuite/btcd/btcec"
+// import "github.com/btcsuite/btcutil"
+
+// PublicKeyToP2WPKHOutputScript converts a public key to a Bitcion p2wpkh
+// witness scriptCode that can spend an output sent to that public key's
+// corresponding address.
+//
+// [BIP141]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
+func PublicKeyToP2WPKHScriptCode(
+  publicKey *ecdsa.PublicKey,
+  chainParams *chaincfg.Params,
+) ([]byte, error) {
+  // ecdsa.PublicKey and btcec.PublicKey are both method attachments to
+  // Go's crypto/ecdsa.PublicKey, so we can cast.
+	publicKeyBytes := (*btcec.PublicKey)(publicKey).SerializeCompressed()
+  // Note that the scriptCode for a p2wpkh address is the equivalent of the
+  // p2pkh scriptPubKey.
+  pubKeyAddress, err := btcutil.NewAddressPubKey(publicKeyBytes, chainParams)
+  if (err != nil) {
+    return fmt.Errorf(
+      "error deriving p2wpkh scriptCode from public key: [%s]",
+      err,
+    )
+  }
+  pkhAddress := pubKeyAddress.AddressPubKeyHash()
+
+  script, err := txscript.PayToAddrScript(pkhAddress)
+  if (err != nil) {
+    return fmt.Errorf(
+      "error deriving p2wpkh scriptCode from public key: [%s]",
+      err,
+    )
+  }
+  if (len(script) > 255) {
+    return fmt.Errorf(
+      "error deriving p2wpkh scriptCode from public key: [scriptCode too long]",
+      len(script)
+    )
+  }
+
+  return append([]byte{byte(len(script))}, script)
+}
+```
 
 === Limitations
 
