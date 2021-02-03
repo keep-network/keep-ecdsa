@@ -260,6 +260,12 @@ computed, each client should construct the final transaction (see
 <<final-transaction-construction>>) and submit it (see
 <<transaction-submission>>).
 
+When receiving the ready message from other nodes, a node should validate that
+the announced BTC address can be parsed correctly by the tooling used to handle
+transaction and sighash construction. If the announced BTC address cannot be
+parsed, an error should be logged and the message should be treated as if it was
+not received.
+
 The retry mechanism for the signing process for liquidation recovery should be
 identical to regular signing, repeating every 2 minutes that a signature has
 not been completed successfully until the liquidation recovery timeout. Unlike
