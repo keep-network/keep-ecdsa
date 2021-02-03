@@ -51,7 +51,7 @@ assemble Bitcoin data.
 
 === Goal
 
-This proposal is focused on achieveing a "least effort" implementation of a
+This proposal is focused on achieving a "least effort" implementation of a
 recovery protocol that can handle happy paths for BTC distribution. Where
 relevant, it points out _unhappy_ paths and may outline how they might be
 dealt with in the future, but these unhappy paths are explicitly considered
@@ -82,7 +82,7 @@ To compute the per-signer amount, the client needs to know:
 - F, the desired fee.
 - L, the deposit lot size.
 
-Once the amount is known, the Bitcoin sighash must be computed in order to
+Separately from the amount, the Bitcoin sighash must be computed in order to
 construct a transaction that can spend the tBTC deposit's UTXO; see the tBTC
 spec's section on https://docs.keep.network/tbtc/#sighash[Standardized
 Sighash Construction] for an introduction to this process. Computing the sighash
@@ -123,7 +123,8 @@ procured or computed:
 - The keep's public key, available on the Keep contract from the
   `getPublicKey` view method.
 - The deposit redemption script, straightforwardly computable from the keep's
-  public key in a way detailed in the section on <<output-script>>.
+  public key by compressing the public key; this is briefly covered in the
+  implementation <<output-script>> section.
 - One Bitcoin address per signer, specified on the client in a way detailed
   in the section on <<recovery-address>>.
 - The keep's signature on the sighash produced by the previous items,
