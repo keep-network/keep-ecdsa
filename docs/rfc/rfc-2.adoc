@@ -62,7 +62,7 @@ Bitcoin node, as that is an additional piece of infrastructure that triggers
 additional requirements for larger staking providers that may be operating
 many nodes on behalf of multiple stakers.
 
-=== Implementation
+=== Implementation Behaviors
 
 It is important to observe that interaction with the Bitcoin chain is
 _strictly unnecessary_ to construct and sign a Bitcoin transaction that
@@ -299,7 +299,7 @@ request to path `/tx`. The POST request body should be the signed transaction
 hex, as would be logged in the WARN logs above. If the POST fails, the client
 should log an error and then fall back on the WARN logging above.
 
-=== Implementation
+=== Implementation Details
 
 There are a few implementation details that are worth calling out; in
 particular, the *pub address derivation, the deposit output script
