@@ -164,12 +164,16 @@ derivations. The client should write the updated index to the `current/`
 directory that tracks active key shares, to an encrypted file named
 `current-btc-refund-derivation-index`. The operator should then seek to
 obtain from the staker an extended public key that is only used for this
-purpose.
+purpose. In cases where in-memory/on-disk derivation index and config file index
+both exist, the highest index should be used.
 
 If an optional Bitcoin node connection is available (see <<electrs>>), the
 client should additionally check a derived address for a balance before
 publishing. To do this, a GET request to `/address/<address>` should be issued,
-and the JSON response inspected for a `tx_count` of 0.
+and the JSON response inspected for a `tx_count` of 0. When such a connection is
+available, if the client finds an address is already used, it should increment
+the derivation index and check again. If the GET request fails, the index should
+be assumed to be valid, as if the Bitcoin node connection were not available.
 
 ==== Modification of key material archiving
 
