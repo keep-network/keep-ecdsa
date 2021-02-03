@@ -168,9 +168,8 @@ purpose.
 
 If an optional Bitcoin node connection is available (see <<electrs>>), the
 client should additionally check a derived address for a balance before
-publishing. A fallback could be implemented that checks
-`https://blockstream.info/api/address/<address>` for a given derived address
-to ensure `tx_count` is 0.
+publishing. To do this, a GET request to `/address/<address>` should be issued,
+and the JSON response inspected for a `tx_count` of 0.
 
 [[bitcoin-fee]]
 ===== Dealing with the Bitcoin Fee
@@ -314,9 +313,9 @@ is open source and has a Docker image available; it must be connected to a
 bitcoind instance.
 
 To configure this, the `Extensions.TBTC.ElectrsURL` key can be set to the
-appropriate URL. This configuration option defaults to
-`https://blockstream.info/api/`, but can be explicitly set to a blank string to
-disable integration altogether.
+appropriate URL. This configuration option should default to
+`https://blockstream.info/api/`, but the operator should be allowed to be set
+it to a blank string to disable integration altogether.
 
 [bibliography]
 == Related Links
