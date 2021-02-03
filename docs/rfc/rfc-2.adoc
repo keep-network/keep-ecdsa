@@ -458,6 +458,96 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error)
   return finalAddress.EncodeAddress()
 }
 ```
+
+[[sighash-construction]]
+==== Construction of Sighash for Signing
+
+The sighash is constructed as the double-SHA256 of the preimage. The preimage
+is defined in BIP143. The sample function below shows the high level needed
+to construct the sighash, which is the data then signed by the signer group
+to produce a valid transaction (see the section on
+<<final-transaction-construction>> for the rest of the process):
+
+```go
+// import "bytes"
+// import "crypto/sha256"
+// import "encoding/binary"
+// import "github.com/btcsuite/btcutil"
+// import "github.com/btcsuite/btcd/txscript"
+
+// Output is a simplified Bitcoin transaction output that contains a value and a
+// string address.
+type output struct {
+  value uint64
+  addressString string
+}
+
+func doubleSha256(bytes []byte) []byte {
+  hash := sha256.Sum256(bytes)
+  secondHash := sha256.Sum256(hash[:])
+
+  return secondHash[:]
+}
+
+func ConstructSighash(
+  // 32-byte little-endian transaction id, then 4-byte little-endian index of
+  // output within transaction to spend.
+  previousOutpoint []byte,
+  previousOutputScriptCode []byte, // see PublicKeyToP2WPKHScriptCode above
+  previousOutputValue uint64,
+  outputs []output,
+  chainParams *chaincfg.Params,
+) ([]byte, error) {
+  sigHashPreimageBuffer := &bytes.Buffer{}
+  // version
+  sigHashPreimageBuffer.Write([]byte{0x01, 0x00, 0x00, 0x00})
+  // hashPrevOuts
+  sigHashPreimageBuffer.Write(doubleSha256(previousOutpoint))
+  // hashSequence(00000000),
+  sigHashPreimageBuffer.Write(doubleSha256([]byte{0x00, 0x00, 0x00, 0x00}))
+  // outpoint
+  sigHashPreimageBuffer.Write(previousOutpoint)
+  // p2wpkh scriptCode
+  sigHashPreimageBuffer.Write(previousOutputScriptCode)
+  // input value
+  binary.Write(sigHashPreimageBuffer, binary.LittleEndian, previousOutputValue)
+  // input sequence number, 0 enables replace-by-fee
+  sigHashPreimageBuffer.Write([]byte{0x00, 0x00, 0x00, 0x00})
+
+  outputBytesBuffer := &bytes.Buffer{}
+  for _, output := range outputs {
+    address, err := btcutil.DecodeAddress(output.addressString, chainParams)
+    if (err != nil) {
+      return nil, fmt.Errorf(
+        "error decoding output address [%s]: [%s]",
+        output.addressString,
+        err,
+      )
+    }
+    outputScript, err := txscript.PayToAddrScript(address)
+    if (err != nil) {
+      return nil, fmt.Errorf(
+        "error constructing script from output address [%s]: [%s]",
+        output.addressString,
+        err,
+      )
+    }
+
+    binary.Write(outputBytesBuffer, binary.LittleEndian, output.value)
+    outputBytesBuffer.WriteByte(byte(len(outputScript)))
+    outputBytesBuffer.Write(outputScript)
+  }
+
+  // hash of outputs
+  sigHashPreimageBuffer.Write(doubleSha256(outputBytesBuffer.Bytes()))
+  // nLockTime
+  sigHashPreimageBuffer.Write([]byte{0x00, 0x00, 0x00, 0x00})
+  // SIG_ALL sighash type
+  sigHashPreimageBuffer.Write([]byte{0x00, 0x00, 0x00, 0x00})
+
+  return doubleSha256(sigHashPreimageBuffer.Bytes()), nil
+}
+```
 === Limitations
 
 Bitcoin fees, additional dependencies, transaction submission.
