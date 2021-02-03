@@ -334,6 +334,130 @@ func PublicKeyToP2WPKHScriptCode(
 }
 ```
 
+==== Derivation of Bitcoin Addresses from Extended Public Keys
+
+For best-practice Bitcoin support, this RFC requires that recovery addresses,
+as specified in <<recovery-address>>, can be specified as extended public
+keys. Extended public keys are generally prefixed by the string `xpub`, as
+defined in BIP32. Two additional prefixes are possible: `ypub` is defined in
+BIP49 and `zpub` is defined in BIP84.
+
+The `github.com/btcsuite/btcutil/hdkeychain` package handles the key
+derivation requirements; however, it always returns BIP44 addresses. As
+such, some special handling is needed to detect `ypub` and `zpub` prefixes
+and generate the appropriate address types (p2sh and p2wpkh, respectively).
+While using the *pub prefix to indicate the address type is not ideal, and
+other approaches are used in a few places, they are outside the scope of this
+RFC.
+
+Each *pub should come already set to the root path that addresses should
+originate at (e.g. `m/0'/0'` for the first account in BIP32 bitcoin-core
+wallets, `m/44'/0'/0'` for the first account in BIP44 wallets, and so on).
+Addresses are derived as external chain addresses, i.e. at subpath `/0`.
+
+Here is a sample function that could be used to implement this functionality
+using the `hdkeychain` package and its relatives:
+
+```go
+// import "github.com/btcsuite/btcd/btcec"
+// import "github.com/btcsuite/btcutil"
+
+// DeriveAddress uses the specified extended public key and address index to
+// derive an address string in the appropriate format at the specified address
+// index. The extended public key is expected to already be at the account path
+// level (e.g. m/44'/0'/0' for [BIP44] xpubs), and addresses are derived within
+// the external chain subpath (`/0`). Thus, calling DeriveAddress with an xpub
+// generated at m/44'/0'/0' and passing the address index 5 will produce the
+// address at path m/44'/0'/0'/0/5.
+//
+// In cases where the extended public key is at depth 4, meaning the external or
+// internal chain is already included, DeriveAddress will directly derive the
+// address index at the existing depth.
+//
+// The returned address will be a p2pkh/p2sh address for prefixes xpub and tpub,
+// (i.e. prefixed by 1, m, or n), a p2wpkh-in-p2sh address for prefixes ypub or
+// upub (i.e., prefixed by 3 or 2), and a bech32 p2wpkh address for prefixes
+// zpub or vpub (i.e., prefixed by bc1 or tb1).
+//
+// See [BIP32], [BIP44], [BIP49], and [BIP84] for more on address derivation,
+// particular paths, etc.
+//
+// [BIP32]: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
+// [BIP44]: https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
+// [BIP49]: https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
+// [BIP84]: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
+func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error)
+{
+  extendedKey, err := hdkeychain.NewKeyFromString(extendedPublicKey)
+  if (err != nil) {
+    return fmt.Errorf(
+      "error parsing extended public key: [%s]",
+      err,
+    )
+  }
+  // For later usage---this is xpub/ypub/zpub/...
+  publicKeyDescriptor = extendedPublicKey[0:4]
+
+  externalChain := extendedKey
+  if (externalChain.Depth() < 4) {
+    // Descend to the external chain path, /0.
+    externalChain, err = extendedKey.Child(0)
+    if (err != nil) {
+      return fmt.Errorf(
+        "error deriving external chain path /0 from extended key: [%s]",
+        err,
+      )
+    }
+  }
+
+  requestedPublicKey, err := externalChain.Child(addressIndex)
+  if (err != nil) {
+    return fmt.Errorf(
+      "error deriving requested address index /0/%s from extended key: [%s]",
+      addressIndex,
+      err,
+    )
+  }
+
+  // Now to decide how we want to serialize the address...
+  var chainParams *chaincfg.Params
+  switch extendedPublicKey[0:4] {
+  case "xpub", "ypub", "zpub":
+    chainParams = &chaincfg.MainNetParams
+  case "tpub", "upub", "vpub":
+    chainParams = &chaincfg.TestNet3Params
+  }
+
+  requestedAddress, err := requestedPublicKey.Address(chainParams)
+
+  var finalAddress btcutil.Address = requestedAddress
+  switch extendedPublicKey[0:4] {
+  case "xpub", "tpub":
+    // Noop, the address is already correct
+  case "ypub", "upub":
+    // p2wpkh-in-p2sh, constructed as per https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#p2wpkh-nested-in-bip16-p2sh .
+    scriptSig = append([]byte{0x00, 0x14}, requestedAddress.Hash160()[:]...)
+    finalAddress = btcutil.NewAddressWitnessScriptHash(
+      btcutil.Hash160(scriptSig),
+      chainParams,
+    )
+  case "zpub", "vpub":
+    // p2wpkh
+    finalAddress, err = btcutil.NewAddressWitnessPubKeyHash(
+      requestedAddress.Hash160()[:],
+      chainParams,
+    )
+  }
+  if (err != nil) {
+    return fmt.Errorf(
+      "failed to derive final address format from extended key: [%s]",
+      err,
+    )
+  }
+
+  return finalAddress.EncodeAddress()
+}
+```
 === Limitations
 
 Bitcoin fees, additional dependencies, transaction submission.
