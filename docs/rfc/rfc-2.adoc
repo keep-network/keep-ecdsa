@@ -234,12 +234,39 @@ not been completed successfully until the liquidation recovery timeout. Unlike
 standard signing, the liquidation recovery timeout should be very long to allow
 for node malfunctions to recover cleanly: this RFC recommends a default timeout
 of 7 days.
+
+[[transaction-submission]]
 ==== Submitting the Signed Transaction
 
-// Log signed transaction on WARN level. If an optional Bitcoin node connection
-// is present, the client should submit the transaction, even if other clients
-// also submit it. Possible default fallback if no Bitcoin node available:
-// attempt to POST signed transaction hex to `https://blockstream.info/api/tx`.
+Submitting a signed Bitcoin transaction requires a connection to a Bitcoin
+node, direct or indirect. To avoid _strictly requiring_ a connection to a
+Bitcoin node, this RFC proposes logging the signed transaction 5 times on the
+WARN level with a descriptive prefix. Current operator guidance suggests that
+more than 5 WARN level logs within 5 minutes should trigger a notification
+for closer monitoring by operators, ensuring these logs will be noticed. The
+descriptive prefix will further allow for targeted notifications by operators
+so that they can flag these logs for follow-up action.
+
+The suggested structure of the log message is:
+
+```
+2020-02-01T12:12:12.12-0800    WARN   keep-ecdsa   Please broadcast Bitcoin transaction 0010010101000828181124af234gbawed000
+```
+
+The first three components are the standard components emitted by the ECDSA
+client's logging library, while the message itself begins with `Please broadcast
+Bitcoin transaction`, followed by the hexadecimal string representing the signed
+transaction. The signed transaction can be broadcast via manual submission to a
+known node, via API access to a service provider like BlockCypher or
+Blockstream, or via a manual form submission on a page like
+https://live.blockcypher.com/btc/pushtx/ .
+
+If an optional Bitcoin node connection is available (see <<electrs>>), the
+client should attempt to publish the transaction by performing an HTTP POST
+request to path `/tx`. The POST request body should be the signed transaction
+hex, as would be logged in the WARN logs above. If the POST fails, the client
+should log an error and then fall back on the WARN logging above.
+
 === Implementation
 
 There are a few implementation details that are worth calling out; in
