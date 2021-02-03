@@ -171,6 +171,39 @@ client should additionally check a derived address for a balance before
 publishing. To do this, a GET request to `/address/<address>` should be issued,
 and the JSON response inspected for a `tx_count` of 0.
 
+==== Modification of key material archiving
+
+In the current client, key material is archived as soon as the ECDSA keep
+contract a client is participating in moves into the CLOSED or TERMINATED
+state. This RFC revises that behavior to only archive on transition to CLOSED.
+When contracts transition into TERMINATED state and that transition is
+confirmed (by waiting
+https://github.com/keep-network/keep-ecdsa/blob/master/pkg/client/client.go#L28-L31[`blockConfirmation`
+blocks]), the client should immediately begin <<bitcoin-fee,Bitcoin fee
+resolution>> followed by the <<signing-protocol>> and finally
+<<transaction-submission,transaction submission>>. Only when signing and
+transaction submission (whether via logging or API) completes or times out
+should the associated key material be archived.
+
+On startup, if a client sees that an unarchived keep is in the TERMINATED
+state and has been in that state for `blockConfirmation` blocks, it should
+move directly to <<bitcoin-fee,Bitcoin fee resolution>>, unless an optional
+Bitcoin node connection is available (see <<electrs>>). In this case, the
+client should check the keep's associated deposit for an unspent balance by
+issuing a GET request to `/tx/:txid/outspend/:vout`, using the deposit's
+`fundingInfo().utxoOutpoint` to derive the transaction id and vout, and only
+start the signing process if the JSON result has a `spent` value of false. If
+`spent` is `true` and `status.confirmed` is `false`, a retry should occur
+after an hour until `spent` is `true`, `status.confirmed` is `true`, and
+`status.block_height` is at least 6 blocks past the value returned by issuing
+a GET request to `/blocks/tip/height`. If this occurs, the key material
+should be archived.
+
+Note that the output spend may go from being `spent` and unconfirmed to being
+unspent if the transaction spending the UTXO is dropped from the mempool
+before being included in a block, at which point the bitcoin fee resolution
+and signing process should proceed as if the keep was just terminated.
+
 [[bitcoin-fee]]
 ===== Dealing with the Bitcoin Fee
 
