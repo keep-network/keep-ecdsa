@@ -216,14 +216,7 @@ func initializeExtensions(
 			return
 		}
 
-		err = tbtc.Initialize(ctx, tbtcEthereumChain)
-		if err != nil {
-			logger.Errorf(
-				"could not initialize tbtc extension: [%v]",
-				err,
-			)
-			return
-		}
+		tbtc.Initialize(ctx, tbtcEthereumChain)
 	}
 }
 
