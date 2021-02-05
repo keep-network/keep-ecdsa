@@ -233,9 +233,13 @@ used in the presence of a Bitcoin connection. If this suggested fee would result
 in a fee consuming more than 5% of the UTXO value that is being split, then
 the lesser of the 25-block suggested fee and `MaxFeePerVByte` configured fee
 should be used. Because the true fee computation requires that the full
-transaction be assembled, the fee should be estimated by assuming the final
-transaction will be 175 vBytes, which should be very close to accurate given
-the regular structure of liquidation refund transactions.
+transaction be assembled, the transaction fee should be estimated by assuming
+the final transaction will be 175 vBytes, which should be very close to
+accurate given the regular structure of liquidation refund transactions.
+
+If the final fee is computed as being >5% of UTXO value, the client should log
+a WARN message so that the operator can be aware of this and revise their max
+fee per vByte if desired.
 
 Once each client has its max fee, it will proceed with the
 <<signing-protocol>>. This protocol involves exchanging the max fees of all
