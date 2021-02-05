@@ -228,11 +228,19 @@ suggested fee per vByte should be available at the `/fee-estimates` endpoint
 of the REST API, which returns a JSON object with the key `"25"`
 corresponding to this fee.
 
+There is one exception to the rule that the 25-block suggested fee should be
+used in the presence of a Bitcoin connection. If this suggested fee would result
+in a fee consuming more than 5% of the UTXO value that is being split, then
+the lesser of the 25-block suggested fee and `MaxFeePerVByte` configured fee
+should be used. Because the true fee computation requires that the full
+transaction be assembled, the fee should be estimated by assuming the final
+transaction will be 175 vBytes, which should be very close to accurate given
+the regular structure of liquidation refund transactions.
+
 Once each client has its max fee, it will proceed with the
 <<signing-protocol>>. This protocol involves exchanging the max fees of all
 clients and choosing the lowest max fee acceptable to all clients, and using
 that as the fee for the final transaction.
-
 
 [[signing-protocol]]
 ===== Signing Protocol
