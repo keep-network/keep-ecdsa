@@ -1,4 +1,4 @@
-package eth
+package chain
 
 import (
 	"math/big"
@@ -10,7 +10,7 @@ import (
 type TBTCHandle interface {
 	Handle
 
-	Deposit
+	Deposit // Instantiate this rather than include it? Encapsulate the address?
 	TBTCSystem
 }
 
@@ -64,6 +64,7 @@ type Deposit interface {
 type TBTCSystem interface {
 	// OnDepositCreated installs a callback that is invoked when an
 	// on-chain notification of a new deposit creation is seen.
+	// Pass a Deposit instead of an address, here and below?
 	OnDepositCreated(
 		handler func(depositAddress string),
 	) subscription.EventSubscription

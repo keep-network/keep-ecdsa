@@ -12,6 +12,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
 
@@ -30,8 +31,8 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-// EthereumChain is an implementation of ethereum blockchain interface.
-type EthereumChain struct {
+// ethereumChain is an implementation of ethereum blockchain interface.
+type ethereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
 	client                         ethutil.EthereumClient
@@ -57,7 +58,7 @@ type EthereumChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain, error) {
+func Connect(accountKey *keystore.Key, config *ethereum.Config) (chain.Handle, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
@@ -110,7 +111,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		return nil, err
 	}
 
-	return &EthereumChain{
+	return &ethereumChain{
 		config:                         config,
 		accountKey:                     accountKey,
 		client:                         wrappedClient,
