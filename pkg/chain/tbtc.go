@@ -66,32 +66,32 @@ type TBTCSystem interface {
 	// on-chain notification of a new deposit creation is seen.
 	OnDepositCreated(
 		handler func(depositAddress string),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 
 	// OnDepositRegisteredPubkey installs a callback that is invoked when an
 	// on-chain notification of a deposit's pubkey registration is seen.
 	OnDepositRegisteredPubkey(
 		handler func(depositAddress string),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 
 	// OnDepositRedemptionRequested installs a callback that is invoked when an
 	// on-chain notification of a deposit redemption request is seen.
 	OnDepositRedemptionRequested(
 		handler func(depositAddress string),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 
 	// OnDepositGotRedemptionSignature installs a callback that is invoked
 	// when an on-chain notification of a deposit receiving a redemption
 	// signature is seen.
 	OnDepositGotRedemptionSignature(
 		handler func(depositAddress string),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 
 	// OnDepositRedeemed installs a callback that is invoked when an
 	// on-chain notification of a deposit redemption is seen.
 	OnDepositRedeemed(
 		handler func(depositAddress string),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 
 	// PastDepositRedemptionRequestedEvents returns all redemption requested
 	// events for the given deposit which occurred after the provided start block.

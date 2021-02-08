@@ -102,10 +102,17 @@ func (d *Deduplicator) NotifyKeyGenCompleted(keepAddress common.Address) {
 // indicating whether the client should proceed with the execution or ignore the
 // event as a duplicate.
 //
+// An important part of making the decision about approving the event or not is
+// to check on-chain if keep is really awaiting for a signature. This check is
+// repeated with a timeout specified as a parameter to address problems with
+// minor chain reorgs or chain clients state not being synced yet at the moment
+// or receiving an event.
+//
 // In case the client proceeds with signing, it should call
 // NotifySigningCompleted once the protocol completes, no matter if it failed or
 // succeeded.
 func (d *Deduplicator) NotifySigningStarted(
+	timeout time.Duration,
 	keepAddress common.Address,
 	digest [32]byte,
 ) (bool, error) {
@@ -118,10 +125,8 @@ func (d *Deduplicator) NotifySigningStarted(
 	// been handled.
 	// Repeat the check in case of a small chain reorg or if chain nodes
 	// are out of sync.
-	isAwaitingSignature, err := utils.ConfirmWithTimeout(
-		10*time.Second,
-		10*time.Second,
-		30*time.Second,
+	isAwaitingSignature, err := utils.ConfirmWithTimeoutDefaultBackoff(
+		timeout,
 		func(ctx context.Context) (bool, error) {
 			return d.chain.IsAwaitingSignature(keepAddress, digest)
 		},

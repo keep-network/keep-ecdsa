@@ -51,6 +51,13 @@ func init() {
 		Usage:       `Provides access to the BondedECDSAKeepVendor contract.`,
 		Description: bondedECDSAKeepVendorDescription,
 		Subcommands: []cli.Command{{
+			Name:      "factory-upgrade-time-delay",
+			Usage:     "Calls the constant method factoryUpgradeTimeDelay on the BondedECDSAKeepVendor contract.",
+			ArgsUsage: "",
+			Action:    becdsakvFactoryUpgradeTimeDelay,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "initialized",
 			Usage:     "Calls the constant method initialized on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "",
@@ -65,12 +72,12 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "factory-upgrade-time-delay",
-			Usage:     "Calls the constant method factoryUpgradeTimeDelay on the BondedECDSAKeepVendor contract.",
-			ArgsUsage: "",
-			Action:    becdsakvFactoryUpgradeTimeDelay,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
+			Name:      "initialize",
+			Usage:     "Calls the method initialize on the BondedECDSAKeepVendor contract.",
+			ArgsUsage: "[registryAddress] [factory] ",
+			Action:    becdsakvInitialize,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
+			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "upgrade-factory",
 			Usage:     "Calls the method upgradeFactory on the BondedECDSAKeepVendor contract.",
@@ -85,18 +92,31 @@ func init() {
 			Action:    becdsakvCompleteFactoryUpgrade,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "initialize",
-			Usage:     "Calls the method initialize on the BondedECDSAKeepVendor contract.",
-			ArgsUsage: "[registryAddress] [factory] ",
-			Action:    becdsakvInitialize,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
 		}},
 	})
 }
 
 /// ------------------- Const methods -------------------
+
+func becdsakvFactoryUpgradeTimeDelay(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepVendor(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.FactoryUpgradeTimeDelayAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
 
 func becdsakvInitialized(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
@@ -138,27 +158,61 @@ func becdsakvSelectFactory(c *cli.Context) error {
 	return nil
 }
 
-func becdsakvFactoryUpgradeTimeDelay(c *cli.Context) error {
+/// ------------------- Non-const methods -------------------
+
+func becdsakvInitialize(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.FactoryUpgradeTimeDelayAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
+	registryAddress, err := ethutil.AddressFromHex(c.Args()[0])
 	if err != nil {
-		return err
+		return fmt.Errorf(
+			"couldn't parse parameter registryAddress, a address, from passed value %v",
+			c.Args()[0],
+		)
 	}
 
-	cmd.PrintOutput(result)
+	factory, err := ethutil.AddressFromHex(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter factory, a address, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.Initialize(
+			registryAddress,
+			factory,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallInitialize(
+			registryAddress,
+			factory,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
 
 	return nil
 }
-
-/// ------------------- Non-const methods -------------------
 
 func becdsakvUpgradeFactory(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
@@ -225,60 +279,6 @@ func becdsakvCompleteFactoryUpgrade(c *cli.Context) error {
 	} else {
 		// Do a call.
 		err = contract.CallCompleteFactoryUpgrade(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func becdsakvInitialize(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepVendor(c)
-	if err != nil {
-		return err
-	}
-
-	registryAddress, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter registryAddress, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	factory, err := ethutil.AddressFromHex(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter factory, a address, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.Initialize(
-			registryAddress,
-			factory,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallInitialize(
-			registryAddress,
-			factory,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
