@@ -7,6 +7,7 @@ ENV GOPATH=/go \
 	GOBIN=/go/bin \
 	APP_NAME=keep-ecdsa \
 	APP_DIR=/go/src/github.com/keep-network/keep-ecdsa \
+	TEST_RESULTS_DIR=/mnt/test-results \
 	BIN_PATH=/usr/local/bin \
 	# GO111MODULE required to support go modules
 	GO111MODULE=on
@@ -26,12 +27,15 @@ RUN apk add --update --no-cache \
 # Install Solidity compiler.
 COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
 
+# Get gotestsum tool
+RUN go get gotest.tools/gotestsum
+
 # Configure GitHub token to be able to get private repositories.
 ARG GITHUB_TOKEN
 RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
 
-# Configure working directory.
-RUN mkdir -p $APP_DIR
+# Configure working and test results directories.
+RUN mkdir -p $APP_DIR $TEST_RESULTS_DIR
 WORKDIR $APP_DIR
 
 # Get dependencies.
