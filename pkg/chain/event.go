@@ -6,10 +6,12 @@ import (
 
 // BondedECDSAKeepCreatedEvent is an event emitted on a new keep creation.
 type BondedECDSAKeepCreatedEvent struct {
-	KeepAddress     common.Address   // keep contract address
-	Members         []common.Address // keep members addresses
-	HonestThreshold uint64
-	BlockNumber     uint64
+	// KeepAddress          KeepID // keep contract address
+	Keep                 BondedECDSAKeepHandle
+	Members              []KeepMemberID // keep members addresses
+	HonestThreshold      uint64
+	BlockNumber          uint64
+	ThisOperatorIsMember bool
 }
 
 // ConflictingPublicKeySubmittedEvent is an event emitted each time when one of
@@ -54,10 +56,16 @@ type SignatureSubmittedEvent struct {
 	BlockNumber uint64
 }
 
+// IsThisOperatorMember returns _true_ if the current operator is a member of
+// the keep whose creation this event represents, false otherwise.
+func (bekce *BondedECDSAKeepCreatedEvent) IsThisOperatorMember() bool {
+	return bekce.ThisOperatorIsMember
+}
+
 // IsMember checks if list of members contains the given address.
-func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
-	for _, member := range e.Members {
-		if member == address {
+func (bekce *BondedECDSAKeepCreatedEvent) IsMember(memberID KeepMemberID) bool {
+	for _, member := range bekce.Members {
+		if member == memberID {
 			return true
 		}
 	}

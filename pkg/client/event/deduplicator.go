@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
@@ -39,7 +38,7 @@ type keepRegistry interface {
 	// HasSigner returns true if keep with the given address already exists
 	// in the registry. In the context of event deduplicator, it means that
 	// the key for the given keep has already been generated.
-	HasSigner(keepAddress common.Address) bool
+	HasSigner(keepID chain.KeepID) bool
 }
 
 func NewDeduplicator(
@@ -76,25 +75,25 @@ func NewDeduplicator(
 // In case the client proceeds with the key generation, it should call
 // NotifyKeyGenCompleted once the protocol completes, no matter if it failed or
 // succeeded.
-func (d *Deduplicator) NotifyKeyGenStarted(keepAddress common.Address) bool {
-	if d.keyGenKeeps.has(keepAddress) {
+func (d *Deduplicator) NotifyKeyGenStarted(keepID chain.KeepID) bool {
+	if d.keyGenKeeps.has(keepID) {
 		return false
 	}
 
 	// If the event is not currently being handled but keep with the given
 	// address already exists in the registry, the event should be rejected
 	// as a duplicate. It is an old event that has already been handled.
-	if d.keepRegistry.HasSigner(keepAddress) {
+	if d.keepRegistry.HasSigner(keepID) {
 		return false
 	}
 
-	return d.keyGenKeeps.add(keepAddress)
+	return d.keyGenKeeps.add(keepID)
 }
 
 // NotifyKeyGenCompleted should be called once client completed key generation
 // protocol, no matter if it succeeded or not.
-func (d *Deduplicator) NotifyKeyGenCompleted(keepAddress common.Address) {
-	d.keyGenKeeps.remove(keepAddress)
+func (d *Deduplicator) NotifyKeyGenCompleted(keepID chain.KeepID) {
+	d.keyGenKeeps.remove(keepID)
 }
 
 // NotifySigningStarted notifies the client wants to start signature generation
@@ -113,11 +112,28 @@ func (d *Deduplicator) NotifyKeyGenCompleted(keepAddress common.Address) {
 // succeeded.
 func (d *Deduplicator) NotifySigningStarted(
 	timeout time.Duration,
-	keepAddress common.Address,
+	keepID chain.KeepID,
 	digest [32]byte,
 ) (bool, error) {
-	if d.requestedSignatures.has(keepAddress, digest) {
+	if d.requestedSignatures.has(keepID, digest) {
 		return false, nil
+	}
+
+	manager, err := d.chain.BondedECDSAKeepManager()
+	if err != nil {
+		return false, fmt.Errorf(
+			"could not check if keep is awaiting for a signature "+
+				"when deduplicating events: [%v]",
+			err,
+		)
+	}
+	keep, err := manager.GetKeepWithID(keepID)
+	if err != nil {
+		return false, fmt.Errorf(
+			"could not check if keep is awaiting for a signature "+
+				"when deduplicating events: [%v]",
+			err,
+		)
 	}
 
 	// If the event is not currently being handled, we need to confirm on-chain
@@ -128,7 +144,7 @@ func (d *Deduplicator) NotifySigningStarted(
 	isAwaitingSignature, err := utils.ConfirmWithTimeoutDefaultBackoff(
 		timeout,
 		func(ctx context.Context) (bool, error) {
-			return d.chain.IsAwaitingSignature(keepAddress, digest)
+			return keep.IsAwaitingSignature(digest)
 		},
 	)
 	if err != nil {
@@ -143,17 +159,17 @@ func (d *Deduplicator) NotifySigningStarted(
 		return false, nil
 	}
 
-	return d.requestedSignatures.add(keepAddress, digest), nil
+	return d.requestedSignatures.add(keepID, digest), nil
 }
 
 // NotifySigningCompleted should be called once client completed signature
 // generation for the given keep and digest, no matter if the protocol succeeded
 // or not.
 func (d *Deduplicator) NotifySigningCompleted(
-	keepAddress common.Address,
+	keepID chain.KeepID,
 	digest [32]byte,
 ) {
-	d.requestedSignatures.remove(keepAddress, digest)
+	d.requestedSignatures.remove(keepID, digest)
 }
 
 // NotifyClosingStarted notifies the client wants to close a keep upon receiving
@@ -163,8 +179,8 @@ func (d *Deduplicator) NotifySigningCompleted(
 // In case the client proceeds with closing the keep, it should call
 // NotifyClosingCompleted once the protocol completes, no matter if it failed or
 // succeeded.
-func (d *Deduplicator) NotifyClosingStarted(keepAddress common.Address) bool {
-	if d.closingKeeps.has(keepAddress) {
+func (d *Deduplicator) NotifyClosingStarted(keepID chain.KeepID) bool {
+	if d.closingKeeps.has(keepID) {
 		return false
 	}
 
@@ -172,17 +188,17 @@ func (d *Deduplicator) NotifyClosingStarted(keepAddress common.Address) bool {
 	// address does no longer exist in the registry, the event should be
 	// rejected as a duplicate. It is an old event that has already been
 	// handled.
-	if !d.keepRegistry.HasSigner(keepAddress) {
+	if !d.keepRegistry.HasSigner(keepID) {
 		return false
 	}
 
-	return d.closingKeeps.add(keepAddress)
+	return d.closingKeeps.add(keepID)
 }
 
 // NotifyClosingCompleted should be called once client completed closing
 // the keep, no matter if the execution succeeded or failed.
-func (d *Deduplicator) NotifyClosingCompleted(keepAddress common.Address) {
-	d.closingKeeps.remove(keepAddress)
+func (d *Deduplicator) NotifyClosingCompleted(keepID chain.KeepID) {
+	d.closingKeeps.remove(keepID)
 }
 
 // NotifyTerminatingStarted notifies the client wants to terminate a keep upon
@@ -192,8 +208,8 @@ func (d *Deduplicator) NotifyClosingCompleted(keepAddress common.Address) {
 // In case the client proceeds with terminating the keep, it should call
 // NotifyTerminatingCompleted once the protocol completes, no matter if it
 // failed or succeeded.
-func (d *Deduplicator) NotifyTerminatingStarted(keepAddress common.Address) bool {
-	if d.terminatingKeeps.has(keepAddress) {
+func (d *Deduplicator) NotifyTerminatingStarted(keepID chain.KeepID) bool {
+	if d.terminatingKeeps.has(keepID) {
 		return false
 	}
 
@@ -201,15 +217,15 @@ func (d *Deduplicator) NotifyTerminatingStarted(keepAddress common.Address) bool
 	// address does no longer exist in the registry, the event should be
 	// rejected as a duplicate. It is an old event that has already been
 	// handled.
-	if !d.keepRegistry.HasSigner(keepAddress) {
+	if !d.keepRegistry.HasSigner(keepID) {
 		return false
 	}
 
-	return d.terminatingKeeps.add(keepAddress)
+	return d.terminatingKeeps.add(keepID)
 }
 
 // NotifyTerminatingCompleted should be called once client completed terminating
 // the keep, no matter if the execution succeeded or failed.
-func (d *Deduplicator) NotifyTerminatingCompleted(keepAddress common.Address) {
-	d.terminatingKeeps.remove(keepAddress)
+func (d *Deduplicator) NotifyTerminatingCompleted(keepID chain.KeepID) {
+	d.terminatingKeeps.remove(keepID)
 }

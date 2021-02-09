@@ -5,6 +5,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
 )
 
+// FIXME Why is this in the chain package? 🤔
 // SerializePublicKey takes X and Y coordinates of a signer's public key and
 // concatenates it to a 64-byte long array. If any of coordinates is shorter
 // than 32-byte it is preceded with zeros.

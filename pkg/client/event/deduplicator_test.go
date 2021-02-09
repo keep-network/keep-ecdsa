@@ -66,17 +66,17 @@ func TestDoSign(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = chain.RequestSignature(keepAddress, digest)
+	err = keep.RequestSignature(digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,17 +100,17 @@ func TestDoNotSignIfCurrentlySigning(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = chain.RequestSignature(keepAddress, digest)
+	err = keep.RequestSignature(digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,12 +140,12 @@ func TestDoNotSignIfNotAwaitingASignature(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,12 +169,12 @@ func TestDoSignOneMoreTime(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +182,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 	//
 	// request and provide a signature, notify it's been provided
 	//
-	err = chain.RequestSignature(keepAddress, digest)
+	err = keep.RequestSignature(digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,7 +205,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 		RecoveryID: 1,
 	}
 
-	err = chain.SubmitSignature(keepAddress, signature)
+	err = keep.SubmitSignature(signature)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,7 +215,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 	//
 	// request signature with the same digest one more time - should work
 	//
-	err = chain.RequestSignature(keepAddress, digest)
+	err = keep.RequestSignature(digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -318,8 +318,7 @@ func TestDoNotTerminateIfAlreadyTerminated(t *testing.T) {
 func newDeduplicator(ctx context.Context) (
 	*Deduplicator,
 	*mockRegistry,
-	local.Chain,
-
+	local.TestingChain,
 ) {
 	mockRegistry := &mockRegistry{
 		keeps: make(map[common.Address]bool),

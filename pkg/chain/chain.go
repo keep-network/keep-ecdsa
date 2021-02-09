@@ -16,12 +16,19 @@ import (
 type KeepMemberID interface {
 	fmt.Stringer
 
-	// PublicKey returns the public key associated with this Keep member.
-	PublicKey() cecdsa.PublicKey
+	// KeepMemberIDs should be convertable to their associated OperatorID. This
+	// may be a 1-to-1 correspondence, i.e. a simple interface cast, or it may
+	// be an internally-tracked association on the host chain.
+	OperatorID() OperatorID
 }
 
 type OperatorID interface {
 	fmt.Stringer
+
+	// PublicKey returns the public key associated with this operator.
+	PublicKey() cecdsa.PublicKey
+	// NetworkID returns the network id associated with this operator.
+	NetworkID() net.ID
 }
 
 // Should be chain-specific, unique across chains, and simple ([A-Za-z0-9-_.]).

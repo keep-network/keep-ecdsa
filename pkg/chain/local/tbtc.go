@@ -21,9 +21,9 @@ const (
 )
 
 type localDeposit struct {
-	keepAddress string
-	pubkey      []byte
-	state       chain.DepositState
+	keep   *localKeep
+	pubkey []byte
+	state  chain.DepositState
 
 	utxoValue           *big.Int
 	redemptionDigest    [32]byte
@@ -120,10 +120,10 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	keepAddress := generateAddress()
-	tlc.OpenKeep(keepAddress, signers)
+	keep := tlc.OpenKeep(keepAddress, signers)
 
 	tlc.deposits[depositAddress] = &localDeposit{
-		keepAddress:               keepAddress.Hex(),
+		keep:                      keep.(*localKeep),
 		state:                     chain.AwaitingSignerSetup,
 		utxoValue:                 big.NewInt(defaultUTXOValue),
 		redemptionRequestedEvents: make([]*chain.DepositRedemptionRequestedEvent, 0),
@@ -203,8 +203,7 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 	deposit.redemptionDigest = randomDigest
 	deposit.redemptionFee = big.NewInt(defaultInitialRedemptionFee)
 
-	err = tlc.RequestSignature(
-		common.HexToAddress(deposit.keepAddress),
+	err = deposit.keep.RequestSignature(
 		deposit.redemptionDigest,
 	)
 	if err != nil {
@@ -217,7 +216,8 @@ func (tlc *TBTCLocalChain) RedeemDeposit(depositAddress string) error {
 		}(handler, depositAddress)
 	}
 
-	currentBlock, err := tlc.BlockCounter().CurrentBlock()
+	blockCounter, _ := tlc.BlockCounter() // localChain BlockCounter never errors
+	currentBlock, err := blockCounter.CurrentBlock()
 	if err != nil {
 		return err
 	}
@@ -318,7 +318,7 @@ func (tlc *TBTCLocalChain) KeepAddress(depositAddress string) (string, error) {
 		return "", fmt.Errorf("no deposit with address [%v]", depositAddress)
 	}
 
-	return deposit.keepAddress, nil
+	return deposit.keep.address.String(), nil
 }
 
 func (tlc *TBTCLocalChain) RetrieveSignerPubkey(depositAddress string) error {
@@ -343,7 +343,7 @@ func (tlc *TBTCLocalChain) RetrieveSignerPubkey(depositAddress string) error {
 	tlc.localChainMutex.Lock()
 	defer tlc.localChainMutex.Unlock()
 
-	keep, ok := tlc.keeps[common.HexToAddress(deposit.keepAddress)]
+	keep, ok := tlc.keeps[common.HexToAddress(deposit.keep.address.String())]
 	if !ok {
 		return fmt.Errorf(
 			"could not find keep for deposit [%v]",
@@ -475,8 +475,7 @@ func (tlc *TBTCLocalChain) IncreaseRedemptionFee(
 	deposit.redemptionFee = new(big.Int).Sub(deposit.utxoValue, newOutputValue)
 	deposit.redemptionSignature = nil
 
-	err = tlc.RequestSignature(
-		common.HexToAddress(deposit.keepAddress),
+	err = deposit.keep.RequestSignature(
 		deposit.redemptionDigest,
 	)
 	if err != nil {
@@ -489,7 +488,8 @@ func (tlc *TBTCLocalChain) IncreaseRedemptionFee(
 		}(handler, depositAddress)
 	}
 
-	currentBlock, err := tlc.BlockCounter().CurrentBlock()
+	blockCounter, _ := tlc.BlockCounter() // localChain BlockCounter never errors
+	currentBlock, err := blockCounter.CurrentBlock()
 	if err != nil {
 		return err
 	}

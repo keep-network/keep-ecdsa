@@ -4,22 +4,20 @@ package node
 import (
 	"context"
 	cecdsa "crypto/ecdsa"
-	"encoding/hex"
 	"fmt"
 	"time"
 
 	"github.com/keep-network/keep-common/pkg/chain/chainutil"
 
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 
 	"github.com/keep-network/keep-core/pkg/operator"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log"
 
+	corechain "github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
@@ -45,7 +43,7 @@ const (
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
 type Node struct {
-	ethereumChain   eth.Handle
+	blockCounter    corechain.BlockCounter
 	networkProvider net.Provider
 	tssParamsPool   *tssPreParamsPool
 	tssConfig       *tss.Config
@@ -55,15 +53,19 @@ type Node struct {
 // network provider. It also initializes TSS Pre-Parameters pool. But does not
 // start parameters generation. This should be called separately.
 func NewNode(
-	ethereumChain eth.Handle,
+	blockCounter corechain.BlockCounter,
 	networkProvider net.Provider,
 	tssConfig *tss.Config,
 ) *Node {
 	return &Node{
-		ethereumChain:   ethereumChain,
+		blockCounter:    blockCounter,
 		networkProvider: networkProvider,
 		tssConfig:       tssConfig,
 	}
+}
+
+func groupID(keep chain.BondedECDSAKeepHandle) string {
+	return keep.ID().String()
 }
 
 // AnnounceSignerPresence triggers the announce protocol in order to signal
@@ -71,10 +73,11 @@ func NewNode(
 func (n *Node) AnnounceSignerPresence(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
-	keepAddress common.Address,
-	keepMembersAddresses []common.Address,
+	keep chain.BondedECDSAKeepHandle,
+	keepMemberIDs []chain.KeepMemberID,
+	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) ([]tss.MemberID, error) {
-	broadcastChannel, err := n.networkProvider.BroadcastChannelFor(keepAddress.Hex())
+	broadcastChannel, err := n.networkProvider.BroadcastChannelFor(groupID(keep))
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
 	}
@@ -82,48 +85,35 @@ func (n *Node) AnnounceSignerPresence(
 	tss.RegisterUnmarshalers(broadcastChannel)
 
 	if err := broadcastChannel.SetFilter(
-		createAddressFilter(keepMembersAddresses),
+		createKeepMemberFilter(keepMemberIDs),
 	); err != nil {
 		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
 	}
 
-	// TODO: Use generic type for representing address in node.go instead of
-	// common.Address from go-ethereum. The current implementation is not
-	// host-chain implementation agnostic.
-	// To do not propagate ethereum-specific types any further, we convert
-	// addresses to strings before passing them to AnnounceProtocol.
-	keepAddressString := keepAddress.Hex()
-	keepMembersAddressesStrings := make([]string, len(keepMembersAddresses))
-	for i, address := range keepMembersAddresses {
-		keepMembersAddressesStrings[i] = address.Hex()
-	}
 	return tss.AnnounceProtocol(
 		ctx,
 		operatorPublicKey,
-		keepAddressString,
-		keepMembersAddressesStrings,
+		keep.ID(),
+		keepMemberIDs,
 		broadcastChannel,
-		n.ethereumChain.Signing().PublicKeyToAddress,
 	)
 }
 
-func createAddressFilter(
-	addresses []common.Address,
+func createKeepMemberFilter(
+	memberIDs []chain.KeepMemberID,
 ) net.BroadcastChannelFilter {
-	authorizations := make(map[string]bool, len(addresses))
-	for _, address := range addresses {
-		authorizations[hex.EncodeToString(address.Bytes())] = true
+	authorizations := make(map[cecdsa.PublicKey]bool, len(memberIDs))
+	for _, memberID := range memberIDs {
+		authorizations[memberID.PublicKey()] = true
 	}
 
 	return func(authorPublicKey *cecdsa.PublicKey) bool {
-		authorAddress := hex.EncodeToString(
-			crypto.PubkeyToAddress(*authorPublicKey).Bytes(),
-		)
-		_, isAuthorized := authorizations[authorAddress]
+		_, isAuthorized := authorizations[*authorPublicKey]
 
 		if !isAuthorized {
 			logger.Warningf(
 				"rejecting message from [%v]; author is not authorized",
+				// FIXME Uh-oh. How can we better log this?
 				authorAddress,
 			)
 		}
@@ -140,9 +130,10 @@ func createAddressFilter(
 func (n *Node) GenerateSignerForKeep(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
-	keepAddress common.Address,
-	members []common.Address,
+	keep chain.BondedECDSAKeepHandle,
+	members []chain.KeepMemberID,
 	keepsRegistry *registry.Keeps,
+	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) (*tss.ThresholdSigner, error) {
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
 	preParamsBox := params.NewBox(n.tssParamsPool.get())
@@ -153,15 +144,15 @@ func (n *Node) GenerateSignerForKeep(
 
 		logger.Infof(
 			"signer generation for keep [%s]; attempt [%v]",
-			keepAddress.String(),
+			keep.ID(),
 			attemptCounter,
 		)
 
-		isActive, err := n.ethereumChain.IsActive(keepAddress)
+		isActive, err := keep.IsActive()
 		if err != nil {
 			logger.Warningf(
 				"could not check if keep [%s] is still active: [%v]",
-				keepAddress.String(),
+				keep.ID(),
 				err,
 			)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -196,8 +187,9 @@ func (n *Node) GenerateSignerForKeep(
 		memberIDs, err := n.AnnounceSignerPresence(
 			ctx,
 			operatorPublicKey,
-			keepAddress,
+			keep,
 			members,
+			pubKeyToAddressFn,
 		)
 		if err != nil {
 			logger.Warningf("failed to announce signer presence: [%v]", err)
@@ -211,12 +203,12 @@ func (n *Node) GenerateSignerForKeep(
 		// If threshold key generation fails, we retry from the beginning.
 		signer, err := tss.GenerateThresholdSigner(
 			ctx,
-			keepAddress.Hex(),
+			groupID(keep),
 			memberID,
 			memberIDs,
-			uint(len(memberIDs)-1),
+			uint(len(memberIDs)-1), // FIXME 🤔
 			n.networkProvider,
-			n.ethereumChain.Signing().PublicKeyToAddress,
+			pubKeyToAddressFn,
 			preParamsBox,
 		)
 		if err != nil {
@@ -230,11 +222,11 @@ func (n *Node) GenerateSignerForKeep(
 		// safely persisted before the public key is registered on-chain.
 		// Then, the snapshot can be used for signer recovery in case something
 		// bad occurs before the final signer registration will be done.
-		err = keepsRegistry.SnapshotSigner(keepAddress, signer)
+		err = keepsRegistry.SnapshotSigner(keep.ID(), signer)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"could not make snapshot of signer for keep [%s]: [%v]",
-				keepAddress.String(),
+				keep.ID(),
 				err,
 			)
 		}
@@ -244,17 +236,17 @@ func (n *Node) GenerateSignerForKeep(
 		// We don't retry in case of an error although the specific chain
 		// implementation may implement its own retry policy. This action
 		// should never fail and if it failed, something terrible happened.
-		publicKey, err := eth.SerializePublicKey(signer.PublicKey())
+		publicKey, err := chain.SerializePublicKey(signer.PublicKey())
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 		}
 
-		err = n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
+		err = keep.SubmitKeepPublicKey(publicKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to submit public key: [%v]", err)
 		}
 
-		go n.monitorKeepPublicKeySubmission(keepAddress, publicKey)
+		go n.monitorKeepPublicKeySubmission(keep, publicKey)
 
 		return signer, nil // key generation succeeded.
 	}
@@ -267,18 +259,18 @@ func (n *Node) GenerateSignerForKeep(
 // until the provided context is done.
 func (n *Node) CalculateSignature(
 	ctx context.Context,
+	keep chain.BondedECDSAKeepHandle,
+	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) error {
-	keepAddress := common.HexToAddress(signer.GroupID())
-
 	attemptCounter := 0
 	for {
 		attemptCounter++
 
 		logger.Infof(
 			"calculate signature for keep [%s]; attempt [%v]",
-			keepAddress.String(),
+			keep.ID(),
 			attemptCounter,
 		)
 
@@ -296,12 +288,12 @@ func (n *Node) CalculateSignature(
 			ctx,
 			digest[:],
 			n.networkProvider,
-			n.ethereumChain.Signing().PublicKeyToAddress,
+			pubKeyToAddressFn,
 		)
 		if err != nil {
 			logger.Errorf(
 				"failed to calculate signature for keep [%s]: [%v]",
-				keepAddress.String(),
+				keep.ID(),
 				err,
 			)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -318,7 +310,7 @@ func (n *Node) CalculateSignature(
 		// We have the signature so now we need to publish it.
 		// This function implements internal retries so we do not need to
 		// retry here.
-		return n.publishSignature(ctx, keepAddress, digest, signature)
+		return n.publishSignature(ctx, keep, digest, signature)
 	}
 }
 
@@ -334,11 +326,11 @@ func (n *Node) CalculateSignature(
 // that we do not waste gas.
 func (n *Node) publishSignature(
 	ctx context.Context,
-	keepAddress common.Address,
+	keep chain.BondedECDSAKeepHandle,
 	digest [32]byte,
 	signature *ecdsa.Signature,
 ) error {
-	n.waitSignaturePublicationDelay(keepAddress)
+	n.waitSignaturePublicationDelay(keep)
 
 	attemptCounter := 0
 	for {
@@ -354,11 +346,11 @@ func (n *Node) publishSignature(
 		// request when keep is no longer active, which means that it was either
 		// closed or terminated and signers' bonds might have been seized already.
 		// We are giving up and leaving this function.
-		isActive, err := n.ethereumChain.IsActive(keepAddress)
+		isActive, err := keep.IsActive()
 		if err != nil {
 			logger.Errorf(
 				"failed to verify if keep [%s] is still active: [%v]",
-				keepAddress.String(),
+				keep.ID(),
 				err,
 			)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -375,11 +367,11 @@ func (n *Node) publishSignature(
 		// do not burn ether on redundant submission.
 		//
 		// If the check failed, we retry from the beginning.
-		isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(keepAddress, digest)
+		isAwaitingSignature, err := keep.IsAwaitingSignature(digest)
 		if err != nil {
 			logger.Errorf(
 				"failed to verify if keep [%s] is still awaiting signature: [%v]",
-				keepAddress.String(),
+				keep.ID(),
 				err,
 			)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -389,22 +381,22 @@ func (n *Node) publishSignature(
 		// Someone submitted the signature, it was accepted by the keep,
 		// and there are enough confirmations from the chain.
 		// We are fine, leaving.
-		if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
+		if !isAwaitingSignature && n.confirmSignature(keep, digest) {
 			return nil
 		}
 
 		logger.Infof(
 			"publishing signature for keep [%s]; attempt [%v]",
-			keepAddress.String(),
+			keep.ID(),
 			attemptCounter,
 		)
 
-		if submissionErr := n.ethereumChain.SubmitSignature(keepAddress, signature); submissionErr != nil {
-			isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(keepAddress, digest)
+		if submissionErr := keep.SubmitSignature(signature); submissionErr != nil {
+			isAwaitingSignature, err := keep.IsAwaitingSignature(digest)
 			if err != nil {
 				logger.Errorf(
 					"failed to verify if keep [%s] is still awaiting signature: [%v]",
-					keepAddress.String(),
+					keep.ID(),
 					err,
 				)
 				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -416,7 +408,7 @@ func (n *Node) publishSignature(
 			// If someone else submitted in the meantime, wait for enough
 			// confirmations from the chain before making a decision about
 			// leaving the submission process.
-			if !isAwaitingSignature && n.confirmSignature(keepAddress, digest) {
+			if !isAwaitingSignature && n.confirmSignature(keep, digest) {
 				return nil
 			}
 
@@ -425,14 +417,14 @@ func (n *Node) publishSignature(
 			logger.Errorf(
 				"failed to submit signature for keep [%s]: [%v]; "+
 					"will retry after 1 minute",
-				keepAddress.String(),
+				keep.ID(),
 				submissionErr,
 			)
 			time.Sleep(1 * time.Minute)
 			continue
 		}
 
-		if !(n.waitForSignature(keepAddress, digest) && n.confirmSignature(keepAddress, digest)) {
+		if !(n.waitForSignature(keep, digest) && n.confirmSignature(keep, digest)) {
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 			continue
 		}
@@ -444,15 +436,13 @@ func (n *Node) publishSignature(
 // waitSignaturePublicationDelay waits a certain amount of time appropriately
 // for the given signer index to avoid all signers publishing the same signature
 // for given keep at the same time.
-func (n *Node) waitSignaturePublicationDelay(
-	keepAddress common.Address,
-) {
-	signerIndex, err := n.getSignerIndex(keepAddress)
+func (n *Node) waitSignaturePublicationDelay(keep chain.BondedECDSAKeepHandle) {
+	signerIndex, err := keep.OperatorIndex()
 	if err != nil {
 		logger.Errorf(
 			"could not determine signature publication delay for keep [%s]: "+
 				"[%v]; the signature publication will not be delayed",
-			keepAddress.String(),
+			keep.ID(),
 			err,
 		)
 		return
@@ -464,7 +454,7 @@ func (n *Node) waitSignaturePublicationDelay(
 			"could not determine signature publication delay for keep [%s], "+
 				"signer index is less than zero; the signature publication "+
 				"will not be delayed",
-			keepAddress.String(),
+			keep.ID(),
 		)
 		return
 	}
@@ -474,29 +464,14 @@ func (n *Node) waitSignaturePublicationDelay(
 	logger.Infof(
 		"waiting [%v] before publishing signature for keep [%s]",
 		delay,
-		keepAddress.String(),
+		keep.ID(),
 	)
 
 	time.Sleep(delay)
 }
 
-func (n *Node) getSignerIndex(keepAddress common.Address) (int, error) {
-	members, err := n.ethereumChain.GetMembers(keepAddress)
-	if err != nil {
-		return -1, err
-	}
-
-	for index, member := range members {
-		if member == n.ethereumChain.Address() {
-			return index, nil
-		}
-	}
-
-	return -1, nil
-}
-
 func (n *Node) waitForSignature(
-	keepAddress common.Address,
+	keep chain.BondedECDSAKeepHandle,
 	digest [32]byte,
 ) bool {
 	const waitTimeout = 10 * time.Minute
@@ -510,7 +485,7 @@ func (n *Node) waitForSignature(
 
 	logger.Infof(
 		"waiting for signature for keep [%s] to appear on-chain",
-		keepAddress.String(),
+		keep.ID(),
 	)
 
 	for {
@@ -520,15 +495,12 @@ func (n *Node) waitForSignature(
 			// incoming events. The main motivation is that events could not be
 			// trusted here because they may come from a forked chain or
 			// the same event can be delivered multiple times.
-			isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(
-				keepAddress,
-				digest,
-			)
+			isAwaitingSignature, err := keep.IsAwaitingSignature(digest)
 			if err != nil {
 				logger.Errorf(
 					"failed to perform signature check while waiting "+
 						"for signature for keep [%s]: [%v]",
-					keepAddress.String(),
+					keep.ID(),
 					err,
 				)
 				continue
@@ -537,7 +509,7 @@ func (n *Node) waitForSignature(
 			if !isAwaitingSignature {
 				logger.Infof(
 					"signature for keep [%s] appeared on-chain",
-					keepAddress.String(),
+					keep.ID(),
 				)
 				return true
 			}
@@ -545,7 +517,7 @@ func (n *Node) waitForSignature(
 			logger.Errorf(
 				"signature for keep [%s] has not appeared on the chain "+
 					"after [%v] from submitting it",
-				keepAddress.String(),
+				keep.ID(),
 				waitTimeout,
 			)
 			return false
@@ -554,34 +526,31 @@ func (n *Node) waitForSignature(
 }
 
 func (n *Node) confirmSignature(
-	keepAddress common.Address,
+	keep chain.BondedECDSAKeepHandle,
 	digest [32]byte,
 ) bool {
 	logger.Infof(
 		"confirming on-chain signature submission for keep [%s]",
-		keepAddress.String(),
+		keep.ID(),
 	)
 
-	currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+	currentBlock, err := n.blockCounter.CurrentBlock()
 	if err != nil {
 		logger.Errorf(
 			"could not get current block while confirming "+
 				"signature submission for keep [%s]: [%v]",
-			keepAddress.String(),
+			keep.ID(),
 			err,
 		)
 		return false
 	}
 
 	isSignatureConfirmed, err := chainutil.WaitForBlockConfirmations(
-		n.ethereumChain.BlockCounter(),
+		n.blockCounter,
 		currentBlock,
 		blockConfirmations,
 		func() (bool, error) {
-			isAwaitingSignature, err := n.ethereumChain.IsAwaitingSignature(
-				keepAddress,
-				digest,
-			)
+			isAwaitingSignature, err := keep.IsAwaitingSignature(digest)
 			if err != nil {
 				return false, err
 			}
@@ -592,7 +561,7 @@ func (n *Node) confirmSignature(
 	if err != nil {
 		logger.Errorf(
 			"could not confirm signature submission for keep [%s]: [%v]",
-			keepAddress.String(),
+			keep.ID(),
 			err,
 		)
 		return false
@@ -602,7 +571,7 @@ func (n *Node) confirmSignature(
 		logger.Errorf(
 			"signature submission for keep [%s] not confirmed; "+
 				"trying to submit the signature again",
-			keepAddress.String(),
+			keep.ID(),
 		)
 		return false
 	}
@@ -610,7 +579,7 @@ func (n *Node) confirmSignature(
 	logger.Infof(
 		"signature for keep [%s] successfully submitted "+
 			"and confirmed on-chain",
-		keepAddress.String(),
+		keep.ID(),
 	)
 
 	return true
@@ -636,21 +605,20 @@ func (n *Node) confirmSignature(
 // confirmations (chain reorganization), this function will attempt to submit
 // the public key again.
 func (n *Node) monitorKeepPublicKeySubmission(
-	keepAddress common.Address,
+	keep chain.BondedECDSAKeepHandle,
 	publicKey [64]byte,
 ) {
-	conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
+	conflictingPublicKey := make(chan *chain.ConflictingPublicKeySubmittedEvent)
 
-	subscriptionConflictingPublicKey, err := n.ethereumChain.OnConflictingPublicKeySubmitted(
-		keepAddress,
-		func(event *eth.ConflictingPublicKeySubmittedEvent) {
+	subscriptionConflictingPublicKey, err := keep.OnConflictingPublicKeySubmitted(
+		func(event *chain.ConflictingPublicKeySubmittedEvent) {
 			conflictingPublicKey <- event
 		},
 	)
 	if err != nil {
 		logger.Errorf(
 			"failed on watching conflicting public key event for keep [%s]: [%v]",
-			keepAddress.String(),
+			keep.ID(),
 			err,
 		)
 	}
@@ -686,7 +654,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 			logger.Errorf(
 				"member [%x] has submitted conflicting public key for keep [%s]: [%x]",
 				event.SubmittingMember,
-				keepAddress.String(),
+				keep.ID(),
 				event.ConflictingPublicKey,
 			)
 			return
@@ -698,7 +666,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 					"monitoring of public key submission for keep [%s] "+
 						"has been cancelled because maximum checks count [%v] "+
 						"has been reached",
-					keepAddress.String(),
+					keep.ID(),
 					maxPubkeyChecksCount,
 				)
 				return
@@ -706,44 +674,42 @@ func (n *Node) monitorKeepPublicKeySubmission(
 
 			logger.Infof(
 				"confirming on-chain public key submission for keep [%s]",
-				keepAddress.String(),
+				keep.ID(),
 			)
 
 			// We check the public key periodically instead of relying on
 			// incoming events. The main motivation is that events could not be
 			// trusted here because they may come from a forked chain or
 			// the same event can be delivered multiple times.
-			keepPublicKey, err := n.ethereumChain.GetPublicKey(keepAddress)
+			keepPublicKey, err := keep.GetPublicKey()
 			if err != nil {
 				logger.Errorf(
 					"failed to get keep public key during "+
 						"public key submission monitoring for keep [%s]: [%v]",
-					keepAddress.String(),
+					keep.ID(),
 					err,
 				)
 				continue
 			} else {
 				if len(keepPublicKey) > 0 {
-					currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+					currentBlock, err := n.blockCounter.CurrentBlock()
 					if err != nil {
 						logger.Errorf(
 							"failed to get the current block while "+
 								"performing public key submission confirmation "+
 								"for keep [%s]: [%v]",
-							keepAddress.String(),
+							keep.ID(),
 							err,
 						)
 						continue
 					}
 
 					isConfirmed, err := chainutil.WaitForBlockConfirmations(
-						n.ethereumChain.BlockCounter(),
+						n.blockCounter,
 						currentBlock,
 						blockConfirmations,
 						func() (bool, error) {
-							key, err := n.ethereumChain.GetPublicKey(
-								keepAddress,
-							)
+							key, err := keep.GetPublicKey()
 							if err != nil {
 								return false, err
 							}
@@ -756,7 +722,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 							"failed to perform keep public key "+
 								"confirmation during public key submission "+
 								"monitoring for keep [%s]: [%v]",
-							keepAddress.String(),
+							keep.ID(),
 							err,
 						)
 						continue
@@ -767,7 +733,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 							"public key [%x] for keep [%s] successfully "+
 								"submitted and confirmed on-chain",
 							keepPublicKey,
-							keepAddress.String(),
+							keep.ID(),
 						)
 						return
 					}
@@ -777,16 +743,16 @@ func (n *Node) monitorKeepPublicKeySubmission(
 			logger.Infof(
 				"keep [%s] still does not have a confirmed public key; "+
 					"re-submitting public key [%x]",
-				keepAddress.String(),
+				keep.ID(),
 				publicKey,
 			)
 
-			err = n.ethereumChain.SubmitKeepPublicKey(keepAddress, publicKey)
+			err = keep.SubmitKeepPublicKey(publicKey)
 			if err != nil {
 				logger.Errorf(
 					"keep [%s] still does not have a confirmed public key "+
 						"and resubmission by this member failed with: [%v]",
-					keepAddress.String(),
+					keep.ID(),
 					err,
 				)
 				return

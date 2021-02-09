@@ -6,12 +6,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
 type storage interface {
-	save(keepAddress common.Address, signer *tss.ThresholdSigner) error
-	snapshot(keepAddress common.Address, signer *tss.ThresholdSigner) error
+	save(keepID chain.KeepID, signer *tss.ThresholdSigner) error
+	snapshot(keepID chain.KeepID, signer *tss.ThresholdSigner) error
 	readAll() (<-chan *keepSigner, <-chan error)
 	archive(keepAddress string) error
 }
@@ -27,7 +28,7 @@ func newStorage(persistence persistence.Handle) storage {
 }
 
 func (ps *persistentStorage) save(
-	keepAddress common.Address,
+	keepID chain.KeepID,
 	signer *tss.ThresholdSigner,
 ) error {
 	signerBytes, err := signer.Marshal()
@@ -37,7 +38,7 @@ func (ps *persistentStorage) save(
 
 	return ps.handle.Save(
 		signerBytes,
-		keepAddress.String(),
+		keepID.String(),
 		// Take just the first 20 bytes of member ID so that we don't produce
 		// too long file names.
 		fmt.Sprintf("/membership_%.40s", signer.MemberID().String()),
@@ -45,7 +46,7 @@ func (ps *persistentStorage) save(
 }
 
 func (ps *persistentStorage) snapshot(
-	keepAddress common.Address,
+	keepID chain.KeepID,
 	signer *tss.ThresholdSigner,
 ) error {
 	signerBytes, err := signer.Marshal()
@@ -55,7 +56,7 @@ func (ps *persistentStorage) snapshot(
 
 	return ps.handle.Snapshot(
 		signerBytes,
-		keepAddress.String(),
+		keepID.String(),
 		// Take just the first 20 bytes of member ID so that we don't produce
 		// too long file names.
 		fmt.Sprintf("/membership_%.40s", signer.MemberID().String()),
@@ -63,8 +64,8 @@ func (ps *persistentStorage) snapshot(
 }
 
 type keepSigner struct {
-	keepAddress common.Address
-	signer      *tss.ThresholdSigner
+	keepID chain.KeepID
+	signer *tss.ThresholdSigner
 }
 
 func (ps *persistentStorage) readAll() (<-chan *keepSigner, <-chan error) {
@@ -139,8 +140,8 @@ func (ps *persistentStorage) readAll() (<-chan *keepSigner, <-chan error) {
 			}
 
 			outputKeepSigner <- &keepSigner{
-				keepAddress: keepAddress,
-				signer:      signer,
+				keepID: keepAddress,
+				signer: signer,
 			}
 		}
 

@@ -14,28 +14,28 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
 
 	"github.com/ethereum/go-ethereum/common"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func TestOnBondedECDSAKeepCreated(t *testing.T) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancelCtx()
 
-	chain := initializeLocalChain(ctx)
-	eventFired := make(chan *eth.BondedECDSAKeepCreatedEvent)
+	localChain := initializeLocalChain(ctx)
+	eventFired := make(chan *chain.BondedECDSAKeepCreatedEvent)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
-	expectedEvent := &eth.BondedECDSAKeepCreatedEvent{
+	expectedEvent := &chain.BondedECDSAKeepCreatedEvent{
 		KeepAddress: keepAddress,
 	}
 
-	subscription := chain.OnBondedECDSAKeepCreated(
-		func(event *eth.BondedECDSAKeepCreatedEvent) {
+	subscription := localChain.OnBondedECDSAKeepCreated(
+		func(event *chain.BondedECDSAKeepCreatedEvent) {
 			eventFired <- event
 		},
 	)
 	defer subscription.Unsubscribe()
 
-	err := chain.createKeep(keepAddress)
+	_, err := localChain.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,12 +58,12 @@ func TestOnSignatureRequested(t *testing.T) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancelCtx()
 
-	chain := initializeLocalChain(ctx)
-	eventFired := make(chan *eth.SignatureRequestedEvent)
+	localChain := initializeLocalChain(ctx)
+	eventFired := make(chan *chain.SignatureRequestedEvent)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
-	err := chain.createKeep(keepAddress)
+	keep, err := localChain.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,14 +71,13 @@ func TestOnSignatureRequested(t *testing.T) {
 	var keepPubkey [64]byte
 	rand.Read(keepPubkey[:])
 
-	err = chain.SubmitKeepPublicKey(keepAddress, keepPubkey)
+	err = keep.SubmitKeepPublicKey(keepPubkey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	subscription, err := chain.OnSignatureRequested(
-		keepAddress,
-		func(event *eth.SignatureRequestedEvent) {
+	subscription, err := keep.OnSignatureRequested(
+		func(event *chain.SignatureRequestedEvent) {
 			eventFired <- event
 		},
 	)
@@ -87,12 +86,12 @@ func TestOnSignatureRequested(t *testing.T) {
 	}
 	defer subscription.Unsubscribe()
 
-	err = chain.RequestSignature(keepAddress, digest)
+	err = keep.RequestSignature(digest)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedEvent := &eth.SignatureRequestedEvent{
+	expectedEvent := &chain.SignatureRequestedEvent{
 		Digest: digest,
 	}
 
@@ -114,7 +113,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := initializeLocalChain(ctx)
+	localChain := initializeLocalChain(ctx)
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 	expectedDuplicationError := fmt.Errorf(
@@ -122,20 +121,19 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		keepAddress.String(),
 	)
 
-	err := chain.createKeep(keepAddress)
+	keep, err := localChain.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = chain.SubmitKeepPublicKey(
-		keepAddress,
+	err = keep.SubmitKeepPublicKey(
 		keepPublicKey,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	onChainPubKey, err := chain.GetPublicKey(keepAddress)
+	onChainPubKey, err := keep.GetPublicKey()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,8 +145,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		)
 	}
 
-	err = chain.SubmitKeepPublicKey(
-		keepAddress,
+	err = keep.SubmitKeepPublicKey(
 		keepPublicKey,
 	)
 	if !reflect.DeepEqual(expectedDuplicationError, err) {
@@ -164,18 +161,17 @@ func TestSubmitSignature(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := initializeLocalChain(ctx)
+	localChain := initializeLocalChain(ctx)
 
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 
-	err := chain.createKeep(keepAddress)
+	keep, err := localChain.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = chain.SubmitKeepPublicKey(
-		keepAddress,
+	err = keep.SubmitKeepPublicKey(
 		keepPublicKey,
 	)
 	if err != nil {
@@ -184,7 +180,7 @@ func TestSubmitSignature(t *testing.T) {
 
 	digest := [32]byte{17, 18}
 
-	err = chain.RequestSignature(keepAddress, digest)
+	err = keep.RequestSignature(digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,12 +191,12 @@ func TestSubmitSignature(t *testing.T) {
 		RecoveryID: 1,
 	}
 
-	err = chain.SubmitSignature(keepAddress, signature)
+	err = keep.SubmitSignature(signature)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	events, err := chain.PastSignatureSubmittedEvents(keepAddress.Hex(), 0)
+	events, err := keep.PastSignatureSubmittedEvents(0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +207,7 @@ func TestSubmitSignature(t *testing.T) {
 
 	expectedRBytes, _ := byteutils.BytesTo32Byte(signature.R.Bytes())
 	expectedSBytes, _ := byteutils.BytesTo32Byte(signature.S.Bytes())
-	expectedEvent := &eth.SignatureSubmittedEvent{
+	expectedEvent := &chain.SignatureSubmittedEvent{
 		Digest:      digest,
 		R:           expectedRBytes,
 		S:           expectedSBytes,
@@ -234,18 +230,17 @@ func TestIsAwaitingSignature(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := initializeLocalChain(ctx)
+	localChain := initializeLocalChain(ctx)
 
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 
-	err := chain.createKeep(keepAddress)
+	keep, err := localChain.createKeep(keepAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = chain.SubmitKeepPublicKey(
-		keepAddress,
+	err = keep.SubmitKeepPublicKey(
 		keepPublicKey,
 	)
 	if err != nil {
@@ -254,18 +249,18 @@ func TestIsAwaitingSignature(t *testing.T) {
 
 	digest := [32]byte{17, 18}
 
-	err = chain.RequestSignature(keepAddress, digest)
+	err = keep.RequestSignature(digest)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	isAwaitingSignature, err := chain.IsAwaitingSignature(keepAddress, digest)
+	isAwaitingSignature, err := keep.IsAwaitingSignature(digest)
 	if !isAwaitingSignature {
 		t.Error("keep should be awaiting for a signature for requested digest")
 	}
 
 	anotherDigest := [32]byte{18, 17}
-	isAwaitingSignature, err = chain.IsAwaitingSignature(keepAddress, anotherDigest)
+	isAwaitingSignature, err = keep.IsAwaitingSignature(anotherDigest)
 	if !isAwaitingSignature {
 		t.Error("keep should not be awaiting for a signature for a not requested digest")
 	}
@@ -276,12 +271,12 @@ func TestIsAwaitingSignature(t *testing.T) {
 		RecoveryID: 1,
 	}
 
-	err = chain.SubmitSignature(keepAddress, signature)
+	err = keep.SubmitSignature(signature)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	isAwaitingSignature, err = chain.IsAwaitingSignature(keepAddress, digest)
+	isAwaitingSignature, err = keep.IsAwaitingSignature(digest)
 	if !isAwaitingSignature {
 		t.Error("keep should be awaiting for already provided signature")
 	}

@@ -2,14 +2,12 @@ package tss
 
 import (
 	"context"
-	cecdsa "crypto/ecdsa"
-	"encoding/hex"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 const protocolAnnounceTimeout = 2 * time.Minute
@@ -17,10 +15,9 @@ const protocolAnnounceTimeout = 2 * time.Minute
 func AnnounceProtocol(
 	parentCtx context.Context,
 	publicKey *operator.PublicKey,
-	keepAddress string,
-	keepMemberAddresses []string,
+	keepAddress chain.KeepID,
+	keepMemberAddresses []chain.KeepMemberID,
 	broadcastChannel net.BroadcastChannel,
-	publicKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) (
 	[]MemberID,
 	error,
@@ -39,13 +36,13 @@ func AnnounceProtocol(
 	}
 	broadcastChannel.Recv(ctx, handleAnnounceMessage)
 
-	receivedMemberIDs := make(map[string]MemberID) // member address -> memberID
+	receivedMemberIDs := make(map[string]chain.KeepMemberID)
 
-	markAnnounced := func(memberID MemberID, memberAddress string) {
-		receivedMemberIDs[strings.ToLower(memberAddress)] = memberID
+	markAnnounced := func(memberID MemberID, keepMemberID chain.KeepMemberID) {
+		receivedMemberIDs[memberID.String()] = keepMemberID
 	}
-	hasAnnounced := func(memberAddress string) bool {
-		_, ok := receivedMemberIDs[strings.ToLower(memberAddress)]
+	hasAnnounced := func(memberID MemberID) bool {
+		_, ok := receivedMemberIDs[memberID.String()]
 		return ok
 	}
 
@@ -55,27 +52,13 @@ func AnnounceProtocol(
 			case <-ctx.Done():
 				return
 			case msg := <-announceInChan:
-				// Since broadcast channel has an address filter, we can
-				// assume each message come from a valid group member.
-				publicKey, err := msg.SenderID.PublicKey()
-				if err != nil {
-					logger.Errorf(
-						"could not get public key for member [%s] of keep [%v]: [%v]",
-						msg.SenderID.String(),
-						keepAddress,
-						err,
-					)
-					continue
-				}
-
-				memberAddress := "0x" + hex.EncodeToString(publicKeyToAddressFn(*publicKey))
 				logger.Infof(
 					"member [%s] from keep [%s] announced its presence",
-					memberAddress,
+					msg.SenderID,
 					keepAddress,
 				)
 
-				markAnnounced(msg.SenderID, memberAddress)
+				markAnnounced(msg.SenderID)
 				if len(receivedMemberIDs) == len(keepMemberAddresses) {
 					cancel()
 				}

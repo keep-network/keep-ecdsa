@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
+	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 // uniqueEventTrack is a simple event track implementation allowing to track
@@ -24,31 +24,31 @@ type uniqueEventTrack struct {
 	mutex sync.Mutex
 }
 
-func (uet *uniqueEventTrack) add(keepAddress common.Address) bool {
+func (uet *uniqueEventTrack) add(keepID chain.KeepID) bool {
 	uet.mutex.Lock()
 	defer uet.mutex.Unlock()
 
-	if uet.data[keepAddress.String()] == true {
+	if uet.data[keepID.String()] == true {
 		return false
 	}
 
-	uet.data[keepAddress.String()] = true
+	uet.data[keepID.String()] = true
 
 	return true
 }
 
-func (uet *uniqueEventTrack) has(keepAddress common.Address) bool {
+func (uet *uniqueEventTrack) has(keepID chain.KeepID) bool {
 	uet.mutex.Lock()
 	defer uet.mutex.Unlock()
 
-	return uet.data[keepAddress.String()]
+	return uet.data[keepID.String()]
 }
 
-func (uet *uniqueEventTrack) remove(keepAddress common.Address) {
+func (uet *uniqueEventTrack) remove(keepID chain.KeepID) {
 	uet.mutex.Lock()
 	defer uet.mutex.Unlock()
 
-	delete(uet.data, keepAddress.String())
+	delete(uet.data, keepID.String())
 }
 
 // requestedSignaturesTrack is used to track signature calculation started after
@@ -62,15 +62,15 @@ type requestedSignaturesTrack struct {
 	mutex sync.Mutex
 }
 
-func (rst *requestedSignaturesTrack) add(keepAddress common.Address, digest [32]byte) bool {
+func (rst *requestedSignaturesTrack) add(keepID chain.KeepID, digest [32]byte) bool {
 	rst.mutex.Lock()
 	defer rst.mutex.Unlock()
 
 	digestString := hex.EncodeToString(digest[:])
 
-	keepSignaturesRequests, ok := rst.data[keepAddress.String()]
+	keepSignaturesRequests, ok := rst.data[keepID.String()]
 	if !ok {
-		rst.data[keepAddress.String()] = map[string]bool{digestString: true}
+		rst.data[keepID.String()] = map[string]bool{digestString: true}
 		return true
 	}
 	if keepSignaturesRequests[digestString] == true {
@@ -82,11 +82,11 @@ func (rst *requestedSignaturesTrack) add(keepAddress common.Address, digest [32]
 
 }
 
-func (rst *requestedSignaturesTrack) has(keepAddress common.Address, digest [32]byte) bool {
+func (rst *requestedSignaturesTrack) has(keepID chain.KeepID, digest [32]byte) bool {
 	rst.mutex.Lock()
 	defer rst.mutex.Unlock()
 
-	keepSignaturesRequests, ok := rst.data[keepAddress.String()]
+	keepSignaturesRequests, ok := rst.data[keepID.String()]
 	if !ok {
 		return false
 	}
@@ -95,16 +95,16 @@ func (rst *requestedSignaturesTrack) has(keepAddress common.Address, digest [32]
 	return keepSignaturesRequests[digestString]
 }
 
-func (rst *requestedSignaturesTrack) remove(keepAddress common.Address, digest [32]byte) {
+func (rst *requestedSignaturesTrack) remove(keepID chain.KeepID, digest [32]byte) {
 	rst.mutex.Lock()
 	defer rst.mutex.Unlock()
 
-	if keepSignatures, ok := rst.data[keepAddress.String()]; ok {
+	if keepSignatures, ok := rst.data[keepID.String()]; ok {
 		digestString := hex.EncodeToString(digest[:])
 		delete(keepSignatures, digestString)
 
 		if len(keepSignatures) == 0 {
-			delete(rst.data, keepAddress.String())
+			delete(rst.data, keepID.String())
 		}
 	}
 }
