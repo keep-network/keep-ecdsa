@@ -16,7 +16,7 @@ jobs:
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true # ignore the failure of a step and avoid terminating the job
       - name: Run Docker build
-        run: | # do we need to add GOPRIVATE param?
+        run: | # do we need to add GOPRIVATE param? 
            docker build \
              --target gobuild \
              --tag go-build-env . 
