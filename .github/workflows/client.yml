@@ -22,7 +22,11 @@ jobs:
              --tag go-build-env . 
       - name: Run Go tests
         run: |
-          docker run --workdir /go/src/github.com/keep-network/keep-ecdsa go-build-env gotest ./.../
+          docker run \
+            --workdir /go/src/github.com/keep-network/keep-ecdsa \
+            go-build-env \
+            go test ./.../
       - name: Build keep-ecdsa runtime image
         run: |
-          docker build --tag keep-ecdsa .
+          docker build \
+            --tag keep-ecdsa .
