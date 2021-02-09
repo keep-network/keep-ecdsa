@@ -3,8 +3,8 @@ name: Go
 #TODO: extend the conditions once workflow gets tested together with other workflows 
 on:  
   push:
-    branches:
-      - master
+    # branches:
+    #  - master
   pull_request:
   workflow_dispatch:
 
