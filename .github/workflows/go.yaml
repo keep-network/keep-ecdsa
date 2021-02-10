@@ -31,47 +31,28 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: "12.x"
-      - name: Cache Go modules
-        uses: actions/cache@v1
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - name: Cache node modules
-        uses: actions/cache@v1
-        env:
-          cache-name: cache-solidity-node-modules
-        with:
-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-      - name: Install Contract dependencies
-        working-directory: ./solidity
-        run: npm ci
-      - name: Install solc
+      - name: Build Go build environment image
         run: |
-          sudo add-apt-repository ppa:ethereum/ethereum
-          sudo apt-get update
-          sudo apt-get install solc=0.5.17
-      - name: Run code generators
-        run: go generate ./.../
+          docker build \
+            --tag go-build-env \
+            --target gobuild .
       - name: Vet code
-        run: go vet ./.../
+        run: |
+          docker run \
+            --workdir /go/src/github.com/keep-network/keep-ecdsa \
+            go-build-env \
+            go vet ./.../
       - name: Check formatting
         run: |
-          go get -u golang.org/x/tools/cmd/goimports
-          goimports -w **/*.go
-          if [[ -n "`git diff`" ]]; then
-            echo "Error: go fmt produced formatting differences."
-            echo "Changes:"
-            git diff --stat
-            exit 1
-          fi
+          docker run \
+            --workdir /go/src/github.com/keep-network/keep-ecdsa \
+            go-build-env \
+            'go get -u golang.org/x/tools/cmd/goimports && '\
+            'goimports -l -w **/*.go'
       - name: Lint code
         run: |
-          go get -u golang.org/x/lint/golint
-          golint ./.../
+          docker run \
+            --workdir /go/src/github.com/keep-network/keep-ecdsa \
+            go-build-env \
+            'go get -u golang.org/x/lint/golint && '\
+            'golint ./.../'
