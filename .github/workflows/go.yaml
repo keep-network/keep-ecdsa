@@ -44,12 +44,10 @@ jobs:
           docker run \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env \
-            'go get -u golang.org/x/tools/cmd/goimports && '\
-            'goimports -l -w **/*.go'
+            sh -c 'go get -u golang.org/x/tools/cmd/goimports && goimports -l -w **/*.go'
       - name: Lint code
         run: |
           docker run \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env \
-            'go get -u golang.org/x/lint/golint && '\
-            'golint ./.../'
+            sh -c 'go get -u golang.org/x/lint/golint && golint ./.../'
