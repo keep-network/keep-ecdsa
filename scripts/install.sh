@@ -24,7 +24,7 @@ help()
            "Required only for 'local' network. Default value is 'password'"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--keep-core-path: Path to the keep-core project"
-   echo -e "\t--network: Ethereum network for keep-core client."\
+   echo -e "\t--network: Ethereum network for keep-ecdsa client."\
            "Available networks and settings are specified in 'truffle.js'\n"
    exit 1 # Exit script after printing help
 }
