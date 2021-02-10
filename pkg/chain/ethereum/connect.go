@@ -6,12 +6,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
+
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
 
@@ -36,9 +37,9 @@ type EthereumChain struct {
 	accountKey                     *keystore.Key
 	client                         ethutil.EthereumClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
-	blockCounter                   *blockcounter.EthereumBlockCounter
-	miningWaiter                   *ethutil.MiningWaiter
-	nonceManager                   *ethutil.NonceManager
+	blockCounter                   *ethlike.BlockCounter
+	miningWaiter                   *ethlike.MiningWaiter
+	nonceManager                   *ethlike.NonceManager
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -67,9 +68,9 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 
 	transactionMutex := &sync.Mutex{}
 
-	nonceManager := ethutil.NewNonceManager(
-		accountKey.Address,
-		wrappedClient,
+	nonceManager := ethlike.NewNonceManager(
+		accountKey.Address.Hex(),
+		ethutil.NewNonceSourceAdapter(wrappedClient),
 	)
 
 	checkInterval := DefaultMiningCheckInterval
@@ -83,9 +84,15 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-	miningWaiter := ethutil.NewMiningWaiter(wrappedClient, checkInterval, maxGasPrice)
+	miningWaiter := ethlike.NewMiningWaiter(
+		ethutil.NewTransactionSourceAdapter(wrappedClient),
+		checkInterval,
+		maxGasPrice,
+	)
 
-	blockCounter, err := blockcounter.CreateBlockCounter(wrappedClient)
+	blockCounter, err := ethlike.CreateBlockCounter(
+		ethutil.NewBlockSourceAdapter(wrappedClient),
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
@@ -139,7 +146,7 @@ func addClientWrappers(
 
 		return ethutil.WrapRateLimiting(
 			loggingClient,
-			&ethutil.RateLimiterConfig{
+			&ethlike.RateLimiterConfig{
 				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
 				ConcurrencyLimit:       config.ConcurrencyLimit,
 			},

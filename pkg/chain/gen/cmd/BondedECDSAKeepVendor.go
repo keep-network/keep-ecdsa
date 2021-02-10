@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
@@ -72,13 +72,6 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "initialize",
-			Usage:     "Calls the method initialize on the BondedECDSAKeepVendor contract.",
-			ArgsUsage: "[registryAddress] [factory] ",
-			Action:    becdsakvInitialize,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
 			Name:      "upgrade-factory",
 			Usage:     "Calls the method upgradeFactory on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "[_factory] ",
@@ -91,6 +84,13 @@ func init() {
 			ArgsUsage: "",
 			Action:    becdsakvCompleteFactoryUpgrade,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "initialize",
+			Usage:     "Calls the method initialize on the BondedECDSAKeepVendor contract.",
+			ArgsUsage: "[registryAddress] [factory] ",
+			Action:    becdsakvInitialize,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
 		}},
 	})
@@ -159,60 +159,6 @@ func becdsakvSelectFactory(c *cli.Context) error {
 }
 
 /// ------------------- Non-const methods -------------------
-
-func becdsakvInitialize(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepVendor(c)
-	if err != nil {
-		return err
-	}
-
-	registryAddress, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter registryAddress, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	factory, err := ethutil.AddressFromHex(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter factory, a address, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.Initialize(
-			registryAddress,
-			factory,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallInitialize(
-			registryAddress,
-			factory,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
 
 func becdsakvUpgradeFactory(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
@@ -291,6 +237,60 @@ func becdsakvCompleteFactoryUpgrade(c *cli.Context) error {
 	return nil
 }
 
+func becdsakvInitialize(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepVendor(c)
+	if err != nil {
+		return err
+	}
+
+	registryAddress, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter registryAddress, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	factory, err := ethutil.AddressFromHex(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter factory, a address, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.Initialize(
+			registryAddress,
+			factory,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallInitialize(
+			registryAddress,
+			factory,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
 /// ------------------- Initialization -------------------
 
 func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepVendor, error) {
@@ -325,9 +325,15 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+	miningWaiter := ethlike.NewMiningWaiter(
+		ethutil.NewTransactionSourceAdapter(client),
+		checkInterval,
+		maxGasPrice,
+	)
 
-	blockCounter, err := blockcounter.CreateBlockCounter(client)
+	blockCounter, err := ethlike.CreateBlockCounter(
+		ethutil.NewBlockSourceAdapter(client),
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
@@ -341,7 +347,10 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 		address,
 		key,
 		client,
-		ethutil.NewNonceManager(key.Address, client),
+		ethlike.NewNonceManager(
+			key.Address.Hex(),
+			ethutil.NewNonceSourceAdapter(client),
+		),
 		miningWaiter,
 		blockCounter,
 		&sync.Mutex{},
