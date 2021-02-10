@@ -1,19 +1,18 @@
 #!/bin/bash
 set -euo pipefail
 
-GOPRIVATE="keep-network/keep-core"
-
 LOG_START='\n\e[1;36m'  # new line + bold + cyan
 LOG_END='\n\e[0m'       # new line + reset
 DONE_START='\n\e[1;32m' # new line + bold + green
 DONE_END='\n\n\e[0m'    # new line + reset
 
-# Dafault inputs.
-KEEP_ACCOUNT_PASSWORD=${KEEP_HOST_CHAIN_ACCOUNT_PASSWORD:-"password"}
-NETWORK_DEFAULT="local"
 KEEP_CORE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../../keep-core)
 KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
 KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
+
+# Defaults, can be overwritten by env variables/input parameters
+KEEP_ETHEREUM_PASSWORD=${KEEP_ETHEREUM_PASSWORD:-"password"}
+NETWORK_DEFAULT="local"
 
 help()
 {
@@ -21,10 +20,12 @@ help()
            "--keep-core-path <path>"\
            "--network <network>"
    echo -e "\nEnvironment variables:\n"
-   echo -e "\tKEEP_HOST_CHAIN_ACCOUNT_PASSWORD: Unlock an account with a password. Default password is 'password'"
+   echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
+           "Required only for 'local' network. Default value is 'password'"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--keep-core-path: Path to the keep-core project"
-   echo -e "\t--network: Host chain network for keep-core client. Defaul is 'local'\n"
+   echo -e "\t--network: Ethereum network for keep-core client."\
+           "Available networks and settings are specified in 'truffle.js'\n"
    exit 1 # Exit script after printing help
 }
 
@@ -69,9 +70,11 @@ cd $KEEP_ECDSA_SOL_PATH
 printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
 npm install
 
-printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
-KEEP_ETHEREUM_PASSWORD=$KEEP_ACCOUNT_PASSWORD \
-    npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
+if [ "$NETWORK" == "local" ]; then
+  printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
+  KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
+      npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
+fi
 
 printf "${LOG_START}Finding current ethereum network ID...${LOG_END}"
 output=$(npx truffle exec ./scripts/get-network-id.js --network $NETWORK)
