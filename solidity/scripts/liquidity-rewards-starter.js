@@ -41,8 +41,8 @@ const mintAndApproveLPReward = async (
   })
 }
 
-const getWrappedTokenContract = async (LPRewardsContract) => {
-  const address = await LPRewardsContract.wrappedToken()
+const getWrappedTokenContract = async (lpRewardsContract) => {
+  const address = await lpRewardsContract.wrappedToken()
   return await TestToken.at(address)
 }
 
@@ -50,55 +50,35 @@ module.exports = async function () {
   try {
     const accounts = await web3.eth.getAccounts()
     const lpRewardsOwner = accounts[0]
-
     const keepToken = await KeepToken.at(KeepTokenAddress)
-    const lpRewardsKEEPETH = await LPRewardsKEEPETH.deployed()
-    const lpRewardsTBTCETH = await LPRewardsTBTCETH.deployed()
-    const lpRewardsKEEPTBTC = await LPRewardsKEEPTBTC.deployed()
-    const lpRewardsTBTCSaddle = await LPRewardsTBTCSaddle.deployed()
     const reward = web3.utils.toWei("1000000")
+    const LPRewardsContracts = [
+      LPRewardsKEEPETH,
+      LPRewardsTBTCETH,
+      LPRewardsKEEPTBTC,
+      LPRewardsTBTCSaddle,
+    ]
 
-    const LP_REWARDS = {
-      KEEP_ETH: {
-        contract: lpRewardsKEEPETH,
-        wrappedTokenContract: null,
-      },
-      TBTC_ETH: {
-        contract: lpRewardsTBTCETH,
-        wrappedTokenContract: null,
-      },
-      KEEP_TBTC: {
-        contract: lpRewardsKEEPTBTC,
-        wrappedTokenContract: null,
-      },
-      TBTC_SADDLE: {
-        contract: lpRewardsTBTCSaddle,
-        wrappedTokenContract: null,
-      },
-    }
-
-    for (const key of Object.keys(LP_REWARDS)) {
-      LP_REWARDS[key].wrappedTokenContract = await getWrappedTokenContract(
-        LP_REWARDS[key].contract
-      )
+    for (const LPRewardsContract of LPRewardsContracts) {
+      const lpRewardsContract = await LPRewardsContract.deployed()
 
       await initLPRewardContract(
-        LP_REWARDS[key].contract,
+        lpRewardsContract,
         keepToken,
         lpRewardsOwner,
         reward
       )
-    }
 
-    for (let i = 8; i < 10; i++) {
-      const staker = accounts[i]
-      const amount = web3.utils.toWei(`${i * 100}`)
+      const wrappedTokenContract = await getWrappedTokenContract(
+        lpRewardsContract
+      )
 
-      for (const values of Object.values(LP_REWARDS)) {
-        const lpRewardsContract = values.contract
+      for (let i = 8; i < 10; i++) {
+        const staker = accounts[i]
+        const amount = web3.utils.toWei(`${i * 100}`)
 
         await mintAndApproveLPReward(
-          values.wrappedTokenContract,
+          wrappedTokenContract,
           lpRewardsContract.address,
           staker,
           amount
