@@ -1,10 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-# Dafault config files directory.
+LOG_START='\n\e[1;36m'  # new line + bold + cyan
+LOG_END='\n\e[0m'       # new line + reset
+DONE_START='\n\e[1;32m' # new line + bold + green
+DONE_END='\n\n\e[0m'    # new line + reset
+
 CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
 KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
+
+# Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="local"
 
 help()
@@ -14,9 +20,10 @@ help()
            "--application-address <address>"\
            "--network <network>"
    echo -e "\nCommand line arguments:\n"
-   echo -e "\t--keep-ecdsa-config-path : Configuration path for keep-ecdsa client"
+   echo -e "\t--keep-ecdsa-config-path : Path to keep-ecdsa client configuration file(s)"
    echo -e "\t--application-address: Address of application approved by the operator"
-   echo -e "\t--network: Host chain network for keep-core client\n"
+   echo -e "\t--network: Ethereum network for keep-ecdsa client."\
+           "Available networks and settings are specified in 'truffle.js'\n"
    exit 1 # Exit script after printing help
 }
 
@@ -56,23 +63,12 @@ cd $KEEP_ECDSA_SOL_PATH
 output=$(npx truffle exec scripts/get-default-application-account.js --network $NETWORK)
 CLIENT_APP_ADDRESS=$(echo "$output" | tail -1)
 
-if [ -z "$CLIENT_APP_ADDRESS" ]; then
-  # Read user app address.
-  read -p "Enter client application address: " client_app_address
-  CLIENT_APP_ADDRESS=${client_app_address}
-fi
-
 if [ ! -z ${client_app_address+x} ]; then
   # Read user app when --application-address is set
   CLIENT_APP_ADDRESS=$client_app_address
 fi
 
 # Run script.
-LOG_START='\n\e[1;36m'  # new line + bold + cyan
-LOG_END='\n\e[0m'       # new line + reset
-DONE_START='\n\e[1;32m' # new line + bold + green
-DONE_END='\n\n\e[0m'    # new line + reset
-
 printf "${LOG_START}Network:${LOG_END} $NETWORK"
 printf "${LOG_START}Application address:${LOG_END} $CLIENT_APP_ADDRESS"
 
