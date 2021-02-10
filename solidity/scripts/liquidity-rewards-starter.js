@@ -1,6 +1,8 @@
 const LPRewardsTBTCETH = artifacts.require("LPRewardsTBTCETH")
 const LPRewardsKEEPETH = artifacts.require("LPRewardsKEEPETH")
 const LPRewardsKEEPTBTC = artifacts.require("LPRewardsKEEPTBTC")
+const LPRewardsTBTCSaddle = artifacts.require("LPRewardsTBTCSaddle")
+
 const TestToken = artifacts.require("./test/TestToken")
 const KeepToken = artifacts.require(
   "@keep-network/keep-core/build/truffle/KeepToken"
@@ -39,105 +41,52 @@ const mintAndApproveLPReward = async (
   })
 }
 
+const getWrappedTokenContract = async (lpRewardsContract) => {
+  const address = await lpRewardsContract.wrappedToken()
+  return await TestToken.at(address)
+}
+
 module.exports = async function () {
   try {
     const accounts = await web3.eth.getAccounts()
     const lpRewardsOwner = accounts[0]
-    const lpRewardsKEEPETH = await LPRewardsKEEPETH.deployed()
-    const lpRewardsTBTCETH = await LPRewardsTBTCETH.deployed()
-    const lpRewardsKEEPTBTC = await LPRewardsKEEPTBTC.deployed()
-
-    const KEEPETHWrappedTokenAddress = await lpRewardsKEEPETH.wrappedToken()
-    const KEEPETHWrappedTokenContract = await TestToken.at(
-      KEEPETHWrappedTokenAddress
-    )
-
-    const TBTCETHWrappedTokenAddress = await lpRewardsTBTCETH.wrappedToken()
-    const TBTCETHHWrappedTokenContract = await TestToken.at(
-      TBTCETHWrappedTokenAddress
-    )
-
-    const KEEPTBTCWrappedTokenAddress = await lpRewardsKEEPTBTC.wrappedToken()
-    const KEEPTBTCHWrappedTokenContract = await TestToken.at(
-      KEEPTBTCWrappedTokenAddress
-    )
-
     const keepToken = await KeepToken.at(KeepTokenAddress)
-
     const reward = web3.utils.toWei("1000000")
+    const LPRewardsContracts = [
+      LPRewardsKEEPETH,
+      LPRewardsTBTCETH,
+      LPRewardsKEEPTBTC,
+      LPRewardsTBTCSaddle,
+    ]
 
-    await initLPRewardContract(
-      lpRewardsKEEPETH,
-      keepToken,
-      lpRewardsOwner,
-      reward
-    )
-    await initLPRewardContract(
-      lpRewardsTBTCETH,
-      keepToken,
-      lpRewardsOwner,
-      reward
-    )
-    await initLPRewardContract(
-      lpRewardsKEEPTBTC,
-      keepToken,
-      lpRewardsOwner,
-      reward
-    )
+    for (const LPRewardsContract of LPRewardsContracts) {
+      const lpRewardsContract = await LPRewardsContract.deployed()
 
-    const staker1 = accounts[8]
-    const staker1WrappedTokenBalance = web3.utils.toWei("300")
+      await initLPRewardContract(
+        lpRewardsContract,
+        keepToken,
+        lpRewardsOwner,
+        reward
+      )
 
-    const staker2 = accounts[9]
-    const staker2WrappedTokenBalance = web3.utils.toWei("700")
+      const wrappedTokenContract = await getWrappedTokenContract(
+        lpRewardsContract
+      )
 
-    await mintAndApproveLPReward(
-      KEEPETHWrappedTokenContract,
-      lpRewardsKEEPETH.address,
-      staker1,
-      staker1WrappedTokenBalance
-    )
-    await mintAndApproveLPReward(
-      KEEPETHWrappedTokenContract,
-      lpRewardsKEEPETH.address,
-      staker2,
-      staker2WrappedTokenBalance
-    )
+      for (let i = 8; i < 10; i++) {
+        const staker = accounts[i]
+        const amount = web3.utils.toWei(`${i * 100}`)
 
-    await mintAndApproveLPReward(
-      TBTCETHHWrappedTokenContract,
-      lpRewardsTBTCETH.address,
-      staker1,
-      staker1WrappedTokenBalance
-    )
-    await mintAndApproveLPReward(
-      TBTCETHHWrappedTokenContract,
-      lpRewardsTBTCETH.address,
-      staker2,
-      staker2WrappedTokenBalance
-    )
+        await mintAndApproveLPReward(
+          wrappedTokenContract,
+          lpRewardsContract.address,
+          staker,
+          amount
+        )
 
-    await mintAndApproveLPReward(
-      KEEPTBTCHWrappedTokenContract,
-      lpRewardsKEEPTBTC.address,
-      staker1,
-      staker1WrappedTokenBalance
-    )
-    await mintAndApproveLPReward(
-      KEEPTBTCHWrappedTokenContract,
-      lpRewardsKEEPTBTC.address,
-      staker2,
-      staker2WrappedTokenBalance
-    )
-
-    await lpRewardsKEEPETH.stake(staker1WrappedTokenBalance, { from: staker1 })
-    await lpRewardsKEEPETH.stake(staker2WrappedTokenBalance, { from: staker2 })
-
-    await lpRewardsTBTCETH.stake(staker1WrappedTokenBalance, { from: staker1 })
-    await lpRewardsTBTCETH.stake(staker2WrappedTokenBalance, { from: staker2 })
-
-    await lpRewardsKEEPTBTC.stake(staker1WrappedTokenBalance, { from: staker1 })
-    await lpRewardsKEEPTBTC.stake(staker2WrappedTokenBalance, { from: staker2 })
+        await lpRewardsContract.stake(amount, { from: staker })
+      }
+    }
   } catch (err) {
     console.error(err)
     process.exit(1)
