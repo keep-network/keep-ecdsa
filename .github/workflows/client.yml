@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - name: Setup Go environment
+        uses: actions/setup-go@v2.1.3
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true # ignore the failure of a step and avoid terminating the job
       - name: Run Docker build
