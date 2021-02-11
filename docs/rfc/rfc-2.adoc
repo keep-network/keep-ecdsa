@@ -91,7 +91,8 @@ requires two additional pieces of data:
 - The previous outpoint, which is the concatenation of the funding UTXO's
   32-byte little-endian transaction hash followed by the 4-byte little-endian
   index of the output pointing to the funding UTXO.
-- The previous output script, which is to say the address of the deposit.
+- The previous output script, which is to say the Bitcoin address
+  corresponding to the deposit.
 
 Notably, both of these pieces of data can be retrieved or computed solely
 from data available on the tBTC deposit contract (the previous outpoint
@@ -122,9 +123,9 @@ procured or computed:
   the third `utxoOutpoint` entry in its 3-part return tuple.
 - The keep's public key, available on the Keep contract from the
   `getPublicKey` view method.
-- The deposit redemption script, straightforwardly computable from the keep's
-  public key by compressing the public key; this is briefly covered in the
-  implementation <<output-script>> section.
+- The deposit's Bitcoin redeem script, straightforwardly computable from the
+  keep's public key by compressing the public key; this is briefly covered in
+  the implementation <<output-script>> section.
 - One Bitcoin address per signer, specified on the client in a way detailed
   in the section on <<recovery-address>>.
 - The keep's signature on the sighash produced by the previous items,
@@ -297,9 +298,11 @@ node, direct or indirect. To avoid _strictly requiring_ a connection to a
 Bitcoin node, this RFC proposes logging the signed transaction 5 times on the
 WARN level with a descriptive prefix. Current operator guidance suggests that
 more than 5 WARN level logs within 5 minutes should trigger a notification
-for closer monitoring by operators, ensuring these logs will be noticed. The
-descriptive prefix will further allow for targeted notifications by operators
-so that they can flag these logs for follow-up action.
+for closer monitoring by operators, ensuring these logs will be noticed, at
+which time the operator can choose to either broadcast the transaction or
+relay it to someone else for broadcasting. The descriptive prefix will
+further allow for targeted notifications by operators so that they can flag
+these logs for follow-up action.
 
 The suggested structure of the log message is:
 
@@ -319,7 +322,8 @@ If an optional Bitcoin node connection is available (see <<electrs>>), the
 client should attempt to publish the transaction by performing an HTTP POST
 request to path `/tx`. The POST request body should be the signed transaction
 hex, as would be logged in the WARN logs above. If the POST fails, the client
-should log an error and then fall back on the WARN logging above.
+should log an error and then fall back on the standard way of surfacing the
+transaction data without a node connection, as described above.
 
 === Implementation Details
 
@@ -351,7 +355,7 @@ public key:
 // witness scriptCode that can spend an output sent to that public key's
 // corresponding address.
 //
-// [BIP141]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
+// [BIP143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
 func PublicKeyToP2WPKHScriptCode(
   publicKey *ecdsa.PublicKey,
   chainParams *chaincfg.Params,
@@ -384,7 +388,10 @@ func PublicKeyToP2WPKHScriptCode(
     )
   }
 
-  return append([]byte{byte(len(script))}, script)
+  // End goal here is a scriptCode that looks like
+  // 0x1976a914{20-byte-pubkey-hash}88ac . 0x19 should be the length of the
+  // script.
+  return append([]byte{byte(len(script))}, script...)
 }
 ```
 
@@ -414,6 +421,7 @@ using the `hdkeychain` package and its relatives:
 
 ```go
 // import "github.com/btcsuite/btcd/btcec"
+// import "github.com/btcsuite/btcd/txscript"
 // import "github.com/btcsuite/btcutil"
 
 // DeriveAddress uses the specified extended public key and address index to
@@ -475,7 +483,7 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error)
 
   // Now to decide how we want to serialize the address...
   var chainParams *chaincfg.Params
-  switch extendedPublicKey[0:4] {
+  switch publicKeyDescriptor {
   case "xpub", "ypub", "zpub":
     chainParams = &chaincfg.MainNetParams
   case "tpub", "upub", "vpub":
@@ -485,7 +493,7 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error)
   requestedAddress, err := requestedPublicKey.Address(chainParams)
 
   var finalAddress btcutil.Address = requestedAddress
-  switch extendedPublicKey[0:4] {
+  switch publicKeyDescriptor {
   case "xpub", "tpub":
     // Noop, the address is already correct
   case "ypub", "upub":
