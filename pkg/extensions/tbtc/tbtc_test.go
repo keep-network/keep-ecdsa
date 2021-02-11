@@ -28,6 +28,7 @@ const (
 )
 
 func newTestTBTC(chain chain.TBTCHandle) *tbtc {
+	t.Fatalf("TEST ERROR")
 	tbtc := newTBTC(chain)
 
 	tbtc.blockConfirmations = defaultLocalBlockConfirmations
