@@ -5,7 +5,7 @@ on:
   push:
     branches:
   #   - master
-    - ci-jobs-to-github-actions-migration
+    - rfc-18/try-golang-test-annotations-gh-action-wip
   pull_request:
   workflow_dispatch:
 
@@ -14,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Setup Go environment
-        uses: actions/setup-go@v2.1.3
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true # ignore the failure of a step and avoid terminating the job
       - name: Run Docker build
@@ -25,31 +23,14 @@ jobs:
              --tag go-build-env . 
             docker build \
             --tag keep-ecdsa .
-      - name: Create test results directory
-        run: |
-          mkdir test-results
-      #- name: Run Go tests
-      #  run: |
-      #    docker run \
-      #      --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
-      #      --workdir /go/src/github.com/keep-network/keep-ecdsa \
-      #      go-build-env \
-      #      gotestsum --junitfile /mnt/test-results/unit-tests.xml
-      - name: Enable Go problem matcher
-        run: echo "::add-matcher::problem-matchers.json"
       - name: Run Go tests
         run: |
           docker run \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env \
-            go test ./.../  
-      - name: Disable Go problem matcher
-        run: echo "::remove-matcher owner=go::"       
-      # - name: Publish unit test results
-      #  uses: EnricoMi/publish-unit-test-result-action@v1.7
-      #  if: always() # guarantees that this action always runs, even if earlier steps fail
-      #  with:
-      #    github_token: ${{ secrets.GITHUB_TOKEN }}
-      #    files:  ./test-results/unit-tests.xml
-      #    check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
-      #    comment_on_pr: false # turns off commenting on Pull Requests
+            go test -json ./... > test.json
+      - name: Annotate tests
+        if: always()
+        uses: guyarb/golang-test-annoations@v0.3.0
+        with:
+          test-results: test.json
