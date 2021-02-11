@@ -34,10 +34,10 @@
     "@keep-network/keep-core": ">1.7.0-pre <1.7.0-rc",
     "@keep-network/sortition-pools": ">1.2.0-pre <1.2.0-rc",
     "@openzeppelin/upgrades": "^2.7.2",
-    "openzeppelin-solidity": "2.3.0",
-    "@celo/contractkit": "^1.0.1"
+    "openzeppelin-solidity": "2.3.0"
   },
   "devDependencies": {
+    "@celo/contractkit": "^1.0.1",
     "@babel/cli": "^7.4.4",
     "@babel/core": "^7.4.5",
     "@babel/node": "^7.4.5",
