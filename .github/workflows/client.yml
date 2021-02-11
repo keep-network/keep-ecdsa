@@ -2,11 +2,6 @@ name: Go
 
 #TODO: extend the conditions once workflow gets tested together with other workflows 
 on:  
-  push:
-    branches:
-  #   - master
-    - rfc-18/try-golang-test-annotations-gh-action-wip
-  pull_request:
   workflow_dispatch:
 
 jobs:
