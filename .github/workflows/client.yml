@@ -35,12 +35,16 @@ jobs:
       #      --workdir /go/src/github.com/keep-network/keep-ecdsa \
       #      go-build-env \
       #      gotestsum --junitfile /mnt/test-results/unit-tests.xml
+      - name: Enable Go problem matcher
+        run: echo "::add-matcher::problem-matchers.json"
       - name: Run Go tests
         run: |
           docker run \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env \
-            go test ./.../       
+            go test ./.../  
+      - name: Disable Go problem matcher
+        run: echo "::remove-matcher owner=go::"       
       # - name: Publish unit test results
       #  uses: EnricoMi/publish-unit-test-result-action@v1.7
       #  if: always() # guarantees that this action always runs, even if earlier steps fail
