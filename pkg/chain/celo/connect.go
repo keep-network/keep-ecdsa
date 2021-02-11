@@ -6,10 +6,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/celo"
+
 	"github.com/celo-org/celo-blockchain/accounts/keystore"
 	celoclient "github.com/celo-org/celo-blockchain/ethclient"
 	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
@@ -19,7 +20,7 @@ const (
 	BondedECDSAKeepFactoryContractName = "BondedECDSAKeepFactory"
 )
 
-// TODO: revisit those constants values
+// TODO: revisit those constants values and adjust them to Celo blockchain
 var (
 	// DefaultMiningCheckInterval is the default interval in which transaction
 	// mining status is checked. If the transaction is not mined within this
@@ -35,10 +36,10 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-// TODO: Replace `*ethereum.Config` and `*contract.BondedECDSAKeepFactory`
+// TODO: Replace `*contract.BondedECDSAKeepFactory`
 // CeloChain is an implementation of Celo blockchain interface.
 type CeloChain struct {
-	config                         *ethereum.Config
+	config                         *celo.Config
 	accountKey                     *keystore.Key
 	client                         celoutil.CeloClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
@@ -65,7 +66,7 @@ type CeloChain struct {
 // based on provided config.
 func Connect(
 	accountKey *keystore.Key,
-	config *ethereum.Config,
+	config *celo.Config,
 ) (*CeloChain, error) {
 	client, err := celoclient.Dial(config.URL)
 	if err != nil {
@@ -108,32 +109,32 @@ func Connect(
 		)
 	}
 
-	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(
-		BondedECDSAKeepFactoryContractName,
-	)
-	if err != nil {
-		return nil, err
-	}
+	//bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(
+	//	BondedECDSAKeepFactoryContractName,
+	//)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	// TODO: create Celo contract bindings
-	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
-		*bondedECDSAKeepFactoryContractAddress,
-		accountKey,
-		wrappedClient,
-		nonceManager,
-		miningWaiter,
-		blockCounter,
-		transactionMutex,
-	)
-	if err != nil {
-		return nil, err
-	}
+	//bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
+	//	*bondedECDSAKeepFactoryContractAddress,
+	//	accountKey,
+	//	wrappedClient,
+	//	nonceManager,
+	//	miningWaiter,
+	//	blockCounter,
+	//	transactionMutex,
+	//)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	return &CeloChain{
 		config:                         config,
 		accountKey:                     accountKey,
 		client:                         wrappedClient,
-		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
+		bondedECDSAKeepFactoryContract: nil, // TODO: replace with contract
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
@@ -142,7 +143,7 @@ func Connect(
 }
 
 func addClientWrappers(
-	config *ethereum.Config,
+	config *celo.Config,
 	client celoutil.CeloClient,
 ) celoutil.CeloClient {
 	loggingClient := celoutil.WrapCallLogging(logger, client)

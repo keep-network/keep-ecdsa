@@ -16,6 +16,11 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 )
 
+// Definitions of contract names.
+const (
+	BondedECDSAKeepFactoryContractName = "BondedECDSAKeepFactory"
+)
+
 var (
 	// DefaultMiningCheckInterval is the default interval in which transaction
 	// mining status is checked. If the transaction is not mined within this
@@ -100,7 +105,9 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		)
 	}
 
-	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(BondedECDSAKeepFactoryContractName)
+	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(
+		BondedECDSAKeepFactoryContractName,
+	)
 	if err != nil {
 		return nil, err
 	}
