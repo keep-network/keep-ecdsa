@@ -12,7 +12,7 @@ import (
 	celoclient "github.com/celo-org/celo-blockchain/ethclient"
 	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/contract"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/celo/contract"
 )
 
 // Definitions of contract names.
@@ -20,7 +20,7 @@ const (
 	BondedECDSAKeepFactoryContractName = "BondedECDSAKeepFactory"
 )
 
-// TODO: revisit those constants values and adjust them to Celo blockchain
+// TODO: revisit those constants values and adjust them to Celo blockchain.
 var (
 	// DefaultMiningCheckInterval is the default interval in which transaction
 	// mining status is checked. If the transaction is not mined within this
@@ -36,7 +36,6 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-// TODO: Replace `*contract.BondedECDSAKeepFactory`
 // CeloChain is an implementation of Celo blockchain interface.
 type CeloChain struct {
 	config                         *celo.Config
@@ -109,32 +108,31 @@ func Connect(
 		)
 	}
 
-	//bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(
-	//	BondedECDSAKeepFactoryContractName,
-	//)
-	//if err != nil {
-	//	return nil, err
-	//}
+	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(
+		BondedECDSAKeepFactoryContractName,
+	)
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO: create Celo contract bindings
-	//bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
-	//	*bondedECDSAKeepFactoryContractAddress,
-	//	accountKey,
-	//	wrappedClient,
-	//	nonceManager,
-	//	miningWaiter,
-	//	blockCounter,
-	//	transactionMutex,
-	//)
-	//if err != nil {
-	//	return nil, err
-	//}
+	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
+		*bondedECDSAKeepFactoryContractAddress,
+		accountKey,
+		wrappedClient,
+		nonceManager,
+		miningWaiter,
+		blockCounter,
+		transactionMutex,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &CeloChain{
 		config:                         config,
 		accountKey:                     accountKey,
 		client:                         wrappedClient,
-		bondedECDSAKeepFactoryContract: nil, // TODO: replace with contract
+		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
