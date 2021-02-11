@@ -25,6 +25,7 @@ const FullyBackedSortitionPoolFactory = artifacts.require(
 const LPRewardsTBTCETH = artifacts.require("LPRewardsTBTCETH")
 const LPRewardsKEEPETH = artifacts.require("LPRewardsKEEPETH")
 const LPRewardsKEEPTBTC = artifacts.require("LPRewardsKEEPTBTC")
+const LPRewardsTBTCSaddle = artifacts.require("LPRewardsTBTCSaddle")
 const TestToken = artifacts.require("./test/TestToken")
 const ECDSARewards = artifacts.require("ECDSARewards")
 const ECDSARewardsDistributor = artifacts.require("ECDSARewardsDistributor")
@@ -134,6 +135,13 @@ module.exports = async function (deployer, network) {
     LPRewardsKEEPTBTC,
     KeepTokenAddress,
     WrappedTokenKEEPTBTC.address
+  )
+
+  const WrappedTokenSaddle = await deployer.deploy(TestToken)
+  await deployer.deploy(
+    LPRewardsTBTCSaddle,
+    KeepTokenAddress,
+    WrappedTokenSaddle.address
   )
 
   // ECDSA Rewards
