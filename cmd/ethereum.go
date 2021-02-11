@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	chaincmd "github.com/keep-network/keep-ecdsa/pkg/chain/gen/cmd"
+	chaincmd "github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/cmd"
 	"github.com/urfave/cli"
 )
 

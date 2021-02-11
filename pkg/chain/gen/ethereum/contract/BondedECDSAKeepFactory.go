@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	ethereumabi "github.com/ethereum/go-ethereum/accounts/abi"
+	backendabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,10 +20,10 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/abi"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/abi"
 )
 
 // Create a package-level logger for this contract. The logger exists at
@@ -34,12 +34,12 @@ var becdsakfLogger = log.Logger("keep-contract-BondedECDSAKeepFactory")
 type BondedECDSAKeepFactory struct {
 	contract          *abi.BondedECDSAKeepFactory
 	contractAddress   common.Address
-	contractABI       *ethereumabi.ABI
+	contractABI       *backendabi.ABI
 	caller            bind.ContractCaller
 	transactor        bind.ContractTransactor
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
-	errorResolver     *ethutil.ErrorResolver
+	errorResolver     *chainutil.ErrorResolver
 	nonceManager      *ethlike.NonceManager
 	miningWaiter      *ethlike.MiningWaiter
 	blockCounter      *ethlike.BlockCounter
@@ -76,7 +76,7 @@ func NewBondedECDSAKeepFactory(
 		)
 	}
 
-	contractABI, err := ethereumabi.JSON(strings.NewReader(abi.BondedECDSAKeepFactoryABI))
+	contractABI, err := backendabi.JSON(strings.NewReader(abi.BondedECDSAKeepFactoryABI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate ABI: [%v]", err)
 	}
@@ -89,7 +89,7 @@ func NewBondedECDSAKeepFactory(
 		transactor:        backend,
 		callerOptions:     callerOptions,
 		transactorOptions: transactorOptions,
-		errorResolver:     ethutil.NewErrorResolver(backend, &contractABI, &contractAddress),
+		errorResolver:     chainutil.NewErrorResolver(backend, &contractABI, &contractAddress),
 		nonceManager:      nonceManager,
 		miningWaiter:      miningWaiter,
 		blockCounter:      blockCounter,
@@ -103,7 +103,7 @@ func NewBondedECDSAKeepFactory(
 func (becdsakf *BondedECDSAKeepFactory) RequestNewGroupSelectionSeed(
 	value *big.Int,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction requestNewGroupSelectionSeed",
@@ -198,7 +198,7 @@ func (becdsakf *BondedECDSAKeepFactory) CallRequestNewGroupSelectionSeed(
 ) error {
 	var result interface{} = nil
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.transactorOptions.From,
 		blockNumber, value,
 		becdsakf.contractABI,
@@ -215,7 +215,7 @@ func (becdsakf *BondedECDSAKeepFactory) CallRequestNewGroupSelectionSeed(
 func (becdsakf *BondedECDSAKeepFactory) RequestNewGroupSelectionSeedGasEstimate() (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		becdsakf.callerOptions.From,
 		becdsakf.contractAddress,
 		"requestNewGroupSelectionSeed",
@@ -230,7 +230,7 @@ func (becdsakf *BondedECDSAKeepFactory) RequestNewGroupSelectionSeedGasEstimate(
 func (becdsakf *BondedECDSAKeepFactory) CreateSortitionPool(
 	_application common.Address,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction createSortitionPool",
@@ -330,7 +330,7 @@ func (becdsakf *BondedECDSAKeepFactory) CallCreateSortitionPool(
 ) (common.Address, error) {
 	var result common.Address
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.transactorOptions.From,
 		blockNumber, nil,
 		becdsakf.contractABI,
@@ -350,7 +350,7 @@ func (becdsakf *BondedECDSAKeepFactory) CreateSortitionPoolGasEstimate(
 ) (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		becdsakf.callerOptions.From,
 		becdsakf.contractAddress,
 		"createSortitionPool",
@@ -371,7 +371,7 @@ func (becdsakf *BondedECDSAKeepFactory) OpenKeep(
 	_stakeLockDuration *big.Int,
 	value *big.Int,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction openKeep",
@@ -499,7 +499,7 @@ func (becdsakf *BondedECDSAKeepFactory) CallOpenKeep(
 ) (common.Address, error) {
 	var result common.Address
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.transactorOptions.From,
 		blockNumber, value,
 		becdsakf.contractABI,
@@ -527,7 +527,7 @@ func (becdsakf *BondedECDSAKeepFactory) OpenKeepGasEstimate(
 ) (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		becdsakf.callerOptions.From,
 		becdsakf.contractAddress,
 		"openKeep",
@@ -544,282 +544,10 @@ func (becdsakf *BondedECDSAKeepFactory) OpenKeepGasEstimate(
 }
 
 // Transaction submission.
-func (becdsakf *BondedECDSAKeepFactory) RegisterMemberCandidate(
-	_application common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	becdsakfLogger.Debug(
-		"submitting transaction registerMemberCandidate",
-		"params: ",
-		fmt.Sprint(
-			_application,
-		),
-	)
-
-	becdsakf.transactionMutex.Lock()
-	defer becdsakf.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *becdsakf.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := becdsakf.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := becdsakf.contract.RegisterMemberCandidate(
-		transactorOptions,
-		_application,
-	)
-	if err != nil {
-		return transaction, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.transactorOptions.From,
-			nil,
-			"registerMemberCandidate",
-			_application,
-		)
-	}
-
-	becdsakfLogger.Infof(
-		"submitted transaction registerMemberCandidate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go becdsakf.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     transaction.Hash().Hex(),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := becdsakf.contract.RegisterMemberCandidate(
-				transactorOptions,
-				_application,
-			)
-			if err != nil {
-				return nil, becdsakf.errorResolver.ResolveError(
-					err,
-					becdsakf.transactorOptions.From,
-					nil,
-					"registerMemberCandidate",
-					_application,
-				)
-			}
-
-			becdsakfLogger.Infof(
-				"submitted transaction registerMemberCandidate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return &ethlike.Transaction{
-				Hash:     transaction.Hash().Hex(),
-				GasPrice: transaction.GasPrice(),
-			}, nil
-		},
-	)
-
-	becdsakf.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (becdsakf *BondedECDSAKeepFactory) CallRegisterMemberCandidate(
-	_application common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		becdsakf.transactorOptions.From,
-		blockNumber, nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"registerMemberCandidate",
-		&result,
-		_application,
-	)
-
-	return err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) RegisterMemberCandidateGasEstimate(
-	_application common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		becdsakf.callerOptions.From,
-		becdsakf.contractAddress,
-		"registerMemberCandidate",
-		becdsakf.contractABI,
-		becdsakf.transactor,
-		_application,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (becdsakf *BondedECDSAKeepFactory) BeaconCallback(
-	_relayEntry *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	becdsakfLogger.Debug(
-		"submitting transaction beaconCallback",
-		"params: ",
-		fmt.Sprint(
-			_relayEntry,
-		),
-	)
-
-	becdsakf.transactionMutex.Lock()
-	defer becdsakf.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *becdsakf.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := becdsakf.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := becdsakf.contract.BeaconCallback(
-		transactorOptions,
-		_relayEntry,
-	)
-	if err != nil {
-		return transaction, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.transactorOptions.From,
-			nil,
-			"beaconCallback",
-			_relayEntry,
-		)
-	}
-
-	becdsakfLogger.Infof(
-		"submitted transaction beaconCallback with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go becdsakf.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     transaction.Hash().Hex(),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := becdsakf.contract.BeaconCallback(
-				transactorOptions,
-				_relayEntry,
-			)
-			if err != nil {
-				return nil, becdsakf.errorResolver.ResolveError(
-					err,
-					becdsakf.transactorOptions.From,
-					nil,
-					"beaconCallback",
-					_relayEntry,
-				)
-			}
-
-			becdsakfLogger.Infof(
-				"submitted transaction beaconCallback with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return &ethlike.Transaction{
-				Hash:     transaction.Hash().Hex(),
-				GasPrice: transaction.GasPrice(),
-			}, nil
-		},
-	)
-
-	becdsakf.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (becdsakf *BondedECDSAKeepFactory) CallBeaconCallback(
-	_relayEntry *big.Int,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		becdsakf.transactorOptions.From,
-		blockNumber, nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"beaconCallback",
-		&result,
-		_relayEntry,
-	)
-
-	return err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) BeaconCallbackGasEstimate(
-	_relayEntry *big.Int,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		becdsakf.callerOptions.From,
-		becdsakf.contractAddress,
-		"beaconCallback",
-		becdsakf.contractABI,
-		becdsakf.transactor,
-		_relayEntry,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
 func (becdsakf *BondedECDSAKeepFactory) IsRecognized(
 	_delegatedAuthorityRecipient common.Address,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction isRecognized",
@@ -919,7 +647,7 @@ func (becdsakf *BondedECDSAKeepFactory) CallIsRecognized(
 ) (bool, error) {
 	var result bool
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.transactorOptions.From,
 		blockNumber, nil,
 		becdsakf.contractABI,
@@ -939,7 +667,7 @@ func (becdsakf *BondedECDSAKeepFactory) IsRecognizedGasEstimate(
 ) (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		becdsakf.callerOptions.From,
 		becdsakf.contractAddress,
 		"isRecognized",
@@ -957,7 +685,7 @@ func (becdsakf *BondedECDSAKeepFactory) SetMinimumBondableValue(
 	_groupSize *big.Int,
 	_honestThreshold *big.Int,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction setMinimumBondableValue",
@@ -1069,7 +797,7 @@ func (becdsakf *BondedECDSAKeepFactory) CallSetMinimumBondableValue(
 ) error {
 	var result interface{} = nil
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.transactorOptions.From,
 		blockNumber, nil,
 		becdsakf.contractABI,
@@ -1093,7 +821,7 @@ func (becdsakf *BondedECDSAKeepFactory) SetMinimumBondableValueGasEstimate(
 ) (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		becdsakf.callerOptions.From,
 		becdsakf.contractAddress,
 		"setMinimumBondableValue",
@@ -1108,11 +836,147 @@ func (becdsakf *BondedECDSAKeepFactory) SetMinimumBondableValueGasEstimate(
 }
 
 // Transaction submission.
+func (becdsakf *BondedECDSAKeepFactory) RegisterMemberCandidate(
+	_application common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	becdsakfLogger.Debug(
+		"submitting transaction registerMemberCandidate",
+		"params: ",
+		fmt.Sprint(
+			_application,
+		),
+	)
+
+	becdsakf.transactionMutex.Lock()
+	defer becdsakf.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *becdsakf.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := becdsakf.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := becdsakf.contract.RegisterMemberCandidate(
+		transactorOptions,
+		_application,
+	)
+	if err != nil {
+		return transaction, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.transactorOptions.From,
+			nil,
+			"registerMemberCandidate",
+			_application,
+		)
+	}
+
+	becdsakfLogger.Infof(
+		"submitted transaction registerMemberCandidate with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go becdsakf.miningWaiter.ForceMining(
+		&ethlike.Transaction{
+			Hash:     transaction.Hash().Hex(),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := becdsakf.contract.RegisterMemberCandidate(
+				transactorOptions,
+				_application,
+			)
+			if err != nil {
+				return nil, becdsakf.errorResolver.ResolveError(
+					err,
+					becdsakf.transactorOptions.From,
+					nil,
+					"registerMemberCandidate",
+					_application,
+				)
+			}
+
+			becdsakfLogger.Infof(
+				"submitted transaction registerMemberCandidate with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return &ethlike.Transaction{
+				Hash:     transaction.Hash().Hex(),
+				GasPrice: transaction.GasPrice(),
+			}, nil
+		},
+	)
+
+	becdsakf.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (becdsakf *BondedECDSAKeepFactory) CallRegisterMemberCandidate(
+	_application common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		becdsakf.transactorOptions.From,
+		blockNumber, nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"registerMemberCandidate",
+		&result,
+		_application,
+	)
+
+	return err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) RegisterMemberCandidateGasEstimate(
+	_application common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		becdsakf.callerOptions.From,
+		becdsakf.contractAddress,
+		"registerMemberCandidate",
+		becdsakf.contractABI,
+		becdsakf.transactor,
+		_application,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (becdsakf *BondedECDSAKeepFactory) UpdateOperatorStatus(
 	_operator common.Address,
 	_application common.Address,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction updateOperatorStatus",
@@ -1218,7 +1082,7 @@ func (becdsakf *BondedECDSAKeepFactory) CallUpdateOperatorStatus(
 ) error {
 	var result interface{} = nil
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.transactorOptions.From,
 		blockNumber, nil,
 		becdsakf.contractABI,
@@ -1240,7 +1104,7 @@ func (becdsakf *BondedECDSAKeepFactory) UpdateOperatorStatusGasEstimate(
 ) (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		becdsakf.callerOptions.From,
 		becdsakf.contractAddress,
 		"updateOperatorStatus",
@@ -1253,11 +1117,147 @@ func (becdsakf *BondedECDSAKeepFactory) UpdateOperatorStatusGasEstimate(
 	return result, err
 }
 
+// Transaction submission.
+func (becdsakf *BondedECDSAKeepFactory) BeaconCallback(
+	_relayEntry *big.Int,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	becdsakfLogger.Debug(
+		"submitting transaction beaconCallback",
+		"params: ",
+		fmt.Sprint(
+			_relayEntry,
+		),
+	)
+
+	becdsakf.transactionMutex.Lock()
+	defer becdsakf.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *becdsakf.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := becdsakf.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := becdsakf.contract.BeaconCallback(
+		transactorOptions,
+		_relayEntry,
+	)
+	if err != nil {
+		return transaction, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.transactorOptions.From,
+			nil,
+			"beaconCallback",
+			_relayEntry,
+		)
+	}
+
+	becdsakfLogger.Infof(
+		"submitted transaction beaconCallback with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go becdsakf.miningWaiter.ForceMining(
+		&ethlike.Transaction{
+			Hash:     transaction.Hash().Hex(),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := becdsakf.contract.BeaconCallback(
+				transactorOptions,
+				_relayEntry,
+			)
+			if err != nil {
+				return nil, becdsakf.errorResolver.ResolveError(
+					err,
+					becdsakf.transactorOptions.From,
+					nil,
+					"beaconCallback",
+					_relayEntry,
+				)
+			}
+
+			becdsakfLogger.Infof(
+				"submitted transaction beaconCallback with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return &ethlike.Transaction{
+				Hash:     transaction.Hash().Hex(),
+				GasPrice: transaction.GasPrice(),
+			}, nil
+		},
+	)
+
+	becdsakf.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (becdsakf *BondedECDSAKeepFactory) CallBeaconCallback(
+	_relayEntry *big.Int,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		becdsakf.transactorOptions.From,
+		blockNumber, nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"beaconCallback",
+		&result,
+		_relayEntry,
+	)
+
+	return err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) BeaconCallbackGasEstimate(
+	_relayEntry *big.Int,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		becdsakf.callerOptions.From,
+		becdsakf.contractAddress,
+		"beaconCallback",
+		becdsakf.contractABI,
+		becdsakf.transactor,
+		_relayEntry,
+	)
+
+	return result, err
+}
+
 // ----- Const Methods ------
 
-func (becdsakf *BondedECDSAKeepFactory) NewGroupSelectionSeedFee() (*big.Int, error) {
+func (becdsakf *BondedECDSAKeepFactory) PoolStakeWeightDivisor() (*big.Int, error) {
 	var result *big.Int
-	result, err := becdsakf.contract.NewGroupSelectionSeedFee(
+	result, err := becdsakf.contract.PoolStakeWeightDivisor(
 		becdsakf.callerOptions,
 	)
 
@@ -1266,19 +1266,19 @@ func (becdsakf *BondedECDSAKeepFactory) NewGroupSelectionSeedFee() (*big.Int, er
 			err,
 			becdsakf.callerOptions.From,
 			nil,
-			"newGroupSelectionSeedFee",
+			"poolStakeWeightDivisor",
 		)
 	}
 
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) NewGroupSelectionSeedFeeAtBlock(
+func (becdsakf *BondedECDSAKeepFactory) PoolStakeWeightDivisorAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1286,8 +1286,90 @@ func (becdsakf *BondedECDSAKeepFactory) NewGroupSelectionSeedFeeAtBlock(
 		becdsakf.caller,
 		becdsakf.errorResolver,
 		becdsakf.contractAddress,
-		"newGroupSelectionSeedFee",
+		"poolStakeWeightDivisor",
 		&result,
+	)
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) CallbackGas() (*big.Int, error) {
+	var result *big.Int
+	result, err := becdsakf.contract.CallbackGas(
+		becdsakf.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.callerOptions.From,
+			nil,
+			"callbackGas",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) CallbackGasAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := chainutil.CallAtBlock(
+		becdsakf.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"callbackGas",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) IsOperatorAuthorized(
+	_operator common.Address,
+) (bool, error) {
+	var result bool
+	result, err := becdsakf.contract.IsOperatorAuthorized(
+		becdsakf.callerOptions,
+		_operator,
+	)
+
+	if err != nil {
+		return result, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.callerOptions.From,
+			nil,
+			"isOperatorAuthorized",
+			_operator,
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) IsOperatorAuthorizedAtBlock(
+	_operator common.Address,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := chainutil.CallAtBlock(
+		becdsakf.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"isOperatorAuthorized",
+		&result,
+		_operator,
 	)
 
 	return result, err
@@ -1321,7 +1403,7 @@ func (becdsakf *BondedECDSAKeepFactory) GetSortitionPoolWeightAtBlock(
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1337,9 +1419,9 @@ func (becdsakf *BondedECDSAKeepFactory) GetSortitionPoolWeightAtBlock(
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) MinimumBond() (*big.Int, error) {
+func (becdsakf *BondedECDSAKeepFactory) GroupSelectionSeed() (*big.Int, error) {
 	var result *big.Int
-	result, err := becdsakf.contract.MinimumBond(
+	result, err := becdsakf.contract.GroupSelectionSeed(
 		becdsakf.callerOptions,
 	)
 
@@ -1348,19 +1430,19 @@ func (becdsakf *BondedECDSAKeepFactory) MinimumBond() (*big.Int, error) {
 			err,
 			becdsakf.callerOptions.From,
 			nil,
-			"minimumBond",
+			"groupSelectionSeed",
 		)
 	}
 
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) MinimumBondAtBlock(
+func (becdsakf *BondedECDSAKeepFactory) GroupSelectionSeedAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1368,7 +1450,83 @@ func (becdsakf *BondedECDSAKeepFactory) MinimumBondAtBlock(
 		becdsakf.caller,
 		becdsakf.errorResolver,
 		becdsakf.contractAddress,
-		"minimumBond",
+		"groupSelectionSeed",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) MasterKeepAddress() (common.Address, error) {
+	var result common.Address
+	result, err := becdsakf.contract.MasterKeepAddress(
+		becdsakf.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.callerOptions.From,
+			nil,
+			"masterKeepAddress",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) MasterKeepAddressAtBlock(
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := chainutil.CallAtBlock(
+		becdsakf.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"masterKeepAddress",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) GetKeepCount() (*big.Int, error) {
+	var result *big.Int
+	result, err := becdsakf.contract.GetKeepCount(
+		becdsakf.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.callerOptions.From,
+			nil,
+			"getKeepCount",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) GetKeepCountAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := chainutil.CallAtBlock(
+		becdsakf.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"getKeepCount",
 		&result,
 	)
 
@@ -1403,7 +1561,7 @@ func (becdsakf *BondedECDSAKeepFactory) GetKeepOpenedTimestampAtBlock(
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1419,15 +1577,13 @@ func (becdsakf *BondedECDSAKeepFactory) GetKeepOpenedTimestampAtBlock(
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) IsOperatorUpToDate(
-	_operator common.Address,
-	_application common.Address,
-) (bool, error) {
-	var result bool
-	result, err := becdsakf.contract.IsOperatorUpToDate(
+func (becdsakf *BondedECDSAKeepFactory) Keeps(
+	arg0 *big.Int,
+) (common.Address, error) {
+	var result common.Address
+	result, err := becdsakf.contract.Keeps(
 		becdsakf.callerOptions,
-		_operator,
-		_application,
+		arg0,
 	)
 
 	if err != nil {
@@ -1435,23 +1591,21 @@ func (becdsakf *BondedECDSAKeepFactory) IsOperatorUpToDate(
 			err,
 			becdsakf.callerOptions.From,
 			nil,
-			"isOperatorUpToDate",
-			_operator,
-			_application,
+			"keeps",
+			arg0,
 		)
 	}
 
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) IsOperatorUpToDateAtBlock(
-	_operator common.Address,
-	_application common.Address,
+func (becdsakf *BondedECDSAKeepFactory) KeepsAtBlock(
+	arg0 *big.Int,
 	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
+) (common.Address, error) {
+	var result common.Address
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1459,267 +1613,9 @@ func (becdsakf *BondedECDSAKeepFactory) IsOperatorUpToDateAtBlock(
 		becdsakf.caller,
 		becdsakf.errorResolver,
 		becdsakf.contractAddress,
-		"isOperatorUpToDate",
+		"keeps",
 		&result,
-		_operator,
-		_application,
-	)
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) HasMinimumStake(
-	_operator common.Address,
-) (bool, error) {
-	var result bool
-	result, err := becdsakf.contract.HasMinimumStake(
-		becdsakf.callerOptions,
-		_operator,
-	)
-
-	if err != nil {
-		return result, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.callerOptions.From,
-			nil,
-			"hasMinimumStake",
-			_operator,
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) HasMinimumStakeAtBlock(
-	_operator common.Address,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		becdsakf.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"hasMinimumStake",
-		&result,
-		_operator,
-	)
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) IsOperatorAuthorized(
-	_operator common.Address,
-) (bool, error) {
-	var result bool
-	result, err := becdsakf.contract.IsOperatorAuthorized(
-		becdsakf.callerOptions,
-		_operator,
-	)
-
-	if err != nil {
-		return result, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.callerOptions.From,
-			nil,
-			"isOperatorAuthorized",
-			_operator,
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) IsOperatorAuthorizedAtBlock(
-	_operator common.Address,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		becdsakf.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"isOperatorAuthorized",
-		&result,
-		_operator,
-	)
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) IsOperatorRegistered(
-	_operator common.Address,
-	_application common.Address,
-) (bool, error) {
-	var result bool
-	result, err := becdsakf.contract.IsOperatorRegistered(
-		becdsakf.callerOptions,
-		_operator,
-		_application,
-	)
-
-	if err != nil {
-		return result, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.callerOptions.From,
-			nil,
-			"isOperatorRegistered",
-			_operator,
-			_application,
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) IsOperatorRegisteredAtBlock(
-	_operator common.Address,
-	_application common.Address,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		becdsakf.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"isOperatorRegistered",
-		&result,
-		_operator,
-		_application,
-	)
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) PoolStakeWeightDivisor() (*big.Int, error) {
-	var result *big.Int
-	result, err := becdsakf.contract.PoolStakeWeightDivisor(
-		becdsakf.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.callerOptions.From,
-			nil,
-			"poolStakeWeightDivisor",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) PoolStakeWeightDivisorAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		becdsakf.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"poolStakeWeightDivisor",
-		&result,
-	)
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) BalanceOf(
-	_operator common.Address,
-) (*big.Int, error) {
-	var result *big.Int
-	result, err := becdsakf.contract.BalanceOf(
-		becdsakf.callerOptions,
-		_operator,
-	)
-
-	if err != nil {
-		return result, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.callerOptions.From,
-			nil,
-			"balanceOf",
-			_operator,
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) BalanceOfAtBlock(
-	_operator common.Address,
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		becdsakf.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"balanceOf",
-		&result,
-		_operator,
-	)
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) GroupSelectionSeed() (*big.Int, error) {
-	var result *big.Int
-	result, err := becdsakf.contract.GroupSelectionSeed(
-		becdsakf.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.callerOptions.From,
-			nil,
-			"groupSelectionSeed",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) GroupSelectionSeedAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		becdsakf.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"groupSelectionSeed",
-		&result,
+		arg0,
 	)
 
 	return result, err
@@ -1757,7 +1653,7 @@ func (becdsakf *BondedECDSAKeepFactory) IsOperatorEligibleAtBlock(
 ) (bool, error) {
 	var result bool
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1774,88 +1670,14 @@ func (becdsakf *BondedECDSAKeepFactory) IsOperatorEligibleAtBlock(
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) MasterKeepAddress() (common.Address, error) {
-	var result common.Address
-	result, err := becdsakf.contract.MasterKeepAddress(
-		becdsakf.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.callerOptions.From,
-			nil,
-			"masterKeepAddress",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) MasterKeepAddressAtBlock(
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		becdsakf.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"masterKeepAddress",
-		&result,
-	)
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) CallbackGas() (*big.Int, error) {
-	var result *big.Int
-	result, err := becdsakf.contract.CallbackGas(
-		becdsakf.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.callerOptions.From,
-			nil,
-			"callbackGas",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) CallbackGasAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		becdsakf.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"callbackGas",
-		&result,
-	)
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) GetSortitionPool(
+func (becdsakf *BondedECDSAKeepFactory) IsOperatorRegistered(
+	_operator common.Address,
 	_application common.Address,
-) (common.Address, error) {
-	var result common.Address
-	result, err := becdsakf.contract.GetSortitionPool(
+) (bool, error) {
+	var result bool
+	result, err := becdsakf.contract.IsOperatorRegistered(
 		becdsakf.callerOptions,
+		_operator,
 		_application,
 	)
 
@@ -1864,7 +1686,8 @@ func (becdsakf *BondedECDSAKeepFactory) GetSortitionPool(
 			err,
 			becdsakf.callerOptions.From,
 			nil,
-			"getSortitionPool",
+			"isOperatorRegistered",
+			_operator,
 			_application,
 		)
 	}
@@ -1872,13 +1695,14 @@ func (becdsakf *BondedECDSAKeepFactory) GetSortitionPool(
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) GetSortitionPoolAtBlock(
+func (becdsakf *BondedECDSAKeepFactory) IsOperatorRegisteredAtBlock(
+	_operator common.Address,
 	_application common.Address,
 	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
+) (bool, error) {
+	var result bool
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1886,17 +1710,18 @@ func (becdsakf *BondedECDSAKeepFactory) GetSortitionPoolAtBlock(
 		becdsakf.caller,
 		becdsakf.errorResolver,
 		becdsakf.contractAddress,
-		"getSortitionPool",
+		"isOperatorRegistered",
 		&result,
+		_operator,
 		_application,
 	)
 
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) ReseedPool() (*big.Int, error) {
+func (becdsakf *BondedECDSAKeepFactory) NewGroupSelectionSeedFee() (*big.Int, error) {
 	var result *big.Int
-	result, err := becdsakf.contract.ReseedPool(
+	result, err := becdsakf.contract.NewGroupSelectionSeedFee(
 		becdsakf.callerOptions,
 	)
 
@@ -1905,19 +1730,19 @@ func (becdsakf *BondedECDSAKeepFactory) ReseedPool() (*big.Int, error) {
 			err,
 			becdsakf.callerOptions.From,
 			nil,
-			"reseedPool",
+			"newGroupSelectionSeedFee",
 		)
 	}
 
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) ReseedPoolAtBlock(
+func (becdsakf *BondedECDSAKeepFactory) NewGroupSelectionSeedFeeAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1925,7 +1750,7 @@ func (becdsakf *BondedECDSAKeepFactory) ReseedPoolAtBlock(
 		becdsakf.caller,
 		becdsakf.errorResolver,
 		becdsakf.contractAddress,
-		"reseedPool",
+		"newGroupSelectionSeedFee",
 		&result,
 	)
 
@@ -1960,7 +1785,7 @@ func (becdsakf *BondedECDSAKeepFactory) GetKeepAtIndexAtBlock(
 ) (common.Address, error) {
 	var result common.Address
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1976,51 +1801,13 @@ func (becdsakf *BondedECDSAKeepFactory) GetKeepAtIndexAtBlock(
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) GetKeepCount() (*big.Int, error) {
-	var result *big.Int
-	result, err := becdsakf.contract.GetKeepCount(
-		becdsakf.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsakf.errorResolver.ResolveError(
-			err,
-			becdsakf.callerOptions.From,
-			nil,
-			"getKeepCount",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) GetKeepCountAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		becdsakf.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakf.contractABI,
-		becdsakf.caller,
-		becdsakf.errorResolver,
-		becdsakf.contractAddress,
-		"getKeepCount",
-		&result,
-	)
-
-	return result, err
-}
-
-func (becdsakf *BondedECDSAKeepFactory) Keeps(
-	arg0 *big.Int,
+func (becdsakf *BondedECDSAKeepFactory) GetSortitionPool(
+	_application common.Address,
 ) (common.Address, error) {
 	var result common.Address
-	result, err := becdsakf.contract.Keeps(
+	result, err := becdsakf.contract.GetSortitionPool(
 		becdsakf.callerOptions,
-		arg0,
+		_application,
 	)
 
 	if err != nil {
@@ -2028,21 +1815,21 @@ func (becdsakf *BondedECDSAKeepFactory) Keeps(
 			err,
 			becdsakf.callerOptions.From,
 			nil,
-			"keeps",
-			arg0,
+			"getSortitionPool",
+			_application,
 		)
 	}
 
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) KeepsAtBlock(
-	arg0 *big.Int,
+func (becdsakf *BondedECDSAKeepFactory) GetSortitionPoolAtBlock(
+	_application common.Address,
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -2050,17 +1837,17 @@ func (becdsakf *BondedECDSAKeepFactory) KeepsAtBlock(
 		becdsakf.caller,
 		becdsakf.errorResolver,
 		becdsakf.contractAddress,
-		"keeps",
+		"getSortitionPool",
 		&result,
-		arg0,
+		_application,
 	)
 
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) NewEntryFeeEstimate() (*big.Int, error) {
+func (becdsakf *BondedECDSAKeepFactory) MinimumBond() (*big.Int, error) {
 	var result *big.Int
-	result, err := becdsakf.contract.NewEntryFeeEstimate(
+	result, err := becdsakf.contract.MinimumBond(
 		becdsakf.callerOptions,
 	)
 
@@ -2069,19 +1856,19 @@ func (becdsakf *BondedECDSAKeepFactory) NewEntryFeeEstimate() (*big.Int, error) 
 			err,
 			becdsakf.callerOptions.From,
 			nil,
-			"newEntryFeeEstimate",
+			"minimumBond",
 		)
 	}
 
 	return result, err
 }
 
-func (becdsakf *BondedECDSAKeepFactory) NewEntryFeeEstimateAtBlock(
+func (becdsakf *BondedECDSAKeepFactory) MinimumBondAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -2089,7 +1876,7 @@ func (becdsakf *BondedECDSAKeepFactory) NewEntryFeeEstimateAtBlock(
 		becdsakf.caller,
 		becdsakf.errorResolver,
 		becdsakf.contractAddress,
-		"newEntryFeeEstimate",
+		"minimumBond",
 		&result,
 	)
 
@@ -2119,7 +1906,7 @@ func (becdsakf *BondedECDSAKeepFactory) OpenKeepFeeEstimateAtBlock(
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakf.callerOptions.From,
 		blockNumber,
 		nil,
@@ -2134,22 +1921,235 @@ func (becdsakf *BondedECDSAKeepFactory) OpenKeepFeeEstimateAtBlock(
 	return result, err
 }
 
+func (becdsakf *BondedECDSAKeepFactory) BalanceOf(
+	_operator common.Address,
+) (*big.Int, error) {
+	var result *big.Int
+	result, err := becdsakf.contract.BalanceOf(
+		becdsakf.callerOptions,
+		_operator,
+	)
+
+	if err != nil {
+		return result, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.callerOptions.From,
+			nil,
+			"balanceOf",
+			_operator,
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) BalanceOfAtBlock(
+	_operator common.Address,
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := chainutil.CallAtBlock(
+		becdsakf.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"balanceOf",
+		&result,
+		_operator,
+	)
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) NewEntryFeeEstimate() (*big.Int, error) {
+	var result *big.Int
+	result, err := becdsakf.contract.NewEntryFeeEstimate(
+		becdsakf.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.callerOptions.From,
+			nil,
+			"newEntryFeeEstimate",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) NewEntryFeeEstimateAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := chainutil.CallAtBlock(
+		becdsakf.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"newEntryFeeEstimate",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) IsOperatorUpToDate(
+	_operator common.Address,
+	_application common.Address,
+) (bool, error) {
+	var result bool
+	result, err := becdsakf.contract.IsOperatorUpToDate(
+		becdsakf.callerOptions,
+		_operator,
+		_application,
+	)
+
+	if err != nil {
+		return result, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.callerOptions.From,
+			nil,
+			"isOperatorUpToDate",
+			_operator,
+			_application,
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) IsOperatorUpToDateAtBlock(
+	_operator common.Address,
+	_application common.Address,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := chainutil.CallAtBlock(
+		becdsakf.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"isOperatorUpToDate",
+		&result,
+		_operator,
+		_application,
+	)
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) ReseedPool() (*big.Int, error) {
+	var result *big.Int
+	result, err := becdsakf.contract.ReseedPool(
+		becdsakf.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.callerOptions.From,
+			nil,
+			"reseedPool",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) ReseedPoolAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := chainutil.CallAtBlock(
+		becdsakf.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"reseedPool",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) HasMinimumStake(
+	_operator common.Address,
+) (bool, error) {
+	var result bool
+	result, err := becdsakf.contract.HasMinimumStake(
+		becdsakf.callerOptions,
+		_operator,
+	)
+
+	if err != nil {
+		return result, becdsakf.errorResolver.ResolveError(
+			err,
+			becdsakf.callerOptions.From,
+			nil,
+			"hasMinimumStake",
+			_operator,
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakf *BondedECDSAKeepFactory) HasMinimumStakeAtBlock(
+	_operator common.Address,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := chainutil.CallAtBlock(
+		becdsakf.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakf.contractABI,
+		becdsakf.caller,
+		becdsakf.errorResolver,
+		becdsakf.contractAddress,
+		"hasMinimumStake",
+		&result,
+		_operator,
+	)
+
+	return result, err
+}
+
 // ------ Events -------
 
 func (becdsakf *BondedECDSAKeepFactory) BondedECDSAKeepCreated(
-	opts *ethutil.SubscribeOpts,
+	opts *chainutil.SubscribeOpts,
 	keepAddressFilter []common.Address,
 	ownerFilter []common.Address,
 	applicationFilter []common.Address,
 ) *BecdsakfBondedECDSAKeepCreatedSubscription {
 	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
+		opts = new(chainutil.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
 	}
 	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
 	return &BecdsakfBondedECDSAKeepCreatedSubscription{
@@ -2163,7 +2163,7 @@ func (becdsakf *BondedECDSAKeepFactory) BondedECDSAKeepCreated(
 
 type BecdsakfBondedECDSAKeepCreatedSubscription struct {
 	contract          *BondedECDSAKeepFactory
-	opts              *ethutil.SubscribeOpts
+	opts              *chainutil.SubscribeOpts
 	keepAddressFilter []common.Address
 	ownerFilter       []common.Address
 	applicationFilter []common.Address
@@ -2294,7 +2294,7 @@ func (becdsakf *BondedECDSAKeepFactory) watchBondedECDSAKeepCreated(
 		becdsakfLogger.Errorf(
 			"subscription to event BondedECDSAKeepCreated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
+				"chain connectivity",
 			elapsed,
 		)
 	}
@@ -2308,10 +2308,10 @@ func (becdsakf *BondedECDSAKeepFactory) watchBondedECDSAKeepCreated(
 		)
 	}
 
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
 		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
+		chainutil.SubscriptionAlertThreshold,
 		thresholdViolatedFn,
 		subscriptionFailedFn,
 	)
@@ -2351,17 +2351,17 @@ func (becdsakf *BondedECDSAKeepFactory) PastBondedECDSAKeepCreatedEvents(
 }
 
 func (becdsakf *BondedECDSAKeepFactory) SortitionPoolCreated(
-	opts *ethutil.SubscribeOpts,
+	opts *chainutil.SubscribeOpts,
 	applicationFilter []common.Address,
 ) *BecdsakfSortitionPoolCreatedSubscription {
 	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
+		opts = new(chainutil.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
 	}
 	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
 	return &BecdsakfSortitionPoolCreatedSubscription{
@@ -2373,7 +2373,7 @@ func (becdsakf *BondedECDSAKeepFactory) SortitionPoolCreated(
 
 type BecdsakfSortitionPoolCreatedSubscription struct {
 	contract          *BondedECDSAKeepFactory
-	opts              *ethutil.SubscribeOpts
+	opts              *chainutil.SubscribeOpts
 	applicationFilter []common.Address
 }
 
@@ -2488,7 +2488,7 @@ func (becdsakf *BondedECDSAKeepFactory) watchSortitionPoolCreated(
 		becdsakfLogger.Errorf(
 			"subscription to event SortitionPoolCreated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
+				"chain connectivity",
 			elapsed,
 		)
 	}
@@ -2502,10 +2502,10 @@ func (becdsakf *BondedECDSAKeepFactory) watchSortitionPoolCreated(
 		)
 	}
 
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
 		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
+		chainutil.SubscriptionAlertThreshold,
 		thresholdViolatedFn,
 		subscriptionFailedFn,
 	)

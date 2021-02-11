@@ -45,10 +45,10 @@ abi/%.go: abi/%.abi
 	go run github.com/ethereum/go-ethereum/cmd/abigen --abi $< --pkg abi --type $* --out $@
 
 contract/%.go cmd/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*.go cmd/$*.go
+	go run github.com/keep-network/keep-common/tools/generators/ethlike $< contract/$*.go cmd/$*.go
 
 contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go: abi/BondedECDSAKeepFactory.abi abi/BondedECDSAKeepFactory.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go 
+	go run github.com/keep-network/keep-common/tools/generators/ethlike $< contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go
 
 contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go: abi/BondedECDSAKeep.abi abi/BondedECDSAKeep.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go
+	go run github.com/keep-network/keep-common/tools/generators/ethlike $< contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go

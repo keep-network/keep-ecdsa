@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	ethereumabi "github.com/ethereum/go-ethereum/accounts/abi"
+	backendabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,10 +20,10 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/abi"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/abi"
 )
 
 // Create a package-level logger for this contract. The logger exists at
@@ -34,12 +34,12 @@ var becdsakvLogger = log.Logger("keep-contract-BondedECDSAKeepVendor")
 type BondedECDSAKeepVendor struct {
 	contract          *abi.BondedECDSAKeepVendorImplV1
 	contractAddress   common.Address
-	contractABI       *ethereumabi.ABI
+	contractABI       *backendabi.ABI
 	caller            bind.ContractCaller
 	transactor        bind.ContractTransactor
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
-	errorResolver     *ethutil.ErrorResolver
+	errorResolver     *chainutil.ErrorResolver
 	nonceManager      *ethlike.NonceManager
 	miningWaiter      *ethlike.MiningWaiter
 	blockCounter      *ethlike.BlockCounter
@@ -76,7 +76,7 @@ func NewBondedECDSAKeepVendor(
 		)
 	}
 
-	contractABI, err := ethereumabi.JSON(strings.NewReader(abi.BondedECDSAKeepVendorImplV1ABI))
+	contractABI, err := backendabi.JSON(strings.NewReader(abi.BondedECDSAKeepVendorImplV1ABI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate ABI: [%v]", err)
 	}
@@ -89,7 +89,7 @@ func NewBondedECDSAKeepVendor(
 		transactor:        backend,
 		callerOptions:     callerOptions,
 		transactorOptions: transactorOptions,
-		errorResolver:     ethutil.NewErrorResolver(backend, &contractABI, &contractAddress),
+		errorResolver:     chainutil.NewErrorResolver(backend, &contractABI, &contractAddress),
 		nonceManager:      nonceManager,
 		miningWaiter:      miningWaiter,
 		blockCounter:      blockCounter,
@@ -103,7 +103,7 @@ func NewBondedECDSAKeepVendor(
 func (becdsakv *BondedECDSAKeepVendor) UpgradeFactory(
 	_factory common.Address,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	becdsakvLogger.Debug(
 		"submitting transaction upgradeFactory",
@@ -203,7 +203,7 @@ func (becdsakv *BondedECDSAKeepVendor) CallUpgradeFactory(
 ) error {
 	var result interface{} = nil
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakv.transactorOptions.From,
 		blockNumber, nil,
 		becdsakv.contractABI,
@@ -223,7 +223,7 @@ func (becdsakv *BondedECDSAKeepVendor) UpgradeFactoryGasEstimate(
 ) (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		becdsakv.callerOptions.From,
 		becdsakv.contractAddress,
 		"upgradeFactory",
@@ -238,7 +238,7 @@ func (becdsakv *BondedECDSAKeepVendor) UpgradeFactoryGasEstimate(
 // Transaction submission.
 func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgrade(
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	becdsakvLogger.Debug(
 		"submitting transaction completeFactoryUpgrade",
@@ -329,7 +329,7 @@ func (becdsakv *BondedECDSAKeepVendor) CallCompleteFactoryUpgrade(
 ) error {
 	var result interface{} = nil
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakv.transactorOptions.From,
 		blockNumber, nil,
 		becdsakv.contractABI,
@@ -346,7 +346,7 @@ func (becdsakv *BondedECDSAKeepVendor) CallCompleteFactoryUpgrade(
 func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgradeGasEstimate() (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		becdsakv.callerOptions.From,
 		becdsakv.contractAddress,
 		"completeFactoryUpgrade",
@@ -362,7 +362,7 @@ func (becdsakv *BondedECDSAKeepVendor) Initialize(
 	registryAddress common.Address,
 	factory common.Address,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	becdsakvLogger.Debug(
 		"submitting transaction initialize",
@@ -468,7 +468,7 @@ func (becdsakv *BondedECDSAKeepVendor) CallInitialize(
 ) error {
 	var result interface{} = nil
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakv.transactorOptions.From,
 		blockNumber, nil,
 		becdsakv.contractABI,
@@ -490,7 +490,7 @@ func (becdsakv *BondedECDSAKeepVendor) InitializeGasEstimate(
 ) (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		becdsakv.callerOptions.From,
 		becdsakv.contractAddress,
 		"initialize",
@@ -504,6 +504,44 @@ func (becdsakv *BondedECDSAKeepVendor) InitializeGasEstimate(
 }
 
 // ----- Const Methods ------
+
+func (becdsakv *BondedECDSAKeepVendor) SelectFactory() (common.Address, error) {
+	var result common.Address
+	result, err := becdsakv.contract.SelectFactory(
+		becdsakv.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsakv.errorResolver.ResolveError(
+			err,
+			becdsakv.callerOptions.From,
+			nil,
+			"selectFactory",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakv *BondedECDSAKeepVendor) SelectFactoryAtBlock(
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := chainutil.CallAtBlock(
+		becdsakv.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakv.contractABI,
+		becdsakv.caller,
+		becdsakv.errorResolver,
+		becdsakv.contractAddress,
+		"selectFactory",
+		&result,
+	)
+
+	return result, err
+}
 
 func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeTimeDelay() (*big.Int, error) {
 	var result *big.Int
@@ -528,7 +566,7 @@ func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeTimeDelayAtBlock(
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakv.callerOptions.From,
 		blockNumber,
 		nil,
@@ -566,7 +604,7 @@ func (becdsakv *BondedECDSAKeepVendor) InitializedAtBlock(
 ) (bool, error) {
 	var result bool
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		becdsakv.callerOptions.From,
 		blockNumber,
 		nil,
@@ -581,57 +619,19 @@ func (becdsakv *BondedECDSAKeepVendor) InitializedAtBlock(
 	return result, err
 }
 
-func (becdsakv *BondedECDSAKeepVendor) SelectFactory() (common.Address, error) {
-	var result common.Address
-	result, err := becdsakv.contract.SelectFactory(
-		becdsakv.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsakv.errorResolver.ResolveError(
-			err,
-			becdsakv.callerOptions.From,
-			nil,
-			"selectFactory",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakv *BondedECDSAKeepVendor) SelectFactoryAtBlock(
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		becdsakv.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakv.contractABI,
-		becdsakv.caller,
-		becdsakv.errorResolver,
-		becdsakv.contractAddress,
-		"selectFactory",
-		&result,
-	)
-
-	return result, err
-}
-
 // ------ Events -------
 
 func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeCompleted(
-	opts *ethutil.SubscribeOpts,
+	opts *chainutil.SubscribeOpts,
 ) *BecdsakvFactoryUpgradeCompletedSubscription {
 	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
+		opts = new(chainutil.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
 	}
 	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
 	return &BecdsakvFactoryUpgradeCompletedSubscription{
@@ -642,7 +642,7 @@ func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeCompleted(
 
 type BecdsakvFactoryUpgradeCompletedSubscription struct {
 	contract *BondedECDSAKeepVendor
-	opts     *ethutil.SubscribeOpts
+	opts     *chainutil.SubscribeOpts
 }
 
 type bondedECDSAKeepVendorFactoryUpgradeCompletedFunc func(
@@ -750,7 +750,7 @@ func (becdsakv *BondedECDSAKeepVendor) watchFactoryUpgradeCompleted(
 		becdsakvLogger.Errorf(
 			"subscription to event FactoryUpgradeCompleted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
+				"chain connectivity",
 			elapsed,
 		)
 	}
@@ -764,10 +764,10 @@ func (becdsakv *BondedECDSAKeepVendor) watchFactoryUpgradeCompleted(
 		)
 	}
 
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
 		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
+		chainutil.SubscriptionAlertThreshold,
 		thresholdViolatedFn,
 		subscriptionFailedFn,
 	)
@@ -801,16 +801,16 @@ func (becdsakv *BondedECDSAKeepVendor) PastFactoryUpgradeCompletedEvents(
 }
 
 func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeStarted(
-	opts *ethutil.SubscribeOpts,
+	opts *chainutil.SubscribeOpts,
 ) *BecdsakvFactoryUpgradeStartedSubscription {
 	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
+		opts = new(chainutil.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
 	}
 	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
 	return &BecdsakvFactoryUpgradeStartedSubscription{
@@ -821,7 +821,7 @@ func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeStarted(
 
 type BecdsakvFactoryUpgradeStartedSubscription struct {
 	contract *BondedECDSAKeepVendor
-	opts     *ethutil.SubscribeOpts
+	opts     *chainutil.SubscribeOpts
 }
 
 type bondedECDSAKeepVendorFactoryUpgradeStartedFunc func(
@@ -931,7 +931,7 @@ func (becdsakv *BondedECDSAKeepVendor) watchFactoryUpgradeStarted(
 		becdsakvLogger.Errorf(
 			"subscription to event FactoryUpgradeStarted had to be "+
 				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
+				"chain connectivity",
 			elapsed,
 		)
 	}
@@ -945,10 +945,10 @@ func (becdsakv *BondedECDSAKeepVendor) watchFactoryUpgradeStarted(
 		)
 	}
 
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
 		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
+		chainutil.SubscriptionAlertThreshold,
 		thresholdViolatedFn,
 		subscriptionFailedFn,
 	)
