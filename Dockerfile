@@ -1,4 +1,4 @@
-FROM golang:1.13.8-alpine3.10 AS gobuild
+FROM golang:1.14-alpine AS gobuild
 
 ARG VERSION
 ARG REVISION
