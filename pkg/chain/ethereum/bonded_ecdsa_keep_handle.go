@@ -195,9 +195,50 @@ func (bek *bondedEcdsaKeep) GetPublicKey() ([]uint8, error) {
 	return bek.contract.GetPublicKey()
 }
 
+// IsThisOperatorMember returns true if this operator is a member of the keep,
+// false otherwise.
+func (bek *bondedEcdsaKeep) IsThisOperatorMember() (bool, error) {
+	operatorIndex, err := bek.OperatorIndex()
+	if err != nil {
+		return false, err
+	}
+
+	return operatorIndex != -1, nil
+}
+
+// IsThisOperatorMember returns true if this operator is a member of the keep,
+// false otherwise.
+func (bek *bondedEcdsaKeep) OperatorIndex() (int, error) {
+	memberIDs, err := bek.GetMembers()
+	if err != nil {
+		return -1, err
+	}
+
+	operatorMemberID := bek.handle.OperatorID().KeepMemberID(bek.ID())
+
+	for i, memberID := range memberIDs {
+		if operatorMemberID.String() == memberID.String() {
+			return i, nil
+		}
+	}
+
+	return -1, nil
+}
+
 // GetMembers returns keep's members.
-func (bek *bondedEcdsaKeep) GetMembers() ([]common.Address, error) {
-	return bek.contract.GetMembers()
+func (bek *bondedEcdsaKeep) GetMembers() ([]chain.KeepMemberID, error) {
+	memberIDs := []chain.KeepMemberID{}
+
+	memberAddresses, err := bek.contract.GetMembers()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, memberAddress := range memberAddresses {
+		memberIDs = append(memberIDs, combinedChainID(memberAddress))
+	}
+
+	return memberIDs, nil
 }
 
 // GetHonestThreshold returns keep's honest threshold.

@@ -2,6 +2,7 @@ package tss
 
 import (
 	"context"
+	cecdsa "crypto/ecdsa"
 	"fmt"
 	"time"
 
@@ -15,9 +16,10 @@ const protocolAnnounceTimeout = 2 * time.Minute
 func AnnounceProtocol(
 	parentCtx context.Context,
 	publicKey *operator.PublicKey,
-	keepAddress chain.KeepID,
+	keepID chain.KeepID,
 	keepMemberAddresses []chain.KeepMemberID,
 	broadcastChannel net.BroadcastChannel,
+	publicKeyToOperatorIDFunc func(*cecdsa.PublicKey) chain.OperatorID,
 ) (
 	[]MemberID,
 	error,
@@ -36,13 +38,16 @@ func AnnounceProtocol(
 	}
 	broadcastChannel.Recv(ctx, handleAnnounceMessage)
 
-	receivedMemberIDs := make(map[string]chain.KeepMemberID)
+	receivedMemberIDs := make(map[chain.KeepMemberID]MemberID)
 
-	markAnnounced := func(memberID MemberID, keepMemberID chain.KeepMemberID) {
-		receivedMemberIDs[memberID.String()] = keepMemberID
+	markAnnouncedBySenderID := func(
+		memberID MemberID,
+		keepMemberID chain.KeepMemberID,
+	) {
+		receivedMemberIDs[keepMemberID] = memberID
 	}
-	hasAnnounced := func(memberID MemberID) bool {
-		_, ok := receivedMemberIDs[memberID.String()]
+	hasAnnounced := func(keepMemberID chain.KeepMemberID) bool {
+		_, ok := receivedMemberIDs[keepMemberID]
 		return ok
 	}
 
@@ -55,10 +60,13 @@ func AnnounceProtocol(
 				logger.Infof(
 					"member [%s] from keep [%s] announced its presence",
 					msg.SenderID,
-					keepAddress,
+					keepID,
 				)
 
-				markAnnounced(msg.SenderID)
+				markAnnouncedBySenderID(
+					msg.SenderID,
+					publicKeyToOperatorIDFunc(publicKey).KeepMemberID((keepID)),
+				)
 				if len(receivedMemberIDs) == len(keepMemberAddresses) {
 					cancel()
 				}
@@ -101,7 +109,7 @@ func AnnounceProtocol(
 						"check if keep client for that operator is active and "+
 						"connected",
 					member,
-					keepAddress,
+					keepID,
 				)
 			}
 		}

@@ -37,6 +37,8 @@ type SanctionedApplications struct {
 	AddressesStrings []string `toml:"Addresses"`
 }
 
+// TODO This should be IDs(chain.Handle) ([]chain.KeepApplicationID, error)
+// TODO It should also be per-chain.
 // Addresses returns list of sanctioned applications as a slice of ethereum addresses.
 func (sa *SanctionedApplications) Addresses() ([]common.Address, error) {
 	applicationsAddresses := make([]common.Address, len(sa.AddressesStrings))

@@ -133,7 +133,6 @@ func (s *ThresholdSigner) CalculateSignature(
 	parentCtx context.Context,
 	digest []byte,
 	networkProvider net.Provider,
-	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) (*ecdsa.Signature, error) {
 	netBridge, err := newNetworkBridge(s.groupInfo, networkProvider)
 	if err != nil {
@@ -157,7 +156,7 @@ func (s *ThresholdSigner) CalculateSignature(
 		ctx,
 		s.groupInfo,
 		broadcastChannel,
-		pubKeyToAddressFn,
+		s.pubKeyToAddressFn,
 	); err != nil {
 		return nil, fmt.Errorf("readiness signaling protocol failed: [%v]", err)
 	}

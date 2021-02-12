@@ -734,7 +734,7 @@ func createNewPolicy(
 	coreFirewall coreNet.Firewall,
 ) *stakeOrActiveKeepPolicy {
 	return &stakeOrActiveKeepPolicy{
-		chain:                       chain,
+		hostChain:                   chain,
 		minimumStakePolicy:          coreFirewall,
 		authorizedOperatorsCache:    cache.NewTimeCache(cacheLifeTime),
 		nonAuthorizedOperatorsCache: cache.NewTimeCache(cacheLifeTime),

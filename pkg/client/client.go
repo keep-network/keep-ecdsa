@@ -63,7 +63,11 @@ func Initialize(
 ) *Handle {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
-	tssNode := node.NewNode(hostChain, networkProvider, tssConfig)
+	tssNode, err := node.NewNode(hostChain, networkProvider, tssConfig)
+	if err != nil {
+		logger.Errorf("failed to set up ECDSA keep node: [%v]", err)
+		return nil
+	}
 
 	tssNode.InitializeTSSPreParamsPool()
 
@@ -139,7 +143,7 @@ func Initialize(
 				logger.Errorf(
 					"failed to verify if keep [%s] is still active: [%v]; "+
 						"subscriptions for keep signing and closing events are skipped",
-					keepAddress.String(),
+					keep.ID(),
 					err,
 				)
 				return
@@ -148,17 +152,17 @@ func Initialize(
 			if !isActive {
 				logger.Infof(
 					"keep [%s] seems no longer active; confirming",
-					keepAddress.String(),
+					keep.ID(),
 				)
-				if isInactivityConfirmed := confirmIsInactive(keepAddress); isInactivityConfirmed {
+				if isInactivityConfirmed := confirmIsInactive(keep.ID()); isInactivityConfirmed {
 					logger.Infof(
 						"confirmed that keep [%s] is no longer active; archiving",
-						keepAddress.String(),
+						keep.ID(),
 					)
 					keepsRegistry.UnregisterKeep(keep.ID())
 					return
 				}
-				logger.Warningf("keep [%s] is still active", keepAddress.String())
+				logger.Warningf("keep [%s] is still active", keep.ID())
 			}
 
 			signer, err := keepsRegistry.GetSigner(keep.ID())
@@ -167,7 +171,7 @@ func Initialize(
 				// wrong. We don't want to continue processing for this keep.
 				logger.Errorf(
 					"no signer for keep [%s]: [%v]",
-					keepAddress.String(),
+					keep.ID(),
 					err,
 				)
 				return
@@ -184,7 +188,7 @@ func Initialize(
 			if err != nil {
 				logger.Errorf(
 					"failed registering for requested signature event for keep [%s]: [%v]",
-					keepAddress.String(),
+					keep.ID(),
 					err,
 				)
 				// In case of an error we want to avoid subscribing to keep
@@ -265,8 +269,27 @@ func Initialize(
 		}
 	})
 
-	for _, application := range sanctionedApplications {
-		go checkStatusAndRegisterForApplication(ctx, hostChain, application)
+	supportedApplicationsByStringID := make(map[string]chain.BondedECDSAKeepApplicationHandle)
+	tbtcApplicationHandle, err := keepManager.TBTCApplicationHandle()
+	if err != nil {
+		logger.Errorf(
+			"failed to look up on-chain tBTC application information for chain " +
+				"[%s]; tBTC application functionality will be disabled",
+		)
+	} else {
+		supportedApplicationsByStringID[tbtcApplicationHandle.ID().String()] =
+			tbtcApplicationHandle
+	}
+	for _, applicationAddress := range sanctionedApplications {
+		handle, exists := supportedApplicationsByStringID[applicationAddress.String()]
+		if exists {
+			go checkStatusAndRegisterForApplication(ctx, blockCounter, handle)
+		} else {
+			logger.Warnf(
+				"unknown sanctioned application address [%s]",
+				applicationAddress,
+			)
+		}
 	}
 
 	return &Handle{
@@ -646,6 +669,7 @@ func monitorSigningRequests(
 
 						if err := tssNode.CalculateSignature(
 							ctx,
+							keep,
 							signer,
 							event.Digest,
 						); err != nil {
@@ -782,6 +806,7 @@ func checkAwaitingSignature(
 
 				if err := tssNode.CalculateSignature(
 					ctx,
+					keep,
 					signer,
 					latestDigest,
 				); err != nil {

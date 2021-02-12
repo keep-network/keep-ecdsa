@@ -3,10 +3,13 @@ package tss
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
+// FIXME How does this differ from an operator id? Why is it a distinct concept?
+// FIXME Does it need to be?
 // MemberID is an unique identifier of a member across the network.
 type MemberID []byte
 

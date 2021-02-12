@@ -1,12 +1,15 @@
 package ethereum
 
 import (
+	cecdsa "crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
@@ -35,6 +38,7 @@ var (
 type ethereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
+	networkID                      string
 	client                         ethutil.EthereumClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *blockcounter.EthereumBlockCounter
@@ -111,16 +115,55 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (chain.Handle, e
 		return nil, err
 	}
 
+	networkIDInt, err := client.NetworkID(nil)
+	networkID := ""
+	if err != nil {
+		// Ignore network id lookup errors.
+		networkID = "unknown"
+	} else {
+		networkID = networkIDInt.Text(10)
+	}
+
 	return &ethereumChain{
-		config:                         config,
-		accountKey:                     accountKey,
-		client:                         wrappedClient,
+		config:     config,
+		accountKey: accountKey,
+		networkID:  networkID,
+		client:     wrappedClient,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
 		transactionMutex:               transactionMutex,
 	}, nil
+}
+
+func (ec *ethereumChain) Name() string {
+	return "Ethereum [network: " + ec.networkID + "]"
+}
+
+func (ec *ethereumChain) OperatorID() chain.OperatorID {
+	return ec.PublicKeyToOperatorID(&ec.accountKey.PrivateKey.PublicKey)
+}
+
+// combinedChainID represents all chain ids in one type: KeepMemberID,
+// OperatorID, KeepApplicationID, and KeepID. For the Ethereum chain, this is an
+// appropriate abstraction since all are underlied by the common.Address type.
+type combinedChainID common.Address
+
+func (cci combinedChainID) OperatorID() chain.OperatorID {
+	return cci
+}
+
+func (cci combinedChainID) KeepMemberID(keepID chain.KeepID) chain.KeepMemberID {
+	return cci
+}
+
+func (cci combinedChainID) String() string {
+	return cci.String()
+}
+
+func (ec *ethereumChain) PublicKeyToOperatorID(publicKey *cecdsa.PublicKey) chain.OperatorID {
+	return combinedChainID(crypto.PubkeyToAddress(*publicKey))
 }
 
 func addClientWrappers(

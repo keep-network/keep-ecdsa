@@ -8,7 +8,7 @@ import (
 
 // TBTCHandle represents a chain handle extended with TBTC-specific capabilities.
 type TBTCHandle interface {
-	Handle
+	BondedECDSAKeepApplicationHandle
 
 	Deposit // Instantiate this rather than include it? Encapsulate the address?
 	TBTCSystem
@@ -19,7 +19,7 @@ type TBTCHandle interface {
 type Deposit interface {
 	// KeepAddress returns the underlying keep address for the
 	// provided deposit.
-	KeepAddress(depositAddress string) (string, error)
+	Keep(depositAddress string) (BondedECDSAKeepHandle, error)
 
 	// RetrieveSignerPubkey retrieves the signer public key for the
 	// provided deposit.

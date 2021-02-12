@@ -6,11 +6,12 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/metrics"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 
-	"github.com/keep-network/keep-core/pkg/chain"
+	corechain "github.com/keep-network/keep-core/pkg/chain"
 	coreMetrics "github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 
@@ -140,12 +141,25 @@ func Start(c *cli.Context) error {
 		operatorPrivateKey, operatorPublicKey,
 	)
 
+	keepManager, err := ethereumChain.BondedECDSAKeepManager()
+	if err != nil {
+		// do something
+	}
+	tbtcHandle, err := keepManager.TBTCApplicationHandle()
+	if err != nil {
+		// do something
+	}
 	networkProvider, err := libp2p.Connect(
 		ctx,
 		config.LibP2P,
 		networkPrivateKey,
 		libp2p.ProtocolECDSA,
-		firewall.NewStakeOrActiveKeepPolicy(ethereumChain, stakeMonitor),
+		firewall.NewStakeOrActiveKeepPolicy(
+			ethereumChain.PublicKeyToOperatorID,
+			keepManager,
+			tbtcHandle,
+			stakeMonitor,
+		),
 		retransmission.NewTimeTicker(ctx, 1*time.Second),
 		libp2p.WithRoutingTableRefreshPeriod(routingTableRefreshPeriod),
 	)
@@ -201,22 +215,23 @@ func Start(c *cli.Context) error {
 func initializeExtensions(
 	ctx context.Context,
 	config config.Extensions,
-	ethereumChain *ethereum.EthereumChain,
+	handle chain.Handle,
 ) {
 	if len(config.TBTC.TBTCSystem) > 0 {
-		tbtcEthereumChain, err := ethereum.WithTBTCExtension(
-			ethereumChain,
-			config.TBTC.TBTCSystem,
-		)
+		blockCounter, err := handle.BlockCounter()
 		if err != nil {
-			logger.Errorf(
-				"could not initialize tbtc chain extension: [%v]",
-				err,
-			)
-			return
+			// log error
+		}
+		keepManager, err := handle.BondedECDSAKeepManager()
+		if err != nil {
+			// log error
+		}
+		tbtcHandle, err := keepManager.TBTCApplicationHandle()
+		if err != nil {
+			// log error
 		}
 
-		tbtc.Initialize(ctx, tbtcEthereumChain)
+		tbtc.Initialize(ctx, handle, tbtcHandle, keepManager, blockCounter)
 	}
 }
 
@@ -224,7 +239,7 @@ func initializeMetrics(
 	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
-	stakeMonitor chain.StakeMonitor,
+	stakeMonitor corechain.StakeMonitor,
 	ethereumAddres string,
 	clientHandle *client.Handle,
 ) {
@@ -295,11 +310,11 @@ func initializeDiagnostics(
 
 func initializeBalanceMonitoring(
 	ctx context.Context,
-	ethereumChain *ethereum.EthereumChain,
+	chainHandle chain.Handle,
 	config *config.Config,
 	ethereumAddress string,
 ) {
-	balanceMonitor, err := ethereumChain.BalanceMonitor()
+	balanceMonitor, err := chainHandle.BalanceMonitor()
 	if err != nil {
 		logger.Errorf("error obtaining balance monitor handle [%v]", err)
 		return

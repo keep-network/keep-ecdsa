@@ -1,6 +1,8 @@
 package tss
 
 import (
+	cecdsa "crypto/ecdsa"
+
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	tssLib "github.com/binance-chain/tss-lib/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
@@ -13,6 +15,8 @@ type ThresholdSigner struct {
 	// thresholdKey contains a signer's key generated for a threshold signing
 	// scheme. This data should be persisted to a local storage.
 	thresholdKey ThresholdKey
+
+	pubKeyToAddressFn func(cecdsa.PublicKey) []byte
 }
 
 // ThresholdKey contains data of signer's threshold key.

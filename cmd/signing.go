@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"context"
-	cecdsa "crypto/ecdsa"
-	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -199,10 +197,6 @@ func SignDigest(c *cli.Context) error {
 
 	signingOutcomesChannel := make(chan *signingOutcome, len(signers))
 
-	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
-		return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
-	}
-
 	for i := range signers {
 		go func(signerIndex int) {
 			defer waitGroup.Done()
@@ -211,7 +205,6 @@ func SignDigest(c *cli.Context) error {
 				ctx,
 				digestBytes,
 				networkProviders[signerIndex],
-				pubKeyToAddressFn,
 			)
 
 			signingOutcomesChannel <- &signingOutcome{

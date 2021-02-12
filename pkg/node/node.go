@@ -43,25 +43,32 @@ const (
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
 type Node struct {
+	hostChain       chain.Handle
 	blockCounter    corechain.BlockCounter
 	networkProvider net.Provider
 	tssParamsPool   *tssPreParamsPool
 	tssConfig       *tss.Config
 }
 
-// NewNode initializes node struct with provided ethereum chain interface and
+// NewNode initializes node struct with provided host chain interface and
 // network provider. It also initializes TSS Pre-Parameters pool. But does not
 // start parameters generation. This should be called separately.
 func NewNode(
-	blockCounter corechain.BlockCounter,
+	hostChain chain.Handle,
 	networkProvider net.Provider,
 	tssConfig *tss.Config,
-) *Node {
+) (*Node, error) {
+	blockCounter, err := hostChain.BlockCounter()
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve block counter: [%v]", err)
+	}
+
 	return &Node{
+		hostChain:       hostChain,
 		blockCounter:    blockCounter,
 		networkProvider: networkProvider,
 		tssConfig:       tssConfig,
-	}
+	}, nil
 }
 
 func groupID(keep chain.BondedECDSAKeepHandle) string {
@@ -75,7 +82,6 @@ func (n *Node) AnnounceSignerPresence(
 	operatorPublicKey *operator.PublicKey,
 	keep chain.BondedECDSAKeepHandle,
 	keepMemberIDs []chain.KeepMemberID,
-	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) ([]tss.MemberID, error) {
 	broadcastChannel, err := n.networkProvider.BroadcastChannelFor(groupID(keep))
 	if err != nil {
@@ -85,7 +91,11 @@ func (n *Node) AnnounceSignerPresence(
 	tss.RegisterUnmarshalers(broadcastChannel)
 
 	if err := broadcastChannel.SetFilter(
-		createKeepMemberFilter(keepMemberIDs),
+		createKeepMemberFilter(
+			keep.ID(),
+			keepMemberIDs,
+			n.hostChain.PublicKeyToOperatorID,
+		),
 	); err != nil {
 		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
 	}
@@ -96,25 +106,30 @@ func (n *Node) AnnounceSignerPresence(
 		keep.ID(),
 		keepMemberIDs,
 		broadcastChannel,
+		n.hostChain.PublicKeyToOperatorID,
 	)
 }
 
 func createKeepMemberFilter(
+	keepID chain.KeepID,
 	memberIDs []chain.KeepMemberID,
+	publicKeyToOperatorIDFunc func(*cecdsa.PublicKey) chain.OperatorID,
 ) net.BroadcastChannelFilter {
-	authorizations := make(map[cecdsa.PublicKey]bool, len(memberIDs))
+	authorizations := make(map[string]struct{}, len(memberIDs))
 	for _, memberID := range memberIDs {
-		authorizations[memberID.PublicKey()] = true
+		authorizations[memberID.String()] = struct{}{}
 	}
 
 	return func(authorPublicKey *cecdsa.PublicKey) bool {
-		_, isAuthorized := authorizations[*authorPublicKey]
+		operatorID := publicKeyToOperatorIDFunc(authorPublicKey)
+		memberID := operatorID.KeepMemberID(keepID)
+		_, isAuthorized := authorizations[memberID.String()]
 
 		if !isAuthorized {
 			logger.Warningf(
 				"rejecting message from [%v]; author is not authorized",
 				// FIXME Uh-oh. How can we better log this?
-				authorAddress,
+				operatorID,
 			)
 		}
 
@@ -133,7 +148,6 @@ func (n *Node) GenerateSignerForKeep(
 	keep chain.BondedECDSAKeepHandle,
 	members []chain.KeepMemberID,
 	keepsRegistry *registry.Keeps,
-	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 ) (*tss.ThresholdSigner, error) {
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
 	preParamsBox := params.NewBox(n.tssParamsPool.get())
@@ -189,7 +203,6 @@ func (n *Node) GenerateSignerForKeep(
 			operatorPublicKey,
 			keep,
 			members,
-			pubKeyToAddressFn,
 		)
 		if err != nil {
 			logger.Warningf("failed to announce signer presence: [%v]", err)
@@ -208,7 +221,7 @@ func (n *Node) GenerateSignerForKeep(
 			memberIDs,
 			uint(len(memberIDs)-1), // FIXME 🤔
 			n.networkProvider,
-			pubKeyToAddressFn,
+			n.hostChain.Signing().PublicKeyToAddress,
 			preParamsBox,
 		)
 		if err != nil {
@@ -260,7 +273,6 @@ func (n *Node) GenerateSignerForKeep(
 func (n *Node) CalculateSignature(
 	ctx context.Context,
 	keep chain.BondedECDSAKeepHandle,
-	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 	signer *tss.ThresholdSigner,
 	digest [32]byte,
 ) error {
@@ -288,7 +300,6 @@ func (n *Node) CalculateSignature(
 			ctx,
 			digest[:],
 			n.networkProvider,
-			pubKeyToAddressFn,
 		)
 		if err != nil {
 			logger.Errorf(

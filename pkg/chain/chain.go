@@ -13,10 +13,14 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
+type KeepApplicationID interface {
+	fmt.Stringer
+}
+
 type KeepMemberID interface {
 	fmt.Stringer
 
-	// KeepMemberIDs should be convertable to their associated OperatorID. This
+	// KeepMemberIDs should be convertible to their associated OperatorID. This
 	// may be a 1-to-1 correspondence, i.e. a simple interface cast, or it may
 	// be an internally-tracked association on the host chain.
 	OperatorID() OperatorID
@@ -25,10 +29,12 @@ type KeepMemberID interface {
 type OperatorID interface {
 	fmt.Stringer
 
-	// PublicKey returns the public key associated with this operator.
-	PublicKey() cecdsa.PublicKey
-	// NetworkID returns the network id associated with this operator.
-	NetworkID() net.ID
+	// OperatorIDs should be convertible to an associated KeepMemberID given the
+	// id of the keep in question. This may be a 1-to-1 correspondence, i.e. a
+	// simple interface cast, or it may be an internally-tracked association on
+	// the host chain. The conversion _may but is not guaranteed to be_ nil if
+	// the operator is not in the specified keep.
+	KeepMemberID(keepID KeepID) KeepMemberID
 }
 
 // Should be chain-specific, unique across chains, and simple ([A-Za-z0-9-_.]).
@@ -55,6 +61,16 @@ type KeepID interface {
 // Handle represents a handle to an implementation of operator functions
 // for a particular chain.
 type Handle interface {
+	// Name returns the name of this chain handle. The name should be
+	// descriptive of the chain this handle represents; for example, for
+	// Ethereum it might return "Ethereum", for Celo "Celo". It can optionally
+	// include additional information if it would be useful in logs or debug
+	// output; for example, Ethereum handles might include network id
+	// information.
+	Name() string
+	// OperatorID returns the operator id associated with this handle.
+	OperatorID() OperatorID
+
 	// chain.BaseHandle from keep-core
 	// StakeMonitor returns a stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
@@ -70,6 +86,8 @@ type Handle interface {
 	// In case the block is not yet mined, an error should be returned.
 	BlockTimestamp(blockNumber *big.Int) (uint64, error)
 
+	PublicKeyToOperatorID(publicKey *cecdsa.PublicKey) OperatorID
+
 	// BondedECDSAKeepManager returns a handle to the on-chain component used to
 	// interact with bonded ECDSA keeps.
 	BondedECDSAKeepManager() (BondedECDSAKeepManager, error)
@@ -82,7 +100,7 @@ type BondedECDSAKeepManager interface {
 	// TBTCApplicationHandle returns a handle for interacting with the tBTC
 	// application associated with this BondedECDSAKeepManager. Returns nil with
 	// an error if no tBTC application exists for this manager.
-	TBTCApplicationHandle() (BondedECDSAKeepApplicationHandle, error)
+	TBTCApplicationHandle() (TBTCHandle, error)
 
 	// OnBondedECDSAKeepCreated installs a callback that is invoked when an
 	// on-chain notification of a new bonded ECDSA keep creation is seen.
@@ -97,9 +115,17 @@ type BondedECDSAKeepManager interface {
 	GetKeepAtIndex(keepIndex *big.Int) (BondedECDSAKeepHandle, error)
 	// GetKeepAtIndex returns a handle to the keep with the given identifier.
 	GetKeepWithID(keepID KeepID) (BondedECDSAKeepHandle, error)
+
+	// IsOperatorAuthorized checks if the factory has the authorization to
+	// operate on stake represented by the provided operator.
+	IsOperatorAuthorized(operator OperatorID) (bool, error)
 }
 
 type BondedECDSAKeepApplicationHandle interface {
+	// ID should return the id of this application in a host chain-agnostic
+	// format.
+	ID() KeepApplicationID
+
 	// RegisterAsMemberCandidate registers client as a candidate to be selected
 	// to a keep.
 	RegisterAsMemberCandidate() error
@@ -119,10 +145,6 @@ type BondedECDSAKeepApplicationHandle interface {
 	// UpdateStatusForApplication updates the operator's status in the signers'
 	// pool for the given application.
 	UpdateStatusForApplication() error
-
-	// IsOperatorAuthorized checks if the factory has the authorization to
-	// operate on stake represented by the provided operator.
-	IsOperatorAuthorized(operator OperatorID) (bool, error)
 }
 
 // BondedECDSAKeepHandle is an interface that provides ability to interact with
