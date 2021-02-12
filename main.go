@@ -57,6 +57,8 @@ func main() {
 			Usage:       "full path to the configuration file",
 		},
 	}
+
+	// TODO: implement Celo commands
 	app.Commands = []cli.Command{
 		cmd.StartCommand,
 		cmd.EthereumCommand,
