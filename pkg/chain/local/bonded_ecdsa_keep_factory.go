@@ -69,6 +69,13 @@ func (lc *localChain) GetKeepWithID(
 	return lc.keeps[common.HexToAddress(keepAddressString)], nil
 }
 
+func (lc *localChain) IsOperatorAuthorized(operator chain.OperatorID) (bool, error) {
+	lc.localChainMutex.Lock()
+	defer lc.localChainMutex.Unlock()
+
+	return lc.authorizations[operator], nil
+}
+
 func (lc *localChain) createKeep(keepAddress common.Address) (*localKeep, error) {
 	return lc.createKeepWithMembers(keepAddress, []common.Address{})
 }
@@ -102,7 +109,7 @@ func (lc *localChain) createKeepWithMembers(
 	lc.keepAddresses = append(lc.keepAddresses, keepAddress)
 
 	keepCreatedEvent := &chain.BondedECDSAKeepCreatedEvent{
-		KeepAddress: keepAddress,
+		Keep: localKeep,
 	}
 
 	for _, handler := range lc.keepCreatedHandlers {

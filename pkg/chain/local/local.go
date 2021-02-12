@@ -14,6 +14,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	corechain "github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
 
@@ -93,6 +94,18 @@ func Connect(ctx context.Context) TestingChain {
 	return localChain
 }
 
+func (lc *localChain) Name() string {
+	return "Local" // include operator address?
+}
+
+func (lc *localChain) OperatorID() chain.OperatorID {
+	return lc.PublicKeyToOperatorID(&lc.operatorKey.PublicKey)
+}
+
+func (lc *localChain) PublicKeyToOperatorID(publicKey *cecdsa.PublicKey) chain.OperatorID {
+	return combinedChainID(crypto.PubkeyToAddress(lc.operatorKey.PublicKey))
+}
+
 func (lc *localChain) observeBlocksTimestamps(ctx context.Context) {
 	blockCounter, _ := lc.BlockCounter() // always errorless in localChain
 	blockChan := blockCounter.WatchBlocks(ctx)
@@ -135,7 +148,7 @@ func (lc *localChain) AuthorizeOperator(operator common.Address) {
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
 
-	lc.authorizations[operator] = true
+	lc.authorizations[combinedChainID(operator)] = true
 }
 
 func (lc *localChain) StakeMonitor() (corechain.StakeMonitor, error) {
@@ -183,4 +196,21 @@ func generateAddress() common.Address {
 	// always `nil`.
 	rand.Read(address[:])
 	return address
+}
+
+// combinedChainID represents all chain ids in one type: KeepMemberID,
+// OperatorID, KeepApplicationID, and KeepID. For the Ethereum chain, this is an
+// appropriate abstraction since all are underlied by the common.Address type.
+type combinedChainID common.Address
+
+func (cci combinedChainID) OperatorID() chain.OperatorID {
+	return cci
+}
+
+func (cci combinedChainID) KeepMemberID(keepID chain.KeepID) chain.KeepMemberID {
+	return cci
+}
+
+func (cci combinedChainID) String() string {
+	return cci.String()
 }

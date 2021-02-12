@@ -260,11 +260,39 @@ func (lk *localKeep) SignatureRequestedBlock(
 	panic("implement")
 }
 
-func (lk *localKeep) GetMembers() ([]common.Address, error) {
+func (lk *localKeep) GetMembers() ([]chain.KeepMemberID, error) {
 	lk.handle.localChainMutex.Lock()
 	defer lk.handle.localChainMutex.Unlock()
 
-	return lk.members, nil
+	keepMemberIDs := []chain.KeepMemberID{}
+	for _, address := range lk.members {
+		keepMemberIDs = append(keepMemberIDs, combinedChainID(address))
+	}
+
+	return keepMemberIDs, nil
+}
+
+func (lk *localKeep) OperatorIndex() (int, error) {
+	lk.handle.localChainMutex.Lock()
+	defer lk.handle.localChainMutex.Unlock()
+
+	operatorKeepID := lk.handle.OperatorID().KeepMemberID(lk.address)
+	for i, address := range lk.members {
+		if combinedChainID(address) == operatorKeepID.(combinedChainID) {
+			return i, nil
+		}
+	}
+
+	return -1, nil
+}
+
+func (lk *localKeep) IsThisOperatorMember() (bool, error) {
+	operatorIndex, err := lk.OperatorIndex()
+	if err != nil {
+		return false, err
+	}
+
+	return operatorIndex > -1, nil
 }
 
 func (lk *localKeep) GetHonestThreshold() (uint64, error) {
