@@ -39,6 +39,15 @@ func (m *AnnounceMessage) Type() string {
 	return "ecdsa/announce_message"
 }
 
+type LiquidationRecoveryMessage struct {
+	SenderID MemberID
+	BtcRecoveryAddress string
+}
+
+func (m * LiquidationRecoveryMessage) Type() string {
+	return "ecdsa/liquidation_recovery_message"
+}
+
 func RegisterUnmarshalers(broadcastChannel net.BroadcastChannel) {
 	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &AnnounceMessage{}
@@ -50,5 +59,9 @@ func RegisterUnmarshalers(broadcastChannel net.BroadcastChannel) {
 
 	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &TSSProtocolMessage{}
+	})
+
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &LiquidationRecoveryMessage{}
 	})
 }
