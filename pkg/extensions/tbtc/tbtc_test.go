@@ -28,7 +28,6 @@ const (
 )
 
 func newTestTBTC(chain chain.TBTCHandle) *tbtc {
-	t.Fatalf("TEST ERROR")
 	tbtc := newTBTC(chain)
 
 	tbtc.blockConfirmations = defaultLocalBlockConfirmations
@@ -37,6 +36,7 @@ func newTestTBTC(chain chain.TBTCHandle) *tbtc {
 }
 
 func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
+	t.Fatalf("TEST ERROR")
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 

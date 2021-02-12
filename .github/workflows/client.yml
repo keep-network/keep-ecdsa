@@ -2,6 +2,9 @@ name: Go
 
 #TODO: extend the conditions once workflow gets tested together with other workflows 
 on:  
+  push:
+    branches: 
+      - rfc-18/try-golang-test-annotations-gh-action-wip
   workflow_dispatch:
 
 jobs:
@@ -23,9 +26,9 @@ jobs:
           docker run \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env \
-            go test -json ./... > test.json
+            go test -json ./... > test-results.json
       - name: Annotate tests
         if: always()
         uses: guyarb/golang-test-annoations@v0.3.0
         with:
-          test-results: test.json
+          test-results: test-results.json
