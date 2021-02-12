@@ -5,6 +5,7 @@ on:
   push:
     branches: 
       - rfc-18/try-golang-test-annotations-gh-action-wip
+  pull_request:
   workflow_dispatch:
 
 jobs:
