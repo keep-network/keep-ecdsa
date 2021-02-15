@@ -91,9 +91,11 @@ printf "${LOG_START}Configuring external client contract address...${LOG_END}"
 CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
     ./scripts/lcl-set-client-address.sh
 
-printf "${LOG_START}Initializing contracts...${LOG_END}"
-CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
-  npx truffle exec scripts/lcl-initialize.js --network $NETWORK
+if [ "$NETWORK" == "local" ]; then
+  printf "${LOG_START}Initializing contracts...${LOG_END}"
+  CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
+    npx truffle exec scripts/lcl-initialize.js --network $NETWORK
+fi
 
 printf "${LOG_START}Updating keep-ecdsa config files...${LOG_END}"
 for CONFIG_FILE in $KEEP_ECDSA_CONFIG_DIR_PATH/*.toml
