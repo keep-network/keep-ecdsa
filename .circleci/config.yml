@@ -87,6 +87,7 @@ jobs:
           name: Run solidity tests
           working_directory: ~/project/solidity
           command: npm run test
+  # GitHub Actions equivalent of this job (.github/workflows/client.yml) has been created as part of work on RFC-18 
   build_client_and_test_go:
     executor: docker-git
     steps:
@@ -311,7 +312,10 @@ workflows:
       - test_staker_rewards_script
   build-test-publish-keep-dev:
     jobs:
-      - build_client_and_test_go
+      - build_client_and_test_go:
+          filters:
+            branches:
+              ignore: /rfc-18\/.*/
       - publish_client:
           context: keep-dev
           filters:
