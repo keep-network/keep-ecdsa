@@ -59,21 +59,13 @@ NETWORK=${network:-$NETWORK_DEFAULT}
 
 cd $KEEP_ECDSA_SOL_PATH
 
-if [ "$NETWORK" == "local" ]; then
-  # Dafault app address.
-  output=$(npx truffle exec scripts/get-default-application-account.js --network $NETWORK)
-  CLIENT_APP_ADDRESS=$(echo "$output" | tail -1)
-fi
+# Default app address.
+output=$(npx truffle exec scripts/get-default-application-account.js --network $NETWORK)
+CLIENT_APP_ADDRESS=$(echo "$output" | tail -1)
 
 if [ ! -z ${client_app_address+x} ]; then
   # Read user app when --application-address is set
   CLIENT_APP_ADDRESS=$client_app_address
-fi
-
-# Read application address in case it was not set from the command line
-if [ -z ${CLIENT_APP_ADDRESS+x} ]; then
-  read -p "Enter client application address: " client_app_address
-  CLIENT_APP_ADDRESS=${client_app_address}
 fi
 
 # Run script.
