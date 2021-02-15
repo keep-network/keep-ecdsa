@@ -95,12 +95,9 @@ func ReadConfig(filePath string) (*Config, error) {
 	}
 
 	password := os.Getenv(PasswordEnvVariable)
-	if config.Ethereum.Enabled {
-		config.Ethereum.Account.KeyFilePassword = password
-	}
-	if config.Celo.Enabled {
-		config.Celo.Account.KeyFilePassword = password
-	}
+
+	config.Ethereum.Account.KeyFilePassword = password
+	config.Celo.Account.KeyFilePassword = password
 
 	return config, nil
 }

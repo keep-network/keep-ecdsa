@@ -61,7 +61,7 @@ func main() {
 	// TODO: implement Celo commands
 	app.Commands = []cli.Command{
 		cmd.StartCommand,
-		cmd.EthereumCommand,
+		cmd.ChainCLICommand,
 		cmd.SigningCommand,
 	}
 

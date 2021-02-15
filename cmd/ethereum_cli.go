@@ -1,3 +1,5 @@
+//+build !celo
+
 package cmd
 
 import (
@@ -5,9 +7,9 @@ import (
 	"github.com/urfave/cli"
 )
 
-// EthereumCommand contains the definition of the ethereum command-line
+// ChainCLICommand contains the definition of the ethereum command-line
 // subcommand and its own subcommands.
-var EthereumCommand cli.Command
+var ChainCLICommand cli.Command
 
 const ethereumDescription = `The ethereum command allows interacting with Keep's Ethereum
 	contracts directly. Each subcommand corresponds to one contract, and has
@@ -17,7 +19,7 @@ const ethereumDescription = `The ethereum command allows interacting with Keep's
     See the subcommand help for additional details.`
 
 func init() {
-	EthereumCommand = cli.Command{
+	ChainCLICommand = cli.Command{
 		Name:        "ethereum",
 		Usage:       `Provides access to Keep network Ethereum contracts.`,
 		Description: ethereumDescription,

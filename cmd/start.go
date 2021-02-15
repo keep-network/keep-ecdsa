@@ -2,14 +2,13 @@ package cmd
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"time"
 
-	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
+
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/celo"
 
 	"github.com/keep-network/keep-ecdsa/pkg/metrics"
 
@@ -21,18 +20,13 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
 
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/keep-network/keep-core/pkg/operator"
-
 	"github.com/keep-network/keep-ecdsa/config"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
-	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
 	"github.com/keep-network/keep-ecdsa/pkg/firewall"
 
 	"github.com/urfave/cli"
@@ -80,6 +74,7 @@ const (
 // defaultBalanceAlertThreshold determines the alert threshold below which
 // the alert should be triggered.
 var defaultBalanceAlertThreshold = big.NewInt(500000000000000000) // 0.5 ether
+
 // defaultBalanceMonitoringTick determines how often the monitoring
 // check should be triggered.
 const defaultBalanceMonitoringTick = 10 * time.Minute
@@ -94,6 +89,15 @@ func init() {
 		}
 }
 
+type chainConfig interface {
+	// BalanceAlertThresholdValue returns the `BalanceAlertThreshold`
+	// integer value.
+	BalanceAlertThresholdValue() *big.Int
+
+	// GetAccount returns the account configuration.
+	GetAccount() ethlike.Account
+}
+
 // Start starts a client.
 func Start(c *cli.Context) error {
 	config, err := config.ReadConfig(c.GlobalString("config"))
@@ -103,7 +107,7 @@ func Start(c *cli.Context) error {
 
 	ctx := context.Background()
 
-	chainHandle, privateKey, err := connectChain(ctx, config)
+	chainHandle, operatorKeys, err := connectChain(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -127,12 +131,8 @@ func Start(c *cli.Context) error {
 		)
 	}
 
-	operatorPrivateKey, operatorPublicKey := privateKeyToOperatorKeys(
-		privateKey,
-	)
-
 	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
-		operatorPrivateKey, operatorPublicKey,
+		operatorKeys.private, operatorKeys.public,
 	)
 
 	networkProvider, err := libp2p.Connect(
@@ -156,7 +156,7 @@ func Start(c *cli.Context) error {
 	}
 	persistence := persistence.NewEncryptedPersistence(
 		handle,
-		config.Ethereum.Account.KeyFilePassword,
+		extractChainConfig(config).GetAccount().KeyFilePassword,
 	)
 
 	sanctionedApplications, err := config.SanctionedApplications.Addresses()
@@ -166,7 +166,7 @@ func Start(c *cli.Context) error {
 
 	clientHandle := client.Initialize(
 		ctx,
-		operatorPublicKey,
+		operatorKeys.public,
 		chainHandle,
 		networkProvider,
 		persistence,
@@ -191,121 +191,12 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func connectChain(
-	ctx context.Context,
-	config *config.Config,
-) (eth.Handle, *ecdsa.PrivateKey, error) {
-	if config.Ethereum.Enabled {
-		return connectEthereumChain(ctx, config)
-	}
-
-	if config.Celo.Enabled {
-		return connectCeloChain(ctx, config)
-	}
-
-	return nil, nil, fmt.Errorf(
-		"config doesn't contain any enabled chain",
-	)
-}
-
-func connectEthereumChain(
-	ctx context.Context,
-	config *config.Config,
-) (eth.Handle, *ecdsa.PrivateKey, error) {
-	ethereumKey, err := ethutil.DecryptKeyFile(
-		config.Ethereum.Account.KeyFile,
-		config.Ethereum.Account.KeyFilePassword,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"failed to read key file [%s]: [%v]",
-			config.Ethereum.Account.KeyFile,
-			err,
-		)
-	}
-
-	ethereumChain, err := ethereum.Connect(ethereumKey, &config.Ethereum)
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"failed to connect to ethereum node: [%v]",
-			err,
-		)
-	}
-
-	initializeEthereumExtensions(ctx, config.Extensions, ethereumChain)
-	initializeBalanceMonitoring(
-		ctx,
-		ethereumChain,
-		&config.Ethereum,
-		ethereumKey.Address.Hex(),
-	)
-
-	return ethereumChain, ethereumKey.PrivateKey, nil
-}
-
-func initializeEthereumExtensions(
-	ctx context.Context,
-	config config.Extensions,
-	ethereumChain *ethereum.EthereumChain,
-) {
-	if len(config.TBTC.TBTCSystem) > 0 {
-		tbtcEthereumChain, err := ethereum.WithTBTCExtension(
-			ethereumChain,
-			config.TBTC.TBTCSystem,
-		)
-		if err != nil {
-			logger.Errorf(
-				"could not initialize tbtc chain extension: [%v]",
-				err,
-			)
-			return
-		}
-
-		tbtc.Initialize(ctx, tbtcEthereumChain)
-	}
-}
-
-func connectCeloChain(
-	ctx context.Context,
-	config *config.Config,
-) (eth.Handle, *ecdsa.PrivateKey, error) {
-	celoKey, err := celoutil.DecryptKeyFile(
-		config.Celo.Account.KeyFile,
-		config.Celo.Account.KeyFilePassword,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"failed to read key file [%s]: [%v]",
-			config.Celo.Account.KeyFile,
-			err,
-		)
-	}
-
-	celoChain, err := celo.Connect(celoKey, &config.Celo)
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"failed to connect to celo node: [%v]",
-			err,
-		)
-	}
-
-	// TODO: initialize Celo extensions
-	initializeBalanceMonitoring(
-		ctx,
-		celoChain,
-		&config.Celo,
-		celoKey.Address.Hex(),
-	)
-
-	return celoChain, celoKey.PrivateKey, nil
-}
-
 func initializeMetrics(
 	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
-	ethereumAddres string,
+	address string,
 	clientHandle *client.Handle,
 ) {
 	registry, isConfigured := coreMetrics.Initialize(
@@ -336,11 +227,12 @@ func initializeMetrics(
 		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
+	// TODO: make this metric chain-agnostic
 	coreMetrics.ObserveEthConnectivity(
 		ctx,
 		registry,
 		stakeMonitor,
-		ethereumAddres,
+		address,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
 
@@ -373,14 +265,10 @@ func initializeDiagnostics(
 	diagnostics.RegisterClientInfoSource(registry, netProvider)
 }
 
-type balanceMonitoringConfig interface {
-	BalanceAlertThresholdValue() *big.Int
-}
-
 func initializeBalanceMonitoring(
 	ctx context.Context,
 	chainHandle eth.Handle,
-	config balanceMonitoringConfig,
+	config chainConfig,
 	address string,
 ) {
 	balanceMonitor, err := chainHandle.BalanceMonitor()
@@ -407,12 +295,4 @@ func initializeBalanceMonitoring(
 		address,
 		alertThreshold,
 	)
-}
-
-// TODO: Temporary helper function. Should be removed once the `operator`
-//  package allows to convert keys of multiple chains.
-func privateKeyToOperatorKeys(
-	privateKey *ecdsa.PrivateKey,
-) (*operator.PrivateKey, *operator.PublicKey) {
-	return privateKey, &privateKey.PublicKey
 }
