@@ -1,9 +1,10 @@
 module.exports = async function () {
   const accounts = await web3.eth.getAccounts()
-  // arbitrary chosen account for default application
-  if (accounts.length < 7) {
-    // Assign the last account address as application account
-    console.log(`${accounts[accounts.length - 1]}`)
+  // In case we are on test network, ex. Ethereum Ropsten or Celo Alfajores,
+  // then we operatate on one account only. Account is specified in truffle.js
+  // For local network development, the default application account is accounts[6]
+  if (accounts.length == 1) {
+    console.log(`${accounts[0]}`)
   } else {
     console.log(`${accounts[6]}`)
   }
