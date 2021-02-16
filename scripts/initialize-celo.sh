@@ -20,7 +20,7 @@ help()
            "--application-address <address>"\
            "--network <network>"
    echo -e "\nEnvironment variables:\n"
-   echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo"
+   echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo. Required for non-local network only"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--config-dir: Path to keep-ecdsa client configuration file(s)"
    echo -e "\t--application-address: Address of application approved by the operator"
