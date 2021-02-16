@@ -18,10 +18,10 @@ import (
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/client/event"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
-	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
 )
 
 var logger = log.Logger("keep-ecdsa")
@@ -173,13 +173,13 @@ func Initialize(
 				ctx,
 				ethereumChain,
 				networkProvider,
-				keepAddress,
-				operatorPublicKey,
 				clientConfig,
 				tssNode,
+				operatorPublicKey,
 				keepsRegistry,
-				subscriptionOnSignatureRequested,
 				eventDeduplicator,
+				keepAddress,
+				subscriptionOnSignatureRequested,
 			)
 
 		}(keepAddress)
@@ -505,17 +505,18 @@ func generateKeyForKeep(
 		subscriptionOnSignatureRequested,
 		eventDeduplicator,
 	)
+
 	go monitorKeepTerminatedEvent(
 		ctx,
 		ethereumChain,
 		networkProvider,
-		keepAddress,
-		operatorPublicKey,
 		clientConfig,
 		tssNode,
+		operatorPublicKey,
 		keepsRegistry,
-		subscriptionOnSignatureRequested,
 		eventDeduplicator,
+		keepAddress,
+		subscriptionOnSignatureRequested,
 	)
 }
 
@@ -874,13 +875,13 @@ func monitorKeepTerminatedEvent(
 	ctx context.Context,
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
-	keepAddress common.Address,
-	operatorPublicKey *operator.PublicKey,
 	clientConfig *Config,
 	tssNode *node.Node,
+	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
-	subscriptionOnSignatureRequested subscription.EventSubscription,
 	eventDeduplicator *event.Deduplicator,
+	keepAddress common.Address,
+	subscriptionOnSignatureRequested subscription.EventSubscription,
 ) {
 	keepTerminated := make(chan *eth.KeepTerminatedEvent)
 
