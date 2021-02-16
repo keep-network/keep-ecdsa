@@ -18,9 +18,9 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/gofuzz v1.1.0
 	github.com/ipfs/go-log v1.0.4
-	github.com/keep-network/keep-common v1.3.1-0.20210210135320-9301b4e728a6
-	github.com/keep-network/keep-core v1.3.2-0.20210210140011-7ad7b68fa457
-	github.com/keep-network/tbtc v1.1.1-0.20210210140213-6bab041d9cc3
+	github.com/keep-network/keep-common v1.3.1-0.20210216125817-b8472bbfbd85
+	github.com/keep-network/keep-core v1.3.2-0.20210216133116-07bf236ec33b
+	github.com/keep-network/tbtc v1.1.1-0.20210216131719-0e0d4bb6f508
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
 )

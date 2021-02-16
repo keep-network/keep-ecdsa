@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/rate"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
@@ -68,10 +70,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 
 	transactionMutex := &sync.Mutex{}
 
-	nonceManager := ethlike.NewNonceManager(
-		accountKey.Address.Hex(),
-		ethutil.NewNonceSourceAdapter(wrappedClient),
-	)
+	nonceManager := ethutil.NewNonceManager(wrappedClient, accountKey.Address)
 
 	checkInterval := DefaultMiningCheckInterval
 	maxGasPrice := DefaultMaxGasPrice
@@ -84,15 +83,14 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-	miningWaiter := ethlike.NewMiningWaiter(
-		ethutil.NewTransactionSourceAdapter(wrappedClient),
+
+	miningWaiter := ethutil.NewMiningWaiter(
+		wrappedClient,
 		checkInterval,
 		maxGasPrice,
 	)
 
-	blockCounter, err := ethlike.CreateBlockCounter(
-		ethutil.NewBlockSourceAdapter(wrappedClient),
-	)
+	blockCounter, err := ethutil.NewBlockCounter(wrappedClient)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
@@ -100,7 +98,9 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		)
 	}
 
-	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(BondedECDSAKeepFactoryContractName)
+	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(
+		BondedECDSAKeepFactoryContractName,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func addClientWrappers(
 
 		return ethutil.WrapRateLimiting(
 			loggingClient,
-			&ethlike.RateLimiterConfig{
+			&rate.LimiterConfig{
 				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
 				ConcurrencyLimit:       config.ConcurrencyLimit,
 			},
