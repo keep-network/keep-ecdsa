@@ -25,6 +25,7 @@ const FullyBackedSortitionPoolFactory = artifacts.require(
 const LPRewardsTBTCETH = artifacts.require("LPRewardsTBTCETH")
 const LPRewardsKEEPETH = artifacts.require("LPRewardsKEEPETH")
 const LPRewardsKEEPTBTC = artifacts.require("LPRewardsKEEPTBTC")
+const LPRewardsTBTCSaddle = artifacts.require("LPRewardsTBTCSaddle")
 const TestToken = artifacts.require("./test/TestToken")
 const ECDSARewards = artifacts.require("ECDSARewards")
 const ECDSARewardsDistributor = artifacts.require("ECDSARewardsDistributor")
@@ -40,8 +41,10 @@ let {
 } = require("./external-contracts")
 
 module.exports = async function (deployer, network) {
+  const testNetworks = ["local", "ropsten", "keep_dev", "alfajores"]
+
   // Set the stake initialization period to 1 second for local development and testnet.
-  if (network === "local" || network === "ropsten" || network === "keep_dev") {
+  if (testNetworks.includes(network)) {
     initializationPeriod = 1
   }
 
@@ -132,6 +135,13 @@ module.exports = async function (deployer, network) {
     LPRewardsKEEPTBTC,
     KeepTokenAddress,
     WrappedTokenKEEPTBTC.address
+  )
+
+  const WrappedTokenSaddle = await deployer.deploy(TestToken)
+  await deployer.deploy(
+    LPRewardsTBTCSaddle,
+    KeepTokenAddress,
+    WrappedTokenSaddle.address
   )
 
   // ECDSA Rewards

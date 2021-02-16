@@ -14,14 +14,13 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/binance-chain/tss-lib v1.3.1
 	github.com/btcsuite/btcd v0.20.1-beta
-	github.com/celo-org/celo-blockchain v0.0.0-20210211195335-cbc4f555cf87
 	github.com/ethereum/go-ethereum v1.9.10
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/gofuzz v1.1.0
 	github.com/ipfs/go-log v1.0.4
-	github.com/keep-network/keep-common v1.3.1-0.20210215145431-e9151f2d7cb9
-	github.com/keep-network/keep-core v1.3.2-0.20210210140011-7ad7b68fa457
-	github.com/keep-network/tbtc v1.1.1-0.20210210140213-6bab041d9cc3
+	github.com/keep-network/keep-common v1.3.1-0.20210216125817-b8472bbfbd85
+	github.com/keep-network/keep-core v1.3.2-0.20210216133116-07bf236ec33b
+	github.com/keep-network/tbtc v1.1.1-0.20210216131719-0e0d4bb6f508
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
 )
