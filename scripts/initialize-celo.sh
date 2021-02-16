@@ -7,7 +7,6 @@ KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 # Defaults, can be overwritten by env variables/input parameters
 CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 NETWORK_DEFAULT="local"
-CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY:-""}
 
 help()
 {
@@ -83,14 +82,12 @@ CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
 
 if [ "$NETWORK" == "local" ]; then
   printf "${LOG_START}Initializing contracts...${LOG_END}"
-  CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
     npx truffle exec scripts/lcl-initialize.js --network $NETWORK
 fi
 
 printf "${LOG_START}Updating keep-ecdsa config files...${LOG_END}"
 for CONFIG_FILE in $KEEP_ECDSA_CONFIG_DIR_PATH/*.toml
 do
-  CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
   KEEP_ECDSA_CONFIG_FILE_PATH=$CONFIG_FILE \
   CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
     npx truffle exec scripts/lcl-client-config.js --network $NETWORK
