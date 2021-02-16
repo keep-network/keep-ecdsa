@@ -1,13 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-KEEP_CORE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../../keep-core)
 KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
 KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 
 # Defaults, can be overwritten by env variables/input parameters
 CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
-KEEP_CELO_PASSWORD=${KEEP_CELO_PASSWORD:-"password"}
 NETWORK_DEFAULT="local"
 CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY:-""}
 
