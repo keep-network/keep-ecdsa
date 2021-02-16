@@ -1,12 +1,17 @@
 #!/bin/bash
 set -euo pipefail
 
+LOG_START='\n\e[1;36m'  # new line + bold + cyan
+LOG_END='\n\e[0m'       # new line + reset
+DONE_START='\n\e[1;32m' # new line + bold + green
+DONE_END='\n\n\e[0m'    # new line + reset
+
 KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
 KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 
 # Defaults, can be overwritten by env variables/input parameters
-CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 NETWORK_DEFAULT="local"
+CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 
 help()
 {
@@ -66,11 +71,6 @@ if [ ! -z ${client_app_address+x} ]; then
 fi
 
 # Run script.
-LOG_START='\n\e[1;36m'  # new line + bold + cyan
-LOG_END='\n\e[0m'       # new line + reset
-DONE_START='\n\e[1;32m' # new line + bold + green
-DONE_END='\n\n\e[0m'    # new line + reset
-
 printf "${LOG_START}Network:${LOG_END} $NETWORK"
 printf "${LOG_START}Application address:${LOG_END} $CLIENT_APP_ADDRESS"
 
