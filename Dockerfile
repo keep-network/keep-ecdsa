@@ -1,8 +1,5 @@
 FROM golang:1.13.8-alpine3.10 AS gobuild
 
-ARG VERSION
-ARG REVISION
-
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
 	APP_NAME=keep-ecdsa \
@@ -60,6 +57,10 @@ COPY ./ $APP_DIR/
 
 # Configure private repositories for Go dependencies
 ARG GOPRIVATE
+
+# Client Versioning.
+ARG VERSION
+ARG REVISION
 
 RUN GOOS=linux GOPRIVATE=$GOPRIVATE go build -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
