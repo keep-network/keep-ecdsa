@@ -23,7 +23,7 @@ help()
    echo -e "\nEnvironment variables:\n"
    echo -e "\tKEEP_CELO_PASSWORD: The password to unlock local Celo accounts to set up delegations."\
            "Required only for 'local' network. Default value is 'password'"
-   echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo"
+   echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo. Required for non-local network only"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--keep-core-path: Path to the keep-core project"
    echo -e "\t--network: Celo network for keep-core client."\
