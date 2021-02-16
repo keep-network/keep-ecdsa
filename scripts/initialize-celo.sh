@@ -15,14 +15,16 @@ CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 
 help()
 {
-   echo -e "\nUsage: $0"\
+   echo -e "\nUsage: ENV_VAR(S) $0"\
            "--config-dir <path>"\
            "--application-address <address>"\
            "--network <network>"
+   echo -e "\nEnvironment variables:\n"
+   echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo. Required for non-local network only"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--config-dir: Path to keep-ecdsa client configuration file(s)"
    echo -e "\t--application-address: Address of application approved by the operator"
-   echo -e "\t--network: Ethereum network for keep-ecdsa client."\
+   echo -e "\t--network: Celo network for keep-ecdsa client."\
            "Available networks and settings are specified in 'truffle.js'\n"
    exit 1 # Exit script after printing help
 }
@@ -59,7 +61,7 @@ NETWORK=${network:-$NETWORK_DEFAULT}
 
 cd $KEEP_ECDSA_SOL_PATH
 
-# Dafault app address.
+# Default app address.
 output=$(npx truffle exec scripts/get-default-application-account.js --network $NETWORK)
 CLIENT_APP_ADDRESS=$(echo "$output" | tail -1)
 
@@ -78,8 +80,10 @@ printf "${LOG_START}Configuring external client contract address...${LOG_END}"
 CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
     ./scripts/lcl-set-client-address.sh
 
-printf "${LOG_START}Initializing contracts...${LOG_END}"
-  npx truffle exec scripts/lcl-initialize.js --network $NETWORK
+if [ "$NETWORK" == "local" ]; then
+  printf "${LOG_START}Initializing contracts...${LOG_END}"
+    npx truffle exec scripts/lcl-initialize.js --network $NETWORK
+fi
 
 printf "${LOG_START}Updating keep-ecdsa config files...${LOG_END}"
 for CONFIG_FILE in $KEEP_ECDSA_CONFIG_DIR_PATH/*.toml

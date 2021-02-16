@@ -11,8 +11,9 @@ KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
 KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 
 # Defaults, can be overwritten by env variables/input parameters
-KEEP_ETHEREUM_PASSWORD=${KEEP_ETHEREUM_PASSWORD:-"password"}
+KEEP_CELO_PASSWORD=${KEEP_CELO_PASSWORD:-"password"}
 NETWORK_DEFAULT="local"
+CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY:-""}
 
 help()
 {
@@ -20,11 +21,12 @@ help()
            "--keep-core-path <path>"\
            "--network <network>"
    echo -e "\nEnvironment variables:\n"
-   echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
+   echo -e "\tKEEP_CELO_PASSWORD: The password to unlock local Celo accounts to set up delegations."\
            "Required only for 'local' network. Default value is 'password'"
+   echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo. Required for non-local network only"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--keep-core-path: Path to the keep-core project"
-   echo -e "\t--network: Ethereum network for keep-ecdsa client."\
+   echo -e "\t--network: Celo network for keep-core client."\
            "Available networks and settings are specified in 'truffle.js'\n"
    exit 1 # Exit script after printing help
 }
@@ -53,7 +55,6 @@ do
 done
 shift $(expr $OPTIND - 1) # remove options from positional parameters
 
-# Overwrite default properties
 KEEP_CORE_PATH=$(realpath ${keep_core_path:-$KEEP_CORE_PATH_DEFAULT})
 NETWORK=${network:-$NETWORK_DEFAULT}
 
@@ -71,13 +72,13 @@ printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
 npm install
 
 if [ "$NETWORK" == "local" ]; then
-  printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
-  KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
-      npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
+    printf "${LOG_START}Unlocking celo accounts...${LOG_END}"
+    KEEP_ETHEREUM_PASSWORD=$KEEP_CELO_PASSWORD \
+        npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
 fi
 
-printf "${LOG_START}Finding current ethereum network ID...${LOG_END}"
-output=$(npx truffle exec ./scripts/get-network-id.js --network $NETWORK)
+printf "${LOG_START}Finding current celo network ID...${LOG_END}"
+output=$(CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY npx truffle exec ./scripts/get-network-id.js --network $NETWORK)
 NETWORKID=$(echo "$output" | tail -1)
 printf "Current network ID: ${NETWORKID}\n"
 
@@ -88,7 +89,8 @@ NETWORKID=$NETWORKID \
 
 printf "${LOG_START}Migrating contracts...${LOG_END}"
 npm run clean
-npx truffle migrate --reset --network $NETWORK
+CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
+    npx truffle migrate --reset --network $NETWORK
 
 printf "${LOG_START}Building keep-ecdsa client...${LOG_END}"
 cd $KEEP_ECDSA_PATH
