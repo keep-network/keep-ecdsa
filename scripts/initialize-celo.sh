@@ -14,13 +14,13 @@ CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KE
 help()
 {
    echo -e "\nUsage: ENV_VAR(S) $0"\
-           "--keep-ecdsa-config-path <path>"\
+           "--config-dir <path>"\
            "--application-address <address>"\
            "--network <network>"
    echo -e "\nEnvironment variables:\n"
    echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo"
    echo -e "\nCommand line arguments:\n"
-   echo -e "\t--keep-ecdsa-config-path: Path to keep-ecdsa client configuration file(s)"
+   echo -e "\t--config-dir: Path to keep-ecdsa client configuration file(s)"
    echo -e "\t--application-address: Address of application approved by the operator"
    echo -e "\t--network: Celo network for keep-ecdsa client."\
            "Available networks and settings are specified in 'truffle.js'\n"
@@ -31,11 +31,11 @@ help()
 for arg in "$@"; do
   shift
   case "$arg" in
-    "--keep-ecdsa-config-path")    set -- "$@" "-d" ;;
-    "--application-address")       set -- "$@" "-a" ;;
-    "--network")                   set -- "$@" "-n" ;;
-    "--help")                      set -- "$@" "-h" ;;
-    *)                             set -- "$@" "$arg"
+    "--config-dir")          set -- "$@" "-d" ;;
+    "--application-address") set -- "$@" "-a" ;;
+    "--network")             set -- "$@" "-n" ;;
+    "--help")                set -- "$@" "-h" ;;
+    *)                       set -- "$@" "$arg"
   esac
 done
 
