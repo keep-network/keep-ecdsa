@@ -2,11 +2,11 @@
 set -euo pipefail
 
 KEEP_CORE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../../keep-core)
-CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
 KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 
 # Defaults, can be overwritten by env variables/input parameters
+CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 KEEP_CELO_PASSWORD=${KEEP_CELO_PASSWORD:-"password"}
 NETWORK_DEFAULT="local"
 CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY:-""}
@@ -20,7 +20,7 @@ help()
    echo -e "\nEnvironment variables:\n"
    echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo"
    echo -e "\nCommand line arguments:\n"
-   echo -e "\t--keep-ecdsa-config-path : Path to keep-ecdsa client configuration file(s)"
+   echo -e "\t--keep-ecdsa-config-path: Path to keep-ecdsa client configuration file(s)"
    echo -e "\t--application-address: Address of application approved by the operator"
    echo -e "\t--network: Celo network for keep-ecdsa client."\
            "Available networks and settings are specified in 'truffle.js'\n"

@@ -6,12 +6,12 @@ LOG_END='\n\e[0m'       # new line + reset
 DONE_START='\n\e[1;32m' # new line + bold + green
 DONE_END='\n\n\e[0m'    # new line + reset
 
-CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 KEEP_ECDSA_PATH=$(realpath $(dirname $0)/../)
 KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 
 # Defaults, can be overwritten by env variables/input parameters
 NETWORK_DEFAULT="local"
+CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 
 help()
 {
