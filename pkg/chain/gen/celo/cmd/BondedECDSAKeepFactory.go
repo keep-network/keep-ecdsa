@@ -13,7 +13,6 @@ import (
 	"github.com/celo-org/celo-blockchain/core/types"
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/celo/contract"
@@ -52,32 +51,25 @@ func init() {
 		Usage:       `Provides access to the BondedECDSAKeepFactory contract.`,
 		Description: bondedECDSAKeepFactoryDescription,
 		Subcommands: []cli.Command{{
-			Name:      "get-sortition-pool-weight",
-			Usage:     "Calls the constant method getSortitionPoolWeight on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[_application] ",
-			Action:    becdsakfGetSortitionPoolWeight,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "open-keep-fee-estimate",
-			Usage:     "Calls the constant method openKeepFeeEstimate on the BondedECDSAKeepFactory contract.",
+			Name:      "get-keep-count",
+			Usage:     "Calls the constant method getKeepCount on the BondedECDSAKeepFactory contract.",
 			ArgsUsage: "",
-			Action:    becdsakfOpenKeepFeeEstimate,
+			Action:    becdsakfGetKeepCount,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-keep-at-index",
-			Usage:     "Calls the constant method getKeepAtIndex on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[index] ",
-			Action:    becdsakfGetKeepAtIndex,
+			Name:      "get-sortition-pool",
+			Usage:     "Calls the constant method getSortitionPool on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[_application] ",
+			Action:    becdsakfGetSortitionPool,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "balance-of",
-			Usage:     "Calls the constant method balanceOf on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[_operator] ",
-			Action:    becdsakfBalanceOf,
-			Before:    cmd.ArgCountChecker(1),
+			Name:      "is-operator-registered",
+			Usage:     "Calls the constant method isOperatorRegistered on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[_operator] [_application] ",
+			Action:    becdsakfIsOperatorRegistered,
+			Before:    cmd.ArgCountChecker(2),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "is-operator-up-to-date",
@@ -94,31 +86,24 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
+			Name:      "balance-of",
+			Usage:     "Calls the constant method balanceOf on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[_operator] ",
+			Action:    becdsakfBalanceOf,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-keep-at-index",
+			Usage:     "Calls the constant method getKeepAtIndex on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[index] ",
+			Action:    becdsakfGetKeepAtIndex,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "new-group-selection-seed-fee",
 			Usage:     "Calls the constant method newGroupSelectionSeedFee on the BondedECDSAKeepFactory contract.",
 			ArgsUsage: "",
 			Action:    becdsakfNewGroupSelectionSeedFee,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "group-selection-seed",
-			Usage:     "Calls the constant method groupSelectionSeed on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "",
-			Action:    becdsakfGroupSelectionSeed,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-authorized",
-			Usage:     "Calls the constant method isOperatorAuthorized on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[_operator] ",
-			Action:    becdsakfIsOperatorAuthorized,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "minimum-bond",
-			Usage:     "Calls the constant method minimumBond on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "",
-			Action:    becdsakfMinimumBond,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -129,53 +114,11 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-keep-count",
-			Usage:     "Calls the constant method getKeepCount on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "",
-			Action:    becdsakfGetKeepCount,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-sortition-pool",
-			Usage:     "Calls the constant method getSortitionPool on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[_application] ",
-			Action:    becdsakfGetSortitionPool,
+			Name:      "is-operator-authorized",
+			Usage:     "Calls the constant method isOperatorAuthorized on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[_operator] ",
+			Action:    becdsakfIsOperatorAuthorized,
 			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-keep-opened-timestamp",
-			Usage:     "Calls the constant method getKeepOpenedTimestamp on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[_keep] ",
-			Action:    becdsakfGetKeepOpenedTimestamp,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-eligible",
-			Usage:     "Calls the constant method isOperatorEligible on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[_operator] [_application] ",
-			Action:    becdsakfIsOperatorEligible,
-			Before:    cmd.ArgCountChecker(2),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-operator-registered",
-			Usage:     "Calls the constant method isOperatorRegistered on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[_operator] [_application] ",
-			Action:    becdsakfIsOperatorRegistered,
-			Before:    cmd.ArgCountChecker(2),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "keeps",
-			Usage:     "Calls the constant method keeps on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[arg0] ",
-			Action:    becdsakfKeeps,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "callback-gas",
-			Usage:     "Calls the constant method callbackGas on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "",
-			Action:    becdsakfCallbackGas,
-			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "has-minimum-stake",
@@ -192,6 +135,27 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
+			Name:      "callback-gas",
+			Usage:     "Calls the constant method callbackGas on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "",
+			Action:    becdsakfCallbackGas,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "group-selection-seed",
+			Usage:     "Calls the constant method groupSelectionSeed on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "",
+			Action:    becdsakfGroupSelectionSeed,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "minimum-bond",
+			Usage:     "Calls the constant method minimumBond on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "",
+			Action:    becdsakfMinimumBond,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "pool-stake-weight-divisor",
 			Usage:     "Calls the constant method poolStakeWeightDivisor on the BondedECDSAKeepFactory contract.",
 			ArgsUsage: "",
@@ -199,12 +163,40 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "beacon-callback",
-			Usage:     "Calls the method beaconCallback on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[_relayEntry] ",
-			Action:    becdsakfBeaconCallback,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
+			Name:      "open-keep-fee-estimate",
+			Usage:     "Calls the constant method openKeepFeeEstimate on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "",
+			Action:    becdsakfOpenKeepFeeEstimate,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-sortition-pool-weight",
+			Usage:     "Calls the constant method getSortitionPoolWeight on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[_application] ",
+			Action:    becdsakfGetSortitionPoolWeight,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "keeps",
+			Usage:     "Calls the constant method keeps on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[arg0] ",
+			Action:    becdsakfKeeps,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "is-operator-eligible",
+			Usage:     "Calls the constant method isOperatorEligible on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[_operator] [_application] ",
+			Action:    becdsakfIsOperatorEligible,
+			Before:    cmd.ArgCountChecker(2),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-keep-opened-timestamp",
+			Usage:     "Calls the constant method getKeepOpenedTimestamp on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[_keep] ",
+			Action:    becdsakfGetKeepOpenedTimestamp,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "register-member-candidate",
 			Usage:     "Calls the method registerMemberCandidate on the BondedECDSAKeepFactory contract.",
@@ -213,18 +205,18 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "request-new-group-selection-seed",
-			Usage:     "Calls the payable method requestNewGroupSelectionSeed on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "",
-			Action:    becdsakfRequestNewGroupSelectionSeed,
-			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.PayableFlags,
+			Name:      "is-recognized",
+			Usage:     "Calls the method isRecognized on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[_delegatedAuthorityRecipient] ",
+			Action:    becdsakfIsRecognized,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "set-minimum-bondable-value",
-			Usage:     "Calls the method setMinimumBondableValue on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[_minimumBondableValue] [_groupSize] [_honestThreshold] ",
-			Action:    becdsakfSetMinimumBondableValue,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(3))),
+			Name:      "beacon-callback",
+			Usage:     "Calls the method beaconCallback on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[_relayEntry] ",
+			Action:    becdsakfBeaconCallback,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "open-keep",
@@ -241,11 +233,18 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "is-recognized",
-			Usage:     "Calls the method isRecognized on the BondedECDSAKeepFactory contract.",
-			ArgsUsage: "[_delegatedAuthorityRecipient] ",
-			Action:    becdsakfIsRecognized,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Name:      "request-new-group-selection-seed",
+			Usage:     "Calls the payable method requestNewGroupSelectionSeed on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "",
+			Action:    becdsakfRequestNewGroupSelectionSeed,
+			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.PayableFlags,
+		}, {
+			Name:      "set-minimum-bondable-value",
+			Usage:     "Calls the method setMinimumBondableValue on the BondedECDSAKeepFactory contract.",
+			ArgsUsage: "[_minimumBondableValue] [_groupSize] [_honestThreshold] ",
+			Action:    becdsakfSetMinimumBondableValue,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(3))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "create-sortition-pool",
@@ -260,7 +259,27 @@ func init() {
 
 /// ------------------- Const methods -------------------
 
-func becdsakfGetSortitionPoolWeight(c *cli.Context) error {
+func becdsakfGetKeepCount(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepFactory(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetKeepCountAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakfGetSortitionPool(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
 	if err != nil {
 		return err
@@ -273,7 +292,7 @@ func becdsakfGetSortitionPoolWeight(c *cli.Context) error {
 		)
 	}
 
-	result, err := contract.GetSortitionPoolWeightAtBlock(
+	result, err := contract.GetSortitionPoolAtBlock(
 		_application,
 
 		cmd.BlockFlagValue.Uint,
@@ -288,55 +307,7 @@ func becdsakfGetSortitionPoolWeight(c *cli.Context) error {
 	return nil
 }
 
-func becdsakfOpenKeepFeeEstimate(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepFactory(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.OpenKeepFeeEstimateAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakfGetKeepAtIndex(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepFactory(c)
-	if err != nil {
-		return err
-	}
-	index, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter index, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.GetKeepAtIndexAtBlock(
-		index,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakfBalanceOf(c *cli.Context) error {
+func becdsakfIsOperatorRegistered(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
 	if err != nil {
 		return err
@@ -349,8 +320,17 @@ func becdsakfBalanceOf(c *cli.Context) error {
 		)
 	}
 
-	result, err := contract.BalanceOfAtBlock(
+	_application, err := chainutil.AddressFromHex(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _application, a address, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	result, err := contract.IsOperatorRegisteredAtBlock(
 		_operator,
+		_application,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -421,47 +401,7 @@ func becdsakfNewEntryFeeEstimate(c *cli.Context) error {
 	return nil
 }
 
-func becdsakfNewGroupSelectionSeedFee(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepFactory(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.NewGroupSelectionSeedFeeAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakfGroupSelectionSeed(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepFactory(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GroupSelectionSeedAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakfIsOperatorAuthorized(c *cli.Context) error {
+func becdsakfBalanceOf(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
 	if err != nil {
 		return err
@@ -474,7 +414,7 @@ func becdsakfIsOperatorAuthorized(c *cli.Context) error {
 		)
 	}
 
-	result, err := contract.IsOperatorAuthorizedAtBlock(
+	result, err := contract.BalanceOfAtBlock(
 		_operator,
 
 		cmd.BlockFlagValue.Uint,
@@ -489,13 +429,41 @@ func becdsakfIsOperatorAuthorized(c *cli.Context) error {
 	return nil
 }
 
-func becdsakfMinimumBond(c *cli.Context) error {
+func becdsakfGetKeepAtIndex(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepFactory(c)
+	if err != nil {
+		return err
+	}
+	index, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter index, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.GetKeepAtIndexAtBlock(
+		index,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakfNewGroupSelectionSeedFee(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.MinimumBondAtBlock(
+	result, err := contract.NewGroupSelectionSeedFeeAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -529,83 +497,7 @@ func becdsakfReseedPool(c *cli.Context) error {
 	return nil
 }
 
-func becdsakfGetKeepCount(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepFactory(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetKeepCountAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakfGetSortitionPool(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepFactory(c)
-	if err != nil {
-		return err
-	}
-	_application, err := chainutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _application, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.GetSortitionPoolAtBlock(
-		_application,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakfGetKeepOpenedTimestamp(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepFactory(c)
-	if err != nil {
-		return err
-	}
-	_keep, err := chainutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _keep, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.GetKeepOpenedTimestampAtBlock(
-		_keep,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakfIsOperatorEligible(c *cli.Context) error {
+func becdsakfIsOperatorAuthorized(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
 	if err != nil {
 		return err
@@ -618,102 +510,8 @@ func becdsakfIsOperatorEligible(c *cli.Context) error {
 		)
 	}
 
-	_application, err := chainutil.AddressFromHex(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _application, a address, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	result, err := contract.IsOperatorEligibleAtBlock(
+	result, err := contract.IsOperatorAuthorizedAtBlock(
 		_operator,
-		_application,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakfIsOperatorRegistered(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepFactory(c)
-	if err != nil {
-		return err
-	}
-	_operator, err := chainutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	_application, err := chainutil.AddressFromHex(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _application, a address, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	result, err := contract.IsOperatorRegisteredAtBlock(
-		_operator,
-		_application,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakfKeeps(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepFactory(c)
-	if err != nil {
-		return err
-	}
-	arg0, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg0, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.KeepsAtBlock(
-		arg0,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func becdsakfCallbackGas(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepFactory(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.CallbackGasAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -775,6 +573,66 @@ func becdsakfMasterKeepAddress(c *cli.Context) error {
 	return nil
 }
 
+func becdsakfCallbackGas(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepFactory(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.CallbackGasAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakfGroupSelectionSeed(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepFactory(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GroupSelectionSeedAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakfMinimumBond(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepFactory(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.MinimumBondAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
 func becdsakfPoolStakeWeightDivisor(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
 	if err != nil {
@@ -795,51 +653,148 @@ func becdsakfPoolStakeWeightDivisor(c *cli.Context) error {
 	return nil
 }
 
-/// ------------------- Non-const methods -------------------
-
-func becdsakfBeaconCallback(c *cli.Context) error {
+func becdsakfOpenKeepFeeEstimate(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
 	if err != nil {
 		return err
 	}
 
-	_relayEntry, err := hexutil.DecodeBig(c.Args()[0])
+	result, err := contract.OpenKeepFeeEstimateAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakfGetSortitionPoolWeight(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepFactory(c)
+	if err != nil {
+		return err
+	}
+	_application, err := chainutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter _relayEntry, a uint256, from passed value %v",
+			"couldn't parse parameter _application, a address, from passed value %v",
 			c.Args()[0],
 		)
 	}
 
-	var (
-		transaction *types.Transaction
+	result, err := contract.GetSortitionPoolWeightAtBlock(
+		_application,
+
+		cmd.BlockFlagValue.Uint,
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.BeaconCallback(
-			_relayEntry,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallBeaconCallback(
-			_relayEntry,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
+	if err != nil {
+		return err
 	}
+
+	cmd.PrintOutput(result)
 
 	return nil
 }
+
+func becdsakfKeeps(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepFactory(c)
+	if err != nil {
+		return err
+	}
+	arg0, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.KeepsAtBlock(
+		arg0,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakfIsOperatorEligible(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepFactory(c)
+	if err != nil {
+		return err
+	}
+	_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	_application, err := chainutil.AddressFromHex(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _application, a address, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	result, err := contract.IsOperatorEligibleAtBlock(
+		_operator,
+		_application,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakfGetKeepOpenedTimestamp(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepFactory(c)
+	if err != nil {
+		return err
+	}
+	_keep, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _keep, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.GetKeepOpenedTimestampAtBlock(
+		_keep,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+/// ------------------- Non-const methods -------------------
 
 func becdsakfRegisterMemberCandidate(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
@@ -885,20 +840,30 @@ func becdsakfRegisterMemberCandidate(c *cli.Context) error {
 	return nil
 }
 
-func becdsakfRequestNewGroupSelectionSeed(c *cli.Context) error {
+func becdsakfIsRecognized(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
 	if err != nil {
 		return err
 	}
 
+	_delegatedAuthorityRecipient, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _delegatedAuthorityRecipient, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
 	var (
 		transaction *types.Transaction
+		result      bool
 	)
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RequestNewGroupSelectionSeed(
-			cmd.ValueFlagValue.Uint)
+		transaction, err = contract.IsRecognized(
+			_delegatedAuthorityRecipient,
+		)
 		if err != nil {
 			return err
 		}
@@ -906,46 +871,31 @@ func becdsakfRequestNewGroupSelectionSeed(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallRequestNewGroupSelectionSeed(
-			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
+		result, err = contract.CallIsRecognized(
+			_delegatedAuthorityRecipient,
+			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(nil)
+		cmd.PrintOutput(result)
 	}
 
 	return nil
 }
 
-func becdsakfSetMinimumBondableValue(c *cli.Context) error {
+func becdsakfBeaconCallback(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
 	if err != nil {
 		return err
 	}
 
-	_minimumBondableValue, err := hexutil.DecodeBig(c.Args()[0])
+	_relayEntry, err := hexutil.DecodeBig(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter _minimumBondableValue, a uint256, from passed value %v",
+			"couldn't parse parameter _relayEntry, a uint256, from passed value %v",
 			c.Args()[0],
-		)
-	}
-
-	_groupSize, err := hexutil.DecodeBig(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _groupSize, a uint256, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	_honestThreshold, err := hexutil.DecodeBig(c.Args()[2])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _honestThreshold, a uint256, from passed value %v",
-			c.Args()[2],
 		)
 	}
 
@@ -955,10 +905,8 @@ func becdsakfSetMinimumBondableValue(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.SetMinimumBondableValue(
-			_minimumBondableValue,
-			_groupSize,
-			_honestThreshold,
+		transaction, err = contract.BeaconCallback(
+			_relayEntry,
 		)
 		if err != nil {
 			return err
@@ -967,10 +915,8 @@ func becdsakfSetMinimumBondableValue(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallSetMinimumBondableValue(
-			_minimumBondableValue,
-			_groupSize,
-			_honestThreshold,
+		err = contract.CallBeaconCallback(
+			_relayEntry,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1122,29 +1068,80 @@ func becdsakfUpdateOperatorStatus(c *cli.Context) error {
 	return nil
 }
 
-func becdsakfIsRecognized(c *cli.Context) error {
+func becdsakfRequestNewGroupSelectionSeed(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepFactory(c)
 	if err != nil {
 		return err
 	}
 
-	_delegatedAuthorityRecipient, err := chainutil.AddressFromHex(c.Args()[0])
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RequestNewGroupSelectionSeed(
+			cmd.ValueFlagValue.Uint)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallRequestNewGroupSelectionSeed(
+			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func becdsakfSetMinimumBondableValue(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepFactory(c)
+	if err != nil {
+		return err
+	}
+
+	_minimumBondableValue, err := hexutil.DecodeBig(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter _delegatedAuthorityRecipient, a address, from passed value %v",
+			"couldn't parse parameter _minimumBondableValue, a uint256, from passed value %v",
 			c.Args()[0],
+		)
+	}
+
+	_groupSize, err := hexutil.DecodeBig(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _groupSize, a uint256, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	_honestThreshold, err := hexutil.DecodeBig(c.Args()[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _honestThreshold, a uint256, from passed value %v",
+			c.Args()[2],
 		)
 	}
 
 	var (
 		transaction *types.Transaction
-		result      bool
 	)
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.IsRecognized(
-			_delegatedAuthorityRecipient,
+		transaction, err = contract.SetMinimumBondableValue(
+			_minimumBondableValue,
+			_groupSize,
+			_honestThreshold,
 		)
 		if err != nil {
 			return err
@@ -1153,15 +1150,17 @@ func becdsakfIsRecognized(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		result, err = contract.CallIsRecognized(
-			_delegatedAuthorityRecipient,
+		err = contract.CallSetMinimumBondableValue(
+			_minimumBondableValue,
+			_groupSize,
+			_honestThreshold,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
 			return err
 		}
 
-		cmd.PrintOutput(result)
+		cmd.PrintOutput(nil)
 	}
 
 	return nil
@@ -1246,15 +1245,13 @@ func initializeBondedECDSAKeepFactory(c *cli.Context) (*contract.BondedECDSAKeep
 		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethlike.NewMiningWaiter(
-		chainutil.NewTransactionSourceAdapter(client),
+	miningWaiter := chainutil.NewMiningWaiter(
+		client,
 		checkInterval,
 		maxGasPrice,
 	)
 
-	blockCounter, err := ethlike.CreateBlockCounter(
-		chainutil.NewBlockSourceAdapter(client),
-	)
+	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create block counter: [%v]",
@@ -1268,10 +1265,7 @@ func initializeBondedECDSAKeepFactory(c *cli.Context) (*contract.BondedECDSAKeep
 		address,
 		key,
 		client,
-		ethlike.NewNonceManager(
-			key.Address.Hex(),
-			chainutil.NewNonceSourceAdapter(client),
-		),
+		chainutil.NewNonceManager(client, key.Address),
 		miningWaiter,
 		blockCounter,
 		&sync.Mutex{},

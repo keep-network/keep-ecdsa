@@ -12,7 +12,6 @@ import (
 	"github.com/celo-org/celo-blockchain/core/types"
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/celo/contract"
@@ -51,13 +50,6 @@ func init() {
 		Usage:       `Provides access to the BondedECDSAKeepVendor contract.`,
 		Description: bondedECDSAKeepVendorDescription,
 		Subcommands: []cli.Command{{
-			Name:      "initialized",
-			Usage:     "Calls the constant method initialized on the BondedECDSAKeepVendor contract.",
-			ArgsUsage: "",
-			Action:    becdsakvInitialized,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
 			Name:      "select-factory",
 			Usage:     "Calls the constant method selectFactory on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "",
@@ -69,6 +61,13 @@ func init() {
 			Usage:     "Calls the constant method factoryUpgradeTimeDelay on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "",
 			Action:    becdsakvFactoryUpgradeTimeDelay,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "initialized",
+			Usage:     "Calls the constant method initialized on the BondedECDSAKeepVendor contract.",
+			ArgsUsage: "",
+			Action:    becdsakvInitialized,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -98,26 +97,6 @@ func init() {
 
 /// ------------------- Const methods -------------------
 
-func becdsakvInitialized(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepVendor(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.InitializedAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
 func becdsakvSelectFactory(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
 	if err != nil {
@@ -145,6 +124,26 @@ func becdsakvFactoryUpgradeTimeDelay(c *cli.Context) error {
 	}
 
 	result, err := contract.FactoryUpgradeTimeDelayAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func becdsakvInitialized(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepVendor(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.InitializedAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -325,15 +324,13 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethlike.NewMiningWaiter(
-		chainutil.NewTransactionSourceAdapter(client),
+	miningWaiter := chainutil.NewMiningWaiter(
+		client,
 		checkInterval,
 		maxGasPrice,
 	)
 
-	blockCounter, err := ethlike.CreateBlockCounter(
-		chainutil.NewBlockSourceAdapter(client),
-	)
+	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create block counter: [%v]",
@@ -347,10 +344,7 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 		address,
 		key,
 		client,
-		ethlike.NewNonceManager(
-			key.Address.Hex(),
-			chainutil.NewNonceSourceAdapter(client),
-		),
+		chainutil.NewNonceManager(client, key.Address),
 		miningWaiter,
 		blockCounter,
 		&sync.Mutex{},

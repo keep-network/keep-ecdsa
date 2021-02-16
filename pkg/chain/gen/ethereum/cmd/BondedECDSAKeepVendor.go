@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/contract"
@@ -51,13 +50,6 @@ func init() {
 		Usage:       `Provides access to the BondedECDSAKeepVendor contract.`,
 		Description: bondedECDSAKeepVendorDescription,
 		Subcommands: []cli.Command{{
-			Name:      "select-factory",
-			Usage:     "Calls the constant method selectFactory on the BondedECDSAKeepVendor contract.",
-			ArgsUsage: "",
-			Action:    becdsakvSelectFactory,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
 			Name:      "factory-upgrade-time-delay",
 			Usage:     "Calls the constant method factoryUpgradeTimeDelay on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "",
@@ -72,12 +64,12 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "upgrade-factory",
-			Usage:     "Calls the method upgradeFactory on the BondedECDSAKeepVendor contract.",
-			ArgsUsage: "[_factory] ",
-			Action:    becdsakvUpgradeFactory,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
+			Name:      "select-factory",
+			Usage:     "Calls the constant method selectFactory on the BondedECDSAKeepVendor contract.",
+			ArgsUsage: "",
+			Action:    becdsakvSelectFactory,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "complete-factory-upgrade",
 			Usage:     "Calls the method completeFactoryUpgrade on the BondedECDSAKeepVendor contract.",
@@ -92,31 +84,18 @@ func init() {
 			Action:    becdsakvInitialize,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "upgrade-factory",
+			Usage:     "Calls the method upgradeFactory on the BondedECDSAKeepVendor contract.",
+			ArgsUsage: "[_factory] ",
+			Action:    becdsakvUpgradeFactory,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
 		}},
 	})
 }
 
 /// ------------------- Const methods -------------------
-
-func becdsakvSelectFactory(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepVendor(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.SelectFactoryAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
 
 func becdsakvFactoryUpgradeTimeDelay(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
@@ -158,51 +137,27 @@ func becdsakvInitialized(c *cli.Context) error {
 	return nil
 }
 
-/// ------------------- Non-const methods -------------------
-
-func becdsakvUpgradeFactory(c *cli.Context) error {
+func becdsakvSelectFactory(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
 	if err != nil {
 		return err
 	}
 
-	_factory, err := chainutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _factory, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
+	result, err := contract.SelectFactoryAtBlock(
 
-	var (
-		transaction *types.Transaction
+		cmd.BlockFlagValue.Uint,
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UpgradeFactory(
-			_factory,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallUpgradeFactory(
-			_factory,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
+	if err != nil {
+		return err
 	}
+
+	cmd.PrintOutput(result)
 
 	return nil
 }
+
+/// ------------------- Non-const methods -------------------
 
 func becdsakvCompleteFactoryUpgrade(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
@@ -291,6 +246,50 @@ func becdsakvInitialize(c *cli.Context) error {
 	return nil
 }
 
+func becdsakvUpgradeFactory(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepVendor(c)
+	if err != nil {
+		return err
+	}
+
+	_factory, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _factory, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpgradeFactory(
+			_factory,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallUpgradeFactory(
+			_factory,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
 /// ------------------- Initialization -------------------
 
 func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepVendor, error) {
@@ -325,15 +324,13 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethlike.NewMiningWaiter(
-		chainutil.NewTransactionSourceAdapter(client),
+	miningWaiter := chainutil.NewMiningWaiter(
+		client,
 		checkInterval,
 		maxGasPrice,
 	)
 
-	blockCounter, err := ethlike.CreateBlockCounter(
-		chainutil.NewBlockSourceAdapter(client),
-	)
+	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create block counter: [%v]",
@@ -347,10 +344,7 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 		address,
 		key,
 		client,
-		ethlike.NewNonceManager(
-			key.Address.Hex(),
-			chainutil.NewNonceSourceAdapter(client),
-		),
+		chainutil.NewNonceManager(client, key.Address),
 		miningWaiter,
 		blockCounter,
 		&sync.Mutex{},

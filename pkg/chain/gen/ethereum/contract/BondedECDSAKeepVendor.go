@@ -505,44 +505,6 @@ func (becdsakv *BondedECDSAKeepVendor) UpgradeFactoryGasEstimate(
 
 // ----- Const Methods ------
 
-func (becdsakv *BondedECDSAKeepVendor) SelectFactory() (common.Address, error) {
-	var result common.Address
-	result, err := becdsakv.contract.SelectFactory(
-		becdsakv.callerOptions,
-	)
-
-	if err != nil {
-		return result, becdsakv.errorResolver.ResolveError(
-			err,
-			becdsakv.callerOptions.From,
-			nil,
-			"selectFactory",
-		)
-	}
-
-	return result, err
-}
-
-func (becdsakv *BondedECDSAKeepVendor) SelectFactoryAtBlock(
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := chainutil.CallAtBlock(
-		becdsakv.callerOptions.From,
-		blockNumber,
-		nil,
-		becdsakv.contractABI,
-		becdsakv.caller,
-		becdsakv.errorResolver,
-		becdsakv.contractAddress,
-		"selectFactory",
-		&result,
-	)
-
-	return result, err
-}
-
 func (becdsakv *BondedECDSAKeepVendor) FactoryUpgradeTimeDelay() (*big.Int, error) {
 	var result *big.Int
 	result, err := becdsakv.contract.FactoryUpgradeTimeDelay(
@@ -613,6 +575,44 @@ func (becdsakv *BondedECDSAKeepVendor) InitializedAtBlock(
 		becdsakv.errorResolver,
 		becdsakv.contractAddress,
 		"initialized",
+		&result,
+	)
+
+	return result, err
+}
+
+func (becdsakv *BondedECDSAKeepVendor) SelectFactory() (common.Address, error) {
+	var result common.Address
+	result, err := becdsakv.contract.SelectFactory(
+		becdsakv.callerOptions,
+	)
+
+	if err != nil {
+		return result, becdsakv.errorResolver.ResolveError(
+			err,
+			becdsakv.callerOptions.From,
+			nil,
+			"selectFactory",
+		)
+	}
+
+	return result, err
+}
+
+func (becdsakv *BondedECDSAKeepVendor) SelectFactoryAtBlock(
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := chainutil.CallAtBlock(
+		becdsakv.callerOptions.From,
+		blockNumber,
+		nil,
+		becdsakv.contractABI,
+		becdsakv.caller,
+		becdsakv.errorResolver,
+		becdsakv.contractAddress,
+		"selectFactory",
 		&result,
 	)
 

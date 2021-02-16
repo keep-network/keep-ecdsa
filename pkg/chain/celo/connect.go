@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/rate"
+
 	"github.com/keep-network/keep-common/pkg/chain/celo"
 
 	"github.com/celo-org/celo-blockchain/accounts/keystore"
@@ -76,10 +78,7 @@ func Connect(
 
 	transactionMutex := &sync.Mutex{}
 
-	nonceManager := ethlike.NewNonceManager(
-		accountKey.Address.Hex(),
-		celoutil.NewNonceSourceAdapter(wrappedClient),
-	)
+	nonceManager := celoutil.NewNonceManager(wrappedClient, accountKey.Address)
 
 	checkInterval := DefaultMiningCheckInterval
 	maxGasPrice := DefaultMaxGasPrice
@@ -92,15 +91,14 @@ func Connect(
 
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-	miningWaiter := ethlike.NewMiningWaiter(
-		celoutil.NewTransactionSourceAdapter(wrappedClient),
+
+	miningWaiter := celoutil.NewMiningWaiter(
+		wrappedClient,
 		checkInterval,
 		maxGasPrice,
 	)
 
-	blockCounter, err := ethlike.CreateBlockCounter(
-		celoutil.NewBlockSourceAdapter(wrappedClient),
-	)
+	blockCounter, err := celoutil.NewBlockCounter(wrappedClient)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Celo blockcounter: [%v]",
@@ -157,7 +155,7 @@ func addClientWrappers(
 
 		return celoutil.WrapRateLimiting(
 			loggingClient,
-			&ethlike.RateLimiterConfig{
+			&rate.LimiterConfig{
 				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
 				ConcurrencyLimit:       config.ConcurrencyLimit,
 			},
