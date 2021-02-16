@@ -45,8 +45,8 @@ func connectChain(
 	)
 
 	operatorKeys := &operatorKeys{
-		public:  &ethereumKey.PrivateKey.PublicKey,
-		private: ethereumKey.PrivateKey,
+		public:  &celoKey.PrivateKey.PublicKey,
+		private: celoKey.PrivateKey,
 	}
 
 	return celoChain, operatorKeys, nil
