@@ -682,20 +682,15 @@ func BuildSignedTransactionHexString(
   // For safety's sake, work on a deep copy, as mutations follow.
   signedTransaction := unsignedTransaction.Copy()
 
-	// Construct witness script.
-	signatureDERBytes := (&btcec.Signature{R: signature.R, S: signature.S}).Serialize()
-	hashType := uint8(txscript.SigHashAll)
-
-	// The witness signature field is the DER signature followed by the hash type.
-	signatureForWitnessBuffer := &bytes.Buffer{}
-	signatureForWitnessBuffer.Write(signatureDERBytes)
-	binary.Write(signatureForWitnessBuffer, binary.LittleEndian, hashType)
+	btcSignature := &btcec.Signature{R: signature.R, S: signature.S}
 
   // The witness is for the first input, since this is known to be a
   // single-input transaction.
-  signedTransaction.TxIn[0].Witness = [][]byte{
-    signatureForWitnessBuffer.Bytes(),
-    compressedPublicKeyBytes((publicKey)),
+  signedTransaction.TxIn[0].Witness = wire.TxWitness{
+    // The witness signature field is the DER signature followed by the hash type.
+    append(btcSignature.Serialize(), byte(txscript.SigHashAll)),
+    // The second part of the witness is the compressed public key.
+    (*btcec.PublicKey)(publicKey).SerializeCompressed(),
   }
 
 	// BtcEncode writes bytes, we wrap it in an hex encoder wrapped
