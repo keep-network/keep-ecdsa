@@ -15,7 +15,7 @@ var logger = log.Logger("keep-registry")
 // Keeps represents a collection of keeps in which the given client is a member.
 type Keeps struct {
 	myKeepsMutex *sync.RWMutex
-	// 🤔🤔🤔
+	// FIXME Need to track keeps by chain...
 	myKeepsByChains map[chain.Handle][]chain.BondedECDSAKeepHandle
 	myKeeps         map[chain.KeepID]*tss.ThresholdSigner
 
@@ -108,6 +108,7 @@ func (k *Keeps) HasSigner(keepID chain.KeepID) bool {
 	return has
 }
 
+// FIXME keepsRegistry.GetKeepsForChain(chain) []chain.BondedECDSAKeepHandle
 // GetKeepsAddresses returns addresses of all registered keeps.
 func (k *Keeps) GetKeepsAddresses() []chain.KeepID {
 	k.myKeepsMutex.RLock()
