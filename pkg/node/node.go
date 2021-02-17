@@ -128,7 +128,6 @@ func createKeepMemberFilter(
 		if !isAuthorized {
 			logger.Warningf(
 				"rejecting message from [%v]; author is not authorized",
-				// FIXME Uh-oh. How can we better log this?
 				operatorID,
 			)
 		}

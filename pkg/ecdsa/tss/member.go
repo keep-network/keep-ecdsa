@@ -9,7 +9,7 @@ import (
 )
 
 // FIXME How does this differ from an operator id? Why is it a distinct concept?
-// FIXME Does it need to be?
+// Improve name to reflect this.
 // MemberID is an unique identifier of a member across the network.
 type MemberID []byte
 

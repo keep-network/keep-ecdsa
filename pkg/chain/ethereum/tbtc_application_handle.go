@@ -20,8 +20,6 @@ type tbtcApplicationHandle struct {
 
 func (bekm *bondedEcdsaKeepManager) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 	return &tbtcApplicationHandle{
-		// FIXME This should probably be ec.bondedECDSAKeepFactoryContract
-		// FIXME instead of the whole ec kit and kaboodle.
 		bekm:              bekm,
 		tbtcSystemAddress: common.Address{},
 	}, nil

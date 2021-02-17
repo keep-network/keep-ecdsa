@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
@@ -62,7 +63,10 @@ func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -120,7 +124,10 @@ func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -188,7 +195,10 @@ func TestRetrievePubkey_KeepClosedEventOccurred(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -253,7 +263,10 @@ func TestRetrievePubkey_KeepTerminatedEventOccurred(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -318,7 +331,10 @@ func TestRetrievePubkey_ActionFailed(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -359,7 +375,10 @@ func TestRetrievePubkey_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) 
 	// cancel the context before any start event occurs
 	cancelCtx()
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -394,7 +413,10 @@ func TestRetrievePubkey_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -474,7 +496,10 @@ func TestProvideRedemptionSignature_TimeoutElapsed(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -547,7 +572,10 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignat
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -635,7 +663,10 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositRedeemed(
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -714,7 +745,10 @@ func TestProvideRedemptionSignature_KeepClosedEventOccurred(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -790,7 +824,10 @@ func TestProvideRedemptionSignature_KeepTerminatedEventOccurred(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -866,7 +903,10 @@ func TestProvideRedemptionSignature_ActionFailed(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -925,7 +965,10 @@ func TestProvideRedemptionSignature_ContextCancelled_WithoutWorkingMonitoring(
 	// cancel the context before any start event occurs
 	cancelCtx()
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -973,7 +1016,10 @@ func TestProvideRedemptionSignature_ContextCancelled_WithWorkingMonitoring(
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -1080,7 +1126,10 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -1177,7 +1226,10 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedemptionRequested(
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -1285,7 +1337,10 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedeemed(
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -1373,7 +1428,10 @@ func TestProvideRedemptionProof_KeepClosedEventOccurred(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -1466,7 +1524,10 @@ func TestProvideRedemptionProof_KeepTerminatedEventOccurred(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -1559,7 +1620,10 @@ func TestProvideRedemptionProof_ActionFailed(t *testing.T) {
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -1627,7 +1691,10 @@ func TestProvideRedemptionProof_ContextCancelled_WithoutWorkingMonitoring(
 	// cancel the context before any start event occurs
 	cancelCtx()
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -1689,7 +1756,10 @@ func TestProvideRedemptionProof_ContextCancelled_WithWorkingMonitoring(
 		timeout,
 	)
 
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -1958,7 +2028,10 @@ func TestShouldMonitorDeposit_ExpectedInitialState(t *testing.T) {
 	tbtcExtension, tbtcHandle := newTestTBTCExtension(testingChain)
 
 	// create a signing group which contains the operator
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 	_, err := submitKeepPublicKey(depositAddress, tbtcHandle)
@@ -1988,7 +2061,10 @@ func TestShouldMonitorDeposit_UnexpectedInitialState(t *testing.T) {
 	tbtcExtension, tbtcHandle := newTestTBTCExtension(testingChain)
 
 	// create a signing group which contains the operator
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -2019,7 +2095,10 @@ func TestShouldMonitorDeposit_InitialStateChange(t *testing.T) {
 	tbtcExtension, tbtcHandle := newTestTBTCExtension(testingChain)
 
 	// create a signing group which contains the operator
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 	_, err := submitKeepPublicKey(depositAddress, tbtcHandle)
@@ -2071,7 +2150,10 @@ func TestShouldMonitorDeposit_MemberCache(t *testing.T) {
 	tbtcExtension, tbtcHandle := newTestTBTCExtension(testingChain)
 
 	// create a signing group which contains the operator
-	signers := local.RandomSigningGroup(3)
+	signers := append(
+		[]common.Address{testingChain.OperatorAddress()},
+		local.RandomSigningGroup(2)...,
+	)
 
 	tbtcHandle.CreateDeposit(depositAddress, signers)
 
@@ -2141,7 +2223,13 @@ func TestShouldMonitorDeposit_NotMemberCache(t *testing.T) {
 	)
 
 	if call1 || call2 || call3 {
-		t.Errorf("should monitor deposit calls results are not same")
+		t.Errorf(
+			"should monitor deposit calls results are not same\n"+
+				"expected: [%v,%v,%v]\n"+
+				"actual:   [%v,%v,%v]",
+			false, false, false,
+			call1, call2, call3,
+		)
 	}
 
 	expectedChainCalls := 1
@@ -2189,7 +2277,7 @@ func TestGetSignerActionDelay(t *testing.T) {
 			tbtcExtension, tbtcHandle := newTestTBTCExtension(testingChain)
 
 			signers := local.RandomSigningGroup(test.signersCount)
-			//signers[test.signerIndex] = tbtcHandle.ID()
+			signers[test.signerIndex] = testingChain.OperatorAddress()
 
 			tbtcHandle.CreateDeposit(depositAddress, signers)
 

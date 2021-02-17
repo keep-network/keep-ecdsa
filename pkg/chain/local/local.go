@@ -53,6 +53,8 @@ type TestingChain interface {
 
 	TestingTBTC() TestingTBTCHandle
 
+	OperatorAddress() common.Address
+
 	OpenKeep(keepAddress common.Address, members []common.Address) TestingBondedECDSAKeepHandle
 	CloseKeep(keepAddress chain.KeepID) error
 	TerminateKeep(keepID chain.KeepID) error
@@ -118,6 +120,10 @@ func (lc *localChain) Name() string {
 
 func (lc *localChain) OperatorID() chain.OperatorID {
 	return lc.PublicKeyToOperatorID(&lc.operatorKey.PublicKey)
+}
+
+func (lc *localChain) OperatorAddress() common.Address {
+	return crypto.PubkeyToAddress(lc.operatorKey.PublicKey)
 }
 
 func (lc *localChain) PublicKeyToOperatorID(publicKey *cecdsa.PublicKey) chain.OperatorID {

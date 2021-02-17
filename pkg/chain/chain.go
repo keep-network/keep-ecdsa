@@ -1,6 +1,6 @@
 // Package chain contains interface for interaction with a host chain along with
 // structures reflecting events emitted on such a chain.
-package chain // TODO: rename; this can be any host chain
+package chain
 
 import (
 	cecdsa "crypto/ecdsa"
@@ -54,9 +54,6 @@ type KeepID interface {
 // 	StakeMonitor() (StakeMonitor, error)
 // 	BalanceMonitor() (BalanceMonitor, error)
 // }
-
-// FIXME BalanceMonitor may be an Ethereum-specific concept, kick it
-// FIXME from the chain interface?
 
 // Handle represents a handle to an implementation of operator functions
 // for a particular chain.
@@ -215,14 +212,11 @@ type BondedECDSAKeepHandle interface {
 	GetPublicKey() ([]uint8, error)
 
 	// GetMembers returns keep's members.
-	// FIXME this should not be needed; instead, BelongsToKeep() or similar
 	GetMembers() ([]KeepMemberID, error)
 
 	// IsThisOperatorMember returns true if the current operator belongs to the
 	// BondedECDSAKeep represented by this handle, false otherwise, or an error
 	// if the process of determining this fails.
-	//
-	// FIXME IsOperatorMember
 	IsThisOperatorMember() (bool, error)
 
 	// OperatorIndex returns the index of the current operator in this keep's

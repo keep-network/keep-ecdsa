@@ -18,7 +18,7 @@ type bondedEcdsaKeep struct {
 	handle   *ethereumChain
 	contract *contract.BondedECDSAKeep
 
-	contractAddress common.Address // FIXME Expose address on contract.BondedECDSAKeep?
+	contractAddress common.Address
 }
 
 // GetKeepWithID returns a handle to the BondedECDSAKeep with the provided id.

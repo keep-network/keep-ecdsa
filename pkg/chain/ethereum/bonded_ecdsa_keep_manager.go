@@ -17,8 +17,6 @@ type bondedEcdsaKeepManager struct {
 
 func (ec *ethereumChain) BondedECDSAKeepManager() (chain.BondedECDSAKeepManager, error) {
 	return &bondedEcdsaKeepManager{
-		// FIXME This should probably be ec.bondedECDSAKeepFactoryContract
-		// FIXME instead of the whole ec kit and kaboodle.
 		handle:  ec,
 		address: ec.accountKey.Address,
 	}, nil
@@ -43,8 +41,6 @@ func (bekm *bondedEcdsaKeepManager) OnBondedECDSAKeepCreated(
 			memberIDs = append(memberIDs, combinedChainID(memberAddress))
 		}
 
-		// FIXME This should pass a BondedECSAKeep instead of an address +
-		// FIXME members.
 		handler(&chain.BondedECDSAKeepCreatedEvent{
 			Keep: &bondedEcdsaKeep{
 				bekm.handle,
