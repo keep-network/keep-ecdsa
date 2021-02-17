@@ -20,8 +20,11 @@ type tbtcApplicationHandle struct {
 
 func (bekm *bondedEcdsaKeepManager) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 	return &tbtcApplicationHandle{
-		bekm:              bekm,
-		tbtcSystemAddress: common.Address{},
+		bekm: bekm,
+		tbtcSystemAddress: common.HexToAddress(
+			// FIXME Update to improved contract address structure?
+			bekm.handle.config.ContractAddresses["TBTCSystem"],
+		),
 	}, nil
 }
 
