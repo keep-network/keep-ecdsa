@@ -764,6 +764,7 @@ func (t *tbtc) monitorAndAct(
 
 	return monitoringStartFn(
 		func(depositAddress string) {
+			fmt.Println("boop", depositAddress, monitoringName)
 			go handleStartEvent(depositAddress)
 		},
 	)

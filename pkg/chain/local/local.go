@@ -20,6 +20,23 @@ import (
 	commonLocal "github.com/keep-network/keep-common/pkg/chain/local"
 )
 
+// TestingTBTCHandle is an extension of the chain.TBTCHandle interface which
+// exposes additional functions useful for testing.
+type TestingTBTCHandle interface {
+	chain.TBTCHandle
+
+	CreateDeposit(depositAddress string, signers []common.Address)
+	DepositPubkey(depositAddress string) ([]byte, error)
+	DepositRedemptionSignature(depositAddress string) (*Signature, error)
+	DepositRedemptionProof(depositAddress string) (*TxProof, error)
+	DepositRedemptionFee(depositAddress string) (*big.Int, error)
+	RedeemDeposit(depositAddress string) error
+
+	SetAlwaysFailingTransactions(transactionNames ...string)
+
+	Logger() *localChainLogger
+}
+
 // TestingBondedECDSAKeepHandle is an extension of the
 // chain.BondedECDSAKeepHandle interface which exposes additional functions
 // useful for testing.
@@ -34,9 +51,11 @@ type TestingBondedECDSAKeepHandle interface {
 type TestingChain interface {
 	chain.Handle
 
+	TestingTBTC() TestingTBTCHandle
+
 	OpenKeep(keepAddress common.Address, members []common.Address) TestingBondedECDSAKeepHandle
-	CloseKeep(keepAddress common.Address) error
-	TerminateKeep(keepAddress common.Address) error
+	CloseKeep(keepAddress chain.KeepID) error
+	TerminateKeep(keepID chain.KeepID) error
 	AuthorizeOperator(operatorAddress common.Address)
 }
 
@@ -135,11 +154,13 @@ func (lc *localChain) OpenKeep(
 	return keep
 }
 
-func (lc *localChain) CloseKeep(keepAddress common.Address) error {
+func (lc *localChain) CloseKeep(keepID chain.KeepID) error {
+	keepAddress := common.HexToAddress(keepID.String())
 	return lc.closeKeep(keepAddress)
 }
 
-func (lc *localChain) TerminateKeep(keepAddress common.Address) error {
+func (lc *localChain) TerminateKeep(keepID chain.KeepID) error {
+	keepAddress := common.HexToAddress(keepID.String())
 	return lc.terminateKeep(keepAddress)
 }
 
@@ -185,6 +206,10 @@ func RandomSigningGroup(size int) []common.Address {
 	}
 
 	return signers
+}
+
+func generateKeepID() chain.KeepID {
+	return combinedChainID(generateAddress())
 }
 
 func generateAddress() common.Address {

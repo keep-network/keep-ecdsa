@@ -37,7 +37,7 @@ type tbtcApplicationHandle struct {
 	depositRedeemedHandlers               map[int]func(depositAddress string)
 }
 
-func (lc *localChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
+func (lc *localChain) TestingTBTC() TestingTBTCHandle {
 	return &tbtcApplicationHandle{
 		handle: lc,
 
@@ -50,7 +50,11 @@ func (lc *localChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 		depositRedemptionRequestedHandlers:    make(map[int]func(depositAddress string)),
 		depositGotRedemptionSignatureHandlers: make(map[int]func(depositAddress string)),
 		depositRedeemedHandlers:               make(map[int]func(depositAddress string)),
-	}, nil
+	}
+}
+
+func (lc *localChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
+	return lc.TestingTBTC(), nil
 }
 
 func (*tbtcApplicationHandle) ID() (chain.KeepApplicationID) {
@@ -90,13 +94,15 @@ func (tah *tbtcApplicationHandle) IsOperatorAuthorized(operator chain.OperatorID
 
 func (tah *tbtcApplicationHandle) CreateDeposit(
 	depositAddress string,
-	signers []common.Address,
+	signerAddresses []common.Address,
 ) {
 	tah.tbtcLocalChainMutex.Lock()
 	defer tah.tbtcLocalChainMutex.Unlock()
 
-	keepAddress := generateAddress()
-	keep, err := tah.handle.createKeepWithMembers(keepAddress, signers)
+	keepID := generateKeepID()
+	keepAddress := common.HexToAddress(keepID.String())
+
+	keep, err := tah.handle.createKeepWithMembers(keepAddress, signerAddresses)
 	if err != nil {
 		panic(err)
 	}
