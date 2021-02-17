@@ -143,12 +143,9 @@ func Start(c *cli.Context) error {
 
 	keepManager, err := ethereumChain.BondedECDSAKeepManager()
 	if err != nil {
-		// do something
+		panic(fmt.Sprintf("Failed to resolve Keep manager: [%v].", err))
 	}
-	tbtcHandle, err := keepManager.TBTCApplicationHandle()
-	if err != nil {
-		// do something
-	}
+
 	networkProvider, err := libp2p.Connect(
 		ctx,
 		config.LibP2P,
@@ -157,7 +154,6 @@ func Start(c *cli.Context) error {
 		firewall.NewStakeOrActiveKeepPolicy(
 			ethereumChain.PublicKeyToOperatorID,
 			keepManager,
-			tbtcHandle,
 			stakeMonitor,
 		),
 		retransmission.NewTimeTicker(ctx, 1*time.Second),

@@ -42,7 +42,6 @@ var errNoMinStakeNoActiveKeep = fmt.Errorf("remote peer has no minimum " +
 func NewStakeOrActiveKeepPolicy(
 	publicKeyToOperatorIDFunc func(*ecdsa.PublicKey) chain.OperatorID,
 	keepManager chain.BondedECDSAKeepManager,
-	tbtcHandle chain.TBTCHandle,
 	stakeMonitor coreChain.StakeMonitor,
 ) coreNet.Firewall {
 	return &stakeOrActiveKeepPolicy{
