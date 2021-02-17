@@ -37,6 +37,8 @@ type SanctionedApplications struct {
 	AddressesStrings []string `toml:"Addresses"`
 }
 
+// FIXME Update to improved contract address structure that removes the need for
+// SanctionedApplications as an entry?
 // TODO This should be IDs(chain.Handle) ([]chain.KeepApplicationID, error)
 // TODO It should also be per-chain.
 // Addresses returns list of sanctioned applications as a slice of ethereum addresses.

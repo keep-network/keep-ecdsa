@@ -269,6 +269,7 @@ func Initialize(
 		}
 	})
 
+	// FIXME Update to improved contract address structure?
 	supportedApplicationsByStringID := make(map[string]chain.BondedECDSAKeepApplicationHandle)
 	tbtcApplicationHandle, err := keepManager.TBTCApplicationHandle()
 	if err != nil {
