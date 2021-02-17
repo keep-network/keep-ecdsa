@@ -35,21 +35,27 @@ func (bekm *bondedEcdsaKeepManager) OnBondedECDSAKeepCreated(
 		HonestThreshold *big.Int,
 		blockNumber uint64,
 	) {
-		contract, _ := bekm.getKeepContract(KeepAddress)
+		keep, err := bekm.GetKeepWithID(combinedChainID(KeepAddress))
+		if err != nil {
+			logger.Errorf(
+				"Failed to look up keep with address [%v] for "+
+					"BondedECDSAKeepCreated event at block [%v]: [%v].",
+				KeepAddress,
+				blockNumber,
+				err,
+			)
+			return
+		}
 		memberIDs := []chain.KeepMemberID{}
 		for _, memberAddress := range Members {
 			memberIDs = append(memberIDs, combinedChainID(memberAddress))
 		}
 
 		handler(&chain.BondedECDSAKeepCreatedEvent{
-			Keep: &bondedEcdsaKeep{
-				bekm.handle,
-				contract,
-				KeepAddress,
-			},
-			Members:         memberIDs,
-			HonestThreshold: HonestThreshold.Uint64(),
-			BlockNumber:     blockNumber,
+			Keep:                 keep,
+			Members:              memberIDs,
+			HonestThreshold:      HonestThreshold.Uint64(),
+			BlockNumber:          blockNumber,
 		})
 	}
 

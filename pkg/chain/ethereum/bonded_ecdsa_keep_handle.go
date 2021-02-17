@@ -31,15 +31,7 @@ func (bekm *bondedEcdsaKeepManager) GetKeepWithID(
 		return nil, fmt.Errorf("incorrect keep address [%s]", keepAddressString)
 	}
 
-	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
-		common.HexToAddress(keepAddressString),
-		bekm.handle.accountKey,
-		bekm.handle.client,
-		bekm.handle.nonceManager,
-		bekm.handle.miningWaiter,
-		bekm.handle.blockCounter,
-		bekm.handle.transactionMutex,
-	)
+	bondedECDSAKeepContract, err := bekm.getKeepContract(common.HexToAddress(keepAddressString))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
