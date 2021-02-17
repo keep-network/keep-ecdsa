@@ -52,14 +52,13 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.bondedECDSAKeepFactoryContract.HasMinimumStake(address)
 }
 
-// BalanceOf returns the stake balance of the specified address.
-// FIXME make private
-func (ec *ethereumChain) BalanceOf(address common.Address) (*big.Int, error) {
+// balanceOf returns the stake balance of the specified address.
+func (ec *ethereumChain) balanceOf(address common.Address) (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
 }
 
-// BlockTimestamp returns given block's timestamp.
-func (ec *ethereumChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
+// blockTimestamp returns given block's timestamp.
+func (ec *ethereumChain) blockTimestamp(blockNumber *big.Int) (uint64, error) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancelCtx()
 

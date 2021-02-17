@@ -46,5 +46,5 @@ func (es *ethereumStaker) Address() relaychain.StakerAddress {
 }
 
 func (es *ethereumStaker) Stake() (*big.Int, error) {
-	return es.ethereum.BalanceOf(common.HexToAddress(es.address))
+	return es.ethereum.balanceOf(common.HexToAddress(es.address))
 }
