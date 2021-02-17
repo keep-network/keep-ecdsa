@@ -233,6 +233,7 @@ type BondedECDSAKeepHandle interface {
 	// All implementations should returns those events sorted by the
 	// block number in the ascending order.
 	PastSignatureSubmittedEvents(
+		// FIXME how can this be divorced from a block number?
 		startBlock uint64,
 	) ([]*SignatureSubmittedEvent, error)
 }

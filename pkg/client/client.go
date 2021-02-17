@@ -80,6 +80,8 @@ func Initialize(
 	keepsRegistry.LoadExistingKeeps()
 
 	confirmIsInactive := func(keepID chain.KeepID) bool {
+		// FIXME Rework WaitForBlockConfirmations in terms of a chain-
+		// FIXME independent WaitForSufficientFinality.
 		blockCounter, err := hostChain.BlockCounter()
 		if err != nil {
 			logger.Errorf("failed to get block counter: [%v]", err)
