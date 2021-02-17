@@ -41,7 +41,7 @@ func (lc *localChain) TestingTBTC() TestingTBTCHandle {
 	return &tbtcApplicationHandle{
 		handle: lc,
 
-		logger:                                &localChainLogger{},
+		logger: &localChainLogger{},
 
 		alwaysFailingTransactions:             make(map[string]bool),
 		deposits:                              make(map[string]*localDeposit),
@@ -57,7 +57,7 @@ func (lc *localChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 	return lc.TestingTBTC(), nil
 }
 
-func (*tbtcApplicationHandle) ID() (chain.KeepApplicationID) {
+func (*tbtcApplicationHandle) ID() chain.KeepApplicationID {
 	return combinedChainID(
 		common.BigToAddress(tbtcApplicationID),
 	)
