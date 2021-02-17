@@ -46,8 +46,14 @@ func (bekm *bondedEcdsaKeepManager) OnBondedECDSAKeepCreated(
 			)
 			return
 		}
+
+		thisOperatorIsMember := false
 		memberIDs := []chain.KeepMemberID{}
 		for _, memberAddress := range Members {
+			if memberAddress == bekm.operatorAddress {
+				thisOperatorIsMember = true
+			}
+
 			memberIDs = append(memberIDs, combinedChainID(memberAddress))
 		}
 
@@ -56,6 +62,7 @@ func (bekm *bondedEcdsaKeepManager) OnBondedECDSAKeepCreated(
 			Members:              memberIDs,
 			HonestThreshold:      HonestThreshold.Uint64(),
 			BlockNumber:          blockNumber,
+			ThisOperatorIsMember: thisOperatorIsMember,
 		})
 	}
 
