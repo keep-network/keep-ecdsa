@@ -212,5 +212,5 @@ func (cci combinedChainID) KeepMemberID(keepID chain.KeepID) chain.KeepMemberID 
 }
 
 func (cci combinedChainID) String() string {
-	return cci.String()
+	return common.Address(cci).String()
 }
