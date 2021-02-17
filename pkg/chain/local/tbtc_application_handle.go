@@ -96,10 +96,13 @@ func (tah *tbtcApplicationHandle) CreateDeposit(
 	defer tah.tbtcLocalChainMutex.Unlock()
 
 	keepAddress := generateAddress()
-	keep := tah.handle.OpenKeep(keepAddress, signers)
+	keep, err := tah.handle.createKeepWithMembers(keepAddress, signers)
+	if err != nil {
+		panic(err)
+	}
 
 	tah.deposits[depositAddress] = &localDeposit{
-		keep:                      keep.(*localKeep),
+		keep:                      keep,
 		state:                     chain.AwaitingSignerSetup,
 		utxoValue:                 big.NewInt(defaultUTXOValue),
 		redemptionRequestedEvents: make([]*chain.DepositRedemptionRequestedEvent, 0),

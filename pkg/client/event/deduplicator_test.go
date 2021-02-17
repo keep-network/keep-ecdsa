@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
@@ -321,7 +322,7 @@ func newDeduplicator(ctx context.Context) (
 	local.TestingChain,
 ) {
 	mockRegistry := &mockRegistry{
-		keeps: make(map[common.Address]bool),
+		keeps: make(map[chain.KeepID]bool),
 	}
 
 	chain := local.Connect(ctx)
@@ -335,13 +336,13 @@ func newDeduplicator(ctx context.Context) (
 }
 
 type mockRegistry struct {
-	keeps map[common.Address]bool
+	keeps map[chain.KeepID]bool
 }
 
 func (mr *mockRegistry) AddSigner(keepAddress common.Address) {
 	mr.keeps[keepAddress] = true
 }
 
-func (mr *mockRegistry) HasSigner(keepAddress common.Address) bool {
-	return mr.keeps[keepAddress]
+func (mr *mockRegistry) HasSigner(keepID chain.KeepID) bool {
+	return mr.keeps[keepID]
 }

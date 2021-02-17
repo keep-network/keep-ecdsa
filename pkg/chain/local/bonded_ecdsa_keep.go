@@ -188,15 +188,15 @@ func (lk *localKeep) IsActive() (bool, error) {
 	return lk.status == active, nil
 }
 
-func (lc *localChain) closeKeep(keepAddress common.Address) error {
+func (lc *localChain) closeKeep(keepID chain.KeepID) error {
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
 
-	keep, ok := lc.keeps[keepAddress]
+	keep, ok := lc.keeps[keepID]
 	if !ok {
 		return fmt.Errorf(
 			"failed to find keep with address: [%s]",
-			keepAddress.String(),
+			keepID,
 		)
 	}
 
@@ -312,15 +312,15 @@ func (lk *localKeep) PastSignatureSubmittedEvents(
 	return lk.signatureSubmittedEvents, nil
 }
 
-func (lc *localChain) terminateKeep(keepAddress common.Address) error {
+func (lc *localChain) terminateKeep(keepID chain.KeepID) error {
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
 
-	keep, ok := lc.keeps[keepAddress]
+	keep, ok := lc.keeps[keepID]
 	if !ok {
 		return fmt.Errorf(
 			"failed to find keep with address: [%s]",
-			keepAddress.String(),
+			keepID,
 		)
 	}
 

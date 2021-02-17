@@ -3,17 +3,33 @@ package tss
 import (
 	"context"
 	cecdsa "crypto/ecdsa"
-	"crypto/elliptic"
-	"encoding/hex"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
+
+type keepMemberIDAddress common.Address
+func (kmia keepMemberIDAddress) String() string {
+	return common.Address(kmia).String()
+}
+func (kmia keepMemberIDAddress) OperatorID() chain.OperatorID {
+	return kmia
+}
+func (kmia keepMemberIDAddress) KeepMemberID(keepID chain.KeepID) chain.KeepMemberID {
+	return kmia
+}
+
+func pubKeyToOperatorIDFunc (publicKey *cecdsa.PublicKey) chain.OperatorID {
+	return keepMemberIDAddress(crypto.PubkeyToAddress(*publicKey))
+}
 
 func TestAnnounceProtocol(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -23,7 +39,7 @@ func TestAnnounceProtocol(t *testing.T) {
 		t.Fatalf("logger initialization failed: [%v]", err)
 	}
 
-	keepAddress := "0x1234567"
+	keepID := keepMemberIDAddress(common.HexToAddress("0x1234567"))
 	groupSize := 3
 
 	groupMembers, err := generateMemberKeys(groupSize)
@@ -31,17 +47,13 @@ func TestAnnounceProtocol(t *testing.T) {
 		t.Fatalf("failed to generate members keys: [%v]", err)
 	}
 
-	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
-		return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
-	}
-
-	groupMemberAddresses := make([]string, groupSize)
+	groupMemberAddresses := make([]chain.KeepMemberID, groupSize)
 	for i, member := range groupMembers {
 		pubKey, err := member.PublicKey()
 		if err != nil {
 			t.Fatalf("could not get member pubkey: [%v]", err)
 		}
-		groupMemberAddresses[i] = hex.EncodeToString(pubKeyToAddressFn(*pubKey))
+		groupMemberAddresses[i] = pubKeyToOperatorIDFunc(pubKey).KeepMemberID(keepID)
 	}
 
 	errChan := make(chan error)
@@ -78,10 +90,10 @@ func TestAnnounceProtocol(t *testing.T) {
 			memberIDs, err := AnnounceProtocol(
 				ctx,
 				memberPublicKey,
-				keepAddress,
+				keepID,
 				groupMemberAddresses,
 				broadcastChannel,
-				pubKeyToAddressFn,
+				pubKeyToOperatorIDFunc,
 			)
 			if err != nil {
 				errChan <- err

@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/cache"
 	coreNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 )
 
@@ -26,7 +26,11 @@ func TestHasMinimumStake(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -51,7 +55,11 @@ func TestNoAuthorization(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -78,7 +86,11 @@ func TestCachesNotAuthorizedOperators(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -108,7 +120,11 @@ func TestCachesAuthorizedOperators(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -137,7 +153,11 @@ func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeer1PublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -146,6 +166,9 @@ func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
 	remotePeer1Address := common.HexToAddress(
 		key.NetworkPubKeyToEthAddress(remotePeer1PublicKey),
 	)
+	remotePeer1ID := chain.PublicKeyToOperatorID(key.NetworkKeyToECDSAKey(
+		remotePeer1PublicKey,
+	))
 
 	_, remotePeer2PublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -154,18 +177,21 @@ func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
 	remotePeer2Address := common.HexToAddress(
 		key.NetworkPubKeyToEthAddress(remotePeer2PublicKey),
 	)
+	remotePeer2ID := chain.PublicKeyToOperatorID(key.NetworkKeyToECDSAKey(
+		remotePeer2PublicKey,
+	))
 
 	policy.authorizedOperatorsCache.Add(remotePeer1Address.String())
 
 	policy.nonAuthorizedOperatorsCache.Add(remotePeer2Address.String())
 	chain.AuthorizeOperator(remotePeer2Address)
 
-	err = policy.validateAuthorization(remotePeer1Address.String())
+	err = policy.validateAuthorization(remotePeer1ID)
 	if err != nil {
 		t.Errorf("expected no valdation error; has: [%v]", err)
 	}
 
-	err = policy.validateAuthorization(remotePeer2Address.String())
+	err = policy.validateAuthorization(remotePeer2ID)
 	if err != errNoAuthorization {
 		t.Errorf("expected error about no authorization; has: [%v]", err)
 	}
@@ -181,7 +207,11 @@ func TestNoMinimumStakeNoKeepsExist(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -213,7 +243,11 @@ func TestNoMinimumStakeIsNotKeepMember(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -253,7 +287,11 @@ func TestNoMinimumStakeIsActiveKeepMember(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -289,7 +327,11 @@ func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -334,7 +376,11 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -384,7 +430,11 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -464,7 +514,11 @@ func TestSweepsActiveKeepMembersCache(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -527,7 +581,11 @@ func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -583,7 +641,11 @@ func TestIsKeepActiveCaching(t *testing.T) {
 
 	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", keepManager)
+	}
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -595,14 +657,14 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
-	chain.OpenKeep(
+	keep1 := chain.OpenKeep(
 		keep1Address,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 		},
 	)
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	chain.OpenKeep(
+	keep2:= chain.OpenKeep(
 		keep2Address,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
@@ -611,14 +673,14 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	chain.CloseKeep(keep2Address)
 
 	// first check, result should be put into the cache
-	isActive, err := policy.isKeepActive(keep1Address)
+	isActive, err := policy.isKeepActive(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !isActive {
 		t.Fatal("keep is active")
 	}
-	isActive, err = policy.isKeepActive(keep2Address)
+	isActive, err = policy.isKeepActive(keep2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -627,14 +689,14 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	}
 
 	// result is read from the cache, should be the same as the original one
-	isActive, err = policy.isKeepActive(keep1Address)
+	isActive, err = policy.isKeepActive(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !isActive {
 		t.Fatal("keep is active")
 	}
-	isActive, err = policy.isKeepActive(keep2Address)
+	isActive, err = policy.isKeepActive(keep2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -644,7 +706,7 @@ func TestIsKeepActiveCaching(t *testing.T) {
 
 	// close active keep and see it's been updated properly
 	chain.CloseKeep(keep1Address)
-	isActive, err = policy.isKeepActive(keep1Address)
+	isActive, err = policy.isKeepActive(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -658,8 +720,12 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	defer cancelCtx()
 
 	chain := local.Connect(ctx)
+	keepManager, err := chain.BondedECDSAKeepManager()
+	if err != nil {
+		t.Fatalf("failed to resolve keep manager: [%+v]", err)
+	}
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(chain.PublicKeyToOperatorID, keepManager, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -671,7 +737,7 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
-	chain.OpenKeep(
+	keep1 := chain.OpenKeep(
 		keep1Address,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
@@ -679,7 +745,7 @@ func TestGetKeepMembersCaching(t *testing.T) {
 		},
 	)
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	chain.OpenKeep(
+	keep2 := chain.OpenKeep(
 		keep2Address,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
@@ -697,14 +763,14 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	}
 
 	// first check, result should be put into the cache
-	members, err := policy.getKeepMembers(keep1Address)
+	members, err := policy.getKeepMembers(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(members, keep1ExpectedMembers) {
 		t.Fatal("unexpected members")
 	}
-	members, err = policy.getKeepMembers(keep2Address)
+	members, err = policy.getKeepMembers(keep2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -713,14 +779,14 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	}
 
 	// result is read from the cache, should be the same as the original one
-	members, err = policy.getKeepMembers(keep1Address)
+	members, err = policy.getKeepMembers(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(members, keep1ExpectedMembers) {
 		t.Fatal("unexpected members")
 	}
-	members, err = policy.getKeepMembers(keep2Address)
+	members, err = policy.getKeepMembers(keep2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -730,11 +796,13 @@ func TestGetKeepMembersCaching(t *testing.T) {
 }
 
 func createNewPolicy(
-	chain eth.Handle,
+	publicKeyToOperatorIDFunc func(*ecdsa.PublicKey) chain.OperatorID,
+	keepManager chain.BondedECDSAKeepManager,
 	coreFirewall coreNet.Firewall,
 ) *stakeOrActiveKeepPolicy {
 	return &stakeOrActiveKeepPolicy{
-		hostChain:                   chain,
+		keepManager:                   keepManager,
+		publicKeyToOperatorIDFunc:   publicKeyToOperatorIDFunc,
 		minimumStakePolicy:          coreFirewall,
 		authorizedOperatorsCache:    cache.NewTimeCache(cacheLifeTime),
 		nonAuthorizedOperatorsCache: cache.NewTimeCache(cacheLifeTime),

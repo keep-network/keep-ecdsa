@@ -11,11 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/chain/local"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	corechain "github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	commonLocal "github.com/keep-network/keep-common/pkg/chain/local"
@@ -51,8 +50,8 @@ type localChain struct {
 	blockCounter     corechain.BlockCounter
 	blocksTimestamps sync.Map
 
-	keepAddresses []common.Address
-	keeps         map[common.Address]*localKeep
+	keepAddresses []chain.KeepID
+	keeps         map[chain.KeepID]*localKeep
 
 	keepCreatedHandlers map[int]func(event *chain.BondedECDSAKeepCreatedEvent)
 
@@ -79,7 +78,7 @@ func Connect(ctx context.Context) TestingChain {
 
 	localChain := &localChain{
 		blockCounter:        blockCounter,
-		keeps:               make(map[common.Address]*localKeep),
+		keeps:               make(map[chain.KeepID]*localKeep),
 		keepCreatedHandlers: make(map[int]func(event *chain.BondedECDSAKeepCreatedEvent)),
 		operatorKey:         operatorKey,
 		signer:              signer,
@@ -103,7 +102,7 @@ func (lc *localChain) OperatorID() chain.OperatorID {
 }
 
 func (lc *localChain) PublicKeyToOperatorID(publicKey *cecdsa.PublicKey) chain.OperatorID {
-	return combinedChainID(crypto.PubkeyToAddress(lc.operatorKey.PublicKey))
+	return combinedChainID(crypto.PubkeyToAddress(*publicKey))
 }
 
 func (lc *localChain) observeBlocksTimestamps(ctx context.Context) {

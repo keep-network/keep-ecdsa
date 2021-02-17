@@ -17,6 +17,10 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
+// func (lc *localChain) testingTBTC() *tbtc {
+
+// }
+
 func TestOnBondedECDSAKeepCreated(t *testing.T) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancelCtx()
@@ -25,7 +29,10 @@ func TestOnBondedECDSAKeepCreated(t *testing.T) {
 	eventFired := make(chan *chain.BondedECDSAKeepCreatedEvent)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	expectedEvent := &chain.BondedECDSAKeepCreatedEvent{
-		KeepAddress: keepAddress,
+		Keep: &localKeep{
+			handle: localChain,
+			address: keepAddress,
+		},
 	}
 
 	subscription := localChain.OnBondedECDSAKeepCreated(
@@ -42,9 +49,10 @@ func TestOnBondedECDSAKeepCreated(t *testing.T) {
 
 	select {
 	case event := <-eventFired:
-		if !reflect.DeepEqual(event, expectedEvent) {
+		localKeep, ok := event.Keep.(*localKeep)
+		if !ok || localKeep.handle != localChain || localKeep.address != keepAddress {
 			t.Fatalf(
-				"unexpected keep creation event\nexpected: [%v]\nactual:   [%v]",
+				"unexpected keep creation event\nexpected: [%+v]\nactual:   [%+v]",
 				expectedEvent,
 				event,
 			)

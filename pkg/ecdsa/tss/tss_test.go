@@ -25,6 +25,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/utils/testutils"
 )
 
+// Tests.
 func TestGenerateKeyAndSign(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
@@ -38,11 +39,11 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Fatalf("logger initialization failed: [%v]", err)
 	}
 
+	errChan := make(chan error)
 	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
 		return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 	}
 
-	errChan := make(chan error)
 
 	groupMemberIDs, err := generateMemberKeys(groupSize)
 	if err != nil {
@@ -172,7 +173,6 @@ func TestGenerateKeyAndSign(t *testing.T) {
 					ctx,
 					digest[:],
 					networkProvider,
-					pubKeyToAddressFn,
 				)
 				if err != nil {
 					errChan <- fmt.Errorf("failed to sign: [%v]", err)

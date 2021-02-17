@@ -60,13 +60,18 @@ func (lc *localChain) GetKeepAtIndex(
 func (lc *localChain) GetKeepWithID(
 	keepID chain.KeepID,
 ) (chain.BondedECDSAKeepHandle, error) {
-	// Inside the Ethereum chain, keep ids are always addresses.
+	// Inside the local chain, keep ids are always addresses.
 	keepAddressString := keepID.String()
 	if !common.IsHexAddress(keepAddressString) {
 		return nil, fmt.Errorf("incorrect keep address [%s]", keepAddressString)
 	}
 
-	return lc.keeps[common.HexToAddress(keepAddressString)], nil
+	keep, exists := lc.keeps[common.HexToAddress(keepAddressString)]
+	if !exists {
+		return nil, fmt.Errorf("failed to find keep with address: [%s]", keepAddressString)
+	}
+
+	return keep, nil
 }
 
 func (lc *localChain) IsOperatorAuthorized(operator chain.OperatorID) (bool, error) {
