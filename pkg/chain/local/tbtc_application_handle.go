@@ -206,6 +206,10 @@ func (tah *tbtcApplicationHandle) RedeemDeposit(depositAddress string) error {
 	if err != nil {
 		return err
 	}
+	currentTimestamp, err := tah.handle.BlockTimestamp(new(big.Int).SetUint64(currentBlock))
+	if err != nil {
+		return err
+	}
 
 	deposit.redemptionRequestedEvents = append(
 		deposit.redemptionRequestedEvents,
@@ -216,6 +220,7 @@ func (tah *tbtcApplicationHandle) RedeemDeposit(depositAddress string) error {
 			RedeemerOutputScript: nil,
 			RequestedFee:         deposit.redemptionFee,
 			Outpoint:             nil,
+			Timestamp:            currentTimestamp,
 			BlockNumber:          currentBlock,
 		},
 	)
@@ -478,6 +483,10 @@ func (tah *tbtcApplicationHandle) IncreaseRedemptionFee(
 	if err != nil {
 		return err
 	}
+	currentTimestamp, err := tah.handle.BlockTimestamp(new(big.Int).SetUint64(currentBlock))
+	if err != nil {
+		return err
+	}
 
 	deposit.redemptionRequestedEvents = append(
 		deposit.redemptionRequestedEvents,
@@ -488,6 +497,7 @@ func (tah *tbtcApplicationHandle) IncreaseRedemptionFee(
 			RedeemerOutputScript: nil,
 			RequestedFee:         deposit.redemptionFee,
 			Outpoint:             nil,
+			Timestamp:            currentTimestamp,
 			BlockNumber:          currentBlock,
 		},
 	)

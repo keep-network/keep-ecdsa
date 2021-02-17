@@ -113,6 +113,7 @@ type DepositRedemptionRequestedEvent struct {
 	RedeemerOutputScript []byte
 	RequestedFee         *big.Int
 	Outpoint             []byte
+	Timestamp            uint64
 	BlockNumber          uint64
 }
 

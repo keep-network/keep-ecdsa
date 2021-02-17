@@ -189,7 +189,7 @@ func (lc *localChain) BlockCounter() (corechain.BlockCounter, error) {
 	return lc.blockCounter, nil
 }
 
-func (lc *localChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
+func (lc *localChain) blockTimestamp(blockNumber *big.Int) (uint64, error) {
 	blockTimestamp, ok := lc.blocksTimestamps.Load(blockNumber.Uint64())
 	if !ok {
 		return 0, fmt.Errorf("no timestamp for block [%v]", blockNumber)

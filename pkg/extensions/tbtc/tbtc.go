@@ -545,22 +545,12 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		latestRedemptionRequestedEvent :=
 			redemptionRequestedEvents[len(redemptionRequestedEvents)-1]
 
-		// FIXME This should be resolved internally in the chain, and timestamp
-		// FIXME provided as part of the event (or as a method).
-		// Get the seconds timestamp for the latest redemption request.
-		redemptionRequestedTimestamp, err := t.hostChain.BlockTimestamp(
-			new(big.Int).SetUint64(latestRedemptionRequestedEvent.BlockNumber),
-		)
-		if err != nil {
-			return 0, err
-		}
-
 		// We must shift the constant timeout value by subtracting the time
 		// elapsed between the redemption request and the redemption signature.
 		// This way we obtain a value close to the redemption proof timeout
 		// and it doesn't matter when the redemption signature arrives.
 		timeoutShift := time.Duration(
-			gotRedemptionSignatureTimestamp-redemptionRequestedTimestamp,
+			gotRedemptionSignatureTimestamp-latestRedemptionRequestedEvent.Timestamp,
 		) * time.Second
 
 		actionDelay, err := t.getSignerActionDelay(depositAddress)

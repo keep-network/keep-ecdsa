@@ -79,9 +79,6 @@ type Handle interface {
 	// using the chain implementation-specific mechanism as well as to
 	// convert between public key and address.
 	Signing() chain.Signing
-	// BlockTimestamp returns given block's timestamp.
-	// In case the block is not yet mined, an error should be returned.
-	BlockTimestamp(blockNumber *big.Int) (uint64, error)
 
 	PublicKeyToOperatorID(publicKey *cecdsa.PublicKey) OperatorID
 

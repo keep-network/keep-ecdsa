@@ -243,6 +243,17 @@ func (tah *tbtcApplicationHandle) PastDepositRedemptionRequestedEvents(
 	result := make([]*chain.DepositRedemptionRequestedEvent, 0)
 
 	for _, event := range events {
+		timestamp, err := tah.bekm.handle.BlockTimestamp(new(big.Int).SetUint64(event.Raw.BlockNumber))
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to resolve timestamp for RedemptionRequested event "+
+					"for deposit [%s] in block [%v]: [%v]",
+				event.DepositContractAddress,
+				event.Raw.BlockNumber,
+				err,
+			)
+		}
+
 		result = append(result, &chain.DepositRedemptionRequestedEvent{
 			DepositAddress:       event.DepositContractAddress.Hex(),
 			RequesterAddress:     event.Requester.Hex(),
@@ -252,12 +263,13 @@ func (tah *tbtcApplicationHandle) PastDepositRedemptionRequestedEvents(
 			RequestedFee:         event.RequestedFee,
 			Outpoint:             event.Outpoint,
 			BlockNumber:          event.Raw.BlockNumber,
+			Timestamp:            timestamp,
 		})
 	}
 
-	// Make sure events are sorted by block number in ascending order.
+	// Make sure events are sorted by timestamp in ascending order.
 	sort.SliceStable(result, func(i, j int) bool {
-		return result[i].BlockNumber < result[j].BlockNumber
+		return result[i].Timestamp < result[j].Timestamp
 	})
 
 	return result, nil
