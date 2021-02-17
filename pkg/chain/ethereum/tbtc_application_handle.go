@@ -66,7 +66,7 @@ func (tah *tbtcApplicationHandle) RegisterAsMemberCandidate() error {
 // as a signer candidate in the factory for the given application.
 func (tah *tbtcApplicationHandle) IsRegisteredForApplication() (bool, error) {
 	return tah.bekm.handle.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
-		tah.bekm.address,
+		tah.bekm.operatorAddress,
 		tah.tbtcSystemAddress,
 	)
 }
@@ -75,7 +75,7 @@ func (tah *tbtcApplicationHandle) IsRegisteredForApplication() (bool, error) {
 // as a signer candidate for the given application.
 func (tah *tbtcApplicationHandle) IsEligibleForApplication() (bool, error) {
 	return tah.bekm.handle.bondedECDSAKeepFactoryContract.IsOperatorEligible(
-		tah.bekm.address,
+		tah.bekm.operatorAddress,
 		tah.tbtcSystemAddress,
 	)
 }
@@ -84,7 +84,7 @@ func (tah *tbtcApplicationHandle) IsEligibleForApplication() (bool, error) {
 // is up to date in the signers' pool of the given application.
 func (tah *tbtcApplicationHandle) IsStatusUpToDateForApplication() (bool, error) {
 	return tah.bekm.handle.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
-		tah.bekm.address,
+		tah.bekm.operatorAddress,
 		tah.tbtcSystemAddress,
 	)
 }
@@ -93,7 +93,7 @@ func (tah *tbtcApplicationHandle) IsStatusUpToDateForApplication() (bool, error)
 // pool for the given application.
 func (tah *tbtcApplicationHandle) UpdateStatusForApplication() error {
 	transaction, err := tah.bekm.handle.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
-		tah.bekm.address,
+		tah.bekm.operatorAddress,
 		tah.tbtcSystemAddress,
 	)
 	if err != nil {

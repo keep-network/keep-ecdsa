@@ -11,14 +11,14 @@ import (
 )
 
 type bondedEcdsaKeepManager struct {
-	handle  *ethereumChain
-	address common.Address
+	handle          *ethereumChain
+	operatorAddress common.Address
 }
 
 func (ec *ethereumChain) BondedECDSAKeepManager() (chain.BondedECDSAKeepManager, error) {
 	return &bondedEcdsaKeepManager{
-		handle:  ec,
-		address: ec.accountKey.Address,
+		handle:          ec,
+		operatorAddress: ec.accountKey.Address,
 	}, nil
 }
 
