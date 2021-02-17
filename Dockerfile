@@ -58,10 +58,6 @@ RUN go generate ./.../gen
 # Build the application.
 COPY ./ $APP_DIR/
 
-# Client Versioning.
-ARG VERSION
-ARG REVISION
-
 # Configure private repositories for Go dependencies
 ARG GOPRIVATE
 
