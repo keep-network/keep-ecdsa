@@ -56,7 +56,6 @@ jobs:
         working-directory: ./solidity
         run: |
           npm run test
-          exit 0
 
   lint:
     runs-on: ubuntu-latest
@@ -82,7 +81,7 @@ jobs:
       - name: Install dependencies
         working-directory: ./solidity
         run: npm ci
-        
+
       - name: Lint
         working-directory: ./solidity
         run: npm run lint
