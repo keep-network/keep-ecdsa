@@ -19,8 +19,10 @@ import (
 )
 
 const (
+	// KeyGenerationProtocolTimeout is the amount of time before we give up on key generation
 	KeyGenerationProtocolTimeout = 8 * time.Minute
-	SigningProtocolTimeout       = 10 * time.Minute
+	// SigningProtocolTimeout is the amount of time before we give up on the signing protocol
+	SigningProtocolTimeout = 10 * time.Minute
 )
 
 var logger = log.Logger("keep-tss")
@@ -170,6 +172,9 @@ func (s *ThresholdSigner) CalculateSignature(
 	return signature, err
 }
 
+// BroadcastRecoveryAddress broadcasts and receives the BTC recovery addresses
+// of each client so that each client can retrieve the underlying bitcoin in
+// the case that a keep is terminated.
 func BroadcastRecoveryAddress(
 	parentCtx context.Context,
 	groupID string,
@@ -178,7 +183,6 @@ func BroadcastRecoveryAddress(
 	dishonestThreshold uint,
 	networkProvider net.Provider,
 	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
-	paramsBox *params.Box,
 ) error {
 	const protocolReadyTimeout = 2 * time.Minute
 
@@ -303,5 +307,4 @@ func BroadcastRecoveryAddress(
 	default:
 		return fmt.Errorf("unexpected context error: [%v]", ctx.Err())
 	}
-	return nil
 }

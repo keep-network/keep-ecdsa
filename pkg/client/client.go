@@ -18,7 +18,6 @@ import (
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/client/event"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
-	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
@@ -938,8 +937,6 @@ func monitorKeepTerminatedEvent(
 					members,
 				)
 
-				preParamsBox := params.NewBox(nil)
-
 				tss.BroadcastRecoveryAddress(
 					ctx,
 					keepAddress.Hex(),
@@ -948,7 +945,6 @@ func monitorKeepTerminatedEvent(
 					uint(len(memberIDs)-1),
 					networkProvider,
 					ethereumChain.Signing().PublicKeyToAddress,
-					preParamsBox,
 				)
 
 				keepsRegistry.UnregisterKeep(keepAddress)
