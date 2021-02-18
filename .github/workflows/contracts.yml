@@ -9,7 +9,6 @@ on:
       - "rfc-18/**"
     paths:
       - "solidity/**"
-      - "!solidity/dashboard/**"
       - ".github/workflows/contracts.yml"
   pull_request:
     branches:
@@ -17,7 +16,6 @@ on:
       - "rfc-18/**"
     paths:
       - "solidity/**"
-      - "!solidity/dashboard/**"
       - ".github/workflows/contracts.yml"
 
 jobs:
