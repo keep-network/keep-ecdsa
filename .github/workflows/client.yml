@@ -50,8 +50,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
 
       - name: Create test results directory
-        run: |
-          mkdir test-results
+        run: mkdir test-results
           
       - name: Run Go tests
         run: |
