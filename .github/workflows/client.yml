@@ -52,6 +52,7 @@ jobs:
       - name: Create test results directory
         run: |
           mkdir test-results
+          
       - name: Run Go tests
         run: |
           docker run \
@@ -59,9 +60,10 @@ jobs:
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env \
             gotestsum --junitfile /mnt/test-results/unit-tests.xml
+
       - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v1.7
-        if: always() # guarantees that this action always runs, even if earlier steps fail
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           files:  ./test-results/unit-tests.xml
