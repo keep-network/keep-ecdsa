@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/keep-network/keep-common/pkg/chain/chainutil"
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 
@@ -573,7 +573,7 @@ func (n *Node) confirmSignature(
 		return false
 	}
 
-	isSignatureConfirmed, err := chainutil.WaitForBlockConfirmations(
+	isSignatureConfirmed, err := ethlike.WaitForBlockConfirmations(
 		n.ethereumChain.BlockCounter(),
 		currentBlock,
 		blockConfirmations,
@@ -736,7 +736,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 						continue
 					}
 
-					isConfirmed, err := chainutil.WaitForBlockConfirmations(
+					isConfirmed, err := ethlike.WaitForBlockConfirmations(
 						n.ethereumChain.BlockCounter(),
 						currentBlock,
 						blockConfirmations,

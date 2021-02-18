@@ -12,13 +12,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
+
 	"github.com/keep-network/keep-common/pkg/cache"
 
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/chain/chainutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
@@ -82,21 +83,21 @@ func Initialize(ctx context.Context, chain chain.TBTCHandle) {
 }
 
 type tbtc struct {
-	chain                     chain.TBTCHandle
-	monitoringLocks           sync.Map
-	blockConfirmations        uint64
-	memberDepositsCache       *cache.TimeCache 
-	notMemberDepositsCache    *cache.TimeCache
-	signerActionDelayStep     time.Duration
+	chain                  chain.TBTCHandle
+	monitoringLocks        sync.Map
+	blockConfirmations     uint64
+	memberDepositsCache    *cache.TimeCache
+	notMemberDepositsCache *cache.TimeCache
+	signerActionDelayStep  time.Duration
 }
 
 func newTBTC(chain chain.TBTCHandle) *tbtc {
 	return &tbtc{
-		chain:                     chain,
-		blockConfirmations:        defaultBlockConfirmations,
-		memberDepositsCache:       cache.NewTimeCache(monitoringCachePeriod),
-		notMemberDepositsCache:    cache.NewTimeCache(monitoringCachePeriod),
-		signerActionDelayStep:     defaultSignerActionDelayStep,
+		chain:                  chain,
+		blockConfirmations:     defaultBlockConfirmations,
+		memberDepositsCache:    cache.NewTimeCache(monitoringCachePeriod),
+		notMemberDepositsCache: cache.NewTimeCache(monitoringCachePeriod),
+		signerActionDelayStep:  defaultSignerActionDelayStep,
 	}
 }
 
@@ -913,7 +914,7 @@ func (t *tbtc) waitDepositStateChangeConfirmation(
 		return false
 	}
 
-	confirmed, err := chainutil.WaitForBlockConfirmations(
+	confirmed, err := ethlike.WaitForBlockConfirmations(
 		t.chain.BlockCounter(),
 		currentBlock,
 		t.blockConfirmations,
@@ -946,7 +947,7 @@ func (t *tbtc) waitKeepNotActiveConfirmation(
 		return false
 	}
 
-	isKeepActive, err := chainutil.WaitForBlockConfirmations(
+	isKeepActive, err := ethlike.WaitForBlockConfirmations(
 		t.chain.BlockCounter(),
 		currentBlock,
 		t.blockConfirmations,
