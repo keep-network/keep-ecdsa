@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/keep-network/keep-common/pkg/chain/chainutil"
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
@@ -81,7 +81,7 @@ func Initialize(
 			return false
 		}
 
-		isKeepActive, err := chainutil.WaitForBlockConfirmations(
+		isKeepActive, err := ethlike.WaitForBlockConfirmations(
 			ethereumChain.BlockCounter(),
 			currentBlock,
 			blockConfirmations,
@@ -584,7 +584,7 @@ func monitorSigningRequests(
 
 						defer eventDeduplicator.NotifySigningCompleted(keepAddress, event.Digest)
 
-						isAwaitingSignature, err := chainutil.WaitForBlockConfirmations(
+						isAwaitingSignature, err := ethlike.WaitForBlockConfirmations(
 							ethereumChain.BlockCounter(),
 							event.BlockNumber,
 							blockConfirmations,
@@ -710,7 +710,7 @@ func checkAwaitingSignature(
 					return err
 				}
 
-				isStillAwaitingSignature, err := chainutil.WaitForBlockConfirmations(
+				isStillAwaitingSignature, err := ethlike.WaitForBlockConfirmations(
 					ethereumChain.BlockCounter(),
 					startBlock,
 					blockConfirmations,
@@ -804,7 +804,7 @@ func monitorKeepClosedEvents(
 				}
 				defer eventDeduplicator.NotifyClosingCompleted(keepAddress)
 
-				isKeepActive, err := chainutil.WaitForBlockConfirmations(
+				isKeepActive, err := ethlike.WaitForBlockConfirmations(
 					ethereumChain.BlockCounter(),
 					event.BlockNumber,
 					blockConfirmations,
@@ -883,7 +883,7 @@ func monitorKeepTerminatedEvent(
 				}
 				defer eventDeduplicator.NotifyTerminatingCompleted(keepAddress)
 
-				isKeepActive, err := chainutil.WaitForBlockConfirmations(
+				isKeepActive, err := ethlike.WaitForBlockConfirmations(
 					ethereumChain.BlockCounter(),
 					event.BlockNumber,
 					blockConfirmations,
