@@ -23,6 +23,9 @@ RUN apk add --update --no-cache \
 # Install Solidity compiler.
 COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
 
+# Get gotestsum tool
+RUN go get gotest.tools/gotestsum
+
 # Configure GitHub token to be able to get private repositories.
 ARG GITHUB_TOKEN
 RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
