@@ -2,9 +2,10 @@ package tss
 
 import (
 	"fmt"
-	fuzz "github.com/google/gofuzz"
 	"reflect"
 	"testing"
+
+	fuzz "github.com/google/gofuzz"
 
 	"github.com/keep-network/keep-ecdsa/internal/testdata"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/pbutils"
@@ -177,7 +178,7 @@ func TestFuzzAnnounceMessageUnmarshaler(t *testing.T) {
 	pbutils.FuzzUnmarshaler(&AnnounceMessage{})
 }
 
-func TestLiquidationRecoveryMessageRoundtrip(t *testing.T) {
+func TestFuzzLiquidationRecoveryMessageRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var message LiquidationRecoveryMessage
 
@@ -190,7 +191,8 @@ func TestLiquidationRecoveryMessageRoundtrip(t *testing.T) {
 
 func TestLiquidationRecoveryMessageMarshalling(t *testing.T) {
 	msg := &LiquidationRecoveryMessage{
-		SenderID: MemberID([]byte("member-1")),
+		SenderID:           MemberID([]byte("member-1")),
+		BtcRecoveryAddress: "bcrt1qgvlmm6pe4epm7j3mjwkvdf2ymymu8tes04t6cr",
 	}
 
 	unmarshaled := &LiquidationRecoveryMessage{}
