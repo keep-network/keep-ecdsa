@@ -15,7 +15,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -117,7 +116,7 @@ func createAddressFilter(
 
 	return func(authorPublicKey *cecdsa.PublicKey) bool {
 		authorAddress := hex.EncodeToString(
-			crypto.PubkeyToAddress(*authorPublicKey).Bytes(),
+			operator.PubkeyToAddress(*authorPublicKey).Bytes(),
 		)
 		_, isAuthorized := authorizations[authorAddress]
 
