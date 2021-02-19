@@ -53,7 +53,7 @@ COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
 # Need this to resolve imports in generated Ethereum commands.
 COPY ./config $APP_DIR/config
-RUN go generate ./.../gen
+RUN go generate ./...
 
 # Build the application.
 COPY ./ $APP_DIR/
