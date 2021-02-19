@@ -22,6 +22,7 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
 
 jobs:
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) has been created as part of work on RFC-18
   lint:
     executor: docker-node
     steps:
@@ -62,6 +63,7 @@ jobs:
           name: Run tests
           working_directory: ~/project/staker-rewards
           command: npm test
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) has been created as part of work on RFC-18
   build_and_test_solidity:
     executor: docker-node
     steps:
@@ -87,6 +89,7 @@ jobs:
           name: Run solidity tests
           working_directory: ~/project/solidity
           command: npm run test
+  # GitHub Actions equivalent of this job (.github/workflows/client.yml) has been created as part of work on RFC-18 
   build_client_and_test_go:
     executor: docker-git
     steps:
@@ -301,7 +304,11 @@ workflows:
   version: 2
   lint:
     jobs:
-      - lint
+      - lint:
+          filters:
+            branches:
+              ignore:
+                - /rfc-18\/.*/
   solidity:
     jobs:
       - build_and_test_solidity
