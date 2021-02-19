@@ -49,7 +49,7 @@ COPY ./solidity $APP_DIR/solidity
 RUN cd $APP_DIR/solidity && npm install
 
 # Generate code.
-COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
+COPY ./pkg/chain/gen/ethereum $APP_DIR/pkg/chain/gen/ethereum
 COPY ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
 # Need this to resolve imports in generated Ethereum commands.
 COPY ./config $APP_DIR/config
