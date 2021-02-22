@@ -10,7 +10,7 @@ import (
 )
 
 type ethereumStakeMonitor struct {
-	ethereum *EthereumChain
+	ethereum *Chain
 }
 
 func (esm *ethereumStakeMonitor) HasMinimumStake(address string) (bool, error) {
@@ -32,13 +32,13 @@ func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error)
 	}, nil
 }
 
-func (ec *EthereumChain) StakeMonitor() (chain.StakeMonitor, error) {
+func (ec *Chain) StakeMonitor() (chain.StakeMonitor, error) {
 	return &ethereumStakeMonitor{ec}, nil
 }
 
 type ethereumStaker struct {
 	address  string
-	ethereum *EthereumChain
+	ethereum *Chain
 }
 
 func (es *ethereumStaker) Address() relaychain.StakerAddress {
