@@ -44,47 +44,47 @@ type Signature struct {
 // TxProof represents where a transaction proof has been provided or not (nil if not)
 type TxProof struct{}
 
-type localChainLogger struct {
 // ChainLogger writes log messages relevant to the local chain
+type ChainLogger struct {
 	retrieveSignerPubkeyCalls       int
 	provideRedemptionSignatureCalls int
 	increaseRedemptionFeeCalls      int
 	keepAddressCalls                int
 }
 
-func (lcl *localChainLogger) logRetrieveSignerPubkeyCall() {
+func (lcl *ChainLogger) logRetrieveSignerPubkeyCall() {
 	lcl.retrieveSignerPubkeyCalls++
 }
 
-func (lcl *localChainLogger) RetrieveSignerPubkeyCalls() int {
 // RetrieveSignerPubkeyCalls returns the number of times we've tried to retrieve the signer public key
+func (lcl *ChainLogger) RetrieveSignerPubkeyCalls() int {
 	return lcl.retrieveSignerPubkeyCalls
 }
 
-func (lcl *localChainLogger) logProvideRedemptionSignatureCall() {
+func (lcl *ChainLogger) logProvideRedemptionSignatureCall() {
 	lcl.provideRedemptionSignatureCalls++
 }
 
-func (lcl *localChainLogger) ProvideRedemptionSignatureCalls() int {
 // ProvideRedemptionSignatureCalls returns the number of times we've tried to provide the redemption signature
+func (lcl *ChainLogger) ProvideRedemptionSignatureCalls() int {
 	return lcl.provideRedemptionSignatureCalls
 }
 
-func (lcl *localChainLogger) logIncreaseRedemptionFeeCall() {
+func (lcl *ChainLogger) logIncreaseRedemptionFeeCall() {
 	lcl.increaseRedemptionFeeCalls++
 }
 
-func (lcl *localChainLogger) IncreaseRedemptionFeeCalls() int {
 // IncreaseRedemptionFeeCalls returns the number of times we've increased the redemption fees
+func (lcl *ChainLogger) IncreaseRedemptionFeeCalls() int {
 	return lcl.increaseRedemptionFeeCalls
 }
 
-func (lcl *localChainLogger) logKeepAddressCall() {
+func (lcl *ChainLogger) logKeepAddressCall() {
 	lcl.keepAddressCalls++
 }
 
-func (lcl *localChainLogger) KeepAddressCalls() int {
 // KeepAddressCalls returns the number of times we've attempted to retrieve the keep address
+func (lcl *ChainLogger) KeepAddressCalls() int {
 	return lcl.keepAddressCalls
 }
 
@@ -94,7 +94,7 @@ type TBTCLocalChain struct {
 
 	tbtcLocalChainMutex sync.Mutex
 
-	logger *localChainLogger
+	logger *ChainLogger
 
 	alwaysFailingTransactions map[string]bool
 
@@ -110,7 +110,7 @@ type TBTCLocalChain struct {
 func NewTBTCLocalChain(ctx context.Context) *TBTCLocalChain {
 	return &TBTCLocalChain{
 		localChain:                            Connect(ctx).(*localChain),
-		logger:                                &localChainLogger{},
+		logger:                                &ChainLogger{},
 		alwaysFailingTransactions:             make(map[string]bool),
 		deposits:                              make(map[string]*localDeposit),
 		depositCreatedHandlers:                make(map[int]func(depositAddress string)),
@@ -691,8 +691,8 @@ func (tlc *TBTCLocalChain) SetAlwaysFailingTransactions(transactions ...string) 
 	}
 }
 
-func (tlc *TBTCLocalChain) Logger() *localChainLogger {
 // Logger surfaces the chain's logger
+func (tlc *TBTCLocalChain) Logger() *ChainLogger {
 	return tlc.logger
 }
 

@@ -50,6 +50,5 @@ func RegisterUnmarshalers(broadcastChannel net.BroadcastChannel) {
 	})
 
 	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &TSSProtocolMessage{}
 	})
 }
