@@ -58,6 +58,16 @@ RUN go generate ./...
 # Build the application.
 COPY ./ $APP_DIR/
 
+# Cleanup the `pkg/chain/gen` dir from unused chains bindings. Leave only
+# the ones which are currently in use. This helps reducing the size of
+# resulting binary and can prevent unexpected errors which may occur due to
+# transitive dependencies conflicts.
+RUN cd $APP_DIR/pkg/chain && \
+	mv ./gen/ethereum ./temp && \
+	rm -rf ./gen && \
+	mkdir ./gen && \
+	mv ./temp ./gen/ethereum
+
 # Client Versioning.
 ARG VERSION
 ARG REVISION

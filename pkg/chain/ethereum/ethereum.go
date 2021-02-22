@@ -1,3 +1,5 @@
+//+build !celo
+
 // Package ethereum contains implementation of ethereum chain interface.
 package ethereum
 
