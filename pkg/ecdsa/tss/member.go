@@ -20,7 +20,7 @@ func (id MemberID) PublicKey() (*operator.PublicKey, error) {
 	return operator.Unmarshal(id)
 }
 
-// MemberIDFromPublicKey creates a MemberID from a string.
+// MemberIDFromString creates a MemberID from a string.
 func MemberIDFromString(string string) (MemberID, error) {
 	return hex.DecodeString(string)
 }

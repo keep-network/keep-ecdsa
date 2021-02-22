@@ -32,6 +32,7 @@ func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error)
 	}, nil
 }
 
+// StakeMonitor generates a new `chain.StakeMonitor` from the chain
 func (ec *Chain) StakeMonitor() (chain.StakeMonitor, error) {
 	return &ethereumStakeMonitor{ec}, nil
 }

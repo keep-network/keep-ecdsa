@@ -39,6 +39,7 @@ func (m *AnnounceMessage) Type() string {
 	return "ecdsa/announce_message"
 }
 
+// RegisterUnmarshalers is a boilerplate method to register unmarshaling on a broadcast channel
 func RegisterUnmarshalers(broadcastChannel net.BroadcastChannel) {
 	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &AnnounceMessage{}
