@@ -35,14 +35,14 @@ func broadcastRecoveryAddress(
 	ctx, cancel := context.WithTimeout(parentCtx, protocolReadyTimeout)
 	defer cancel()
 
-	msgInChan := make(chan *LiquidationRecoveryMessage, len(group.groupMemberIDs))
-	handleLiquidationRecoveryMessage := func(netMsg net.Message) {
+	msgInChan := make(chan *LiquidationRecoveryAnnounceMessage, len(group.groupMemberIDs))
+	handleLiquidationRecoveryAnnounceMessage := func(netMsg net.Message) {
 		switch msg := netMsg.Payload().(type) {
-		case *LiquidationRecoveryMessage:
+		case *LiquidationRecoveryAnnounceMessage:
 			msgInChan <- msg
 		}
 	}
-	broadcastChannel.Recv(ctx, handleLiquidationRecoveryMessage)
+	broadcastChannel.Recv(ctx, handleLiquidationRecoveryAnnounceMessage)
 
 	memberBTCAddresses := make(map[string]string)
 
@@ -90,7 +90,7 @@ func broadcastRecoveryAddress(
 	go func() {
 		sendMessage := func() {
 			if err := broadcastChannel.Send(ctx,
-				&LiquidationRecoveryMessage{SenderID: group.memberID, BtcRecoveryAddress: "abc123"},
+				&LiquidationRecoveryAnnounceMessage{SenderID: group.memberID, BtcRecoveryAddress: "abc123"},
 			); err != nil {
 				logger.Errorf("failed to send btc recovery address: [%v]", err)
 			}

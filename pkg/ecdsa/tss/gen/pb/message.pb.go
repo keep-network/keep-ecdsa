@@ -6,12 +6,13 @@ package pb
 import (
 	bytes "bytes"
 	fmt "fmt"
-	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
 	reflect "reflect"
 	strings "strings"
+
+	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -35,7 +36,7 @@ type TSSProtocolMessage struct {
 func (m *TSSProtocolMessage) Reset()      { *m = TSSProtocolMessage{} }
 func (*TSSProtocolMessage) ProtoMessage() {}
 func (*TSSProtocolMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8447775385e7eb85, []int{0}
+	return fileDescriptor_33c57e4bae7b9afd, []int{0}
 }
 func (m *TSSProtocolMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -99,7 +100,7 @@ type ReadyMessage struct {
 func (m *ReadyMessage) Reset()      { *m = ReadyMessage{} }
 func (*ReadyMessage) ProtoMessage() {}
 func (*ReadyMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8447775385e7eb85, []int{1}
+	return fileDescriptor_33c57e4bae7b9afd, []int{1}
 }
 func (m *ReadyMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -142,7 +143,7 @@ type AnnounceMessage struct {
 func (m *AnnounceMessage) Reset()      { *m = AnnounceMessage{} }
 func (*AnnounceMessage) ProtoMessage() {}
 func (*AnnounceMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8447775385e7eb85, []int{2}
+	return fileDescriptor_33c57e4bae7b9afd, []int{2}
 }
 func (m *AnnounceMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -178,22 +179,22 @@ func (m *AnnounceMessage) GetSenderID() []byte {
 	return nil
 }
 
-type LiquidationRecoveryMessage struct {
+type LiquidationRecoveryAnnounceMessage struct {
 	SenderID           []byte `protobuf:"bytes,1,opt,name=senderID,proto3" json:"senderID,omitempty"`
 	BtcRecoveryAddress string `protobuf:"bytes,2,opt,name=btcRecoveryAddress,proto3" json:"btcRecoveryAddress,omitempty"`
 }
 
-func (m *LiquidationRecoveryMessage) Reset()      { *m = LiquidationRecoveryMessage{} }
-func (*LiquidationRecoveryMessage) ProtoMessage() {}
-func (*LiquidationRecoveryMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8447775385e7eb85, []int{3}
+func (m *LiquidationRecoveryAnnounceMessage) Reset()      { *m = LiquidationRecoveryAnnounceMessage{} }
+func (*LiquidationRecoveryAnnounceMessage) ProtoMessage() {}
+func (*LiquidationRecoveryAnnounceMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptor_33c57e4bae7b9afd, []int{3}
 }
-func (m *LiquidationRecoveryMessage) XXX_Unmarshal(b []byte) error {
+func (m *LiquidationRecoveryAnnounceMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *LiquidationRecoveryMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *LiquidationRecoveryAnnounceMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_LiquidationRecoveryMessage.Marshal(b, m, deterministic)
+		return xxx_messageInfo_LiquidationRecoveryAnnounceMessage.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -203,26 +204,26 @@ func (m *LiquidationRecoveryMessage) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *LiquidationRecoveryMessage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LiquidationRecoveryMessage.Merge(m, src)
+func (m *LiquidationRecoveryAnnounceMessage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LiquidationRecoveryAnnounceMessage.Merge(m, src)
 }
-func (m *LiquidationRecoveryMessage) XXX_Size() int {
+func (m *LiquidationRecoveryAnnounceMessage) XXX_Size() int {
 	return m.Size()
 }
-func (m *LiquidationRecoveryMessage) XXX_DiscardUnknown() {
-	xxx_messageInfo_LiquidationRecoveryMessage.DiscardUnknown(m)
+func (m *LiquidationRecoveryAnnounceMessage) XXX_DiscardUnknown() {
+	xxx_messageInfo_LiquidationRecoveryAnnounceMessage.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_LiquidationRecoveryMessage proto.InternalMessageInfo
+var xxx_messageInfo_LiquidationRecoveryAnnounceMessage proto.InternalMessageInfo
 
-func (m *LiquidationRecoveryMessage) GetSenderID() []byte {
+func (m *LiquidationRecoveryAnnounceMessage) GetSenderID() []byte {
 	if m != nil {
 		return m.SenderID
 	}
 	return nil
 }
 
-func (m *LiquidationRecoveryMessage) GetBtcRecoveryAddress() string {
+func (m *LiquidationRecoveryAnnounceMessage) GetBtcRecoveryAddress() string {
 	if m != nil {
 		return m.BtcRecoveryAddress
 	}
@@ -233,31 +234,31 @@ func init() {
 	proto.RegisterType((*TSSProtocolMessage)(nil), "tss.TSSProtocolMessage")
 	proto.RegisterType((*ReadyMessage)(nil), "tss.ReadyMessage")
 	proto.RegisterType((*AnnounceMessage)(nil), "tss.AnnounceMessage")
-	proto.RegisterType((*LiquidationRecoveryMessage)(nil), "tss.LiquidationRecoveryMessage")
+	proto.RegisterType((*LiquidationRecoveryAnnounceMessage)(nil), "tss.LiquidationRecoveryAnnounceMessage")
 }
 
-func init() { proto.RegisterFile("pb/message.proto", fileDescriptor_8447775385e7eb85) }
+func init() { proto.RegisterFile("message.proto", fileDescriptor_33c57e4bae7b9afd) }
 
-var fileDescriptor_8447775385e7eb85 = []byte{
-	// 284 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x91, 0x31, 0x4b, 0x03, 0x41,
-	0x10, 0x85, 0x77, 0x12, 0xd1, 0x64, 0x0d, 0x28, 0x5b, 0x1d, 0x41, 0x86, 0x23, 0x55, 0x10, 0x8c,
-	0x85, 0x8d, 0x6d, 0x42, 0x9a, 0x80, 0x82, 0x6c, 0xac, 0xec, 0xf6, 0x6e, 0x17, 0x3d, 0x88, 0xbb,
-	0xe7, 0xcd, 0x45, 0x48, 0x67, 0x6d, 0xe5, 0xcf, 0xf0, 0xa7, 0x58, 0x5e, 0x99, 0xd2, 0xdb, 0x6b,
-	0x2c, 0xf3, 0x13, 0xc4, 0x93, 0xa8, 0x85, 0xc5, 0x95, 0xef, 0x7b, 0x6f, 0x98, 0x19, 0x1e, 0x3f,
-	0x4c, 0xa3, 0xd3, 0x7b, 0x43, 0xa4, 0x6e, 0xcd, 0x28, 0xcd, 0x5c, 0xee, 0x44, 0x3b, 0x27, 0x1a,
-	0x3c, 0x03, 0x17, 0xd7, 0xf3, 0xf9, 0xd5, 0x17, 0x89, 0xdd, 0xe2, 0xf2, 0x3b, 0x21, 0xfa, 0xbc,
-	0x43, 0xc6, 0x6a, 0x93, 0xcd, 0xa6, 0x01, 0x84, 0x30, 0xec, 0xc9, 0x1f, 0x2d, 0x02, 0xbe, 0x97,
-	0xaa, 0xd5, 0xc2, 0x29, 0x1d, 0xb4, 0x6a, 0x6b, 0x2b, 0x45, 0xc8, 0xf7, 0x13, 0x9a, 0x64, 0x4e,
-	0xe9, 0x58, 0x51, 0x1e, 0xb4, 0x43, 0x18, 0x76, 0xe4, 0x5f, 0x24, 0x8e, 0x78, 0x97, 0x0c, 0x51,
-	0xe2, 0xec, 0x6c, 0x1a, 0xec, 0x84, 0x30, 0xec, 0xca, 0x5f, 0x30, 0x38, 0xe6, 0x3d, 0x69, 0x94,
-	0x5e, 0x35, 0xb8, 0x62, 0x70, 0xc2, 0x0f, 0xc6, 0xd6, 0xba, 0xa5, 0x8d, 0x4d, 0x93, 0xf8, 0x1d,
-	0xef, 0x5f, 0x24, 0x0f, 0xcb, 0x44, 0xab, 0x3c, 0x71, 0x56, 0x9a, 0xd8, 0x3d, 0x9a, 0xac, 0xc9,
-	0x22, 0x31, 0xe2, 0x22, 0xca, 0xe3, 0xed, 0xc4, 0x58, 0xeb, 0xcc, 0x10, 0xd5, 0x9f, 0x77, 0xe5,
-	0x3f, 0xce, 0xe4, 0xbc, 0x28, 0x91, 0xad, 0x4b, 0x64, 0x9b, 0x12, 0xe1, 0xc9, 0x23, 0xbc, 0x7a,
-	0x84, 0x37, 0x8f, 0x50, 0x78, 0x84, 0x77, 0x8f, 0xf0, 0xe1, 0x91, 0x6d, 0x3c, 0xc2, 0x4b, 0x85,
-	0xac, 0xa8, 0x90, 0xad, 0x2b, 0x64, 0x37, 0xad, 0x34, 0x8a, 0x76, 0xeb, 0x5e, 0xce, 0x3e, 0x03,
-	0x00, 0x00, 0xff, 0xff, 0xd3, 0xc9, 0xfe, 0x9b, 0xab, 0x01, 0x00, 0x00,
+var fileDescriptor_33c57e4bae7b9afd = []byte{
+	// 282 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x91, 0x31, 0x4b, 0x3b, 0x41,
+	0x10, 0xc5, 0x77, 0x92, 0x3f, 0x7f, 0x93, 0x35, 0x22, 0x6c, 0x75, 0x88, 0x0c, 0xc7, 0x55, 0x87,
+	0x60, 0x1a, 0x1b, 0x5b, 0x43, 0x9a, 0x80, 0x82, 0x6c, 0xac, 0xec, 0xf6, 0x6e, 0x17, 0x39, 0x88,
+	0xbb, 0xe7, 0xcd, 0x45, 0xb8, 0xce, 0xda, 0xca, 0x8f, 0xe1, 0x47, 0xb1, 0xbc, 0x32, 0xa5, 0xb7,
+	0xd7, 0x58, 0xe6, 0x23, 0x88, 0x27, 0x46, 0x0b, 0x8b, 0x58, 0xbe, 0xdf, 0x7b, 0x33, 0x0c, 0xf3,
+	0xf8, 0xde, 0xad, 0x21, 0x52, 0x37, 0x66, 0x9c, 0x17, 0xae, 0x74, 0xa2, 0x5f, 0x12, 0x45, 0x8f,
+	0xc0, 0xc5, 0xd5, 0x7c, 0x7e, 0xf9, 0x41, 0x52, 0xb7, 0xb8, 0xf8, 0x4c, 0x88, 0x03, 0x3e, 0x20,
+	0x63, 0xb5, 0x29, 0x66, 0xd3, 0x00, 0x42, 0x88, 0x47, 0x72, 0xa3, 0x45, 0xc0, 0x77, 0x72, 0x55,
+	0x2d, 0x9c, 0xd2, 0x41, 0xaf, 0xb3, 0xbe, 0xa4, 0x08, 0xf9, 0x6e, 0x46, 0x93, 0xc2, 0x29, 0x9d,
+	0x2a, 0x2a, 0x83, 0x7e, 0x08, 0xf1, 0x40, 0xfe, 0x44, 0xe2, 0x90, 0x0f, 0xc9, 0x10, 0x65, 0xce,
+	0xce, 0xa6, 0xc1, 0xbf, 0x10, 0xe2, 0xa1, 0xfc, 0x06, 0xd1, 0x11, 0x1f, 0x49, 0xa3, 0x74, 0xb5,
+	0xc5, 0x15, 0xd1, 0x31, 0xdf, 0x3f, 0xb3, 0xd6, 0x2d, 0x6d, 0x6a, 0xb6, 0x89, 0xe7, 0x3c, 0x3a,
+	0xcf, 0xee, 0x96, 0x99, 0x56, 0x65, 0xe6, 0xac, 0x34, 0xa9, 0xbb, 0x37, 0x45, 0xf5, 0x87, 0x0d,
+	0x62, 0xcc, 0x45, 0x52, 0xa6, 0x9b, 0x49, 0xad, 0x0b, 0x43, 0xd4, 0x7d, 0x60, 0x28, 0x7f, 0x71,
+	0x26, 0xa7, 0x75, 0x83, 0x6c, 0xd5, 0x20, 0x5b, 0x37, 0x08, 0x0f, 0x1e, 0xe1, 0xd9, 0x23, 0xbc,
+	0x78, 0x84, 0xda, 0x23, 0xbc, 0x7a, 0x84, 0x37, 0x8f, 0x6c, 0xed, 0x11, 0x9e, 0x5a, 0x64, 0x75,
+	0x8b, 0x6c, 0xd5, 0x22, 0xbb, 0xee, 0xe5, 0x49, 0xf2, 0xbf, 0xeb, 0xe7, 0xe4, 0x3d, 0x00, 0x00,
+	0xff, 0xff, 0x41, 0x99, 0x80, 0xaa, 0xb0, 0x01, 0x00, 0x00,
 }
 
 func (this *TSSProtocolMessage) Equal(that interface{}) bool {
@@ -341,14 +342,14 @@ func (this *AnnounceMessage) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *LiquidationRecoveryMessage) Equal(that interface{}) bool {
+func (this *LiquidationRecoveryAnnounceMessage) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*LiquidationRecoveryMessage)
+	that1, ok := that.(*LiquidationRecoveryAnnounceMessage)
 	if !ok {
-		that2, ok := that.(LiquidationRecoveryMessage)
+		that2, ok := that.(LiquidationRecoveryAnnounceMessage)
 		if ok {
 			that1 = &that2
 		} else {
@@ -401,12 +402,12 @@ func (this *AnnounceMessage) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
-func (this *LiquidationRecoveryMessage) GoString() string {
+func (this *LiquidationRecoveryAnnounceMessage) GoString() string {
 	if this == nil {
 		return "nil"
 	}
 	s := make([]string, 0, 6)
-	s = append(s, "&pb.LiquidationRecoveryMessage{")
+	s = append(s, "&pb.LiquidationRecoveryAnnounceMessage{")
 	s = append(s, "SenderID: "+fmt.Sprintf("%#v", this.SenderID)+",\n")
 	s = append(s, "BtcRecoveryAddress: "+fmt.Sprintf("%#v", this.BtcRecoveryAddress)+",\n")
 	s = append(s, "}")
@@ -534,7 +535,7 @@ func (m *AnnounceMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *LiquidationRecoveryMessage) Marshal() (dAtA []byte, err error) {
+func (m *LiquidationRecoveryAnnounceMessage) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -544,12 +545,12 @@ func (m *LiquidationRecoveryMessage) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *LiquidationRecoveryMessage) MarshalTo(dAtA []byte) (int, error) {
+func (m *LiquidationRecoveryAnnounceMessage) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *LiquidationRecoveryMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *LiquidationRecoveryAnnounceMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -632,7 +633,7 @@ func (m *AnnounceMessage) Size() (n int) {
 	return n
 }
 
-func (m *LiquidationRecoveryMessage) Size() (n int) {
+func (m *LiquidationRecoveryAnnounceMessage) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -688,11 +689,11 @@ func (this *AnnounceMessage) String() string {
 	}, "")
 	return s
 }
-func (this *LiquidationRecoveryMessage) String() string {
+func (this *LiquidationRecoveryAnnounceMessage) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&LiquidationRecoveryMessage{`,
+	s := strings.Join([]string{`&LiquidationRecoveryAnnounceMessage{`,
 		`SenderID:` + fmt.Sprintf("%v", this.SenderID) + `,`,
 		`BtcRecoveryAddress:` + fmt.Sprintf("%v", this.BtcRecoveryAddress) + `,`,
 		`}`,
@@ -1045,7 +1046,7 @@ func (m *AnnounceMessage) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *LiquidationRecoveryMessage) Unmarshal(dAtA []byte) error {
+func (m *LiquidationRecoveryAnnounceMessage) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1068,10 +1069,10 @@ func (m *LiquidationRecoveryMessage) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: LiquidationRecoveryMessage: wiretype end group for non-group")
+			return fmt.Errorf("proto: LiquidationRecoveryAnnounceMessage: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: LiquidationRecoveryMessage: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: LiquidationRecoveryAnnounceMessage: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
