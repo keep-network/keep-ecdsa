@@ -12,7 +12,7 @@ import (
 // BroadcastRecoveryAddress broadcasts and receives the BTC recovery addresses
 // of each client so that each client can retrieve the underlying bitcoin in
 // the case that a keep is terminated.
-func broadcastRecoveryAddress(
+func BroadcastRecoveryAddress(
 	parentCtx context.Context,
 	groupID string,
 	memberID MemberID,
