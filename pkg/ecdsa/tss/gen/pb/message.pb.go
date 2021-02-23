@@ -6,13 +6,12 @@ package pb
 import (
 	bytes "bytes"
 	fmt "fmt"
+	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
 	reflect "reflect"
 	strings "strings"
-
-	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -179,31 +178,86 @@ func (m *AnnounceMessage) GetSenderID() []byte {
 	return nil
 }
 
+type LiquidationRecoveryMessage struct {
+	SenderID           []byte `protobuf:"bytes,1,opt,name=senderID,proto3" json:"senderID,omitempty"`
+	BtcRecoveryAddress string `protobuf:"bytes,2,opt,name=btcRecoveryAddress,proto3" json:"btcRecoveryAddress,omitempty"`
+}
+
+func (m *LiquidationRecoveryMessage) Reset()      { *m = LiquidationRecoveryMessage{} }
+func (*LiquidationRecoveryMessage) ProtoMessage() {}
+func (*LiquidationRecoveryMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8447775385e7eb85, []int{3}
+}
+func (m *LiquidationRecoveryMessage) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *LiquidationRecoveryMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_LiquidationRecoveryMessage.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *LiquidationRecoveryMessage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LiquidationRecoveryMessage.Merge(m, src)
+}
+func (m *LiquidationRecoveryMessage) XXX_Size() int {
+	return m.Size()
+}
+func (m *LiquidationRecoveryMessage) XXX_DiscardUnknown() {
+	xxx_messageInfo_LiquidationRecoveryMessage.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LiquidationRecoveryMessage proto.InternalMessageInfo
+
+func (m *LiquidationRecoveryMessage) GetSenderID() []byte {
+	if m != nil {
+		return m.SenderID
+	}
+	return nil
+}
+
+func (m *LiquidationRecoveryMessage) GetBtcRecoveryAddress() string {
+	if m != nil {
+		return m.BtcRecoveryAddress
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*TSSProtocolMessage)(nil), "tss.TSSProtocolMessage")
 	proto.RegisterType((*ReadyMessage)(nil), "tss.ReadyMessage")
 	proto.RegisterType((*AnnounceMessage)(nil), "tss.AnnounceMessage")
+	proto.RegisterType((*LiquidationRecoveryMessage)(nil), "tss.LiquidationRecoveryMessage")
 }
 
 func init() { proto.RegisterFile("pb/message.proto", fileDescriptor_8447775385e7eb85) }
 
 var fileDescriptor_8447775385e7eb85 = []byte{
-	// 240 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x28, 0x48, 0xd2, 0xcf,
-	0x4d, 0x2d, 0x2e, 0x4e, 0x4c, 0x4f, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2e, 0x29,
-	0x2e, 0x56, 0xea, 0x62, 0xe4, 0x12, 0x0a, 0x09, 0x0e, 0x0e, 0x00, 0x89, 0x24, 0xe7, 0xe7, 0xf8,
-	0x42, 0x54, 0x08, 0x49, 0x71, 0x71, 0x14, 0xa7, 0xe6, 0xa5, 0xa4, 0x16, 0x79, 0xba, 0x48, 0x30,
-	0x2a, 0x30, 0x6a, 0xf0, 0x04, 0xc1, 0xf9, 0x42, 0x12, 0x5c, 0xec, 0x05, 0x89, 0x95, 0x39, 0xf9,
-	0x89, 0x29, 0x12, 0x4c, 0x60, 0x29, 0x18, 0x57, 0x48, 0x81, 0x8b, 0x3b, 0xb3, 0xd8, 0xa9, 0x28,
-	0x3f, 0x31, 0x25, 0x39, 0xb1, 0xb8, 0x44, 0x82, 0x59, 0x81, 0x51, 0x83, 0x23, 0x08, 0x59, 0x48,
-	0x48, 0x86, 0x8b, 0xb3, 0x38, 0xb5, 0xb8, 0x38, 0x33, 0x3f, 0xcf, 0xd3, 0x45, 0x82, 0x45, 0x81,
-	0x51, 0x83, 0x33, 0x08, 0x21, 0xa0, 0xa4, 0xc5, 0xc5, 0x13, 0x94, 0x9a, 0x98, 0x52, 0x49, 0x84,
-	0x2b, 0x94, 0x74, 0xb9, 0xf8, 0x1d, 0xf3, 0xf2, 0xf2, 0x4b, 0xf3, 0x92, 0x53, 0x89, 0x50, 0xee,
-	0x64, 0x71, 0xe1, 0xa1, 0x1c, 0xc3, 0x8d, 0x87, 0x72, 0x0c, 0x1f, 0x1e, 0xca, 0x31, 0x36, 0x3c,
-	0x92, 0x63, 0x5c, 0xf1, 0x48, 0x8e, 0xf1, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f,
-	0x3c, 0x92, 0x63, 0x7c, 0xf1, 0x48, 0x8e, 0xe1, 0xc3, 0x23, 0x39, 0xc6, 0x09, 0x8f, 0xe5, 0x18,
-	0x2e, 0x3c, 0x96, 0x63, 0xb8, 0xf1, 0x58, 0x8e, 0x21, 0x8a, 0xa9, 0x20, 0x29, 0x89, 0x0d, 0x1c,
-	0x5a, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x80, 0x6d, 0xec, 0x07, 0x41, 0x01, 0x00, 0x00,
+	// 284 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x91, 0x31, 0x4b, 0x03, 0x41,
+	0x10, 0x85, 0x77, 0x12, 0xd1, 0x64, 0x0d, 0x28, 0x5b, 0x1d, 0x41, 0x86, 0x23, 0x55, 0x10, 0x8c,
+	0x85, 0x8d, 0x6d, 0x42, 0x9a, 0x80, 0x82, 0x6c, 0xac, 0xec, 0xf6, 0x6e, 0x17, 0x3d, 0x88, 0xbb,
+	0xe7, 0xcd, 0x45, 0x48, 0x67, 0x6d, 0xe5, 0xcf, 0xf0, 0xa7, 0x58, 0x5e, 0x99, 0xd2, 0xdb, 0x6b,
+	0x2c, 0xf3, 0x13, 0xc4, 0x93, 0xa8, 0x85, 0xc5, 0x95, 0xef, 0x7b, 0x6f, 0x98, 0x19, 0x1e, 0x3f,
+	0x4c, 0xa3, 0xd3, 0x7b, 0x43, 0xa4, 0x6e, 0xcd, 0x28, 0xcd, 0x5c, 0xee, 0x44, 0x3b, 0x27, 0x1a,
+	0x3c, 0x03, 0x17, 0xd7, 0xf3, 0xf9, 0xd5, 0x17, 0x89, 0xdd, 0xe2, 0xf2, 0x3b, 0x21, 0xfa, 0xbc,
+	0x43, 0xc6, 0x6a, 0x93, 0xcd, 0xa6, 0x01, 0x84, 0x30, 0xec, 0xc9, 0x1f, 0x2d, 0x02, 0xbe, 0x97,
+	0xaa, 0xd5, 0xc2, 0x29, 0x1d, 0xb4, 0x6a, 0x6b, 0x2b, 0x45, 0xc8, 0xf7, 0x13, 0x9a, 0x64, 0x4e,
+	0xe9, 0x58, 0x51, 0x1e, 0xb4, 0x43, 0x18, 0x76, 0xe4, 0x5f, 0x24, 0x8e, 0x78, 0x97, 0x0c, 0x51,
+	0xe2, 0xec, 0x6c, 0x1a, 0xec, 0x84, 0x30, 0xec, 0xca, 0x5f, 0x30, 0x38, 0xe6, 0x3d, 0x69, 0x94,
+	0x5e, 0x35, 0xb8, 0x62, 0x70, 0xc2, 0x0f, 0xc6, 0xd6, 0xba, 0xa5, 0x8d, 0x4d, 0x93, 0xf8, 0x1d,
+	0xef, 0x5f, 0x24, 0x0f, 0xcb, 0x44, 0xab, 0x3c, 0x71, 0x56, 0x9a, 0xd8, 0x3d, 0x9a, 0xac, 0xc9,
+	0x22, 0x31, 0xe2, 0x22, 0xca, 0xe3, 0xed, 0xc4, 0x58, 0xeb, 0xcc, 0x10, 0xd5, 0x9f, 0x77, 0xe5,
+	0x3f, 0xce, 0xe4, 0xbc, 0x28, 0x91, 0xad, 0x4b, 0x64, 0x9b, 0x12, 0xe1, 0xc9, 0x23, 0xbc, 0x7a,
+	0x84, 0x37, 0x8f, 0x50, 0x78, 0x84, 0x77, 0x8f, 0xf0, 0xe1, 0x91, 0x6d, 0x3c, 0xc2, 0x4b, 0x85,
+	0xac, 0xa8, 0x90, 0xad, 0x2b, 0x64, 0x37, 0xad, 0x34, 0x8a, 0x76, 0xeb, 0x5e, 0xce, 0x3e, 0x03,
+	0x00, 0x00, 0xff, 0xff, 0xd3, 0xc9, 0xfe, 0x9b, 0xab, 0x01, 0x00, 0x00,
 }
 
 func (this *TSSProtocolMessage) Equal(that interface{}) bool {
@@ -287,6 +341,33 @@ func (this *AnnounceMessage) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *LiquidationRecoveryMessage) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*LiquidationRecoveryMessage)
+	if !ok {
+		that2, ok := that.(LiquidationRecoveryMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !bytes.Equal(this.SenderID, that1.SenderID) {
+		return false
+	}
+	if this.BtcRecoveryAddress != that1.BtcRecoveryAddress {
+		return false
+	}
+	return true
+}
 func (this *TSSProtocolMessage) GoString() string {
 	if this == nil {
 		return "nil"
@@ -317,6 +398,17 @@ func (this *AnnounceMessage) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&pb.AnnounceMessage{")
 	s = append(s, "SenderID: "+fmt.Sprintf("%#v", this.SenderID)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *LiquidationRecoveryMessage) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&pb.LiquidationRecoveryMessage{")
+	s = append(s, "SenderID: "+fmt.Sprintf("%#v", this.SenderID)+",\n")
+	s = append(s, "BtcRecoveryAddress: "+fmt.Sprintf("%#v", this.BtcRecoveryAddress)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -442,6 +534,43 @@ func (m *AnnounceMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *LiquidationRecoveryMessage) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *LiquidationRecoveryMessage) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *LiquidationRecoveryMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.BtcRecoveryAddress) > 0 {
+		i -= len(m.BtcRecoveryAddress)
+		copy(dAtA[i:], m.BtcRecoveryAddress)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.BtcRecoveryAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.SenderID) > 0 {
+		i -= len(m.SenderID)
+		copy(dAtA[i:], m.SenderID)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.SenderID)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintMessage(dAtA []byte, offset int, v uint64) int {
 	offset -= sovMessage(v)
 	base := offset
@@ -503,6 +632,23 @@ func (m *AnnounceMessage) Size() (n int) {
 	return n
 }
 
+func (m *LiquidationRecoveryMessage) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.SenderID)
+	if l > 0 {
+		n += 1 + l + sovMessage(uint64(l))
+	}
+	l = len(m.BtcRecoveryAddress)
+	if l > 0 {
+		n += 1 + l + sovMessage(uint64(l))
+	}
+	return n
+}
+
 func sovMessage(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
@@ -538,6 +684,17 @@ func (this *AnnounceMessage) String() string {
 	}
 	s := strings.Join([]string{`&AnnounceMessage{`,
 		`SenderID:` + fmt.Sprintf("%v", this.SenderID) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *LiquidationRecoveryMessage) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&LiquidationRecoveryMessage{`,
+		`SenderID:` + fmt.Sprintf("%v", this.SenderID) + `,`,
+		`BtcRecoveryAddress:` + fmt.Sprintf("%v", this.BtcRecoveryAddress) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -705,10 +862,7 @@ func (m *TSSProtocolMessage) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMessage
 			}
 			if (iNdEx + skippy) > l {
@@ -792,10 +946,7 @@ func (m *ReadyMessage) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMessage
 			}
 			if (iNdEx + skippy) > l {
@@ -879,10 +1030,123 @@ func (m *AnnounceMessage) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMessage
 			}
-			if (iNdEx + skippy) < 0 {
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *LiquidationRecoveryMessage) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMessage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LiquidationRecoveryMessage: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LiquidationRecoveryMessage: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SenderID", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthMessage
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMessage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SenderID = append(m.SenderID[:0], dAtA[iNdEx:postIndex]...)
+			if m.SenderID == nil {
+				m.SenderID = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcRecoveryAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMessage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMessage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BtcRecoveryAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMessage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMessage
 			}
 			if (iNdEx + skippy) > l {

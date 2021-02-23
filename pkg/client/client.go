@@ -169,11 +169,16 @@ func Initialize(
 				eventDeduplicator,
 			)
 			go monitorKeepTerminatedEvent(
+				ctx,
 				ethereumChain,
-				keepAddress,
+				networkProvider,
+				clientConfig,
+				tssNode,
+				operatorPublicKey,
 				keepsRegistry,
-				subscriptionOnSignatureRequested,
 				eventDeduplicator,
+				keepAddress,
+				subscriptionOnSignatureRequested,
 			)
 
 		}(keepAddress)
@@ -182,6 +187,7 @@ func Initialize(
 	go checkAwaitingKeyGeneration(
 		ctx,
 		ethereumChain,
+		networkProvider,
 		clientConfig,
 		tssNode,
 		operatorPublicKey,
@@ -215,6 +221,7 @@ func Initialize(
 				generateKeyForKeep(
 					ctx,
 					ethereumChain,
+					networkProvider,
 					clientConfig,
 					tssNode,
 					operatorPublicKey,
@@ -245,6 +252,7 @@ func Initialize(
 func checkAwaitingKeyGeneration(
 	ctx context.Context,
 	ethereumChain eth.Handle,
+	networkProvider net.Provider,
 	clientConfig *Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
@@ -305,6 +313,7 @@ func checkAwaitingKeyGeneration(
 		err = checkAwaitingKeyGenerationForKeep(
 			ctx,
 			ethereumChain,
+			networkProvider,
 			clientConfig,
 			tssNode,
 			operatorPublicKey,
@@ -325,6 +334,7 @@ func checkAwaitingKeyGeneration(
 func checkAwaitingKeyGenerationForKeep(
 	ctx context.Context,
 	ethereumChain eth.Handle,
+	networkProvider net.Provider,
 	clientConfig *Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
@@ -372,6 +382,7 @@ func checkAwaitingKeyGenerationForKeep(
 			go generateKeyForKeep(
 				ctx,
 				ethereumChain,
+				networkProvider,
 				clientConfig,
 				tssNode,
 				operatorPublicKey,
@@ -392,6 +403,7 @@ func checkAwaitingKeyGenerationForKeep(
 func generateKeyForKeep(
 	ctx context.Context,
 	ethereumChain eth.Handle,
+	networkProvider net.Provider,
 	clientConfig *Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
@@ -492,12 +504,18 @@ func generateKeyForKeep(
 		subscriptionOnSignatureRequested,
 		eventDeduplicator,
 	)
+
 	go monitorKeepTerminatedEvent(
+		ctx,
 		ethereumChain,
-		keepAddress,
+		networkProvider,
+		clientConfig,
+		tssNode,
+		operatorPublicKey,
 		keepsRegistry,
-		subscriptionOnSignatureRequested,
 		eventDeduplicator,
+		keepAddress,
+		subscriptionOnSignatureRequested,
 	)
 }
 
@@ -853,11 +871,16 @@ func monitorKeepClosedEvents(
 // happens unsubscribes from signing event for the given keep and unregisters it
 // from the keep registry.
 func monitorKeepTerminatedEvent(
+	ctx context.Context,
 	ethereumChain eth.Handle,
-	keepAddress common.Address,
+	networkProvider net.Provider,
+	clientConfig *Config,
+	tssNode *node.Node,
+	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
-	subscriptionOnSignatureRequested subscription.EventSubscription,
 	eventDeduplicator *event.Deduplicator,
+	keepAddress common.Address,
+	subscriptionOnSignatureRequested subscription.EventSubscription,
 ) {
 	keepTerminated := make(chan *eth.KeepTerminatedEvent)
 
@@ -904,6 +927,25 @@ func monitorKeepTerminatedEvent(
 					logger.Warningf("keep [%s] has not been terminated", keepAddress.String())
 					return
 				}
+
+				members, err := ethereumChain.GetMembers(keepAddress)
+				memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
+				memberIDs, err := tssNode.AnnounceSignerPresence(
+					ctx,
+					operatorPublicKey,
+					keepAddress,
+					members,
+				)
+
+				tss.BroadcastRecoveryAddress(
+					ctx,
+					keepAddress.Hex(),
+					memberID,
+					memberIDs,
+					uint(len(memberIDs)-1),
+					networkProvider,
+					ethereumChain.Signing().PublicKeyToAddress,
+				)
 
 				keepsRegistry.UnregisterKeep(keepAddress)
 				keepTerminated <- event

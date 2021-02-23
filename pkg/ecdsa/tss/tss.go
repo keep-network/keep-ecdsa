@@ -171,3 +171,26 @@ func (s *ThresholdSigner) CalculateSignature(
 
 	return signature, err
 }
+
+// BroadcastRecoveryAddress broadcasts and receives the BTC recovery addresses
+// of each client so that each client can retrieve the underlying bitcoin in
+// the case that a keep is terminated.
+func BroadcastRecoveryAddress(
+	parentCtx context.Context,
+	groupID string,
+	memberID MemberID,
+	groupMemberIDs []MemberID,
+	dishonestThreshold uint,
+	networkProvider net.Provider,
+	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
+) error {
+	return broadcastRecoveryAddress(
+		parentCtx,
+		groupID,
+		memberID,
+		groupMemberIDs,
+		dishonestThreshold,
+		networkProvider,
+		pubKeyToAddressFn,
+	)
+}

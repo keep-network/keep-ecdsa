@@ -39,6 +39,17 @@ func (m *AnnounceMessage) Type() string {
 	return "ecdsa/announce_message"
 }
 
+// LiquidationRecoveryMessage is a network message used to broadcast a btc recovery address
+type LiquidationRecoveryMessage struct {
+	SenderID           MemberID
+	BtcRecoveryAddress string
+}
+
+// Type returns a string type of the `LiquidationRecoveryMessage`
+func (m *LiquidationRecoveryMessage) Type() string {
+	return "ecdsa/liquidation_recovery_message"
+}
+
 // RegisterUnmarshalers is a boilerplate method to register unmarshaling on a broadcast channel
 func RegisterUnmarshalers(broadcastChannel net.BroadcastChannel) {
 	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
@@ -51,5 +62,9 @@ func RegisterUnmarshalers(broadcastChannel net.BroadcastChannel) {
 
 	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &ProtocolMessage{}
+	})
+
+	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &LiquidationRecoveryMessage{}
 	})
 }
