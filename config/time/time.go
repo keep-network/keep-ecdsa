@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// Duration is a work around to be able to be able to parse values provided in
-// more friendly way, e.g. "4m20s". We have to do this because we use
+// Duration is a work around to be able to parse values provided in more
+// friendly way, e.g. "4m20s". We have to do this because we use
 // BurntSushi/toml package to parse configuration files. Unfortunately it
 // doesn't support time.Duration out of the box.
 type Duration struct {

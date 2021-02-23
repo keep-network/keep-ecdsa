@@ -52,40 +52,40 @@ type ChainLogger struct {
 	keepAddressCalls                int
 }
 
-func (lcl *ChainLogger) logRetrieveSignerPubkeyCall() {
-	lcl.retrieveSignerPubkeyCalls++
+func (cl *ChainLogger) logRetrieveSignerPubkeyCall() {
+	cl.retrieveSignerPubkeyCalls++
 }
 
 // RetrieveSignerPubkeyCalls returns the number of times we've tried to retrieve the signer public key
-func (lcl *ChainLogger) RetrieveSignerPubkeyCalls() int {
-	return lcl.retrieveSignerPubkeyCalls
+func (cl *ChainLogger) RetrieveSignerPubkeyCalls() int {
+	return cl.retrieveSignerPubkeyCalls
 }
 
-func (lcl *ChainLogger) logProvideRedemptionSignatureCall() {
-	lcl.provideRedemptionSignatureCalls++
+func (cl *ChainLogger) logProvideRedemptionSignatureCall() {
+	cl.provideRedemptionSignatureCalls++
 }
 
 // ProvideRedemptionSignatureCalls returns the number of times we've tried to provide the redemption signature
-func (lcl *ChainLogger) ProvideRedemptionSignatureCalls() int {
-	return lcl.provideRedemptionSignatureCalls
+func (cl *ChainLogger) ProvideRedemptionSignatureCalls() int {
+	return cl.provideRedemptionSignatureCalls
 }
 
-func (lcl *ChainLogger) logIncreaseRedemptionFeeCall() {
-	lcl.increaseRedemptionFeeCalls++
+func (cl *ChainLogger) logIncreaseRedemptionFeeCall() {
+	cl.increaseRedemptionFeeCalls++
 }
 
 // IncreaseRedemptionFeeCalls returns the number of times we've increased the redemption fees
-func (lcl *ChainLogger) IncreaseRedemptionFeeCalls() int {
-	return lcl.increaseRedemptionFeeCalls
+func (cl *ChainLogger) IncreaseRedemptionFeeCalls() int {
+	return cl.increaseRedemptionFeeCalls
 }
 
-func (lcl *ChainLogger) logKeepAddressCall() {
-	lcl.keepAddressCalls++
+func (cl *ChainLogger) logKeepAddressCall() {
+	cl.keepAddressCalls++
 }
 
 // KeepAddressCalls returns the number of times we've attempted to retrieve the keep address
-func (lcl *ChainLogger) KeepAddressCalls() int {
-	return lcl.keepAddressCalls
+func (cl *ChainLogger) KeepAddressCalls() int {
+	return cl.keepAddressCalls
 }
 
 // TBTCLocalChain represents variables and state relative to the TBTC chain
