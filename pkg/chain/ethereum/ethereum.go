@@ -10,6 +10,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -566,15 +568,23 @@ func (ec *EthereumChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
 	return header.Time, nil
 }
 
-//WeiBalanceOf returns the wei balance of the given address from the latest known block.
-func (ec *EthereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
+// WeiBalanceOf returns the wei balance of the given address from the latest
+// known block.
+func (ec *EthereumChain) WeiBalanceOf(
+	address common.Address,
+) (*ethereum.Wei, error) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancelCtx()
 
-	return ec.client.BalanceAt(ctx, address, nil)
+	balance, err := ec.client.BalanceAt(ctx, address, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return ethereum.WrapWei(balance), err
 }
 
 // BalanceMonitor returns a balance monitor.
-func (ec *EthereumChain) BalanceMonitor() (chain.BalanceMonitor, error) {
+func (ec *EthereumChain) BalanceMonitor() (*ethutil.BalanceMonitor, error) {
 	return ethutil.NewBalanceMonitor(ec.WeiBalanceOf), nil
 }

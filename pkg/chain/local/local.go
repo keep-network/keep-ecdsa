@@ -135,10 +135,6 @@ func (lc *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return nil, nil // not implemented.
 }
 
-func (lc *localChain) BalanceMonitor() (chain.BalanceMonitor, error) {
-	panic("not implemented")
-}
-
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
 func (lc *localChain) RegisterAsMemberCandidate(application common.Address) error {

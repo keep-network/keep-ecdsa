@@ -9,6 +9,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/celo"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/celo-org/celo-blockchain/common"
@@ -610,18 +612,23 @@ func (cc *CeloChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
 	return header.Time, nil
 }
 
-//WeiBalanceOf returns the wei balance of the given address from the
-// latest known block.
-func (cc *CeloChain) WeiBalanceOf(address ExternalAddress) (*big.Int, error) {
+// WeiBalanceOf returns the wei balance of the given address from the latest
+// known block.
+func (cc *CeloChain) WeiBalanceOf(address ExternalAddress) (*celo.Wei, error) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancelCtx()
 
-	return cc.client.BalanceAt(ctx, fromExternalAddress(address), nil)
+	balance, err := cc.client.BalanceAt(ctx, fromExternalAddress(address), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return celo.WrapWei(balance), err
 }
 
 // BalanceMonitor returns a balance monitor.
-func (cc *CeloChain) BalanceMonitor() (chain.BalanceMonitor, error) {
-	weiBalanceOf := func(address InternalAddress) (*big.Int, error) {
+func (cc *CeloChain) BalanceMonitor() (*celoutil.BalanceMonitor, error) {
+	weiBalanceOf := func(address InternalAddress) (*celo.Wei, error) {
 		return cc.WeiBalanceOf(toExternalAddress(address))
 	}
 

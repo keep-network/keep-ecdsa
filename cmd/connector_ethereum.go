@@ -8,6 +8,8 @@ import (
 	"math/big"
 	"time"
 
+	commoneth "github.com/keep-network/keep-common/pkg/chain/ethereum"
+
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
@@ -21,7 +23,9 @@ import (
 //
 // defaultBalanceAlertThreshold determines the alert threshold below which
 // the alert should be triggered.
-var defaultBalanceAlertThreshold = big.NewInt(500000000000000000) // 0.5 ETH
+var defaultBalanceAlertThreshold = commoneth.WrapWei(
+	big.NewInt(500000000000000000),
+)
 
 // defaultBalanceMonitoringTick determines how often the monitoring
 // check should be triggered.
@@ -98,14 +102,12 @@ func initializeBalanceMonitoring(
 
 	alertThreshold := defaultBalanceAlertThreshold
 	if value := config.Ethereum.BalanceAlertThreshold; value != nil {
-		alertThreshold = value.Int
+		alertThreshold = value
 	}
-
-	address := ethereumKey.Address.Hex()
 
 	balanceMonitor.Observe(
 		ctx,
-		address,
+		ethereumKey.Address,
 		alertThreshold,
 		defaultBalanceMonitoringTick,
 	)
@@ -113,7 +115,7 @@ func initializeBalanceMonitoring(
 	logger.Infof(
 		"started balance monitoring for address [%v] "+
 			"with the alert threshold set to [%v]",
-		address,
+		ethereumKey.Address.Hex(),
 		alertThreshold,
 	)
 }

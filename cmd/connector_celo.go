@@ -10,6 +10,7 @@ import (
 
 	"github.com/celo-org/celo-blockchain/accounts/keystore"
 
+	commoncelo "github.com/keep-network/keep-common/pkg/chain/celo"
 	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-ecdsa/config"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
@@ -20,7 +21,9 @@ import (
 //
 // defaultBalanceAlertThreshold determines the alert threshold below which
 // the alert should be triggered.
-var defaultBalanceAlertThreshold = big.NewInt(500000000000000000) // 0.5 CELO
+var defaultBalanceAlertThreshold = commoncelo.WrapWei(
+	big.NewInt(500000000000000000),
+)
 
 // defaultBalanceMonitoringTick determines how often the monitoring
 // check should be triggered.
@@ -75,14 +78,12 @@ func initializeBalanceMonitoring(
 
 	alertThreshold := defaultBalanceAlertThreshold
 	if value := config.Celo.BalanceAlertThreshold; value != nil {
-		alertThreshold = value.Int
+		alertThreshold = value
 	}
-
-	address := celokey.Address.Hex()
 
 	balanceMonitor.Observe(
 		ctx,
-		address,
+		celokey.Address,
 		alertThreshold,
 		defaultBalanceMonitoringTick,
 	)
@@ -90,7 +91,7 @@ func initializeBalanceMonitoring(
 	logger.Infof(
 		"started balance monitoring for address [%v] "+
 			"with the alert threshold set to [%v]",
-		address,
+		celokey.Address.Hex(),
 		alertThreshold,
 	)
 }

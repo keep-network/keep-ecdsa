@@ -18,8 +18,6 @@ type Handle interface {
 	Address() common.Address // TODO: use implementation-agnostic type
 	// StakeMonitor returns a stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
-	// BalanceMonitor returns a balance monitor.
-	BalanceMonitor() (chain.BalanceMonitor, error)
 	// BlockCounter returns a block counter.
 	BlockCounter() chain.BlockCounter
 	// Signing returns a signer interface allowing to sign and verify messages
