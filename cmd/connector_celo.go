@@ -67,7 +67,7 @@ func connectChain(
 func initializeBalanceMonitoring(
 	ctx context.Context,
 	config *config.Config,
-	celoChain *celo.CeloChain,
+	celoChain *celo.Chain,
 	celokey *keystore.Key,
 ) {
 	balanceMonitor, err := celoChain.BalanceMonitor()

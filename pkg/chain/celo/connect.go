@@ -40,8 +40,8 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-// CeloChain is an implementation of Celo blockchain interface.
-type CeloChain struct {
+// Chain is an implementation of Celo blockchain interface.
+type Chain struct {
 	config                         *celo.Config
 	accountKey                     *keystore.Key
 	client                         celoutil.CeloClient
@@ -70,7 +70,7 @@ type CeloChain struct {
 func Connect(
 	accountKey *keystore.Key,
 	config *celo.Config,
-) (*CeloChain, error) {
+) (*Chain, error) {
 	client, err := celoclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func Connect(
 		return nil, err
 	}
 
-	return &CeloChain{
+	return &Chain{
 		config:                         config,
 		accountKey:                     accountKey,
 		client:                         wrappedClient,

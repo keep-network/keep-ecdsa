@@ -12,7 +12,7 @@ import (
 )
 
 type celoStakeMonitor struct {
-	celo *CeloChain
+	celo *Chain
 }
 
 func (esm *celoStakeMonitor) HasMinimumStake(address string) (bool, error) {
@@ -34,13 +34,14 @@ func (esm *celoStakeMonitor) StakerFor(address string) (chain.Staker, error) {
 	}, nil
 }
 
-func (ec *CeloChain) StakeMonitor() (chain.StakeMonitor, error) {
-	return &celoStakeMonitor{ec}, nil
+// StakeMonitor generates a new `chain.StakeMonitor` from the chain
+func (c *Chain) StakeMonitor() (chain.StakeMonitor, error) {
+	return &celoStakeMonitor{c}, nil
 }
 
 type celoStaker struct {
 	address string
-	celo    *CeloChain
+	celo    *Chain
 }
 
 func (es *celoStaker) Address() relaychain.StakerAddress {
