@@ -120,16 +120,28 @@ type DepositRedemptionRequestedEvent struct {
 type DepositState int
 
 const (
+	// Start is initial deposit state
 	Start DepositState = iota
+	// AwaitingSignerSetup represents that the system is awaiting the signers to set up
 	AwaitingSignerSetup
+	// AwaitingBtcFundingProof represents that the system is awaiting proof that BTC funding has occured
 	AwaitingBtcFundingProof
+	// FailedSetup represents that the setup has failed
 	FailedSetup
+	// Active represents that the BTC has been secured and the TDT has been issued
 	Active
+	// AwaitingWithdrawalSignature represents that the redemption process has started, and is waiting on a signature
 	AwaitingWithdrawalSignature
+	// AwaitingWithdrawalProof represents that the remption process is waiting on proof of redemption on the BTC blockchain
 	AwaitingWithdrawalProof
+	// Redeemed represents that the BTC has been dispersed and the TDT/TBTC has been destroyed
 	Redeemed
+	// CourtesyCall represents that the keep is in danger of being liquidated, and so should be redeemed immediately
 	CourtesyCall
+	// FraudLiquidationInProgress means that fraud was detected, and so the keep is being liquidated
 	FraudLiquidationInProgress
+	// LiquidationInProgress means that the system has seized the eth collateral and the signers are trying to recover the held BTC
 	LiquidationInProgress
+	// Liquidated means that the system seized the eth collateral and the signers recovered the held BTC
 	Liquidated
 )

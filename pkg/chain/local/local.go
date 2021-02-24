@@ -496,6 +496,7 @@ func generateHandlerID() int {
 	return rand.Int()
 }
 
+// RandomSigningGroup randmly chooses `size` signers to be a new signing group
 func RandomSigningGroup(size int) []common.Address {
 	signers := make([]common.Address, size)
 

@@ -211,7 +211,7 @@ func (tk *ThresholdKey) Unmarshal(bytes []byte) error {
 }
 
 // Marshal converts this message to a byte array suitable for network communication.
-func (m *TSSProtocolMessage) Marshal() ([]byte, error) {
+func (m *ProtocolMessage) Marshal() ([]byte, error) {
 	return (&pb.TSSProtocolMessage{
 		SenderID:    m.SenderID,
 		Payload:     m.Payload,
@@ -221,7 +221,7 @@ func (m *TSSProtocolMessage) Marshal() ([]byte, error) {
 }
 
 // Unmarshal converts a byte array produced by Marshal to a message.
-func (m *TSSProtocolMessage) Unmarshal(bytes []byte) error {
+func (m *ProtocolMessage) Unmarshal(bytes []byte) error {
 	pbMsg := &pb.TSSProtocolMessage{}
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err

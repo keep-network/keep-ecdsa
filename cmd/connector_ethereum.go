@@ -69,7 +69,7 @@ func connectChain(
 func initializeExtensions(
 	ctx context.Context,
 	config config.Extensions,
-	ethereumChain *ethereum.EthereumChain,
+	ethereumChain *ethereum.Chain,
 ) {
 	if len(config.TBTC.TBTCSystem) > 0 {
 		tbtcEthereumChain, err := ethereum.WithTBTCExtension(
@@ -91,7 +91,7 @@ func initializeExtensions(
 func initializeBalanceMonitoring(
 	ctx context.Context,
 	config *config.Config,
-	ethereumChain *ethereum.EthereumChain,
+	ethereumChain *ethereum.Chain,
 	ethereumKey *keystore.Key,
 ) {
 	balanceMonitor, err := ethereumChain.BalanceMonitor()

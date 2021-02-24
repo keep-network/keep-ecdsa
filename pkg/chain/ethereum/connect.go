@@ -40,8 +40,8 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-// EthereumChain is an implementation of ethereum blockchain interface.
-type EthereumChain struct {
+// Chain is an implementation of ethereum blockchain interface.
+type Chain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
 	client                         ethutil.EthereumClient
@@ -67,7 +67,7 @@ type EthereumChain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain, error) {
+func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 		return nil, err
 	}
 
-	return &EthereumChain{
+	return &Chain{
 		config:                         config,
 		accountKey:                     accountKey,
 		client:                         wrappedClient,
