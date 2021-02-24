@@ -46,18 +46,18 @@ abi/%.go: abi/%.abi
 
 contract/%.go cmd/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.go
 	go run github.com/keep-network/keep-common/tools/generators/ethlike \
-		-backend-module github.com/celo-org/celo-blockchain \
+		-host-chain-module github.com/celo-org/celo-blockchain \
 		-chain-util-package github.com/keep-network/keep-common/pkg/chain/celo/celoutil \
 		 $< contract/$*.go cmd/$*.go
 
 contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go: abi/BondedECDSAKeepFactory.abi abi/BondedECDSAKeepFactory.go *.go
 	go run github.com/keep-network/keep-common/tools/generators/ethlike \
-		-backend-module github.com/celo-org/celo-blockchain \
+		-host-chain-module github.com/celo-org/celo-blockchain \
         -chain-util-package github.com/keep-network/keep-common/pkg/chain/celo/celoutil \
 	 	$< contract/BondedECDSAKeepFactory.go cmd/BondedECDSAKeepFactory.go \
 
 contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go: abi/BondedECDSAKeep.abi abi/BondedECDSAKeep.go *.go
 	go run github.com/keep-network/keep-common/tools/generators/ethlike \
-		-backend-module github.com/celo-org/celo-blockchain \
+		-host-chain-module github.com/celo-org/celo-blockchain \
     	-chain-util-package github.com/keep-network/keep-common/pkg/chain/celo/celoutil \
 		$< contract/BondedECDSAKeep.go cmd/BondedECDSAKeep.go \

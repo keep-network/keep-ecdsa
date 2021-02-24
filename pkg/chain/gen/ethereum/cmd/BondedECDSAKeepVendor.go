@@ -50,13 +50,6 @@ func init() {
 		Usage:       `Provides access to the BondedECDSAKeepVendor contract.`,
 		Description: bondedECDSAKeepVendorDescription,
 		Subcommands: []cli.Command{{
-			Name:      "factory-upgrade-time-delay",
-			Usage:     "Calls the constant method factoryUpgradeTimeDelay on the BondedECDSAKeepVendor contract.",
-			ArgsUsage: "",
-			Action:    becdsakvFactoryUpgradeTimeDelay,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
 			Name:      "initialized",
 			Usage:     "Calls the constant method initialized on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "",
@@ -71,12 +64,12 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "complete-factory-upgrade",
-			Usage:     "Calls the method completeFactoryUpgrade on the BondedECDSAKeepVendor contract.",
+			Name:      "factory-upgrade-time-delay",
+			Usage:     "Calls the constant method factoryUpgradeTimeDelay on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "",
-			Action:    becdsakvCompleteFactoryUpgrade,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
+			Action:    becdsakvFactoryUpgradeTimeDelay,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "initialize",
 			Usage:     "Calls the method initialize on the BondedECDSAKeepVendor contract.",
@@ -91,31 +84,18 @@ func init() {
 			Action:    becdsakvUpgradeFactory,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "complete-factory-upgrade",
+			Usage:     "Calls the method completeFactoryUpgrade on the BondedECDSAKeepVendor contract.",
+			ArgsUsage: "",
+			Action:    becdsakvCompleteFactoryUpgrade,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
 		}},
 	})
 }
 
 /// ------------------- Const methods -------------------
-
-func becdsakvFactoryUpgradeTimeDelay(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepVendor(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.FactoryUpgradeTimeDelayAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
 
 func becdsakvInitialized(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
@@ -157,40 +137,27 @@ func becdsakvSelectFactory(c *cli.Context) error {
 	return nil
 }
 
-/// ------------------- Non-const methods -------------------
-
-func becdsakvCompleteFactoryUpgrade(c *cli.Context) error {
+func becdsakvFactoryUpgradeTimeDelay(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
 	if err != nil {
 		return err
 	}
 
-	var (
-		transaction *types.Transaction
+	result, err := contract.FactoryUpgradeTimeDelayAtBlock(
+
+		cmd.BlockFlagValue.Uint,
 	)
 
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.CompleteFactoryUpgrade()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallCompleteFactoryUpgrade(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
+	if err != nil {
+		return err
 	}
+
+	cmd.PrintOutput(result)
 
 	return nil
 }
+
+/// ------------------- Non-const methods -------------------
 
 func becdsakvInitialize(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
@@ -290,6 +257,39 @@ func becdsakvUpgradeFactory(c *cli.Context) error {
 	return nil
 }
 
+func becdsakvCompleteFactoryUpgrade(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepVendor(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.CompleteFactoryUpgrade()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallCompleteFactoryUpgrade(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
 /// ------------------- Initialization -------------------
 
 func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepVendor, error) {
@@ -300,7 +300,7 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 
 	client, _, _, err := chainutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to chan node: [%v]", err)
+		return nil, fmt.Errorf("error connecting to host chain node: [%v]", err)
 	}
 
 	key, err := chainutil.DecryptKeyFile(
