@@ -9,6 +9,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
+
 	"github.com/celo-org/celo-blockchain/common"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
@@ -116,7 +118,7 @@ func (cc *CeloChain) OnKeepClosed(
 	onEvent := func(blockNumber uint64) {
 		handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
 	}
-	return keepContract.KeepClosed(&celoutil.SubscribeOpts{
+	return keepContract.KeepClosed(&ethlike.SubscribeOpts{
 		Tick:       4 * time.Hour,
 		PastBlocks: 2000,
 	}).OnEvent(onEvent), nil
@@ -136,7 +138,7 @@ func (cc *CeloChain) OnKeepTerminated(
 	onEvent := func(blockNumber uint64) {
 		handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
 	}
-	return keepContract.KeepTerminated(&celoutil.SubscribeOpts{
+	return keepContract.KeepTerminated(&ethlike.SubscribeOpts{
 		Tick:       4 * time.Hour,
 		PastBlocks: 2000,
 	}).OnEvent(onEvent), nil
@@ -623,5 +625,5 @@ func (cc *CeloChain) BalanceMonitor() (chain.BalanceMonitor, error) {
 		return cc.WeiBalanceOf(toExternalAddress(address))
 	}
 
-	return NewBalanceMonitor(weiBalanceOf), nil
+	return celoutil.NewBalanceMonitor(weiBalanceOf), nil
 }

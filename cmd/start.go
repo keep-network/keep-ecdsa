@@ -3,12 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"time"
-
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
-
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/keep-network/keep-ecdsa/pkg/metrics"
 
@@ -70,15 +65,6 @@ const (
 	routingTableRefreshPeriod = 5 * time.Minute
 )
 
-// Values related with balance monitoring.
-// defaultBalanceAlertThreshold determines the alert threshold below which
-// the alert should be triggered.
-var defaultBalanceAlertThreshold = big.NewInt(500000000000000000) // 0.5 ether
-
-// defaultBalanceMonitoringTick determines how often the monitoring
-// check should be triggered.
-const defaultBalanceMonitoringTick = 10 * time.Minute
-
 func init() {
 	StartCommand =
 		cli.Command{
@@ -87,15 +73,6 @@ func init() {
 			Description: startDescription,
 			Action:      Start,
 		}
-}
-
-type chainConfig interface {
-	// BalanceAlertThresholdValue returns the `BalanceAlertThreshold`
-	// integer value.
-	BalanceAlertThresholdValue() *big.Int
-
-	// GetAccount returns the account configuration.
-	GetAccount() ethlike.Account
 }
 
 // Start starts a client.
@@ -156,7 +133,7 @@ func Start(c *cli.Context) error {
 	}
 	persistence := persistence.NewEncryptedPersistence(
 		handle,
-		extractChainConfig(config).GetAccount().KeyFilePassword,
+		extractKeyFilePassword(config),
 	)
 
 	sanctionedApplications, err := config.SanctionedApplications.Addresses()
@@ -263,36 +240,4 @@ func initializeDiagnostics(
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
 	diagnostics.RegisterClientInfoSource(registry, netProvider)
-}
-
-func initializeBalanceMonitoring(
-	ctx context.Context,
-	chainHandle eth.Handle,
-	config chainConfig,
-	address string,
-) {
-	balanceMonitor, err := chainHandle.BalanceMonitor()
-	if err != nil {
-		logger.Errorf("error obtaining balance monitor handle [%v]", err)
-		return
-	}
-
-	alertThreshold := defaultBalanceAlertThreshold
-	if value := config.BalanceAlertThresholdValue(); value != nil {
-		alertThreshold = value
-	}
-
-	balanceMonitor.Observe(
-		ctx,
-		address,
-		alertThreshold,
-		defaultBalanceMonitoringTick,
-	)
-
-	logger.Infof(
-		"started balance monitoring for address [%v] "+
-			"with the alert threshold set to [%v]",
-		address,
-		alertThreshold,
-	)
 }

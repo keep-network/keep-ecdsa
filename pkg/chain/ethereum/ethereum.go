@@ -10,6 +10,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
@@ -17,7 +19,6 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/contract"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
@@ -113,7 +114,7 @@ func (ec *EthereumChain) OnKeepClosed(
 	onEvent := func(blockNumber uint64) {
 		handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
 	}
-	return keepContract.KeepClosed(&ethutil.SubscribeOpts{
+	return keepContract.KeepClosed(&ethlike.SubscribeOpts{
 		Tick:       4 * time.Hour,
 		PastBlocks: 2000,
 	}).OnEvent(onEvent), nil
@@ -133,7 +134,7 @@ func (ec *EthereumChain) OnKeepTerminated(
 	onEvent := func(blockNumber uint64) {
 		handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
 	}
-	return keepContract.KeepTerminated(&ethutil.SubscribeOpts{
+	return keepContract.KeepTerminated(&ethlike.SubscribeOpts{
 		Tick:       4 * time.Hour,
 		PastBlocks: 2000,
 	}).OnEvent(onEvent), nil
@@ -575,5 +576,5 @@ func (ec *EthereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) 
 
 // BalanceMonitor returns a balance monitor.
 func (ec *EthereumChain) BalanceMonitor() (chain.BalanceMonitor, error) {
-	return ethereum.NewBalanceMonitor(ec.WeiBalanceOf), nil
+	return ethutil.NewBalanceMonitor(ec.WeiBalanceOf), nil
 }
