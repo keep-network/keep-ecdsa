@@ -1,6 +1,6 @@
-//+build !celo
+//+build celo
 
-package ethereum
+package celo
 
 import (
 	"fmt"
@@ -10,14 +10,13 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/rate"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/chain/celo"
+
+	"github.com/celo-org/celo-blockchain/accounts/keystore"
+	celoclient "github.com/celo-org/celo-blockchain/ethclient"
+	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
-
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/ethclient"
-
-	"github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/contract"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/celo/contract"
 )
 
 // Definitions of contract names.
@@ -25,6 +24,7 @@ const (
 	BondedECDSAKeepFactoryContractName = "BondedECDSAKeepFactory"
 )
 
+// TODO: revisit those constants values and adjust them to Celo blockchain.
 var (
 	// DefaultMiningCheckInterval is the default interval in which transaction
 	// mining status is checked. If the transaction is not mined within this
@@ -40,11 +40,11 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-// Chain is an implementation of ethereum blockchain interface.
+// Chain is an implementation of Celo blockchain interface.
 type Chain struct {
-	config                         *ethereum.Config
+	config                         *celo.Config
 	accountKey                     *keystore.Key
-	client                         ethutil.HostChainClient
+	client                         celoutil.HostChainClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *ethlike.BlockCounter
 	miningWaiter                   *ethlike.MiningWaiter
@@ -57,7 +57,7 @@ type Chain struct {
 	// equal to the count of transactions the account has submitted so far, and
 	// for a transaction to be accepted it should be monotonically greater than
 	// any previous submitted transaction. To do this, transaction submission
-	// asks the Ethereum client it is connected to for the next pending nonce,
+	// asks the Celo client it is connected to for the next pending nonce,
 	// and uses that value for the transaction. Unfortunately, if multiple
 	// transactions are submitted in short order, they may all get the same
 	// nonce. Serializing submission ensures that each nonce is requested after
@@ -65,10 +65,13 @@ type Chain struct {
 	transactionMutex *sync.Mutex
 }
 
-// Connect performs initialization for communication with Ethereum blockchain
+// Connect performs initialization for communication with Celo blockchain
 // based on provided config.
-func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) {
-	client, err := ethclient.Dial(config.URL)
+func Connect(
+	accountKey *keystore.Key,
+	config *celo.Config,
+) (*Chain, error) {
+	client, err := celoclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +80,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 
 	transactionMutex := &sync.Mutex{}
 
-	nonceManager := ethutil.NewNonceManager(wrappedClient, accountKey.Address)
+	nonceManager := celoutil.NewNonceManager(wrappedClient, accountKey.Address)
 
 	checkInterval := DefaultMiningCheckInterval
 	maxGasPrice := DefaultMaxGasPrice
@@ -91,16 +94,16 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
 
-	miningWaiter := ethutil.NewMiningWaiter(
+	miningWaiter := celoutil.NewMiningWaiter(
 		wrappedClient,
 		checkInterval,
 		maxGasPrice,
 	)
 
-	blockCounter, err := ethutil.NewBlockCounter(wrappedClient)
+	blockCounter, err := celoutil.NewBlockCounter(wrappedClient)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to create Ethereum blockcounter: [%v]",
+			"failed to create Celo blockcounter: [%v]",
 			err,
 		)
 	}
@@ -111,6 +114,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
 		*bondedECDSAKeepFactoryContractAddress,
 		accountKey,
@@ -137,21 +141,21 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 }
 
 func addClientWrappers(
-	config *ethereum.Config,
-	client ethutil.HostChainClient,
-) ethutil.HostChainClient {
-	loggingClient := ethutil.WrapCallLogging(logger, client)
+	config *celo.Config,
+	client celoutil.HostChainClient,
+) celoutil.HostChainClient {
+	loggingClient := celoutil.WrapCallLogging(logger, client)
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
 		logger.Infof(
-			"enabled ethereum rate limiter; "+
+			"enabled Celo rate limiter; "+
 				"rps limit [%v]; "+
 				"concurrency limit [%v]",
 			config.RequestsPerSecondLimit,
 			config.ConcurrencyLimit,
 		)
 
-		return ethutil.WrapRateLimiting(
+		return celoutil.WrapRateLimiting(
 			loggingClient,
 			&rate.LimiterConfig{
 				RequestsPerSecondLimit: config.RequestsPerSecondLimit,

@@ -1,3 +1,5 @@
+//+build !celo
+
 package ethereum
 
 import (

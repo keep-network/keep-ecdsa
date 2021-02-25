@@ -60,7 +60,7 @@ func init() {
 				Action:    SignDigest,
 				ArgsUsage: "[unprefixed-hex-digest] [key-shares-dir]",
 			},
-			EthereumSigningCommand,
+			ChainSigningCommand,
 		},
 	}
 }

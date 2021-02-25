@@ -77,7 +77,9 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 	}
 
 	remotePeerNetworkPublicKey := coreKey.NetworkPublic(*remotePeerPublicKey)
-	remotePeerAddress := coreKey.NetworkPubKeyToEthAddress(&remotePeerNetworkPublicKey)
+	remotePeerAddress := coreKey.NetworkPubKeyToChainAddress(
+		&remotePeerNetworkPublicKey,
+	)
 
 	// Check if the remote peer has authorization on the factory.
 	// The authorization cannot be revoked.

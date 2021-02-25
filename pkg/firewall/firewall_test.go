@@ -86,7 +86,7 @@ func TestCachesNotAuthorizedOperators(t *testing.T) {
 	}
 
 	remotePeerAddress := common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	).String()
 
 	policy.Validate(key.NetworkKeyToECDSAKey(remotePeerPublicKey))
@@ -116,7 +116,7 @@ func TestCachesAuthorizedOperators(t *testing.T) {
 	}
 
 	remotePeerAddress := common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	)
 
 	chain.AuthorizeOperator(remotePeerAddress)
@@ -144,7 +144,7 @@ func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
 		t.Fatal(err)
 	}
 	remotePeer1Address := common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeer1PublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeer1PublicKey),
 	)
 
 	_, remotePeer2PublicKey, err := key.GenerateStaticNetworkKey()
@@ -152,7 +152,7 @@ func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
 		t.Fatal(err)
 	}
 	remotePeer2Address := common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeer2PublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeer2PublicKey),
 	)
 
 	policy.authorizedOperatorsCache.Add(remotePeer1Address.String())
@@ -189,7 +189,7 @@ func TestNoMinimumStakeNoKeepsExist(t *testing.T) {
 	}
 
 	chain.AuthorizeOperator(common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	if err := policy.Validate(
@@ -221,7 +221,7 @@ func TestNoMinimumStakeIsNotKeepMember(t *testing.T) {
 	}
 
 	chain.AuthorizeOperator(common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	chain.OpenKeep(
@@ -261,14 +261,14 @@ func TestNoMinimumStakeIsActiveKeepMember(t *testing.T) {
 	}
 
 	chain.AuthorizeOperator(common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	chain.OpenKeep(
 		common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256"),
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
-			common.HexToAddress(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)),
+			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
 		},
 	)
 
@@ -297,7 +297,7 @@ func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
 	}
 
 	chain.AuthorizeOperator(common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	keepAddress := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
@@ -305,7 +305,7 @@ func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
 		keepAddress,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
-			common.HexToAddress(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)),
+			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
 		},
 	)
 	if err := chain.CloseKeep(keepAddress); err != nil {
@@ -342,7 +342,7 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 	}
 
 	chain.AuthorizeOperator(common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
@@ -350,7 +350,7 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 		keep1Address,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
-			common.HexToAddress(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)),
+			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
 		},
 	)
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
@@ -358,7 +358,7 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 		keep2Address,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
-			common.HexToAddress(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)),
+			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
 		},
 	)
 
@@ -392,7 +392,7 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 	}
 
 	chain.AuthorizeOperator(common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	activeKeepMembers := []common.Address{
@@ -446,7 +446,7 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 	if policy.noActiveKeepMembersCache.Has(closedKeepMembers[1].String()) {
 		t.Errorf("should not cache member until all keeps are checked")
 	}
-	if !policy.noActiveKeepMembersCache.Has(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)) {
+	if !policy.noActiveKeepMembersCache.Has(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)) {
 		t.Errorf("should be in the no active keep members cache")
 	}
 }
@@ -472,14 +472,14 @@ func TestSweepsActiveKeepMembersCache(t *testing.T) {
 	}
 
 	chain.AuthorizeOperator(common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	keepAddress := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
 	chain.OpenKeep(
 		keepAddress,
 		[]common.Address{
-			common.HexToAddress(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)),
+			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
 		},
 	)
 
@@ -535,7 +535,7 @@ func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 	}
 
 	chain.AuthorizeOperator(common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	if err := policy.Validate(
@@ -552,7 +552,7 @@ func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 	chain.OpenKeep(
 		keepAddress,
 		[]common.Address{
-			common.HexToAddress(key.NetworkPubKeyToEthAddress(remotePeerPublicKey)),
+			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
 		},
 	)
 
@@ -591,7 +591,7 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	}
 
 	chain.AuthorizeOperator(common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
@@ -667,7 +667,7 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	}
 
 	chain.AuthorizeOperator(common.HexToAddress(
-		key.NetworkPubKeyToEthAddress(remotePeerPublicKey),
+		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")

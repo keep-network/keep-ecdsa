@@ -23,7 +23,3 @@ solidity/
 !solidity/contracts
 !solidity/package.json
 !solidity/package-lock.json
-
-# Go stuff.
-**/gen/*/**/*.go
-!pkg/chain/gen/cmd/cmd*.go
