@@ -59,6 +59,7 @@ func (k *Keeps) RegisterSigner(
 	return nil
 }
 
+// SnapshotSigner stores a snapshot of a keep address with its signer
 func (k *Keeps) SnapshotSigner(
 	keepAddress common.Address,
 	signer *tss.ThresholdSigner,

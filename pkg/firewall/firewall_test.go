@@ -1,6 +1,7 @@
 package firewall
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"reflect"
@@ -20,7 +21,10 @@ var cacheLifeTime = time.Second
 // Has minimum stake.
 // Should allow to connect.
 func TestHasMinimumStake(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -42,7 +46,10 @@ func TestHasMinimumStake(t *testing.T) {
 // Has no authorization.
 // Should NOT allow to connect.
 func TestNoAuthorization(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -66,7 +73,10 @@ func TestNoAuthorization(t *testing.T) {
 // Has no authorization
 // Should cache the information operator is not authorized
 func TestCachesNotAuthorizedOperators(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -93,7 +103,10 @@ func TestCachesNotAuthorizedOperators(t *testing.T) {
 // Has authorization
 // Should cache the information operator is authorized.
 func TestCachesAuthorizedOperators(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -119,7 +132,10 @@ func TestCachesAuthorizedOperators(t *testing.T) {
 }
 
 func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -160,7 +176,10 @@ func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
 // No keeps exist.
 // Should NOT allow to connect.
 func TestNoMinimumStakeNoKeepsExist(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -189,7 +208,10 @@ func TestNoMinimumStakeNoKeepsExist(t *testing.T) {
 // It not a member of a keep.
 // Should NOT allow to connect.
 func TestNoMinimumStakeIsNotKeepMember(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -226,7 +248,10 @@ func TestNoMinimumStakeIsNotKeepMember(t *testing.T) {
 // Is a member of an active keep
 // Should allow to connect.
 func TestNoMinimumStakeIsActiveKeepMember(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -259,7 +284,10 @@ func TestNoMinimumStakeIsActiveKeepMember(t *testing.T) {
 // Is a member of a closed keep
 // Should NOT allow to connect.
 func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -301,7 +329,10 @@ func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
 // Is a member of an active keep
 // Should allow to connect.
 func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -348,7 +379,10 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 // Is not a member of an active keep.
 // Should NOT allow to connect but should cache all active keep members in-memory.
 func TestCachesAllActiveKeepMembers(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -425,7 +459,10 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 // After some time, the keep gets closed.
 // It should no longer allow to connect.
 func TestSweepsActiveKeepMembersCache(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -485,7 +522,10 @@ func TestSweepsActiveKeepMembersCache(t *testing.T) {
 // Shortly after that, the minimum stake drops below the required minimum but
 // the membership in an active keep remains.
 func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -538,7 +578,10 @@ func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 }
 
 func TestIsKeepActiveCaching(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -611,7 +654,10 @@ func TestIsKeepActiveCaching(t *testing.T) {
 }
 
 func TestGetKeepMembersCaching(t *testing.T) {
-	chain := local.Connect()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 

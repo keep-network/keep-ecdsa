@@ -4,21 +4,25 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func TestRequestSignatureNonexistentKeep(t *testing.T) {
-	chain := initializeLocalChain()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := initializeLocalChain(ctx)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 	expectedError := fmt.Errorf("failed to find keep with address: [0x0000000000000000000000000000000000000001]")
 
-	err := chain.requestSignature(keepAddress, digest)
+	err := chain.RequestSignature(keepAddress, digest)
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf(
@@ -30,7 +34,10 @@ func TestRequestSignatureNonexistentKeep(t *testing.T) {
 }
 
 func TestRequestSignatureNoHandler(t *testing.T) {
-	chain := initializeLocalChain()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := initializeLocalChain(ctx)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
@@ -39,17 +46,25 @@ func TestRequestSignatureNoHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = chain.requestSignature(keepAddress, digest)
+	var keepPubkey [64]byte
+	rand.Read(keepPubkey[:])
+
+	err = chain.SubmitKeepPublicKey(keepAddress, keepPubkey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = chain.RequestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestRequestSignature(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancelCtx()
 
-	chain := initializeLocalChain()
+	chain := initializeLocalChain(ctx)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 	eventEmitted := make(chan *eth.SignatureRequestedEvent)
@@ -61,9 +76,18 @@ func TestRequestSignature(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	var keepPubkey [64]byte
+	rand.Read(keepPubkey[:])
+
+	err = chain.SubmitKeepPublicKey(keepAddress, keepPubkey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	chain.keeps[keepAddress].signatureRequestedHandlers[0] = handler
 
-	err = chain.requestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress, digest)
 	if err != nil {
 		t.Fatal(err)
 	}

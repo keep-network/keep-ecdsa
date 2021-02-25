@@ -16,7 +16,9 @@ module.exports = async function () {
     // 50 ETH / 3 members = 16,67 ETH of unbonded value for each member.
     // Here we set the bonding value to bigger value so members can handle
     // multiple keeps.
-    const bondingValue = web3.utils.toWei("50", "ether")
+    const bonding = "50"
+
+    const bondingValue = web3.utils.toWei(bonding, "ether")
 
     const accounts = await web3.eth.getAccounts()
     const operators = [accounts[1], accounts[2], accounts[3], accounts[4]]
@@ -33,13 +35,13 @@ module.exports = async function () {
         await tokenStaking.authorizeOperatorContract(
           operator,
           operatorContract,
-          {from: operator}
+          { from: operator }
         )
 
         await keepBonding.authorizeSortitionPoolContract(
           operator,
           sortitionPoolAddress,
-          {from: operator}
+          { from: operator }
         ) // this function should be called by authorizer but it's currently set to operator in demo.js
       } catch (err) {
         console.error(err)
@@ -52,7 +54,7 @@ module.exports = async function () {
 
     const depositUnbondedValue = async (operator) => {
       try {
-        await keepBonding.deposit(operator, {value: bondingValue})
+        await keepBonding.deposit(operator, { value: bondingValue })
         console.log(
           `deposited ${web3.utils.fromWei(
             bondingValue

@@ -41,9 +41,10 @@ interface IBondedECDSAKeepFactory {
     /// @param _application Address of the application.
     /// @return The sum of all registered operators' weights in the pool.
     /// Reverts if sortition pool for the application does not exist.
-    function getSortitionPoolWeight(
-        address _application
-    ) external view returns (uint256);
+    function getSortitionPoolWeight(address _application)
+        external
+        view
+        returns (uint256);
 
     /// @notice Sets the minimum bondable value required from the operator to
     /// join the sortition pool of the given application. It is up to the

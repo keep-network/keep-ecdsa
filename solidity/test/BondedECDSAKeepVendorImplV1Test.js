@@ -1,7 +1,7 @@
-const {accounts, contract} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { accounts, contract } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 
-const {constants, expectRevert} = require("@openzeppelin/test-helpers")
+const { constants, expectRevert } = require("@openzeppelin/test-helpers")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const BondedECDSAKeepVendorImplV1Stub = contract.fromArtifact(
@@ -67,7 +67,7 @@ describe("BondedECDSAKeepVendorImplV1", function () {
 
     it("reverts when called directly", async () => {
       await expectRevert(
-        keepVendor.upgradeFactory(address1, {from: upgrader}),
+        keepVendor.upgradeFactory(address1, { from: upgrader }),
         "KeepRegistry address is not registered"
       )
     })

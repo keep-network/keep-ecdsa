@@ -1,8 +1,5 @@
 FROM golang:1.13.8-alpine3.10 AS gobuild
 
-ARG VERSION
-ARG REVISION
-
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
 	APP_NAME=keep-ecdsa \
@@ -25,6 +22,9 @@ RUN apk add --update --no-cache \
 
 # Install Solidity compiler.
 COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
+
+# Get gotestsum tool
+RUN go get gotest.tools/gotestsum
 
 # Configure GitHub token to be able to get private repositories.
 ARG GITHUB_TOKEN
@@ -52,16 +52,17 @@ RUN cd $APP_DIR/solidity && npm install
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
 # Need this to resolve imports in generated Ethereum commands.
-COPY ./internal/config $APP_DIR/config
+COPY ./config $APP_DIR/config
 RUN go generate ./.../gen
 
 # Build the application.
 COPY ./ $APP_DIR/
 
-# Configure private repositories for Go dependencies
-ARG GOPRIVATE
+# Client Versioning.
+ARG VERSION
+ARG REVISION
 
-RUN GOOS=linux GOPRIVATE=$GOPRIVATE go build -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ && \
+RUN GOOS=linux go build -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
 
 # Configure runtime container.

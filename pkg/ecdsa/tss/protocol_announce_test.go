@@ -2,10 +2,14 @@ package tss
 
 import (
 	"context"
-	"github.com/keep-network/keep-core/pkg/net"
+	cecdsa "crypto/ecdsa"
+	"crypto/elliptic"
+	"encoding/hex"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/net"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -19,11 +23,25 @@ func TestAnnounceProtocol(t *testing.T) {
 		t.Fatalf("logger initialization failed: [%v]", err)
 	}
 
+	keepAddress := "0x1234567"
 	groupSize := 3
 
 	groupMembers, err := generateMemberKeys(groupSize)
 	if err != nil {
 		t.Fatalf("failed to generate members keys: [%v]", err)
+	}
+
+	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
+		return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
+	}
+
+	groupMemberAddresses := make([]string, groupSize)
+	for i, member := range groupMembers {
+		pubKey, err := member.PublicKey()
+		if err != nil {
+			t.Fatalf("could not get member pubkey: [%v]", err)
+		}
+		groupMemberAddresses[i] = hex.EncodeToString(pubKeyToAddressFn(*pubKey))
 	}
 
 	errChan := make(chan error)
@@ -60,8 +78,10 @@ func TestAnnounceProtocol(t *testing.T) {
 			memberIDs, err := AnnounceProtocol(
 				ctx,
 				memberPublicKey,
-				groupSize,
+				keepAddress,
+				groupMemberAddresses,
 				broadcastChannel,
+				pubKeyToAddressFn,
 			)
 			if err != nil {
 				errChan <- err

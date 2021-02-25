@@ -1,0 +1,2 @@
+The keep-ecdsa security policy matches that of the keep-core repository at
+https://github.com/keep-network/keep-core/tree/master/SECURITY.adoc.

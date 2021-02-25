@@ -3,8 +3,9 @@ package tss
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // MemberID is an unique identifier of a member across the network.
@@ -20,7 +21,7 @@ func (id MemberID) PublicKey() (*operator.PublicKey, error) {
 	return operator.Unmarshal(id)
 }
 
-// MemberIDFromPublicKey creates a MemberID from a string.
+// MemberIDFromString creates a MemberID from a string.
 func MemberIDFromString(string string) (MemberID, error) {
 	return hex.DecodeString(string)
 }

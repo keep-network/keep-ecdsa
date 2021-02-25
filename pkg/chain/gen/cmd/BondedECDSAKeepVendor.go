@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"sync"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
-	"github.com/keep-network/keep-ecdsa/internal/config"
+	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
 
 	"github.com/urfave/cli"
@@ -321,11 +320,23 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 	if config.MiningCheckInterval != 0 {
 		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
 	}
-	if config.MaxGasPrice != 0 {
-		maxGasPrice = new(big.Int).SetUint64(config.MaxGasPrice)
+	if config.MaxGasPrice != nil {
+		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(
+		client,
+		checkInterval,
+		maxGasPrice,
+	)
+
+	blockCounter, err := ethutil.NewBlockCounter(client)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create block counter: [%v]",
+			err,
+		)
+	}
 
 	address := common.HexToAddress(config.ContractAddresses["BondedECDSAKeepVendor"])
 
@@ -333,8 +344,9 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 		address,
 		key,
 		client,
-		ethutil.NewNonceManager(key.Address, client),
+		ethutil.NewNonceManager(client, key.Address),
 		miningWaiter,
+		blockCounter,
 		&sync.Mutex{},
 	)
 }
