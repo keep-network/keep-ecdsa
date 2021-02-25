@@ -14,6 +14,7 @@ import (
 // the case that a keep is terminated.
 func BroadcastRecoveryAddress(
 	parentCtx context.Context,
+	btcRecoveryAddress string,
 	groupID string,
 	memberID MemberID,
 	groupMemberIDs []MemberID,
@@ -90,7 +91,7 @@ func BroadcastRecoveryAddress(
 	go func() {
 		sendMessage := func() {
 			if err := broadcastChannel.Send(ctx,
-				&LiquidationRecoveryAnnounceMessage{SenderID: group.memberID, BtcRecoveryAddress: "abc123"},
+				&LiquidationRecoveryAnnounceMessage{SenderID: group.memberID, BtcRecoveryAddress: btcRecoveryAddress},
 			); err != nil {
 				logger.Errorf("failed to send btc recovery address: [%v]", err)
 			}

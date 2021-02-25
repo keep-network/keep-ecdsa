@@ -92,6 +92,10 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.TBTCSystem },
 			expectedValue: "0xa4888eDD97A5a3A739B4E0807C71817c8a418273",
 		},
+		"Extensions.TBTC.BTCRefunds.BeneficiaryAddress": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.BeneficiaryAddress },
+			expectedValue: "bcrt1q0umle4fe6penqqyzuwsysqezwwptuyqa82jas4",
+		},
 	}
 
 	for testName, test := range configReadTests {

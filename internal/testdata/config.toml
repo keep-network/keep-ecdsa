@@ -3,7 +3,7 @@
 	URLRPC                  = "http://192.168.0.158:8545"
 	MaxGasPrice             = "140 Gwei"
 	BalanceAlertThreshold   = "2.5 ether"
-	
+
 [ethereum.account]
 	KeyFile            = "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b"
 
@@ -34,3 +34,6 @@
 
 [Extensions.TBTC]
 	TBTCSystem = "0xa4888eDD97A5a3A739B4E0807C71817c8a418273"
+
+  [Extensions.TBTC.BTCRefunds]
+  	BeneficiaryAddress = "bcrt1q0umle4fe6penqqyzuwsysqezwwptuyqa82jas4"
