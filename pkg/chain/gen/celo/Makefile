@@ -6,15 +6,15 @@ solidity_files := $(wildcard ${solidity_dir}/contracts/*.sol)
 
 # Bare Solidity filenames without .sol or Solidity directory prefix.
 contract_stems := $(notdir $(basename $(solidity_files)))
-# Go abigen bindings in abi/ subdirectory with .go suffix, alongside solc ABI
-# files with .abi suffix.
-abi_files := $(addprefix abi/,$(addsuffix .abi,$(contract_stems)))
-abigen_files := $(addprefix abi/,$(addsuffix .go,$(contract_stems)))
 # *ImplV1.go files will get generated into clean Keep contract bindings, the
 # corresponding contract filenames will drop the ImplV1, if it exists, and live
 # in the contract/ directory.
 clean_contract_stems := $(filter %ImplV1,$(contract_stems)) $(filter BondedECDSAKeepFactory, $(contract_stems)) $(filter BondedECDSAKeep, $(contract_stems))
 contract_files := $(addprefix contract/,$(addsuffix .go,$(subst ImplV1,,$(clean_contract_stems))))
+# Go abigen bindings in abi/ subdirectory with .go suffix, alongside solc ABI
+# files with .abi suffix.
+abi_files := $(addprefix abi/,$(addsuffix .abi,$(clean_contract_stems)))
+abigen_files := $(addprefix abi/,$(addsuffix .go,$(clean_contract_stems)))
 
 all: gen_contract_go gen_abi_go
 
