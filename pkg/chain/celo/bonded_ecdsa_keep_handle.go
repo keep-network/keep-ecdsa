@@ -125,48 +125,11 @@ func (c *Chain) SubmitKeepPublicKey(
 	// case is when Celo nodes are behind a load balancer and not fully synced
 	// with each other. To mitigate this issue, a client will retry submitting
 	// a public key up to 10 times with a 250ms interval.
-	if err := c.withRetry(submitPubKey); err != nil {
+	if err := withRetry(submitPubKey); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (c *Chain) withRetry(fn func() error) error {
-	const numberOfRetries = 10
-	const delay = 12 * time.Second
-
-	for i := 1; ; i++ {
-		err := fn()
-		if err != nil {
-			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
-			if i == numberOfRetries {
-				return err
-			}
-			time.Sleep(delay)
-		} else {
-			return nil
-		}
-	}
-}
-
-func (c *Chain) getKeepContract(
-	address ExternalAddress,
-) (*contract.BondedECDSAKeep, error) {
-	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
-		fromExternalAddress(address),
-		c.accountKey,
-		c.client,
-		c.nonceManager,
-		c.miningWaiter,
-		c.blockCounter,
-		c.transactionMutex,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return bondedECDSAKeepContract, nil
 }
 
 // SubmitSignature submits a signature to a keep contract deployed under a
@@ -410,4 +373,42 @@ func (c *Chain) PastSignatureSubmittedEvents(
 	})
 
 	return result, nil
+}
+
+func (c *Chain) getKeepContract(
+	address ExternalAddress,
+) (*contract.BondedECDSAKeep, error) {
+	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
+		fromExternalAddress(address),
+		c.accountKey,
+		c.client,
+		c.nonceManager,
+		c.miningWaiter,
+		c.blockCounter,
+		c.transactionMutex,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return bondedECDSAKeepContract, nil
+}
+
+// TODO Move to keep-common and parametrize by number of retries and delay?
+func withRetry(fn func() error) error {
+	const numberOfRetries = 10
+	const delay = 12 * time.Second
+
+	for i := 1; ; i++ {
+		err := fn()
+		if err != nil {
+			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
+			if i == numberOfRetries {
+				return err
+			}
+			time.Sleep(delay)
+		} else {
+			return nil
+		}
+	}
 }
