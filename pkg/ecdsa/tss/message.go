@@ -39,14 +39,16 @@ func (m *AnnounceMessage) Type() string {
 	return "ecdsa/announce_message"
 }
 
-// LiquidationRecoveryMessage is a network message used to broadcast a btc recovery address
-type LiquidationRecoveryMessage struct {
+// LiquidationRecoveryAnnounceMessage is a network message used announce a BTC
+// recovery address to other signers on a group
+type LiquidationRecoveryAnnounceMessage struct {
 	SenderID           MemberID
 	BtcRecoveryAddress string
 }
 
-// Type returns a string type of the `LiquidationRecoveryMessage`
-func (m *LiquidationRecoveryMessage) Type() string {
+// Type returns a string type of the `LiquidationRecoveryAnnounceMessage` so
+// that it conforms to `net.Message` interface
+func (m *LiquidationRecoveryAnnounceMessage) Type() string {
 	return "ecdsa/liquidation_recovery_message"
 }
 
@@ -65,6 +67,6 @@ func RegisterUnmarshalers(broadcastChannel net.BroadcastChannel) {
 	})
 
 	broadcastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &LiquidationRecoveryMessage{}
+		return &LiquidationRecoveryAnnounceMessage{}
 	})
 }
