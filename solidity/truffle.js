@@ -9,6 +9,7 @@
 require("@babel/register")
 require("@babel/polyfill")
 const HDWalletProvider = require("@truffle/hdwallet-provider")
+const Kit = require("@celo/contractkit")
 
 module.exports = {
   /**
@@ -28,7 +29,7 @@ module.exports = {
     //
     local: {
       host: "127.0.0.1", // Localhost (default: none)
-      port: 8545, // Standard Ethereum port (default: none)
+      port: 8546, // Standard Ethereum port (default: none)
       network_id: "*", // Any network (default: none)
       websockets: true, //  Enable EventEmitter interface for web3 (default: false)
     },
@@ -52,6 +53,14 @@ module.exports = {
       gas: 8000000,
       network_id: 3,
       skipDryRun: true,
+    },
+    alfajores: {
+      provider: function () {
+        const kit = Kit.newKit("https://alfajores-forno.celo-testnet.org")
+        kit.addAccount(process.env.CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY)
+        return kit.web3.currentProvider
+      },
+      network_id: 44787,
     },
   },
   // Configure your compilers

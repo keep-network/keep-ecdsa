@@ -1,8 +1,9 @@
 package tss
 
 import (
-	"github.com/keep-network/keep-core/pkg/operator"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 func TestMemberID(t *testing.T) {

@@ -14,6 +14,7 @@ import (
 
 const protocolAnnounceTimeout = 2 * time.Minute
 
+// AnnounceProtocol announces a client to the other clients in the keep network
 func AnnounceProtocol(
 	parentCtx context.Context,
 	publicKey *operator.PublicKey,

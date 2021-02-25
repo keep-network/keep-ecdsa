@@ -201,7 +201,7 @@ func Start(c *cli.Context) error {
 func initializeExtensions(
 	ctx context.Context,
 	config config.Extensions,
-	ethereumChain *ethereum.EthereumChain,
+	ethereumChain *ethereum.Chain,
 ) {
 	if len(config.TBTC.TBTCSystem) > 0 {
 		tbtcEthereumChain, err := ethereum.WithTBTCExtension(
@@ -295,7 +295,7 @@ func initializeDiagnostics(
 
 func initializeBalanceMonitoring(
 	ctx context.Context,
-	ethereumChain *ethereum.EthereumChain,
+	ethereumChain *ethereum.Chain,
 	config *config.Config,
 	ethereumAddress string,
 ) {
