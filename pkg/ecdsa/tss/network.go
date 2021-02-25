@@ -31,7 +31,7 @@ type networkBridge struct {
 	tssMessageHandlers      []tssMessageHandler
 }
 
-type tssMessageHandler func(netMsg *TSSProtocolMessage) error
+type tssMessageHandler func(netMsg *ProtocolMessage) error
 
 // newNetworkBridge initializes a new network bridge for the given network provider.
 func newNetworkBridge(
@@ -58,7 +58,7 @@ func (b *networkBridge) connect(
 	party tss.Party,
 	sortedPartyIDs tss.SortedPartyIDs,
 ) error {
-	netInChan := make(chan *TSSProtocolMessage, len(b.groupInfo.groupMemberIDs))
+	netInChan := make(chan *ProtocolMessage, len(b.groupInfo.groupMemberIDs))
 
 	if err := b.initializeChannels(ctx, netInChan); err != nil {
 		return fmt.Errorf("failed to initialize channels: [%v]", err)
@@ -84,11 +84,11 @@ func (b *networkBridge) connect(
 
 func (b *networkBridge) initializeChannels(
 	ctx context.Context,
-	netInChan chan *TSSProtocolMessage,
+	netInChan chan *ProtocolMessage,
 ) error {
 	handleFn := func(msg net.Message) {
 		switch protocolMessage := msg.Payload().(type) {
-		case *TSSProtocolMessage:
+		case *ProtocolMessage:
 			netInChan <- protocolMessage
 		}
 	}
@@ -237,7 +237,7 @@ func (b *networkBridge) getUnicastChannelWith(
 	}
 
 	unicastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &TSSProtocolMessage{}
+		return &ProtocolMessage{}
 	})
 
 	b.unicastChannels[peerTransportID] = unicastChannel
@@ -255,7 +255,7 @@ func (b *networkBridge) sendTSSMessage(
 		return
 	}
 
-	protocolMessage := &TSSProtocolMessage{
+	protocolMessage := &ProtocolMessage{
 		SenderID:    routing.From.GetKey(),
 		Payload:     bytes,
 		IsBroadcast: routing.IsBroadcast,
@@ -295,7 +295,7 @@ func (b *networkBridge) sendTSSMessage(
 
 func (b *networkBridge) broadcast(
 	ctx context.Context,
-	msg *TSSProtocolMessage,
+	msg *ProtocolMessage,
 ) error {
 	broadcastChannel, err := b.getBroadcastChannel()
 	if err != nil {
@@ -312,7 +312,7 @@ func (b *networkBridge) broadcast(
 
 func (b *networkBridge) sendTo(
 	receiverTransportID net.TransportIdentifier,
-	message *TSSProtocolMessage,
+	message *ProtocolMessage,
 ) error {
 	unicastChannel, err := b.getUnicastChannelWith(receiverTransportID)
 	if err != nil {
@@ -341,7 +341,7 @@ func (b *networkBridge) registerProtocolMessageHandler(
 	party tss.Party,
 	sortedPartyIDs tss.SortedPartyIDs,
 ) {
-	handler := func(protocolMessage *TSSProtocolMessage) error {
+	handler := func(protocolMessage *ProtocolMessage) error {
 		if protocolMessage.SessionID != b.groupInfo.groupID {
 			return nil
 		}
@@ -370,7 +370,7 @@ func (b *networkBridge) registerProtocolMessageHandler(
 	b.tssMessageHandlers = append(b.tssMessageHandlers, handler)
 }
 
-func (b *networkBridge) handleTSSProtocolMessage(protocolMessage *TSSProtocolMessage) {
+func (b *networkBridge) handleTSSProtocolMessage(protocolMessage *ProtocolMessage) {
 	b.tssMessageHandlersMutex.Lock()
 	defer b.tssMessageHandlersMutex.Unlock()
 
