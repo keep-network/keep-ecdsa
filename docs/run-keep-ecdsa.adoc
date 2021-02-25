@@ -368,7 +368,7 @@ Trust math, not hardware.
 21:19:47.129 DEBUG keep-net-w: connected to [1] peers:[16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY]
 ```
 
-You may also see the number of peers you've conncted to:
+You may also see the number of peers you've connected to:
 ```
 05:52:08.062Z INFO keep-net-libp2p number of connected peers: [71]
 ```
