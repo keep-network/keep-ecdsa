@@ -17,7 +17,7 @@ import (
 	coreNet "github.com/keep-network/keep-core/pkg/net"
 	coreKey "github.com/keep-network/keep-core/pkg/net/key"
 
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 var logger = log.Logger("keep-firewall")
@@ -43,11 +43,11 @@ var errNoMinStakeNoActiveKeep = fmt.Errorf("remote peer has no minimum " +
 // has a minimum stake and in case it has no minimum stake if it is a member of
 // at least one active keep.
 func NewStakeOrActiveKeepPolicy(
-	chain eth.Handle,
+	chainHandle chain.Handle,
 	stakeMonitor coreChain.StakeMonitor,
 ) coreNet.Firewall {
 	return &stakeOrActiveKeepPolicy{
-		chain:                       chain,
+		chain:                       chainHandle,
 		minimumStakePolicy:          coreFirewall.MinimumStakePolicy(stakeMonitor),
 		authorizedOperatorsCache:    cache.NewTimeCache(authorizationCachePeriod),
 		nonAuthorizedOperatorsCache: cache.NewTimeCache(authorizationCachePeriod),
@@ -58,7 +58,7 @@ func NewStakeOrActiveKeepPolicy(
 }
 
 type stakeOrActiveKeepPolicy struct {
-	chain                       eth.Handle
+	chain                       chain.Handle
 	minimumStakePolicy          coreNet.Firewall
 	authorizedOperatorsCache    *cache.TimeCache
 	nonAuthorizedOperatorsCache *cache.TimeCache

@@ -17,8 +17,8 @@ import (
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/keep-core/pkg/chain"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	corechain "github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/celo/contract"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
@@ -32,12 +32,12 @@ func (c *Chain) Address() ExternalAddress {
 }
 
 // Signing returns signing interface for creating and verifying signatures.
-func (c *Chain) Signing() chain.Signing {
+func (c *Chain) Signing() corechain.Signing {
 	return celoutil.NewSigner(c.accountKey.PrivateKey)
 }
 
 // BlockCounter returns a block counter.
-func (c *Chain) BlockCounter() chain.BlockCounter {
+func (c *Chain) BlockCounter() corechain.BlockCounter {
 	return c.blockCounter
 }
 
@@ -81,7 +81,7 @@ func (c *Chain) RegisterAsMemberCandidate(
 // OnBondedECDSAKeepCreated installs a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (c *Chain) OnBondedECDSAKeepCreated(
-	handler func(event *eth.BondedECDSAKeepCreatedEvent),
+	handler func(event *chain.BondedECDSAKeepCreatedEvent),
 ) subscription.EventSubscription {
 	onEvent := func(
 		KeepAddress InternalAddress,
@@ -91,7 +91,7 @@ func (c *Chain) OnBondedECDSAKeepCreated(
 		HonestThreshold *big.Int,
 		blockNumber uint64,
 	) {
-		handler(&eth.BondedECDSAKeepCreatedEvent{
+		handler(&chain.BondedECDSAKeepCreatedEvent{
 			KeepAddress:     toExternalAddress(KeepAddress),
 			Members:         toExternalAddresses(Members),
 			HonestThreshold: HonestThreshold.Uint64(),
@@ -110,7 +110,7 @@ func (c *Chain) OnBondedECDSAKeepCreated(
 // OnKeepClosed installs a callback that is invoked on-chain when keep is closed.
 func (c *Chain) OnKeepClosed(
 	keepAddress ExternalAddress,
-	handler func(event *eth.KeepClosedEvent),
+	handler func(event *chain.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := c.getKeepContract(keepAddress)
 	if err != nil {
@@ -118,7 +118,7 @@ func (c *Chain) OnKeepClosed(
 	}
 
 	onEvent := func(blockNumber uint64) {
-		handler(&eth.KeepClosedEvent{BlockNumber: blockNumber})
+		handler(&chain.KeepClosedEvent{BlockNumber: blockNumber})
 	}
 	return keepContract.KeepClosed(&ethlike.SubscribeOpts{
 		Tick:       4 * time.Hour,
@@ -130,7 +130,7 @@ func (c *Chain) OnKeepClosed(
 // is terminated.
 func (c *Chain) OnKeepTerminated(
 	keepAddress ExternalAddress,
-	handler func(event *eth.KeepTerminatedEvent),
+	handler func(event *chain.KeepTerminatedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := c.getKeepContract(keepAddress)
 	if err != nil {
@@ -138,7 +138,7 @@ func (c *Chain) OnKeepTerminated(
 	}
 
 	onEvent := func(blockNumber uint64) {
-		handler(&eth.KeepTerminatedEvent{BlockNumber: blockNumber})
+		handler(&chain.KeepTerminatedEvent{BlockNumber: blockNumber})
 	}
 	return keepContract.KeepTerminated(&ethlike.SubscribeOpts{
 		Tick:       4 * time.Hour,
@@ -150,7 +150,7 @@ func (c *Chain) OnKeepTerminated(
 // event of a published public key was emitted.
 func (c *Chain) OnPublicKeyPublished(
 	keepAddress ExternalAddress,
-	handler func(event *eth.PublicKeyPublishedEvent),
+	handler func(event *chain.PublicKeyPublishedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := c.getKeepContract(keepAddress)
 	if err != nil {
@@ -161,7 +161,7 @@ func (c *Chain) OnPublicKeyPublished(
 		PublicKey []byte,
 		blockNumber uint64,
 	) {
-		handler(&eth.PublicKeyPublishedEvent{
+		handler(&chain.PublicKeyPublishedEvent{
 			PublicKey:   PublicKey,
 			BlockNumber: blockNumber,
 		})
@@ -173,7 +173,7 @@ func (c *Chain) OnPublicKeyPublished(
 // on-chain notification of a conflicting public key submission is seen.
 func (c *Chain) OnConflictingPublicKeySubmitted(
 	keepAddress ExternalAddress,
-	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
+	handler func(event *chain.ConflictingPublicKeySubmittedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := c.getKeepContract(keepAddress)
 	if err != nil {
@@ -185,7 +185,7 @@ func (c *Chain) OnConflictingPublicKeySubmitted(
 		ConflictingPublicKey []byte,
 		blockNumber uint64,
 	) {
-		handler(&eth.ConflictingPublicKeySubmittedEvent{
+		handler(&chain.ConflictingPublicKeySubmittedEvent{
 			SubmittingMember:     toExternalAddress(SubmittingMember),
 			ConflictingPublicKey: ConflictingPublicKey,
 			BlockNumber:          blockNumber,
@@ -201,7 +201,7 @@ func (c *Chain) OnConflictingPublicKeySubmitted(
 // when a keep's signature is requested.
 func (c *Chain) OnSignatureRequested(
 	keepAddress ExternalAddress,
-	handler func(event *eth.SignatureRequestedEvent),
+	handler func(event *chain.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
 	keepContract, err := c.getKeepContract(keepAddress)
 	if err != nil {
@@ -212,7 +212,7 @@ func (c *Chain) OnSignatureRequested(
 		Digest [32]uint8,
 		blockNumber uint64,
 	) {
-		handler(&eth.SignatureRequestedEvent{
+		handler(&chain.SignatureRequestedEvent{
 			Digest:      Digest,
 			BlockNumber: blockNumber,
 		})
@@ -559,7 +559,7 @@ func (c *Chain) GetOpenedTimestamp(
 func (c *Chain) PastSignatureSubmittedEvents(
 	keepAddress string,
 	startBlock uint64,
-) ([]*eth.SignatureSubmittedEvent, error) {
+) ([]*chain.SignatureSubmittedEvent, error) {
 	if !common.IsHexAddress(keepAddress) {
 		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
 	}
@@ -579,10 +579,10 @@ func (c *Chain) PastSignatureSubmittedEvents(
 		return nil, err
 	}
 
-	result := make([]*eth.SignatureSubmittedEvent, 0)
+	result := make([]*chain.SignatureSubmittedEvent, 0)
 
 	for _, event := range events {
-		result = append(result, &eth.SignatureSubmittedEvent{
+		result = append(result, &chain.SignatureSubmittedEvent{
 			Digest:      event.Digest,
 			R:           event.R,
 			S:           event.S,

@@ -14,7 +14,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-ecdsa/config"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
 )
@@ -34,7 +34,7 @@ const defaultBalanceMonitoringTick = 10 * time.Minute
 func connectChain(
 	ctx context.Context,
 	config *config.Config,
-) (eth.Handle, *operatorKeys, error) {
+) (chain.Handle, *operatorKeys, error) {
 	ethereumKey, err := ethutil.DecryptKeyFile(
 		config.Ethereum.Account.KeyFile,
 		config.Ethereum.Account.KeyFilePassword,

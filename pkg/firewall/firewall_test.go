@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/cache"
 	coreNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 )
 
@@ -24,9 +24,9 @@ func TestHasMinimumStake(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -49,9 +49,9 @@ func TestNoAuthorization(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -76,9 +76,9 @@ func TestCachesNotAuthorizedOperators(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -106,9 +106,9 @@ func TestCachesAuthorizedOperators(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -119,7 +119,7 @@ func TestCachesAuthorizedOperators(t *testing.T) {
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	)
 
-	chain.AuthorizeOperator(remotePeerAddress)
+	localChain.AuthorizeOperator(remotePeerAddress)
 
 	policy.Validate(key.NetworkKeyToECDSAKey(remotePeerPublicKey))
 
@@ -135,9 +135,9 @@ func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeer1PublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
@@ -158,7 +158,7 @@ func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
 	policy.authorizedOperatorsCache.Add(remotePeer1Address.String())
 
 	policy.nonAuthorizedOperatorsCache.Add(remotePeer2Address.String())
-	chain.AuthorizeOperator(remotePeer2Address)
+	localChain.AuthorizeOperator(remotePeer2Address)
 
 	err = policy.validateAuthorization(remotePeer1Address.String())
 	if err != nil {
@@ -179,16 +179,16 @@ func TestNoMinimumStakeNoKeepsExist(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	chain.AuthorizeOperator(common.HexToAddress(
+	localChain.AuthorizeOperator(common.HexToAddress(
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
@@ -211,20 +211,20 @@ func TestNoMinimumStakeIsNotKeepMember(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	chain.AuthorizeOperator(common.HexToAddress(
+	localChain.AuthorizeOperator(common.HexToAddress(
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256"),
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
@@ -251,20 +251,20 @@ func TestNoMinimumStakeIsActiveKeepMember(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	chain.AuthorizeOperator(common.HexToAddress(
+	localChain.AuthorizeOperator(common.HexToAddress(
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256"),
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
@@ -287,28 +287,28 @@ func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	chain.AuthorizeOperator(common.HexToAddress(
+	localChain.AuthorizeOperator(common.HexToAddress(
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	keepAddress := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		keepAddress,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
 		},
 	)
-	if err := chain.CloseKeep(keepAddress); err != nil {
+	if err := localChain.CloseKeep(keepAddress); err != nil {
 		t.Fatal(err)
 	}
 
@@ -332,21 +332,21 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	chain.AuthorizeOperator(common.HexToAddress(
+	localChain.AuthorizeOperator(common.HexToAddress(
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		keep1Address,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
@@ -354,7 +354,7 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 		},
 	)
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		keep2Address,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
@@ -362,7 +362,7 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 		},
 	)
 
-	if err := chain.CloseKeep(keep1Address); err != nil {
+	if err := localChain.CloseKeep(keep1Address); err != nil {
 		t.Fatal(err)
 	}
 
@@ -382,16 +382,16 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	chain.AuthorizeOperator(common.HexToAddress(
+	localChain.AuthorizeOperator(common.HexToAddress(
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
@@ -404,14 +404,14 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 		common.HexToAddress("0x18e67aF1a54BF713Bc04EF811a7779b5AC0ef0eC"),
 	}
 
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		common.HexToAddress("0xCFEF2DC492E44a2747B2712f92d82527964B4b8F"),
 		activeKeepMembers,
 	)
 
 	closedKeepAddress := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	chain.OpenKeep(closedKeepAddress, closedKeepMembers)
-	if err := chain.CloseKeep(closedKeepAddress); err != nil {
+	localChain.OpenKeep(closedKeepAddress, closedKeepMembers)
+	if err := localChain.CloseKeep(closedKeepAddress); err != nil {
 		t.Fatal(err)
 	}
 
@@ -462,21 +462,21 @@ func TestSweepsActiveKeepMembersCache(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	chain.AuthorizeOperator(common.HexToAddress(
+	localChain.AuthorizeOperator(common.HexToAddress(
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	keepAddress := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		keepAddress,
 		[]common.Address{
 			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
@@ -489,7 +489,7 @@ func TestSweepsActiveKeepMembersCache(t *testing.T) {
 		t.Fatalf("validation should pass: [%v]", err)
 	}
 
-	if err := chain.CloseKeep(keepAddress); err != nil {
+	if err := localChain.CloseKeep(keepAddress); err != nil {
 		t.Fatal(err)
 	}
 
@@ -525,16 +525,16 @@ func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	chain.AuthorizeOperator(common.HexToAddress(
+	localChain.AuthorizeOperator(common.HexToAddress(
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
@@ -549,7 +549,7 @@ func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 	}
 
 	keepAddress := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		keepAddress,
 		[]common.Address{
 			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
@@ -581,34 +581,34 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	chain.AuthorizeOperator(common.HexToAddress(
+	localChain.AuthorizeOperator(common.HexToAddress(
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		keep1Address,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 		},
 	)
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		keep2Address,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
 		},
 	)
-	chain.CloseKeep(keep2Address)
+	localChain.CloseKeep(keep2Address)
 
 	// first check, result should be put into the cache
 	isActive, err := policy.isKeepActive(keep1Address)
@@ -643,7 +643,7 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	}
 
 	// close active keep and see it's been updated properly
-	chain.CloseKeep(keep1Address)
+	localChain.CloseKeep(keep1Address)
 	isActive, err = policy.isKeepActive(keep1Address)
 	if err != nil {
 		t.Fatal(err)
@@ -657,21 +657,21 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	localChain := local.Connect(ctx)
 	coreFirewall := newMockCoreFirewall()
-	policy := createNewPolicy(chain, coreFirewall)
+	policy := createNewPolicy(localChain, coreFirewall)
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	chain.AuthorizeOperator(common.HexToAddress(
+	localChain.AuthorizeOperator(common.HexToAddress(
 		key.NetworkPubKeyToChainAddress(remotePeerPublicKey),
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		keep1Address,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
@@ -679,7 +679,7 @@ func TestGetKeepMembersCaching(t *testing.T) {
 		},
 	)
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	chain.OpenKeep(
+	localChain.OpenKeep(
 		keep2Address,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
@@ -730,11 +730,11 @@ func TestGetKeepMembersCaching(t *testing.T) {
 }
 
 func createNewPolicy(
-	chain eth.Handle,
+	chainHandle chain.Handle,
 	coreFirewall coreNet.Firewall,
 ) *stakeOrActiveKeepPolicy {
 	return &stakeOrActiveKeepPolicy{
-		chain:                       chain,
+		chain:                       chainHandle,
 		minimumStakePolicy:          coreFirewall,
 		authorizedOperatorsCache:    cache.NewTimeCache(cacheLifeTime),
 		nonAuthorizedOperatorsCache: cache.NewTimeCache(cacheLifeTime),

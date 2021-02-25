@@ -13,7 +13,7 @@ import (
 	commoncelo "github.com/keep-network/keep-common/pkg/chain/celo"
 	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-ecdsa/config"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/celo"
 )
 
@@ -32,7 +32,7 @@ const defaultBalanceMonitoringTick = 10 * time.Minute
 func connectChain(
 	ctx context.Context,
 	config *config.Config,
-) (eth.Handle, *operatorKeys, error) {
+) (chain.Handle, *operatorKeys, error) {
 	celoKey, err := celoutil.DecryptKeyFile(
 		config.Celo.Account.KeyFile,
 		config.Celo.Account.KeyFilePassword,
