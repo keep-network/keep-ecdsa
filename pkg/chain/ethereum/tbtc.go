@@ -17,7 +17,7 @@ import (
 // TBTCEthereumChain represents an Ethereum chain handle with
 // TBTC-specific capabilities.
 type TBTCEthereumChain struct {
-	*Chain
+	*ethereumChain
 
 	tbtcSystemContract *contract.TBTCSystem
 }
@@ -25,7 +25,7 @@ type TBTCEthereumChain struct {
 // WithTBTCExtension extends the Ethereum chain handle with
 // TBTC-specific capabilities.
 func WithTBTCExtension(
-	ethereumChain *Chain,
+	ethereumChain *ethereumChain,
 	tbtcSystemContractAddress string,
 ) (*TBTCEthereumChain, error) {
 	if !common.IsHexAddress(tbtcSystemContractAddress) {
@@ -46,7 +46,7 @@ func WithTBTCExtension(
 	}
 
 	return &TBTCEthereumChain{
-		Chain:              ethereumChain,
+		ethereumChain:      ethereumChain,
 		tbtcSystemContract: tbtcSystemContract,
 	}, nil
 }

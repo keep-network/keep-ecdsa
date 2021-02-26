@@ -22,23 +22,23 @@ var defaultBalanceAlertThreshold = ethereum.WrapWei(
 // check should be triggered.
 const defaultBalanceMonitoringTick = 10 * time.Minute
 
-func (c *Chain) initializeBalanceMonitoring(
+func (ec *ethereumChain) initializeBalanceMonitoring(
 	ctx context.Context,
 ) {
-	balanceMonitor, err := c.BalanceMonitor()
+	balanceMonitor, err := ec.BalanceMonitor()
 	if err != nil {
 		logger.Errorf("error obtaining balance monitor handle [%v]", err)
 		return
 	}
 
 	alertThreshold := defaultBalanceAlertThreshold
-	if value := c.config.BalanceAlertThreshold; value != nil {
+	if value := ec.config.BalanceAlertThreshold; value != nil {
 		alertThreshold = value
 	}
 
 	balanceMonitor.Observe(
 		ctx,
-		c.Address(),
+		ec.Address(),
 		alertThreshold,
 		defaultBalanceMonitoringTick,
 	)
@@ -46,7 +46,7 @@ func (c *Chain) initializeBalanceMonitoring(
 	logger.Infof(
 		"started balance monitoring for address [%v] "+
 			"with the alert threshold set to [%v]",
-		c.Address().Hex(),
+		ec.Address().Hex(),
 		alertThreshold,
 	)
 }

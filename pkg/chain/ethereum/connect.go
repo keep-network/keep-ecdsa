@@ -42,8 +42,8 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-// Chain is an implementation of ethereum blockchain interface.
-type Chain struct {
+// ethereumChain is an implementation of ethereum blockchain interface.
+type ethereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
 	client                         ethutil.EthereumClient
@@ -74,7 +74,7 @@ func Connect(
 	accountKey *keystore.Key,
 	config *ethereum.Config,
 	tbtcSystemAddress string,
-) (*Chain, chain.TBTCHandle, error) {
+) (chain.Handle, chain.TBTCHandle, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, nil, err
@@ -131,10 +131,11 @@ func Connect(
 		return nil, nil, err
 	}
 
-	ethereum := &Chain{
-		config:                         config,
-		accountKey:                     accountKey,
-		client:                         wrappedClient,
+	ethereum := &ethereumChain{
+		config:     config,
+		accountKey: accountKey,
+		client:     wrappedClient,
+
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
@@ -175,10 +176,10 @@ func addClientWrappers(
 }
 
 // FIXME Rip this back out to connector_ethereum.go after tBTC handle refactor.
-func (c *Chain) buildTBTC(tbtcSystemAddress string) chain.TBTCHandle {
+func (ec *ethereumChain) buildTBTC(tbtcSystemAddress string) chain.TBTCHandle {
 	if len(tbtcSystemAddress) > 0 {
 		tbtcEthereumChain, err := WithTBTCExtension(
-			c,
+			ec,
 			tbtcSystemAddress,
 		)
 		if err != nil {
