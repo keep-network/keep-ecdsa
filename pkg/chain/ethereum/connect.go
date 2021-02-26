@@ -3,6 +3,7 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sync"
@@ -17,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/contract"
 )
 
@@ -40,8 +42,8 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-// Chain is an implementation of ethereum blockchain interface.
-type Chain struct {
+// ethereumChain is an implementation of ethereum blockchain interface.
+type ethereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
 	client                         ethutil.HostChainClient
@@ -67,10 +69,15 @@ type Chain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) {
+func Connect(
+	ctx context.Context,
+	accountKey *keystore.Key,
+	config *ethereum.Config,
+	tbtcSystemAddress string,
+) (chain.Handle, chain.TBTCHandle, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	wrappedClient := addClientWrappers(config, client)
@@ -99,7 +106,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 
 	blockCounter, err := ethutil.NewBlockCounter(wrappedClient)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
 			err,
 		)
@@ -109,7 +116,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 		BondedECDSAKeepFactoryContractName,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
 		*bondedECDSAKeepFactoryContractAddress,
@@ -121,19 +128,24 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 		transactionMutex,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &Chain{
-		config:                         config,
-		accountKey:                     accountKey,
-		client:                         wrappedClient,
+	ethereum := &ethereumChain{
+		config:     config,
+		accountKey: accountKey,
+		client:     wrappedClient,
+
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
 		transactionMutex:               transactionMutex,
-	}, nil
+	}
+
+	ethereum.initializeBalanceMonitoring(ctx)
+
+	return ethereum, ethereum.buildTBTC(tbtcSystemAddress), nil
 }
 
 func addClientWrappers(
@@ -161,4 +173,21 @@ func addClientWrappers(
 	}
 
 	return loggingClient
+}
+
+// FIXME Rip this back out to connector_ethereum.go after tBTC handle refactor.
+func (ec *ethereumChain) buildTBTC(tbtcSystemAddress string) chain.TBTCHandle {
+	if len(tbtcSystemAddress) > 0 {
+		tbtcEthereumChain, err := WithTBTCExtension(
+			ec,
+			tbtcSystemAddress,
+		)
+		if err != nil {
+			return nil
+		}
+
+		return tbtcEthereumChain
+	}
+
+	return nil
 }

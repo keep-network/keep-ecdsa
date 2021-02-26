@@ -3,6 +3,7 @@
 package celo
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sync"
@@ -16,6 +17,7 @@ import (
 	celoclient "github.com/celo-org/celo-blockchain/ethclient"
 	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/celo/contract"
 )
 
@@ -40,8 +42,8 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-// Chain is an implementation of Celo blockchain interface.
-type Chain struct {
+// celoChain is an implementation of Celo blockchain interface.
+type celoChain struct {
 	config                         *celo.Config
 	accountKey                     *keystore.Key
 	client                         celoutil.HostChainClient
@@ -68,9 +70,10 @@ type Chain struct {
 // Connect performs initialization for communication with Celo blockchain
 // based on provided config.
 func Connect(
+	ctx context.Context,
 	accountKey *keystore.Key,
 	config *celo.Config,
-) (*Chain, error) {
+) (chain.Handle, error) {
 	client, err := celoclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
@@ -128,7 +131,7 @@ func Connect(
 		return nil, err
 	}
 
-	return &Chain{
+	celo := &celoChain{
 		config:                         config,
 		accountKey:                     accountKey,
 		client:                         wrappedClient,
@@ -137,7 +140,11 @@ func Connect(
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
 		transactionMutex:               transactionMutex,
-	}, nil
+	}
+
+	celo.initializeBalanceMonitoring(ctx)
+
+	return celo, nil
 }
 
 func addClientWrappers(
