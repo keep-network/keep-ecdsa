@@ -3,6 +3,7 @@
 package celo
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sync"
@@ -16,6 +17,7 @@ import (
 	celoclient "github.com/celo-org/celo-blockchain/ethclient"
 	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/celo/contract"
 )
 
@@ -68,6 +70,7 @@ type Chain struct {
 // Connect performs initialization for communication with Celo blockchain
 // based on provided config.
 func Connect(
+	ctx context.Context,
 	accountKey *keystore.Key,
 	config *celo.Config,
 ) (*Chain, error) {
@@ -128,7 +131,7 @@ func Connect(
 		return nil, err
 	}
 
-	return &Chain{
+	celo := &Chain{
 		config:                         config,
 		accountKey:                     accountKey,
 		client:                         wrappedClient,
@@ -137,7 +140,11 @@ func Connect(
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
 		transactionMutex:               transactionMutex,
-	}, nil
+	}
+
+	celo.initializeBalanceMonitoring(ctx)
+
+	return celo, nil
 }
 
 func addClientWrappers(

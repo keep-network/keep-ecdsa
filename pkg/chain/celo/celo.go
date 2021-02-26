@@ -223,12 +223,3 @@ func (c *Chain) WeiBalanceOf(address ExternalAddress) (*celo.Wei, error) {
 
 	return celo.WrapWei(balance), err
 }
-
-// BalanceMonitor returns a balance monitor.
-func (c *Chain) BalanceMonitor() (*celoutil.BalanceMonitor, error) {
-	weiBalanceOf := func(address InternalAddress) (*celo.Wei, error) {
-		return c.WeiBalanceOf(toExternalAddress(address))
-	}
-
-	return celoutil.NewBalanceMonitor(weiBalanceOf), nil
-}
