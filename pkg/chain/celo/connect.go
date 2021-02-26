@@ -46,7 +46,7 @@ var (
 type celoChain struct {
 	config                         *celo.Config
 	accountKey                     *keystore.Key
-	client                         celoutil.CeloClient
+	client                         celoutil.HostChainClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *ethlike.BlockCounter
 	miningWaiter                   *ethlike.MiningWaiter
@@ -149,8 +149,8 @@ func Connect(
 
 func addClientWrappers(
 	config *celo.Config,
-	client celoutil.CeloClient,
-) celoutil.CeloClient {
+	client celoutil.HostChainClient,
+) celoutil.HostChainClient {
 	loggingClient := celoutil.WrapCallLogging(logger, client)
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
