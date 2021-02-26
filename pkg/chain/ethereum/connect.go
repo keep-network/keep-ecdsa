@@ -44,7 +44,7 @@ var (
 type Chain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
-	client                         ethutil.EthereumClient
+	client                         ethutil.HostChainClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *ethlike.BlockCounter
 	miningWaiter                   *ethlike.MiningWaiter
@@ -138,8 +138,8 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 
 func addClientWrappers(
 	config *ethereum.Config,
-	client ethutil.EthereumClient,
-) ethutil.EthereumClient {
+	client ethutil.HostChainClient,
+) ethutil.HostChainClient {
 	loggingClient := ethutil.WrapCallLogging(logger, client)
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
