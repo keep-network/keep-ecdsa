@@ -42,6 +42,7 @@ type keepRegistry interface {
 	HasSigner(keepAddress common.Address) bool
 }
 
+// NewDeduplicator is a Deduplicator constructor
 func NewDeduplicator(
 	keepRegistry keepRegistry,
 	chain chain.Handle,

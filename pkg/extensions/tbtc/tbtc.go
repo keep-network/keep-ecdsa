@@ -54,8 +54,8 @@ const (
 	confirmInitialStateTimeout = 30 * time.Second
 )
 
-// TODO: Resume monitoring after client restart
 // Initialize initializes extension specific to the TBTC application.
+// TODO: Resume monitoring after client restart
 func Initialize(ctx context.Context, chain chain.TBTCHandle) {
 	logger.Infof("initializing tbtc extension")
 

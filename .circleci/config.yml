@@ -110,7 +110,6 @@ jobs:
           command: |
             docker build \
               --build-arg GITHUB_TOKEN=$GITHUB_TOKEN\
-              --build-arg GOPRIVATE=$GOPRIVATE\
               --tag go-build-env \
               --target gobuild .
       - run:

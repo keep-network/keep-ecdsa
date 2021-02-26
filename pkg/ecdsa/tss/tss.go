@@ -19,8 +19,10 @@ import (
 )
 
 const (
+	// KeyGenerationProtocolTimeout represents the amount of time before we give up trying to communicate key generation
 	KeyGenerationProtocolTimeout = 8 * time.Minute
-	SigningProtocolTimeout       = 10 * time.Minute
+	// SigningProtocolTimeout represents the amount of time before we give up trying to communicate signing
+	SigningProtocolTimeout = 10 * time.Minute
 )
 
 var logger = log.Logger("keep-tss")

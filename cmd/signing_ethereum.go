@@ -1,3 +1,5 @@
+//+build !celo
+
 package cmd
 
 import (
@@ -18,9 +20,9 @@ import (
 	"github.com/urfave/cli"
 )
 
-// EthereumSigningCommand contains the definition of the `signing ethereum`
+// ChainSigningCommand contains the definition of the `signing ethereum`
 // command-line subcommand and its own subcommands.
-var EthereumSigningCommand = cli.Command{
+var ChainSigningCommand = cli.Command{
 	Name:  "ethereum",
 	Usage: "Ethereum signatures calculation",
 	Subcommands: []cli.Command{

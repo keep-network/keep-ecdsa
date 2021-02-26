@@ -1,11 +1,11 @@
-package eth
+package chain
 
 import (
 	"bytes"
 	"math/big"
 	"testing"
 
-	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	cecdsa "crypto/ecdsa"
 )
 
 func TestSerializePublicKey(t *testing.T) {
@@ -29,7 +29,7 @@ func TestSerializePublicKey(t *testing.T) {
 	}
 
 	actualResult, err := SerializePublicKey(
-		&ecdsa.PublicKey{
+		&cecdsa.PublicKey{
 			X: new(big.Int).SetBytes(bytes32),
 			Y: new(big.Int).SetBytes(bytes31),
 		},

@@ -1,8 +1,25 @@
-.vscode
-.circleci
+# Hidden files and directories.
+.*
 
-vendor/
+# Top-level directories unrelated to the build.
+docs/
 infrastructure/
+scripts/
+staker-rewards/
 
-solidity/node_modules/
-solidity/build/
+# Top-level files unrealted to the build.
+CODEOWNERS
+crytic-config.json
+Dockerfile
+*.adoc
+
+# NPM stuff.
+**/node_modules/*
+
+# Solidity stuff.
+# We want to include only bare contracts and NPM package configuration for Go code
+# generator.
+solidity/
+!solidity/contracts
+!solidity/package.json
+!solidity/package-lock.json

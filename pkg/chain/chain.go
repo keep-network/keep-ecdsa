@@ -1,6 +1,7 @@
-// Package eth contains interface for interaction with an ethereum blockchain
-// along with structures reflecting events emitted on an ethereum blockchain.
-package eth // TODO: rename; this can be any host chain
+// Package chain contains interface for interaction with a blockchain that
+// implements ECDSA keep functionality, along with structures reflecting events
+// needed for that functionality.
+package chain
 
 import (
 	"math/big"
@@ -18,8 +19,6 @@ type Handle interface {
 	Address() common.Address // TODO: use implementation-agnostic type
 	// StakeMonitor returns a stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
-	// BalanceMonitor returns a balance monitor.
-	BalanceMonitor() (chain.BalanceMonitor, error)
 	// BlockCounter returns a block counter.
 	BlockCounter() chain.BlockCounter
 	// Signing returns a signer interface allowing to sign and verify messages

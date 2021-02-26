@@ -49,14 +49,24 @@ COPY ./solidity $APP_DIR/solidity
 RUN cd $APP_DIR/solidity && npm install
 
 # Generate code.
-COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
+COPY ./pkg/chain/gen/ethereum $APP_DIR/pkg/chain/gen/ethereum
 COPY ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
 # Need this to resolve imports in generated Ethereum commands.
 COPY ./config $APP_DIR/config
-RUN go generate ./.../gen
+RUN go generate ./...
 
 # Build the application.
 COPY ./ $APP_DIR/
+
+# Cleanup the `pkg/chain/gen` dir from unused chains bindings. Leave only
+# the ones which are currently in use. This helps reducing the size of
+# resulting binary and can prevent unexpected errors which may occur due to
+# transitive dependencies conflicts.
+RUN cd $APP_DIR/pkg/chain && \
+	mv ./gen/ethereum ./temp && \
+	rm -rf ./gen && \
+	mkdir ./gen && \
+	mv ./temp ./gen/ethereum
 
 # Client Versioning.
 ARG VERSION

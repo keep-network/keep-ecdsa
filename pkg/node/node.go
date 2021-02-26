@@ -15,11 +15,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
@@ -45,7 +44,7 @@ const (
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
 type Node struct {
-	ethereumChain   eth.Handle
+	ethereumChain   chain.Handle
 	networkProvider net.Provider
 	tssParamsPool   *tssPreParamsPool
 	tssConfig       *tss.Config
@@ -55,7 +54,7 @@ type Node struct {
 // network provider. It also initializes TSS Pre-Parameters pool. But does not
 // start parameters generation. This should be called separately.
 func NewNode(
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	networkProvider net.Provider,
 	tssConfig *tss.Config,
 ) *Node {
@@ -117,7 +116,7 @@ func createAddressFilter(
 
 	return func(authorPublicKey *cecdsa.PublicKey) bool {
 		authorAddress := hex.EncodeToString(
-			crypto.PubkeyToAddress(*authorPublicKey).Bytes(),
+			operator.PubkeyToAddress(*authorPublicKey).Bytes(),
 		)
 		_, isAuthorized := authorizations[authorAddress]
 
@@ -244,7 +243,7 @@ func (n *Node) GenerateSignerForKeep(
 		// We don't retry in case of an error although the specific chain
 		// implementation may implement its own retry policy. This action
 		// should never fail and if it failed, something terrible happened.
-		publicKey, err := eth.SerializePublicKey(signer.PublicKey())
+		publicKey, err := chain.SerializePublicKey(signer.PublicKey())
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize public key: [%v]", err)
 		}
@@ -639,11 +638,11 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	keepAddress common.Address,
 	publicKey [64]byte,
 ) {
-	conflictingPublicKey := make(chan *eth.ConflictingPublicKeySubmittedEvent)
+	conflictingPublicKey := make(chan *chain.ConflictingPublicKeySubmittedEvent)
 
 	subscriptionConflictingPublicKey, err := n.ethereumChain.OnConflictingPublicKeySubmitted(
 		keepAddress,
-		func(event *eth.ConflictingPublicKeySubmittedEvent) {
+		func(event *chain.ConflictingPublicKeySubmittedEvent) {
 			conflictingPublicKey <- event
 		},
 	)

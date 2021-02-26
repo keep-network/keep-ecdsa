@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ethereum/go-ethereum/common"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 const statusCheckIntervalBlocks = 100
@@ -33,7 +33,7 @@ const eligibilityRetryDelay = 20 * time.Minute
 // removed from the pool it triggers the registration process from the begining.
 func checkStatusAndRegisterForApplication(
 	ctx context.Context,
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	application common.Address,
 ) {
 RegistrationLoop:
@@ -82,7 +82,7 @@ RegistrationLoop:
 // block until the operator is finally eligible and can be registered.
 func registerAsMemberCandidate(
 	parentCtx context.Context,
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	application common.Address,
 ) {
 	// If the operator is eligible right now for registering as a member
@@ -125,7 +125,7 @@ func registerAsMemberCandidate(
 // As soon as the operator becomes eligible, function triggers the registration.
 func registerAsMemberCandidateWhenEligible(
 	parentCtx context.Context,
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	application common.Address,
 ) {
 	ctx, cancel := context.WithCancel(parentCtx)
@@ -186,7 +186,7 @@ func registerAsMemberCandidateWhenEligible(
 // candidate for the given application.
 func waitUntilRegistered(
 	ctx context.Context,
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	application common.Address,
 ) {
 	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
@@ -227,7 +227,7 @@ func waitUntilRegistered(
 // (staking weight, bonding) and updates the status when it gets out of date.
 func monitorSignerPoolStatus(
 	ctx context.Context,
-	ethereumChain eth.Handle,
+	ethereumChain chain.Handle,
 	application common.Address,
 ) error {
 	logger.Debugf(
