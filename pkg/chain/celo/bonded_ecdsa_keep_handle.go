@@ -19,11 +19,11 @@ import (
 
 // OnSignatureRequested installs a callback that is invoked on-chain
 // when a keep's signature is requested.
-func (c *Chain) OnSignatureRequested(
+func (cc *celoChain) OnSignatureRequested(
 	keepAddress ExternalAddress,
 	handler func(event *chain.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
@@ -45,11 +45,11 @@ func (c *Chain) OnSignatureRequested(
 
 // OnConflictingPublicKeySubmitted installs a callback that is invoked when an
 // on-chain notification of a conflicting public key submission is seen.
-func (c *Chain) OnConflictingPublicKeySubmitted(
+func (cc *celoChain) OnConflictingPublicKeySubmitted(
 	keepAddress ExternalAddress,
 	handler func(event *chain.ConflictingPublicKeySubmittedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
@@ -73,11 +73,11 @@ func (c *Chain) OnConflictingPublicKeySubmitted(
 
 // OnPublicKeyPublished installs a callback that is invoked when an on-chain
 // event of a published public key was emitted.
-func (c *Chain) OnPublicKeyPublished(
+func (cc *celoChain) OnPublicKeyPublished(
 	keepAddress ExternalAddress,
 	handler func(event *chain.PublicKeyPublishedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
@@ -96,11 +96,11 @@ func (c *Chain) OnPublicKeyPublished(
 
 // SubmitKeepPublicKey submits a public key to a keep contract deployed under
 // a given address.
-func (c *Chain) SubmitKeepPublicKey(
+func (cc *celoChain) SubmitKeepPublicKey(
 	keepAddress ExternalAddress,
 	publicKey [64]byte,
 ) error {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return err
 	}
@@ -134,11 +134,11 @@ func (c *Chain) SubmitKeepPublicKey(
 
 // SubmitSignature submits a signature to a keep contract deployed under a
 // given address.
-func (c *Chain) SubmitSignature(
+func (cc *celoChain) SubmitSignature(
 	keepAddress ExternalAddress,
 	signature *ecdsa.Signature,
 ) error {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return err
 	}
@@ -171,11 +171,11 @@ func (c *Chain) SubmitSignature(
 }
 
 // OnKeepClosed installs a callback that is invoked on-chain when keep is closed.
-func (c *Chain) OnKeepClosed(
+func (cc *celoChain) OnKeepClosed(
 	keepAddress ExternalAddress,
 	handler func(event *chain.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
@@ -191,11 +191,11 @@ func (c *Chain) OnKeepClosed(
 
 // OnKeepTerminated installs a callback that is invoked on-chain when keep
 // is terminated.
-func (c *Chain) OnKeepTerminated(
+func (cc *celoChain) OnKeepTerminated(
 	keepAddress ExternalAddress,
 	handler func(event *chain.KeepTerminatedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
 	}
@@ -211,11 +211,11 @@ func (c *Chain) OnKeepTerminated(
 
 // IsAwaitingSignature checks if the keep is waiting for a signature to be
 // calculated for the given digest.
-func (c *Chain) IsAwaitingSignature(
+func (cc *celoChain) IsAwaitingSignature(
 	keepAddress ExternalAddress,
 	digest [32]byte,
 ) (bool, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return false, err
 	}
@@ -224,8 +224,8 @@ func (c *Chain) IsAwaitingSignature(
 }
 
 // IsActive checks for current state of a keep on-chain.
-func (c *Chain) IsActive(keepAddress ExternalAddress) (bool, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+func (cc *celoChain) IsActive(keepAddress ExternalAddress) (bool, error) {
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return false, err
 	}
@@ -234,10 +234,10 @@ func (c *Chain) IsActive(keepAddress ExternalAddress) (bool, error) {
 }
 
 // LatestDigest returns the latest digest requested to be signed.
-func (c *Chain) LatestDigest(
+func (cc *celoChain) LatestDigest(
 	keepAddress ExternalAddress,
 ) ([32]byte, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -248,11 +248,11 @@ func (c *Chain) LatestDigest(
 // SignatureRequestedBlock returns block number from the moment when a
 // signature was requested for the given digest from a keep.
 // If a signature was not requested for the given digest, returns 0.
-func (c *Chain) SignatureRequestedBlock(
+func (cc *celoChain) SignatureRequestedBlock(
 	keepAddress ExternalAddress,
 	digest [32]byte,
 ) (uint64, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return 0, err
 	}
@@ -267,8 +267,8 @@ func (c *Chain) SignatureRequestedBlock(
 
 // GetPublicKey returns keep's public key. If there is no public key yet,
 // an empty slice is returned.
-func (c *Chain) GetPublicKey(keepAddress ExternalAddress) ([]uint8, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+func (cc *celoChain) GetPublicKey(keepAddress ExternalAddress) ([]uint8, error) {
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return []uint8{}, err
 	}
@@ -277,10 +277,10 @@ func (c *Chain) GetPublicKey(keepAddress ExternalAddress) ([]uint8, error) {
 }
 
 // GetMembers returns keep's members.
-func (c *Chain) GetMembers(
+func (cc *celoChain) GetMembers(
 	keepAddress ExternalAddress,
 ) ([]ExternalAddress, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return []ExternalAddress{}, err
 	}
@@ -294,10 +294,10 @@ func (c *Chain) GetMembers(
 }
 
 // GetHonestThreshold returns keep's honest threshold.
-func (c *Chain) GetHonestThreshold(
+func (cc *celoChain) GetHonestThreshold(
 	keepAddress ExternalAddress,
 ) (uint64, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return 0, err
 	}
@@ -311,10 +311,10 @@ func (c *Chain) GetHonestThreshold(
 }
 
 // GetOpenedTimestamp returns timestamp when the keep was created.
-func (c *Chain) GetOpenedTimestamp(
+func (cc *celoChain) GetOpenedTimestamp(
 	keepAddress ExternalAddress,
 ) (time.Time, error) {
-	keepContract, err := c.getKeepContract(keepAddress)
+	keepContract, err := cc.getKeepContract(keepAddress)
 	if err != nil {
 		return time.Unix(0, 0), err
 	}
@@ -332,14 +332,14 @@ func (c *Chain) GetOpenedTimestamp(
 // PastSignatureSubmittedEvents returns all signature submitted events
 // for the given keep which occurred after the provided start block.
 // Returned events are sorted by the block number in the ascending order.
-func (c *Chain) PastSignatureSubmittedEvents(
+func (cc *celoChain) PastSignatureSubmittedEvents(
 	keepAddress string,
 	startBlock uint64,
 ) ([]*chain.SignatureSubmittedEvent, error) {
 	if !common.IsHexAddress(keepAddress) {
 		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
 	}
-	keepContract, err := c.getKeepContract(
+	keepContract, err := cc.getKeepContract(
 		toExternalAddress(common.HexToAddress(keepAddress)),
 	)
 	if err != nil {
@@ -375,17 +375,17 @@ func (c *Chain) PastSignatureSubmittedEvents(
 	return result, nil
 }
 
-func (c *Chain) getKeepContract(
+func (cc *celoChain) getKeepContract(
 	address ExternalAddress,
 ) (*contract.BondedECDSAKeep, error) {
 	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
 		fromExternalAddress(address),
-		c.accountKey,
-		c.client,
-		c.nonceManager,
-		c.miningWaiter,
-		c.blockCounter,
-		c.transactionMutex,
+		cc.accountKey,
+		cc.client,
+		cc.nonceManager,
+		cc.miningWaiter,
+		cc.blockCounter,
+		cc.transactionMutex,
 	)
 	if err != nil {
 		return nil, err

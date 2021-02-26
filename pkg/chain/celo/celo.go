@@ -20,26 +20,26 @@ import (
 var logger = log.Logger("keep-chain-celo")
 
 // Address returns client's Celo address.
-func (c *Chain) Address() ExternalAddress {
-	return toExternalAddress(c.accountKey.Address)
+func (cc *celoChain) Address() ExternalAddress {
+	return toExternalAddress(cc.accountKey.Address)
 }
 
 // Signing returns signing interface for creating and verifying signatures.
-func (c *Chain) Signing() corechain.Signing {
-	return celoutil.NewSigner(c.accountKey.PrivateKey)
+func (cc *celoChain) Signing() corechain.Signing {
+	return celoutil.NewSigner(cc.accountKey.PrivateKey)
 }
 
 // BlockCounter returns a block counter.
-func (c *Chain) BlockCounter() corechain.BlockCounter {
-	return c.blockCounter
+func (cc *celoChain) BlockCounter() corechain.BlockCounter {
+	return cc.blockCounter
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
 // to a keep.
-func (c *Chain) RegisterAsMemberCandidate(
+func (cc *celoChain) RegisterAsMemberCandidate(
 	application ExternalAddress,
 ) error {
-	gasEstimate, err := c.bondedECDSAKeepFactoryContract.
+	gasEstimate, err := cc.bondedECDSAKeepFactoryContract.
 		RegisterMemberCandidateGasEstimate(fromExternalAddress(application))
 	if err != nil {
 		return fmt.Errorf("failed to estimate gas [%v]", err)
@@ -52,7 +52,7 @@ func (c *Chain) RegisterAsMemberCandidate(
 	// on a different state of the pool. We add 20% safety margin to the
 	// original gas estimation to account for that.
 	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
-	transaction, err := c.bondedECDSAKeepFactoryContract.
+	transaction, err := cc.bondedECDSAKeepFactoryContract.
 		RegisterMemberCandidate(
 			fromExternalAddress(application),
 			celoutil.TransactionOptions{
@@ -73,7 +73,7 @@ func (c *Chain) RegisterAsMemberCandidate(
 
 // OnBondedECDSAKeepCreated installs a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
-func (c *Chain) OnBondedECDSAKeepCreated(
+func (cc *celoChain) OnBondedECDSAKeepCreated(
 	handler func(event *chain.BondedECDSAKeepCreatedEvent),
 ) subscription.EventSubscription {
 	onEvent := func(
@@ -92,7 +92,7 @@ func (c *Chain) OnBondedECDSAKeepCreated(
 		})
 	}
 
-	return c.bondedECDSAKeepFactoryContract.BondedECDSAKeepCreated(
+	return cc.bondedECDSAKeepFactoryContract.BondedECDSAKeepCreated(
 		nil,
 		nil,
 		nil,
@@ -103,59 +103,59 @@ func (c *Chain) OnBondedECDSAKeepCreated(
 // HasMinimumStake returns true if the specified address is staked.  False will
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.
-func (c *Chain) HasMinimumStake(address ExternalAddress) (bool, error) {
-	return c.bondedECDSAKeepFactoryContract.HasMinimumStake(
+func (cc *celoChain) HasMinimumStake(address ExternalAddress) (bool, error) {
+	return cc.bondedECDSAKeepFactoryContract.HasMinimumStake(
 		fromExternalAddress(address),
 	)
 }
 
 // BalanceOf returns the stake balance of the specified address.
-func (c *Chain) BalanceOf(address ExternalAddress) (*big.Int, error) {
-	return c.bondedECDSAKeepFactoryContract.BalanceOf(
+func (cc *celoChain) BalanceOf(address ExternalAddress) (*big.Int, error) {
+	return cc.bondedECDSAKeepFactoryContract.BalanceOf(
 		fromExternalAddress(address),
 	)
 }
 
 // IsRegisteredForApplication checks if the operator is registered
 // as a signer candidate in the factory for the given application.
-func (c *Chain) IsRegisteredForApplication(
+func (cc *celoChain) IsRegisteredForApplication(
 	application ExternalAddress,
 ) (bool, error) {
-	return c.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
-		fromExternalAddress(c.Address()),
+	return cc.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
+		fromExternalAddress(cc.Address()),
 		fromExternalAddress(application),
 	)
 }
 
 // IsEligibleForApplication checks if the operator is eligible to register
 // as a signer candidate for the given application.
-func (c *Chain) IsEligibleForApplication(
+func (cc *celoChain) IsEligibleForApplication(
 	application ExternalAddress,
 ) (bool, error) {
-	return c.bondedECDSAKeepFactoryContract.IsOperatorEligible(
-		fromExternalAddress(c.Address()),
+	return cc.bondedECDSAKeepFactoryContract.IsOperatorEligible(
+		fromExternalAddress(cc.Address()),
 		fromExternalAddress(application),
 	)
 }
 
 // IsStatusUpToDateForApplication checks if the operator's status
 // is up to date in the signers' pool of the given application.
-func (c *Chain) IsStatusUpToDateForApplication(
+func (cc *celoChain) IsStatusUpToDateForApplication(
 	application ExternalAddress,
 ) (bool, error) {
-	return c.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
-		fromExternalAddress(c.Address()),
+	return cc.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
+		fromExternalAddress(cc.Address()),
 		fromExternalAddress(application),
 	)
 }
 
 // UpdateStatusForApplication updates the operator's status in the signers'
 // pool for the given application.
-func (c *Chain) UpdateStatusForApplication(
+func (cc *celoChain) UpdateStatusForApplication(
 	application ExternalAddress,
 ) error {
-	transaction, err := c.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
-		fromExternalAddress(c.Address()),
+	transaction, err := cc.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
+		fromExternalAddress(cc.Address()),
 		fromExternalAddress(application),
 	)
 	if err != nil {
@@ -172,24 +172,24 @@ func (c *Chain) UpdateStatusForApplication(
 
 // IsOperatorAuthorized checks if the factory has the authorization to
 // operate on stake represented by the provided operator.
-func (c *Chain) IsOperatorAuthorized(
+func (cc *celoChain) IsOperatorAuthorized(
 	operator ExternalAddress,
 ) (bool, error) {
-	return c.bondedECDSAKeepFactoryContract.IsOperatorAuthorized(
+	return cc.bondedECDSAKeepFactoryContract.IsOperatorAuthorized(
 		fromExternalAddress(operator),
 	)
 }
 
 // GetKeepCount returns number of keeps.
-func (c *Chain) GetKeepCount() (*big.Int, error) {
-	return c.bondedECDSAKeepFactoryContract.GetKeepCount()
+func (cc *celoChain) GetKeepCount() (*big.Int, error) {
+	return cc.bondedECDSAKeepFactoryContract.GetKeepCount()
 }
 
 // GetKeepAtIndex returns the address of the keep at the given index.
-func (c *Chain) GetKeepAtIndex(
+func (cc *celoChain) GetKeepAtIndex(
 	keepIndex *big.Int,
 ) (ExternalAddress, error) {
-	address, err := c.bondedECDSAKeepFactoryContract.GetKeepAtIndex(keepIndex)
+	address, err := cc.bondedECDSAKeepFactoryContract.GetKeepAtIndex(keepIndex)
 	if err != nil {
 		return ExternalAddress{}, nil
 	}
@@ -198,11 +198,11 @@ func (c *Chain) GetKeepAtIndex(
 }
 
 // BlockTimestamp returns given block's timestamp.
-func (c *Chain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
+func (cc *celoChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancelCtx()
 
-	header, err := c.client.HeaderByNumber(ctx, blockNumber)
+	header, err := cc.client.HeaderByNumber(ctx, blockNumber)
 	if err != nil {
 		return 0, err
 	}
@@ -212,11 +212,11 @@ func (c *Chain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
 
 // WeiBalanceOf returns the wei balance of the given address from the latest
 // known block.
-func (c *Chain) WeiBalanceOf(address ExternalAddress) (*celo.Wei, error) {
+func (cc *celoChain) WeiBalanceOf(address ExternalAddress) (*celo.Wei, error) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancelCtx()
 
-	balance, err := c.client.BalanceAt(ctx, fromExternalAddress(address), nil)
+	balance, err := cc.client.BalanceAt(ctx, fromExternalAddress(address), nil)
 	if err != nil {
 		return nil, err
 	}

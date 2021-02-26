@@ -23,23 +23,23 @@ var defaultBalanceAlertThreshold = celo.WrapWei(
 // check should be triggered.
 const defaultBalanceMonitoringTick = 10 * time.Minute
 
-func (c *Chain) initializeBalanceMonitoring(
+func (cc *celoChain) initializeBalanceMonitoring(
 	ctx context.Context,
 ) {
-	balanceMonitor, err := c.balanceMonitor()
+	balanceMonitor, err := cc.balanceMonitor()
 	if err != nil {
 		logger.Errorf("error obtaining balance monitor handle [%v]", err)
 		return
 	}
 
 	alertThreshold := defaultBalanceAlertThreshold
-	if value := c.config.BalanceAlertThreshold; value != nil {
+	if value := cc.config.BalanceAlertThreshold; value != nil {
 		alertThreshold = value
 	}
 
 	balanceMonitor.Observe(
 		ctx,
-		fromExternalAddress(ExternalAddress(c.Address())),
+		fromExternalAddress(ExternalAddress(cc.Address())),
 		alertThreshold,
 		defaultBalanceMonitoringTick,
 	)
@@ -47,15 +47,15 @@ func (c *Chain) initializeBalanceMonitoring(
 	logger.Infof(
 		"started balance monitoring for address [%v] "+
 			"with the alert threshold set to [%v]",
-		c.Address().Hex(),
+		cc.Address().Hex(),
 		alertThreshold,
 	)
 }
 
 // BalanceMonitor returns a balance monitor.
-func (c *Chain) balanceMonitor() (*celoutil.BalanceMonitor, error) {
+func (cc *celoChain) balanceMonitor() (*celoutil.BalanceMonitor, error) {
 	weiBalanceOf := func(address InternalAddress) (*celo.Wei, error) {
-		return c.WeiBalanceOf(toExternalAddress(address))
+		return cc.WeiBalanceOf(toExternalAddress(address))
 	}
 
 	return celoutil.NewBalanceMonitor(weiBalanceOf), nil
