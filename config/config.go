@@ -85,6 +85,8 @@ type TBTC struct {
 	BTCRefunds BTCRefunds
 }
 
+// BTCRefunds stores configuration related to recovering BTC from a liquidated
+// keep
 type BTCRefunds struct {
 	BeneficiaryAddress string
 }
