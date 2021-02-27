@@ -37,59 +37,58 @@ type localKeep struct {
 	signatureSubmittedEvents []*chain.SignatureSubmittedEvent
 }
 
+func (lc *localChain) GetKeepWithID(
+	keepID common.Address,
+) (chain.BondedECDSAKeepHandle, error) {
+	return lc.keeps[keepID], nil
+}
+
 func (lc *localChain) GetKeepAtIndex(
 	keepIndex *big.Int,
-) (common.Address, error) {
+) (chain.BondedECDSAKeepHandle, error) {
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
 
 	index := int(keepIndex.Uint64())
 
 	if index > len(lc.keepAddresses) {
-		return common.HexToAddress("0x0"), fmt.Errorf("out of bounds")
+		return nil, fmt.Errorf("out of bounds")
 	}
 
-	return lc.keepAddresses[index], nil
+	return lc.GetKeepWithID(lc.keepAddresses[index])
+}
+
+func (lk *localKeep) ID() common.Address {
+	return lk.keepID
 }
 
 // OnSignatureRequested is a callback that is invoked on-chain
 // when a keep's signature is requested.
-func (lc *localChain) OnSignatureRequested(
-	keepAddress common.Address,
+func (lk *localKeep) OnSignatureRequested(
 	handler func(event *chain.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
-	lc.localChainMutex.Lock()
-	defer lc.localChainMutex.Unlock()
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
-	keep, ok := lc.keeps[keepAddress]
-	if !ok {
-		return nil, fmt.Errorf(
-			"failed to find keep with address: [%s]",
-			keepAddress.String(),
-		)
-	}
-
-	keep.signatureRequestedHandlers[handlerID] = handler
+	lk.signatureRequestedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		lc.localChainMutex.Lock()
-		defer lc.localChainMutex.Unlock()
+		lk.chain.localChainMutex.Lock()
+		defer lk.chain.localChainMutex.Unlock()
 
-		delete(keep.signatureRequestedHandlers, handlerID)
+		delete(lk.signatureRequestedHandlers, handlerID)
 	}), nil
 }
 
-func (lc *localChain) OnConflictingPublicKeySubmitted(
-	keepAddress common.Address,
+func (lk *localKeep) OnConflictingPublicKeySubmitted(
 	handler func(event *chain.ConflictingPublicKeySubmittedEvent),
 ) (subscription.EventSubscription, error) {
 	panic("implement")
 }
 
-func (lc *localChain) OnPublicKeyPublished(
-	keepAddress common.Address,
+func (lk *localKeep) OnPublicKeyPublished(
 	handler func(event *chain.PublicKeyPublishedEvent),
 ) (subscription.EventSubscription, error) {
 	panic("implement")
@@ -97,55 +96,33 @@ func (lc *localChain) OnPublicKeyPublished(
 
 // SubmitKeepPublicKey checks if public key has been already submitted for given
 // keep address, if not it stores the key in a map.
-func (lc *localChain) SubmitKeepPublicKey(
-	keepAddress common.Address,
-	publicKey [64]byte,
-) error {
-	lc.localChainMutex.Lock()
-	defer lc.localChainMutex.Unlock()
+func (lk *localKeep) SubmitKeepPublicKey(publicKey [64]byte) error {
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
 
-	keep, ok := lc.keeps[keepAddress]
-	if !ok {
-		return fmt.Errorf(
-			"failed to find keep with address: [%s]",
-			keepAddress.String(),
-		)
-	}
-
-	if keep.publicKey != [64]byte{} {
+	if lk.publicKey != [64]byte{} {
 		return fmt.Errorf(
 			"public key already submitted for keep [%s]",
-			keepAddress.String(),
+			lk.ID().String(),
 		)
 	}
 
-	keep.publicKey = publicKey
+	lk.publicKey = publicKey
 
 	return nil
 }
 
 // SubmitSignature submits a signature to a keep contract deployed under a
 // given address.
-func (lc *localChain) SubmitSignature(
-	keepAddress common.Address,
-	signature *ecdsa.Signature,
-) error {
-	lc.localChainMutex.Lock()
-	defer lc.localChainMutex.Unlock()
-
-	keep, ok := lc.keeps[keepAddress]
-	if !ok {
-		return fmt.Errorf(
-			"failed to find keep with address: [%s]",
-			keepAddress.String(),
-		)
-	}
+func (lk *localKeep) SubmitSignature(signature *ecdsa.Signature) error {
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
 
 	// force the right workflow sequence
-	if keep.latestDigest == [32]byte{} {
+	if lk.latestDigest == [32]byte{} {
 		return fmt.Errorf(
 			"keep [%s] is not awaiting for a signature",
-			keepAddress.String(),
+			lk.ID().String(),
 		)
 	}
 
@@ -159,10 +136,10 @@ func (lc *localChain) SubmitSignature(
 		return err
 	}
 
-	keep.signatureSubmittedEvents = append(
-		keep.signatureSubmittedEvents,
+	lk.signatureSubmittedEvents = append(
+		lk.signatureSubmittedEvents,
 		&chain.SignatureSubmittedEvent{
-			Digest:     keep.latestDigest,
+			Digest:     lk.latestDigest,
 			R:          rBytes,
 			S:          sBytes,
 			RecoveryID: uint8(signature.RecoveryID),
@@ -172,168 +149,103 @@ func (lc *localChain) SubmitSignature(
 	return nil
 }
 
-func (lc *localChain) OnKeepClosed(
-	keepAddress common.Address,
+func (lk *localKeep) OnKeepClosed(
 	handler func(event *chain.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
-	lc.localChainMutex.Lock()
-	defer lc.localChainMutex.Unlock()
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
-	keep, ok := lc.keeps[keepAddress]
-	if !ok {
-		return nil, fmt.Errorf(
-			"failed to find keep with address: [%s]",
-			keepAddress.String(),
-		)
-	}
-
-	keep.keepClosedHandlers[handlerID] = handler
+	lk.keepClosedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		lc.localChainMutex.Lock()
-		defer lc.localChainMutex.Unlock()
+		lk.chain.localChainMutex.Lock()
+		defer lk.chain.localChainMutex.Unlock()
 
-		delete(keep.keepClosedHandlers, handlerID)
+		delete(lk.keepClosedHandlers, handlerID)
 	}), nil
-
 }
 
-func (lc *localChain) OnKeepTerminated(
-	keepAddress common.Address,
+func (lk *localKeep) OnKeepTerminated(
 	handler func(event *chain.KeepTerminatedEvent),
 ) (subscription.EventSubscription, error) {
-	lc.localChainMutex.Lock()
-	defer lc.localChainMutex.Unlock()
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
 
 	handlerID := generateHandlerID()
 
-	keep, ok := lc.keeps[keepAddress]
-	if !ok {
-		return nil, fmt.Errorf(
-			"failed to find keep with address: [%s]",
-			keepAddress.String(),
-		)
-	}
-
-	keep.keepTerminatedHandlers[handlerID] = handler
+	lk.keepTerminatedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
-		lc.localChainMutex.Lock()
-		defer lc.localChainMutex.Unlock()
+		lk.chain.localChainMutex.Lock()
+		defer lk.chain.localChainMutex.Unlock()
 
-		delete(keep.keepTerminatedHandlers, handlerID)
+		delete(lk.keepTerminatedHandlers, handlerID)
 	}), nil
 }
 
 // IsAwaitingSignature checks if the keep is waiting for a signature to be
 // calculated for the given digest.
-func (lc *localChain) IsAwaitingSignature(
-	keepAddress common.Address,
-	digest [32]byte,
-) (bool, error) {
-	lc.localChainMutex.Lock()
-	defer lc.localChainMutex.Unlock()
+func (lk *localKeep) IsAwaitingSignature(digest [32]byte) (bool, error) {
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
 
-	keep, ok := lc.keeps[keepAddress]
-	if !ok {
-		return false, fmt.Errorf(
-			"failed to find keep with address: [%s]",
-			keepAddress.String(),
-		)
-	}
-
-	return keep.latestDigest != [32]byte{}, nil
+	return lk.latestDigest != [32]byte{}, nil
 }
 
 // IsActive checks for current state of a keep on-chain.
-func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
+func (lk *localKeep) IsActive() (bool, error) {
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
 
-	lc.localChainMutex.Lock()
-	defer lc.localChainMutex.Unlock()
-
-	keep, ok := lc.keeps[keepAddress]
-	if !ok {
-		return false, fmt.Errorf("no keep with address [%v]", keepAddress)
-	}
-
-	return keep.status == active, nil
-
+	return lk.status == active, nil
 }
 
-func (lc *localChain) LatestDigest(keepAddress common.Address) ([32]byte, error) {
+func (lk *localKeep) LatestDigest() ([32]byte, error) {
 	panic("implement")
 }
 
-func (lc *localChain) SignatureRequestedBlock(
-	keepAddress common.Address,
-	digest [32]byte,
-) (uint64, error) {
+func (lk *localKeep) SignatureRequestedBlock(digest [32]byte) (uint64, error) {
 	panic("implement")
 }
 
-func (lc *localChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
-	lc.localChainMutex.Lock()
-	defer lc.localChainMutex.Unlock()
+func (lk *localKeep) GetPublicKey() ([]uint8, error) {
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
 
-	keep, ok := lc.keeps[keepAddress]
-	if !ok {
-		return nil, fmt.Errorf(
-			"failed to find keep with address: [%s]",
-			keepAddress.String(),
-		)
-	}
-
-	return keep.publicKey[:], nil
-
+	return lk.publicKey[:], nil
 }
 
-func (lc *localChain) GetMembers(
-	keepAddress common.Address,
-) ([]common.Address, error) {
-	lc.localChainMutex.Lock()
-	defer lc.localChainMutex.Unlock()
+func (lk *localKeep) GetMembers() ([]common.Address, error) {
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
 
-	keep, ok := lc.keeps[keepAddress]
-	if !ok {
-		return nil, fmt.Errorf("no keep with address [%v]", keepAddress)
-
-	}
-	return keep.members, nil
+	return lk.members, nil
 }
 
-func (lc *localChain) GetHonestThreshold(
-	keepAddress common.Address,
-) (uint64, error) {
+func (lk *localKeep) GetHonestThreshold() (uint64, error) {
 	panic("implement")
 }
 
-func (lc *localChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time, error) {
+func (lk *localKeep) GetOpenedTimestamp() (time.Time, error) {
 	panic("implement")
 }
 
-func (lc *localChain) PastSignatureSubmittedEvents(
-	keepAddress string,
+func (lk *localKeep) PastSignatureSubmittedEvents(
 	startBlock uint64,
 ) ([]*chain.SignatureSubmittedEvent, error) {
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
+
+	return lk.signatureSubmittedEvents, nil
+}
+
+func (lc *localChain) RequestSignature(keepAddress common.Address, digest [32]byte) error {
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
 
-	keep, ok := lc.keeps[common.HexToAddress(keepAddress)]
-	if !ok {
-		return nil, fmt.Errorf("no keep with address [%v]", keepAddress)
-
-	}
-
-	return keep.signatureSubmittedEvents, nil
-}
-
-func (c *localChain) RequestSignature(keepAddress common.Address, digest [32]byte) error {
-	c.localChainMutex.Lock()
-	defer c.localChainMutex.Unlock()
-
-	keep, ok := c.keeps[keepAddress]
+	keep, ok := lc.keeps[keepAddress]
 	if !ok {
 		return fmt.Errorf(
 			"failed to find keep with address: [%s]",

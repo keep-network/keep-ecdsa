@@ -185,18 +185,6 @@ func (cc *celoChain) GetKeepCount() (*big.Int, error) {
 	return cc.bondedECDSAKeepFactoryContract.GetKeepCount()
 }
 
-// GetKeepAtIndex returns the address of the keep at the given index.
-func (cc *celoChain) GetKeepAtIndex(
-	keepIndex *big.Int,
-) (ExternalAddress, error) {
-	address, err := cc.bondedECDSAKeepFactoryContract.GetKeepAtIndex(keepIndex)
-	if err != nil {
-		return ExternalAddress{}, nil
-	}
-
-	return toExternalAddress(address), err
-}
-
 // BlockTimestamp returns given block's timestamp.
 func (cc *celoChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)

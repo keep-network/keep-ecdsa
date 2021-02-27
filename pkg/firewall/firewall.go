@@ -174,7 +174,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	lastIndex := new(big.Int).Sub(keepCount, one)
 
 	for keepIndex := new(big.Int).Set(lastIndex); keepIndex.Cmp(zero) != -1; keepIndex.Sub(keepIndex, one) {
-		keepAddress, err := soakp.chain.GetKeepAtIndex(keepIndex)
+		keep, err := soakp.chain.GetKeepAtIndex(keepIndex)
 		if err != nil {
 			logger.Errorf(
 				"could not get keep at index [%v]: [%v]",
@@ -188,11 +188,11 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 		// active, we skip it. We still need to process the rest of the keeps
 		// because it's possible that although this keep is not active some
 		// peers created before this one are still active.
-		isActive, err := soakp.isKeepActive(keepAddress)
+		isActive, err := soakp.isKeepActive(keep)
 		if err != nil {
 			logger.Errorf(
-				"could not check if keep [%x] is active: [%v]",
-				keepAddress,
+				"could not check if keep [%s] is active: [%v]",
+				keep.ID(),
 				err,
 			)
 			continue
@@ -203,11 +203,11 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 
 		// Get all the members of the active keep and store them in the active
 		// keep members cache.
-		members, err := soakp.getKeepMembers(keepAddress)
+		members, err := soakp.getKeepMembers(keep)
 		if err != nil {
 			logger.Errorf(
-				"could not get members of keep [%x]: [%v]",
-				keepAddress,
+				"could not get members of keep [%s]: [%v]",
+				keep.ID(),
 				err,
 			)
 			continue
@@ -236,26 +236,26 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 // If the keep has been marked as inactive in the cache, function returns false
 // without hitting the chain.
 func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
-	keepAddress common.Address,
+	keep chain.BondedECDSAKeepHandle,
 ) (bool, error) {
 	cache := soakp.keepInfoCache
 
 	cache.mutex.RLock()
-	isInactive, isCached := cache.isInactive[keepAddress.String()]
+	isInactive, isCached := cache.isInactive[keep.ID().String()]
 	cache.mutex.RUnlock()
 
 	if isCached && isInactive {
 		return false, nil
 	}
 
-	isActive, err := soakp.chain.IsActive(keepAddress)
+	isActive, err := keep.IsActive()
 	if err != nil {
 		return false, err
 	}
 
 	if !isActive {
 		cache.mutex.Lock()
-		cache.isInactive[keepAddress.String()] = true
+		cache.isInactive[keep.ID().String()] = true
 		cache.mutex.Unlock()
 	}
 
@@ -265,19 +265,19 @@ func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
 // getKeepMembers fetches members of the keep with the given address from the
 // chain or reads them from a cache if this information is available there.
 func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
-	keepAddress common.Address,
+	keep chain.BondedECDSAKeepHandle,
 ) ([]string, error) {
 	cache := soakp.keepInfoCache
 
 	cache.mutex.RLock()
-	members, areCached := cache.members[keepAddress.String()]
+	members, areCached := cache.members[keep.ID().String()]
 	cache.mutex.RUnlock()
 
 	if areCached {
 		return members, nil
 	}
 
-	memberAddresses, err := soakp.chain.GetMembers(keepAddress)
+	memberAddresses, err := keep.GetMembers()
 	if err != nil {
 		return nil, nil
 	}
@@ -288,7 +288,7 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
 	}
 
 	cache.mutex.Lock()
-	cache.members[keepAddress.String()] = members
+	cache.members[keep.ID().String()] = members
 	cache.mutex.Unlock()
 
 	return members, nil
