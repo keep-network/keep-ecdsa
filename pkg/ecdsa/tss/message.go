@@ -44,6 +44,7 @@ func (m *AnnounceMessage) Type() string {
 type LiquidationRecoveryAnnounceMessage struct {
 	SenderID           MemberID
 	BtcRecoveryAddress string
+	MaxFeePerVByte     int
 }
 
 // Type returns a string type of the `LiquidationRecoveryAnnounceMessage` so

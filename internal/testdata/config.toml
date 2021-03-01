@@ -37,3 +37,4 @@
 
   [Extensions.TBTC.BTCRefunds]
   	BeneficiaryAddress = "bcrt1q0umle4fe6penqqyzuwsysqezwwptuyqa82jas4"
+  	MaxFeePerVByte = 73

@@ -177,6 +177,7 @@ func Start(c *cli.Context) error {
 		persistence,
 		sanctionedApplications,
 		config.Extensions.TBTC.BTCRefunds.BeneficiaryAddress,
+		config.Extensions.TBTC.BTCRefunds.MaxFeePerVByte,
 		&config.Client,
 		&config.TSS,
 	)
