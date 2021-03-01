@@ -12,6 +12,7 @@ on:
     paths:
       - "staker-rewards/**"
       - ".github/workflows/staker-rewards.yml"
+  workflow_dispatch:
 
 jobs:
   test:
