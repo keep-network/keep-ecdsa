@@ -16,8 +16,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/keep-core/pkg/chain"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	corechain "github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 
 	commonLocal "github.com/keep-network/keep-common/pkg/chain/local"
@@ -26,7 +26,7 @@ import (
 // Chain is an extention of eth.Handle interface which exposes
 // additional functions useful for testing.
 type Chain interface {
-	eth.Handle
+	chain.Handle
 
 	OpenKeep(keepAddress common.Address, members []common.Address)
 	CloseKeep(keepAddress common.Address) error
@@ -42,16 +42,16 @@ type Chain interface {
 type localChain struct {
 	localChainMutex sync.Mutex
 
-	blockCounter     chain.BlockCounter
+	blockCounter     corechain.BlockCounter
 	blocksTimestamps sync.Map
 
 	keepAddresses []common.Address
 	keeps         map[common.Address]*localKeep
 
-	keepCreatedHandlers map[int]func(event *eth.BondedECDSAKeepCreatedEvent)
+	keepCreatedHandlers map[int]func(event *chain.BondedECDSAKeepCreatedEvent)
 
 	operatorKey *cecdsa.PrivateKey
-	signer      chain.Signing
+	signer      corechain.Signing
 
 	authorizations map[common.Address]bool
 }
@@ -74,7 +74,7 @@ func Connect(ctx context.Context) Chain {
 	localChain := &localChain{
 		blockCounter:        blockCounter,
 		keeps:               make(map[common.Address]*localKeep),
-		keepCreatedHandlers: make(map[int]func(event *eth.BondedECDSAKeepCreatedEvent)),
+		keepCreatedHandlers: make(map[int]func(event *chain.BondedECDSAKeepCreatedEvent)),
 		operatorKey:         operatorKey,
 		signer:              signer,
 		authorizations:      make(map[common.Address]bool),
@@ -105,7 +105,7 @@ func (lc *localChain) Address() common.Address {
 	return common.BytesToAddress(lc.signer.PublicKey())
 }
 
-func (lc *localChain) Signing() chain.Signing {
+func (lc *localChain) Signing() corechain.Signing {
 	return commonLocal.NewSigner(lc.operatorKey)
 }
 
@@ -131,12 +131,8 @@ func (lc *localChain) AuthorizeOperator(operator common.Address) {
 	lc.authorizations[operator] = true
 }
 
-func (lc *localChain) StakeMonitor() (chain.StakeMonitor, error) {
+func (lc *localChain) StakeMonitor() (corechain.StakeMonitor, error) {
 	return nil, nil // not implemented.
-}
-
-func (lc *localChain) BalanceMonitor() (chain.BalanceMonitor, error) {
-	panic("not implemented")
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
@@ -148,7 +144,7 @@ func (lc *localChain) RegisterAsMemberCandidate(application common.Address) erro
 // OnBondedECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (lc *localChain) OnBondedECDSAKeepCreated(
-	handler func(event *eth.BondedECDSAKeepCreatedEvent),
+	handler func(event *chain.BondedECDSAKeepCreatedEvent),
 ) subscription.EventSubscription {
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
@@ -169,7 +165,7 @@ func (lc *localChain) OnBondedECDSAKeepCreated(
 // when a keep's signature is requested.
 func (lc *localChain) OnSignatureRequested(
 	keepAddress common.Address,
-	handler func(event *eth.SignatureRequestedEvent),
+	handler func(event *chain.SignatureRequestedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
@@ -260,7 +256,7 @@ func (lc *localChain) SubmitSignature(
 
 	keep.signatureSubmittedEvents = append(
 		keep.signatureSubmittedEvents,
-		&eth.SignatureSubmittedEvent{
+		&chain.SignatureSubmittedEvent{
 			Digest:     keep.latestDigest,
 			R:          rBytes,
 			S:          sBytes,
@@ -319,7 +315,7 @@ func (lc *localChain) IsActive(keepAddress common.Address) (bool, error) {
 	return keep.status == active, nil
 }
 
-func (lc *localChain) BlockCounter() chain.BlockCounter {
+func (lc *localChain) BlockCounter() corechain.BlockCounter {
 	return lc.blockCounter
 }
 
@@ -370,7 +366,7 @@ func (lc *localChain) GetKeepAtIndex(
 
 func (lc *localChain) OnKeepClosed(
 	keepAddress common.Address,
-	handler func(event *eth.KeepClosedEvent),
+	handler func(event *chain.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
@@ -397,7 +393,7 @@ func (lc *localChain) OnKeepClosed(
 
 func (lc *localChain) OnKeepTerminated(
 	keepAddress common.Address,
-	handler func(event *eth.KeepTerminatedEvent),
+	handler func(event *chain.KeepTerminatedEvent),
 ) (subscription.EventSubscription, error) {
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
@@ -424,14 +420,14 @@ func (lc *localChain) OnKeepTerminated(
 
 func (lc *localChain) OnConflictingPublicKeySubmitted(
 	keepAddress common.Address,
-	handler func(event *eth.ConflictingPublicKeySubmittedEvent),
+	handler func(event *chain.ConflictingPublicKeySubmittedEvent),
 ) (subscription.EventSubscription, error) {
 	panic("implement")
 }
 
 func (lc *localChain) OnPublicKeyPublished(
 	keepAddress common.Address,
-	handler func(event *eth.PublicKeyPublishedEvent),
+	handler func(event *chain.PublicKeyPublishedEvent),
 ) (subscription.EventSubscription, error) {
 	panic("implement")
 }
@@ -473,7 +469,7 @@ func (lc *localChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time,
 func (lc *localChain) PastSignatureSubmittedEvents(
 	keepAddress string,
 	startBlock uint64,
-) ([]*eth.SignatureSubmittedEvent, error) {
+) ([]*chain.SignatureSubmittedEvent, error) {
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
 
@@ -500,6 +496,7 @@ func generateHandlerID() int {
 	return rand.Int()
 }
 
+// RandomSigningGroup randmly chooses `size` signers to be a new signing group
 func RandomSigningGroup(size int) []common.Address {
 	signers := make([]common.Address, size)
 

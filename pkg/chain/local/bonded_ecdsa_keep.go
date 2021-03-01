@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 type keepStatus int
@@ -21,12 +21,12 @@ type localKeep struct {
 	status       keepStatus
 	latestDigest [32]byte
 
-	signatureRequestedHandlers map[int]func(event *eth.SignatureRequestedEvent)
+	signatureRequestedHandlers map[int]func(event *chain.SignatureRequestedEvent)
 
-	keepClosedHandlers     map[int]func(event *eth.KeepClosedEvent)
-	keepTerminatedHandlers map[int]func(event *eth.KeepTerminatedEvent)
+	keepClosedHandlers     map[int]func(event *chain.KeepClosedEvent)
+	keepTerminatedHandlers map[int]func(event *chain.KeepTerminatedEvent)
 
-	signatureSubmittedEvents []*eth.SignatureSubmittedEvent
+	signatureSubmittedEvents []*chain.SignatureSubmittedEvent
 }
 
 func (c *localChain) RequestSignature(keepAddress common.Address, digest [32]byte) error {
@@ -51,12 +51,12 @@ func (c *localChain) RequestSignature(keepAddress common.Address, digest [32]byt
 
 	keep.latestDigest = digest
 
-	signatureRequestedEvent := &eth.SignatureRequestedEvent{
+	signatureRequestedEvent := &chain.SignatureRequestedEvent{
 		Digest: digest,
 	}
 
 	for _, handler := range keep.signatureRequestedHandlers {
-		go func(handler func(event *eth.SignatureRequestedEvent), signatureRequestedEvent *eth.SignatureRequestedEvent) {
+		go func(handler func(event *chain.SignatureRequestedEvent), signatureRequestedEvent *chain.SignatureRequestedEvent) {
 			handler(signatureRequestedEvent)
 		}(handler, signatureRequestedEvent)
 	}
@@ -82,12 +82,12 @@ func (c *localChain) closeKeep(keepAddress common.Address) error {
 
 	keep.status = closed
 
-	keepClosedEvent := &eth.KeepClosedEvent{}
+	keepClosedEvent := &chain.KeepClosedEvent{}
 
 	for _, handler := range keep.keepClosedHandlers {
 		go func(
-			handler func(event *eth.KeepClosedEvent),
-			keepClosedEvent *eth.KeepClosedEvent,
+			handler func(event *chain.KeepClosedEvent),
+			keepClosedEvent *chain.KeepClosedEvent,
 		) {
 			handler(keepClosedEvent)
 		}(handler, keepClosedEvent)
@@ -114,12 +114,12 @@ func (c *localChain) terminateKeep(keepAddress common.Address) error {
 
 	keep.status = terminated
 
-	keepTerminatedEvent := &eth.KeepTerminatedEvent{}
+	keepTerminatedEvent := &chain.KeepTerminatedEvent{}
 
 	for _, handler := range keep.keepTerminatedHandlers {
 		go func(
-			handler func(event *eth.KeepTerminatedEvent),
-			keepTerminatedEvent *eth.KeepTerminatedEvent,
+			handler func(event *chain.KeepTerminatedEvent),
+			keepTerminatedEvent *chain.KeepTerminatedEvent,
 		) {
 			handler(keepTerminatedEvent)
 		}(handler, keepTerminatedEvent)

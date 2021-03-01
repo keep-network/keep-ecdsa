@@ -215,7 +215,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	}
 
 	if !cecdsa.Verify(
-		(*cecdsa.PublicKey)(firstPublicKey),
+		firstPublicKey,
 		digest[:],
 		firstSignature.R,
 		firstSignature.S,

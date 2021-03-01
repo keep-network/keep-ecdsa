@@ -2,9 +2,10 @@ package tss
 
 import (
 	"fmt"
-	fuzz "github.com/google/gofuzz"
 	"reflect"
 	"testing"
+
+	fuzz "github.com/google/gofuzz"
 
 	"github.com/keep-network/keep-ecdsa/internal/testdata"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/pbutils"
@@ -73,14 +74,14 @@ func TestThresholdKeyMarshalling(t *testing.T) {
 }
 
 func TestTSSProtocolMessageMarshalling(t *testing.T) {
-	msg := &TSSProtocolMessage{
+	msg := &ProtocolMessage{
 		SenderID:    MemberID([]byte("member-1")),
 		Payload:     []byte("very important message"),
 		IsBroadcast: true,
 		SessionID:   "session-1",
 	}
 
-	unmarshaled := &TSSProtocolMessage{}
+	unmarshaled := &ProtocolMessage{}
 
 	if err := pbutils.RoundTrip(msg, unmarshaled); err != nil {
 		t.Fatal(err)
@@ -96,17 +97,17 @@ func TestTSSProtocolMessageMarshalling(t *testing.T) {
 
 func TestFuzzTSSProtocolMessageRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		var message TSSProtocolMessage
+		var message ProtocolMessage
 
 		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
 		f.Fuzz(&message)
 
-		_ = pbutils.RoundTrip(&message, &TSSProtocolMessage{})
+		_ = pbutils.RoundTrip(&message, &ProtocolMessage{})
 	}
 }
 
 func TestFuzzTSSProtocolMessageUnmarshaler(t *testing.T) {
-	pbutils.FuzzUnmarshaler(&TSSProtocolMessage{})
+	pbutils.FuzzUnmarshaler(&ProtocolMessage{})
 }
 
 func TestReadyMessageMarshalling(t *testing.T) {
