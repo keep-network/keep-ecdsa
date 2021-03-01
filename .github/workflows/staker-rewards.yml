@@ -43,7 +43,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test # or npm run test?
+        run: npm test
 
   lint:
     runs-on: ubuntu-latest
