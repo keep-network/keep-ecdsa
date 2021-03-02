@@ -154,6 +154,7 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 	return finalAddress.EncodeAddress(), nil
 }
 
+// ConstructUnsignedTransaction produces an unsigned transaction
 func ConstructUnsignedTransaction(
 	previousOutputTransactionHashHex string, // (1)
 	previousOutputIndex uint32,
@@ -246,6 +247,8 @@ func ConstructUnsignedTransaction(
 	return tx, nil
 }
 
+// BuildSignedTransactionHexString generates the final transaction hex string
+// that can then be submitted to the chain
 func BuildSignedTransactionHexString(
 	unsignedTransaction *wire.MsgTx, // (1)
 	signature *ecdsa.Signature, // (2)
