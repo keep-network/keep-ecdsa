@@ -82,6 +82,12 @@ type Extensions struct {
 // executing signer actions specific for TBTC application.
 type TBTC struct {
 	TBTCSystem string
+	BTCRefunds BTCRefunds
+}
+
+// BTCRefunds stores configuration related to recovering BTC from a closed keep.
+type BTCRefunds struct {
+	BeneficiaryAddress string
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file
