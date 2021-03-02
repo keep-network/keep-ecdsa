@@ -67,7 +67,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           files:  ./test-results-ethereum/unit-tests.xml
-          check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
+          check_name: Go Test Results (Ethereum) # name under which test results will be presented in GitHub (optional)
           comment_on_pr: false # turns off commenting on Pull Requests
 
       # This step is executed after the tests as we want to configure it eventually
