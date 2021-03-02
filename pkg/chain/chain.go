@@ -106,11 +106,11 @@ type BondedECDSAKeepHandle interface {
 
 	// SubmitKeepPublicKey submits a 64-byte serialized public key to a keep
 	// contract deployed under a given address.
-	SubmitKeepPublicKey(publicKey [64]byte) error // TODO: Add promise *async.KeepPublicKeySubmissionPromise
+	SubmitKeepPublicKey(publicKey [64]byte) error
 
 	// SubmitSignature submits a signature to a keep contract deployed under a
 	// given address.
-	SubmitSignature(signature *ecdsa.Signature) error // TODO: Add promise *async.SignatureSubmissionPromise
+	SubmitSignature(signature *ecdsa.Signature) error
 
 	// OnKeepClosed installs a callback that will be called on closing the
 	// given keep.
