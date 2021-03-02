@@ -146,7 +146,7 @@ func (bekh *bondedEcdsaKeepHandle) SubmitKeepPublicKey(
 
 	// There might be a scenario, when a public key submission fails because of
 	// a new cloned contract has not been registered by the ethereum node. Common
-	// case is when Ethereum nodes are behind a load balancer and not fully synced
+	// case is when Celo nodes are behind a load balancer and not fully synced
 	// with each other. To mitigate this issue, a client will retry submitting
 	// a public key up to 10 times with a 250ms interval.
 	if err := withRetry(submitPubKey); err != nil {
