@@ -89,7 +89,7 @@ type TBTC struct {
 // keep
 type BTCRefunds struct {
 	BeneficiaryAddress string
-	MaxFeePerVByte     int
+	MaxFeePerVByte     int32
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file

@@ -13,7 +13,7 @@ import (
 // other signers to complete liquidation recovery.
 type RecoveryInfo struct {
 	btcRecoveryAddress string
-	maxFeePerVByte     int
+	maxFeePerVByte     int32
 }
 
 // BroadcastRecoveryAddress broadcasts and receives the BTC recovery addresses
@@ -22,7 +22,7 @@ type RecoveryInfo struct {
 func BroadcastRecoveryAddress(
 	parentCtx context.Context,
 	btcRecoveryAddress string,
-	maxFeePerVByte int,
+	maxFeePerVByte int32,
 	groupID string,
 	memberID MemberID,
 	groupMemberIDs []MemberID,
