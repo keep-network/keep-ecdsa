@@ -1,8 +1,8 @@
 FROM golang:1.13.8-alpine3.10 AS gobuild
 
-# CHAIN argument defines the chain implementation which should be used
+# HOST_CHAIN argument defines the chain implementation which should be used
 # during image build process.
-ARG CHAIN=ethereum
+ARG HOST_CHAIN=ethereum
 
 # Several host chain Go modules which use native C code underneath may
 # need to know the C standard library implementation used by the platform.
@@ -18,7 +18,7 @@ ENV GOPATH=/go \
 	BIN_PATH=/usr/local/bin \
 	# GO111MODULE required to support go modules
 	GO111MODULE=on \
-	APP_BUILD_TAGS="$CHAIN $LIBC" \
+	APP_BUILD_TAGS="$HOST_CHAIN $LIBC" \
 	ABIGEN_BUILD_TAGS=$LIBC
 
 RUN apk add --update --no-cache \
@@ -61,7 +61,7 @@ COPY ./solidity $APP_DIR/solidity
 RUN cd $APP_DIR/solidity && npm install
 
 # Generate code.
-COPY ./pkg/chain/gen/$CHAIN $APP_DIR/pkg/chain/gen/$CHAIN
+COPY ./pkg/chain/gen/$HOST_CHAIN $APP_DIR/pkg/chain/gen/$HOST_CHAIN
 COPY ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
 # Need this to resolve imports in generated chain commands.
 COPY ./config $APP_DIR/config
@@ -75,10 +75,10 @@ COPY ./ $APP_DIR/
 # resulting binary and can prevent unexpected errors which may occur due to
 # transitive dependencies conflicts.
 RUN cd $APP_DIR/pkg/chain && \
-	mv ./gen/$CHAIN ./temp && \
+	mv ./gen/$HOST_CHAIN ./temp && \
 	rm -rf ./gen && \
 	mkdir ./gen && \
-	mv ./temp ./gen/$CHAIN
+	mv ./temp ./gen/$HOST_CHAIN
 
 # Client Versioning.
 ARG VERSION
