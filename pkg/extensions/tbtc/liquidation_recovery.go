@@ -22,7 +22,7 @@ import (
 //
 // [BIP143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
 func PublicKeyToP2WPKHScriptCode(
-	publicKey *ecdsa.PublicKey,
+	publicKey *cecdsa.PublicKey,
 	chainParams *chaincfg.Params,
 ) ([]byte, error) {
 	// ecdsa.PublicKey and btcec.PublicKey are both method attachments to
