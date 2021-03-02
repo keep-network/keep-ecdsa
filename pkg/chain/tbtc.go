@@ -17,9 +17,8 @@ type TBTCHandle interface {
 // Deposit is an interface that provides ability to interact
 // with Deposit contracts.
 type Deposit interface {
-	// KeepAddress returns the underlying keep address for the
-	// provided deposit.
-	KeepAddress(depositAddress string) (string, error)
+	// Keep returns the underlying keep for the provided deposit.
+	Keep(depositAddress string) (BondedECDSAKeepHandle, error)
 
 	// RetrieveSignerPubkey retrieves the signer public key for the
 	// provided deposit.

@@ -16,8 +16,6 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/cache"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -261,11 +259,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	}
 
 	actFn := func(depositAddress string) error {
-		keepAddress, err := t.chain.KeepAddress(depositAddress)
-		if err != nil {
-			return err
-		}
-		keep, err := t.chain.GetKeepWithID(common.HexToAddress(keepAddress))
+		keep, err := t.chain.Keep(depositAddress)
 		if err != nil {
 			return err
 		}
@@ -756,18 +750,14 @@ func (t *tbtc) watchKeepClosed(
 ) (chan struct{}, func(), error) {
 	signalChan := make(chan struct{})
 
-	keepAddress, err := t.chain.KeepAddress(depositAddress)
-	if err != nil {
-		return nil, nil, err
-	}
-	keep, err := t.chain.GetKeepWithID(common.HexToAddress(keepAddress))
+	keep, err := t.chain.Keep(depositAddress)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	keepClosedSubscription, err := keep.OnKeepClosed(
 		func(_ *chain.KeepClosedEvent) {
-			if t.waitKeepNotActiveConfirmation(keepAddress) {
+			if t.waitKeepNotActiveConfirmation(keep) {
 				signalChan <- struct{}{}
 			}
 		},
@@ -778,7 +768,7 @@ func (t *tbtc) watchKeepClosed(
 
 	keepTerminatedSubscription, err := keep.OnKeepTerminated(
 		func(_ *chain.KeepTerminatedEvent) {
-			if t.waitKeepNotActiveConfirmation(keepAddress) {
+			if t.waitKeepNotActiveConfirmation(keep) {
 				signalChan <- struct{}{}
 			}
 		},
@@ -859,11 +849,7 @@ func (t *tbtc) shouldMonitorDeposit(
 }
 
 func (t *tbtc) getSignerIndex(depositAddress string) (int, error) {
-	keepAddress, err := t.chain.KeepAddress(depositAddress)
-	if err != nil {
-		return -1, err
-	}
-	keep, err := t.chain.GetKeepWithID(common.HexToAddress(keepAddress))
+	keep, err := t.chain.Keep(depositAddress)
 	if err != nil {
 		return -1, err
 	}
@@ -943,25 +929,14 @@ func (t *tbtc) waitDepositStateChangeConfirmation(
 }
 
 func (t *tbtc) waitKeepNotActiveConfirmation(
-	keepAddress string,
+	keep chain.BondedECDSAKeepHandle,
 ) bool {
 	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
 	if err != nil {
 		logger.Errorf(
 			"could not get current block while confirming "+
 				"keep [%v] is not active: [%v]",
-			keepAddress,
-			err,
-		)
-		return false
-	}
-
-	keep, err := t.chain.GetKeepWithID(common.HexToAddress(keepAddress))
-	if err != nil {
-		logger.Errorf(
-			"could not get current block while confirming "+
-				"keep [%v] is not active: [%v]",
-			keepAddress,
+			keep.ID(),
 			err,
 		)
 		return false
@@ -978,7 +953,7 @@ func (t *tbtc) waitKeepNotActiveConfirmation(
 	if err != nil {
 		logger.Errorf(
 			"could not confirm if keep [%v] is not active: [%v]",
-			keepAddress,
+			keep.ID(),
 			err,
 		)
 		return false
