@@ -1,4 +1,4 @@
-name: Go
+name: Go / Ethereum
 
 #TODO: extend the conditions once workflow gets tested together with other workflows
 on:
@@ -8,7 +8,7 @@ on:
       # - master
       - "rfc-18/**"
   pull_request:
-      branches:
+    branches:
       # TODO: Run on all branches after we're fully migrated from Circle CI
       - "rfc-18/**"
   workflow_dispatch:
@@ -25,10 +25,10 @@ jobs:
       - name: Cache Docker layers
         uses: actions/cache@v2
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          path: /tmp/.buildx-ethereum-cache
+          key: ${{ runner.os }}-buildx-ethereum-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
+            ${{ runner.os }}-buildx-ethereum-
       # TODO: This step was left here intentionally so we can track disk space
       # usage for a while. We were trying to fight problems with out of disk space
       # that happened due to the size of data restored from cache. The cache size
@@ -41,13 +41,13 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           target: gobuild
-          tags: go-build-env
+          tags: go-build-env-ethereum
           build-args: |
           # REVISION=${{ github.sha }} TODO: set revision only when we want to publish the image
           # VERSION= ? TODO: Configure version, sample: 1.7.6
           load: true # load image to local registry to use it in next steps
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-from: type=local,src=/tmp/.buildx-ethereum-cache
+          cache-to: type=local,dest=/tmp/.buildx-ethereum-cache
 
       - name: Create test results directory
         run: mkdir test-results
@@ -57,7 +57,7 @@ jobs:
           docker run \
             --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
-            go-build-env \
+            go-build-env-ethereum \
             gotestsum --junitfile /mnt/test-results/unit-tests.xml
 
       - name: Publish unit test results
@@ -74,7 +74,7 @@ jobs:
       - name: Build Docker Runtime Image
         uses: docker/build-push-action@v2
         with:
-          tags: keep-ecdsa
+          tags: keep-ecdsa-ethereum
           labels: |
             revision=${{ github.sha }}
           # TODO: Check branch name and publish to a registry accordingly to the
