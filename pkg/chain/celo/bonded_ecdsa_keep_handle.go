@@ -18,8 +18,9 @@ import (
 )
 
 type bondedEcdsaKeepHandle struct {
-	keepID   ExternalAddress
-	contract *contract.BondedECDSAKeep
+	keepID     ExternalAddress
+	operatorID ExternalAddress
+	contract   *contract.BondedECDSAKeep
 }
 
 func (cc *celoChain) GetKeepWithID(
@@ -39,8 +40,9 @@ func (cc *celoChain) GetKeepWithID(
 	}
 
 	return &bondedEcdsaKeepHandle{
-		keepID:   keepID,
-		contract: bondedECDSAKeepContract,
+		keepID:     keepID,
+		operatorID: cc.Address(),
+		contract:   bondedECDSAKeepContract,
 	}, nil
 }
 
@@ -259,6 +261,32 @@ func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]ExternalAddress, error) {
 	}
 
 	return toExternalAddresses(addresses), err
+}
+
+func (bekh *bondedEcdsaKeepHandle) IsThisOperatorMember() (bool, error) {
+	operatorIndex, err := bekh.OperatorIndex()
+	if err != nil {
+		return false, err
+	}
+
+	return operatorIndex != -1, nil
+}
+
+func (bekh *bondedEcdsaKeepHandle) OperatorIndex() (int, error) {
+	memberIDs, err := bekh.GetMembers()
+	if err != nil {
+		return -1, err
+	}
+
+	operatorMemberID := bekh.operatorID
+
+	for i, memberID := range memberIDs {
+		if operatorMemberID.String() == memberID.String() {
+			return i, nil
+		}
+	}
+
+	return -1, nil
 }
 
 // GetHonestThreshold returns keep's honest threshold.

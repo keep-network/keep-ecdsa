@@ -217,6 +217,32 @@ func (lk *localKeep) GetPublicKey() ([]uint8, error) {
 	return lk.publicKey[:], nil
 }
 
+func (lk *localKeep) IsThisOperatorMember() (bool, error) {
+	operatorIndex, err := lk.OperatorIndex()
+	if err != nil {
+		return false, err
+	}
+
+	return operatorIndex != -1, nil
+}
+
+func (lk *localKeep) OperatorIndex() (int, error) {
+	memberIDs, err := lk.GetMembers()
+	if err != nil {
+		return -1, err
+	}
+
+	operatorMemberID := lk.chain.Address()
+
+	for i, memberID := range memberIDs {
+		if operatorMemberID.String() == memberID.String() {
+			return i, nil
+		}
+	}
+
+	return -1, nil
+}
+
 func (lk *localKeep) GetMembers() ([]common.Address, error) {
 	lk.chain.localChainMutex.Lock()
 	defer lk.chain.localChainMutex.Unlock()

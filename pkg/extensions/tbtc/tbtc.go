@@ -849,23 +849,12 @@ func (t *tbtc) shouldMonitorDeposit(
 }
 
 func (t *tbtc) getSignerIndex(depositAddress string) (int, error) {
-	keep, err := t.chain.Keep(depositAddress)
+	keep, err := t.handle.Keep(depositAddress)
 	if err != nil {
 		return -1, err
 	}
 
-	members, err := keep.GetMembers()
-	if err != nil {
-		return -1, err
-	}
-
-	for index, member := range members {
-		if member == t.chain.Address() {
-			return index, nil
-		}
-	}
-
-	return -1, nil
+	return keep.OperatorIndex()
 }
 
 func (t *tbtc) getSignerActionDelay(
