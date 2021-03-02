@@ -104,7 +104,7 @@ func Initialize(
 			keep, err := ethereumChain.GetKeepWithID(keepAddress)
 			if err != nil {
 				logger.Errorf(
-					"failed to verify if keep [%s] is still active: [%v]; "+
+					"failed to look up keep [%s] for active check: [%v]; "+
 						"subscriptions for keep signing and closing events are skipped",
 					keep.ID(),
 					err,
