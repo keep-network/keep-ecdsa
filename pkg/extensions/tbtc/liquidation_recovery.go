@@ -92,7 +92,7 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 		)
 	}
 	// For later usage---this is xpub/ypub/zpub/...
-	publicKeyDescriptor = extendedPublicKey[0:4]
+	publicKeyDescriptor := extendedPublicKey[0:4]
 
 	externalChain := extendedKey
 	if externalChain.Depth() < 4 {
@@ -132,7 +132,7 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 		// Noop, the address is already correct
 	case "ypub", "upub":
 		// p2wpkh-in-p2sh, constructed as per https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#p2wpkh-nested-in-bip16-p2sh .
-		scriptSig = append([]byte{0x00, 0x14}, requestedAddress.Hash160()[:]...)
+		scriptSig := append([]byte{0x00, 0x14}, requestedAddress.Hash160()[:]...)
 		finalAddress, err = btcutil.NewAddressWitnessScriptHash(
 			btcutil.Hash160(scriptSig),
 			chainParams,
