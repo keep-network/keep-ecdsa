@@ -56,7 +56,7 @@ jobs:
             --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env-celo \
-            gotestsum --junitfile /mnt/test-results/unit-tests.xml -- -tags=celo
+            gotestsum --junitfile /mnt/test-results/unit-tests.xml -- -tags=celo,musl
 
       - name: Publish unit test results
         uses: EnricoMi/publish-unit-test-result-action@v1
