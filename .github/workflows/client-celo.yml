@@ -48,22 +48,22 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-celo-cache
 
       - name: Create test results directory
-        run: mkdir test-results
+        run: mkdir test-results-celo
 
       - name: Run Go tests
         run: |
           docker run \
-            --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
+            --volume $GITHUB_WORKSPACE/test-results-celo:/mnt/test-results-celo \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env-celo \
-            gotestsum --junitfile /mnt/test-results/unit-tests.xml -- -tags=celo,musl
+            gotestsum --junitfile /mnt/test-results-celo/unit-tests.xml -- -tags=celo,musl
 
       - name: Publish unit test results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          files:  ./test-results/unit-tests.xml
+          files:  ./test-results-celo/unit-tests.xml
           check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
           comment_on_pr: false # turns off commenting on Pull Requests
 
