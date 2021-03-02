@@ -271,7 +271,7 @@ func BuildSignedTransactionHexString(
 	// BtcEncode writes bytes, we wrap it in an hex encoder wrapped
 	// around a strings.Builder to get a hex string.
 	transactionHexBuilder := &strings.Builder{}
-	transactionWriter := hex.NewEncoder(txBuilder)
+	transactionWriter := hex.NewEncoder(transactionHexBuilder)
 	signedTransaction.BtcEncode(
 		transactionWriter,
 		wire.ProtocolVersion,
