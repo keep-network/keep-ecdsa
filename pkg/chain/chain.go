@@ -147,6 +147,17 @@ type BondedECDSAKeepHandle interface {
 	// GetMembers returns keep's members.
 	GetMembers() ([]common.Address, error)
 
+	// IsThisOperatorMember returns true if the current operator belongs to the
+	// BondedECDSAKeep represented by this handle, false otherwise, or an error
+	// if the process of determining this fails.
+	IsThisOperatorMember() (bool, error)
+
+	// OperatorIndex returns the index of the current operator in this keep's
+	// set of members, or an error if the process of determining this fails. If
+	// the operator is not a member this will return -1 (and no error) and
+	// IsOperatorMember will return false.
+	OperatorIndex() (int, error)
+
 	// GetHonestThreshold returns keep's honest threshold.
 	GetHonestThreshold() (uint64, error)
 
