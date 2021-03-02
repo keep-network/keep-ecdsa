@@ -59,14 +59,14 @@ jobs:
             --volume $GITHUB_WORKSPACE/test-results-ethereum:/mnt/test-results-ethereum \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env-ethereum \
-            gotestsum --junitfile /mnt/test-results-ethereum/unit-tests.xml
+            gotestsum --junitfile /mnt/test-results-ethereum/unit-tests-ethereum.xml
 
       - name: Publish unit test results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          files:  ./test-results-ethereum/unit-tests.xml
+          files:  ./test-results-ethereum/unit-tests-ethereum.xml
           check_name: Go Test Results (Ethereum) # name under which test results will be presented in GitHub (optional)
           comment_on_pr: false # turns off commenting on Pull Requests
 
