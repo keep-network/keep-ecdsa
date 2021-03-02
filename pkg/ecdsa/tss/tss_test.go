@@ -127,6 +127,9 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 	firstSigner := signers[groupMemberIDs[0].String()]
 	firstPublicKey := firstSigner.PublicKey()
+
+	// S256 function is defined in respective `tss-*-test.go` files. The file
+	// in use depends on the passed build tags.
 	curve := S256()
 
 	if !curve.IsOnCurve(firstPublicKey.X, firstPublicKey.Y) {
@@ -261,6 +264,8 @@ func verifyEthereumSignature(
 		t.Fatalf("failed to serialize signature: [%v]", err)
 	}
 
+	// SigToPub function is defined in respective `tss-*-test.go` files. The
+	// file in use depends on the passed build tags.
 	publicKey, err := SigToPub(hash, serializedSignature)
 	if err != nil {
 		t.Fatalf("failed to get public key from signature: [%v]", err)
