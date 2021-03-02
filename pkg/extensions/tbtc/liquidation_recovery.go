@@ -31,6 +31,8 @@ func PublicKeyToP2WPKHScriptCode(
 	// Note that the scriptCode for a p2wpkh address is the equivalent of the
 	// p2pkh scriptPubKey.
 	pubKeyAddress, err := btcutil.NewAddressPubKey(publicKeyBytes, chainParams)
+	if err != nil {
+		return nil, fmt.Errorf(
 			"error deriving p2wpkh scriptCode from public key: [%s]",
 			err,
 		)
@@ -38,16 +40,15 @@ func PublicKeyToP2WPKHScriptCode(
 	pkhAddress := pubKeyAddress.AddressPubKeyHash()
 
 	script, err := txscript.PayToAddrScript(pkhAddress)
-		return fmt.Errorf(
 	if err != nil {
+		return nil, fmt.Errorf(
 			"error deriving p2wpkh scriptCode from public key: [%s]",
 			err,
 		)
 	}
-		return fmt.Errorf(
-			"error deriving p2wpkh scriptCode from public key: [scriptCode too long]",
-			len(script)
 	if len(script) > 255 {
+		return nil, fmt.Errorf(
+			"error deriving p2wpkh scriptCode from public key: [scriptCode too long: %v]",
 			len(script),
 		)
 	}
@@ -55,7 +56,7 @@ func PublicKeyToP2WPKHScriptCode(
 	// End goal here is a scriptCode that looks like
 	// 0x1976a914{20-byte-pubkey-hash}88ac . 0x19 should be the length of the
 	// script.
-	return append([]byte{byte(len(script))}, script...)
+	return append([]byte{byte(len(script))}, script...), nil
 }
 
 // DeriveAddress uses the specified extended public key and address index to
@@ -84,8 +85,8 @@ func PublicKeyToP2WPKHScriptCode(
 // [BIP84]: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
 func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 	extendedKey, err := hdkeychain.NewKeyFromString(extendedPublicKey)
-		return fmt.Errorf(
 	if err != nil {
+		return "", fmt.Errorf(
 			"error parsing extended public key: [%s]",
 			err,
 		)
@@ -97,8 +98,8 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 	if externalChain.Depth() < 4 {
 		// Descend to the external chain path, /0.
 		externalChain, err = extendedKey.Child(0)
-			return fmt.Errorf(
 		if err != nil {
+			return "", fmt.Errorf(
 				"error deriving external chain path /0 from extended key: [%s]",
 				err,
 			)
@@ -106,9 +107,9 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 	}
 
 	requestedPublicKey, err := externalChain.Child(addressIndex)
-		return fmt.Errorf(
-			"error deriving requested address index /0/%s from extended key: [%s]",
 	if err != nil {
+		return "", fmt.Errorf(
+			"error deriving requested address index /0/%v from extended key: [%s]",
 			addressIndex,
 			err,
 		)
@@ -143,14 +144,14 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 			chainParams,
 		)
 	}
-		return fmt.Errorf(
 	if err != nil {
+		return "", fmt.Errorf(
 			"failed to derive final address format from extended key: [%s]",
 			err,
 		)
 	}
 
-	return finalAddress.EncodeAddress()
+	return finalAddress.EncodeAddress(), nil
 }
 
 func ConstructUnsignedTransaction(
@@ -167,7 +168,7 @@ func ConstructUnsignedTransaction(
 		previousOutputTransactionHashHex,
 	)
 	if err != nil {
-		return "", fmt.Errorf(
+		return nil, fmt.Errorf(
 			"error extracting outpoint transaction hash: [%s]",
 			previousOutputTransactionHash,
 		)
@@ -210,7 +211,7 @@ func ConstructUnsignedTransaction(
 	for _, recipientAddress := range recipientAddresses {
 		address, err := btcutil.DecodeAddress(recipientAddress, chainParams)
 		if err != nil {
-			return "", fmt.Errorf(
+			return nil, fmt.Errorf(
 				"error decoding output address [%s]: [%s]",
 				recipientAddress,
 				err,
@@ -218,7 +219,7 @@ func ConstructUnsignedTransaction(
 		}
 		outputScript, err := txscript.PayToAddrScript(address)
 		if err != nil {
-			return "", fmt.Errorf(
+			return nil, fmt.Errorf(
 				"error constructing script from output address [%s]: [%s]",
 				recipientAddress,
 				err,
