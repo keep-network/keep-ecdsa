@@ -16,7 +16,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
-// PublicKeyToP2WPKHOutputScript converts a public key to a Bitcion p2wpkh
+// PublicKeyToP2WPKHScriptCode converts a public key to a Bitcion p2wpkh
 // witness scriptCode that can spend an output sent to that public key's
 // corresponding address.
 //
