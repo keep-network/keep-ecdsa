@@ -156,12 +156,12 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 
 // ConstructUnsignedTransaction produces an unsigned transaction
 func ConstructUnsignedTransaction(
-	previousOutputTransactionHashHex string, // (1)
+	previousOutputTransactionHashHex string,
 	previousOutputIndex uint32,
-	previousOutputValue int64, // (2)
-	feePerVbyte int64, // (3)
+	previousOutputValue int64,
+	feePerVbyte int64,
 	recipientAddresses []string,
-	chainParams *chaincfg.Params, // (4)
+	chainParams *chaincfg.Params,
 ) (*wire.MsgTx, error) {
 	// If the previous output transaction hash is passed as a []byte, can use
 	// chainhash.NewHash.
@@ -250,9 +250,9 @@ func ConstructUnsignedTransaction(
 // BuildSignedTransactionHexString generates the final transaction hex string
 // that can then be submitted to the chain
 func BuildSignedTransactionHexString(
-	unsignedTransaction *wire.MsgTx, // (1)
-	signature *ecdsa.Signature, // (2)
-	publicKey *ecdsa.PublicKey, // (3)
+	unsignedTransaction *wire.MsgTx,
+	signature *ecdsa.Signature,
+	publicKey *ecdsa.PublicKey,
 ) (string, error) {
 	// For safety's sake, work on a deep copy, as mutations follow.
 	signedTransaction := unsignedTransaction.Copy()
