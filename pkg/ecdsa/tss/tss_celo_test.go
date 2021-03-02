@@ -13,7 +13,7 @@ import (
 // backing package can be swapped to an other `celo-blockchain/crypto`-like
 // package at build time, via according build tags. That solution aims to
 // address problems with package conflicts as package `celo-blockchain/crypto`
-// uses some native C code underneath. If an other `celo-blockchain/crypto`-like
+// uses some native C code underneath. If another `celo-blockchain/crypto`-like
 // package is used in the same time, the compilation may fail due to C linker
 // errors caused by duplicated symbols. Such a problem can be observed while
 // trying to use the `celo-blockchain/crypto` and `ethereum-go/crypto` at the
