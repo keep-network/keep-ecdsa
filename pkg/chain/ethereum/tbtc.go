@@ -208,20 +208,20 @@ func (tec *TBTCEthereumChain) PastDepositRedemptionRequestedEvents(
 
 // KeepAddress returns the underlying keep address for the
 // provided deposit.
-func (tec *TBTCEthereumChain) KeepAddress(
+func (tec *TBTCEthereumChain) Keep(
 	depositAddress string,
-) (string, error) {
+) (chain.BondedECDSAKeepHandle, error) {
 	deposit, err := tec.getDepositContract(depositAddress)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	keepAddress, err := deposit.KeepAddress()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return keepAddress.Hex(), nil
+	return tec.GetKeepWithID(keepAddress)
 }
 
 // RetrieveSignerPubkey retrieves the signer public key for the

@@ -109,8 +109,9 @@ type TBTCLocalChain struct {
 // NewTBTCLocalChain creates a new TBTCLocalChain
 func NewTBTCLocalChain(ctx context.Context) *TBTCLocalChain {
 	return &TBTCLocalChain{
-		localChain:                            Connect(ctx).(*localChain),
-		logger:                                &ChainLogger{},
+		localChain: Connect(ctx).(*localChain),
+		logger:     &ChainLogger{},
+
 		alwaysFailingTransactions:             make(map[string]bool),
 		deposits:                              make(map[string]*localDeposit),
 		depositCreatedHandlers:                make(map[int]func(depositAddress string)),
@@ -330,8 +331,8 @@ func (tlc *TBTCLocalChain) PastDepositRedemptionRequestedEvents(
 	return deposit.redemptionRequestedEvents, nil
 }
 
-// KeepAddress returns the keep address for a particular deposit
-func (tlc *TBTCLocalChain) KeepAddress(depositAddress string) (string, error) {
+// Keep returns the keep for a particular deposit
+func (tlc *TBTCLocalChain) Keep(depositAddress string) (chain.BondedECDSAKeepHandle, error) {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
@@ -339,10 +340,10 @@ func (tlc *TBTCLocalChain) KeepAddress(depositAddress string) (string, error) {
 
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
-		return "", fmt.Errorf("no deposit with address [%v]", depositAddress)
+		return nil, fmt.Errorf("no deposit with address [%v]", depositAddress)
 	}
 
-	return deposit.keepAddress, nil
+	return tlc.GetKeepWithID(common.HexToAddress(deposit.keepAddress))
 }
 
 // RetrieveSignerPubkey enriches the referenced deposit with the signer public
