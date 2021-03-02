@@ -31,8 +31,6 @@ func PublicKeyToP2WPKHScriptCode(
 	// Note that the scriptCode for a p2wpkh address is the equivalent of the
 	// p2pkh scriptPubKey.
 	pubKeyAddress, err := btcutil.NewAddressPubKey(publicKeyBytes, chainParams)
-	if (err != nil) {
-		return fmt.Errorf(
 			"error deriving p2wpkh scriptCode from public key: [%s]",
 			err,
 		)
@@ -40,16 +38,17 @@ func PublicKeyToP2WPKHScriptCode(
 	pkhAddress := pubKeyAddress.AddressPubKeyHash()
 
 	script, err := txscript.PayToAddrScript(pkhAddress)
-	if (err != nil) {
 		return fmt.Errorf(
+	if err != nil {
 			"error deriving p2wpkh scriptCode from public key: [%s]",
 			err,
 		)
 	}
-	if (len(script) > 255) {
 		return fmt.Errorf(
 			"error deriving p2wpkh scriptCode from public key: [scriptCode too long]",
 			len(script)
+	if len(script) > 255 {
+			len(script),
 		)
 	}
 
@@ -83,11 +82,10 @@ func PublicKeyToP2WPKHScriptCode(
 // [BIP44]: https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
 // [BIP49]: https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
 // [BIP84]: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
-func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error)
-{
+func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 	extendedKey, err := hdkeychain.NewKeyFromString(extendedPublicKey)
-	if (err != nil) {
 		return fmt.Errorf(
+	if err != nil {
 			"error parsing extended public key: [%s]",
 			err,
 		)
@@ -96,11 +94,11 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error)
 	publicKeyDescriptor = extendedPublicKey[0:4]
 
 	externalChain := extendedKey
-	if (externalChain.Depth() < 4) {
+	if externalChain.Depth() < 4 {
 		// Descend to the external chain path, /0.
 		externalChain, err = extendedKey.Child(0)
-		if (err != nil) {
 			return fmt.Errorf(
+		if err != nil {
 				"error deriving external chain path /0 from extended key: [%s]",
 				err,
 			)
@@ -108,9 +106,9 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error)
 	}
 
 	requestedPublicKey, err := externalChain.Child(addressIndex)
-	if (err != nil) {
 		return fmt.Errorf(
 			"error deriving requested address index /0/%s from extended key: [%s]",
+	if err != nil {
 			addressIndex,
 			err,
 		)
@@ -145,8 +143,8 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error)
 			chainParams,
 		)
 	}
-	if (err != nil) {
 		return fmt.Errorf(
+	if err != nil {
 			"failed to derive final address format from extended key: [%s]",
 			err,
 		)
