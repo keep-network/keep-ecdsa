@@ -106,7 +106,7 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 		}
 	}
 
-	requestedPublicKey, err := externalChain.Child(addressIndex)
+	requestedPublicKey, err := externalChain.Child(uint32(addressIndex))
 	if err != nil {
 		return "", fmt.Errorf(
 			"error deriving requested address index /0/%v from extended key: [%s]",
