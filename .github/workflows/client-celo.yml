@@ -40,7 +40,7 @@ jobs:
           target: gobuild
           tags: go-build-env-celo
           build-args: |
-            CHAIN=celo
+            HOST_CHAIN=celo
           # REVISION=${{ github.sha }} TODO: set revision only when we want to publish the image
           # VERSION= ? TODO: Configure version, sample: 1.7.6
           load: true # load image to local registry to use it in next steps
