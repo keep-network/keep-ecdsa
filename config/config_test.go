@@ -98,7 +98,7 @@ func TestReadConfig(t *testing.T) {
 		},
 		"Extensions.TBTC.BTCRefunds.MaxFeePerVByte": {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.MaxFeePerVByte },
-			expectedValue: 73,
+			expectedValue: int32(73),
 		},
 	}
 
