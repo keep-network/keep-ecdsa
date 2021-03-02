@@ -17,6 +17,10 @@ abi_files := $(addprefix abi/,$(addsuffix .abi,$(clean_contract_stems)))
 abigen_files := $(addprefix abi/,$(addsuffix .go,$(clean_contract_stems)))
 
 # Additional build tags which should be passed while running `abigen` command.
+# The `default` value of the `ABIGEN_BUILD_TAGS` env variable is an arbitrary
+# default value and doesn't have any special meaning. Without it, the `go run`
+# command which runs the abigen will fail due to empty build tag list in case
+# `ABIGEN_BUILD_TAGS` env variable is not set.
 ABIGEN_BUILD_TAGS ?= default
 abigen_build_tags = ${ABIGEN_BUILD_TAGS}
 
