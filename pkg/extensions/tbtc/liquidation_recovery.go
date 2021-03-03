@@ -47,9 +47,9 @@ func PublicKeyToP2WPKHScriptCode(
 			err,
 		)
 	}
-	if len(script) > 255 {
+	if len(script) != 25 {
 		return nil, fmt.Errorf(
-			"error deriving p2wpkh scriptCode from public key: [scriptCode too long: %v]",
+			"error deriving p2wpkh scriptCode from public key: [unexpected scriptCode length: %v]",
 			len(script),
 		)
 	}
