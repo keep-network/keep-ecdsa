@@ -53,7 +53,7 @@ func (h *Handle) TSSPreParamsPoolSize() int {
 func Initialize(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
-	ethereumChain chain.Handle,
+	hostChain chain.Handle,
 	networkProvider net.Provider,
 	persistence persistence.Handle,
 	sanctionedApplications []common.Address,
@@ -62,27 +62,27 @@ func Initialize(
 ) *Handle {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
 
-	tssNode := node.NewNode(ethereumChain, networkProvider, tssConfig)
+	tssNode := node.NewNode(hostChain, networkProvider, tssConfig)
 
 	tssNode.InitializeTSSPreParamsPool()
 
 	eventDeduplicator := event.NewDeduplicator(
 		keepsRegistry,
-		ethereumChain,
+		hostChain,
 	)
 
 	// Load current keeps' signers from storage and register for signing events.
 	keepsRegistry.LoadExistingKeeps()
 
 	confirmIsInactive := func(keep chain.BondedECDSAKeepHandle) bool {
-		currentBlock, err := ethereumChain.BlockCounter().CurrentBlock()
+		currentBlock, err := hostChain.BlockCounter().CurrentBlock()
 		if err != nil {
 			logger.Errorf("failed to get current block height [%v]", err)
 			return false
 		}
 
 		isKeepActive, err := ethlike.WaitForBlockConfirmations(
-			ethereumChain.BlockCounter(),
+			hostChain.BlockCounter(),
 			currentBlock,
 			blockConfirmations,
 			keep.IsActive,
@@ -101,7 +101,7 @@ func Initialize(
 
 	for _, keepAddress := range keepsRegistry.GetKeepsAddresses() {
 		go func(keepAddress common.Address) {
-			keep, err := ethereumChain.GetKeepWithID(keepAddress)
+			keep, err := hostChain.GetKeepWithID(keepAddress)
 			if err != nil {
 				logger.Errorf(
 					"failed to look up keep [%s] for active check: [%v]; "+
@@ -152,7 +152,7 @@ func Initialize(
 			}
 
 			subscriptionOnSignatureRequested, err := monitorSigningRequests(
-				ethereumChain,
+				hostChain,
 				clientConfig,
 				tssNode,
 				keep,
@@ -171,14 +171,14 @@ func Initialize(
 				return
 			}
 			go monitorKeepClosedEvents(
-				ethereumChain,
+				hostChain,
 				keep,
 				keepsRegistry,
 				subscriptionOnSignatureRequested,
 				eventDeduplicator,
 			)
 			go monitorKeepTerminatedEvent(
-				ethereumChain,
+				hostChain,
 				keep,
 				keepsRegistry,
 				subscriptionOnSignatureRequested,
@@ -190,7 +190,7 @@ func Initialize(
 
 	go checkAwaitingKeyGeneration(
 		ctx,
-		ethereumChain,
+		hostChain,
 		clientConfig,
 		tssNode,
 		operatorPublicKey,
@@ -199,7 +199,7 @@ func Initialize(
 	)
 
 	// Watch for new keeps creation.
-	_ = ethereumChain.OnBondedECDSAKeepCreated(func(event *chain.BondedECDSAKeepCreatedEvent) {
+	_ = hostChain.OnBondedECDSAKeepCreated(func(event *chain.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(
 			"new keep [%s] created with members: [%x] at block [%d]",
 			event.KeepAddress.String(),
@@ -207,7 +207,7 @@ func Initialize(
 			event.BlockNumber,
 		)
 
-		if event.IsMember(ethereumChain.Address()) {
+		if event.IsMember(hostChain.Address()) {
 			go func(event *chain.BondedECDSAKeepCreatedEvent) {
 				if shouldHandle := eventDeduplicator.NotifyKeyGenStarted(event.KeepAddress); !shouldHandle {
 					logger.Infof(
@@ -221,7 +221,7 @@ func Initialize(
 				}
 				defer eventDeduplicator.NotifyKeyGenCompleted(event.KeepAddress)
 
-				keep, err := ethereumChain.GetKeepWithID(event.KeepAddress)
+				keep, err := hostChain.GetKeepWithID(event.KeepAddress)
 				if err != nil {
 					logger.Errorf(
 						"failed to resolve keep with address [%v] for created event: [%v]",
@@ -232,7 +232,7 @@ func Initialize(
 
 				generateKeyForKeep(
 					ctx,
-					ethereumChain,
+					hostChain,
 					clientConfig,
 					tssNode,
 					operatorPublicKey,
@@ -251,10 +251,10 @@ func Initialize(
 		}
 	})
 
-	blockCounter := ethereumChain.BlockCounter()
+	blockCounter := hostChain.BlockCounter()
 
 	supportedApplicationsByStringID := make(map[string]chain.BondedECDSAKeepApplicationHandle)
-	tbtcApplicationHandle, err := ethereumChain.TBTCApplicationHandle()
+	tbtcApplicationHandle, err := hostChain.TBTCApplicationHandle()
 	if err != nil {
 		logger.Errorf(
 			"failed to look up on-chain tBTC application information for chain " +
