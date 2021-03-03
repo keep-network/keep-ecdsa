@@ -35,7 +35,7 @@ func connectChain(
 	if !exists && len(config.Extensions.TBTC.TBTCSystem) != 0 {
 		logger.Warn(
 			"TBTCSystem address configuration in Extensions.TBTC.TBTCSystem " +
-				"is DEPRECATED and will be removed. PLease configure the " +
+				"is DEPRECATED and will be removed. Please configure the " +
 				"TBTCSystem address alongside BondedECDSAKeep under " +
 				"Ethereum.ContractAddresses.",
 		)
