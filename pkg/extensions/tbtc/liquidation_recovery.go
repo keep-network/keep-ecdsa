@@ -1,6 +1,7 @@
 package tbtc
 
 import (
+	"bytes"
 	cecdsa "crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
@@ -178,24 +179,10 @@ func ConstructUnsignedTransaction(
 	// The witness signature field is the DER signature followed by the hash type.
 	// We write a dummy signature with 73 0 bytes. DER signatures vary in encoding
 	// between 71, 72, and 73 bytes, so we choose the longest for fee purposes.
-	dummySignatureForWitness := []byte{
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0,
-		0, // one more dummy byte for the SigHashType
-	}
+	dummySignatureForWitness := bytes.Repeat([]byte{0}, 74) // one more dummy byte for the SigHashType
+
 	// The compressed public key requires 33 bytes.
-	dummyCompressedPublicKeyForWitness := []byte{
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0,
-	}
+	dummyCompressedPublicKeyForWitness := bytes.Repeat([]byte{0}, 33)
 
 	tx := wire.NewMsgTx(wire.TxVersion)
 	txIn := wire.NewTxIn(
