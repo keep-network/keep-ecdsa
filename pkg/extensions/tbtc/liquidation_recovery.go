@@ -179,7 +179,8 @@ func ConstructUnsignedTransaction(
 	// The witness signature field is the DER signature followed by the hash type.
 	// We write a dummy signature with 73 0 bytes. DER signatures vary in encoding
 	// between 71, 72, and 73 bytes, so we choose the longest for fee purposes.
-	dummySignatureForWitness := bytes.Repeat([]byte{0}, 74) // one more dummy byte for the SigHashType
+	// We then add one more dummy byte for the SigHashType for a total of 74 bytes.
+	dummySignatureForWitness := bytes.Repeat([]byte{0}, 74)
 
 	// The compressed public key requires 33 bytes.
 	dummyCompressedPublicKeyForWitness := bytes.Repeat([]byte{0}, 33)
