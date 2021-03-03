@@ -47,9 +47,10 @@ func (ec *ethereumChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 	}
 
 	return &tbtcApplication{
-		chainHandle:        ec,
-		tbtcSystemAddress:  ec.tbtcSystemAddress,
-		tbtcSystemContract: tbtcSystemContract,
+		chainHandle:                    ec,
+		bondedECDSAKeepFactoryContract: ec.bondedECDSAKeepFactoryContract,
+		tbtcSystemAddress:              ec.tbtcSystemAddress,
+		tbtcSystemContract:             tbtcSystemContract,
 	}, nil
 }
 
