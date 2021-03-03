@@ -595,14 +595,14 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
-	localChain.OpenKeep(
+	keep1 := localChain.OpenKeep(
 		keep1Address,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 		},
 	)
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	localChain.OpenKeep(
+	keep2 := localChain.OpenKeep(
 		keep2Address,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
@@ -611,14 +611,14 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	localChain.CloseKeep(keep2Address)
 
 	// first check, result should be put into the cache
-	isActive, err := policy.isKeepActive(keep1Address)
+	isActive, err := policy.isKeepActive(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !isActive {
 		t.Fatal("keep is active")
 	}
-	isActive, err = policy.isKeepActive(keep2Address)
+	isActive, err = policy.isKeepActive(keep2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -627,14 +627,14 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	}
 
 	// result is read from the cache, should be the same as the original one
-	isActive, err = policy.isKeepActive(keep1Address)
+	isActive, err = policy.isKeepActive(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !isActive {
 		t.Fatal("keep is active")
 	}
-	isActive, err = policy.isKeepActive(keep2Address)
+	isActive, err = policy.isKeepActive(keep2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -644,7 +644,7 @@ func TestIsKeepActiveCaching(t *testing.T) {
 
 	// close active keep and see it's been updated properly
 	localChain.CloseKeep(keep1Address)
-	isActive, err = policy.isKeepActive(keep1Address)
+	isActive, err = policy.isKeepActive(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -671,7 +671,7 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
-	localChain.OpenKeep(
+	keep1 := localChain.OpenKeep(
 		keep1Address,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
@@ -679,7 +679,7 @@ func TestGetKeepMembersCaching(t *testing.T) {
 		},
 	)
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	localChain.OpenKeep(
+	keep2 := localChain.OpenKeep(
 		keep2Address,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
@@ -697,14 +697,14 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	}
 
 	// first check, result should be put into the cache
-	members, err := policy.getKeepMembers(keep1Address)
+	members, err := policy.getKeepMembers(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(members, keep1ExpectedMembers) {
 		t.Fatal("unexpected members")
 	}
-	members, err = policy.getKeepMembers(keep2Address)
+	members, err = policy.getKeepMembers(keep2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -713,14 +713,14 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	}
 
 	// result is read from the cache, should be the same as the original one
-	members, err = policy.getKeepMembers(keep1Address)
+	members, err = policy.getKeepMembers(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(members, keep1ExpectedMembers) {
 		t.Fatal("unexpected members")
 	}
-	members, err = policy.getKeepMembers(keep2Address)
+	members, err = policy.getKeepMembers(keep2)
 	if err != nil {
 		t.Fatal(err)
 	}

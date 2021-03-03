@@ -63,21 +63,17 @@ func TestOnSignatureRequested(t *testing.T) {
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
-	err := localChain.createKeep(keepAddress)
-	if err != nil {
-		t.Fatal(err)
-	}
+	keep := localChain.OpenKeep(keepAddress, []common.Address{})
 
 	var keepPubkey [64]byte
 	rand.Read(keepPubkey[:])
 
-	err = localChain.SubmitKeepPublicKey(keepAddress, keepPubkey)
+	err := keep.SubmitKeepPublicKey(keepPubkey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	subscription, err := localChain.OnSignatureRequested(
-		keepAddress,
+	subscription, err := keep.OnSignatureRequested(
 		func(event *chain.SignatureRequestedEvent) {
 			eventFired <- event
 		},
@@ -122,20 +118,14 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		keepAddress.String(),
 	)
 
-	err := localChain.createKeep(keepAddress)
+	keep := localChain.OpenKeep(keepAddress, []common.Address{})
+
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = localChain.SubmitKeepPublicKey(
-		keepAddress,
-		keepPublicKey,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	onChainPubKey, err := localChain.GetPublicKey(keepAddress)
+	onChainPubKey, err := keep.GetPublicKey()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,10 +137,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		)
 	}
 
-	err = localChain.SubmitKeepPublicKey(
-		keepAddress,
-		keepPublicKey,
-	)
+	err = keep.SubmitKeepPublicKey(keepPublicKey)
 	if !reflect.DeepEqual(expectedDuplicationError, err) {
 		t.Errorf(
 			"unexpected error\nexpected: [%+v]\nactual:   [%+v]",
@@ -169,15 +156,9 @@ func TestSubmitSignature(t *testing.T) {
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 
-	err := localChain.createKeep(keepAddress)
-	if err != nil {
-		t.Fatal(err)
-	}
+	keep := localChain.OpenKeep(keepAddress, []common.Address{})
 
-	err = localChain.SubmitKeepPublicKey(
-		keepAddress,
-		keepPublicKey,
-	)
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,12 +176,12 @@ func TestSubmitSignature(t *testing.T) {
 		RecoveryID: 1,
 	}
 
-	err = localChain.SubmitSignature(keepAddress, signature)
+	err = keep.SubmitSignature(signature)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	events, err := localChain.PastSignatureSubmittedEvents(keepAddress.Hex(), 0)
+	events, err := keep.PastSignatureSubmittedEvents(0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,15 +220,9 @@ func TestIsAwaitingSignature(t *testing.T) {
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 
-	err := localChain.createKeep(keepAddress)
-	if err != nil {
-		t.Fatal(err)
-	}
+	keep := localChain.OpenKeep(keepAddress, []common.Address{})
 
-	err = localChain.SubmitKeepPublicKey(
-		keepAddress,
-		keepPublicKey,
-	)
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,13 +234,13 @@ func TestIsAwaitingSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	isAwaitingSignature, err := localChain.IsAwaitingSignature(keepAddress, digest)
+	isAwaitingSignature, err := keep.IsAwaitingSignature(digest)
 	if !isAwaitingSignature {
 		t.Error("keep should be awaiting for a signature for requested digest")
 	}
 
 	anotherDigest := [32]byte{18, 17}
-	isAwaitingSignature, err = localChain.IsAwaitingSignature(keepAddress, anotherDigest)
+	isAwaitingSignature, err = keep.IsAwaitingSignature(anotherDigest)
 	if !isAwaitingSignature {
 		t.Error("keep should not be awaiting for a signature for a not requested digest")
 	}
@@ -276,12 +251,12 @@ func TestIsAwaitingSignature(t *testing.T) {
 		RecoveryID: 1,
 	}
 
-	err = localChain.SubmitSignature(keepAddress, signature)
+	err = keep.SubmitSignature(signature)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	isAwaitingSignature, err = localChain.IsAwaitingSignature(keepAddress, digest)
+	isAwaitingSignature, err = keep.IsAwaitingSignature(digest)
 	if !isAwaitingSignature {
 		t.Error("keep should be awaiting for already provided signature")
 	}
