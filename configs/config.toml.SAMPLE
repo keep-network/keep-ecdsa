@@ -51,6 +51,7 @@
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
   BondedECDSAKeepFactory = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+  TBTCSystem = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 
 # Addresses of applications approved by the operator.
 [SanctionedApplications]
