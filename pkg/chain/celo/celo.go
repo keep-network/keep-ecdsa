@@ -4,7 +4,6 @@ package celo
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -32,43 +31,6 @@ func (cc *celoChain) Signing() corechain.Signing {
 // BlockCounter returns a block counter.
 func (cc *celoChain) BlockCounter() corechain.BlockCounter {
 	return cc.blockCounter
-}
-
-// RegisterAsMemberCandidate registers client as a candidate to be selected
-// to a keep.
-func (cc *celoChain) RegisterAsMemberCandidate(
-	application ExternalAddress,
-) error {
-	gasEstimate, err := cc.bondedECDSAKeepFactoryContract.
-		RegisterMemberCandidateGasEstimate(fromExternalAddress(application))
-	if err != nil {
-		return fmt.Errorf("failed to estimate gas [%v]", err)
-	}
-
-	// If we have multiple sortition pool join transactions queued - and that
-	// happens when multiple operators become eligible to join at the same time,
-	// e.g. after lowering the minimum bond requirement, transactions mined at
-	// the end may no longer have valid gas limits as they were estimated based
-	// on a different state of the pool. We add 20% safety margin to the
-	// original gas estimation to account for that.
-	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
-	transaction, err := cc.bondedECDSAKeepFactoryContract.
-		RegisterMemberCandidate(
-			fromExternalAddress(application),
-			celoutil.TransactionOptions{
-				GasLimit: uint64(gasEstimateWithMargin),
-			},
-		)
-	if err != nil {
-		return err
-	}
-
-	logger.Debugf(
-		"submitted RegisterMemberCandidate transaction with hash: [%x]",
-		transaction.Hash(),
-	)
-
-	return nil
 }
 
 // OnBondedECDSAKeepCreated installs a callback that is invoked when an on-chain
@@ -114,60 +76,6 @@ func (cc *celoChain) BalanceOf(address ExternalAddress) (*big.Int, error) {
 	return cc.bondedECDSAKeepFactoryContract.BalanceOf(
 		fromExternalAddress(address),
 	)
-}
-
-// IsRegisteredForApplication checks if the operator is registered
-// as a signer candidate in the factory for the given application.
-func (cc *celoChain) IsRegisteredForApplication(
-	application ExternalAddress,
-) (bool, error) {
-	return cc.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
-		fromExternalAddress(cc.Address()),
-		fromExternalAddress(application),
-	)
-}
-
-// IsEligibleForApplication checks if the operator is eligible to register
-// as a signer candidate for the given application.
-func (cc *celoChain) IsEligibleForApplication(
-	application ExternalAddress,
-) (bool, error) {
-	return cc.bondedECDSAKeepFactoryContract.IsOperatorEligible(
-		fromExternalAddress(cc.Address()),
-		fromExternalAddress(application),
-	)
-}
-
-// IsStatusUpToDateForApplication checks if the operator's status
-// is up to date in the signers' pool of the given application.
-func (cc *celoChain) IsStatusUpToDateForApplication(
-	application ExternalAddress,
-) (bool, error) {
-	return cc.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
-		fromExternalAddress(cc.Address()),
-		fromExternalAddress(application),
-	)
-}
-
-// UpdateStatusForApplication updates the operator's status in the signers'
-// pool for the given application.
-func (cc *celoChain) UpdateStatusForApplication(
-	application ExternalAddress,
-) error {
-	transaction, err := cc.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
-		fromExternalAddress(cc.Address()),
-		fromExternalAddress(application),
-	)
-	if err != nil {
-		return err
-	}
-
-	logger.Debugf(
-		"submitted UpdateOperatorStatus transaction with hash: [%x]",
-		transaction.Hash(),
-	)
-
-	return nil
 }
 
 // IsOperatorAuthorized checks if the factory has the authorization to

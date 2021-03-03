@@ -251,8 +251,29 @@ func Initialize(
 		}
 	})
 
-	for _, application := range sanctionedApplications {
-		go checkStatusAndRegisterForApplication(ctx, ethereumChain, application)
+	blockCounter := ethereumChain.BlockCounter()
+
+	supportedApplicationsByStringID := make(map[string]chain.BondedECDSAKeepApplicationHandle)
+	tbtcApplicationHandle, err := ethereumChain.TBTCApplicationHandle()
+	if err != nil {
+		logger.Errorf(
+			"failed to look up on-chain tBTC application information for chain " +
+				"[%s]; tBTC application functionality will be disabled",
+		)
+	} else {
+		supportedApplicationsByStringID[tbtcApplicationHandle.ID().String()] =
+			tbtcApplicationHandle
+	}
+	for _, applicationAddress := range sanctionedApplications {
+		handle, exists := supportedApplicationsByStringID[applicationAddress.String()]
+		if exists {
+			go checkStatusAndRegisterForApplication(ctx, blockCounter, handle)
+		} else {
+			logger.Warnf(
+				"unknown sanctioned application address [%s]",
+				applicationAddress,
+			)
+		}
 	}
 
 	return &Handle{
