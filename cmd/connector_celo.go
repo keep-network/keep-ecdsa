@@ -28,21 +28,6 @@ func connectChain(
 		)
 	}
 
-	// DEPRECATED: config.Celo.ContractAddresses is the correct container
-	// for the TBTCSystem address from now on; default to Extensions.TBTC and
-	// warn if the ContractAddresses version is not set yet.
-	_, exists := config.Celo.ContractAddresses[celo.TBTCSystemContractName]
-	if !exists && len(config.Extensions.TBTC.TBTCSystem) != 0 {
-		logger.Warn(
-			"TBTCSystem address configuration in Extensions.TBTC.TBTCSystem " +
-				"is DEPRECATED and will be removed. Please configure the " +
-				"TBTCSystem address alongside BondedECDSAKeep under " +
-				"Celo.ContractAddresses.",
-		)
-		config.Celo.ContractAddresses[celo.TBTCSystemContractName] =
-			config.Extensions.TBTC.TBTCSystem
-	}
-
 	celoChain, err := celo.Connect(ctx, celoKey, &config.Celo)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
