@@ -2288,14 +2288,15 @@ func submitKeepPublicKey(
 	if err != nil {
 		return [64]byte{}, err
 	}
+	keep, err := tbtcChain.GetKeepWithID(common.HexToAddress(keepAddress))
+	if err != nil {
+		return [64]byte{}, err
+	}
 
 	var keepPubkey [64]byte
 	rand.Read(keepPubkey[:])
 
-	err = tbtcChain.SubmitKeepPublicKey(
-		common.HexToAddress(keepAddress),
-		keepPubkey,
-	)
+	err = keep.SubmitKeepPublicKey(keepPubkey)
 	if err != nil {
 		return [64]byte{}, err
 	}
@@ -2311,6 +2312,10 @@ func submitKeepSignature(
 	if err != nil {
 		return nil, err
 	}
+	keep, err := tbtcChain.GetKeepWithID(common.HexToAddress(keepAddress))
+	if err != nil {
+		return nil, err
+	}
 
 	signature := &ecdsa.Signature{
 		R:          new(big.Int).SetUint64(rand.Uint64()),
@@ -2318,10 +2323,7 @@ func submitKeepSignature(
 		RecoveryID: rand.Intn(4),
 	}
 
-	err = tbtcChain.SubmitSignature(
-		common.HexToAddress(keepAddress),
-		signature,
-	)
+	err = keep.SubmitSignature(signature)
 	if err != nil {
 		return nil, err
 	}

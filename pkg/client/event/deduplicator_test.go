@@ -66,12 +66,12 @@ func TestDoSign(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +83,7 @@ func TestDoSign(t *testing.T) {
 
 	canSign, err := deduplicator.NotifySigningStarted(
 		signStateConfirmTimeout,
-		keepAddress,
+		keep,
 		digest,
 	)
 	if err != nil {
@@ -100,12 +100,12 @@ func TestDoNotSignIfCurrentlySigning(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,13 +117,13 @@ func TestDoNotSignIfCurrentlySigning(t *testing.T) {
 
 	deduplicator.NotifySigningStarted(
 		signStateConfirmTimeout,
-		keepAddress,
+		keep,
 		digest,
 	)
 
 	canSign, err := deduplicator.NotifySigningStarted(
 		signStateConfirmTimeout,
-		keepAddress,
+		keep,
 		digest,
 	)
 	if err != nil {
@@ -140,19 +140,19 @@ func TestDoNotSignIfNotAwaitingASignature(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	canSign, err := deduplicator.NotifySigningStarted(
 		signStateConfirmTimeout,
-		keepAddress,
+		keep,
 		digest,
 	)
 	if err != nil {
@@ -169,12 +169,12 @@ func TestDoSignOneMoreTime(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
 
-	err := chain.SubmitKeepPublicKey(keepAddress, keepPublicKey)
+	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +189,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 
 	canSign, err := deduplicator.NotifySigningStarted(
 		signStateConfirmTimeout,
-		keepAddress,
+		keep,
 		digest,
 	)
 	if err != nil {
@@ -205,7 +205,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 		RecoveryID: 1,
 	}
 
-	err = chain.SubmitSignature(keepAddress, signature)
+	err = keep.SubmitSignature(signature)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +222,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 
 	canSign, err = deduplicator.NotifySigningStarted(
 		signStateConfirmTimeout,
-		keepAddress,
+		keep,
 		digest,
 	)
 	if err != nil {

@@ -26,6 +26,8 @@ func (c *localChain) createKeepWithMembers(
 	}
 
 	localKeep := &localKeep{
+		chain:                      c,
+		keepID:                     keepAddress,
 		publicKey:                  [64]byte{},
 		members:                    members,
 		signatureRequestedHandlers: make(map[int]func(event *chain.SignatureRequestedEvent)),
