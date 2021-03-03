@@ -48,7 +48,7 @@ var (
 type ethereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
-	client                         ethutil.HostChainClient
+	client                         ethutil.EthereumClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	tbtcSystemAddress              common.Address
 	blockCounter                   *ethlike.BlockCounter
@@ -164,8 +164,8 @@ func Connect(
 
 func addClientWrappers(
 	config *ethereum.Config,
-	client ethutil.HostChainClient,
-) ethutil.HostChainClient {
+	client ethutil.EthereumClient,
+) ethutil.EthereumClient {
 	loggingClient := ethutil.WrapCallLogging(logger, client)
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
