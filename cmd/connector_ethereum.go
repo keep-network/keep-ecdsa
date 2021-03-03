@@ -10,7 +10,6 @@ import (
 	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
-	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
 )
 
 func connectChain(
@@ -56,45 +55,12 @@ func connectChain(
 		)
 	}
 
-	tbtcHandle, err := ethereumChain.TBTCApplicationHandle()
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"failed to set up tBTC application: [%v]",
-			err,
-		)
-	}
-
-	initializeExtensions(
-		ctx,
-		ethereumChain,
-		tbtcHandle,
-	)
-
 	operatorKeys := &operatorKeys{
 		public:  &ethereumKey.PrivateKey.PublicKey,
 		private: ethereumKey.PrivateKey,
 	}
 
 	return ethereumChain, operatorKeys, nil
-}
-
-func initializeExtensions(
-	ctx context.Context,
-	chain chain.Handle,
-	tbtcEthereumChain chain.TBTCHandle,
-) {
-	if tbtcEthereumChain != nil {
-		tbtc.Initialize(
-			ctx,
-			tbtcEthereumChain,
-			chain.BlockCounter(),
-			chain.BlockTimestamp,
-		)
-	} else {
-		logger.Errorf(
-			"could not initialize tbtc chain extension",
-		)
-	}
 }
 
 func extractKeyFilePassword(config *config.Config) string {
