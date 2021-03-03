@@ -66,7 +66,7 @@ type BondedECDSAKeepFactory interface {
 // honest cooperation in the threshold signature application that the keep
 // corresponds to.
 type BondedECDSAKeepHandle interface {
-	// GetKeepWithID returns the underlying keep's ID.
+	// ID returns the id of this keep in a host chain-agnostic format.
 	// FIXME currently this ID is still a common.Address 😬
 	ID() common.Address
 
