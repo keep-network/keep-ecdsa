@@ -30,7 +30,12 @@ func connectChain(
 	}
 
 	// FIXME tBTC stuff needs some luuuuv.
-	ethereumChain, tbtcHandle, err := ethereum.Connect(ctx, ethereumKey, &config.Ethereum, config.Extensions.TBTC.TBTCSystem)
+	ethereumChain, err := ethereum.Connect(
+		ctx,
+		ethereumKey,
+		&config.Ethereum,
+		config.Extensions.TBTC.TBTCSystem,
+	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
 			"failed to connect to ethereum node: [%v]",
@@ -38,7 +43,19 @@ func connectChain(
 		)
 	}
 
-	initializeExtensions(ctx, tbtcHandle)
+	tbtcHandle, err := ethereumChain.TBTCApplicationHandle()
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"failed to set up tBTC application: [%v]",
+			err,
+		)
+	}
+
+	initializeExtensions(
+		ctx,
+		ethereumChain,
+		tbtcHandle,
+	)
 
 	operatorKeys := &operatorKeys{
 		public:  &ethereumKey.PrivateKey.PublicKey,
@@ -50,10 +67,16 @@ func connectChain(
 
 func initializeExtensions(
 	ctx context.Context,
+	chain chain.Handle,
 	tbtcEthereumChain chain.TBTCHandle,
 ) {
 	if tbtcEthereumChain != nil {
-		tbtc.Initialize(ctx, tbtcEthereumChain)
+		tbtc.Initialize(
+			ctx,
+			tbtcEthereumChain,
+			chain.BlockCounter(),
+			chain.BlockTimestamp,
+		)
 	} else {
 		logger.Errorf(
 			"could not initialize tbtc chain extension",

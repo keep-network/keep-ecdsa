@@ -19,7 +19,8 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/subscription"
-	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
+	corechain "github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
@@ -54,10 +55,19 @@ const (
 
 // Initialize initializes extension specific to the TBTC application.
 // TODO: Resume monitoring after client restart
-func Initialize(ctx context.Context, chain chain.TBTCHandle) {
+func Initialize(
+	ctx context.Context,
+	tbtcHandle chain.TBTCHandle,
+	blockCounter corechain.BlockCounter,
+	blockTimestamp func(blockNumber *big.Int) (uint64, error),
+) {
 	logger.Infof("initializing tbtc extension")
 
-	tbtc := newTBTC(chain)
+	tbtc := newTBTC(
+		tbtcHandle,
+		blockCounter,
+		blockTimestamp,
+	)
 
 	tbtc.monitorRetrievePubKey(
 		ctx,
@@ -81,7 +91,10 @@ func Initialize(ctx context.Context, chain chain.TBTCHandle) {
 }
 
 type tbtc struct {
-	chain                  chain.TBTCHandle
+	handle         chain.TBTCHandle
+	blockCounter   corechain.BlockCounter
+	blockTimestamp func(blockNumber *big.Int) (uint64, error)
+
 	monitoringLocks        sync.Map
 	blockConfirmations     uint64
 	memberDepositsCache    *cache.TimeCache
@@ -89,9 +102,16 @@ type tbtc struct {
 	signerActionDelayStep  time.Duration
 }
 
-func newTBTC(chain chain.TBTCHandle) *tbtc {
+func newTBTC(
+	tbtcHandle chain.TBTCHandle,
+	blockCounter corechain.BlockCounter,
+	blockTimestamp func(blockNumber *big.Int) (uint64, error),
+) *tbtc {
 	return &tbtc{
-		chain:                  chain,
+		handle:         tbtcHandle,
+		blockCounter:   blockCounter,
+		blockTimestamp: blockTimestamp,
+
 		blockConfirmations:     defaultBlockConfirmations,
 		memberDepositsCache:    cache.NewTimeCache(monitoringCachePeriod),
 		notMemberDepositsCache: cache.NewTimeCache(monitoringCachePeriod),
@@ -109,7 +129,7 @@ func (t *tbtc) monitorRetrievePubKey(
 	monitoringStartFn := func(
 		handler depositEventHandler,
 	) subscription.EventSubscription {
-		return t.chain.OnDepositCreated(handler)
+		return t.handle.OnDepositCreated(handler)
 	}
 
 	shouldMonitorFn := func(depositAddress string) bool {
@@ -123,7 +143,7 @@ func (t *tbtc) monitorRetrievePubKey(
 	monitoringStopFn := func(
 		handler depositEventHandler,
 	) subscription.EventSubscription {
-		return t.chain.OnDepositRegisteredPubkey(func(depositAddress string) {
+		return t.handle.OnDepositRegisteredPubkey(func(depositAddress string) {
 			if t.waitDepositStateChangeConfirmation(
 				depositAddress,
 				initialDepositState,
@@ -141,7 +161,7 @@ func (t *tbtc) monitorRetrievePubKey(
 	}
 
 	actFn := func(depositAddress string) error {
-		err := t.chain.RetrieveSignerPubkey(depositAddress)
+		err := t.handle.RetrieveSignerPubkey(depositAddress)
 		if err != nil {
 			return err
 		}
@@ -198,7 +218,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	) subscription.EventSubscription {
 		// Start right after a redemption has been requested or the redemption
 		// fee has been increased.
-		return t.chain.OnDepositRedemptionRequested(handler)
+		return t.handle.OnDepositRedemptionRequested(handler)
 	}
 
 	shouldMonitorFn := func(depositAddress string) bool {
@@ -213,7 +233,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		handler depositEventHandler,
 	) subscription.EventSubscription {
 		// Stop in case the redemption signature has been provided by someone else.
-		signatureSubscription := t.chain.OnDepositGotRedemptionSignature(
+		signatureSubscription := t.handle.OnDepositGotRedemptionSignature(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -232,7 +252,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		)
 
 		// Stop in case the redemption proof has been provided by someone else.
-		redeemedSubscription := t.chain.OnDepositRedeemed(
+		redeemedSubscription := t.handle.OnDepositRedeemed(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -259,12 +279,12 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 	}
 
 	actFn := func(depositAddress string) error {
-		keep, err := t.chain.Keep(depositAddress)
+		keep, err := t.handle.Keep(depositAddress)
 		if err != nil {
 			return err
 		}
 
-		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
+		redemptionRequestedEvents, err := t.handle.PastDepositRedemptionRequestedEvents(
 			t.pastEventsLookupStartBlock(),
 			depositAddress,
 		)
@@ -311,7 +331,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		// We add 27 to the recovery ID to align it with ethereum and
 		// bitcoin protocols where 27 is added to recovery ID to
 		// indicate usage of uncompressed public keys.
-		err = t.chain.ProvideRedemptionSignature(
+		err = t.handle.ProvideRedemptionSignature(
 			depositAddress,
 			27+latestSignatureSubmittedEvent.RecoveryID,
 			latestSignatureSubmittedEvent.R,
@@ -372,7 +392,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		handler depositEventHandler,
 	) subscription.EventSubscription {
 		// Start right after a redemption signature has been provided.
-		return t.chain.OnDepositGotRedemptionSignature(handler)
+		return t.handle.OnDepositGotRedemptionSignature(handler)
 	}
 
 	shouldMonitorFn := func(depositAddress string) bool {
@@ -387,7 +407,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		handler depositEventHandler,
 	) subscription.EventSubscription {
 		// Stop in case the redemption fee has been increased by someone else.
-		redemptionRequestedSubscription := t.chain.OnDepositRedemptionRequested(
+		redemptionRequestedSubscription := t.handle.OnDepositRedemptionRequested(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -406,7 +426,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		)
 
 		// Stop in case the redemption proof has been provided by someone else.
-		redeemedSubscription := t.chain.OnDepositRedeemed(
+		redeemedSubscription := t.handle.OnDepositRedeemed(
 			func(depositAddress string) {
 				if t.waitDepositStateChangeConfirmation(
 					depositAddress,
@@ -433,7 +453,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 	}
 
 	actFn := func(depositAddress string) error {
-		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
+		redemptionRequestedEvents, err := t.handle.PastDepositRedemptionRequestedEvents(
 			t.pastEventsLookupStartBlock(),
 			depositAddress,
 		)
@@ -480,7 +500,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 			feeBumpStep,
 		)
 
-		err = t.chain.IncreaseRedemptionFee(
+		err = t.handle.IncreaseRedemptionFee(
 			depositAddress,
 			toLittleEndianBytes(previousOutputValue),
 			toLittleEndianBytes(newOutputValue),
@@ -505,7 +525,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 		// the `GotRedemptionSignature` event.
 		gotRedemptionSignatureTimestamp := uint64(time.Now().Unix())
 
-		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
+		redemptionRequestedEvents, err := t.handle.PastDepositRedemptionRequestedEvents(
 			t.pastEventsLookupStartBlock(),
 			depositAddress,
 		)
@@ -524,7 +544,7 @@ func (t *tbtc) monitorProvideRedemptionProof(
 			redemptionRequestedEvents[len(redemptionRequestedEvents)-1]
 
 		// Get the seconds timestamp for the latest redemption request.
-		redemptionRequestedTimestamp, err := t.chain.BlockTimestamp(
+		redemptionRequestedTimestamp, err := t.blockTimestamp(
 			new(big.Int).SetUint64(latestRedemptionRequestedEvent.BlockNumber),
 		)
 		if err != nil {
@@ -750,7 +770,7 @@ func (t *tbtc) watchKeepClosed(
 ) (chan struct{}, func(), error) {
 	signalChan := make(chan struct{})
 
-	keep, err := t.chain.Keep(depositAddress)
+	keep, err := t.handle.Keep(depositAddress)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -800,7 +820,7 @@ func (t *tbtc) shouldMonitorDeposit(
 	hasInitialState, err := utils.ConfirmWithTimeoutDefaultBackoff(
 		confirmStateTimeout,
 		func(ctx context.Context) (bool, error) {
-			currentState, err := t.chain.CurrentState(depositAddress)
+			currentState, err := t.handle.CurrentState(depositAddress)
 			if err != nil {
 				return false, err
 			}
@@ -878,7 +898,7 @@ func (t *tbtc) waitDepositStateChangeConfirmation(
 	initialDepositState chain.DepositState,
 ) bool {
 	stateCheck := func() (bool, error) {
-		currentState, err := t.chain.CurrentState(depositAddress)
+		currentState, err := t.handle.CurrentState(depositAddress)
 		if err != nil {
 			return false, err
 		}
@@ -886,7 +906,7 @@ func (t *tbtc) waitDepositStateChangeConfirmation(
 		return currentState != initialDepositState, nil
 	}
 
-	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
+	currentBlock, err := t.blockCounter.CurrentBlock()
 	if err != nil {
 		logger.Errorf(
 			"could not get current block while confirming "+
@@ -899,7 +919,7 @@ func (t *tbtc) waitDepositStateChangeConfirmation(
 	}
 
 	confirmed, err := ethlike.WaitForBlockConfirmations(
-		t.chain.BlockCounter(),
+		t.blockCounter,
 		currentBlock,
 		t.blockConfirmations,
 		stateCheck,
@@ -920,7 +940,7 @@ func (t *tbtc) waitDepositStateChangeConfirmation(
 func (t *tbtc) waitKeepNotActiveConfirmation(
 	keep chain.BondedECDSAKeepHandle,
 ) bool {
-	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
+	currentBlock, err := t.blockCounter.CurrentBlock()
 	if err != nil {
 		logger.Errorf(
 			"could not get current block while confirming "+
@@ -932,7 +952,7 @@ func (t *tbtc) waitKeepNotActiveConfirmation(
 	}
 
 	isKeepActive, err := ethlike.WaitForBlockConfirmations(
-		t.chain.BlockCounter(),
+		t.blockCounter,
 		currentBlock,
 		t.blockConfirmations,
 		func() (bool, error) {
@@ -952,7 +972,7 @@ func (t *tbtc) waitKeepNotActiveConfirmation(
 }
 
 func (t *tbtc) pastEventsLookupStartBlock() uint64 {
-	currentBlock, err := t.chain.BlockCounter().CurrentBlock()
+	currentBlock, err := t.blockCounter.CurrentBlock()
 	if err != nil {
 		return 0 // if something went wrong, start from block `0`
 	}

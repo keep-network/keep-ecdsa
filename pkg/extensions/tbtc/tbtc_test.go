@@ -27,8 +27,14 @@ const (
 	defaultLocalBlockConfirmations = 0
 )
 
-func newTestTBTC(chain chain.TBTCHandle) *tbtc {
-	tbtc := newTBTC(chain)
+func newTestTBTC(
+	localChain *local.TBTCLocalChain,
+) *tbtc {
+	tbtc := newTBTC(
+		localChain,
+		localChain.BlockCounter(),
+		localChain.BlockTimestamp,
+	)
 
 	tbtc.blockConfirmations = defaultLocalBlockConfirmations
 

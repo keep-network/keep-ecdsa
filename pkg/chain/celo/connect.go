@@ -132,9 +132,9 @@ func Connect(
 	}
 
 	celo := &celoChain{
-		config:                         config,
-		accountKey:                     accountKey,
-		client:                         wrappedClient,
+		config:     config,
+		accountKey: accountKey,
+		client:     wrappedClient,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,

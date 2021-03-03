@@ -6,9 +6,10 @@ import (
 	"github.com/keep-network/keep-common/pkg/subscription"
 )
 
-// TBTCHandle represents a chain handle extended with TBTC-specific capabilities.
+// TBTCHandle represents handle to the tBTC on-chain application. It extends the
+// BondedECDSAKeepApplicationHandle interface with tBTC-specific functionality.
 type TBTCHandle interface {
-	Handle
+	BondedECDSAKeepApplicationHandle
 
 	Deposit
 	TBTCSystem

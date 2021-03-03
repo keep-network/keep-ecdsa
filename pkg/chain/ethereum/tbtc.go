@@ -8,52 +8,138 @@ import (
 	"sort"
 
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/contract"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
+	tbtcchain "github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
 )
 
-// TBTCEthereumChain represents an Ethereum chain handle with
+// tbtcApplication represents an Ethereum chain handle with
 // TBTC-specific capabilities.
-type TBTCEthereumChain struct {
-	*ethereumChain
+type tbtcApplication struct {
+	chainHandle *ethereumChain
 
-	tbtcSystemContract *contract.TBTCSystem
+	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
+
+	tbtcSystemAddress  common.Address
+	tbtcSystemContract *tbtcchain.TBTCSystem
 }
 
-// WithTBTCExtension extends the Ethereum chain handle with
-// TBTC-specific capabilities.
-func WithTBTCExtension(
-	ethereumChain *ethereumChain,
-	tbtcSystemContractAddress string,
-) (*TBTCEthereumChain, error) {
-	if !common.IsHexAddress(tbtcSystemContractAddress) {
-		return nil, fmt.Errorf("incorrect TBTCSystem contract address")
+func (ec *ethereumChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
+	var emptyAddress = common.Address{}
+	if ec.tbtcSystemAddress == emptyAddress {
+		return nil, fmt.Errorf("TBTCSystem address unset")
 	}
 
-	tbtcSystemContract, err := contract.NewTBTCSystem(
-		common.HexToAddress(tbtcSystemContractAddress),
-		ethereumChain.accountKey,
-		ethereumChain.client,
-		ethereumChain.nonceManager,
-		ethereumChain.miningWaiter,
-		ethereumChain.blockCounter,
-		ethereumChain.transactionMutex,
+	tbtcSystemContract, err := tbtcchain.NewTBTCSystem(
+		ec.tbtcSystemAddress,
+		ec.accountKey,
+		ec.client,
+		ec.nonceManager,
+		ec.miningWaiter,
+		ec.blockCounter,
+		ec.transactionMutex,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &TBTCEthereumChain{
-		ethereumChain:      ethereumChain,
+	return &tbtcApplication{
+		chainHandle:        ec,
+		tbtcSystemAddress:  ec.tbtcSystemAddress,
 		tbtcSystemContract: tbtcSystemContract,
 	}, nil
 }
 
+func (ta *tbtcApplication) ID() common.Address {
+	return ta.tbtcSystemAddress
+}
+
+func (ta *tbtcApplication) RegisterAsMemberCandidate() error {
+	gasEstimate, err :=
+		ta.bondedECDSAKeepFactoryContract.RegisterMemberCandidateGasEstimate(
+			ta.tbtcSystemAddress,
+		)
+	if err != nil {
+		return fmt.Errorf("failed to estimate gas [%v]", err)
+	}
+
+	// If we have multiple sortition pool join transactions queued - and that
+	// happens when multiple operators become eligible to join at the same time,
+	// e.g. after lowering the minimum bond requirement, transactions mined at
+	// the end may no longer have valid gas limits as they were estimated based
+	// on a different state of the pool. We add 20% safety margin to the original
+	// gas estimation to account for that.
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
+	transaction, err := ta.bondedECDSAKeepFactoryContract.RegisterMemberCandidate(
+		ta.tbtcSystemAddress,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf(
+		"submitted RegisterMemberCandidate transaction with hash: [%x]",
+		transaction.Hash(),
+	)
+
+	return nil
+}
+
+// IsRegisteredForApplication checks if the operator is registered
+// as a signer candidate in the factory for the given application.
+func (ta *tbtcApplication) IsRegisteredForApplication() (bool, error) {
+	return ta.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
+		ta.chainHandle.Address(),
+		ta.tbtcSystemAddress,
+	)
+}
+
+// IsEligibleForApplication checks if the operator is eligible to register
+// as a signer candidate for the given application.
+func (ta *tbtcApplication) IsEligibleForApplication() (bool, error) {
+	return ta.bondedECDSAKeepFactoryContract.IsOperatorEligible(
+		ta.chainHandle.Address(),
+		ta.tbtcSystemAddress,
+	)
+}
+
+// IsStatusUpToDateForApplication checks if the operator's status
+// is up to date in the signers' pool of the given application.
+func (ta *tbtcApplication) IsStatusUpToDateForApplication() (bool, error) {
+	return ta.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
+		ta.chainHandle.Address(),
+		ta.tbtcSystemAddress,
+	)
+}
+
+// UpdateStatusForApplication updates the operator's status in the signers'
+// pool for the given application.
+func (ta *tbtcApplication) UpdateStatusForApplication() error {
+	transaction, err := ta.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
+		ta.chainHandle.Address(),
+		ta.tbtcSystemAddress,
+	)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf(
+		"submitted UpdateOperatorStatus transaction with hash: [%x]",
+		transaction.Hash(),
+	)
+
+	return nil
+}
+
 // OnDepositCreated installs a callback that is invoked when an
 // on-chain notification of a new deposit creation is seen.
-func (tec *TBTCEthereumChain) OnDepositCreated(
+func (ta *tbtcApplication) OnDepositCreated(
 	handler func(depositAddress string),
 ) subscription.EventSubscription {
 	onEvent := func(
@@ -65,7 +151,7 @@ func (tec *TBTCEthereumChain) OnDepositCreated(
 		handler(DepositContractAddress.Hex())
 	}
 
-	return tec.tbtcSystemContract.Created(
+	return ta.tbtcSystemContract.Created(
 		nil,
 		nil,
 		nil,
@@ -74,7 +160,7 @@ func (tec *TBTCEthereumChain) OnDepositCreated(
 
 // OnDepositRegisteredPubkey installs a callback that is invoked when an
 // on-chain notification of a deposit's pubkey registration is seen.
-func (tec *TBTCEthereumChain) OnDepositRegisteredPubkey(
+func (ta *tbtcApplication) OnDepositRegisteredPubkey(
 	handler func(depositAddress string),
 ) subscription.EventSubscription {
 	onEvent := func(
@@ -87,12 +173,12 @@ func (tec *TBTCEthereumChain) OnDepositRegisteredPubkey(
 		handler(DepositContractAddress.Hex())
 	}
 
-	return tec.tbtcSystemContract.RegisteredPubkey(nil, nil).OnEvent(onEvent)
+	return ta.tbtcSystemContract.RegisteredPubkey(nil, nil).OnEvent(onEvent)
 }
 
 // OnDepositRedemptionRequested installs a callback that is invoked when an
 // on-chain notification of a deposit redemption request is seen.
-func (tec *TBTCEthereumChain) OnDepositRedemptionRequested(
+func (ta *tbtcApplication) OnDepositRedemptionRequested(
 	handler func(depositAddress string),
 ) subscription.EventSubscription {
 	onEvent := func(
@@ -108,7 +194,7 @@ func (tec *TBTCEthereumChain) OnDepositRedemptionRequested(
 		handler(DepositContractAddress.Hex())
 	}
 
-	return tec.tbtcSystemContract.RedemptionRequested(
+	return ta.tbtcSystemContract.RedemptionRequested(
 		nil,
 		nil,
 		nil,
@@ -118,7 +204,7 @@ func (tec *TBTCEthereumChain) OnDepositRedemptionRequested(
 
 // OnDepositGotRedemptionSignature installs a callback that is invoked when an
 // on-chain notification of a deposit receiving a redemption signature is seen.
-func (tec *TBTCEthereumChain) OnDepositGotRedemptionSignature(
+func (ta *tbtcApplication) OnDepositGotRedemptionSignature(
 	handler func(depositAddress string),
 ) subscription.EventSubscription {
 	onEvent := func(
@@ -132,7 +218,7 @@ func (tec *TBTCEthereumChain) OnDepositGotRedemptionSignature(
 		handler(DepositContractAddress.Hex())
 	}
 
-	return tec.tbtcSystemContract.GotRedemptionSignature(
+	return ta.tbtcSystemContract.GotRedemptionSignature(
 		nil,
 		nil,
 		nil,
@@ -141,7 +227,7 @@ func (tec *TBTCEthereumChain) OnDepositGotRedemptionSignature(
 
 // OnDepositRedeemed installs a callback that is invoked when an
 // on-chain notification of a deposit redemption is seen.
-func (tec *TBTCEthereumChain) OnDepositRedeemed(
+func (ta *tbtcApplication) OnDepositRedeemed(
 	handler func(depositAddress string),
 ) subscription.EventSubscription {
 	onEvent := func(
@@ -153,7 +239,7 @@ func (tec *TBTCEthereumChain) OnDepositRedeemed(
 		handler(DepositContractAddress.Hex())
 	}
 
-	return tec.tbtcSystemContract.Redeemed(
+	return ta.tbtcSystemContract.Redeemed(
 		nil,
 		nil,
 		nil,
@@ -163,14 +249,14 @@ func (tec *TBTCEthereumChain) OnDepositRedeemed(
 // PastDepositRedemptionRequestedEvents returns all redemption requested
 // events for the given deposit which occurred after the provided start block.
 // Returned events are sorted by the block number in the ascending order.
-func (tec *TBTCEthereumChain) PastDepositRedemptionRequestedEvents(
+func (ta *tbtcApplication) PastDepositRedemptionRequestedEvents(
 	startBlock uint64,
 	depositAddress string,
 ) ([]*chain.DepositRedemptionRequestedEvent, error) {
 	if !common.IsHexAddress(depositAddress) {
 		return nil, fmt.Errorf("incorrect deposit contract address")
 	}
-	events, err := tec.tbtcSystemContract.PastRedemptionRequestedEvents(
+	events, err := ta.tbtcSystemContract.PastRedemptionRequestedEvents(
 		startBlock,
 		nil,
 		[]common.Address{
@@ -206,12 +292,10 @@ func (tec *TBTCEthereumChain) PastDepositRedemptionRequestedEvents(
 	return result, nil
 }
 
-// KeepAddress returns the underlying keep address for the
-// provided deposit.
-func (tec *TBTCEthereumChain) Keep(
+func (ta *tbtcApplication) Keep(
 	depositAddress string,
 ) (chain.BondedECDSAKeepHandle, error) {
-	deposit, err := tec.getDepositContract(depositAddress)
+	deposit, err := ta.getDepositContract(depositAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -221,15 +305,15 @@ func (tec *TBTCEthereumChain) Keep(
 		return nil, err
 	}
 
-	return tec.GetKeepWithID(keepAddress)
+	return ta.chainHandle.GetKeepWithID(keepAddress)
 }
 
 // RetrieveSignerPubkey retrieves the signer public key for the
 // provided deposit.
-func (tec *TBTCEthereumChain) RetrieveSignerPubkey(
+func (ta *tbtcApplication) RetrieveSignerPubkey(
 	depositAddress string,
 ) error {
-	deposit, err := tec.getDepositContract(depositAddress)
+	deposit, err := ta.getDepositContract(depositAddress)
 	if err != nil {
 		return err
 	}
@@ -249,13 +333,13 @@ func (tec *TBTCEthereumChain) RetrieveSignerPubkey(
 
 // ProvideRedemptionSignature provides the redemption signature for the
 // provided deposit.
-func (tec *TBTCEthereumChain) ProvideRedemptionSignature(
+func (ta *tbtcApplication) ProvideRedemptionSignature(
 	depositAddress string,
 	v uint8,
 	r [32]uint8,
 	s [32]uint8,
 ) error {
-	deposit, err := tec.getDepositContract(depositAddress)
+	deposit, err := ta.getDepositContract(depositAddress)
 	if err != nil {
 		return err
 	}
@@ -274,12 +358,12 @@ func (tec *TBTCEthereumChain) ProvideRedemptionSignature(
 }
 
 // IncreaseRedemptionFee increases the redemption fee for the provided deposit.
-func (tec *TBTCEthereumChain) IncreaseRedemptionFee(
+func (ta *tbtcApplication) IncreaseRedemptionFee(
 	depositAddress string,
 	previousOutputValueBytes [8]uint8,
 	newOutputValueBytes [8]uint8,
 ) error {
-	deposit, err := tec.getDepositContract(depositAddress)
+	deposit, err := ta.getDepositContract(depositAddress)
 	if err != nil {
 		return err
 	}
@@ -301,7 +385,7 @@ func (tec *TBTCEthereumChain) IncreaseRedemptionFee(
 }
 
 // ProvideRedemptionProof provides the redemption proof for the provided deposit.
-func (tec *TBTCEthereumChain) ProvideRedemptionProof(
+func (ta *tbtcApplication) ProvideRedemptionProof(
 	depositAddress string,
 	txVersion [4]uint8,
 	txInputVector []uint8,
@@ -311,7 +395,7 @@ func (tec *TBTCEthereumChain) ProvideRedemptionProof(
 	txIndexInBlock *big.Int,
 	bitcoinHeaders []uint8,
 ) error {
-	deposit, err := tec.getDepositContract(depositAddress)
+	deposit, err := ta.getDepositContract(depositAddress)
 	if err != nil {
 		return err
 	}
@@ -338,10 +422,10 @@ func (tec *TBTCEthereumChain) ProvideRedemptionProof(
 }
 
 // CurrentState returns the current state for the provided deposit.
-func (tec *TBTCEthereumChain) CurrentState(
+func (ta *tbtcApplication) CurrentState(
 	depositAddress string,
 ) (chain.DepositState, error) {
-	deposit, err := tec.getDepositContract(depositAddress)
+	deposit, err := ta.getDepositContract(depositAddress)
 	if err != nil {
 		return 0, err
 	}
@@ -354,21 +438,21 @@ func (tec *TBTCEthereumChain) CurrentState(
 	return chain.DepositState(state.Uint64()), err
 }
 
-func (tec *TBTCEthereumChain) getDepositContract(
+func (ta *tbtcApplication) getDepositContract(
 	address string,
-) (*contract.Deposit, error) {
+) (*tbtcchain.Deposit, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("incorrect deposit contract address")
 	}
 
-	depositContract, err := contract.NewDeposit(
+	depositContract, err := tbtcchain.NewDeposit(
 		common.HexToAddress(address),
-		tec.accountKey,
-		tec.client,
-		tec.nonceManager,
-		tec.miningWaiter,
-		tec.blockCounter,
-		tec.transactionMutex,
+		ta.chainHandle.accountKey,
+		ta.chainHandle.client,
+		ta.chainHandle.nonceManager,
+		ta.chainHandle.miningWaiter,
+		ta.chainHandle.blockCounter,
+		ta.chainHandle.transactionMutex,
 	)
 	if err != nil {
 		return nil, err

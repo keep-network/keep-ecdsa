@@ -34,6 +34,9 @@ type localDeposit struct {
 	redemptionRequestedEvents []*chain.DepositRedemptionRequestedEvent
 }
 
+// A preset application id for tBTC on the local chain.
+var tbtcApplicationID = common.Big1
+
 // Signature represents an ecdsa signature
 type Signature struct {
 	V uint8
@@ -106,6 +109,10 @@ type TBTCLocalChain struct {
 	depositRedeemedHandlers               map[int]func(depositAddress string)
 }
 
+func (lc *localChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
+	return NewTBTCLocalChain(context.Background()), nil
+}
+
 // NewTBTCLocalChain creates a new TBTCLocalChain
 func NewTBTCLocalChain(ctx context.Context) *TBTCLocalChain {
 	return &TBTCLocalChain{
@@ -120,6 +127,41 @@ func NewTBTCLocalChain(ctx context.Context) *TBTCLocalChain {
 		depositGotRedemptionSignatureHandlers: make(map[int]func(depositAddress string)),
 		depositRedeemedHandlers:               make(map[int]func(depositAddress string)),
 	}
+}
+
+// ID implements the ID method in the chain.TBTCHandle interface.
+func (tlc *TBTCLocalChain) ID() common.Address {
+	return common.BigToAddress(tbtcApplicationID)
+}
+
+// RegisterAsMemberCandidate registers client as a candidate to be selected
+// to a keep.
+func (tlc *TBTCLocalChain) RegisterAsMemberCandidate() error {
+	return nil
+}
+
+// IsRegisteredForApplication implements the IsRegisteredForApplication method
+// in the chain.TBTCHandle interface.
+func (tlc *TBTCLocalChain) IsRegisteredForApplication() (bool, error) {
+	panic("implement")
+}
+
+// IsEligibleForApplication implements the IsEligibleForApplication method in
+// the chain.TBTCHandle interface.
+func (tlc *TBTCLocalChain) IsEligibleForApplication() (bool, error) {
+	panic("implement")
+}
+
+// IsStatusUpToDateForApplication implements the IsStatusUpToDateForApplication
+// method in the chain.TBTCHandle interface.
+func (lc *localChain) IsStatusUpToDateForApplication() (bool, error) {
+	panic("implement")
+}
+
+// UpdateStatusForApplication implements the UpdateStatusForApplication method
+// in the chain.TBTCHandle interface.
+func (tlc *TBTCLocalChain) UpdateStatusForApplication() error {
+	panic("implement")
 }
 
 // CreateDeposit creates a new deposit by mutating the local TBTC chain
