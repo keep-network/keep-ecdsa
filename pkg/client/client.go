@@ -13,11 +13,13 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-common/pkg/subscription"
+	corechain "github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/client/event"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
@@ -276,8 +278,35 @@ func Initialize(
 		}
 	}
 
+	initializeExtensions(
+		ctx,
+		tbtcApplicationHandle,
+		blockCounter,
+		hostChain.BlockTimestamp,
+	)
+
 	return &Handle{
 		tssNode: tssNode,
+	}
+}
+
+func initializeExtensions(
+	ctx context.Context,
+	tbtcHandle chain.TBTCHandle,
+	blockCounter corechain.BlockCounter,
+	blockTimestamp func(blockNumber *big.Int) (uint64, error),
+) {
+	if tbtcHandle != nil {
+		tbtc.Initialize(
+			ctx,
+			tbtcHandle,
+			blockCounter,
+			blockTimestamp,
+		)
+	} else {
+		logger.Errorf(
+			"could not initialize tbtc chain extension",
+		)
 	}
 }
 
