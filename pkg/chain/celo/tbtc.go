@@ -15,8 +15,8 @@ import (
 	tbtcchain "github.com/keep-network/tbtc/pkg/chain/celo/gen/contract"
 )
 
-// tbtcApplication represents an Celo chain handle with
-// TBTC-specific capabilities.
+// tbtcApplication represents a tBTC application handle conforming to
+// chain.TBTCHandle.
 type tbtcApplication struct {
 	chainHandle *celoChain
 

@@ -16,8 +16,8 @@ import (
 	tbtcchain "github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
 )
 
-// tbtcApplication represents an Ethereum chain handle with
-// TBTC-specific capabilities.
+// tbtcApplication represents a tBTC application handle conforming to
+// chain.TBTCHandle.
 type tbtcApplication struct {
 	chainHandle *ethereumChain
 
