@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - celo-ci-jobs
   pull_request:
     branches:
       - master
