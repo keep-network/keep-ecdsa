@@ -115,7 +115,7 @@ func Connect(
 	}
 
 	tbtcSystemAddress, err := config.ContractAddress(
-		BondedECDSAKeepFactoryContractName,
+		TBTCSystemContractName,
 	)
 	if err != nil {
 		// If the contract address can't be looked up, let this fail later on,
