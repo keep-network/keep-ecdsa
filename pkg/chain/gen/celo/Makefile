@@ -16,6 +16,14 @@ contract_files := $(addprefix contract/,$(addsuffix .go,$(subst ImplV1,,$(clean_
 abi_files := $(addprefix abi/,$(addsuffix .abi,$(clean_contract_stems)))
 abigen_files := $(addprefix abi/,$(addsuffix .go,$(clean_contract_stems)))
 
+# Additional build tags which should be passed while running `abigen` command.
+# The `default` value of the `ABIGEN_BUILD_TAGS` env variable is an arbitrary
+# default value and doesn't have any special meaning. Without it, the `go run`
+# command which runs the abigen will fail due to empty build tag list in case
+# `ABIGEN_BUILD_TAGS` env variable is not set.
+ABIGEN_BUILD_TAGS ?= default
+abigen_build_tags = ${ABIGEN_BUILD_TAGS}
+
 all: gen_contract_go gen_abi_go
 
 clean:
@@ -42,7 +50,7 @@ abi/%.abi: ${solidity_dir}/contracts/%.sol
 
 
 abi/%.go: abi/%.abi
-	go run github.com/celo-org/celo-blockchain/cmd/abigen --abi $< --pkg abi --type $* --out $@
+	go run -tags ${abigen_build_tags} github.com/celo-org/celo-blockchain/cmd/abigen --abi $< --pkg abi --type $* --out $@
 
 contract/%.go cmd/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.go
 	go run github.com/keep-network/keep-common/tools/generators/ethlike \
