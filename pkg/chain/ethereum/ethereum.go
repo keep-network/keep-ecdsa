@@ -166,13 +166,6 @@ func (ec *ethereumChain) GetKeepCount() (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.GetKeepCount()
 }
 
-// GetKeepAtIndex returns the address of the keep at the given index.
-func (ec *ethereumChain) GetKeepAtIndex(
-	keepIndex *big.Int,
-) (common.Address, error) {
-	return ec.bondedECDSAKeepFactoryContract.GetKeepAtIndex(keepIndex)
-}
-
 // BlockTimestamp returns given block's timestamp.
 func (ec *ethereumChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)

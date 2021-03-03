@@ -265,6 +265,10 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		if err != nil {
 			return err
 		}
+		keep, err := t.chain.GetKeepWithID(common.HexToAddress(keepAddress))
+		if err != nil {
+			return err
+		}
 
 		redemptionRequestedEvents, err := t.chain.PastDepositRedemptionRequestedEvents(
 			t.pastEventsLookupStartBlock(),
@@ -284,8 +288,7 @@ func (t *tbtc) monitorProvideRedemptionSignature(
 		latestRedemptionRequestedEvent :=
 			redemptionRequestedEvents[len(redemptionRequestedEvents)-1]
 
-		signatureSubmittedEvents, err := t.chain.PastSignatureSubmittedEvents(
-			keepAddress,
+		signatureSubmittedEvents, err := keep.PastSignatureSubmittedEvents(
 			latestRedemptionRequestedEvent.BlockNumber,
 		)
 		if err != nil {
@@ -757,9 +760,12 @@ func (t *tbtc) watchKeepClosed(
 	if err != nil {
 		return nil, nil, err
 	}
+	keep, err := t.chain.GetKeepWithID(common.HexToAddress(keepAddress))
+	if err != nil {
+		return nil, nil, err
+	}
 
-	keepClosedSubscription, err := t.chain.OnKeepClosed(
-		common.HexToAddress(keepAddress),
+	keepClosedSubscription, err := keep.OnKeepClosed(
 		func(_ *chain.KeepClosedEvent) {
 			if t.waitKeepNotActiveConfirmation(keepAddress) {
 				signalChan <- struct{}{}
@@ -770,8 +776,7 @@ func (t *tbtc) watchKeepClosed(
 		return nil, nil, err
 	}
 
-	keepTerminatedSubscription, err := t.chain.OnKeepTerminated(
-		common.HexToAddress(keepAddress),
+	keepTerminatedSubscription, err := keep.OnKeepTerminated(
 		func(_ *chain.KeepTerminatedEvent) {
 			if t.waitKeepNotActiveConfirmation(keepAddress) {
 				signalChan <- struct{}{}
@@ -858,8 +863,12 @@ func (t *tbtc) getSignerIndex(depositAddress string) (int, error) {
 	if err != nil {
 		return -1, err
 	}
+	keep, err := t.chain.GetKeepWithID(common.HexToAddress(keepAddress))
+	if err != nil {
+		return -1, err
+	}
 
-	members, err := t.chain.GetMembers(common.HexToAddress(keepAddress))
+	members, err := keep.GetMembers()
 	if err != nil {
 		return -1, err
 	}
@@ -947,12 +956,23 @@ func (t *tbtc) waitKeepNotActiveConfirmation(
 		return false
 	}
 
+	keep, err := t.chain.GetKeepWithID(common.HexToAddress(keepAddress))
+	if err != nil {
+		logger.Errorf(
+			"could not get current block while confirming "+
+				"keep [%v] is not active: [%v]",
+			keepAddress,
+			err,
+		)
+		return false
+	}
+
 	isKeepActive, err := ethlike.WaitForBlockConfirmations(
 		t.chain.BlockCounter(),
 		currentBlock,
 		t.blockConfirmations,
 		func() (bool, error) {
-			return t.chain.IsActive(common.HexToAddress(keepAddress))
+			return keep.IsActive()
 		},
 	)
 	if err != nil {

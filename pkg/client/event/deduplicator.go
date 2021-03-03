@@ -114,10 +114,10 @@ func (d *Deduplicator) NotifyKeyGenCompleted(keepAddress common.Address) {
 // succeeded.
 func (d *Deduplicator) NotifySigningStarted(
 	timeout time.Duration,
-	keepAddress common.Address,
+	keep chain.BondedECDSAKeepHandle,
 	digest [32]byte,
 ) (bool, error) {
-	if d.requestedSignatures.has(keepAddress, digest) {
+	if d.requestedSignatures.has(keep.ID(), digest) {
 		return false, nil
 	}
 
@@ -129,7 +129,7 @@ func (d *Deduplicator) NotifySigningStarted(
 	isAwaitingSignature, err := utils.ConfirmWithTimeoutDefaultBackoff(
 		timeout,
 		func(ctx context.Context) (bool, error) {
-			return d.chain.IsAwaitingSignature(keepAddress, digest)
+			return keep.IsAwaitingSignature(digest)
 		},
 	)
 	if err != nil {
@@ -144,7 +144,7 @@ func (d *Deduplicator) NotifySigningStarted(
 		return false, nil
 	}
 
-	return d.requestedSignatures.add(keepAddress, digest), nil
+	return d.requestedSignatures.add(keep.ID(), digest), nil
 }
 
 // NotifySigningCompleted should be called once client completed signature
