@@ -46,9 +46,10 @@ func (cc *celoChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 	}
 
 	return &tbtcApplication{
-		chainHandle:        cc,
-		tbtcSystemAddress:  cc.tbtcSystemAddress,
-		tbtcSystemContract: tbtcSystemContract,
+		chainHandle:                    cc,
+		bondedECDSAKeepFactoryContract: cc.bondedECDSAKeepFactoryContract,
+		tbtcSystemAddress:              cc.tbtcSystemAddress,
+		tbtcSystemContract:             tbtcSystemContract,
 	}, nil
 }
 
