@@ -4,6 +4,7 @@ package ethereum
 
 import (
 	"fmt"
+	"math/big"
 	"sort"
 	"time"
 
@@ -17,17 +18,64 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
 )
 
-// OnSignatureRequested installs a callback that is invoked on-chain
-// when a keep's signature is requested.
-func (ec *ethereumChain) OnSignatureRequested(
-	keepAddress common.Address,
-	handler func(event *chain.SignatureRequestedEvent),
-) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
+type bondedEcdsaKeepHandle struct {
+	keepID   common.Address
+	contract *contract.BondedECDSAKeep
+}
+
+func (ec *ethereumChain) GetKeepWithID(
+	keepID common.Address,
+) (chain.BondedECDSAKeepHandle, error) {
+	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
+		keepID,
+		ec.accountKey,
+		ec.client,
+		ec.nonceManager,
+		ec.miningWaiter,
+		ec.blockCounter,
+		ec.transactionMutex,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
+		return nil, fmt.Errorf(
+			"failed to resolve contract for keep with id [%v]: [%v]",
+			keepID,
+			err,
+		)
 	}
 
+	return &bondedEcdsaKeepHandle{
+		keepID:   keepID,
+		contract: bondedECDSAKeepContract,
+	}, nil
+}
+
+// GetKeepAtIndex returns the address of the keep at the given index.
+func (ec *ethereumChain) GetKeepAtIndex(
+	keepIndex *big.Int,
+) (chain.BondedECDSAKeepHandle, error) {
+	keepAddress, err := ec.bondedECDSAKeepFactoryContract.GetKeepAtIndex(
+		keepIndex,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to look up keep address for index [%v]: [%v]",
+			keepIndex,
+			err,
+		)
+	}
+
+	return ec.GetKeepWithID(keepAddress)
+}
+
+func (bekh *bondedEcdsaKeepHandle) ID() common.Address {
+	return bekh.keepID
+}
+
+// OnSignatureRequested installs a callback that is invoked on-chain
+// when a keep's signature is requested.
+func (bekh *bondedEcdsaKeepHandle) OnSignatureRequested(
+	handler func(event *chain.SignatureRequestedEvent),
+) (subscription.EventSubscription, error) {
 	onEvent := func(
 		Digest [32]uint8,
 		blockNumber uint64,
@@ -37,7 +85,7 @@ func (ec *ethereumChain) OnSignatureRequested(
 			BlockNumber: blockNumber,
 		})
 	}
-	return keepContract.SignatureRequested(
+	return bekh.contract.SignatureRequested(
 		nil,
 		nil,
 	).OnEvent(onEvent), nil
@@ -45,15 +93,9 @@ func (ec *ethereumChain) OnSignatureRequested(
 
 // OnConflictingPublicKeySubmitted installs a callback that is invoked when an
 // on-chain notification of a conflicting public key submission is seen.
-func (ec *ethereumChain) OnConflictingPublicKeySubmitted(
-	keepAddress common.Address,
+func (bekh *bondedEcdsaKeepHandle) OnConflictingPublicKeySubmitted(
 	handler func(event *chain.ConflictingPublicKeySubmittedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
-	}
-
 	onEvent := func(
 		SubmittingMember common.Address,
 		ConflictingPublicKey []byte,
@@ -65,7 +107,7 @@ func (ec *ethereumChain) OnConflictingPublicKeySubmitted(
 			BlockNumber:          blockNumber,
 		})
 	}
-	return keepContract.ConflictingPublicKeySubmitted(
+	return bekh.contract.ConflictingPublicKeySubmitted(
 		nil,
 		nil,
 	).OnEvent(onEvent), nil
@@ -73,15 +115,9 @@ func (ec *ethereumChain) OnConflictingPublicKeySubmitted(
 
 // OnPublicKeyPublished installs a callback that is invoked when an on-chain
 // event of a published public key was emitted.
-func (ec *ethereumChain) OnPublicKeyPublished(
-	keepAddress common.Address,
+func (bekh *bondedEcdsaKeepHandle) OnPublicKeyPublished(
 	handler func(event *chain.PublicKeyPublishedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
-	}
-
 	onEvent := func(
 		PublicKey []byte,
 		blockNumber uint64,
@@ -91,22 +127,16 @@ func (ec *ethereumChain) OnPublicKeyPublished(
 			BlockNumber: blockNumber,
 		})
 	}
-	return keepContract.PublicKeyPublished(nil).OnEvent(onEvent), nil
+	return bekh.contract.PublicKeyPublished(nil).OnEvent(onEvent), nil
 }
 
 // SubmitKeepPublicKey submits a public key to a keep contract deployed under
 // a given address.
-func (ec *ethereumChain) SubmitKeepPublicKey(
-	keepAddress common.Address,
+func (bekh *bondedEcdsaKeepHandle) SubmitKeepPublicKey(
 	publicKey [64]byte,
 ) error {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return err
-	}
-
 	submitPubKey := func() error {
-		transaction, err := keepContract.SubmitPublicKey(
+		transaction, err := bekh.contract.SubmitPublicKey(
 			publicKey[:],
 			ethutil.TransactionOptions{
 				GasLimit: 350000, // enough for a group size of 16
@@ -134,15 +164,9 @@ func (ec *ethereumChain) SubmitKeepPublicKey(
 
 // SubmitSignature submits a signature to a keep contract deployed under a
 // given address.
-func (ec *ethereumChain) SubmitSignature(
-	keepAddress common.Address,
+func (bekh *bondedEcdsaKeepHandle) SubmitSignature(
 	signature *ecdsa.Signature,
 ) error {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return err
-	}
-
 	signatureR, err := byteutils.BytesTo32Byte(signature.R.Bytes())
 	if err != nil {
 		return err
@@ -153,7 +177,7 @@ func (ec *ethereumChain) SubmitSignature(
 		return err
 	}
 
-	transaction, err := keepContract.SubmitSignature(
+	transaction, err := bekh.contract.SubmitSignature(
 		signatureR,
 		signatureS,
 		uint8(signature.RecoveryID),
@@ -171,19 +195,13 @@ func (ec *ethereumChain) SubmitSignature(
 }
 
 // OnKeepClosed installs a callback that is invoked on-chain when keep is closed.
-func (ec *ethereumChain) OnKeepClosed(
-	keepAddress common.Address,
+func (bekh *bondedEcdsaKeepHandle) OnKeepClosed(
 	handler func(event *chain.KeepClosedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
-	}
-
 	onEvent := func(blockNumber uint64) {
 		handler(&chain.KeepClosedEvent{BlockNumber: blockNumber})
 	}
-	return keepContract.KeepClosed(&ethlike.SubscribeOpts{
+	return bekh.contract.KeepClosed(&ethlike.SubscribeOpts{
 		Tick:       4 * time.Hour,
 		PastBlocks: 2000,
 	}).OnEvent(onEvent), nil
@@ -191,19 +209,13 @@ func (ec *ethereumChain) OnKeepClosed(
 
 // OnKeepTerminated installs a callback that is invoked on-chain when keep
 // is terminated.
-func (ec *ethereumChain) OnKeepTerminated(
-	keepAddress common.Address,
+func (bekh *bondedEcdsaKeepHandle) OnKeepTerminated(
 	handler func(event *chain.KeepTerminatedEvent),
 ) (subscription.EventSubscription, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create contract abi: [%v]", err)
-	}
-
 	onEvent := func(blockNumber uint64) {
 		handler(&chain.KeepTerminatedEvent{BlockNumber: blockNumber})
 	}
-	return keepContract.KeepTerminated(&ethlike.SubscribeOpts{
+	return bekh.contract.KeepTerminated(&ethlike.SubscribeOpts{
 		Tick:       4 * time.Hour,
 		PastBlocks: 2000,
 	}).OnEvent(onEvent), nil
@@ -211,48 +223,27 @@ func (ec *ethereumChain) OnKeepTerminated(
 
 // IsAwaitingSignature checks if the keep is waiting for a signature to be
 // calculated for the given digest.
-func (ec *ethereumChain) IsAwaitingSignature(keepAddress common.Address, digest [32]byte) (bool, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return false, err
-	}
-
-	return keepContract.IsAwaitingSignature(digest)
+func (bekh *bondedEcdsaKeepHandle) IsAwaitingSignature(digest [32]byte) (bool, error) {
+	return bekh.contract.IsAwaitingSignature(digest)
 }
 
 // IsActive checks for current state of a keep on-chain.
-func (ec *ethereumChain) IsActive(keepAddress common.Address) (bool, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return false, err
-	}
-
-	return keepContract.IsActive()
+func (bekh *bondedEcdsaKeepHandle) IsActive() (bool, error) {
+	return bekh.contract.IsActive()
 }
 
 // LatestDigest returns the latest digest requested to be signed.
-func (ec *ethereumChain) LatestDigest(keepAddress common.Address) ([32]byte, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return [32]byte{}, err
-	}
-
-	return keepContract.Digest()
+func (bekh *bondedEcdsaKeepHandle) LatestDigest() ([32]byte, error) {
+	return bekh.contract.Digest()
 }
 
 // SignatureRequestedBlock returns block number from the moment when a
 // signature was requested for the given digest from a keep.
 // If a signature was not requested for the given digest, returns 0.
-func (ec *ethereumChain) SignatureRequestedBlock(
-	keepAddress common.Address,
+func (bekh *bondedEcdsaKeepHandle) SignatureRequestedBlock(
 	digest [32]byte,
 ) (uint64, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return 0, err
-	}
-
-	blockNumber, err := keepContract.Digests(digest)
+	blockNumber, err := bekh.contract.Digests(digest)
 	if err != nil {
 		return 0, err
 	}
@@ -262,37 +253,18 @@ func (ec *ethereumChain) SignatureRequestedBlock(
 
 // GetPublicKey returns keep's public key. If there is no public key yet,
 // an empty slice is returned.
-func (ec *ethereumChain) GetPublicKey(keepAddress common.Address) ([]uint8, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return []uint8{}, err
-	}
-
-	return keepContract.GetPublicKey()
+func (bekh *bondedEcdsaKeepHandle) GetPublicKey() ([]uint8, error) {
+	return bekh.contract.GetPublicKey()
 }
 
 // GetMembers returns keep's members.
-func (ec *ethereumChain) GetMembers(
-	keepAddress common.Address,
-) ([]common.Address, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return []common.Address{}, err
-	}
-
-	return keepContract.GetMembers()
+func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]common.Address, error) {
+	return bekh.contract.GetMembers()
 }
 
 // GetHonestThreshold returns keep's honest threshold.
-func (ec *ethereumChain) GetHonestThreshold(
-	keepAddress common.Address,
-) (uint64, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return 0, err
-	}
-
-	threshold, err := keepContract.HonestThreshold()
+func (bekh *bondedEcdsaKeepHandle) GetHonestThreshold() (uint64, error) {
+	threshold, err := bekh.contract.HonestThreshold()
 	if err != nil {
 		return 0, err
 	}
@@ -301,13 +273,8 @@ func (ec *ethereumChain) GetHonestThreshold(
 }
 
 // GetOpenedTimestamp returns timestamp when the keep was created.
-func (ec *ethereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Time, error) {
-	keepContract, err := ec.getKeepContract(keepAddress)
-	if err != nil {
-		return time.Unix(0, 0), err
-	}
-
-	timestamp, err := keepContract.GetOpenedTimestamp()
+func (bekh *bondedEcdsaKeepHandle) GetOpenedTimestamp() (time.Time, error) {
+	timestamp, err := bekh.contract.GetOpenedTimestamp()
 	if err != nil {
 		return time.Unix(0, 0), err
 	}
@@ -320,19 +287,10 @@ func (ec *ethereumChain) GetOpenedTimestamp(keepAddress common.Address) (time.Ti
 // PastSignatureSubmittedEvents returns all signature submitted events
 // for the given keep which occurred after the provided start block.
 // Returned events are sorted by the block number in the ascending order.
-func (ec *ethereumChain) PastSignatureSubmittedEvents(
-	keepAddress string,
+func (bekh *bondedEcdsaKeepHandle) PastSignatureSubmittedEvents(
 	startBlock uint64,
 ) ([]*chain.SignatureSubmittedEvent, error) {
-	if !common.IsHexAddress(keepAddress) {
-		return nil, fmt.Errorf("invalid keep address: [%v]", keepAddress)
-	}
-	keepContract, err := ec.getKeepContract(common.HexToAddress(keepAddress))
-	if err != nil {
-		return nil, err
-	}
-
-	events, err := keepContract.PastSignatureSubmittedEvents(
+	events, err := bekh.contract.PastSignatureSubmittedEvents(
 		startBlock,
 		nil, // latest block
 		nil,
@@ -359,25 +317,6 @@ func (ec *ethereumChain) PastSignatureSubmittedEvents(
 	})
 
 	return result, nil
-}
-
-func (ec *ethereumChain) getKeepContract(
-	address common.Address,
-) (*contract.BondedECDSAKeep, error) {
-	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
-		address,
-		ec.accountKey,
-		ec.client,
-		ec.nonceManager,
-		ec.miningWaiter,
-		ec.blockCounter,
-		ec.transactionMutex,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return bondedECDSAKeepContract, nil
 }
 
 // TODO Move to keep-common and parametrize by number of retries and delay?
