@@ -29,12 +29,25 @@ func connectChain(
 		)
 	}
 
-	// FIXME tBTC stuff needs some luuuuv.
+	// DEPRECATED: config.Ethereum.ContractAddresses is the correct container
+	// for the TBTCSystem address from now on; default to Extensions.TBTC and
+	// warn if the ContractAddresses version is not set yet.
+	_, exists := config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName]
+	if !exists && len(config.Extensions.TBTC.TBTCSystem) != 0 {
+		logger.Warn(
+			"TBTCSystem address configuration in Extensions.TBTC.TBTCSystem " +
+				"is DEPRECATED and will be removed. PLease configure the " +
+				"TBTCSystem address alongside BondedECDSAKeep under " +
+				"Ethereum.ContractAddresses.",
+		)
+		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] =
+			config.Extensions.TBTC.TBTCSystem
+	}
+
 	ethereumChain, err := ethereum.Connect(
 		ctx,
 		ethereumKey,
 		&config.Ethereum,
-		config.Extensions.TBTC.TBTCSystem,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(

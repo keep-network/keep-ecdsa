@@ -76,7 +76,6 @@ func Connect(
 	ctx context.Context,
 	accountKey *keystore.Key,
 	config *ethereum.Config,
-	tbtcSystemAddressString string, // DEPRECATED: should be read from ethereum.Config.ContractAddresses
 ) (chain.Handle, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
@@ -115,7 +114,16 @@ func Connect(
 		)
 	}
 
-	tbtcSystemAddress := common.HexToAddress(tbtcSystemAddressString)
+	tbtcSystemAddress, err := config.ContractAddress(
+		BondedECDSAKeepFactoryContractName,
+	)
+	if err != nil {
+		// If the contract address can't be looked up, let this fail later on,
+		// but make sure an empty address is in place. A missing TBTCSystem
+		// address should only mean that we fail to start the tBTC app handling,
+		// not that the whole client fails to start.
+		tbtcSystemAddress = &common.Address{}
+	}
 
 	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(
 		BondedECDSAKeepFactoryContractName,
@@ -142,7 +150,7 @@ func Connect(
 		client:     wrappedClient,
 
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
-		tbtcSystemAddress:              tbtcSystemAddress,
+		tbtcSystemAddress:              *tbtcSystemAddress,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
