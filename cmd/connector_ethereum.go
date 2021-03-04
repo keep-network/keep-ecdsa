@@ -63,6 +63,18 @@ func connectChain(
 			applicationAddresses[0]
 	}
 
+	if exists && len(applicationAddresses) > 0 &&
+		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] != applicationAddresses[0] {
+		panic(
+			"Configured TBTCSystem contract and SanctionedApplications list " +
+				"do not match. Failing to boot to avoid misconfiguration. " +
+				"Please ensure ethereum.ContractAddresses." +
+				ethereum.TBTCSystemContractName + "is set to the correct " +
+				"tBTC system contract and remove SanctionedApplications " +
+				"configuration list, then try starting again.",
+		)
+	}
+
 	ethereumChain, err := ethereum.Connect(
 		ctx,
 		ethereumKey,
