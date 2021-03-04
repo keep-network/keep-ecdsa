@@ -121,6 +121,8 @@ Application configurations are stored in a `.toml` file and passed to the applic
 
 ==== Sample
 
+// TODO: build + publish this with our docs build process, include ../configs/config.toml.SAMPLE
+// directly.
 [source,toml]
 ----
 # This is a TOML configuration file.
@@ -136,13 +138,7 @@ Application configurations are stored in a `.toml` file and passed to the applic
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
   BondedECDSAKeepFactory = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-
-# Addresses of applications approved by the operator.
-[SanctionedApplications]
-  Addresses = [
-    "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
-    "0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
-  ]
+  TBTCSystem = "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
 
 [Storage]
   DataDir = "/my/secure/location"
@@ -205,19 +201,11 @@ Application configurations are stored in a `.toml` file and passed to the applic
 |Hex-encoded address of the BondedECDSAKeepFactory Contract.
 |""
 |Yes
-|===
 
-[%header,cols=4*]
-|===
-|`SanctionedApplications`
-|Description
-|Default
-|Required
-
-|`Addresses`
-|Comma delimited hex-encoded list of application addresses authorized to bond for a given operator.
-|[""]
-|Yes
+|`TBTCSystem`
+|Hex-encoded address of the TBTCSystem Contract.
+|""
+|Yes, if operating for tBTC v1
 |===
 
 [%header,cols=4*]
@@ -523,7 +511,7 @@ Bond Access for tBTC::
 
 These smart contracts can be authorized using the KEEP token dashboard. As always,
 authorized operator contracts may slash or seize tokens in case of operator
-misbehavior. Contracts authorized for bonding are set in `SanctionedApplications.Addresses`
+misbehavior. Contracts authorized for bonding are set in `ContractAddresses`
 in the config file. The operator must explicitly register as a candidate for selection,
 as a safeguard against choosing clients that have not yet booted up; the sanctioned
 applications list allows the client software to automatically register as a candidate

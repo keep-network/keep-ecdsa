@@ -57,13 +57,6 @@
   # increase redemption fee on tBTC deposit.
   # TBTCSystem = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 
-# Addresses of applications approved by the operator.
-[SanctionedApplications]
-  Addresses = [
-    "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
-    "0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
-  ]
-
 [Storage]
   DataDir = "/my/secure/location"
 
