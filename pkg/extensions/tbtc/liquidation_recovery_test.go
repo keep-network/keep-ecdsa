@@ -105,4 +105,20 @@ func Test_DeriveAddress(t *testing.T) {
 		16,
 		"3JuNnoMh8eWhtY5YLk3SMXfw7vm8y6zPLg",
 	)
+
+	// BIP141 at m/0
+	deriveAddressTester(
+		t,
+		"ypub6TMciWL8Pv4Rk41sLR1Z8ay9beZPMDyrV3T7tbb4Vtw3Vaf3uxWmug1hp5uEry9CbR6448YJEzUopCT8PSgKMPZVFVZKDc2kvQC8xHqdtZa",
+		7,
+		"3JbDbN7rYRFcBsU1BHwqrfua8TMAeMerqb",
+	)
+
+	// BIP141 at m/0'/0'
+	deriveAddressTester(
+		t,
+		"ypub6Uy1fJC1qHtHWY6Gkavofq465y6Wi23cLGfoaQBLbTA5DjKLv7R2Qzz3ZJi6ZU8EopNGZEmHuCrmY7Dey5Fu9Jxa3XAAxZQPHhD3WLaGsin",
+		2,
+		"38Nfe3mepBtWicrDghCAhZitgeQotggyfF",
+	)
 }
