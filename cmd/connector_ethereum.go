@@ -41,6 +41,26 @@ func connectChain(
 		)
 		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] =
 			config.Extensions.TBTC.TBTCSystem
+
+		// Flag that the contract address entry now exists to skip the next
+		// default.
+		exists = true
+	}
+
+	// DEPRECATED: config.Ethereum.ContractAddresses is the correct container
+	// for the TBTCSystem address from now on; read SanctionedApplications and
+	// assume it has a single entry that is TBTCSystem, warn if
+	// SanctionedApplications needs to be used.
+	applicationAddresses := config.SanctionedApplications.AddressesStrings
+	if !exists && len(applicationAddresses) == 1 {
+		logger.Warn(
+			"TBTCSystem address configuration in Extensions.TBTC.TBTCSystem " +
+				"is DEPRECATED and will be removed. Please configure the " +
+				"TBTCSystem address alongside BondedECDSAKeep under " +
+				"Ethereum.ContractAddresses.",
+		)
+		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] =
+			applicationAddresses[0]
 	}
 
 	ethereumChain, err := ethereum.Connect(

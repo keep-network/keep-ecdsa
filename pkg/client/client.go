@@ -58,7 +58,6 @@ func Initialize(
 	hostChain chain.Handle,
 	networkProvider net.Provider,
 	persistence persistence.Handle,
-	sanctionedApplications []common.Address,
 	clientConfig *Config,
 	tssConfig *tss.Config,
 ) *Handle {
@@ -255,27 +254,16 @@ func Initialize(
 
 	blockCounter := hostChain.BlockCounter()
 
-	supportedApplicationsByStringID := make(map[string]chain.BondedECDSAKeepApplicationHandle)
 	tbtcApplicationHandle, err := hostChain.TBTCApplicationHandle()
 	if err != nil {
 		logger.Errorf(
-			"failed to look up on-chain tBTC application information for chain " +
-				"[%s]; tBTC application functionality will be disabled",
+			"failed to look up on-chain tBTC application information for "+
+				"chain [%s]; this client WILL NOT ATTEMPT TO OPERATE "+
+				"on the tBTC system",
+			hostChain,
 		)
 	} else {
-		supportedApplicationsByStringID[tbtcApplicationHandle.ID().String()] =
-			tbtcApplicationHandle
-	}
-	for _, applicationAddress := range sanctionedApplications {
-		handle, exists := supportedApplicationsByStringID[applicationAddress.String()]
-		if exists {
-			go checkStatusAndRegisterForApplication(ctx, blockCounter, handle)
-		} else {
-			logger.Warnf(
-				"unknown sanctioned application address [%s]",
-				applicationAddress,
-			)
-		}
+		go checkStatusAndRegisterForApplication(ctx, blockCounter, tbtcApplicationHandle)
 	}
 
 	initializeExtensions(
