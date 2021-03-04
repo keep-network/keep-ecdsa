@@ -278,6 +278,7 @@ func (m *LiquidationRecoveryAnnounceMessage) Marshal() ([]byte, error) {
 	return (&pb.LiquidationRecoveryAnnounceMessage{
 		SenderID:           m.SenderID,
 		BtcRecoveryAddress: m.BtcRecoveryAddress,
+		MaxFeePerVByte:     m.MaxFeePerVByte,
 	}).Marshal()
 }
 
@@ -290,6 +291,7 @@ func (m *LiquidationRecoveryAnnounceMessage) Unmarshal(bytes []byte) error {
 
 	m.SenderID = pbMsg.SenderID
 	m.BtcRecoveryAddress = pbMsg.BtcRecoveryAddress
+	m.MaxFeePerVByte = pbMsg.MaxFeePerVByte
 
 	return nil
 }

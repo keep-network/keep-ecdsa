@@ -9,12 +9,20 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
+// RecoveryInfo represents the broadcasted information needed needed from the
+// other signers to complete liquidation recovery.
+type RecoveryInfo struct {
+	btcRecoveryAddress string
+	maxFeePerVByte     int32
+}
+
 // BroadcastRecoveryAddress broadcasts and receives the BTC recovery addresses
 // of each client so that each client can retrieve the underlying bitcoin in
 // the case that a keep is terminated.
 func BroadcastRecoveryAddress(
 	parentCtx context.Context,
 	btcRecoveryAddress string,
+	maxFeePerVByte int32,
 	groupID string,
 	memberID MemberID,
 	groupMemberIDs []MemberID,
@@ -45,7 +53,7 @@ func BroadcastRecoveryAddress(
 	}
 	broadcastChannel.Recv(ctx, handleLiquidationRecoveryAnnounceMessage)
 
-	memberBTCAddresses := make(map[string]string)
+	memberRecoveryInfo := make(map[string]RecoveryInfo)
 
 	go func() {
 		for {
@@ -68,20 +76,22 @@ func BroadcastRecoveryAddress(
 							)
 							break
 						}
-						memberBTCAddresses[memberAddress] = msg.BtcRecoveryAddress
+						memberRecoveryInfo[memberAddress] = RecoveryInfo{btcRecoveryAddress: msg.BtcRecoveryAddress, maxFeePerVByte: msg.MaxFeePerVByte}
 
 						logger.Infof(
-							"member [%s] from keep [%s] announced supplied btc address [%s] for liquidation recovery",
+							"member [%s] from keep [%s] announced supplied btc address [%s] for "+
+								"liquidation recovery with a max fee of [%v]",
 							memberAddress,
 							group.groupID,
 							msg.BtcRecoveryAddress,
+							msg.MaxFeePerVByte,
 						)
 
 						break
 					}
 				}
 
-				if len(memberBTCAddresses) == len(group.groupMemberIDs) {
+				if len(memberRecoveryInfo) == len(group.groupMemberIDs) {
 					cancel()
 				}
 			}
@@ -91,7 +101,11 @@ func BroadcastRecoveryAddress(
 	go func() {
 		sendMessage := func() {
 			if err := broadcastChannel.Send(ctx,
-				&LiquidationRecoveryAnnounceMessage{SenderID: group.memberID, BtcRecoveryAddress: btcRecoveryAddress},
+				&LiquidationRecoveryAnnounceMessage{
+					SenderID:           group.memberID,
+					BtcRecoveryAddress: btcRecoveryAddress,
+					MaxFeePerVByte:     maxFeePerVByte,
+				},
 			); err != nil {
 				logger.Errorf("failed to send btc recovery address: [%v]", err)
 			}
@@ -125,7 +139,7 @@ func BroadcastRecoveryAddress(
 				)
 				continue
 			}
-			if _, present := memberBTCAddresses[memberAddress]; !present {
+			if _, present := memberRecoveryInfo[memberAddress]; !present {
 				logger.Errorf(
 					"member [%s] has not supplied a btc recovery address for keep [%s]; "+
 						"check if keep client for that operator is active and "+

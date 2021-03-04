@@ -96,6 +96,10 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.BeneficiaryAddress },
 			expectedValue: "bcrt1q0umle4fe6penqqyzuwsysqezwwptuyqa82jas4",
 		},
+		"Extensions.TBTC.BTCRefunds.MaxFeePerVByte": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.MaxFeePerVByte },
+			expectedValue: int32(73),
+		},
 	}
 
 	for testName, test := range configReadTests {

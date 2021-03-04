@@ -88,6 +88,7 @@ type TBTC struct {
 // BTCRefunds stores configuration related to recovering BTC from a closed keep.
 type BTCRefunds struct {
 	BeneficiaryAddress string
+	MaxFeePerVByte     int32
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file

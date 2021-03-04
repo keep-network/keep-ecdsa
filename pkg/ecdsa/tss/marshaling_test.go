@@ -193,6 +193,7 @@ func TestLiquidationRecoveryAnnounceMessageMarshalling(t *testing.T) {
 	msg := &LiquidationRecoveryAnnounceMessage{
 		SenderID:           MemberID([]byte("member-1")),
 		BtcRecoveryAddress: "bcrt1qgvlmm6pe4epm7j3mjwkvdf2ymymu8tes04t6cr",
+		MaxFeePerVByte:     300,
 	}
 
 	unmarshaled := &LiquidationRecoveryAnnounceMessage{}
