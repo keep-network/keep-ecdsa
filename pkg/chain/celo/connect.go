@@ -123,7 +123,7 @@ func Connect(
 		// but make sure an empty address is in place. A missing TBTCSystem
 		// address should only mean that we fail to start the tBTC app handling,
 		// not that the whole client fails to start.
-		tbtcSystemAddress = &common.Address{}
+		tbtcSystemAddress = common.Address{}
 	}
 
 	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(
@@ -134,7 +134,7 @@ func Connect(
 	}
 
 	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
-		*bondedECDSAKeepFactoryContractAddress,
+		bondedECDSAKeepFactoryContractAddress,
 		accountKey,
 		wrappedClient,
 		nonceManager,
@@ -151,7 +151,7 @@ func Connect(
 		accountKey:                     accountKey,
 		client:                         wrappedClient,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
-		tbtcSystemAddress:              *tbtcSystemAddress,
+		tbtcSystemAddress:              tbtcSystemAddress,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
