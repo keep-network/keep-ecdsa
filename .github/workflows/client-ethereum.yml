@@ -50,24 +50,15 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-ethereum-cache
 
       - name: Create test results directory
-        run: mkdir test-results-ethereum
+        run: mkdir test-results
           
       - name: Run Go tests
         run: |
           docker run \
-            --volume $GITHUB_WORKSPACE/test-results-ethereum:/mnt/test-results-ethereum \
+            --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env-ethereum \
-            gotestsum --junitfile /mnt/test-results-ethereum/unit-tests-ethereum.xml
-
-      - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          files:  ./test-results-ethereum/unit-tests-ethereum.xml
-          check_name: Ethereum Client Test Results # name under which test results will be presented in GitHub (optional)
-          comment_on_pr: false # turns off commenting on Pull Requests
+            gotestsum --junitfile /mnt/test-results/unit-tests.xml
 
       # This step is executed after the tests as we want to configure it eventually
       # as image publication step.

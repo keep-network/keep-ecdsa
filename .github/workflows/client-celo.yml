@@ -45,24 +45,15 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-celo-cache
 
       - name: Create test results directory
-        run: mkdir test-results-celo
+        run: mkdir test-results
 
       - name: Run Go tests
         run: |
           docker run \
-            --volume $GITHUB_WORKSPACE/test-results-celo:/mnt/test-results-celo \
+            --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env-celo \
-            gotestsum --junitfile /mnt/test-results-celo/unit-tests-celo.xml -- -tags=celo,musl ./...
-
-      - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          files:  ./test-results-celo/unit-tests-celo.xml
-          check_name: Celo Client Test Results # name under which test results will be presented in GitHub (optional)
-          comment_on_pr: false # turns off commenting on Pull Requests
+            gotestsum --junitfile /mnt/test-results/unit-tests.xml -- -tags=celo,musl ./...
 
       # This step is executed after the tests as we want to configure it eventually
       # as image publication step.
