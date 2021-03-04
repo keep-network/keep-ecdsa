@@ -62,11 +62,11 @@ func PublicKeyToP2WPKHScriptCode(
 
 // DeriveAddress uses the specified extended public key and address index to
 // derive an address string in the appropriate format at the specified address
-// index. The extended public key is expected to already be at the account path
-// level (e.g. m/44'/0'/0' for [BIP44] xpubs), and addresses are derived within
-// the external chain subpath (`/0`). Thus, calling DeriveAddress with an xpub
-// generated at m/44'/0'/0' and passing the address index 5 will produce the
-// address at path m/44'/0'/0'/0/5.
+// index. The extended public key can be at any level. DeriveAddress will take
+// the first child `/0` until a depth of 4 is reached, and then produce the
+// address at the the supplied index. Thus, calling DeriveAddress with an xpub
+// generated at m/44'/0' and passing the address index 5 will produce the
+// address at path m/44'/0'/0/0/5.
 //
 // In cases where the extended public key is at depth 4, meaning the external or
 // internal chain is already included, DeriveAddress will directly derive the
