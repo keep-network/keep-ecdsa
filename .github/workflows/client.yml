@@ -43,9 +43,6 @@ jobs:
         with:
           target: gobuild
           tags: go-build-env
-          build-args: |
-            REVISION=${{ github.sha }}
-          # VERSION= ? TODO: Configure version, sample: 1.7.6
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -91,6 +88,9 @@ jobs:
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
           tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
+          build-args: |
+            REVISION=${{ github.sha }}
+          # VERSION= ? TODO: Configure version, sample: 1.7.6
           push: |
             ${{ startsWith(github.ref, 'refs/heads/releases')
               || startsWith(github.ref, 'refs/heads/rfc-18/ropsten') }}
