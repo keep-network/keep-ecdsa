@@ -54,7 +54,7 @@ func connectChain(
 	applicationAddresses := config.SanctionedApplications.AddressesStrings
 	if !exists && len(applicationAddresses) == 1 {
 		logger.Warn(
-			"TBTCSystem address configuration in Extensions.TBTC.TBTCSystem " +
+			"TBTCSystem address configuration in SanctionedApplications.Addresses " +
 				"is DEPRECATED and will be removed. Please configure the " +
 				"TBTCSystem address alongside BondedECDSAKeep under " +
 				"Ethereum.ContractAddresses.",
