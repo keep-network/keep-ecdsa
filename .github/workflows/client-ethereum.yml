@@ -48,17 +48,13 @@ jobs:
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-ethereum-cache
           cache-to: type=local,dest=/tmp/.buildx-ethereum-cache
-
-      - name: Create test results directory
-        run: mkdir test-results
           
       - name: Run Go tests
         run: |
           docker run \
-            --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env-ethereum \
-            gotestsum --junitfile /mnt/test-results/unit-tests.xml
+            gotestsum
 
       # This step is executed after the tests as we want to configure it eventually
       # as image publication step.
