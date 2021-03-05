@@ -79,5 +79,5 @@ jobs:
             REVISION=${{ github.sha }}
           # VERSION= ? TODO: Configure version, sample: 1.7.6
           push: |
-            ${{ startsWith(github.ref, 'refs/heads/releases')
+            ${{ startsWith(github.ref, 'refs/heads/releases/ropsten')
               || startsWith(github.ref, 'refs/heads/rfc-18/ropsten') }}
