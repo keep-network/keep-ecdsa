@@ -11,10 +11,7 @@ URLRPC = ""
   # Addresses of contracts deployed on ethereum blockchain.
   [ethereum.ContractAddresses]
   BondedECDSAKeepFactory = ""
-
-# Addresses of applications approved by the operator.
-[SanctionedApplications]
-Addresses = [""]
+  TBTCSystem = ""
 
 [LibP2P]
 Peers = []

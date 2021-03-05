@@ -35,31 +35,16 @@ type Handle interface {
 // BondedECDSAKeepFactory is an interface that provides ability to interact with
 // BondedECDSAKeepFactory ethereum contracts.
 type BondedECDSAKeepFactory interface {
-	// RegisterAsMemberCandidate registers client as a candidate to be selected
-	// to a keep.
-	RegisterAsMemberCandidate(application common.Address) error
+	// TBTCApplicationHandle returns a handle for interacting with the tBTC
+	// application associated with this BondedECDSAKeepManager. Returns nil with
+	// an error if no tBTC application exists for this manager.
+	TBTCApplicationHandle() (TBTCHandle, error)
 
 	// OnBondedECDSAKeepCreated installs a callback that is invoked when an
 	// on-chain notification of a new bonded ECDSA keep creation is seen.
 	OnBondedECDSAKeepCreated(
 		handler func(event *BondedECDSAKeepCreatedEvent),
 	) subscription.EventSubscription
-
-	// IsRegisteredForApplication checks if the operator is registered
-	// as a signer candidate in the factory for the given application.
-	IsRegisteredForApplication(application common.Address) (bool, error)
-
-	// IsEligibleForApplication checks if the operator is eligible to register
-	// as a signer candidate for the given application.
-	IsEligibleForApplication(application common.Address) (bool, error)
-
-	// IsStatusUpToDateForApplication checks if the operator's status
-	// is up to date in the signers' pool of the given application.
-	IsStatusUpToDateForApplication(application common.Address) (bool, error)
-
-	// UpdateStatusForApplication updates the operator's status in the signers'
-	// pool for the given application.
-	UpdateStatusForApplication(application common.Address) error
 
 	// IsOperatorAuthorized checks if the factory has the authorization to
 	// operate on stake represented by the provided operator.
@@ -81,7 +66,7 @@ type BondedECDSAKeepFactory interface {
 // honest cooperation in the threshold signature application that the keep
 // corresponds to.
 type BondedECDSAKeepHandle interface {
-	// GetKeepWithID returns the underlying keep's ID.
+	// ID returns the id of this keep in a host chain-agnostic format.
 	// FIXME currently this ID is still a common.Address 😬
 	ID() common.Address
 
@@ -147,6 +132,17 @@ type BondedECDSAKeepHandle interface {
 	// GetMembers returns keep's members.
 	GetMembers() ([]common.Address, error)
 
+	// IsThisOperatorMember returns true if the current operator belongs to the
+	// BondedECDSAKeep represented by this handle, false otherwise, or an error
+	// if the process of determining this fails.
+	IsThisOperatorMember() (bool, error)
+
+	// OperatorIndex returns the index of the current operator in this keep's
+	// set of members, or an error if the process of determining this fails. If
+	// the operator is not a member this will return -1 (and no error) and
+	// IsOperatorMember will return false.
+	OperatorIndex() (int, error)
+
 	// GetHonestThreshold returns keep's honest threshold.
 	GetHonestThreshold() (uint64, error)
 
@@ -160,4 +156,38 @@ type BondedECDSAKeepHandle interface {
 	PastSignatureSubmittedEvents(
 		startBlock uint64,
 	) ([]*SignatureSubmittedEvent, error)
+}
+
+// BondedECDSAKeepApplicationHandle is a handle to a specific application that
+// is allowed to use ECDSA keeps and their respective bonds for operations. Such
+// applications may require keeping the host chain up-to-date on the operator's
+// available bond for sortition purposes, and generally each operator's
+// authorizer will need to authorize the specific application to operate on
+// their stake. The BondedECDSAKeepApplicationHandle provides methods that wrap
+// this on-chain functionality.
+type BondedECDSAKeepApplicationHandle interface {
+	// ID returns the id of this application in a host chain-agnostic format.
+	// FIXME currently this ID is still a common.Address 😬
+	ID() common.Address
+
+	// RegisterAsMemberCandidate registers this instance's operator as a
+	// candidate to be selected to a keep.
+	RegisterAsMemberCandidate() error
+
+	// IsRegisteredForApplication checks if this instance's operator is
+	// registered as a signer candidate in the factory for the given
+	// application.
+	IsRegisteredForApplication() (bool, error)
+
+	// IsEligibleForApplication checks if this instance's operator is eligible
+	// to register as a signer candidate for the given application.
+	IsEligibleForApplication() (bool, error)
+
+	// IsStatusUpToDateForApplication checks if this instance's operator's
+	// status is up to date in the signers' pool of the given application.
+	IsStatusUpToDateForApplication() (bool, error)
+
+	// UpdateStatusForApplication updates this instance's operator's status in
+	// the signers' pool for the given application.
+	UpdateStatusForApplication() error
 }

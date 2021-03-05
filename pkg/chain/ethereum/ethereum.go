@@ -5,7 +5,6 @@ package ethereum
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -36,36 +35,6 @@ func (ec *ethereumChain) Signing() corechain.Signing {
 // BlockCounter returns a block counter.
 func (ec *ethereumChain) BlockCounter() corechain.BlockCounter {
 	return ec.blockCounter
-}
-
-// RegisterAsMemberCandidate registers client as a candidate to be selected
-// to a keep.
-func (ec *ethereumChain) RegisterAsMemberCandidate(application common.Address) error {
-	gasEstimate, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidateGasEstimate(application)
-	if err != nil {
-		return fmt.Errorf("failed to estimate gas [%v]", err)
-	}
-
-	// If we have multiple sortition pool join transactions queued - and that
-	// happens when multiple operators become eligible to join at the same time,
-	// e.g. after lowering the minimum bond requirement, transactions mined at
-	// the end may no longer have valid gas limits as they were estimated based
-	// on a different state of the pool. We add 20% safety margin to the original
-	// gas estimation to account for that.
-	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
-	transaction, err := ec.bondedECDSAKeepFactoryContract.RegisterMemberCandidate(
-		application,
-		ethutil.TransactionOptions{
-			GasLimit: uint64(gasEstimateWithMargin),
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	logger.Debugf("submitted RegisterMemberCandidate transaction with hash: [%x]", transaction.Hash())
-
-	return nil
 }
 
 // OnBondedECDSAKeepCreated installs a callback that is invoked when an on-chain
@@ -107,52 +76,6 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 // BalanceOf returns the stake balance of the specified address.
 func (ec *ethereumChain) BalanceOf(address common.Address) (*big.Int, error) {
 	return ec.bondedECDSAKeepFactoryContract.BalanceOf(address)
-}
-
-// IsRegisteredForApplication checks if the operator is registered
-// as a signer candidate in the factory for the given application.
-func (ec *ethereumChain) IsRegisteredForApplication(application common.Address) (bool, error) {
-	return ec.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
-		ec.Address(),
-		application,
-	)
-}
-
-// IsEligibleForApplication checks if the operator is eligible to register
-// as a signer candidate for the given application.
-func (ec *ethereumChain) IsEligibleForApplication(application common.Address) (bool, error) {
-	return ec.bondedECDSAKeepFactoryContract.IsOperatorEligible(
-		ec.Address(),
-		application,
-	)
-}
-
-// IsStatusUpToDateForApplication checks if the operator's status
-// is up to date in the signers' pool of the given application.
-func (ec *ethereumChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
-	return ec.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
-		ec.Address(),
-		application,
-	)
-}
-
-// UpdateStatusForApplication updates the operator's status in the signers'
-// pool for the given application.
-func (ec *ethereumChain) UpdateStatusForApplication(application common.Address) error {
-	transaction, err := ec.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
-		ec.Address(),
-		application,
-	)
-	if err != nil {
-		return err
-	}
-
-	logger.Debugf(
-		"submitted UpdateOperatorStatus transaction with hash: [%x]",
-		transaction.Hash(),
-	)
-
-	return nil
 }
 
 // IsOperatorAuthorized checks if the factory has the authorization to

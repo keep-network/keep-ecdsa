@@ -1,25 +1,24 @@
-//+build !celo
+//+build celo
 
-package ethereum
+package celo
 
 import (
 	"fmt"
 	"math/big"
 	"sort"
 
-	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/contract"
-
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/celo-org/celo-blockchain/common"
+	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	tbtcchain "github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/celo/contract"
+	tbtcchain "github.com/keep-network/tbtc/pkg/chain/celo/gen/contract"
 )
 
 // tbtcApplication represents a tBTC application handle conforming to
 // chain.TBTCHandle.
 type tbtcApplication struct {
-	chainHandle *ethereumChain
+	chainHandle *celoChain
 
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 
@@ -27,35 +26,35 @@ type tbtcApplication struct {
 	tbtcSystemContract *tbtcchain.TBTCSystem
 }
 
-func (ec *ethereumChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
+func (cc *celoChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 	var emptyAddress = common.Address{}
-	if ec.tbtcSystemAddress == emptyAddress {
+	if cc.tbtcSystemAddress == emptyAddress {
 		return nil, fmt.Errorf("TBTCSystem address unset")
 	}
 
 	tbtcSystemContract, err := tbtcchain.NewTBTCSystem(
-		ec.tbtcSystemAddress,
-		ec.accountKey,
-		ec.client,
-		ec.nonceManager,
-		ec.miningWaiter,
-		ec.blockCounter,
-		ec.transactionMutex,
+		cc.tbtcSystemAddress,
+		cc.accountKey,
+		cc.client,
+		cc.nonceManager,
+		cc.miningWaiter,
+		cc.blockCounter,
+		cc.transactionMutex,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &tbtcApplication{
-		chainHandle:                    ec,
-		bondedECDSAKeepFactoryContract: ec.bondedECDSAKeepFactoryContract,
-		tbtcSystemAddress:              ec.tbtcSystemAddress,
+		chainHandle:                    cc,
+		bondedECDSAKeepFactoryContract: cc.bondedECDSAKeepFactoryContract,
+		tbtcSystemAddress:              cc.tbtcSystemAddress,
 		tbtcSystemContract:             tbtcSystemContract,
 	}, nil
 }
 
-func (ta *tbtcApplication) ID() common.Address {
-	return ta.tbtcSystemAddress
+func (ta *tbtcApplication) ID() ExternalAddress {
+	return toExternalAddress(ta.tbtcSystemAddress)
 }
 
 func (ta *tbtcApplication) RegisterAsMemberCandidate() error {
@@ -76,7 +75,7 @@ func (ta *tbtcApplication) RegisterAsMemberCandidate() error {
 	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2)
 	transaction, err := ta.bondedECDSAKeepFactoryContract.RegisterMemberCandidate(
 		ta.tbtcSystemAddress,
-		ethutil.TransactionOptions{
+		celoutil.TransactionOptions{
 			GasLimit: uint64(gasEstimateWithMargin),
 		},
 	)
@@ -96,7 +95,7 @@ func (ta *tbtcApplication) RegisterAsMemberCandidate() error {
 // as a signer candidate in the factory for the given application.
 func (ta *tbtcApplication) IsRegisteredForApplication() (bool, error) {
 	return ta.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
-		ta.chainHandle.Address(),
+		fromExternalAddress(ta.chainHandle.Address()),
 		ta.tbtcSystemAddress,
 	)
 }
@@ -105,7 +104,7 @@ func (ta *tbtcApplication) IsRegisteredForApplication() (bool, error) {
 // as a signer candidate for the given application.
 func (ta *tbtcApplication) IsEligibleForApplication() (bool, error) {
 	return ta.bondedECDSAKeepFactoryContract.IsOperatorEligible(
-		ta.chainHandle.Address(),
+		fromExternalAddress(ta.chainHandle.Address()),
 		ta.tbtcSystemAddress,
 	)
 }
@@ -114,7 +113,7 @@ func (ta *tbtcApplication) IsEligibleForApplication() (bool, error) {
 // is up to date in the signers' pool of the given application.
 func (ta *tbtcApplication) IsStatusUpToDateForApplication() (bool, error) {
 	return ta.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
-		ta.chainHandle.Address(),
+		fromExternalAddress(ta.chainHandle.Address()),
 		ta.tbtcSystemAddress,
 	)
 }
@@ -123,7 +122,7 @@ func (ta *tbtcApplication) IsStatusUpToDateForApplication() (bool, error) {
 // pool for the given application.
 func (ta *tbtcApplication) UpdateStatusForApplication() error {
 	transaction, err := ta.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
-		ta.chainHandle.Address(),
+		fromExternalAddress(ta.chainHandle.Address()),
 		ta.tbtcSystemAddress,
 	)
 	if err != nil {
@@ -306,7 +305,7 @@ func (ta *tbtcApplication) Keep(
 		return nil, err
 	}
 
-	return ta.chainHandle.GetKeepWithID(keepAddress)
+	return ta.chainHandle.GetKeepWithID(toExternalAddress(keepAddress))
 }
 
 // RetrieveSignerPubkey retrieves the signer public key for the

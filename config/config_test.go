@@ -47,13 +47,7 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },
 			expectedValue: map[string]string{
 				"BondedECDSAKeepFactory": "0x2BBE98119100D664eb6dEe5b8DB978aEEeAf42D6",
-			},
-		},
-		"SanctionedApplications": {
-			readValueFunc: func(c *Config) interface{} { return c.SanctionedApplications.AddressesStrings },
-			expectedValue: []string{
-				"0x15095EA15759f4C7d09cA2fcEd179527487ae81b",
-				"0xda4c869B9073deac021344fd592c1BB0DC6Fc9a5",
+				"TBTCSystem":             "0xda4c869B9073deac021344fd592c1BB0DC6Fc9a5",
 			},
 		},
 		"Storage.DataDir": {
@@ -87,10 +81,6 @@ func TestReadConfig(t *testing.T) {
 		"TSS.PreParamsTargetPoolSize": {
 			readValueFunc: func(c *Config) interface{} { return c.TSS.GetPreParamsTargetPoolSize() },
 			expectedValue: 36,
-		},
-		"Extensions.TBTC.TBTCSystem": {
-			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.TBTCSystem },
-			expectedValue: "0xa4888eDD97A5a3A739B4E0807C71817c8a418273",
 		},
 	}
 
