@@ -136,18 +136,12 @@ func Start(c *cli.Context) error {
 		extractKeyFilePassword(config),
 	)
 
-	sanctionedApplications, err := config.SanctionedApplications.Addresses()
-	if err != nil {
-		return fmt.Errorf("failed to get sanctioned applications addresses: [%v]", err)
-	}
-
 	clientHandle := client.Initialize(
 		ctx,
 		operatorKeys.public,
 		chainHandle,
 		networkProvider,
 		persistence,
-		sanctionedApplications,
 		&config.Client,
 		&config.TSS,
 	)

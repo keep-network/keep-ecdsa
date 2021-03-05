@@ -36,7 +36,6 @@ func connectChain(
 		)
 	}
 
-	// TODO: initialize Celo extensions
 	operatorKeys := &operatorKeys{
 		public:  &celoKey.PrivateKey.PublicKey,
 		private: celoKey.PrivateKey,
