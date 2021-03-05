@@ -137,12 +137,6 @@ func (lc *localChain) StakeMonitor() (corechain.StakeMonitor, error) {
 	return nil, nil // not implemented.
 }
 
-// RegisterAsMemberCandidate registers client as a candidate to be selected
-// to a keep.
-func (lc *localChain) RegisterAsMemberCandidate(application common.Address) error {
-	return nil
-}
-
 // OnBondedECDSAKeepCreated is a callback that is invoked when an on-chain
 // notification of a new ECDSA keep creation is seen.
 func (lc *localChain) OnBondedECDSAKeepCreated(
@@ -165,22 +159,6 @@ func (lc *localChain) OnBondedECDSAKeepCreated(
 
 func (lc *localChain) BlockCounter() corechain.BlockCounter {
 	return lc.blockCounter
-}
-
-func (lc *localChain) IsRegisteredForApplication(application common.Address) (bool, error) {
-	panic("implement")
-}
-
-func (lc *localChain) IsEligibleForApplication(application common.Address) (bool, error) {
-	panic("implement")
-}
-
-func (lc *localChain) IsStatusUpToDateForApplication(application common.Address) (bool, error) {
-	panic("implement")
-}
-
-func (lc *localChain) UpdateStatusForApplication(application common.Address) error {
-	panic("implement")
 }
 
 func (lc *localChain) IsOperatorAuthorized(operator common.Address) (bool, error) {
