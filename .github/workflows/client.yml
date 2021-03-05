@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build-test-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -29,6 +29,7 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
+
       # TODO: This step was left here intentionally so we can track disk space
       # usage for a while. We were trying to fight problems with out of disk space
       # that happened due to the size of data restored from cache. The cache size
@@ -42,41 +43,41 @@ jobs:
         with:
           target: gobuild
           tags: go-build-env
-          build-args: |
-          # REVISION=${{ github.sha }} TODO: set revision only when we want to publish the image
-          # VERSION= ? TODO: Configure version, sample: 1.7.6
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
-      - name: Create test results directory
-        run: mkdir test-results
-          
       - name: Run Go tests
         run: |
           docker run \
-            --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
             go-build-env \
-            gotestsum --junitfile /mnt/test-results/unit-tests.xml
+            gotestsum
 
-      - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
+      - name: Login to Google Container Registry
+        if:  |
+          startsWith(github.ref, 'refs/heads/releases/ropsten') 
+            || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
+        uses: docker/login-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          files:  ./test-results/unit-tests.xml
-          check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
-          comment_on_pr: false # turns off commenting on Pull Requests
+          registry: ${{ secrets.GCR_REGISTRY_URL }}
+          username: _json_key
+          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
-      # This step is executed after the tests as we want to configure it eventually
-      # as image publication step.
-      - name: Build Docker Runtime Image
+      - name: Build and publish Docker Runtime Image
         uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: 'keep-ecdsa-wip' # TODO: change later to 'keep-ecdsa'
+          GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
-          tags: keep-ecdsa
-          labels: |
-            revision=${{ github.sha }}
-          # TODO: Check branch name and publish to a registry accordingly to the
-          # environment.
-          # push: true # publish to registry
+          # GCR image should be named according to following convention:
+          # HOSTNAME/PROJECT-ID/IMAGE:TAG
+          # We don't use TAG yet, will be added at later stages of work on RFC-18.
+          tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          labels: revision=${{ github.sha }}
+          build-args: |
+            REVISION=${{ github.sha }}
+          # VERSION= ? TODO: Configure version, sample: 1.7.6
+          push: |
+            ${{ startsWith(github.ref, 'refs/heads/releases')
+              || startsWith(github.ref, 'refs/heads/rfc-18/ropsten') }}
