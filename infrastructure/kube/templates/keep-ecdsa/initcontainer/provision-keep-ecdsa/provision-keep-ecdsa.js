@@ -49,6 +49,7 @@ const bondedECDSAKeepFactory = getWeb3Contract("BondedECDSAKeepFactory")
 const keepBondingContract = getWeb3Contract("KeepBonding")
 const tokenStakingContract = getWeb3Contract("TokenStaking")
 const keepTokenContract = getWeb3Contract("KeepToken")
+const tbtcSystemContract = getWeb3Contract("TBTCSystem")
 
 // Addresses of the external contracts (e.g. TBTCSystem) which should be set for
 // the InitContainer execution. Addresses should be separated with spaces.
@@ -333,9 +334,8 @@ async function createKeepTecdsaConfig() {
   parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory =
     bondedECDSAKeepFactory.options.address
 
-  parsedConfigFile.SanctionedApplications.Addresses = [].concat(
-    sanctionedApplications
-  )
+  parsedConfigFile.ethereum.ContractAddresses.TBTCSystem =
+    tbtcSystem.options.address
 
   parsedConfigFile.LibP2P.Peers = libp2pPeers
   parsedConfigFile.LibP2P.Port = libp2pPort

@@ -10,7 +10,6 @@ import (
 	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
-	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
 )
 
 func connectChain(
@@ -29,8 +28,58 @@ func connectChain(
 		)
 	}
 
-	// FIXME tBTC stuff needs some luuuuv.
-	ethereumChain, tbtcHandle, err := ethereum.Connect(ctx, ethereumKey, &config.Ethereum, config.Extensions.TBTC.TBTCSystem)
+	// DEPRECATED: config.Ethereum.ContractAddresses is the correct container
+	// for the TBTCSystem address from now on; default to Extensions.TBTC and
+	// warn if the ContractAddresses version is not set yet.
+	_, exists := config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName]
+	if !exists && len(config.Extensions.TBTC.TBTCSystem) != 0 {
+		logger.Warn(
+			"TBTCSystem address configuration in Extensions.TBTC.TBTCSystem " +
+				"is DEPRECATED and will be removed. Please configure the " +
+				"TBTCSystem address alongside BondedECDSAKeep under " +
+				"Ethereum.ContractAddresses.",
+		)
+		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] =
+			config.Extensions.TBTC.TBTCSystem
+
+		// Flag that the contract address entry now exists to skip the next
+		// default.
+		exists = true
+	}
+
+	// DEPRECATED: config.Ethereum.ContractAddresses is the correct container
+	// for the TBTCSystem address from now on; read SanctionedApplications and
+	// assume it has a single entry that is TBTCSystem, warn if
+	// SanctionedApplications needs to be used.
+	applicationAddresses := config.SanctionedApplications.AddressesStrings
+	if !exists && len(applicationAddresses) == 1 {
+		logger.Warn(
+			"TBTCSystem address configuration in SanctionedApplications.Addresses " +
+				"is DEPRECATED and will be removed. Please configure the " +
+				"TBTCSystem address alongside BondedECDSAKeep under " +
+				"Ethereum.ContractAddresses.",
+		)
+		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] =
+			applicationAddresses[0]
+	}
+
+	if exists && len(applicationAddresses) > 0 &&
+		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] != applicationAddresses[0] {
+		panic(
+			"Configured TBTCSystem contract and SanctionedApplications list " +
+				"do not match. Failing to boot to avoid misconfiguration. " +
+				"Please ensure ethereum.ContractAddresses." +
+				ethereum.TBTCSystemContractName + "is set to the correct " +
+				"tBTC system contract and remove SanctionedApplications " +
+				"configuration list, then try starting again.",
+		)
+	}
+
+	ethereumChain, err := ethereum.Connect(
+		ctx,
+		ethereumKey,
+		&config.Ethereum,
+	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
 			"failed to connect to ethereum node: [%v]",
@@ -38,27 +87,12 @@ func connectChain(
 		)
 	}
 
-	initializeExtensions(ctx, tbtcHandle)
-
 	operatorKeys := &operatorKeys{
 		public:  &ethereumKey.PrivateKey.PublicKey,
 		private: ethereumKey.PrivateKey,
 	}
 
 	return ethereumChain, operatorKeys, nil
-}
-
-func initializeExtensions(
-	ctx context.Context,
-	tbtcEthereumChain chain.TBTCHandle,
-) {
-	if tbtcEthereumChain != nil {
-		tbtc.Initialize(ctx, tbtcEthereumChain)
-	} else {
-		logger.Errorf(
-			"could not initialize tbtc chain extension",
-		)
-	}
 }
 
 func extractKeyFilePassword(config *config.Config) string {
