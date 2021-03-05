@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/celo-org/celo-blockchain/common"
+
 	"github.com/keep-network/keep-common/pkg/rate"
 
 	"github.com/keep-network/keep-common/pkg/chain/celo"
@@ -24,6 +26,7 @@ import (
 // Definitions of contract names.
 const (
 	BondedECDSAKeepFactoryContractName = "BondedECDSAKeepFactory"
+	TBTCSystemContractName             = "TBTCSystem"
 )
 
 // TODO: revisit those constants values and adjust them to Celo blockchain.
@@ -46,8 +49,9 @@ var (
 type celoChain struct {
 	config                         *celo.Config
 	accountKey                     *keystore.Key
-	client                         celoutil.HostChainClient
+	client                         celoutil.CeloClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
+	tbtcSystemAddress              common.Address
 	blockCounter                   *ethlike.BlockCounter
 	miningWaiter                   *ethlike.MiningWaiter
 	nonceManager                   *ethlike.NonceManager
@@ -111,6 +115,17 @@ func Connect(
 		)
 	}
 
+	tbtcSystemAddress, err := config.ContractAddress(
+		TBTCSystemContractName,
+	)
+	if err != nil {
+		// If the contract address can't be looked up, let this fail later on,
+		// but make sure an empty address is in place. A missing TBTCSystem
+		// address should only mean that we fail to start the tBTC app handling,
+		// not that the whole client fails to start.
+		tbtcSystemAddress = common.Address{}
+	}
+
 	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(
 		BondedECDSAKeepFactoryContractName,
 	)
@@ -119,7 +134,7 @@ func Connect(
 	}
 
 	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
-		*bondedECDSAKeepFactoryContractAddress,
+		bondedECDSAKeepFactoryContractAddress,
 		accountKey,
 		wrappedClient,
 		nonceManager,
@@ -136,6 +151,7 @@ func Connect(
 		accountKey:                     accountKey,
 		client:                         wrappedClient,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
+		tbtcSystemAddress:              tbtcSystemAddress,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
@@ -149,8 +165,8 @@ func Connect(
 
 func addClientWrappers(
 	config *celo.Config,
-	client celoutil.HostChainClient,
-) celoutil.HostChainClient {
+	client celoutil.CeloClient,
+) celoutil.CeloClient {
 	loggingClient := celoutil.WrapCallLogging(logger, client)
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {

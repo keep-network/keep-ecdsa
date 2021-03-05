@@ -34,7 +34,7 @@ module.exports = async function () {
 
       fileContent.ethereum.ContractAddresses.BondedECDSAKeepFactory = keepFactoryAddress
 
-      fileContent.SanctionedApplications.Addresses = [sanctionedApp]
+      fileContent.ethereum.ContractAddresses.TBTCSystem = sanctionedApp
 
       /*
             tomlify.toToml() writes our Seed/Port values as a float.  The added precision renders our config

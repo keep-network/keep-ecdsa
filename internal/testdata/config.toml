@@ -9,12 +9,7 @@
 
 [ethereum.ContractAddresses]
 	BondedECDSAKeepFactory = "0x2BBE98119100D664eb6dEe5b8DB978aEEeAf42D6"
-
-[SanctionedApplications]
-  Addresses = [
-    "0x15095EA15759f4C7d09cA2fcEd179527487ae81b",
-    "0xda4c869B9073deac021344fd592c1BB0DC6Fc9a5"
-  ]
+	TBTCSystem = "0xda4c869B9073deac021344fd592c1BB0DC6Fc9a5"
 
 [Storage]
 	DataDir = "/my/secure/location"
@@ -31,6 +26,3 @@
 [TSS]
 	PreParamsGenerationTimeout = "6m37s"
 	PreParamsTargetPoolSize = 36
-
-[Extensions.TBTC]
-	TBTCSystem = "0xa4888eDD97A5a3A739B4E0807C71817c8a418273"

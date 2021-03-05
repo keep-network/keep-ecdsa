@@ -27,8 +27,14 @@ const (
 	defaultLocalBlockConfirmations = 0
 )
 
-func newTestTBTC(chain chain.TBTCHandle) *tbtc {
-	tbtc := newTBTC(chain)
+func newTestTBTC(
+	localChain *local.TBTCLocalChain,
+) *tbtc {
+	tbtc := newTBTC(
+		localChain,
+		localChain.BlockCounter(),
+		localChain.BlockTimestamp,
+	)
 
 	tbtc.blockConfirmations = defaultLocalBlockConfirmations
 
@@ -2284,11 +2290,7 @@ func submitKeepPublicKey(
 	depositAddress string,
 	tbtcChain *local.TBTCLocalChain,
 ) ([64]byte, error) {
-	keepAddress, err := tbtcChain.KeepAddress(depositAddress)
-	if err != nil {
-		return [64]byte{}, err
-	}
-	keep, err := tbtcChain.GetKeepWithID(common.HexToAddress(keepAddress))
+	keep, err := tbtcChain.Keep(depositAddress)
 	if err != nil {
 		return [64]byte{}, err
 	}
@@ -2308,11 +2310,7 @@ func submitKeepSignature(
 	depositAddress string,
 	tbtcChain *local.TBTCLocalChain,
 ) (*local.Signature, error) {
-	keepAddress, err := tbtcChain.KeepAddress(depositAddress)
-	if err != nil {
-		return nil, err
-	}
-	keep, err := tbtcChain.GetKeepWithID(common.HexToAddress(keepAddress))
+	keep, err := tbtcChain.Keep(depositAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -2371,12 +2369,12 @@ func closeKeep(
 	depositAddress string,
 	tbtcChain *local.TBTCLocalChain,
 ) error {
-	keepAddress, err := tbtcChain.KeepAddress(depositAddress)
+	keep, err := tbtcChain.Keep(depositAddress)
 	if err != nil {
 		return err
 	}
 
-	err = tbtcChain.CloseKeep(common.HexToAddress(keepAddress))
+	err = tbtcChain.CloseKeep(keep.ID())
 	if err != nil {
 		return err
 	}
@@ -2388,12 +2386,12 @@ func terminateKeep(
 	depositAddress string,
 	tbtcChain *local.TBTCLocalChain,
 ) error {
-	keepAddress, err := tbtcChain.KeepAddress(depositAddress)
+	keep, err := tbtcChain.Keep(depositAddress)
 	if err != nil {
 		return err
 	}
 
-	err = tbtcChain.TerminateKeep(common.HexToAddress(keepAddress))
+	err = tbtcChain.TerminateKeep(keep.ID())
 	if err != nil {
 		return err
 	}
