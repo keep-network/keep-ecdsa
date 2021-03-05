@@ -1,16 +1,10 @@
-name: Go
+name: Go / Celo
 
-#TODO: extend the conditions once workflow gets tested together with other workflows
 on:
   push:
     branches:
-      # TODO: Run on master after we're fully migrated from Circle CI
-      # - master
-      - "rfc-18/**"
+      - master
   pull_request:
-      branches:
-      # TODO: Run on all branches after we're fully migrated from Circle CI
-      - "rfc-18/**"
   workflow_dispatch:
 
 jobs:
@@ -25,10 +19,10 @@ jobs:
       - name: Cache Docker layers
         uses: actions/cache@v2
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          path: /tmp/.buildx-celo-cache
+          key: ${{ runner.os }}-buildx-celo-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
+            ${{ runner.os }}-buildx-celo-
 
       # TODO: This step was left here intentionally so we can track disk space
       # usage for a while. We were trying to fight problems with out of disk space
@@ -42,22 +36,23 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           target: gobuild
-          tags: go-build-env
+          tags: go-build-env-celo
+          build-args: |
+            HOST_CHAIN=celo
           load: true # load image to local registry to use it in next steps
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-from: type=local,src=/tmp/.buildx-celo-cache
+          cache-to: type=local,dest=/tmp/.buildx-celo-cache
 
       - name: Run Go tests
         run: |
           docker run \
             --workdir /go/src/github.com/keep-network/keep-ecdsa \
-            go-build-env \
-            gotestsum
+            go-build-env-celo \
+            gotestsum -- -tags=celo,musl ./...
 
       - name: Login to Google Container Registry
         if:  |
-          startsWith(github.ref, 'refs/heads/releases/ropsten') 
-            || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
+          startsWith(github.ref, 'refs/heads/releases/alfajores')
         uses: docker/login-action@v1
         with:
           registry: ${{ secrets.GCR_REGISTRY_URL }}
@@ -67,7 +62,7 @@ jobs:
       - name: Build and publish Docker Runtime Image
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-ecdsa-wip' # TODO: change later to 'keep-ecdsa'
+          IMAGE_NAME: 'keep-ecdsa-celo'
           GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
           # GCR image should be named according to following convention:
@@ -76,8 +71,8 @@ jobs:
           tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
           build-args: |
+            HOST_CHAIN=celo
             REVISION=${{ github.sha }}
           # VERSION= ? TODO: Configure version, sample: 1.7.6
           push: |
-            ${{ startsWith(github.ref, 'refs/heads/releases')
-              || startsWith(github.ref, 'refs/heads/rfc-18/ropsten') }}
+            ${{ startsWith(github.ref, 'refs/heads/releases/alfajores') }}
