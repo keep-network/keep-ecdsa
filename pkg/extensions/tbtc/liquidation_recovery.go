@@ -241,7 +241,7 @@ func ConstructUnsignedTransaction(
 func BuildSignedTransactionHexString(
 	unsignedTransaction *wire.MsgTx,
 	signature *ecdsa.Signature,
-	publicKey *ecdsa.PublicKey,
+	publicKey *cecdsa.PublicKey,
 ) (string, error) {
 	// For safety's sake, work on a deep copy, as mutations follow.
 	signedTransaction := unsignedTransaction.Copy()
