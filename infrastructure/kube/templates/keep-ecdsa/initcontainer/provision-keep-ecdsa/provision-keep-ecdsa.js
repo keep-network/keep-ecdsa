@@ -4,6 +4,8 @@ const tomlify = require("tomlify-j0.4")
 const Web3 = require("web3")
 const HDWalletProvider = require("@truffle/hdwallet-provider")
 
+const hostChain = process.env.HOST_CHAIN || "ethereum"
+
 // ETH host info
 const ethRPCUrl = process.env.ETH_RPC_URL
 const ethWSUrl = process.env.ETH_WS_URL
@@ -326,15 +328,15 @@ async function createKeepTecdsaConfig() {
     fs.readFileSync("/tmp/keep-ecdsa-config-template.toml", "utf8")
   )
 
-  parsedConfigFile.ethereum.URL = ethWSUrl
-  parsedConfigFile.ethereum.URLRPC = ethRPCUrl
+  parsedConfigFile[hostChain].URL = ethWSUrl
+  parsedConfigFile[hostChain].URLRPC = ethRPCUrl
 
-  parsedConfigFile.ethereum.account.KeyFile = operatorKeyFile
+  parsedConfigFile[hostChain].account.KeyFile = operatorKeyFile
 
-  parsedConfigFile.ethereum.ContractAddresses.BondedECDSAKeepFactory =
+  parsedConfigFile[hostChain].ContractAddresses.BondedECDSAKeepFactory =
     bondedECDSAKeepFactory.options.address
 
-  parsedConfigFile.ethereum.ContractAddresses.TBTCSystem =
+  parsedConfigFile[hostChain].ContractAddresses.TBTCSystem =
     tbtcSystem.options.address
 
   parsedConfigFile.LibP2P.Peers = libp2pPeers
