@@ -71,6 +71,13 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
+			Name:      "complete-factory-upgrade",
+			Usage:     "Calls the method completeFactoryUpgrade on the BondedECDSAKeepVendor contract.",
+			ArgsUsage: "",
+			Action:    becdsakvCompleteFactoryUpgrade,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
 			Name:      "initialize",
 			Usage:     "Calls the method initialize on the BondedECDSAKeepVendor contract.",
 			ArgsUsage: "[registryAddress] [factory] ",
@@ -83,13 +90,6 @@ func init() {
 			ArgsUsage: "[_factory] ",
 			Action:    becdsakvUpgradeFactory,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "complete-factory-upgrade",
-			Usage:     "Calls the method completeFactoryUpgrade on the BondedECDSAKeepVendor contract.",
-			ArgsUsage: "",
-			Action:    becdsakvCompleteFactoryUpgrade,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}},
 	})
@@ -158,6 +158,39 @@ func becdsakvSelectFactory(c *cli.Context) error {
 }
 
 /// ------------------- Non-const methods -------------------
+
+func becdsakvCompleteFactoryUpgrade(c *cli.Context) error {
+	contract, err := initializeBondedECDSAKeepVendor(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.CompleteFactoryUpgrade()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallCompleteFactoryUpgrade(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
 
 func becdsakvInitialize(c *cli.Context) error {
 	contract, err := initializeBondedECDSAKeepVendor(c)
@@ -257,43 +290,10 @@ func becdsakvUpgradeFactory(c *cli.Context) error {
 	return nil
 }
 
-func becdsakvCompleteFactoryUpgrade(c *cli.Context) error {
-	contract, err := initializeBondedECDSAKeepVendor(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.CompleteFactoryUpgrade()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallCompleteFactoryUpgrade(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
 /// ------------------- Initialization -------------------
 
 func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepVendor, error) {
-	config, err := config.ReadEthereumConfig(c.GlobalString("config"))
+	config, err := config.ReadCeloConfig(c.GlobalString("config"))
 	if err != nil {
 		return nil, fmt.Errorf("error reading config from file: [%v]", err)
 	}

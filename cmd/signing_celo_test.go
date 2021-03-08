@@ -1,14 +1,14 @@
-//+build !celo
+//+build celo
 
 package cmd
 
 import (
 	"fmt"
+	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/celo-org/celo-blockchain/common"
 )
 
 // Signatures should match a signature format on mycrypto.com. A signing/verification
@@ -24,7 +24,7 @@ var validSignature = EthlikeSignature{
 
 func TestSign(t *testing.T) {
 	message := "verySecretMessage"
-	keyFilePath := "../internal/testdata/eth_key.json"
+	keyFilePath := "../internal/testdata/celo_key.json"
 	keyFilePassword := "password"
 
 	expectedResult := &EthlikeSignature{
@@ -34,7 +34,7 @@ func TestSign(t *testing.T) {
 		Version:   "2",
 	}
 
-	ethereumKey, err := ethutil.DecryptKeyFile(keyFilePath, keyFilePassword)
+	celoKey, err := celoutil.DecryptKeyFile(keyFilePath, keyFilePassword)
 	if err != nil {
 		t.Fatalf(
 			"failed to read key file [%s]: [%v]",
@@ -43,16 +43,16 @@ func TestSign(t *testing.T) {
 		)
 	}
 
-	ethereumSignature, err := sign(ethereumKey, message)
+	celoSignature, err := sign(celoKey, message)
 	if err != nil {
 		t.Errorf("signing failed: [%v]", err)
 	}
 
-	if !reflect.DeepEqual(ethereumSignature, expectedResult) {
+	if !reflect.DeepEqual(celoSignature, expectedResult) {
 		t.Errorf(
 			"unexpected signature\nexpected: %v\nactual:   %v",
 			expectedResult,
-			ethereumSignature,
+			celoSignature,
 		)
 	}
 }
@@ -65,64 +65,64 @@ func TestVerify_V0(t *testing.T) {
 }
 
 func TestVerify_V27(t *testing.T) {
-	// go-ethereum library produces a signature with V value of 0 or 1. In some
-	// chains the V value is expected to be 27 or 28. Even ethereum is sometimes
+	// celo-blockchain library produces a signature with V value of 0 or 1. In some
+	// chains the V value is expected to be 27 or 28. Even celo is sometimes
 	// inconsistent about that across their libraries. In our implementation we
 	// expect V to be 0 or 1, we're not currently supporting 27 or 28.
-	ethereumSignature := validSignature
-	ethereumSignature.Signature = "0xc8be189ab0ee691de7019eaa3de58558b84775085d9a0840908343ac690e02ca3f6e3d2dc70025b9b214d96c30e38c41f818cccd6f06b7a81c4afd26cbe6d6d61b"
+	celoSignature := validSignature
+	celoSignature.Signature = "0xc8be189ab0ee691de7019eaa3de58558b84775085d9a0840908343ac690e02ca3f6e3d2dc70025b9b214d96c30e38c41f818cccd6f06b7a81c4afd26cbe6d6d61b"
 
 	expectedError := fmt.Errorf("could not recover public key from signature [invalid signature recovery id]")
 
-	err := verify(&ethereumSignature)
+	err := verify(&celoSignature)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf("unexpected error\nexpected: [%v]\nactual:   [%v]", expectedError, err)
 	}
 }
 
 func TestVerify_WrongAddress(t *testing.T) {
-	ethereumSignature := validSignature
-	ethereumSignature.Address = common.HexToAddress("0x93df7c54c41A9D7FB17C1E8039d387a2A924708c")
+	celoSignature := validSignature
+	celoSignature.Address = common.HexToAddress("0x93df7c54c41A9D7FB17C1E8039d387a2A924708c")
 
 	expectedError := fmt.Errorf("invalid signer\n\texpected: 0x93df7c54c41A9D7FB17C1E8039d387a2A924708c\n\tactual:   0x4BCFC3099F12C53D01Da46695CC8776be584b946")
 
-	err := verify(&ethereumSignature)
+	err := verify(&celoSignature)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf("unexpected error\nexpected: [%v]\nactual:   [%v]", expectedError, err)
 	}
 }
 
 func TestVerify_WrongMessage(t *testing.T) {
-	ethereumSignature := validSignature
-	ethereumSignature.Message = "notTheSignedMessage"
+	celoSignature := validSignature
+	celoSignature.Message = "notTheSignedMessage"
 
 	expectedError := fmt.Errorf("invalid signer\n\texpected: 0x4BCFC3099F12C53D01Da46695CC8776be584b946\n\tactual:   0x19882d7da145A10d5AEEFEe217Fd87dE679b4bb1")
 
-	err := verify(&ethereumSignature)
+	err := verify(&celoSignature)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf("unexpected error\nexpected: [%v]\nactual:   [%v]", expectedError, err)
 	}
 }
 
 func TestVerify_WrongSignature(t *testing.T) {
-	ethereumSignature := validSignature
-	ethereumSignature.Signature = "0xc8be189ab0ee691de7019eaa3de58558b84775085d9a0840908343ac690e02ca3f6e3d2dc70025b9b214d96c30e38c41f818cccd6f06b7a81c4afd26cbe6d6d601"
+	celoSignature := validSignature
+	celoSignature.Signature = "0xc8be189ab0ee691de7019eaa3de58558b84775085d9a0840908343ac690e02ca3f6e3d2dc70025b9b214d96c30e38c41f818cccd6f06b7a81c4afd26cbe6d6d601"
 
 	expectedError := fmt.Errorf("invalid signer\n\texpected: 0x4BCFC3099F12C53D01Da46695CC8776be584b946\n\tactual:   0xb560e6c746138528509de08B782E3144E031a6B1")
 
-	err := verify(&ethereumSignature)
+	err := verify(&celoSignature)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf("unexpected error\nexpected: [%v]\nactual:   [%v]", expectedError, err)
 	}
 }
 
 func TestVerify_WrongVersion(t *testing.T) {
-	ethereumSignature := validSignature
-	ethereumSignature.Version = "1"
+	celoSignature := validSignature
+	celoSignature.Version = "1"
 
 	expectedError := fmt.Errorf("unsupported signature version\n\texpected: 2\n\tactual:   1")
 
-	err := verify(&ethereumSignature)
+	err := verify(&celoSignature)
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf("unexpected error\nexpected: [%v]\nactual:   [%v]", expectedError, err)
 	}
