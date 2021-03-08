@@ -8,6 +8,9 @@ metadata:
     keel.sh/policy: all
     app: keep
     type: ecdsa
+    id: '0'
+    network: ropsten
+    chain: ethereum
 spec:
   replicas: 1
   selector:
@@ -15,6 +18,8 @@ spec:
       app: keep
       type: ecdsa
       id: '0'
+      network: ropsten
+      chain: ethereum
   serviceName: keep-ecdsa-0
   volumeClaimTemplates:
     - metadata:
@@ -37,6 +42,8 @@ spec:
         app: keep
         type: ecdsa
         id: '0'
+        network: ropsten
+        chain: ethereum
     spec:
       containers:
         - name: keep-ecdsa

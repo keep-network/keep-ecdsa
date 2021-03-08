@@ -8,6 +8,8 @@ metadata:
     app: keep
     type: ecdsa
     id: '8'
+    network: ropsten
+    chain: ethereum
 spec:
   type: LoadBalancer
   ports:
@@ -18,3 +20,5 @@ spec:
     app: keep
     type: ecdsa
     id: '8'
+    network: ropsten
+    chain: ethereum
