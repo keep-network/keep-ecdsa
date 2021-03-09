@@ -18,6 +18,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -202,7 +203,7 @@ func Start(c *cli.Context) error {
 
 func initializeExtensions(
 	ctx context.Context,
-	config config.Extensions,
+	config eth.Config,
 	ethereumChain *ethereum.Chain,
 ) {
 	if len(config.TBTC.TBTCSystem) > 0 {
