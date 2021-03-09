@@ -334,10 +334,10 @@ async function createKeepTecdsaConfig() {
   parsedConfigFile[hostChain].account.KeyFile = operatorKeyFile
 
   parsedConfigFile[hostChain].ContractAddresses.BondedECDSAKeepFactory =
-    bondedECDSAKeepFactory.options.address
+      bondedECDSAKeepFactory.options.address
 
   parsedConfigFile[hostChain].ContractAddresses.TBTCSystem =
-    tbtcSystem.options.address
+      tbtcSystemContract.options.address
 
   parsedConfigFile.LibP2P.Peers = libp2pPeers
   parsedConfigFile.LibP2P.Port = libp2pPort
