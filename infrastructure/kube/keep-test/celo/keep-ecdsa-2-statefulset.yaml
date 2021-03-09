@@ -1,0 +1,140 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keep-ecdsa-celo-2
+  namespace: default
+  labels:
+    keel.sh/policy: all
+    app: keep
+    type: ecdsa
+    id: '2'
+    network: alfajores
+    chain: celo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keep
+      type: ecdsa
+      id: '2'
+      network: alfajores
+      chain: celo
+  serviceName: keep-ecdsa-celo-2
+  volumeClaimTemplates:
+    - metadata:
+        name: keep-ecdsa-data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 512Mi
+    - metadata:
+        name: keep-ecdsa-config
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 5Mi
+  template:
+    metadata:
+      labels:
+        app: keep
+        type: ecdsa
+        id: '2'
+        network: alfajores
+        chain: celo
+    spec:
+      containers:
+        - name: keep-ecdsa
+          image: gcr.io/keep-test-f3e0/keep-ecdsa-celo
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3919
+          env:
+            - name: KEEP_ETHEREUM_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: eth-account-passphrases
+                  key: account-2
+            - name: LOG_LEVEL
+              value: 'keep*=debug tss-lib=warning'
+            - name: IPFS_LOGGING_FMT
+              value: nocolor
+          volumeMounts:
+            - name: keep-ecdsa-config
+              mountPath: /mnt/keep-ecdsa/config
+            - name: keep-ecdsa-data
+              mountPath: /mnt/keep-ecdsa/data
+            - name: eth-account-keyfile
+              mountPath: /mnt/keep-ecdsa/keyfile
+          command:
+            [
+              'keep-ecdsa',
+              '-config',
+              '/mnt/keep-ecdsa/config/keep-ecdsa-config.toml',
+              'start',
+            ]
+      initContainers:
+        - name: initcontainer-provision-keep-ecdsa
+          image: gcr.io/keep-test-f3e0/initcontainer-provision-keep-ecdsa-celo
+          imagePullPolicy: Always
+          env:
+            - name: HOST_CHAIN
+              value: celo
+            - name: ETH_RPC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: celo-network-alfajores
+                  key: keep-ecdsa-rpc-url
+            - name: ETH_WS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: celo-network-alfajores
+                  key: keep-ecdsa-ws-url
+            - name: ETH_NETWORK_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: celo-network-alfajores
+                  key: network-id
+            - name: CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: celo-network-alfajores
+                  key: contract-owner-celo-account-address
+            - name: CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: celo-network-alfajores
+                  key: contract-owner-celo-account-private-key
+            - name: KEEP_TECDSA_ETH_KEYFILE_PATH
+              value: /mnt/keep-ecdsa/keyfile/account-2-keyfile
+            - name: KEEP_TECDSA_PEERS
+              value: /dns4/ecdsa-celo-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
+            - name: KEEP_TECDSA_ANNOUNCED_ADDRESSES
+              value: /dns4/ecdsa-celo-2.test.keep.network/tcp/3919
+            - name: KEEP_TECDSA_PORT
+              value: '3919'
+            - name: KEEP_DATA_DIR
+              value: /mnt/keep-ecdsa/data
+            - name: SANCTIONED_APPLICATIONS
+              value: '0x2B2976824682233807A197081119dA511AF12F7a' # Shall we extract this property to a configmap?
+          volumeMounts:
+            - name: keep-ecdsa-config
+              mountPath: /mnt/keep-ecdsa/config
+            - name: eth-account-keyfile
+              mountPath: /mnt/keep-ecdsa/keyfile
+          command: ['node', '/tmp/provision-keep-ecdsa.js']
+      volumes:
+        - name: keep-ecdsa-config
+          persistentVolumeClaim:
+            claimName: keep-ecdsa-config
+        - name: keep-ecdsa-data
+          persistentVolumeClaim:
+            claimName: keep-ecdsa-data
+        - name: eth-account-keyfile
+          configMap:
+            name: eth-account-info
+            items:
+              - key: account-2-keyfile
+                path: account-2-keyfile
