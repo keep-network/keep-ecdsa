@@ -3,13 +3,6 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,6 +11,24 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/urfave/cli"
+)
+
+// Type aliases and function variables needed to expose specific chain types
+// without forcing the client code to directly import the host chain module.
+// They are used by the common code from `signing_ethlike.go` file.
+type (
+	keystoreKey   = keystore.Key
+	commonAddress = common.Address
+)
+
+var (
+	decryptKeyFile        = ethutil.DecryptKeyFile
+	accountsTextHash      = accounts.TextHash
+	hexutilEncode         = hexutil.Encode
+	hexutilDecode         = hexutil.Decode
+	cryptoSigToPub        = crypto.SigToPub
+	cryptoPubkeyToAddress = crypto.PubkeyToAddress
+	cryptoSign            = crypto.Sign
 )
 
 // ChainSigningCommand contains the definition of the `signing ethereum`
@@ -34,7 +45,7 @@ var ChainSigningCommand = cli.Command{
 			ArgsUsage:   "[message]",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name: "eth-key-file,k",
+					Name: "key-file,k",
 					Usage: "Path to the ethereum key file. " +
 						"If not provided read the path from a config file.",
 				},
@@ -49,7 +60,7 @@ var ChainSigningCommand = cli.Command{
 			Usage:       "Verifies a signature",
 			Description: ethereumVerifyDescription,
 			Action:      EthereumVerify,
-			ArgsUsage:   "[ethereum-signature]",
+			ArgsUsage:   "[signature]",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "input-file,i",
@@ -60,17 +71,18 @@ var ChainSigningCommand = cli.Command{
 	},
 }
 
-const ethereumSignDescription = `Calculates an ethereum signature for a given message.
-The message is expected to be provided as a string, it is later hashed with
-ethereum's hashing algorithm and passed to Ethereum ECDSA signing. Signature is
-calculated in Ethereum specific format as a hexadecimal string representation of
-65-byte {R, S, V} parameters, where V is 0 or 1.
+const ethereumSignDescription = `Calculates an ethereum signature for a given 
+message. The message is expected to be provided as a string, it is later hashed 
+with ethereum's hashing algorithm and passed to Ethereum ECDSA signing. 
+Signature is calculated in Ethereum specific format as a hexadecimal string 
+representation of 65-byte {R, S, V} parameters, where V is 0 or 1.
 
-It requires an Ethereum key to be provided in an encrypted file. A path to the key file
-can be configured in a config file or specified directly with an 'eth-key-file' flag.
+It requires an Ethereum key to be provided in an encrypted file. A path to the 
+key file can be configured in a config file or specified directly with an 
+'eth-key-file' flag.
 
-The key file is expected to be encrypted with a password provided as ` + config.PasswordEnvVariable + `
-environment variable.
+The key file is expected to be encrypted with a password provided 
+as ` + config.PasswordEnvVariable + `environment variable.
 	
 The result is outputted in a common Ethereum signature format:
 {
@@ -83,8 +95,8 @@ The result is outputted in a common Ethereum signature format:
 If 'output-file' flag is set the result will be stored in a specified file path.
 `
 
-const ethereumVerifyDescription = `Verifies if a signature was calculated for a message 
-by an ethereum account identified by an address. 
+const ethereumVerifyDescription = `Verifies if a signature was calculated for 
+a message by an ethereum account identified by an address. 
 
 It expects a signature to be provided in a common Ethereum signature format:
 {
@@ -97,149 +109,24 @@ It expects a signature to be provided in a common Ethereum signature format:
 If 'input-file' flag is set the input will be read from a specified file path.
 `
 
-// EthereumSignature is a common Ethereum signature format.
-type EthereumSignature struct {
-	Address   common.Address `json:"address"`
-	Message   string         `json:"msg"`
-	Signature string         `json:"sig"`
-	Version   string         `json:"version"`
-}
-
-const ethSignatureVersion = "2"
-
 // EthereumSign signs a string using operator's ethereum key.
 func EthereumSign(c *cli.Context) error {
-	message := c.Args().First()
-	if len(message) == 0 {
-		return fmt.Errorf("invalid digest")
-	}
-
-	var ethKeyFilePath, ethKeyPassword string
-	// Check if `eth-key-file` flag was set. If not read the key file path from
-	// a config file.
-	if ethKeyFilePath = c.String("eth-key-file"); len(ethKeyFilePath) > 0 {
-		ethKeyPassword = os.Getenv(config.PasswordEnvVariable)
-	} else {
-		ethereumConfig, err := config.ReadEthereumConfig(c.GlobalString("config"))
+	keyFileConfigExtractor := func(
+		configFilePath string,
+	) (string, string, error) {
+		config, err := config.ReadEthereumConfig(configFilePath)
 		if err != nil {
-			return fmt.Errorf("failed while reading config file: [%v]", err)
+			return "", "", err
 		}
 
-		ethKeyFilePath = ethereumConfig.Account.KeyFile
-		ethKeyPassword = ethereumConfig.Account.KeyFilePassword
+		return config.Account.KeyFile, config.Account.KeyFilePassword, nil
 	}
 
-	ethereumKey, err := ethutil.DecryptKeyFile(ethKeyFilePath, ethKeyPassword)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to read key file [%s]: [%v]",
-			ethKeyFilePath,
-			err,
-		)
-	}
-
-	ethereumSignature, err := sign(ethereumKey, message)
-	if err != nil {
-		return fmt.Errorf("signing failed: [%v]", err)
-	}
-
-	marshaledSignature, err := json.Marshal(ethereumSignature)
-	if err != nil {
-		return fmt.Errorf("failed to marshal ethereum signature: [%v]", err)
-	}
-
-	return outputData(c, marshaledSignature, 0644) // store to user writeable file
+	return EthlikeSign(c, keyFileConfigExtractor)
 }
 
 // EthereumVerify verifies if a signature was calculated by a signer with the
 // given ethereum address.
 func EthereumVerify(c *cli.Context) error {
-	var marshaledSignature []byte
-	if inputFilePath := c.String("input-file"); len(inputFilePath) > 0 {
-		fileContent, err := ioutil.ReadFile(filepath.Clean(inputFilePath))
-		if err != nil {
-			return fmt.Errorf("failed to read a file: [%v]", err)
-		}
-		marshaledSignature = fileContent
-	} else {
-		signatureArg := c.Args().First()
-		if len(signatureArg) == 0 {
-			return fmt.Errorf("missing argument")
-		}
-
-		marshaledSignature = []byte(signatureArg)
-	}
-
-	ethereumSignature := &EthereumSignature{}
-	err := json.Unmarshal(marshaledSignature, ethereumSignature)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal ethereum signature: [%v]", err)
-	}
-
-	err = verify(ethereumSignature)
-	if err != nil {
-		return fmt.Errorf("signature verification failed: [%v]", err)
-	}
-
-	fmt.Printf(
-		"signature verified correctly, message [%s] was signed by [%s]\n",
-		ethereumSignature.Message,
-		ethereumSignature.Address.Hex(),
-	)
-
-	return nil
-}
-
-func sign(ethereumKey *keystore.Key, message string) (*EthereumSignature, error) {
-	digest := accounts.TextHash([]byte(message))
-
-	signature, err := crypto.Sign(digest[:], ethereumKey.PrivateKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign: [%v]", err)
-	}
-
-	return &EthereumSignature{
-		Address:   ethereumKey.Address,
-		Message:   message,
-		Signature: hexutil.Encode(signature),
-		Version:   ethSignatureVersion,
-	}, nil
-}
-
-func verify(ethereumSignature *EthereumSignature) error {
-	if ethereumSignature.Version != ethSignatureVersion {
-		return fmt.Errorf(
-			"unsupported ethereum signature version\n"+
-				"\texpected: %s\n"+
-				"\tactual:   %s",
-			ethSignatureVersion,
-			ethereumSignature.Version,
-		)
-	}
-
-	digest := accounts.TextHash([]byte(ethereumSignature.Message))
-
-	signatureBytes, err := hexutil.Decode(ethereumSignature.Signature)
-	if err != nil {
-		return fmt.Errorf("failed to decode signature: [%v]", err)
-	}
-
-	publicKey, err := crypto.SigToPub(digest[:], signatureBytes)
-	if err != nil {
-		return fmt.Errorf("could not recover public key from signature [%v]", err)
-	}
-
-	recoveredAddress := crypto.PubkeyToAddress(*publicKey)
-
-	if !bytes.Equal(recoveredAddress.Bytes(), ethereumSignature.Address.Bytes()) {
-		return fmt.Errorf(
-			"invalid signer\n"+
-				"\texpected: %s\n"+
-				"\tactual:   %s",
-			ethereumSignature.Address.Hex(),
-			recoveredAddress.Hex(),
-		)
-	}
-
-	return nil
+	return EthlikeVerify(c)
 }
