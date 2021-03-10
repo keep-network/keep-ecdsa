@@ -516,3 +516,22 @@ func (tec *TBTCEthereumChain) DepositAddressForKeepAddress(
 	lastCreatedEvent := createdEvents[len(createdEvents)-1]
 	return lastCreatedEvent.DepositAddress, nil
 }
+
+// FundingInfo retrieves the funding info for a particular deposit address
+func (tec *TBTCEthereumChain) FundingInfo(
+	depositAddress string,
+) (*chain.FundingInfo, error) {
+	deposit, err := tec.getDepositContract(depositAddress)
+	if err != nil {
+		return nil, err
+	}
+	fundingInfo, err := deposit.FundingInfo()
+	if err != nil {
+		return nil, err
+	}
+	return &chain.FundingInfo{
+		UtxoValueBytes: fundingInfo.UtxoValueBytes,
+		FundedAt:       fundingInfo.FundedAt,
+		UtxoOutpoint:   fundingInfo.UtxoOutpoint,
+	}, nil
+}

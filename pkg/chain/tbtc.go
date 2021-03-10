@@ -114,6 +114,18 @@ type TBTCSystem interface {
 	DepositAddressForKeepAddress(
 		keepAddress string,
 	) (string, error)
+
+	// FundingInfo retrieves the funding info for a particular deposit address
+	FundingInfo(
+		depositAddress string,
+	) (*FundingInfo, error)
+}
+
+// FundingInfo represents the funding information for a tbtc deposit
+type FundingInfo struct {
+	UtxoValueBytes [8]uint8
+	FundedAt       *big.Int
+	UtxoOutpoint   []uint8
 }
 
 // CreatedEvent is an event emitted when a deposit has been created.

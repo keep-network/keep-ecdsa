@@ -25,6 +25,8 @@ type localDeposit struct {
 	pubkey      []byte
 	state       chain.DepositState
 
+	fundingInfo *chain.FundingInfo
+
 	utxoValue           *big.Int
 	redemptionDigest    [32]byte
 	redemptionFee       *big.Int
@@ -182,6 +184,16 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 		keepAddress: keepAddress.Hex(),
 		state:       chain.AwaitingSignerSetup,
 		utxoValue:   big.NewInt(defaultUTXOValue),
+		fundingInfo: &chain.FundingInfo{
+			UtxoValueBytes: [8]uint8{0, 101, 205, 29, 0, 0, 0, 0}, // 0x0065cd1d00000000
+			FundedAt:       big.NewInt(1615172517),
+			UtxoOutpoint: []uint8{
+				194, 124, 59, 250, 130, 147, 172, 107, 48, 59,
+				159, 116, 85, 174, 35, 183, 194, 75, 136, 20,
+				145, 90, 101, 17, 151, 96, 39, 6, 78, 252,
+				77, 81, 1, 0, 0, 0,
+			}, // 0xc27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d5101000000
+		},
 		createdEvents: []*chain.CreatedEvent{{
 			DepositAddress: depositAddress,
 			KeepAddress:    keepAddress.Hex(),
@@ -779,6 +791,17 @@ func (tlc *TBTCLocalChain) DepositAddressForKeepAddress(
 	}
 	lastCreatedEvent := createdEvents[len(createdEvents)-1]
 	return lastCreatedEvent.DepositAddress, nil
+}
+
+// FundingInfo retrieves the funding info for a particular deposit address
+func (tlc *TBTCLocalChain) FundingInfo(
+	depositAddress string,
+) (*chain.FundingInfo, error) {
+	deposit, ok := tlc.deposits[depositAddress]
+	if !ok {
+		return nil, fmt.Errorf("no deposit with address [%v]", depositAddress)
+	}
+	return deposit.fundingInfo, nil
 }
 
 // Logger surfaces the chain's logger
