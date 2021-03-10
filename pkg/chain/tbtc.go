@@ -103,12 +103,17 @@ type TBTCSystem interface {
 
 	// PastDepositRedemptionRequestedEvents returns all redemption requested
 	// events for the given deposit which occurred after the provided start block.
-	// All implementations should returns those events sorted by the
+	// All implementations should return those events sorted by the
 	// block number in the ascending order.
 	PastDepositRedemptionRequestedEvents(
 		startBlock uint64,
 		depositAddress string,
 	) ([]*DepositRedemptionRequestedEvent, error)
+
+	// DepositAddressForKeepAddress retrieves the deposit address for a particular keep address
+	DepositAddressForKeepAddress(
+		keepAddress string,
+	) (string, error)
 }
 
 // CreatedEvent is an event emitted when a deposit has been created.

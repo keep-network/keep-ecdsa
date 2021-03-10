@@ -501,3 +501,18 @@ func (ta *tbtcApplication) getDepositContract(
 
 	return depositContract, nil
 }
+
+// DepositAddressForKeepAddress retrieves the deposit address for a particular keep address
+func (tec *TBTCEthereumChain) DepositAddressForKeepAddress(
+	keepAddress string,
+) (string, error) {
+	createdEvents, err := tec.PastCreatedEvents(0, keepAddress)
+	if err != nil {
+		return "", err
+	}
+	if len(createdEvents) == 0 {
+		return "", fmt.Errorf("There were no created events associated to keep address [%s]", keepAddress)
+	}
+	lastCreatedEvent := createdEvents[len(createdEvents)-1]
+	return lastCreatedEvent.DepositAddress, nil
+}

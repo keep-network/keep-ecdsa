@@ -764,6 +764,23 @@ func (tlc *TBTCLocalChain) SetAlwaysFailingTransactions(transactions ...string) 
 	}
 }
 
+// DepositAddressForKeepAddress retrieves the deposit address for a particular keep address
+func (tlc *TBTCLocalChain) DepositAddressForKeepAddress(
+	keepAddress string,
+) (string, error) {
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
+	createdEvents, err := tlc.PastCreatedEvents(0, keepAddress)
+	if err != nil {
+		return "", err
+	}
+	if len(createdEvents) == 0 {
+		return "", fmt.Errorf("There were no created events associated to keep address [%s]", keepAddress)
+	}
+	lastCreatedEvent := createdEvents[len(createdEvents)-1]
+	return lastCreatedEvent.DepositAddress, nil
+}
+
 // Logger surfaces the chain's logger
 func (tlc *TBTCLocalChain) Logger() *ChainLogger {
 	return tlc.logger
