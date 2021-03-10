@@ -12,9 +12,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
+
 	"github.com/keep-network/keep-core/pkg/operator"
 
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -22,7 +23,6 @@ import (
 	"github.com/keep-network/keep-ecdsa/internal/testdata"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
-	"github.com/keep-network/keep-ecdsa/pkg/utils/testutils"
 )
 
 func TestGenerateKeyAndSign(t *testing.T) {
@@ -127,7 +127,10 @@ func TestGenerateKeyAndSign(t *testing.T) {
 
 	firstSigner := signers[groupMemberIDs[0].String()]
 	firstPublicKey := firstSigner.PublicKey()
-	curve := secp256k1.S256()
+
+	// S256 function is defined in respective `tss-*-test.go` files. The file
+	// in use depends on the passed build tags.
+	curve := S256()
 
 	if !curve.IsOnCurve(firstPublicKey.X, firstPublicKey.Y) {
 		t.Error("public key is not on curve")
@@ -215,7 +218,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 	}
 
 	if !cecdsa.Verify(
-		(*cecdsa.PublicKey)(firstPublicKey),
+		firstPublicKey,
 		digest[:],
 		firstSignature.R,
 		firstSignature.S,
@@ -223,7 +226,7 @@ func TestGenerateKeyAndSign(t *testing.T) {
 		t.Errorf("invalid signature: [%+v]", firstSignature)
 	}
 
-	testutils.VerifyEthereumSignature(t, digest[:], firstSignature, firstPublicKey)
+	verifyEthereumSignature(t, digest[:], firstSignature, firstPublicKey)
 }
 
 func generateMemberKeys(groupSize int) ([]MemberID, error) {
@@ -243,4 +246,59 @@ func generateMemberKeys(groupSize int) ([]MemberID, error) {
 
 func newTestNetProvider(memberNetworkKey *key.NetworkPublic) net.Provider {
 	return local.ConnectWithKey(memberNetworkKey)
+}
+
+// verifyEthereumSignature validates that signature in form (r, s, recoveryID)
+// is a valid ethereum signature. `SigToPub` is a wrapper on `Ecrecover` that
+// allows us to validate a signature in the same way as it's done on-chain, we
+// extract public key from the signature and compare it with signer's public key.
+func verifyEthereumSignature(
+	t *testing.T,
+	hash []byte,
+	signature *ecdsa.Signature,
+	expectedPublicKey *cecdsa.PublicKey,
+) {
+
+	serializedSignature, err := serializeSignature(signature)
+	if err != nil {
+		t.Fatalf("failed to serialize signature: [%v]", err)
+	}
+
+	// SigToPub function is defined in respective `tss-*-test.go` files. The
+	// file in use depends on the passed build tags.
+	publicKey, err := SigToPub(hash, serializedSignature)
+	if err != nil {
+		t.Fatalf("failed to get public key from signature: [%v]", err)
+	}
+
+	if expectedPublicKey.X.Cmp(publicKey.X) != 0 ||
+		expectedPublicKey.Y.Cmp(publicKey.Y) != 0 {
+		t.Errorf(
+			"invalid public key:\nexpected: [%x]\nactual:   [%x]\n",
+			expectedPublicKey,
+			publicKey,
+		)
+	}
+}
+
+func serializeSignature(signature *ecdsa.Signature) ([]byte, error) {
+	var serializedBytes []byte
+
+	r, err := byteutils.LeftPadTo32Bytes(signature.R.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := byteutils.LeftPadTo32Bytes(signature.S.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	recoveryID := byte(signature.RecoveryID)
+
+	serializedBytes = append(serializedBytes, r...)
+	serializedBytes = append(serializedBytes, s...)
+	serializedBytes = append(serializedBytes, recoveryID)
+
+	return serializedBytes, nil
 }

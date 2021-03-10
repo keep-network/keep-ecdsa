@@ -1,0 +1,76 @@
+name: Staker Rewards
+
+#TODO: extend the conditions once workflow gets tested together with other workflows
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "staker-rewards/**"
+      - ".github/workflows/staker-rewards.yml"
+  pull_request:
+    paths:
+      - "staker-rewards/**"
+      - ".github/workflows/staker-rewards.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./staker-rewards
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./staker-rewards
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint

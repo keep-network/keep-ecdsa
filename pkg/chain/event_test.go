@@ -1,4 +1,4 @@
-package eth
+package chain
 
 import (
 	"testing"

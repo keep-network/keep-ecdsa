@@ -1,3 +1,5 @@
+//+build !celo
+
 package ethereum
 
 import (
@@ -10,7 +12,7 @@ import (
 )
 
 type ethereumStakeMonitor struct {
-	ethereum *Chain
+	ethereum *ethereumChain
 }
 
 func (esm *ethereumStakeMonitor) HasMinimumStake(address string) (bool, error) {
@@ -33,13 +35,13 @@ func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error)
 }
 
 // StakeMonitor generates a new `chain.StakeMonitor` from the chain
-func (ec *Chain) StakeMonitor() (chain.StakeMonitor, error) {
+func (ec *ethereumChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return &ethereumStakeMonitor{ec}, nil
 }
 
 type ethereumStaker struct {
 	address  string
-	ethereum *Chain
+	ethereum *ethereumChain
 }
 
 func (es *ethereumStaker) Address() relaychain.StakerAddress {

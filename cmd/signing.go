@@ -18,7 +18,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -60,7 +60,7 @@ func init() {
 				Action:    SignDigest,
 				ArgsUsage: "[unprefixed-hex-digest] [key-shares-dir]",
 			},
-			EthereumSigningCommand,
+			ChainSigningCommand,
 		},
 	}
 }
@@ -259,7 +259,7 @@ func SignDigest(c *cli.Context) error {
 			)
 		}
 
-		publicKey, err := eth.SerializePublicKey(signers[0].PublicKey())
+		publicKey, err := chain.SerializePublicKey(signers[0].PublicKey())
 		if err != nil {
 			return err
 		}

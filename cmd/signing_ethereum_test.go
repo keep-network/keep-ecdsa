@@ -1,3 +1,5 @@
+//+build !celo
+
 package cmd
 
 import (
@@ -13,7 +15,7 @@ import (
 // tool available on https://mycrypto.com/sign-and-verify-message can be used to
 // cross-check correctness of signatures provided by our implementation.
 
-var validSignature = EthereumSignature{
+var validSignature = EthlikeSignature{
 	Address:   common.HexToAddress("0x4BCFC3099F12C53D01Da46695CC8776be584b946"),
 	Message:   "verySecretMessage",
 	Signature: "0xc8be189ab0ee691de7019eaa3de58558b84775085d9a0840908343ac690e02ca3f6e3d2dc70025b9b214d96c30e38c41f818cccd6f06b7a81c4afd26cbe6d6d600",
@@ -25,7 +27,7 @@ func TestSign(t *testing.T) {
 	keyFilePath := "../internal/testdata/eth_key.json"
 	keyFilePassword := "password"
 
-	expectedResult := &EthereumSignature{
+	expectedResult := &EthlikeSignature{
 		Address:   common.HexToAddress("0x4BCFC3099F12C53D01Da46695CC8776be584b946"),
 		Message:   message,
 		Signature: "0xc8be189ab0ee691de7019eaa3de58558b84775085d9a0840908343ac690e02ca3f6e3d2dc70025b9b214d96c30e38c41f818cccd6f06b7a81c4afd26cbe6d6d600",
@@ -118,7 +120,7 @@ func TestVerify_WrongVersion(t *testing.T) {
 	ethereumSignature := validSignature
 	ethereumSignature.Version = "1"
 
-	expectedError := fmt.Errorf("unsupported ethereum signature version\n\texpected: 2\n\tactual:   1")
+	expectedError := fmt.Errorf("unsupported signature version\n\texpected: 2\n\tactual:   1")
 
 	err := verify(&ethereumSignature)
 	if !reflect.DeepEqual(expectedError, err) {

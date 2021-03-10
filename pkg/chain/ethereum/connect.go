@@ -1,6 +1,9 @@
+//+build !celo
+
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sync"
@@ -12,10 +15,18 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/contract"
+)
+
+// Definitions of contract names.
+const (
+	BondedECDSAKeepFactoryContractName = "BondedECDSAKeepFactory"
+	TBTCSystemContractName             = "TBTCSystem"
 )
 
 var (
@@ -33,12 +44,13 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-// Chain is an implementation of ethereum blockchain interface.
-type Chain struct {
+// ethereumChain is an implementation of ethereum blockchain interface.
+type ethereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
 	client                         ethutil.EthereumClient
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
+	tbtcSystemAddress              common.Address
 	blockCounter                   *ethlike.BlockCounter
 	miningWaiter                   *ethlike.MiningWaiter
 	nonceManager                   *ethlike.NonceManager
@@ -60,7 +72,11 @@ type Chain struct {
 
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
-func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) {
+func Connect(
+	ctx context.Context,
+	accountKey *keystore.Key,
+	config *ethereum.Config,
+) (chain.Handle, error) {
 	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, err
@@ -98,6 +114,17 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 		)
 	}
 
+	tbtcSystemAddress, err := config.ContractAddress(
+		TBTCSystemContractName,
+	)
+	if err != nil {
+		// If the contract address can't be looked up, let this fail later on,
+		// but make sure an empty address is in place. A missing TBTCSystem
+		// address should only mean that we fail to start the tBTC app handling,
+		// not that the whole client fails to start.
+		tbtcSystemAddress = common.Address{}
+	}
+
 	bondedECDSAKeepFactoryContractAddress, err := config.ContractAddress(
 		BondedECDSAKeepFactoryContractName,
 	)
@@ -105,7 +132,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 		return nil, err
 	}
 	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
-		*bondedECDSAKeepFactoryContractAddress,
+		bondedECDSAKeepFactoryContractAddress,
 		accountKey,
 		wrappedClient,
 		nonceManager,
@@ -117,16 +144,22 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*Chain, error) 
 		return nil, err
 	}
 
-	return &Chain{
-		config:                         config,
-		accountKey:                     accountKey,
-		client:                         wrappedClient,
+	ethereum := &ethereumChain{
+		config:     config,
+		accountKey: accountKey,
+		client:     wrappedClient,
+
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
+		tbtcSystemAddress:              tbtcSystemAddress,
 		blockCounter:                   blockCounter,
 		nonceManager:                   nonceManager,
 		miningWaiter:                   miningWaiter,
 		transactionMutex:               transactionMutex,
-	}, nil
+	}
+
+	ethereum.initializeBalanceMonitoring(ctx)
+
+	return ethereum, nil
 }
 
 func addClientWrappers(

@@ -1,4 +1,4 @@
-package eth
+package chain
 
 import (
 	"math/big"
@@ -6,9 +6,10 @@ import (
 	"github.com/keep-network/keep-common/pkg/subscription"
 )
 
-// TBTCHandle represents a chain handle extended with TBTC-specific capabilities.
+// TBTCHandle represents handle to the tBTC on-chain application. It extends the
+// BondedECDSAKeepApplicationHandle interface with tBTC-specific functionality.
 type TBTCHandle interface {
-	Handle
+	BondedECDSAKeepApplicationHandle
 
 	Deposit
 	TBTCSystem
@@ -17,9 +18,8 @@ type TBTCHandle interface {
 // Deposit is an interface that provides ability to interact
 // with Deposit contracts.
 type Deposit interface {
-	// KeepAddress returns the underlying keep address for the
-	// provided deposit.
-	KeepAddress(depositAddress string) (string, error)
+	// Keep returns the underlying keep for the provided deposit.
+	Keep(depositAddress string) (BondedECDSAKeepHandle, error)
 
 	// RetrieveSignerPubkey retrieves the signer public key for the
 	// provided deposit.

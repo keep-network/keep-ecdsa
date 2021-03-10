@@ -7,8 +7,8 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
-	"github.com/ethereum/go-ethereum/common"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	corechain "github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 const statusCheckIntervalBlocks = 100
@@ -33,8 +33,8 @@ const eligibilityRetryDelay = 20 * time.Minute
 // removed from the pool it triggers the registration process from the begining.
 func checkStatusAndRegisterForApplication(
 	ctx context.Context,
-	ethereumChain eth.Handle,
-	application common.Address,
+	blockCounter corechain.BlockCounter,
+	application chain.BondedECDSAKeepApplicationHandle,
 ) {
 RegistrationLoop:
 	for {
@@ -42,11 +42,11 @@ RegistrationLoop:
 		case <-ctx.Done():
 			return
 		default:
-			isRegistered, err := ethereumChain.IsRegisteredForApplication(application)
+			isRegistered, err := application.IsRegisteredForApplication()
 			if err != nil {
 				logger.Errorf(
 					"failed to check if member is registered for application [%s]: [%v]",
-					application.String(),
+					application.ID(),
 					err,
 				)
 				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -56,13 +56,13 @@ RegistrationLoop:
 			if !isRegistered {
 				// if the operator is not registered, we need to register it and
 				// wait until registration is confirmed
-				registerAsMemberCandidate(ctx, ethereumChain, application)
-				waitUntilRegistered(ctx, ethereumChain, application)
+				registerAsMemberCandidate(ctx, blockCounter, application)
+				waitUntilRegistered(ctx, blockCounter, application)
 			}
 
 			// once the registration is confirmed or if the client is already
 			// registered, we can start to monitor the status
-			if err := monitorSignerPoolStatus(ctx, ethereumChain, application); err != nil {
+			if err := monitorSignerPoolStatus(ctx, blockCounter, application); err != nil {
 				logger.Errorf(
 					"failed on signer pool status monitoring; please inspect "+
 						"signer's unbonded value and stake: [%v]",
@@ -82,29 +82,29 @@ RegistrationLoop:
 // block until the operator is finally eligible and can be registered.
 func registerAsMemberCandidate(
 	parentCtx context.Context,
-	ethereumChain eth.Handle,
-	application common.Address,
+	blockCounter corechain.BlockCounter,
+	application chain.BondedECDSAKeepApplicationHandle,
 ) {
 	// If the operator is eligible right now for registering as a member
 	// candidate for the application, we register the operator.
-	isEligible, err := ethereumChain.IsEligibleForApplication(application)
+	isEligible, err := application.IsEligibleForApplication()
 	if err != nil {
 		logger.Errorf(
 			"failed to check operator eligibility for application [%s]: [%v]",
-			application.String(),
+			application.ID(),
 			err,
 		)
 	}
 	if isEligible {
 		logger.Infof(
 			"registering member candidate for application [%s]",
-			application.String(),
+			application.ID(),
 		)
-		err := ethereumChain.RegisterAsMemberCandidate(application)
+		err := application.RegisterAsMemberCandidate()
 		if err != nil {
 			logger.Errorf(
 				"failed to register member candidate for application [%s]: [%v]",
-				application.String(),
+				application.ID(),
 				err,
 			)
 		} else {
@@ -117,29 +117,31 @@ func registerAsMemberCandidate(
 	// We do the same in case the registration of eligible operator failed for
 	// some reason. As soon as the operator is eligible, we will proceed with
 	// the registration.
-	registerAsMemberCandidateWhenEligible(parentCtx, ethereumChain, application)
+	registerAsMemberCandidateWhenEligible(parentCtx, blockCounter, application)
 }
 
 // registerAsMemberCandidateWhenEligible for each new block checks the operator's
 // eligibility to be registered as a keep member candidate for the application.
 // As soon as the operator becomes eligible, function triggers the registration.
+//
+// TODO Move this to application.RegisterAsMemberCandidateWhenEligible() <-chan error?
 func registerAsMemberCandidateWhenEligible(
 	parentCtx context.Context,
-	ethereumChain eth.Handle,
-	application common.Address,
+	blockCounter corechain.BlockCounter,
+	application chain.BondedECDSAKeepApplicationHandle,
 ) {
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
+	newBlockChan := blockCounter.WatchBlocks(ctx)
 	for {
 		select {
 		case <-newBlockChan:
-			isEligible, err := ethereumChain.IsEligibleForApplication(application)
+			isEligible, err := application.IsEligibleForApplication()
 			if err != nil {
 				logger.Errorf(
 					"failed to check operator eligibility for application [%s]: [%v]",
-					application.String(),
+					application.ID(),
 					err,
 				)
 				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -151,7 +153,7 @@ func registerAsMemberCandidateWhenEligible(
 				// block and execute the check again
 				logger.Warningf(
 					"operator is not eligible for application [%s]",
-					application.String(),
+					application.ID(),
 				)
 				time.Sleep(eligibilityRetryDelay) // TODO: #413 Replace with backoff.
 				continue
@@ -161,12 +163,12 @@ func registerAsMemberCandidateWhenEligible(
 			// candidate for this application
 			logger.Infof(
 				"registering member candidate for application [%s]",
-				application.String(),
+				application.ID(),
 			)
-			if err := ethereumChain.RegisterAsMemberCandidate(application); err != nil {
+			if err := application.RegisterAsMemberCandidate(); err != nil {
 				logger.Errorf(
 					"failed to register member candidate for application [%s]: [%v]",
-					application.String(),
+					application.ID(),
 					err,
 				)
 				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -186,19 +188,19 @@ func registerAsMemberCandidateWhenEligible(
 // candidate for the given application.
 func waitUntilRegistered(
 	ctx context.Context,
-	ethereumChain eth.Handle,
-	application common.Address,
+	blockCounter corechain.BlockCounter,
+	application chain.BondedECDSAKeepApplicationHandle,
 ) {
-	newBlockChan := ethereumChain.BlockCounter().WatchBlocks(ctx)
+	newBlockChan := blockCounter.WatchBlocks(ctx)
 
 	for {
 		select {
 		case <-newBlockChan:
-			isRegistered, err := ethereumChain.IsRegisteredForApplication(application)
+			isRegistered, err := application.IsRegisteredForApplication()
 			if err != nil {
 				logger.Errorf(
 					"failed to check if member is registered for application [%s]: [%v]",
-					application.String(),
+					application.ID(),
 					err,
 				)
 				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -208,14 +210,14 @@ func waitUntilRegistered(
 			if isRegistered {
 				logger.Infof(
 					"operator is registered for application [%s]",
-					application.String(),
+					application.ID(),
 				)
 				return
 			}
 
 			logger.Infof(
 				"operator is not yet registered for application [%s], waiting...",
-				application.String(),
+				application.ID(),
 			)
 		case <-ctx.Done():
 			return
@@ -227,15 +229,13 @@ func waitUntilRegistered(
 // (staking weight, bonding) and updates the status when it gets out of date.
 func monitorSignerPoolStatus(
 	ctx context.Context,
-	ethereumChain eth.Handle,
-	application common.Address,
+	blockCounter corechain.BlockCounter,
+	application chain.BondedECDSAKeepApplicationHandle,
 ) error {
 	logger.Debugf(
 		"starting monitoring operatator status for application [%s]",
-		application.String(),
+		application.ID(),
 	)
-
-	blockCounter := ethereumChain.BlockCounter()
 
 	startingBlock, err := blockCounter.CurrentBlock()
 	if err != nil {
@@ -255,15 +255,15 @@ func monitorSignerPoolStatus(
 			logger.Debugf(
 				"operator status check for application [%s] "+
 					"triggered at block [%v]",
-				application.String(),
+				application.ID(),
 				statusCheckBlock,
 			)
 
-			isUpToDate, err := ethereumChain.IsStatusUpToDateForApplication(application)
+			isUpToDate, err := application.IsStatusUpToDateForApplication()
 			if err != nil {
 				return fmt.Errorf(
 					"failed to check operator status for application [%s]: [%v]",
-					application.String(),
+					application.ID(),
 					err,
 				)
 			}
@@ -271,38 +271,36 @@ func monitorSignerPoolStatus(
 			if isUpToDate {
 				logger.Debugf(
 					"operator status is up to date for application [%s]",
-					application.String(),
+					application.ID(),
 				)
 			} else {
 				logger.Infof(
 					"updating operator status for application [%s]",
-					application.String(),
+					application.ID(),
 				)
 
-				err := ethereumChain.UpdateStatusForApplication(application)
+				err := application.UpdateStatusForApplication()
 				if err != nil {
 					return fmt.Errorf(
 						"failed to update operator status for application [%s]: [%v]",
-						application.String(),
+						application.ID(),
 						err,
 					)
 				}
 
 				isRegistered, err := ethlike.WaitForBlockConfirmations(
-					ethereumChain.BlockCounter(),
+					blockCounter,
 					statusCheckBlock,
 					blockConfirmations,
 					func() (bool, error) {
-						return ethereumChain.IsRegisteredForApplication(
-							application,
-						)
+						return application.IsRegisteredForApplication()
 					},
 				)
 				if err != nil {
 					return fmt.Errorf(
 						"failed to confirm that operator is registered "+
 							"for application [%s]: [%v]",
-						application.String(),
+						application.ID(),
 						err,
 					)
 				}
@@ -310,7 +308,7 @@ func monitorSignerPoolStatus(
 				if !isRegistered {
 					return fmt.Errorf(
 						"operator is no longer registered for application [%s]",
-						application.String(),
+						application.ID(),
 					)
 				}
 			}

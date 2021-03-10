@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/keep-network/keep-ecdsa/pkg/metrics"
@@ -16,18 +15,13 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
 
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/keep-network/keep-core/pkg/operator"
-
 	"github.com/keep-network/keep-ecdsa/config"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
-	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
 	"github.com/keep-network/keep-ecdsa/pkg/firewall"
 
 	"github.com/urfave/cli"
@@ -71,14 +65,6 @@ const (
 	routingTableRefreshPeriod = 5 * time.Minute
 )
 
-// Values related with balance monitoring.
-// defaultBalanceAlertThreshold determines the alert threshold below which
-// the alert should be triggered.
-var defaultBalanceAlertThreshold = big.NewInt(500000000000000000) // 0.5 ether
-// defaultBalanceMonitoringTick determines how often the monitoring
-// check should be triggered.
-const defaultBalanceMonitoringTick = 10 * time.Minute
-
 func init() {
 	StartCommand =
 		cli.Command{
@@ -98,29 +84,17 @@ func Start(c *cli.Context) error {
 
 	ctx := context.Background()
 
-	ethereumKey, err := ethutil.DecryptKeyFile(
-		config.Ethereum.Account.KeyFile,
-		config.Ethereum.Account.KeyFilePassword,
-	)
+	chainHandle, operatorKeys, err := connectChain(ctx, config)
 	if err != nil {
-		return fmt.Errorf(
-			"failed to read key file [%s]: [%v]",
-			config.Ethereum.Account.KeyFile,
-			err,
-		)
+		return err
 	}
 
-	ethereumChain, err := ethereum.Connect(ethereumKey, &config.Ethereum)
-	if err != nil {
-		return fmt.Errorf("failed to connect to ethereum node: [%v]", err)
-	}
-
-	stakeMonitor, err := ethereumChain.StakeMonitor()
+	stakeMonitor, err := chainHandle.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle: [%v]", err)
 	}
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
-		ethereumKey.Address.Hex(),
+		chainHandle.Address().Hex(),
 	)
 	if err != nil {
 		return fmt.Errorf("could not check the stake: [%v]", err)
@@ -134,10 +108,8 @@ func Start(c *cli.Context) error {
 		)
 	}
 
-	operatorPrivateKey, operatorPublicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
-
 	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
-		operatorPrivateKey, operatorPublicKey,
+		operatorKeys.private, operatorKeys.public,
 	)
 
 	networkProvider, err := libp2p.Connect(
@@ -145,7 +117,7 @@ func Start(c *cli.Context) error {
 		config.LibP2P,
 		networkPrivateKey,
 		libp2p.ProtocolECDSA,
-		firewall.NewStakeOrActiveKeepPolicy(ethereumChain, stakeMonitor),
+		firewall.NewStakeOrActiveKeepPolicy(chainHandle, stakeMonitor),
 		retransmission.NewTimeTicker(ctx, 1*time.Second),
 		libp2p.WithRoutingTableRefreshPeriod(routingTableRefreshPeriod),
 	)
@@ -161,32 +133,24 @@ func Start(c *cli.Context) error {
 	}
 	persistence := persistence.NewEncryptedPersistence(
 		handle,
-		config.Ethereum.Account.KeyFilePassword,
+		extractKeyFilePassword(config),
 	)
-
-	sanctionedApplications, err := config.SanctionedApplications.Addresses()
-	if err != nil {
-		return fmt.Errorf("failed to get sanctioned applications addresses: [%v]", err)
-	}
 
 	clientHandle := client.Initialize(
 		ctx,
-		operatorPublicKey,
-		ethereumChain,
+		operatorKeys.public,
+		chainHandle,
 		networkProvider,
 		persistence,
-		sanctionedApplications,
 		config.Extensions.TBTC.BTCRefunds.BeneficiaryAddress,
 		config.Extensions.TBTC.BTCRefunds.MaxFeePerVByte,
 		&config.Client,
 		&config.TSS,
 	)
-	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
+	logger.Debugf("initialized operator with address: [%s]", chainHandle.Address().String())
 
-	initializeExtensions(ctx, config.Extensions, ethereumChain)
-	initializeMetrics(ctx, config, networkProvider, stakeMonitor, ethereumKey.Address.Hex(), clientHandle)
+	initializeMetrics(ctx, config, networkProvider, stakeMonitor, chainHandle.Address().Hex(), clientHandle)
 	initializeDiagnostics(config, networkProvider)
-	initializeBalanceMonitoring(ctx, ethereumChain, config, ethereumKey.Address.Hex())
 
 	logger.Info("client started")
 
@@ -200,34 +164,12 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func initializeExtensions(
-	ctx context.Context,
-	config config.Extensions,
-	ethereumChain *ethereum.Chain,
-) {
-	if len(config.TBTC.TBTCSystem) > 0 {
-		tbtcEthereumChain, err := ethereum.WithTBTCExtension(
-			ethereumChain,
-			config.TBTC.TBTCSystem,
-		)
-		if err != nil {
-			logger.Errorf(
-				"could not initialize tbtc chain extension: [%v]",
-				err,
-			)
-			return
-		}
-
-		tbtc.Initialize(ctx, tbtcEthereumChain)
-	}
-}
-
 func initializeMetrics(
 	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
-	ethereumAddres string,
+	address string,
 	clientHandle *client.Handle,
 ) {
 	registry, isConfigured := coreMetrics.Initialize(
@@ -258,11 +200,12 @@ func initializeMetrics(
 		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
+	// TODO: make this metric chain-agnostic
 	coreMetrics.ObserveEthConnectivity(
 		ctx,
 		registry,
 		stakeMonitor,
-		ethereumAddres,
+		address,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
 
@@ -293,36 +236,4 @@ func initializeDiagnostics(
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
 	diagnostics.RegisterClientInfoSource(registry, netProvider)
-}
-
-func initializeBalanceMonitoring(
-	ctx context.Context,
-	ethereumChain *ethereum.Chain,
-	config *config.Config,
-	ethereumAddress string,
-) {
-	balanceMonitor, err := ethereumChain.BalanceMonitor()
-	if err != nil {
-		logger.Errorf("error obtaining balance monitor handle [%v]", err)
-		return
-	}
-
-	alertThreshold := defaultBalanceAlertThreshold
-	if config.Ethereum.BalanceAlertThreshold != nil {
-		alertThreshold = config.Ethereum.BalanceAlertThreshold.Int
-	}
-
-	balanceMonitor.Observe(
-		ctx,
-		ethereumAddress,
-		alertThreshold,
-		defaultBalanceMonitoringTick,
-	)
-
-	logger.Infof(
-		"started balance monitoring for address [%v] "+
-			"with the alert threshold set to [%v] wei",
-		ethereumAddress,
-		alertThreshold,
-	)
 }
