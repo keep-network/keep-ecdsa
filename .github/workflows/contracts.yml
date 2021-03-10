@@ -86,7 +86,9 @@ jobs:
   migrate-and-publish-celo:
     needs: [build-and-test, lint]
     if: |
-      startsWith(github.head_ref, 'releases/alfajores')
+      github.ref == 'refs/heads/master'
+        && (github.event_name == 'push'
+        || github.event_name == 'workflow_dispatch')
     environment: keep-test
     runs-on: ubuntu-latest
     defaults:
