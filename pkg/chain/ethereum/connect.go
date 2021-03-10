@@ -49,6 +49,7 @@ type ethereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
 	client                         ethutil.EthereumClient
+	chainID                        *big.Int
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	tbtcSystemAddress              common.Address
 	blockCounter                   *ethlike.BlockCounter
@@ -85,6 +86,14 @@ func Connect(
 	wrappedClient := addClientWrappers(config, client)
 
 	transactionMutex := &sync.Mutex{}
+
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve Ethereum chain id: [%v]",
+			err,
+		)
+	}
 
 	nonceManager := ethutil.NewNonceManager(wrappedClient, accountKey.Address)
 
@@ -133,6 +142,7 @@ func Connect(
 	}
 	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
 		bondedECDSAKeepFactoryContractAddress,
+		chainID,
 		accountKey,
 		wrappedClient,
 		nonceManager,
@@ -148,6 +158,7 @@ func Connect(
 		config:     config,
 		accountKey: accountKey,
 		client:     wrappedClient,
+		chainID:    chainID,
 
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		tbtcSystemAddress:              tbtcSystemAddress,
