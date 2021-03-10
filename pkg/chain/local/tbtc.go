@@ -31,6 +31,7 @@ type localDeposit struct {
 	redemptionSignature *Signature
 	redemptionProof     *TxProof
 
+	createdEvents             []*chain.CreatedEvent
 	redemptionRequestedEvents []*chain.DepositRedemptionRequestedEvent
 }
 
@@ -175,10 +176,17 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 	keepAddress := generateAddress()
 	tlc.OpenKeep(keepAddress, signers)
 
+	currentBlock, _ := tlc.BlockCounter().CurrentBlock()
+
 	tlc.deposits[depositAddress] = &localDeposit{
-		keepAddress:               keepAddress.Hex(),
-		state:                     chain.AwaitingSignerSetup,
-		utxoValue:                 big.NewInt(defaultUTXOValue),
+		keepAddress: keepAddress.Hex(),
+		state:       chain.AwaitingSignerSetup,
+		utxoValue:   big.NewInt(defaultUTXOValue),
+		createdEvents: []*chain.CreatedEvent{{
+			DepositAddress: depositAddress,
+			KeepAddress:    keepAddress.Hex(),
+			BlockNumber:    currentBlock,
+		}},
 		redemptionRequestedEvents: make([]*chain.DepositRedemptionRequestedEvent, 0),
 	}
 
@@ -355,6 +363,28 @@ func (tlc *TBTCLocalChain) OnDepositRedeemed(
 
 		delete(tlc.depositRedeemedHandlers, handlerID)
 	})
+}
+
+// PastCreatedEvents are the created events relevant to a particular keep address
+func (tlc *TBTCLocalChain) PastCreatedEvents(
+	startBlock uint64,
+	keepAddress string,
+) ([]*chain.CreatedEvent, error) {
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
+
+	var matchingDeposit *localDeposit
+	for _, deposit := range tlc.deposits {
+		if deposit.keepAddress == keepAddress {
+			matchingDeposit = deposit
+			break
+		}
+	}
+	if matchingDeposit == nil {
+		return nil, fmt.Errorf("no deposit with keep address [%s]", keepAddress)
+	}
+
+	return matchingDeposit.createdEvents, nil
 }
 
 // PastDepositRedemptionRequestedEvents the redemption requested events relevant to a particular deposit

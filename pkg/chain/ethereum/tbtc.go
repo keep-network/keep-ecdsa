@@ -247,6 +247,46 @@ func (ta *tbtcApplication) OnDepositRedeemed(
 	).OnEvent(onEvent)
 }
 
+// PastCreatedEvents returns all created events for the given deposit which
+// occurred after the provided start block. Returned events are sorted by the
+// block number in the ascending order.
+func (tec *TBTCEthereumChain) PastCreatedEvents(
+	startBlock uint64,
+	keepAddress string,
+) ([]*chain.CreatedEvent, error) {
+	if !common.IsHexAddress(keepAddress) {
+		return nil, fmt.Errorf("incorrect keep address")
+	}
+	events, err := tec.tbtcSystemContract.PastCreatedEvents(
+		startBlock,
+		nil,
+		nil,
+		[]common.Address{
+			common.HexToAddress(keepAddress),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*chain.CreatedEvent, 0)
+
+	for _, event := range events {
+		result = append(result, &chain.CreatedEvent{
+			DepositAddress: event.DepositContractAddress.Hex(),
+			KeepAddress:    event.KeepAddress.Hex(),
+			BlockNumber:    event.Raw.BlockNumber,
+		})
+	}
+
+	// Make sure events are sorted by block number in ascending order.
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].BlockNumber < result[j].BlockNumber
+	})
+
+	return result, nil
+}
+
 // PastDepositRedemptionRequestedEvents returns all redemption requested
 // events for the given deposit which occurred after the provided start block.
 // Returned events are sorted by the block number in the ascending order.
