@@ -18,7 +18,6 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
 
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -177,8 +176,8 @@ func Start(c *cli.Context) error {
 		networkProvider,
 		persistence,
 		sanctionedApplications,
-		&config.Extensions.TBTC,
 		&config.Client,
+		&config.Extensions.TBTC.BTCRefunds,
 		&config.TSS,
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
@@ -202,7 +201,7 @@ func Start(c *cli.Context) error {
 
 func initializeExtensions(
 	ctx context.Context,
-	config eth.Config,
+	config config.Extensions,
 	ethereumChain *ethereum.Chain,
 ) {
 	if len(config.TBTC.TBTCSystem) > 0 {

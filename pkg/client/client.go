@@ -16,6 +16,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
 	eth "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 	"github.com/keep-network/keep-ecdsa/pkg/client/event"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
@@ -57,8 +58,8 @@ func Initialize(
 	networkProvider net.Provider,
 	persistence persistence.Handle,
 	sanctionedApplications []common.Address,
-	tbtcConfig *eth.TBTC,
 	clientConfig *Config,
+	bitcoinConfig *bitcoin.Config,
 	tssConfig *tss.Config,
 ) *Handle {
 	keepsRegistry := registry.NewKeepsRegistry(persistence)
@@ -174,7 +175,7 @@ func Initialize(
 				ethereumChain,
 				networkProvider,
 				clientConfig,
-				tbtcConfig,
+				bitcoinConfig,
 				tssNode,
 				operatorPublicKey,
 				keepsRegistry,
@@ -191,7 +192,7 @@ func Initialize(
 		ethereumChain,
 		networkProvider,
 		clientConfig,
-		tbtcConfig,
+		bitcoinConfig,
 		tssNode,
 		operatorPublicKey,
 		keepsRegistry,
@@ -226,7 +227,7 @@ func Initialize(
 					ethereumChain,
 					networkProvider,
 					clientConfig,
-					tbtcConfig,
+					bitcoinConfig,
 					tssNode,
 					operatorPublicKey,
 					keepsRegistry,
@@ -258,7 +259,7 @@ func checkAwaitingKeyGeneration(
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	tbtcConfig *eth.TBTC,
+	bitcoinConfig *bitcoin.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -320,7 +321,7 @@ func checkAwaitingKeyGeneration(
 			ethereumChain,
 			networkProvider,
 			clientConfig,
-			tbtcConfig,
+			bitcoinConfig,
 			tssNode,
 			operatorPublicKey,
 			keepsRegistry,
@@ -342,7 +343,7 @@ func checkAwaitingKeyGenerationForKeep(
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	tbtcConfig *eth.TBTC,
+	bitcoinConfig *bitcoin.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -391,7 +392,7 @@ func checkAwaitingKeyGenerationForKeep(
 				ethereumChain,
 				networkProvider,
 				clientConfig,
-				tbtcConfig,
+				bitcoinConfig,
 				tssNode,
 				operatorPublicKey,
 				keepsRegistry,
@@ -413,7 +414,7 @@ func generateKeyForKeep(
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	tbtcConfig *eth.TBTC,
+	bitcoinConfig *bitcoin.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -519,7 +520,7 @@ func generateKeyForKeep(
 		ethereumChain,
 		networkProvider,
 		clientConfig,
-		tbtcConfig,
+		bitcoinConfig,
 		tssNode,
 		operatorPublicKey,
 		keepsRegistry,
@@ -885,7 +886,7 @@ func monitorKeepTerminatedEvent(
 	ethereumChain eth.Handle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	tbtcConfig *eth.TBTC,
+	bitcoinConfig *bitcoin.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -950,8 +951,8 @@ func monitorKeepTerminatedEvent(
 
 				tss.BroadcastRecoveryAddress(
 					ctx,
-					tbtcConfig.BTCRefunds.BeneficiaryAddress,
-					tbtcConfig.BTCRefunds.MaxFeePerVByte,
+					bitcoinConfig.BeneficiaryAddress,
+					bitcoinConfig.MaxFeePerVByte,
 					keepAddress.Hex(),
 					memberID,
 					memberIDs,
