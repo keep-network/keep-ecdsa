@@ -38,6 +38,84 @@
           "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
         }
       ]
+    },
+    {
+      "hash": "0x6564b79168cd3150fb690d27cf4834ad432f8424e809410bc000eeb551bc598c",
+      "from": "0x4029b496d25322cb69dcb356bde69a7314bff0ef",
+      "to": "0x27321f84704a599ab740281e285cc4463d89a3d5",
+      "block_number": 11971254,
+      "method": "deauthorizeSortitionPoolContract",
+      "decoded_input": [
+        {
+          "soltype": {
+            "name": "_operator",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xa39f6ca62303229873d06395237307cd59de806d"
+        },
+        {
+          "soltype": {
+            "name": "_poolAddress",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
+        }
+      ]
+    },
+    {
+      "hash": "0xea113ad8bef109d790788bc4ffdfdb6984d262df8678a4ee8b3c06ada298a871",
+      "from": "0x4029b496d25322cb69dcb356bde69a7314bff0ef",
+      "to": "0x27321f84704a599ab740281e285cc4463d89a3d5",
+      "block_number": 11971254,
+      "method": "deauthorizeSortitionPoolContract",
+      "decoded_input": [
+        {
+          "soltype": {
+            "name": "_operator",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xa39f6ca62303229873d06395237307cd59de806d"
+        },
+        {
+          "soltype": {
+            "name": "_poolAddress",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
+        }
+      ]
     }
   ]
 }
