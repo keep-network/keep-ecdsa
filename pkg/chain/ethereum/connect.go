@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sync"
@@ -35,6 +36,7 @@ type EthereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
 	client                         ethutil.EthereumClient
+	chainID                        *big.Int
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	blockCounter                   *blockcounter.EthereumBlockCounter
 	miningWaiter                   *ethutil.MiningWaiter
@@ -64,6 +66,14 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 	}
 
 	wrappedClient := addClientWrappers(config, client)
+
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve Ethereum chain id: [%v]",
+			err,
+		)
+	}
 
 	transactionMutex := &sync.Mutex{}
 
@@ -99,6 +109,7 @@ func Connect(accountKey *keystore.Key, config *ethereum.Config) (*EthereumChain,
 	}
 	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
 		*bondedECDSAKeepFactoryContractAddress,
+		chainID,
 		accountKey,
 		wrappedClient,
 		nonceManager,
