@@ -118,7 +118,7 @@ spec:
             - name: KEEP_DATA_DIR
               value: /mnt/keep-ecdsa/data
             - name: SANCTIONED_APPLICATIONS
-              value: '0x2B2976824682233807A197081119dA511AF12F7a' # Shall we extract this property to a configmap?
+              value: '0x87ABAD43f9e31067712dd5E2460C70b666AFfcE0' # Shall we extract this property to a configmap?
           volumeMounts:
             - name: keep-ecdsa-config
               mountPath: /mnt/keep-ecdsa/config
