@@ -32,6 +32,7 @@ func WithTBTCExtension(
 
 	tbtcSystemContract, err := contract.NewTBTCSystem(
 		common.HexToAddress(tbtcSystemContractAddress),
+		ethereumChain.chainID,
 		ethereumChain.accountKey,
 		ethereumChain.client,
 		ethereumChain.nonceManager,
@@ -361,6 +362,7 @@ func (tec *TBTCEthereumChain) getDepositContract(
 
 	depositContract, err := contract.NewDeposit(
 		common.HexToAddress(address),
+		tec.chainID,
 		tec.accountKey,
 		tec.client,
 		tec.nonceManager,
