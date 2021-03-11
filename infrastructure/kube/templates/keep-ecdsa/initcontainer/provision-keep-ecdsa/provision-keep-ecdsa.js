@@ -424,11 +424,13 @@ const transactor = {
   celo: {
     sendTransaction: async (txConfig) => {
       const tx = await getCeloKit().sendTransaction(txConfig)
+      await tx.waitReceipt()
       console.log(`transaction ${await tx.getHash()} has been sent`)
     },
 
     sendTransactionObject: async (txObject, params) => {
       const tx = await getCeloKit().sendTransactionObject(txObject, params)
+      await tx.waitReceipt()
       console.log(`transaction ${await tx.getHash()} has been sent`)
     }
   }
