@@ -273,6 +273,7 @@ func (ec *EthereumChain) withRetry(fn func() error) error {
 func (ec *EthereumChain) getKeepContract(address common.Address) (*contract.BondedECDSAKeep, error) {
 	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
 		address,
+		ec.chainID,
 		ec.accountKey,
 		ec.client,
 		ec.nonceManager,
