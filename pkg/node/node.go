@@ -499,7 +499,7 @@ func (n *Node) waitForSignature(
 	keepAddress common.Address,
 	digest [32]byte,
 ) bool {
-	const waitTimeout = 10 * time.Minute
+	const waitTimeout = 30 * time.Minute
 	const checkTick = 1 * time.Minute
 
 	ctx, cancelCtx := context.WithTimeout(context.Background(), waitTimeout)
@@ -516,7 +516,7 @@ func (n *Node) waitForSignature(
 	for {
 		select {
 		case <-checkTicker.C:
-			// We check the public key periodically instead of relying on
+			// We check the signature periodically instead of relying on
 			// incoming events. The main motivation is that events could not be
 			// trusted here because they may come from a forked chain or
 			// the same event can be delivered multiple times.
@@ -663,11 +663,11 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	// not that serious as for not submitting a signature and to minimize gas
 	// expenditure in case the current client's pub key has been properly
 	// registered and we are waiting for someone else, we retry only three times.
-	const maxPubkeyChecksCount = 3
+	const maxPubkeyChecksCount = 2
 	// All three operators need to submit public key to the chain so we are
 	// less aggressive with check ticks than in case of signature submission
 	// where only one signature is enough.
-	const pubkeyCheckTick = 10 * time.Minute
+	const pubkeyCheckTick = 60 * time.Minute
 
 	pubkeyCheckTicker := time.NewTicker(pubkeyCheckTick)
 	defer pubkeyCheckTicker.Stop()
