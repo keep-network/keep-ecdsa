@@ -27,7 +27,7 @@ var (
 	// gas price can not be higher than the max gas price value. If the maximum
 	// allowed gas price is reached, no further resubmission attempts are
 	// performed. This value can be overwritten in the configuration file.
-	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
+	DefaultMaxGasPrice = big.NewInt(1000000000000) // 1000 Gwei
 )
 
 // EthereumChain is an implementation of ethereum blockchain interface.
