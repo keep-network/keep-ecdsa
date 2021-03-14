@@ -72,13 +72,13 @@ var deriveAddressTestData = []struct {
 	},
 }
 
-func Test_DeriveAddress(t *testing.T) {
+func TestDeriveAddress(t *testing.T) {
 	for _, testData := range deriveAddressTestData {
 		address, err := DeriveAddress(testData.extendedAddress, testData.addressIndex)
 
 		if err != nil {
 			t.Errorf(
-				"Got %s while trying to derive %s at index %v",
+				"got %s while trying to derive %s at index %d",
 				err,
 				testData.extendedAddress,
 				testData.addressIndex,
@@ -87,11 +87,11 @@ func Test_DeriveAddress(t *testing.T) {
 
 		if address != testData.expectedAddress {
 			t.Errorf(
-				"Unexpected address while trying to derive %s at index %v.\nActual:   %s\nExpected: %s",
+				"unexpected address while trying to derive %s at index %v\nExpected: %s\nActual:   %s",
 				testData.extendedAddress,
 				testData.addressIndex,
-				address,
 				testData.expectedAddress,
+				address,
 			)
 		}
 	}
