@@ -19,7 +19,7 @@
 	# performed.A value can be provided in `wei`, `Gwei` or `ether`, e.g.
 	# `800.5 Gwei`.
 	#
-	# MaxGasPrice = "500 Gwei" # 500 Gwei (default value)
+	# MaxGasPrice = "1000 Gwei" # 1000 Gwei (default value)
 	#
   # Uncomment to enable Ethereum node rate limiting. Both properties can be
   # used together or separately.
