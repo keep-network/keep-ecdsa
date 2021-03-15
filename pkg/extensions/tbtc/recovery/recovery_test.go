@@ -1,4 +1,4 @@
-package tbtc
+package recovery
 
 import (
 	"bytes"
