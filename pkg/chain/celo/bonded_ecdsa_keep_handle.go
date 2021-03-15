@@ -28,6 +28,7 @@ func (cc *celoChain) GetKeepWithID(
 ) (chain.BondedECDSAKeepHandle, error) {
 	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
 		fromExternalAddress(keepID),
+		cc.chainID,
 		cc.accountKey,
 		cc.client,
 		cc.nonceManager,
