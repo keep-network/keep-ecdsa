@@ -6,6 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -37,7 +38,6 @@ func TestConstructUnsignedTransaction(t *testing.T) {
 	}
 
 	previousOutputValue := int64(100000000)
-	expectedShare := int64(45)
 
 	messageTransaction, err := ConstructUnsignedTransaction(
 		"0b99dea9655f219991001e9296cfe2103dd918a21ef477a14121d1a0ba9491f1",
@@ -48,26 +48,18 @@ func TestConstructUnsignedTransaction(t *testing.T) {
 		&chaincfg.TestNet3Params,
 	)
 	if err != nil {
-		t.Errorf("%v", err)
+		t.Error(err)
 	}
-	if len(messageTransaction.TxIn) != 1 {
-		t.Errorf("There should be 1 input transaction. Got %v instead.", len(messageTransaction.TxIn))
-	}
-	if len(messageTransaction.TxOut) != len(recipientAddresses) {
+
+	serializedMessageTransactionBytes, _ := json.Marshal(messageTransaction)
+	serializedMessageTransaction := string(serializedMessageTransactionBytes)
+	expectedSerializedMessageTransaction := "{\"Version\":1,\"TxIn\":[{\"PreviousOutPoint\":{\"Hash\":[241,145,148,186,160,209,33,65,161,119,244,30,162,24,217,61,16,226,207,150,146,30,0,145,153,33,95,101,169,222,153,11],\"Index\":0},\"SignatureScript\":null,\"Witness\":[\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\",\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"],\"Sequence\":0}],\"TxOut\":[{\"Value\":33293200,\"PkScript\":\"ABSkBel8ni79rtMnCTVmVeoD/B8qjA==\"},{\"Value\":33293200,\"PkScript\":\"ABT5l06+ocpdb5X7n1UJ+LPnuwBHJg==\"},{\"Value\":33293200,\"PkScript\":\"ABSVwo3u/TJdLS/CTFrIKTdtzPUg4A==\"}],\"LockTime\":0}"
+	if expectedSerializedMessageTransaction != serializedMessageTransaction {
 		t.Errorf(
-			"there should be an output transaction for each recovery address\nexpected: %v\nactual:   %v",
-			len(recipientAddresses),
-			len(messageTransaction.TxOut),
+			"expectedSerializedMessageTransaction did not match the expectation\nexpected: %s\nactual:   %s",
+			expectedSerializedMessageTransaction,
+			serializedMessageTransaction,
 		)
-	}
-	for _, transactionOut := range messageTransaction.TxOut {
-		if transactionOut.Value != expectedShare {
-			t.Errorf(
-				"incorrect transaction output value\nexpected: %v\nactual:   %v",
-				expectedShare,
-				transactionOut.Value,
-			)
-		}
 	}
 }
 
@@ -92,7 +84,14 @@ func Test_BuildSignedTransactionHexString(t *testing.T) {
 		))
 	}
 	curve := elliptic.P224()
-	privateKey, _ := cecdsa.GenerateKey(curve, rand.Reader)
+	privateKey := cecdsa.PrivateKey{
+		PublicKey: cecdsa.PublicKey{
+			Curve: curve,
+			X:     bigIntFromString(t, "828612351041249926199933036276541218289243364325366441967565889653"),
+			Y:     bigIntFromString(t, "985040320797760939221216987624001720525496952574017416820319442840"),
+		},
+		D: bigIntFromString(t, "13944630350777130481687329643969358734978178969757056469087366016470"),
+	}
 	signedTransactionHex, err := BuildSignedTransactionHexString(
 		unsignedTransaction,
 		&ecdsa.Signature{
@@ -106,9 +105,20 @@ func Test_BuildSignedTransactionHexString(t *testing.T) {
 		t.Errorf("Something went wrong building the signed transaction string: %v", err)
 	}
 
-	signedTransaction := wire.NewMsgTx(wire.TxVersion)
 	signedTransactionBytes, _ := hex.DecodeString(signedTransactionHex)
+	signedTransaction := wire.NewMsgTx(wire.TxVersion)
 	signedTransaction.BtcDecode(bytes.NewReader(signedTransactionBytes), 1, wire.WitnessEncoding)
+	serializedSignedTransactionBytes, _ := json.Marshal(signedTransaction)
+	serializedSignedTransaction := string(serializedSignedTransactionBytes)
+	expectedSerializedSignedTransaction := "{\"Version\":1,\"TxIn\":[{\"PreviousOutPoint\":{\"Hash\":[241,145,148,186,160,209,33,65,161,119,244,30,162,24,217,61,16,226,207,150,146,30,0,145,153,33,95,101,169,222,153,11],\"Index\":0},\"SignatureScript\":\"\",\"Witness\":[\"MAYCAQMCAQcB\",\"AgAAAAAH3j67ZA0rAhWQwJ1ec5WX0C2TkiTSJ6F0A2B1\"],\"Sequence\":4294967295}],\"TxOut\":[{\"Value\":100,\"PkScript\":\"\"},{\"Value\":100,\"PkScript\":\"\"},{\"Value\":100,\"PkScript\":\"\"}],\"LockTime\":0}"
+
+	if expectedSerializedSignedTransaction != serializedSignedTransaction {
+		t.Errorf(
+			"the signed transaction does not match expectation\nexpected: %s\nactual:   %s",
+			expectedSerializedSignedTransaction,
+			serializedSignedTransaction,
+		)
+	}
 
 	if len(signedTransaction.TxIn) != len(unsignedTransaction.TxIn) {
 		t.Errorf(
@@ -118,35 +128,12 @@ func Test_BuildSignedTransactionHexString(t *testing.T) {
 			len(signedTransaction.TxIn),
 		)
 	}
-	for i, signedTransactionIn := range signedTransaction.TxIn {
-		originalTransactionIn := unsignedTransaction.TxIn[i]
-		if signedTransactionIn.PreviousOutPoint.Hash != originalTransactionIn.PreviousOutPoint.Hash {
-			t.Errorf(
-				"TxIn hashes don't match\nexpected: %v\nactual:   %v",
-				originalTransactionIn.PreviousOutPoint.Hash,
-				signedTransactionIn.PreviousOutPoint.Hash,
-			)
-		}
-		if signedTransactionIn.Witness == nil {
-			t.Errorf("TxIn does not have a witness.")
-		}
+}
+
+func bigIntFromString(t *testing.T, s string) *big.Int {
+	bigInt, ok := new(big.Int).SetString(s, 0)
+	if !ok {
+		t.Errorf("Something went wrong creating a big int from %s", s)
 	}
-	if len(signedTransaction.TxOut) != len(unsignedTransaction.TxOut) {
-		t.Errorf(
-			"the original and signed transactions must have the same number of output transactions\n"+
-				"expected: %v\nactual:   %v",
-			len(unsignedTransaction.TxOut),
-			len(signedTransaction.TxOut),
-		)
-	}
-	for i, signedTransactionOut := range signedTransaction.TxOut {
-		originalTransactionOut := unsignedTransaction.TxOut[i]
-		if signedTransactionOut.Value != originalTransactionOut.Value {
-			t.Errorf(
-				"TxOut values don't match.\nexpected: %v\nactual:   %v",
-				originalTransactionOut.Value,
-				signedTransactionOut.Value,
-			)
-		}
-	}
+	return bigInt
 }
