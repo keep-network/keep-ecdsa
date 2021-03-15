@@ -92,8 +92,7 @@ jobs:
         || github.ref == 'refs/heads/master')
         && (github.event_name == 'push'
         || github.event_name == 'workflow_dispatch')
-    # TODO: Implement similiar for keep-dev (should execute for rfc-18... & master branch)
-    environment: keep-test # currently keep-test requires manual aproval of job
+    environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -141,7 +140,7 @@ jobs:
           TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_ETH_TRUFFLE_NETWORK }}
           ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
-        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK # writes artifacts to /home/runner/work/keep-ecdsa/keep-ecdsa/solidity/build/contracts
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       - name: Push contracts to Tenderly
         # TODO: once below action gets tagged replace `@main` with `@v1`
@@ -178,16 +177,65 @@ jobs:
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public --dry-run
 
-      # TODO: consider swithing to below action, after tweaking
-      # (requires some changes, as below config throws an error)
-      # - name: Publish to npm
-      #   uses: JS-DevTools/npm-publish@v1
-      #   with:
-      #     package: ./solidity/package.json
-      #     token: ${{ secrets.NPM_TOKEN }}
-      #     access: public
-      #     dry-run: true # TODO: to be removed once testing of workflow is done
-  
+      - name: Upload a build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          # TODO: consider adding version to the name
+          name: Contracts (Node.js ${{ matrix.node-version }})
+          path: ./solidity/build/contracts/*
+
+  build-and-publish-initcontainer:
+    needs: [migrate-and-publish-ethereum]
+    if: needs.migrate-and-publish-ethereum.result == 'success'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download a build artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: Contracts (Node.js ${{ matrix.node-version }})
+          path: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+            
+      - name: Login to Google Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.GCR_REGISTRY_URL }}
+          username: _json_key
+          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Build and publish initcontainer
+        uses: docker/build-push-action@v2
+        env:
+          # TODO: change later to 'initcontainer-provision-keep-client'
+          IMAGE_NAME: 'initcontainer-provision-keep-client-wip'
+          GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
+        with:
+          context: ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
+          # GCR image should be named according to following convention:
+          # HOSTNAME/PROJECT-ID/IMAGE:TAG
+          # We don't use TAG yet, will be added at later stages of work on RFC-18.
+          tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          labels: |
+            revision=${{ github.sha }}
+          push: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache 
+
   migrate-and-publish-celo:
     needs: [build-and-test, lint]
     if: |
