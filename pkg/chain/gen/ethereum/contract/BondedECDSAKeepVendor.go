@@ -66,6 +66,9 @@ func NewBondedECDSAKeepVendor(
 	// FIXME bumps beyond 1.9.25.
 	key := accountKey.PrivateKey
 	keyAddress := crypto.PubkeyToAddress(key.PublicKey)
+	if chainId == nil {
+		return nil, fmt.Errorf("no chain id specified")
+	}
 	transactorOptions := &bind.TransactOpts{
 		From: keyAddress,
 		Signer: func(_ types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
