@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -1224,6 +1225,14 @@ func initializeBondedECDSAKeepFactory(c *cli.Context) (*contract.BondedECDSAKeep
 		return nil, fmt.Errorf("error connecting to host chain node: [%v]", err)
 	}
 
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve host chain id: [%v]",
+			err,
+		)
+	}
+
 	key, err := chainutil.DecryptKeyFile(
 		config.Account.KeyFile,
 		config.Account.KeyFilePassword,
@@ -1263,6 +1272,7 @@ func initializeBondedECDSAKeepFactory(c *cli.Context) (*contract.BondedECDSAKeep
 
 	return contract.NewBondedECDSAKeepFactory(
 		address,
+		chainID,
 		key,
 		client,
 		chainutil.NewNonceManager(client, key.Address),
