@@ -219,16 +219,15 @@ jobs:
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
           CONTRACT_DATA_BUCKET_DIR: keep-core-celo
-          ETH_NETWORK_ID: 44787 # Alfajores network ID
+          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Migrate contracts
         env:
+          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_CELO_TRUFFLE_NETWORK }}
           CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
-        run: npx truffle migrate --reset --network alfajores
-
-      # TODO: if Celo works with Tenderly, add appropriate push step
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       - name: Upload contract data
         env:

@@ -35,6 +35,7 @@ func (ec *ethereumChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 
 	tbtcSystemContract, err := tbtcchain.NewTBTCSystem(
 		ec.tbtcSystemAddress,
+		ec.chainID,
 		ec.accountKey,
 		ec.client,
 		ec.nonceManager,
@@ -448,6 +449,7 @@ func (ta *tbtcApplication) getDepositContract(
 
 	depositContract, err := tbtcchain.NewDeposit(
 		common.HexToAddress(address),
+		ta.chainHandle.chainID,
 		ta.chainHandle.accountKey,
 		ta.chainHandle.client,
 		ta.chainHandle.nonceManager,

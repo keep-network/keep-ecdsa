@@ -77,6 +77,7 @@ github.com/buraksezer/consistent v0.0.0-20191006190839-693edf70fd72 h1:fUmDBbSvv
 github.com/buraksezer/consistent v0.0.0-20191006190839-693edf70fd72/go.mod h1:OEE5igu/CDjGegM1Jn6ZMo7R6LlV/JChAkjfQQIRLpg=
 github.com/celo-org/celo-blockchain v0.0.0-20210222234634-f8c8f6744526 h1:rdY1F8vUybjjsv+V58eaSYsYPTNO+AXK9o7l+BQuhhU=
 github.com/celo-org/celo-blockchain v0.0.0-20210222234634-f8c8f6744526/go.mod h1:4tbv23s4i0AU7+KN5UP2RaB5c9OMXedtx9F7wJ+s0Jo=
+github.com/celo-org/celo-bls-go v0.2.4 h1:V1y92kM5IRJWQZ6DCwqiKLW7swmUA5y/dPJ9YbU4HfA=
 github.com/celo-org/celo-bls-go v0.2.4/go.mod h1:eXUCLXu5F1yfd3M+3VaUk5ZUXaA0sLK2rWdLC1Cfaqo=
 github.com/cespare/cp v0.1.0/go.mod h1:SOGHArjBr4JWaSDEVpWpo/hNg6RoKrls6Oh40hiwW+s=
 github.com/cespare/cp v1.1.1 h1:nCb6ZLdB7NRaqsm91JtQTAme2SKJzXVsdPIPkyJr1MU=
@@ -344,14 +345,14 @@ github.com/keep-network/cli v1.20.0 h1:mEufpPsovOVdduTTkk+a2CxS3crIrGFqUsvs58gSi
 github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxKNohQWtQhA=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec h1:2pXAsi4OUUjZKr5ds5UOF2IxXN+jVW0WetVO+czkf+A=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec/go.mod h1:xR8jf3/VJAjh3nWu5tFe8Yxnt2HvWsqZHfGef1P5oDk=
-github.com/keep-network/keep-common v1.3.1-0.20210226151147-28633644e7e5 h1:hzkjJv1bgn5nxibcDgAT3mHNsHZjMnYUW2F/wn/AGrs=
-github.com/keep-network/keep-common v1.3.1-0.20210226151147-28633644e7e5/go.mod h1:sldQ7H2fdJWFdYUJCe/UsMGlyqtoT+39o7GTvpUVWnI=
 github.com/keep-network/keep-common v1.3.1-0.20210304083053-baf172c68552 h1:N3FQultvCbxwGoXWlSF4WWQnPOohuPSDwS+ZFpiiqLg=
 github.com/keep-network/keep-common v1.3.1-0.20210304083053-baf172c68552/go.mod h1:eM8DwRcQYzq5TYQSn9iOFXfvnAh2w1xWQmpIoG1cdpo=
+github.com/keep-network/keep-common v1.4.1-0.20210315092601-3203332583f0 h1:CwyzdowOpUno267LCPCEwHzxsRsJ+TwVrc95TFPPi58=
+github.com/keep-network/keep-common v1.4.1-0.20210315092601-3203332583f0/go.mod h1:eM8DwRcQYzq5TYQSn9iOFXfvnAh2w1xWQmpIoG1cdpo=
 github.com/keep-network/keep-core v1.3.2-0.20210304083305-d08fdb9170d5 h1:o6kfolnjNHr6zDxxKmqgNYytHUv3LZsZ10fZ1LWfV4c=
 github.com/keep-network/keep-core v1.3.2-0.20210304083305-d08fdb9170d5/go.mod h1:wa98Eftg9XT7WKvuPkQQH5z8RIx93ApTVNMVit6non4=
-github.com/keep-network/tbtc v1.1.1-0.20210303113031-adf361fd085b h1:D6FOQK7Q1AUBrXpoo/EKeV06NIClsU9E1+n1BuJUMF4=
-github.com/keep-network/tbtc v1.1.1-0.20210303113031-adf361fd085b/go.mod h1:s2IqWSI3YS++2GIftOe+E3cUBprWK7eHI08TL1wHNwE=
+github.com/keep-network/tbtc v1.1.1-0.20210315122630-61d538499ba1 h1:NehRRc5YsOZESfo8499u/lvD8zksx5a4xmAGx/O8XJ8=
+github.com/keep-network/tbtc v1.1.1-0.20210315122630-61d538499ba1/go.mod h1:P3DQyFZlnWQ/m7r4fT0jyLGkxIiLxPX3AeP8Al7sJxk=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
