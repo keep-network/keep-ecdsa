@@ -155,11 +155,10 @@ func Connect(
 	}
 
 	ethereum := &ethereumChain{
-		config:     config,
-		accountKey: accountKey,
-		client:     wrappedClient,
-		chainID:    chainID,
-
+		config:                         config,
+		accountKey:                     accountKey,
+		client:                         wrappedClient,
+		chainID:                        chainID,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		tbtcSystemAddress:              tbtcSystemAddress,
 		blockCounter:                   blockCounter,
