@@ -160,7 +160,7 @@ jobs:
             # This needs to be part of a base docker image, not installed here.
             apt-get update
             apt-get install jq -y
-            solidity/scripts/circleci-provision-external-contracts.sh
+            solidity/scripts/ci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
           command: |
