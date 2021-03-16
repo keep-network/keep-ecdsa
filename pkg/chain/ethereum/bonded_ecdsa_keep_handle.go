@@ -29,6 +29,7 @@ func (ec *ethereumChain) GetKeepWithID(
 ) (chain.BondedECDSAKeepHandle, error) {
 	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
 		keepID,
+		ec.chainID,
 		ec.accountKey,
 		ec.client,
 		ec.nonceManager,
