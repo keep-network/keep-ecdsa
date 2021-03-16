@@ -142,9 +142,8 @@ func Start(c *cli.Context) error {
 		chainHandle,
 		networkProvider,
 		persistence,
-		config.Extensions.TBTC.BTCRefunds.BeneficiaryAddress,
-		config.Extensions.TBTC.BTCRefunds.MaxFeePerVByte,
 		&config.Client,
+		&config.Extensions.TBTC.BTCRefunds,
 		&config.TSS,
 	)
 	logger.Debugf("initialized operator with address: [%s]", chainHandle.Address().String())
