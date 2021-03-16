@@ -78,6 +78,7 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 	// Validate minimum stake policy. If the remote peer has the minimum stake,
 	// we are fine and we should let to connect.
 	if err := soakp.minimumStakePolicy.Validate(remotePeerPublicKey); err == nil {
+		logger.Infof("  minimum stake policy met for peer: %s", remotePeerAddress)
 		return nil
 	}
 
@@ -86,6 +87,7 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 	// If peer has no authorization on the factory it means it has never
 	// participated in any group selection so there is no chance it can be
 	// a member of any keep.
+	logger.Infof("  validating authorization for peer: %s", remotePeerAddress)
 	err := soakp.validateAuthorization(remotePeerAddress)
 	if err != nil {
 		return err
@@ -94,7 +96,11 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 	// In case the remote peer has no minimum stake, we need to check if it is
 	// a member in at least one active keep. If so, we let to connect.
 	// Otherwise, we do not let to connect.
-	return soakp.validateActiveKeepMembership(remotePeerAddress)
+	logger.Infof("  validating keep membership for peer: %s", remotePeerAddress)
+	result := soakp.validateActiveKeepMembership(remotePeerAddress)
+	logger.Info("  keep membership validation returned [%v] for peer: %s", result, remotePeerAddress)
+
+	return result
 }
 
 func (soakp *stakeOrActiveKeepPolicy) validateAuthorization(
@@ -117,6 +123,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateAuthorization(
 
 	// We do not know if the remote peer has or has not the authorization so
 	// we need to ask ETH client about it.
+	logger.Infof("  executing authorization check for peer: %s", remotePeerAddress)
 	isAuthorized, err := soakp.chain.IsOperatorAuthorized(
 		common.HexToAddress(remotePeerAddress),
 	)
@@ -154,10 +161,12 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	soakp.noActiveKeepMembersCache.Sweep()
 
 	if soakp.activeKeepMembersCache.Has(remotePeerAddress) {
+		logger.Infof("  active keep members cache has peer %s", remotePeerAddress)
 		return nil
 	}
 
 	if soakp.noActiveKeepMembersCache.Has(remotePeerAddress) {
+		logger.Infof("  no-active keep members cache has peer %s", remotePeerAddress)
 		return errNoMinStakeNoActiveKeep
 	}
 
@@ -166,6 +175,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 
 	// Start iterating through all keeps known to the factory starting from the
 	// ones most recently created as there is a higher chance they are active.
+	logger.Infof("  getting keep count while checking peer: %s", remotePeerAddress)
 	keepCount, err := soakp.chain.GetKeepCount()
 	if err != nil {
 		return fmt.Errorf("could not get keep count: [%v]", err)
@@ -174,6 +184,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	lastIndex := new(big.Int).Sub(keepCount, one)
 
 	for keepIndex := new(big.Int).Set(lastIndex); keepIndex.Cmp(zero) != -1; keepIndex.Sub(keepIndex, one) {
+		logger.Infof("  getting keep at index %s while checking peer: %s", keepIndex, remotePeerAddress)
 		keepAddress, err := soakp.chain.GetKeepAtIndex(keepIndex)
 		if err != nil {
 			logger.Errorf(
@@ -188,6 +199,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 		// active, we skip it. We still need to process the rest of the keeps
 		// because it's possible that although this keep is not active some
 		// peers created before this one are still active.
+		logger.Infof("  checking if keep %s is active while checking peer: %s", keepAddress.String(), remotePeerAddress)
 		isActive, err := soakp.isKeepActive(keepAddress)
 		if err != nil {
 			logger.Errorf(
@@ -203,6 +215,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 
 		// Get all the members of the active keep and store them in the active
 		// keep members cache.
+		logger.Infof("  getting members of keep %s while checking peer: %s", keepAddress.String(), remotePeerAddress)
 		members, err := soakp.getKeepMembers(keepAddress)
 		if err != nil {
 			logger.Errorf(
