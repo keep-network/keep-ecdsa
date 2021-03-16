@@ -177,15 +177,11 @@ jobs:
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public --dry-run
 
-      - name: DEBUG
-        continue-on-error: true
-        run: ls ./build/contracts/
-
       - name: Upload a build artifact
         uses: actions/upload-artifact@v2
         with:
           # TODO: consider adding version to the name
-          name: Selected contracts (Node.js ${{ matrix.node-version }}
+          name: Selected contracts (Node.js ${{ matrix.node-version }})
           path: |
             ./solidity/build/contracts/BondedECDSAKeepFactory.json
             ./solidity/build/contracts/KeepBonding.json
