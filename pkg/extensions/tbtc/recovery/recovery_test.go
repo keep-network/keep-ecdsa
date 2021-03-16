@@ -17,15 +17,13 @@ import (
 
 func TestPublicKeyToP2WPKHScriptCode(t *testing.T) {
 	curve := elliptic.P224()
-	privateKey := cecdsa.PrivateKey{
-		PublicKey: cecdsa.PublicKey{
-			Curve: curve,
-			X:     bigIntFromString(t, "26941450295542185119886680310683442762751278660470797072401180634537"),
-			Y:     bigIntFromString(t, "25316128528826716218547984440391195807075864123777900043328271050996"),
-		},
-		D: bigIntFromString(t, "18109202854347435965591271560665343234645589757372242840882235502272"),
+
+	publicKey := cecdsa.PublicKey{
+		Curve: curve,
+		X:     bigIntFromString(t, "26941450295542185119886680310683442762751278660470797072401180634537"),
+		Y:     bigIntFromString(t, "25316128528826716218547984440391195807075864123777900043328271050996"),
 	}
-	scriptCodeBytes, err := PublicKeyToP2WPKHScriptCode(&privateKey.PublicKey, &chaincfg.TestNet3Params)
+	scriptCodeBytes, err := PublicKeyToP2WPKHScriptCode(&publicKey, &chaincfg.TestNet3Params)
 
 	if err != nil {
 		t.Error(err)
