@@ -70,14 +70,16 @@ type stakeOrActiveKeepPolicy struct {
 func (soakp *stakeOrActiveKeepPolicy) Validate(
 	remotePeerPublicKey *ecdsa.PublicKey,
 ) error {
+	remotePeerNetworkPublicKey := coreKey.NetworkPublic(*remotePeerPublicKey)
+	remotePeerAddress := coreKey.NetworkPubKeyToEthAddress(&remotePeerNetworkPublicKey)
+
+	logger.Infof("validating remote peer: %s", remotePeerAddress)
+
 	// Validate minimum stake policy. If the remote peer has the minimum stake,
 	// we are fine and we should let to connect.
 	if err := soakp.minimumStakePolicy.Validate(remotePeerPublicKey); err == nil {
 		return nil
 	}
-
-	remotePeerNetworkPublicKey := coreKey.NetworkPublic(*remotePeerPublicKey)
-	remotePeerAddress := coreKey.NetworkPubKeyToEthAddress(&remotePeerNetworkPublicKey)
 
 	// Check if the remote peer has authorization on the factory.
 	// The authorization cannot be revoked.
