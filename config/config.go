@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
@@ -82,13 +83,7 @@ type Extensions struct {
 // executing signer actions specific for TBTC application.
 type TBTC struct {
 	TBTCSystem string
-	BTCRefunds BTCRefunds
-}
-
-// BTCRefunds stores configuration related to recovering BTC from a closed keep.
-type BTCRefunds struct {
-	BeneficiaryAddress string
-	MaxFeePerVByte     int32
+	BTCRefunds bitcoin.Config
 }
 
 // ReadConfig reads in the configuration file in .toml format. Ethereum key file

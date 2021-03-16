@@ -176,9 +176,8 @@ func Start(c *cli.Context) error {
 		networkProvider,
 		persistence,
 		sanctionedApplications,
-		config.Extensions.TBTC.BTCRefunds.BeneficiaryAddress,
-		config.Extensions.TBTC.BTCRefunds.MaxFeePerVByte,
 		&config.Client,
+		&config.Extensions.TBTC.BTCRefunds,
 		&config.TSS,
 	)
 	logger.Debugf("initialized operator with address: [%s]", ethereumKey.Address.String())
