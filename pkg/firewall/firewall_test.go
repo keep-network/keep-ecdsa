@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
 	"reflect"
 	"testing"
 	"time"
@@ -726,6 +727,67 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	}
 	if !reflect.DeepEqual(members, keep2ExpectedMembers) {
 		t.Fatal("unexpected members")
+	}
+}
+
+func TestGetKeepAtIndexCaching(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	chain := local.Connect(ctx)
+	coreFirewall := newMockCoreFirewall()
+	policy := createNewPolicy(chain, coreFirewall)
+
+	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
+	chain.OpenKeep(
+		keep1Address,
+		[]common.Address{
+			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
+			common.HexToAddress("0xA04Ba34b0689D1b1b5670a774a8EC5538C77FfaF"),
+		},
+	)
+	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
+	chain.OpenKeep(
+		keep2Address,
+		[]common.Address{
+			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
+			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
+		},
+	)
+
+	// first check, result should be put into the cache
+	address, err := policy.getKeepAtIndex(big.NewInt(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep1Address != address {
+		t.Fatal("unexpected keep at index 0")
+	}
+	address, err = policy.getKeepAtIndex(big.NewInt(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep2Address != address {
+		t.Fatal("unexpected keep at index 1")
+	}
+
+	// FIXME We are not really checking whether the result is cached.
+	// FIXME We should make sure no additional call to the chain is executed.
+
+	// result is read from the cache, should be the same as the original one
+	address, err = policy.getKeepAtIndex(big.NewInt(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep1Address != address {
+		t.Fatal("unexpected keep at index 0")
+	}
+	address, err = policy.getKeepAtIndex(big.NewInt(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep2Address != address {
+		t.Fatal("unexpected keep at index 1")
 	}
 }
 
