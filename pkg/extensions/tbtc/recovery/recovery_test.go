@@ -29,8 +29,17 @@ func TestPublicKeyToP2WPKHScriptCode(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(scriptCodeBytes) != 26 {
-		t.Errorf("The script code must be exactly 26 bytes long. Instead, it was %v", len(scriptCodeBytes))
+	expectedBytes := []byte{
+		25, 118, 169, 20, 19, 235, 244, 140, 39, 16,
+		169, 180, 46, 150, 197, 235, 26, 83, 183, 47,
+		176, 151, 26, 151, 136, 172,
+	}
+	if bytes.Compare(expectedBytes, scriptCodeBytes) != 0 {
+		t.Errorf(
+			"got an unexpected script code\nexpected: %+v\nactual:   %+v",
+			expectedBytes,
+			scriptCodeBytes,
+		)
 	}
 }
 
