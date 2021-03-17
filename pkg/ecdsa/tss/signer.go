@@ -1,9 +1,10 @@
 package tss
 
 import (
+	cecdsa "crypto/ecdsa"
+
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	tssLib "github.com/binance-chain/tss-lib/tss"
-	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
 // ThresholdSigner is a threshold signer who completed key generation stage.
@@ -30,15 +31,15 @@ func (s *ThresholdSigner) GroupID() string {
 
 // PublicKey returns signer's ECDSA public key which is also the signing group's
 // public key.
-func (s *ThresholdSigner) PublicKey() *ecdsa.PublicKey {
+func (s *ThresholdSigner) PublicKey() *cecdsa.PublicKey {
 	pkX, pkY := s.thresholdKey.ECDSAPub.X(), s.thresholdKey.ECDSAPub.Y()
 
 	curve := tssLib.EC()
-	publicKey := ecdsa.PublicKey{
+	publicKey := cecdsa.PublicKey{
 		Curve: curve,
 		X:     pkX,
 		Y:     pkY,
 	}
 
-	return (*ecdsa.PublicKey)(&publicKey)
+	return &publicKey
 }

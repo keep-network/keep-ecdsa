@@ -22,7 +22,8 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
 
 jobs:
-  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) has been created as part of work on RFC-18
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   lint:
     executor: docker-node
     steps:
@@ -39,31 +40,8 @@ jobs:
           command: |
             set -ex
             npm run lint
-  lint_staker_rewards_script:
-    executor: docker-node-14
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          working_directory: ~/project/staker-rewards
-          command: npm ci
-      - run:
-          name: Lint Implementation
-          working_directory: ~/project/staker-rewards
-          command: npm run lint
-  test_staker_rewards_script:
-    executor: docker-node-14
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          working_directory: ~/project/staker-rewards
-          command: npm ci
-      - run:
-          name: Run tests
-          working_directory: ~/project/staker-rewards
-          command: npm test
-  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) has been created as part of work on RFC-18
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   build_and_test_solidity:
     executor: docker-node
     steps:
@@ -89,7 +67,8 @@ jobs:
           name: Run solidity tests
           working_directory: ~/project/solidity
           command: npm run test
-  # GitHub Actions equivalent of this job (.github/workflows/client.yml) has been created as part of work on RFC-18 
+  # GitHub Actions equivalent of this job (.github/workflows/client.yml) 
+  # has been created as part of work on RFC-18 
   build_client_and_test_go:
     executor: docker-git
     steps:
@@ -103,7 +82,6 @@ jobs:
           command: |
             docker build \
               --build-arg GITHUB_TOKEN=$GITHUB_TOKEN\
-              --build-arg GOPRIVATE=$GOPRIVATE\
               --tag go-build-env \
               --target gobuild .
       - run:
@@ -237,6 +215,8 @@ jobs:
             # Publish to npm.
             echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
             npm publish --access=public
+  # GitHub Actions equivalent of this job (.github/workflows/client.yml) 
+  # has been created as part of work on RFC-18 
   publish_client:
     executor: gcp-gcr/default
     steps:
@@ -312,10 +292,6 @@ workflows:
   solidity:
     jobs:
       - build_and_test_solidity
-  staker-rewards:
-    jobs:
-      - lint_staker_rewards_script
-      - test_staker_rewards_script
   build-test-publish-keep-dev:
     jobs:
       - build_client_and_test_go

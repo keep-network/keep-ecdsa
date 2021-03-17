@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 func nodeHeader(addrStrings []string, port int) {
@@ -71,4 +73,9 @@ func buildMultiLine(lineLength int, prefix, suffix, startPrefix string, lines []
 	}
 
 	return combinedLines
+}
+
+type operatorKeys struct {
+	public  *operator.PublicKey
+	private *operator.PrivateKey
 }

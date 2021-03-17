@@ -6,6 +6,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-common/pkg/chain/celo"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
@@ -22,6 +23,7 @@ const PasswordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 // Config is the top level config structure.
 type Config struct {
 	Ethereum               ethereum.Config
+	Celo                   celo.Config
 	SanctionedApplications SanctionedApplications
 	Storage                Storage
 	LibP2P                 libp2p.Config
@@ -86,7 +88,7 @@ type TBTC struct {
 	BTCRefunds bitcoin.Config
 }
 
-// ReadConfig reads in the configuration file in .toml format. Ethereum key file
+// ReadConfig reads in the configuration file in .toml format. Chain key file
 // password is expected to be provided as environment variable.
 func ReadConfig(filePath string) (*Config, error) {
 	config := &Config{}
@@ -94,7 +96,10 @@ func ReadConfig(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode file [%s]: [%v]", filePath, err)
 	}
 
-	config.Ethereum.Account.KeyFilePassword = os.Getenv(PasswordEnvVariable)
+	password := os.Getenv(PasswordEnvVariable)
+
+	config.Ethereum.Account.KeyFilePassword = password
+	config.Celo.Account.KeyFilePassword = password
 
 	return config, nil
 }
@@ -114,4 +119,21 @@ func ReadEthereumConfig(filePath string) (ethereum.Config, error) {
 	}
 
 	return config.Ethereum, nil
+}
+
+// ReadCeloConfig reads in the configuration file at `filePath` and returns
+// its contained Celo config, or an error if something fails while reading
+// the file.
+//
+// This is the same as invoking ReadConfig and reading the Celo property
+// from the returned config, but is available for external functions that expect
+// to interact solely with Celo and are therefore independent of the rest of
+// the config structure.
+func ReadCeloConfig(filePath string) (celo.Config, error) {
+	config, err := ReadConfig(filePath)
+	if err != nil {
+		return celo.Config{}, err
+	}
+
+	return config.Celo, nil
 }

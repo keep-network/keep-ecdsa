@@ -8,13 +8,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/celo-org/celo-blockchain/common"
+	"github.com/celo-org/celo-blockchain/core/types"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	chainutil "github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-ecdsa/config"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/contract"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/celo/contract"
 
 	"github.com/urfave/cli"
 )
@@ -22,7 +22,7 @@ import (
 var BondedECDSAKeepVendorCommand cli.Command
 
 var bondedECDSAKeepVendorDescription = `The bonded-e-c-d-s-a-keep-vendor command allows calling the BondedECDSAKeepVendor contract on an
-	Ethereum network. It has subcommands corresponding to each contract method,
+	ETH-like network. It has subcommands corresponding to each contract method,
 	which respectively each take parameters based on the contract method's
 	parameters.
 
@@ -198,7 +198,7 @@ func becdsakvInitialize(c *cli.Context) error {
 		return err
 	}
 
-	registryAddress, err := ethutil.AddressFromHex(c.Args()[0])
+	registryAddress, err := chainutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter registryAddress, a address, from passed value %v",
@@ -206,7 +206,7 @@ func becdsakvInitialize(c *cli.Context) error {
 		)
 	}
 
-	factory, err := ethutil.AddressFromHex(c.Args()[1])
+	factory, err := chainutil.AddressFromHex(c.Args()[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter factory, a address, from passed value %v",
@@ -252,7 +252,7 @@ func becdsakvUpgradeFactory(c *cli.Context) error {
 		return err
 	}
 
-	_factory, err := ethutil.AddressFromHex(c.Args()[0])
+	_factory, err := chainutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter _factory, a address, from passed value %v",
@@ -293,17 +293,17 @@ func becdsakvUpgradeFactory(c *cli.Context) error {
 /// ------------------- Initialization -------------------
 
 func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepVendor, error) {
-	config, err := config.ReadEthereumConfig(c.GlobalString("config"))
+	config, err := config.ReadCeloConfig(c.GlobalString("config"))
 	if err != nil {
-		return nil, fmt.Errorf("error reading Ethereum config from file: [%v]", err)
+		return nil, fmt.Errorf("error reading config from file: [%v]", err)
 	}
 
-	client, _, _, err := ethutil.ConnectClients(config.URL, config.URLRPC)
+	client, _, _, err := chainutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to Ethereum node: [%v]", err)
+		return nil, fmt.Errorf("error connecting to host chain node: [%v]", err)
 	}
 
-	key, err := ethutil.DecryptKeyFile(
+	key, err := chainutil.DecryptKeyFile(
 		config.Account.KeyFile,
 		config.Account.KeyFilePassword,
 	)
@@ -324,13 +324,13 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethutil.NewMiningWaiter(
+	miningWaiter := chainutil.NewMiningWaiter(
 		client,
 		checkInterval,
 		maxGasPrice,
 	)
 
-	blockCounter, err := ethutil.NewBlockCounter(client)
+	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create block counter: [%v]",
@@ -344,7 +344,7 @@ func initializeBondedECDSAKeepVendor(c *cli.Context) (*contract.BondedECDSAKeepV
 		address,
 		key,
 		client,
-		ethutil.NewNonceManager(client, key.Address),
+		chainutil.NewNonceManager(client, key.Address),
 		miningWaiter,
 		blockCounter,
 		&sync.Mutex{},
