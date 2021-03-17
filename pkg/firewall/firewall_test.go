@@ -643,8 +643,10 @@ func TestIsKeepActiveCaching(t *testing.T) {
 		t.Fatal("keep is not active")
 	}
 
-	// close active keep and see it's been updated properly
+	// close active keep and see it's been updated properly after caching period
+	// elapsed
 	localChain.CloseKeep(keep1Address)
+	time.Sleep(cacheLifeTime)
 	isActive, err = policy.isKeepActive(keep1)
 	if err != nil {
 		t.Fatal(err)
@@ -653,12 +655,13 @@ func TestIsKeepActiveCaching(t *testing.T) {
 		t.Fatal("keep is not active")
 	}
 
-	// we do not cache information that the keep is active, so all isActive
-	// checks for that keep should end up with an on-chain call, as long as the
-	// keep is active
-	if keep1.isActiveCallCount != 3 {
+	// we do time-cache information that the keep is active and there should be
+	// two on-chain isActive checks:
+	// - first keep1 isActive check that yields true and is time-cached
+	// - second keep1 isActive check after time cache elapsed that yields false
+	if keep1.isActiveCallCount != 2 {
 		t.Fatalf(
-			"chain isActive should be called 3 time; was [%v]",
+			"chain isActive should be called 2 time; was [%v]",
 			keep1.isActiveCallCount,
 		)
 	}
@@ -776,7 +779,7 @@ func createNewPolicy(
 		nonAuthorizedOperatorsCache: cache.NewTimeCache(cacheLifeTime),
 		activeKeepMembersCache:      cache.NewTimeCache(cacheLifeTime),
 		noActiveKeepMembersCache:    cache.NewTimeCache(cacheLifeTime),
-		keepInfoCache:               newKeepInfoCache(),
+		keepInfoCache:               newKeepInfoCache(cacheLifeTime),
 	}
 }
 
