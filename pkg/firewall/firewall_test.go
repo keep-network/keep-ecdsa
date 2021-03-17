@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -582,7 +583,7 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	chain := withCallCounter(local.Connect(ctx))
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -654,13 +655,24 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	if isActive {
 		t.Fatal("keep is not active")
 	}
+
+	// IsActive should be called 3 times:
+	// - first keep 1 IsActive check which yields true
+	// - first keep 2 IsActive check which yields false
+	// - second keep 1 IsActive check after the time cache expired
+	if chain.isActiveCallCount != 3 {
+		t.Fatalf(
+			"chain IsActive should be called 3 times; was [%v]",
+			chain.isActiveCallCount,
+		)
+	}
 }
 
 func TestGetKeepMembersCaching(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	chain := withCallCounter(local.Connect(ctx))
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -730,13 +742,22 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	if !reflect.DeepEqual(members, keep2ExpectedMembers) {
 		t.Fatal("unexpected members")
 	}
+
+	// we do cache result for each on-chain GetMembers call so
+	// there should be only two calls - one for each keep
+	if chain.getMembersCallCount != 2 {
+		t.Fatalf(
+			"chain GetMembers should be called 2 times; was [%v]",
+			chain.getMembersCallCount,
+		)
+	}
 }
 
 func TestGetKeepAtIndexCaching(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	chain := local.Connect(ctx)
+	chain := withCallCounter(local.Connect(ctx))
 	coreFirewall := newMockCoreFirewall()
 	policy := createNewPolicy(chain, coreFirewall)
 
@@ -773,9 +794,6 @@ func TestGetKeepAtIndexCaching(t *testing.T) {
 		t.Fatal("unexpected keep at index 1")
 	}
 
-	// FIXME We are not really checking whether the result is cached.
-	// FIXME We should make sure no additional call to the chain is executed.
-
 	// result is read from the cache, should be the same as the original one
 	address, err = policy.getKeepAtIndex(big.NewInt(0))
 	if err != nil {
@@ -790,6 +808,15 @@ func TestGetKeepAtIndexCaching(t *testing.T) {
 	}
 	if keep2Address != address {
 		t.Fatal("unexpected keep at index 1")
+	}
+
+	// we do cache result for each on-chain GetKeepAtIndex call so
+	// there should be only two calls - one for each keep
+	if chain.getKeepAtIndexCallCount != 2 {
+		t.Fatalf(
+			"chain GetKeepAtIndex should be called 2 times; was [%v]",
+			chain.getKeepAtIndexCallCount,
+		)
 	}
 }
 
@@ -831,4 +858,42 @@ func (mf *mockCoreFirewall) updatePeer(
 ) {
 	x := key.NetworkKeyToECDSAKey(remotePeerPublicKey).X.Uint64()
 	mf.meetsCriteria[x] = meetsCriteria
+}
+
+func withCallCounter(handle local.Chain) *chainWithCallCounter {
+	return &chainWithCallCounter{
+		Chain:                   handle,
+		getKeepAtIndexCallCount: 0,
+		isActiveCallCount:       0,
+		getMembersCallCount:     0,
+	}
+}
+
+type chainWithCallCounter struct {
+	local.Chain
+
+	getKeepAtIndexCallCount uint64
+	isActiveCallCount       uint64
+	getMembersCallCount     uint64
+}
+
+func (cwcc *chainWithCallCounter) GetKeepAtIndex(
+	keepIndex *big.Int,
+) (common.Address, error) {
+	atomic.AddUint64(&cwcc.getKeepAtIndexCallCount, 1)
+	return cwcc.Chain.GetKeepAtIndex(keepIndex)
+}
+
+func (cwcc *chainWithCallCounter) IsActive(
+	keepAddress common.Address,
+) (bool, error) {
+	atomic.AddUint64(&cwcc.isActiveCallCount, 1)
+	return cwcc.Chain.IsActive(keepAddress)
+}
+
+func (cwcc *chainWithCallCounter) GetMembers(
+	keepAddress common.Address,
+) ([]common.Address, error) {
+	atomic.AddUint64(&cwcc.getMembersCallCount, 1)
+	return cwcc.Chain.GetMembers(keepAddress)
 }
