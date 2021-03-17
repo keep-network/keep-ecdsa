@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -577,6 +579,71 @@ func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 	}
 }
 
+func TestGetKeepAtIndexCaching(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	localChain := withCallCounter(local.Connect(ctx))
+	coreFirewall := newMockCoreFirewall()
+	policy := createNewPolicy(localChain, coreFirewall)
+
+	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
+	keep1 := localChain.OpenKeep(
+		keep1Address,
+		[]common.Address{
+			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
+		},
+	)
+	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
+	keep2 := localChain.OpenKeep(
+		keep2Address,
+		[]common.Address{
+			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
+		},
+	)
+
+	// first check, result should be put into the cache
+	keep, err := policy.getKeepAtIndex(big.NewInt(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep.ID() != keep1.ID() {
+		t.Fatal("unexpected keep at index 0")
+	}
+	keep, err = policy.getKeepAtIndex(big.NewInt(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep.ID() != keep2.ID() {
+		t.Fatal("unexpected keep at index 1")
+	}
+
+	// result is read from the cache, should be the same as the original one
+	keep, err = policy.getKeepAtIndex(big.NewInt(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep.ID() != keep1.ID() {
+		t.Fatal("unexpected keep at index 0")
+	}
+	keep, err = policy.getKeepAtIndex(big.NewInt(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep.ID() != keep2.ID() {
+		t.Fatal("unexpected keep at index 1")
+	}
+
+	// we do cache result for each on-chain GetKeepAtIndex call so
+	// there should be only two calls - one for each keep
+	if localChain.getKeepAtIndexCallCount != 2 {
+		t.Fatalf(
+			"chain GetKeepAtIndex should be called 2 times; was [%v]",
+			localChain.getKeepAtIndexCallCount,
+		)
+	}
+}
+
 func TestIsKeepActiveCaching(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
@@ -595,19 +662,19 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
-	keep1 := localChain.OpenKeep(
+	keep1 := withKeepCallCounter(localChain.OpenKeep(
 		keep1Address,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 		},
-	)
+	))
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	keep2 := localChain.OpenKeep(
+	keep2 := withKeepCallCounter(localChain.OpenKeep(
 		keep2Address,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
 		},
-	)
+	))
 	localChain.CloseKeep(keep2Address)
 
 	// first check, result should be put into the cache
@@ -642,14 +709,37 @@ func TestIsKeepActiveCaching(t *testing.T) {
 		t.Fatal("keep is not active")
 	}
 
-	// close active keep and see it's been updated properly
+	// close active keep and see it's been updated properly after caching period
+	// elapsed
 	localChain.CloseKeep(keep1Address)
+	time.Sleep(cacheLifeTime)
 	isActive, err = policy.isKeepActive(keep1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if isActive {
 		t.Fatal("keep is not active")
+	}
+
+	// we do time-cache information that the keep is active and there should be
+	// two on-chain isActive checks:
+	// - first keep1 isActive check that yields true and is time-cached
+	// - second keep1 isActive check after time cache elapsed that yields false
+	if keep1.isActiveCallCount != 2 {
+		t.Fatalf(
+			"chain isActive should be called 2 time; was [%v]",
+			keep1.isActiveCallCount,
+		)
+	}
+
+	// we do cache information that the keep is inactive, so there should be
+	// only one isActive check to the chain for a keep inactive during that
+	// first check
+	if keep2.isActiveCallCount != 1 {
+		t.Fatalf(
+			"chain isActive should be called only one time; was [%v]",
+			keep2.isActiveCallCount,
+		)
 	}
 }
 
@@ -671,21 +761,21 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	))
 
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
-	keep1 := localChain.OpenKeep(
+	keep1 := withKeepCallCounter(localChain.OpenKeep(
 		keep1Address,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 			common.HexToAddress("0xA04Ba34b0689D1b1b5670a774a8EC5538C77FfaF"),
 		},
-	)
+	))
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	keep2 := localChain.OpenKeep(
+	keep2 := withKeepCallCounter(localChain.OpenKeep(
 		keep2Address,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 		},
-	)
+	))
 
 	keep1ExpectedMembers := []string{
 		"0x4f7C771Ab173bEc2BbE980497111866383a21172",
@@ -727,6 +817,21 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	if !reflect.DeepEqual(members, keep2ExpectedMembers) {
 		t.Fatal("unexpected members")
 	}
+
+	// we do cache result for each on-chain getMembers call so there should be
+	// only one on-chain getMembers call for each keep
+	if keep1.getMembersCallCount != 1 {
+		t.Fatalf(
+			"chain getMembers should be called only one time; was [%v]",
+			keep1.getMembersCallCount,
+		)
+	}
+	if keep2.getMembersCallCount != 1 {
+		t.Fatalf(
+			"chain getMembers should be called only one time; was [%v]",
+			keep2.getMembersCallCount,
+		)
+	}
 }
 
 func createNewPolicy(
@@ -740,7 +845,7 @@ func createNewPolicy(
 		nonAuthorizedOperatorsCache: cache.NewTimeCache(cacheLifeTime),
 		activeKeepMembersCache:      cache.NewTimeCache(cacheLifeTime),
 		noActiveKeepMembersCache:    cache.NewTimeCache(cacheLifeTime),
-		keepInfoCache:               newKeepInfoCache(),
+		keepInfoCache:               newKeepInfoCache(cacheLifeTime),
 	}
 }
 
@@ -767,4 +872,48 @@ func (mf *mockCoreFirewall) updatePeer(
 ) {
 	x := key.NetworkKeyToECDSAKey(remotePeerPublicKey).X.Uint64()
 	mf.meetsCriteria[x] = meetsCriteria
+}
+
+func withCallCounter(handle local.Chain) *chainWithCallCounter {
+	return &chainWithCallCounter{
+		Chain:                   handle,
+		getKeepAtIndexCallCount: 0,
+	}
+}
+
+type chainWithCallCounter struct {
+	local.Chain
+	getKeepAtIndexCallCount uint64
+}
+
+func (cwcc *chainWithCallCounter) GetKeepAtIndex(
+	keepIndex *big.Int,
+) (chain.BondedECDSAKeepHandle, error) {
+	atomic.AddUint64(&cwcc.getKeepAtIndexCallCount, 1)
+	return cwcc.Chain.GetKeepAtIndex(keepIndex)
+}
+
+func withKeepCallCounter(handle chain.BondedECDSAKeepHandle) *keepHandleWithCounter {
+	return &keepHandleWithCounter{
+		BondedECDSAKeepHandle: handle,
+		isActiveCallCount:     0,
+		getMembersCallCount:   0,
+	}
+}
+
+type keepHandleWithCounter struct {
+	chain.BondedECDSAKeepHandle
+
+	isActiveCallCount   uint64
+	getMembersCallCount uint64
+}
+
+func (khwc *keepHandleWithCounter) IsActive() (bool, error) {
+	atomic.AddUint64(&khwc.isActiveCallCount, 1)
+	return khwc.BondedECDSAKeepHandle.IsActive()
+}
+
+func (khwc *keepHandleWithCounter) GetMembers() ([]common.Address, error) {
+	atomic.AddUint64(&khwc.getMembersCallCount, 1)
+	return khwc.BondedECDSAKeepHandle.GetMembers()
 }
