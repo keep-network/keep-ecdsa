@@ -31,7 +31,7 @@ const (
 	// activeKeepCachePeriod is the time the cache maintains information
 	// about active and no active keep members. We use the cache to minimize
 	// calls to Ethereum client.
-	activeKeepCachePeriod = 168 * time.Hour // one week
+	activeKeepMemberCachePeriod = 168 * time.Hour // one week
 )
 
 var errNoAuthorization = fmt.Errorf("remote peer has no authorization on the factory")
@@ -51,9 +51,9 @@ func NewStakeOrActiveKeepPolicy(
 		minimumStakePolicy:          coreFirewall.MinimumStakePolicy(stakeMonitor),
 		authorizedOperatorsCache:    cache.NewTimeCache(authorizationCachePeriod),
 		nonAuthorizedOperatorsCache: cache.NewTimeCache(authorizationCachePeriod),
-		activeKeepMembersCache:      cache.NewTimeCache(activeKeepCachePeriod),
-		noActiveKeepMembersCache:    cache.NewTimeCache(activeKeepCachePeriod),
-		keepInfoCache:               newKeepInfoCache(),
+		activeKeepMembersCache:      cache.NewTimeCache(activeKeepMemberCachePeriod),
+		noActiveKeepMembersCache:    cache.NewTimeCache(activeKeepMemberCachePeriod),
+		keepInfoCache:               newKeepInfoCache(activeKeepMemberCachePeriod),
 	}
 }
 
@@ -257,10 +257,11 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepAtIndex(
 	return address, nil
 }
 
-// isKeepActive performs on-chain check whether the keep with the given address
-// is active if the keep has not been previously marked as inactive in the cache.
-// If the keep has been marked as inactive in the cache, function returns false
-// without hitting the chain.
+// isKeepActive checks whether the keep with the given address is active. If the
+// keep has been previously identified as inactive, function returns false
+// without querying the chain. If the keep has been identified as active some
+// time ago, depending on the time-caching policy, this function may return
+// true without querying the chain.
 func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
 	keepAddress common.Address,
 ) (bool, error) {
@@ -274,12 +275,19 @@ func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
 		return false, nil
 	}
 
+	cache.isActive.Sweep()
+	if cache.isActive.Has(keepAddress.String()) {
+		return true, nil
+	}
+
 	isActive, err := soakp.chain.IsActive(keepAddress)
 	if err != nil {
 		return false, err
 	}
 
-	if !isActive {
+	if isActive {
+		cache.isActive.Add(keepAddress.String())
+	} else {
 		cache.mutex.Lock()
 		cache.isInactive[keepAddress.String()] = true
 		cache.mutex.Unlock()
@@ -320,25 +328,31 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
 	return members, nil
 }
 
-// keepInfoCache caches invariant information obtained from the chain.
-// This cache never expires.
+// keepInfoCache caches information about keeps obtained from the chain.
 //
-// There are three invariants that can be cached:
+// There are four pieces of information cached:
 // 1. Keep index - keep address mapping. Keep never changes its address and
-//    keep factory never changes index of a keep.
-// 2. Information whether the keep is inactive. Inactive keep can never become
-//    active again.
-// 3. Information about keep members. Keep members never change.
+//    keep factory never changes index of a keep. This information, once cached,
+//    never expires.
+// 2. Information whether the keep is active. Keep may become inactive at any
+//    moment so this information, if cached, does expire after some time, and
+//    there is a risk information in the cache is out of date.
+// 3. Information whether the keep is inactive. Inactive keep can never become
+//    active again. This information, once cached, never expires.
+// 4. Information about keep members. Keep members never change so this
+//    information, once cached, never expires.
 type keepInfoCache struct {
 	address    map[string]string   // keep index -> keep address
-	isInactive map[string]bool     // keep address -> is inactive ?
+	isActive   *cache.TimeCache    // keep address -> true (if active)
+	isInactive map[string]bool     // keep address -> true (if inactive)
 	members    map[string][]string // keep address -> member addresses
 	mutex      sync.RWMutex
 }
 
-func newKeepInfoCache() *keepInfoCache {
+func newKeepInfoCache(isActiveKeepCachePeriod time.Duration) *keepInfoCache {
 	return &keepInfoCache{
 		address:    make(map[string]string),
+		isActive:   cache.NewTimeCache(isActiveKeepCachePeriod),
 		isInactive: make(map[string]bool),
 		members:    make(map[string][]string),
 	}

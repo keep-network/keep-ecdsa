@@ -643,8 +643,10 @@ func TestIsKeepActiveCaching(t *testing.T) {
 		t.Fatal("keep is not active")
 	}
 
-	// close active keep and see it's been updated properly
+	// close active keep and see it's been updated properly after caching period
+	// elapsed
 	chain.CloseKeep(keep1Address)
+	time.Sleep(cacheLifeTime)
 	isActive, err = policy.isKeepActive(keep1Address)
 	if err != nil {
 		t.Fatal(err)
@@ -802,7 +804,7 @@ func createNewPolicy(
 		nonAuthorizedOperatorsCache: cache.NewTimeCache(cacheLifeTime),
 		activeKeepMembersCache:      cache.NewTimeCache(cacheLifeTime),
 		noActiveKeepMembersCache:    cache.NewTimeCache(cacheLifeTime),
-		keepInfoCache:               newKeepInfoCache(),
+		keepInfoCache:               newKeepInfoCache(cacheLifeTime),
 	}
 }
 
