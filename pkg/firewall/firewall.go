@@ -70,16 +70,18 @@ type stakeOrActiveKeepPolicy struct {
 func (soakp *stakeOrActiveKeepPolicy) Validate(
 	remotePeerPublicKey *ecdsa.PublicKey,
 ) error {
+	remotePeerNetworkPublicKey := coreKey.NetworkPublic(*remotePeerPublicKey)
+	remotePeerAddress := coreKey.NetworkPubKeyToChainAddress(
+		&remotePeerNetworkPublicKey,
+	)
+
+	logger.Debugf("validating firewall rules for [%v]", remotePeerAddress)
+
 	// Validate minimum stake policy. If the remote peer has the minimum stake,
 	// we are fine and we should let to connect.
 	if err := soakp.minimumStakePolicy.Validate(remotePeerPublicKey); err == nil {
 		return nil
 	}
-
-	remotePeerNetworkPublicKey := coreKey.NetworkPublic(*remotePeerPublicKey)
-	remotePeerAddress := coreKey.NetworkPubKeyToChainAddress(
-		&remotePeerNetworkPublicKey,
-	)
 
 	// Check if the remote peer has authorization on the factory.
 	// The authorization cannot be revoked.
@@ -100,6 +102,11 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 func (soakp *stakeOrActiveKeepPolicy) validateAuthorization(
 	remotePeerAddress string,
 ) error {
+	logger.Debugf(
+		"validating authorization for [%v]",
+		remotePeerAddress,
+	)
+
 	// Before hitting ETH client, consult the in-memory time cache.
 	// If the caching time for the given entry elapsed or if that entry is
 	// not in the cache, we'll have to consult the chain and execute a call
@@ -122,7 +129,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateAuthorization(
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"could not check authorization for address [%v]: [%v]",
+			"could not validate authorization for address [%v]: [%v]",
 			remotePeerAddress,
 			err,
 		)
@@ -140,6 +147,10 @@ func (soakp *stakeOrActiveKeepPolicy) validateAuthorization(
 func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	remotePeerAddress string,
 ) error {
+	logger.Debugf(
+		"validating active keep membership for [%v]",
+		remotePeerAddress,
+	)
 
 	// First, check in the in-memory time cache to minimize hits to ETH client.
 	// If the Keep client with the given chain address is in the active members
@@ -247,6 +258,7 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepAtIndex(
 		return soakp.chain.GetKeepWithID(cachedID)
 	}
 
+	logger.Debugf("fetching keep at index [%v] from the chain", index)
 	keep, err := soakp.chain.GetKeepAtIndex(index)
 	if err != nil {
 		return nil, err
@@ -282,6 +294,10 @@ func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
 		return true, nil
 	}
 
+	logger.Debugf(
+		"checking if keep with ID [%v] is active on the chain",
+		keep.ID(),
+	)
 	isActive, err := keep.IsActive()
 	if err != nil {
 		return false, err
@@ -313,6 +329,10 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
 		return members, nil
 	}
 
+	logger.Debugf(
+		"getting members of the keep with ID [%v] from the chain",
+		keep.ID(),
+	)
 	memberAddresses, err := keep.GetMembers()
 	if err != nil {
 		return nil, nil
