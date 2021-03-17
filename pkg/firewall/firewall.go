@@ -245,14 +245,20 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepAtIndex(
 		return common.HexToAddress(cachedAddress), nil
 	}
 
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+
+	cachedAddress, isCached = cache.address[index.String()]
+	if isCached {
+		return common.HexToAddress(cachedAddress), nil
+	}
+
 	address, err := soakp.chain.GetKeepAtIndex(index)
 	if err != nil {
 		return common.Address{}, err
 	}
 
-	cache.mutex.Lock()
 	cache.address[index.String()] = address.Hex()
-	cache.mutex.Unlock()
 
 	return address, nil
 }
@@ -280,6 +286,17 @@ func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
 		return true, nil
 	}
 
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+
+	isInactive, isCached = cache.isInactive[keepAddress.String()]
+	if isCached && isInactive {
+		return false, nil
+	}
+	if cache.isActive.Has(keepAddress.String()) {
+		return true, nil
+	}
+
 	isActive, err := soakp.chain.IsActive(keepAddress)
 	if err != nil {
 		return false, err
@@ -288,9 +305,7 @@ func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
 	if isActive {
 		cache.isActive.Add(keepAddress.String())
 	} else {
-		cache.mutex.Lock()
 		cache.isInactive[keepAddress.String()] = true
-		cache.mutex.Unlock()
 	}
 
 	return isActive, nil
@@ -311,6 +326,14 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
 		return members, nil
 	}
 
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+
+	members, areCached = cache.members[keepAddress.String()]
+	if areCached {
+		return members, nil
+	}
+
 	memberAddresses, err := soakp.chain.GetMembers(keepAddress)
 	if err != nil {
 		return nil, nil
@@ -321,9 +344,7 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
 		members[i] = member.String()
 	}
 
-	cache.mutex.Lock()
 	cache.members[keepAddress.String()] = members
-	cache.mutex.Unlock()
 
 	return members, nil
 }
