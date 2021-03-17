@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
 	"reflect"
 	"sync/atomic"
 	"testing"
@@ -578,6 +579,71 @@ func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 	}
 }
 
+func TestGetKeepAtIndexCaching(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	localChain := withCallCounter(local.Connect(ctx))
+	coreFirewall := newMockCoreFirewall()
+	policy := createNewPolicy(localChain, coreFirewall)
+
+	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
+	keep1 := localChain.OpenKeep(
+		keep1Address,
+		[]common.Address{
+			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
+		},
+	)
+	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
+	keep2 := localChain.OpenKeep(
+		keep2Address,
+		[]common.Address{
+			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
+		},
+	)
+
+	// first check, result should be put into the cache
+	keep, err := policy.getKeepAtIndex(big.NewInt(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep.ID() != keep1.ID() {
+		t.Fatal("unexpected keep at index 0")
+	}
+	keep, err = policy.getKeepAtIndex(big.NewInt(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep.ID() != keep2.ID() {
+		t.Fatal("unexpected keep at index 1")
+	}
+
+	// result is read from the cache, should be the same as the original one
+	keep, err = policy.getKeepAtIndex(big.NewInt(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep.ID() != keep1.ID() {
+		t.Fatal("unexpected keep at index 0")
+	}
+	keep, err = policy.getKeepAtIndex(big.NewInt(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keep.ID() != keep2.ID() {
+		t.Fatal("unexpected keep at index 1")
+	}
+
+	// we do cache result for each on-chain GetKeepAtIndex call so
+	// there should be only two calls - one for each keep
+	if localChain.getKeepAtIndexCallCount != 2 {
+		t.Fatalf(
+			"chain GetKeepAtIndex should be called 2 times; was [%v]",
+			localChain.getKeepAtIndexCallCount,
+		)
+	}
+}
+
 func TestIsKeepActiveCaching(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
@@ -806,6 +872,25 @@ func (mf *mockCoreFirewall) updatePeer(
 ) {
 	x := key.NetworkKeyToECDSAKey(remotePeerPublicKey).X.Uint64()
 	mf.meetsCriteria[x] = meetsCriteria
+}
+
+func withCallCounter(handle local.Chain) *chainWithCallCounter {
+	return &chainWithCallCounter{
+		Chain:                   handle,
+		getKeepAtIndexCallCount: 0,
+	}
+}
+
+type chainWithCallCounter struct {
+	local.Chain
+	getKeepAtIndexCallCount uint64
+}
+
+func (cwcc *chainWithCallCounter) GetKeepAtIndex(
+	keepIndex *big.Int,
+) (chain.BondedECDSAKeepHandle, error) {
+	atomic.AddUint64(&cwcc.getKeepAtIndexCallCount, 1)
+	return cwcc.Chain.GetKeepAtIndex(keepIndex)
 }
 
 func withKeepCallCounter(handle chain.BondedECDSAKeepHandle) *keepHandleWithCounter {

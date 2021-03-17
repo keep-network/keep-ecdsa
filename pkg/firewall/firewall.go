@@ -174,7 +174,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	lastIndex := new(big.Int).Sub(keepCount, one)
 
 	for keepIndex := new(big.Int).Set(lastIndex); keepIndex.Cmp(zero) != -1; keepIndex.Sub(keepIndex, one) {
-		keep, err := soakp.chain.GetKeepAtIndex(keepIndex)
+		keep, err := soakp.getKeepAtIndex(keepIndex)
 		if err != nil {
 			logger.Errorf(
 				"could not get keep at index [%v]: [%v]",
@@ -229,6 +229,34 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	// active keeps and it's minimum stake check failed as well. We are not
 	// allowing to connect with that peer.
 	return errNoMinStakeNoActiveKeep
+}
+
+// getKeepAtIndex returns keep handle for a keep registered in the factory
+// under the given index. Keep index to keep ID mapping is cached so this
+// function allows to limit the number of on-chain calls.
+func (soakp *stakeOrActiveKeepPolicy) getKeepAtIndex(
+	index *big.Int,
+) (chain.BondedECDSAKeepHandle, error) {
+	cache := soakp.keepInfoCache
+
+	cache.mutex.RLock()
+	cachedID, isCached := cache.indexToID[index.String()]
+	cache.mutex.RUnlock()
+
+	if isCached {
+		return soakp.chain.GetKeepWithID(cachedID)
+	}
+
+	keep, err := soakp.chain.GetKeepAtIndex(index)
+	if err != nil {
+		return nil, err
+	}
+
+	cache.mutex.Lock()
+	cache.indexToID[index.String()] = keep.ID()
+	cache.mutex.Unlock()
+
+	return keep, nil
 }
 
 // isKeepActive checks whether the keep with the given address is active. If the
@@ -304,23 +332,28 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
 
 // keepInfoCache caches information about keeps obtained from the chain.
 //
-// There are three pieces of information cached:
-// 1. Information whether the keep is active. Keep may become inactive at any
+// There are four pieces of information cached:
+// 1. Keep index - keep on-chain ID mapping. Keep never changes its ID and keep
+//    factory never changes index of a keep so this information, once cached,
+//    never expires.
+// 2. Information whether the keep is active. Keep may become inactive at any
 //    moment so this information, if cached, does expire after some time, and
 //    there is a risk information in the cache is out of date.
-// 2. Information whether the keep is inactive. Inactive keep can never become
+// 3. Information whether the keep is inactive. Inactive keep can never become
 //    active again. This information, once cached, never expires.
-// 3. Information about keep members. Keep members never change so this
+// 4. Information about keep members. Keep members never change so this
 //    information, once cached, never expires.
 type keepInfoCache struct {
-	isActive   *cache.TimeCache    // keep on-chain ID -> true (if active)
-	isInactive map[string]bool     // keep on-chain ID -> true (if inactive)
-	members    map[string][]string // keep on-chain ID -> member on-chain IDs
+	indexToID  map[string]common.Address // keep index -> keep on-chain ID
+	isActive   *cache.TimeCache          // keep on-chain ID -> true (if active)
+	isInactive map[string]bool           // keep on-chain ID -> true (if inactive)
+	members    map[string][]string       // keep on-chain ID -> member on-chain IDs
 	mutex      sync.RWMutex
 }
 
 func newKeepInfoCache(isActiveKeepCachePeriod time.Duration) *keepInfoCache {
 	return &keepInfoCache{
+		indexToID:  make(map[string]common.Address),
 		isActive:   cache.NewTimeCache(isActiveKeepCachePeriod),
 		isInactive: make(map[string]bool),
 		members:    make(map[string][]string),
