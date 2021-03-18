@@ -74,19 +74,12 @@ func TestDeriveAddress(t *testing.T) {
 			address, err := DeriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
 
 			if err != nil {
-				t.Errorf(
-					"got %s while trying to derive %s at index %d",
-					err,
-					testData.extendedAddress,
-					testData.addressIndex,
-				)
+				t.Error(err)
 			}
 
 			if address != testData.expectedAddress {
 				t.Errorf(
-					"unexpected address while trying to derive %s at index %v\nExpected: %s\nActual:   %s",
-					testData.extendedAddress,
-					testData.addressIndex,
+					"unexpected derived address\nexpected: %s\nactual:   %s",
 					testData.expectedAddress,
 					address,
 				)
