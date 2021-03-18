@@ -71,7 +71,7 @@ var deriveAddressTestData = map[string]struct {
 func TestDeriveAddress(t *testing.T) {
 	for testName, testData := range deriveAddressTestData {
 		t.Run(testName, func(t *testing.T) {
-			address, err := DeriveAddress(testData.extendedAddress, testData.addressIndex)
+			address, err := DeriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
 
 			if err != nil {
 				t.Errorf(

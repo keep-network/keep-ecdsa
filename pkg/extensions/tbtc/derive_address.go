@@ -32,7 +32,7 @@ import (
 // [BIP44]: https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
 // [BIP49]: https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
 // [BIP84]: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
-func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
+func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error) {
 	extendedKey, err := hdkeychain.NewKeyFromString(extendedPublicKey)
 	if err != nil {
 		return "", fmt.Errorf(
@@ -55,7 +55,7 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 		}
 	}
 
-	requestedPublicKey, err := externalChain.Child(uint32(addressIndex))
+	requestedPublicKey, err := externalChain.Child(addressIndex)
 	if err != nil {
 		return "", fmt.Errorf(
 			"error deriving requested address index /0/%v from extended key: [%s]",
