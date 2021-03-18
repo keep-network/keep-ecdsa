@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindBondedECDSAKeep(address common.Address, caller bind.ContractCaller, tra
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_BondedECDSAKeep *BondedECDSAKeepRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_BondedECDSAKeep *BondedECDSAKeepRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _BondedECDSAKeep.Contract.BondedECDSAKeepCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_BondedECDSAKeep *BondedECDSAKeepRaw) Transact(opts *bind.TransactOpts, me
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_BondedECDSAKeep *BondedECDSAKeepCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_BondedECDSAKeep *BondedECDSAKeepCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _BondedECDSAKeep.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,468 +173,558 @@ func (_BondedECDSAKeep *BondedECDSAKeepTransactorRaw) Transact(opts *bind.Transa
 
 // CheckBondAmount is a free data retrieval call binding the contract method 0xdc3d6da8.
 //
-// Solidity: function checkBondAmount() constant returns(uint256)
+// Solidity: function checkBondAmount() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) CheckBondAmount(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "checkBondAmount")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "checkBondAmount")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // CheckBondAmount is a free data retrieval call binding the contract method 0xdc3d6da8.
 //
-// Solidity: function checkBondAmount() constant returns(uint256)
+// Solidity: function checkBondAmount() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) CheckBondAmount() (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.CheckBondAmount(&_BondedECDSAKeep.CallOpts)
 }
 
 // CheckBondAmount is a free data retrieval call binding the contract method 0xdc3d6da8.
 //
-// Solidity: function checkBondAmount() constant returns(uint256)
+// Solidity: function checkBondAmount() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) CheckBondAmount() (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.CheckBondAmount(&_BondedECDSAKeep.CallOpts)
 }
 
 // CheckSignatureFraud is a free data retrieval call binding the contract method 0xbf9c8301.
 //
-// Solidity: function checkSignatureFraud(uint8 _v, bytes32 _r, bytes32 _s, bytes32 _signedDigest, bytes _preimage) constant returns(bool _isFraud)
+// Solidity: function checkSignatureFraud(uint8 _v, bytes32 _r, bytes32 _s, bytes32 _signedDigest, bytes _preimage) view returns(bool _isFraud)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) CheckSignatureFraud(opts *bind.CallOpts, _v uint8, _r [32]byte, _s [32]byte, _signedDigest [32]byte, _preimage []byte) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "checkSignatureFraud", _v, _r, _s, _signedDigest, _preimage)
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "checkSignatureFraud", _v, _r, _s, _signedDigest, _preimage)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // CheckSignatureFraud is a free data retrieval call binding the contract method 0xbf9c8301.
 //
-// Solidity: function checkSignatureFraud(uint8 _v, bytes32 _r, bytes32 _s, bytes32 _signedDigest, bytes _preimage) constant returns(bool _isFraud)
+// Solidity: function checkSignatureFraud(uint8 _v, bytes32 _r, bytes32 _s, bytes32 _signedDigest, bytes _preimage) view returns(bool _isFraud)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) CheckSignatureFraud(_v uint8, _r [32]byte, _s [32]byte, _signedDigest [32]byte, _preimage []byte) (bool, error) {
 	return _BondedECDSAKeep.Contract.CheckSignatureFraud(&_BondedECDSAKeep.CallOpts, _v, _r, _s, _signedDigest, _preimage)
 }
 
 // CheckSignatureFraud is a free data retrieval call binding the contract method 0xbf9c8301.
 //
-// Solidity: function checkSignatureFraud(uint8 _v, bytes32 _r, bytes32 _s, bytes32 _signedDigest, bytes _preimage) constant returns(bool _isFraud)
+// Solidity: function checkSignatureFraud(uint8 _v, bytes32 _r, bytes32 _s, bytes32 _signedDigest, bytes _preimage) view returns(bool _isFraud)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) CheckSignatureFraud(_v uint8, _r [32]byte, _s [32]byte, _signedDigest [32]byte, _preimage []byte) (bool, error) {
 	return _BondedECDSAKeep.Contract.CheckSignatureFraud(&_BondedECDSAKeep.CallOpts, _v, _r, _s, _signedDigest, _preimage)
 }
 
 // Digest is a free data retrieval call binding the contract method 0x52a82b65.
 //
-// Solidity: function digest() constant returns(bytes32)
+// Solidity: function digest() view returns(bytes32)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) Digest(opts *bind.CallOpts) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "digest")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "digest")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
 }
 
 // Digest is a free data retrieval call binding the contract method 0x52a82b65.
 //
-// Solidity: function digest() constant returns(bytes32)
+// Solidity: function digest() view returns(bytes32)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) Digest() ([32]byte, error) {
 	return _BondedECDSAKeep.Contract.Digest(&_BondedECDSAKeep.CallOpts)
 }
 
 // Digest is a free data retrieval call binding the contract method 0x52a82b65.
 //
-// Solidity: function digest() constant returns(bytes32)
+// Solidity: function digest() view returns(bytes32)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) Digest() ([32]byte, error) {
 	return _BondedECDSAKeep.Contract.Digest(&_BondedECDSAKeep.CallOpts)
 }
 
 // Digests is a free data retrieval call binding the contract method 0x01ac4293.
 //
-// Solidity: function digests(bytes32 ) constant returns(uint256)
+// Solidity: function digests(bytes32 ) view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) Digests(opts *bind.CallOpts, arg0 [32]byte) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "digests", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "digests", arg0)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // Digests is a free data retrieval call binding the contract method 0x01ac4293.
 //
-// Solidity: function digests(bytes32 ) constant returns(uint256)
+// Solidity: function digests(bytes32 ) view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) Digests(arg0 [32]byte) (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.Digests(&_BondedECDSAKeep.CallOpts, arg0)
 }
 
 // Digests is a free data retrieval call binding the contract method 0x01ac4293.
 //
-// Solidity: function digests(bytes32 ) constant returns(uint256)
+// Solidity: function digests(bytes32 ) view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) Digests(arg0 [32]byte) (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.Digests(&_BondedECDSAKeep.CallOpts, arg0)
 }
 
 // GetMemberETHBalance is a free data retrieval call binding the contract method 0xd5cc8b0f.
 //
-// Solidity: function getMemberETHBalance(address _member) constant returns(uint256)
+// Solidity: function getMemberETHBalance(address _member) view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) GetMemberETHBalance(opts *bind.CallOpts, _member common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "getMemberETHBalance", _member)
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "getMemberETHBalance", _member)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetMemberETHBalance is a free data retrieval call binding the contract method 0xd5cc8b0f.
 //
-// Solidity: function getMemberETHBalance(address _member) constant returns(uint256)
+// Solidity: function getMemberETHBalance(address _member) view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) GetMemberETHBalance(_member common.Address) (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.GetMemberETHBalance(&_BondedECDSAKeep.CallOpts, _member)
 }
 
 // GetMemberETHBalance is a free data retrieval call binding the contract method 0xd5cc8b0f.
 //
-// Solidity: function getMemberETHBalance(address _member) constant returns(uint256)
+// Solidity: function getMemberETHBalance(address _member) view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) GetMemberETHBalance(_member common.Address) (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.GetMemberETHBalance(&_BondedECDSAKeep.CallOpts, _member)
 }
 
 // GetMembers is a free data retrieval call binding the contract method 0x9eab5253.
 //
-// Solidity: function getMembers() constant returns(address[])
+// Solidity: function getMembers() view returns(address[])
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) GetMembers(opts *bind.CallOpts) ([]common.Address, error) {
-	var (
-		ret0 = new([]common.Address)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "getMembers")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "getMembers")
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
 }
 
 // GetMembers is a free data retrieval call binding the contract method 0x9eab5253.
 //
-// Solidity: function getMembers() constant returns(address[])
+// Solidity: function getMembers() view returns(address[])
 func (_BondedECDSAKeep *BondedECDSAKeepSession) GetMembers() ([]common.Address, error) {
 	return _BondedECDSAKeep.Contract.GetMembers(&_BondedECDSAKeep.CallOpts)
 }
 
 // GetMembers is a free data retrieval call binding the contract method 0x9eab5253.
 //
-// Solidity: function getMembers() constant returns(address[])
+// Solidity: function getMembers() view returns(address[])
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) GetMembers() ([]common.Address, error) {
 	return _BondedECDSAKeep.Contract.GetMembers(&_BondedECDSAKeep.CallOpts)
 }
 
 // GetOpenedTimestamp is a free data retrieval call binding the contract method 0xf4c2b4c1.
 //
-// Solidity: function getOpenedTimestamp() constant returns(uint256)
+// Solidity: function getOpenedTimestamp() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) GetOpenedTimestamp(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "getOpenedTimestamp")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "getOpenedTimestamp")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetOpenedTimestamp is a free data retrieval call binding the contract method 0xf4c2b4c1.
 //
-// Solidity: function getOpenedTimestamp() constant returns(uint256)
+// Solidity: function getOpenedTimestamp() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) GetOpenedTimestamp() (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.GetOpenedTimestamp(&_BondedECDSAKeep.CallOpts)
 }
 
 // GetOpenedTimestamp is a free data retrieval call binding the contract method 0xf4c2b4c1.
 //
-// Solidity: function getOpenedTimestamp() constant returns(uint256)
+// Solidity: function getOpenedTimestamp() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) GetOpenedTimestamp() (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.GetOpenedTimestamp(&_BondedECDSAKeep.CallOpts)
 }
 
 // GetOwner is a free data retrieval call binding the contract method 0x893d20e8.
 //
-// Solidity: function getOwner() constant returns(address)
+// Solidity: function getOwner() view returns(address)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) GetOwner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "getOwner")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "getOwner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // GetOwner is a free data retrieval call binding the contract method 0x893d20e8.
 //
-// Solidity: function getOwner() constant returns(address)
+// Solidity: function getOwner() view returns(address)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) GetOwner() (common.Address, error) {
 	return _BondedECDSAKeep.Contract.GetOwner(&_BondedECDSAKeep.CallOpts)
 }
 
 // GetOwner is a free data retrieval call binding the contract method 0x893d20e8.
 //
-// Solidity: function getOwner() constant returns(address)
+// Solidity: function getOwner() view returns(address)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) GetOwner() (common.Address, error) {
 	return _BondedECDSAKeep.Contract.GetOwner(&_BondedECDSAKeep.CallOpts)
 }
 
 // GetPublicKey is a free data retrieval call binding the contract method 0x2e334452.
 //
-// Solidity: function getPublicKey() constant returns(bytes)
+// Solidity: function getPublicKey() view returns(bytes)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) GetPublicKey(opts *bind.CallOpts) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "getPublicKey")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "getPublicKey")
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
 }
 
 // GetPublicKey is a free data retrieval call binding the contract method 0x2e334452.
 //
-// Solidity: function getPublicKey() constant returns(bytes)
+// Solidity: function getPublicKey() view returns(bytes)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) GetPublicKey() ([]byte, error) {
 	return _BondedECDSAKeep.Contract.GetPublicKey(&_BondedECDSAKeep.CallOpts)
 }
 
 // GetPublicKey is a free data retrieval call binding the contract method 0x2e334452.
 //
-// Solidity: function getPublicKey() constant returns(bytes)
+// Solidity: function getPublicKey() view returns(bytes)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) GetPublicKey() ([]byte, error) {
 	return _BondedECDSAKeep.Contract.GetPublicKey(&_BondedECDSAKeep.CallOpts)
 }
 
 // HonestThreshold is a free data retrieval call binding the contract method 0x6806db1f.
 //
-// Solidity: function honestThreshold() constant returns(uint256)
+// Solidity: function honestThreshold() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) HonestThreshold(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "honestThreshold")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "honestThreshold")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // HonestThreshold is a free data retrieval call binding the contract method 0x6806db1f.
 //
-// Solidity: function honestThreshold() constant returns(uint256)
+// Solidity: function honestThreshold() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) HonestThreshold() (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.HonestThreshold(&_BondedECDSAKeep.CallOpts)
 }
 
 // HonestThreshold is a free data retrieval call binding the contract method 0x6806db1f.
 //
-// Solidity: function honestThreshold() constant returns(uint256)
+// Solidity: function honestThreshold() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) HonestThreshold() (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.HonestThreshold(&_BondedECDSAKeep.CallOpts)
 }
 
 // IsActive is a free data retrieval call binding the contract method 0x22f3e2d4.
 //
-// Solidity: function isActive() constant returns(bool)
+// Solidity: function isActive() view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) IsActive(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "isActive")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "isActive")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsActive is a free data retrieval call binding the contract method 0x22f3e2d4.
 //
-// Solidity: function isActive() constant returns(bool)
+// Solidity: function isActive() view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) IsActive() (bool, error) {
 	return _BondedECDSAKeep.Contract.IsActive(&_BondedECDSAKeep.CallOpts)
 }
 
 // IsActive is a free data retrieval call binding the contract method 0x22f3e2d4.
 //
-// Solidity: function isActive() constant returns(bool)
+// Solidity: function isActive() view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) IsActive() (bool, error) {
 	return _BondedECDSAKeep.Contract.IsActive(&_BondedECDSAKeep.CallOpts)
 }
 
 // IsAwaitingSignature is a free data retrieval call binding the contract method 0xcb7cf187.
 //
-// Solidity: function isAwaitingSignature(bytes32 _digest) constant returns(bool)
+// Solidity: function isAwaitingSignature(bytes32 _digest) view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) IsAwaitingSignature(opts *bind.CallOpts, _digest [32]byte) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "isAwaitingSignature", _digest)
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "isAwaitingSignature", _digest)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsAwaitingSignature is a free data retrieval call binding the contract method 0xcb7cf187.
 //
-// Solidity: function isAwaitingSignature(bytes32 _digest) constant returns(bool)
+// Solidity: function isAwaitingSignature(bytes32 _digest) view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) IsAwaitingSignature(_digest [32]byte) (bool, error) {
 	return _BondedECDSAKeep.Contract.IsAwaitingSignature(&_BondedECDSAKeep.CallOpts, _digest)
 }
 
 // IsAwaitingSignature is a free data retrieval call binding the contract method 0xcb7cf187.
 //
-// Solidity: function isAwaitingSignature(bytes32 _digest) constant returns(bool)
+// Solidity: function isAwaitingSignature(bytes32 _digest) view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) IsAwaitingSignature(_digest [32]byte) (bool, error) {
 	return _BondedECDSAKeep.Contract.IsAwaitingSignature(&_BondedECDSAKeep.CallOpts, _digest)
 }
 
 // IsClosed is a free data retrieval call binding the contract method 0xc2b6b58c.
 //
-// Solidity: function isClosed() constant returns(bool)
+// Solidity: function isClosed() view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) IsClosed(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "isClosed")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "isClosed")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsClosed is a free data retrieval call binding the contract method 0xc2b6b58c.
 //
-// Solidity: function isClosed() constant returns(bool)
+// Solidity: function isClosed() view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) IsClosed() (bool, error) {
 	return _BondedECDSAKeep.Contract.IsClosed(&_BondedECDSAKeep.CallOpts)
 }
 
 // IsClosed is a free data retrieval call binding the contract method 0xc2b6b58c.
 //
-// Solidity: function isClosed() constant returns(bool)
+// Solidity: function isClosed() view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) IsClosed() (bool, error) {
 	return _BondedECDSAKeep.Contract.IsClosed(&_BondedECDSAKeep.CallOpts)
 }
 
 // IsTerminated is a free data retrieval call binding the contract method 0xd1cc9976.
 //
-// Solidity: function isTerminated() constant returns(bool)
+// Solidity: function isTerminated() view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) IsTerminated(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "isTerminated")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "isTerminated")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsTerminated is a free data retrieval call binding the contract method 0xd1cc9976.
 //
-// Solidity: function isTerminated() constant returns(bool)
+// Solidity: function isTerminated() view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) IsTerminated() (bool, error) {
 	return _BondedECDSAKeep.Contract.IsTerminated(&_BondedECDSAKeep.CallOpts)
 }
 
 // IsTerminated is a free data retrieval call binding the contract method 0xd1cc9976.
 //
-// Solidity: function isTerminated() constant returns(bool)
+// Solidity: function isTerminated() view returns(bool)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) IsTerminated() (bool, error) {
 	return _BondedECDSAKeep.Contract.IsTerminated(&_BondedECDSAKeep.CallOpts)
 }
 
 // MemberStake is a free data retrieval call binding the contract method 0xc9de240d.
 //
-// Solidity: function memberStake() constant returns(uint256)
+// Solidity: function memberStake() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) MemberStake(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "memberStake")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "memberStake")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // MemberStake is a free data retrieval call binding the contract method 0xc9de240d.
 //
-// Solidity: function memberStake() constant returns(uint256)
+// Solidity: function memberStake() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) MemberStake() (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.MemberStake(&_BondedECDSAKeep.CallOpts)
 }
 
 // MemberStake is a free data retrieval call binding the contract method 0xc9de240d.
 //
-// Solidity: function memberStake() constant returns(uint256)
+// Solidity: function memberStake() view returns(uint256)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) MemberStake() (*big.Int, error) {
 	return _BondedECDSAKeep.Contract.MemberStake(&_BondedECDSAKeep.CallOpts)
 }
 
 // Members is a free data retrieval call binding the contract method 0x5daf08ca.
 //
-// Solidity: function members(uint256 ) constant returns(address)
+// Solidity: function members(uint256 ) view returns(address)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) Members(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "members", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "members", arg0)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Members is a free data retrieval call binding the contract method 0x5daf08ca.
 //
-// Solidity: function members(uint256 ) constant returns(address)
+// Solidity: function members(uint256 ) view returns(address)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) Members(arg0 *big.Int) (common.Address, error) {
 	return _BondedECDSAKeep.Contract.Members(&_BondedECDSAKeep.CallOpts, arg0)
 }
 
 // Members is a free data retrieval call binding the contract method 0x5daf08ca.
 //
-// Solidity: function members(uint256 ) constant returns(address)
+// Solidity: function members(uint256 ) view returns(address)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) Members(arg0 *big.Int) (common.Address, error) {
 	return _BondedECDSAKeep.Contract.Members(&_BondedECDSAKeep.CallOpts, arg0)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) Owner() (common.Address, error) {
 	return _BondedECDSAKeep.Contract.Owner(&_BondedECDSAKeep.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) Owner() (common.Address, error) {
 	return _BondedECDSAKeep.Contract.Owner(&_BondedECDSAKeep.CallOpts)
 }
 
 // PublicKey is a free data retrieval call binding the contract method 0x63ffab31.
 //
-// Solidity: function publicKey() constant returns(bytes)
+// Solidity: function publicKey() view returns(bytes)
 func (_BondedECDSAKeep *BondedECDSAKeepCaller) PublicKey(opts *bind.CallOpts) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _BondedECDSAKeep.contract.Call(opts, out, "publicKey")
-	return *ret0, err
+	var out []interface{}
+	err := _BondedECDSAKeep.contract.Call(opts, &out, "publicKey")
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
 }
 
 // PublicKey is a free data retrieval call binding the contract method 0x63ffab31.
 //
-// Solidity: function publicKey() constant returns(bytes)
+// Solidity: function publicKey() view returns(bytes)
 func (_BondedECDSAKeep *BondedECDSAKeepSession) PublicKey() ([]byte, error) {
 	return _BondedECDSAKeep.Contract.PublicKey(&_BondedECDSAKeep.CallOpts)
 }
 
 // PublicKey is a free data retrieval call binding the contract method 0x63ffab31.
 //
-// Solidity: function publicKey() constant returns(bytes)
+// Solidity: function publicKey() view returns(bytes)
 func (_BondedECDSAKeep *BondedECDSAKeepCallerSession) PublicKey() ([]byte, error) {
 	return _BondedECDSAKeep.Contract.PublicKey(&_BondedECDSAKeep.CallOpts)
 }
@@ -684,21 +773,21 @@ func (_BondedECDSAKeep *BondedECDSAKeepTransactorSession) DistributeERC20Reward(
 
 // DistributeETHReward is a paid mutator transaction binding the contract method 0x2930e170.
 //
-// Solidity: function distributeETHReward() returns()
+// Solidity: function distributeETHReward() payable returns()
 func (_BondedECDSAKeep *BondedECDSAKeepTransactor) DistributeETHReward(opts *bind.TransactOpts) (*types.Transaction, error) {
 	return _BondedECDSAKeep.contract.Transact(opts, "distributeETHReward")
 }
 
 // DistributeETHReward is a paid mutator transaction binding the contract method 0x2930e170.
 //
-// Solidity: function distributeETHReward() returns()
+// Solidity: function distributeETHReward() payable returns()
 func (_BondedECDSAKeep *BondedECDSAKeepSession) DistributeETHReward() (*types.Transaction, error) {
 	return _BondedECDSAKeep.Contract.DistributeETHReward(&_BondedECDSAKeep.TransactOpts)
 }
 
 // DistributeETHReward is a paid mutator transaction binding the contract method 0x2930e170.
 //
-// Solidity: function distributeETHReward() returns()
+// Solidity: function distributeETHReward() payable returns()
 func (_BondedECDSAKeep *BondedECDSAKeepTransactorSession) DistributeETHReward() (*types.Transaction, error) {
 	return _BondedECDSAKeep.Contract.DistributeETHReward(&_BondedECDSAKeep.TransactOpts)
 }
@@ -726,21 +815,21 @@ func (_BondedECDSAKeep *BondedECDSAKeepTransactorSession) Initialize(_owner comm
 
 // ReturnPartialSignerBonds is a paid mutator transaction binding the contract method 0x6ed15f94.
 //
-// Solidity: function returnPartialSignerBonds() returns()
+// Solidity: function returnPartialSignerBonds() payable returns()
 func (_BondedECDSAKeep *BondedECDSAKeepTransactor) ReturnPartialSignerBonds(opts *bind.TransactOpts) (*types.Transaction, error) {
 	return _BondedECDSAKeep.contract.Transact(opts, "returnPartialSignerBonds")
 }
 
 // ReturnPartialSignerBonds is a paid mutator transaction binding the contract method 0x6ed15f94.
 //
-// Solidity: function returnPartialSignerBonds() returns()
+// Solidity: function returnPartialSignerBonds() payable returns()
 func (_BondedECDSAKeep *BondedECDSAKeepSession) ReturnPartialSignerBonds() (*types.Transaction, error) {
 	return _BondedECDSAKeep.Contract.ReturnPartialSignerBonds(&_BondedECDSAKeep.TransactOpts)
 }
 
 // ReturnPartialSignerBonds is a paid mutator transaction binding the contract method 0x6ed15f94.
 //
-// Solidity: function returnPartialSignerBonds() returns()
+// Solidity: function returnPartialSignerBonds() payable returns()
 func (_BondedECDSAKeep *BondedECDSAKeepTransactorSession) ReturnPartialSignerBonds() (*types.Transaction, error) {
 	return _BondedECDSAKeep.Contract.ReturnPartialSignerBonds(&_BondedECDSAKeep.TransactOpts)
 }
@@ -1012,6 +1101,7 @@ func (_BondedECDSAKeep *BondedECDSAKeepFilterer) ParseConflictingPublicKeySubmit
 	if err := _BondedECDSAKeep.contract.UnpackLog(event, "ConflictingPublicKeySubmitted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1156,6 +1246,7 @@ func (_BondedECDSAKeep *BondedECDSAKeepFilterer) ParseERC20RewardDistributed(log
 	if err := _BondedECDSAKeep.contract.UnpackLog(event, "ERC20RewardDistributed", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1289,6 +1380,7 @@ func (_BondedECDSAKeep *BondedECDSAKeepFilterer) ParseETHRewardDistributed(log t
 	if err := _BondedECDSAKeep.contract.UnpackLog(event, "ETHRewardDistributed", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1421,6 +1513,7 @@ func (_BondedECDSAKeep *BondedECDSAKeepFilterer) ParseKeepClosed(log types.Log) 
 	if err := _BondedECDSAKeep.contract.UnpackLog(event, "KeepClosed", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1553,6 +1646,7 @@ func (_BondedECDSAKeep *BondedECDSAKeepFilterer) ParseKeepTerminated(log types.L
 	if err := _BondedECDSAKeep.contract.UnpackLog(event, "KeepTerminated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1686,6 +1780,7 @@ func (_BondedECDSAKeep *BondedECDSAKeepFilterer) ParsePublicKeyPublished(log typ
 	if err := _BondedECDSAKeep.contract.UnpackLog(event, "PublicKeyPublished", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1829,6 +1924,7 @@ func (_BondedECDSAKeep *BondedECDSAKeepFilterer) ParseSignatureRequested(log typ
 	if err := _BondedECDSAKeep.contract.UnpackLog(event, "SignatureRequested", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1975,6 +2071,7 @@ func (_BondedECDSAKeep *BondedECDSAKeepFilterer) ParseSignatureSubmitted(log typ
 	if err := _BondedECDSAKeep.contract.UnpackLog(event, "SignatureSubmitted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2107,5 +2204,6 @@ func (_BondedECDSAKeep *BondedECDSAKeepFilterer) ParseSlashingFailed(log types.L
 	if err := _BondedECDSAKeep.contract.UnpackLog(event, "SlashingFailed", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
