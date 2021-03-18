@@ -800,6 +800,8 @@ func (tlc *TBTCLocalChain) DepositAddressForKeepAddress(
 func (tlc *TBTCLocalChain) FundingInfo(
 	depositAddress string,
 ) (*chain.FundingInfo, error) {
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
 	deposit, ok := tlc.deposits[depositAddress]
 	if !ok {
 		return nil, fmt.Errorf("no deposit with address [%v]", depositAddress)
