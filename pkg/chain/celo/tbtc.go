@@ -246,6 +246,46 @@ func (ta *tbtcApplication) OnDepositRedeemed(
 	).OnEvent(onEvent)
 }
 
+// PastDepositCreatedEvents returns all deposit created events with the given keep
+// address which occurred after the provided start block. Returned events are sorted by the
+// block number in the ascending order.
+func (ta *tbtcApplication) PastDepositCreatedEvents(
+	startBlock uint64,
+	keepAddress string,
+) ([]*chain.CreatedEvent, error) {
+	if !common.IsHexAddress(keepAddress) {
+		return nil, fmt.Errorf("incorrect keep address")
+	}
+	events, err := ta.tbtcSystemContract.PastCreatedEvents(
+		startBlock,
+		nil,
+		nil,
+		[]common.Address{
+			common.HexToAddress(keepAddress),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*chain.CreatedEvent, 0)
+
+	for _, event := range events {
+		result = append(result, &chain.CreatedEvent{
+			DepositAddress: event.DepositContractAddress.Hex(),
+			KeepAddress:    event.KeepAddress.Hex(),
+			BlockNumber:    event.Raw.BlockNumber,
+		})
+	}
+
+	// Make sure events are sorted by block number in ascending order.
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].BlockNumber < result[j].BlockNumber
+	})
+
+	return result, nil
+}
+
 // PastDepositRedemptionRequestedEvents returns all redemption requested
 // events for the given deposit which occurred after the provided start block.
 // Returned events are sorted by the block number in the ascending order.
@@ -436,6 +476,40 @@ func (ta *tbtcApplication) CurrentState(
 	}
 
 	return chain.DepositState(state.Uint64()), err
+}
+
+// DepositAddressForKeepAddress retrieves the deposit address for a particular keep address
+func (ta *tbtcApplication) DepositAddressForKeepAddress(
+	keepAddress string,
+) (string, error) {
+	createdEvents, err := ta.PastDepositCreatedEvents(0, keepAddress)
+	if err != nil {
+		return "", err
+	}
+	if len(createdEvents) == 0 {
+		return "", fmt.Errorf("There were no created events associated to keep address [%s]", keepAddress)
+	}
+	lastCreatedEvent := createdEvents[len(createdEvents)-1]
+	return lastCreatedEvent.DepositAddress, nil
+}
+
+// FundingInfo retrieves the funding info for a particular deposit address
+func (ta *tbtcApplication) FundingInfo(
+	depositAddress string,
+) (*chain.FundingInfo, error) {
+	deposit, err := ta.getDepositContract(depositAddress)
+	if err != nil {
+		return nil, err
+	}
+	fundingInfo, err := deposit.FundingInfo()
+	if err != nil {
+		return nil, err
+	}
+	return &chain.FundingInfo{
+		UtxoValueBytes: fundingInfo.UtxoValueBytes,
+		FundedAt:       fundingInfo.FundedAt,
+		UtxoOutpoint:   fundingInfo.UtxoOutpoint,
+	}, nil
 }
 
 func (ta *tbtcApplication) getDepositContract(
