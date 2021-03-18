@@ -43,6 +43,9 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 	// For later usage---this is xpub/ypub/zpub/...
 
 	externalChain := extendedKey
+	if externalChain.Depth() > 4 {
+		return "", fmt.Errorf("extended public key is deeper than 4. depth: %d", externalChain.Depth())
+	}
 	for externalChain.Depth() < 4 {
 		// Descend the hierarchy at /0 until the external chain path, `m/*/*/*/0`.
 		// ex: If we get a `m/32'/5` extended key, we descend to `m/32'/5/0/0`.

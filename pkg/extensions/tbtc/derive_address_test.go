@@ -155,6 +155,12 @@ var deriveAddressTestFailureData = map[string]struct {
 		11 + 2147483648,
 		"unable to handle extended public key format",
 	},
+
+	"BIP141 ypub is too deep at m/0/0/0/0/0/0": {
+		"ypub6bp11ZqNVMqm3C3eXAFGpEvKqNfEZ6Vhznd4Uo3S73RYTSFgmF7q9sWPoCFhLGVMSLqKZZpcpHoKgHNwStDuqQPnDfF13goQwS8qSFA6vnz",
+		0,
+		"extended public key is deeper than 4. depth: 5",
+	},
 }
 
 func ErrorContains(err error, expected string) bool {
