@@ -12,7 +12,7 @@ import (
 // derive an address string in the appropriate format at the specified address
 // index. The extended public key can be at any level. DeriveAddress will take
 // the first child `/0` until a depth of 4 is reached, and then produce the
-// address at the the supplied index. Thus, calling DeriveAddress with an xpub
+// address at the supplied index. Thus, calling DeriveAddress with an xpub
 // generated at m/44'/0' and passing the address index 5 will produce the
 // address at path m/44'/0'/0/0/5.
 //
