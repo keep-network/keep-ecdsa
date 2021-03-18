@@ -785,8 +785,6 @@ func (tlc *TBTCLocalChain) SetAlwaysFailingTransactions(transactions ...string) 
 func (tlc *TBTCLocalChain) DepositAddressForKeepAddress(
 	keepAddress string,
 ) (string, error) {
-	tlc.tbtcLocalChainMutex.Lock()
-	defer tlc.tbtcLocalChainMutex.Unlock()
 	createdEvents, err := tlc.PastDepositCreatedEvents(0, keepAddress)
 	if err != nil {
 		return "", err
