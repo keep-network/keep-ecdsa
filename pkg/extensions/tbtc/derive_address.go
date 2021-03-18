@@ -74,6 +74,12 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 	case "tpub", "upub", "vpub":
 		chainParams = &chaincfg.TestNet3Params
 	}
+	if chainParams == nil {
+		return "", fmt.Errorf(
+			"unable to handle extended public key format %s",
+			extendedPublicKey,
+		)
+	}
 
 	requestedAddress, err := requestedPublicKey.Address(chainParams)
 	if err != nil {
