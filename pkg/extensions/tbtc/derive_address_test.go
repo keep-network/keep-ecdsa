@@ -125,7 +125,7 @@ func TestDeriveAddress(t *testing.T) {
 			address, err := DeriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
 
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 
 			if address != testData.expectedAddress {
