@@ -41,7 +41,6 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 		)
 	}
 	// For later usage---this is xpub/ypub/zpub/...
-	publicKeyDescriptor := extendedPublicKey[0:4]
 
 	externalChain := extendedKey
 	for externalChain.Depth() < 4 {
@@ -67,6 +66,8 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 
 	// Now to decide how we want to serialize the address...
 	var chainParams *chaincfg.Params
+
+	publicKeyDescriptor := extendedPublicKey[0:4]
 	switch publicKeyDescriptor {
 	case "xpub", "ypub", "zpub":
 		chainParams = &chaincfg.MainNetParams
