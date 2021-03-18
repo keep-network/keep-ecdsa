@@ -76,6 +76,13 @@ func DeriveAddress(extendedPublicKey string, addressIndex int) (string, error) {
 	}
 
 	requestedAddress, err := requestedPublicKey.Address(chainParams)
+	if err != nil {
+		return "", fmt.Errorf(
+			"error retrieving the requested address from the public key with extended key [%v]: [%s]",
+			extendedPublicKey,
+			err,
+		)
+	}
 
 	var finalAddress btcutil.Address = requestedAddress
 	switch publicKeyDescriptor {
