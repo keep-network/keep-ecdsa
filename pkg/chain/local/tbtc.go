@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -18,6 +19,9 @@ import (
 const (
 	defaultUTXOValue            = 1000
 	defaultInitialRedemptionFee = 10
+	defaultUtxoValueHex         = "0065cd1d00000000"
+	defaultFundedAt             = "1615172517"
+	defaultUtxoOutpoint         = "c27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d5101000000"
 )
 
 type localDeposit struct {
@@ -179,20 +183,20 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 	tlc.OpenKeep(keepAddress, signers)
 
 	currentBlock, _ := tlc.BlockCounter().CurrentBlock()
+	utxoValueBytesSlice, _ := hex.DecodeString(defaultUtxoValueHex)
+	var utxoValueBytes [8]byte
+	copy(utxoValueBytes[:], utxoValueBytesSlice)
+	fundedAt, _ := new(big.Int).SetString(defaultFundedAt, 0)
+	utxoOutpoint, _ := hex.DecodeString(defaultUtxoOutpoint)
 
 	tlc.deposits[depositAddress] = &localDeposit{
 		keepAddress: keepAddress.Hex(),
 		state:       chain.AwaitingSignerSetup,
 		utxoValue:   big.NewInt(defaultUTXOValue),
 		fundingInfo: &chain.FundingInfo{
-			UtxoValueBytes: [8]uint8{0, 101, 205, 29, 0, 0, 0, 0}, // 0x0065cd1d00000000
-			FundedAt:       big.NewInt(1615172517),
-			UtxoOutpoint: []uint8{
-				194, 124, 59, 250, 130, 147, 172, 107, 48, 59,
-				159, 116, 85, 174, 35, 183, 194, 75, 136, 20,
-				145, 90, 101, 17, 151, 96, 39, 6, 78, 252,
-				77, 81, 1, 0, 0, 0,
-			}, // 0xc27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d5101000000
+			UtxoValueBytes: utxoValueBytes, // 0x0065cd1d00000000
+			FundedAt:       fundedAt,
+			UtxoOutpoint:   utxoOutpoint, // 0xc27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d5101000000
 		},
 		createdEvents: []*chain.CreatedEvent{{
 			DepositAddress: depositAddress,
