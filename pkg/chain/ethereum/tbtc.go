@@ -247,17 +247,17 @@ func (ta *tbtcApplication) OnDepositRedeemed(
 	).OnEvent(onEvent)
 }
 
-// PastCreatedEvents returns all created events for the given deposit which
-// occurred after the provided start block. Returned events are sorted by the
+// PastDepositCreatedEvents returns all deposit created events with the given keep
+// address which occurred after the provided start block. Returned events are sorted by the
 // block number in the ascending order.
-func (tec *TBTCEthereumChain) PastCreatedEvents(
+func (ta *tbtcApplication) PastDepositCreatedEvents(
 	startBlock uint64,
 	keepAddress string,
 ) ([]*chain.CreatedEvent, error) {
 	if !common.IsHexAddress(keepAddress) {
 		return nil, fmt.Errorf("incorrect keep address")
 	}
-	events, err := tec.tbtcSystemContract.PastCreatedEvents(
+	events, err := ta.tbtcSystemContract.PastCreatedEvents(
 		startBlock,
 		nil,
 		nil,
@@ -503,10 +503,10 @@ func (ta *tbtcApplication) getDepositContract(
 }
 
 // DepositAddressForKeepAddress retrieves the deposit address for a particular keep address
-func (tec *TBTCEthereumChain) DepositAddressForKeepAddress(
+func (ta *tbtcApplication) DepositAddressForKeepAddress(
 	keepAddress string,
 ) (string, error) {
-	createdEvents, err := tec.PastCreatedEvents(0, keepAddress)
+	createdEvents, err := ta.PastDepositCreatedEvents(0, keepAddress)
 	if err != nil {
 		return "", err
 	}
@@ -518,10 +518,10 @@ func (tec *TBTCEthereumChain) DepositAddressForKeepAddress(
 }
 
 // FundingInfo retrieves the funding info for a particular deposit address
-func (tec *TBTCEthereumChain) FundingInfo(
+func (ta *tbtcApplication) FundingInfo(
 	depositAddress string,
 ) (*chain.FundingInfo, error) {
-	deposit, err := tec.getDepositContract(depositAddress)
+	deposit, err := ta.getDepositContract(depositAddress)
 	if err != nil {
 		return nil, err
 	}

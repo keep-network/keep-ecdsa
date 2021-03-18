@@ -93,10 +93,10 @@ type TBTCSystem interface {
 		handler func(depositAddress string),
 	) subscription.EventSubscription
 
-	// PastCreatedEvents returns all created events for the given keep which
+	// PastDepositCreatedEvents returns all created events for the given keep which
 	// occured after the provided start block. All implementations should return
 	// those events sorted by the block number in ascending order.
-	PastCreatedEvents(
+	PastDepositCreatedEvents(
 		startBlock uint64,
 		keepAddress string,
 	) ([]*CreatedEvent, error)

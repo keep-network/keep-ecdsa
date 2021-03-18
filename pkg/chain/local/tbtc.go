@@ -381,8 +381,9 @@ func (tlc *TBTCLocalChain) OnDepositRedeemed(
 	})
 }
 
-// PastCreatedEvents are the created events relevant to a particular keep address
-func (tlc *TBTCLocalChain) PastCreatedEvents(
+// PastDepositCreatedEvents are the created events relevant to a particular
+// keep address
+func (tlc *TBTCLocalChain) PastDepositCreatedEvents(
 	startBlock uint64,
 	keepAddress string,
 ) ([]*chain.CreatedEvent, error) {
@@ -786,7 +787,7 @@ func (tlc *TBTCLocalChain) DepositAddressForKeepAddress(
 ) (string, error) {
 	tlc.tbtcLocalChainMutex.Lock()
 	defer tlc.tbtcLocalChainMutex.Unlock()
-	createdEvents, err := tlc.PastCreatedEvents(0, keepAddress)
+	createdEvents, err := tlc.PastDepositCreatedEvents(0, keepAddress)
 	if err != nil {
 		return "", err
 	}
