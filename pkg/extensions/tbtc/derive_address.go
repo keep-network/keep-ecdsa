@@ -20,6 +20,9 @@ import (
 // internal chain is already included, DeriveAddress will directly derive the
 // address index at the existing depth.
 //
+// DeriveAddress does not support hardened child indexes (anything greater than
+// or equal to 2147483648, abbreviated as 0')
+//
 // The returned address will be a p2pkh/p2sh address for prefixes xpub and tpub,
 // (i.e. prefixed by 1, m, or n), a p2wpkh-in-p2sh address for prefixes ypub or
 // upub (i.e., prefixed by 3 or 2), and a bech32 p2wpkh address for prefixes
