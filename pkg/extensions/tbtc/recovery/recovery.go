@@ -61,7 +61,7 @@ func PublicKeyToP2WPKHScriptCode(
 
 // ConstructUnsignedTransaction produces an unsigned transaction
 func ConstructUnsignedTransaction(
-	previousOutputTransactionHashHex string,
+	previousTransactionHashHex string,
 	previousOutputIndex uint32,
 	previousOutputValue int64,
 	feePerVbyte int64,
@@ -71,11 +71,11 @@ func ConstructUnsignedTransaction(
 	// If the previous output transaction hash is passed as a []byte, can use
 	// chainhash.NewHash.
 	previousOutputTransactionHash, err := chainhash.NewHashFromStr(
-		previousOutputTransactionHashHex,
+		previousTransactionHashHex,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error extracting outpoint transaction hash: [%s]",
+			"error decoding outpoint transaction hash: [%s]",
 			previousOutputTransactionHash,
 		)
 	}
@@ -105,7 +105,7 @@ func ConstructUnsignedTransaction(
 		address, err := btcutil.DecodeAddress(recipientAddress, chainParams)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"error decoding output address [%s]: [%s]",
+				"error decoding recipient address [%s]: [%s]",
 				recipientAddress,
 				err,
 			)
@@ -113,7 +113,7 @@ func ConstructUnsignedTransaction(
 		outputScript, err := txscript.PayToAddrScript(address)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"error constructing script from output address [%s]: [%s]",
+				"error constructing script from recipient address [%s]: [%s]",
 				recipientAddress,
 				err,
 			)

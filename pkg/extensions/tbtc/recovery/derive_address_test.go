@@ -153,13 +153,13 @@ var deriveAddressTestFailureData = map[string]struct {
 	"BIP141 P2WPKH nested in P2SH ypub at m/6'/4'/9'/0/11' with a private key": {
 		"yprvAL8WjRn1VWQSQX2LY6YVusxi3am6o5BVt1mnZJD3ZPsrVu5SucQyXED23ikCvDeeFHTMeX9q5n5MHNTLWQvCSm3KWnA3KdyZuDXncTn2VW5",
 		11 + 2147483648,
-		"unable to handle extended public key format",
+		"unsupported public key format",
 	},
 
 	"BIP141 ypub is too deep at m/0/0/0/0/0/0": {
 		"ypub6bp11ZqNVMqm3C3eXAFGpEvKqNfEZ6Vhznd4Uo3S73RYTSFgmF7q9sWPoCFhLGVMSLqKZZpcpHoKgHNwStDuqQPnDfF13goQwS8qSFA6vnz",
 		0,
-		"extended public key is deeper than 4. depth: 5",
+		"extended public key is deeper than 4, depth: 5",
 	},
 }
 

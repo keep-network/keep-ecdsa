@@ -46,7 +46,7 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 
 	externalChain := extendedKey
 	if externalChain.Depth() > 4 {
-		return "", fmt.Errorf("extended public key is deeper than 4. depth: %d", externalChain.Depth())
+		return "", fmt.Errorf("extended public key is deeper than 4, depth: %d", externalChain.Depth())
 	}
 	for externalChain.Depth() < 4 {
 		// Descend the hierarchy at /0 until the external chain path, `m/*/*/*/0`.
@@ -78,11 +78,10 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 		chainParams = &chaincfg.MainNetParams
 	case "tpub", "upub", "vpub":
 		chainParams = &chaincfg.TestNet3Params
-	}
-	if chainParams == nil {
+	default:
 		return "", fmt.Errorf(
-			"unable to handle extended public key format %s",
-			extendedPublicKey,
+			"unsupported public key format [%s]",
+			publicKeyDescriptor,
 		)
 	}
 
