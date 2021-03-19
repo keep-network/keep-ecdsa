@@ -10,6 +10,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
@@ -128,8 +129,7 @@ func ConstructUnsignedTransaction(
 	// Compute weight and vsize per [BIP141], except vsize is truncated
 	// instead of rounded up, then compute the final fee and set the
 	// per-recipient value. Could result in a fractionally low fee.
-	weight := tx.SerializeSizeStripped()*3 + tx.SerializeSize()
-	vsize := weight / 4
+	vsize := mempool.GetTxVirtualSize(btcutil.NewTx(tx))
 	fee := feePerVbyte * int64(vsize)
 	perRecipientValue := (previousOutputValue - fee) / int64(len(recipientAddresses))
 	for _, txOut := range tx.TxOut {
