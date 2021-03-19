@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
@@ -16,28 +17,22 @@ import (
 )
 
 func TestPublicKeyToP2WPKHScriptCode(t *testing.T) {
-	curve := elliptic.P224()
+	// Test based on test values from BIP143:
+	// https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
+	serializedPublicKey, _ := hex.DecodeString("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357")
+	expectedScriptCode, _ := hex.DecodeString("1976a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac")
 
-	publicKey := cecdsa.PublicKey{
-		Curve: curve,
-		X:     bigIntFromString(t, "26941450295542185119886680310683442762751278660470797072401180634537"),
-		Y:     bigIntFromString(t, "25316128528826716218547984440391195807075864123777900043328271050996"),
-	}
-	scriptCodeBytes, err := PublicKeyToP2WPKHScriptCode(&publicKey, &chaincfg.TestNet3Params)
+	publicKey, _ := btcec.ParsePubKey(serializedPublicKey, btcec.S256())
 
+	scriptCodeBytes, err := PublicKeyToP2WPKHScriptCode(publicKey.ToECDSA(), &chaincfg.MainNetParams)
 	if err != nil {
-		t.Error(err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 
-	expectedBytes := []byte{
-		25, 118, 169, 20, 19, 235, 244, 140, 39, 16,
-		169, 180, 46, 150, 197, 235, 26, 83, 183, 47,
-		176, 151, 26, 151, 136, 172,
-	}
-	if bytes.Compare(expectedBytes, scriptCodeBytes) != 0 {
+	if bytes.Compare(expectedScriptCode, scriptCodeBytes) != 0 {
 		t.Errorf(
-			"got an unexpected script code\nexpected: %+v\nactual:   %+v",
-			expectedBytes,
+			"unexpected script code\nexpected: %x\nactual:   %x",
+			expectedScriptCode,
 			scriptCodeBytes,
 		)
 	}
