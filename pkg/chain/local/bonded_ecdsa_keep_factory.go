@@ -7,12 +7,15 @@ import (
 	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
-func (c *localChain) createKeep(keepAddress common.Address) error {
-	return c.createKeepWithMembers(keepAddress, []common.Address{})
+func (c *localChain) createKeep(
+	keepAddress common.Address,
+) error {
+	return c.createKeepWithMembers(keepAddress, keepAddress, []common.Address{})
 }
 
 func (c *localChain) createKeepWithMembers(
 	keepAddress common.Address,
+	ownerAddress common.Address,
 	members []common.Address,
 ) error {
 	c.localChainMutex.Lock()
@@ -28,6 +31,7 @@ func (c *localChain) createKeepWithMembers(
 	localKeep := &localKeep{
 		chain:                      c,
 		keepID:                     keepAddress,
+		owner:                      ownerAddress,
 		publicKey:                  [64]byte{},
 		members:                    members,
 		signatureRequestedHandlers: make(map[int]func(event *chain.SignatureRequestedEvent)),

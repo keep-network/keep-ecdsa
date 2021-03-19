@@ -180,7 +180,7 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	keepAddress := generateAddress()
-	tlc.OpenKeep(keepAddress, signers)
+	tlc.OpenKeep(keepAddress, common.HexToAddress(depositAddress), signers)
 
 	currentBlock, _ := tlc.BlockCounter().CurrentBlock()
 	utxoValueBytesSlice, _ := hex.DecodeString(defaultUtxoValueHex)

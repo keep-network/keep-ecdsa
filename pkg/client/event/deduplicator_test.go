@@ -66,7 +66,7 @@ func TestDoSign(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
@@ -100,7 +100,7 @@ func TestDoNotSignIfCurrentlySigning(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
@@ -140,7 +140,7 @@ func TestDoNotSignIfNotAwaitingASignature(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
@@ -169,7 +169,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress, keepAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])

@@ -2325,6 +2325,32 @@ func TestFundingInfo(t *testing.T) {
 	}
 }
 
+func TestGetOwner(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+
+	signers := local.RandomSigningGroup(3)
+
+	tbtcChain.CreateDeposit(depositAddress, signers)
+	keep, err := tbtcChain.Keep(depositAddress)
+	if err != nil {
+		t.Fatalf("unexpected error %v", err)
+	}
+	owner, err := keep.GetOwner()
+	if err != nil {
+		t.Fatalf("unexpected error %v", err)
+	}
+	if owner.Hex() != depositAddress {
+		t.Errorf(
+			"unexpected owner address\nexpected: %s\nactual:   %s",
+			depositAddress,
+			owner.String(),
+		)
+	}
+}
+
 func submitKeepPublicKey(
 	depositAddress string,
 	tbtcChain *local.TBTCLocalChain,

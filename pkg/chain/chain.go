@@ -132,6 +132,9 @@ type BondedECDSAKeepHandle interface {
 	// GetMembers returns keep's members.
 	GetMembers() ([]common.Address, error)
 
+	// GetOwner returns the keep's owner.
+	GetOwner() (common.Address, error)
+
 	// IsThisOperatorMember returns true if the current operator belongs to the
 	// BondedECDSAKeep represented by this handle, false otherwise, or an error
 	// if the process of determining this fails.

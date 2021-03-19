@@ -26,7 +26,11 @@ import (
 type Chain interface {
 	chain.Handle
 
-	OpenKeep(keepAddress common.Address, members []common.Address) chain.BondedECDSAKeepHandle
+	OpenKeep(
+		keepAddress common.Address,
+		ownerAddress common.Address,
+		members []common.Address,
+	) chain.BondedECDSAKeepHandle
 	CloseKeep(keepAddress common.Address) error
 	TerminateKeep(keepAddress common.Address) error
 	RequestSignature(keepAddress common.Address, digest [32]byte) error
@@ -107,8 +111,12 @@ func (lc *localChain) Signing() corechain.Signing {
 	return commonLocal.NewSigner(lc.operatorKey)
 }
 
-func (lc *localChain) OpenKeep(keepAddress common.Address, members []common.Address) chain.BondedECDSAKeepHandle {
-	err := lc.createKeepWithMembers(keepAddress, members)
+func (lc *localChain) OpenKeep(
+	keepAddress common.Address,
+	ownerAddress common.Address,
+	members []common.Address,
+) chain.BondedECDSAKeepHandle {
+	err := lc.createKeepWithMembers(keepAddress, ownerAddress, members)
 	if err != nil {
 		panic(err)
 	}
