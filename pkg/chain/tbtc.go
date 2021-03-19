@@ -93,14 +93,6 @@ type TBTCSystem interface {
 		handler func(depositAddress string),
 	) subscription.EventSubscription
 
-	// PastDepositCreatedEvents returns all created events for the given keep which
-	// occured after the provided start block. All implementations should return
-	// those events sorted by the block number in ascending order.
-	PastDepositCreatedEvents(
-		startBlock uint64,
-		keepAddress string,
-	) ([]*CreatedEvent, error)
-
 	// PastDepositRedemptionRequestedEvents returns all redemption requested
 	// events for the given deposit which occurred after the provided start block.
 	// All implementations should return those events sorted by the
@@ -109,11 +101,6 @@ type TBTCSystem interface {
 		startBlock uint64,
 		depositAddress string,
 	) ([]*DepositRedemptionRequestedEvent, error)
-
-	// DepositAddressForKeepAddress retrieves the deposit address for a particular keep address
-	DepositAddressForKeepAddress(
-		keepAddress string,
-	) (string, error)
 
 	// FundingInfo retrieves the funding info for a particular deposit address
 	FundingInfo(

@@ -381,29 +381,6 @@ func (tlc *TBTCLocalChain) OnDepositRedeemed(
 	})
 }
 
-// PastDepositCreatedEvents are the created events relevant to a particular
-// keep address
-func (tlc *TBTCLocalChain) PastDepositCreatedEvents(
-	startBlock uint64,
-	keepAddress string,
-) ([]*chain.CreatedEvent, error) {
-	tlc.tbtcLocalChainMutex.Lock()
-	defer tlc.tbtcLocalChainMutex.Unlock()
-
-	var matchingDeposit *localDeposit
-	for _, deposit := range tlc.deposits {
-		if deposit.keepAddress == keepAddress {
-			matchingDeposit = deposit
-			break
-		}
-	}
-	if matchingDeposit == nil {
-		return nil, fmt.Errorf("no deposit with keep address [%s]", keepAddress)
-	}
-
-	return matchingDeposit.createdEvents, nil
-}
-
 // PastDepositRedemptionRequestedEvents the redemption requested events relevant to a particular deposit
 func (tlc *TBTCLocalChain) PastDepositRedemptionRequestedEvents(
 	startBlock uint64,
@@ -779,21 +756,6 @@ func (tlc *TBTCLocalChain) SetAlwaysFailingTransactions(transactions ...string) 
 	for _, tx := range transactions {
 		tlc.alwaysFailingTransactions[tx] = true
 	}
-}
-
-// DepositAddressForKeepAddress retrieves the deposit address for a particular keep address
-func (tlc *TBTCLocalChain) DepositAddressForKeepAddress(
-	keepAddress string,
-) (string, error) {
-	createdEvents, err := tlc.PastDepositCreatedEvents(0, keepAddress)
-	if err != nil {
-		return "", err
-	}
-	if len(createdEvents) == 0 {
-		return "", fmt.Errorf("There were no created events associated to keep address [%s]", keepAddress)
-	}
-	lastCreatedEvent := createdEvents[len(createdEvents)-1]
-	return lastCreatedEvent.DepositAddress, nil
 }
 
 // FundingInfo retrieves the funding info for a particular deposit address
