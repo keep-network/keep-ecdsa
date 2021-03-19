@@ -43,7 +43,6 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 			err,
 		)
 	}
-	// For later usage---this is xpub/ypub/zpub/...
 
 	externalChain := extendedKey
 	if externalChain.Depth() > 4 {
