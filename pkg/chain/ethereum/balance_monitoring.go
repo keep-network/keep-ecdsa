@@ -38,7 +38,7 @@ func (ec *ethereumChain) initializeBalanceMonitoring(
 
 	balanceMonitor.Observe(
 		ctx,
-		ec.Address(),
+		ec.operatorAddress(),
 		alertThreshold,
 		defaultBalanceMonitoringTick,
 	)
@@ -46,7 +46,7 @@ func (ec *ethereumChain) initializeBalanceMonitoring(
 	logger.Infof(
 		"started balance monitoring for address [%v] "+
 			"with the alert threshold set to [%v]",
-		ec.Address().Hex(),
+		ec.operatorAddress().Hex(),
 		alertThreshold,
 	)
 }

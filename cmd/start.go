@@ -15,8 +15,6 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/persistence"
-
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -94,7 +92,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error obtaining stake monitor handle: [%v]", err)
 	}
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
-		chainHandle.Address().Hex(),
+		chainHandle.OperatorID().String(),
 	)
 	if err != nil {
 		return fmt.Errorf("could not check the stake: [%v]", err)
@@ -112,6 +110,15 @@ func Start(c *cli.Context) error {
 		operatorKeys.private, operatorKeys.public,
 	)
 
+	persistence, err := buildPersistenceHandle(
+		chainHandle,
+		extractKeyFilePassword(config),
+		config.Storage.DataDir,
+	)
+	if err != nil {
+		return err
+	}
+
 	networkProvider, err := libp2p.Connect(
 		ctx,
 		config.LibP2P,
@@ -127,15 +134,6 @@ func Start(c *cli.Context) error {
 
 	nodeHeader(networkProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
 
-	handle, err := persistence.NewDiskHandle(config.Storage.DataDir)
-	if err != nil {
-		return fmt.Errorf("failed while creating a storage disk handler: [%v]", err)
-	}
-	persistence := persistence.NewEncryptedPersistence(
-		handle,
-		extractKeyFilePassword(config),
-	)
-
 	clientHandle := client.Initialize(
 		ctx,
 		operatorKeys.public,
@@ -145,9 +143,16 @@ func Start(c *cli.Context) error {
 		&config.Client,
 		&config.TSS,
 	)
-	logger.Debugf("initialized operator with address: [%s]", chainHandle.Address().String())
+	logger.Debugf("initialized operator with address: [%s]", chainHandle.OperatorID())
 
-	initializeMetrics(ctx, config, networkProvider, stakeMonitor, chainHandle.Address().Hex(), clientHandle)
+	initializeMetrics(
+		ctx,
+		config,
+		networkProvider,
+		stakeMonitor,
+		chainHandle.OperatorID().String(),
+		clientHandle,
+	)
 	initializeDiagnostics(config, networkProvider)
 
 	logger.Info("client started")

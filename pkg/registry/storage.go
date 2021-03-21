@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
 type storage interface {
-	save(keepAddress common.Address, signer *tss.ThresholdSigner) error
-	snapshot(keepAddress common.Address, signer *tss.ThresholdSigner) error
-	readAll() (<-chan *keepSigner, <-chan error)
-	archive(keepAddress string) error
+	save(keepID chain.ID, signer *tss.ThresholdSigner) error
+	snapshot(keepID chain.ID, signer *tss.ThresholdSigner) error
+	readAll(unmarshalIDFunc func(string) (chain.ID, error)) (<-chan *keepSigner, <-chan error)
+	archive(keepID chain.ID) error
 }
 
 type persistentStorage struct {
@@ -27,7 +27,7 @@ func newStorage(persistence persistence.Handle) storage {
 }
 
 func (ps *persistentStorage) save(
-	keepAddress common.Address,
+	keepID chain.ID,
 	signer *tss.ThresholdSigner,
 ) error {
 	signerBytes, err := signer.Marshal()
@@ -37,7 +37,7 @@ func (ps *persistentStorage) save(
 
 	return ps.handle.Save(
 		signerBytes,
-		keepAddress.String(),
+		keepID.String(),
 		// Take just the first 20 bytes of member ID so that we don't produce
 		// too long file names.
 		fmt.Sprintf("/membership_%.40s", signer.MemberID().String()),
@@ -45,7 +45,7 @@ func (ps *persistentStorage) save(
 }
 
 func (ps *persistentStorage) snapshot(
-	keepAddress common.Address,
+	keepID chain.ID,
 	signer *tss.ThresholdSigner,
 ) error {
 	signerBytes, err := signer.Marshal()
@@ -55,7 +55,7 @@ func (ps *persistentStorage) snapshot(
 
 	return ps.handle.Snapshot(
 		signerBytes,
-		keepAddress.String(),
+		keepID.String(),
 		// Take just the first 20 bytes of member ID so that we don't produce
 		// too long file names.
 		fmt.Sprintf("/membership_%.40s", signer.MemberID().String()),
@@ -63,11 +63,13 @@ func (ps *persistentStorage) snapshot(
 }
 
 type keepSigner struct {
-	keepAddress common.Address
-	signer      *tss.ThresholdSigner
+	keepID chain.ID
+	signer *tss.ThresholdSigner
 }
 
-func (ps *persistentStorage) readAll() (<-chan *keepSigner, <-chan error) {
+func (ps *persistentStorage) readAll(
+	unmarshalIDFunc func(string) (chain.ID, error),
+) (<-chan *keepSigner, <-chan error) {
 	outputKeepSigner := make(chan *keepSigner)
 	outputErrors := make(chan error)
 
@@ -117,14 +119,15 @@ func (ps *persistentStorage) readAll() (<-chan *keepSigner, <-chan error) {
 				continue
 			}
 
-			if !common.IsHexAddress(descriptor.Directory()) {
+			keepID, err := unmarshalIDFunc(descriptor.Directory())
+			if err != nil {
 				outputErrors <- fmt.Errorf(
-					"directory name [%v] is not valid ethereum address",
+					"directory name [%v] could not be converted to a keep ID: [%v]",
 					descriptor.Directory(),
+					keepID,
 				)
 				continue
 			}
-			keepAddress := common.HexToAddress(descriptor.Directory())
 
 			signer := &tss.ThresholdSigner{}
 			err = signer.Unmarshal(content)
@@ -139,8 +142,8 @@ func (ps *persistentStorage) readAll() (<-chan *keepSigner, <-chan error) {
 			}
 
 			outputKeepSigner <- &keepSigner{
-				keepAddress: keepAddress,
-				signer:      signer,
+				keepID: keepID,
+				signer: signer,
 			}
 		}
 
@@ -150,6 +153,6 @@ func (ps *persistentStorage) readAll() (<-chan *keepSigner, <-chan error) {
 	return outputKeepSigner, outputErrors
 }
 
-func (ps *persistentStorage) archive(keepAddress string) error {
-	return ps.handle.Archive(keepAddress)
+func (ps *persistentStorage) archive(keepID chain.ID) error {
+	return ps.handle.Archive(keepID.String())
 }

@@ -9,14 +9,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/net"
-
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
+
+	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 )
 
 func TestAnnounceProtocol(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+
+	localChain := local.Connect(ctx)
 
 	err := log.SetLogLevel("*", "INFO")
 	if err != nil {
@@ -31,17 +35,28 @@ func TestAnnounceProtocol(t *testing.T) {
 		t.Fatalf("failed to generate members keys: [%v]", err)
 	}
 
-	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
+	pubKeyToAddressFn := func(publicKey *cecdsa.PublicKey) []byte {
 		return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 	}
 
-	groupMemberAddresses := make([]string, groupSize)
+	groupMemberAddresses := make([]common.Address, groupSize)
 	for i, member := range groupMembers {
 		pubKey, err := member.PublicKey()
 		if err != nil {
 			t.Fatalf("could not get member pubkey: [%v]", err)
 		}
-		groupMemberAddresses[i] = hex.EncodeToString(pubKeyToAddressFn(*pubKey))
+		groupMemberAddresses[i] = common.HexToAddress(
+			hex.EncodeToString(pubKeyToAddressFn(pubKey)),
+		)
+	}
+
+	keep := localChain.OpenKeep(
+		common.HexToAddress(keepAddress),
+		groupMemberAddresses,
+	)
+	keepMembers, err := keep.GetMembers()
+	if err != nil {
+		t.Fatalf("failed to look up keep member ids: [%v]", err)
 	}
 
 	errChan := make(chan error)
@@ -78,10 +93,10 @@ func TestAnnounceProtocol(t *testing.T) {
 			memberIDs, err := AnnounceProtocol(
 				ctx,
 				memberPublicKey,
-				keepAddress,
-				groupMemberAddresses,
+				keep.ID(),
+				keepMembers,
 				broadcastChannel,
-				pubKeyToAddressFn,
+				localChain.PublicKeyToOperatorID,
 			)
 			if err != nil {
 				errChan <- err

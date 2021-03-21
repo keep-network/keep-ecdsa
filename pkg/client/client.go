@@ -8,7 +8,6 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -61,7 +60,10 @@ func Initialize(
 	clientConfig *Config,
 	tssConfig *tss.Config,
 ) *Handle {
-	keepsRegistry := registry.NewKeepsRegistry(persistence)
+	keepsRegistry := registry.NewKeepsRegistry(
+		persistence,
+		hostChain.UnmarshalID,
+	)
 
 	tssNode := node.NewNode(hostChain, networkProvider, tssConfig)
 
@@ -100,9 +102,9 @@ func Initialize(
 		return !isKeepActive
 	}
 
-	for _, keepAddress := range keepsRegistry.GetKeepsAddresses() {
-		go func(keepAddress common.Address) {
-			keep, err := hostChain.GetKeepWithID(keepAddress)
+	for _, keepID := range keepsRegistry.GetKeepsIDs() {
+		go func(keepID chain.ID) {
+			keep, err := hostChain.GetKeepWithID(keepID)
 			if err != nil {
 				logger.Errorf(
 					"failed to look up keep [%s] for active check: [%v]; "+
@@ -134,13 +136,13 @@ func Initialize(
 						"confirmed that keep [%s] is no longer active; archiving",
 						keep.ID(),
 					)
-					keepsRegistry.UnregisterKeep(keepAddress)
+					keepsRegistry.UnregisterKeep(keepID)
 					return
 				}
 				logger.Warningf("keep [%s] is still active", keep.ID())
 			}
 
-			signer, err := keepsRegistry.GetSigner(keepAddress)
+			signer, err := keepsRegistry.GetSigner(keepID)
 			if err != nil {
 				// If there are no signer for loaded keep that something is clearly
 				// wrong. We don't want to continue processing for this keep.
@@ -186,7 +188,7 @@ func Initialize(
 				eventDeduplicator,
 			)
 
-		}(keepAddress)
+		}(keepID)
 	}
 
 	go checkAwaitingKeyGeneration(
@@ -203,26 +205,26 @@ func Initialize(
 	_ = hostChain.OnBondedECDSAKeepCreated(func(event *chain.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(
 			"new keep [%s] created with members: [%x] at block [%d]",
-			event.KeepAddress.String(),
-			event.Members,
+			event.Keep.ID(),
+			event.MemberIDs,
 			event.BlockNumber,
 		)
 
-		if event.IsMember(hostChain.Address()) {
+		if event.ThisOperatorIsMember {
 			go func(event *chain.BondedECDSAKeepCreatedEvent) {
-				if shouldHandle := eventDeduplicator.NotifyKeyGenStarted(event.KeepAddress); !shouldHandle {
+				if shouldHandle := eventDeduplicator.NotifyKeyGenStarted(event.Keep.ID()); !shouldHandle {
 					logger.Infof(
 						"key generation request for keep [%s] already handled",
-						event.KeepAddress.String(),
+						event.Keep.ID(),
 					)
 
 					// currently handling or already handled in the past
 					// in case this event is a duplicate.
 					return
 				}
-				defer eventDeduplicator.NotifyKeyGenCompleted(event.KeepAddress)
+				defer eventDeduplicator.NotifyKeyGenCompleted(event.Keep.ID())
 
-				keep, err := hostChain.GetKeepWithID(event.KeepAddress)
+				keep, err := hostChain.GetKeepWithID(event.Keep.ID())
 				if err != nil {
 					logger.Errorf(
 						"failed to resolve keep with address [%v] for created event: [%v]",
@@ -240,14 +242,14 @@ func Initialize(
 					keepsRegistry,
 					eventDeduplicator,
 					keep,
-					event.Members,
+					event.MemberIDs,
 					event.HonestThreshold,
 				)
 			}(event)
 		} else {
 			logger.Infof(
 				"not a signing group member in keep [%s], skipping",
-				event.KeepAddress.String(),
+				event.Keep.ID(),
 			)
 		}
 	})
@@ -418,28 +420,29 @@ func checkAwaitingKeyGenerationForKeep(
 		return err
 	}
 
+	isThisOperatorMember, err := keep.IsThisOperatorMember()
+	if err != nil {
+		return err
+	}
+
 	honestThreshold, err := keep.GetHonestThreshold()
 	if err != nil {
 		return err
 	}
 
-	for _, member := range members {
-		if ethereumChain.Address() == member {
-			go generateKeyForKeep(
-				ctx,
-				ethereumChain,
-				clientConfig,
-				tssNode,
-				operatorPublicKey,
-				keepsRegistry,
-				eventDeduplicator,
-				keep,
-				members,
-				honestThreshold,
-			)
-
-			break
-		}
+	if isThisOperatorMember {
+		go generateKeyForKeep(
+			ctx,
+			ethereumChain,
+			clientConfig,
+			tssNode,
+			operatorPublicKey,
+			keepsRegistry,
+			eventDeduplicator,
+			keep,
+			members,
+			honestThreshold,
+		)
 	}
 
 	return nil
@@ -454,7 +457,7 @@ func generateKeyForKeep(
 	keepsRegistry *registry.Keeps,
 	eventDeduplicator *event.Deduplicator,
 	keep chain.BondedECDSAKeepHandle,
-	members []common.Address,
+	members []chain.ID,
 	honestThreshold uint64,
 ) {
 	if len(members) < 2 {
@@ -481,7 +484,7 @@ func generateKeyForKeep(
 
 	logger.Infof(
 		"member [%s] is starting signer generation for keep [%s]...",
-		ethereumChain.Address().String(),
+		ethereumChain.OperatorID(),
 		keep.ID(),
 	)
 
@@ -563,7 +566,7 @@ func generateSignerForKeep(
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keep chain.BondedECDSAKeepHandle,
-	members []common.Address,
+	members []chain.ID,
 	keepsRegistry *registry.Keeps,
 ) (*tss.ThresholdSigner, error) {
 	keygenCtx, cancel := context.WithTimeout(ctx, clientConfig.GetKeyGenerationTimeout())

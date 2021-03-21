@@ -4,19 +4,73 @@
 package chain
 
 import (
+	cecdsa "crypto/ecdsa"
+	"fmt"
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
 
-// Handle represents a handle to an ethereum blockchain.
+// ID represents a generic id on a given chain. The underlying chain's name is
+// provided by the ChainName func, and a method is provided to check whether the
+// ID is for a particular chain.
+//
+// IDs should not be considered interchangeable between different chain
+// instances, and generally uses on a given chain should guard using a
+// `ForChain` call.
+type ID interface {
+	fmt.Stringer
+
+	ChainName() string
+	ForChain(handle Handle) bool
+}
+
+// OfflineHandle represents a handle to a host chain without a backing chain
+// connection. It cannot perform any actions that require state information from
+// the host chain, but provides access to functionality used for interfacing
+// with other parts of the system such as persistence and Keep network
+// connections.
+type OfflineHandle interface {
+	// Return a simple name for this chain handle. This name should consist only
+	// of lowercase letters, numbers, and - or _, and should start with a letter
+	// (that is, it should conform to the regular expression [a-z][a-z0-9-_]*).
+	// It should describe the chain in a way distinguishable from other chains,
+	// and generally should be the name of the underlying chain. It can include
+	// additional information such as the name of the specific network (e.g.
+	// mainnet or the name of a testnet) if desired, but should be stable for a
+	// given network indefinitely once the chain has been used in production.
+	//
+	// This name may be used to construct persistence paths that need to work
+	// across node instances, and in general is expected to be stable across
+	// executable instances and different remote chain nodes.
+	Name() string
+
+	// OperatorID returns operator ID for the client this handle represents on chain.
+	OperatorID() ID
+
+	// PublicKeyToOperatorID takes a public key in Go crypto package format and
+	// returns an OperatorID suitable for use with any component interacting
+	// with this chain handle.
+	PublicKeyToOperatorID(publicKey *cecdsa.PublicKey) ID
+
+	// UnmarshalID takes an ID string produced by this chain in the past and
+	// unmarshals it into a KeepID object for this chain. Returns an error if
+	// the ID string was invalid. It should be safe to call this function from
+	// multiple goroutines.
+	//
+	// Note that unmarshaling the ID used by one chain from a string produced by
+	// a different chain is not supported and could lead to unexpected behavior.
+	UnmarshalID(idString string) (ID, error)
+}
+
+// Handle represents a handle to a host chain that anchors ECDSA client
+// applications.
 type Handle interface {
-	// Address returns client's ethereum address.
-	Address() common.Address // TODO: use implementation-agnostic type
+	OfflineHandle
+
 	// StakeMonitor returns a stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
 	// BlockCounter returns a block counter.
@@ -48,7 +102,7 @@ type BondedECDSAKeepFactory interface {
 
 	// IsOperatorAuthorized checks if the factory has the authorization to
 	// operate on stake represented by the provided operator.
-	IsOperatorAuthorized(operator common.Address) (bool, error)
+	IsOperatorAuthorized(operator ID) (bool, error)
 
 	// GetKeepCount returns number of keeps.
 	GetKeepCount() (*big.Int, error)
@@ -56,8 +110,7 @@ type BondedECDSAKeepFactory interface {
 	// GetKeepAtIndex returns a handle to the keep at the given index.
 	GetKeepAtIndex(keepIndex *big.Int) (BondedECDSAKeepHandle, error)
 	// GetKeepWithID returns a handle to the keep with the given ID.
-	// FIXME currently this ID is still a common.Address 😬
-	GetKeepWithID(keepID common.Address) (BondedECDSAKeepHandle, error)
+	GetKeepWithID(keepID ID) (BondedECDSAKeepHandle, error)
 }
 
 // BondedECDSAKeepHandle is an interface that provides ability to interact with
@@ -67,8 +120,7 @@ type BondedECDSAKeepFactory interface {
 // corresponds to.
 type BondedECDSAKeepHandle interface {
 	// ID returns the id of this keep in a host chain-agnostic format.
-	// FIXME currently this ID is still a common.Address 😬
-	ID() common.Address
+	ID() ID
 
 	// OnSignatureRequested installs a callback that is invoked when an on-chain
 	// notification of a new signing request for a given keep is seen.
@@ -130,7 +182,7 @@ type BondedECDSAKeepHandle interface {
 	GetPublicKey() ([]uint8, error)
 
 	// GetMembers returns keep's members.
-	GetMembers() ([]common.Address, error)
+	GetMembers() ([]ID, error)
 
 	// IsThisOperatorMember returns true if the current operator belongs to the
 	// BondedECDSAKeep represented by this handle, false otherwise, or an error
@@ -167,8 +219,7 @@ type BondedECDSAKeepHandle interface {
 // this on-chain functionality.
 type BondedECDSAKeepApplicationHandle interface {
 	// ID returns the id of this application in a host chain-agnostic format.
-	// FIXME currently this ID is still a common.Address 😬
-	ID() common.Address
+	ID() ID
 
 	// RegisterAsMemberCandidate registers this instance's operator as a
 	// candidate to be selected to a keep.

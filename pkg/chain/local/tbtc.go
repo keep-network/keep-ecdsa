@@ -9,10 +9,10 @@ import (
 	"math/rand"
 	"sync"
 
-	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
-
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/keep-network/keep-common/pkg/subscription"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 const (
@@ -130,8 +130,8 @@ func NewTBTCLocalChain(ctx context.Context) *TBTCLocalChain {
 }
 
 // ID implements the ID method in the chain.TBTCHandle interface.
-func (tlc *TBTCLocalChain) ID() common.Address {
-	return common.BigToAddress(tbtcApplicationID)
+func (tlc *TBTCLocalChain) ID() chain.ID {
+	return localChainID(common.BigToAddress(tbtcApplicationID))
 }
 
 // RegisterAsMemberCandidate registers client as a candidate to be selected
@@ -385,7 +385,9 @@ func (tlc *TBTCLocalChain) Keep(depositAddress string) (chain.BondedECDSAKeepHan
 		return nil, fmt.Errorf("no deposit with address [%v]", depositAddress)
 	}
 
-	return tlc.GetKeepWithID(common.HexToAddress(deposit.keepAddress))
+	return tlc.GetKeepWithID(
+		localChainID(common.HexToAddress(deposit.keepAddress)),
+	)
 }
 
 // RetrieveSignerPubkey enriches the referenced deposit with the signer public

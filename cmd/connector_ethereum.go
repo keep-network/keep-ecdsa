@@ -12,6 +12,24 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/chain/ethereum"
 )
 
+func offlineChain(
+	config *config.Config,
+) (chain.OfflineHandle, error) {
+	ethereumKey, err := ethutil.DecryptKeyFile(
+		config.Ethereum.Account.KeyFile,
+		config.Ethereum.Account.KeyFilePassword,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to read key file [%s]: [%v]",
+			config.Ethereum.Account.KeyFile,
+			err,
+		)
+	}
+
+	return ethereum.Offline(ethereumKey, &config.Ethereum), nil
+}
+
 func connectChain(
 	ctx context.Context,
 	config *config.Config,

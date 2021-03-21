@@ -20,7 +20,7 @@ func (esm *celoStakeMonitor) HasMinimumStake(address string) (bool, error) {
 		return false, fmt.Errorf("not a valid celo address: %v", address)
 	}
 
-	return esm.celo.HasMinimumStake(toExternalAddress(common.HexToAddress(address)))
+	return esm.celo.hasMinimumStake(common.HexToAddress(address))
 }
 
 func (esm *celoStakeMonitor) StakerFor(address string) (chain.Staker, error) {
@@ -49,5 +49,5 @@ func (es *celoStaker) Address() relaychain.StakerAddress {
 }
 
 func (es *celoStaker) Stake() (*big.Int, error) {
-	return es.celo.BalanceOf(toExternalAddress(common.HexToAddress(es.address)))
+	return es.celo.balanceOf(common.HexToAddress(es.address))
 }

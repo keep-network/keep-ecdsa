@@ -70,10 +70,10 @@ func NewNode(
 func (n *Node) AnnounceSignerPresence(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
-	keepAddress common.Address,
-	keepMembersAddresses []common.Address,
+	keepID chain.ID,
+	keepMemberIDs []chain.ID,
 ) ([]tss.MemberID, error) {
-	broadcastChannel, err := n.networkProvider.BroadcastChannelFor(keepAddress.Hex())
+	broadcastChannel, err := n.networkProvider.BroadcastChannelFor(keepID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
 	}
@@ -81,44 +81,34 @@ func (n *Node) AnnounceSignerPresence(
 	tss.RegisterUnmarshalers(broadcastChannel)
 
 	if err := broadcastChannel.SetFilter(
-		createAddressFilter(keepMembersAddresses),
+		createAddressFilter(keepMemberIDs),
 	); err != nil {
 		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
 	}
 
-	// TODO: Use generic type for representing address in node.go instead of
-	// common.Address from go-ethereum. The current implementation is not
-	// host-chain implementation agnostic.
-	// To do not propagate ethereum-specific types any further, we convert
-	// addresses to strings before passing them to AnnounceProtocol.
-	keepAddressString := keepAddress.Hex()
-	keepMembersAddressesStrings := make([]string, len(keepMembersAddresses))
-	for i, address := range keepMembersAddresses {
-		keepMembersAddressesStrings[i] = address.Hex()
-	}
 	return tss.AnnounceProtocol(
 		ctx,
 		operatorPublicKey,
-		keepAddressString,
-		keepMembersAddressesStrings,
+		keepID,
+		keepMemberIDs,
 		broadcastChannel,
-		n.ethereumChain.Signing().PublicKeyToAddress,
+		n.ethereumChain.PublicKeyToOperatorID,
 	)
 }
 
 func createAddressFilter(
-	addresses []common.Address,
+	keepMemberIDs []chain.ID,
 ) net.BroadcastChannelFilter {
-	authorizations := make(map[string]bool, len(addresses))
-	for _, address := range addresses {
-		authorizations[hex.EncodeToString(address.Bytes())] = true
+	operatorAuthorizations := make(map[string]bool, len(keepMemberIDs))
+	for _, keepMemberID := range keepMemberIDs {
+		operatorAuthorizations[keepMemberID.String()] = true
 	}
 
 	return func(authorPublicKey *cecdsa.PublicKey) bool {
 		authorAddress := hex.EncodeToString(
 			operator.PubkeyToAddress(*authorPublicKey).Bytes(),
 		)
-		_, isAuthorized := authorizations[authorAddress]
+		_, isAuthorized := operatorAuthorizations[authorAddress]
 
 		if !isAuthorized {
 			logger.Warningf(
@@ -140,7 +130,7 @@ func (n *Node) GenerateSignerForKeep(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
 	keep chain.BondedECDSAKeepHandle,
-	members []common.Address,
+	members []chain.ID,
 	keepsRegistry *registry.Keeps,
 ) (*tss.ThresholdSigner, error) {
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
@@ -445,7 +435,7 @@ func (n *Node) publishSignature(
 // for the given signer index to avoid all signers publishing the same signature
 // for given keep at the same time.
 func (n *Node) waitSignaturePublicationDelay(keep chain.BondedECDSAKeepHandle) {
-	signerIndex, err := n.getSignerIndex(keep)
+	signerIndex, err := keep.OperatorIndex()
 	if err != nil {
 		logger.Errorf(
 			"could not determine signature publication delay for keep [%s]: "+
@@ -476,21 +466,6 @@ func (n *Node) waitSignaturePublicationDelay(keep chain.BondedECDSAKeepHandle) {
 	)
 
 	time.Sleep(delay)
-}
-
-func (n *Node) getSignerIndex(keep chain.BondedECDSAKeepHandle) (int, error) {
-	members, err := keep.GetMembers()
-	if err != nil {
-		return -1, err
-	}
-
-	for index, member := range members {
-		if member == n.ethereumChain.Address() {
-			return index, nil
-		}
-	}
-
-	return -1, nil
 }
 
 func (n *Node) waitForSignature(

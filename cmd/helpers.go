@@ -2,10 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func nodeHeader(addrStrings []string, port int) {
@@ -73,6 +76,59 @@ func buildMultiLine(lineLength int, prefix, suffix, startPrefix string, lines []
 	}
 
 	return combinedLines
+}
+
+func buildPersistenceHandle(
+	chainHandle chain.OfflineHandle,
+	keyFilePassword string,
+	dataDir string,
+) (persistence.Handle, error) {
+	// Validate chain name to avoid issues with persistence later.
+	validChainName, err := regexp.MatchString(
+		"^[a-z][a-z0-9-_]*$",
+		chainHandle.Name(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to verify chain name [%v]: [%v]",
+			chainHandle.Name(),
+			err,
+		)
+	}
+	if !validChainName {
+		return nil, fmt.Errorf(
+			"nvalid chain name: [%v]; chain name must start with a lowercase "+
+				"letter and then consist solely of lowercase letters, numbers, "+
+				" -, or _",
+			chainHandle.Name(),
+		)
+	}
+
+	// Below, use the bare data dir for the Ethereum chain for backwards
+	// compatibility. A future version may do a one-time migration of the
+	// ethereum directory.
+	//
+	// For other chains, use the chain's self-reported name as a path prefix
+	// within the data directory. Since all directories in the Ethereum path are
+	// Ethereum addresses, the validation above requiring a starting letter
+	// ensures there will be no clashes with existing Ethereum address
+	// directories.
+	diskPersistencePath := dataDir
+	if chainHandle.Name() != "ethereum" {
+		diskPersistencePath += "/" + strings.ToLower(chainHandle.Name())
+	}
+	handle, err := persistence.NewDiskHandle(diskPersistencePath)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed while creating a storage disk handler: [%v]",
+			err,
+		)
+	}
+
+	return persistence.NewEncryptedPersistence(
+		handle,
+		keyFilePassword,
+	), nil
 }
 
 type operatorKeys struct {

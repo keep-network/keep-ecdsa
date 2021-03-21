@@ -1,102 +1,107 @@
 package event
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 )
 
-func TestUniqueEventTrackAdd(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	keepAddress2 := common.BytesToAddress([]byte{2})
+var (
+	keepID1String = "0x4e09cadc7037afa36603138d1c0b76fe2aa5039c"
+	keepID2String = "0x0000000000000000000000000000000000000002"
 
+	keepID1, keepID2 chain.ID
+)
+
+func init() {
+	localChain := local.Connect(context.Background())
+
+	keepID1, _ = localChain.UnmarshalID(keepID1String)
+	keepID2, _ = localChain.UnmarshalID(keepID2String)
+}
+
+func TestUniqueEventTrackAdd(t *testing.T) {
 	rs := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 
-	if !rs.add(keepAddress1) {
+	if !rs.add(keepID1) {
 		t.Error("event wasn't emitted before; should be added successfully")
 	}
 
-	if !rs.add(keepAddress2) {
+	fmt.Println(keepID2)
+	if !rs.add(keepID2) {
 		t.Error("event wasn't emitted before; should be added successfully")
 	}
 }
 
 func TestUniqueEventTrackAdd_Duplicate(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
-
 	rs := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 
-	if !rs.add(keepAddress) {
+	if !rs.add(keepID1) {
 		t.Error("event wasn't emitted before; should be added successfully")
 	}
 
-	if rs.add(keepAddress) {
+	if rs.add(keepID1) {
 		t.Error("event was emitted before; it should not be added")
 	}
 }
 
 func TestUniqueEventTrackRemove(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
-
 	rs := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 
-	if !rs.add(keepAddress) {
+	if !rs.add(keepID1) {
 		t.Error("event wasn't emitted before; should be added successfully")
 	}
 
-	rs.remove(keepAddress)
+	rs.remove(keepID1)
 
-	if !rs.add(keepAddress) {
+	if !rs.add(keepID1) {
 		t.Error("event was removed from tracking; should be added successfully")
 	}
 }
 
 func TestUniqueEventTrackRemove_WhenEmpty(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
-
 	rs := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 
-	rs.remove(keepAddress)
+	rs.remove(keepID1)
 
-	if !rs.add(keepAddress) {
+	if !rs.add(keepID1) {
 		t.Error("event wasn't emitted before; should be added successfully")
 	}
 }
 
 func TestUniqueEventTrackHas(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	keepAddress2 := common.BytesToAddress([]byte{2})
 
 	rs := &uniqueEventTrack{
 		data: make(map[string]bool),
 	}
 
-	rs.add(keepAddress1)
+	rs.add(keepID1)
 
-	if !rs.has(keepAddress1) {
+	if !rs.has(keepID1) {
 		t.Error("event was emitted and should be tracked")
 	}
-	if rs.has(keepAddress2) {
+	if rs.has(keepID2) {
 		t.Error("event was not emitted and should not be tracked")
 	}
 
-	rs.remove(keepAddress1)
-	if rs.has(keepAddress1) {
+	rs.remove(keepID1)
+	if rs.has(keepID1) {
 		t.Error("event was removed and should no longer be tracked")
 	}
 }
 
 func TestRequestedSignaturesTrackAdd_SameKeep(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
-
 	digest1 := [32]byte{9}
 	digest2 := [32]byte{8}
 
@@ -104,13 +109,13 @@ func TestRequestedSignaturesTrackAdd_SameKeep(t *testing.T) {
 		data: make(map[string]map[string]bool),
 	}
 
-	if !rs.add(keepAddress, digest1) {
+	if !rs.add(keepID1, digest1) {
 		t.Error(
 			"signature for the first digest wasn't requested before; " +
 				"event should be added successfully",
 		)
 	}
-	if !rs.add(keepAddress, digest2) {
+	if !rs.add(keepID1, digest2) {
 		t.Error(
 			"signature for the second digest wasn't requested before; " +
 				"event should be added successfully",
@@ -119,8 +124,6 @@ func TestRequestedSignaturesTrackAdd_SameKeep(t *testing.T) {
 }
 
 func TestRequestedSignaturesTrackAdd_DifferentKeeps(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	keepAddress2 := common.BytesToAddress([]byte{2})
 
 	digest1 := [32]byte{9}
 	digest2 := [32]byte{8}
@@ -129,14 +132,14 @@ func TestRequestedSignaturesTrackAdd_DifferentKeeps(t *testing.T) {
 		data: make(map[string]map[string]bool),
 	}
 
-	if !rs.add(keepAddress1, digest1) {
+	if !rs.add(keepID1, digest1) {
 		t.Error(
 			"signature from the first keep wasn't requested before; " +
 				"event should be added successfully",
 		)
 	}
 
-	if !rs.add(keepAddress2, digest2) {
+	if !rs.add(keepID2, digest2) {
 		t.Error(
 			"signature from the second keep wasn't requested before; " +
 				"event should be added successfully",
@@ -145,27 +148,23 @@ func TestRequestedSignaturesTrackAdd_DifferentKeeps(t *testing.T) {
 }
 
 func TestRequestedSignaturesTrackAdd_Duplicate(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
-	digest := [32]byte{9}
 
 	rs := &requestedSignaturesTrack{
 		data: make(map[string]map[string]bool),
 	}
 
-	if !rs.add(keepAddress, digest) {
+	if !rs.add(keepID1, digest) {
 		t.Error(
 			"signature wasn't requested before; event should be added",
 		)
 	}
 
-	if rs.add(keepAddress, digest) {
+	if rs.add(keepID1, digest) {
 		t.Error("signature was requested before; event should not be added")
 	}
 }
 
 func TestRequestedSignaturesTrackRemove(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	keepAddress2 := common.BytesToAddress([]byte{2})
 
 	digest := [32]byte{9}
 
@@ -173,30 +172,30 @@ func TestRequestedSignaturesTrackRemove(t *testing.T) {
 		data: make(map[string]map[string]bool),
 	}
 
-	if !rs.add(keepAddress1, digest) {
+	if !rs.add(keepID1, digest) {
 		t.Error(
 			"signature from the first keep wasn't requested before; " +
 				"event should be added successfully",
 		)
 	}
 
-	if !rs.add(keepAddress2, digest) {
+	if !rs.add(keepID2, digest) {
 		t.Error(
 			"signature from the second keep wasn't requested before; " +
 				"event should be added successfully",
 		)
 	}
 
-	rs.remove(keepAddress1, digest)
+	rs.remove(keepID1, digest)
 
-	if !rs.add(keepAddress1, digest) {
+	if !rs.add(keepID1, digest) {
 		t.Error(
 			"signature event for the first keep was removed from tracking; " +
 				"event should be added successfully",
 		)
 	}
 
-	if rs.add(keepAddress2, digest) {
+	if rs.add(keepID2, digest) {
 		t.Error(
 			"signature event for the second keep was not removed from tracking; " +
 				"event should not be added",
@@ -205,16 +204,14 @@ func TestRequestedSignaturesTrackRemove(t *testing.T) {
 }
 
 func TestRequestedSignaturesTrackRemove_WhenEmpty(t *testing.T) {
-	keepAddress := common.BytesToAddress([]byte{1})
-	digest := [32]byte{9}
 
 	rs := &requestedSignaturesTrack{
 		data: make(map[string]map[string]bool),
 	}
 
-	rs.remove(keepAddress, digest)
+	rs.remove(keepID1, digest)
 
-	if !rs.add(keepAddress, digest) {
+	if !rs.add(keepID1, digest) {
 		t.Error(
 			"signature from the first keep wasn't requested before; " +
 				"event should be added successfully",
@@ -223,8 +220,6 @@ func TestRequestedSignaturesTrackRemove_WhenEmpty(t *testing.T) {
 }
 
 func TestRequestedSignaturesTrackHas(t *testing.T) {
-	keepAddress1 := common.BytesToAddress([]byte{1})
-	keepAddress2 := common.BytesToAddress([]byte{2})
 
 	digest1 := [32]byte{9}
 	digest2 := [32]byte{10}
@@ -233,20 +228,20 @@ func TestRequestedSignaturesTrackHas(t *testing.T) {
 		data: make(map[string]map[string]bool),
 	}
 
-	rs.add(keepAddress1, digest1)
+	rs.add(keepID1, digest1)
 
-	if !rs.has(keepAddress1, digest1) {
+	if !rs.has(keepID1, digest1) {
 		t.Errorf("event was emitted and should be tracked")
 	}
-	if rs.has(keepAddress1, digest2) {
+	if rs.has(keepID1, digest2) {
 		t.Errorf("event with this digest was not emitted and should not be tracked")
 	}
-	if rs.has(keepAddress2, digest1) {
+	if rs.has(keepID2, digest1) {
 		t.Errorf("event for this keep was not emitted and should not be tracked")
 	}
 
-	rs.remove(keepAddress1, digest1)
-	if rs.has(keepAddress1, digest1) {
+	rs.remove(keepID1, digest1)
+	if rs.has(keepID1, digest1) {
 		t.Errorf("event was removed and should no longer be tracked")
 	}
 }

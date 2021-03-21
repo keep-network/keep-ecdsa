@@ -54,8 +54,8 @@ func (cc *celoChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 	}, nil
 }
 
-func (ta *tbtcApplication) ID() ExternalAddress {
-	return toExternalAddress(ta.tbtcSystemAddress)
+func (ta *tbtcApplication) ID() chain.ID {
+	return celoChainID(ta.tbtcSystemAddress)
 }
 
 func (ta *tbtcApplication) RegisterAsMemberCandidate() error {
@@ -96,7 +96,7 @@ func (ta *tbtcApplication) RegisterAsMemberCandidate() error {
 // as a signer candidate in the factory for the given application.
 func (ta *tbtcApplication) IsRegisteredForApplication() (bool, error) {
 	return ta.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
-		fromExternalAddress(ta.chainHandle.Address()),
+		ta.chainHandle.operatorAddress(),
 		ta.tbtcSystemAddress,
 	)
 }
@@ -105,7 +105,7 @@ func (ta *tbtcApplication) IsRegisteredForApplication() (bool, error) {
 // as a signer candidate for the given application.
 func (ta *tbtcApplication) IsEligibleForApplication() (bool, error) {
 	return ta.bondedECDSAKeepFactoryContract.IsOperatorEligible(
-		fromExternalAddress(ta.chainHandle.Address()),
+		ta.chainHandle.operatorAddress(),
 		ta.tbtcSystemAddress,
 	)
 }
@@ -114,7 +114,7 @@ func (ta *tbtcApplication) IsEligibleForApplication() (bool, error) {
 // is up to date in the signers' pool of the given application.
 func (ta *tbtcApplication) IsStatusUpToDateForApplication() (bool, error) {
 	return ta.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
-		fromExternalAddress(ta.chainHandle.Address()),
+		ta.chainHandle.operatorAddress(),
 		ta.tbtcSystemAddress,
 	)
 }
@@ -123,7 +123,7 @@ func (ta *tbtcApplication) IsStatusUpToDateForApplication() (bool, error) {
 // pool for the given application.
 func (ta *tbtcApplication) UpdateStatusForApplication() error {
 	transaction, err := ta.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
-		fromExternalAddress(ta.chainHandle.Address()),
+		ta.chainHandle.operatorAddress(),
 		ta.tbtcSystemAddress,
 	)
 	if err != nil {
@@ -306,7 +306,7 @@ func (ta *tbtcApplication) Keep(
 		return nil, err
 	}
 
-	return ta.chainHandle.GetKeepWithID(toExternalAddress(keepAddress))
+	return ta.chainHandle.GetKeepWithID(celoChainID(keepAddress))
 }
 
 // RetrieveSignerPubkey retrieves the signer public key for the

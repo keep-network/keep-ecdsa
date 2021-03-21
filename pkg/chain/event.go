@@ -1,22 +1,19 @@
 package chain
 
-import (
-	"github.com/ethereum/go-ethereum/common"
-)
-
 // BondedECDSAKeepCreatedEvent is an event emitted on a new keep creation.
 type BondedECDSAKeepCreatedEvent struct {
-	KeepAddress     common.Address   // keep contract address
-	Members         []common.Address // keep members addresses
-	HonestThreshold uint64
-	BlockNumber     uint64
+	Keep                 BondedECDSAKeepHandle
+	MemberIDs            []ID // keep member ids
+	HonestThreshold      uint64
+	BlockNumber          uint64
+	ThisOperatorIsMember bool
 }
 
 // ConflictingPublicKeySubmittedEvent is an event emitted each time when one of
 // the members of a keep has submitted a key that does not match the keys submitted
 // so far by other members.
 type ConflictingPublicKeySubmittedEvent struct {
-	SubmittingMember     common.Address
+	SubmittingMember     ID
 	ConflictingPublicKey []byte
 	BlockNumber          uint64
 }
@@ -52,14 +49,4 @@ type SignatureSubmittedEvent struct {
 	S           [32]byte
 	RecoveryID  uint8
 	BlockNumber uint64
-}
-
-// IsMember checks if list of members contains the given address.
-func (e *BondedECDSAKeepCreatedEvent) IsMember(address common.Address) bool {
-	for _, member := range e.Members {
-		if member == address {
-			return true
-		}
-	}
-	return false
 }
