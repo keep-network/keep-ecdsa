@@ -71,7 +71,7 @@ func TestConstructUnsignedTransaction(t *testing.T) {
 	}
 }
 
-func Test_BuildSignedTransactionHexString(t *testing.T) {
+func TestBuildSignedTransactionHexString(t *testing.T) {
 	unsignedTransaction := wire.NewMsgTx(wire.TxVersion)
 	previousOutputTransactionHash, err := chainhash.NewHashFromStr(
 		"0b99dea9655f219991001e9296cfe2103dd918a21ef477a14121d1a0ba9491f1",
