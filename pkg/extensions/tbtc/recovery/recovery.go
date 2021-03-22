@@ -161,9 +161,13 @@ func BuildSignedTransactionHexString(
 	}
 
 	// BtcEncode writes bytes, we wrap it in an hex encoder wrapped
-	// around a strings.Builder to get a hex string.
+	// around a strings. Builder to get a hex string.
 	transactionHexBuilder := &strings.Builder{}
 	transactionWriter := hex.NewEncoder(transactionHexBuilder)
+	// We use BtcEncode instead of Serialize here since we're preparing for the
+	// transaction to be sent out of our network or executed on the bitcoin
+	// blockchain, rather than persisting the information. For more information,
+	// check out the btcsuite/btcd/wire/msgtx.go documentation.
 	signedTransaction.BtcEncode(
 		transactionWriter,
 		wire.ProtocolVersion,
