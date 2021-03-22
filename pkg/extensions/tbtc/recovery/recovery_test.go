@@ -5,7 +5,6 @@ import (
 	cecdsa "crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
-	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/google/go-cmp/cmp"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"gotest.tools/v3/assert"
 )
 
 func TestPublicKeyToP2WPKHScriptCode(t *testing.T) {
@@ -47,7 +47,15 @@ func TestConstructUnsignedTransaction(t *testing.T) {
 
 	previousOutputValue := int64(100000000)
 
-	messageTransaction, err := ConstructUnsignedTransaction(
+	expectedTxHex := "01000000000101f19194baa0d12141a177f41ea218d93d10e2cf96921e009199215f65a9de990b000000000000000000039003fc0100000000160014a405e97c9e2efdaed32709356655ea03fc1f2a8c9003fc0100000000160014f9974ebea1ca5d6f95fb9f5509f8b3e7bb0047269003fc010000000016001495c28deefd325d2d2fc24c5ac829376dccf520e0024a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002100000000000000000000000000000000000000000000000000000000000000000000000000"
+	expectedTxBytes, err := hex.DecodeString(expectedTxHex)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedTx := wire.NewMsgTx(0)
+	expectedTx.Deserialize(bytes.NewReader(expectedTxBytes))
+
+	actualTx, err := ConstructUnsignedTransaction(
 		"0b99dea9655f219991001e9296cfe2103dd918a21ef477a14121d1a0ba9491f1",
 		uint32(0),
 		previousOutputValue,
@@ -59,16 +67,7 @@ func TestConstructUnsignedTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	serializedMessageTransactionBytes, _ := json.Marshal(messageTransaction)
-	serializedMessageTransaction := string(serializedMessageTransactionBytes)
-	expectedSerializedMessageTransaction := "{\"Version\":1,\"TxIn\":[{\"PreviousOutPoint\":{\"Hash\":[241,145,148,186,160,209,33,65,161,119,244,30,162,24,217,61,16,226,207,150,146,30,0,145,153,33,95,101,169,222,153,11],\"Index\":0},\"SignatureScript\":null,\"Witness\":[\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\",\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"],\"Sequence\":0}],\"TxOut\":[{\"Value\":33293200,\"PkScript\":\"ABSkBel8ni79rtMnCTVmVeoD/B8qjA==\"},{\"Value\":33293200,\"PkScript\":\"ABT5l06+ocpdb5X7n1UJ+LPnuwBHJg==\"},{\"Value\":33293200,\"PkScript\":\"ABSVwo3u/TJdLS/CTFrIKTdtzPUg4A==\"}],\"LockTime\":0}"
-	if expectedSerializedMessageTransaction != serializedMessageTransaction {
-		t.Errorf(
-			"expectedSerializedMessageTransaction did not match the expectation\nexpected: %s\nactual:   %s",
-			expectedSerializedMessageTransaction,
-			serializedMessageTransaction,
-		)
-	}
+	assert.DeepEqual(t, actualTx, expectedTx)
 }
 
 func TestBuildSignedTransactionHexString(t *testing.T) {

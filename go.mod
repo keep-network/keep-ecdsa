@@ -26,4 +26,5 @@ require (
 	github.com/keep-network/tbtc v1.1.1-0.20210315122630-61d538499ba1
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
+	gotest.tools/v3 v3.0.3
 )
