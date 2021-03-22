@@ -37,7 +37,6 @@ type localDeposit struct {
 	redemptionSignature *Signature
 	redemptionProof     *TxProof
 
-	createdEvents             []*chain.CreatedEvent
 	redemptionRequestedEvents []*chain.DepositRedemptionRequestedEvent
 }
 
@@ -182,7 +181,6 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 	keepAddress := generateAddress()
 	tlc.OpenKeep(keepAddress, common.HexToAddress(depositAddress), signers)
 
-	currentBlock, _ := tlc.BlockCounter().CurrentBlock()
 	utxoValueBytesSlice, _ := hex.DecodeString(defaultUtxoValueHex)
 	var utxoValueBytes [8]byte
 	copy(utxoValueBytes[:], utxoValueBytesSlice)
@@ -198,11 +196,6 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 			FundedAt:       fundedAt,
 			UtxoOutpoint:   utxoOutpoint, // 0xc27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d5101000000
 		},
-		createdEvents: []*chain.CreatedEvent{{
-			DepositAddress: depositAddress,
-			KeepAddress:    keepAddress.Hex(),
-			BlockNumber:    currentBlock,
-		}},
 		redemptionRequestedEvents: make([]*chain.DepositRedemptionRequestedEvent, 0),
 	}
 

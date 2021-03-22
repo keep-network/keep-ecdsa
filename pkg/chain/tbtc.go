@@ -115,13 +115,6 @@ type FundingInfo struct {
 	UtxoOutpoint   []uint8
 }
 
-// CreatedEvent is an event emitted when a deposit has been created.
-type CreatedEvent struct {
-	DepositAddress string
-	KeepAddress    string
-	BlockNumber    uint64
-}
-
 // DepositRedemptionRequestedEvent is an event emitted when a deposit
 // redemption has been requested or the redemption fee has been increased.
 type DepositRedemptionRequestedEvent struct {
