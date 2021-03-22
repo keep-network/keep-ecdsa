@@ -40,43 +40,43 @@ var deriveAddressTestData = map[string]struct {
 		"3M9z86KGrNER18mKKhwxeeNxzmeoD9iUpt",
 	},
 
-	"BIP84: ypub at m/84'/0'/0'/0/0": {
+	"BIP84: zpub at m/84'/0'/0'/0/0": {
 		"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9",
 		0,
 		"bc1q46uejlhm9vkswfcqs9plvujzzmqjvtfda3mra6",
 	},
-	"BIP84: ypub at m/84'/0'/0'/0/8": {
+	"BIP84: zpub at m/84'/0'/0'/0/8": {
 		"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9",
 		8,
 		"bc1quq0vrufxy05ypk45xmu3hpk6qsmlhr5vr3n8kz",
 	},
-	"BIP84: ypub at m/84'/0'/72'/0/8": {
+	"BIP84: ypub at m/84'/0'/72'/0/12": {
 		"ypub6ZpieGfpesfH3KqGr4zZPETidCze6RzeNMz7FLnSPgABwyQNZZmpA4tpUYFn53xtHkHXaoGviseJJcFhSn3Kw9sgzsiSnP5xEqp6Z2Yy4ZH",
 		12,
 		"32n4JF1ytaPfw4951nvN8gvNmAnRuxMvMb",
 	},
 
-	"BIP141: P2WPKH nested in P2SH ypub from m/0": {
+	"BIP141: P2WPKH nested in P2SH ypub at m/0/0/0/0/0 extrapolated from m/0": {
 		"ypub6TMciWL8Pv4Rk41sLR1Z8ay9beZPMDyrV3T7tbb4Vtw3Vaf3uxWmug1hp5uEry9CbR6448YJEzUopCT8PSgKMPZVFVZKDc2kvQC8xHqdtZa",
 		0,
 		"398r9poPaoKJ7vHkaVzNVsXBGRB3mFMXEK",
 	},
-	"BIP141: P2WPKH nested in P2SH ypub from m/6'": {
+	"BIP141: P2WPKH nested in P2SH ypub at m/6'/0/0/0/7 extrapolated from m/6'": {
 		"ypub6TMciWLGjabQBSQtDkD3vG3KZdXDZ89ySQrsjuviw1M6wr7uF5fnbimqae2zhJPVminGn29Q6jHCZS9RFBCnAikDsWQgY57J9hLmptE2oK8",
 		7,
 		"33F67PgGyFD73YmDg7JYbwEqufsB89vvpc",
 	},
-	"BIP141: P2WPKH nested in P2SH ypub from m/6'/0": {
+	"BIP141: P2WPKH nested in P2SH ypub at m/6'/0/0/0/0 extrapolated from m/6'/0": {
 		"ypub6VGWAW57V8o1eaVnrvNPuKb7xfvP6X4hxb3vxGGQp9oyCKoZCFvbvLDYjy36RE1immwe5RSGGFiQULB65v9Zw1Ej2TbPR6CLTGkzhxMSQ4q",
 		0,
 		"3Qt1E64dYpUA1ovvYYfZYYeoCazjDTLww3",
 	},
-	"BIP141: P2WPKH nested in P2SH ypub from m/6'/4'": {
+	"BIP141: P2WPKH nested in P2SH ypub at m/6'/4'/0/0/1 extrapolated from m/6'/4'": {
 		"ypub6VGWAW5FpoKyziaLoi5RJnL1ezT4Xb5BwZH1HYmArsESpvs4rgP1fM8hPxQA6qEnxXVM5zFbzzSWKuuvB3QUFSbmFppU5hyQHyojgvf8S3f",
 		1,
 		"3PMemKpygPQDyzqsjdrnqMswRhNjcka1Wu",
 	},
-	"BIP141: P2WPKH nested in P2SH ypub from m/6'/4'/9'": {
+	"BIP141: P2WPKH nested in P2SH ypub at m/6'/4'/9'/0/11 extrapolated from m/6'/4'/9'": {
 		"ypub6Xgwmha4MdU4UAfH9oXWtTmCvZxnqZXkp1ReiWsKeHvKid6QEhjA2CUDQcNCYpiExbPkZhr6DHtTUda3ZQp4KM7NfqVJWs3YFqHrJLECa1k",
 		11,
 		"382CXgbMHT4gzUiKQ2EHsJgESrBjv6bik8",
@@ -87,27 +87,27 @@ var deriveAddressTestData = map[string]struct {
 		"3FQZbk6HBX72j2yyT5L8hWTymaJgwvb9u9",
 	},
 
-	"BIP141: P2WPKH zpub from m/0": {
+	"BIP141: P2WPKH zpub at m/0/0/0/0/0 extrapolated from m/0": {
 		"zpub6nBt2B13YbbubMCzAmoBLg4emchqHqyMQ9yLfzUwsuJvYgUHAcgLXjfqqHrprso814Croc8rheqMhV4h796L9dF67qFjoWrFC8FnLsVHknB",
 		0,
 		"bc1q8dnmvgj4jsvafe0wuwdm89aua2405jp7jp2zhn",
 	},
-	"BIP141: P2WPKH zpub from m/6'": {
+	"BIP141: P2WPKH zpub at m/6'/0/0/0/7 extrapolated from m/6'": {
 		"zpub6nBt2B1BtG8t2jc146zg8M8pjbffVk9UMXP6XJpcK1iyzww8VjqMDnRybqzahD3RBMu5XVjxZPdkSikyxscnxxRpjr777yvnRRQRDVAG58G",
 		7,
 		"bc1q4nrgadrcxz4tcqke9eh7f6zn8lxg8lz49d8v6k",
 	},
-	"BIP141: P2WPKH zpub from m/6'/0": {
+	"BIP141: P2WPKH zpub at m/6'/0/0/0/0 extrapolated from m/6'/0": {
 		"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp",
 		0,
 		"bc1q9wwwcgcl2lw74quetxan4j6vhluyvyhy3dwt5l",
 	},
-	"BIP141: P2WPKH zpub from m/6'/4'": {
+	"BIP141: P2WPKH zpub at m/6'/4'/0/0/1 extrapolated from m/6'/4'": {
 		"zpub6p6mUAkAyUsTr1mTe4s3WsRWpxbWUD4grfoE4wf4EscKt2gJ7LYaHQnqRAMk6jtiNAc9qTrATeo4DCXUtjpV3gHN8AWtfcntZhsP5UeStdx",
 		1,
 		"bc1qwsuszzk93puxlgs6l6f54r66dev882pm2760dv",
 	},
-	"BIP141: P2WPKH zpub from m/6'/4'/9'": {
+	"BIP141: P2WPKH zpub at m/6'/4'/9'/0/11 extrapolated from m/6'/4'/9'": {
 		"zpub6rXD5NEyWK1YKTrPzAK96Yri6Y7EnBXFj7wsVumD2JJCmiudVMtieG8MRpKnYjNANEWZKBSefxF1MvBcH7E57anyYBBj6ms2XZMVgsuPzzs",
 		11,
 		"bc1qsszrcep8whzqh93ksmmckn77eh9fl55s5dzjx6",
