@@ -1,0 +1,8 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: celo-network-alfajores
+  namespace: default
+data:
+  network-id: '44787'
+  contract-owner-celo-account-address: '0x2B2976824682233807A197081119dA511AF12F7a'
