@@ -2287,40 +2287,34 @@ func TestGetSignerActionDelay(t *testing.T) {
 }
 
 func TestFundingInfo(t *testing.T) {
+	expectedFundingInfo := &chain.FundingInfo{
+		UtxoValueBytes: [8]uint8{0, 101, 205, 29, 0, 0, 0, 0},
+		FundedAt:       big.NewInt(1615172517),
+		UtxoOutpoint: []byte{
+			194, 124, 59, 250, 130, 147, 172, 107, 48, 59,
+			159, 116, 85, 174, 35, 183, 194, 75, 136, 20,
+			145, 90, 101, 17, 151, 96, 39, 6, 78, 252,
+			77, 81, 1, 0, 0, 0,
+		},
+	}
+
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
 	tbtcChain := local.NewTBTCLocalChain(ctx)
 
-	signers := local.RandomSigningGroup(3)
-
-	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.CreateDeposit(depositAddress, local.RandomSigningGroup(3))
 
 	fundingInfo, err := tbtcChain.FundingInfo(depositAddress)
 	if err != nil {
 		t.Error(err)
 	}
 
-	expectedUtxoValueBytes := []byte{0, 101, 205, 29, 0, 0, 0, 0}
-	if !bytes.Equal(fundingInfo.UtxoValueBytes[:], expectedUtxoValueBytes) {
+	if !reflect.DeepEqual(expectedFundingInfo, fundingInfo) {
 		t.Errorf(
-			"utxo value bytes do not match\nexpected: %v\nactual:   %v",
-			expectedUtxoValueBytes,
-			fundingInfo.UtxoValueBytes,
-		)
-	}
-
-	expectedUtxoOutpoint := []byte{
-		194, 124, 59, 250, 130, 147, 172, 107, 48, 59,
-		159, 116, 85, 174, 35, 183, 194, 75, 136, 20,
-		145, 90, 101, 17, 151, 96, 39, 6, 78, 252,
-		77, 81, 1, 0, 0, 0,
-	}
-	if !bytes.Equal(fundingInfo.UtxoOutpoint, expectedUtxoOutpoint) {
-		t.Errorf(
-			"utxo outpoint does not match\nexpected: %v\nactual:   %v",
-			expectedUtxoOutpoint,
-			fundingInfo.UtxoValueBytes,
+			"funding info does not match\nexpected: %v\nactual:   %v",
+			expectedFundingInfo,
+			fundingInfo,
 		)
 	}
 }
