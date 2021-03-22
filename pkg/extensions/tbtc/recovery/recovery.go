@@ -93,7 +93,7 @@ func ConstructUnsignedTransaction(
 	tx := wire.NewMsgTx(wire.TxVersion)
 	txIn := wire.NewTxIn(
 		wire.NewOutPoint(previousOutputTransactionHash, previousOutputIndex),
-		nil, // scriptSig is empty here
+		[]byte{}, // scriptSig is empty here
 		[][]byte{
 			dummySignatureForWitness,
 			dummyCompressedPublicKeyForWitness,
