@@ -17,6 +17,7 @@ import (
 )
 
 var cacheLifeTime = time.Second
+var emptyAddress = common.BytesToAddress([]byte{})
 
 // Has minimum stake.
 // Should allow to connect.
@@ -226,7 +227,7 @@ func TestNoMinimumStakeIsNotKeepMember(t *testing.T) {
 
 	localChain.OpenKeep(
 		common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256"),
-		common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256"),
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 			common.HexToAddress("0x65ea55c1f10491038425725dc00dffeab2a1e28a"),
@@ -267,7 +268,7 @@ func TestNoMinimumStakeIsActiveKeepMember(t *testing.T) {
 
 	localChain.OpenKeep(
 		common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256"),
-		common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256"),
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
@@ -305,7 +306,7 @@ func TestNoMinimumStakeIsClosedKeepMember(t *testing.T) {
 	keepAddress := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
 	localChain.OpenKeep(
 		keepAddress,
-		keepAddress,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
@@ -351,7 +352,7 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
 	localChain.OpenKeep(
 		keep1Address,
-		keep1Address,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
@@ -360,7 +361,7 @@ func TestNoMinimumStakeMultipleKeepsMember(t *testing.T) {
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
 	localChain.OpenKeep(
 		keep2Address,
-		keep2Address,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
 			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
@@ -411,12 +412,12 @@ func TestCachesAllActiveKeepMembers(t *testing.T) {
 
 	localChain.OpenKeep(
 		common.HexToAddress("0xCFEF2DC492E44a2747B2712f92d82527964B4b8F"),
-		common.HexToAddress("0xCFEF2DC492E44a2747B2712f92d82527964B4b8F"),
+		emptyAddress,
 		activeKeepMembers,
 	)
 
 	closedKeepAddress := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
-	localChain.OpenKeep(closedKeepAddress, closedKeepAddress, closedKeepMembers)
+	localChain.OpenKeep(closedKeepAddress, emptyAddress, closedKeepMembers)
 	if err := localChain.CloseKeep(closedKeepAddress); err != nil {
 		t.Fatal(err)
 	}
@@ -484,7 +485,7 @@ func TestSweepsActiveKeepMembersCache(t *testing.T) {
 	keepAddress := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
 	localChain.OpenKeep(
 		keepAddress,
-		keepAddress,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
 		},
@@ -558,7 +559,7 @@ func TestSweepsNoActiveKeepMembersCache(t *testing.T) {
 	keepAddress := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
 	localChain.OpenKeep(
 		keepAddress,
-		keepAddress,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress(key.NetworkPubKeyToChainAddress(remotePeerPublicKey)),
 		},
@@ -605,7 +606,7 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
 	keep1 := localChain.OpenKeep(
 		keep1Address,
-		keep1Address,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 		},
@@ -613,7 +614,7 @@ func TestIsKeepActiveCaching(t *testing.T) {
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
 	keep2 := localChain.OpenKeep(
 		keep2Address,
-		keep2Address,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
 		},
@@ -683,7 +684,7 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
 	keep1 := localChain.OpenKeep(
 		keep1Address,
-		keep1Address,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 			common.HexToAddress("0xA04Ba34b0689D1b1b5670a774a8EC5538C77FfaF"),
@@ -692,7 +693,7 @@ func TestGetKeepMembersCaching(t *testing.T) {
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
 	keep2 := localChain.OpenKeep(
 		keep2Address,
-		keep2Address,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),

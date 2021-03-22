@@ -63,7 +63,7 @@ func TestOnSignatureRequested(t *testing.T) {
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
-	keep := localChain.OpenKeep(keepAddress, keepAddress, []common.Address{})
+	keep := localChain.OpenKeep(keepAddress, emptyAddress, []common.Address{})
 
 	var keepPubkey [64]byte
 	rand.Read(keepPubkey[:])
@@ -118,7 +118,7 @@ func TestSubmitKeepPublicKey(t *testing.T) {
 		keepAddress.String(),
 	)
 
-	keep := localChain.OpenKeep(keepAddress, keepAddress, []common.Address{})
+	keep := localChain.OpenKeep(keepAddress, emptyAddress, []common.Address{})
 
 	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
@@ -156,7 +156,7 @@ func TestSubmitSignature(t *testing.T) {
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 
-	keep := localChain.OpenKeep(keepAddress, keepAddress, []common.Address{})
+	keep := localChain.OpenKeep(keepAddress, emptyAddress, []common.Address{})
 
 	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {
@@ -220,7 +220,7 @@ func TestIsAwaitingSignature(t *testing.T) {
 	keepAddress := common.HexToAddress("0x41048F9B90290A2e96D07f537F3A7E97620E9e47")
 	keepPublicKey := [64]byte{11, 12, 13, 14, 15, 16}
 
-	keep := localChain.OpenKeep(keepAddress, keepAddress, []common.Address{})
+	keep := localChain.OpenKeep(keepAddress, emptyAddress, []common.Address{})
 
 	err := keep.SubmitKeepPublicKey(keepPublicKey)
 	if err != nil {

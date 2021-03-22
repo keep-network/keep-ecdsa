@@ -13,6 +13,8 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
+var emptyAddress = common.BytesToAddress([]byte{})
+
 func TestRequestSignatureNonexistentKeep(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
@@ -41,7 +43,7 @@ func TestRequestSignatureNoHandler(t *testing.T) {
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	digest := [32]byte{1}
 
-	keep := localChain.OpenKeep(keepAddress, keepAddress, []common.Address{})
+	keep := localChain.OpenKeep(keepAddress, emptyAddress, []common.Address{})
 
 	var keepPubkey [64]byte
 	rand.Read(keepPubkey[:])
@@ -69,7 +71,7 @@ func TestRequestSignature(t *testing.T) {
 		eventEmitted <- event
 	}
 
-	keep := localChain.OpenKeep(keepAddress, keepAddress, []common.Address{})
+	keep := localChain.OpenKeep(keepAddress, emptyAddress, []common.Address{})
 
 	var keepPubkey [64]byte
 	rand.Read(keepPubkey[:])
