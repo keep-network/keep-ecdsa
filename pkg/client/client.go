@@ -3,9 +3,14 @@ package client
 
 import (
 	"context"
+	"encoding/binary"
+	"encoding/hex"
 	"math/big"
+	"sort"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -21,6 +26,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/client/event"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
+	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc/recovery"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
@@ -100,6 +106,20 @@ func Initialize(
 		}
 
 		return !isKeepActive
+	}
+
+	blockCounter := hostChain.BlockCounter()
+
+	tbtcApplicationHandle, err := hostChain.TBTCApplicationHandle()
+	if err != nil {
+		logger.Errorf(
+			"failed to look up on-chain tBTC application information for "+
+				"chain [%s]; this client WILL NOT ATTEMPT TO OPERATE "+
+				"on the tBTC system",
+			hostChain,
+		)
+	} else {
+		go checkStatusAndRegisterForApplication(ctx, blockCounter, tbtcApplicationHandle)
 	}
 
 	for _, keepAddress := range keepsRegistry.GetKeepsAddresses() {
@@ -183,6 +203,7 @@ func Initialize(
 			go monitorKeepTerminatedEvent(
 				ctx,
 				hostChain,
+				tbtcApplicationHandle,
 				networkProvider,
 				clientConfig,
 				bitcoinConfig,
@@ -200,6 +221,7 @@ func Initialize(
 	go checkAwaitingKeyGeneration(
 		ctx,
 		hostChain,
+		tbtcApplicationHandle,
 		networkProvider,
 		clientConfig,
 		bitcoinConfig,
@@ -244,6 +266,7 @@ func Initialize(
 				generateKeyForKeep(
 					ctx,
 					hostChain,
+					tbtcApplicationHandle,
 					networkProvider,
 					clientConfig,
 					bitcoinConfig,
@@ -263,20 +286,6 @@ func Initialize(
 			)
 		}
 	})
-
-	blockCounter := hostChain.BlockCounter()
-
-	tbtcApplicationHandle, err := hostChain.TBTCApplicationHandle()
-	if err != nil {
-		logger.Errorf(
-			"failed to look up on-chain tBTC application information for "+
-				"chain [%s]; this client WILL NOT ATTEMPT TO OPERATE "+
-				"on the tBTC system",
-			hostChain,
-		)
-	} else {
-		go checkStatusAndRegisterForApplication(ctx, blockCounter, tbtcApplicationHandle)
-	}
 
 	initializeExtensions(
 		ctx,
@@ -313,6 +322,7 @@ func initializeExtensions(
 func checkAwaitingKeyGeneration(
 	ctx context.Context,
 	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
 	bitcoinConfig *bitcoin.Config,
@@ -375,6 +385,7 @@ func checkAwaitingKeyGeneration(
 		err = checkAwaitingKeyGenerationForKeep(
 			ctx,
 			hostChain,
+			tbtcHandle,
 			networkProvider,
 			clientConfig,
 			bitcoinConfig,
@@ -397,6 +408,7 @@ func checkAwaitingKeyGeneration(
 func checkAwaitingKeyGenerationForKeep(
 	ctx context.Context,
 	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
 	bitcoinConfig *bitcoin.Config,
@@ -446,6 +458,7 @@ func checkAwaitingKeyGenerationForKeep(
 			go generateKeyForKeep(
 				ctx,
 				hostChain,
+				tbtcHandle,
 				networkProvider,
 				clientConfig,
 				bitcoinConfig,
@@ -468,6 +481,7 @@ func checkAwaitingKeyGenerationForKeep(
 func generateKeyForKeep(
 	ctx context.Context,
 	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
 	bitcoinConfig *bitcoin.Config,
@@ -574,6 +588,7 @@ func generateKeyForKeep(
 	go monitorKeepTerminatedEvent(
 		ctx,
 		hostChain,
+		tbtcHandle,
 		networkProvider,
 		clientConfig,
 		bitcoinConfig,
@@ -940,6 +955,7 @@ func monitorKeepClosedEvents(
 func monitorKeepTerminatedEvent(
 	ctx context.Context,
 	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
 	bitcoinConfig *bitcoin.Config,
@@ -1004,7 +1020,16 @@ func monitorKeepTerminatedEvent(
 					members,
 				)
 
-				tss.BroadcastRecoveryAddress(
+				if err != nil {
+					logger.Errorf(
+						"failed to retrieve member ids on keep [%s] termination: [%v]",
+						keep.ID().String(),
+						err,
+					)
+					return
+				}
+
+				recoveryInfos, err := tss.BroadcastRecoveryAddress(
 					ctx,
 					bitcoinConfig.BeneficiaryAddress,
 					bitcoinConfig.MaxFeePerVByte,
@@ -1015,6 +1040,172 @@ func monitorKeepTerminatedEvent(
 					networkProvider,
 					hostChain.Signing().PublicKeyToAddress,
 				)
+				if err != nil {
+					logger.Errorf(
+						"failed to retrieve btc recovery addresses on keep [%s]: [%v]",
+						keep.ID().String(),
+						err,
+					)
+					return
+				}
+
+				rawBtcAddresses := make([]string, 0, len(recoveryInfos))
+				maxFeePerVByte := recoveryInfos[0].MaxFeePerVByte
+				for _, recoveryInfo := range recoveryInfos {
+					rawBtcAddresses = append(rawBtcAddresses, recoveryInfo.BtcRecoveryAddress)
+					logger.Infof("Found recovery address %s", recoveryInfo.BtcRecoveryAddress)
+					if recoveryInfo.MaxFeePerVByte < maxFeePerVByte {
+						maxFeePerVByte = recoveryInfo.MaxFeePerVByte
+					}
+				}
+
+				derivedBtcAddresses := make([]string, 0, len(rawBtcAddresses))
+				for _, rawBtcAddress := range rawBtcAddresses {
+					logger.Infof("rawBtcAddress: %v", rawBtcAddress)
+					btcAddress, err := recovery.DeriveAddress(rawBtcAddress, 0)
+					if err != nil {
+						logger.Errorf(
+							"unable to derive btc address for keep [%s] and address [%s]: [%v]",
+							keep.ID().String(),
+							rawBtcAddress,
+							err,
+						)
+						return
+					}
+					derivedBtcAddresses = append(derivedBtcAddresses, btcAddress)
+				}
+				sort.Strings(derivedBtcAddresses)
+
+				signer, err := keepsRegistry.GetSigner(keep.ID())
+				if err != nil {
+					// If there are no signer for loaded keep that something is clearly
+					// wrong. We don't want to continue processing for this keep.
+					logger.Errorf(
+						"no signer for keep [%s]: [%v]",
+						keep.ID().String(),
+						err,
+					)
+					return
+				}
+				scriptCodeBytes, err := recovery.PublicKeyToP2WPKHScriptCode(signer.PublicKey(), &chaincfg.TestNet3Params)
+				if err != nil {
+					logger.Errorf(
+						"failed to retrieve the script code for keep [%s]: [%v]",
+						keep.ID().String(),
+						err,
+					)
+					return
+				}
+				depositAddress, err := keep.GetOwner()
+				if err != nil {
+					logger.Errorf(
+						"failed to retrieve the deposit address for keep [%s]: [%v]",
+						keep.ID().String(),
+						err,
+					)
+					return
+				}
+
+				fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.Hex())
+				if err != nil {
+					logger.Errorf(
+						"failed to retrieve the funding info for keep [%s]: [%v]",
+						keep.ID().String(),
+						err,
+					)
+					return
+				}
+
+				previousOutputTransactionHashHex := hex.EncodeToString(fundingInfo.UtxoOutpoint[:32])
+				previousOutputIndex := binary.LittleEndian.Uint32(fundingInfo.UtxoOutpoint[32:])
+				previousOutputValue, bytesRead := binary.Varint(fundingInfo.UtxoValueBytes[:])
+				if bytesRead == 0 {
+					logger.Errorf(
+						"failed to read the funding info's value bytes: [%v] for keep [%s]: the buffer was too small",
+						fundingInfo.UtxoValueBytes,
+						keep.ID().String(),
+					)
+					return
+				}
+				if bytesRead < 0 {
+					logger.Errorf(
+						"failed to read the funding info's value bytes: [%v] for keep [%s]: the value was larger than 64 bits",
+						fundingInfo.UtxoValueBytes,
+						keep.ID().String(),
+					)
+					return
+				}
+
+				unsignedTransaction, err := recovery.ConstructUnsignedTransaction(
+					previousOutputTransactionHashHex,
+					previousOutputIndex,
+					previousOutputValue,
+					int64(maxFeePerVByte),
+					derivedBtcAddresses,
+					&chaincfg.MainNetParams,
+				)
+				if err != nil {
+					logger.Errorf(
+						"failed to construct the unsigned transaction for keep [%s]: [%v]",
+						keep.ID().String(),
+						err,
+					)
+					return
+				}
+
+				sighashBytes, err := txscript.CalcWitnessSigHash(
+					scriptCodeBytes,
+					txscript.NewTxSigHashes(unsignedTransaction),
+					txscript.SigHashAll,
+					unsignedTransaction,
+					0,
+					previousOutputValue,
+				)
+				if err != nil {
+					logger.Errorf(
+						"failed to calculate the sighash bytes for keep [%s]: [%v]",
+						keep.ID().String(),
+						err,
+					)
+					return
+				}
+
+				logger.Warningf("calculating sig for bytes %v", sighashBytes)
+
+				signature, err := signer.CalculateSignature(
+					ctx,
+					sighashBytes,
+					networkProvider,
+					hostChain.Signing().PublicKeyToAddress,
+				)
+				if err != nil {
+					logger.Errorf(
+						"failed to calculate the signature bytes for keep [%s]: [%v]",
+						keep.ID().String(),
+						err,
+					)
+					return
+				}
+
+				signedHexString, err := recovery.BuildSignedTransactionHexString(
+					unsignedTransaction,
+					signature,
+					signer.PublicKey(),
+				)
+				if err != nil {
+					logger.Errorf(
+						"failed to build the signed hex string for keep [%s]: [%v]",
+						keep.ID().String(),
+						err,
+					)
+					return
+				}
+
+				logger.Warningf("Please broadcast Bitcoin transaction %s", signedHexString)
+				logger.Warningf("Please broadcast Bitcoin transaction %s", signedHexString)
+				logger.Warningf("Please broadcast Bitcoin transaction %s", signedHexString)
+				logger.Warningf("Please broadcast Bitcoin transaction %s", signedHexString)
+				logger.Warningf("Please broadcast Bitcoin transaction %s", signedHexString)
 
 				keepsRegistry.UnregisterKeep(keep.ID())
 				keepTerminated <- event
@@ -1024,7 +1215,7 @@ func monitorKeepTerminatedEvent(
 	if err != nil {
 		logger.Errorf(
 			"failed on registering for terminated event for keep [%s]: [%v]",
-			keep.ID(),
+			keep.ID().String(),
 			err,
 		)
 
