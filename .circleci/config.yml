@@ -143,6 +143,8 @@ jobs:
           root: /tmp/keep-ecdsa
           paths:
             - docker-images
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   migrate_contracts:
     executor: docker-node-gcloud
     steps:
@@ -160,7 +162,7 @@ jobs:
             # This needs to be part of a base docker image, not installed here.
             apt-get update
             apt-get install jq -y
-            solidity/scripts/circleci-provision-external-contracts.sh
+            solidity/scripts/ci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
           command: |
@@ -171,6 +173,8 @@ jobs:
           root: /tmp/keep-ecdsa
           paths:
             - contracts
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   publish_npm_package:
     executor: docker-node
     steps:
@@ -263,6 +267,8 @@ jobs:
           registry-url: $GCR_REGISTRY_URL
           image: initcontainer-provision-keep-ecdsa
           tag: latest
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   publish_contract_data:
     executor: gcp-cli/default
     steps:

@@ -41,7 +41,7 @@ var (
 	// gas price can not be higher than the max gas price value. If the maximum
 	// allowed gas price is reached, no further resubmission attempts are
 	// performed. This value can be overwritten in the configuration file.
-	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
+	DefaultMaxGasPrice = big.NewInt(1000000000000) // 1000 Gwei
 )
 
 // ethereumChain is an implementation of ethereum blockchain interface.
@@ -49,6 +49,7 @@ type ethereumChain struct {
 	config                         *ethereum.Config
 	accountKey                     *keystore.Key
 	client                         ethutil.EthereumClient
+	chainID                        *big.Int
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	tbtcSystemAddress              common.Address
 	blockCounter                   *ethlike.BlockCounter
@@ -85,6 +86,14 @@ func Connect(
 	wrappedClient := addClientWrappers(config, client)
 
 	transactionMutex := &sync.Mutex{}
+
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve Ethereum chain id: [%v]",
+			err,
+		)
+	}
 
 	nonceManager := ethutil.NewNonceManager(wrappedClient, accountKey.Address)
 
@@ -133,6 +142,7 @@ func Connect(
 	}
 	bondedECDSAKeepFactoryContract, err := contract.NewBondedECDSAKeepFactory(
 		bondedECDSAKeepFactoryContractAddress,
+		chainID,
 		accountKey,
 		wrappedClient,
 		nonceManager,
@@ -145,10 +155,10 @@ func Connect(
 	}
 
 	ethereum := &ethereumChain{
-		config:     config,
-		accountKey: accountKey,
-		client:     wrappedClient,
-
+		config:                         config,
+		accountKey:                     accountKey,
+		client:                         wrappedClient,
+		chainID:                        chainID,
 		bondedECDSAKeepFactoryContract: bondedECDSAKeepFactoryContract,
 		tbtcSystemAddress:              tbtcSystemAddress,
 		blockCounter:                   blockCounter,

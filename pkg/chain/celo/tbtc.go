@@ -34,6 +34,7 @@ func (cc *celoChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 
 	tbtcSystemContract, err := tbtcchain.NewTBTCSystem(
 		cc.tbtcSystemAddress,
+		cc.chainID,
 		cc.accountKey,
 		cc.client,
 		cc.nonceManager,
@@ -447,6 +448,7 @@ func (ta *tbtcApplication) getDepositContract(
 
 	depositContract, err := tbtcchain.NewDeposit(
 		common.HexToAddress(address),
+		ta.chainHandle.chainID,
 		ta.chainHandle.accountKey,
 		ta.chainHandle.client,
 		ta.chainHandle.nonceManager,
