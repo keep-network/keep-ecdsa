@@ -12,8 +12,8 @@ import (
 // RecoveryInfo represents the broadcasted information needed needed from the
 // other signers to complete liquidation recovery.
 type RecoveryInfo struct {
-	btcRecoveryAddress string
-	maxFeePerVByte     int32
+	BtcRecoveryAddress string
+	MaxFeePerVByte     int32
 }
 
 // BroadcastRecoveryAddress broadcasts and receives the BTC recovery addresses
@@ -29,7 +29,7 @@ func BroadcastRecoveryAddress(
 	dishonestThreshold uint,
 	networkProvider net.Provider,
 	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
-) error {
+) ([]RecoveryInfo, error) {
 	const protocolReadyTimeout = 2 * time.Minute
 
 	group := &groupInfo{
@@ -76,7 +76,7 @@ func BroadcastRecoveryAddress(
 							)
 							break
 						}
-						memberRecoveryInfo[memberAddress] = RecoveryInfo{btcRecoveryAddress: msg.BtcRecoveryAddress, maxFeePerVByte: msg.MaxFeePerVByte}
+						memberRecoveryInfo[memberAddress] = RecoveryInfo{BtcRecoveryAddress: msg.BtcRecoveryAddress, MaxFeePerVByte: msg.MaxFeePerVByte}
 
 						logger.Infof(
 							"member [%s] from keep [%s] announced supplied btc address [%s] for "+
@@ -149,14 +149,19 @@ func BroadcastRecoveryAddress(
 				)
 			}
 		}
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"waiting for btc recovery addresses timed out after: [%v]", protocolReadyTimeout,
 		)
 	case context.Canceled:
 		logger.Infof("successfully gathered all btc addresses")
 
-		return nil
+		recoveryInfos := make([]RecoveryInfo, 0, len(memberRecoveryInfo))
+		for _, recoveryInfo := range memberRecoveryInfo {
+			recoveryInfos = append(recoveryInfos, recoveryInfo)
+		}
+
+		return recoveryInfos, nil
 	default:
-		return fmt.Errorf("unexpected context error: [%v]", ctx.Err())
+		return nil, fmt.Errorf("unexpected context error: [%v]", ctx.Err())
 	}
 }
