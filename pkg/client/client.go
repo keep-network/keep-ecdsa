@@ -11,6 +11,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -1029,9 +1030,26 @@ func monitorKeepTerminatedEvent(
 					return
 				}
 
+				var beneficiaryAddress string
+				_, err = btcutil.DecodeAddress(bitcoinConfig.BeneficiaryAddress, &chaincfg.TestNet3Params)
+				if err != nil {
+					beneficiaryAddress, err = recovery.DeriveAddress(bitcoinConfig.BeneficiaryAddress, 0)
+				} else {
+					beneficiaryAddress = bitcoinConfig.BeneficiaryAddress
+				}
+				if err != nil {
+					logger.Errorf(
+						"failed to retrieve a btc address from config - keep: [%s] address: [%s] err: [%v]",
+						keep.ID().Hex(),
+						bitcoinConfig.BeneficiaryAddress,
+						err,
+					)
+					return
+				}
+
 				recoveryInfos, err := tss.BroadcastRecoveryAddress(
 					ctx,
-					bitcoinConfig.BeneficiaryAddress,
+					beneficiaryAddress,
 					bitcoinConfig.MaxFeePerVByte,
 					keep.ID().Hex(),
 					memberID,
@@ -1049,32 +1067,17 @@ func monitorKeepTerminatedEvent(
 					return
 				}
 
-				rawBtcAddresses := make([]string, 0, len(recoveryInfos))
+				btcAddresses := make([]string, 0, len(recoveryInfos))
 				maxFeePerVByte := recoveryInfos[0].MaxFeePerVByte
 				for _, recoveryInfo := range recoveryInfos {
-					rawBtcAddresses = append(rawBtcAddresses, recoveryInfo.BtcRecoveryAddress)
+					btcAddresses = append(btcAddresses, recoveryInfo.BtcRecoveryAddress)
 					logger.Infof("Found recovery address %s", recoveryInfo.BtcRecoveryAddress)
 					if recoveryInfo.MaxFeePerVByte < maxFeePerVByte {
 						maxFeePerVByte = recoveryInfo.MaxFeePerVByte
 					}
 				}
 
-				derivedBtcAddresses := make([]string, 0, len(rawBtcAddresses))
-				for _, rawBtcAddress := range rawBtcAddresses {
-					logger.Infof("rawBtcAddress: %v", rawBtcAddress)
-					btcAddress, err := recovery.DeriveAddress(rawBtcAddress, 0)
-					if err != nil {
-						logger.Errorf(
-							"unable to derive btc address for keep [%s] and address [%s]: [%v]",
-							keep.ID().Hex(),
-							rawBtcAddress,
-							err,
-						)
-						return
-					}
-					derivedBtcAddresses = append(derivedBtcAddresses, btcAddress)
-				}
-				sort.Strings(derivedBtcAddresses)
+				sort.Strings(btcAddresses)
 
 				signer, err := keepsRegistry.GetSigner(keep.ID())
 				if err != nil {
@@ -1141,7 +1144,7 @@ func monitorKeepTerminatedEvent(
 					previousOutputIndex,
 					previousOutputValue,
 					int64(maxFeePerVByte),
-					derivedBtcAddresses,
+					btcAddresses,
 					&chaincfg.MainNetParams,
 				)
 				if err != nil {
