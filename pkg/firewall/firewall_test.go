@@ -599,6 +599,7 @@ func TestGetKeepAtIndexCaching(t *testing.T) {
 	keep1Address := common.HexToAddress("0xD6e148Be1E36Fc4Be9FE5a1abD7b3103ED527256")
 	keep1 := localChain.OpenKeep(
 		keep1Address,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0x4f7C771Ab173bEc2BbE980497111866383a21172"),
 		},
@@ -606,6 +607,7 @@ func TestGetKeepAtIndexCaching(t *testing.T) {
 	keep2Address := common.HexToAddress("0x1Ca1EB1CafF6B3784Fe28a1b12266a10D04626A0")
 	keep2 := localChain.OpenKeep(
 		keep2Address,
+		emptyAddress,
 		[]common.Address{
 			common.HexToAddress("0xF9798F39CfEf21931d3B5F73aF67718ae569a73e"),
 		},
