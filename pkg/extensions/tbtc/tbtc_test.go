@@ -2286,6 +2286,65 @@ func TestGetSignerActionDelay(t *testing.T) {
 	}
 }
 
+func TestFundingInfo(t *testing.T) {
+	expectedFundingInfo := &chain.FundingInfo{
+		UtxoValueBytes: [8]uint8{0, 101, 205, 29, 0, 0, 0, 0},
+		FundedAt:       big.NewInt(1615172517),
+		UtxoOutpoint: []byte{
+			194, 124, 59, 250, 130, 147, 172, 107, 48, 59,
+			159, 116, 85, 174, 35, 183, 194, 75, 136, 20,
+			145, 90, 101, 17, 151, 96, 39, 6, 78, 252,
+			77, 81, 1, 0, 0, 0,
+		},
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+
+	tbtcChain.CreateDeposit(depositAddress, local.RandomSigningGroup(3))
+
+	fundingInfo, err := tbtcChain.FundingInfo(depositAddress)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(expectedFundingInfo, fundingInfo) {
+		t.Errorf(
+			"funding info does not match\nexpected: %v\nactual:   %v",
+			expectedFundingInfo,
+			fundingInfo,
+		)
+	}
+}
+
+func TestGetOwner(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+
+	signers := local.RandomSigningGroup(3)
+
+	tbtcChain.CreateDeposit(depositAddress, signers)
+	keep, err := tbtcChain.Keep(depositAddress)
+	if err != nil {
+		t.Fatalf("unexpected error %v", err)
+	}
+	owner, err := keep.GetOwner()
+	if err != nil {
+		t.Fatalf("unexpected error %v", err)
+	}
+	if owner.Hex() != depositAddress {
+		t.Errorf(
+			"unexpected owner address\nexpected: %s\nactual:   %s",
+			depositAddress,
+			owner.String(),
+		)
+	}
+}
+
 func submitKeepPublicKey(
 	depositAddress string,
 	tbtcChain *local.TBTCLocalChain,

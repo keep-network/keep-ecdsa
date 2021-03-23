@@ -95,12 +95,24 @@ type TBTCSystem interface {
 
 	// PastDepositRedemptionRequestedEvents returns all redemption requested
 	// events for the given deposit which occurred after the provided start block.
-	// All implementations should returns those events sorted by the
+	// All implementations should return those events sorted by the
 	// block number in the ascending order.
 	PastDepositRedemptionRequestedEvents(
 		startBlock uint64,
 		depositAddress string,
 	) ([]*DepositRedemptionRequestedEvent, error)
+
+	// FundingInfo retrieves the funding info for a particular deposit address
+	FundingInfo(
+		depositAddress string,
+	) (*FundingInfo, error)
+}
+
+// FundingInfo represents the funding information for a tbtc deposit
+type FundingInfo struct {
+	UtxoValueBytes [8]uint8
+	FundedAt       *big.Int
+	UtxoOutpoint   []uint8
 }
 
 // DepositRedemptionRequestedEvent is an event emitted when a deposit

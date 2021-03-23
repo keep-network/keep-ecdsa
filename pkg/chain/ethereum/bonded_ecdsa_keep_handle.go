@@ -265,6 +265,12 @@ func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]common.Address, error) {
 	return bekh.contract.GetMembers()
 }
 
+// GetOwner returns keep's owner.
+func (bekh *bondedEcdsaKeepHandle) GetOwner() (common.Address, error) {
+	return bekh.contract.GetOwner()
+}
+
+// IsThisOperatorMember returns whether or not the operator is a member
 func (bekh *bondedEcdsaKeepHandle) IsThisOperatorMember() (bool, error) {
 	operatorIndex, err := bekh.OperatorIndex()
 	if err != nil {
@@ -274,6 +280,8 @@ func (bekh *bondedEcdsaKeepHandle) IsThisOperatorMember() (bool, error) {
 	return operatorIndex != -1, nil
 }
 
+// OperatorIndex returns the index of the operator's among the member ids.
+// Returns -1 if the operator isn't a member.
 func (bekh *bondedEcdsaKeepHandle) OperatorIndex() (int, error) {
 	memberIDs, err := bekh.GetMembers()
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -18,12 +19,17 @@ import (
 const (
 	defaultUTXOValue            = 1000
 	defaultInitialRedemptionFee = 10
+	defaultUtxoValueHex         = "0065cd1d00000000"
+	defaultFundedAt             = "1615172517"
+	defaultUtxoOutpoint         = "c27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d5101000000"
 )
 
 type localDeposit struct {
 	keepAddress string
 	pubkey      []byte
 	state       chain.DepositState
+
+	fundingInfo *chain.FundingInfo
 
 	utxoValue           *big.Int
 	redemptionDigest    [32]byte
@@ -173,12 +179,23 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 	defer tlc.tbtcLocalChainMutex.Unlock()
 
 	keepAddress := generateAddress()
-	tlc.OpenKeep(keepAddress, signers)
+	tlc.OpenKeep(keepAddress, common.HexToAddress(depositAddress), signers)
+
+	utxoValueBytesSlice, _ := hex.DecodeString(defaultUtxoValueHex)
+	var utxoValueBytes [8]byte
+	copy(utxoValueBytes[:], utxoValueBytesSlice)
+	fundedAt, _ := new(big.Int).SetString(defaultFundedAt, 0)
+	utxoOutpoint, _ := hex.DecodeString(defaultUtxoOutpoint)
 
 	tlc.deposits[depositAddress] = &localDeposit{
-		keepAddress:               keepAddress.Hex(),
-		state:                     chain.AwaitingSignerSetup,
-		utxoValue:                 big.NewInt(defaultUTXOValue),
+		keepAddress: keepAddress.Hex(),
+		state:       chain.AwaitingSignerSetup,
+		utxoValue:   big.NewInt(defaultUTXOValue),
+		fundingInfo: &chain.FundingInfo{
+			UtxoValueBytes: utxoValueBytes, // 0x0065cd1d00000000
+			FundedAt:       fundedAt,
+			UtxoOutpoint:   utxoOutpoint, // 0xc27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d5101000000
+		},
 		redemptionRequestedEvents: make([]*chain.DepositRedemptionRequestedEvent, 0),
 	}
 
@@ -732,6 +749,19 @@ func (tlc *TBTCLocalChain) SetAlwaysFailingTransactions(transactions ...string) 
 	for _, tx := range transactions {
 		tlc.alwaysFailingTransactions[tx] = true
 	}
+}
+
+// FundingInfo retrieves the funding info for a particular deposit address
+func (tlc *TBTCLocalChain) FundingInfo(
+	depositAddress string,
+) (*chain.FundingInfo, error) {
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
+	deposit, ok := tlc.deposits[depositAddress]
+	if !ok {
+		return nil, fmt.Errorf("no deposit with address [%v]", depositAddress)
+	}
+	return deposit.fundingInfo, nil
 }
 
 // Logger surfaces the chain's logger
