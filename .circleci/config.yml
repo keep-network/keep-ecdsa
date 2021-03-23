@@ -108,6 +108,8 @@ jobs:
           root: /tmp/keep-ecdsa
           paths:
             - docker-images
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   build_initcontainer:
     executor: docker-thesis-buildpack
     steps:
@@ -244,6 +246,8 @@ jobs:
           registry-url: $GCR_REGISTRY_URL
           image: keep-ecdsa
           tag: latest
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   publish_initcontainer_provision_keep_ecdsa:
     executor: gcp-gcr/default
     steps:
