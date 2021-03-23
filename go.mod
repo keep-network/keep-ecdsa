@@ -14,9 +14,11 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/binance-chain/tss-lib v1.3.1
 	github.com/btcsuite/btcd v0.20.1-beta
+	github.com/btcsuite/btcutil v1.0.2
 	github.com/celo-org/celo-blockchain v0.0.0-20210222234634-f8c8f6744526
 	github.com/ethereum/go-ethereum v1.9.10
 	github.com/gogo/protobuf v1.3.1
+	github.com/google/go-cmp v0.4.0
 	github.com/google/gofuzz v1.1.0
 	github.com/ipfs/go-log v1.0.4
 	github.com/keep-network/keep-common v1.4.1-0.20210315092601-3203332583f0
@@ -24,4 +26,5 @@ require (
 	github.com/keep-network/tbtc v1.1.1-0.20210315122630-61d538499ba1
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli v1.22.1
+	gotest.tools/v3 v3.0.3
 )
