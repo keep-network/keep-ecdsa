@@ -4,6 +4,7 @@ import (
 	"context"
 	cecdsa "crypto/ecdsa"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -29,7 +30,7 @@ func BroadcastRecoveryAddress(
 	dishonestThreshold uint,
 	networkProvider net.Provider,
 	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
-) ([]RecoveryInfo, error) {
+) ([]string, int32, error) {
 	const protocolReadyTimeout = 2 * time.Minute
 
 	group := &groupInfo{
@@ -149,19 +150,24 @@ func BroadcastRecoveryAddress(
 				)
 			}
 		}
-		return nil, fmt.Errorf(
+		return nil, 0, fmt.Errorf(
 			"waiting for btc recovery addresses timed out after: [%v]", protocolReadyTimeout,
 		)
 	case context.Canceled:
 		logger.Infof("successfully gathered all btc addresses")
 
-		recoveryInfos := make([]RecoveryInfo, 0, len(memberRecoveryInfo))
+		retrievalAddresses := make([]string, 0, len(memberRecoveryInfo))
+		maxFeePerVByte := int32(2147483647) // since we're taking the min fee among the signers, start with the max int32
 		for _, recoveryInfo := range memberRecoveryInfo {
-			recoveryInfos = append(recoveryInfos, recoveryInfo)
+			retrievalAddresses = append(retrievalAddresses, recoveryInfo.BtcRecoveryAddress)
+			if recoveryInfo.MaxFeePerVByte < maxFeePerVByte {
+				maxFeePerVByte = recoveryInfo.MaxFeePerVByte
+			}
 		}
+		sort.Strings(retrievalAddresses)
 
-		return recoveryInfos, nil
+		return retrievalAddresses, maxFeePerVByte, nil
 	default:
-		return nil, fmt.Errorf("unexpected context error: [%v]", ctx.Err())
+		return nil, 0, fmt.Errorf("unexpected context error: [%v]", ctx.Err())
 	}
 }

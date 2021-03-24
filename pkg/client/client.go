@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"math/big"
-	"sort"
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -1047,7 +1046,7 @@ func monitorKeepTerminatedEvent(
 					return
 				}
 
-				recoveryInfos, err := tss.BroadcastRecoveryAddress(
+				btcAddresses, maxFeePerVByte, err := tss.BroadcastRecoveryAddress(
 					ctx,
 					beneficiaryAddress,
 					bitcoinConfig.MaxFeePerVByte,
@@ -1066,18 +1065,6 @@ func monitorKeepTerminatedEvent(
 					)
 					return
 				}
-
-				btcAddresses := make([]string, 0, len(recoveryInfos))
-				maxFeePerVByte := recoveryInfos[0].MaxFeePerVByte
-				for _, recoveryInfo := range recoveryInfos {
-					btcAddresses = append(btcAddresses, recoveryInfo.BtcRecoveryAddress)
-					logger.Infof("Found recovery address %s", recoveryInfo.BtcRecoveryAddress)
-					if recoveryInfo.MaxFeePerVByte < maxFeePerVByte {
-						maxFeePerVByte = recoveryInfo.MaxFeePerVByte
-					}
-				}
-
-				sort.Strings(btcAddresses)
 
 				signer, err := keepsRegistry.GetSigner(keep.ID())
 				if err != nil {
