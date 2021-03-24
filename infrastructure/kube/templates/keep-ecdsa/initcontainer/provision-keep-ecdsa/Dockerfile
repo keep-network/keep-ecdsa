@@ -15,8 +15,6 @@ COPY ./TokenStaking.json /tmp/TokenStaking.json
 
 COPY ./KeepToken.json /tmp/KeepToken.json
 
-COPY ./TBTCSystem.json /tmp/TBTCSystem.json
-
 COPY ./keep-ecdsa-config-template.toml /tmp/keep-ecdsa-config-template.toml
 
 COPY ./provision-keep-ecdsa.js /tmp/provision-keep-ecdsa.js
