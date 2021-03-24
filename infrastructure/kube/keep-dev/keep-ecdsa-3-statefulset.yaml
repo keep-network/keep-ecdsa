@@ -109,7 +109,7 @@ spec:
               value: '3919'
             - name: KEEP_DATA_DIR
               value: /mnt/keep-ecdsa/data
-            - name: SANCTIONED_APPLICATIONS
+            - name: TBTC_SYSTEM_ADDRESS
               value: '0x7F68B90dce19d2ac034477B7ba2229106656A084' # Shall we extract this property to a configmap?
           volumeMounts:
             - name: keep-ecdsa-config
