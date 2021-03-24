@@ -10,11 +10,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// RecoveryInfo represents the broadcasted information needed needed from the
+// recoveryInfo represents the broadcasted information needed needed from the
 // other signers to complete liquidation recovery.
-type RecoveryInfo struct {
-	BtcRecoveryAddress string
-	MaxFeePerVByte     int32
+type recoveryInfo struct {
+	btcRecoveryAddress string
+	maxFeePerVByte     int32
 }
 
 // BroadcastRecoveryAddress broadcasts and receives the BTC recovery addresses
@@ -54,7 +54,7 @@ func BroadcastRecoveryAddress(
 	}
 	broadcastChannel.Recv(ctx, handleLiquidationRecoveryAnnounceMessage)
 
-	memberRecoveryInfo := make(map[string]RecoveryInfo)
+	memberRecoveryInfo := make(map[string]recoveryInfo)
 
 	go func() {
 		for {
@@ -77,7 +77,7 @@ func BroadcastRecoveryAddress(
 							)
 							break
 						}
-						memberRecoveryInfo[memberAddress] = RecoveryInfo{BtcRecoveryAddress: msg.BtcRecoveryAddress, MaxFeePerVByte: msg.MaxFeePerVByte}
+						memberRecoveryInfo[memberAddress] = recoveryInfo{btcRecoveryAddress: msg.BtcRecoveryAddress, maxFeePerVByte: msg.MaxFeePerVByte}
 
 						logger.Infof(
 							"member [%s] from keep [%s] announced supplied btc address [%s] for "+
@@ -159,9 +159,9 @@ func BroadcastRecoveryAddress(
 		retrievalAddresses := make([]string, 0, len(memberRecoveryInfo))
 		maxFeePerVByte := int32(2147483647) // since we're taking the min fee among the signers, start with the max int32
 		for _, recoveryInfo := range memberRecoveryInfo {
-			retrievalAddresses = append(retrievalAddresses, recoveryInfo.BtcRecoveryAddress)
-			if recoveryInfo.MaxFeePerVByte < maxFeePerVByte {
-				maxFeePerVByte = recoveryInfo.MaxFeePerVByte
+			retrievalAddresses = append(retrievalAddresses, recoveryInfo.btcRecoveryAddress)
+			if recoveryInfo.maxFeePerVByte < maxFeePerVByte {
+				maxFeePerVByte = recoveryInfo.maxFeePerVByte
 			}
 		}
 		sort.Strings(retrievalAddresses)

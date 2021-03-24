@@ -24,7 +24,7 @@ func TestPublicKeyToP2WPKHScriptCode(t *testing.T) {
 
 	publicKey, _ := btcec.ParsePubKey(serializedPublicKey, btcec.S256())
 
-	scriptCodeBytes, err := PublicKeyToP2WPKHScriptCode(publicKey.ToECDSA(), &chaincfg.MainNetParams)
+	scriptCodeBytes, err := publicKeyToP2WPKHScriptCode(publicKey.ToECDSA(), &chaincfg.MainNetParams)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -55,7 +55,7 @@ func TestConstructUnsignedTransaction(t *testing.T) {
 	expectedTx := wire.NewMsgTx(0)
 	expectedTx.Deserialize(bytes.NewReader(expectedTxBytes))
 
-	actualTx, err := ConstructUnsignedTransaction(
+	actualTx, err := constructUnsignedTransaction(
 		"0b99dea9655f219991001e9296cfe2103dd918a21ef477a14121d1a0ba9491f1",
 		uint32(0),
 		previousOutputValue,
@@ -86,7 +86,7 @@ func TestBuildSignedTransactionHexString(t *testing.T) {
 		RecoveryID: 1,
 	}
 
-	signedTxHex, err := BuildSignedTransactionHexString(
+	signedTxHex, err := buildSignedTransactionHexString(
 		decodeTransaction(t, unsignedTxHex),
 		signature,
 		publicKey,

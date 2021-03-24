@@ -26,12 +26,12 @@ import (
 
 var logger = log.Logger("keep-ecdsa")
 
-// PublicKeyToP2WPKHScriptCode converts a public key to a Bitcion p2wpkh
+// publicKeyToP2WPKHScriptCode converts a public key to a Bitcion p2wpkh
 // witness scriptCode that can spend an output sent to that public key's
 // corresponding address.
 //
 // [BIP143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
-func PublicKeyToP2WPKHScriptCode(
+func publicKeyToP2WPKHScriptCode(
 	publicKey *cecdsa.PublicKey,
 	chainParams *chaincfg.Params,
 ) ([]byte, error) {
@@ -69,8 +69,8 @@ func PublicKeyToP2WPKHScriptCode(
 	return append([]byte{byte(len(script))}, script...), nil
 }
 
-// ConstructUnsignedTransaction produces an unsigned transaction
-func ConstructUnsignedTransaction(
+// constructUnsignedTransaction produces an unsigned transaction
+func constructUnsignedTransaction(
 	previousTransactionHashHex string,
 	previousOutputIndex uint32,
 	previousOutputValue int64,
@@ -148,9 +148,9 @@ func ConstructUnsignedTransaction(
 	return tx, nil
 }
 
-// BuildSignedTransactionHexString generates the final transaction hex string
+// buildSignedTransactionHexString generates the final transaction hex string
 // that can then be submitted to the chain
-func BuildSignedTransactionHexString(
+func buildSignedTransactionHexString(
 	unsignedTransaction *wire.MsgTx,
 	signature *ecdsa.Signature,
 	publicKey *cecdsa.PublicKey,
@@ -198,7 +198,7 @@ func BuildBitcoinTransaction(
 	retrievalAddresses []string,
 	maxFeePerVByte int32,
 ) (string, error) {
-	scriptCodeBytes, err := PublicKeyToP2WPKHScriptCode(signer.PublicKey(), &chaincfg.TestNet3Params)
+	scriptCodeBytes, err := publicKeyToP2WPKHScriptCode(signer.PublicKey(), &chaincfg.TestNet3Params)
 	if err != nil {
 		logger.Errorf(
 			"failed to retrieve the script code for keep [%s]: [%v]",
@@ -247,7 +247,7 @@ func BuildBitcoinTransaction(
 		return "", err
 	}
 
-	unsignedTransaction, err := ConstructUnsignedTransaction(
+	unsignedTransaction, err := constructUnsignedTransaction(
 		previousOutputTransactionHashHex,
 		previousOutputIndex,
 		previousOutputValue,
@@ -298,7 +298,7 @@ func BuildBitcoinTransaction(
 		return "", err
 	}
 
-	return BuildSignedTransactionHexString(
+	return buildSignedTransactionHexString(
 		unsignedTransaction,
 		signature,
 		signer.PublicKey(),
