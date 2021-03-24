@@ -2,10 +2,14 @@ package recovery
 
 import (
 	"bytes"
+	"context"
 	cecdsa "crypto/ecdsa"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"strings"
+
+	"github.com/ipfs/go-log"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -14,8 +18,13 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
+	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
+
+var logger = log.Logger("keep-ecdsa")
 
 // PublicKeyToP2WPKHScriptCode converts a public key to a Bitcion p2wpkh
 // witness scriptCode that can spend an output sent to that public key's
@@ -175,4 +184,123 @@ func BuildSignedTransactionHexString(
 	)
 
 	return transactionHexBuilder.String(), nil
+}
+
+// BuildBitcoinTransaction generates a signed transaction hex string that can
+// recover an underlying bitcoin deposit that has been liquidated.
+func BuildBitcoinTransaction(
+	ctx context.Context,
+	networkProvider net.Provider,
+	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
+	keep chain.BondedECDSAKeepHandle,
+	signer *tss.ThresholdSigner,
+	retrievalAddresses []string,
+	maxFeePerVByte int32,
+) (string, error) {
+	scriptCodeBytes, err := PublicKeyToP2WPKHScriptCode(signer.PublicKey(), &chaincfg.TestNet3Params)
+	if err != nil {
+		logger.Errorf(
+			"failed to retrieve the script code for keep [%s]: [%v]",
+			keep.ID().Hex(),
+			err,
+		)
+		return "", err
+	}
+	depositAddress, err := keep.GetOwner()
+	if err != nil {
+		logger.Errorf(
+			"failed to retrieve the deposit address for keep [%s]: [%v]",
+			keep.ID().Hex(),
+			err,
+		)
+		return "", err
+	}
+
+	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.Hex())
+	if err != nil {
+		logger.Errorf(
+			"failed to retrieve the funding info for keep [%s]: [%v]",
+			keep.ID().Hex(),
+			err,
+		)
+		return "", err
+	}
+
+	previousOutputTransactionHashHex := hex.EncodeToString(fundingInfo.UtxoOutpoint[:32])
+	previousOutputIndex := binary.LittleEndian.Uint32(fundingInfo.UtxoOutpoint[32:])
+	previousOutputValue, bytesRead := binary.Varint(fundingInfo.UtxoValueBytes[:])
+	if bytesRead == 0 {
+		logger.Errorf(
+			"failed to read the funding info's value bytes: [%v] for keep [%s]: the buffer was too small",
+			fundingInfo.UtxoValueBytes,
+			keep.ID().Hex(),
+		)
+		return "", err
+	}
+	if bytesRead < 0 {
+		logger.Errorf(
+			"failed to read the funding info's value bytes: [%v] for keep [%s]: the value was larger than 64 bits",
+			fundingInfo.UtxoValueBytes,
+			keep.ID().Hex(),
+		)
+		return "", err
+	}
+
+	unsignedTransaction, err := ConstructUnsignedTransaction(
+		previousOutputTransactionHashHex,
+		previousOutputIndex,
+		previousOutputValue,
+		int64(maxFeePerVByte),
+		retrievalAddresses,
+		&chaincfg.MainNetParams,
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed to construct the unsigned transaction for keep [%s]: [%v]",
+			keep.ID().Hex(),
+			err,
+		)
+		return "", err
+	}
+
+	sighashBytes, err := txscript.CalcWitnessSigHash(
+		scriptCodeBytes,
+		txscript.NewTxSigHashes(unsignedTransaction),
+		txscript.SigHashAll,
+		unsignedTransaction,
+		0,
+		previousOutputValue,
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed to calculate the sighash bytes for keep [%s]: [%v]",
+			keep.ID().Hex(),
+			err,
+		)
+		return "", err
+	}
+
+	logger.Warningf("calculating sig for bytes %v", sighashBytes)
+
+	signature, err := signer.CalculateSignature(
+		ctx,
+		sighashBytes,
+		networkProvider,
+		hostChain.Signing().PublicKeyToAddress,
+	)
+	if err != nil {
+		logger.Errorf(
+			"failed to calculate the signature bytes for keep [%s]: [%v]",
+			keep.ID().Hex(),
+			err,
+		)
+		return "", err
+	}
+
+	return BuildSignedTransactionHexString(
+		unsignedTransaction,
+		signature,
+		signer.PublicKey(),
+	)
 }

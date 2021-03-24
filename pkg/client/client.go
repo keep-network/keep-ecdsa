@@ -3,13 +3,10 @@ package client
 
 import (
 	"context"
-	"encoding/binary"
-	"encoding/hex"
 	"math/big"
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
@@ -1077,110 +1074,16 @@ func monitorKeepTerminatedEvent(
 					)
 					return
 				}
-				scriptCodeBytes, err := recovery.PublicKeyToP2WPKHScriptCode(signer.PublicKey(), &chaincfg.TestNet3Params)
-				if err != nil {
-					logger.Errorf(
-						"failed to retrieve the script code for keep [%s]: [%v]",
-						keep.ID().Hex(),
-						err,
-					)
-					return
-				}
-				depositAddress, err := keep.GetOwner()
-				if err != nil {
-					logger.Errorf(
-						"failed to retrieve the deposit address for keep [%s]: [%v]",
-						keep.ID().Hex(),
-						err,
-					)
-					return
-				}
 
-				fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.Hex())
-				if err != nil {
-					logger.Errorf(
-						"failed to retrieve the funding info for keep [%s]: [%v]",
-						keep.ID().Hex(),
-						err,
-					)
-					return
-				}
-
-				previousOutputTransactionHashHex := hex.EncodeToString(fundingInfo.UtxoOutpoint[:32])
-				previousOutputIndex := binary.LittleEndian.Uint32(fundingInfo.UtxoOutpoint[32:])
-				previousOutputValue, bytesRead := binary.Varint(fundingInfo.UtxoValueBytes[:])
-				if bytesRead == 0 {
-					logger.Errorf(
-						"failed to read the funding info's value bytes: [%v] for keep [%s]: the buffer was too small",
-						fundingInfo.UtxoValueBytes,
-						keep.ID().Hex(),
-					)
-					return
-				}
-				if bytesRead < 0 {
-					logger.Errorf(
-						"failed to read the funding info's value bytes: [%v] for keep [%s]: the value was larger than 64 bits",
-						fundingInfo.UtxoValueBytes,
-						keep.ID().Hex(),
-					)
-					return
-				}
-
-				unsignedTransaction, err := recovery.ConstructUnsignedTransaction(
-					previousOutputTransactionHashHex,
-					previousOutputIndex,
-					previousOutputValue,
-					int64(maxFeePerVByte),
-					btcAddresses,
-					&chaincfg.MainNetParams,
-				)
-				if err != nil {
-					logger.Errorf(
-						"failed to construct the unsigned transaction for keep [%s]: [%v]",
-						keep.ID().Hex(),
-						err,
-					)
-					return
-				}
-
-				sighashBytes, err := txscript.CalcWitnessSigHash(
-					scriptCodeBytes,
-					txscript.NewTxSigHashes(unsignedTransaction),
-					txscript.SigHashAll,
-					unsignedTransaction,
-					0,
-					previousOutputValue,
-				)
-				if err != nil {
-					logger.Errorf(
-						"failed to calculate the sighash bytes for keep [%s]: [%v]",
-						keep.ID().Hex(),
-						err,
-					)
-					return
-				}
-
-				logger.Warningf("calculating sig for bytes %v", sighashBytes)
-
-				signature, err := signer.CalculateSignature(
+				signedHexString, err := recovery.BuildBitcoinTransaction(
 					ctx,
-					sighashBytes,
 					networkProvider,
-					hostChain.Signing().PublicKeyToAddress,
-				)
-				if err != nil {
-					logger.Errorf(
-						"failed to calculate the signature bytes for keep [%s]: [%v]",
-						keep.ID().Hex(),
-						err,
-					)
-					return
-				}
-
-				signedHexString, err := recovery.BuildSignedTransactionHexString(
-					unsignedTransaction,
-					signature,
-					signer.PublicKey(),
+					hostChain,
+					tbtcHandle,
+					keep,
+					signer,
+					btcAddresses,
+					maxFeePerVByte,
 				)
 				if err != nil {
 					logger.Errorf(
