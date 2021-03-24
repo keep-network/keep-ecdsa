@@ -131,7 +131,7 @@ async function provisionKeepTecdsa() {
       !sortitionPoolContractAddress ||
       sortitionPoolContractAddress === "0x0000000000000000000000000000000000000000"
     ) {
-      throw new Error(`missing sortition pool for application: [${tbtcSystemAddress}]`)
+      throw new Error(`missing sortition pool for TBTCSystem contract: [${tbtcSystemAddress}]`)
     }
 
     console.log(
