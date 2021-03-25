@@ -2,17 +2,30 @@ package recovery
 
 import (
 	"bytes"
+	"context"
 	cecdsa "crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
+	"fmt"
 	"math/big"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
+	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-ecdsa/internal/testdata"
+	lc "github.com/keep-network/keep-ecdsa/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
 	"gotest.tools/v3/assert"
 )
 
@@ -119,4 +132,166 @@ func bigIntFromString(t *testing.T, s string) *big.Int {
 		t.Errorf("Something went wrong creating a big int from %s", s)
 	}
 	return bigInt
+}
+
+func TestBuildBitcoinTransaction(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	localChain := lc.Connect(ctx)
+	tbtcHandle := lc.NewTBTCLocalChain(ctx)
+
+	err := log.SetLogLevel("*", "INFO")
+	if err != nil {
+		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
+	groupSize := 3
+
+	groupMembers, err := generateMemberKeys(groupSize)
+	if err != nil {
+		t.Fatalf("failed to generate members keys: [%v]", err)
+	}
+
+	testData, err := testdata.LoadKeygenTestFixtures(groupSize)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
+		return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
+	}
+
+	groupMemberAddresses := make([]string, groupSize)
+	for i, member := range groupMembers {
+		pubKey, err := member.PublicKey()
+		if err != nil {
+			t.Fatalf("could not get member pubkey: [%v]", err)
+		}
+		groupMemberAddresses[i] = hex.EncodeToString(pubKeyToAddressFn(*pubKey))
+	}
+
+	errChan := make(chan error)
+
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(groupSize)
+
+	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	memberAddresses := make([]common.Address, groupSize)
+	for i, memberAddress := range groupMemberAddresses {
+		memberAddresses[i] = common.HexToAddress(memberAddress)
+	}
+	depositAddressString := "0xa5FA806723A7c7c8523F33c39686f20b52612877"
+	depositAddress := common.HexToAddress(depositAddressString)
+	tbtcHandle.CreateDeposit(depositAddressString, memberAddresses)
+	keep := tbtcHandle.OpenKeep(keepAddress, depositAddress, memberAddresses)
+
+	btcAddresses := []string{
+		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+		"1EEX8qZnTw1thadyxsueV748v3Y6tTMccc",
+		"1EZuKz6RrJ6XmBPvFwJiEcREpaEVhUVAt5",
+	}
+	maxFeePerVByte := int32(73)
+
+	mutex := &sync.RWMutex{}
+
+	result := make(map[string]string)
+
+	for i, memberID := range groupMembers {
+		go func(memberID tss.MemberID, index int) {
+			memberPublicKey, err := memberID.PublicKey()
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			memberNetworkKey := key.NetworkPublic(*memberPublicKey)
+			networkProvider := local.ConnectWithKey(&memberNetworkKey)
+
+			defer waitGroup.Done()
+
+			preParams := testData[0].LocalPreParams
+
+			signer, err := tss.GenerateThresholdSigner(
+				ctx,
+				keep.ID().Hex(),
+				memberID,
+				groupMembers,
+				uint(len(groupMembers)-1),
+				networkProvider,
+				pubKeyToAddressFn,
+				params.NewBox(&preParams),
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			signedHexString, err := BuildBitcoinTransaction(
+				ctx,
+				networkProvider,
+				localChain,
+				tbtcHandle,
+				keep,
+				signer,
+				btcAddresses,
+				maxFeePerVByte,
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			mutex.Lock()
+			result[memberID.String()] = signedHexString
+			mutex.Unlock()
+		}(memberID, i)
+	}
+
+	go func() {
+		waitGroup.Wait()
+		cancel()
+	}()
+
+	select {
+	case <-ctx.Done():
+		if len(result) != groupSize {
+			t.Errorf(
+				"invalid number of results\nexpected: [%d]\nactual:  [%d]",
+				groupSize,
+				len(result),
+			)
+		}
+
+		expectedSignature := ""
+		for _, memberID := range groupMembers {
+			if memberResult, ok := result[memberID.String()]; ok {
+				if memberResult != expectedSignature {
+					t.Errorf(
+						"unexpected signed hex string\nexpected: %s\nactual:   %s",
+						expectedSignature,
+						memberResult,
+					)
+				}
+			} else {
+				t.Errorf("missing result for member [%v]", memberID)
+			}
+		}
+	case err := <-errChan:
+		t.Fatal(err)
+	}
+}
+
+func generateMemberKeys(groupSize int) ([]tss.MemberID, error) {
+	memberIDs := []tss.MemberID{}
+
+	for i := 0; i < groupSize; i++ {
+		_, publicKey, err := operator.GenerateKeyPair()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate operator key: [%v]", err)
+		}
+
+		memberIDs = append(memberIDs, tss.MemberIDFromPublicKey(publicKey))
+	}
+
+	return memberIDs, nil
 }
