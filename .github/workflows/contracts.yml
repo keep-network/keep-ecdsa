@@ -135,6 +135,12 @@ jobs:
           ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
         run: ./scripts/ci-provision-external-contracts.sh
 
+      - name: Resolve latest contracts
+        run: |
+            npm update \
+              @keep-network/keep-core \
+              @keep-network/sortition-pools
+
       - name: Migrate contracts
         env:
           TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_ETH_TRUFFLE_NETWORK }}
@@ -295,6 +301,12 @@ jobs:
           CONTRACT_DATA_BUCKET_DIR: keep-core-celo
           ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
+
+      - name: Resolve latest contracts
+        run: |
+            npm update \
+              @keep-network/keep-core \
+              @keep-network/sortition-pools
 
       - name: Migrate contracts
         env:
