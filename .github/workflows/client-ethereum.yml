@@ -81,3 +81,15 @@ jobs:
           push: |
             ${{ startsWith(github.ref, 'refs/heads/releases/ropsten')
               || startsWith(github.ref, 'refs/heads/rfc-18/ropsten') }}
+
+  scan:
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+    steps:
+      - uses: actions/checkout@v2
+      - uses: securego/gosec@master
+        with:
+          args: |
+            -exclude-dir=pkg/chain/gen
+            ./...
