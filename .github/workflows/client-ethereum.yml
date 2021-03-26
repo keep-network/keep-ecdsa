@@ -1,16 +1,10 @@
 name: Go / Ethereum
 
-#TODO: extend the conditions once workflow gets tested together with other workflows
 on:
   push:
     branches:
-      # TODO: Run on master after we're fully migrated from Circle CI
-      # - master
-      - "rfc-18/**"
+      - master
   pull_request:
-    branches:
-      # TODO: Run on all branches after we're fully migrated from Circle CI
-      - "rfc-18/**"
   workflow_dispatch:
 
 jobs:
@@ -30,14 +24,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-ethereum-
 
-      # TODO: This step was left here intentionally so we can track disk space
-      # usage for a while. We were trying to fight problems with out of disk space
-      # that happened due to the size of data restored from cache. The cache size
-      # was growing linearly with subsequent workflow runs. We want to observe
-      # available disk space for `/`. Fresh execution starts with 21 GB, we expect
-      # to have no less than 15 GB after the cache is restored.
-      - run: sudo df -h
-
       - name: Build Docker Build Image
         uses: docker/build-push-action@v2
         with:
@@ -56,8 +42,9 @@ jobs:
 
       - name: Login to Google Container Registry
         if:  |
-          startsWith(github.ref, 'refs/heads/releases/ropsten')
-            || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
+            github.ref == 'refs/heads/master'
+              && (github.event_name == 'push'
+              || github.event_name == 'workflow_dispatch')
         uses: docker/login-action@v1
         with:
           registry: ${{ secrets.GCR_REGISTRY_URL }}
@@ -67,7 +54,7 @@ jobs:
       - name: Build and publish Docker Runtime Image
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-ecdsa-ethereum-wip' # TODO: change later to 'keep-ecdsa-ethereum'
+          IMAGE_NAME: 'keep-ecdsa-ethereum'
           GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
           # GCR image should be named according to following convention:
@@ -79,5 +66,6 @@ jobs:
             REVISION=${{ github.sha }}
           # VERSION= ? TODO: Configure version, sample: 1.7.6
           push: |
-            ${{ startsWith(github.ref, 'refs/heads/releases/ropsten')
-              || startsWith(github.ref, 'refs/heads/rfc-18/ropsten') }}
+            ${{ github.ref == 'refs/heads/master'
+              && (github.event_name == 'push'
+              || github.event_name == 'workflow_dispatch') }}
