@@ -7,12 +7,30 @@ on:
     paths:
       - "solidity/**"
   pull_request:
-    paths:
-      - "solidity/**"
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  contracts-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request' 
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request' 
+      id: filter
+      with:
+        filters: |
+          path-filter:
+            - './solidity/**'
+
+  contracts-build-and-test:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || (github.event_name == 'pull_request'
+        && needs.contracts-detect-changes.outputs.path-filter == 'true') 
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -45,7 +63,12 @@ jobs:
       - name: Run tests
         run: npm run test
 
-  lint:
+  contracts-lint:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || (github.event_name == 'pull_request'
+        && needs.contracts-detect-changes.outputs.path-filter == 'true') 
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -75,12 +98,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
-  migrate-and-publish-ethereum:
-    needs: [build-and-test, lint]
+  contracts-migrate-and-publish-ethereum:
+    needs: [contracts-build-and-test, contracts-lint]
     if: |
       github.ref == 'refs/heads/master'
-        && (github.event_name == 'push'
-        || github.event_name == 'workflow_dispatch')
+        && github.event_name != 'pull_request'
     environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
@@ -123,6 +145,12 @@ jobs:
           CONTRACT_DATA_BUCKET_DIR: keep-core
           ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
         run: ./scripts/ci-provision-external-contracts.sh
+
+      - name: Resolve latest contracts
+        run: |
+            npm update \
+              @keep-network/keep-core \
+              @keep-network/sortition-pools
 
       - name: Migrate contracts
         env:
@@ -174,9 +202,9 @@ jobs:
             ./solidity/build/contracts/BondedECDSAKeepFactory.json
             ./solidity/build/contracts/KeepBonding.json
 
-  build-and-publish-initcontainer:
-    needs: [migrate-and-publish-ethereum]
-    if: needs.migrate-and-publish-ethereum.result == 'success'
+  contracts-build-and-publish-initcontainer:
+    needs: [contracts-migrate-and-publish-ethereum]
+    if: needs.contracts-migrate-and-publish-ethereum.result == 'success'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -238,12 +266,11 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache 
 
-  migrate-and-publish-celo:
-    needs: [build-and-test, lint]
+  contracts-migrate-and-publish-celo:
+    needs: [contracts-build-and-test, contracts-lint]
     if: |
       github.ref == 'refs/heads/master'
-        && (github.event_name == 'push'
-        || github.event_name == 'workflow_dispatch')
+        && github.event_name != 'pull_request'
     environment: keep-test
     runs-on: ubuntu-latest
     defaults:
@@ -282,6 +309,12 @@ jobs:
           CONTRACT_DATA_BUCKET_DIR: keep-core-celo
           ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
+
+      - name: Resolve latest contracts
+        run: |
+            npm update \
+              @keep-network/keep-core \
+              @keep-network/sortition-pools
 
       - name: Migrate contracts
         env:
