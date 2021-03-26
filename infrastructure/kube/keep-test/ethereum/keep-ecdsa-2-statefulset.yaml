@@ -2,20 +2,25 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: keep-ecdsa-1
+  name: keep-ecdsa-2
   namespace: default
   labels:
     keel.sh/policy: all
     app: keep
     type: ecdsa
+    id: '2'
+    network: ropsten
+    chain: ethereum
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: keep
       type: ecdsa
-      id: '1'
-  serviceName: keep-ecdsa-1
+      id: '2'
+      network: ropsten
+      chain: ethereum
+  serviceName: keep-ecdsa-2
   volumeClaimTemplates:
     - metadata:
         name: keep-ecdsa-data
@@ -36,7 +41,9 @@ spec:
       labels:
         app: keep
         type: ecdsa
-        id: '1'
+        id: '2'
+        network: ropsten
+        chain: ethereum
     spec:
       containers:
         - name: keep-ecdsa
@@ -49,7 +56,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: eth-account-passphrases
-                  key: account-1
+                  key: account-2
             - name: LOG_LEVEL
               value: 'keep*=debug tss-lib=warning'
             - name: IPFS_LOGGING_FMT
@@ -99,16 +106,16 @@ spec:
                   name: eth-network-ropsten
                   key: contract-owner-eth-account-private-key
             - name: KEEP_TECDSA_ETH_KEYFILE_PATH
-              value: /mnt/keep-ecdsa/keyfile/account-1-keyfile
+              value: /mnt/keep-ecdsa/keyfile/account-2-keyfile
             - name: KEEP_TECDSA_PEERS
-              value: /dns4/ecdsa-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
+              value: /dns4/ecdsa-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf
             - name: KEEP_TECDSA_ANNOUNCED_ADDRESSES
-              value: /dns4/ecdsa-1.test.keep.network/tcp/3919
+              value: /dns4/ecdsa-2.test.keep.network/tcp/3919
             - name: KEEP_TECDSA_PORT
               value: '3919'
             - name: KEEP_DATA_DIR
               value: /mnt/keep-ecdsa/data
-            - name: SANCTIONED_APPLICATIONS
+            - name: TBTC_SYSTEM_ADDRESS
               value: '0xA41ffe9d9BAD45aD884e5100E6e201854912373E' # Shall we extract this property to a configmap?
           volumeMounts:
             - name: keep-ecdsa-config
@@ -127,5 +134,5 @@ spec:
           configMap:
             name: eth-account-info
             items:
-              - key: account-1-keyfile
-                path: account-1-keyfile
+              - key: account-2-keyfile
+                path: account-2-keyfile

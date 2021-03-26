@@ -2,21 +2,25 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: keep-ecdsa-4
+  name: keep-ecdsa-5
   namespace: default
   labels:
     keel.sh/policy: all
     app: keep
     type: ecdsa
-    id: '4'
+    id: '5'
+    network: ropsten
+    chain: ethereum
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: keep
       type: ecdsa
-      id: '4'
-  serviceName: keep-ecdsa-4
+      id: '5'
+      network: ropsten
+      chain: ethereum
+  serviceName: keep-ecdsa-5
   volumeClaimTemplates:
     - metadata:
         name: keep-ecdsa-data
@@ -37,11 +41,13 @@ spec:
       labels:
         app: keep
         type: ecdsa
-        id: '4'
+        id: '5'
+        network: ropsten
+        chain: ethereum
     spec:
       containers:
         - name: keep-ecdsa
-          image: gcr.io/keep-dev-fe24/keep-ecdsa
+          image: gcr.io/keep-test-f3e0/keep-ecdsa
           imagePullPolicy: Always
           ports:
             - containerPort: 3919
@@ -50,7 +56,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: eth-account-passphrases
-                  key: account-4
+                  key: account-5
             - name: LOG_LEVEL
               value: 'keep*=debug tss-lib=warning'
             - name: IPFS_LOGGING_FMT
@@ -71,46 +77,46 @@ spec:
             ]
       initContainers:
         - name: initcontainer-provision-keep-ecdsa
-          image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-ecdsa
+          image: gcr.io/keep-test-f3e0/initcontainer-provision-keep-ecdsa
           imagePullPolicy: Always
           env:
             - name: ETH_RPC_URL
               valueFrom:
-                configMapKeyRef:
-                  name: eth-network-internal
-                  key: rpc-url
+                secretKeyRef:
+                  name: eth-network-ropsten
+                  key: keep-ecdsa-rpc-url
             - name: ETH_WS_URL
               valueFrom:
-                configMapKeyRef:
-                  name: eth-network-internal
-                  key: ws-url
+                secretKeyRef:
+                  name: eth-network-ropsten
+                  key: keep-ecdsa-ws-url
             - name: ETH_NETWORK_ID
               valueFrom:
                 configMapKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: network-id
             - name: CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
               valueFrom:
                 configMapKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: contract-owner-eth-account-address
             - name: CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: contract-owner-eth-account-private-key
             - name: KEEP_TECDSA_ETH_KEYFILE_PATH
-              value: /mnt/keep-ecdsa/keyfile/account-4-keyfile
+              value: /mnt/keep-ecdsa/keyfile/account-5-keyfile
             - name: KEEP_TECDSA_PEERS
-              value: /ip4/10.102.100.194/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf
+              value: /dns4/ecdsa-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY
             - name: KEEP_TECDSA_ANNOUNCED_ADDRESSES
-              value: ''
+              value: /dns4/ecdsa-5.test.keep.network/tcp/3919
             - name: KEEP_TECDSA_PORT
               value: '3919'
             - name: KEEP_DATA_DIR
               value: /mnt/keep-ecdsa/data
             - name: TBTC_SYSTEM_ADDRESS
-              value: '0x7F68B90dce19d2ac034477B7ba2229106656A084' # Shall we extract this property to a configmap?
+              value: '0x576ad5Ced9D0030D2F26E2F08BD2E92de9fcD858' # Shall we extract this property to a configmap?
           volumeMounts:
             - name: keep-ecdsa-config
               mountPath: /mnt/keep-ecdsa/config
@@ -128,5 +134,5 @@ spec:
           configMap:
             name: eth-account-info
             items:
-              - key: account-4-keyfile
-                path: account-4-keyfile
+              - key: account-5-keyfile
+                path: account-5-keyfile

@@ -2,12 +2,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: keep-ecdsa-7
+  name: keep-ecdsa-celo-0
   namespace: default
   labels:
     app: keep
     type: ecdsa
-    id: '7'
+    id: '0'
+    network: alfajores
+    chain: celo
 spec:
   type: LoadBalancer
   ports:
@@ -17,4 +19,6 @@ spec:
   selector:
     app: keep
     type: ecdsa
-    id: '7'
+    id: '0'
+    network: alfajores
+    chain: celo

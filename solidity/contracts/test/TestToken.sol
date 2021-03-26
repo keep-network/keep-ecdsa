@@ -1,8 +1,11 @@
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 
-contract TestToken is ERC20 {
+contract TestToken is ERC20, ERC20Detailed {
+    constructor() public ERC20Detailed("TEST Token", "TEST", 18) {}
+
     /// @dev             Mints an amount of the token and assigns it to an account.
     ///                  Uses the internal _mint function. Anyone can call
     /// @param _account  The account that will receive the created tokens.
