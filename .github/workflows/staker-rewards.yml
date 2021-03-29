@@ -29,8 +29,7 @@ jobs:
     needs: staker-rewards-detect-changes
     if: |
       github.event_name != 'pull_request'
-        || (github.event_name == 'pull_request'
-        && needs.staker-rewards-detect-changes.outputs.path-filter == 'true') 
+        && needs.staker-rewards-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -64,8 +63,7 @@ jobs:
     needs: staker-rewards-detect-changes
     if: |
       github.event_name != 'pull_request'
-        || (github.event_name == 'pull_request'
-        && needs.staker-rewards-detect-changes.outputs.path-filter == 'true') 
+        && needs.staker-rewards-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
