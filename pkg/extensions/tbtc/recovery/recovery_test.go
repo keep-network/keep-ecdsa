@@ -196,6 +196,9 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 
 	result := make(map[string]string)
 
+	var providersInitializedWg sync.WaitGroup
+	providersInitializedWg.Add(groupSize)
+
 	for i, memberID := range groupMembers {
 		go func(memberID tss.MemberID, index int) {
 			memberPublicKey, err := memberID.PublicKey()
@@ -206,6 +209,9 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 
 			memberNetworkKey := key.NetworkPublic(*memberPublicKey)
 			networkProvider := local.ConnectWithKey(&memberNetworkKey)
+
+			providersInitializedWg.Done()
+			providersInitializedWg.Wait()
 
 			defer waitGroup.Done()
 
