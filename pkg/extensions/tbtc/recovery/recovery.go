@@ -229,23 +229,7 @@ func BuildBitcoinTransaction(
 
 	previousOutputTransactionHashHex := hex.EncodeToString(fundingInfo.UtxoOutpoint[:32])
 	previousOutputIndex := binary.LittleEndian.Uint32(fundingInfo.UtxoOutpoint[32:])
-	previousOutputValue, bytesRead := binary.Varint(fundingInfo.UtxoValueBytes[:])
-	if bytesRead == 0 {
-		logger.Errorf(
-			"failed to read the funding info's value bytes: [%v] for keep [%s]: the buffer was too small",
-			fundingInfo.UtxoValueBytes,
-			keep.ID().Hex(),
-		)
-		return "", err
-	}
-	if bytesRead < 0 {
-		logger.Errorf(
-			"failed to read the funding info's value bytes: [%v] for keep [%s]: the value was larger than 64 bits",
-			fundingInfo.UtxoValueBytes,
-			keep.ID().Hex(),
-		)
-		return "", err
-	}
+	previousOutputValue := int64(binary.LittleEndian.Uint32(fundingInfo.UtxoValueBytes[:]))
 
 	unsignedTransaction, err := constructUnsignedTransaction(
 		previousOutputTransactionHashHex,
