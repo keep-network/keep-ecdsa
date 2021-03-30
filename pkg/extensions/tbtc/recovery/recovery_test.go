@@ -209,7 +209,7 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 
 			defer waitGroup.Done()
 
-			preParams := testData[0].LocalPreParams
+			preParams := testData[index].LocalPreParams
 
 			signer, err := tss.GenerateThresholdSigner(
 				ctx,
