@@ -147,9 +147,17 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 
 	groupSize := 3
 
-	groupMembers, err := generateMemberKeys(groupSize)
-	if err != nil {
-		t.Fatalf("failed to generate members keys: [%v]", err)
+	groupMembers := make([]tss.MemberID, groupSize)
+	for i, memberIDString := range []string{
+		"04754b25e1b91dc4006acf17d2c28788be8398a8ed591ba2cbbff5c424d23d91971a8881edd3fc64772d90a181665b4b2ffdbbf05776b8fa8bd08893c26c1cad44",
+		"045300560c6c1619d8e2fd4bacc5566c330a89b6402c8c8ceb748d4232b5157dce812ab86645fc66e534a7a3238299eb258245e48a3885d3eea7b885e6c94ddfed",
+		"047279cff18c9bdfad9f6f23407070b9ace75acb5570d687de3416a306ecae16a7b40e6f1721f30bcee9b910e8a3d9bb298e9a6540826cf3ae5fbe1163a60d86ec",
+	} {
+		memberID, err := tss.MemberIDFromString(memberIDString)
+		if err != nil {
+			t.Fatal(err)
+		}
+		groupMembers[i] = memberID
 	}
 
 	testData, err := testdata.LoadKeygenTestFixtures(groupSize)
