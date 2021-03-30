@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	defaultUTXOValue            = 1000
+	defaultUTXOValue            = 10000000
 	defaultInitialRedemptionFee = 10
-	defaultUtxoValueHex         = "0065cd1d00000000"
+	defaultUtxoValueHex         = "8096980000000000"
 	defaultFundedAt             = "1615172517"
 	defaultUtxoOutpoint         = "c27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d5101000000"
 )
