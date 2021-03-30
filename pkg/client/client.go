@@ -1072,7 +1072,7 @@ func monitorKeepTerminatedEvent(
 					return
 				}
 
-				signedHexString, err := recovery.BuildBitcoinTransaction(
+				recoveryTransactionHex, err := recovery.BuildBitcoinTransaction(
 					ctx,
 					networkProvider,
 					hostChain,
@@ -1091,11 +1091,11 @@ func monitorKeepTerminatedEvent(
 					return
 				}
 
-				logger.Warningf("Please broadcast Bitcoin transaction %s", signedHexString)
-				logger.Warningf("Please broadcast Bitcoin transaction %s", signedHexString)
-				logger.Warningf("Please broadcast Bitcoin transaction %s", signedHexString)
-				logger.Warningf("Please broadcast Bitcoin transaction %s", signedHexString)
-				logger.Warningf("Please broadcast Bitcoin transaction %s", signedHexString)
+				logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+				logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+				logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+				logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+				logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
 
 				keepsRegistry.UnregisterKeep(keep.ID())
 				keepTerminated <- event
