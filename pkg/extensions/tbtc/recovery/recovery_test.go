@@ -32,7 +32,7 @@ func TestPublicKeyToP2WPKHScriptCode(t *testing.T) {
 	// Test based on test values from BIP143:
 	// https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
 	serializedPublicKey, _ := hex.DecodeString("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357")
-	expectedScriptCode, _ := hex.DecodeString("1976a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac")
+	expectedScriptCode, _ := hex.DecodeString("76a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac")
 
 	publicKey, _ := btcec.ParsePubKey(serializedPublicKey, btcec.S256())
 

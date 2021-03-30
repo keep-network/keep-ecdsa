@@ -63,10 +63,7 @@ func publicKeyToP2WPKHScriptCode(
 		)
 	}
 
-	// End goal here is a scriptCode that looks like
-	// 0x1976a914{20-byte-pubkey-hash}88ac . 0x19 should be the length of the
-	// script.
-	return append([]byte{byte(len(script))}, script...), nil
+	return script, nil
 }
 
 // constructUnsignedTransaction produces an unsigned transaction
@@ -249,7 +246,7 @@ func BuildBitcoinTransaction(
 	}
 
 	sighashBytes, err := txscript.CalcWitnessSigHash(
-		scriptCodeBytes[1:],
+		scriptCodeBytes,
 		txscript.NewTxSigHashes(unsignedTransaction),
 		txscript.SigHashAll,
 		unsignedTransaction,
