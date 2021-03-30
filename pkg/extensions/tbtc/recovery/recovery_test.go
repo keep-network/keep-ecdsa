@@ -6,7 +6,6 @@ import (
 	cecdsa "crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"sync"
 	"testing"
@@ -14,13 +13,13 @@ import (
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/local"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-ecdsa/internal/testdata"
 	lc "github.com/keep-network/keep-ecdsa/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
@@ -113,25 +112,6 @@ func TestBuildSignedTransactionHexString(t *testing.T) {
 			"invalid signed transaction\n- actual\n+ expected\n%s",
 			cmp.Diff(decodeTransaction(t, signedTxHex), decodeTransaction(t, expectedSignedTx)))
 	}
-}
-
-func decodeTransaction(t *testing.T, txHex string) *wire.MsgTx {
-	txBytes, err := hex.DecodeString(txHex)
-	if err != nil {
-		t.Fatalf("failed to decode transaction [%s]: [%v]", txHex, err)
-	}
-	tx := wire.NewMsgTx(0)
-	tx.BtcDecode(bytes.NewReader(txBytes), wire.ProtocolVersion, wire.WitnessEncoding)
-
-	return tx
-}
-
-func bigIntFromString(t *testing.T, s string) *big.Int {
-	bigInt, ok := new(big.Int).SetString(s, 0)
-	if !ok {
-		t.Errorf("Something went wrong creating a big int from %s", s)
-	}
-	return bigInt
 }
 
 func TestBuildBitcoinTransaction(t *testing.T) {
@@ -289,6 +269,26 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 						memberResult,
 					)
 				}
+
+				decodedTransaction := decodeTransaction(t, memberResult)
+
+				if len(decodedTransaction.TxOut) != 3 {
+					t.Errorf("wrong number of output transactions\nexpected: 1\nactual:   %d", len(decodedTransaction.TxOut))
+				}
+
+				expectedOutputValue := int64(3328929) // (original deposit of 10000000 - fee) / 3
+				for _, outputTransaction := range decodedTransaction.TxOut {
+					if outputTransaction.Value != expectedOutputValue {
+						t.Errorf(
+							"incorrect output transaction value\nexpected: %d\nactual:   %d",
+							outputTransaction,
+							outputTransaction.Value,
+						)
+					}
+				}
+
+				validateTransaction(t, decodedTransaction, 10000000) // original deposit amount
+
 			} else {
 				t.Errorf("missing result for member [%v]", memberID)
 			}
@@ -298,17 +298,56 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 	}
 }
 
-func generateMemberKeys(groupSize int) ([]tss.MemberID, error) {
-	memberIDs := []tss.MemberID{}
+func decodeTransaction(t *testing.T, txHex string) *wire.MsgTx {
+	txBytes, err := hex.DecodeString(txHex)
+	if err != nil {
+		t.Fatalf("failed to decode transaction [%s]: [%v]", txHex, err)
+	}
+	tx := wire.NewMsgTx(0)
+	tx.BtcDecode(bytes.NewReader(txBytes), wire.ProtocolVersion, wire.WitnessEncoding)
 
-	for i := 0; i < groupSize; i++ {
-		_, publicKey, err := operator.GenerateKeyPair()
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate operator key: [%v]", err)
-		}
+	return tx
+}
 
-		memberIDs = append(memberIDs, tss.MemberIDFromPublicKey(publicKey))
+func bigIntFromString(t *testing.T, s string) *big.Int {
+	bigInt, ok := new(big.Int).SetString(s, 0)
+	if !ok {
+		t.Errorf("Something went wrong creating a big int from %s", s)
+	}
+	return bigInt
+}
+
+func validateTransaction(t *testing.T, transaction *wire.MsgTx, previousOutputValue int64) {
+	subscript, err := txscript.ComputePkScript(transaction.TxIn[0].SignatureScript, transaction.TxIn[0].Witness)
+	if err != nil {
+		t.Fatalf("failed to decode pk script: [%v]", err)
 	}
 
-	return memberIDs, nil
+	if len(transaction.TxIn) != 1 {
+		t.Error("only transactions with one input are supported")
+	}
+	inputIndex := 0
+
+	validationEngine, err := txscript.NewEngine(
+		subscript.Script(),
+		transaction,
+		inputIndex,
+		txscript.StandardVerifyFlags,
+		nil,
+		nil,
+		previousOutputValue,
+	)
+	if err != nil {
+		t.Fatalf(
+			"failed to create validation engine: [%v]",
+			err,
+		)
+	}
+
+	if err := validationEngine.Execute(); err != nil {
+		t.Errorf(
+			"failed to validate transaction: [%v]",
+			err,
+		)
+	}
 }
