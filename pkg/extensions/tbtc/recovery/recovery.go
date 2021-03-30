@@ -198,7 +198,7 @@ func BuildBitcoinTransaction(
 	retrievalAddresses []string,
 	maxFeePerVByte int32,
 ) (string, error) {
-	scriptCodeBytes, err := publicKeyToP2WPKHScriptCode(signer.PublicKey(), &chaincfg.TestNet3Params)
+	scriptCodeBytes, err := publicKeyToP2WPKHScriptCode(signer.PublicKey(), &chaincfg.MainNetParams)
 	if err != nil {
 		logger.Errorf(
 			"failed to retrieve the script code for keep [%s]: [%v]",
