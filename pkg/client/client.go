@@ -1019,7 +1019,7 @@ func monitorKeepTerminatedEvent(
 
 				if err != nil {
 					logger.Errorf(
-						"failed to retrieve member ids on keep [%s] termination: [%v]",
+						"failed to announce signer presence on keep [%s] termination: [%v]",
 						keep.ID().Hex(),
 						err,
 					)
