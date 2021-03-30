@@ -122,7 +122,7 @@ var deriveAddressTestData = map[string]struct {
 func TestDeriveAddress(t *testing.T) {
 	for testName, testData := range deriveAddressTestData {
 		t.Run(testName, func(t *testing.T) {
-			address, err := DeriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
+			address, err := deriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
 
 			if err != nil {
 				t.Fatal(err)
@@ -170,7 +170,7 @@ func ErrorContains(err error, expected string) bool {
 func TestDeriveAddress_ExpectedFailure(t *testing.T) {
 	for testName, testData := range deriveAddressTestFailureData {
 		t.Run(testName, func(t *testing.T) {
-			_, err := DeriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
+			_, err := deriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
 			if !ErrorContains(err, testData.failure) {
 				t.Errorf(
 					"unexpected error message\nexpected: %s\nactual:   %s",

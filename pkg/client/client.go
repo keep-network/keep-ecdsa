@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -1026,13 +1025,11 @@ func monitorKeepTerminatedEvent(
 					return
 				}
 
-				var beneficiaryAddress string
-				_, err = btcutil.DecodeAddress(bitcoinConfig.BeneficiaryAddress, &chaincfg.TestNet3Params)
-				if err != nil {
-					beneficiaryAddress, err = recovery.DeriveAddress(bitcoinConfig.BeneficiaryAddress, 0)
-				} else {
-					beneficiaryAddress = bitcoinConfig.BeneficiaryAddress
-				}
+				beneficiaryAddress, err := recovery.ResolveBeneficiaryAddress(
+					bitcoinConfig.BeneficiaryAddress,
+					0,
+					&chaincfg.TestNet3Params,
+				)
 				if err != nil {
 					logger.Errorf(
 						"failed to retrieve a btc address from config - keep: [%s] address: [%s] err: [%v]",
