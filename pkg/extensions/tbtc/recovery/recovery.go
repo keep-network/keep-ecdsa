@@ -26,7 +26,7 @@ import (
 
 var logger = log.Logger("keep-ecdsa")
 
-// publicKeyToP2WPKHScriptCode converts a public key to a Bitcion p2wpkh
+// publicKeyToP2WPKHScriptCode converts a public key to a Bitcoin p2wpkh
 // witness scriptCode that can spend an output sent to that public key's
 // corresponding address.
 //
