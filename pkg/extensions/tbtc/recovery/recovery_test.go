@@ -276,12 +276,15 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 			)
 		}
 
-		expectedSignature := ""
+		expectedSignature := "replace-me"
 		for _, memberID := range groupMembers {
 			if memberResult, ok := result[memberID.String()]; ok {
+				if expectedSignature == "replace-me" {
+					expectedSignature = memberResult
+				}
 				if memberResult != expectedSignature {
 					t.Errorf(
-						"unexpected signed hex string\nexpected: %s\nactual:   %s",
+						"hex strings must all be identical\nexpected: %s\nactual:   %s",
 						expectedSignature,
 						memberResult,
 					)
