@@ -3,6 +3,8 @@ package recovery
 import (
 	"strings"
 	"testing"
+
+	"github.com/btcsuite/btcd/chaincfg"
 )
 
 // These tests use https://iancoleman.io/bip39/ with the bip39 mnemonic: loyal
@@ -176,6 +178,56 @@ func TestDeriveAddress_ExpectedFailure(t *testing.T) {
 					"unexpected error message\nexpected: %s\nactual:   %s",
 					testData.failure,
 					err.Error(),
+				)
+			}
+		})
+	}
+}
+
+var resolveBeneficiaryAddressData = map[string]struct {
+	beneficiaryAddress string
+	addressIndex       int
+	netParams          *chaincfg.Params
+	expectedAddress    string
+}{
+	"BIP44: xpub at m/44'/0'/0'/0/0": {
+		"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1",
+		0,
+		&chaincfg.MainNetParams,
+		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+	},
+
+	"Standard mainnet btc address": {
+		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+		0,
+		&chaincfg.MainNetParams,
+		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+	},
+
+	"Standard testnet btc address": {
+		"mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt",
+		0,
+		&chaincfg.TestNet3Params,
+		"mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt",
+	},
+}
+
+func TestResolveBeneficiaryAddress(t *testing.T) {
+	for testName, testData := range resolveBeneficiaryAddressData {
+		t.Run(testName, func(t *testing.T) {
+			resolvedAddress, err := ResolveBeneficiaryAddress(
+				testData.beneficiaryAddress,
+				uint32(testData.addressIndex),
+				testData.netParams,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if resolvedAddress != testData.expectedAddress {
+				t.Errorf(
+					"the resolved address does not match\nexpected: %s\nactual:   %s",
+					testData.expectedAddress,
+					resolvedAddress,
 				)
 			}
 		})
