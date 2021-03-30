@@ -10,8 +10,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// recoveryInfo represents the broadcasted information needed needed from the
-// other signers to complete liquidation recovery.
+// recoveryInfo represents the broadcasted information needed from the other
+// signers to complete liquidation recovery.
 type recoveryInfo struct {
 	btcRecoveryAddress string
 	maxFeePerVByte     int32
