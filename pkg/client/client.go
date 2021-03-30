@@ -1053,7 +1053,7 @@ func monitorKeepTerminatedEvent(
 				)
 				if err != nil {
 					logger.Errorf(
-						"failed to retrieve btc recovery addresses on keep [%s]: [%v]",
+						"failed to communicate recovery details for keep [%s]: [%v]",
 						keep.ID().Hex(),
 						err,
 					)
