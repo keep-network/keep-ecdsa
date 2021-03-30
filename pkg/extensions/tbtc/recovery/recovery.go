@@ -24,7 +24,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
-var logger = log.Logger("keep-ecdsa")
+var logger = log.Logger("keep-tbtc-recovery")
 
 // publicKeyToP2WPKHScriptCode converts a public key to a Bitcoin p2wpkh
 // witness scriptCode that can spend an output sent to that public key's
