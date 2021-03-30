@@ -249,13 +249,14 @@ func BuildBitcoinTransaction(
 	}
 
 	sighashBytes, err := txscript.CalcWitnessSigHash(
-		scriptCodeBytes,
+		scriptCodeBytes[1:],
 		txscript.NewTxSigHashes(unsignedTransaction),
 		txscript.SigHashAll,
 		unsignedTransaction,
 		0,
 		previousOutputValue,
 	)
+
 	if err != nil {
 		logger.Errorf(
 			"failed to calculate the sighash bytes for keep [%s]: [%v]",
@@ -264,8 +265,6 @@ func BuildBitcoinTransaction(
 		)
 		return "", err
 	}
-
-	logger.Warningf("calculating sig for bytes %v", sighashBytes)
 
 	signature, err := signer.CalculateSignature(
 		ctx,
