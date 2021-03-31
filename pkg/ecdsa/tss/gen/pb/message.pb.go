@@ -6,13 +6,12 @@ package pb
 import (
 	bytes "bytes"
 	fmt "fmt"
+	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
 	reflect "reflect"
 	strings "strings"
-
-	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -705,10 +704,7 @@ func (m *TSSProtocolMessage) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMessage
 			}
 			if (iNdEx + skippy) > l {
@@ -792,10 +788,7 @@ func (m *ReadyMessage) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMessage
 			}
 			if (iNdEx + skippy) > l {
@@ -879,10 +872,7 @@ func (m *AnnounceMessage) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMessage
 			}
 			if (iNdEx + skippy) > l {
