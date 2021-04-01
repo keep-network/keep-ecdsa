@@ -130,12 +130,12 @@ func deriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 func ResolveAddress(
 	beneficiaryAddress string,
 	addressIndex uint32,
-	netParams *chaincfg.Params,
+	chainParams *chaincfg.Params,
 ) (string, error) {
 	// If the address decodes without error, then we have a valid bitcoin
 	// address. Otherwise, we assume that it's an extended key and we attempt to
 	// derive the address.
-	_, err := btcutil.DecodeAddress(beneficiaryAddress, netParams)
+	_, err := btcutil.DecodeAddress(beneficiaryAddress, chainParams)
 	if err != nil {
 		return deriveAddress(beneficiaryAddress, addressIndex)
 	} else {

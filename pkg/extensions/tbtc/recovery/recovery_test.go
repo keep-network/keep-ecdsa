@@ -227,6 +227,7 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 				tbtcHandle,
 				keep,
 				signer,
+				&chaincfg.MainNetParams,
 				btcAddresses,
 				maxFeePerVByte,
 			)

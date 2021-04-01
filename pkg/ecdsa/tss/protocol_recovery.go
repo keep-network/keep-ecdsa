@@ -7,6 +7,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcutil"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -30,6 +32,7 @@ func BroadcastRecoveryAddress(
 	dishonestThreshold uint,
 	networkProvider net.Provider,
 	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
+	chainParams *chaincfg.Params,
 ) ([]string, int32, error) {
 	const protocolReadyTimeout = 2 * time.Minute
 
@@ -159,6 +162,15 @@ func BroadcastRecoveryAddress(
 		retrievalAddresses := make([]string, 0, len(memberRecoveryInfo))
 		maxFeePerVByte := int32(2147483647) // since we're taking the min fee among the signers, start with the max int32
 		for _, recoveryInfo := range memberRecoveryInfo {
+
+			if _, err := btcutil.DecodeAddress(recoveryInfo.btcRecoveryAddress, chainParams); err != nil {
+				logger.Errorf(
+					"something went wrong validating btc address: [%s] during recovery broadcast: [%v]",
+					recoveryInfo.btcRecoveryAddress,
+					err,
+				)
+				return nil, 0, err
+			}
 			retrievalAddresses = append(retrievalAddresses, recoveryInfo.btcRecoveryAddress)
 			if recoveryInfo.maxFeePerVByte < maxFeePerVByte {
 				maxFeePerVByte = recoveryInfo.maxFeePerVByte

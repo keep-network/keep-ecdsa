@@ -192,10 +192,11 @@ func BuildBitcoinTransaction(
 	tbtcHandle chain.TBTCHandle,
 	keep chain.BondedECDSAKeepHandle,
 	signer *tss.ThresholdSigner,
+	chainParams *chaincfg.Params,
 	retrievalAddresses []string,
 	maxFeePerVByte int32,
 ) (string, error) {
-	scriptCodeBytes, err := publicKeyToP2WPKHScriptCode(signer.PublicKey(), &chaincfg.MainNetParams)
+	scriptCodeBytes, err := publicKeyToP2WPKHScriptCode(signer.PublicKey(), chainParams)
 	if err != nil {
 		logger.Errorf(
 			"failed to retrieve the script code for keep [%s]: [%v]",
@@ -235,7 +236,7 @@ func BuildBitcoinTransaction(
 		previousOutputValue,
 		int64(maxFeePerVByte),
 		retrievalAddresses,
-		&chaincfg.MainNetParams,
+		chainParams,
 	)
 	if err != nil {
 		logger.Errorf(

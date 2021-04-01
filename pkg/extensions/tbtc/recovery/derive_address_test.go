@@ -187,7 +187,7 @@ func TestDeriveAddress_ExpectedFailure(t *testing.T) {
 var resolveAddressData = map[string]struct {
 	beneficiaryAddress string
 	addressIndex       int
-	netParams          *chaincfg.Params
+	chainParams        *chaincfg.Params
 	expectedAddress    string
 }{
 	"BIP44: xpub at m/44'/0'/0'/0/0": {
@@ -232,7 +232,7 @@ func TestResolveAddress(t *testing.T) {
 			resolvedAddress, err := ResolveAddress(
 				testData.beneficiaryAddress,
 				uint32(testData.addressIndex),
-				testData.netParams,
+				testData.chainParams,
 			)
 			if err != nil {
 				t.Fatal(err)
@@ -250,7 +250,7 @@ func TestResolveAddress(t *testing.T) {
 
 var resolveAddressExpectedFailureData = map[string]struct {
 	extendedAddress string
-	netParams       *chaincfg.Params
+	chainParams     *chaincfg.Params
 	failure         string
 }{
 	"WIF": {
@@ -281,7 +281,7 @@ func TestResolveBeneficiaryAddress_ExpectedFailure(t *testing.T) {
 			_, err := ResolveAddress(
 				testData.extendedAddress,
 				0,
-				testData.netParams,
+				testData.chainParams,
 			)
 			if err == nil {
 				t.Errorf("no error found\nexpected: %s", testData.failure)
