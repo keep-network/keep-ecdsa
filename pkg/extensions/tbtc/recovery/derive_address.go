@@ -122,12 +122,12 @@ func deriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 	return finalAddress.EncodeAddress(), nil
 }
 
-// ResolveBeneficiaryAddress reolves a configured beneficiaryAddress into a
+// ResolveAddress reolves a configured beneficiaryAddress into a
 // valid bitcoin address. If the supplied address is already a valid bitcoin
 // address, we don't have to do anything. If the supplied address is an
 // extended public key of a HD wallet, attempt to derive the bitcoin address at
 // the specified index.
-func ResolveBeneficiaryAddress(
+func ResolveAddress(
 	beneficiaryAddress string,
 	addressIndex uint32,
 	netParams *chaincfg.Params,

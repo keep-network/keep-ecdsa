@@ -184,7 +184,7 @@ func TestDeriveAddress_ExpectedFailure(t *testing.T) {
 	}
 }
 
-var resolveBeneficiaryAddressData = map[string]struct {
+var resolveAddressData = map[string]struct {
 	beneficiaryAddress string
 	addressIndex       int
 	netParams          *chaincfg.Params
@@ -226,10 +226,10 @@ var resolveBeneficiaryAddressData = map[string]struct {
 	},
 }
 
-func TestResolveBeneficiaryAddress(t *testing.T) {
-	for testName, testData := range resolveBeneficiaryAddressData {
+func TestResolveAddress(t *testing.T) {
+	for testName, testData := range resolveAddressData {
 		t.Run(testName, func(t *testing.T) {
-			resolvedAddress, err := ResolveBeneficiaryAddress(
+			resolvedAddress, err := ResolveAddress(
 				testData.beneficiaryAddress,
 				uint32(testData.addressIndex),
 				testData.netParams,
@@ -248,7 +248,7 @@ func TestResolveBeneficiaryAddress(t *testing.T) {
 	}
 }
 
-var resolveBeneficiaryAddressExpectedFailureData = map[string]struct {
+var resolveAddressExpectedFailureData = map[string]struct {
 	extendedAddress string
 	netParams       *chaincfg.Params
 	failure         string
@@ -276,9 +276,9 @@ var resolveBeneficiaryAddressExpectedFailureData = map[string]struct {
 }
 
 func TestResolveBeneficiaryAddress_ExpectedFailure(t *testing.T) {
-	for testName, testData := range resolveBeneficiaryAddressExpectedFailureData {
+	for testName, testData := range resolveAddressExpectedFailureData {
 		t.Run(testName, func(t *testing.T) {
-			_, err := ResolveBeneficiaryAddress(
+			_, err := ResolveAddress(
 				testData.extendedAddress,
 				0,
 				testData.netParams,

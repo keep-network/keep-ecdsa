@@ -1028,7 +1028,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						beneficiaryAddress, err := recovery.ResolveBeneficiaryAddress(
+						beneficiaryAddress, err := recovery.ResolveAddress(
 							bitcoinConfig.BeneficiaryAddress,
 							0,
 							&chaincfg.MainNetParams,
