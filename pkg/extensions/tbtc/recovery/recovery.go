@@ -207,7 +207,7 @@ func BuildBitcoinTransaction(
 	depositAddress, err := keep.GetOwner()
 	if err != nil {
 		logger.Errorf(
-			"failed to retrieve the deposit address for keep [%s]: [%v]",
+			"failed to retrieve the owner for keep [%s]: [%v]",
 			keep.ID().Hex(),
 			err,
 		)
@@ -217,7 +217,8 @@ func BuildBitcoinTransaction(
 	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.Hex())
 	if err != nil {
 		logger.Errorf(
-			"failed to retrieve the funding info for keep [%s]: [%v]",
+			"failed to retrieve the funding info of deposit [%s] for keep [%s]: [%v]",
+			depositAddress.Hex(),
 			keep.ID().Hex(),
 			err,
 		)
@@ -253,7 +254,6 @@ func BuildBitcoinTransaction(
 		0,
 		previousOutputValue,
 	)
-
 	if err != nil {
 		logger.Errorf(
 			"failed to calculate the sighash bytes for keep [%s]: [%v]",
@@ -271,7 +271,7 @@ func BuildBitcoinTransaction(
 	)
 	if err != nil {
 		logger.Errorf(
-			"failed to calculate the signature bytes for keep [%s]: [%v]",
+			"failed to calculate signature for keep [%s]: [%v]",
 			keep.ID().Hex(),
 			err,
 		)

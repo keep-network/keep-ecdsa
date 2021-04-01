@@ -1043,7 +1043,7 @@ func monitorKeepTerminatedEvent(
 						)
 						if err != nil {
 							logger.Errorf(
-								"failed to retrieve a btc address from config - keep: [%s] address: [%s] err: [%v]",
+								"failed to resolve a btc address for keep: [%s] address: [%s] err: [%v]",
 								keep.ID().Hex(),
 								bitcoinConfig.BeneficiaryAddress,
 								err,
@@ -1095,7 +1095,7 @@ func monitorKeepTerminatedEvent(
 						)
 						if err != nil {
 							logger.Errorf(
-								"failed to build the signed hex string for keep [%s]: [%v]",
+								"failed to build the transaction for keep [%s]: [%v]",
 								keep.ID().Hex(),
 								err,
 							)
