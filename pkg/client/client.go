@@ -1011,6 +1011,14 @@ func monitorKeepTerminatedEvent(
 						}
 
 						members, err := keep.GetMembers()
+						if err != nil {
+							logger.Errorf(
+								"failed to retrieve members from keep [%s]: [%v]",
+								keep.ID().Hex(),
+								err,
+							)
+							return err
+						}
 						memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
 						memberIDs, err := tssNode.AnnounceSignerPresence(
 							ctx,
