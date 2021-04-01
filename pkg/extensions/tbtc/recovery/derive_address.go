@@ -129,9 +129,10 @@ func deriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 // the specified index.
 func ResolveAddress(
 	beneficiaryAddress string,
-	addressIndex uint32,
 	chainParams *chaincfg.Params,
 ) (string, error) {
+	//FIXME: pull the address index from persistence
+	addressIndex := uint32(0)
 	// If the address decodes without error, then we have a valid bitcoin
 	// address. Otherwise, we assume that it's an extended key and we attempt to
 	// derive the address.
