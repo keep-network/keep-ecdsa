@@ -175,8 +175,8 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 
 	btcAddresses := []string{
 		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
-		"1EEX8qZnTw1thadyxsueV748v3Y6tTMccc",
-		"1EZuKz6RrJ6XmBPvFwJiEcREpaEVhUVAt5",
+		"3EktnHQD7RiAE6uzMj2ZifT9YgRrkSgzQX",
+		"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
 	}
 	maxFeePerVByte := int32(73)
 
@@ -277,12 +277,12 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 					t.Errorf("wrong number of output transactions\nexpected: 1\nactual:   %d", len(decodedTransaction.TxOut))
 				}
 
-				expectedOutputValue := int64(3328929) // (original deposit of 10000000 - fee) / 3
+				expectedOutputValue := int64(3329050) // (original deposit of 10000000 - fee) / 3
 				for _, outputTransaction := range decodedTransaction.TxOut {
 					if outputTransaction.Value != expectedOutputValue {
 						t.Errorf(
 							"incorrect output transaction value\nexpected: %d\nactual:   %d",
-							outputTransaction,
+							expectedOutputValue,
 							outputTransaction.Value,
 						)
 					}
