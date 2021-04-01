@@ -182,7 +182,7 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 
 	mutex := &sync.RWMutex{}
 
-	result := make(map[string]string)
+	btcTransactions := make(map[string]string)
 
 	var providersInitializedWg sync.WaitGroup
 	providersInitializedWg.Add(groupSize)
@@ -220,7 +220,7 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 				return
 			}
 
-			signedHexString, err := BuildBitcoinTransaction(
+			signedBtcTransaction, err := BuildBitcoinTransaction(
 				ctx,
 				networkProvider,
 				localChain,
@@ -237,7 +237,7 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 			}
 
 			mutex.Lock()
-			result[memberID.String()] = signedHexString
+			btcTransactions[memberID.String()] = signedBtcTransaction
 			mutex.Unlock()
 		}(memberID, i)
 	}
@@ -249,20 +249,20 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 
 	select {
 	case <-ctx.Done():
-		if len(result) != groupSize {
+		if len(btcTransactions) != groupSize {
 			t.Errorf(
 				"invalid number of results\nexpected: [%d]\nactual:  [%d]",
 				groupSize,
-				len(result),
+				len(btcTransactions),
 			)
 		}
 
-		expectedSignature := "replace-me"
+		expectedSignature := btcTransactions[groupMembers[0].String()]
+		expectedOutputValue := int64(3329050) // (original deposit of 10000000 - fee) / 3
+		originalDepositSats := int64(10000000)
+
 		for _, memberID := range groupMembers {
-			if memberResult, ok := result[memberID.String()]; ok {
-				if expectedSignature == "replace-me" {
-					expectedSignature = memberResult
-				}
+			if memberResult, ok := btcTransactions[memberID.String()]; ok {
 				if memberResult != expectedSignature {
 					t.Errorf(
 						"hex strings must all be identical\nexpected: %s\nactual:   %s",
@@ -274,22 +274,20 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 				decodedTransaction := decodeTransaction(t, memberResult)
 
 				if len(decodedTransaction.TxOut) != 3 {
-					t.Errorf("wrong number of output transactions\nexpected: 1\nactual:   %d", len(decodedTransaction.TxOut))
+					t.Errorf("wrong number of outputs\nexpected: 1\nactual:   %d", len(decodedTransaction.TxOut))
 				}
 
-				expectedOutputValue := int64(3329050) // (original deposit of 10000000 - fee) / 3
 				for _, outputTransaction := range decodedTransaction.TxOut {
 					if outputTransaction.Value != expectedOutputValue {
 						t.Errorf(
-							"incorrect output transaction value\nexpected: %d\nactual:   %d",
+							"incorrect output value\nexpected: %d\nactual:   %d",
 							expectedOutputValue,
 							outputTransaction.Value,
 						)
 					}
 				}
 
-				validateTransaction(t, decodedTransaction, 10000000) // original deposit amount
-
+				validateTransaction(t, decodedTransaction, originalDepositSats) // original deposit amount
 			} else {
 				t.Errorf("missing result for member [%v]", memberID)
 			}
