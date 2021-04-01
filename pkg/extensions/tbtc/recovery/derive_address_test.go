@@ -197,11 +197,25 @@ var resolveBeneficiaryAddressData = map[string]struct {
 		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
 	},
 
-	"Standard mainnet btc address": {
+	"Standard mainnet P2PKH btc address": {
 		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
 		0,
 		&chaincfg.MainNetParams,
 		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+	},
+
+	"Standard mainnet P2SH btc address": {
+		"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+		0,
+		&chaincfg.MainNetParams,
+		"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+	},
+
+	"Standard mainnet Bech32 btc address": {
+		"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+		0,
+		&chaincfg.MainNetParams,
+		"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
 	},
 
 	"Standard testnet btc address": {
