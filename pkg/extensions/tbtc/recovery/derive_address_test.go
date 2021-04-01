@@ -233,3 +233,51 @@ func TestResolveBeneficiaryAddress(t *testing.T) {
 		})
 	}
 }
+
+var resolveBeneficiaryAddressExpectedFailureData = map[string]struct {
+	extendedAddress string
+	netParams       *chaincfg.Params
+	failure         string
+}{
+	"WIF": {
+		"5Hwgr3u458GLafKBgxtssHSPqJnYoGrSzgQsPwLFhLNYskDPyyA",
+		&chaincfg.MainNetParams,
+		"the provided serialized extended key length is invalid",
+	},
+	"empty string": {
+		"",
+		&chaincfg.MainNetParams,
+		"the provided serialized extended key length is invalid",
+	},
+	"BIP32 private key": {
+		"xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzF93Y5wvzdUayhgkkFoicQZcP3y52uPPxFnfoLZB21Teqt1VvEHx",
+		&chaincfg.MainNetParams,
+		"unusable seed",
+	},
+	"complete nonsense": {
+		"lorem ipsum dolor sit amet, consec",
+		&chaincfg.MainNetParams,
+		"the provided serialized extended key length is invalid",
+	},
+}
+
+func TestResolveBeneficiaryAddress_ExpectedFailure(t *testing.T) {
+	for testName, testData := range resolveBeneficiaryAddressExpectedFailureData {
+		t.Run(testName, func(t *testing.T) {
+			_, err := ResolveBeneficiaryAddress(
+				testData.extendedAddress,
+				0,
+				testData.netParams,
+			)
+			if err == nil {
+				t.Errorf("no error found\nexpected: %s", testData.failure)
+			} else if !ErrorContains(err, testData.failure) {
+				t.Errorf(
+					"unexpected error message\nexpected: %s\nactual:   %s",
+					testData.failure,
+					err.Error(),
+				)
+			}
+		})
+	}
+}
