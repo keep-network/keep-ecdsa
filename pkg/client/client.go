@@ -922,6 +922,8 @@ func monitorKeepClosedEvents(
 					return
 				}
 
+				// TODO: Rework how unregistering works in the context of
+				// completing/confirming btc recovery on the bitcoin chain.
 				keepsRegistry.UnregisterKeep(keep.ID())
 				keepClosed <- event
 			}(event)
