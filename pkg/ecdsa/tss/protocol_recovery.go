@@ -164,12 +164,11 @@ func BroadcastRecoveryAddress(
 		for _, recoveryInfo := range memberRecoveryInfo {
 
 			if _, err := btcutil.DecodeAddress(recoveryInfo.btcRecoveryAddress, chainParams); err != nil {
-				logger.Errorf(
+				return nil, 0, fmt.Errorf(
 					"something went wrong validating btc address: [%s] during recovery broadcast: [%v]",
 					recoveryInfo.btcRecoveryAddress,
 					err,
 				)
-				return nil, 0, err
 			}
 			retrievalAddresses = append(retrievalAddresses, recoveryInfo.btcRecoveryAddress)
 			if recoveryInfo.maxFeePerVByte < maxFeePerVByte {
