@@ -1038,9 +1038,12 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
+						//FIXME: derive the chain params from config
+						chainParams := &chaincfg.MainNetParams
+
 						beneficiaryAddress, err := recovery.ResolveAddress(
 							bitcoinConfig.BeneficiaryAddress,
-							&chaincfg.MainNetParams,
+							chainParams,
 						)
 						if err != nil {
 							logger.Errorf(
@@ -1051,9 +1054,6 @@ func monitorKeepTerminatedEvent(
 							)
 							return err
 						}
-
-						//FIXME: derive the chain params from config
-						chainParams := &chaincfg.MainNetParams
 
 						btcAddresses, maxFeePerVByte, err := tss.BroadcastRecoveryAddress(
 							ctx,
