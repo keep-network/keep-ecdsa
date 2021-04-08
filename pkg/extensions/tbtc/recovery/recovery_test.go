@@ -257,37 +257,34 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 			)
 		}
 
-		expectedSignature := btcTransactions[groupMembers[0].String()]
+		firstBtcTransaction := btcTransactions[groupMembers[0].String()]
+		decodedTransaction := decodeTransaction(t, firstBtcTransaction)
+		if len(decodedTransaction.TxOut) != 3 {
+			t.Errorf("wrong number of outputs\nexpected: 1\nactual:   %d", len(decodedTransaction.TxOut))
+		}
+
 		expectedOutputValue := int64(3329050) // (original deposit of 10000000 - fee) / 3
-		originalDepositSats := int64(10000000)
+		for _, outputTransaction := range decodedTransaction.TxOut {
+			if outputTransaction.Value != expectedOutputValue {
+				t.Errorf(
+					"incorrect output value\nexpected: %d\nactual:   %d",
+					expectedOutputValue,
+					outputTransaction.Value,
+				)
+			}
+		}
+
+		validateTransaction(t, decodedTransaction, int64(10000000)) // original deposit amount
 
 		for _, memberID := range groupMembers {
 			if memberResult, ok := btcTransactions[memberID.String()]; ok {
-				if memberResult != expectedSignature {
+				if memberResult != firstBtcTransaction {
 					t.Errorf(
 						"hex strings must all be identical\nexpected: %s\nactual:   %s",
-						expectedSignature,
+						firstBtcTransaction,
 						memberResult,
 					)
 				}
-
-				decodedTransaction := decodeTransaction(t, memberResult)
-
-				if len(decodedTransaction.TxOut) != 3 {
-					t.Errorf("wrong number of outputs\nexpected: 1\nactual:   %d", len(decodedTransaction.TxOut))
-				}
-
-				for _, outputTransaction := range decodedTransaction.TxOut {
-					if outputTransaction.Value != expectedOutputValue {
-						t.Errorf(
-							"incorrect output value\nexpected: %d\nactual:   %d",
-							expectedOutputValue,
-							outputTransaction.Value,
-						)
-					}
-				}
-
-				validateTransaction(t, decodedTransaction, originalDepositSats) // original deposit amount
 			} else {
 				t.Errorf("missing result for member [%v]", memberID)
 			}
