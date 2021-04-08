@@ -1263,8 +1263,8 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedemptionRequested(
 	// invoke the action which will trigger the stop event in result
 	err = tbtcChain.IncreaseRedemptionFee(
 		depositAddress,
-		toLittleEndianBytes(big.NewInt(990)),
-		toLittleEndianBytes(big.NewInt(980)),
+		toLittleEndianBytes(big.NewInt(9999990)),
+		toLittleEndianBytes(big.NewInt(9999980)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -2288,7 +2288,7 @@ func TestGetSignerActionDelay(t *testing.T) {
 
 func TestFundingInfo(t *testing.T) {
 	expectedFundingInfo := &chain.FundingInfo{
-		UtxoValueBytes: [8]uint8{0, 101, 205, 29, 0, 0, 0, 0},
+		UtxoValueBytes: [8]uint8{128, 150, 152, 0, 0, 0, 0, 0},
 		FundedAt:       big.NewInt(1615172517),
 		UtxoOutpoint: []byte{
 			194, 124, 59, 250, 130, 147, 172, 107, 48, 59,
