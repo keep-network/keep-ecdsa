@@ -1,17 +1,14 @@
 name: Staker Rewards
 
-#TODO: extend the conditions once workflow gets tested together with other workflows
 on:
   push:
     branches:
       - master
     paths:
       - "staker-rewards/**"
-      - ".github/workflows/staker-rewards.yml"
   pull_request:
     paths:
       - "staker-rewards/**"
-      - ".github/workflows/staker-rewards.yml"
   workflow_dispatch:
 
 jobs:

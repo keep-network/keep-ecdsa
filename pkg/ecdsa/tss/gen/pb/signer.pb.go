@@ -6,13 +6,12 @@ package pb
 import (
 	bytes "bytes"
 	fmt "fmt"
+	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
 	reflect "reflect"
 	strings "strings"
-
-	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1790,10 +1789,7 @@ func (m *ThresholdSigner) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthSigner
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthSigner
 			}
 			if (iNdEx + skippy) > l {
@@ -1960,10 +1956,7 @@ func (m *ThresholdSigner_GroupInfo) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthSigner
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthSigner
 			}
 			if (iNdEx + skippy) > l {
@@ -2315,10 +2308,7 @@ func (m *LocalPartySaveData) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthSigner
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthSigner
 			}
 			if (iNdEx + skippy) > l {
@@ -2642,10 +2632,7 @@ func (m *LocalPartySaveData_LocalPreParams) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthSigner
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthSigner
 			}
 			if (iNdEx + skippy) > l {
@@ -2797,10 +2784,7 @@ func (m *LocalPartySaveData_LocalPreParams_PrivateKey) Unmarshal(dAtA []byte) er
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthSigner
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthSigner
 			}
 			if (iNdEx + skippy) > l {
@@ -2918,10 +2902,7 @@ func (m *LocalPartySaveData_LocalSecrets) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthSigner
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthSigner
 			}
 			if (iNdEx + skippy) > l {
@@ -3039,10 +3020,7 @@ func (m *LocalPartySaveData_ECPoint) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthSigner
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthSigner
 			}
 			if (iNdEx + skippy) > l {
