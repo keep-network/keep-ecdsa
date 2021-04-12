@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -1038,8 +1037,14 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						//FIXME: derive the chain params from config
-						chainParams := &chaincfg.MainNetParams
+						chainParams, err := bitcoinConfig.ChainParams()
+						if err != nil {
+							logger.Errorf(
+								"failed to parse the the configured net params: [%v]",
+								err,
+							)
+							return err
+						}
 
 						beneficiaryAddress, err := recovery.ResolveAddress(
 							bitcoinConfig.BeneficiaryAddress,
