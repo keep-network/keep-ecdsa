@@ -203,7 +203,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 		if err != nil {
 			logger.Errorf(
 				"could not check if keep [%s] is active: [%v]",
-				keep.ID(),
+				keep.ID().Hex(),
 				err,
 			)
 			continue
@@ -218,7 +218,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 		if err != nil {
 			logger.Errorf(
 				"could not get members of keep [%s]: [%v]",
-				keep.ID(),
+				keep.ID().Hex(),
 				err,
 			)
 			continue
@@ -313,7 +313,7 @@ func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
 
 	logger.Debugf(
 		"checking if keep with ID [%v] is active on the chain",
-		keep.ID(),
+		keep.ID().Hex(),
 	)
 	isActive, err := keep.IsActive()
 	if err != nil {
@@ -354,7 +354,7 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
 
 	logger.Debugf(
 		"getting members of the keep with ID [%v] from the chain",
-		keep.ID(),
+		keep.ID().Hex(),
 	)
 	memberAddresses, err := keep.GetMembers()
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -21,6 +22,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/client/event"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
+	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc/recovery"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
@@ -93,13 +95,27 @@ func Initialize(
 		if err != nil {
 			logger.Errorf(
 				"failed to confirm that keep [%s] is inactive: [%v]",
-				keep.ID(),
+				keep.ID().Hex(),
 				err,
 			)
 			return false
 		}
 
 		return !isKeepActive
+	}
+
+	blockCounter := hostChain.BlockCounter()
+
+	tbtcApplicationHandle, err := hostChain.TBTCApplicationHandle()
+	if err != nil {
+		logger.Errorf(
+			"failed to look up on-chain tBTC application information for "+
+				"chain [%s]; this client WILL NOT ATTEMPT TO OPERATE "+
+				"on the tBTC system",
+			hostChain,
+		)
+	} else {
+		go checkStatusAndRegisterForApplication(ctx, blockCounter, tbtcApplicationHandle)
 	}
 
 	for _, keepAddress := range keepsRegistry.GetKeepsAddresses() {
@@ -109,7 +125,7 @@ func Initialize(
 				logger.Errorf(
 					"failed to look up keep [%s] for active check: [%v]; "+
 						"subscriptions for keep signing and closing events are skipped",
-					keep.ID(),
+					keep.ID().Hex(),
 					err,
 				)
 				return
@@ -120,7 +136,7 @@ func Initialize(
 				logger.Errorf(
 					"failed to verify if keep [%s] is still active: [%v]; "+
 						"subscriptions for keep signing and closing events are skipped",
-					keep.ID(),
+					keep.ID().Hex(),
 					err,
 				)
 				return
@@ -129,12 +145,12 @@ func Initialize(
 			if !isActive {
 				logger.Infof(
 					"keep [%s] seems no longer active; confirming",
-					keep.ID(),
+					keep.ID().Hex(),
 				)
 				if isInactivityConfirmed := confirmIsInactive(keep); isInactivityConfirmed {
 					logger.Infof(
 						"confirmed that keep [%s] is no longer active; archiving",
-						keep.ID(),
+						keep.ID().Hex(),
 					)
 					keepsRegistry.UnregisterKeep(keepAddress)
 					return
@@ -148,7 +164,7 @@ func Initialize(
 				// wrong. We don't want to continue processing for this keep.
 				logger.Errorf(
 					"no signer for keep [%s]: [%v]",
-					keep.ID(),
+					keep.ID().Hex(),
 					err,
 				)
 				return
@@ -165,7 +181,7 @@ func Initialize(
 			if err != nil {
 				logger.Errorf(
 					"failed registering for requested signature event for keep [%s]: [%v]",
-					keep.ID(),
+					keep.ID().Hex(),
 					err,
 				)
 				// In case of an error we want to avoid subscribing to keep
@@ -183,6 +199,7 @@ func Initialize(
 			go monitorKeepTerminatedEvent(
 				ctx,
 				hostChain,
+				tbtcApplicationHandle,
 				networkProvider,
 				clientConfig,
 				bitcoinConfig,
@@ -200,6 +217,7 @@ func Initialize(
 	go checkAwaitingKeyGeneration(
 		ctx,
 		hostChain,
+		tbtcApplicationHandle,
 		networkProvider,
 		clientConfig,
 		bitcoinConfig,
@@ -236,7 +254,7 @@ func Initialize(
 				if err != nil {
 					logger.Errorf(
 						"failed to resolve keep with address [%v] for created event: [%v]",
-						keep.ID(),
+						keep.ID().Hex(),
 						err,
 					)
 				}
@@ -244,6 +262,7 @@ func Initialize(
 				generateKeyForKeep(
 					ctx,
 					hostChain,
+					tbtcApplicationHandle,
 					networkProvider,
 					clientConfig,
 					bitcoinConfig,
@@ -263,20 +282,6 @@ func Initialize(
 			)
 		}
 	})
-
-	blockCounter := hostChain.BlockCounter()
-
-	tbtcApplicationHandle, err := hostChain.TBTCApplicationHandle()
-	if err != nil {
-		logger.Errorf(
-			"failed to look up on-chain tBTC application information for "+
-				"chain [%s]; this client WILL NOT ATTEMPT TO OPERATE "+
-				"on the tBTC system",
-			hostChain,
-		)
-	} else {
-		go checkStatusAndRegisterForApplication(ctx, blockCounter, tbtcApplicationHandle)
-	}
 
 	initializeExtensions(
 		ctx,
@@ -313,6 +318,7 @@ func initializeExtensions(
 func checkAwaitingKeyGeneration(
 	ctx context.Context,
 	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
 	bitcoinConfig *bitcoin.Config,
@@ -355,7 +361,7 @@ func checkAwaitingKeyGeneration(
 		if err != nil {
 			logger.Warningf(
 				"could not check opening timestamp for keep [%s]: [%v]",
-				keep.ID(),
+				keep.ID().Hex(),
 				err,
 			)
 			continue
@@ -375,6 +381,7 @@ func checkAwaitingKeyGeneration(
 		err = checkAwaitingKeyGenerationForKeep(
 			ctx,
 			hostChain,
+			tbtcHandle,
 			networkProvider,
 			clientConfig,
 			bitcoinConfig,
@@ -387,7 +394,7 @@ func checkAwaitingKeyGeneration(
 		if err != nil {
 			logger.Warningf(
 				"could not check awaiting key generation for keep [%s]: [%v]",
-				keep.ID(),
+				keep.ID().Hex(),
 				err,
 			)
 		}
@@ -397,6 +404,7 @@ func checkAwaitingKeyGeneration(
 func checkAwaitingKeyGenerationForKeep(
 	ctx context.Context,
 	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
 	bitcoinConfig *bitcoin.Config,
@@ -426,7 +434,7 @@ func checkAwaitingKeyGenerationForKeep(
 			"keep public key is not registered on-chain but key material "+
 				"is stored on disk; skipping key generation; PLEASE INSPECT "+
 				"PUBLIC KEY SUBMISSION TRANSACTION FOR KEEP [%v]",
-			keep.ID(),
+			keep.ID().Hex(),
 		)
 		return nil
 	}
@@ -446,6 +454,7 @@ func checkAwaitingKeyGenerationForKeep(
 			go generateKeyForKeep(
 				ctx,
 				hostChain,
+				tbtcHandle,
 				networkProvider,
 				clientConfig,
 				bitcoinConfig,
@@ -468,6 +477,7 @@ func checkAwaitingKeyGenerationForKeep(
 func generateKeyForKeep(
 	ctx context.Context,
 	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
 	bitcoinConfig *bitcoin.Config,
@@ -483,7 +493,7 @@ func generateKeyForKeep(
 		// TODO: #408 Implement single signer support.
 		logger.Errorf(
 			"keep [%s] has [%d] members; only keeps with at least 2 members are supported",
-			keep.ID(),
+			keep.ID().Hex(),
 			len(members),
 		)
 		return
@@ -494,7 +504,7 @@ func generateKeyForKeep(
 		logger.Errorf(
 			"keep [%s] has honest threshold [%s] and [%d] members; "+
 				"only keeps with honest threshold same as group size are supported",
-			keep.ID(),
+			keep.ID().Hex(),
 			honestThreshold,
 			len(members),
 		)
@@ -504,7 +514,7 @@ func generateKeyForKeep(
 	logger.Infof(
 		"member [%s] is starting signer generation for keep [%s]...",
 		hostChain.Address().String(),
-		keep.ID(),
+		keep.ID().Hex(),
 	)
 
 	signer, err := generateSignerForKeep(
@@ -519,7 +529,7 @@ func generateKeyForKeep(
 	if err != nil {
 		logger.Errorf(
 			"failed to generate signer for keep [%s]: [%v]",
-			keep.ID(),
+			keep.ID().Hex(),
 			err,
 		)
 		return
@@ -531,7 +541,7 @@ func generateKeyForKeep(
 	if err != nil {
 		logger.Errorf(
 			"failed to register threshold signer for keep [%s]: [%v]",
-			keep.ID(),
+			keep.ID().Hex(),
 			err,
 		)
 
@@ -553,7 +563,7 @@ func generateKeyForKeep(
 		logger.Errorf(
 			"failed on registering for requested signature event "+
 				"for keep [%s]: [%v]",
-			keep.ID(),
+			keep.ID().Hex(),
 			err,
 		)
 
@@ -574,6 +584,7 @@ func generateKeyForKeep(
 	go monitorKeepTerminatedEvent(
 		ctx,
 		hostChain,
+		tbtcHandle,
 		networkProvider,
 		clientConfig,
 		bitcoinConfig,
@@ -630,7 +641,7 @@ func monitorSigningRequests(
 		func(event *chain.SignatureRequestedEvent) {
 			logger.Infof(
 				"new signature requested from keep [%s] for digest [%+x] at block [%d]",
-				keep.ID(),
+				keep.ID().Hex(),
 				event.Digest,
 				event.BlockNumber,
 			)
@@ -658,7 +669,7 @@ func monitorSigningRequests(
 						if !shouldHandle {
 							logger.Infof(
 								"signing request for keep [%s] and digest [%+x] already handled",
-								keep.ID(),
+								keep.ID().Hex(),
 								event.Digest,
 							)
 							// currently handling or already handled in the past
@@ -679,7 +690,7 @@ func monitorSigningRequests(
 						if err != nil {
 							logger.Errorf(
 								"failed to confirm signing request for keep [%s] and digest [%+x]: [%v]",
-								keep.ID(),
+								keep.ID().Hex(),
 								event.Digest,
 								err,
 							)
@@ -689,7 +700,7 @@ func monitorSigningRequests(
 						if !isAwaitingSignature {
 							logger.Warningf(
 								"keep [%s] is not awaiting a signature for digest [%+x]",
-								keep.ID(),
+								keep.ID().Hex(),
 								event.Digest,
 							)
 
@@ -705,7 +716,7 @@ func monitorSigningRequests(
 						); err != nil {
 							logger.Errorf(
 								"signature calculation failed for keep [%s]: [%v]",
-								keep.ID(),
+								keep.ID().Hex(),
 								err,
 							)
 						}
@@ -743,7 +754,7 @@ func checkAwaitingSignature(
 			"could not check awaiting signature of "+
 				"digest [%+x] for keep [%s]",
 			latestDigest,
-			keep.ID(),
+			keep.ID().Hex(),
 		)
 		return
 	}
@@ -751,7 +762,7 @@ func checkAwaitingSignature(
 	if isAwaitingDigest {
 		logger.Infof(
 			"awaiting a signature from keep [%s] for digest [%+x]",
-			keep.ID(),
+			keep.ID().Hex(),
 			latestDigest,
 		)
 
@@ -774,7 +785,7 @@ func checkAwaitingSignature(
 				if !shouldHandle {
 					logger.Infof(
 						"signing request for keep [%s] and digest [%+x] already handled",
-						keep.ID(),
+						keep.ID().Hex(),
 						latestDigest,
 					)
 					// currently handling - it is possible that event
@@ -788,7 +799,7 @@ func checkAwaitingSignature(
 				if err != nil {
 					logger.Errorf(
 						"failed to get signature request block height for keep [%s] and digest [%x]: [%v]",
-						keep.ID(),
+						keep.ID().Hex(),
 						latestDigest,
 						err,
 					)
@@ -816,7 +827,7 @@ func checkAwaitingSignature(
 				if err != nil {
 					logger.Errorf(
 						"failed to confirm signing request for keep [%s] and digest [%+x]: [%v]",
-						keep.ID(),
+						keep.ID().Hex(),
 						latestDigest,
 						err,
 					)
@@ -826,7 +837,7 @@ func checkAwaitingSignature(
 				if !isStillAwaitingSignature {
 					logger.Warningf(
 						"keep [%s] is not awaiting a signature for digest [%+x]",
-						keep.ID(),
+						keep.ID().Hex(),
 						latestDigest,
 					)
 
@@ -842,7 +853,7 @@ func checkAwaitingSignature(
 				); err != nil {
 					logger.Errorf(
 						"signature calculation failed for keep [%s]: [%v]",
-						keep.ID(),
+						keep.ID().Hex(),
 						err,
 					)
 				}
@@ -872,7 +883,7 @@ func monitorKeepClosedEvents(
 		func(event *chain.KeepClosedEvent) {
 			logger.Infof(
 				"keep [%s] closed event received at block [%d]",
-				keep.ID(),
+				keep.ID().Hex(),
 				event.BlockNumber,
 			)
 
@@ -880,7 +891,7 @@ func monitorKeepClosedEvents(
 				if shouldHandle := eventDeduplicator.NotifyClosingStarted(keep.ID()); !shouldHandle {
 					logger.Infof(
 						"close event for keep [%s] already handled",
-						keep.ID(),
+						keep.ID().Hex(),
 					)
 
 					// currently handling or already handled in the past
@@ -900,7 +911,7 @@ func monitorKeepClosedEvents(
 				if err != nil {
 					logger.Errorf(
 						"failed to confirm keep [%s] closed: [%v]",
-						keep.ID(),
+						keep.ID().Hex(),
 						err,
 					)
 					return
@@ -911,6 +922,8 @@ func monitorKeepClosedEvents(
 					return
 				}
 
+				// TODO: Rework how unregistering works in the context of
+				// completing/confirming btc recovery on the bitcoin chain.
 				keepsRegistry.UnregisterKeep(keep.ID())
 				keepClosed <- event
 			}(event)
@@ -919,7 +932,7 @@ func monitorKeepClosedEvents(
 	if err != nil {
 		logger.Errorf(
 			"failed on registering for closed event for keep [%s]: [%v]",
-			keep.ID(),
+			keep.ID().Hex(),
 			err,
 		)
 
@@ -940,6 +953,7 @@ func monitorKeepClosedEvents(
 func monitorKeepTerminatedEvent(
 	ctx context.Context,
 	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
 	bitcoinConfig *bitcoin.Config,
@@ -956,75 +970,166 @@ func monitorKeepTerminatedEvent(
 		func(event *chain.KeepTerminatedEvent) {
 			logger.Warningf(
 				"keep [%s] terminated event received at block [%d]",
-				keep.ID(),
+				keep.ID().Hex(),
 				event.BlockNumber,
 			)
 
 			go func(event *chain.KeepTerminatedEvent) {
-				if shouldHandle := eventDeduplicator.NotifyTerminatingStarted(keep.ID()); !shouldHandle {
-					logger.Infof(
-						"terminate event for keep [%s] already handled",
-						keep.ID(),
-					)
+				err := utils.DoWithDefaultRetry(
+					clientConfig.GetSigningTimeout(),
+					func(ctx context.Context) error {
+						if shouldHandle := eventDeduplicator.NotifyTerminatingStarted(keep.ID()); !shouldHandle {
+							logger.Infof(
+								"terminate event for keep [%s] already handled",
+								keep.ID().Hex(),
+							)
 
-					// currently handling or already handled in the past
-					// in case this event is a duplicate.
-					return
-				}
-				defer eventDeduplicator.NotifyTerminatingCompleted(keep.ID())
+							// currently handling or already handled in the past
+							// in case this event is a duplicate.
+							return nil
+						}
+						defer eventDeduplicator.NotifyTerminatingCompleted(keep.ID())
 
-				isKeepActive, err := ethlike.WaitForBlockConfirmations(
-					hostChain.BlockCounter(),
-					event.BlockNumber,
-					blockConfirmations,
-					func() (bool, error) {
-						return keep.IsActive()
+						isKeepActive, err := ethlike.WaitForBlockConfirmations(
+							hostChain.BlockCounter(),
+							event.BlockNumber,
+							blockConfirmations,
+							func() (bool, error) {
+								return keep.IsActive()
+							},
+						)
+						if err != nil {
+							logger.Errorf(
+								"failed to confirm keep [%s] termination: [%v]",
+								keep.ID().Hex(),
+								err,
+							)
+							return err
+						}
+
+						if isKeepActive {
+							logger.Warningf("keep [%s] has not been terminated", keep.ID())
+							return err
+						}
+
+						members, err := keep.GetMembers()
+						if err != nil {
+							logger.Errorf(
+								"failed to retrieve members from keep [%s]: [%v]",
+								keep.ID().Hex(),
+								err,
+							)
+							return err
+						}
+						memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
+						memberIDs, err := tssNode.AnnounceSignerPresence(
+							ctx,
+							operatorPublicKey,
+							keep.ID(),
+							members,
+						)
+
+						if err != nil {
+							logger.Errorf(
+								"failed to announce signer presence on keep [%s] termination: [%v]",
+								keep.ID().Hex(),
+								err,
+							)
+							return err
+						}
+
+						//FIXME: derive the chain params from config
+						chainParams := &chaincfg.MainNetParams
+
+						beneficiaryAddress, err := recovery.ResolveAddress(
+							bitcoinConfig.BeneficiaryAddress,
+							chainParams,
+						)
+						if err != nil {
+							logger.Errorf(
+								"failed to resolve a btc address for keep: [%s] address: [%s] err: [%v]",
+								keep.ID().Hex(),
+								bitcoinConfig.BeneficiaryAddress,
+								err,
+							)
+							return err
+						}
+
+						btcAddresses, maxFeePerVByte, err := tss.BroadcastRecoveryAddress(
+							ctx,
+							beneficiaryAddress,
+							bitcoinConfig.MaxFeePerVByte,
+							keep.ID().Hex(),
+							memberID,
+							memberIDs,
+							uint(len(memberIDs)-1),
+							networkProvider,
+							hostChain.Signing().PublicKeyToAddress,
+							chainParams,
+						)
+						if err != nil {
+							logger.Errorf(
+								"failed to communicate recovery details for keep [%s]: [%v]",
+								keep.ID().Hex(),
+								err,
+							)
+							return err
+						}
+
+						signer, err := keepsRegistry.GetSigner(keep.ID())
+						if err != nil {
+							// If there are no signer for loaded keep that something is clearly
+							// wrong. We don't want to continue processing for this keep.
+							logger.Errorf(
+								"no signer for keep [%s]: [%v]",
+								keep.ID().Hex(),
+								err,
+							)
+							return err
+						}
+
+						recoveryTransactionHex, err := recovery.BuildBitcoinTransaction(
+							ctx,
+							networkProvider,
+							hostChain,
+							tbtcHandle,
+							keep,
+							signer,
+							chainParams,
+							btcAddresses,
+							maxFeePerVByte,
+						)
+						if err != nil {
+							logger.Errorf(
+								"failed to build the transaction for keep [%s]: [%v]",
+								keep.ID().Hex(),
+								err,
+							)
+							return err
+						}
+
+						logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+						logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+						logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+						logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+						logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+
+						keepsRegistry.UnregisterKeep(keep.ID())
+						keepTerminated <- event
+
+						return nil
 					},
 				)
 				if err != nil {
-					logger.Errorf(
-						"failed to confirm keep [%s] termination: [%v]",
-						keep.ID(),
-						err,
-					)
-					return
+					logger.Errorf("failed to broadcast the bitcoin recovery transaction: [%v]", err)
 				}
-
-				if isKeepActive {
-					logger.Warningf("keep [%s] has not been terminated", keep.ID())
-					return
-				}
-
-				members, err := keep.GetMembers()
-				memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
-				memberIDs, err := tssNode.AnnounceSignerPresence(
-					ctx,
-					operatorPublicKey,
-					keep.ID(),
-					members,
-				)
-
-				tss.BroadcastRecoveryAddress(
-					ctx,
-					bitcoinConfig.BeneficiaryAddress,
-					bitcoinConfig.MaxFeePerVByte,
-					keep.ID().Hex(),
-					memberID,
-					memberIDs,
-					uint(len(memberIDs)-1),
-					networkProvider,
-					hostChain.Signing().PublicKeyToAddress,
-				)
-
-				keepsRegistry.UnregisterKeep(keep.ID())
-				keepTerminated <- event
 			}(event)
 		},
 	)
 	if err != nil {
 		logger.Errorf(
 			"failed on registering for terminated event for keep [%s]: [%v]",
-			keep.ID(),
+			keep.ID().Hex(),
 			err,
 		)
 

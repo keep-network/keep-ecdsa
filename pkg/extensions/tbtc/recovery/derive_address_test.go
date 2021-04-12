@@ -3,6 +3,8 @@ package recovery
 import (
 	"strings"
 	"testing"
+
+	"github.com/btcsuite/btcd/chaincfg"
 )
 
 // These tests use https://iancoleman.io/bip39/ with the bip39 mnemonic: loyal
@@ -122,7 +124,7 @@ var deriveAddressTestData = map[string]struct {
 func TestDeriveAddress(t *testing.T) {
 	for testName, testData := range deriveAddressTestData {
 		t.Run(testName, func(t *testing.T) {
-			address, err := DeriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
+			address, err := deriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
 
 			if err != nil {
 				t.Fatal(err)
@@ -170,8 +172,112 @@ func ErrorContains(err error, expected string) bool {
 func TestDeriveAddress_ExpectedFailure(t *testing.T) {
 	for testName, testData := range deriveAddressTestFailureData {
 		t.Run(testName, func(t *testing.T) {
-			_, err := DeriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
+			_, err := deriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
 			if !ErrorContains(err, testData.failure) {
+				t.Errorf(
+					"unexpected error message\nexpected: %s\nactual:   %s",
+					testData.failure,
+					err.Error(),
+				)
+			}
+		})
+	}
+}
+
+var resolveAddressData = map[string]struct {
+	beneficiaryAddress string
+	chainParams        *chaincfg.Params
+	expectedAddress    string
+}{
+	"BIP44: xpub at m/44'/0'/0'/0/0": {
+		"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1",
+		&chaincfg.MainNetParams,
+		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+	},
+
+	"Standard mainnet P2PKH btc address": {
+		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+		&chaincfg.MainNetParams,
+		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+	},
+
+	"Standard mainnet P2SH btc address": {
+		"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+		&chaincfg.MainNetParams,
+		"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+	},
+
+	"Standard mainnet Bech32 btc address": {
+		"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+		&chaincfg.MainNetParams,
+		"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+	},
+
+	"Standard testnet btc address": {
+		"mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt",
+		&chaincfg.TestNet3Params,
+		"mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt",
+	},
+}
+
+func TestResolveAddress(t *testing.T) {
+	for testName, testData := range resolveAddressData {
+		t.Run(testName, func(t *testing.T) {
+			resolvedAddress, err := ResolveAddress(
+				testData.beneficiaryAddress,
+				testData.chainParams,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if resolvedAddress != testData.expectedAddress {
+				t.Errorf(
+					"the resolved address does not match\nexpected: %s\nactual:   %s",
+					testData.expectedAddress,
+					resolvedAddress,
+				)
+			}
+		})
+	}
+}
+
+var resolveAddressExpectedFailureData = map[string]struct {
+	extendedAddress string
+	chainParams     *chaincfg.Params
+	failure         string
+}{
+	"WIF": {
+		"5Hwgr3u458GLafKBgxtssHSPqJnYoGrSzgQsPwLFhLNYskDPyyA",
+		&chaincfg.MainNetParams,
+		"the provided serialized extended key length is invalid",
+	},
+	"empty string": {
+		"",
+		&chaincfg.MainNetParams,
+		"the provided serialized extended key length is invalid",
+	},
+	"BIP32 private key": {
+		"xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzF93Y5wvzdUayhgkkFoicQZcP3y52uPPxFnfoLZB21Teqt1VvEHx",
+		&chaincfg.MainNetParams,
+		"unusable seed",
+	},
+	"complete nonsense": {
+		"lorem ipsum dolor sit amet, consec",
+		&chaincfg.MainNetParams,
+		"the provided serialized extended key length is invalid",
+	},
+}
+
+func TestResolveBeneficiaryAddress_ExpectedFailure(t *testing.T) {
+	for testName, testData := range resolveAddressExpectedFailureData {
+		t.Run(testName, func(t *testing.T) {
+			_, err := ResolveAddress(
+				testData.extendedAddress,
+				testData.chainParams,
+			)
+			if err == nil {
+				t.Errorf("no error found\nexpected: %s", testData.failure)
+			} else if !ErrorContains(err, testData.failure) {
 				t.Errorf(
 					"unexpected error message\nexpected: %s\nactual:   %s",
 					testData.failure,

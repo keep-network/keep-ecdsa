@@ -2,17 +2,29 @@ package recovery
 
 import (
 	"bytes"
+	"context"
 	cecdsa "crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
 	"math/big"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
+	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-ecdsa/internal/testdata"
+	lc "github.com/keep-network/keep-ecdsa/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
 	"gotest.tools/v3/assert"
 )
 
@@ -20,11 +32,11 @@ func TestPublicKeyToP2WPKHScriptCode(t *testing.T) {
 	// Test based on test values from BIP143:
 	// https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
 	serializedPublicKey, _ := hex.DecodeString("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357")
-	expectedScriptCode, _ := hex.DecodeString("1976a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac")
+	expectedScriptCode, _ := hex.DecodeString("76a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac")
 
 	publicKey, _ := btcec.ParsePubKey(serializedPublicKey, btcec.S256())
 
-	scriptCodeBytes, err := PublicKeyToP2WPKHScriptCode(publicKey.ToECDSA(), &chaincfg.MainNetParams)
+	scriptCodeBytes, err := publicKeyToP2WPKHScriptCode(publicKey.ToECDSA(), &chaincfg.MainNetParams)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -55,7 +67,7 @@ func TestConstructUnsignedTransaction(t *testing.T) {
 	expectedTx := wire.NewMsgTx(0)
 	expectedTx.Deserialize(bytes.NewReader(expectedTxBytes))
 
-	actualTx, err := ConstructUnsignedTransaction(
+	actualTx, err := constructUnsignedTransaction(
 		"0b99dea9655f219991001e9296cfe2103dd918a21ef477a14121d1a0ba9491f1",
 		uint32(0),
 		previousOutputValue,
@@ -86,7 +98,7 @@ func TestBuildSignedTransactionHexString(t *testing.T) {
 		RecoveryID: 1,
 	}
 
-	signedTxHex, err := BuildSignedTransactionHexString(
+	signedTxHex, err := buildSignedTransactionHexString(
 		decodeTransaction(t, unsignedTxHex),
 		signature,
 		publicKey,
@@ -99,6 +111,186 @@ func TestBuildSignedTransactionHexString(t *testing.T) {
 		t.Errorf(
 			"invalid signed transaction\n- actual\n+ expected\n%s",
 			cmp.Diff(decodeTransaction(t, signedTxHex), decodeTransaction(t, expectedSignedTx)))
+	}
+}
+
+func TestBuildBitcoinTransaction(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+	localChain := lc.Connect(ctx)
+	tbtcHandle := lc.NewTBTCLocalChain(ctx)
+
+	err := log.SetLogLevel("*", "INFO")
+	if err != nil {
+		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
+	groupSize := 3
+
+	groupMembers := make([]tss.MemberID, groupSize)
+	for i, memberIDString := range []string{
+		"04754b25e1b91dc4006acf17d2c28788be8398a8ed591ba2cbbff5c424d23d91971a8881edd3fc64772d90a181665b4b2ffdbbf05776b8fa8bd08893c26c1cad44",
+		"045300560c6c1619d8e2fd4bacc5566c330a89b6402c8c8ceb748d4232b5157dce812ab86645fc66e534a7a3238299eb258245e48a3885d3eea7b885e6c94ddfed",
+		"047279cff18c9bdfad9f6f23407070b9ace75acb5570d687de3416a306ecae16a7b40e6f1721f30bcee9b910e8a3d9bb298e9a6540826cf3ae5fbe1163a60d86ec",
+	} {
+		memberID, err := tss.MemberIDFromString(memberIDString)
+		if err != nil {
+			t.Fatal(err)
+		}
+		groupMembers[i] = memberID
+	}
+
+	testData, err := testdata.LoadKeygenTestFixtures(groupSize)
+	if err != nil {
+		t.Fatalf("failed to load test data: [%v]", err)
+	}
+
+	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
+		return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
+	}
+
+	groupMemberAddresses := make([]string, groupSize)
+	for i, member := range groupMembers {
+		pubKey, err := member.PublicKey()
+		if err != nil {
+			t.Fatalf("could not get member pubkey: [%v]", err)
+		}
+		groupMemberAddresses[i] = hex.EncodeToString(pubKeyToAddressFn(*pubKey))
+	}
+
+	errChan := make(chan error)
+
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(groupSize)
+
+	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	memberAddresses := make([]common.Address, groupSize)
+	for i, memberAddress := range groupMemberAddresses {
+		memberAddresses[i] = common.HexToAddress(memberAddress)
+	}
+	depositAddressString := "0xa5FA806723A7c7c8523F33c39686f20b52612877"
+	depositAddress := common.HexToAddress(depositAddressString)
+	tbtcHandle.CreateDeposit(depositAddressString, memberAddresses)
+	keep := tbtcHandle.OpenKeep(keepAddress, depositAddress, memberAddresses)
+
+	btcAddresses := []string{
+		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+		"3EktnHQD7RiAE6uzMj2ZifT9YgRrkSgzQX",
+		"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+	}
+	maxFeePerVByte := int32(73)
+
+	mutex := &sync.RWMutex{}
+
+	btcTransactions := make(map[string]string)
+
+	var providersInitializedWg sync.WaitGroup
+	providersInitializedWg.Add(groupSize)
+
+	for i, memberID := range groupMembers {
+		go func(memberID tss.MemberID, index int) {
+			memberPublicKey, err := memberID.PublicKey()
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			memberNetworkKey := key.NetworkPublic(*memberPublicKey)
+			networkProvider := local.ConnectWithKey(&memberNetworkKey)
+
+			providersInitializedWg.Done()
+			providersInitializedWg.Wait()
+
+			defer waitGroup.Done()
+
+			preParams := testData[index].LocalPreParams
+
+			signer, err := tss.GenerateThresholdSigner(
+				ctx,
+				keep.ID().Hex(),
+				memberID,
+				groupMembers,
+				uint(len(groupMembers)-1),
+				networkProvider,
+				pubKeyToAddressFn,
+				params.NewBox(&preParams),
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			signedBtcTransaction, err := BuildBitcoinTransaction(
+				ctx,
+				networkProvider,
+				localChain,
+				tbtcHandle,
+				keep,
+				signer,
+				&chaincfg.MainNetParams,
+				btcAddresses,
+				maxFeePerVByte,
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			mutex.Lock()
+			btcTransactions[memberID.String()] = signedBtcTransaction
+			mutex.Unlock()
+		}(memberID, i)
+	}
+
+	go func() {
+		waitGroup.Wait()
+		cancel()
+	}()
+
+	select {
+	case <-ctx.Done():
+		if len(btcTransactions) != groupSize {
+			t.Errorf(
+				"invalid number of results\nexpected: [%d]\nactual:  [%d]",
+				groupSize,
+				len(btcTransactions),
+			)
+		}
+
+		firstBtcTransaction := btcTransactions[groupMembers[0].String()]
+		decodedTransaction := decodeTransaction(t, firstBtcTransaction)
+		if len(decodedTransaction.TxOut) != 3 {
+			t.Errorf("wrong number of outputs\nexpected: 1\nactual:   %d", len(decodedTransaction.TxOut))
+		}
+
+		expectedOutputValue := int64(3329050) // (original deposit of 10000000 - fee) / 3
+		for _, outputTransaction := range decodedTransaction.TxOut {
+			if outputTransaction.Value != expectedOutputValue {
+				t.Errorf(
+					"incorrect output value\nexpected: %d\nactual:   %d",
+					expectedOutputValue,
+					outputTransaction.Value,
+				)
+			}
+		}
+
+		validateTransaction(t, decodedTransaction, int64(10000000)) // original deposit amount
+
+		for _, memberID := range groupMembers {
+			if memberResult, ok := btcTransactions[memberID.String()]; ok {
+				if memberResult != firstBtcTransaction {
+					t.Errorf(
+						"hex strings must all be identical\nexpected: %s\nactual:   %s",
+						firstBtcTransaction,
+						memberResult,
+					)
+				}
+			} else {
+				t.Errorf("missing result for member [%v]", memberID)
+			}
+		}
+	case err := <-errChan:
+		t.Fatal(err)
 	}
 }
 
@@ -119,4 +311,39 @@ func bigIntFromString(t *testing.T, s string) *big.Int {
 		t.Errorf("Something went wrong creating a big int from %s", s)
 	}
 	return bigInt
+}
+
+func validateTransaction(t *testing.T, transaction *wire.MsgTx, previousOutputValue int64) {
+	subscript, err := txscript.ComputePkScript(transaction.TxIn[0].SignatureScript, transaction.TxIn[0].Witness)
+	if err != nil {
+		t.Fatalf("failed to decode pk script: [%v]", err)
+	}
+
+	if len(transaction.TxIn) != 1 {
+		t.Error("only transactions with one input are supported")
+	}
+	inputIndex := 0
+
+	validationEngine, err := txscript.NewEngine(
+		subscript.Script(),
+		transaction,
+		inputIndex,
+		txscript.StandardVerifyFlags,
+		nil,
+		nil,
+		previousOutputValue,
+	)
+	if err != nil {
+		t.Fatalf(
+			"failed to create validation engine: [%v]",
+			err,
+		)
+	}
+
+	if err := validationEngine.Execute(); err != nil {
+		t.Errorf(
+			"failed to validate transaction: [%v]",
+			err,
+		)
+	}
 }

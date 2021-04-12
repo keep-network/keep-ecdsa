@@ -4,14 +4,17 @@ import (
 	"context"
 	cecdsa "crypto/ecdsa"
 	"fmt"
+	"sort"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcutil"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// RecoveryInfo represents the broadcasted information needed needed from the
-// other signers to complete liquidation recovery.
-type RecoveryInfo struct {
+// recoveryInfo represents the broadcasted information needed from the other
+// signers to complete liquidation recovery.
+type recoveryInfo struct {
 	btcRecoveryAddress string
 	maxFeePerVByte     int32
 }
@@ -29,7 +32,8 @@ func BroadcastRecoveryAddress(
 	dishonestThreshold uint,
 	networkProvider net.Provider,
 	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
-) error {
+	chainParams *chaincfg.Params,
+) ([]string, int32, error) {
 	const protocolReadyTimeout = 2 * time.Minute
 
 	group := &groupInfo{
@@ -53,7 +57,7 @@ func BroadcastRecoveryAddress(
 	}
 	broadcastChannel.Recv(ctx, handleLiquidationRecoveryAnnounceMessage)
 
-	memberRecoveryInfo := make(map[string]RecoveryInfo)
+	memberRecoveryInfo := make(map[string]recoveryInfo)
 
 	go func() {
 		for {
@@ -76,7 +80,7 @@ func BroadcastRecoveryAddress(
 							)
 							break
 						}
-						memberRecoveryInfo[memberAddress] = RecoveryInfo{btcRecoveryAddress: msg.BtcRecoveryAddress, maxFeePerVByte: msg.MaxFeePerVByte}
+						memberRecoveryInfo[memberAddress] = recoveryInfo{btcRecoveryAddress: msg.BtcRecoveryAddress, maxFeePerVByte: msg.MaxFeePerVByte}
 
 						logger.Infof(
 							"member [%s] from keep [%s] announced supplied btc address [%s] for "+
@@ -149,14 +153,32 @@ func BroadcastRecoveryAddress(
 				)
 			}
 		}
-		return fmt.Errorf(
+		return nil, 0, fmt.Errorf(
 			"waiting for btc recovery addresses timed out after: [%v]", protocolReadyTimeout,
 		)
 	case context.Canceled:
 		logger.Infof("successfully gathered all btc addresses")
 
-		return nil
+		retrievalAddresses := make([]string, 0, len(memberRecoveryInfo))
+		maxFeePerVByte := int32(2147483647) // since we're taking the min fee among the signers, start with the max int32
+		for _, recoveryInfo := range memberRecoveryInfo {
+
+			if _, err := btcutil.DecodeAddress(recoveryInfo.btcRecoveryAddress, chainParams); err != nil {
+				return nil, 0, fmt.Errorf(
+					"something went wrong validating btc address: [%s] during recovery broadcast: [%v]",
+					recoveryInfo.btcRecoveryAddress,
+					err,
+				)
+			}
+			retrievalAddresses = append(retrievalAddresses, recoveryInfo.btcRecoveryAddress)
+			if recoveryInfo.maxFeePerVByte < maxFeePerVByte {
+				maxFeePerVByte = recoveryInfo.maxFeePerVByte
+			}
+		}
+		sort.Strings(retrievalAddresses)
+
+		return retrievalAddresses, maxFeePerVByte, nil
 	default:
-		return fmt.Errorf("unexpected context error: [%v]", ctx.Err())
+		return nil, 0, fmt.Errorf("unexpected context error: [%v]", ctx.Err())
 	}
 }

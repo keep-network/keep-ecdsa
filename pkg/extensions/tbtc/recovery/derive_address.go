@@ -8,19 +8,19 @@ import (
 	"github.com/btcsuite/btcutil/hdkeychain"
 )
 
-// DeriveAddress uses the specified extended public key and address index to
+// deriveAddress uses the specified extended public key and address index to
 // derive an address string in the appropriate format at the specified address
-// index. The extended public key can be at any level. DeriveAddress will take
+// index. The extended public key can be at any level. deriveAddress will take
 // the first child `/0` until a depth of 4 is reached, and then produce the
-// address at the supplied index. Thus, calling DeriveAddress with an xpub
+// address at the supplied index. Thus, calling deriveAddress with an xpub
 // generated at m/44'/0' and passing the address index 5 will produce the
 // address at path m/44'/0'/0/0/5.
 //
 // In cases where the extended public key is at depth 4, meaning the external or
-// internal chain is already included, DeriveAddress will directly derive the
+// internal chain is already included, deriveAddress will directly derive the
 // address index at the existing depth.
 //
-// DeriveAddress does not support hardened child indexes (anything greater than
+// deriveAddress does not support hardened child indexes (anything greater than
 // or equal to 2147483648, abbreviated as 0')
 //
 // The returned address will be a p2pkh/p2sh address for prefixes xpub and tpub,
@@ -35,7 +35,7 @@ import (
 // [BIP44]: https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
 // [BIP49]: https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
 // [BIP84]: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
-func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error) {
+func deriveAddress(extendedPublicKey string, addressIndex uint32) (string, error) {
 	extendedKey, err := hdkeychain.NewKeyFromString(extendedPublicKey)
 	if err != nil {
 		return "", fmt.Errorf(
@@ -120,4 +120,26 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 	}
 
 	return finalAddress.EncodeAddress(), nil
+}
+
+// ResolveAddress resolves a configured beneficiaryAddress into a
+// valid bitcoin address. If the supplied address is already a valid bitcoin
+// address, we don't have to do anything. If the supplied address is an
+// extended public key of a HD wallet, attempt to derive the bitcoin address at
+// the specified index.
+func ResolveAddress(
+	beneficiaryAddress string,
+	chainParams *chaincfg.Params,
+) (string, error) {
+	//FIXME: pull the address index from persistence
+	addressIndex := uint32(0)
+	// If the address decodes without error, then we have a valid bitcoin
+	// address. Otherwise, we assume that it's an extended key and we attempt to
+	// derive the address.
+	_, err := btcutil.DecodeAddress(beneficiaryAddress, chainParams)
+	if err != nil {
+		return deriveAddress(beneficiaryAddress, addressIndex)
+	} else {
+		return beneficiaryAddress, nil
+	}
 }
