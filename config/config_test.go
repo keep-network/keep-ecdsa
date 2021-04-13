@@ -91,6 +91,14 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.TBTCSystem },
 			expectedValue: "0xa4888eDD97A5a3A739B4E0807C71817c8a418273",
 		},
+		"Extensions.TBTC.ElectrsURL": {
+			readValueFunc: func(c *Config) interface{} { return *c.Extensions.TBTC.ElectrsURL },
+			expectedValue: "example.com",
+		},
+		"Extensions.TBTC.ElectrsURLWithDefault()": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.ElectrsURLWithDefault() },
+			expectedValue: "example.com",
+		},
 		"Extensions.TBTC.BTCRefunds.BeneficiaryAddress": {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.BeneficiaryAddress },
 			expectedValue: "bcrt1q0umle4fe6penqqyzuwsysqezwwptuyqa82jas4",
@@ -195,5 +203,53 @@ func TestParseChainParams_ExpectedFailure(t *testing.T) {
 			expectedError,
 			err,
 		)
+	}
+}
+
+func TestElectrsURLWithDefault(t *testing.T) {
+	var electrsURLTests = map[string]struct {
+		url         []string
+		expectedURL string
+	}{
+		"blockstream": {
+			[]string{"https://blockstream.info/api/"},
+			"https://blockstream.info/api/",
+		},
+		"localhost": {
+			[]string{"localhost:8080/api/"},
+			"localhost:8080/api/",
+		},
+		"nonsense": {
+			[]string{"bleeble blabble"},
+			"bleeble blabble",
+		},
+		"undefined": {
+			[]string{},
+			"https://blockstream.info/api/",
+		},
+		"empty": {
+			[]string{""},
+			"",
+		},
+	}
+	for testName, testData := range electrsURLTests {
+		t.Run(testName, func(t *testing.T) {
+			// Use a string builder and a single-value list to represent optionality.
+			// If the list has a url, we define it in the config, otherwise, we have
+			// an empty `[Extensions.TBTC]` section.
+			var b strings.Builder
+			fmt.Fprint(&b, "[Extensions.TBTC]")
+			for _, url := range testData.url {
+				fmt.Fprintf(&b, "\nElectrsURL=\"%s\"", url)
+			}
+			config := &Config{}
+			if _, err := toml.Decode(b.String(), config); err != nil {
+				t.Fatal(err)
+			}
+			url := config.Extensions.TBTC.ElectrsURLWithDefault()
+			if url != testData.expectedURL {
+				t.Errorf("unexpected url\nexpected: %s\nactual:   %s", testData.expectedURL, url)
+			}
+		})
 	}
 }

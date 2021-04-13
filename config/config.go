@@ -85,7 +85,20 @@ type Extensions struct {
 // executing signer actions specific for TBTC application.
 type TBTC struct {
 	TBTCSystem string
+	ElectrsURL *string
 	BTCRefunds bitcoin.Config
+}
+
+// ElectrsURLWithDefault dereferences ElectrsURL in the following way: if there
+// is a configured value, use it. Otherwise, default to
+// https://blockstream.info/api/. This allows us to add bitcoin connection
+// functionality to nodes that haven't made config changes yet while also
+// letting a user connect to the node of their choice.
+func (t TBTC) ElectrsURLWithDefault() string {
+	if t.ElectrsURL == nil {
+		return "https://blockstream.info/api/"
+	}
+	return *t.ElectrsURL
 }
 
 // ReadConfig reads in the configuration file in .toml format. Chain key file
