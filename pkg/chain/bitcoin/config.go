@@ -16,7 +16,8 @@ type Config struct {
 // ChainParams parses the net param name into the associated chaincfg.Params
 func (c Config) ChainParams() (*chaincfg.Params, error) {
 	switch c.ChainName {
-	case "mainnet":
+	case "mainnet", "":
+		// If no chain name is provided, use the main net
 		return &chaincfg.MainNetParams, nil
 	case "regtest":
 		return &chaincfg.RegressionNetParams, nil
@@ -24,9 +25,6 @@ func (c Config) ChainParams() (*chaincfg.Params, error) {
 		return &chaincfg.SimNetParams, nil
 	case "testnet3":
 		return &chaincfg.TestNet3Params, nil
-	case "":
-		// If no chain name is provided, use the main net
-		return &chaincfg.MainNetParams, nil
 	default:
 		return nil, fmt.Errorf("unable to find chaincfg param for name: [%s]", c.ChainName)
 	}
