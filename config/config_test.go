@@ -155,7 +155,9 @@ func TestParseChainParams(t *testing.T) {
 	}
 	for testName, testData := range parseChainParamTests {
 		t.Run(testName, func(t *testing.T) {
-			// use a string builder and a single-value list to represent optionality
+			// Use a string builder and a single-value list to represent optionality.
+			// If the list has a chain name, we define it in the config, otherwise,
+			// we have an empty `[Extensions.TBTC.BTCRefunds]` section.
 			var b strings.Builder
 			fmt.Fprint(&b, "[Extensions.TBTC.BTCRefunds]")
 			for _, name := range testData.chainName {
