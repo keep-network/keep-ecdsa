@@ -1,11 +1,16 @@
 package config
 
 import (
+	"fmt"
 	"math/big"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/BurntSushi/toml"
+	"github.com/btcsuite/btcd/chaincfg"
 )
 
 func TestReadConfig(t *testing.T) {
@@ -94,6 +99,17 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.MaxFeePerVByte },
 			expectedValue: int32(73),
 		},
+		"Extensions.TBTC.BTCRefunds.BitcoinChainName": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.BitcoinChainName },
+			expectedValue: "mainnet",
+		},
+		"Extensions.TBTC.BTCRefunds.ChainParams()": {
+			readValueFunc: func(c *Config) interface{} {
+				params, _ := c.Extensions.TBTC.BTCRefunds.ChainParams()
+				return *params
+			},
+			expectedValue: chaincfg.MainNetParams,
+		},
 	}
 
 	for testName, test := range configReadTests {
@@ -105,5 +121,79 @@ func TestReadConfig(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestParseChainParams(t *testing.T) {
+	var parseChainParamTests = map[string]struct {
+		chainName   []string
+		chainParams chaincfg.Params
+	}{
+		"main network": {
+			[]string{"mainnet"},
+			chaincfg.MainNetParams,
+		},
+		"regtest": {
+			[]string{"regtest"},
+			chaincfg.RegressionNetParams,
+		},
+		"simnet": {
+			[]string{"simnet"},
+			chaincfg.SimNetParams,
+		},
+		"testnet3": {
+			[]string{"testnet3"},
+			chaincfg.TestNet3Params,
+		},
+		"undefined": {
+			[]string{},
+			chaincfg.MainNetParams,
+		},
+		"empty": {
+			[]string{""},
+			chaincfg.MainNetParams,
+		},
+	}
+	for testName, testData := range parseChainParamTests {
+		t.Run(testName, func(t *testing.T) {
+			// Use a string builder and a single-value list to represent optionality.
+			// If the list has a chain name, we define it in the config, otherwise,
+			// we have an empty `[Extensions.TBTC.BTCRefunds]` section.
+			var b strings.Builder
+			fmt.Fprint(&b, "[Extensions.TBTC.BTCRefunds]")
+			for _, name := range testData.chainName {
+				fmt.Fprintf(&b, "\nBitcoinChainName=\"%s\"", name)
+			}
+			config := &Config{}
+			if _, err := toml.Decode(b.String(), config); err != nil {
+				t.Fatal(err)
+			}
+			chainParams, err := config.Extensions.TBTC.BTCRefunds.ChainParams()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(*chainParams, testData.chainParams) {
+				t.Errorf("unexpected net params\nexpected: %v\nactual:   %v", testData.chainParams, chainParams)
+			}
+		})
+	}
+}
+
+func TestParseChainParams_ExpectedFailure(t *testing.T) {
+	configString := fmt.Sprintf("[Extensions.TBTC.BTCRefunds]\nBitcoinChainName=\"%s\"", "bleeble blabble")
+	config := &Config{}
+	if _, err := toml.Decode(configString, config); err != nil {
+		t.Fatal(err)
+	}
+	_, err := config.Extensions.TBTC.BTCRefunds.ChainParams()
+	expectedError := "unable to find chaincfg param for name: [bleeble blabble]"
+	if err == nil {
+		t.Fatalf("expecting an error but found none")
+	}
+	if expectedError != err.Error() {
+		t.Errorf(
+			"unexpected error\nexpected: %s\nactual:   %v",
+			expectedError,
+			err,
+		)
+	}
 }
