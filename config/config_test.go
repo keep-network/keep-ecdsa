@@ -99,8 +99,8 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.MaxFeePerVByte },
 			expectedValue: int32(73),
 		},
-		"Extensions.TBTC.BTCRefunds.ChainName": {
-			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.ChainName },
+		"Extensions.TBTC.BTCRefunds.BitcoinChainName": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.BitcoinChainName },
 			expectedValue: "mainnet",
 		},
 		"Extensions.TBTC.BTCRefunds.ChainParams()": {
@@ -161,7 +161,7 @@ func TestParseChainParams(t *testing.T) {
 			var b strings.Builder
 			fmt.Fprint(&b, "[Extensions.TBTC.BTCRefunds]")
 			for _, name := range testData.chainName {
-				fmt.Fprintf(&b, "\nChainName=\"%s\"", name)
+				fmt.Fprintf(&b, "\nBitcoinChainName=\"%s\"", name)
 			}
 			config := &Config{}
 			if _, err := toml.Decode(b.String(), config); err != nil {
@@ -179,7 +179,7 @@ func TestParseChainParams(t *testing.T) {
 }
 
 func TestParseChainParams_ExpectedFailure(t *testing.T) {
-	configString := fmt.Sprintf("[Extensions.TBTC.BTCRefunds]\nChainName=\"%s\"", "bleeble blabble")
+	configString := fmt.Sprintf("[Extensions.TBTC.BTCRefunds]\nBitcoinChainName=\"%s\"", "bleeble blabble")
 	config := &Config{}
 	if _, err := toml.Decode(configString, config); err != nil {
 		t.Fatal(err)

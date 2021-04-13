@@ -10,12 +10,12 @@ import (
 type Config struct {
 	BeneficiaryAddress string
 	MaxFeePerVByte     int32
-	ChainName          string
+	BitcoinChainName   string
 }
 
 // ChainParams parses the net param name into the associated chaincfg.Params
 func (c Config) ChainParams() (*chaincfg.Params, error) {
-	switch c.ChainName {
+	switch c.BitcoinChainName {
 	case "mainnet", "":
 		// If no chain name is provided, use the main net
 		return &chaincfg.MainNetParams, nil
@@ -26,6 +26,6 @@ func (c Config) ChainParams() (*chaincfg.Params, error) {
 	case "testnet3":
 		return &chaincfg.TestNet3Params, nil
 	default:
-		return nil, fmt.Errorf("unable to find chaincfg param for name: [%s]", c.ChainName)
+		return nil, fmt.Errorf("unable to find chaincfg param for name: [%s]", c.BitcoinChainName)
 	}
 }
