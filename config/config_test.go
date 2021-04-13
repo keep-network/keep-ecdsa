@@ -189,15 +189,11 @@ func TestParseChainParams_ExpectedFailure(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expecting an error but found none")
 	}
-	if !errorContains(err, expectedError) {
+	if expectedError != err.Error() {
 		t.Errorf(
 			"unexpected error\nexpected: %s\nactual:   %v",
 			expectedError,
 			err,
 		)
 	}
-}
-
-func errorContains(err error, expected string) bool {
-	return strings.Contains(err.Error(), expected)
 }
