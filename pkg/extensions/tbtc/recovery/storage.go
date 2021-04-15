@@ -28,6 +28,12 @@ func NewDerivationIndexStorage(path string) (*DerivationIndexStorage, error) {
 	}, nil
 }
 
+// getStoragePath stores an extended public key as its 4-letter descriptor
+// followed by an underscore and then it's 8-letter suffix. For example:
+// xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1 => xpub_zCAk9sk1
+// ypub6Xxan668aiJqvh4SVfd7EzqjWvf36gWufTkhWHv3gaxnBh44HpkTi2TTkm1u136qjUxk7F3jGzoyfrGpHvALMgJgbF4WNXpoPu3QYrqogMK => ypub_QYrqogMK
+// zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9 => zpub_VDaZuQT9
+// This both obfuscates the whole extended key and makes the folder easier to digest for human reading.
 func (dis DerivationIndexStorage) getStoragePath(extendedPublicKey string) (string, error) {
 	if len(extendedPublicKey) < 12 {
 		return "", fmt.Errorf("insufficient length for public key %s", extendedPublicKey)
