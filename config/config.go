@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/celo"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
@@ -78,27 +78,7 @@ type Diagnostics struct {
 
 // Extensions stores app-specific extensions configuration.
 type Extensions struct {
-	TBTC TBTC
-}
-
-// TBTC stores configuration of application extension responsible for
-// executing signer actions specific for TBTC application.
-type TBTC struct {
-	TBTCSystem string
-	ElectrsURL *string
-	BTCRefunds bitcoin.Config
-}
-
-// ElectrsURLWithDefault dereferences ElectrsURL in the following way: if there
-// is a configured value, use it. Otherwise, default to
-// https://blockstream.info/api/. This allows us to add bitcoin connection
-// functionality to nodes that haven't made config changes yet while also
-// letting a user connect to the node of their choice.
-func (t TBTC) ElectrsURLWithDefault() string {
-	if t.ElectrsURL == nil {
-		return "https://blockstream.info/api/"
-	}
-	return *t.ElectrsURL
+	TBTC chain.Config
 }
 
 // ReadConfig reads in the configuration file in .toml format. Chain key file

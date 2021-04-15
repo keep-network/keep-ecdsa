@@ -16,7 +16,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 	"github.com/keep-network/keep-ecdsa/pkg/client/event"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
@@ -60,7 +59,7 @@ func Initialize(
 	networkProvider net.Provider,
 	persistence persistence.Handle,
 	clientConfig *Config,
-	bitcoinConfig *bitcoin.Config,
+	tbtcConfig *chain.Config,
 	tssConfig *tss.Config,
 ) *Handle {
 	keepsRegistry := registry.NewKeepsRegistry(
@@ -203,7 +202,7 @@ func Initialize(
 				tbtcApplicationHandle,
 				networkProvider,
 				clientConfig,
-				bitcoinConfig,
+				tbtcConfig,
 				tssNode,
 				operatorPublicKey,
 				keep,
@@ -221,7 +220,7 @@ func Initialize(
 		tbtcApplicationHandle,
 		networkProvider,
 		clientConfig,
-		bitcoinConfig,
+		tbtcConfig,
 		tssNode,
 		operatorPublicKey,
 		keepsRegistry,
@@ -266,7 +265,7 @@ func Initialize(
 					tbtcApplicationHandle,
 					networkProvider,
 					clientConfig,
-					bitcoinConfig,
+					tbtcConfig,
 					tssNode,
 					operatorPublicKey,
 					keepsRegistry,
@@ -322,7 +321,7 @@ func checkAwaitingKeyGeneration(
 	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	bitcoinConfig *bitcoin.Config,
+	tbtcConfig *chain.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -385,7 +384,7 @@ func checkAwaitingKeyGeneration(
 			tbtcHandle,
 			networkProvider,
 			clientConfig,
-			bitcoinConfig,
+			tbtcConfig,
 			tssNode,
 			operatorPublicKey,
 			keepsRegistry,
@@ -408,7 +407,7 @@ func checkAwaitingKeyGenerationForKeep(
 	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	bitcoinConfig *bitcoin.Config,
+	tbtcConfig *chain.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -462,7 +461,7 @@ func checkAwaitingKeyGenerationForKeep(
 			tbtcHandle,
 			networkProvider,
 			clientConfig,
-			bitcoinConfig,
+			tbtcConfig,
 			tssNode,
 			operatorPublicKey,
 			keepsRegistry,
@@ -482,7 +481,7 @@ func generateKeyForKeep(
 	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	bitcoinConfig *bitcoin.Config,
+	tbtcConfig *chain.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -589,7 +588,7 @@ func generateKeyForKeep(
 		tbtcHandle,
 		networkProvider,
 		clientConfig,
-		bitcoinConfig,
+		tbtcConfig,
 		tssNode,
 		operatorPublicKey,
 		keep,
@@ -958,7 +957,7 @@ func monitorKeepTerminatedEvent(
 	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	bitcoinConfig *bitcoin.Config,
+	tbtcConfig *chain.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keep chain.BondedECDSAKeepHandle,
@@ -1040,7 +1039,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						chainParams, err := bitcoinConfig.ChainParams()
+						chainParams, err := tbtcConfig.BTCRefunds.ChainParams()
 						if err != nil {
 							logger.Errorf(
 								"failed to parse the the configured net params: [%v]",
@@ -1050,14 +1049,14 @@ func monitorKeepTerminatedEvent(
 						}
 
 						beneficiaryAddress, err := recovery.ResolveAddress(
-							bitcoinConfig.BeneficiaryAddress,
+							tbtcConfig.BTCRefunds.BeneficiaryAddress,
 							chainParams,
 						)
 						if err != nil {
 							logger.Errorf(
 								"failed to resolve a btc address for keep: [%s] address: [%s] err: [%v]",
 								keep.ID(),
-								bitcoinConfig.BeneficiaryAddress,
+								tbtcConfig.BTCRefunds.BeneficiaryAddress,
 								err,
 							)
 							return err
@@ -1066,7 +1065,7 @@ func monitorKeepTerminatedEvent(
 						btcAddresses, maxFeePerVByte, err := tss.BroadcastRecoveryAddress(
 							ctx,
 							beneficiaryAddress,
-							bitcoinConfig.MaxFeePerVByte,
+							tbtcConfig.BTCRefunds.MaxFeePerVByte,
 							keep.ID().String(),
 							memberID,
 							memberIDs,
