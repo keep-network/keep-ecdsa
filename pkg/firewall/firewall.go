@@ -251,15 +251,21 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepAtIndex(
 		return soakp.chain.GetKeepWithID(cachedID)
 	}
 
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+
+	cachedID, isCached = cache.indexToID[index.String()]
+	if isCached {
+		return soakp.chain.GetKeepWithID(cachedID)
+	}
+
 	logger.Debugf("fetching keep at index [%v] from the chain", index)
 	keep, err := soakp.chain.GetKeepAtIndex(index)
 	if err != nil {
 		return nil, err
 	}
 
-	cache.mutex.Lock()
 	cache.indexToID[index.String()] = keep.ID()
-	cache.mutex.Unlock()
 
 	return keep, nil
 }
@@ -287,6 +293,17 @@ func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
 		return true, nil
 	}
 
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+
+	isInactive, isCached = cache.isInactive[keep.ID().String()]
+	if isCached && isInactive {
+		return false, nil
+	}
+	if cache.isActive.Has(keep.ID().String()) {
+		return true, nil
+	}
+
 	logger.Debugf(
 		"checking if keep with ID [%v] is active on the chain",
 		keep.ID(),
@@ -299,9 +316,7 @@ func (soakp *stakeOrActiveKeepPolicy) isKeepActive(
 	if isActive {
 		cache.isActive.Add(keep.ID().String())
 	} else {
-		cache.mutex.Lock()
 		cache.isInactive[keep.ID().String()] = true
-		cache.mutex.Unlock()
 	}
 
 	return isActive, nil
@@ -322,6 +337,14 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
 		return members, nil
 	}
 
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+
+	members, areCached = cache.members[keep.ID().String()]
+	if areCached {
+		return members, nil
+	}
+
 	logger.Debugf(
 		"getting members of the keep with ID [%v] from the chain",
 		keep.ID(),
@@ -336,9 +359,7 @@ func (soakp *stakeOrActiveKeepPolicy) getKeepMembers(
 		members[i] = member.String()
 	}
 
-	cache.mutex.Lock()
 	cache.members[keep.ID().String()] = members
-	cache.mutex.Unlock()
 
 	return members, nil
 }

@@ -58,7 +58,7 @@ spec:
                   name: eth-account-passphrases
                   key: account-6
             - name: LOG_LEVEL
-              value: 'keep*=debug tss-lib=warning'
+              value: 'keep*=debug tss-lib=warn'
             - name: IPFS_LOGGING_FMT
               value: nocolor
           volumeMounts:
@@ -117,7 +117,7 @@ spec:
               value: '3919'
             - name: KEEP_DATA_DIR
               value: /mnt/keep-ecdsa/data
-            - name: SANCTIONED_APPLICATIONS
+            - name: TBTC_SYSTEM_ADDRESS
               value: '0x87ABAD43f9e31067712dd5E2460C70b666AFfcE0' # Shall we extract this property to a configmap?
           volumeMounts:
             - name: keep-ecdsa-config
