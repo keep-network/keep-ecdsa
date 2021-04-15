@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	fileName = "derivation_indexes"
+	directoryName = "derivation_indexes"
 )
 
 // DerivationIndexStorage provides access to the derivation index persistence
@@ -19,7 +19,7 @@ type DerivationIndexStorage struct {
 
 // NewDerivationIndexStorage is a factory method that creates a new DerivationIndexStorage at the specified path.
 func NewDerivationIndexStorage(path string) (*DerivationIndexStorage, error) {
-	err := ensureDirectoryExists(fmt.Sprintf("%s/%s", path, fileName))
+	err := ensureDirectoryExists(fmt.Sprintf("%s/%s", path, directoryName))
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (dis DerivationIndexStorage) getStoragePath(extendedPublicKey string) (stri
 	}
 	publicKeyDescriptor := extendedPublicKey[:4]
 	suffix := extendedPublicKey[len(extendedPublicKey)-8:]
-	return fmt.Sprintf("%s/%s/%s_%s", dis.path, fileName, publicKeyDescriptor, suffix), nil
+	return fmt.Sprintf("%s/%s/%s_%s", dis.path, directoryName, publicKeyDescriptor, suffix), nil
 }
 
 func ensureDirectoryExists(path string) error {
