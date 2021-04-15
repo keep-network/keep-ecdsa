@@ -64,8 +64,8 @@ func (dis DerivationIndexStorage) Save(extendedPublicKey string, index int, btcA
 	return write(filePath, []byte(btcAddress))
 }
 
-// Read returns the next unused index for the extended public key
-func (dis DerivationIndexStorage) Read(extendedPublicKey string) (int, error) {
+// Read returns the most recently used index for the extended public key
+func (dis DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
 	dirPath, err := dis.getStoragePath(extendedPublicKey)
 	if err != nil {
 		return 0, err
@@ -86,6 +86,15 @@ func (dis DerivationIndexStorage) Read(extendedPublicKey string) (int, error) {
 		if fileIndex > index {
 			index = fileIndex
 		}
+	}
+	return index, nil
+}
+
+// GetNextIndex returns the next unused index for the extended public key
+func (dis DerivationIndexStorage) GetNextIndex(extendedPublicKey string) (int, error) {
+	index, err := dis.read(extendedPublicKey)
+	if err != nil {
+		return 0, err
 	}
 	return index + 1, nil
 }

@@ -137,7 +137,7 @@ func ResolveAddress(
 	// derive the address.
 	_, err := btcutil.DecodeAddress(beneficiaryAddress, chainParams)
 	if err != nil {
-		addressIndex, err := storage.Read(beneficiaryAddress)
+		addressIndex, err := storage.GetNextIndex(beneficiaryAddress)
 		if err != nil {
 			return "", err
 		}

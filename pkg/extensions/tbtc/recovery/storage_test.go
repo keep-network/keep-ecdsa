@@ -16,7 +16,7 @@ func TestDerivationIndexStorage_Read(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	index, err := dis.Read("extendedPublicKey")
+	index, err := dis.GetNextIndex("extendedPublicKey")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func TestDerivationIndexStorage_WriteThenRead(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	index, err := dis.Read(extendedPublicKey)
+	index, err := dis.GetNextIndex(extendedPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
