@@ -20,6 +20,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
+	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc/recovery"
 	"github.com/keep-network/keep-ecdsa/pkg/firewall"
 
 	"github.com/urfave/cli"
@@ -134,12 +135,18 @@ func Start(c *cli.Context) error {
 
 	nodeHeader(networkProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
 
+	derivationIndexPersistence, err := recovery.NewDerivationIndexStorage(config.Storage.DataDir)
+	if err != nil {
+		return err
+	}
+
 	clientHandle := client.Initialize(
 		ctx,
 		operatorKeys.public,
 		chainHandle,
 		networkProvider,
 		persistence,
+		derivationIndexPersistence,
 		&config.Client,
 		&config.Extensions.TBTC,
 		&config.TSS,

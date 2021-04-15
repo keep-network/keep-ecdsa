@@ -1,6 +1,8 @@
 package recovery
 
 import (
+	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -223,8 +225,18 @@ var resolveAddressData = map[string]struct {
 func TestResolveAddress(t *testing.T) {
 	for testName, testData := range resolveAddressData {
 		t.Run(testName, func(t *testing.T) {
+			dir, err := ioutil.TempDir("", "example")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(dir)
+			dis, err := NewDerivationIndexStorage(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
 			resolvedAddress, err := ResolveAddress(
 				testData.beneficiaryAddress,
+				dis,
 				testData.chainParams,
 			)
 			if err != nil {
@@ -254,7 +266,7 @@ var resolveAddressExpectedFailureData = map[string]struct {
 	"empty string": {
 		"",
 		&chaincfg.MainNetParams,
-		"the provided serialized extended key length is invalid",
+		"insufficient length for public key",
 	},
 	"BIP32 private key": {
 		"xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzF93Y5wvzdUayhgkkFoicQZcP3y52uPPxFnfoLZB21Teqt1VvEHx",
@@ -271,8 +283,18 @@ var resolveAddressExpectedFailureData = map[string]struct {
 func TestResolveBeneficiaryAddress_ExpectedFailure(t *testing.T) {
 	for testName, testData := range resolveAddressExpectedFailureData {
 		t.Run(testName, func(t *testing.T) {
-			_, err := ResolveAddress(
+			dir, err := ioutil.TempDir("", "example")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(dir)
+			dis, err := NewDerivationIndexStorage(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = ResolveAddress(
 				testData.extendedAddress,
+				dis,
 				testData.chainParams,
 			)
 			if err == nil {
