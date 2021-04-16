@@ -30,7 +30,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - name: Show workflow metadata # TODO: consider whether to keep it or remove
+      - name: Show workflow metadata
         if: github.event_name == 'workflow_dispatch'
         run: |
             echo "Workflow dispatched on branch: ${{ github.ref }}"
@@ -38,7 +38,7 @@ jobs:
             echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
             echo "ref = ${{ github.event.inputs.ref }}"
 
-      - name: Show workflow metadata # TODO: consider whether to keep it or remove
+      - name: Show workflow metadata
         if: github.event_name != 'workflow_dispatch'
         run: |
             echo "ref = ${{ github.ref }}"
@@ -92,10 +92,6 @@ jobs:
             gotestsum
 
       - name: Login to Google Container Registry
-        # if:  |
-        #   github.ref == 'refs/heads/master'
-        #     && github.event_name != 'pull_request'
-         # TODO: Decide on execution conditions
         if: |
           (github.ref == 'refs/heads/master'
             && github.event_name == 'push')
@@ -120,10 +116,6 @@ jobs:
           build-args: |
             REVISION=${{ github.sha }}
           # VERSION= ? TODO: Configure version, sample: 1.7.6
-          # push: | # what about publishing for workflow_dipatch on different refs than master?
-          #   ${{ github.ref == 'refs/heads/master' 
-          #     && github.event_name != 'pull_request' }}
-          # TODO: Decide on execution conditions
           push: |
             ${{ (github.ref == 'refs/heads/master'
               && github.event_name == 'push')

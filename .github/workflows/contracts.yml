@@ -28,7 +28,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - name: Show workflow metadata # TODO: consider whether to keep it or remove
+      - name: Show workflow metadata
         if: github.event_name == 'workflow_dispatch'
         run: |
             echo "Workflow dispatched on branch: ${{ github.ref }}"
@@ -36,7 +36,7 @@ jobs:
             echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
             echo "ref = ${{ github.event.inputs.ref }}"
 
-      - name: Show workflow metadata # TODO: consider whether to keep it or remove
+      - name: Show workflow metadata
         if: github.event_name != 'workflow_dispatch'
         run: |
             echo "ref = ${{ github.ref }}"
@@ -126,10 +126,6 @@ jobs:
 
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test, contracts-lint]
-    # if: |
-    #   github.ref == 'refs/heads/master'
-    #     && github.event_name != 'pull_request'
-    # TODO: Decide on execution conditions
     if: |
       (github.ref == 'refs/heads/master'
         && github.event_name == 'push')
@@ -173,7 +169,7 @@ jobs:
       - name: Fetch external contracts artifacts
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-          CONTRACT_DATA_BUCKET_DIR: keep-core
+          CONTRACT_DATA_BUCKET_DIR: keep-core-wip # TODO remove '-wip'
           ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
         run: ./scripts/ci-provision-external-contracts.sh
 
@@ -205,9 +201,9 @@ jobs:
       - name: Upload contract data
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: |
+        run: | # TODO remove '-wip'
           cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-ecdsa
+          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-ecdsa-wip
 
       - name: Copy artifacts
         run: |
@@ -259,9 +255,9 @@ jobs:
         working-directory: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: |
-            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/KeepToken.json .
-            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/TokenStaking.json .
+        run: | # TODO remove '-wip'
+            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core-wip/KeepToken.json .
+            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core-wip/TokenStaking.json .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -376,16 +372,3 @@ jobs:
           cd build/contracts
           gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-ecdsa-celo
       # TODO: add NPM publish step once it's clear how artifacts should be tagged
-
-
-
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-        with:
-          module: "github.com/keep-network/keep-ecdsa/solidity"
-          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          environment: ${{ github.event.inputs.environment }}
-          upstream_builds: ${{ github.event.inputs.upstream_builds }}
-          ref: ${{ github.event.inputs.ref }}
-          version: ${{ github.sha }} # TODO: replace with version once versioning ready
