@@ -3,6 +3,8 @@
 package ethereum
 
 import (
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"sort"
@@ -478,9 +480,17 @@ func (ta *tbtcApplication) FundingInfo(
 	if err != nil {
 		return nil, err
 	}
+
+	// the transaction bytes are little-endian, so we need to reverse them before converting them to hex
+	transactionBytes := fundingInfo.UtxoOutpoint[:32]
+	for i, j := 0, len(transactionBytes)-1; i < j; i, j = i+1, j-1 {
+		transactionBytes[i], transactionBytes[j] = transactionBytes[j], transactionBytes[i]
+	}
+
 	return &chain.FundingInfo{
-		UtxoValueBytes: fundingInfo.UtxoValueBytes,
-		FundedAt:       fundingInfo.FundedAt,
-		UtxoOutpoint:   fundingInfo.UtxoOutpoint,
+		UtxoValueBytes:  fundingInfo.UtxoValueBytes,
+		FundedAt:        fundingInfo.FundedAt,
+		TransactionHash: hex.EncodeToString(transactionBytes),
+		Index:           binary.LittleEndian.Uint32(fundingInfo.UtxoOutpoint[32:]),
 	}, nil
 }

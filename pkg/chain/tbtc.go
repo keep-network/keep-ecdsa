@@ -110,9 +110,10 @@ type TBTCSystem interface {
 
 // FundingInfo represents the funding information for a tbtc deposit
 type FundingInfo struct {
-	UtxoValueBytes [8]uint8
-	FundedAt       *big.Int
-	UtxoOutpoint   []uint8
+	UtxoValueBytes  [8]uint8
+	FundedAt        *big.Int
+	TransactionHash string
+	Index           uint32
 }
 
 // DepositRedemptionRequestedEvent is an event emitted when a deposit
