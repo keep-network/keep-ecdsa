@@ -4,11 +4,35 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - "docs/**"
+      - "infrastructure/**"
+      - "scripts/**"
+      - "staker-rewards/**"
   pull_request:
   workflow_dispatch:
 
 jobs:
-  build-test-publish:
+  client-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request' 
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request' 
+      id: filter
+      with:
+        filters: |
+          path-filter:
+            - './!((docs|infrastructure|scripts|staker-rewards)/**)'
+
+  client-build-test-publish:
+    needs: client-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.client-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -44,9 +68,8 @@ jobs:
 
       - name: Login to Google Container Registry
         if:  |
-            github.ref == 'refs/heads/master'
-              && (github.event_name == 'push'
-              || github.event_name == 'workflow_dispatch')
+          github.ref == 'refs/heads/master'
+            && github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
           registry: ${{ secrets.GCR_REGISTRY_URL }}
@@ -70,5 +93,16 @@ jobs:
           # VERSION= ? TODO: Configure version, sample: 1.7.6
           push: |
             ${{ github.ref == 'refs/heads/master'
-              && (github.event_name == 'push'
-              || github.event_name == 'workflow_dispatch') }}
+              && github.event_name != 'pull_request' }}
+
+  client-scan:
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+    steps:
+      - uses: actions/checkout@v2
+      - uses: securego/gosec@master
+        with:
+          args: |
+            -exclude-dir=pkg/chain/gen
+            ./...
