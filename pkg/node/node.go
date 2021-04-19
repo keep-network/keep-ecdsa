@@ -44,22 +44,22 @@ const (
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
 type Node struct {
-	ethereumChain   chain.Handle
+	chain           chain.Handle
 	networkProvider net.Provider
 	tssParamsPool   *tssPreParamsPool
 	tssConfig       *tss.Config
 }
 
-// NewNode initializes node struct with provided ethereum chain interface and
+// NewNode initializes node struct with provided chain interface and
 // network provider. It also initializes TSS Pre-Parameters pool. But does not
 // start parameters generation. This should be called separately.
 func NewNode(
-	ethereumChain chain.Handle,
+	chain chain.Handle,
 	networkProvider net.Provider,
 	tssConfig *tss.Config,
 ) *Node {
 	return &Node{
-		ethereumChain:   ethereumChain,
+		chain:           chain,
 		networkProvider: networkProvider,
 		tssConfig:       tssConfig,
 	}
@@ -92,7 +92,7 @@ func (n *Node) AnnounceSignerPresence(
 		keepID,
 		keepMemberIDs,
 		broadcastChannel,
-		n.ethereumChain.PublicKeyToOperatorID,
+		n.chain.PublicKeyToOperatorID,
 	)
 }
 
@@ -205,7 +205,7 @@ func (n *Node) GenerateSignerForKeep(
 			memberIDs,
 			uint(len(memberIDs)-1),
 			n.networkProvider,
-			n.ethereumChain.Signing().PublicKeyToAddress,
+			n.chain.Signing().PublicKeyToAddress,
 			preParamsBox,
 		)
 		if err != nil {
@@ -286,7 +286,7 @@ func (n *Node) CalculateSignature(
 			ctx,
 			digest[:],
 			n.networkProvider,
-			n.ethereumChain.Signing().PublicKeyToAddress,
+			n.chain.Signing().PublicKeyToAddress,
 		)
 		if err != nil {
 			logger.Errorf(
@@ -532,7 +532,7 @@ func (n *Node) confirmSignature(
 		keep.ID(),
 	)
 
-	currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+	currentBlock, err := n.chain.BlockCounter().CurrentBlock()
 	if err != nil {
 		logger.Errorf(
 			"could not get current block while confirming "+
@@ -544,7 +544,7 @@ func (n *Node) confirmSignature(
 	}
 
 	isSignatureConfirmed, err := ethlike.WaitForBlockConfirmations(
-		n.ethereumChain.BlockCounter(),
+		n.chain.BlockCounter(),
 		currentBlock,
 		blockConfirmations,
 		func() (bool, error) {
@@ -690,7 +690,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 				continue
 			} else {
 				if len(keepPublicKey) > 0 {
-					currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+					currentBlock, err := n.chain.BlockCounter().CurrentBlock()
 					if err != nil {
 						logger.Errorf(
 							"failed to get the current block while "+
@@ -703,7 +703,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 					}
 
 					isConfirmed, err := ethlike.WaitForBlockConfirmations(
-						n.ethereumChain.BlockCounter(),
+						n.chain.BlockCounter(),
 						currentBlock,
 						blockConfirmations,
 						func() (bool, error) {
