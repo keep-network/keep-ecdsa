@@ -133,3 +133,27 @@ jobs:
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           ref: ${{ github.event.inputs.ref }}
           version: ${{ github.sha }} # TODO: replace with version once versioning ready
+
+  client-scan:
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+    steps:
+      - uses: actions/checkout@v2
+      - uses: securego/gosec@master
+        with:
+          args: |
+            -exclude-dir=pkg/chain/gen
+            ./...
+
+  client-lint:
+    needs: client-detect-changes
+    if: |
+      github.event_name == 'push'
+        || needs.client-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Lint Go
+        uses: keep-network/golint-action@v1.0.2        
