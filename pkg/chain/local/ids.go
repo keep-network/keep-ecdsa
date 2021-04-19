@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
@@ -21,7 +21,7 @@ func (lc *localChain) UnmarshalID(idString string) (chain.ID, error) {
 }
 
 func (lc *localChain) PublicKeyToOperatorID(publicKey *cecdsa.PublicKey) chain.ID {
-	return localChainID(crypto.PubkeyToAddress(*publicKey))
+	return localChainID(operator.PubkeyToAddress(*publicKey))
 }
 
 // localChainID is the local chain.ID type; it is an alias for
