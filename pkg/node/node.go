@@ -4,7 +4,6 @@ package node
 import (
 	"context"
 	cecdsa "crypto/ecdsa"
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -81,7 +80,10 @@ func (n *Node) AnnounceSignerPresence(
 	tss.RegisterUnmarshalers(broadcastChannel)
 
 	if err := broadcastChannel.SetFilter(
-		createAddressFilter(keepMemberIDs),
+		createAddressFilter(
+			keepMemberIDs,
+			n.chain.PublicKeyToOperatorID,
+		),
 	); err != nil {
 		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
 	}
@@ -98,6 +100,7 @@ func (n *Node) AnnounceSignerPresence(
 
 func createAddressFilter(
 	keepMemberIDs []chain.ID,
+	publicKeyToOperatorIDFunc func(*cecdsa.PublicKey) chain.ID,
 ) net.BroadcastChannelFilter {
 	operatorAuthorizations := make(map[string]bool, len(keepMemberIDs))
 	for _, keepMemberID := range keepMemberIDs {
@@ -105,10 +108,9 @@ func createAddressFilter(
 	}
 
 	return func(authorPublicKey *cecdsa.PublicKey) bool {
-		authorAddress := hex.EncodeToString(
-			operator.PubkeyToAddress(*authorPublicKey).Bytes(),
-		)
-		_, isAuthorized := operatorAuthorizations[authorAddress]
+		authorAddress := publicKeyToOperatorIDFunc(authorPublicKey)
+
+		_, isAuthorized := operatorAuthorizations[authorAddress.String()]
 
 		if !isAuthorized {
 			logger.Warningf(
