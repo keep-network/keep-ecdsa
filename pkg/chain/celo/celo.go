@@ -22,7 +22,7 @@ import (
 
 var logger = log.Logger("keep-chain-celo")
 
-// Offline returns a chain.Handle for an offline Ethereum client. Use Connect to
+// Offline returns a chain.Handle for an offline Celo client. Use Connect to
 // get a chain handle that can perform online actions.
 func Offline(
 	accountKey *keystore.Key,
