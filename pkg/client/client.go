@@ -204,7 +204,7 @@ func Initialize(
 	// Watch for new keeps creation.
 	_ = hostChain.OnBondedECDSAKeepCreated(func(event *chain.BondedECDSAKeepCreatedEvent) {
 		logger.Infof(
-			"new keep [%s] created with members: [%x] at block [%d]",
+			"new keep [%s] created with members: [%s] at block [%d]",
 			event.Keep.ID(),
 			event.MemberIDs,
 			event.BlockNumber,
