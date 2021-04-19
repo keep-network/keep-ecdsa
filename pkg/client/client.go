@@ -1062,10 +1062,27 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
+						electrsConnection := recovery.NewElectrsConnection(tbtcConfig.ElectrsURLWithDefault())
+						vbyteFee, err := electrsConnection.VbyteFee()
+						if err != nil {
+							logger.Errorf(
+								"failed to retrieve a vbyte fee estimate from %s, [%v]",
+								tbtcConfig.ElectrsURLWithDefault(),
+								err,
+							)
+							return err
+						}
+						if vbyteFee == 0 {
+							vbyteFee = tbtcConfig.BTCRefunds.MaxFeePerVByte
+						}
+						if vbyteFee == 0 {
+							vbyteFee = 75
+						}
+
 						btcAddresses, maxFeePerVByte, err := tss.BroadcastRecoveryAddress(
 							ctx,
 							beneficiaryAddress,
-							tbtcConfig.BTCRefunds.MaxFeePerVByte,
+							vbyteFee,
 							keep.ID().String(),
 							memberID,
 							memberIDs,
@@ -1115,11 +1132,14 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
-						logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
-						logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
-						logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
-						logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+						err = electrsConnection.Broadcast(recoveryTransactionHex)
+						if err != nil {
+							logger.Errorf(
+								"failed to broadcast the recovery transaction to %s, [%v]",
+								*tbtcConfig.ElectrsURL,
+								err,
+							)
+						}
 
 						keepsRegistry.UnregisterKeep(keep.ID())
 						keepTerminated <- event
