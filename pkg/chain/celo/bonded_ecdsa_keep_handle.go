@@ -264,6 +264,12 @@ func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]ExternalAddress, error) {
 	return toExternalAddresses(addresses), err
 }
 
+// GetOwner returns keep's owner.
+func (bekh *bondedEcdsaKeepHandle) GetOwner() (ExternalAddress, error) {
+	owner, err := bekh.contract.GetOwner()
+	return toExternalAddress(owner), err
+}
+
 func (bekh *bondedEcdsaKeepHandle) IsThisOperatorMember() (bool, error) {
 	operatorIndex, err := bekh.OperatorIndex()
 	if err != nil {
