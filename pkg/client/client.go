@@ -1060,7 +1060,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						beneficiaryAddress, err := recovery.ResolveAddress(
+						beneficiaryAddress, addressIndex, err := recovery.ResolveAddress(
 							tbtcConfig.Bitcoin.BeneficiaryAddress,
 							derivationIndexStorage,
 							chainParams,
@@ -1155,6 +1155,18 @@ func monitorKeepTerminatedEvent(
 
 							for i := 0; i < 5; i++ {
 								logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+							}
+						}
+
+						if bitcoinConfig.BeneficiaryAddress != beneficiaryAddress {
+							err = derivationIndexStorage.Save(bitcoinConfig.BeneficiaryAddress, addressIndex, beneficiaryAddress)
+							if err != nil {
+								logger.Errorf(
+									"failed to persist the latest address derivation index for keep [%s]: [%v]",
+									keep.ID().Hex(),
+									err,
+								)
+								return err
 							}
 						}
 

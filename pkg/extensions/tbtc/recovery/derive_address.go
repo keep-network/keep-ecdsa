@@ -131,7 +131,7 @@ func ResolveAddress(
 	beneficiaryAddress string,
 	storage *DerivationIndexStorage,
 	chainParams *chaincfg.Params,
-) (string, error) {
+) (string, uint32, error) {
 	// If the address decodes without error, then we have a valid bitcoin
 	// address. Otherwise, we assume that it's an extended key and we attempt to
 	// derive the address.
@@ -139,17 +139,13 @@ func ResolveAddress(
 	if err != nil {
 		addressIndex, err := storage.GetNextIndex(beneficiaryAddress)
 		if err != nil {
-			return "", err
+			return "", 0, err
 		}
-		derivedAddress, err := deriveAddress(beneficiaryAddress, uint32(addressIndex))
+		derivedAddress, err := deriveAddress(beneficiaryAddress, addressIndex)
 		if err != nil {
-			return "", err
+			return "", 0, err
 		}
-		err = storage.Save(beneficiaryAddress, addressIndex, derivedAddress)
-		if err != nil {
-			return "", err
-		}
-		return derivedAddress, nil
+		return derivedAddress, addressIndex, nil
 	}
-	return beneficiaryAddress, nil
+	return beneficiaryAddress, 0, nil
 }

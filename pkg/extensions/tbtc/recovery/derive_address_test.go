@@ -234,7 +234,7 @@ func TestResolveAddress(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			resolvedAddress, err := ResolveAddress(
+			resolvedAddress, _, err := ResolveAddress(
 				testData.beneficiaryAddress,
 				dis,
 				testData.chainParams,
@@ -292,7 +292,7 @@ func TestResolveBeneficiaryAddress_ExpectedFailure(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, err = ResolveAddress(
+			_, _, err = ResolveAddress(
 				testData.extendedAddress,
 				dis,
 				testData.chainParams,
