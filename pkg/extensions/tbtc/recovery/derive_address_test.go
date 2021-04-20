@@ -188,35 +188,41 @@ func TestDeriveAddress_ExpectedFailure(t *testing.T) {
 
 var resolveAddressData = map[string]struct {
 	beneficiaryAddress string
+	usedIndexes        []uint32
 	chainParams        *chaincfg.Params
 	expectedAddress    string
 }{
-	"BIP44: xpub at m/44'/0'/0'/0/0": {
+	"BIP44: xpub at m/44'/0'/0'/0/4": {
 		"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1",
+		[]uint32{3},
 		&chaincfg.MainNetParams,
-		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+		"1EEX8qZnTw1thadyxsueV748v3Y6tTMccc",
 	},
 
 	"Standard mainnet P2PKH btc address": {
 		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+		[]uint32{},
 		&chaincfg.MainNetParams,
 		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
 	},
 
 	"Standard mainnet P2SH btc address": {
 		"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+		[]uint32{},
 		&chaincfg.MainNetParams,
 		"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
 	},
 
 	"Standard mainnet Bech32 btc address": {
 		"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+		[]uint32{},
 		&chaincfg.MainNetParams,
 		"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
 	},
 
 	"Standard testnet btc address": {
 		"mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt",
+		[]uint32{},
 		&chaincfg.TestNet3Params,
 		"mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt",
 	},
@@ -233,6 +239,9 @@ func TestResolveAddress(t *testing.T) {
 			dis, err := NewDerivationIndexStorage(dir)
 			if err != nil {
 				t.Fatal(err)
+			}
+			for _, usedIndex := range testData.usedIndexes {
+				dis.Save(testData.beneficiaryAddress, usedIndex, "<example-btc-address>")
 			}
 			resolvedAddress, _, err := ResolveAddress(
 				testData.beneficiaryAddress,
