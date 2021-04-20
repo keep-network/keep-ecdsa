@@ -20,7 +20,7 @@ func TestDerivationIndexStorage_GetNextIndexOnNewKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedIndex := 0
+	expectedIndex := uint32(0)
 	if index != expectedIndex {
 		t.Errorf("incorrect extendedPublicKey index\nexpected: %d\nactual:   %d", expectedIndex, index)
 	}
@@ -98,7 +98,7 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 			for _, input := range testData.inputs {
 				err = dis.Save(
 					input.publicKey,
-					input.index,
+					uint32(input.index),
 					"<btc-address>",
 				)
 				if err != nil {
@@ -111,7 +111,7 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if index != expectation.index {
+				if index != uint32(expectation.index) {
 					t.Errorf("incorrect extendedPublicKey index for %s\nexpected: %d\nactual:   %d", expectation.publicKey, expectation.index, index)
 				}
 			}

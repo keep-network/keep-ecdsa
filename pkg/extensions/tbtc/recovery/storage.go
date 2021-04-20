@@ -61,7 +61,7 @@ func ensureDirectoryExists(path string) error {
 }
 
 // Save marks an index as used for a particular extendedPublicKey
-func (dis DerivationIndexStorage) Save(extendedPublicKey string, index int, btcAddress string) error {
+func (dis DerivationIndexStorage) Save(extendedPublicKey string, index uint32, btcAddress string) error {
 	dirPath, err := dis.getStoragePath(extendedPublicKey)
 	if err != nil {
 		return err
@@ -103,12 +103,12 @@ func (dis DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
 }
 
 // GetNextIndex returns the next unused index for the extended public key
-func (dis DerivationIndexStorage) GetNextIndex(extendedPublicKey string) (int, error) {
+func (dis DerivationIndexStorage) GetNextIndex(extendedPublicKey string) (uint32, error) {
 	index, err := dis.read(extendedPublicKey)
 	if err != nil {
 		return 0, err
 	}
-	return index + 1, nil
+	return uint32(index + 1), nil
 }
 
 // create and write data to a file
