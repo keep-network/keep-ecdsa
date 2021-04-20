@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	chainName     = "bitcoin"
 	directoryName = "derivation_indexes"
 )
 
@@ -19,7 +20,12 @@ type DerivationIndexStorage struct {
 
 // NewDerivationIndexStorage is a factory method that creates a new DerivationIndexStorage at the specified path.
 func NewDerivationIndexStorage(path string) (*DerivationIndexStorage, error) {
-	err := ensureDirectoryExists(fmt.Sprintf("%s/%s", path, directoryName))
+	err := ensureDirectoryExists(fmt.Sprintf("%s/%s", path, chainName))
+	if err != nil {
+		return nil, err
+	}
+
+	err = ensureDirectoryExists(fmt.Sprintf("%s/%s/%s", path, chainName, directoryName))
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +46,7 @@ func (dis DerivationIndexStorage) getStoragePath(extendedPublicKey string) (stri
 	}
 	publicKeyDescriptor := extendedPublicKey[:4]
 	suffix := extendedPublicKey[len(extendedPublicKey)-8:]
-	return fmt.Sprintf("%s/%s/%s_%s", dis.path, directoryName, publicKeyDescriptor, suffix), nil
+	return fmt.Sprintf("%s/%s/%s/%s_%s", dis.path, chainName, directoryName, publicKeyDescriptor, suffix), nil
 }
 
 func ensureDirectoryExists(path string) error {
