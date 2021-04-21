@@ -2,7 +2,6 @@ package event
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
@@ -32,7 +31,6 @@ func TestUniqueEventTrackAdd(t *testing.T) {
 		t.Error("event wasn't emitted before; should be added successfully")
 	}
 
-	fmt.Println(keepID2)
 	if !rs.add(keepID2) {
 		t.Error("event wasn't emitted before; should be added successfully")
 	}
