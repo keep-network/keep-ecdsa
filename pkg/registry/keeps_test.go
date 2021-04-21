@@ -350,8 +350,6 @@ func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, 
 	outputData := make(chan persistence.DataDescriptor, 3)
 	outputErrors := make(chan error)
 
-	fmt.Println(keepID1)
-	fmt.Println(signer1)
 	outputData <- &testDataDescriptor{"/membership_0", keepID1.String(), signerBytes1}
 	outputData <- &testDataDescriptor{"/membership_0", keepID2.String(), signerBytes2}
 
