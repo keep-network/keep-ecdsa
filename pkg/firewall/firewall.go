@@ -81,7 +81,10 @@ func (soakp *stakeOrActiveKeepPolicy) Validate(
 		return nil
 	}
 
+	// Check if the remote peer has authorization on the factory.
+	// The authorization cannot be revoked.
 	// If peer has no authorization on the factory it means it has never
+	// participated in any group selection so there is no chance it can be
 	// a member of any keep.
 	err := soakp.validateAuthorization(remotePeerOperatorID)
 	if err != nil {
