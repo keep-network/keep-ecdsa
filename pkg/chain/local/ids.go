@@ -36,7 +36,7 @@ func (ci localChainID) String() string {
 	return common.Address(ci).Hex()
 }
 
-func (ci localChainID) ForChain(handle chain.Handle) bool {
+func (ci localChainID) IsForChain(handle chain.Handle) bool {
 	_, ok := handle.(*localChain)
 
 	return ok

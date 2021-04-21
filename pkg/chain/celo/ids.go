@@ -39,7 +39,7 @@ func (ci celoChainID) String() string {
 	return common.Address(ci).Hex()
 }
 
-func (ci celoChainID) ForChain(handle chain.Handle) bool {
+func (ci celoChainID) IsForChain(handle chain.Handle) bool {
 	_, ok := handle.(*celoChain)
 
 	return ok

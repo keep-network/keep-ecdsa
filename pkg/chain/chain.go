@@ -25,7 +25,7 @@ type ID interface {
 	fmt.Stringer
 
 	ChainName() string
-	ForChain(handle Handle) bool
+	IsForChain(handle Handle) bool
 }
 
 // OfflineHandle represents a handle to a host chain without a backing chain

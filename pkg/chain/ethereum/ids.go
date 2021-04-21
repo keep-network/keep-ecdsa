@@ -32,7 +32,7 @@ func (eci ethereumChainID) String() string {
 	return common.Address(eci).Hex()
 }
 
-func (eci ethereumChainID) ForChain(handle chain.Handle) bool {
+func (eci ethereumChainID) IsForChain(handle chain.Handle) bool {
 	_, ok := handle.(*ethereumChain)
 
 	return ok
