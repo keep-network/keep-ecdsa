@@ -97,7 +97,7 @@ func buildPersistenceHandle(
 	}
 	if !validChainName {
 		return nil, fmt.Errorf(
-			"nvalid chain name: [%v]; chain name must start with a lowercase "+
+			"invalid chain name: [%v]; chain name must start with a lowercase "+
 				"letter and then consist solely of lowercase letters, numbers, "+
 				" -, or _",
 			chainHandle.Name(),
