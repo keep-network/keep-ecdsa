@@ -4,7 +4,6 @@ import (
 	"context"
 	cecdsa "crypto/ecdsa"
 	"crypto/elliptic"
-	"encoding/hex"
 	"sync"
 	"testing"
 	"time"
@@ -45,9 +44,7 @@ func TestAnnounceProtocol(t *testing.T) {
 		if err != nil {
 			t.Fatalf("could not get member pubkey: [%v]", err)
 		}
-		groupMemberAddresses[i] = common.HexToAddress(
-			hex.EncodeToString(pubKeyToAddressFn(pubKey)),
-		)
+		groupMemberAddresses[i] = common.BytesToAddress(pubKeyToAddressFn(pubKey))
 	}
 
 	keep := localChain.OpenKeep(
