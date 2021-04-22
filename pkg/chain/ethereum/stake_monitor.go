@@ -20,7 +20,7 @@ func (esm *ethereumStakeMonitor) HasMinimumStake(address string) (bool, error) {
 		return false, fmt.Errorf("not a valid ethereum address: %v", address)
 	}
 
-	return esm.ethereum.HasMinimumStake(common.HexToAddress(address))
+	return esm.ethereum.hasMinimumStake(common.HexToAddress(address))
 }
 
 func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error) {
@@ -49,5 +49,5 @@ func (es *ethereumStaker) Address() relaychain.StakerAddress {
 }
 
 func (es *ethereumStaker) Stake() (*big.Int, error) {
-	return es.ethereum.BalanceOf(common.HexToAddress(es.address))
+	return es.ethereum.balanceOf(common.HexToAddress(es.address))
 }

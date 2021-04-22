@@ -1,23 +1,29 @@
 package registry
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-ecdsa/internal/testdata"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/gen/pb"
 )
 
 var (
-	keepAddress1 = common.HexToAddress("0x770a9E2F2Aa1eC2d3Ca916Fc3e6A55058A898632")
-	keepAddress2 = common.HexToAddress("0x8B3BccB3A3994681A1C1584DE4b4E8b23ed1Ed6d")
-	keepAddress3 = common.HexToAddress("0x0472ec0185ebb8202f3d4ddb0226998889663cf2")
+	keepID1String = "0x770a9E2F2Aa1eC2d3Ca916Fc3e6A55058A898632"
+	keepID2String = "0x8B3BccB3A3994681A1C1584DE4b4E8b23ed1Ed6d"
+	keepID3String = "0x0472ec0185ebb8202f3d4ddb0226998889663cf2"
+
+	localChain chain.Handle
+
+	keepID1, keepID2, keepID3 chain.ID
 
 	groupMemberIDs = [][]byte{
 		[]byte("member-1"),
@@ -26,9 +32,27 @@ var (
 	}
 )
 
-func TestRegisterSigner(t *testing.T) {
+func init() {
+	localChain = local.Connect(context.Background())
+
+	var err error
+	keepID1, err = localChain.UnmarshalID(keepID1String)
+	keepID2, _ = localChain.UnmarshalID(keepID2String)
+	keepID3, _ = localChain.UnmarshalID(keepID3String)
+
+	if err != nil {
+		fmt.Println("booyansky", err)
+	}
+}
+
+func buildRegistry() (*persistenceHandleMock, *Keeps) {
 	persistenceMock := &persistenceHandleMock{}
-	kr := NewKeepsRegistry(persistenceMock)
+
+	return persistenceMock, NewKeepsRegistry(persistenceMock, localChain.UnmarshalID)
+}
+
+func TestRegisterSigner(t *testing.T) {
+	persistenceMock, kr := buildRegistry()
 
 	signer1, err := newTestSigner(0)
 	if err != nil {
@@ -42,11 +66,11 @@ func TestRegisterSigner(t *testing.T) {
 
 	expectedFile := &testFileInfo{
 		data:      expectedSignerBytes,
-		directory: keepAddress1.String(),
+		directory: keepID1.String(),
 		name:      fmt.Sprintf("/membership_%s", signer1.MemberID().String()),
 	}
 
-	err = kr.RegisterSigner(keepAddress1, signer1)
+	err = kr.RegisterSigner(keepID1, signer1)
 	if err != nil {
 		t.Fatalf("failed to register signer: [%v]", err)
 	}
@@ -73,24 +97,23 @@ func TestRegisterSigner(t *testing.T) {
 }
 
 func TestRegisterSignerDuplicate(t *testing.T) {
-	persistenceMock := &persistenceHandleMock{}
-	kr := NewKeepsRegistry(persistenceMock)
+	_, kr := buildRegistry()
 
 	signer1, err := newTestSigner(0)
 	if err != nil {
 		t.Fatalf("failed to get signer: [%v]", err)
 	}
 
-	err = kr.RegisterSigner(keepAddress1, signer1)
+	err = kr.RegisterSigner(keepID1, signer1)
 
 	signer2, err := newTestSigner(1)
 	if err != nil {
 		t.Fatalf("failed to get signer: [%v]", err)
 	}
 
-	err = kr.RegisterSigner(keepAddress1, signer2)
+	err = kr.RegisterSigner(keepID1, signer2)
 
-	expectedError := fmt.Errorf("signer for keep [%s] already registered", keepAddress1.String())
+	expectedError := fmt.Errorf("signer for keep [%s] already registered", keepID1.String())
 	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\nexpected: [%v]\nactual:   [%v]",
@@ -101,8 +124,7 @@ func TestRegisterSignerDuplicate(t *testing.T) {
 }
 
 func TestSnapshotSigner(t *testing.T) {
-	persistenceMock := &persistenceHandleMock{}
-	kr := NewKeepsRegistry(persistenceMock)
+	persistenceMock, kr := buildRegistry()
 
 	signer1, err := newTestSigner(0)
 	if err != nil {
@@ -116,11 +138,11 @@ func TestSnapshotSigner(t *testing.T) {
 
 	expectedFile := &testFileInfo{
 		data:      expectedSignerBytes,
-		directory: keepAddress1.String(),
+		directory: keepID1.String(),
 		name:      fmt.Sprintf("/membership_%s", signer1.MemberID().String()),
 	}
 
-	err = kr.SnapshotSigner(keepAddress1, signer1)
+	err = kr.SnapshotSigner(keepID1, signer1)
 	if err != nil {
 		t.Fatalf("failed to snapshot signer: [%v]", err)
 	}
@@ -146,20 +168,19 @@ func TestSnapshotSigner(t *testing.T) {
 }
 
 func TestUnregisterSigner(t *testing.T) {
-	persistenceMock := &persistenceHandleMock{}
-	kr := NewKeepsRegistry(persistenceMock)
+	persistenceMock, kr := buildRegistry()
 
 	signer1, err := newTestSigner(0)
 	if err != nil {
 		t.Fatalf("failed to get signer: [%v]", err)
 	}
 
-	err = kr.RegisterSigner(keepAddress1, signer1)
+	err = kr.RegisterSigner(keepID1, signer1)
 	if err != nil {
 		t.Fatalf("failed to register signer: [%v]", err)
 	}
 
-	kr.UnregisterKeep(keepAddress1)
+	kr.UnregisterKeep(keepID1)
 
 	if len(persistenceMock.persistedGroups) != 0 {
 		t.Errorf(
@@ -179,8 +200,7 @@ func TestUnregisterSigner(t *testing.T) {
 }
 
 func TestGetSigner(t *testing.T) {
-	persistenceMock := &persistenceHandleMock{}
-	kr := NewKeepsRegistry(persistenceMock)
+	_, kr := buildRegistry()
 
 	signers, err := testSigners()
 	if err != nil {
@@ -189,32 +209,32 @@ func TestGetSigner(t *testing.T) {
 
 	signer1 := signers[0]
 
-	err = kr.RegisterSigner(keepAddress1, signer1)
+	err = kr.RegisterSigner(keepID1, signer1)
 	if err != nil {
 		t.Fatalf("failed to register signer: [%v]", err)
 	}
 
 	var tests = map[string]struct {
-		keepAddress    common.Address
+		keepID         chain.ID
 		expectedSigner *tss.ThresholdSigner
 		expectedError  error
 	}{
 		"returns registered keep with one signer": {
-			keepAddress:    keepAddress1,
+			keepID:         keepID1,
 			expectedSigner: signer1,
 		},
 		"returns error for not registered keep": {
-			keepAddress: keepAddress3,
+			keepID: keepID3,
 			expectedError: fmt.Errorf(
 				"could not find signer for keep: [%s]",
-				keepAddress3.String(),
+				keepID3.String(),
 			),
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			signer, err := kr.GetSigner(test.keepAddress)
+			signer, err := kr.GetSigner(test.keepID)
 
 			if test.expectedSigner != signer {
 				t.Errorf(
@@ -236,8 +256,6 @@ func TestGetSigner(t *testing.T) {
 }
 
 func TestLoadExistingGroups(t *testing.T) {
-	persistenceMock := &persistenceHandleMock{}
-
 	signers, err := testSigners()
 	if err != nil {
 		t.Fatalf("failed to get signer: [%v]", err)
@@ -246,9 +264,9 @@ func TestLoadExistingGroups(t *testing.T) {
 	signer1 := signers[0]
 	signer2 := signers[1]
 
-	kr := NewKeepsRegistry(persistenceMock)
+	_, kr := buildRegistry()
 
-	if len(kr.GetKeepsAddresses()) != 0 {
+	if len(kr.GetKeepsIDs()) != 0 {
 		t.Fatal("unexpected keeps number at start")
 	}
 
@@ -256,7 +274,7 @@ func TestLoadExistingGroups(t *testing.T) {
 
 	signersCount := 0
 
-	if len(kr.GetKeepsAddresses()) != 2 {
+	if len(kr.GetKeepsIDs()) != 2 {
 		t.Fatalf(
 			"unexpected number of keeps\nexpected: [%d]\nactual:   [%d]",
 			2,
@@ -265,7 +283,7 @@ func TestLoadExistingGroups(t *testing.T) {
 	}
 
 	expectedSigner1 := signer1
-	actualSigner1, err := kr.GetSigner(keepAddress1)
+	actualSigner1, err := kr.GetSigner(keepID1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -278,7 +296,7 @@ func TestLoadExistingGroups(t *testing.T) {
 	}
 
 	expectedSigner2 := signer2
-	actualSigner2, err := kr.GetSigner(keepAddress2)
+	actualSigner2, err := kr.GetSigner(keepID2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -332,8 +350,8 @@ func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, 
 	outputData := make(chan persistence.DataDescriptor, 3)
 	outputErrors := make(chan error)
 
-	outputData <- &testDataDescriptor{"/membership_0", keepAddress1.String(), signerBytes1}
-	outputData <- &testDataDescriptor{"/membership_0", keepAddress2.String(), signerBytes2}
+	outputData <- &testDataDescriptor{"/membership_0", keepID1.String(), signerBytes1}
+	outputData <- &testDataDescriptor{"/membership_0", keepID2.String(), signerBytes2}
 
 	close(outputData)
 	close(outputErrors)
