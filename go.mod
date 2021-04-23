@@ -16,7 +16,7 @@ require (
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/celo-org/celo-blockchain v0.0.0-20210222234634-f8c8f6744526
 	github.com/ethereum/go-ethereum v1.10.1
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
 	github.com/ipfs/go-log v1.0.4
 	github.com/keep-network/keep-common v1.4.1-0.20210319095805-ebf46d0b62db

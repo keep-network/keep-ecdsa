@@ -8,6 +8,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/celo-org/celo-blockchain/common"
+
 	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -18,16 +20,25 @@ import (
 )
 
 type bondedEcdsaKeepHandle struct {
-	keepID     ExternalAddress
-	operatorID ExternalAddress
+	keepID     chain.ID
+	operatorID chain.ID
 	contract   *contract.BondedECDSAKeep
 }
 
 func (cc *celoChain) GetKeepWithID(
-	keepID ExternalAddress,
+	keepID chain.ID,
 ) (chain.BondedECDSAKeepHandle, error) {
+	keepAddress, err := fromChainID(keepID)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"unable to interpret keep ID [%v]: [%v]",
+			keepID,
+			err,
+		)
+	}
+
 	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
-		fromExternalAddress(keepID),
+		keepAddress,
 		cc.chainID,
 		cc.accountKey,
 		cc.client,
@@ -42,7 +53,7 @@ func (cc *celoChain) GetKeepWithID(
 
 	return &bondedEcdsaKeepHandle{
 		keepID:     keepID,
-		operatorID: cc.Address(),
+		operatorID: cc.OperatorID(),
 		contract:   bondedECDSAKeepContract,
 	}, nil
 }
@@ -61,10 +72,10 @@ func (cc *celoChain) GetKeepAtIndex(
 		)
 	}
 
-	return cc.GetKeepWithID(toExternalAddress(keepAddress))
+	return cc.GetKeepWithID(celoChainID(keepAddress))
 }
 
-func (bekh *bondedEcdsaKeepHandle) ID() ExternalAddress {
+func (bekh *bondedEcdsaKeepHandle) ID() chain.ID {
 	return bekh.keepID
 }
 
@@ -94,12 +105,12 @@ func (bekh *bondedEcdsaKeepHandle) OnConflictingPublicKeySubmitted(
 	handler func(event *chain.ConflictingPublicKeySubmittedEvent),
 ) (subscription.EventSubscription, error) {
 	onEvent := func(
-		SubmittingMember InternalAddress,
+		SubmittingMember common.Address,
 		ConflictingPublicKey []byte,
 		blockNumber uint64,
 	) {
 		handler(&chain.ConflictingPublicKeySubmittedEvent{
-			SubmittingMember:     toExternalAddress(SubmittingMember),
+			SubmittingMember:     celoChainID(SubmittingMember),
 			ConflictingPublicKey: ConflictingPublicKey,
 			BlockNumber:          blockNumber,
 		})
@@ -255,13 +266,13 @@ func (bekh *bondedEcdsaKeepHandle) GetPublicKey() ([]uint8, error) {
 }
 
 // GetMembers returns keep's members.
-func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]ExternalAddress, error) {
+func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]chain.ID, error) {
 	addresses, err := bekh.contract.GetMembers()
 	if err != nil {
-		return []ExternalAddress{}, err
+		return nil, err
 	}
 
-	return toExternalAddresses(addresses), err
+	return toIDSlice(addresses), err
 }
 
 func (bekh *bondedEcdsaKeepHandle) IsThisOperatorMember() (bool, error) {

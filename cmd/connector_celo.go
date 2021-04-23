@@ -12,6 +12,24 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/chain/celo"
 )
 
+func offlineChain(
+	config *config.Config,
+) (chain.OfflineHandle, error) {
+	celoKey, err := celoutil.DecryptKeyFile(
+		config.Celo.Account.KeyFile,
+		config.Celo.Account.KeyFilePassword,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to read key file [%s]: [%v]",
+			config.Celo.Account.KeyFile,
+			err,
+		)
+	}
+
+	return celo.Offline(celoKey, &config.Celo), nil
+}
+
 func connectChain(
 	ctx context.Context,
 	config *config.Config,

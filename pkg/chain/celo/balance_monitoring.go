@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/celo-org/celo-blockchain/common"
 	"github.com/keep-network/keep-common/pkg/chain/celo"
 	"github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 )
@@ -39,7 +40,7 @@ func (cc *celoChain) initializeBalanceMonitoring(
 
 	balanceMonitor.Observe(
 		ctx,
-		fromExternalAddress(ExternalAddress(cc.Address())),
+		cc.operatorAddress(),
 		alertThreshold,
 		defaultBalanceMonitoringTick,
 	)
@@ -47,15 +48,15 @@ func (cc *celoChain) initializeBalanceMonitoring(
 	logger.Infof(
 		"started balance monitoring for address [%v] "+
 			"with the alert threshold set to [%v]",
-		cc.Address().Hex(),
+		cc.OperatorID(),
 		alertThreshold,
 	)
 }
 
 // BalanceMonitor returns a balance monitor.
 func (cc *celoChain) balanceMonitor() (*celoutil.BalanceMonitor, error) {
-	weiBalanceOf := func(address InternalAddress) (*celo.Wei, error) {
-		return cc.WeiBalanceOf(toExternalAddress(address))
+	weiBalanceOf := func(address common.Address) (*celo.Wei, error) {
+		return cc.weiBalanceOf(address)
 	}
 
 	return celoutil.NewBalanceMonitor(weiBalanceOf), nil

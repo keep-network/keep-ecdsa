@@ -11,14 +11,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/keep-network/keep-common/pkg/subscription"
 
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/utils/byteutils"
-
-	"github.com/ethereum/go-ethereum/common"
-	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 )
 
 const (
@@ -55,7 +55,7 @@ func TestRetrievePubkey_TimeoutElapsed(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -116,7 +116,7 @@ func TestRetrievePubkey_StopEventOccurred(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -187,7 +187,7 @@ func TestRetrievePubkey_KeepClosedEventOccurred(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -255,7 +255,7 @@ func TestRetrievePubkey_KeepTerminatedEventOccurred(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -323,7 +323,7 @@ func TestRetrievePubkey_ActionFailed(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -367,7 +367,7 @@ func TestRetrievePubkey_ContextCancelled_WithoutWorkingMonitoring(t *testing.T) 
 	cancelCtx()
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -405,7 +405,7 @@ func TestRetrievePubkey_ContextCancelled_WithWorkingMonitoring(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -488,7 +488,7 @@ func TestProvideRedemptionSignature_TimeoutElapsed(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -564,7 +564,7 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignat
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -655,7 +655,7 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositRedeemed(
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -737,7 +737,7 @@ func TestProvideRedemptionSignature_KeepClosedEventOccurred(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -816,7 +816,7 @@ func TestProvideRedemptionSignature_KeepTerminatedEventOccurred(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -895,7 +895,7 @@ func TestProvideRedemptionSignature_ActionFailed(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -957,7 +957,7 @@ func TestProvideRedemptionSignature_ContextCancelled_WithoutWorkingMonitoring(
 	cancelCtx()
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -1008,7 +1008,7 @@ func TestProvideRedemptionSignature_ContextCancelled_WithWorkingMonitoring(
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -1118,7 +1118,7 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -1218,7 +1218,7 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedemptionRequested(
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -1329,7 +1329,7 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedeemed(
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -1420,7 +1420,7 @@ func TestProvideRedemptionProof_KeepClosedEventOccurred(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -1516,7 +1516,7 @@ func TestProvideRedemptionProof_KeepTerminatedEventOccurred(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -1612,7 +1612,7 @@ func TestProvideRedemptionProof_ActionFailed(t *testing.T) {
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -1683,7 +1683,7 @@ func TestProvideRedemptionProof_ContextCancelled_WithoutWorkingMonitoring(
 	cancelCtx()
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -1748,7 +1748,7 @@ func TestProvideRedemptionProof_ContextCancelled_WithWorkingMonitoring(
 	)
 
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -2020,7 +2020,7 @@ func TestShouldMonitorDeposit_ExpectedInitialState(t *testing.T) {
 
 	// create a signing group which contains the operator
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -2053,7 +2053,7 @@ func TestShouldMonitorDeposit_UnexpectedInitialState(t *testing.T) {
 
 	// create a signing group which contains the operator
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -2087,7 +2087,7 @@ func TestShouldMonitorDeposit_InitialStateChange(t *testing.T) {
 
 	// create a signing group which contains the operator
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -2142,7 +2142,7 @@ func TestShouldMonitorDeposit_MemberCache(t *testing.T) {
 
 	// create a signing group which contains the operator
 	signers := append(
-		[]common.Address{tbtcChain.Address()},
+		[]common.Address{tbtcChain.OperatorAddress()},
 		local.RandomSigningGroup(2)...,
 	)
 
@@ -2262,7 +2262,7 @@ func TestGetSignerActionDelay(t *testing.T) {
 			tbtc := newTestTBTC(tbtcChain)
 
 			signers := local.RandomSigningGroup(test.signersCount)
-			signers[test.signerIndex] = tbtcChain.Address()
+			signers[test.signerIndex] = tbtcChain.OperatorAddress()
 
 			tbtcChain.CreateDeposit(depositAddress, signers)
 
@@ -2374,7 +2374,7 @@ func closeKeep(
 		return err
 	}
 
-	err = tbtcChain.CloseKeep(keep.ID())
+	err = tbtcChain.CloseKeep(common.HexToAddress(keep.ID().String()))
 	if err != nil {
 		return err
 	}
@@ -2391,7 +2391,7 @@ func terminateKeep(
 		return err
 	}
 
-	err = tbtcChain.TerminateKeep(keep.ID())
+	err = tbtcChain.TerminateKeep(common.HexToAddress(keep.ID().String()))
 	if err != nil {
 		return err
 	}

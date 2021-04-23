@@ -38,9 +38,14 @@ type localKeep struct {
 }
 
 func (lc *localChain) GetKeepWithID(
-	keepID common.Address,
+	keepID chain.ID,
 ) (chain.BondedECDSAKeepHandle, error) {
-	return lc.keeps[keepID], nil
+	keepAddress, err := fromChainID(keepID)
+	if err != nil {
+		return nil, err
+	}
+
+	return lc.keeps[keepAddress], nil
 }
 
 func (lc *localChain) GetKeepAtIndex(
@@ -55,11 +60,11 @@ func (lc *localChain) GetKeepAtIndex(
 		return nil, fmt.Errorf("out of bounds")
 	}
 
-	return lc.GetKeepWithID(lc.keepAddresses[index])
+	return lc.GetKeepWithID(localChainID(lc.keepAddresses[index]))
 }
 
-func (lk *localKeep) ID() common.Address {
-	return lk.keepID
+func (lk *localKeep) ID() chain.ID {
+	return localChainID(lk.keepID)
 }
 
 // OnSignatureRequested is a callback that is invoked on-chain
@@ -226,16 +231,28 @@ func (lk *localKeep) IsThisOperatorMember() (bool, error) {
 	return operatorIndex != -1, nil
 }
 
-func (lk *localKeep) OperatorIndex() (int, error) {
-	memberIDs, err := lk.GetMembers()
-	if err != nil {
-		return -1, err
+// Unsafe version of OperatorIndex that does no mutex locking. This is for use
+// with callers who have already locked the mutex.
+func (lk *localKeep) unsafeOperatorIndex() int {
+	operatorAddress := lk.chain.OperatorAddress()
+
+	for i, memberID := range lk.members {
+		if operatorAddress.String() == memberID.String() {
+			return i
+		}
 	}
 
-	operatorMemberID := lk.chain.Address()
+	return -1
+}
 
-	for i, memberID := range memberIDs {
-		if operatorMemberID.String() == memberID.String() {
+func (lk *localKeep) OperatorIndex() (int, error) {
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
+
+	operatorAddress := lk.chain.OperatorAddress()
+
+	for i, memberID := range lk.members {
+		if operatorAddress.String() == memberID.String() {
 			return i, nil
 		}
 	}
@@ -243,11 +260,11 @@ func (lk *localKeep) OperatorIndex() (int, error) {
 	return -1, nil
 }
 
-func (lk *localKeep) GetMembers() ([]common.Address, error) {
+func (lk *localKeep) GetMembers() ([]chain.ID, error) {
 	lk.chain.localChainMutex.Lock()
 	defer lk.chain.localChainMutex.Unlock()
 
-	return lk.members, nil
+	return toIDSlice(lk.members), nil
 }
 
 func (lk *localKeep) GetHonestThreshold() (uint64, error) {

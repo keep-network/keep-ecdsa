@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
@@ -15,81 +15,86 @@ var logger = log.Logger("keep-registry")
 // Keeps represents a collection of keeps in which the given client is a member.
 type Keeps struct {
 	myKeepsMutex *sync.RWMutex
-	myKeeps      map[common.Address]*tss.ThresholdSigner
+	myKeeps      map[chain.ID]*tss.ThresholdSigner
 
-	storage storage
+	storage     storage
+	unmarshalID func(string) (chain.ID, error)
 }
 
 // NewKeepsRegistry returns an empty keeps registry.
-func NewKeepsRegistry(persistence persistence.Handle) *Keeps {
+func NewKeepsRegistry(
+	persistence persistence.Handle,
+	unmarshalIDFunc func(string) (chain.ID, error),
+) *Keeps {
 	return &Keeps{
 		myKeepsMutex: &sync.RWMutex{},
-		myKeeps:      make(map[common.Address]*tss.ThresholdSigner),
+		myKeeps:      make(map[chain.ID]*tss.ThresholdSigner),
 		storage:      newStorage(persistence),
+		unmarshalID:  unmarshalIDFunc,
 	}
 }
 
 // RegisterSigner registers that a signer was successfully created for the given
 // keep.
 func (k *Keeps) RegisterSigner(
-	keepAddress common.Address,
+	keepID chain.ID,
 	signer *tss.ThresholdSigner,
 ) error {
 	k.myKeepsMutex.Lock()
 	defer k.myKeepsMutex.Unlock()
 
-	if _, exists := k.myKeeps[keepAddress]; exists {
+	if _, exists := k.myKeeps[keepID]; exists {
 		return fmt.Errorf(
 			"signer for keep [%s] already registered",
-			keepAddress.String(),
+			keepID.String(),
 		)
 	}
 
-	err := k.storage.save(keepAddress, signer)
+	err := k.storage.save(keepID, signer)
 	if err != nil {
 		return fmt.Errorf(
 			"could not persist signer for keep [%s] in the storage: [%v]",
-			keepAddress.String(),
+			keepID.String(),
 			err,
 		)
 	}
 
-	k.myKeeps[keepAddress] = signer
+	k.myKeeps[keepID] = signer
 
 	return nil
 }
 
 // SnapshotSigner stores a snapshot of a keep address with its signer
 func (k *Keeps) SnapshotSigner(
-	keepAddress common.Address,
+	keepID chain.ID,
 	signer *tss.ThresholdSigner,
 ) error {
-	return k.storage.snapshot(keepAddress, signer)
+	return k.storage.snapshot(keepID, signer)
 }
 
 // UnregisterKeep archives threeshold signer info for the given keep address.
-func (k *Keeps) UnregisterKeep(keepAddress common.Address) {
+func (k *Keeps) UnregisterKeep(keepID chain.ID) {
 	k.myKeepsMutex.Lock()
 	defer k.myKeepsMutex.Unlock()
 
-	err := k.storage.archive(keepAddress.String())
+	err := k.storage.archive(keepID)
 	if err != nil {
 		logger.Errorf("could not archive keep to the storage: [%v]", err)
 	}
 
-	delete(k.myKeeps, keepAddress)
+	delete(k.myKeeps, keepID)
 }
 
 // GetSigner gets signer for a keep address.
-func (k *Keeps) GetSigner(keepAddress common.Address) (*tss.ThresholdSigner, error) {
+func (k *Keeps) GetSigner(keepID chain.ID) (*tss.ThresholdSigner, error) {
 	k.myKeepsMutex.RLock()
 	defer k.myKeepsMutex.RUnlock()
 
-	signer, ok := k.myKeeps[keepAddress]
+	signer, ok := k.myKeeps[keepID]
 	if !ok {
 		return nil, fmt.Errorf(
 			"could not find signer for keep: [%s]",
-			keepAddress.String(),
+			keepID.String(),
 		)
 	}
 
@@ -98,26 +103,26 @@ func (k *Keeps) GetSigner(keepAddress common.Address) (*tss.ThresholdSigner, err
 
 // HasSigner returns true if at least one signer exists in the registry
 // for the keep with the given addres.
-func (k *Keeps) HasSigner(keepAddress common.Address) bool {
+func (k *Keeps) HasSigner(keepID chain.ID) bool {
 	k.myKeepsMutex.RLock()
 	defer k.myKeepsMutex.RUnlock()
 
-	_, has := k.myKeeps[keepAddress]
+	_, has := k.myKeeps[keepID]
 	return has
 }
 
-// GetKeepsAddresses returns addresses of all registered keeps.
-func (k *Keeps) GetKeepsAddresses() []common.Address {
+// GetKeepsIDs returns ids of all registered keeps.
+func (k *Keeps) GetKeepsIDs() []chain.ID {
 	k.myKeepsMutex.RLock()
 	defer k.myKeepsMutex.RUnlock()
 
-	keepsAddresses := make([]common.Address, 0)
+	keepIDs := make([]chain.ID, 0, len(k.myKeeps))
 
-	for keepAddress := range k.myKeeps {
-		keepsAddresses = append(keepsAddresses, keepAddress)
+	for keepID := range k.myKeeps {
+		keepIDs = append(keepIDs, keepID)
 	}
 
-	return keepsAddresses
+	return keepIDs
 }
 
 // LoadExistingKeeps iterates over all signers stored on disk and loads them
@@ -126,7 +131,7 @@ func (k *Keeps) LoadExistingKeeps() {
 	k.myKeepsMutex.Lock()
 	defer k.myKeepsMutex.Unlock()
 
-	keepSignersChannel, errorsChannel := k.storage.readAll()
+	keepSignersChannel, errorsChannel := k.storage.readAll(k.unmarshalID)
 
 	// Two goroutines read from signers and errors channels and either adds
 	// signers to the keeps registry or outputs an error to stderr.
@@ -139,16 +144,17 @@ func (k *Keeps) LoadExistingKeeps() {
 
 	go func() {
 		for keepSigner := range keepSignersChannel {
-			if _, exists := k.myKeeps[keepSigner.keepAddress]; exists {
+			fmt.Println(keepSigner, keepSigner.keepID)
+			if _, exists := k.myKeeps[keepSigner.keepID]; exists {
 				logger.Errorf(
 					"signer for keep [%s] already loaded; "+
 						"possible duplicate in the storage layer",
-					keepSigner.keepAddress.String(),
+					keepSigner.keepID.String(),
 				)
 				continue
 			}
 
-			k.myKeeps[keepSigner.keepAddress] = keepSigner.signer
+			k.myKeeps[keepSigner.keepID] = keepSigner.signer
 		}
 
 		wg.Done()

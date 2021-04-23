@@ -24,9 +24,6 @@ func TestOnBondedECDSAKeepCreated(t *testing.T) {
 	localChain := initializeLocalChain(ctx)
 	eventFired := make(chan *chain.BondedECDSAKeepCreatedEvent)
 	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
-	expectedEvent := &chain.BondedECDSAKeepCreatedEvent{
-		KeepAddress: keepAddress,
-	}
 
 	subscription := localChain.OnBondedECDSAKeepCreated(
 		func(event *chain.BondedECDSAKeepCreatedEvent) {
@@ -35,9 +32,9 @@ func TestOnBondedECDSAKeepCreated(t *testing.T) {
 	)
 	defer subscription.Unsubscribe()
 
-	err := localChain.createKeep(keepAddress)
-	if err != nil {
-		t.Fatal(err)
+	keep := localChain.OpenKeep(keepAddress, []common.Address{})
+	expectedEvent := &chain.BondedECDSAKeepCreatedEvent{
+		Keep: keep,
 	}
 
 	select {
