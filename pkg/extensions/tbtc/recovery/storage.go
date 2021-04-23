@@ -112,6 +112,18 @@ func (dis *DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
 func (dis *DerivationIndexStorage) GetNextIndex(extendedPublicKey string) (uint32, error) {
 	dis.mutex.Lock()
 	defer dis.mutex.Unlock()
+	dirPath, err := dis.getStoragePath(extendedPublicKey)
+	if err != nil {
+		return 0, err
+	}
+	_, err = os.Stat(dirPath)
+	if os.IsNotExist(err) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+
 	index, err := dis.read(extendedPublicKey)
 	if err != nil {
 		return 0, err
