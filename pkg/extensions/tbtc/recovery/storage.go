@@ -89,18 +89,18 @@ func (dis *DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
 		return 0, err
 	}
 
-	err = ensureDirectoryExists(dirPath)
+	index := -1
+	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		return 0, err
 	}
 
-	index := -1
-	files, err := ioutil.ReadDir(dirPath)
 	for _, file := range files {
 		fileIndex, err := strconv.Atoi(file.Name())
 		if err != nil {
 			return 0, err
 		}
+
 		if fileIndex > index {
 			index = fileIndex
 		}
