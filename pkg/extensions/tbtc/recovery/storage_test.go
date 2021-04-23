@@ -92,6 +92,17 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				{"       xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1          ", 5091},
 			},
 		},
+		"write to the same index multiple times": {
+			[]keyAndIndex{
+				{"xpub1sameidx", 777},
+				{"xpub1sameidx", 777},
+				{"xpub1sameidx", 777},
+				{"xpub1sameidx", 777},
+			},
+			[]keyAndIndex{
+				{"xpub1sameidx", 778},
+			},
+		},
 	}
 	for testName, testData := range testData {
 		t.Run(testName, func(t *testing.T) {
@@ -126,6 +137,75 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestDerivationIndexStorage_OverwriteExistingPair(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+	dis, err := NewDerivationIndexStorage(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	extendedPublicKey := "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
+	index := uint32(89)
+	err = dis.Save(extendedPublicKey, index, "<first-btc-address>")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = dis.Save(extendedPublicKey, index, "<second-btc-address>")
+	if err != nil {
+		t.Errorf("unexpected error trying to overwrite extendedPublicKey [%s] at index [%d]: [%v]", extendedPublicKey, index, err)
+	}
+}
+
+func TestDerivationIndexStorage_ShortExtendedPublicKeys(t *testing.T) {
+	null := "\xff" // represents no error
+	testData := map[string]struct {
+		input         keyAndIndex
+		expectedError string
+	}{
+		"6-letter key":  {keyAndIndex{"abc123", 8}, "insufficient length for public key"},
+		"11-letter key": {keyAndIndex{"1111.1111.1", 12}, "insufficient length for public key"},
+		"12-letter key": {keyAndIndex{"1111.1111.11", 16}, null},
+		"13-letter key": {keyAndIndex{"1111.1111.111", 20}, null},
+	}
+	for testName, testData := range testData {
+		t.Run(testName, func(t *testing.T) {
+			dir, err := ioutil.TempDir("", "example")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(dir)
+			dis, err := NewDerivationIndexStorage(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = dis.Save(testData.input.publicKey, uint32(testData.input.index), "<btc-address>")
+			if testData.expectedError == null {
+				if err != nil {
+					t.Errorf("unexpected error: [%v]", err)
+				}
+			} else {
+				if err == nil {
+					t.Fatalf("expected an error, but found none")
+				}
+				if !ErrorContains(err, testData.expectedError) {
+					t.Errorf("unexpected error\nexpected: %s\nactual:   %v", testData.expectedError, err)
+				}
+			}
+		})
+	}
+}
+
+func TestDerivationIndexStorage_NewDerivationIndexStorageOnNonexistantPath(t *testing.T) {
+	_, err := NewDerivationIndexStorage("banana-fofana")
+	if !ErrorContains(err, "no such file or directory") {
+		t.Errorf("unexpected error: [%v]", err)
 	}
 }
 
