@@ -94,15 +94,3 @@ jobs:
           push: |
             ${{ github.ref == 'refs/heads/master'
               && github.event_name != 'pull_request' }}
-
-  client-scan:
-    runs-on: ubuntu-latest
-    env:
-      GO111MODULE: on
-    steps:
-      - uses: actions/checkout@v2
-      - uses: securego/gosec@master
-        with:
-          args: |
-            -exclude-dir=pkg/chain/gen
-            ./...
