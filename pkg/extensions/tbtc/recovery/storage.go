@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
@@ -16,7 +17,8 @@ const (
 // DerivationIndexStorage provides access to the derivation index persistence
 // API, which makes sure we're not reusing derived wallet addresses.
 type DerivationIndexStorage struct {
-	path string
+	path  string
+	mutex sync.Mutex
 }
 
 // NewDerivationIndexStorage is a factory method that creates a new DerivationIndexStorage at the specified path.
@@ -63,7 +65,9 @@ func ensureDirectoryExists(path string) error {
 }
 
 // Save marks an index as used for a particular extendedPublicKey
-func (dis DerivationIndexStorage) Save(extendedPublicKey string, index uint32, btcAddress string) error {
+func (dis *DerivationIndexStorage) Save(extendedPublicKey string, index uint32, btcAddress string) error {
+	dis.mutex.Lock()
+	defer dis.mutex.Unlock()
 	dirPath, err := dis.getStoragePath(extendedPublicKey)
 	if err != nil {
 		return err
@@ -79,7 +83,7 @@ func (dis DerivationIndexStorage) Save(extendedPublicKey string, index uint32, b
 }
 
 // Read returns the most recently used index for the extended public key
-func (dis DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
+func (dis *DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
 	dirPath, err := dis.getStoragePath(extendedPublicKey)
 	if err != nil {
 		return 0, err
@@ -105,7 +109,9 @@ func (dis DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
 }
 
 // GetNextIndex returns the next unused index for the extended public key
-func (dis DerivationIndexStorage) GetNextIndex(extendedPublicKey string) (uint32, error) {
+func (dis *DerivationIndexStorage) GetNextIndex(extendedPublicKey string) (uint32, error) {
+	dis.mutex.Lock()
+	defer dis.mutex.Unlock()
 	index, err := dis.read(extendedPublicKey)
 	if err != nil {
 		return 0, err

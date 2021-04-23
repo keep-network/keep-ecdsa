@@ -128,3 +128,52 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 		})
 	}
 }
+
+func TestDerivationIndexStorage_MultipleAsyncSavesAndGetNextIndexes(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+	dis, err := NewDerivationIndexStorage(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	extendedPublicKey := "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
+	index := uint32(831)
+	iterations := 10
+	errs := make(chan error, iterations)
+	for i := 0; i < iterations; i++ {
+		go func() {
+			err = dis.Save(extendedPublicKey, index, "<first-btc-address>")
+			errs <- err
+		}()
+	}
+	for i := 0; i < iterations; i++ {
+		err := <-errs
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	type pair struct {
+		index uint32
+		err   error
+	}
+	getNextIndexResults := make(chan pair, iterations)
+	for i := 0; i < iterations; i++ {
+		go func() {
+			nextIndex, err := dis.GetNextIndex(extendedPublicKey)
+			getNextIndexResults <- pair{nextIndex, err}
+		}()
+	}
+	for i := 0; i < iterations; i++ {
+		result := <-getNextIndexResults
+		if result.err != nil {
+			t.Fatal(err)
+		}
+		if result.index != index+1 {
+			t.Errorf("unexpected next index\nexpected: %d\nactual:   %d", index+1, result.index)
+		}
+	}
+}
