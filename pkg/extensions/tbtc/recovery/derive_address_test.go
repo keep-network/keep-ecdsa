@@ -192,6 +192,12 @@ var resolveAddressData = map[string]struct {
 	chainParams        *chaincfg.Params
 	expectedAddress    string
 }{
+	"BIP44: xpub at m/44'/0'/0'/0/0": {
+		"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1",
+		[]uint32{},
+		&chaincfg.MainNetParams,
+		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+	},
 	"BIP44: xpub at m/44'/0'/0'/0/4": {
 		"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1",
 		[]uint32{3},
