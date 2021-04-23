@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -40,12 +41,13 @@ func NewDerivationIndexStorage(path string) (*DerivationIndexStorage, error) {
 // ypub6Xxan668aiJqvh4SVfd7EzqjWvf36gWufTkhWHv3gaxnBh44HpkTi2TTkm1u136qjUxk7F3jGzoyfrGpHvALMgJgbF4WNXpoPu3QYrqogMK => ypub_QYrqogMK
 // zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9 => zpub_VDaZuQT9
 // This both obfuscates the whole extended key and makes the folder easier to digest for human reading.
-func (dis DerivationIndexStorage) getStoragePath(extendedPublicKey string) (string, error) {
-	if len(extendedPublicKey) < 12 {
-		return "", fmt.Errorf("insufficient length for public key %s", extendedPublicKey)
+func (dis *DerivationIndexStorage) getStoragePath(extendedPublicKey string) (string, error) {
+	trimmedKey := strings.TrimSpace(extendedPublicKey)
+	if len(trimmedKey) < 12 {
+		return "", fmt.Errorf("insufficient length for public key %s", trimmedKey)
 	}
-	publicKeyDescriptor := extendedPublicKey[:4]
-	suffix := extendedPublicKey[len(extendedPublicKey)-8:]
+	publicKeyDescriptor := trimmedKey[:4]
+	suffix := trimmedKey[len(trimmedKey)-8:]
 	return fmt.Sprintf("%s/%s/%s/%s_%s", dis.path, chainName, directoryName, publicKeyDescriptor, suffix), nil
 }
 
