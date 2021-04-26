@@ -7,12 +7,29 @@ on:
     paths:
       - "staker-rewards/**"
   pull_request:
-    paths:
-      - "staker-rewards/**"
   workflow_dispatch:
 
 jobs:
-  test:
+  staker-rewards-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request' 
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request' 
+      id: filter
+      with:
+        filters: |
+          path-filter:
+            - './staker-rewards/**'
+
+  staker-rewards-test:
+    needs: staker-rewards-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.staker-rewards-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -42,7 +59,11 @@ jobs:
       - name: Run tests
         run: npm test
 
-  lint:
+  staker-rewards-lint:
+    needs: staker-rewards-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        && needs.staker-rewards-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
