@@ -23,7 +23,12 @@ type DerivationIndexStorage struct {
 
 // NewDerivationIndexStorage is a factory method that creates a new DerivationIndexStorage at the specified path.
 func NewDerivationIndexStorage(path string) (*DerivationIndexStorage, error) {
-	err := ensureDirectoryExists(fmt.Sprintf("%s/%s", path, chainName))
+	err := checkStoragePermission(path)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ensureDirectoryExists(fmt.Sprintf("%s/%s", path, chainName))
 	if err != nil {
 		return nil, err
 	}
@@ -158,4 +163,20 @@ func closeFile(file *os.File) {
 	if err != nil {
 		logger.Errorf("could not close file [%v]: [%v]", file.Name(), err)
 	}
+}
+
+func checkStoragePermission(dirBasePath string) error {
+	_, err := ioutil.ReadDir(dirBasePath)
+	if err != nil {
+		return fmt.Errorf("cannot read from the storage directory: [%v]", err)
+	}
+
+	tempFile, err := ioutil.TempFile(dirBasePath, "write-test.*.tmp")
+	if err != nil {
+		return fmt.Errorf("cannot write to the storage directory: [%v]", err)
+	}
+
+	defer os.RemoveAll(tempFile.Name())
+
+	return nil
 }

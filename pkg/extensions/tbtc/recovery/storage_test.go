@@ -209,6 +209,47 @@ func TestDerivationIndexStorage_NewDerivationIndexStorageOnNonexistantPath(t *te
 	}
 }
 
+func TestDerviationIndexStorage_BadPermissions(t *testing.T) {
+	null := "\xff" // represents no error
+	testData := map[string]struct {
+		mode int
+		err  string
+	}{
+		"execute only":               {0100, "cannot read from the storage directory"},
+		"write only":                 {0200, "cannot read from the storage directory"},
+		"write and execute":          {0300, "cannot read from the storage directory"},
+		"read only":                  {0400, "cannot write to the storage directory"},
+		"read and execute":           {0500, "cannot write to the storage directory"},
+		"read and write":             {0600, "cannot write to the storage directory"},
+		"read and write and execute": {0700, null},
+	}
+	for testName, testData := range testData {
+		t.Run(testName, func(t *testing.T) {
+			dir, err := ioutil.TempDir("", "example")
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = os.Chmod(dir, os.FileMode(testData.mode))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(dir)
+			_, err = NewDerivationIndexStorage(dir)
+			if testData.err == null {
+				if err != nil {
+					t.Errorf("unexpected error\nexpected: <nil>\nactual:   %v", err)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("unexpected error\nexpected: %s\nactual:   <nil>", testData.err)
+				} else if !ErrorContains(err, testData.err) {
+					t.Errorf("unexpected error\nexpected: %s\nactual:   %v", testData.err, err)
+				}
+			}
+		})
+	}
+}
+
 func TestDerivationIndexStorage_MultipleAsyncSavesAndGetNextIndexes(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	if err != nil {
