@@ -1063,14 +1063,14 @@ func monitorKeepTerminatedEvent(
 						}
 
 						electrsConnection := recovery.NewElectrsConnection(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
-						vbyteFee, err := electrsConnection.VbyteFee()
-						if err != nil {
+						vbyteFee, vbyteFeeError := electrsConnection.VbyteFee()
+						if vbyteFeeError != nil {
 							logger.Errorf(
 								"failed to retrieve a vbyte fee estimate from %s, [%v]",
 								tbtcConfig.Bitcoin.ElectrsURLWithDefault(),
-								err,
+								vbyteFeeError,
 							)
-							return err
+							// Since the electrs connection is optional, we don't return the error
 						}
 						if vbyteFee == 0 {
 							vbyteFee = tbtcConfig.Bitcoin.MaxFeePerVByte
@@ -1132,13 +1132,17 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						err = electrsConnection.Broadcast(recoveryTransactionHex)
-						if err != nil {
+						broadcastError := electrsConnection.Broadcast(recoveryTransactionHex)
+						if broadcastError != nil {
 							logger.Errorf(
 								"failed to broadcast the recovery transaction to %s, [%v]",
 								*tbtcConfig.Bitcoin.ElectrsURL,
-								err,
+								broadcastError,
 							)
+
+							for i := 0; i < 5; i++ {
+								logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+							}
 						}
 
 						keepsRegistry.UnregisterKeep(keep.ID())

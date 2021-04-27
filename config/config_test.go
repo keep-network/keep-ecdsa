@@ -206,6 +206,17 @@ func TestParseChainParams_ExpectedFailure(t *testing.T) {
 	}
 }
 
+func TestDefaultVbyteFee(t *testing.T) {
+	config := &Config{}
+	if _, err := toml.Decode("[Extensions.TBTC.Bitcoin]", config); err != nil {
+		t.Fatal(err)
+	}
+	fee := config.Extensions.TBTC.Bitcoin.MaxFeePerVByte
+	if fee != 0 {
+		t.Errorf("unexpected default fee\nexpected: 0\nactual:   %d", fee)
+	}
+}
+
 func TestElectrsURLWithDefault(t *testing.T) {
 	var electrsURLTests = map[string]struct {
 		url         []string
