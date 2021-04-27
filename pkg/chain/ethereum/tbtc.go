@@ -492,7 +492,6 @@ func (ta *tbtcApplication) FundingInfo(
 	if err != nil {
 		return nil, err
 	}
-	logger.Warnf("utxo outpoint: %+v", fundingInfo.UtxoOutpoint)
 
 	transactionHash, outputIndex := parseUtxoOutpoint(fundingInfo.UtxoOutpoint)
 	return &chain.FundingInfo{
