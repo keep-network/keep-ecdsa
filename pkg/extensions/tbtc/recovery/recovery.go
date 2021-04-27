@@ -230,7 +230,7 @@ func BuildBitcoinTransaction(
 
 	unsignedTransaction, err := constructUnsignedTransaction(
 		fundingInfo.TransactionHash,
-		fundingInfo.Index,
+		fundingInfo.OutputIndex,
 		previousOutputValue,
 		int64(maxFeePerVByte),
 		retrievalAddresses,

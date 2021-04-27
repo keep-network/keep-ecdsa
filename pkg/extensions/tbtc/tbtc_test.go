@@ -2291,7 +2291,7 @@ func TestFundingInfo(t *testing.T) {
 		UtxoValueBytes:  [8]uint8{128, 150, 152, 0, 0, 0, 0, 0},
 		FundedAt:        big.NewInt(1615172517),
 		TransactionHash: "c27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d51",
-		Index:           1,
+		OutputIndex:     1,
 	}
 
 	ctx, cancelCtx := context.WithCancel(context.Background())

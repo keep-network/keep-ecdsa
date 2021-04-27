@@ -468,6 +468,18 @@ func (ta *tbtcApplication) getDepositContract(
 	return depositContract, nil
 }
 
+func parseUtxoOutpoint(utxoOutpoint []uint8) (string, uint32) {
+	transactionBytes := utxoOutpoint[:32]
+
+	// the transaction bytes are little-endian, so we need to reverse them before converting them to hex
+	for i, j := 0, len(transactionBytes)-1; i < j; i, j = i+1, j-1 {
+		transactionBytes[i], transactionBytes[j] = transactionBytes[j], transactionBytes[i]
+	}
+	transactionHash := hex.EncodeToString(transactionBytes)
+	outputIndex := binary.LittleEndian.Uint32(utxoOutpoint[32:])
+	return transactionHash, outputIndex
+}
+
 // FundingInfo retrieves the funding info for a particular deposit address
 func (ta *tbtcApplication) FundingInfo(
 	depositAddress string,
@@ -480,17 +492,13 @@ func (ta *tbtcApplication) FundingInfo(
 	if err != nil {
 		return nil, err
 	}
+	logger.Warnf("utxo outpoint: %+v", fundingInfo.UtxoOutpoint)
 
-	// the transaction bytes are little-endian, so we need to reverse them before converting them to hex
-	transactionBytes := fundingInfo.UtxoOutpoint[:32]
-	for i, j := 0, len(transactionBytes)-1; i < j; i, j = i+1, j-1 {
-		transactionBytes[i], transactionBytes[j] = transactionBytes[j], transactionBytes[i]
-	}
-
+	transactionHash, outputIndex := parseUtxoOutpoint(fundingInfo.UtxoOutpoint)
 	return &chain.FundingInfo{
 		UtxoValueBytes:  fundingInfo.UtxoValueBytes,
 		FundedAt:        fundingInfo.FundedAt,
-		TransactionHash: hex.EncodeToString(transactionBytes),
-		Index:           binary.LittleEndian.Uint32(fundingInfo.UtxoOutpoint[32:]),
+		TransactionHash: transactionHash,
+		OutputIndex:     outputIndex,
 	}, nil
 }

@@ -195,7 +195,7 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 			UtxoValueBytes:  utxoValueBytes, // 0x0065cd1d00000000
 			FundedAt:        fundedAt,
 			TransactionHash: previousTransactionHashHex,
-			Index:           previousTransactionIndex,
+			OutputIndex:     previousTransactionIndex,
 		},
 		redemptionRequestedEvents: make([]*chain.DepositRedemptionRequestedEvent, 0),
 	}

@@ -113,7 +113,7 @@ type FundingInfo struct {
 	UtxoValueBytes  [8]uint8
 	FundedAt        *big.Int
 	TransactionHash string
-	Index           uint32
+	OutputIndex     uint32
 }
 
 // DepositRedemptionRequestedEvent is an event emitted when a deposit
