@@ -59,7 +59,7 @@ func Initialize(
 	networkProvider net.Provider,
 	persistence persistence.Handle,
 	clientConfig *Config,
-	tbtcConfig *chain.Config,
+	tbtcConfig *tbtc.Config,
 	tssConfig *tss.Config,
 ) *Handle {
 	keepsRegistry := registry.NewKeepsRegistry(
@@ -321,7 +321,7 @@ func checkAwaitingKeyGeneration(
 	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	tbtcConfig *chain.Config,
+	tbtcConfig *tbtc.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -407,7 +407,7 @@ func checkAwaitingKeyGenerationForKeep(
 	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	tbtcConfig *chain.Config,
+	tbtcConfig *tbtc.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -481,7 +481,7 @@ func generateKeyForKeep(
 	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	tbtcConfig *chain.Config,
+	tbtcConfig *tbtc.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
@@ -957,7 +957,7 @@ func monitorKeepTerminatedEvent(
 	tbtcHandle chain.TBTCHandle,
 	networkProvider net.Provider,
 	clientConfig *Config,
-	tbtcConfig *chain.Config,
+	tbtcConfig *tbtc.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keep chain.BondedECDSAKeepHandle,
@@ -1039,7 +1039,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						chainParams, err := tbtcConfig.BTCRefunds.ChainParams()
+						chainParams, err := tbtcConfig.Bitcoin.ChainParams()
 						if err != nil {
 							logger.Errorf(
 								"failed to parse the the configured net params: [%v]",
@@ -1049,31 +1049,31 @@ func monitorKeepTerminatedEvent(
 						}
 
 						beneficiaryAddress, err := recovery.ResolveAddress(
-							tbtcConfig.BTCRefunds.BeneficiaryAddress,
+							tbtcConfig.Bitcoin.BeneficiaryAddress,
 							chainParams,
 						)
 						if err != nil {
 							logger.Errorf(
 								"failed to resolve a btc address for keep: [%s] address: [%s] err: [%v]",
 								keep.ID(),
-								tbtcConfig.BTCRefunds.BeneficiaryAddress,
+								tbtcConfig.Bitcoin.BeneficiaryAddress,
 								err,
 							)
 							return err
 						}
 
-						electrsConnection := recovery.NewElectrsConnection(tbtcConfig.ElectrsURLWithDefault())
+						electrsConnection := recovery.NewElectrsConnection(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
 						vbyteFee, err := electrsConnection.VbyteFee()
 						if err != nil {
 							logger.Errorf(
 								"failed to retrieve a vbyte fee estimate from %s, [%v]",
-								tbtcConfig.ElectrsURLWithDefault(),
+								tbtcConfig.Bitcoin.ElectrsURLWithDefault(),
 								err,
 							)
 							return err
 						}
 						if vbyteFee == 0 {
-							vbyteFee = tbtcConfig.BTCRefunds.MaxFeePerVByte
+							vbyteFee = tbtcConfig.Bitcoin.MaxFeePerVByte
 						}
 						if vbyteFee == 0 {
 							vbyteFee = 75
@@ -1136,7 +1136,7 @@ func monitorKeepTerminatedEvent(
 						if err != nil {
 							logger.Errorf(
 								"failed to broadcast the recovery transaction to %s, [%v]",
-								*tbtcConfig.ElectrsURL,
+								*tbtcConfig.Bitcoin.ElectrsURL,
 								err,
 							)
 						}

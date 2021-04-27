@@ -29,9 +29,9 @@
 
 [Extensions.TBTC]
 	TBTCSystem = "0xa4888eDD97A5a3A739B4E0807C71817c8a418273"
-	ElectrsURL = "example.com"
 
-	[Extensions.TBTC.BTCRefunds]
+	[Extensions.TBTC.Bitcoin]
 		BeneficiaryAddress = "bcrt1q0umle4fe6penqqyzuwsysqezwwptuyqa82jas4"
 		MaxFeePerVByte = 73
 		BitcoinChainName = "mainnet"
+		ElectrsURL = "example.com"

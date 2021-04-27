@@ -9,9 +9,9 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/celo"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
-	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
 )
 
 // PasswordEnvVariable environment variable name for ethereum key password.
@@ -78,7 +78,7 @@ type Diagnostics struct {
 
 // Extensions stores app-specific extensions configuration.
 type Extensions struct {
-	TBTC chain.Config
+	TBTC tbtc.Config
 }
 
 // ReadConfig reads in the configuration file in .toml format. Chain key file
