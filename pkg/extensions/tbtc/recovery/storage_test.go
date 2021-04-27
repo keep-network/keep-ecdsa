@@ -1,8 +1,10 @@
 package recovery
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -104,6 +106,11 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 			},
 		},
 	}
+
+	btcAddressTestString := func(publicKey string, index int) string {
+		return fmt.Sprintf("btc-address-%s-%d", strings.TrimSpace(publicKey), index)
+	}
+
 	for testName, testData := range testData {
 		t.Run(testName, func(t *testing.T) {
 			dir, err := ioutil.TempDir("", "example")
@@ -120,7 +127,7 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				err = dis.Save(
 					input.publicKey,
 					uint32(input.index),
-					"<btc-address>",
+					btcAddressTestString(input.publicKey, input.index),
 				)
 				if err != nil {
 					t.Fatal(err)
@@ -134,6 +141,21 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 
 				if index != uint32(expectation.index) {
 					t.Errorf("incorrect extendedPublicKey index for %s\nexpected: %d\nactual:   %d", expectation.publicKey, expectation.index, index)
+				}
+
+				actualBtcAddress, err := dis.readStoredBtcAddress(expectation.publicKey, expectation.index-1)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				expectedBtcAddress := btcAddressTestString(expectation.publicKey, expectation.index-1)
+				if expectedBtcAddress != string(actualBtcAddress) {
+					t.Errorf(
+						"incorrect stored btc address for %s\nexpected: %s\nactual:   %s",
+						expectation.publicKey,
+						expectedBtcAddress,
+						actualBtcAddress,
+					)
 				}
 			}
 		})
@@ -297,4 +319,23 @@ func TestDerivationIndexStorage_MultipleAsyncSavesAndGetNextIndexes(t *testing.T
 			t.Errorf("unexpected next index\nexpected: %d\nactual:   %d", index+1, result.index)
 		}
 	}
+}
+
+func (dis *DerivationIndexStorage) readStoredBtcAddress(extendedPublicKey string, index int) (string, error) {
+	dis.mutex.Lock()
+	defer dis.mutex.Unlock()
+
+	dirPath, err := dis.getStoragePath(extendedPublicKey)
+	if err != nil {
+		return "", err
+	}
+
+	fileContent, err := ioutil.ReadFile(
+		fmt.Sprintf("%s/%d", dirPath, index),
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return string(fileContent), nil
 }
