@@ -50,7 +50,17 @@ func (e ElectrsConnection) Broadcast(transaction string) error {
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("something went wrong with broadcast: [%s], transaction: [%s]", resp.Status, transaction)
 	}
-	logger.Info("successfully broadcast the bitcoin transaction")
+	transactionIDBuffer := new(strings.Builder)
+	bytesCopied, err := io.Copy(transactionIDBuffer, resp.Body)
+	// if the status code was 200, but we were unable to read the body, log an
+	// error but return successfully anyway.
+	if err != nil {
+		logger.Errorf("something went wrong reading the electrs response body: [%v]", err)
+	}
+	if bytesCopied == 0 {
+		logger.Error("something went wrong reading the electrs response body: 0 bytes copied")
+	}
+	logger.Infof("successfully broadcast the bitcoin transaction: %s", transactionIDBuffer.String())
 	return nil
 }
 
