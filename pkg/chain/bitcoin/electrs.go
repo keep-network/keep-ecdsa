@@ -1,4 +1,4 @@
-package recovery
+package bitcoin
 
 import (
 	"encoding/json"
@@ -6,7 +6,11 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/ipfs/go-log"
 )
+
+var logger = log.Logger("bitcoin")
 
 type httpClient interface {
 	Post(url string, contentType string, body io.Reader) (*http.Response, error)

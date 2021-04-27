@@ -16,6 +16,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 	"github.com/keep-network/keep-ecdsa/pkg/client/event"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
@@ -1062,7 +1063,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						electrsConnection := recovery.NewElectrsConnection(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
+						electrsConnection := bitcoin.NewElectrsConnection(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
 						vbyteFee, vbyteFeeError := electrsConnection.VbyteFee()
 						if vbyteFeeError != nil {
 							logger.Errorf(
