@@ -19,16 +19,25 @@ import (
 )
 
 type bondedEcdsaKeepHandle struct {
-	keepID     common.Address
-	operatorID common.Address
-	contract   *contract.BondedECDSAKeep
+	keepAddress     common.Address
+	operatorAddress common.Address
+	contract        *contract.BondedECDSAKeep
 }
 
 func (ec *ethereumChain) GetKeepWithID(
-	keepID common.Address,
+	keepID chain.ID,
 ) (chain.BondedECDSAKeepHandle, error) {
+	keepAddress, err := fromChainID(keepID)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"unable to interpret keep ID [%v]: [%v]",
+			keepID,
+			err,
+		)
+	}
+
 	bondedECDSAKeepContract, err := contract.NewBondedECDSAKeep(
-		keepID,
+		keepAddress,
 		ec.chainID,
 		ec.accountKey,
 		ec.client,
@@ -46,9 +55,9 @@ func (ec *ethereumChain) GetKeepWithID(
 	}
 
 	return &bondedEcdsaKeepHandle{
-		keepID:     keepID,
-		operatorID: ec.Address(),
-		contract:   bondedECDSAKeepContract,
+		keepAddress:     keepAddress,
+		operatorAddress: ec.operatorAddress(),
+		contract:        bondedECDSAKeepContract,
 	}, nil
 }
 
@@ -67,11 +76,11 @@ func (ec *ethereumChain) GetKeepAtIndex(
 		)
 	}
 
-	return ec.GetKeepWithID(keepAddress)
+	return ec.GetKeepWithID(ethereumChainID(keepAddress))
 }
 
-func (bekh *bondedEcdsaKeepHandle) ID() common.Address {
-	return bekh.keepID
+func (bekh *bondedEcdsaKeepHandle) ID() chain.ID {
+	return ethereumChainID(bekh.keepAddress)
 }
 
 // OnSignatureRequested installs a callback that is invoked on-chain
@@ -105,7 +114,7 @@ func (bekh *bondedEcdsaKeepHandle) OnConflictingPublicKeySubmitted(
 		blockNumber uint64,
 	) {
 		handler(&chain.ConflictingPublicKeySubmittedEvent{
-			SubmittingMember:     SubmittingMember,
+			SubmittingMember:     ethereumChainID(SubmittingMember),
 			ConflictingPublicKey: ConflictingPublicKey,
 			BlockNumber:          blockNumber,
 		})
@@ -261,8 +270,13 @@ func (bekh *bondedEcdsaKeepHandle) GetPublicKey() ([]uint8, error) {
 }
 
 // GetMembers returns keep's members.
-func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]common.Address, error) {
-	return bekh.contract.GetMembers()
+func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]chain.ID, error) {
+	memberAddresses, err := bekh.contract.GetMembers()
+	if err != nil {
+		return nil, err
+	}
+
+	return toIDSlice(memberAddresses), nil
 }
 
 // GetOwner returns keep's owner.
@@ -283,12 +297,12 @@ func (bekh *bondedEcdsaKeepHandle) IsThisOperatorMember() (bool, error) {
 // OperatorIndex returns the index of the operator's among the member ids.
 // Returns -1 if the operator isn't a member.
 func (bekh *bondedEcdsaKeepHandle) OperatorIndex() (int, error) {
-	memberIDs, err := bekh.GetMembers()
+	memberIDs, err := bekh.contract.GetMembers()
 	if err != nil {
 		return -1, err
 	}
 
-	operatorMemberID := bekh.operatorID
+	operatorMemberID := bekh.operatorAddress
 
 	for i, memberID := range memberIDs {
 		if operatorMemberID.String() == memberID.String() {

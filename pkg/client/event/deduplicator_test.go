@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 )
@@ -17,6 +18,7 @@ const signStateConfirmTimeout = 10 * time.Second
 
 var keepAddress = common.HexToAddress("0x4e09cadc7037afa36603138d1c0b76fe2aa5039c")
 var emptyAddress = common.BytesToAddress([]byte{})
+var keepAddress1 = common.HexToAddress(keepID1String)
 var digest = sha256.Sum256([]byte("Do or do not. There is no try."))
 
 func TestDoGenerateKey(t *testing.T) {
@@ -25,7 +27,7 @@ func TestDoGenerateKey(t *testing.T) {
 
 	deduplicator, _, _ := newDeduplicator(ctx)
 
-	canGenerate := deduplicator.NotifyKeyGenStarted(keepAddress)
+	canGenerate := deduplicator.NotifyKeyGenStarted(keepID1)
 	if !canGenerate {
 		t.Fatal("should be allowed to generate a key")
 	}
@@ -37,9 +39,9 @@ func TestDoNotGenerateKeyIfCurrentlyGenerating(t *testing.T) {
 
 	deduplicator, _, _ := newDeduplicator(ctx)
 
-	deduplicator.NotifyKeyGenStarted(keepAddress)
+	deduplicator.NotifyKeyGenStarted(keepID1)
 
-	canGenerate := deduplicator.NotifyKeyGenStarted(keepAddress)
+	canGenerate := deduplicator.NotifyKeyGenStarted(keepID1)
 	if canGenerate {
 		t.Fatal("should not be allowed to generate a key")
 	}
@@ -51,11 +53,11 @@ func TestDoNotGenerateKeyIfAlreadyGenerated(t *testing.T) {
 
 	deduplicator, registry, _ := newDeduplicator(ctx)
 
-	deduplicator.NotifyKeyGenStarted(keepAddress)
-	registry.AddSigner(keepAddress)
-	deduplicator.NotifyKeyGenCompleted(keepAddress)
+	deduplicator.NotifyKeyGenStarted(keepID1)
+	registry.AddSigner(keepID1)
+	deduplicator.NotifyKeyGenCompleted(keepID1)
 
-	canGenerate := deduplicator.NotifyKeyGenStarted(keepAddress)
+	canGenerate := deduplicator.NotifyKeyGenStarted(keepID1)
 	if canGenerate {
 		t.Fatal("should not be allowed to generate a key")
 	}
@@ -67,7 +69,7 @@ func TestDoSign(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress, emptyAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress1, emptyAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
@@ -77,7 +79,7 @@ func TestDoSign(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = chain.RequestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress1, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +103,7 @@ func TestDoNotSignIfCurrentlySigning(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress, emptyAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress1, emptyAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
@@ -111,7 +113,7 @@ func TestDoNotSignIfCurrentlySigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = chain.RequestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress1, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +143,7 @@ func TestDoNotSignIfNotAwaitingASignature(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress, emptyAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress1, emptyAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
@@ -170,7 +172,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress, emptyAddress, []common.Address{})
+	keep := chain.OpenKeep(keepAddress1, emptyAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
@@ -183,7 +185,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 	//
 	// request and provide a signature, notify it's been provided
 	//
-	err = chain.RequestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress1, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,12 +213,12 @@ func TestDoSignOneMoreTime(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deduplicator.NotifySigningCompleted(keepAddress, digest)
+	deduplicator.NotifySigningCompleted(keepID1, digest)
 
 	//
 	// request signature with the same digest one more time - should work
 	//
-	err = chain.RequestSignature(keepAddress, digest)
+	err = chain.RequestSignature(keepAddress1, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,9 +241,9 @@ func TestDoClose(t *testing.T) {
 	defer cancel()
 
 	deduplicator, registry, _ := newDeduplicator(ctx)
-	registry.AddSigner(keepAddress)
+	registry.AddSigner(keepID1)
 
-	canClose := deduplicator.NotifyClosingStarted(keepAddress)
+	canClose := deduplicator.NotifyClosingStarted(keepID1)
 	if !canClose {
 		t.Fatal("should be allowed to close a keep")
 	}
@@ -252,11 +254,11 @@ func TestDoNotCloseIfCurrentlyClosing(t *testing.T) {
 	defer cancel()
 
 	deduplicator, registry, _ := newDeduplicator(ctx)
-	registry.AddSigner(keepAddress)
+	registry.AddSigner(keepID1)
 
-	deduplicator.NotifyClosingStarted(keepAddress)
+	deduplicator.NotifyClosingStarted(keepID1)
 
-	canClose := deduplicator.NotifyClosingStarted(keepAddress)
+	canClose := deduplicator.NotifyClosingStarted(keepID1)
 	if canClose {
 		t.Fatal("should not be allowed to close a keep")
 	}
@@ -269,7 +271,7 @@ func TestDoNotCloseIfAlreadyClosed(t *testing.T) {
 	deduplicator, _, _ := newDeduplicator(ctx)
 	// keep not in the registry
 
-	canClose := deduplicator.NotifyClosingStarted(keepAddress)
+	canClose := deduplicator.NotifyClosingStarted(keepID1)
 	if canClose {
 		t.Fatal("should not be allowed to close a keep")
 	}
@@ -280,9 +282,9 @@ func TestDoTerminate(t *testing.T) {
 	defer cancel()
 
 	deduplicator, registry, _ := newDeduplicator(ctx)
-	registry.AddSigner(keepAddress)
+	registry.AddSigner(keepID1)
 
-	canTerminate := deduplicator.NotifyTerminatingStarted(keepAddress)
+	canTerminate := deduplicator.NotifyTerminatingStarted(keepID1)
 	if !canTerminate {
 		t.Fatal("should be allowed to terminate a keep")
 	}
@@ -293,11 +295,11 @@ func TestDoNotTerminateIfCurrentlyTerminating(t *testing.T) {
 	defer cancel()
 
 	deduplicator, registry, _ := newDeduplicator(ctx)
-	registry.AddSigner(keepAddress)
+	registry.AddSigner(keepID1)
 
-	deduplicator.NotifyTerminatingStarted(keepAddress)
+	deduplicator.NotifyTerminatingStarted(keepID1)
 
-	canTerminate := deduplicator.NotifyTerminatingStarted(keepAddress)
+	canTerminate := deduplicator.NotifyTerminatingStarted(keepID1)
 	if canTerminate {
 		t.Fatal("should not be allowed to terminate a keep")
 	}
@@ -310,7 +312,7 @@ func TestDoNotTerminateIfAlreadyTerminated(t *testing.T) {
 	deduplicator, _, _ := newDeduplicator(ctx)
 	// keep not in the registry
 
-	canTerminate := deduplicator.NotifyTerminatingStarted(keepAddress)
+	canTerminate := deduplicator.NotifyTerminatingStarted(keepID1)
 	if canTerminate {
 		t.Fatal("should not be allowed to terminate a keep")
 	}
@@ -323,7 +325,7 @@ func newDeduplicator(ctx context.Context) (
 
 ) {
 	mockRegistry := &mockRegistry{
-		keeps: make(map[common.Address]bool),
+		keeps: make(map[chain.ID]bool),
 	}
 
 	chain := local.Connect(ctx)
@@ -337,13 +339,13 @@ func newDeduplicator(ctx context.Context) (
 }
 
 type mockRegistry struct {
-	keeps map[common.Address]bool
+	keeps map[chain.ID]bool
 }
 
-func (mr *mockRegistry) AddSigner(keepAddress common.Address) {
-	mr.keeps[keepAddress] = true
+func (mr *mockRegistry) AddSigner(keepID chain.ID) {
+	mr.keeps[keepID] = true
 }
 
-func (mr *mockRegistry) HasSigner(keepAddress common.Address) bool {
-	return mr.keeps[keepAddress]
+func (mr *mockRegistry) HasSigner(keepID chain.ID) bool {
+	return mr.keeps[keepID]
 }

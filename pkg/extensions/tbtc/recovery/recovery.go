@@ -200,7 +200,7 @@ func BuildBitcoinTransaction(
 	if err != nil {
 		logger.Errorf(
 			"failed to retrieve the script code for keep [%s]: [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 		return "", err
@@ -209,7 +209,7 @@ func BuildBitcoinTransaction(
 	if err != nil {
 		logger.Errorf(
 			"failed to retrieve the owner for keep [%s]: [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 		return "", err
@@ -219,8 +219,8 @@ func BuildBitcoinTransaction(
 	if err != nil {
 		logger.Errorf(
 			"failed to retrieve the funding info of deposit [%s] for keep [%s]: [%v]",
-			depositAddress.Hex(),
-			keep.ID().Hex(),
+			depositAddress,
+			keep.ID(),
 			err,
 		)
 		return "", err
@@ -241,7 +241,7 @@ func BuildBitcoinTransaction(
 	if err != nil {
 		logger.Errorf(
 			"failed to construct the unsigned transaction for keep [%s]: [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 		return "", err
@@ -258,7 +258,7 @@ func BuildBitcoinTransaction(
 	if err != nil {
 		logger.Errorf(
 			"failed to calculate the sighash bytes for keep [%s]: [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 		return "", err
@@ -273,7 +273,7 @@ func BuildBitcoinTransaction(
 	if err != nil {
 		logger.Errorf(
 			"failed to calculate signature for keep [%s]: [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 		return "", err

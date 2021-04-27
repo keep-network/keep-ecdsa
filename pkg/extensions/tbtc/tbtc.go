@@ -945,7 +945,7 @@ func (t *tbtc) waitKeepNotActiveConfirmation(
 		logger.Errorf(
 			"could not get current block while confirming "+
 				"keep [%v] is not active: [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 		return false
@@ -962,7 +962,7 @@ func (t *tbtc) waitKeepNotActiveConfirmation(
 	if err != nil {
 		logger.Errorf(
 			"could not confirm if keep [%v] is not active: [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 		return false

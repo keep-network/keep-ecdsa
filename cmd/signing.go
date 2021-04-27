@@ -15,16 +15,13 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-ecdsa/config"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
+	"github.com/keep-network/keep-ecdsa/pkg/registry"
 
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
 
-	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-ecdsa/config"
-	"github.com/keep-network/keep-ecdsa/pkg/registry"
 	"github.com/urfave/cli"
 )
 
@@ -72,35 +69,38 @@ func DecryptKeyShare(c *cli.Context) error {
 		return fmt.Errorf("failed while reading config file: [%v]", err)
 	}
 
-	keepAddressHex := c.Args().First()
-	if !common.IsHexAddress(keepAddressHex) {
-		return fmt.Errorf("invalid keep address")
-	}
-
-	keepAddress := common.HexToAddress(keepAddressHex)
-
-	handle, err := persistence.NewDiskHandle(config.Storage.DataDir)
+	chainHandle, err := offlineChain(config)
 	if err != nil {
-		return fmt.Errorf(
-			"failed while creating a storage disk handler: [%v]",
-			err,
-		)
+		return err
 	}
 
-	persistence := persistence.NewEncryptedPersistence(
-		handle,
-		config.Ethereum.Account.KeyFilePassword,
-	)
+	keepIDString := c.Args().First()
+	keepID, err := chainHandle.UnmarshalID(keepIDString)
+	if err != nil {
+		return fmt.Errorf("could not interpret keep ID: [%v]", err)
+	}
 
-	keepRegistry := registry.NewKeepsRegistry(persistence)
+	persistence, err := buildPersistenceHandle(
+		chainHandle,
+		extractKeyFilePassword(config),
+		config.Storage.DataDir,
+	)
+	if err != nil {
+		return err
+	}
+
+	keepRegistry := registry.NewKeepsRegistry(
+		persistence,
+		chainHandle.UnmarshalID,
+	)
 
 	keepRegistry.LoadExistingKeeps()
 
-	signer, err := keepRegistry.GetSigner(keepAddress)
+	signer, err := keepRegistry.GetSigner(keepID)
 	if err != nil {
 		return fmt.Errorf(
 			"no signers for keep [%s]: [%v]",
-			keepAddress.String(),
+			keepID,
 			err,
 		)
 	}
@@ -109,7 +109,7 @@ func DecryptKeyShare(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf(
 			"failed to marshall signer for keep [%s]: [%v]",
-			keepAddress.String(),
+			keepID,
 			err,
 		)
 	}

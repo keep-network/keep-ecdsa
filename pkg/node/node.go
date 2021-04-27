@@ -4,7 +4,6 @@ package node
 import (
 	"context"
 	cecdsa "crypto/ecdsa"
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -44,22 +43,22 @@ const (
 // Node holds interfaces to interact with the blockchain and network messages
 // transport layer.
 type Node struct {
-	ethereumChain   chain.Handle
+	chain           chain.Handle
 	networkProvider net.Provider
 	tssParamsPool   *tssPreParamsPool
 	tssConfig       *tss.Config
 }
 
-// NewNode initializes node struct with provided ethereum chain interface and
+// NewNode initializes node struct with provided chain interface and
 // network provider. It also initializes TSS Pre-Parameters pool. But does not
 // start parameters generation. This should be called separately.
 func NewNode(
-	ethereumChain chain.Handle,
+	chain chain.Handle,
 	networkProvider net.Provider,
 	tssConfig *tss.Config,
 ) *Node {
 	return &Node{
-		ethereumChain:   ethereumChain,
+		chain:           chain,
 		networkProvider: networkProvider,
 		tssConfig:       tssConfig,
 	}
@@ -70,10 +69,10 @@ func NewNode(
 func (n *Node) AnnounceSignerPresence(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
-	keepAddress common.Address,
-	keepMembersAddresses []common.Address,
+	keepID chain.ID,
+	keepMemberIDs []chain.ID,
 ) ([]tss.MemberID, error) {
-	broadcastChannel, err := n.networkProvider.BroadcastChannelFor(keepAddress.Hex())
+	broadcastChannel, err := n.networkProvider.BroadcastChannelFor(keepID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize broadcast channel: [%v]", err)
 	}
@@ -81,44 +80,37 @@ func (n *Node) AnnounceSignerPresence(
 	tss.RegisterUnmarshalers(broadcastChannel)
 
 	if err := broadcastChannel.SetFilter(
-		createAddressFilter(keepMembersAddresses),
+		createAddressFilter(
+			keepMemberIDs,
+			n.chain.PublicKeyToOperatorID,
+		),
 	); err != nil {
 		return nil, fmt.Errorf("failed to set broadcast channel filter: [%v]", err)
 	}
 
-	// TODO: Use generic type for representing address in node.go instead of
-	// common.Address from go-ethereum. The current implementation is not
-	// host-chain implementation agnostic.
-	// To do not propagate ethereum-specific types any further, we convert
-	// addresses to strings before passing them to AnnounceProtocol.
-	keepAddressString := keepAddress.Hex()
-	keepMembersAddressesStrings := make([]string, len(keepMembersAddresses))
-	for i, address := range keepMembersAddresses {
-		keepMembersAddressesStrings[i] = address.Hex()
-	}
 	return tss.AnnounceProtocol(
 		ctx,
 		operatorPublicKey,
-		keepAddressString,
-		keepMembersAddressesStrings,
+		keepID,
+		keepMemberIDs,
 		broadcastChannel,
-		n.ethereumChain.Signing().PublicKeyToAddress,
+		n.chain.PublicKeyToOperatorID,
 	)
 }
 
 func createAddressFilter(
-	addresses []common.Address,
+	keepMemberIDs []chain.ID,
+	publicKeyToOperatorIDFunc func(*cecdsa.PublicKey) chain.ID,
 ) net.BroadcastChannelFilter {
-	authorizations := make(map[string]bool, len(addresses))
-	for _, address := range addresses {
-		authorizations[hex.EncodeToString(address.Bytes())] = true
+	operatorAuthorizations := make(map[string]bool, len(keepMemberIDs))
+	for _, keepMemberID := range keepMemberIDs {
+		operatorAuthorizations[keepMemberID.String()] = true
 	}
 
 	return func(authorPublicKey *cecdsa.PublicKey) bool {
-		authorAddress := hex.EncodeToString(
-			operator.PubkeyToAddress(*authorPublicKey).Bytes(),
-		)
-		_, isAuthorized := authorizations[authorAddress]
+		authorAddress := publicKeyToOperatorIDFunc(authorPublicKey)
+
+		_, isAuthorized := operatorAuthorizations[authorAddress.String()]
 
 		if !isAuthorized {
 			logger.Warningf(
@@ -140,7 +132,7 @@ func (n *Node) GenerateSignerForKeep(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
 	keep chain.BondedECDSAKeepHandle,
-	members []common.Address,
+	members []chain.ID,
 	keepsRegistry *registry.Keeps,
 ) (*tss.ThresholdSigner, error) {
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
@@ -152,7 +144,7 @@ func (n *Node) GenerateSignerForKeep(
 
 		logger.Infof(
 			"signer generation for keep [%s]; attempt [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			attemptCounter,
 		)
 
@@ -160,7 +152,7 @@ func (n *Node) GenerateSignerForKeep(
 		if err != nil {
 			logger.Warningf(
 				"could not check if keep [%s] is still active: [%v]",
-				keep.ID().Hex(),
+				keep.ID(),
 				err,
 			)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -215,7 +207,7 @@ func (n *Node) GenerateSignerForKeep(
 			memberIDs,
 			uint(len(memberIDs)-1),
 			n.networkProvider,
-			n.ethereumChain.Signing().PublicKeyToAddress,
+			n.chain.Signing().PublicKeyToAddress,
 			preParamsBox,
 		)
 		if err != nil {
@@ -233,7 +225,7 @@ func (n *Node) GenerateSignerForKeep(
 		if err != nil {
 			return nil, fmt.Errorf(
 				"could not make snapshot of signer for keep [%s]: [%v]",
-				keep.ID().Hex(),
+				keep.ID(),
 				err,
 			)
 		}
@@ -296,7 +288,7 @@ func (n *Node) CalculateSignature(
 			ctx,
 			digest[:],
 			n.networkProvider,
-			n.ethereumChain.Signing().PublicKeyToAddress,
+			n.chain.Signing().PublicKeyToAddress,
 		)
 		if err != nil {
 			logger.Errorf(
@@ -358,7 +350,7 @@ func (n *Node) publishSignature(
 		if err != nil {
 			logger.Errorf(
 				"failed to verify if keep [%s] is still active: [%v]",
-				keep.ID().Hex(),
+				keep.ID(),
 				err,
 			)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -379,7 +371,7 @@ func (n *Node) publishSignature(
 		if err != nil {
 			logger.Errorf(
 				"failed to verify if keep [%s] is still awaiting signature: [%v]",
-				keep.ID().Hex(),
+				keep.ID(),
 				err,
 			)
 			time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -395,7 +387,7 @@ func (n *Node) publishSignature(
 
 		logger.Infof(
 			"publishing signature for keep [%s]; attempt [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			attemptCounter,
 		)
 
@@ -404,7 +396,7 @@ func (n *Node) publishSignature(
 			if err != nil {
 				logger.Errorf(
 					"failed to verify if keep [%s] is still awaiting signature: [%v]",
-					keep.ID().Hex(),
+					keep.ID(),
 					err,
 				)
 				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
@@ -425,7 +417,7 @@ func (n *Node) publishSignature(
 			logger.Errorf(
 				"failed to submit signature for keep [%s]: [%v]; "+
 					"will retry after 1 minute",
-				keep.ID().Hex(),
+				keep.ID(),
 				submissionErr,
 			)
 			time.Sleep(1 * time.Minute)
@@ -445,12 +437,12 @@ func (n *Node) publishSignature(
 // for the given signer index to avoid all signers publishing the same signature
 // for given keep at the same time.
 func (n *Node) waitSignaturePublicationDelay(keep chain.BondedECDSAKeepHandle) {
-	signerIndex, err := n.getSignerIndex(keep)
+	signerIndex, err := keep.OperatorIndex()
 	if err != nil {
 		logger.Errorf(
 			"could not determine signature publication delay for keep [%s]: "+
 				"[%v]; the signature publication will not be delayed",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 		return
@@ -462,7 +454,7 @@ func (n *Node) waitSignaturePublicationDelay(keep chain.BondedECDSAKeepHandle) {
 			"could not determine signature publication delay for keep [%s], "+
 				"signer index is less than zero; the signature publication "+
 				"will not be delayed",
-			keep.ID().Hex(),
+			keep.ID(),
 		)
 		return
 	}
@@ -472,25 +464,10 @@ func (n *Node) waitSignaturePublicationDelay(keep chain.BondedECDSAKeepHandle) {
 	logger.Infof(
 		"waiting [%v] before publishing signature for keep [%s]",
 		delay,
-		keep.ID().Hex(),
+		keep.ID(),
 	)
 
 	time.Sleep(delay)
-}
-
-func (n *Node) getSignerIndex(keep chain.BondedECDSAKeepHandle) (int, error) {
-	members, err := keep.GetMembers()
-	if err != nil {
-		return -1, err
-	}
-
-	for index, member := range members {
-		if member == n.ethereumChain.Address() {
-			return index, nil
-		}
-	}
-
-	return -1, nil
 }
 
 func (n *Node) waitForSignature(
@@ -508,7 +485,7 @@ func (n *Node) waitForSignature(
 
 	logger.Infof(
 		"waiting for signature for keep [%s] to appear on-chain",
-		keep.ID().Hex(),
+		keep.ID(),
 	)
 
 	for {
@@ -523,7 +500,7 @@ func (n *Node) waitForSignature(
 				logger.Errorf(
 					"failed to perform signature check while waiting "+
 						"for signature for keep [%s]: [%v]",
-					keep.ID().Hex(),
+					keep.ID(),
 					err,
 				)
 				continue
@@ -532,7 +509,7 @@ func (n *Node) waitForSignature(
 			if !isAwaitingSignature {
 				logger.Infof(
 					"signature for keep [%s] appeared on-chain",
-					keep.ID().Hex(),
+					keep.ID(),
 				)
 				return true
 			}
@@ -540,7 +517,7 @@ func (n *Node) waitForSignature(
 			logger.Errorf(
 				"signature for keep [%s] has not appeared on the chain "+
 					"after [%v] from submitting it",
-				keep.ID().Hex(),
+				keep.ID(),
 				waitTimeout,
 			)
 			return false
@@ -554,22 +531,22 @@ func (n *Node) confirmSignature(
 ) bool {
 	logger.Infof(
 		"confirming on-chain signature submission for keep [%s]",
-		keep.ID().Hex(),
+		keep.ID(),
 	)
 
-	currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+	currentBlock, err := n.chain.BlockCounter().CurrentBlock()
 	if err != nil {
 		logger.Errorf(
 			"could not get current block while confirming "+
 				"signature submission for keep [%s]: [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 		return false
 	}
 
 	isSignatureConfirmed, err := ethlike.WaitForBlockConfirmations(
-		n.ethereumChain.BlockCounter(),
+		n.chain.BlockCounter(),
 		currentBlock,
 		blockConfirmations,
 		func() (bool, error) {
@@ -584,7 +561,7 @@ func (n *Node) confirmSignature(
 	if err != nil {
 		logger.Errorf(
 			"could not confirm signature submission for keep [%s]: [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 		return false
@@ -594,7 +571,7 @@ func (n *Node) confirmSignature(
 		logger.Errorf(
 			"signature submission for keep [%s] not confirmed; "+
 				"trying to submit the signature again",
-			keep.ID().Hex(),
+			keep.ID(),
 		)
 		return false
 	}
@@ -602,7 +579,7 @@ func (n *Node) confirmSignature(
 	logger.Infof(
 		"signature for keep [%s] successfully submitted "+
 			"and confirmed on-chain",
-		keep.ID().Hex(),
+		keep.ID(),
 	)
 
 	return true
@@ -641,7 +618,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 	if err != nil {
 		logger.Errorf(
 			"failed on watching conflicting public key event for keep [%s]: [%v]",
-			keep.ID().Hex(),
+			keep.ID(),
 			err,
 		)
 	}
@@ -677,7 +654,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 			logger.Errorf(
 				"member [%x] has submitted conflicting public key for keep [%s]: [%x]",
 				event.SubmittingMember,
-				keep.ID().Hex(),
+				keep.ID(),
 				event.ConflictingPublicKey,
 			)
 			return
@@ -689,7 +666,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 					"monitoring of public key submission for keep [%s] "+
 						"has been cancelled because maximum checks count [%v] "+
 						"has been reached",
-					keep.ID().Hex(),
+					keep.ID(),
 					maxPubkeyChecksCount,
 				)
 				return
@@ -697,7 +674,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 
 			logger.Infof(
 				"confirming on-chain public key submission for keep [%s]",
-				keep.ID().Hex(),
+				keep.ID(),
 			)
 
 			// We check the public key periodically instead of relying on
@@ -709,26 +686,26 @@ func (n *Node) monitorKeepPublicKeySubmission(
 				logger.Errorf(
 					"failed to get keep public key during "+
 						"public key submission monitoring for keep [%s]: [%v]",
-					keep.ID().Hex(),
+					keep.ID(),
 					err,
 				)
 				continue
 			} else {
 				if len(keepPublicKey) > 0 {
-					currentBlock, err := n.ethereumChain.BlockCounter().CurrentBlock()
+					currentBlock, err := n.chain.BlockCounter().CurrentBlock()
 					if err != nil {
 						logger.Errorf(
 							"failed to get the current block while "+
 								"performing public key submission confirmation "+
 								"for keep [%s]: [%v]",
-							keep.ID().Hex(),
+							keep.ID(),
 							err,
 						)
 						continue
 					}
 
 					isConfirmed, err := ethlike.WaitForBlockConfirmations(
-						n.ethereumChain.BlockCounter(),
+						n.chain.BlockCounter(),
 						currentBlock,
 						blockConfirmations,
 						func() (bool, error) {
@@ -745,7 +722,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 							"failed to perform keep public key "+
 								"confirmation during public key submission "+
 								"monitoring for keep [%s]: [%v]",
-							keep.ID().Hex(),
+							keep.ID(),
 							err,
 						)
 						continue
@@ -756,7 +733,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 							"public key [%x] for keep [%s] successfully "+
 								"submitted and confirmed on-chain",
 							keepPublicKey,
-							keep.ID().Hex(),
+							keep.ID(),
 						)
 						return
 					}
@@ -766,7 +743,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 			logger.Infof(
 				"keep [%s] still does not have a confirmed public key; "+
 					"re-submitting public key [%x]",
-				keep.ID().Hex(),
+				keep.ID(),
 				publicKey,
 			)
 
@@ -775,7 +752,7 @@ func (n *Node) monitorKeepPublicKeySubmission(
 				logger.Errorf(
 					"keep [%s] still does not have a confirmed public key "+
 						"and resubmission by this member failed with: [%v]",
-					keep.ID().Hex(),
+					keep.ID(),
 					err,
 				)
 				return

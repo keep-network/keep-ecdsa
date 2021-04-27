@@ -25,7 +25,7 @@ import (
 // additional functions useful for testing.
 type Chain interface {
 	chain.Handle
-
+	OperatorAddress() common.Address
 	OpenKeep(
 		keepAddress common.Address,
 		ownerAddress common.Address,
@@ -58,8 +58,8 @@ type localChain struct {
 	authorizations map[common.Address]bool
 }
 
-// Connect performs initialization for communication with Ethereum blockchain
-// based on provided config.
+// Connect performs initialization for the local chain, wrapped in the provided
+// context.
 func Connect(ctx context.Context) Chain {
 	blockCounter, err := local.BlockCounter()
 	if err != nil {
@@ -90,6 +90,10 @@ func Connect(ctx context.Context) Chain {
 	return localChain
 }
 
+func (lc *localChain) Name() string {
+	return "local"
+}
+
 func (lc *localChain) observeBlocksTimestamps(ctx context.Context) {
 	blockChan := lc.BlockCounter().WatchBlocks(ctx)
 
@@ -103,8 +107,12 @@ func (lc *localChain) observeBlocksTimestamps(ctx context.Context) {
 	}
 }
 
-func (lc *localChain) Address() common.Address {
+func (lc *localChain) OperatorAddress() common.Address {
 	return common.BytesToAddress(lc.signer.PublicKey())
+}
+
+func (lc *localChain) OperatorID() chain.ID {
+	return localChainID(common.BytesToAddress(lc.signer.PublicKey()))
 }
 
 func (lc *localChain) Signing() corechain.Signing {
@@ -122,7 +130,7 @@ func (lc *localChain) OpenKeep(
 	}
 
 	// GetKeepWithID never errors in localChain.
-	keep, _ := lc.GetKeepWithID(keepAddress)
+	keep, _ := lc.GetKeepWithID(localChainID(keepAddress))
 	return keep
 }
 
@@ -169,11 +177,16 @@ func (lc *localChain) BlockCounter() corechain.BlockCounter {
 	return lc.blockCounter
 }
 
-func (lc *localChain) IsOperatorAuthorized(operator common.Address) (bool, error) {
+func (lc *localChain) IsOperatorAuthorized(operator chain.ID) (bool, error) {
+	operatorAddress, err := fromChainID(operator)
+	if err != nil {
+		return false, err
+	}
+
 	lc.localChainMutex.Lock()
 	defer lc.localChainMutex.Unlock()
 
-	return lc.authorizations[operator], nil
+	return lc.authorizations[operatorAddress], nil
 }
 
 func (lc *localChain) GetKeepCount() (*big.Int, error) {

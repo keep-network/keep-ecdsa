@@ -7,13 +7,15 @@ import (
 	"math/big"
 	"sort"
 
-	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/contract"
-
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	tbtcchain "github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
+
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/gen/ethereum/contract"
+
+	tbtccontract "github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
 )
 
 // tbtcApplication represents a tBTC application handle conforming to
@@ -24,7 +26,7 @@ type tbtcApplication struct {
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 
 	tbtcSystemAddress  common.Address
-	tbtcSystemContract *tbtcchain.TBTCSystem
+	tbtcSystemContract *tbtccontract.TBTCSystem
 }
 
 func (ec *ethereumChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
@@ -33,7 +35,7 @@ func (ec *ethereumChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 		return nil, fmt.Errorf("TBTCSystem address unset")
 	}
 
-	tbtcSystemContract, err := tbtcchain.NewTBTCSystem(
+	tbtcSystemContract, err := tbtccontract.NewTBTCSystem(
 		ec.tbtcSystemAddress,
 		ec.chainID,
 		ec.accountKey,
@@ -55,8 +57,8 @@ func (ec *ethereumChain) TBTCApplicationHandle() (chain.TBTCHandle, error) {
 	}, nil
 }
 
-func (ta *tbtcApplication) ID() common.Address {
-	return ta.tbtcSystemAddress
+func (ta *tbtcApplication) ID() chain.ID {
+	return ethereumChainID(ta.tbtcSystemAddress)
 }
 
 func (ta *tbtcApplication) RegisterAsMemberCandidate() error {
@@ -97,7 +99,7 @@ func (ta *tbtcApplication) RegisterAsMemberCandidate() error {
 // as a signer candidate in the factory for the given application.
 func (ta *tbtcApplication) IsRegisteredForApplication() (bool, error) {
 	return ta.bondedECDSAKeepFactoryContract.IsOperatorRegistered(
-		ta.chainHandle.Address(),
+		ta.chainHandle.operatorAddress(),
 		ta.tbtcSystemAddress,
 	)
 }
@@ -106,7 +108,7 @@ func (ta *tbtcApplication) IsRegisteredForApplication() (bool, error) {
 // as a signer candidate for the given application.
 func (ta *tbtcApplication) IsEligibleForApplication() (bool, error) {
 	return ta.bondedECDSAKeepFactoryContract.IsOperatorEligible(
-		ta.chainHandle.Address(),
+		ta.chainHandle.operatorAddress(),
 		ta.tbtcSystemAddress,
 	)
 }
@@ -115,7 +117,7 @@ func (ta *tbtcApplication) IsEligibleForApplication() (bool, error) {
 // is up to date in the signers' pool of the given application.
 func (ta *tbtcApplication) IsStatusUpToDateForApplication() (bool, error) {
 	return ta.bondedECDSAKeepFactoryContract.IsOperatorUpToDate(
-		ta.chainHandle.Address(),
+		ta.chainHandle.operatorAddress(),
 		ta.tbtcSystemAddress,
 	)
 }
@@ -124,7 +126,7 @@ func (ta *tbtcApplication) IsStatusUpToDateForApplication() (bool, error) {
 // pool for the given application.
 func (ta *tbtcApplication) UpdateStatusForApplication() error {
 	transaction, err := ta.bondedECDSAKeepFactoryContract.UpdateOperatorStatus(
-		ta.chainHandle.Address(),
+		ta.chainHandle.operatorAddress(),
 		ta.tbtcSystemAddress,
 	)
 	if err != nil {
@@ -307,7 +309,7 @@ func (ta *tbtcApplication) Keep(
 		return nil, err
 	}
 
-	return ta.chainHandle.GetKeepWithID(keepAddress)
+	return ta.chainHandle.GetKeepWithID(ethereumChainID(keepAddress))
 }
 
 // RetrieveSignerPubkey retrieves the signer public key for the
@@ -442,12 +444,12 @@ func (ta *tbtcApplication) CurrentState(
 
 func (ta *tbtcApplication) getDepositContract(
 	address string,
-) (*tbtcchain.Deposit, error) {
+) (*tbtccontract.Deposit, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("incorrect deposit contract address")
 	}
 
-	depositContract, err := tbtcchain.NewDeposit(
+	depositContract, err := tbtccontract.NewDeposit(
 		common.HexToAddress(address),
 		ta.chainHandle.chainID,
 		ta.chainHandle.accountKey,

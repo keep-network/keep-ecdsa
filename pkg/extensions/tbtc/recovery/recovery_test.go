@@ -207,7 +207,7 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 
 			signer, err := tss.GenerateThresholdSigner(
 				ctx,
-				keep.ID().Hex(),
+				keep.ID().String(),
 				memberID,
 				groupMembers,
 				uint(len(groupMembers)-1),
