@@ -276,9 +276,9 @@ func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]chain.ID, error) {
 }
 
 // GetOwner returns keep's owner.
-func (bekh *bondedEcdsaKeepHandle) GetOwner() (ExternalAddress, error) {
+func (bekh *bondedEcdsaKeepHandle) GetOwner() (chain.ID, error) {
 	owner, err := bekh.contract.GetOwner()
-	return toExternalAddress(owner), err
+	return celoChainID(owner), err
 }
 
 func (bekh *bondedEcdsaKeepHandle) IsThisOperatorMember() (bool, error) {

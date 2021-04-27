@@ -268,11 +268,11 @@ func (lk *localKeep) GetMembers() ([]chain.ID, error) {
 	return toIDSlice(lk.members), nil
 }
 
-func (lk *localKeep) GetOwner() (common.Address, error) {
+func (lk *localKeep) GetOwner() (chain.ID, error) {
 	lk.chain.localChainMutex.Lock()
 	defer lk.chain.localChainMutex.Unlock()
 
-	return lk.owner, nil
+	return localChainID(lk.owner), nil
 }
 
 func (lk *localKeep) GetHonestThreshold() (uint64, error) {

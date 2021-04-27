@@ -280,8 +280,12 @@ func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]chain.ID, error) {
 }
 
 // GetOwner returns keep's owner.
-func (bekh *bondedEcdsaKeepHandle) GetOwner() (common.Address, error) {
-	return bekh.contract.GetOwner()
+func (bekh *bondedEcdsaKeepHandle) GetOwner() (chain.ID, error) {
+	owner, err := bekh.contract.GetOwner()
+	if err != nil {
+		return nil, err
+	}
+	return ethereumChainID(owner), nil
 }
 
 // IsThisOperatorMember returns whether or not the operator is a member

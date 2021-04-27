@@ -9,7 +9,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa"
@@ -186,7 +185,7 @@ type BondedECDSAKeepHandle interface {
 	GetMembers() ([]ID, error)
 
 	// GetOwner returns the keep's owner.
-	GetOwner() (common.Address, error)
+	GetOwner() (ID, error)
 
 	// IsThisOperatorMember returns true if the current operator belongs to the
 	// BondedECDSAKeep represented by this handle, false otherwise, or an error

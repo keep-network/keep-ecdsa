@@ -2336,7 +2336,7 @@ func TestGetOwner(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error %v", err)
 	}
-	if owner.Hex() != depositAddress {
+	if owner.String() != depositAddress {
 		t.Errorf(
 			"unexpected owner address\nexpected: %s\nactual:   %s",
 			depositAddress,

@@ -215,7 +215,7 @@ func BuildBitcoinTransaction(
 		return "", err
 	}
 
-	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.Hex())
+	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.String())
 	if err != nil {
 		logger.Errorf(
 			"failed to retrieve the funding info of deposit [%s] for keep [%s]: [%v]",
