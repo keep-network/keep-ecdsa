@@ -52,6 +52,7 @@ func TestElectrsConnection_broadcast(t *testing.T) {
 
 			return &http.Response{
 				StatusCode: 200,
+				Body:       ioutil.NopCloser(strings.NewReader("<fake-tx-id>")),
 			}, nil
 		},
 	})
