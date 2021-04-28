@@ -1163,7 +1163,7 @@ func monitorKeepTerminatedEvent(
 							if err != nil {
 								logger.Errorf(
 									"failed to persist the latest address derivation index for keep [%s]: [%v]",
-									keep.ID().Hex(),
+									keep.ID(),
 									err,
 								)
 								return err
