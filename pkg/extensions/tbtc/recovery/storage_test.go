@@ -321,6 +321,35 @@ func TestDerivationIndexStorage_MultipleAsyncSavesAndGetNextIndexes(t *testing.T
 	}
 }
 
+func TestDerviationIndexStorage_SaveOverwrites(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+	dis, err := NewDerivationIndexStorage(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	extendedPublicKey := "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
+	btcAddress := "<first-btc-address>"
+	index := uint32(831)
+	iterations := 10
+	for i := 0; i < iterations; i++ {
+		err = dis.Save(extendedPublicKey, index, btcAddress)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	btcAddressFromStorage, err := dis.readStoredBtcAddress(extendedPublicKey, int(index))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if btcAddressFromStorage != btcAddress {
+		t.Errorf("unexpected btc address from storage\nexpected: %s\nactual:   %s", btcAddress, btcAddressFromStorage)
+	}
+}
+
 func (dis *DerivationIndexStorage) readStoredBtcAddress(extendedPublicKey string, index int) (string, error) {
 	dis.mutex.Lock()
 	defer dis.mutex.Unlock()
