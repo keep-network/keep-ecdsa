@@ -138,6 +138,8 @@ jobs:
     defaults:
       run:
         working-directory: ./solidity
+    outputs:
+      version: ${{ steps.npm-version-bump.outputs.version }}
     steps:
       - uses: actions/checkout@v2
 
@@ -169,15 +171,23 @@ jobs:
       - name: Fetch external contracts artifacts
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-          CONTRACT_DATA_BUCKET_DIR: keep-core-wip # TODO remove '-wip'
+          CONTRACT_DATA_BUCKET_DIR: keep-core
           ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
         run: ./scripts/ci-provision-external-contracts.sh
 
+      - name: Get upstream packages' versions
+        uses: keep-network/upstream-builds-query@main
+        id: upstream-builds-query
+        with:
+          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          query: |
+            keep-core-solidity-version = github.com/keep-network/keep-core/solidity#version
+
       - name: Resolve latest contracts
         run: |
-            npm update \
-              @keep-network/keep-core \
-              @keep-network/sortition-pools
+            npm update @keep-network/sortition-pools
+            npm install --save-exact \
+              @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
 
       - name: Migrate contracts
         env:
@@ -185,6 +195,20 @@ jobs:
           ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+
+      - name: Copy artifacts
+        run: |
+          mkdir -p artifacts
+          cp -r build/contracts/* artifacts/
+
+      - name: Bump up package version
+        id: npm-version-bump
+        uses: keep-network/npm-version-bump@v2
+        with:
+          work-dir: ./solidity
+          environment: ${{ github.event.inputs.environment }}
+          branch: ${{ github.ref }}
+          commit: ${{ github.sha }}
 
       - name: Push contracts to Tenderly
         # TODO: once below action gets tagged replace `@main` with `@v1`
@@ -196,35 +220,23 @@ jobs:
           tenderly-project: thesis/keep-test
           eth-network-id: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
           github-project-name: keep-ecdsa
-          # version-tag: # TODO: resolve npm package version
+          version-tag: ${{ steps.npm-version-bump.outputs.version }}
 
       - name: Upload contract data
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: | # TODO remove '-wip'
-          cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-ecdsa-wip
-
-      - name: Copy artifacts
         run: |
-          mkdir -p artifacts
-          cp -r build/contracts/* artifacts/
-
-      - name: Bump up package version
-        uses: keep-network/npm-version-bump@v1
-        with:
-          workDir: ./solidity
+          cd build/contracts
+          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-ecdsa
 
       - name: Publish to npm
-        # TODO: --dry-run to be removed once testing of workflow is done
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
-          npm publish --access=public --dry-run
+          npm publish --access=public
 
       - name: Upload a build artifact
         uses: actions/upload-artifact@v2
         with:
-          # TODO: consider adding version to the name
           name: Selected contracts (Node.js ${{ matrix.node-version }})
           path: |
             ./solidity/build/contracts/BondedECDSAKeepFactory.json
@@ -255,9 +267,9 @@ jobs:
         working-directory: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: | # TODO remove '-wip'
-            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core-wip/KeepToken.json .
-            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core-wip/TokenStaking.json .
+        run: |
+            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/KeepToken.json .
+            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/TokenStaking.json .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -280,8 +292,7 @@ jobs:
       - name: Build and publish initcontainer
         uses: docker/build-push-action@v2
         env:
-          # TODO: change later to 'initcontainer-provision-keep-ecdsa'
-          IMAGE_NAME: 'initcontainer-provision-keep-ecdsa-wip'
+          IMAGE_NAME: 'initcontainer-provision-keep-ecdsa'
           GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
           context: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
@@ -306,7 +317,7 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           ref: ${{ github.event.inputs.ref }}
-          version: ${{ github.sha }} # TODO: replace with version once versioning ready
+          version: ${{ needs.contracts-migrate-and-publish-ethereum.outputs.version }}
 
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test]
