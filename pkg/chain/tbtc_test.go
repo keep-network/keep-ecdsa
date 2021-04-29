@@ -1,6 +1,4 @@
-//+build !celo
-
-package ethereum
+package chain
 
 import (
 	"testing"
@@ -65,7 +63,7 @@ func TestParseUtxoOutpoint(t *testing.T) {
 	}
 	for testName, testData := range testData {
 		t.Run(testName, func(t *testing.T) {
-			transactionHash, outputIndex := parseUtxoOutpoint(testData.utxoOutpoint)
+			transactionHash, outputIndex := ParseUtxoOutpoint(testData.utxoOutpoint)
 			if transactionHash != testData.expectedTransactionHash {
 				t.Errorf("unexpected transaction hash\nexpected: %s\nactual:   %s", testData.expectedTransactionHash, transactionHash)
 			}

@@ -3,8 +3,6 @@
 package ethereum
 
 import (
-	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"sort"
@@ -468,18 +466,6 @@ func (ta *tbtcApplication) getDepositContract(
 	return depositContract, nil
 }
 
-func parseUtxoOutpoint(utxoOutpoint []uint8) (string, uint32) {
-	transactionBytes := utxoOutpoint[:32]
-
-	// the transaction bytes are little-endian, so we need to reverse them before converting them to hex
-	for i, j := 0, len(transactionBytes)-1; i < j; i, j = i+1, j-1 {
-		transactionBytes[i], transactionBytes[j] = transactionBytes[j], transactionBytes[i]
-	}
-	transactionHash := hex.EncodeToString(transactionBytes)
-	outputIndex := binary.LittleEndian.Uint32(utxoOutpoint[32:])
-	return transactionHash, outputIndex
-}
-
 // FundingInfo retrieves the funding info for a particular deposit address
 func (ta *tbtcApplication) FundingInfo(
 	depositAddress string,
@@ -493,7 +479,8 @@ func (ta *tbtcApplication) FundingInfo(
 		return nil, err
 	}
 
-	transactionHash, outputIndex := parseUtxoOutpoint(fundingInfo.UtxoOutpoint)
+	transactionHash, outputIndex := chain.ParseUtxoOutpoint(fundingInfo.UtxoOutpoint)
+
 	return &chain.FundingInfo{
 		UtxoValueBytes:  fundingInfo.UtxoValueBytes,
 		FundedAt:        fundingInfo.FundedAt,
