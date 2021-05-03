@@ -226,13 +226,11 @@ func BuildBitcoinTransaction(
 		return "", err
 	}
 
-	previousOutputTransactionHashHex := hex.EncodeToString(fundingInfo.UtxoOutpoint[:32])
-	previousOutputIndex := binary.LittleEndian.Uint32(fundingInfo.UtxoOutpoint[32:])
 	previousOutputValue := int64(binary.LittleEndian.Uint32(fundingInfo.UtxoValueBytes[:]))
 
 	unsignedTransaction, err := constructUnsignedTransaction(
-		previousOutputTransactionHashHex,
-		previousOutputIndex,
+		fundingInfo.TransactionHash,
+		fundingInfo.OutputIndex,
 		previousOutputValue,
 		int64(maxFeePerVByte),
 		retrievalAddresses,

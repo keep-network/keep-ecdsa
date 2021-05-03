@@ -1,6 +1,8 @@
 package chain
 
 import (
+	"encoding/binary"
+	"encoding/hex"
 	"math/big"
 
 	"github.com/keep-network/keep-common/pkg/subscription"
@@ -110,9 +112,10 @@ type TBTCSystem interface {
 
 // FundingInfo represents the funding information for a tbtc deposit
 type FundingInfo struct {
-	UtxoValueBytes [8]uint8
-	FundedAt       *big.Int
-	UtxoOutpoint   []uint8
+	UtxoValueBytes  [8]uint8
+	FundedAt        *big.Int
+	TransactionHash string
+	OutputIndex     uint32
 }
 
 // DepositRedemptionRequestedEvent is an event emitted when a deposit
@@ -157,3 +160,18 @@ const (
 	// Liquidated means that the system seized the eth collateral and the signers recovered the held BTC
 	Liquidated
 )
+
+// ParseUtxoOutpoint parses a 36-byte utxo outpoint into a transaction hash and
+// an output index. The first 32 bytes in reverse represet the transaction
+// hash, and the last 4 bytes are a little-endian represention of the output index.
+func ParseUtxoOutpoint(utxoOutpoint []uint8) (string, uint32) {
+	transactionBytes := utxoOutpoint[:32]
+
+	// the transaction bytes are little-endian, so we need to reverse them before converting them to hex
+	for i, j := 0, len(transactionBytes)-1; i < j; i, j = i+1, j-1 {
+		transactionBytes[i], transactionBytes[j] = transactionBytes[j], transactionBytes[i]
+	}
+	transactionHash := hex.EncodeToString(transactionBytes)
+	outputIndex := binary.LittleEndian.Uint32(utxoOutpoint[32:])
+	return transactionHash, outputIndex
+}

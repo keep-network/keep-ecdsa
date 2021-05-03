@@ -2288,14 +2288,10 @@ func TestGetSignerActionDelay(t *testing.T) {
 
 func TestFundingInfo(t *testing.T) {
 	expectedFundingInfo := &chain.FundingInfo{
-		UtxoValueBytes: [8]uint8{128, 150, 152, 0, 0, 0, 0, 0},
-		FundedAt:       big.NewInt(1615172517),
-		UtxoOutpoint: []byte{
-			194, 124, 59, 250, 130, 147, 172, 107, 48, 59,
-			159, 116, 85, 174, 35, 183, 194, 75, 136, 20,
-			145, 90, 101, 17, 151, 96, 39, 6, 78, 252,
-			77, 81, 1, 0, 0, 0,
-		},
+		UtxoValueBytes:  [8]uint8{128, 150, 152, 0, 0, 0, 0, 0},
+		FundedAt:        big.NewInt(1615172517),
+		TransactionHash: "c27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d51",
+		OutputIndex:     1,
 	}
 
 	ctx, cancelCtx := context.WithCancel(context.Background())
