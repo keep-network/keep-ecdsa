@@ -118,7 +118,7 @@ jobs:
           CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
           environment: 'ropsten'
-          ref: 'rfc-18/import-env-var' # TODO: replace with master once config file gets merged to master
+          ref: 'master'
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -220,7 +220,7 @@ jobs:
           CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
           environment: 'ropsten'
-          ref: 'rfc-18/import-env-var' # TODO: replace with master once config file gets merged to master
+          ref: 'master'
 
       - name: Download a build artifact
         uses: actions/download-artifact@v2
@@ -292,7 +292,7 @@ jobs:
           CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
           environment: 'alfajores'
-          ref: 'rfc-18/import-env-var' # TODO: replace with master once config file gets merged to master
+          ref: 'master'
 
       - uses: actions/setup-node@v2
         with:
