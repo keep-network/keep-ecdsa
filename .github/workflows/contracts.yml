@@ -112,6 +112,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'ropsten'
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
@@ -134,14 +144,13 @@ jobs:
       
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+          project_id: ${{ env.GOOGLE_PROJECT_ID }}
           service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
       - name: Fetch external contracts artifacts
         env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
           CONTRACT_DATA_BUCKET_DIR: keep-core
-          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
+          ETH_NETWORK_ID: ${{ env.NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Resolve latest contracts
@@ -152,7 +161,6 @@ jobs:
 
       - name: Migrate contracts
         env:
-          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_ETH_TRUFFLE_NETWORK }}
           ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
@@ -165,16 +173,14 @@ jobs:
           working-directory: ./solidity
           tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
           tenderly-project: thesis/keep-test
-          eth-network-id: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
+          eth-network-id: ${{ env.NETWORK_ID }}
           github-project-name: keep-ecdsa
           # version-tag: # TODO: resolve npm package version
 
       - name: Upload contract data
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
         run: |
           cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-ecdsa
+          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-ecdsa
 
       - name: Copy artifacts
         run: |
@@ -210,6 +216,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'ropsten'
+
       - name: Download a build artifact
         uses: actions/download-artifact@v2
         with:
@@ -218,16 +234,14 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+          project_id: ${{ env.GOOGLE_PROJECT_ID }}
           service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
       
       - name: Download contract data
         working-directory: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
         run: |
-            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/KeepToken.json .
-            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/TokenStaking.json .
+            gsutil cp gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-core/KeepToken.json .
+            gsutil cp gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-core/TokenStaking.json .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -243,7 +257,7 @@ jobs:
       - name: Login to Google Container Registry
         uses: docker/login-action@v1
         with:
-          registry: ${{ secrets.GCR_REGISTRY_URL }}
+          registry: ${{ env.GCR_REGISTRY_URL }}
           username: _json_key
           password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
@@ -251,13 +265,12 @@ jobs:
         uses: docker/build-push-action@v2
         env:
           IMAGE_NAME: 'initcontainer-provision-keep-ecdsa'
-          GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
           context: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
           # GCR image should be named according to following convention:
           # HOSTNAME/PROJECT-ID/IMAGE:TAG
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
-          tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: |
             revision=${{ github.sha }}
           push: true
@@ -276,6 +289,16 @@ jobs:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'alfajores'
 
       - uses: actions/setup-node@v2
         with:
@@ -298,14 +321,13 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+          project_id: ${{ env.GOOGLE_PROJECT_ID }}
           service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
       - name: Fetch external contracts artifacts
         env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
           CONTRACT_DATA_BUCKET_DIR: keep-core-celo
-          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_NETWORK_ID }}
+          ETH_NETWORK_ID: ${{ env.NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Resolve latest contracts
@@ -316,16 +338,13 @@ jobs:
 
       - name: Migrate contracts
         env:
-          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_CELO_TRUFFLE_NETWORK }}
           CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       - name: Upload contract data
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
         run: |
           cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-ecdsa-celo
+          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-ecdsa-celo
 
       # TODO: add NPM publish step once it's clear how artifacts should be tagged
