@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	chain "github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain"
 )
 
 func (c *localChain) createKeep(keepAddress common.Address) error {
@@ -39,8 +39,12 @@ func (c *localChain) createKeepWithMembers(
 	c.keeps[keepAddress] = localKeep
 	c.keepAddresses = append(c.keepAddresses, keepAddress)
 
+	// Ignore errors as the local version never errors.
+	operatorIndex := localKeep.unsafeOperatorIndex()
+
 	keepCreatedEvent := &chain.BondedECDSAKeepCreatedEvent{
-		KeepAddress: keepAddress,
+		Keep:                 localKeep,
+		ThisOperatorIsMember: operatorIndex > -1,
 	}
 
 	for _, handler := range c.keepCreatedHandlers {
