@@ -163,18 +163,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - uses: google-github-actions/setup-gcloud@v0.2.0
-        with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
-      - name: Fetch external contracts artifacts
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-          CONTRACT_DATA_BUCKET_DIR: keep-core
-          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
-        run: ./scripts/ci-provision-external-contracts.sh
-
       - name: Get upstream packages' versions
         uses: keep-network/upstream-builds-query@main
         id: upstream-builds-query
@@ -222,25 +210,20 @@ jobs:
           github-project-name: keep-ecdsa
           version-tag: ${{ steps.npm-version-bump.outputs.version }}
 
-      - name: Upload contract data
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: |
-          cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-ecdsa
-
       - name: Publish to npm
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public
 
-      - name: Upload a build artifact
+      - name: Upload contracts artifacts for initcontainer build
         uses: actions/upload-artifact@v2
         with:
           name: Selected contracts (Node.js ${{ matrix.node-version }})
           path: |
             ./solidity/build/contracts/BondedECDSAKeepFactory.json
             ./solidity/build/contracts/KeepBonding.json
+            ./solidity/node_modules/@keep-network/keep-core/artifacts/KeepToken.json
+            ./solidity/node_modules/@keep-network/keep-core/artifacts/TokenStaking.json
 
   contracts-build-and-publish-initcontainer:
     needs: [contracts-migrate-and-publish-ethereum]
@@ -252,24 +235,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Download a build artifact
+      - name: Download migrated contracts artifacts
         uses: actions/download-artifact@v2
         with:
           name: Selected contracts (Node.js ${{ matrix.node-version }})
           path: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
-
-      - uses: google-github-actions/setup-gcloud@v0.2.0
-        with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-      
-      - name: Download contract data
-        working-directory: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: |
-            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/KeepToken.json .
-            gsutil cp gs://${CONTRACT_DATA_BUCKET}/keep-core/TokenStaking.json .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -351,18 +321,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - uses: google-github-actions/setup-gcloud@v0.2.0
-        with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
-      - name: Fetch external contracts artifacts
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-          CONTRACT_DATA_BUCKET_DIR: keep-core-celo
-          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_NETWORK_ID }}
-        run: ./scripts/ci-provision-external-contracts.sh
-
       - name: Resolve latest contracts
         run: |
             npm update \
@@ -376,10 +334,4 @@ jobs:
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
-      - name: Upload contract data
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: |
-          cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-ecdsa-celo
       # TODO: add NPM publish step once it's clear how artifacts should be tagged
