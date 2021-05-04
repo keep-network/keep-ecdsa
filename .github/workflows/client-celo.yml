@@ -101,6 +101,5 @@ jobs:
             REVISION=${{ github.sha }}
           # VERSION= ? TODO: Configure version, sample: 1.7.6
           push: |
-            ${{ (github.ref == 'refs/heads/master'
-              && github.event_name != 'pull_request')
-              || github.ref == 'refs/heads/rfc-18/load-env-var' }}
+            ${{ github.ref == 'refs/heads/master'
+              && github.event_name != 'pull_request' }}
