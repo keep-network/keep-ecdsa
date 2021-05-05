@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/keep-network/keep-common/pkg/persistence"
 )
 
 const (
@@ -23,7 +25,7 @@ type DerivationIndexStorage struct {
 
 // NewDerivationIndexStorage is a factory method that creates a new DerivationIndexStorage at the specified path.
 func NewDerivationIndexStorage(path string) (*DerivationIndexStorage, error) {
-	err := checkStoragePermission(path)
+	err := persistence.CheckStoragePermission(path)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +108,7 @@ func (dis *DerivationIndexStorage) Save(extendedPublicKey string, index uint32) 
 	}
 	filePath := fmt.Sprintf("%s/%d", dirPath, index)
 
-	return write(filePath, []byte{})
+	return persistence.Write(filePath, []byte{})
 }
 
 // Read returns the most recently used index for the extended public key
@@ -158,47 +160,9 @@ func (dis *DerivationIndexStorage) GetNextIndex(extendedPublicKey string) (uint3
 	return uint32(index + 1), nil
 }
 
-// create and write data to a file
-func write(filePath string, data []byte) error {
-	writeFile, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-
-	defer closeFile(writeFile)
-
-	_, err = writeFile.Write(data)
-	if err != nil {
-		return err
-	}
-
-	err = writeFile.Sync()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func closeFile(file *os.File) {
 	err := file.Close()
 	if err != nil {
 		logger.Errorf("could not close file [%v]: [%v]", file.Name(), err)
 	}
-}
-
-func checkStoragePermission(dirBasePath string) error {
-	_, err := ioutil.ReadDir(dirBasePath)
-	if err != nil {
-		return fmt.Errorf("cannot read from the storage directory: [%v]", err)
-	}
-
-	tempFile, err := ioutil.TempFile(dirBasePath, "write-test.*.tmp")
-	if err != nil {
-		return fmt.Errorf("cannot write to the storage directory: [%v]", err)
-	}
-
-	defer os.RemoveAll(tempFile.Name())
-
-	return nil
 }
