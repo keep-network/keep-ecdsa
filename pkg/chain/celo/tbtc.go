@@ -451,10 +451,14 @@ func (ta *tbtcApplication) FundingInfo(
 	if err != nil {
 		return nil, err
 	}
+
+	transactionHash, outputIndex := chain.ParseUtxoOutpoint(fundingInfo.UtxoOutpoint)
+
 	return &chain.FundingInfo{
-		UtxoValueBytes: fundingInfo.UtxoValueBytes,
-		FundedAt:       fundingInfo.FundedAt,
-		UtxoOutpoint:   fundingInfo.UtxoOutpoint,
+		UtxoValueBytes:  fundingInfo.UtxoValueBytes,
+		FundedAt:        fundingInfo.FundedAt,
+		TransactionHash: transactionHash,
+		OutputIndex:     outputIndex,
 	}, nil
 }
 
