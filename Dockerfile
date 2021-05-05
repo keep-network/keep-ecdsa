@@ -33,8 +33,12 @@ RUN apk add --update --no-cache \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
+RUN adduser -D -g '' keep
+RUN chown keep $BIN_PATH
+USER keep
+
 # Install Solidity compiler.
-COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
+COPY --chown=keep --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
 
 # Get gotestsum tool
 RUN go get gotest.tools/gotestsum
@@ -57,18 +61,18 @@ RUN go mod download
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.2/protoc-gen-gogoslick && go install .
 
 # Install Solidity contracts.
-COPY ./solidity $APP_DIR/solidity
+COPY --chown=keep ./solidity $APP_DIR/solidity
 RUN cd $APP_DIR/solidity && npm install
 
 # Generate code.
-COPY ./pkg/chain/gen/$HOST_CHAIN $APP_DIR/pkg/chain/gen/$HOST_CHAIN
-COPY ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
+COPY --chown=keep ./pkg/chain/gen/$HOST_CHAIN $APP_DIR/pkg/chain/gen/$HOST_CHAIN
+COPY --chown=keep ./pkg/ecdsa/tss/gen $APP_DIR/pkg/ecdsa/tss/gen
 # Need this to resolve imports in generated chain commands.
-COPY ./config $APP_DIR/config
+COPY --chown=keep ./config $APP_DIR/config
 RUN go generate ./...
 
 # Build the application.
-COPY ./ $APP_DIR/
+COPY --chown=keep ./ $APP_DIR/
 
 # Cleanup the `pkg/chain/gen` dir from unused chains bindings. Leave only
 # the ones which are currently in use. This helps reducing the size of
