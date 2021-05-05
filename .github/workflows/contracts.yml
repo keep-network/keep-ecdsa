@@ -8,6 +8,18 @@ on:
       - "solidity/**"
   pull_request:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment for workflow execution'
+        required: false
+        default: 'dev'
+      upstream_builds:
+        description: 'Upstream builds'
+        required: false
+      ref:
+        description: 'Git reference to checkout (e.g. branch name)'
+        required: false
+        default: 'master'
 
 jobs:
   contracts-detect-changes:
@@ -15,15 +27,31 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-    - uses: actions/checkout@v2
-      if: github.event_name == 'pull_request' 
-    - uses: dorny/paths-filter@v2
-      if: github.event_name == 'pull_request' 
-      id: filter
-      with:
-        filters: |
-          path-filter:
-            - './solidity/**'
+      - name: Show workflow metadata
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+            echo "Workflow dispatched on branch: ${{ github.ref }}"
+            echo "environment = ${{ github.event.inputs.environment }}"
+            echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
+            echo "ref = ${{ github.event.inputs.ref }}"
+            echo "sha = ${{ github.sha }}"
+
+      - name: Show workflow metadata
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+            echo "ref = ${{ github.ref }}"
+            echo "sha = ${{ github.sha }}"
+
+      - uses: actions/checkout@v2
+        if: github.event_name == 'pull_request'
+
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './solidity/**'
 
   contracts-build-and-test:
     needs: contracts-detect-changes
@@ -65,7 +93,7 @@ jobs:
   contracts-lint:
     needs: contracts-detect-changes
     if: |
-      github.event_name != 'pull_request'
+      github.event_name == 'push'
         || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
@@ -97,10 +125,8 @@ jobs:
         run: npm run lint
 
   contracts-migrate-and-publish-ethereum:
-    needs: [contracts-build-and-test, contracts-lint]
-    if: |
-      github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request'
+    needs: [contracts-build-and-test]
+    if: github.event_name == 'workflow_dispatch'
     environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
@@ -109,6 +135,8 @@ jobs:
     defaults:
       run:
         working-directory: ./solidity
+    outputs:
+      version: ${{ steps.npm-version-bump.outputs.version }}
     steps:
       - uses: actions/checkout@v2
 
@@ -142,28 +170,40 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - uses: google-github-actions/setup-gcloud@v0.2.0
+      - name: Get upstream packages' versions
+        uses: keep-network/upstream-builds-query@main
+        id: upstream-builds-query
         with:
-          project_id: ${{ env.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
-      - name: Fetch external contracts artifacts
-        env:
-          CONTRACT_DATA_BUCKET_DIR: keep-core
-          ETH_NETWORK_ID: ${{ env.NETWORK_ID }}
-        run: ./scripts/ci-provision-external-contracts.sh
+          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          query: |
+            keep-core-solidity-version = github.com/keep-network/keep-core/solidity#version
 
       - name: Resolve latest contracts
         run: |
-            npm update \
-              @keep-network/keep-core \
-              @keep-network/sortition-pools
+            npm update @keep-network/sortition-pools
+            npm install --save-exact \
+              @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
 
       - name: Migrate contracts
         env:
           ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
-          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+
+      - name: Copy artifacts
+        run: |
+          mkdir -p artifacts
+          cp -r build/contracts/* artifacts/
+
+      - name: Bump up package version
+        id: npm-version-bump
+        uses: keep-network/npm-version-bump@v2
+        with:
+          work-dir: ./solidity
+          environment: ${{ github.event.inputs.environment }}
+          branch: ${{ github.ref }}
+          commit: ${{ github.sha }}
 
       - name: Push contracts to Tenderly
         # TODO: once below action gets tagged replace `@main` with `@v1`
@@ -175,36 +215,28 @@ jobs:
           tenderly-project: thesis/keep-test
           eth-network-id: ${{ env.NETWORK_ID }}
           github-project-name: keep-ecdsa
-          # version-tag: # TODO: resolve npm package version
-
-      - name: Upload contract data
-        run: |
-          cd build/contracts
-          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-ecdsa
-
-      - name: Copy artifacts
-        run: |
-          mkdir -p artifacts
-          cp -r build/contracts/* artifacts/
-
-      - name: Bump up package version
-        uses: keep-network/npm-version-bump@v1
-        with:
-          workDir: ./solidity
+          version-tag: ${{ steps.npm-version-bump.outputs.version }}
 
       - name: Publish to npm
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public
 
-      - name: Upload a build artifact
+      - name: Upload keep-ecdsa contracts artifacts for initcontainer build
         uses: actions/upload-artifact@v2
         with:
-          # TODO: consider adding version to the name
           name: Selected contracts (Node.js ${{ matrix.node-version }})
           path: |
             ./solidity/build/contracts/BondedECDSAKeepFactory.json
             ./solidity/build/contracts/KeepBonding.json
+
+      - name: Upload keep-core contracts artifacts for initcontainer build
+        uses: actions/upload-artifact@v2
+        with:
+          name: Selected contracts (Node.js ${{ matrix.node-version }})
+          path: |
+            ./solidity/node_modules/@keep-network/keep-core/artifacts/KeepToken.json
+            ./solidity/node_modules/@keep-network/keep-core/artifacts/TokenStaking.json
 
   contracts-build-and-publish-initcontainer:
     needs: [contracts-migrate-and-publish-ethereum]
@@ -226,22 +258,11 @@ jobs:
           # in config files.
           environment: 'ropsten'
 
-      - name: Download a build artifact
+      - name: Download migrated contracts artifacts
         uses: actions/download-artifact@v2
         with:
           name: Selected contracts (Node.js ${{ matrix.node-version }})
           path: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
-
-      - uses: google-github-actions/setup-gcloud@v0.2.0
-        with:
-          project_id: ${{ env.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-      
-      - name: Download contract data
-        working-directory: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
-        run: |
-            gsutil cp gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-core/KeepToken.json .
-            gsutil cp gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-core/TokenStaking.json .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -275,13 +296,23 @@ jobs:
             revision=${{ github.sha }}
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache 
+          cache-to: type=local,dest=/tmp/.buildx-cache
+      
+      - name: Notify CI about completion of the workflow
+        uses: keep-network/notify-workflow-completed@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          module: "github.com/keep-network/keep-ecdsa/solidity"
+          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          environment: ${{ github.event.inputs.environment }}
+          upstream_builds: ${{ github.event.inputs.upstream_builds }}
+          ref: ${{ github.event.inputs.ref }}
+          version: ${{ needs.contracts-migrate-and-publish-ethereum.outputs.version }}
 
   contracts-migrate-and-publish-celo:
-    needs: [contracts-build-and-test, contracts-lint]
-    if: |
-      github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request'
+    needs: [contracts-build-and-test]
+    if: github.event_name == 'workflow_dispatch'
     environment: keep-test
     runs-on: ubuntu-latest
     defaults:
@@ -319,32 +350,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - uses: google-github-actions/setup-gcloud@v0.2.0
+      - name: Get upstream packages' versions
+        uses: keep-network/upstream-builds-query@main
+        id: upstream-builds-query
         with:
-          project_id: ${{ env.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
-      - name: Fetch external contracts artifacts
-        env:
-          CONTRACT_DATA_BUCKET_DIR: keep-core-celo
-          ETH_NETWORK_ID: ${{ env.NETWORK_ID }}
-        run: ./scripts/ci-provision-external-contracts.sh
+          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          query: |
+            keep-ecdsa-solidity-version = github.com/keep-network/keep-ecdsa/solidity#version
 
       - name: Resolve latest contracts
         run: |
-            npm update \
-              @keep-network/keep-core \
-              @keep-network/sortition-pools
+            npm update @keep-network/sortition-pools
+            npm install --save-exact \
+              @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
 
       - name: Migrate contracts
         env:
           CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
-
-      - name: Upload contract data
-        run: |
-          cd build/contracts
-          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-ecdsa-celo
 
       # TODO: add NPM publish step once it's clear how artifacts should be tagged

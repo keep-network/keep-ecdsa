@@ -11,6 +11,18 @@ on:
       - "staker-rewards/**"
   pull_request:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment for workflow execution'
+        required: false
+        default: 'dev'
+      upstream_builds:
+        description: 'Upstream builds'
+        required: false
+      ref:
+        description: 'Git reference to checkout (e.g. branch name)'
+        required: false
+        default: 'master'
 
 jobs:
   client-detect-changes:
@@ -18,15 +30,31 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-    - uses: actions/checkout@v2
-      if: github.event_name == 'pull_request' 
-    - uses: dorny/paths-filter@v2
-      if: github.event_name == 'pull_request' 
-      id: filter
-      with:
-        filters: |
-          path-filter:
-            - './!((docs|infrastructure|scripts|staker-rewards)/**)'
+      - name: Show workflow metadata
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+            echo "Workflow dispatched on branch: ${{ github.ref }}"
+            echo "environment = ${{ github.event.inputs.environment }}"
+            echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
+            echo "ref = ${{ github.event.inputs.ref }}"
+            echo "sha = ${{ github.sha }}"
+
+      - name: Show workflow metadata
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+            echo "ref = ${{ github.ref }}"
+            echo "sha = ${{ github.sha }}"
+
+      - uses: actions/checkout@v2
+        if: github.event_name == 'pull_request' 
+        
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request' 
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './!((docs|infrastructure|scripts|staker-rewards)/**)'
 
   client-build-test-publish:
     needs: client-detect-changes
@@ -75,9 +103,7 @@ jobs:
             gotestsum
 
       - name: Login to Google Container Registry
-        if: |
-          github.ref == 'refs/heads/master'
-            && github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         uses: docker/login-action@v1
         with:
           registry: ${{ env.GCR_REGISTRY_URL }}
@@ -87,7 +113,7 @@ jobs:
       - name: Build and publish Docker Runtime Image
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-ecdsa'
+          IMAGE_NAME: 'keep-ecdsa-ethereum'
         with:
           # GCR image should be named according to following convention:
           # HOSTNAME/PROJECT-ID/IMAGE:TAG
@@ -97,6 +123,33 @@ jobs:
           build-args: |
             REVISION=${{ github.sha }}
           # VERSION= ? TODO: Configure version, sample: 1.7.6
-          push: |
-            ${{ github.ref == 'refs/heads/master'
-              && github.event_name != 'pull_request' }}
+          push: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Notify CI about completion of the workflow
+        if: github.event_name == 'workflow_dispatch'
+        uses: keep-network/notify-workflow-completed@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          module: "github.com/keep-network/keep-ecdsa"
+          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          environment: ${{ github.event.inputs.environment }}
+          upstream_builds: ${{ github.event.inputs.upstream_builds }}
+          ref: ${{ github.event.inputs.ref }}
+          version: ${{ github.sha }} # TODO: replace with version once versioning ready
+
+  client-scan:
+    needs: client-detect-changes
+    if: |
+      github.event_name == 'push'
+        || needs.client-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+    steps:
+      - uses: actions/checkout@v2
+      - uses: securego/gosec@master
+        with:
+          args: |
+            -exclude-dir=pkg/chain/gen
+            ./...
