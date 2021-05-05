@@ -74,12 +74,9 @@ printf "${LOG_START}Application address:${LOG_END} $CLIENT_APP_ADDRESS"
 
 printf "${LOG_START}Starting initialization...${LOG_END}"
 
-printf "${LOG_START}Configuring external client contract address...${LOG_END}"
-CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
-    ./scripts/lcl-set-client-address.sh
-
 printf "${LOG_START}Initializing contracts...${LOG_END}"
-  npx truffle exec scripts/lcl-initialize.js --network $NETWORK
+  CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
+    npx truffle exec scripts/lcl-initialize.js --network $NETWORK
 
 printf "${LOG_START}Updating keep-ecdsa config files...${LOG_END}"
 for CONFIG_FILE in $KEEP_ECDSA_CONFIG_DIR_PATH/*.toml
