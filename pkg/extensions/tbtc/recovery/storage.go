@@ -82,6 +82,28 @@ func (dis *DerivationIndexStorage) Save(extendedPublicKey string, index uint32) 
 	if err != nil {
 		return err
 	}
+
+	files, err := ioutil.ReadDir(dirPath)
+	if err != nil {
+		logger.Errorf("something went wrong trying to clean up old index files: [%v]", err)
+	}
+
+	// clean up old indexes
+	for _, file := range files {
+		fileIndex, err := strconv.Atoi(file.Name())
+		if err != nil {
+			logger.Errorf("something went wrong trying to clean up old index files: [%v]", err)
+			continue
+		}
+
+		if uint32(fileIndex) < index {
+			err = os.Remove(fmt.Sprintf("%s/%s", dirPath, file.Name()))
+			if err != nil {
+				logger.Errorf("something went wrong trying to clean up old index files: [%v]", err)
+				continue
+			}
+		}
+	}
 	filePath := fmt.Sprintf("%s/%d", dirPath, index)
 
 	return write(filePath, []byte{})
