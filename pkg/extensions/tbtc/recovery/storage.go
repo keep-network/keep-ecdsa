@@ -70,7 +70,7 @@ func ensureDirectoryExists(path string) error {
 }
 
 // Save marks an index as used for a particular extendedPublicKey
-func (dis *DerivationIndexStorage) Save(extendedPublicKey string, index uint32, btcAddress string) error {
+func (dis *DerivationIndexStorage) Save(extendedPublicKey string, index uint32) error {
 	dis.mutex.Lock()
 	defer dis.mutex.Unlock()
 	dirPath, err := dis.getStoragePath(extendedPublicKey)
@@ -84,7 +84,7 @@ func (dis *DerivationIndexStorage) Save(extendedPublicKey string, index uint32, 
 	}
 	filePath := fmt.Sprintf("%s/%d", dirPath, index)
 
-	return write(filePath, []byte(btcAddress))
+	return write(filePath, []byte{})
 }
 
 // Read returns the most recently used index for the extended public key

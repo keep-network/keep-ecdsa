@@ -247,7 +247,7 @@ func TestResolveAddress(t *testing.T) {
 				t.Fatal(err)
 			}
 			for _, usedIndex := range testData.usedIndexes {
-				dis.Save(testData.beneficiaryAddress, usedIndex, "<example-btc-address>")
+				dis.Save(testData.beneficiaryAddress, usedIndex)
 			}
 			resolvedAddress, _, err := ResolveAddress(
 				testData.beneficiaryAddress,

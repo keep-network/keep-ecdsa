@@ -1,10 +1,8 @@
 package recovery
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -107,10 +105,6 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 		},
 	}
 
-	btcAddressTestString := func(publicKey string, index int) string {
-		return fmt.Sprintf("btc-address-%s-%d", strings.TrimSpace(publicKey), index)
-	}
-
 	for testName, testData := range testData {
 		t.Run(testName, func(t *testing.T) {
 			dir, err := ioutil.TempDir("", "example")
@@ -127,7 +121,6 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				err = dis.Save(
 					input.publicKey,
 					uint32(input.index),
-					btcAddressTestString(input.publicKey, input.index),
 				)
 				if err != nil {
 					t.Fatal(err)
@@ -141,21 +134,6 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 
 				if index != uint32(expectation.index) {
 					t.Errorf("incorrect extendedPublicKey index for %s\nexpected: %d\nactual:   %d", expectation.publicKey, expectation.index, index)
-				}
-
-				actualBtcAddress, err := dis.readStoredBtcAddress(expectation.publicKey, expectation.index-1)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				expectedBtcAddress := btcAddressTestString(expectation.publicKey, expectation.index-1)
-				if expectedBtcAddress != string(actualBtcAddress) {
-					t.Errorf(
-						"incorrect stored btc address for %s\nexpected: %s\nactual:   %s",
-						expectation.publicKey,
-						expectedBtcAddress,
-						actualBtcAddress,
-					)
 				}
 			}
 		})
@@ -174,11 +152,11 @@ func TestDerivationIndexStorage_OverwriteExistingPair(t *testing.T) {
 	}
 	extendedPublicKey := "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
 	index := uint32(89)
-	err = dis.Save(extendedPublicKey, index, "<first-btc-address>")
+	err = dis.Save(extendedPublicKey, index)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = dis.Save(extendedPublicKey, index, "<second-btc-address>")
+	err = dis.Save(extendedPublicKey, index)
 	if err != nil {
 		t.Errorf("unexpected error trying to overwrite extendedPublicKey [%s] at index [%d]: [%v]", extendedPublicKey, index, err)
 	}
@@ -207,7 +185,7 @@ func TestDerivationIndexStorage_ShortExtendedPublicKeys(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			err = dis.Save(testData.input.publicKey, uint32(testData.input.index), "<btc-address>")
+			err = dis.Save(testData.input.publicKey, uint32(testData.input.index))
 			if testData.expectedError == null {
 				if err != nil {
 					t.Errorf("unexpected error: [%v]", err)
@@ -288,7 +266,7 @@ func TestDerivationIndexStorage_MultipleAsyncSavesAndGetNextIndexes(t *testing.T
 	errs := make(chan error, iterations)
 	for i := 0; i < iterations; i++ {
 		go func() {
-			err = dis.Save(extendedPublicKey, index, "<first-btc-address>")
+			err = dis.Save(extendedPublicKey, index)
 			errs <- err
 		}()
 	}
@@ -332,39 +310,12 @@ func TestDerviationIndexStorage_SaveOverwrites(t *testing.T) {
 		t.Fatal(err)
 	}
 	extendedPublicKey := "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
-	btcAddress := "<first-btc-address>"
 	index := uint32(831)
 	iterations := 10
 	for i := 0; i < iterations; i++ {
-		err = dis.Save(extendedPublicKey, index, btcAddress)
+		err = dis.Save(extendedPublicKey, index)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
-	btcAddressFromStorage, err := dis.readStoredBtcAddress(extendedPublicKey, int(index))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if btcAddressFromStorage != btcAddress {
-		t.Errorf("unexpected btc address from storage\nexpected: %s\nactual:   %s", btcAddress, btcAddressFromStorage)
-	}
-}
-
-func (dis *DerivationIndexStorage) readStoredBtcAddress(extendedPublicKey string, index int) (string, error) {
-	dis.mutex.Lock()
-	defer dis.mutex.Unlock()
-
-	dirPath, err := dis.getStoragePath(extendedPublicKey)
-	if err != nil {
-		return "", err
-	}
-
-	fileContent, err := ioutil.ReadFile(
-		fmt.Sprintf("%s/%d", dirPath, index),
-	)
-	if err != nil {
-		return "", err
-	}
-
-	return string(fileContent), nil
 }
