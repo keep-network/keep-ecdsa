@@ -17,14 +17,17 @@ CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KE
 help()
 {
    echo -e "\nUsage: ENV_VAR(S) $0"\
-           "--network <network>"
+           "--network <network>"\
+           "--contracts-only"
    echo -e "\nEnvironment variables:\n"
    echo -e "\tKEEP_CELO_PASSWORD: The password to unlock local Celo accounts to set up delegations."\
            "Required only for 'local' network. Default value is 'password'"
    echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo. Required for non-local network only"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--network: Celo network for keep-core client."\
-           "Available networks and settings are specified in 'truffle.js'\n"
+           "Available networks and settings are specified in 'truffle.js'"
+   echo -e "\t--contracts-only: Should execute contracts part only."\
+           "Client installation will not be executed.\n"
    exit 1 # Exit script after printing help
 }
 
@@ -33,6 +36,7 @@ for arg in "$@"; do
   shift
   case "$arg" in
     "--network")        set -- "$@" "-n" ;;
+    "--contracts-only") set -- "$@" "-m" ;;
     "--help")           set -- "$@" "-h" ;;
     *)                  set -- "$@" "$arg"
   esac
@@ -40,10 +44,11 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "n:h" opt
+while getopts "n:mh" opt
 do
    case "$opt" in
       n ) network="$OPTARG" ;;
+      m ) contracts_only=true ;;
       h ) help ;;
       ? ) help ;; # Print help in case parameter is non-existent
    esac
@@ -52,6 +57,7 @@ shift $(expr $OPTIND - 1) # remove options from positional parameters
 
 # Overwrite default properties
 NETWORK=${network:-$NETWORK_DEFAULT}
+CONTRACTS_ONLY=${contracts_only:-false}
 
 printf "${LOG_START}Network: $NETWORK ${LOG_END}"
 
@@ -79,9 +85,11 @@ printf "${LOG_START}Creating links...${LOG_END}"
 ln -sf build/contracts artifacts
 npm link
 
-printf "${LOG_START}Building keep-ecdsa client...${LOG_END}"
-cd $KEEP_ECDSA_PATH
-go generate ./...
-go build -a -o keep-ecdsa .
+if [ "$CONTRACTS_ONLY" = false ] ; then
+        printf "${LOG_START}Building keep-ecdsa client...${LOG_END}"
+        cd $KEEP_ECDSA_PATH
+        go generate ./...
+        go build -a -o keep-ecdsa .
+fi
 
 printf "${DONE_START}Installation completed!${DONE_END}"
