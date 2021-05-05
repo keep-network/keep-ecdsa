@@ -126,10 +126,7 @@ jobs:
 
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test]
-    if: |
-      (github.ref == 'refs/heads/master'
-        && github.event_name == 'push')
-        || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
@@ -190,7 +187,8 @@ jobs:
       - name: Migrate contracts
         env:
           ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
-          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       - name: Copy artifacts
@@ -224,7 +222,7 @@ jobs:
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public
 
-      - name: Upload contracts artifacts for initcontainer build (from solidity/build)
+      - name: Upload keep-ecdsa contracts artifacts for initcontainer build
         uses: actions/upload-artifact@v2
         with:
           name: Selected contracts (Node.js ${{ matrix.node-version }})
@@ -232,7 +230,7 @@ jobs:
             ./solidity/build/contracts/BondedECDSAKeepFactory.json
             ./solidity/build/contracts/KeepBonding.json
 
-      - name: Upload contracts artifacts for initcontainer build (from solidity/node_modules)
+      - name: Upload keep-core contracts artifacts for initcontainer build
         uses: actions/upload-artifact@v2
         with:
           name: Selected contracts (Node.js ${{ matrix.node-version }})
@@ -250,12 +248,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Download migrated contracts artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: Selected contracts (Node.js ${{ matrix.node-version }})
-          path: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
-
       - name: Load environment variables
         uses: keep-network/load-env-variables@v1
         env: 
@@ -265,6 +257,12 @@ jobs:
           # hardcoded value. Would require some rework in action's code or
           # in config files.
           environment: 'ropsten'
+
+      - name: Download migrated contracts artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: Selected contracts (Node.js ${{ matrix.node-version }})
+          path: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -301,7 +299,6 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
       
       - name: Notify CI about completion of the workflow
-        if: github.event_name == 'workflow_dispatch'
         uses: keep-network/notify-workflow-completed@main
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
@@ -315,9 +312,7 @@ jobs:
 
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test]
-    if: |
-      github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     environment: keep-test
     runs-on: ubuntu-latest
     defaults:
@@ -355,11 +350,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Get upstream packages' versions
+        uses: keep-network/upstream-builds-query@main
+        id: upstream-builds-query
+        with:
+          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          query: |
+            keep-ecdsa-solidity-version = github.com/keep-network/keep-ecdsa/solidity#version
+
       - name: Resolve latest contracts
         run: |
-            npm update \
-              @keep-network/keep-core \
-              @keep-network/sortition-pools
+            npm update @keep-network/sortition-pools
+            npm install --save-exact \
+              @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
 
       - name: Migrate contracts
         env:
