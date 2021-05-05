@@ -224,13 +224,19 @@ jobs:
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public
 
-      - name: Upload contracts artifacts for initcontainer build
+      - name: Upload contracts artifacts for initcontainer build (from solidity/build)
         uses: actions/upload-artifact@v2
         with:
           name: Selected contracts (Node.js ${{ matrix.node-version }})
           path: |
             ./solidity/build/contracts/BondedECDSAKeepFactory.json
             ./solidity/build/contracts/KeepBonding.json
+
+      - name: Upload contracts artifacts for initcontainer build (from solidity/node_modules)
+        uses: actions/upload-artifact@v2
+        with:
+          name: Selected contracts (Node.js ${{ matrix.node-version }})
+          path: |
             ./solidity/node_modules/@keep-network/keep-core/artifacts/KeepToken.json
             ./solidity/node_modules/@keep-network/keep-core/artifacts/TokenStaking.json
 
