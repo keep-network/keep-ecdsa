@@ -12,7 +12,6 @@ replace (
 
 require (
 	github.com/BurntSushi/toml v0.3.1
-	github.com/OneOfOne/xxhash v1.2.5 // indirect
 	github.com/binance-chain/tss-lib v1.3.1
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/btcsuite/btcutil v1.0.2
@@ -26,8 +25,6 @@ require (
 	github.com/keep-network/keep-core v1.3.2-0.20210504101950-aba0402945bd
 	github.com/keep-network/tbtc v1.1.1-0.20210319100902-7a3b5230ffcf
 	github.com/pkg/errors v0.9.1
-	github.com/robertkrimen/otto v0.0.0-20170205013659-6a77b7cbc37d // indirect
 	github.com/urfave/cli v1.22.1
-	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gotest.tools/v3 v3.0.3
 )
