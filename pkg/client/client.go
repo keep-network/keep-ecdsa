@@ -1166,7 +1166,6 @@ func monitorKeepTerminatedEvent(
 									keep.ID(),
 									err,
 								)
-								return err
 							}
 						}
 
