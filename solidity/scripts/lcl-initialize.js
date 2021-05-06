@@ -10,6 +10,8 @@ const { readExternalContractAddress } = contracts
 
 module.exports = async function () {
   try {
+    const networkID = await web3.eth.net.getId()
+    
     // Assuming BTC/ETH rate = 50 to cover a keep bond of 1 BTC we need to have
     // 50 ETH / 3 members = 16,67 ETH of unbonded value for each member.
     // Here we set the bonding value to bigger value so members can handle
@@ -31,7 +33,7 @@ module.exports = async function () {
     const TokenStakingAddress = readExternalContractAddress(
       "@keep-network/keep-core",
       "TokenStaking",
-      deployer
+      networkID
     )
 
     const authorizeOperator = async (operator) => {
