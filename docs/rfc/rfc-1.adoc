@@ -223,8 +223,3 @@ addressed in followup work.
 
 Why not invert this? A single loop monitoring for each of these
 events and checking against locally handled keeps.
-
-[bibliography]
-== Related Links
-
-- Links to come...
