@@ -22,12 +22,12 @@ describe("MerkleDistributor", () => {
     tokenStaking = await TokenStakingStub.new()
     rewardsDistributor = await ECDSARewardsDistributor.new(
       keepToken.address,
-      tokenStaking.address
+      tokenStaking.address,
     )
 
     for (claim of [].concat(
       testValues.interval0.claims,
-      testValues.interval1.claims
+      testValues.interval1.claims,
     )) {
       await tokenStaking.setBeneficiary(claim.operator, claim.beneficiary)
     }
@@ -48,7 +48,7 @@ describe("MerkleDistributor", () => {
 
       await allocateTokens(
         testValues.interval0.merkleRoot,
-        testValues.interval0.amountToAllocate
+        testValues.interval0.amountToAllocate,
       )
 
       balance = await keepToken.balanceOf(rewardsDistributor.address)
@@ -73,9 +73,9 @@ describe("MerkleDistributor", () => {
       await expectRevert(
         rewardsDistributor.allocate(
           testValues.interval0.merkleRoot,
-          testValues.interval0.amountToAllocate
+          testValues.interval0.amountToAllocate,
         ),
-        "SafeERC20: low-level call failed"
+        "SafeERC20: low-level call failed",
       )
     })
   })
@@ -87,12 +87,12 @@ describe("MerkleDistributor", () => {
     beforeEach(async () => {
       await allocateTokens(
         testValues.interval0.merkleRoot,
-        testValues.interval0.amountToAllocate
+        testValues.interval0.amountToAllocate,
       )
 
       await allocateTokens(
         testValues.interval1.merkleRoot,
-        testValues.interval1.amountToAllocate
+        testValues.interval1.amountToAllocate,
       )
     })
 
@@ -109,7 +109,7 @@ describe("MerkleDistributor", () => {
         index,
         operator,
         amount,
-        proof
+        proof,
       )
 
       expect(await keepToken.balanceOf(beneficiary)).to.eq.BN(amount)
@@ -125,7 +125,7 @@ describe("MerkleDistributor", () => {
 
     it("should successfuly claim multiple rewards and update contract balance", async () => {
       const initialBalance = await keepToken.balanceOf(
-        rewardsDistributor.address
+        rewardsDistributor.address,
       )
 
       let claimedAmounts = new BN(0)
@@ -144,19 +144,19 @@ describe("MerkleDistributor", () => {
           index,
           operator,
           amount,
-          proof
+          proof,
         )
 
         expect(await keepToken.balanceOf(beneficiary)).to.eq.BN(amount)
       }
 
       const actualBalance = await keepToken.balanceOf(
-        rewardsDistributor.address
+        rewardsDistributor.address,
       )
 
       expect(actualBalance).to.eq.BN(
         initialBalance.sub(claimedAmounts),
-        "invalid unbonded value"
+        "invalid unbonded value",
       )
     })
 
@@ -172,13 +172,13 @@ describe("MerkleDistributor", () => {
 
       await expectRevert(
         rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
-        "Invalid proof"
+        "Invalid proof",
       )
     })
 
     it("should successfuly claim rewards from multiple merkle roots", async () => {
       const initialBalance = await keepToken.balanceOf(
-        rewardsDistributor.address
+        rewardsDistributor.address,
       )
 
       let claimedAmounts = new BN(0)
@@ -204,12 +204,12 @@ describe("MerkleDistributor", () => {
       await rewardsDistributor.claim(merkleRoot, index, operator, amount, proof)
 
       const actualBalance = await keepToken.balanceOf(
-        rewardsDistributor.address
+        rewardsDistributor.address,
       )
 
       expect(actualBalance).to.eq.BN(
         initialBalance.sub(claimedAmounts),
-        "invalid unbonded value"
+        "invalid unbonded value",
       )
     })
 
@@ -224,7 +224,7 @@ describe("MerkleDistributor", () => {
 
       await expectRevert(
         rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
-        "Reward already claimed"
+        "Reward already claimed",
       )
 
       merkleRoot = merkle1.merkleRoot
@@ -237,7 +237,7 @@ describe("MerkleDistributor", () => {
 
       await expectRevert(
         rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
-        "Reward already claimed"
+        "Reward already claimed",
       )
     })
 
@@ -250,7 +250,7 @@ describe("MerkleDistributor", () => {
 
       let isRewardClaimed = await rewardsDistributor.isClaimed(
         merkleRoot,
-        index
+        index,
       )
       expect(isRewardClaimed).to.be.false
 
@@ -272,7 +272,7 @@ describe("MerkleDistributor", () => {
 
       await expectRevert(
         rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
-        "Rewards must be allocated for a given merkle root"
+        "Rewards must be allocated for a given merkle root",
       )
     })
 
@@ -287,7 +287,7 @@ describe("MerkleDistributor", () => {
 
       await expectRevert(
         rewardsDistributor.claim(merkleRoot, index, operator, amount, proof),
-        "ERC20: transfer to the zero address"
+        "ERC20: transfer to the zero address",
       )
     })
   })

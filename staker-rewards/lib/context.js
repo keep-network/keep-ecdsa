@@ -31,7 +31,7 @@ export default class Context {
 
     const BondedECDSAKeepFactory = new Contract(
       BondedECDSAKeepFactoryJson,
-      web3
+      web3,
     )
 
     const BondedECDSAKeep = new Contract(BondedECDSAKeepJson, web3)
@@ -42,7 +42,7 @@ export default class Context {
 
     const factoryDeploymentBlock = await getDeploymentBlockNumber(
       BondedECDSAKeepFactoryJson,
-      web3
+      web3,
     )
 
     const contracts = {
@@ -63,7 +63,7 @@ export default class Context {
       tenderly = Tenderly.initialize(
         web3,
         tenderlyProjectURL,
-        tenderlyAccessToken
+        tenderlyAccessToken,
       )
     }
 
@@ -81,7 +81,7 @@ async function initWeb3(url) {
     "6892a90dab700bab8cee21cef939461f41f48b91c271120aa8b10cd3d9dd86dc"
 
   engine.addProvider(
-    new Subproviders.MnemonicWalletSubprovider({ mnemonic: dummyMnemonic })
+    new Subproviders.MnemonicWalletSubprovider({ mnemonic: dummyMnemonic }),
   )
 
   engine.addProvider(new WebsocketSubprovider({ rpcUrl: url }))

@@ -8,7 +8,7 @@ function packTicket(ticketValueHex, index, operator) {
 
   const virtualStakerIndexPadded = web3.utils.padLeft(index, 8)
   const virtualStakerIndexBytes = web3.utils.hexToBytes(
-    virtualStakerIndexPadded
+    virtualStakerIndexPadded,
   )
 
   return ticketValue.concat(stakerValueBytes).concat(virtualStakerIndexBytes)

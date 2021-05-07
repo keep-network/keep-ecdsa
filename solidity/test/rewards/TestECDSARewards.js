@@ -46,7 +46,7 @@ describe("ECDSARewards", () => {
       keepToken.address,
       keepFactory.address,
       tokenStaking.address,
-      { from: owner }
+      { from: owner },
     )
 
     await fund(keepToken, rewardsContract, totalRewardsAllocation)
@@ -127,7 +127,7 @@ describe("ECDSARewards", () => {
       await timeJumpToEndOfIntervalIfApplicable(0)
       await expectRevert(
         rewardsContract.receiveReward(keepAddress),
-        "Keep is not closed"
+        "Keep is not closed",
       )
     })
 
@@ -143,7 +143,7 @@ describe("ECDSARewards", () => {
       await timeJumpToEndOfIntervalIfApplicable(0)
       await expectRevert(
         rewardsContract.receiveReward(keepAddress),
-        "Keep is not closed"
+        "Keep is not closed",
       )
     })
 
@@ -199,7 +199,7 @@ describe("ECDSARewards", () => {
       for (let i = 0; i < 3; i++) {
         const keepTerminatedAddress = await keepFactory.getKeepAtIndex(i)
         const keepTerminated = await BondedECDSAKeepStub.at(
-          keepTerminatedAddress
+          keepTerminatedAddress,
         )
         await keepTerminated.publicMarkAsTerminated()
         keepTerminatedAddresses.push(keepTerminatedAddress)
@@ -347,7 +347,7 @@ describe("ECDSARewards", () => {
           rewardsContract.withdrawRewards(0, operators[i], {
             from: operators[i],
           }),
-          "No rewards to withdraw"
+          "No rewards to withdraw",
         )
       }
     })
@@ -370,7 +370,7 @@ describe("ECDSARewards", () => {
 
       await expectRevert(
         rewardsContract.receiveReward(keepAddress),
-        "Rewards already claimed"
+        "Rewards already claimed",
       )
     })
 
@@ -491,7 +491,7 @@ describe("ECDSARewards", () => {
 
     for (let i = 0; i < beneficiaries.length; i++) {
       const actualBalance = (await keepToken.balanceOf(beneficiaries[i])).div(
-        tokenDecimalMultiplier
+        tokenDecimalMultiplier,
       )
 
       expect(actualBalance).to.gte.BN(expectedBalance.subn(precision))
@@ -505,7 +505,7 @@ describe("ECDSARewards", () => {
     for (let i = 0; i < operators.length; i++) {
       const actualWithdrawnRewards = await rewardsContract.getAllocatedRewards(
         interval,
-        operators[i]
+        operators[i],
       )
       const actual = actualWithdrawnRewards.div(tokenDecimalMultiplier)
 
@@ -520,7 +520,7 @@ describe("ECDSARewards", () => {
     for (let i = 0; i < operators.length; i++) {
       const actualWithdrawnRewards = await rewardsContract.getWithdrawnRewards(
         interval,
-        operators[i]
+        operators[i],
       )
       const actual = actualWithdrawnRewards.div(tokenDecimalMultiplier)
 
@@ -535,7 +535,7 @@ describe("ECDSARewards", () => {
     for (let i = 0; i < operators.length; i++) {
       const actualWithdrawnRewards = await rewardsContract.getWithdrawableRewards(
         interval,
-        operators[i]
+        operators[i],
       )
       const actual = actualWithdrawnRewards.div(tokenDecimalMultiplier)
 

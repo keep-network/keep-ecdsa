@@ -53,7 +53,7 @@ async function run() {
   const context = await Context.initialize(
     ethHostname,
     tenderlyProjectUrl,
-    tenderlyAccessToken
+    tenderlyAccessToken,
   )
 
   const interval = {
@@ -105,14 +105,14 @@ async function run() {
            ${toFormat(
              operatorRewards.rewardWeight,
              false,
-             BigNumber.ROUND_DOWN
+             BigNumber.ROUND_DOWN,
            )} 
            ${toFormat(
              operatorRewards.totalRewards,
              false,
-             BigNumber.ROUND_DOWN
+             BigNumber.ROUND_DOWN,
            )}
-          `.replace(/\n/g, "\t")
+          `.replace(/\n/g, "\t"),
       )
 
       if (!operatorRewards.totalRewards.isZero()) {
@@ -149,7 +149,7 @@ function validateIntervalTimestamps(interval) {
   const isEndAfterStart = endDate.getTime() > startDate.getTime()
   if (!isEndAfterStart) {
     throw new Error(
-      "Interval end timestamp should be bigger than the interval start"
+      "Interval end timestamp should be bigger than the interval start",
     )
   }
 
@@ -163,7 +163,7 @@ function validateIntervalTotalRewards(interval) {
   }
 
   console.log(
-    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`)
+    clc.green(`Interval total rewards: ${interval.totalRewards} KEEP`),
   )
 }
 
@@ -179,7 +179,7 @@ function validateIntervalBlockspan(context, interval) {
   const isEndAfterStart = interval.endBlock > interval.startBlock
   if (!isEndAfterStart) {
     throw new Error(
-      "Interval end block should be bigger than the interval start block"
+      "Interval end block should be bigger than the interval start block",
     )
   }
 
@@ -200,7 +200,7 @@ async function calculateOperatorsRewards(context, interval) {
     const operatorRequirements = await requirements.check(operator)
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     const operatorAssets = await assetsCalculator.calculateOperatorAssets(
-      operator
+      operator,
     )
 
     operatorsParameters.push(
@@ -209,15 +209,15 @@ async function calculateOperatorsRewards(context, interval) {
         isFraudulent,
         operatorRequirements,
         operatorSLA,
-        operatorAssets
-      )
+        operatorAssets,
+      ),
     )
   }
 
   const rewardsCalculator = await RewardsCalculator.initialize(
     context,
     interval,
-    operatorsParameters
+    operatorsParameters,
   )
 
   const operatorsSummary = []
@@ -227,7 +227,7 @@ async function calculateOperatorsRewards(context, interval) {
     const operatorRewards = rewardsCalculator.getOperatorRewards(operator)
 
     operatorsSummary.push(
-      new OperatorSummary(operator, operatorParameters, operatorRewards)
+      new OperatorSummary(operator, operatorParameters, operatorRewards),
     )
   }
 
@@ -243,7 +243,7 @@ async function getOperators(context) {
     context.web3,
     await context.contracts.KeepBonding.deployed(),
     "UnbondedValueDeposited",
-    context.contracts.factoryDeploymentBlock
+    context.contracts.factoryDeploymentBlock,
   )
 
   events.forEach((event) => operators.add(event.returnValues.operator))
@@ -256,7 +256,7 @@ function OperatorParameters(
   isFraudulent,
   requirements,
   operatorSLA,
-  operatorAssets
+  operatorAssets,
 ) {
   ;(this.operator = operator),
     (this.isFraudulent = isFraudulent),
@@ -324,8 +324,8 @@ run()
   .then((result) => {
     console.log(
       clc.green(
-        "Staker rewards distribution calculations completed successfully"
-      )
+        "Staker rewards distribution calculations completed successfully",
+      ),
     )
 
     process.exit(0)
@@ -333,9 +333,9 @@ run()
   .catch((error) => {
     console.trace(
       clc.red(
-        "Staker rewards distribution calculations errored out with error: "
+        "Staker rewards distribution calculations errored out with error: ",
       ),
-      error
+      error,
     )
 
     process.exit(1)

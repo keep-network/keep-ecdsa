@@ -69,16 +69,16 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [createOperatorParameters(operator, 70000, 100)]
+        [createOperatorParameters(operator, 70000, 100)],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(
         rewards.ethScore.isEqualTo(new BigNumber(100).multipliedBy(1e18)),
-        true
+        true,
       )
-    }
+    },
   )
 
   it(
@@ -92,16 +92,16 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [createOperatorParameters(operator, 70000, 12000)]
+        [createOperatorParameters(operator, 70000, 12000)],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(
         rewards.ethScore.isEqualTo(new BigNumber(9000).multipliedBy(1e18)),
-        true
+        true,
       )
-    }
+    },
   )
 
   it("should return the right value of boost if KEEP_staked/KEEP_minStake is smaller", async () => {
@@ -112,7 +112,7 @@ describe("rewards calculator", async () => {
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
       interval,
-      [createOperatorParameters(operator, 70000, 100)]
+      [createOperatorParameters(operator, 70000, 100)],
     )
 
     const rewards = rewardsCalculator.getOperatorRewards(operator)
@@ -128,7 +128,7 @@ describe("rewards calculator", async () => {
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
       interval,
-      [createOperatorParameters(operator, 70000, 560)]
+      [createOperatorParameters(operator, 70000, 560)],
     )
 
     const rewards = rewardsCalculator.getOperatorRewards(operator)
@@ -144,14 +144,14 @@ describe("rewards calculator", async () => {
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
       interval,
-      [createOperatorParameters(operator, 70000, 100)]
+      [createOperatorParameters(operator, 70000, 100)],
     )
 
     const rewards = rewardsCalculator.getOperatorRewards(operator)
 
     assert.equal(
       rewards.rewardWeight.isEqualTo(new BigNumber(200).multipliedBy(1e18)),
-      true
+      true,
     )
   })
 
@@ -170,14 +170,14 @@ describe("rewards calculator", async () => {
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
       interval,
-      operatorsParameters
+      operatorsParameters,
     )
 
     const rewards = rewardsCalculator.getOperatorRewards(operator)
 
     assert.equal(
       rewards.totalRewards.isEqualTo(new BigNumber(1800000).multipliedBy(1e18)),
-      true
+      true,
     )
   })
 
@@ -193,7 +193,7 @@ describe("rewards calculator", async () => {
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
       interval,
-      [operatorParameters]
+      [operatorParameters],
     )
 
     const rewards = rewardsCalculator.getOperatorRewards(operator)
@@ -213,7 +213,7 @@ describe("rewards calculator", async () => {
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
       interval,
-      [operatorParameters]
+      [operatorParameters],
     )
 
     const rewards = rewardsCalculator.getOperatorRewards(operator)
@@ -233,7 +233,7 @@ describe("rewards calculator", async () => {
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
       interval,
-      [operatorParameters]
+      [operatorParameters],
     )
 
     const rewards = rewardsCalculator.getOperatorRewards(operator)
@@ -253,7 +253,7 @@ describe("rewards calculator", async () => {
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
       interval,
-      [operatorParameters]
+      [operatorParameters],
     )
 
     const rewards = rewardsCalculator.getOperatorRewards(operator)
@@ -273,7 +273,7 @@ describe("rewards calculator", async () => {
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
       interval,
-      [operatorParameters]
+      [operatorParameters],
     )
 
     const rewards = rewardsCalculator.getOperatorRewards(operator)
@@ -297,13 +297,13 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [operatorParameters]
+        [operatorParameters],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
-    }
+    },
   )
 
   it(
@@ -322,13 +322,13 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [operatorParameters]
+        [operatorParameters],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
-    }
+    },
   )
 
   it(
@@ -348,13 +348,13 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [operatorParameters]
+        [operatorParameters],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
-    }
+    },
   )
 
   it(
@@ -374,13 +374,13 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [operatorParameters]
+        [operatorParameters],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
-    }
+    },
   )
 
   it(
@@ -400,13 +400,13 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [operatorParameters]
+        [operatorParameters],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
-    }
+    },
   )
 
   it(
@@ -426,13 +426,13 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [operatorParameters]
+        [operatorParameters],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
-    }
+    },
   )
 
   it(
@@ -452,13 +452,13 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [operatorParameters]
+        [operatorParameters],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
-    }
+    },
   )
 
   it(
@@ -478,13 +478,13 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [operatorParameters]
+        [operatorParameters],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
-    }
+    },
   )
 
   it(
@@ -504,13 +504,13 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [operatorParameters]
+        [operatorParameters],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
-    }
+    },
   )
 
   it(
@@ -530,12 +530,12 @@ describe("rewards calculator", async () => {
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
         interval,
-        [operatorParameters]
+        [operatorParameters],
       )
 
       const rewards = rewardsCalculator.getOperatorRewards(operator)
 
       assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
-    }
+    },
   )
 })

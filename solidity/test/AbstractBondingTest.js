@@ -42,7 +42,7 @@ describe("AbstractBonding", function () {
 
     abstractBonding = await AbstractBonding.new(
       registry.address,
-      stakingInfoStub.address
+      stakingInfoStub.address,
     )
 
     etherReceiver = await TestEtherReceiver.new()
@@ -55,7 +55,7 @@ describe("AbstractBonding", function () {
       sortitionPool,
       {
         from: authorizer,
-      }
+      },
     )
 
     await stakingInfoStub.authorizeOperatorContract(operator, bondCreator)
@@ -79,7 +79,7 @@ describe("AbstractBonding", function () {
       const unbonded = await abstractBonding.availableUnbondedValue(
         operator,
         bondCreator,
-        sortitionPool
+        sortitionPool,
       )
 
       expect(unbonded).to.eq.BN(expectedUnbonded, "invalid unbonded value")
@@ -96,8 +96,8 @@ describe("AbstractBonding", function () {
         await abstractBonding.availableUnbondedValue(
           operator,
           bondCreator,
-          sortitionPool
-        )
+          sortitionPool,
+        ),
       ).to.eq.BN(value1, "invalid unbonded value after first deposit")
 
       await abstractBonding.deposit(operator, { value: value2 })
@@ -105,11 +105,11 @@ describe("AbstractBonding", function () {
         await abstractBonding.availableUnbondedValue(
           operator,
           bondCreator,
-          sortitionPool
-        )
+          sortitionPool,
+        ),
       ).to.eq.BN(
         value1.add(value2),
-        "invalid unbonded value after second deposit"
+        "invalid unbonded value after second deposit",
       )
     })
 
@@ -128,7 +128,7 @@ describe("AbstractBonding", function () {
 
       await expectRevert(
         abstractBonding.deposit(operator, { value: value }),
-        "Beneficiary not defined for the operator"
+        "Beneficiary not defined for the operator",
       )
     })
   })
@@ -148,7 +148,7 @@ describe("AbstractBonding", function () {
       const unbondedValue = await abstractBonding.availableUnbondedValue(
         unbondedOperator,
         bondCreator,
-        sortitionPool
+        sortitionPool,
       )
       expect(unbondedValue).to.eq.BN(expectedUnbonded, "invalid unbonded value")
     })
@@ -161,7 +161,7 @@ describe("AbstractBonding", function () {
       const unbondedValue = await abstractBonding.availableUnbondedValue(
         operator,
         notApprovedBondCreator,
-        sortitionPool
+        sortitionPool,
       )
       expect(unbondedValue).to.eq.BN(expectedUnbonded, "invalid unbonded value")
     })
@@ -174,7 +174,7 @@ describe("AbstractBonding", function () {
       const unbondedValue = await abstractBonding.availableUnbondedValue(
         operator,
         bondCreator,
-        notAuthorizedSortitionPool
+        notAuthorizedSortitionPool,
       )
       expect(unbondedValue).to.eq.BN(expectedUnbonded, "invalid unbonded value")
     })
@@ -185,7 +185,7 @@ describe("AbstractBonding", function () {
       const unbonded = await abstractBonding.availableUnbondedValue(
         operator,
         bondCreator,
-        sortitionPool
+        sortitionPool,
       )
 
       expect(unbonded).to.eq.BN(expectedUnbonded, "invalid unbonded value")
@@ -212,20 +212,20 @@ describe("AbstractBonding", function () {
         reference,
         value,
         sortitionPool,
-        { from: bondCreator }
+        { from: bondCreator },
       )
 
       const unbonded = await abstractBonding.availableUnbondedValue(
         operator,
         bondCreator,
-        sortitionPool
+        sortitionPool,
       )
       expect(unbonded).to.eq.BN(expectedUnbonded, "invalid unbonded value")
 
       const lockedBonds = await abstractBonding.bondAmount(
         operator,
         holder,
-        reference
+        reference,
       )
       expect(lockedBonds).to.eq.BN(value, "unexpected bond value")
     })
@@ -239,7 +239,7 @@ describe("AbstractBonding", function () {
         reference,
         value,
         sortitionPool,
-        { from: bondCreator }
+        { from: bondCreator },
       )
 
       expectEvent(receipt, "BondCreated", {
@@ -268,7 +268,7 @@ describe("AbstractBonding", function () {
       await abstractBonding.authorizeSortitionPoolContract(
         operator2,
         sortitionPool,
-        { from: authorizer2 }
+        { from: authorizer2 },
       )
       await abstractBonding.createBond(
         operator,
@@ -276,7 +276,7 @@ describe("AbstractBonding", function () {
         reference,
         bondValue,
         sortitionPool,
-        { from: bondCreator }
+        { from: bondCreator },
       )
       await abstractBonding.createBond(
         operator2,
@@ -284,34 +284,34 @@ describe("AbstractBonding", function () {
         reference,
         bondValue,
         sortitionPool,
-        { from: bondCreator }
+        { from: bondCreator },
       )
 
       const unbonded1 = await abstractBonding.availableUnbondedValue(
         operator,
         bondCreator,
-        sortitionPool
+        sortitionPool,
       )
       expect(unbonded1).to.eq.BN(expectedUnbonded, "invalid unbonded value 1")
 
       const unbonded2 = await abstractBonding.availableUnbondedValue(
         operator2,
         bondCreator,
-        sortitionPool
+        sortitionPool,
       )
       expect(unbonded2).to.eq.BN(expectedUnbonded, "invalid unbonded value 2")
 
       const lockedBonds1 = await abstractBonding.bondAmount(
         operator,
         holder,
-        reference
+        reference,
       )
       expect(lockedBonds1).to.eq.BN(bondValue, "unexpected bond value 1")
 
       const lockedBonds2 = await abstractBonding.bondAmount(
         operator2,
         holder,
-        reference
+        reference,
       )
       expect(lockedBonds2).to.eq.BN(bondValue, "unexpected bond value 2")
     })
@@ -326,7 +326,7 @@ describe("AbstractBonding", function () {
         reference,
         bondValue,
         sortitionPool,
-        { from: bondCreator }
+        { from: bondCreator },
       )
 
       await expectRevert(
@@ -336,9 +336,9 @@ describe("AbstractBonding", function () {
           reference,
           bondValue,
           sortitionPool,
-          { from: bondCreator }
+          { from: bondCreator },
         ),
-        "Reference ID not unique for holder and operator"
+        "Reference ID not unique for holder and operator",
       )
     })
 
@@ -354,9 +354,9 @@ describe("AbstractBonding", function () {
           sortitionPool,
           {
             from: bondCreator,
-          }
+          },
         ),
-        "Insufficient unbonded value"
+        "Insufficient unbonded value",
       )
     })
   })
@@ -377,7 +377,7 @@ describe("AbstractBonding", function () {
         reference,
         bondValue,
         sortitionPool,
-        { from: bondCreator }
+        { from: bondCreator },
       )
     })
 
@@ -387,34 +387,34 @@ describe("AbstractBonding", function () {
         reference,
         newHolder,
         newReference,
-        { from: holder }
+        { from: holder },
       )
 
       let lockedBonds = await abstractBonding.bondAmount(
         operator,
         holder,
-        reference
+        reference,
       )
       expect(lockedBonds).to.eq.BN(0, "invalid locked bonds")
 
       lockedBonds = await abstractBonding.bondAmount(
         operator,
         holder,
-        newReference
+        newReference,
       )
       expect(lockedBonds).to.eq.BN(0, "invalid locked bonds")
 
       lockedBonds = await abstractBonding.bondAmount(
         operator,
         newHolder,
-        reference
+        reference,
       )
       expect(lockedBonds).to.eq.BN(0, "invalid locked bonds")
 
       lockedBonds = await abstractBonding.bondAmount(
         operator,
         newHolder,
-        newReference
+        newReference,
       )
       expect(lockedBonds).to.eq.BN(bondValue, "invalid locked bonds")
     })
@@ -425,20 +425,20 @@ describe("AbstractBonding", function () {
         reference,
         holder,
         newReference,
-        { from: holder }
+        { from: holder },
       )
 
       let lockedBonds = await abstractBonding.bondAmount(
         operator,
         holder,
-        reference
+        reference,
       )
       expect(lockedBonds).to.eq.BN(0, "invalid locked bonds")
 
       lockedBonds = await abstractBonding.bondAmount(
         operator,
         holder,
-        newReference
+        newReference,
       )
       expect(lockedBonds).to.eq.BN(bondValue, "invalid locked bonds")
     })
@@ -449,20 +449,20 @@ describe("AbstractBonding", function () {
         reference,
         newHolder,
         reference,
-        { from: holder }
+        { from: holder },
       )
 
       let lockedBonds = await abstractBonding.bondAmount(
         operator,
         holder,
-        reference
+        reference,
       )
       expect(lockedBonds).to.eq.BN(0, "invalid locked bonds")
 
       lockedBonds = await abstractBonding.bondAmount(
         operator,
         newHolder,
-        reference
+        reference,
       )
       expect(lockedBonds).to.eq.BN(bondValue, "invalid locked bonds")
     })
@@ -473,7 +473,7 @@ describe("AbstractBonding", function () {
         reference,
         newHolder,
         newReference,
-        { from: holder }
+        { from: holder },
       )
 
       expectEvent(receipt, "BondReassigned", {
@@ -493,9 +493,9 @@ describe("AbstractBonding", function () {
           newReference,
           {
             from: accounts[0],
-          }
+          },
         ),
-        "Bond not found"
+        "Bond not found",
       )
     })
 
@@ -507,7 +507,7 @@ describe("AbstractBonding", function () {
         newReference,
         bondValue,
         sortitionPool,
-        { from: bondCreator }
+        { from: bondCreator },
       )
 
       await expectRevert(
@@ -518,9 +518,9 @@ describe("AbstractBonding", function () {
           newReference,
           {
             from: holder,
-          }
+          },
         ),
-        "Reference ID not unique for holder and operator"
+        "Reference ID not unique for holder and operator",
       )
     })
   })
@@ -540,7 +540,7 @@ describe("AbstractBonding", function () {
         reference,
         bondValue,
         sortitionPool,
-        { from: bondCreator }
+        { from: bondCreator },
       )
     })
 
@@ -550,18 +550,18 @@ describe("AbstractBonding", function () {
       const lockedBonds = await abstractBonding.bondAmount(
         operator,
         holder,
-        reference
+        reference,
       )
       expect(lockedBonds).to.eq.BN(0, "unexpected remaining locked bonds")
 
       const unbondedValue = await abstractBonding.availableUnbondedValue(
         operator,
         bondCreator,
-        sortitionPool
+        sortitionPool,
       )
       expect(unbondedValue).to.eq.BN(
         initialUnboundedValue,
-        "unexpected unbonded value"
+        "unexpected unbonded value",
       )
     })
 
@@ -579,7 +579,7 @@ describe("AbstractBonding", function () {
     it("fails if sender is not the holder", async () => {
       await expectRevert(
         abstractBonding.freeBond(operator, reference, { from: accounts[0] }),
-        "Bond not found"
+        "Bond not found",
       )
     })
   })
@@ -599,7 +599,7 @@ describe("AbstractBonding", function () {
         reference,
         bondValue,
         sortitionPool,
-        { from: bondCreator }
+        { from: bondCreator },
       )
     })
 
@@ -616,19 +616,19 @@ describe("AbstractBonding", function () {
         destination,
         {
           from: holder,
-        }
+        },
       )
 
       const actualBalance = await web3.eth.getBalance(destination)
       expect(actualBalance).to.eq.BN(
         expectedBalance,
-        "invalid destination account balance"
+        "invalid destination account balance",
       )
 
       const lockedBonds = await abstractBonding.bondAmount(
         operator,
         holder,
-        reference
+        reference,
       )
       expect(lockedBonds).to.eq.BN(0, "unexpected remaining bond value")
     })
@@ -643,7 +643,7 @@ describe("AbstractBonding", function () {
         destination,
         {
           from: holder,
-        }
+        },
       )
 
       expectEvent(receipt, "BondSeized", {
@@ -668,23 +668,23 @@ describe("AbstractBonding", function () {
         destination,
         {
           from: holder,
-        }
+        },
       )
 
       const actualBalance = await web3.eth.getBalance(destination)
       expect(actualBalance).to.eq.BN(
         expectedBalance,
-        "invalid destination account balance"
+        "invalid destination account balance",
       )
 
       const lockedBonds = await abstractBonding.bondAmount(
         operator,
         holder,
-        reference
+        reference,
       )
       expect(lockedBonds).to.eq.BN(
         remainingBond,
-        "unexpected remaining bond value"
+        "unexpected remaining bond value",
       )
     })
 
@@ -694,7 +694,7 @@ describe("AbstractBonding", function () {
         abstractBonding.seizeBond(operator, reference, amount, destination, {
           from: holder,
         }),
-        "Requested amount should be greater than zero"
+        "Requested amount should be greater than zero",
       )
     })
 
@@ -704,7 +704,7 @@ describe("AbstractBonding", function () {
         abstractBonding.seizeBond(operator, reference, amount, destination, {
           from: holder,
         }),
-        "Requested amount is greater than the bond"
+        "Requested amount is greater than the bond",
       )
     })
 
@@ -716,19 +716,19 @@ describe("AbstractBonding", function () {
         abstractBonding.seizeBond(operator, reference, bondValue, destination, {
           from: holder,
         }),
-        "Transfer failed"
+        "Transfer failed",
       )
 
       const destinationBalance = await web3.eth.getBalance(destination)
       expect(destinationBalance).to.eq.BN(
         0,
-        "invalid destination account balance"
+        "invalid destination account balance",
       )
 
       const lockedBonds = await abstractBonding.bondAmount(
         operator,
         holder,
-        reference
+        reference,
       )
       expect(lockedBonds).to.eq.BN(bondValue, "unexpected bond value")
     })
@@ -744,9 +744,9 @@ describe("AbstractBonding", function () {
           sortitionPool,
           {
             from: authorizer1,
-          }
+          },
         ),
-        "Not authorized"
+        "Not authorized",
       )
     })
 
@@ -754,15 +754,15 @@ describe("AbstractBonding", function () {
       await abstractBonding.authorizeSortitionPoolContract(
         operator,
         sortitionPool,
-        { from: authorizer }
+        { from: authorizer },
       )
 
       assert.isTrue(
         await abstractBonding.hasSecondaryAuthorization(
           operator,
-          sortitionPool
+          sortitionPool,
         ),
-        "Sortition pool should be authorized for the provided operator"
+        "Sortition pool should be authorized for the provided operator",
       )
     })
   })
@@ -777,9 +777,9 @@ describe("AbstractBonding", function () {
           sortitionPool,
           {
             from: authorizer1,
-          }
+          },
         ),
-        "Not authorized"
+        "Not authorized",
       )
     })
 
@@ -787,19 +787,19 @@ describe("AbstractBonding", function () {
       await abstractBonding.authorizeSortitionPoolContract(
         operator,
         sortitionPool,
-        { from: authorizer }
+        { from: authorizer },
       )
       await abstractBonding.deauthorizeSortitionPoolContract(
         operator,
         sortitionPool,
-        { from: authorizer }
+        { from: authorizer },
       )
       assert.isFalse(
         await abstractBonding.hasSecondaryAuthorization(
           operator,
-          sortitionPool
+          sortitionPool,
         ),
-        "Sortition pool should be deauthorized for the provided operator"
+        "Sortition pool should be deauthorized for the provided operator",
       )
     })
 
@@ -825,14 +825,14 @@ describe("AbstractBonding", function () {
         const unbonded = await abstractBonding.availableUnbondedValue(
           operator,
           bondCreator,
-          sortitionPool
+          sortitionPool,
         )
         expect(unbonded).to.eq.BN(expectedUnbonded, "invalid unbonded value")
 
         const actualBeneficiaryBalance = await web3.eth.getBalance(beneficiary)
         expect(actualBeneficiaryBalance).to.eq.BN(
           expectedBeneficiaryBalance,
-          "invalid beneficiary balance"
+          "invalid beneficiary balance",
         )
       })
 
@@ -844,7 +844,7 @@ describe("AbstractBonding", function () {
           operator,
           {
             from: operator,
-          }
+          },
         )
         expectEvent(receipt, "UnbondedValueWithdrawn", {
           operator: operator,
@@ -860,7 +860,7 @@ describe("AbstractBonding", function () {
           abstractBonding.withdrawBondExposed(invalidValue, operator, {
             from: operator,
           }),
-          "Insufficient unbonded value"
+          "Insufficient unbonded value",
         )
       })
 
@@ -872,7 +872,7 @@ describe("AbstractBonding", function () {
           abstractBonding.withdrawBondExposed(value, operator, {
             from: operator,
           }),
-          "Transfer failed"
+          "Transfer failed",
         )
       })
     })

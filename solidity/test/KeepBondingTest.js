@@ -42,7 +42,7 @@ describe("KeepBonding", function () {
     keepBonding = await KeepBonding.new(
       registry.address,
       tokenStaking.address,
-      tokenGrant.address
+      tokenGrant.address,
     )
     etherReceiver = await TestEtherReceiver.new()
 
@@ -101,7 +101,7 @@ describe("KeepBonding", function () {
 
       await expectRevert(
         keepBonding.withdraw(value, operator, { from: thirdParty }),
-        "Only operator or the owner is allowed to withdraw bond"
+        "Only operator or the owner is allowed to withdraw bond",
       )
     })
 
@@ -117,14 +117,14 @@ describe("KeepBonding", function () {
       const unbonded = await keepBonding.availableUnbondedValue(
         operator,
         bondCreator,
-        sortitionPool
+        sortitionPool,
       )
       expect(unbonded).to.eq.BN(expectedUnbonded, "invalid unbonded value")
 
       const actualBeneficiaryBalance = await web3.eth.getBalance(beneficiary)
       expect(actualBeneficiaryBalance).to.eq.BN(
         expectedBeneficiaryBalance,
-        "invalid beneficiary balance"
+        "invalid beneficiary balance",
       )
     })
 
@@ -146,7 +146,7 @@ describe("KeepBonding", function () {
 
       await expectRevert(
         keepBonding.withdraw(invalidValue, operator, { from: operator }),
-        "Insufficient unbonded value"
+        "Insufficient unbonded value",
       )
     })
 
@@ -156,7 +156,7 @@ describe("KeepBonding", function () {
 
       await expectRevert(
         keepBonding.withdraw(value, operator, { from: operator }),
-        "Transfer failed"
+        "Transfer failed",
       )
     })
   })
@@ -179,7 +179,7 @@ describe("KeepBonding", function () {
         value,
         operator,
         managedGrant.address,
-        { from: managedGrantee }
+        { from: managedGrantee },
       )
       // ok, no reverts
     })
@@ -190,9 +190,9 @@ describe("KeepBonding", function () {
           value,
           operator,
           managedGrant.address,
-          { from: operator }
+          { from: operator },
         ),
-        "Not a grantee of the provided contract"
+        "Not a grantee of the provided contract",
       )
     })
 
@@ -205,9 +205,9 @@ describe("KeepBonding", function () {
           value,
           operator,
           managedGrant.address,
-          { from: tokenOwner }
+          { from: tokenOwner },
         ),
-        "Not a grantee of the provided contract"
+        "Not a grantee of the provided contract",
       )
     })
 
@@ -220,9 +220,9 @@ describe("KeepBonding", function () {
           value,
           operator,
           managedGrant.address,
-          { from: standardGrantee }
+          { from: standardGrantee },
         ),
-        "Not a grantee of the provided contract"
+        "Not a grantee of the provided contract",
       )
     })
 
@@ -234,9 +234,9 @@ describe("KeepBonding", function () {
           value,
           operator,
           managedGrant.address,
-          { from: thirdParty }
+          { from: thirdParty },
         ),
-        "Not a grantee of the provided contract"
+        "Not a grantee of the provided contract",
       )
     })
 
@@ -251,20 +251,20 @@ describe("KeepBonding", function () {
         value,
         operator,
         managedGrant.address,
-        { from: managedGrantee }
+        { from: managedGrantee },
       )
 
       const unbonded = await keepBonding.availableUnbondedValue(
         operator,
         bondCreator,
-        sortitionPool
+        sortitionPool,
       )
       expect(unbonded).to.eq.BN(expectedUnbonded, "invalid unbonded value")
 
       const actualBeneficiaryBalance = await web3.eth.getBalance(beneficiary)
       expect(actualBeneficiaryBalance).to.eq.BN(
         expectedBeneficiaryBalance,
-        "invalid beneficiary balance"
+        "invalid beneficiary balance",
       )
     })
 
@@ -275,7 +275,7 @@ describe("KeepBonding", function () {
         value,
         operator,
         managedGrant.address,
-        { from: managedGrantee }
+        { from: managedGrantee },
       )
       expectEvent(receipt, "UnbondedValueWithdrawn", {
         operator: operator,
@@ -291,9 +291,9 @@ describe("KeepBonding", function () {
           invalidValue,
           operator,
           managedGrant.address,
-          { from: managedGrantee }
+          { from: managedGrantee },
         ),
-        "Insufficient unbonded value"
+        "Insufficient unbonded value",
       )
     })
 
@@ -306,9 +306,9 @@ describe("KeepBonding", function () {
           value,
           operator,
           managedGrant.address,
-          { from: managedGrantee }
+          { from: managedGrantee },
         ),
-        "Transfer failed"
+        "Transfer failed",
       )
     })
   })

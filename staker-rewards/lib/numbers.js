@@ -14,5 +14,5 @@ export const toFormat = (value, decimals = true, rounding) =>
   new BigNumber(value).toFormat(
     decimals ? decimalPlaces : noDecimalPlaces,
     rounding,
-    format
+    format,
   )

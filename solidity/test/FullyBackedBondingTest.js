@@ -48,7 +48,7 @@ describe("FullyBackedBonding", function () {
     registry = await KeepRegistry.new()
     bonding = await FullyBackedBonding.new(
       registry.address,
-      initializationPeriod
+      initializationPeriod,
     )
     etherReceiver = await TestEtherReceiver.new()
 
@@ -74,43 +74,43 @@ describe("FullyBackedBonding", function () {
         {
           from: owner,
           value: minimumDelegationValue,
-        }
+        },
       )
 
       assert.equal(
         await bonding.ownerOf(operator),
         owner,
-        "incorrect owner address"
+        "incorrect owner address",
       )
 
       assert.equal(
         await bonding.beneficiaryOf(operator),
         beneficiary,
-        "incorrect beneficiary address"
+        "incorrect beneficiary address",
       )
 
       assert.equal(
         await bonding.authorizerOf(operator),
         authorizer,
-        "incorrect authorizer address"
+        "incorrect authorizer address",
       )
 
       expect(await bonding.balanceOf(operator)).to.eq.BN(
         0,
-        "incorrect delegation balance"
+        "incorrect delegation balance",
       )
 
       const { timestamp: expectedCreatedAt } = await web3.eth.getBlock(
-        receipt.blockNumber
+        receipt.blockNumber,
       )
 
       const { createdAt, undelegatedAt } = await bonding.getDelegationInfo(
-        operator
+        operator,
       )
 
       expect(createdAt).to.eq.BN(
         expectedCreatedAt,
-        "incorrect created at value"
+        "incorrect created at value",
       )
 
       expect(undelegatedAt).to.eq.BN(0, "incorrect undelegated at value")
@@ -124,7 +124,7 @@ describe("FullyBackedBonding", function () {
         {
           from: owner,
           value: minimumDelegationValue,
-        }
+        },
       )
 
       await expectEvent(receipt, "Delegated", {
@@ -150,7 +150,7 @@ describe("FullyBackedBonding", function () {
 
       expect(await bonding.unbondedValue(operator)).to.eq.BN(
         value,
-        "invalid unbonded value"
+        "invalid unbonded value",
       )
 
       await bonding.authorizeOperatorContract(operator, bondCreator, {
@@ -165,8 +165,8 @@ describe("FullyBackedBonding", function () {
         await bonding.availableUnbondedValue(
           operator,
           bondCreator,
-          sortitionPool
-        )
+          sortitionPool,
+        ),
       ).to.eq.BN(value, "invalid available unbonded value")
     })
 
@@ -178,7 +178,7 @@ describe("FullyBackedBonding", function () {
           from: owner,
           value: value,
         }),
-        "Insufficient delegation value"
+        "Insufficient delegation value",
       )
     })
 
@@ -202,7 +202,7 @@ describe("FullyBackedBonding", function () {
           from: owner,
           value: minimumDelegationValue,
         }),
-        "Invalid operator address"
+        "Invalid operator address",
       )
     })
 
@@ -212,7 +212,7 @@ describe("FullyBackedBonding", function () {
           from: owner,
           value: minimumDelegationValue,
         }),
-        "Beneficiary not defined for the operator"
+        "Beneficiary not defined for the operator",
       )
     })
 
@@ -222,7 +222,7 @@ describe("FullyBackedBonding", function () {
           from: owner,
           value: minimumDelegationValue,
         }),
-        "Invalid authorizer address"
+        "Invalid authorizer address",
       )
     })
 
@@ -234,7 +234,7 @@ describe("FullyBackedBonding", function () {
 
       await expectRevert(
         bonding.delegate(operator, accounts[5], accounts[5]),
-        "Operator already in use"
+        "Operator already in use",
       )
     })
   })
@@ -262,7 +262,7 @@ describe("FullyBackedBonding", function () {
 
       expect(await bonding.unbondedValue(operator)).to.eq.BN(
         expectedFinalBalance,
-        "invalid final unbonded value"
+        "invalid final unbonded value",
       )
     })
 
@@ -282,7 +282,7 @@ describe("FullyBackedBonding", function () {
         bonding.topUp(thirdParty, {
           value: new BN(123),
         }),
-        "Beneficiary not defined for the operator"
+        "Beneficiary not defined for the operator",
       )
     })
   })
@@ -300,7 +300,7 @@ describe("FullyBackedBonding", function () {
 
       expect(await bonding.unbondedValue(operator)).to.eq.BN(
         initialDeposit,
-        "invalid initial unbonded value"
+        "invalid initial unbonded value",
       )
 
       await bonding.deposit(operator, {
@@ -309,7 +309,7 @@ describe("FullyBackedBonding", function () {
 
       expect(await bonding.unbondedValue(operator)).to.eq.BN(
         expectedFinalBalance,
-        "invalid final unbonded value"
+        "invalid final unbonded value",
       )
 
       await bonding.authorizeOperatorContract(operator, bondCreator, {
@@ -324,8 +324,8 @@ describe("FullyBackedBonding", function () {
         await bonding.availableUnbondedValue(
           operator,
           bondCreator,
-          sortitionPool
-        )
+          sortitionPool,
+        ),
       ).to.eq.BN(expectedFinalBalance, "invalid final available unbonded value")
     })
   })
@@ -378,21 +378,21 @@ describe("FullyBackedBonding", function () {
 
       await expectRevert(
         bonding.withdraw(value, operator2, { from: owner }),
-        "Delegation lock period has not passed yet"
+        "Delegation lock period has not passed yet",
       )
     })
 
     it("cannot be called by authorizer", async () => {
       await expectRevert(
         bonding.withdraw(value, operator, { from: authorizer }),
-        "Only operator or the owner is allowed to withdraw bond"
+        "Only operator or the owner is allowed to withdraw bond",
       )
     })
 
     it("cannot be called by beneficiary", async () => {
       await expectRevert(
         bonding.withdraw(value, operator, { from: beneficiary }),
-        "Only operator or the owner is allowed to withdraw bond"
+        "Only operator or the owner is allowed to withdraw bond",
       )
     })
 
@@ -401,7 +401,7 @@ describe("FullyBackedBonding", function () {
 
       await expectRevert(
         bonding.withdraw(value, operator, { from: thirdParty }),
-        "Only operator or the owner is allowed to withdraw bond"
+        "Only operator or the owner is allowed to withdraw bond",
       )
     })
 
@@ -414,20 +414,20 @@ describe("FullyBackedBonding", function () {
 
       expect(await bonding.unbondedValue(operator)).to.eq.BN(
         initialDeposit,
-        "invalid unbonded value"
+        "invalid unbonded value",
       )
 
       await bonding.withdraw(value, operator, { from: operator })
 
       expect(await bonding.unbondedValue(operator)).to.eq.BN(
         expectedUnbonded,
-        "invalid unbonded value"
+        "invalid unbonded value",
       )
 
       const actualBeneficiaryBalance = await web3.eth.getBalance(beneficiary)
       expect(actualBeneficiaryBalance).to.eq.BN(
         expectedBeneficiaryBalance,
-        "invalid beneficiary balance"
+        "invalid beneficiary balance",
       )
     })
 
@@ -449,7 +449,7 @@ describe("FullyBackedBonding", function () {
 
       await expectRevert(
         bonding.withdraw(invalidValue, operator, { from: operator }),
-        "Insufficient unbonded value"
+        "Insufficient unbonded value",
       )
     })
 
@@ -467,7 +467,7 @@ describe("FullyBackedBonding", function () {
 
       await expectRevert(
         bonding.withdraw(value, operator2, { from: operator2 }),
-        "Transfer failed"
+        "Transfer failed",
       )
     })
   })

@@ -28,13 +28,13 @@ module.exports = async function () {
       const keepAddress = event.returnValues.keepAddress
       keep = await BondedECDSAKeep.at(keepAddress)
       console.log(
-        `new keep created: [${keepAddress}] at [${new Date().toLocaleString()}]`
+        `new keep created: [${keepAddress}] at [${new Date().toLocaleString()}]`,
       )
 
       const publicKeyPublishedEvent = await watchPublicKeyPublished(keep)
       keepPublicKey = publicKeyPublishedEvent.returnValues.publicKey
       console.log(
-        `public key generated for keep [${keepAddress}] at [${new Date().toLocaleString()}]: [${keepPublicKey}]`
+        `public key generated for keep [${keepAddress}] at [${new Date().toLocaleString()}]: [${keepPublicKey}]`,
       )
 
       generatedKeys++
@@ -70,7 +70,7 @@ function openKeep(keepFactory, keepOwner, application) {
       {
         from: application,
         value: fee,
-      }
+      },
     )
     resolve()
   })

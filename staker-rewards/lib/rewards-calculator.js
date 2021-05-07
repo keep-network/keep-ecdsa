@@ -8,7 +8,7 @@ export default class RewardsCalculator {
     this.context = context
     this.interval = interval
     this.ethScoreThreshold = new BigNumber(3000).multipliedBy(
-      new BigNumber(1e18)
+      new BigNumber(1e18),
     ) // 3000 ETH
   }
 
@@ -29,7 +29,7 @@ export default class RewardsCalculator {
       const { keepStaked, ethTotal } = operatorParameters.operatorAssets
 
       const requirementsViolations = this.checkRequirementsViolations(
-        operatorParameters
+        operatorParameters,
       )
 
       const ethScore = this.calculateETHScore(ethTotal)
@@ -47,7 +47,7 @@ export default class RewardsCalculator {
 
     const rewardWeightSum = operatorsRewardsFactors.reduce(
       (accumulator, factors) => accumulator.plus(factors.rewardWeight),
-      new BigNumber(0)
+      new BigNumber(0),
     )
 
     console.log(
@@ -55,9 +55,9 @@ export default class RewardsCalculator {
         `Rewards weight sum ${toFormat(
           rewardWeightSum,
           false,
-          BigNumber.ROUND_DOWN
-        )}`
-      )
+          BigNumber.ROUND_DOWN,
+        )}`,
+      ),
     )
 
     const operatorsRewards = []
@@ -80,17 +80,17 @@ export default class RewardsCalculator {
           operatorRewardsFactors.boost,
           rewardWeight,
           totalRewards,
-          requirementsViolations
-        )
+          requirementsViolations,
+        ),
       )
     }
 
     const totalRewardsSum = operatorsRewards.reduce(
       (accumulator, rewards) =>
         accumulator.plus(
-          rewards.totalRewards.integerValue(BigNumber.ROUND_DOWN)
+          rewards.totalRewards.integerValue(BigNumber.ROUND_DOWN),
         ),
-      new BigNumber(0)
+      new BigNumber(0),
     )
 
     console.log(clc.yellow(`Total rewards sum ${totalRewardsSum}`))
@@ -102,7 +102,7 @@ export default class RewardsCalculator {
     const tokenStaking = await this.context.contracts.TokenStaking.deployed()
 
     const minimumStake = await callWithRetry(
-      tokenStaking.methods.minimumStake()
+      tokenStaking.methods.minimumStake(),
     )
 
     return new BigNumber(minimumStake)
@@ -194,7 +194,7 @@ export default class RewardsCalculator {
 
   getOperatorRewards(operator) {
     return this.operatorsRewards.find(
-      (operatorRewards) => operatorRewards.operator === operator
+      (operatorRewards) => operatorRewards.operator === operator,
     )
   }
 }
@@ -205,7 +205,7 @@ function OperatorRewards(
   boost,
   rewardWeight,
   totalRewards,
-  requirementsViolations
+  requirementsViolations,
 ) {
   ;(this.operator = operator),
     (this.ethScore = ethScore),

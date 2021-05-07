@@ -9,7 +9,7 @@ export default class SLACalculator {
     openedKeeps,
     keygenFailKeeps,
     deactivatedAndAskedForSigning,
-    signatureFailKeeps
+    signatureFailKeeps,
   ) {
     this.openedKeeps = openedKeeps
     this.keygenFailKeeps = keygenFailKeeps
@@ -29,7 +29,7 @@ export default class SLACalculator {
       .filter((keep) =>
         // get keeps whose creation timestamps are within
         // the given interval
-        isInInterval(keep.creationTimestamp)
+        isInInterval(keep.creationTimestamp),
       )
 
     // Step 2 of keygen SLA: from keeps opened within the given interval,
@@ -37,7 +37,7 @@ export default class SLACalculator {
     const keygenFailKeeps = openedKeeps.filter(
       (keep) =>
         keep.status.name === KeepStatus.TERMINATED &&
-        keep.status.cause === KeepTerminationCause.KEYGEN_FAIL
+        keep.status.cause === KeepTerminationCause.KEYGEN_FAIL,
     )
 
     // Step 1 of signature SLA: get keeps closed within the given interval
@@ -46,7 +46,7 @@ export default class SLACalculator {
       .filter((keep) =>
         // get keeps whose statuses have been changed within the
         // given interval
-        isInInterval(keep.status.timestamp)
+        isInInterval(keep.status.timestamp),
       )
 
     // Step 2 of signature SLA: get keeps terminated due to signature fail,
@@ -56,12 +56,12 @@ export default class SLACalculator {
       .filter((keep) =>
         // get keeps whose statuses have been changed within the
         // given interval
-        isInInterval(keep.status.timestamp)
+        isInInterval(keep.status.timestamp),
       )
       .filter(
         (keep) =>
           // get keeps which have been terminated due to signature fail
-          keep.status.cause === KeepTerminationCause.SIGNATURE_FAIL
+          keep.status.cause === KeepTerminationCause.SIGNATURE_FAIL,
       )
 
     // Step 3 of signature SLA: concatenate keeps closed and terminated
@@ -91,7 +91,7 @@ export default class SLACalculator {
       openedKeeps,
       keygenFailKeeps,
       deactivatedAndAskedForSigning,
-      signatureFailKeeps
+      signatureFailKeeps,
     )
   }
 
@@ -103,13 +103,13 @@ export default class SLACalculator {
     const keygen = this.calculateSLA(
       operator,
       this.openedKeeps,
-      this.keygenFailKeeps
+      this.keygenFailKeeps,
     )
 
     const signature = this.calculateSLA(
       operator,
       this.deactivatedAndAskedForSigning,
-      this.signatureFailKeeps
+      this.signatureFailKeeps,
     )
 
     return new OperatorSLA(
@@ -119,7 +119,7 @@ export default class SLACalculator {
       keygen.SLA,
       signature.totalCount,
       signature.failsCount,
-      signature.SLA
+      signature.SLA,
     )
   }
 
@@ -148,7 +148,7 @@ function OperatorSLA(
   keygenSLA,
   signatureCount,
   signatureFailCount,
-  signatureSLA
+  signatureSLA,
 ) {
   ;(this.address = address),
     (this.keygenCount = keygenCount),

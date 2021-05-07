@@ -5,21 +5,21 @@ const BondedECDSAKeep = artifacts.require("BondedECDSAKeep")
 const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
 const BondedECDSAKeepVendor = artifacts.require("BondedECDSAKeepVendor")
 const BondedECDSAKeepVendorImplV1 = artifacts.require(
-  "BondedECDSAKeepVendorImplV1"
+  "BondedECDSAKeepVendorImplV1",
 )
 
 const FullyBackedBonding = artifacts.require("FullyBackedBonding")
 const FullyBackedECDSAKeep = artifacts.require("FullyBackedECDSAKeep")
 const FullyBackedECDSAKeepFactory = artifacts.require(
-  "FullyBackedECDSAKeepFactory"
+  "FullyBackedECDSAKeepFactory",
 )
 
 const SortitionPoolsDeployer = require("@keep-network/sortition-pools/migrations/scripts/deployContracts")
 const BondedSortitionPoolFactory = artifacts.require(
-  "BondedSortitionPoolFactory"
+  "BondedSortitionPoolFactory",
 )
 const FullyBackedSortitionPoolFactory = artifacts.require(
-  "FullyBackedSortitionPoolFactory"
+  "FullyBackedSortitionPoolFactory",
 )
 
 const LPRewardsTBTCETH = artifacts.require("LPRewardsTBTCETH")
@@ -70,7 +70,7 @@ module.exports = async function (deployer, network) {
     KeepBonding,
     RegistryAddress,
     TokenStakingAddress,
-    TokenGrantAddress
+    TokenGrantAddress,
   )
 
   await deployer.deploy(BondedECDSAKeep)
@@ -81,11 +81,11 @@ module.exports = async function (deployer, network) {
     BondedSortitionPoolFactory.address,
     TokenStakingAddress,
     KeepBonding.address,
-    RandomBeaconAddress
+    RandomBeaconAddress,
   )
 
   const bondedECDSAKeepVendorImplV1 = await deployer.deploy(
-    BondedECDSAKeepVendorImplV1
+    BondedECDSAKeepVendorImplV1,
   )
 
   const implInitializeCallData = bondedECDSAKeepVendorImplV1.contract.methods
@@ -95,14 +95,14 @@ module.exports = async function (deployer, network) {
   await deployer.deploy(
     BondedECDSAKeepVendor,
     BondedECDSAKeepVendorImplV1.address,
-    implInitializeCallData
+    implInitializeCallData,
   )
 
   // ETH bonding only
   await deployer.deploy(
     FullyBackedBonding,
     RegistryAddress,
-    initializationPeriod
+    initializationPeriod,
   )
 
   await deployer.deploy(FullyBackedECDSAKeep)
@@ -112,7 +112,7 @@ module.exports = async function (deployer, network) {
     FullyBackedECDSAKeep.address,
     FullyBackedSortitionPoolFactory.address,
     FullyBackedBonding.address,
-    RandomBeaconAddress
+    RandomBeaconAddress,
   )
 
   // Liquidity Rewards
@@ -120,28 +120,28 @@ module.exports = async function (deployer, network) {
   await deployer.deploy(
     LPRewardsKEEPETH,
     KeepTokenAddress,
-    WrappedTokenKEEPETH.address
+    WrappedTokenKEEPETH.address,
   )
 
   const WrappedTokenTBTCETH = await deployer.deploy(TestToken)
   await deployer.deploy(
     LPRewardsTBTCETH,
     KeepTokenAddress,
-    WrappedTokenTBTCETH.address
+    WrappedTokenTBTCETH.address,
   )
 
   const WrappedTokenKEEPTBTC = await deployer.deploy(TestToken)
   await deployer.deploy(
     LPRewardsKEEPTBTC,
     KeepTokenAddress,
-    WrappedTokenKEEPTBTC.address
+    WrappedTokenKEEPTBTC.address,
   )
 
   const WrappedTokenSaddle = await deployer.deploy(TestToken)
   await deployer.deploy(
     LPRewardsTBTCSaddle,
     KeepTokenAddress,
-    WrappedTokenSaddle.address
+    WrappedTokenSaddle.address,
   )
 
   // ECDSA Rewards
@@ -149,12 +149,12 @@ module.exports = async function (deployer, network) {
     ECDSARewards,
     KeepTokenAddress,
     BondedECDSAKeepFactory.address,
-    TokenStakingAddress
+    TokenStakingAddress,
   )
 
   await deployer.deploy(
     ECDSARewardsDistributor,
     KeepTokenAddress,
-    TokenStakingAddress
+    TokenStakingAddress,
   )
 }

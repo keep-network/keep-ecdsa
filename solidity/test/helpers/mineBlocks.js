@@ -14,7 +14,7 @@ async function mineBlocks(blocks) {
       },
       function (err, _) {
         if (err) console.log("Error mining a block.")
-      }
+      },
     )
   }
 }

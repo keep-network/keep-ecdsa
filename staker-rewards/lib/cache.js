@@ -60,7 +60,7 @@ export default class Cache {
       this.web3,
       factory,
       "BondedECDSAKeepCreated",
-      startBlock
+      startBlock,
     )
 
     const newKeeps = []
@@ -76,7 +76,7 @@ export default class Cache {
 
     console.log(
       `Number of keeps created since block ` +
-        `[${startBlock}]: ${newKeeps.length}`
+        `[${startBlock}]: ${newKeeps.length}`,
     )
 
     console.log(`Number of keeps in the cache: ${cachedKeepsCount}`)
@@ -103,7 +103,7 @@ export default class Cache {
       })
 
       console.log(
-        `Successfully fetched information about [${results.length}] new keeps`
+        `Successfully fetched information about [${results.length}] new keeps`,
       )
     }
 
@@ -118,7 +118,7 @@ export default class Cache {
         const keepContract = await this.contracts.BondedECDSAKeep.at(address)
 
         const creationTimestamp = await callWithRetry(
-          keepContract.methods.getOpenedTimestamp()
+          keepContract.methods.getOpenedTimestamp(),
         )
 
         this.keepsCache
@@ -161,13 +161,13 @@ export default class Cache {
     const currentStatus = await getKeepStatus(
       keepData,
       this.contracts,
-      this.web3
+      this.web3,
     )
 
     if (lastStatus.name !== currentStatus.name) {
       console.log(
         `Updating current status of keep ${keepData.address} ` +
-          `from [${lastStatus.name}] to [${currentStatus.name}]`
+          `from [${lastStatus.name}] to [${currentStatus.name}]`,
       )
 
       this.keepsCache
@@ -202,7 +202,8 @@ export default class Cache {
     return this.transactionsCache
       .get("transactions")
       .filter(
-        (tx) => tx.to.toLowerCase() === to.toLowerCase() && tx.method === method
+        (tx) =>
+          tx.to.toLowerCase() === to.toLowerCase() && tx.method === method,
       )
       .value()
   }

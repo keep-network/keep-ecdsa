@@ -13,13 +13,13 @@ const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const FullyBackedECDSAKeep = contract.fromArtifact("FullyBackedECDSAKeep")
 const FullyBackedECDSAKeepStub = contract.fromArtifact(
-  "FullyBackedECDSAKeepStub"
+  "FullyBackedECDSAKeepStub",
 )
 const TestToken = contract.fromArtifact("TestToken")
 const FullyBackedBondingStub = contract.fromArtifact("FullyBackedBondingStub")
 const TestEtherReceiver = contract.fromArtifact("TestEtherReceiver")
 const FullyBackedECDSAKeepCloneFactoryStub = contract.fromArtifact(
-  "FullyBackedECDSAKeepCloneFactoryStub"
+  "FullyBackedECDSAKeepCloneFactoryStub",
 )
 
 const truffleAssert = require("truffle-assertions")
@@ -56,7 +56,7 @@ describe("FullyBackedECDSAKeep", function () {
     members,
     honestThreshold,
     bonding,
-    keepFactory
+    keepFactory,
   ) {
     const startBlock = await web3.eth.getBlockNumber()
 
@@ -65,7 +65,7 @@ describe("FullyBackedECDSAKeep", function () {
       members,
       honestThreshold,
       bonding,
-      keepFactory
+      keepFactory,
     )
 
     const events = await factoryStub.getPastEvents(
@@ -73,12 +73,12 @@ describe("FullyBackedECDSAKeep", function () {
       {
         fromBlock: startBlock,
         toBlock: "latest",
-      }
+      },
     )
     assert.lengthOf(
       events,
       1,
-      "unexpected length of FullyBackedECDSAKeepCreated events"
+      "unexpected length of FullyBackedECDSAKeepCreated events",
     )
     const keepAddress = events[0].returnValues.keepAddress
 
@@ -89,11 +89,11 @@ describe("FullyBackedECDSAKeep", function () {
     registry = await KeepRegistry.new()
     bonding = await FullyBackedBondingStub.new(
       registry.address,
-      delegationInitPeriod
+      delegationInitPeriod,
     )
     keepStubMaster = await FullyBackedECDSAKeepStub.new()
     factoryStub = await FullyBackedECDSAKeepCloneFactoryStub.new(
-      keepStubMaster.address
+      keepStubMaster.address,
     )
 
     await registry.approveOperatorContract(bondCreator)
@@ -110,7 +110,7 @@ describe("FullyBackedECDSAKeep", function () {
       members,
       honestThreshold,
       bonding.address,
-      factoryStub.address
+      factoryStub.address,
     )
   })
 
@@ -126,7 +126,7 @@ describe("FullyBackedECDSAKeep", function () {
         members,
         honestThreshold,
         bonding.address,
-        factoryStub.address
+        factoryStub.address,
       )
     })
 
@@ -137,13 +137,13 @@ describe("FullyBackedECDSAKeep", function () {
         members,
         honestThreshold,
         bonding.address,
-        factoryStub.address
+        factoryStub.address,
       )
 
       assert.equal(
         await bonding.getAuthoritySource(keep.address),
         factoryStub.address,
-        "incorrect bonding delegated authority"
+        "incorrect bonding delegated authority",
       )
     })
 
@@ -155,9 +155,9 @@ describe("FullyBackedECDSAKeep", function () {
           members,
           honestThreshold,
           bonding.address,
-          factoryStub.address
+          factoryStub.address,
         ),
-        "Contract already initialized"
+        "Contract already initialized",
       )
     })
   })
@@ -171,7 +171,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("reverts if public key was not set", async () => {
       await expectRevert(
         keep.sign(digest, { from: owner }),
-        "Public key was not set yet"
+        "Public key was not set yet",
       )
     })
 
@@ -192,7 +192,7 @@ describe("FullyBackedECDSAKeep", function () {
       const blockNumber = await keep.digests.call(digest)
 
       expect(blockNumber, "incorrect block number").to.eq.BN(
-        signTx.receipt.blockNumber
+        signTx.receipt.blockNumber,
       )
     })
 
@@ -203,7 +203,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       await expectRevert(
         keep.sign(digest, { from: owner }),
-        "Keep is not active"
+        "Keep is not active",
       )
     })
 
@@ -214,7 +214,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("cannot be called by non-owner member", async () => {
       await expectRevert(
         keep.sign(digest, { from: members[0] }),
-        "Caller is not the keep owner"
+        "Caller is not the keep owner",
       )
     })
 
@@ -276,7 +276,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       await expectRevert(
         keep.submitSignature(signatureR, signatureS, 0, { from: members[0] }),
-        "Invalid signature"
+        "Invalid signature",
       )
 
       assert.isTrue(await keep.isAwaitingSignature(digest1))
@@ -299,7 +299,7 @@ describe("FullyBackedECDSAKeep", function () {
         sixteenSigners,
         sixteenSigners.length,
         bonding.address,
-        factoryStub.address
+        factoryStub.address,
       )
 
       await factoryStub.newKeep(
@@ -307,7 +307,7 @@ describe("FullyBackedECDSAKeep", function () {
         sixteenSigners,
         sixteenSigners.length,
         bonding.address,
-        factoryStub.address
+        factoryStub.address,
       )
 
       keepWith16Signers = await FullyBackedECDSAKeep.at(keepAddress)
@@ -389,7 +389,7 @@ describe("FullyBackedECDSAKeep", function () {
             fromBlock: startBlock,
             toBlock: "latest",
           }),
-          "unexpected events emitted"
+          "unexpected events emitted",
         )
       })
 
@@ -407,7 +407,7 @@ describe("FullyBackedECDSAKeep", function () {
             fromBlock: startBlock,
             toBlock: "latest",
           }),
-          "unexpected events emitted"
+          "unexpected events emitted",
         )
       })
 
@@ -429,7 +429,7 @@ describe("FullyBackedECDSAKeep", function () {
         assert.equal(
           await keep.getPublicKey(),
           publicKey1,
-          "incorrect public key"
+          "incorrect public key",
         )
       })
 
@@ -438,7 +438,7 @@ describe("FullyBackedECDSAKeep", function () {
 
         await expectRevert(
           keep.submitPublicKey(publicKey1, { from: members[0] }),
-          "Member already submitted a public key"
+          "Member already submitted a public key",
         )
       })
 
@@ -456,7 +456,7 @@ describe("FullyBackedECDSAKeep", function () {
             toBlock: "latest",
           }),
           1,
-          "unexpected events"
+          "unexpected events",
         )
       })
 
@@ -474,7 +474,7 @@ describe("FullyBackedECDSAKeep", function () {
             toBlock: "latest",
           }),
           0,
-          "unexpected events for the first submitted key"
+          "unexpected events for the first submitted key",
         )
         await mineBlocks(1)
 
@@ -487,7 +487,7 @@ describe("FullyBackedECDSAKeep", function () {
             toBlock: "latest",
           }),
           1,
-          "unexpected events for the second submitted key"
+          "unexpected events for the second submitted key",
         )
         await mineBlocks(1)
 
@@ -500,7 +500,7 @@ describe("FullyBackedECDSAKeep", function () {
             toBlock: "latest",
           }),
           2,
-          "unexpected events for the third submitted key"
+          "unexpected events for the third submitted key",
         )
 
         assert.isNull(await keep.getPublicKey(), "incorrect public key")
@@ -511,21 +511,21 @@ describe("FullyBackedECDSAKeep", function () {
 
         await expectRevert(
           keep.submitPublicKey(publicKey1, { from: members[0] }),
-          "Member already submitted a public key"
+          "Member already submitted a public key",
         )
       })
 
       it("cannot be called by non-member", async () => {
         await expectRevert(
           keep.submitPublicKey(publicKey1),
-          "Caller is not the keep member"
+          "Caller is not the keep member",
         )
       })
 
       it("cannot be called by non-member owner", async () => {
         await expectRevert(
           keep.submitPublicKey(publicKey1, { from: owner }),
-          "Caller is not the keep member"
+          "Caller is not the keep member",
         )
       })
 
@@ -535,7 +535,7 @@ describe("FullyBackedECDSAKeep", function () {
         await keep.submitPublicKey(publicKey1, { from: members[1] })
         await expectRevert(
           keep.submitPublicKey(badPublicKey, { from: members[2] }),
-          "Public key must be 64 bytes long"
+          "Public key must be 64 bytes long",
         )
       })
     })
@@ -570,14 +570,14 @@ describe("FullyBackedECDSAKeep", function () {
 
       expect(await keep.checkBondAmount()).to.eq.BN(
         expectedBondsSum,
-        "incorrect bond amount before seizure"
+        "incorrect bond amount before seizure",
       )
 
       const gasPrice = await web3.eth.getGasPrice()
 
       const txHash = await keep.seizeSignerBonds({ from: owner })
       const seizedSignerBondsFee = new BN(txHash.receipt.gasUsed).mul(
-        new BN(gasPrice)
+        new BN(gasPrice),
       )
       const ownerBalanceDiff = new BN(await web3.eth.getBalance(owner))
         .add(seizedSignerBondsFee)
@@ -585,12 +585,12 @@ describe("FullyBackedECDSAKeep", function () {
 
       expect(ownerBalanceDiff).to.eq.BN(
         expectedBondsSum,
-        "incorrect owner balance"
+        "incorrect owner balance",
       )
 
       expect(await keep.checkBondAmount()).to.eq.BN(
         0,
-        "should zero all the bonds"
+        "should zero all the bonds",
       )
     })
 
@@ -604,14 +604,14 @@ describe("FullyBackedECDSAKeep", function () {
     it("emits an event", async () => {
       truffleAssert.eventEmitted(
         await keep.seizeSignerBonds({ from: owner }),
-        "KeepTerminated"
+        "KeepTerminated",
       )
     })
 
     it("can be called only by owner", async () => {
       await expectRevert(
         keep.seizeSignerBonds({ from: nonOwner }),
-        "Caller is not the keep owner"
+        "Caller is not the keep owner",
       )
     })
 
@@ -625,7 +625,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       await expectRevert(
         keep.seizeSignerBonds({ from: owner }),
-        "Keep is not active"
+        "Keep is not active",
       )
     })
 
@@ -634,7 +634,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       await expectRevert(
         keep.seizeSignerBonds({ from: owner }),
-        "Keep is not active"
+        "Keep is not active",
       )
     })
   })
@@ -673,9 +673,9 @@ describe("FullyBackedECDSAKeep", function () {
           signature1.R,
           signature1.S,
           hash256Digest1,
-          preimage1
+          preimage1,
         ),
-        "Public key was not set yet"
+        "Public key was not set yet",
       )
     })
 
@@ -689,12 +689,12 @@ describe("FullyBackedECDSAKeep", function () {
         signature1.R,
         signature1.S,
         hash256Digest1,
-        preimage1
+        preimage1,
       )
 
       assert.isTrue(
         res,
-        "Signature is fraudulent because is valid but was not requested."
+        "Signature is fraudulent because is valid but was not requested.",
       )
     })
 
@@ -709,9 +709,9 @@ describe("FullyBackedECDSAKeep", function () {
           signature1.R,
           signature1.S,
           hash256Digest1,
-          preimage2
+          preimage2,
         ),
-        "Signed digest does not match sha256 hash of the preimage"
+        "Signed digest does not match sha256 hash of the preimage",
       )
     })
 
@@ -727,9 +727,9 @@ describe("FullyBackedECDSAKeep", function () {
           badSignatureR,
           signature1.S,
           hash256Digest1,
-          preimage1
+          preimage1,
         ),
-        "signature is not fraudulent"
+        "signature is not fraudulent",
       )
     })
 
@@ -746,9 +746,9 @@ describe("FullyBackedECDSAKeep", function () {
           badSignatureR,
           signature1.S,
           hash256Digest1,
-          preimage1
+          preimage1,
         ),
-        "signature is not fraudulent"
+        "signature is not fraudulent",
       )
     })
 
@@ -763,9 +763,9 @@ describe("FullyBackedECDSAKeep", function () {
           signature1.R,
           signature1.S,
           hash256Digest1,
-          preimage1
+          preimage1,
         ),
-        "signature is not fraudulent"
+        "signature is not fraudulent",
       )
     })
 
@@ -779,7 +779,7 @@ describe("FullyBackedECDSAKeep", function () {
         signature1.V - 27,
         {
           from: members[0],
-        }
+        },
       )
 
       assert.isFalse(
@@ -788,9 +788,9 @@ describe("FullyBackedECDSAKeep", function () {
           signature1.R,
           signature1.S,
           hash256Digest1,
-          preimage1
+          preimage1,
         ),
-        "signature is not fraudulent"
+        "signature is not fraudulent",
       )
     })
   })
@@ -826,7 +826,7 @@ describe("FullyBackedECDSAKeep", function () {
         signature1.R,
         signature1.S,
         hash256Digest1,
-        preimage1
+        preimage1,
       )
 
       await keep.submitSignatureFraud(
@@ -834,7 +834,7 @@ describe("FullyBackedECDSAKeep", function () {
         signature1.R,
         signature1.S,
         hash256Digest1,
-        preimage1
+        preimage1,
       )
 
       assert.isTrue(res, "incorrect returned result")
@@ -847,7 +847,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       assert.isFalse(
         await keep.isFradulentPreimageSet(preimage1),
-        "fradulent preimage should not have been set"
+        "fradulent preimage should not have been set",
       )
 
       await keep.submitSignatureFraud(
@@ -855,12 +855,12 @@ describe("FullyBackedECDSAKeep", function () {
         signature1.R,
         signature1.S,
         hash256Digest1,
-        preimage1
+        preimage1,
       )
 
       assert.isTrue(
         await keep.isFradulentPreimageSet(preimage1),
-        "fradulent preimage should have been set"
+        "fradulent preimage should have been set",
       )
 
       await keep.submitSignatureFraud(
@@ -868,7 +868,7 @@ describe("FullyBackedECDSAKeep", function () {
         signature1.R,
         signature1.S,
         hash256Digest1,
-        preimage1
+        preimage1,
       )
 
       assert.equal(await factoryStub.banKeepMembersCalledCount(keep.address), 1)
@@ -885,9 +885,9 @@ describe("FullyBackedECDSAKeep", function () {
           signature1.R,
           signature1.S,
           hash256Digest1,
-          preimage1
+          preimage1,
         ),
-        "Signature is not fraudulent"
+        "Signature is not fraudulent",
       )
 
       assert.equal(await factoryStub.banKeepMembersCalledCount(keep.address), 0)
@@ -902,9 +902,9 @@ describe("FullyBackedECDSAKeep", function () {
           signature1.R,
           signature1.S,
           hash256Digest1,
-          preimage1
+          preimage1,
         ),
-        "Keep is not active"
+        "Keep is not active",
       )
     })
 
@@ -917,9 +917,9 @@ describe("FullyBackedECDSAKeep", function () {
           signature1.R,
           signature1.S,
           hash256Digest1,
-          preimage1
+          preimage1,
         ),
-        "Keep is not active"
+        "Keep is not active",
       )
     })
   })
@@ -955,7 +955,7 @@ describe("FullyBackedECDSAKeep", function () {
         signatureR,
         signatureS,
         signatureRecoveryID,
-        { from: members[0] }
+        { from: members[0] },
       )
 
       truffleAssert.eventEmitted(res, "SignatureSubmitted", (ev) => {
@@ -983,7 +983,7 @@ describe("FullyBackedECDSAKeep", function () {
         keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
           from: members[0],
         }),
-        "Not awaiting a signature"
+        "Not awaiting a signature",
       )
     })
 
@@ -995,14 +995,14 @@ describe("FullyBackedECDSAKeep", function () {
       it("rejects recovery ID out of allowed range", async () => {
         await expectRevert(
           keep.submitSignature(signatureR, signatureS, 4, { from: members[0] }),
-          "Recovery ID must be one of {0, 1, 2, 3}"
+          "Recovery ID must be one of {0, 1, 2, 3}",
         )
       })
 
       it("rejects invalid signature", async () => {
         await expectRevert(
           keep.submitSignature(signatureR, signatureS, 0, { from: members[0] }),
-          "Invalid signature"
+          "Invalid signature",
         )
       })
 
@@ -1012,13 +1012,13 @@ describe("FullyBackedECDSAKeep", function () {
             signatureR,
             malleableS,
             malleableRecoveryID,
-            { from: members[0] }
+            { from: members[0] },
           )
           assert(false, "Test call did not error as expected")
         } catch (e) {
           assert.include(
             e.message,
-            "Malleable signature - s should be in the low half of secp256k1 curve's order"
+            "Malleable signature - s should be in the low half of secp256k1 curve's order",
           )
         }
       })
@@ -1029,7 +1029,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       await expectRevert(
         keep.submitSignature(signatureR, signatureS, signatureRecoveryID),
-        "Caller is not the keep member"
+        "Caller is not the keep member",
       )
     })
 
@@ -1040,7 +1040,7 @@ describe("FullyBackedECDSAKeep", function () {
         keep.submitSignature(signatureR, signatureS, signatureRecoveryID, {
           from: owner,
         }),
-        "Caller is not the keep member"
+        "Caller is not the keep member",
       )
     })
   })
@@ -1063,7 +1063,7 @@ describe("FullyBackedECDSAKeep", function () {
     it("emits an event", async () => {
       truffleAssert.eventEmitted(
         await keep.closeKeep({ from: owner }),
-        "KeepClosed"
+        "KeepClosed",
       )
     })
 
@@ -1079,31 +1079,31 @@ describe("FullyBackedECDSAKeep", function () {
 
       expect(await keep.checkBondAmount()).to.eq.BN(
         0,
-        "incorrect bond amount for keep"
+        "incorrect bond amount for keep",
       )
 
       expect(
         await bonding.availableUnbondedValue(
           members[0],
           bondCreator,
-          signingPool
-        )
+          signingPool,
+        ),
       ).to.eq.BN(bondValue0, "incorrect unbonded amount for member 0")
 
       expect(
         await bonding.availableUnbondedValue(
           members[1],
           bondCreator,
-          signingPool
-        )
+          signingPool,
+        ),
       ).to.eq.BN(bondValue1, "incorrect unbonded amount for member 1")
 
       expect(
         await bonding.availableUnbondedValue(
           members[2],
           bondCreator,
-          signingPool
-        )
+          signingPool,
+        ),
       ).to.eq.BN(bondValue2, "incorrect unbonded amount for member 2")
     })
 
@@ -1133,7 +1133,7 @@ describe("FullyBackedECDSAKeep", function () {
   describe("returnPartialSignerBonds", async () => {
     const singleReturnedBondValue = new BN(2000)
     const allReturnedBondsValue = singleReturnedBondValue.mul(
-      new BN(members.length)
+      new BN(members.length),
     )
 
     const member1Unbonded = new BN(100)
@@ -1144,7 +1144,7 @@ describe("FullyBackedECDSAKeep", function () {
       await depositForBonding(
         member1Unbonded,
         member2Unbounded,
-        member3Unbounded
+        member3Unbounded,
       )
     })
 
@@ -1154,30 +1154,30 @@ describe("FullyBackedECDSAKeep", function () {
       const member1UnbondedAfter = await bonding.availableUnbondedValue(
         members[0],
         bondCreator,
-        signingPool
+        signingPool,
       )
       const member2UnbondedAfter = await bonding.availableUnbondedValue(
         members[1],
         bondCreator,
-        signingPool
+        signingPool,
       )
       const member3UnbondedAfter = await bonding.availableUnbondedValue(
         members[2],
         bondCreator,
-        signingPool
+        signingPool,
       )
 
       expect(
         member1UnbondedAfter,
-        "incorrect unbounded balance for member 1"
+        "incorrect unbounded balance for member 1",
       ).to.eq.BN(2100) // 2000 + 100
       expect(
         member2UnbondedAfter,
-        "incorrect unbounded balance for member 2"
+        "incorrect unbounded balance for member 2",
       ).to.eq.BN(2200) // 2000 + 200
       expect(
         member3UnbondedAfter,
-        "incorrect unbounded balance for member 3"
+        "incorrect unbounded balance for member 3",
       ).to.eq.BN(2700) // 2000 + 700
     })
 
@@ -1191,44 +1191,44 @@ describe("FullyBackedECDSAKeep", function () {
       const member1UnbondedAfter = await bonding.availableUnbondedValue(
         members[0],
         bondCreator,
-        signingPool
+        signingPool,
       )
       const member2UnbondedAfter = await bonding.availableUnbondedValue(
         members[1],
         bondCreator,
-        signingPool
+        signingPool,
       )
       const member3UnbondedAfter = await bonding.availableUnbondedValue(
         members[2],
         bondCreator,
-        signingPool
+        signingPool,
       )
 
       expect(
         member1UnbondedAfter,
-        "incorrect unbounded balance for member 1"
+        "incorrect unbounded balance for member 1",
       ).to.eq.BN(2100) // 2000 + 100
       expect(
         member2UnbondedAfter,
-        "incorrect unbounded balance for member 2"
+        "incorrect unbounded balance for member 2",
       ).to.eq.BN(2200) // 2000 + 200
       expect(
         member3UnbondedAfter,
-        "incorrect unbounded balance for member 3"
+        "incorrect unbounded balance for member 3",
       ).to.eq.BN(2702) // 2000 + 700 + 2
     })
 
     it("reverts with zero value", async () => {
       await expectRevert(
         keep.returnPartialSignerBonds({ value: 0 }),
-        "Partial signer bond must be non-zero"
+        "Partial signer bond must be non-zero",
       )
     })
 
     it("reverts with zero value per member", async () => {
       await expectRevert(
         keep.returnPartialSignerBonds({ value: members.length - 1 }),
-        "Partial signer bond must be non-zero"
+        "Partial signer bond must be non-zero",
       )
     })
   })
@@ -1251,7 +1251,7 @@ describe("FullyBackedECDSAKeep", function () {
           toBlock: "latest",
         }),
         1,
-        "unexpected events emitted"
+        "unexpected events emitted",
       )
     })
 
@@ -1266,22 +1266,22 @@ describe("FullyBackedECDSAKeep", function () {
 
       expect(
         await web3.eth.getBalance(keep.address),
-        "incorrect keep balance"
+        "incorrect keep balance",
       ).to.eq.BN(ethValue)
 
       expect(
         await keep.getMemberETHBalance(members[0]),
-        "incorrect member 0 balance"
+        "incorrect member 0 balance",
       ).to.eq.BN(singleValue)
 
       expect(
         await keep.getMemberETHBalance(members[1]),
-        "incorrect member 1 balance"
+        "incorrect member 1 balance",
       ).to.eq.BN(singleValue)
 
       expect(
         await keep.getMemberETHBalance(members[2]),
-        "incorrect member 2 balance"
+        "incorrect member 2 balance",
       ).to.eq.BN(singleValue)
     })
 
@@ -1293,29 +1293,29 @@ describe("FullyBackedECDSAKeep", function () {
 
       expect(
         await web3.eth.getBalance(keep.address),
-        "incorrect keep balance"
+        "incorrect keep balance",
       ).to.eq.BN(valueWithRemainder)
 
       expect(
         await keep.getMemberETHBalance(members[0]),
-        "incorrect member 0 balance"
+        "incorrect member 0 balance",
       ).to.eq.BN(singleValue)
 
       expect(
         await keep.getMemberETHBalance(members[1]),
-        "incorrect member 1 balance"
+        "incorrect member 1 balance",
       ).to.eq.BN(singleValue)
 
       expect(
         await keep.getMemberETHBalance(members[2]),
-        "incorrect member 2 balance"
+        "incorrect member 2 balance",
       ).to.eq.BN(singleValue.add(expectedRemainder))
     })
 
     it("reverts with zero value", async () => {
       await expectRevert(
         keep.distributeETHReward(),
-        "Dividend value must be non-zero"
+        "Dividend value must be non-zero",
       )
     })
 
@@ -1323,7 +1323,7 @@ describe("FullyBackedECDSAKeep", function () {
       const msgValue = members.length - 1
       await expectRevert(
         keep.distributeETHReward({ value: msgValue }),
-        "Dividend value must be non-zero"
+        "Dividend value must be non-zero",
       )
     })
   })
@@ -1338,24 +1338,24 @@ describe("FullyBackedECDSAKeep", function () {
 
     it("correctly transfers value", async () => {
       const initialMemberBalance = new BN(
-        await web3.eth.getBalance(beneficiaries[0])
+        await web3.eth.getBalance(beneficiaries[0]),
       )
 
       await keep.withdraw(members[0])
 
       expect(
         await web3.eth.getBalance(keep.address),
-        "incorrect keep balance"
+        "incorrect keep balance",
       ).to.eq.BN(ethValue.sub(singleValue))
 
       expect(
         await keep.getMemberETHBalance(members[0]),
-        "incorrect member balance"
+        "incorrect member balance",
       ).to.eq.BN(0)
 
       expect(
         await web3.eth.getBalance(beneficiaries[0]),
-        "incorrect member account balance"
+        "incorrect member account balance",
       ).to.eq.BN(initialMemberBalance.add(singleValue))
     })
 
@@ -1363,7 +1363,7 @@ describe("FullyBackedECDSAKeep", function () {
       const valueWithRemainder = ethValue.add(new BN(1))
       const expectedMember1Reward = ethValue.divn(2)
       const expectedMember2Reward = valueWithRemainder.sub(
-        expectedMember1Reward
+        expectedMember1Reward,
       )
 
       const member1 = members[0]
@@ -1381,10 +1381,10 @@ describe("FullyBackedECDSAKeep", function () {
         new BN(await web3.eth.getBalance(member1)),
         new BN(await web3.eth.getBalance(member2)),
         new BN(await web3.eth.getBalance(beneficiaries[0])).add(
-          expectedMember1Reward
+          expectedMember1Reward,
         ),
         new BN(await web3.eth.getBalance(beneficiaries[1])).add(
-          expectedMember2Reward
+          expectedMember2Reward,
         ),
       ]
 
@@ -1393,7 +1393,7 @@ describe("FullyBackedECDSAKeep", function () {
         testMembers,
         honestThreshold,
         bonding.address,
-        factoryStub.address
+        factoryStub.address,
       )
 
       await keep.distributeETHReward({ value: valueWithRemainder })
@@ -1401,13 +1401,13 @@ describe("FullyBackedECDSAKeep", function () {
       await keep.withdraw(member1)
       expect(
         await keep.getMemberETHBalance(member1),
-        "incorrect member 1 balance"
+        "incorrect member 1 balance",
       ).to.eq.BN(0)
 
       await keep.withdraw(member2)
       expect(
         await keep.getMemberETHBalance(member2),
-        "incorrect member 2 balance"
+        "incorrect member 2 balance",
       ).to.eq.BN(0)
 
       // Check balances of all keep members' and beneficiary.
@@ -1423,7 +1423,7 @@ describe("FullyBackedECDSAKeep", function () {
         [member],
         honestThreshold,
         bonding.address,
-        factoryStub.address
+        factoryStub.address,
       )
 
       await expectRevert(keep.withdraw(member), "No funds to withdraw")
@@ -1441,7 +1441,7 @@ describe("FullyBackedECDSAKeep", function () {
         [member],
         honestThreshold,
         bonding.address,
-        factoryStub.address
+        factoryStub.address,
       )
 
       await keep.distributeETHReward({ value: ethValue })
@@ -1451,13 +1451,13 @@ describe("FullyBackedECDSAKeep", function () {
       // Check balances of keep members's beneficiary account.
       expect(
         await web3.eth.getBalance(etherReceiver.address),
-        "incorrect member's account balance"
+        "incorrect member's account balance",
       ).to.eq.BN(0)
 
       // Check that value which failed transfer remained in the keep contract.
       expect(
         await web3.eth.getBalance(keep.address),
-        "incorrect keep's account balance"
+        "incorrect keep's account balance",
       ).to.eq.BN(ethValue)
     })
   })
@@ -1475,7 +1475,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       const expectedBalances = addToBalances(
         await getERC20BalancesFromList(beneficiaries, token),
-        erc20Value / members.length
+        erc20Value / members.length,
       )
 
       await keep.distributeERC20Reward(token.address, erc20Value, {
@@ -1508,7 +1508,7 @@ describe("FullyBackedECDSAKeep", function () {
           toBlock: "latest",
         }),
         1,
-        "unexpected events emitted"
+        "unexpected events emitted",
       )
     })
 
@@ -1520,12 +1520,12 @@ describe("FullyBackedECDSAKeep", function () {
 
       const expectedBalances = addToBalances(
         await getERC20BalancesFromList(beneficiaries, token),
-        erc20Value / members.length
+        erc20Value / members.length,
       )
 
       const lastMemberIndex = members.length - 1
       expectedBalances[lastMemberIndex] = expectedBalances[lastMemberIndex].add(
-        expectedRemainder
+        expectedRemainder,
       )
 
       await keep.distributeERC20Reward(token.address, valueWithRemainder, {
@@ -1538,21 +1538,21 @@ describe("FullyBackedECDSAKeep", function () {
 
       expect(await token.balanceOf(keep.address)).to.eq.BN(
         0,
-        "incorrect keep balance"
+        "incorrect keep balance",
       )
     })
 
     it("fails with insufficient approval", async () => {
       await expectRevert(
         keep.distributeERC20Reward(token.address, erc20Value),
-        "SafeERC20: low-level call failed"
+        "SafeERC20: low-level call failed",
       )
     })
 
     it("fails with zero value", async () => {
       await expectRevert(
         keep.distributeERC20Reward(token.address, 0),
-        "Dividend value must be non-zero"
+        "Dividend value must be non-zero",
       )
     })
 
@@ -1563,7 +1563,7 @@ describe("FullyBackedECDSAKeep", function () {
 
       await expectRevert(
         keep.distributeERC20Reward(token.address, value),
-        "Dividend value must be non-zero"
+        "Dividend value must be non-zero",
       )
     })
 
@@ -1571,7 +1571,7 @@ describe("FullyBackedECDSAKeep", function () {
       const valueWithRemainder = erc20Value.add(new BN(1))
       const expectedMember1Reward = erc20Value.divn(2)
       const expectedMember2Reward = valueWithRemainder.sub(
-        expectedMember1Reward
+        expectedMember1Reward,
       )
 
       const member1 = accounts[2]
@@ -1589,10 +1589,10 @@ describe("FullyBackedECDSAKeep", function () {
         new BN(await token.balanceOf(member1)),
         new BN(await token.balanceOf(member2)),
         new BN(await token.balanceOf(beneficiaries[0])).add(
-          expectedMember1Reward
+          expectedMember1Reward,
         ),
         new BN(await token.balanceOf(beneficiaries[1])).add(
-          expectedMember2Reward
+          expectedMember2Reward,
         ),
       ]
 
@@ -1601,7 +1601,7 @@ describe("FullyBackedECDSAKeep", function () {
         testMembers,
         honestThreshold,
         bonding.address,
-        factoryStub.address
+        factoryStub.address,
       )
 
       await initializeTokens(token, keep, accounts[0], valueWithRemainder)
@@ -1686,7 +1686,7 @@ describe("FullyBackedECDSAKeep", function () {
       referenceID,
       bondValue1,
       signingPool,
-      { from: bondCreator }
+      { from: bondCreator },
     )
     await bonding.createBond(
       members[1],
@@ -1694,7 +1694,7 @@ describe("FullyBackedECDSAKeep", function () {
       referenceID,
       bondValue2,
       signingPool,
-      { from: bondCreator }
+      { from: bondCreator },
     )
     await bonding.createBond(
       members[2],
@@ -1702,7 +1702,7 @@ describe("FullyBackedECDSAKeep", function () {
       referenceID,
       bondValue3,
       signingPool,
-      { from: bondCreator }
+      { from: bondCreator },
     )
 
     return bondValue1.add(bondValue2).add(bondValue3)

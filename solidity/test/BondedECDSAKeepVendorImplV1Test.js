@@ -5,7 +5,7 @@ const { constants, expectRevert } = require("@openzeppelin/test-helpers")
 
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const BondedECDSAKeepVendorImplV1Stub = contract.fromArtifact(
-  "BondedECDSAKeepVendorImplV1Stub"
+  "BondedECDSAKeepVendorImplV1Stub",
 )
 
 const chai = require("chai")
@@ -55,7 +55,7 @@ describe("BondedECDSAKeepVendorImplV1", function () {
     it("reverts as contract is already initialized", async () => {
       await expectRevert(
         keepVendor.initialize(address1, address1),
-        "Contract is already initialized."
+        "Contract is already initialized.",
       )
     })
   })
@@ -68,7 +68,7 @@ describe("BondedECDSAKeepVendorImplV1", function () {
     it("reverts when called directly", async () => {
       await expectRevert(
         keepVendor.upgradeFactory(address1, { from: upgrader }),
-        "KeepRegistry address is not registered"
+        "KeepRegistry address is not registered",
       )
     })
   })
@@ -81,7 +81,7 @@ describe("BondedECDSAKeepVendorImplV1", function () {
     it("reverts when called directly", async () => {
       await expectRevert(
         keepVendor.completeFactoryUpgrade(),
-        "Upgrade not initiated"
+        "Upgrade not initiated",
       )
     })
   })

@@ -22,11 +22,11 @@ export default class Tenderly {
 
   async getFunctionCalls(contractAddress, functionSignature) {
     console.debug(
-      `Looking for calls to contract [${contractAddress}] function [${functionSignature}]`
+      `Looking for calls to contract [${contractAddress}] function [${functionSignature}]`,
     )
 
     const functionSelector = this.web3.eth.abi.encodeFunctionSignature(
-      functionSignature
+      functionSignature,
     )
 
     const uri = `/transactions?contractId[]=eth:1:${contractAddress}&functionSelector=${functionSelector}`

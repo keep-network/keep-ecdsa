@@ -2,7 +2,7 @@ import testBlockchain from "../data/test-blockchain.json"
 
 const getStateAtBlock = (contractAddress, blockNumber) => {
   const block = testBlockchain.find(
-    (block) => block.blockNumber === blockNumber
+    (block) => block.blockNumber === blockNumber,
   )
 
   return (
@@ -18,7 +18,7 @@ export function mockMethod(
   contractAddress,
   method,
   inputCheck,
-  defaultOutput = ""
+  defaultOutput = "",
 ) {
   return async (_, blockNumber) => {
     const state = getStateAtBlock(contractAddress, blockNumber)

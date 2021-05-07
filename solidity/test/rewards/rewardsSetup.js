@@ -4,7 +4,7 @@ const KeepToken = contract.fromArtifact("KeepToken")
 const StackLib = contract.fromArtifact("StackLib")
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const BondedECDSAKeepFactoryStub = contract.fromArtifact(
-  "BondedECDSAKeepFactoryStub"
+  "BondedECDSAKeepFactoryStub",
 )
 const KeepBonding = contract.fromArtifact("KeepBonding")
 const MinimumStakeSchedule = contract.fromArtifact("MinimumStakeSchedule")
@@ -15,7 +15,7 @@ const TokenStakingEscrow = contract.fromArtifact("TokenStakingEscrow")
 const TokenStaking = contract.fromArtifact("TokenStakingStub")
 const TokenGrant = contract.fromArtifact("TokenGrant")
 const BondedSortitionPoolFactory = contract.fromArtifact(
-  "BondedSortitionPoolFactory"
+  "BondedSortitionPoolFactory",
 )
 const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
 const BondedECDSAKeepStub = contract.fromArtifact("BondedECDSAKeepStub")
@@ -27,7 +27,7 @@ async function initialize() {
   await BondedSortitionPoolFactory.detectNetwork()
   await BondedSortitionPoolFactory.link(
     "StackLib",
-    (await StackLib.new({ from: owner })).address
+    (await StackLib.new({ from: owner })).address,
   )
 
   keepToken = await KeepToken.new({ from: owner })
@@ -40,11 +40,11 @@ async function initialize() {
   await TokenStaking.detectNetwork()
   await TokenStaking.link(
     "MinimumStakeSchedule",
-    (await MinimumStakeSchedule.new({ from: owner })).address
+    (await MinimumStakeSchedule.new({ from: owner })).address,
   )
   await TokenStaking.link(
     "GrantStaking",
-    (await GrantStaking.new({ from: owner })).address
+    (await GrantStaking.new({ from: owner })).address,
   )
   await TokenStaking.link("Locks", (await Locks.new({ from: owner })).address)
   await TokenStaking.link("TopUps", (await TopUps.new({ from: owner })).address)
@@ -52,7 +52,7 @@ async function initialize() {
   const stakingEscrow = await TokenStakingEscrow.new(
     keepToken.address,
     keepTokenGrant.address,
-    { from: owner }
+    { from: owner },
   )
 
   const stakeInitializationPeriod = 30 // In seconds
@@ -63,7 +63,7 @@ async function initialize() {
     stakingEscrow.address,
     registry.address,
     stakeInitializationPeriod,
-    { from: owner }
+    { from: owner },
   )
   const tokenGrant = await TokenGrant.new(keepToken.address, { from: owner })
 
@@ -71,7 +71,7 @@ async function initialize() {
     registry.address,
     tokenStaking.address,
     tokenGrant.address,
-    { from: owner }
+    { from: owner },
   )
   const randomBeacon = await RandomBeaconStub.new({ from: owner })
   const bondedECDSAKeepMasterContract = await BondedECDSAKeepStub.new({
@@ -83,7 +83,7 @@ async function initialize() {
     tokenStaking.address,
     keepBonding.address,
     randomBeacon.address,
-    { from: owner }
+    { from: owner },
   )
 
   await registry.approveOperatorContract(keepFactory.address, { from: owner })

@@ -7,11 +7,11 @@ const KeepToken = contract.fromArtifact("KeepToken")
 const TokenStakingStub = contract.fromArtifact("TokenStakingStub")
 const PhasedEscrow = contract.fromArtifact("PhasedEscrow")
 const ECDSARewardsEscrowBeneficiary = contract.fromArtifact(
-  "ECDSARewardsEscrowBeneficiary"
+  "ECDSARewardsEscrowBeneficiary",
 )
 const ECDSARewardsDistributor = contract.fromArtifact("ECDSARewardsDistributor")
 const ECDSARewardsDistributorEscrow = contract.fromArtifact(
-  "ECDSARewardsDistributorEscrow"
+  "ECDSARewardsDistributorEscrow",
 )
 
 describe("ECDSARewardsDistributorEscrow", () => {
@@ -33,12 +33,12 @@ describe("ECDSARewardsDistributorEscrow", () => {
       tokenStaking.address,
       {
         from: owner,
-      }
+      },
     )
     escrow = await ECDSARewardsDistributorEscrow.new(
       token.address,
       rewardsDistributor.address,
-      { from: owner }
+      { from: owner },
     )
 
     await rewardsDistributor.transferOwnership(escrow.address, { from: owner })
@@ -64,7 +64,7 @@ describe("ECDSARewardsDistributorEscrow", () => {
       const beneficiary = await ECDSARewardsEscrowBeneficiary.new(
         token.address,
         escrow.address,
-        { from: owner }
+        { from: owner },
       )
       await beneficiary.transferOwnership(fundingEscrow.address, {
         from: owner,
@@ -96,7 +96,7 @@ describe("ECDSARewardsDistributorEscrow", () => {
     it("can not be called by non-owner", async () => {
       await expectRevert(
         escrow.allocateInterval(merkleRoot, amount, { from: thirdParty }),
-        "Ownable: caller is not the owner"
+        "Ownable: caller is not the owner",
       )
     })
 
@@ -113,7 +113,7 @@ describe("ECDSARewardsDistributorEscrow", () => {
         {
           fromBlock: 0,
           toBlock: "latest",
-        }
+        },
       )
 
       expect(eventList.length).to.equal(1, "incorrect number of emitted events")
@@ -135,7 +135,7 @@ describe("ECDSARewardsDistributorEscrow", () => {
         {
           fromBlock: 0,
           toBlock: "latest",
-        }
+        },
       )
 
       expect(eventList.length).to.equal(2, "incorrect number of emitted events")
@@ -147,7 +147,7 @@ describe("ECDSARewardsDistributorEscrow", () => {
       expect(event2.amount).to.eq.BN(amount2)
 
       expect(await token.balanceOf(rewardsDistributor.address)).to.eq.BN(
-        amount.add(amount2)
+        amount.add(amount2),
       )
     })
   })
