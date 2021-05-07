@@ -91,21 +91,29 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.TBTCSystem },
 			expectedValue: "0xa4888eDD97A5a3A739B4E0807C71817c8a418273",
 		},
-		"Extensions.TBTC.BTCRefunds.BeneficiaryAddress": {
-			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.BeneficiaryAddress },
+		"Extensions.TBTC.Bitcoin.ElectrsURL": {
+			readValueFunc: func(c *Config) interface{} { return *c.Extensions.TBTC.Bitcoin.ElectrsURL },
+			expectedValue: "example.com",
+		},
+		"Extensions.TBTC.Bitcoin.ElectrsURLWithDefault()": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.Bitcoin.ElectrsURLWithDefault() },
+			expectedValue: "example.com",
+		},
+		"Extensions.TBTC.Bitcoin.BeneficiaryAddress": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.Bitcoin.BeneficiaryAddress },
 			expectedValue: "bcrt1q0umle4fe6penqqyzuwsysqezwwptuyqa82jas4",
 		},
-		"Extensions.TBTC.BTCRefunds.MaxFeePerVByte": {
-			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.MaxFeePerVByte },
+		"Extensions.TBTC.Bitcoin.MaxFeePerVByte": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.Bitcoin.MaxFeePerVByte },
 			expectedValue: int32(73),
 		},
-		"Extensions.TBTC.BTCRefunds.BitcoinChainName": {
-			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.BTCRefunds.BitcoinChainName },
+		"Extensions.TBTC.Bitcoin.BitcoinChainName": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.Bitcoin.BitcoinChainName },
 			expectedValue: "mainnet",
 		},
-		"Extensions.TBTC.BTCRefunds.ChainParams()": {
+		"Extensions.TBTC.Bitcoin.ChainParams()": {
 			readValueFunc: func(c *Config) interface{} {
-				params, _ := c.Extensions.TBTC.BTCRefunds.ChainParams()
+				params, _ := c.Extensions.TBTC.Bitcoin.ChainParams()
 				return *params
 			},
 			expectedValue: chaincfg.MainNetParams,
@@ -157,9 +165,9 @@ func TestParseChainParams(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			// Use a string builder and a single-value list to represent optionality.
 			// If the list has a chain name, we define it in the config, otherwise,
-			// we have an empty `[Extensions.TBTC.BTCRefunds]` section.
+			// we have an empty `[Extensions.TBTC.Bitcoin]` section.
 			var b strings.Builder
-			fmt.Fprint(&b, "[Extensions.TBTC.BTCRefunds]")
+			fmt.Fprint(&b, "[Extensions.TBTC.Bitcoin]")
 			for _, name := range testData.chainName {
 				fmt.Fprintf(&b, "\nBitcoinChainName=\"%s\"", name)
 			}
@@ -167,7 +175,7 @@ func TestParseChainParams(t *testing.T) {
 			if _, err := toml.Decode(b.String(), config); err != nil {
 				t.Fatal(err)
 			}
-			chainParams, err := config.Extensions.TBTC.BTCRefunds.ChainParams()
+			chainParams, err := config.Extensions.TBTC.Bitcoin.ChainParams()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -179,12 +187,12 @@ func TestParseChainParams(t *testing.T) {
 }
 
 func TestParseChainParams_ExpectedFailure(t *testing.T) {
-	configString := fmt.Sprintf("[Extensions.TBTC.BTCRefunds]\nBitcoinChainName=\"%s\"", "bleeble blabble")
+	configString := fmt.Sprintf("[Extensions.TBTC.Bitcoin]\nBitcoinChainName=\"%s\"", "bleeble blabble")
 	config := &Config{}
 	if _, err := toml.Decode(configString, config); err != nil {
 		t.Fatal(err)
 	}
-	_, err := config.Extensions.TBTC.BTCRefunds.ChainParams()
+	_, err := config.Extensions.TBTC.Bitcoin.ChainParams()
 	expectedError := "unable to find chaincfg param for name: [bleeble blabble]"
 	if err == nil {
 		t.Fatalf("expecting an error but found none")
@@ -195,5 +203,64 @@ func TestParseChainParams_ExpectedFailure(t *testing.T) {
 			expectedError,
 			err,
 		)
+	}
+}
+
+func TestDefaultVbyteFee(t *testing.T) {
+	config := &Config{}
+	if _, err := toml.Decode("[Extensions.TBTC.Bitcoin]", config); err != nil {
+		t.Fatal(err)
+	}
+	fee := config.Extensions.TBTC.Bitcoin.MaxFeePerVByte
+	if fee != 0 {
+		t.Errorf("unexpected default fee\nexpected: 0\nactual:   %d", fee)
+	}
+}
+
+func TestElectrsURLWithDefault(t *testing.T) {
+	var electrsURLTests = map[string]struct {
+		url         []string
+		expectedURL string
+	}{
+		"blockstream": {
+			[]string{"https://blockstream.info/api/"},
+			"https://blockstream.info/api/",
+		},
+		"localhost": {
+			[]string{"localhost:8080/api/"},
+			"localhost:8080/api/",
+		},
+		"nonsense": {
+			[]string{"bleeble blabble"},
+			"bleeble blabble",
+		},
+		"undefined": {
+			[]string{},
+			"https://blockstream.info/api/",
+		},
+		"empty": {
+			[]string{""},
+			"",
+		},
+	}
+	for testName, testData := range electrsURLTests {
+		t.Run(testName, func(t *testing.T) {
+			// Use a string builder and a single-value list to represent optionality.
+			// If the list has a url, we define it in the config, otherwise, we have
+			// an empty `[Extensions.TBTC]` section.
+			var b strings.Builder
+			fmt.Fprint(&b, "[Extensions.TBTC.Bitcoin]")
+			for _, url := range testData.url {
+				fmt.Fprintf(&b, "\nElectrsURL=\"%s\"", url)
+			}
+			config := &Config{}
+			if _, err := toml.Decode(b.String(), config); err != nil {
+				t.Fatal(err)
+			}
+			url := config.Extensions.TBTC.Bitcoin.ElectrsURLWithDefault()
+			if url != testData.expectedURL {
+				t.Errorf("unexpected url\nexpected: %s\nactual:   %s", testData.expectedURL, url)
+			}
+		})
 	}
 }
