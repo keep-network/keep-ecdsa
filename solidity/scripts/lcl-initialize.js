@@ -2,7 +2,7 @@ const BondedECDSAKeepFactory = artifacts.require("BondedECDSAKeepFactory")
 const KeepBonding = artifacts.require("KeepBonding")
 
 const TokenStaking = artifacts.require(
-  "@keep-network/keep-core/build/truffle/TokenStaking"
+  "@keep-network/keep-core/build/truffle/TokenStaking",
 )
 
 const { contracts } = require("@keep-network/common.js")
@@ -11,7 +11,7 @@ const { readExternalContractAddress } = contracts
 module.exports = async function () {
   try {
     const networkID = await web3.eth.net.getId()
-    
+
     // Assuming BTC/ETH rate = 50 to cover a keep bond of 1 BTC we need to have
     // 50 ETH / 3 members = 16,67 ETH of unbonded value for each member.
     // Here we set the bonding value to bigger value so members can handle
@@ -33,7 +33,7 @@ module.exports = async function () {
     const TokenStakingAddress = readExternalContractAddress(
       "@keep-network/keep-core",
       "TokenStaking",
-      networkID
+      networkID,
     )
 
     const authorizeOperator = async (operator) => {
@@ -41,20 +41,20 @@ module.exports = async function () {
         await tokenStaking.authorizeOperatorContract(
           operator,
           operatorContract,
-          { from: operator }
+          { from: operator },
         )
 
         await keepBonding.authorizeSortitionPoolContract(
           operator,
           sortitionPoolAddress,
-          { from: operator }
+          { from: operator },
         ) // this function should be called by authorizer but it's currently set to operator in demo.js
       } catch (err) {
         console.error(err)
         process.exit(1)
       }
       console.log(
-        `authorized operator [${operator}] for factory [${operatorContract}]`
+        `authorized operator [${operator}] for factory [${operatorContract}]`,
       )
     }
 
@@ -63,8 +63,8 @@ module.exports = async function () {
         await keepBonding.deposit(operator, { value: bondingValue })
         console.log(
           `deposited ${web3.utils.fromWei(
-            bondingValue
-          )} ETH bonding value for operator [${operator}]`
+            bondingValue,
+          )} ETH bonding value for operator [${operator}]`,
         )
       } catch (err) {
         console.error(err)
@@ -87,7 +87,7 @@ module.exports = async function () {
       console.log(`getting sortition pool for application [${application}]`)
 
       sortitionPoolAddress = await bondedECDSAKeepFactory.getSortitionPool(
-        application
+        application,
       )
     } catch (err) {
       console.error("failed to get sortition pool", err)
@@ -103,7 +103,7 @@ module.exports = async function () {
     ) {
       try {
         console.error(
-          `no sortition pool for application: [${application}]; creating a new one`
+          `no sortition pool for application: [${application}]; creating a new one`,
         )
 
         await bondedECDSAKeepFactory.createSortitionPool(application)
@@ -111,7 +111,7 @@ module.exports = async function () {
         console.log(`created sortition pool for application: [${application}]`)
 
         sortitionPoolAddress = await bondedECDSAKeepFactory.getSortitionPool(
-          application
+          application,
         )
       } catch (err) {
         console.error("failed to create sortition pool", err)
@@ -120,7 +120,7 @@ module.exports = async function () {
     }
 
     console.log(
-      `sortition pool for application [${application}] is [${sortitionPoolAddress}]`
+      `sortition pool for application [${application}] is [${sortitionPoolAddress}]`,
     )
 
     try {
