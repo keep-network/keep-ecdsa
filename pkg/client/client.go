@@ -1158,8 +1158,8 @@ func monitorKeepTerminatedEvent(
 							}
 						}
 
-						if bitcoinConfig.BeneficiaryAddress != beneficiaryAddress {
-							err = derivationIndexStorage.Save(bitcoinConfig.BeneficiaryAddress, addressIndex)
+						if tbtcConfig.Bitcoin.BeneficiaryAddress != beneficiaryAddress {
+							err = derivationIndexStorage.Save(tbtcConfig.Bitcoin.BeneficiaryAddress, addressIndex)
 							if err != nil {
 								logger.Errorf(
 									"failed to persist the latest address derivation index for keep [%s]: [%v]",
