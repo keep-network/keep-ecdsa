@@ -81,6 +81,7 @@ npx truffle migrate --reset --network $NETWORK
 printf "${LOG_START}Creating links...${LOG_END}"
 ln -sf build/contracts artifacts
 npm link
+npm link @keep-network/keep-core
 
 if [ "$CONTRACTS_ONLY" = false ] ; then
   printf "${LOG_START}Building keep-ecdsa client...${LOG_END}"
