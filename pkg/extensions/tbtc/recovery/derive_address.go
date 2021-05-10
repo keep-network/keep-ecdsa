@@ -6,6 +6,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 )
 
 // deriveAddress uses the specified extended public key and address index to
@@ -131,6 +132,7 @@ func ResolveAddress(
 	beneficiaryAddress string,
 	storage *DerivationIndexStorage,
 	chainParams *chaincfg.Params,
+	electrs *bitcoin.ElectrsConnection,
 ) (string, uint32, error) {
 	// If the address decodes without error, then we have a valid bitcoin
 	// address. Otherwise, we assume that it's an extended key and we attempt to

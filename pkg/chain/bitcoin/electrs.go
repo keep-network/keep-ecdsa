@@ -89,3 +89,28 @@ func (e ElectrsConnection) VbyteFee() (int32, error) {
 	logger.Info("retrieved a vbyte fee of [%d]", fee)
 	return int32(fee), nil
 }
+
+func (e ElectrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
+	if e.apiURL == "" {
+		return true, nil
+	}
+	resp, err := e.client.Get(fmt.Sprintf("%s/address/%s/txs", e.apiURL, btcAddress))
+	if err != nil {
+		return false, err
+	}
+	if resp.StatusCode != 200 {
+		return false, fmt.Errorf(
+			"something went wrong trying to get information about address %s: [%s]",
+			btcAddress,
+			resp.Status,
+		)
+	}
+
+	responses := []interface{}{}
+	err = json.NewDecoder(resp.Body).Decode(&responses)
+	if err != nil {
+		return false, err
+	}
+
+	return len(responses) == 0, nil
+}
