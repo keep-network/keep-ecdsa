@@ -16,8 +16,6 @@ ENV GOPATH=/go \
 	APP_NAME=keep-ecdsa \
 	APP_DIR=/go/src/github.com/keep-network/keep-ecdsa \
 	BIN_PATH=/usr/local/bin \
-	# GO111MODULE required to support go modules
-	GO111MODULE=on \
 	APP_BUILD_TAGS="$HOST_CHAIN $LIBC" \
 	ABIGEN_BUILD_TAGS=$LIBC
 
