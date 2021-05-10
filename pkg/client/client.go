@@ -59,6 +59,7 @@ func Initialize(
 	hostChain chain.Handle,
 	networkProvider net.Provider,
 	persistence persistence.Handle,
+	derivationIndexStorage *recovery.DerivationIndexStorage,
 	clientConfig *Config,
 	tbtcConfig *tbtc.Config,
 	tssConfig *tss.Config,
@@ -208,6 +209,7 @@ func Initialize(
 				operatorPublicKey,
 				keep,
 				keepsRegistry,
+				derivationIndexStorage,
 				eventDeduplicator,
 				subscriptionOnSignatureRequested,
 			)
@@ -225,6 +227,7 @@ func Initialize(
 		tssNode,
 		operatorPublicKey,
 		keepsRegistry,
+		derivationIndexStorage,
 		eventDeduplicator,
 	)
 
@@ -270,6 +273,7 @@ func Initialize(
 					tssNode,
 					operatorPublicKey,
 					keepsRegistry,
+					derivationIndexStorage,
 					eventDeduplicator,
 					keep,
 					event.MemberIDs,
@@ -326,6 +330,7 @@ func checkAwaitingKeyGeneration(
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
+	derivationIndexStorage *recovery.DerivationIndexStorage,
 	eventDeduplicator *event.Deduplicator,
 ) {
 	keepCount, err := hostChain.GetKeepCount()
@@ -389,6 +394,7 @@ func checkAwaitingKeyGeneration(
 			tssNode,
 			operatorPublicKey,
 			keepsRegistry,
+			derivationIndexStorage,
 			eventDeduplicator,
 			keep,
 		)
@@ -412,6 +418,7 @@ func checkAwaitingKeyGenerationForKeep(
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
+	derivationIndexStorage *recovery.DerivationIndexStorage,
 	eventDeduplicator *event.Deduplicator,
 	keep chain.BondedECDSAKeepHandle,
 ) error {
@@ -466,6 +473,7 @@ func checkAwaitingKeyGenerationForKeep(
 			tssNode,
 			operatorPublicKey,
 			keepsRegistry,
+			derivationIndexStorage,
 			eventDeduplicator,
 			keep,
 			members,
@@ -486,6 +494,7 @@ func generateKeyForKeep(
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
+	derivationIndexStorage *recovery.DerivationIndexStorage,
 	eventDeduplicator *event.Deduplicator,
 	keep chain.BondedECDSAKeepHandle,
 	members []chain.ID,
@@ -594,6 +603,7 @@ func generateKeyForKeep(
 		operatorPublicKey,
 		keep,
 		keepsRegistry,
+		derivationIndexStorage,
 		eventDeduplicator,
 		subscriptionOnSignatureRequested,
 	)
@@ -963,6 +973,7 @@ func monitorKeepTerminatedEvent(
 	operatorPublicKey *operator.PublicKey,
 	keep chain.BondedECDSAKeepHandle,
 	keepsRegistry *registry.Keeps,
+	derivationIndexStorage *recovery.DerivationIndexStorage,
 	eventDeduplicator *event.Deduplicator,
 	subscriptionOnSignatureRequested subscription.EventSubscription,
 ) {
@@ -1049,8 +1060,9 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						beneficiaryAddress, err := recovery.ResolveAddress(
+						beneficiaryAddress, addressIndex, err := recovery.ResolveAddress(
 							tbtcConfig.Bitcoin.BeneficiaryAddress,
+							derivationIndexStorage,
 							chainParams,
 						)
 						if err != nil {
@@ -1143,6 +1155,17 @@ func monitorKeepTerminatedEvent(
 
 							for i := 0; i < 5; i++ {
 								logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
+							}
+						}
+
+						if tbtcConfig.Bitcoin.BeneficiaryAddress != beneficiaryAddress {
+							err = derivationIndexStorage.Save(tbtcConfig.Bitcoin.BeneficiaryAddress, addressIndex)
+							if err != nil {
+								logger.Errorf(
+									"failed to persist the latest address derivation index for keep [%s]: [%v]",
+									keep.ID(),
+									err,
+								)
 							}
 						}
 

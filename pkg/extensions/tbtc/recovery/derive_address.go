@@ -129,17 +129,23 @@ func deriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 // the specified index.
 func ResolveAddress(
 	beneficiaryAddress string,
+	storage *DerivationIndexStorage,
 	chainParams *chaincfg.Params,
-) (string, error) {
-	//FIXME: pull the address index from persistence
-	addressIndex := uint32(0)
+) (string, uint32, error) {
 	// If the address decodes without error, then we have a valid bitcoin
 	// address. Otherwise, we assume that it's an extended key and we attempt to
 	// derive the address.
 	_, err := btcutil.DecodeAddress(beneficiaryAddress, chainParams)
 	if err != nil {
-		return deriveAddress(beneficiaryAddress, addressIndex)
-	} else {
-		return beneficiaryAddress, nil
+		addressIndex, err := storage.GetNextIndex(beneficiaryAddress)
+		if err != nil {
+			return "", 0, err
+		}
+		derivedAddress, err := deriveAddress(beneficiaryAddress, addressIndex)
+		if err != nil {
+			return "", 0, err
+		}
+		return derivedAddress, addressIndex, nil
 	}
+	return beneficiaryAddress, 0, nil
 }
