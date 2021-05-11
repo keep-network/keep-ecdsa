@@ -44,7 +44,7 @@ describe("ECDSABackportRewards", () => {
     rewardsContract = await ECDSABackportRewards.new(
       keepToken.address,
       keepFactory.address,
-      { from: owner }
+      { from: owner },
     )
 
     await fund(keepToken, rewardsContract, ECDSABackportKEEPRewards)
@@ -66,7 +66,7 @@ describe("ECDSABackportRewards", () => {
       await rewardsContract.allocateRewards(0)
 
       const allocated = (await rewardsContract.getAllocatedRewards(0)).div(
-        tokenDecimalMultiplier
+        tokenDecimalMultiplier,
       )
       expect(allocated).to.eq.BN(expectedAllocation)
     })
@@ -91,9 +91,9 @@ describe("ECDSABackportRewards", () => {
     it("should fail for non-existing group", async () => {
       await expectRevert(
         rewardsContract.receiveReward(
-          "0x1111111111111111111111111111111111111111"
+          "0x1111111111111111111111111111111111111111",
         ),
-        "Keep not recognized by factory"
+        "Keep not recognized by factory",
       )
     })
   })

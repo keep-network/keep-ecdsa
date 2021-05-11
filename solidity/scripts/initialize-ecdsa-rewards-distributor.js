@@ -11,7 +11,7 @@
 const fs = require("fs")
 const ECDSARewardsDistributor = artifacts.require("./ECDSARewardsDistributor")
 const KeepToken = artifacts.require(
-  "@keep-network/keep-core/build/truffle/KeepToken"
+  "@keep-network/keep-core/build/truffle/KeepToken",
 )
 const { KeepTokenAddress } = require("../migrations/external-contracts")
 
@@ -29,7 +29,7 @@ module.exports = async function () {
     }
 
     const merkleJSON = JSON.parse(
-      fs.readFileSync(distributorOutput, { encoding: "utf8" })
+      fs.readFileSync(distributorOutput, { encoding: "utf8" }),
     )
     if (typeof merkleJSON !== "object") throw new Error("Invalid JSON")
 

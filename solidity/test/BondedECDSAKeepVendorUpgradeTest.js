@@ -9,10 +9,10 @@ const {
 
 const BondedECDSAKeepVendor = contract.fromArtifact("BondedECDSAKeepVendor")
 const BondedECDSAKeepVendorImplV1Stub = contract.fromArtifact(
-  "BondedECDSAKeepVendorImplV1Stub"
+  "BondedECDSAKeepVendorImplV1Stub",
 )
 const BondedECDSAKeepVendorImplV2Stub = contract.fromArtifact(
-  "BondedECDSAKeepVendorImplV2Stub"
+  "BondedECDSAKeepVendorImplV2Stub",
 )
 
 const chai = require("chai")
@@ -40,7 +40,7 @@ describe("BondedECDSAKeepVendorUpgrade", function () {
     keepVendorProxy = await BondedECDSAKeepVendor.new(
       implV1.address,
       initializeCallData,
-      { from: proxyAdmin }
+      { from: proxyAdmin },
     )
   })
 
@@ -73,14 +73,14 @@ describe("BondedECDSAKeepVendorUpgrade", function () {
       assert.equal(await keepVendorProxy.implementation(), implV2.address)
 
       const keepVendor = await BondedECDSAKeepVendorImplV2Stub.at(
-        keepVendorProxy.address
+        keepVendorProxy.address,
       )
 
       assert.equal(await keepVendor.version(), "V2")
 
       assert.isTrue(
         await keepVendor.initialized(),
-        "implementation not initialized"
+        "implementation not initialized",
       )
     })
 
@@ -96,7 +96,7 @@ describe("BondedECDSAKeepVendorUpgrade", function () {
 
       await expectRevert(
         keepVendorProxy.completeUpgrade({ from: proxyAdmin }),
-        "revert"
+        "revert",
       )
     })
 
@@ -123,7 +123,7 @@ describe("BondedECDSAKeepVendorUpgrade", function () {
 
       await expectRevert(
         keepVendorProxy.completeUpgrade({ from: proxyAdmin }),
-        "Contract is already initialized"
+        "Contract is already initialized",
       )
     })
   })

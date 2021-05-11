@@ -10,18 +10,18 @@ const truffleAssert = require("truffle-assertions")
 const StackLib = contract.fromArtifact("StackLib")
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const FullyBackedECDSAKeepFactoryStub = contract.fromArtifact(
-  "FullyBackedECDSAKeepFactoryStub"
+  "FullyBackedECDSAKeepFactoryStub",
 )
 const FullyBackedBonding = contract.fromArtifact("FullyBackedBonding")
 const FullyBackedSortitionPool = contract.fromArtifact(
-  "FullyBackedSortitionPool"
+  "FullyBackedSortitionPool",
 )
 const FullyBackedSortitionPoolFactory = contract.fromArtifact(
-  "FullyBackedSortitionPoolFactory"
+  "FullyBackedSortitionPoolFactory",
 )
 const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
 const FullyBackedECDSAKeepStub = contract.fromArtifact(
-  "FullyBackedECDSAKeepStub"
+  "FullyBackedECDSAKeepStub",
 )
 
 const BN = web3.utils.BN
@@ -64,7 +64,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     await FullyBackedSortitionPoolFactory.detectNetwork()
     await FullyBackedSortitionPoolFactory.link(
       "StackLib",
-      (await StackLib.new()).address
+      (await StackLib.new()).address,
     )
   })
 
@@ -98,7 +98,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepFactory.registerMemberCandidate(unknownApplication, {
           from: members[0],
         }),
-        "No pool found for the application"
+        "No pool found for the application",
       )
     })
 
@@ -115,7 +115,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       expect(await pool.getPoolWeight(members[0])).to.eq.BN(
         expectedWeight,
-        "invalid staking weight"
+        "invalid staking weight",
       )
     })
 
@@ -130,11 +130,11 @@ describe("FullyBackedECDSAKeepFactory", function () {
       const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
       assert.isTrue(
         await pool.isOperatorInPool(members[0]),
-        "operator 1 is not in the pool"
+        "operator 1 is not in the pool",
       )
       assert.isTrue(
         await pool.isOperatorInPool(members[1]),
-        "operator 2 is not in the pool"
+        "operator 2 is not in the pool",
       )
     })
 
@@ -147,7 +147,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       assert.isTrue(
         await pool.isOperatorInPool(members[0]),
-        "operator is not in the pool"
+        "operator is not in the pool",
       )
 
       await keepFactory.registerMemberCandidate(application, {
@@ -156,7 +156,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       assert.isTrue(
         await pool.isOperatorInPool(members[0]),
-        "operator is not in the pool"
+        "operator is not in the pool",
       )
     })
 
@@ -165,7 +165,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       await expectRevert(
         keepFactory.registerMemberCandidate(application, { from: members[0] }),
-        "Operator not eligible"
+        "Operator not eligible",
       )
     })
 
@@ -174,23 +174,23 @@ describe("FullyBackedECDSAKeepFactory", function () {
       const application2 = "0x0000000000000000000000000000000000000002"
 
       const signerPool1Address = await keepFactory.createSortitionPool.call(
-        application1
+        application1,
       )
       await keepFactory.createSortitionPool(application1)
       const signerPool2Address = await keepFactory.createSortitionPool.call(
-        application2
+        application2,
       )
       await keepFactory.createSortitionPool(application2)
 
       await bonding.authorizeSortitionPoolContract(
         members[0],
         signerPool1Address,
-        { from: authorizers[0] }
+        { from: authorizers[0] },
       )
       await bonding.authorizeSortitionPoolContract(
         members[1],
         signerPool2Address,
-        { from: authorizers[1] }
+        { from: authorizers[1] },
       )
 
       await keepFactory.registerMemberCandidate(application1, {
@@ -204,22 +204,22 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       assert.isTrue(
         await signerPool1.isOperatorInPool(members[0]),
-        "operator 1 is not in the pool"
+        "operator 1 is not in the pool",
       )
       assert.isFalse(
         await signerPool1.isOperatorInPool(members[1]),
-        "operator 2 is in the pool"
+        "operator 2 is in the pool",
       )
 
       const signerPool2 = await FullyBackedSortitionPool.at(signerPool2Address)
 
       assert.isFalse(
         await signerPool2.isOperatorInPool(members[0]),
-        "operator 1 is in the pool"
+        "operator 1 is in the pool",
       )
       assert.isTrue(
         await signerPool2.isOperatorInPool(members[1]),
-        "operator 2 is not in the pool"
+        "operator 2 is not in the pool",
       )
     })
 
@@ -227,7 +227,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await initializeNewFactory()
 
       signerPoolAddress = await keepFactory.createSortitionPool.call(
-        application
+        application,
       )
       await keepFactory.createSortitionPool(application)
       const pool = await FullyBackedSortitionPool.at(signerPoolAddress)
@@ -240,7 +240,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepFactory.registerMemberCandidate(application, {
           from: members[0],
         }),
-        "Operator not eligible"
+        "Operator not eligible",
       )
 
       await time.increase(2)
@@ -251,7 +251,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       assert.isTrue(
         await pool.isOperatorInPool(members[0]),
-        "operator is not in the pool after initialization period"
+        "operator is not in the pool after initialization period",
       )
     })
 
@@ -270,7 +270,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepFactory.registerMemberCandidate(application, {
           from: keepMembers[1],
         }),
-        "Operator not eligible"
+        "Operator not eligible",
       )
     })
   })
@@ -282,7 +282,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
     it("creates new sortition pool and emits an event", async () => {
       const sortitionPoolAddress = await keepFactory.createSortitionPool.call(
-        application
+        application,
       )
 
       const res = await keepFactory.createSortitionPool(application)
@@ -297,7 +297,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       await expectRevert(
         keepFactory.createSortitionPool(application),
-        "Sortition pool already exists"
+        "Sortition pool already exists",
       )
     })
   })
@@ -309,7 +309,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
     it("returns address of sortition pool", async () => {
       const sortitionPoolAddress = await keepFactory.createSortitionPool.call(
-        application
+        application,
       )
       await keepFactory.createSortitionPool(application)
 
@@ -317,14 +317,14 @@ describe("FullyBackedECDSAKeepFactory", function () {
       assert.equal(
         result,
         sortitionPoolAddress,
-        "incorrect sortition pool address"
+        "incorrect sortition pool address",
       )
     })
 
     it("reverts if sortition pool does not exist", async () => {
       await expectRevert(
         keepFactory.getSortitionPool(application),
-        "No pool found for the application"
+        "No pool found for the application",
       )
     })
   })
@@ -341,7 +341,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       })
 
       assert.isTrue(
-        await keepFactory.isOperatorRegistered(members[0], application)
+        await keepFactory.isOperatorRegistered(members[0], application),
       )
     })
 
@@ -353,13 +353,13 @@ describe("FullyBackedECDSAKeepFactory", function () {
       })
 
       assert.isFalse(
-        await keepFactory.isOperatorRegistered(members[0], application2)
+        await keepFactory.isOperatorRegistered(members[0], application2),
       )
     })
 
     it("returns false if the operator is not registered for any application", async () => {
       assert.isFalse(
-        await keepFactory.isOperatorRegistered(members[0], application)
+        await keepFactory.isOperatorRegistered(members[0], application),
       )
     })
   })
@@ -383,7 +383,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       })
 
       assert.isTrue(
-        await keepFactory.isOperatorUpToDate(members[0], application)
+        await keepFactory.isOperatorUpToDate(members[0], application),
       )
     })
 
@@ -403,7 +403,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       // Ethereum uint256 division performs implicit floor:
       // The weight went down from 200 to 199
       assert.isFalse(
-        await keepFactory.isOperatorUpToDate(members[0], application)
+        await keepFactory.isOperatorUpToDate(members[0], application),
       )
     })
 
@@ -422,7 +422,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       // ((20 * 10^18 * 10) + 10^18) / 10^18 = 201
       // The weight went up from 200 to 201
       assert.isFalse(
-        await keepFactory.isOperatorUpToDate(members[0], application)
+        await keepFactory.isOperatorUpToDate(members[0], application),
       )
     })
 
@@ -442,7 +442,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       // Ethereum uint256 division performs implicit floor:
       // The weight dit not change: 200 == floor(200.99)
       assert.isTrue(
-        await keepFactory.isOperatorUpToDate(members[0], application)
+        await keepFactory.isOperatorUpToDate(members[0], application),
       )
     })
 
@@ -454,7 +454,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await setUnbondedValue(members[0], minimumBondableValue.subn(1))
 
       assert.isFalse(
-        await keepFactory.isOperatorUpToDate(members[0], application)
+        await keepFactory.isOperatorUpToDate(members[0], application),
       )
     })
 
@@ -464,7 +464,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       await expectRevert(
         keepFactory.isOperatorUpToDate(members[0], application),
-        "Operator not registered for the application"
+        "Operator not registered for the application",
       )
     })
   })
@@ -487,7 +487,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     it("reverts if operator is up to date", async () => {
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
-        "Operator already up to date"
+        "Operator already up to date",
       )
     })
 
@@ -499,14 +499,14 @@ describe("FullyBackedECDSAKeepFactory", function () {
       bonding.withdraw(valueToWithdraw, members[0], { from: members[0] })
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after bonding value change"
+        "unexpected status of the operator after bonding value change",
       )
 
       await keepFactory.updateOperatorStatus(members[0], application)
 
       await expectRevert(
         keepFactory.isOperatorUpToDate(members[0], application),
-        "Operator not registered for the application"
+        "Operator not registered for the application",
       )
     })
 
@@ -514,12 +514,12 @@ describe("FullyBackedECDSAKeepFactory", function () {
       bonding.deposit(members[0], { value: new BN(1) })
       assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after bonding value change"
+        "unexpected status of the operator after bonding value change",
       )
 
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
-        "Operator already up to date"
+        "Operator already up to date",
       )
     })
 
@@ -528,14 +528,14 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after stake change"
+        "unexpected status of the operator after stake change",
       )
 
       await keepFactory.updateOperatorStatus(members[0], application)
 
       assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after status update"
+        "unexpected status of the operator after status update",
       )
     })
 
@@ -544,14 +544,14 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after stake change"
+        "unexpected status of the operator after stake change",
       )
 
       await keepFactory.updateOperatorStatus(members[0], application)
 
       assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after status update"
+        "unexpected status of the operator after status update",
       )
     })
 
@@ -564,14 +564,14 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       assert.isFalse(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after stake change"
+        "unexpected status of the operator after stake change",
       )
 
       await keepFactory.updateOperatorStatus(members[0], application)
 
       assert.isTrue(
         await keepFactory.isOperatorUpToDate(members[0], application),
-        "unexpected status of the operator after status update"
+        "unexpected status of the operator after status update",
       )
     })
 
@@ -581,7 +581,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       await expectRevert(
         keepFactory.updateOperatorStatus(members[0], application),
-        "Operator not registered for the application"
+        "Operator not registered for the application",
       )
     })
   })
@@ -611,9 +611,9 @@ describe("FullyBackedECDSAKeepFactory", function () {
           stakeLockDuration,
           {
             value: feeEstimate,
-          }
+          },
         ),
-        "No pool found for the application"
+        "No pool found for the application",
       )
     })
 
@@ -630,9 +630,9 @@ describe("FullyBackedECDSAKeepFactory", function () {
           {
             from: application,
             value: feeEstimate,
-          }
+          },
         ),
-        "Bond per member must be greater than zero"
+        "Bond per member must be greater than zero",
       )
     })
 
@@ -649,9 +649,9 @@ describe("FullyBackedECDSAKeepFactory", function () {
           {
             from: application,
             fee: insufficientFee,
-          }
+          },
         ),
-        "Insufficient payment for opening a new keep"
+        "Insufficient payment for opening a new keep",
       )
     })
 
@@ -667,7 +667,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
 
       await keepFactory.openKeep(
@@ -679,7 +679,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
 
       const eventList = await keepFactory.getPastEvents(
@@ -687,7 +687,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        }
+        },
       )
 
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
@@ -701,7 +701,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       assert.sameMembers(
         ev.members,
         [members[0], members[1], members[2]],
-        "incorrect keep members"
+        "incorrect keep members",
       )
 
       expect(ev.honestThreshold).to.eq.BN(threshold, "incorrect threshold")
@@ -719,7 +719,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
 
       const eventList = await keepFactory.getPastEvents(
@@ -727,21 +727,21 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        }
+        },
       )
 
       const keepAddress = eventList[0].returnValues.keepAddress
 
       expect(
-        await bonding.bondAmount(members[0], keepAddress, keepAddress)
+        await bonding.bondAmount(members[0], keepAddress, keepAddress),
       ).to.eq.BN(singleBond, "invalid bond value for members[0]")
 
       expect(
-        await bonding.bondAmount(members[1], keepAddress, keepAddress)
+        await bonding.bondAmount(members[1], keepAddress, keepAddress),
       ).to.eq.BN(singleBond, "invalid bond value for members[1]")
 
       expect(
-        await bonding.bondAmount(members[2], keepAddress, keepAddress)
+        await bonding.bondAmount(members[2], keepAddress, keepAddress),
       ).to.eq.BN(singleBond, "invalid bond value for members[2]")
     })
 
@@ -759,7 +759,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepOwner,
         requestedBond,
         stakeLockDuration,
-        { from: application, value: feeEstimate }
+        { from: application, value: feeEstimate },
       )
 
       const eventList = await keepFactory.getPastEvents(
@@ -767,24 +767,24 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        }
+        },
       )
 
       const keepAddress = eventList[0].returnValues.keepAddress
 
       expect(
         await bonding.bondAmount(members[0], keepAddress, keepAddress),
-        "invalid bond value for members[0]"
+        "invalid bond value for members[0]",
       ).to.eq.BN(expectedMemberBond)
 
       expect(
         await bonding.bondAmount(members[1], keepAddress, keepAddress),
-        "invalid bond value for members[1]"
+        "invalid bond value for members[1]",
       ).to.eq.BN(expectedMemberBond)
 
       expect(
         await bonding.bondAmount(members[2], keepAddress, keepAddress),
-        "invalid bond value for members[2]"
+        "invalid bond value for members[2]",
       ).to.eq.BN(expectedMemberBond)
     })
 
@@ -801,7 +801,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepOwner,
         requestedBond,
         stakeLockDuration,
-        { from: application, value: feeEstimate }
+        { from: application, value: feeEstimate },
       )
 
       const eventList = await keepFactory.getPastEvents(
@@ -809,24 +809,24 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        }
+        },
       )
 
       const keepAddress = eventList[0].returnValues.keepAddress
 
       expect(
         await bonding.bondAmount(members[0], keepAddress, keepAddress),
-        "invalid bond value for members[0]"
+        "invalid bond value for members[0]",
       ).to.eq.BN(expectedMemberBond)
 
       expect(
         await bonding.bondAmount(members[1], keepAddress, keepAddress),
-        "invalid bond value for members[1]"
+        "invalid bond value for members[1]",
       ).to.eq.BN(expectedMemberBond)
 
       expect(
         await bonding.bondAmount(members[2], keepAddress, keepAddress),
-        "invalid bond value for members[2]"
+        "invalid bond value for members[2]",
       ).to.eq.BN(expectedMemberBond)
     })
 
@@ -843,9 +843,9 @@ describe("FullyBackedECDSAKeepFactory", function () {
           {
             from: application,
             value: feeEstimate,
-          }
+          },
         ),
-        "Not enough operators in pool"
+        "Not enough operators in pool",
       )
     })
 
@@ -854,7 +854,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       const availableUnbonded = await bonding.availableUnbondedValue(
         members[2],
         keepFactory.address,
-        signerPoolAddress
+        signerPoolAddress,
       )
       const withdrawValue = availableUnbonded.sub(minimumBond).add(new BN(1))
       await bonding.withdraw(withdrawValue, members[2], {
@@ -871,9 +871,9 @@ describe("FullyBackedECDSAKeepFactory", function () {
           {
             from: application,
             value: feeEstimate,
-          }
+          },
         ),
-        "Not enough operators in pool"
+        "Not enough operators in pool",
       )
     })
 
@@ -887,12 +887,12 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        }
+        },
       )
 
       assert.isTrue(
         web3.utils.isAddress(keep.address),
-        `keep address ${keep.address} is not a valid address`
+        `keep address ${keep.address} is not a valid address`,
       )
 
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
@@ -900,19 +900,19 @@ describe("FullyBackedECDSAKeepFactory", function () {
       assert.equal(
         eventList[0].returnValues.keepAddress,
         keep.address,
-        "incorrect keep address in emitted event"
+        "incorrect keep address in emitted event",
       )
 
       assert.sameMembers(
         eventList[0].returnValues.members,
         [members[0], members[1], members[2]],
-        "incorrect keep member in emitted event"
+        "incorrect keep member in emitted event",
       )
 
       assert.equal(
         eventList[0].returnValues.owner,
         keepOwner,
-        "incorrect keep owner in emitted event"
+        "incorrect keep owner in emitted event",
       )
     })
 
@@ -930,18 +930,18 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
 
       assert.equal(
         await randomBeacon.requestCount.call(),
         1,
-        "incorrect number of beacon calls"
+        "incorrect number of beacon calls",
       )
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         expectedNewEntry,
-        "incorrect new group selection seed"
+        "incorrect new group selection seed",
       )
     })
 
@@ -953,7 +953,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       await keepFactory.initialGroupSelectionSeed(groupSelectionSeed)
 
       const expectedNewGroupSelectionSeed = web3.utils.toBN(
-        web3.utils.soliditySha3(groupSelectionSeed, keepFactory.address)
+        web3.utils.soliditySha3(groupSelectionSeed, keepFactory.address),
       )
 
       await keepFactory.openKeep(
@@ -965,12 +965,12 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         expectedNewGroupSelectionSeed,
-        "incorrect new group selection seed"
+        "incorrect new group selection seed",
       )
     })
 
@@ -986,7 +986,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
 
       // TODO: Add verification of what we will do in case of the failure.
@@ -1004,12 +1004,12 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: value,
-        }
+        },
       )
 
       expect(await web3.eth.getBalance(randomBeacon.address)).to.eq.BN(
         value,
-        "incorrect random beacon balance"
+        "incorrect random beacon balance",
       )
     })
 
@@ -1027,9 +1027,9 @@ describe("FullyBackedECDSAKeepFactory", function () {
           {
             from: application,
             value: feeEstimate,
-          }
+          },
         ),
-        "Honest threshold must be less or equal the group size"
+        "Honest threshold must be less or equal the group size",
       )
     })
 
@@ -1046,9 +1046,9 @@ describe("FullyBackedECDSAKeepFactory", function () {
           {
             from: application,
             value: feeEstimate,
-          }
+          },
         ),
-        "Honest threshold must be greater than 0"
+        "Honest threshold must be greater than 0",
       )
     })
 
@@ -1067,7 +1067,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
 
       const eventList = await keepFactory.getPastEvents(
@@ -1075,7 +1075,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        }
+        },
       )
 
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
@@ -1090,7 +1090,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepOwner,
         bond,
         stakeLockDuration,
-        { from: application, value: feeEstimate }
+        { from: application, value: feeEstimate },
       )
 
       await keepFactory.openKeep(
@@ -1102,24 +1102,24 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
       const recordedKeepAddress = await keepFactory.getKeepAtIndex(preKeepCount)
       const keep = await FullyBackedECDSAKeepStub.at(keepAddress)
       const keepOpenedTime = await keep.getOpenedTimestamp()
       const factoryKeepOpenedTime = await keepFactory.getKeepOpenedTimestamp(
-        keepAddress
+        keepAddress,
       )
 
       assert.equal(
         recordedKeepAddress,
         keepAddress,
-        "address recorded in factory differs from returned keep address"
+        "address recorded in factory differs from returned keep address",
       )
 
       expect(factoryKeepOpenedTime).to.eq.BN(
         keepOpenedTime,
-        "opened time in factory differs from opened time in keep"
+        "opened time in factory differs from opened time in keep",
       )
     })
 
@@ -1130,7 +1130,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepOwner,
         bond,
         stakeLockDuration,
-        { from: application, value: feeEstimate }
+        { from: application, value: feeEstimate },
       )
 
       await keepFactory.openKeep(
@@ -1142,7 +1142,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
 
       const keep = await FullyBackedECDSAKeepStub.at(keepAddress)
@@ -1168,7 +1168,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
 
       const eventList = await keepFactory.getPastEvents(
@@ -1176,14 +1176,14 @@ describe("FullyBackedECDSAKeepFactory", function () {
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        }
+        },
       )
 
       assert.equal(eventList.length, 1, "incorrect number of emitted events")
       assert.equal(
         eventList[0].returnValues.members.length,
         groupSize,
-        "incorrect number of members"
+        "incorrect number of members",
       )
     })
 
@@ -1200,9 +1200,9 @@ describe("FullyBackedECDSAKeepFactory", function () {
           {
             from: application,
             value: feeEstimate,
-          }
+          },
         ),
-        "Maximum signing group size is 16"
+        "Maximum signing group size is 16",
       )
     })
 
@@ -1219,15 +1219,15 @@ describe("FullyBackedECDSAKeepFactory", function () {
           {
             from: application,
             value: feeEstimate,
-          }
+          },
         ),
-        "Minimum signing group size is 1"
+        "Minimum signing group size is 1",
       )
     })
 
     async function createDepositAndRegisterMembers(
       memberCount,
-      unbondedAmount
+      unbondedAmount,
     ) {
       const operators = []
 
@@ -1262,7 +1262,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       sortitionPoolFactory = await FullyBackedSortitionPoolFactory.new()
       bonding = await FullyBackedBonding.new(
         registry.address,
-        delegationInitPeriod
+        delegationInitPeriod,
       )
       randomBeacon = accounts[1]
       const keepMasterContract = await FullyBackedECDSAKeepStub.new()
@@ -1270,7 +1270,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepMasterContract.address,
         sortitionPoolFactory.address,
         bonding.address,
-        randomBeacon
+        randomBeacon,
       )
     })
 
@@ -1281,7 +1281,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         newRelayEntry,
-        "incorrect new group selection seed"
+        "incorrect new group selection seed",
       )
     })
 
@@ -1290,7 +1290,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         keepFactory.__beaconCallback(newRelayEntry, {
           from: accounts[2],
         }),
-        "Caller is not the random beacon"
+        "Caller is not the random beacon",
       )
     })
   })
@@ -1309,7 +1309,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       const reseedFee = await keepFactory.newGroupSelectionSeedFee()
       expect(reseedFee).to.eq.BN(
         newEntryFee,
-        "reseed fee should equal new entry fee"
+        "reseed fee should equal new entry fee",
       )
     })
 
@@ -1324,7 +1324,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       const reseedFee = await keepFactory.newGroupSelectionSeedFee()
       expect(reseedFee).to.eq.BN(
         newEntryFee.sub(poolValue),
-        "reseed fee should equal new entry fee minus pool value"
+        "reseed fee should equal new entry fee minus pool value",
       )
     })
 
@@ -1370,12 +1370,12 @@ describe("FullyBackedECDSAKeepFactory", function () {
       assert.equal(
         await randomBeacon.requestCount.call(),
         1,
-        "incorrect number of beacon calls"
+        "incorrect number of beacon calls",
       )
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         expectedNewEntry,
-        "incorrect new group selection seed"
+        "incorrect new group selection seed",
       )
     })
 
@@ -1395,12 +1395,12 @@ describe("FullyBackedECDSAKeepFactory", function () {
       assert.equal(
         await randomBeacon.requestCount.call(),
         1,
-        "incorrect number of beacon calls"
+        "incorrect number of beacon calls",
       )
 
       expect(await keepFactory.getGroupSelectionSeed()).to.eq.BN(
         expectedNewEntry,
-        "incorrect new group selection seed"
+        "incorrect new group selection seed",
       )
     })
 
@@ -1419,7 +1419,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       const expectedPoolValue = poolValue.sub(newEntryFee)
       expect(await keepFactory.reseedPool()).to.eq.BN(
         expectedPoolValue,
-        "unexpected reseed pool value"
+        "unexpected reseed pool value",
       )
     })
 
@@ -1439,7 +1439,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       const expectedPoolValue = poolValue.sub(newEntryFee).add(valueSent)
       expect(await keepFactory.reseedPool()).to.eq.BN(
         expectedPoolValue,
-        "unexpected reseed pool value"
+        "unexpected reseed pool value",
       )
     })
 
@@ -1453,7 +1453,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       await expectRevert(
         keepFactory.requestNewGroupSelectionSeed({ value: 1 }),
-        "Not enough funds to trigger reseed"
+        "Not enough funds to trigger reseed",
       )
     })
 
@@ -1463,7 +1463,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       const reseedFee = await keepFactory.newGroupSelectionSeedFee()
       await expectRevert(
         keepFactory.requestNewGroupSelectionSeed({ value: reseedFee }),
-        "request relay entry failed"
+        "request relay entry failed",
       )
     })
   })
@@ -1497,12 +1497,12 @@ describe("FullyBackedECDSAKeepFactory", function () {
       assert.equal(
         keep0.address,
         atIndex0,
-        "incorrect keep address returned for index 0"
+        "incorrect keep address returned for index 0",
       )
       assert.equal(
         keep1.address,
         atIndex1,
-        "incorrect keep address returned for index 1"
+        "incorrect keep address returned for index 1",
       )
     })
   })
@@ -1516,14 +1516,14 @@ describe("FullyBackedECDSAKeepFactory", function () {
     it("returns true if operator is authorized for the factory", async () => {
       assert.isTrue(
         await keepFactory.isOperatorAuthorized(members[0]),
-        "the operator is authorized for the factory"
+        "the operator is authorized for the factory",
       )
     })
 
     it("returns false if operator is not authorized for the factory", async () => {
       assert.isFalse(
         await keepFactory.isOperatorAuthorized(notMember),
-        "the operator is not authorized for the factory"
+        "the operator is not authorized for the factory",
       )
     })
   })
@@ -1547,7 +1547,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     it("reverts when called by non-keep", async () => {
       await expectRevert(
         keepFactory.banKeepMembers(),
-        "Caller is not a keep created by the factory"
+        "Caller is not a keep created by the factory",
       )
     })
 
@@ -1564,7 +1564,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
         if (keepMembers.includes(operator)) {
           assert.isFalse(
-            await keepFactory.isOperatorRegistered(operator, application)
+            await keepFactory.isOperatorRegistered(operator, application),
           )
 
           assert.isTrue(await pool.bannedOperators(operator))
@@ -1579,7 +1579,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
       const application2 = "0x0000000000000000000000000000000000000002"
       const pool2Address = await keepFactory.createSortitionPool.call(
-        application2
+        application2,
       )
       await keepFactory.createSortitionPool(application2)
       const pool2 = await FullyBackedSortitionPool.at(pool2Address)
@@ -1609,20 +1609,20 @@ describe("FullyBackedECDSAKeepFactory", function () {
       assert.equal(
         eventList.length,
         keepMembers.length,
-        "incorrect number of emitted events"
+        "incorrect number of emitted events",
       )
 
       for (let i = 0; i < eventList.length; i++) {
         assert.equal(
           eventList[i].returnValues.operator,
           keepMembers[i],
-          `incorrect operator address in event ${i}`
+          `incorrect operator address in event ${i}`,
         )
 
         assert.equal(
           eventList[i].returnValues.application,
           application,
-          `incorrect application address in event ${i}`
+          `incorrect application address in event ${i}`,
         )
       }
     })
@@ -1644,14 +1644,14 @@ describe("FullyBackedECDSAKeepFactory", function () {
         .muln(members.length)
 
       expect(poolWeight, "incorrect sortition pool weight").to.eq.BN(
-        expectedPoolWeight
+        expectedPoolWeight,
       )
     })
 
     it("reverts when pool doesn't exist for application", async () => {
       await expectRevert(
         keepFactory.getSortitionPoolWeight(application),
-        "No pool found for the application"
+        "No pool found for the application",
       )
     })
   })
@@ -1665,7 +1665,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     it("reverts for unknown application", async () => {
       await expectRevert(
         keepFactory.setMinimumBondableValue(10, 3, 3),
-        "No pool found for the application"
+        "No pool found for the application",
       )
     })
 
@@ -1696,7 +1696,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     sortitionPoolFactory = await FullyBackedSortitionPoolFactory.new()
     bonding = await FullyBackedBonding.new(
       registry.address,
-      delegationInitPeriod
+      delegationInitPeriod,
     )
     randomBeacon = await RandomBeaconStub.new()
     const keepMasterContract = await FullyBackedECDSAKeepStub.new()
@@ -1704,7 +1704,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       keepMasterContract.address,
       sortitionPoolFactory.address,
       bonding.address,
-      randomBeacon.address
+      randomBeacon.address,
     )
 
     minimumDelegationDeposit = await bonding.MINIMUM_DELEGATION_DEPOSIT.call()
@@ -1715,7 +1715,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
   async function initializeMemberCandidates(
     operators = members,
-    unbondedValue
+    unbondedValue,
   ) {
     const minimumDelegationValue = await bonding.MINIMUM_DELEGATION_DEPOSIT.call()
 
@@ -1729,7 +1729,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
         operators[i],
         operators[i],
         authorizers[i],
-        unbondedValue || minimumDelegationValue
+        unbondedValue || minimumDelegationValue,
       )
     }
 
@@ -1772,7 +1772,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
 
   async function registerMemberCandidates(
     operators = members,
-    app = application
+    app = application,
   ) {
     for (let i = 0; i < operators.length; i++) {
       await keepFactory.registerMemberCandidate(app, {
@@ -1781,7 +1781,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
     }
 
     const pool = await FullyBackedSortitionPool.at(
-      await keepFactory.getSortitionPool.call(app)
+      await keepFactory.getSortitionPool.call(app),
     )
     const poolInitBlocks = await pool.operatorInitBlocks()
     await mineBlocks(poolInitBlocks.add(new BN(1)))
@@ -1796,7 +1796,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       keepOwner,
       bond,
       stakeLockDuration,
-      { from: application, value: feeEstimate }
+      { from: application, value: feeEstimate },
     )
 
     await keepFactory.openKeep(
@@ -1808,7 +1808,7 @@ describe("FullyBackedECDSAKeepFactory", function () {
       {
         from: application,
         value: feeEstimate,
-      }
+      },
     )
 
     return await FullyBackedECDSAKeepStub.at(keepAddress)

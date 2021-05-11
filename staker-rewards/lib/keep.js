@@ -29,7 +29,7 @@ export async function getKeepStatus(keepData, contracts, web3) {
   const terminationTimestamp = await getKeepTerminationTime(
     keepData,
     contracts,
-    web3
+    web3,
   )
   if (terminationTimestamp) {
     return {
@@ -54,7 +54,7 @@ async function getKeepTerminationTime(keepData, contracts, web3) {
     keepData,
     "KeepTerminated",
     contracts,
-    web3
+    web3,
   )
 }
 
@@ -70,7 +70,7 @@ async function getKeepEventTimestamp(keepData, eventName, contracts, web3) {
     web3,
     keepContract,
     eventName,
-    creationBlock
+    creationBlock,
   )
 
   if (events.length > 0) {
@@ -98,7 +98,7 @@ async function resolveKeepTerminationCause(keepData, contracts, web3) {
     const digest = latestSignatureRequestedEvent.returnValues.digest
 
     const isAwaitingSignature = await callWithRetry(
-      keepContract.methods.isAwaitingSignature(digest)
+      keepContract.methods.isAwaitingSignature(digest),
     )
 
     if (isAwaitingSignature) {
@@ -118,7 +118,7 @@ export async function wasAskedForSignature(keepData, contracts, web3) {
     web3,
     keepContract,
     "SignatureRequested",
-    creationBlock
+    creationBlock,
   )
 
   return events.length > 0

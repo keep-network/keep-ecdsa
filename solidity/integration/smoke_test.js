@@ -1,6 +1,6 @@
 const BondedECDSAKeepVendor = artifacts.require("./BondedECDSAKeepVendor.sol")
 const BondedECDSAKeepVendorImplV1 = artifacts.require(
-  "./BondedECDSAKeepVendorImplV1.sol"
+  "./BondedECDSAKeepVendorImplV1.sol",
 )
 const BondedECDSAKeepFactory = artifacts.require("./BondedECDSAKeepFactory.sol")
 const BondedECDSAKeep = artifacts.require("./BondedECDSAKeep.sol")
@@ -48,7 +48,7 @@ module.exports = async function () {
     console.log("selecting a keep factory...")
 
     const keepVendor = await BondedECDSAKeepVendorImplV1.at(
-      (await BondedECDSAKeepVendor.deployed()).address
+      (await BondedECDSAKeepVendor.deployed()).address,
     )
     const keepFactoryAddress = await keepVendor.selectFactory()
     keepFactory = await BondedECDSAKeepFactory.at(keepFactoryAddress)
@@ -62,16 +62,16 @@ module.exports = async function () {
     for (let i = 0; i < members.length; i++) {
       const isRegistered = await keepFactory.isOperatorRegistered(
         members[i],
-        application
+        application,
       )
 
       if (isRegistered) {
         console.log(
-          `operator [${members[i]}] is registered for application [${application}]`
+          `operator [${members[i]}] is registered for application [${application}]`,
         )
       } else {
         console.log(
-          `operator [${members[i]}] is NOT registered for application [${application}]`
+          `operator [${members[i]}] is NOT registered for application [${application}]`,
         )
       }
     }
@@ -93,7 +93,7 @@ module.exports = async function () {
       {
         from: application,
         value: fee,
-      }
+      },
     )
 
     const keepCreatedEvent = await keepCreatedWatcher
@@ -103,7 +103,7 @@ module.exports = async function () {
 
     const keepMembers = keepCreatedEvent.returnValues.members
     console.log(
-      `new keep opened with address: [${keepAddress}] and members: [${keepMembers}]`
+      `new keep opened with address: [${keepAddress}] and members: [${keepMembers}]`,
     )
   } catch (err) {
     console.error(`failed to open new keep: [${err}]`)
@@ -140,7 +140,7 @@ module.exports = async function () {
       v,
       signature.r,
       signature.s,
-      true
+      true,
     )
 
     const keepPublicKeyAddress = publicKeyToAddress(keepPublicKey)
@@ -152,7 +152,7 @@ module.exports = async function () {
       console.error(
         "signature validation failed, recovered address doesn't match expected\n" +
           `expected:  [${keepPublicKeyAddress}]\n` +
-          `recovered: [${recoveredAddress}]`
+          `recovered: [${recoveredAddress}]`,
       )
     }
 
@@ -160,7 +160,7 @@ module.exports = async function () {
       "received valid signature:\n" +
         `r: [${signature.r}]\n` +
         `s: [${signature.s}]\n` +
-        `recoveryID: [${signature.recoveryID}]\n`
+        `recoveryID: [${signature.recoveryID}]\n`,
     )
   } catch (err) {
     console.error(`signing failed: [${err}]`)
@@ -175,19 +175,19 @@ module.exports = async function () {
 
     console.log("get current group selection seed...")
     const currentSeed = web3.utils.toBN(
-      await keepFactory.groupSelectionSeed.call()
+      await keepFactory.groupSelectionSeed.call(),
     )
 
     if (currentSeed.cmp(newRelayEntry) != 0) {
       throw Error(
         "current seed does not equal new relay entry\n" +
           `actual:   ${currentSeed}\n` +
-          `expected: ${newRelayEntry}`
+          `expected: ${newRelayEntry}`,
       )
     }
 
     console.log(
-      `group selection seed successfully updated by the random beacon; seed = [${currentSeed}]`
+      `group selection seed successfully updated by the random beacon; seed = [${currentSeed}]`,
     )
   } catch (err) {
     console.error(`random beacon callback failed: [${err}]`)

@@ -9,7 +9,7 @@ const KeepToken = contract.fromArtifact("KeepTokenIntegration")
 const KeepTokenGrant = contract.fromArtifact("TokenGrant")
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const BondedECDSAKeepFactoryStub = contract.fromArtifact(
-  "BondedECDSAKeepFactoryStub"
+  "BondedECDSAKeepFactoryStub",
 )
 const KeepBonding = contract.fromArtifact("KeepBonding")
 const MinimumStakeSchedule = contract.fromArtifact("MinimumStakeSchedule")
@@ -21,7 +21,7 @@ const TokenStaking = contract.fromArtifact("TokenStaking")
 const TokenGrant = contract.fromArtifact("TokenGrant")
 const BondedSortitionPool = contract.fromArtifact("BondedSortitionPool")
 const BondedSortitionPoolFactory = contract.fromArtifact(
-  "BondedSortitionPoolFactory"
+  "BondedSortitionPoolFactory",
 )
 const RandomBeaconStub = contract.fromArtifact("RandomBeaconStub")
 const BondedECDSAKeep = contract.fromArtifact("BondedECDSAKeep")
@@ -65,7 +65,7 @@ describe("BondedECDSAKeepFactory", function () {
     await BondedSortitionPoolFactory.detectNetwork()
     await BondedSortitionPoolFactory.link(
       "StackLib",
-      (await StackLib.new()).address
+      (await StackLib.new()).address,
     )
 
     await initializeNewFactory()
@@ -91,7 +91,7 @@ describe("BondedECDSAKeepFactory", function () {
         keepOwner,
         bond,
         stakeLockDuration,
-        { from: application, value: feeEstimate }
+        { from: application, value: feeEstimate },
       )
 
       await keepFactory.openKeep(
@@ -103,13 +103,13 @@ describe("BondedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
 
       assert.equal(
         await tokenStaking.getAuthoritySource(keepAddress),
         keepFactory.address,
-        "invalid token staking authority source"
+        "invalid token staking authority source",
       )
     })
 
@@ -123,27 +123,27 @@ describe("BondedECDSAKeepFactory", function () {
         {
           from: application,
           value: feeEstimate,
-        }
+        },
       )
       const keepAddress = tx.logs[0].args.keepAddress
 
       const expectedExpirationTime = (await time.latest()).add(
-        stakeLockDuration
+        stakeLockDuration,
       )
 
       for (let i = 0; i < members.length; i++) {
         const { creators, expirations } = await tokenStaking.getLocks(
-          members[i]
+          members[i],
         )
 
         assert.deepEqual(
           creators,
           [keepAddress],
-          "incorrect token lock creator"
+          "incorrect token lock creator",
         )
 
         expect(expirations[0], "incorrect token lock expiration time").to.eq.BN(
-          expectedExpirationTime
+          expectedExpirationTime,
         )
       }
     })
@@ -157,7 +157,7 @@ describe("BondedECDSAKeepFactory", function () {
 
       for (let i = 0; i < members.length; i++) {
         const { creators, expirations } = await tokenStaking.getLocks(
-          members[i]
+          members[i],
         )
 
         assert.isEmpty(creators, "incorrect token lock creator")
@@ -175,7 +175,7 @@ describe("BondedECDSAKeepFactory", function () {
 
       for (let i = 0; i < members.length; i++) {
         const { creators, expirations } = await tokenStaking.getLocks(
-          members[i]
+          members[i],
         )
 
         assert.isEmpty(creators, "incorrect token lock creator")
@@ -214,7 +214,7 @@ describe("BondedECDSAKeepFactory", function () {
       const initialStakes = []
       for (let i = 0; i < members.length; i++) {
         initialStakes[i] = web3.utils.toBN(
-          await tokenStaking.eligibleStake(members[i], keepFactory.address)
+          await tokenStaking.eligibleStake(members[i], keepFactory.address),
         )
       }
 
@@ -225,7 +225,7 @@ describe("BondedECDSAKeepFactory", function () {
         signature1.R,
         signature1.S,
         hash256Digest1,
-        preimage1
+        preimage1,
       )
 
       await keep.submitSignatureFraud(
@@ -233,24 +233,24 @@ describe("BondedECDSAKeepFactory", function () {
         signature1.R,
         signature1.S,
         hash256Digest1,
-        preimage1
+        preimage1,
       )
 
       assert.isTrue(res, "incorrect returned result")
 
       for (let i = 0; i < members.length; i++) {
         const expectedStake = initialStakes[i].sub(
-          await tokenStaking.minimumStake.call()
+          await tokenStaking.minimumStake.call(),
         )
 
         const actualStake = await tokenStaking.eligibleStake(
           members[i],
-          keepFactory.address
+          keepFactory.address,
         )
 
         expect(actualStake).to.eq.BN(
           expectedStake,
-          `incorrect stake for member ${i}`
+          `incorrect stake for member ${i}`,
         )
       }
     })
@@ -265,7 +265,7 @@ describe("BondedECDSAKeepFactory", function () {
     await TokenStaking.detectNetwork()
     await TokenStaking.link(
       "MinimumStakeSchedule",
-      (await MinimumStakeSchedule.new()).address
+      (await MinimumStakeSchedule.new()).address,
     )
     await TokenStaking.link("GrantStaking", (await GrantStaking.new()).address)
     await TokenStaking.link("Locks", (await Locks.new()).address)
@@ -273,7 +273,7 @@ describe("BondedECDSAKeepFactory", function () {
 
     const stakingEscrow = await TokenStakingEscrow.new(
       keepToken.address,
-      keepTokenGrant.address
+      keepTokenGrant.address,
     )
 
     const stakeInitializationPeriod = 30 // In seconds
@@ -283,14 +283,14 @@ describe("BondedECDSAKeepFactory", function () {
       keepTokenGrant.address,
       stakingEscrow.address,
       registry.address,
-      stakeInitializationPeriod
+      stakeInitializationPeriod,
     )
     tokenGrant = await TokenGrant.new(keepToken.address)
 
     keepBonding = await KeepBonding.new(
       registry.address,
       tokenStaking.address,
-      tokenGrant.address
+      tokenGrant.address,
     )
     randomBeacon = await RandomBeaconStub.new()
     const bondedECDSAKeepMasterContract = await BondedECDSAKeep.new()
@@ -299,7 +299,7 @@ describe("BondedECDSAKeepFactory", function () {
       bondedSortitionPoolFactory.address,
       tokenStaking.address,
       keepBonding.address,
-      randomBeacon.address
+      randomBeacon.address,
     )
 
     await registry.approveOperatorContract(keepFactory.address)
@@ -322,7 +322,7 @@ describe("BondedECDSAKeepFactory", function () {
       await keepToken.approveAndCall(
         tokenStaking.address,
         stakeBalance,
-        delegation
+        delegation,
       )
 
       await time.increase(initializationPeriod.addn(1))
@@ -340,7 +340,7 @@ describe("BondedECDSAKeepFactory", function () {
       await tokenStaking.authorizeOperatorContract(
         members[i],
         keepFactory.address,
-        { from: authorizers[i] }
+        { from: authorizers[i] },
       )
       await keepBonding.authorizeSortitionPoolContract(members[i], signerPool, {
         from: authorizers[i],
@@ -378,7 +378,7 @@ describe("BondedECDSAKeepFactory", function () {
       keepOwner,
       bond,
       stakeLockDuration,
-      { from: application, value: feeEstimate }
+      { from: application, value: feeEstimate },
     )
 
     await keepFactory.openKeep(
@@ -390,7 +390,7 @@ describe("BondedECDSAKeepFactory", function () {
       {
         from: application,
         value: feeEstimate,
-      }
+      },
     )
 
     return await BondedECDSAKeep.at(keepAddress)

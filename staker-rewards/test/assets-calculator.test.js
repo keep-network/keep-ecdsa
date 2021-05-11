@@ -48,14 +48,14 @@ const setupContractsMock = (context) => {
             "activeStake",
             (inputs) =>
               inputs.operator === operator &&
-              inputs.operatorContract === operatorContract
+              inputs.operatorContract === operatorContract,
           ),
         }),
         getDelegationInfo: (operator) => ({
           call: mockMethod(
             TokenStakingAddress,
             "getDelegationInfo",
-            (inputs) => inputs.operator === operator
+            (inputs) => inputs.operator === operator,
           ),
         }),
       },
@@ -68,7 +68,7 @@ const setupContractsMock = (context) => {
         availableUnbondedValue: (
           operator,
           bondCreator,
-          sortitionPoolAddress
+          sortitionPoolAddress,
         ) => ({
           call: mockMethod(
             KeepBondingAddress,
@@ -76,7 +76,7 @@ const setupContractsMock = (context) => {
             (inputs) =>
               inputs.operator === operator &&
               inputs.operatorContract === bondCreator &&
-              inputs.sortitionPool === sortitionPoolAddress
+              inputs.sortitionPool === sortitionPoolAddress,
           ),
         }),
       },
@@ -95,14 +95,14 @@ describe("assets calculator", async () => {
 
     const assetsCalculator = await AssetsCalculator.initialize(
       mockContext,
-      interval
+      interval,
     )
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
       assets.keepStaked.isEqualTo(new BigNumber(500000).multipliedBy(1e18)),
-      true
+      true,
     )
   })
 
@@ -113,14 +113,14 @@ describe("assets calculator", async () => {
 
     const assetsCalculator = await AssetsCalculator.initialize(
       mockContext,
-      interval
+      interval,
     )
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
       assets.ethUnbonded.isEqualTo(new BigNumber(40).multipliedBy(1e18)),
-      true
+      true,
     )
   })
 
@@ -131,14 +131,14 @@ describe("assets calculator", async () => {
 
     const assetsCalculator = await AssetsCalculator.initialize(
       mockContext,
-      interval
+      interval,
     )
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
       assets.ethWithdrawn.isEqualTo(new BigNumber(15).multipliedBy(1e18)),
-      true
+      true,
     )
   })
 
@@ -149,14 +149,14 @@ describe("assets calculator", async () => {
 
     const assetsCalculator = await AssetsCalculator.initialize(
       mockContext,
-      interval
+      interval,
     )
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
       assets.ethBonded.isEqualTo(new BigNumber(15).multipliedBy(1e18)),
-      true
+      true,
     )
   })
 
@@ -167,14 +167,14 @@ describe("assets calculator", async () => {
 
     const assetsCalculator = await AssetsCalculator.initialize(
       mockContext,
-      interval
+      interval,
     )
 
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
       assets.ethTotal.isEqualTo(new BigNumber(40).multipliedBy(1e18)),
-      true
+      true,
     )
   })
 
@@ -188,17 +188,17 @@ describe("assets calculator", async () => {
 
       const assetsCalculator = await AssetsCalculator.initialize(
         mockContext,
-        interval
+        interval,
       )
 
       const assets = await assetsCalculator.calculateOperatorAssets(
-        undelegatingOperator
+        undelegatingOperator,
       )
 
       assert.equal(
         assets.ethTotal.isEqualTo(new BigNumber(10).multipliedBy(1e18)),
-        true
+        true,
       )
-    }
+    },
   )
 })

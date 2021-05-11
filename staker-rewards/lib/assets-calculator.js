@@ -8,7 +8,7 @@ export default class AssetsCalculator {
     tokenStaking,
     bondedECDSAKeepFactory,
     keepBonding,
-    sortitionPoolAddress
+    sortitionPoolAddress,
   ) {
     this.context = context
     this.interval = interval
@@ -25,8 +25,8 @@ export default class AssetsCalculator {
 
     const sortitionPoolAddress = await callWithRetry(
       bondedECDSAKeepFactory.methods.getSortitionPool(
-        contracts.sanctionedApplicationAddress
-      )
+        contracts.sanctionedApplicationAddress,
+      ),
     )
 
     const assetsCalculator = new AssetsCalculator(
@@ -35,7 +35,7 @@ export default class AssetsCalculator {
       await contracts.TokenStaking.deployed(),
       bondedECDSAKeepFactory,
       await contracts.KeepBonding.deployed(),
-      sortitionPoolAddress
+      sortitionPoolAddress,
     )
 
     await assetsCalculator.fetchBondEvents()
@@ -47,7 +47,7 @@ export default class AssetsCalculator {
   async calculateOperatorAssets(operator) {
     if (process.env.NODE_ENV !== "test") {
       console.log(
-        `Calculating KEEP and ETH under management for operator ${operator}`
+        `Calculating KEEP and ETH under management for operator ${operator}`,
       )
     }
 
@@ -73,7 +73,7 @@ export default class AssetsCalculator {
       ethUnbonded,
       ethWithdrawn,
       ethTotal,
-      isUndelegating
+      isUndelegating,
     )
   }
 
@@ -95,12 +95,12 @@ export default class AssetsCalculator {
         this.keepBonding,
         eventName,
         fromBlock,
-        toBlock
+        toBlock,
       )
 
     this.bondEvents = {
       bondCreatedEvents: (await getBondEvents("BondCreated")).filter(
-        eventBySortitionPool
+        eventBySortitionPool,
       ),
       bondReleasedEvents: await getBondEvents("BondReleased"),
       bondSeizedEvents: await getBondEvents("BondSeized"),
@@ -118,7 +118,7 @@ export default class AssetsCalculator {
       this.keepBonding,
       "UnbondedValueWithdrawn",
       fromBlock,
-      toBlock
+      toBlock,
     )
   }
 
@@ -129,7 +129,7 @@ export default class AssetsCalculator {
 
     const keepStaked = await callWithRetry(
       this.tokenStaking.methods.activeStake(operator, operatorContract),
-      block
+      block,
     )
 
     return new BigNumber(keepStaked)
@@ -142,13 +142,13 @@ export default class AssetsCalculator {
     }
 
     const bondCreatedEvents = this.bondEvents.bondCreatedEvents.filter(
-      eventByOperator
+      eventByOperator,
     )
     const bondReleasedEvents = this.bondEvents.bondReleasedEvents.filter(
-      eventByOperator
+      eventByOperator,
     )
     const bondSeizedEvents = this.bondEvents.bondSeizedEvents.filter(
-      eventByOperator
+      eventByOperator,
     )
 
     let weiBonded = new BigNumber(0)
@@ -165,7 +165,7 @@ export default class AssetsCalculator {
 
       // Check if the bond has been seized
       const bondSeizedEvent = bondSeizedEvents.find(
-        eventByReferenceID(referenceID)
+        eventByReferenceID(referenceID),
       )
       if (bondSeizedEvent) {
         // If the bond has been seized, subtract the seized amount
@@ -188,9 +188,9 @@ export default class AssetsCalculator {
       this.keepBonding.methods.availableUnbondedValue(
         operator,
         bondCreator,
-        this.sortitionPoolAddress
+        this.sortitionPoolAddress,
       ),
-      block
+      block,
     )
 
     return new BigNumber(weiUnbonded)
@@ -202,7 +202,7 @@ export default class AssetsCalculator {
       .reduce(
         (accumulator, event) =>
           accumulator.plus(new BigNumber(event.returnValues.amount)),
-        new BigNumber(0)
+        new BigNumber(0),
       )
   }
 
@@ -211,7 +211,7 @@ export default class AssetsCalculator {
 
     const delegationInfo = await callWithRetry(
       tokenStaking.methods.getDelegationInfo(operator),
-      this.interval.startBlock
+      this.interval.startBlock,
     )
 
     return delegationInfo.undelegatedAt !== "0"
@@ -225,7 +225,7 @@ function OperatorAssets(
   ethUnbonded,
   ethWithdrawn,
   ethTotal,
-  isUndelegating
+  isUndelegating,
 ) {
   ;(this.address = address),
     (this.keepStaked = keepStaked),

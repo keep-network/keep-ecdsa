@@ -37,13 +37,13 @@ export async function callWithRetry(
   contractMethod,
   block = "latest",
   params = undefined,
-  totalAttempts = 3
+  totalAttempts = 3,
 ) {
   return EthereumHelpers.callWithRetry(
     contractMethod,
     params,
     totalAttempts,
-    block
+    block,
   )
 }
 
@@ -52,11 +52,11 @@ export async function getPastEvents(
   contract,
   eventName,
   fromBlock = 0,
-  toBlock = "latest"
+  toBlock = "latest",
 ) {
   if (fromBlock < 0) {
     throw new Error(
-      `FromBlock cannot be less than 0, current value: ${fromBlock}`
+      `FromBlock cannot be less than 0, current value: ${fromBlock}`,
     )
   }
 
@@ -64,7 +64,7 @@ export async function getPastEvents(
     if (!Number.isInteger(toBlock) || toBlock < fromBlock) {
       throw new Error(
         `ToBlock should be \'latest'\ or an integer greater ` +
-          `than FromBlock, current value: ${toBlock}`
+          `than FromBlock, current value: ${toBlock}`,
       )
     }
   }
@@ -80,7 +80,7 @@ export async function getPastEvents(
       console.log(
         `Switching to partial events pulls; ` +
           `failed to get events in one request for event [${eventName}], ` +
-          `fromBlock: [${fromBlock}], toBlock: [${toBlock}]: [${error.message}]`
+          `fromBlock: [${fromBlock}], toBlock: [${toBlock}]: [${error.message}]`,
       )
 
       try {
@@ -97,7 +97,7 @@ export async function getPastEvents(
           }
           console.log(
             `Executing partial events pull for event [${eventName}], ` +
-              `fromBlock: [${batchStartBlock}], toBlock: [${batchEndBlock}]`
+              `fromBlock: [${batchStartBlock}], toBlock: [${batchEndBlock}]`,
           )
           const foundEvents = await contract.getPastEvents(eventName, {
             fromBlock: batchStartBlock,
@@ -107,7 +107,7 @@ export async function getPastEvents(
           resultEvents = resultEvents.concat(foundEvents)
           console.log(
             `Fetched [${foundEvents.length}] events, has ` +
-              `[${resultEvents.length}] total`
+              `[${resultEvents.length}] total`,
           )
 
           batchStartBlock = batchEndBlock + 1

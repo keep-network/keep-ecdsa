@@ -5,7 +5,7 @@ const LPRewardsTBTCSaddle = artifacts.require("LPRewardsTBTCSaddle")
 
 const TestToken = artifacts.require("./test/TestToken")
 const KeepToken = artifacts.require(
-  "@keep-network/keep-core/build/truffle/KeepToken"
+  "@keep-network/keep-core/build/truffle/KeepToken",
 )
 const { KeepTokenAddress } = require("../migrations/external-contracts")
 
@@ -13,7 +13,7 @@ const initLPRewardContract = async (
   LPRewardsContract,
   KEEPTokenContract,
   lprewardsOwner,
-  reward
+  reward,
 ) => {
   await LPRewardsContract.setRewardDistribution(lprewardsOwner, {
     from: lprewardsOwner,
@@ -33,7 +33,7 @@ const mintAndApproveLPReward = async (
   WrappedTokenContract,
   lpRewardsAddress,
   address,
-  amount
+  amount,
 ) => {
   await WrappedTokenContract.mint(address, amount)
   await WrappedTokenContract.approve(lpRewardsAddress, amount, {
@@ -66,11 +66,11 @@ module.exports = async function () {
         lpRewardsContract,
         keepToken,
         lpRewardsOwner,
-        reward
+        reward,
       )
 
       const wrappedTokenContract = await getWrappedTokenContract(
-        lpRewardsContract
+        lpRewardsContract,
       )
 
       for (let i = 8; i < 10; i++) {
@@ -81,7 +81,7 @@ module.exports = async function () {
           wrappedTokenContract,
           lpRewardsContract.address,
           staker,
-          amount
+          amount,
         )
 
         await lpRewardsContract.stake(amount, { from: staker })

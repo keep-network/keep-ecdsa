@@ -4,7 +4,7 @@
 
 const ECDSARewards = artifacts.require("./test/ECDSARewardsStub")
 const KeepToken = artifacts.require(
-  "@keep-network/keep-core/build/truffle/KeepToken"
+  "@keep-network/keep-core/build/truffle/KeepToken",
 )
 const { KeepTokenAddress } = require("../migrations/external-contracts")
 
@@ -23,7 +23,7 @@ module.exports = async function () {
       "0x0",
       {
         from: owner,
-      }
+      },
     )
     await rewardsContract.markAsFunded({ from: owner })
 
@@ -35,7 +35,7 @@ module.exports = async function () {
           operator,
           interval,
           web3.utils.toWei("3000"),
-          { from: owner }
+          { from: owner },
         )
       }
     }

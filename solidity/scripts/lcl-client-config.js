@@ -54,13 +54,13 @@ module.exports = async function () {
               // Find keys that match exactly `Port`, `MiningCheckInterval`,
               // `MaxGasPrice` or end with `MetricsTick` or `Limit`.
               key.match(
-                /(^Port|^MiningCheckInterval|^MaxGasPrice|MetricsTick|Limit)$/
+                /(^Port|^MiningCheckInterval|^MaxGasPrice|MetricsTick|Limit)$/,
               )
                 ? value.toFixed(0) // convert float to integer
                 : false // do nothing
           } catch (err) {
             console.error(
-              `tomlify replace failed for key ${key} and value ${value} with error: [${err}]`
+              `tomlify replace failed for key ${key} and value ${value} with error: [${err}]`,
             )
             process.exit(1)
           }

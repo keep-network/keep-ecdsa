@@ -61,11 +61,11 @@ async function requestSignature(keep, keepOwner, digest) {
 
   if (receivedSignatureEvent.returnValues.digest != digest) {
     throw new Error(
-      `unexpected digest: ${receivedSignatureEvent.returnValues.digest}`
+      `unexpected digest: ${receivedSignatureEvent.returnValues.digest}`,
     )
   }
 
   console.log(
-    `received signature:\nR: ${receivedSignatureEvent.returnValues.r}\nS: ${receivedSignatureEvent.returnValues.s}`
+    `received signature:\nR: ${receivedSignatureEvent.returnValues.r}\nS: ${receivedSignatureEvent.returnValues.s}`,
   )
 }

@@ -6,7 +6,7 @@ function generateTickets(randomBeaconValue, stakerValue, stakerWeight) {
     const ticketValueHex = web3.utils.soliditySha3(
       { t: "uint", v: randomBeaconValue },
       { t: "uint", v: stakerValue },
-      { t: "uint", v: i }
+      { t: "uint", v: i },
     )
     const ticketValue = web3.utils.toBN(ticketValueHex)
     const ticket = {

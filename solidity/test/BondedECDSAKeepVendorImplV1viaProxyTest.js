@@ -18,7 +18,7 @@ const KeepRegistry = contract.fromArtifact("KeepRegistry")
 
 const BondedECDSAKeepVendor = contract.fromArtifact("BondedECDSAKeepVendor")
 const BondedECDSAKeepVendorImplV1Stub = contract.fromArtifact(
-  "BondedECDSAKeepVendorImplV1Stub"
+  "BondedECDSAKeepVendorImplV1Stub",
 )
 
 // These tests are calling BondedECDSAKeepVendorImplV1 via proxy contract.
@@ -64,14 +64,14 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     it("does not register registry with zero address", async () => {
       await expectRevert(
         deployVendorProxy(address0, address1),
-        "Incorrect registry address"
+        "Incorrect registry address",
       )
     })
 
     it("does not register factory with zero address", async () => {
       await expectRevert(
         deployVendorProxy(address1, address0),
-        "Incorrect factory address"
+        "Incorrect factory address",
       )
     })
   })
@@ -93,7 +93,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
       assert.equal(
         await keepVendor.getNewKeepFactory(),
         address2,
-        "unexpected registered new factory"
+        "unexpected registered new factory",
       )
     })
 
@@ -129,7 +129,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     it("does not register factory with zero address", async () => {
       await expectRevert(
         keepVendor.upgradeFactory(address0, { from: upgrader }),
-        "Incorrect factory address"
+        "Incorrect factory address",
       )
     })
 
@@ -138,14 +138,14 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
 
       await expectRevert(
         keepVendor.upgradeFactory(address2, { from: upgrader }),
-        "Factory already registered"
+        "Factory already registered",
       )
     })
 
     it("does not register factory not approved in registry", async () => {
       await expectRevert(
         keepVendor.upgradeFactory(address4, { from: upgrader }),
-        "Factory contract is not approved"
+        "Factory contract is not approved",
       )
     })
 
@@ -158,21 +158,21 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     it("cannot be called by proxy admin", async () => {
       await expectRevert(
         keepVendor.completeFactoryUpgrade({ from: proxyAdmin }),
-        "Upgrade not initiated"
+        "Upgrade not initiated",
       )
     })
 
     it("cannot be called by implementation owner", async () => {
       await expectRevert(
         keepVendor.completeFactoryUpgrade({ from: implOwner }),
-        "Upgrade not initiated"
+        "Upgrade not initiated",
       )
     })
 
     it("cannot be called by non-authorized upgrader", async () => {
       await expectRevert(
         keepVendor.upgradeFactory(address2),
-        "Caller is not operator contract upgrader"
+        "Caller is not operator contract upgrader",
       )
     })
   })
@@ -181,7 +181,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     it("reverts when upgrade not initiated", async () => {
       await expectRevert(
         keepVendor.completeFactoryUpgrade(),
-        "Upgrade not initiated"
+        "Upgrade not initiated",
       )
     })
 
@@ -192,7 +192,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
 
       await expectRevert(
         keepVendor.completeFactoryUpgrade(),
-        "Timer not elapsed"
+        "Timer not elapsed",
       )
     })
 
@@ -212,7 +212,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
       await keepVendor.completeFactoryUpgrade()
 
       expect(
-        await keepVendor.getFactoryRegistrationInitiatedTimestamp()
+        await keepVendor.getFactoryRegistrationInitiatedTimestamp(),
       ).to.eq.BN(0)
     })
 
@@ -239,7 +239,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
 
   async function deployVendorProxy(registryAddress, factoryAddress) {
     const bondedECDSAKeepVendorImplV1Stub = await BondedECDSAKeepVendorImplV1Stub.new(
-      { from: implOwner }
+      { from: implOwner },
     )
 
     const initializeCallData = bondedECDSAKeepVendorImplV1Stub.contract.methods
@@ -249,10 +249,10 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
     const bondedECDSAKeepVendorProxy = await BondedECDSAKeepVendor.new(
       bondedECDSAKeepVendorImplV1Stub.address,
       initializeCallData,
-      { from: proxyAdmin }
+      { from: proxyAdmin },
     )
     const keepVendor = await BondedECDSAKeepVendorImplV1Stub.at(
-      bondedECDSAKeepVendorProxy.address
+      bondedECDSAKeepVendorProxy.address,
     )
 
     return keepVendor
@@ -260,7 +260,7 @@ describe("BondedECDSAKeepVendorImplV1viaProxy", function () {
 
   async function newVendor(
     registryAddress = registry.address,
-    factoryAddress = address1
+    factoryAddress = address1,
   ) {
     const keepVendor = await deployVendorProxy(registryAddress, factoryAddress)
 

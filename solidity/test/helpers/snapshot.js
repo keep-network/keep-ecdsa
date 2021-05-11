@@ -22,7 +22,7 @@ async function createSnapshot() {
         const snapshotId = result.result
         snapshotIdsStack.push(snapshotId)
         res()
-      }
+      },
     )
   })
 }
@@ -43,7 +43,7 @@ async function restoreSnapshot() {
       function (err, result) {
         if (err) rej(err)
         else res()
-      }
+      },
     )
   })
 }

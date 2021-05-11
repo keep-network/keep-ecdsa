@@ -10,7 +10,7 @@ export default class Requirements {
     keepBonding,
     sanctionedApplicationAddress,
     sortitionPoolAddress,
-    minimumBondableValueAtStart
+    minimumBondableValueAtStart,
   ) {
     this.context = context
     this.interval = interval
@@ -31,24 +31,24 @@ export default class Requirements {
 
     const sortitionPoolAddress = await callWithRetry(
       bondedECDSAKeepFactory.methods.getSortitionPool(
-        sanctionedApplicationAddress
-      )
+        sanctionedApplicationAddress,
+      ),
     )
 
     const bondedSortitionPool = await contracts.BondedSortitionPool.at(
-      sortitionPoolAddress
+      sortitionPoolAddress,
     )
     const minimumBondableValueAtStart = new BigNumber(
       await callWithRetry(
         bondedSortitionPool.methods.getMinimumBondableValue(),
-        interval.startBlock
-      )
+        interval.startBlock,
+      ),
     )
 
     console.log(
       `Minimum Bondable Value at interval start: ${shorten18Decimals(
-        minimumBondableValueAtStart
-      )} ether`
+        minimumBondableValueAtStart,
+      )} ether`,
     )
 
     const requirements = new Requirements(
@@ -58,7 +58,7 @@ export default class Requirements {
       await contracts.KeepBonding.deployed(),
       sanctionedApplicationAddress,
       sortitionPoolAddress,
-      minimumBondableValueAtStart
+      minimumBondableValueAtStart,
     )
 
     await requirements.checkDeauthorizations()
@@ -78,11 +78,11 @@ export default class Requirements {
     // by the contract on the function call.
     const deauthorizations = this.context.cache.getTransactionFunctionCalls(
       this.keepBonding.options.address,
-      "deauthorizeSortitionPoolContract"
+      "deauthorizeSortitionPoolContract",
     )
 
     console.debug(
-      `Found ${deauthorizations.length} sortition pool contract deauthorizations`
+      `Found ${deauthorizations.length} sortition pool contract deauthorizations`,
     )
 
     if (deauthorizations && deauthorizations.length > 0) {
@@ -98,7 +98,7 @@ export default class Requirements {
           transaction.block_number >= this.interval.endBlock
         ) {
           console.debug(
-            `Skipping transaction made in block ${transaction.block_number}`
+            `Skipping transaction made in block ${transaction.block_number}`,
           )
           continue
         }
@@ -111,18 +111,18 @@ export default class Requirements {
           this.sortitionPoolAddress.toLowerCase()
         ) {
           console.debug(
-            `Skipping transaction for sortition pool ${transactionSortitionPool}`
+            `Skipping transaction for sortition pool ${transactionSortitionPool}`,
           )
           continue
         }
 
         console.log(
           `Discovered deauthorization for operator ${transactionOperator}` +
-            ` in transaction ${transaction.hash} in the current interval`
+            ` in transaction ${transaction.hash} in the current interval`,
         )
 
         this.operatorsDeauthorizedInInterval.add(
-          transactionOperator.toLowerCase()
+          transactionOperator.toLowerCase(),
         )
       }
     }
@@ -135,11 +135,11 @@ export default class Requirements {
     try {
       data = await this.context.tenderly.getFunctionCalls(
         this.keepBonding.options.address,
-        "deauthorizeSortitionPoolContract(address,address)"
+        "deauthorizeSortitionPoolContract(address,address)",
       )
     } catch (error) {
       throw new Error(
-        `Failed to fetch function calls from Tenderly: ${error.message}`
+        `Failed to fetch function calls from Tenderly: ${error.message}`,
       )
     }
 
@@ -171,11 +171,11 @@ export default class Requirements {
     } = await this.checkAuthorizations(operator)
 
     const minimumStakeAtStart = await this.checkMinimumStakeAtIntervalStart(
-      operator
+      operator,
     )
 
     const poolRequirementFulfilledAtStart = await this.checkWasInPoolIfRequiredAtIntervalStart(
-      operator
+      operator,
     )
 
     return new OperatorRequirements(
@@ -184,7 +184,7 @@ export default class Requirements {
       poolAuthorizedAtStart,
       poolDeauthorizedInInterval,
       minimumStakeAtStart,
-      poolRequirementFulfilledAtStart
+      poolRequirementFulfilledAtStart,
     )
   }
 
@@ -197,7 +197,7 @@ export default class Requirements {
 
     // Deauthorizations during the interval.
     const poolDeauthorizedInInterval = await this.wasSortitionPoolDeauthorized(
-      operator
+      operator,
     )
 
     return {
@@ -211,16 +211,16 @@ export default class Requirements {
     // Operator contract
     const wasFactoryAuthorized = await callWithRetry(
       this.bondedECDSAKeepFactory.methods.isOperatorAuthorized(operator),
-      this.interval.startBlock
+      this.interval.startBlock,
     )
 
     // Sortition pool
     const wasSortitionPoolAuthorized = await callWithRetry(
       this.keepBonding.methods.hasSecondaryAuthorization(
         operator,
-        this.sortitionPoolAddress
+        this.sortitionPoolAddress,
       ),
-      this.interval.startBlock
+      this.interval.startBlock,
     )
 
     return { wasFactoryAuthorized, wasSortitionPoolAuthorized }
@@ -233,7 +233,7 @@ export default class Requirements {
   async checkMinimumStakeAtIntervalStart(operator) {
     return await callWithRetry(
       this.bondedECDSAKeepFactory.methods.hasMinimumStake(operator),
-      this.interval.startBlock
+      this.interval.startBlock,
     )
   }
 
@@ -245,21 +245,21 @@ export default class Requirements {
     const unbondedValueAtStart = new BigNumber(
       await callWithRetry(
         this.keepBonding.methods.unbondedValue(operator),
-        this.interval.startBlock
-      )
+        this.interval.startBlock,
+      ),
     )
 
     const hadMinimumBondableValueAtStart = unbondedValueAtStart.gte(
-      this.minimumBondableValueAtStart
+      this.minimumBondableValueAtStart,
     )
 
     if (hadMinimumBondableValueAtStart) {
       const wasRegisteredAtStart = await callWithRetry(
         this.bondedECDSAKeepFactory.methods.isOperatorRegistered(
           operator,
-          this.sanctionedApplicationAddress
+          this.sanctionedApplicationAddress,
         ),
-        this.interval.startBlock
+        this.interval.startBlock,
       )
 
       return wasRegisteredAtStart
@@ -275,7 +275,7 @@ export function OperatorRequirements(
   poolAuthorizedAtStart,
   poolDeauthorizedInInterval,
   minimumStakeAtStart,
-  poolRequirementFulfilledAtStart
+  poolRequirementFulfilledAtStart,
 ) {
   ;(this.address = address),
     (this.factoryAuthorizedAtStart = factoryAuthorizedAtStart),

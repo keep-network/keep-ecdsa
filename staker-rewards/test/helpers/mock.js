@@ -8,7 +8,8 @@ export const createMockContext = () => ({
       testCache.keeps.filter((keep) => !status || keep.status.name === status),
     getTransactionFunctionCalls: (to, method) =>
       transactionsCache.transactions.filter(
-        (tx) => tx.to.toLowerCase() === to.toLowerCase() && tx.method === method
+        (tx) =>
+          tx.to.toLowerCase() === to.toLowerCase() && tx.method === method,
       ),
   },
   contracts: { sanctionedApplicationAddress: SANCTIONED_APPLICATION_ADDRESS },

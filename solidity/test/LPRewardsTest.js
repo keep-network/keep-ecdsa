@@ -15,7 +15,7 @@ const LPRewardsStaker = contract.fromArtifact("LPRewardsStaker")
 
 const BatchedPhasedEscrow = contract.fromArtifact("BatchedPhasedEscrow")
 const StakingPoolRewardsEscrowBeneficiary = contract.fromArtifact(
-  "StakingPoolRewardsEscrowBeneficiary"
+  "StakingPoolRewardsEscrowBeneficiary",
 )
 
 const BN = web3.utils.BN
@@ -109,38 +109,38 @@ describe("LPRewards", () => {
       wrappedTokenBalance = await wrappedToken.balanceOf(lpRewards.address)
       // 4,000 + 5,000 = 9,000
       expect(wrappedTokenBalance).to.eq.BN(
-        web3.utils.toBN(9000).mul(tokenDecimalMultiplier)
+        web3.utils.toBN(9000).mul(tokenDecimalMultiplier),
       )
 
       const totalSupply = await lpRewards.totalSupply()
       expect(totalSupply).to.eq.BN(
-        web3.utils.toBN(9000).mul(tokenDecimalMultiplier)
+        web3.utils.toBN(9000).mul(tokenDecimalMultiplier),
       )
 
       const balanceStaker1 = await lpRewards.balanceOf(staker1)
       expect(balanceStaker1).to.eq.BN(
-        web3.utils.toBN(4000).mul(tokenDecimalMultiplier)
+        web3.utils.toBN(4000).mul(tokenDecimalMultiplier),
       )
 
       const balanceStaker2 = await lpRewards.balanceOf(staker2)
       expect(balanceStaker2).to.eq.BN(
-        web3.utils.toBN(5000).mul(tokenDecimalMultiplier)
+        web3.utils.toBN(5000).mul(tokenDecimalMultiplier),
       )
 
       const actualWrappedTokenStakerBalance1 = await wrappedToken.balanceOf(
-        staker1
+        staker1,
       )
       // 10,000 - 4,000 = 6,000
       expect(actualWrappedTokenStakerBalance1).to.eq.BN(
-        web3.utils.toBN(6000).mul(tokenDecimalMultiplier)
+        web3.utils.toBN(6000).mul(tokenDecimalMultiplier),
       )
 
       const actualWrappedTokenStakerBalance2 = await wrappedToken.balanceOf(
-        staker2
+        staker2,
       )
       // 20,000 - 5,000 = 15,000
       expect(actualWrappedTokenStakerBalance2).to.eq.BN(
-        web3.utils.toBN(15000).mul(tokenDecimalMultiplier)
+        web3.utils.toBN(15000).mul(tokenDecimalMultiplier),
       )
     })
   })
@@ -167,7 +167,7 @@ describe("LPRewards", () => {
       await time.increaseTo(periodFinish)
 
       const actualEarnings = (await lpRewards.earned(staker1)).div(
-        tokenDecimalMultiplier
+        tokenDecimalMultiplier,
       )
       const expectedEarnings = new BN(10000)
       expect(actualEarnings).to.gte.BN(expectedEarnings.subn(precision))
@@ -184,14 +184,14 @@ describe("LPRewards", () => {
       const expectedRewardPerWrappedToken = new BN(5)
 
       const actualRewardPerToken = (await lpRewards.rewardPerToken()).div(
-        tokenDecimalMultiplier
+        tokenDecimalMultiplier,
       )
 
       expect(actualRewardPerToken).to.gte.BN(
-        expectedRewardPerWrappedToken.subn(precision)
+        expectedRewardPerWrappedToken.subn(precision),
       )
       expect(actualRewardPerToken).to.lte.BN(
-        expectedRewardPerWrappedToken.addn(precision)
+        expectedRewardPerWrappedToken.addn(precision),
       )
     })
 
@@ -219,17 +219,17 @@ describe("LPRewards", () => {
 
       // Earned KEEP rewards for adding liquidity
       const keepEarnedRewards = (await keepToken.balanceOf(staker1)).div(
-        tokenDecimalMultiplier
+        tokenDecimalMultiplier,
       )
       expect(keepEarnedRewards).to.gte.BN(rewardsAmount.subn(precision))
       expect(keepEarnedRewards).to.lte.BN(rewardsAmount.addn(precision))
 
       // Check that all wrapped tokens were transferred back to the staker
       const actualWrappedTokenStakerBalance = await wrappedToken.balanceOf(
-        staker1
+        staker1,
       )
       expect(wrappedTokenStakerBalance).to.eq.BN(
-        actualWrappedTokenStakerBalance
+        actualWrappedTokenStakerBalance,
       )
     })
   })
@@ -240,7 +240,7 @@ describe("LPRewards", () => {
     it("deploys contract for TBTC-ETH pair", async () => {
       const lpRewards = await LPRewardsTBTCETH.new(
         keepToken.address,
-        wrappedToken.address
+        wrappedToken.address,
       )
 
       expect(await lpRewards.keepToken.call()).equal(keepToken.address)
@@ -250,7 +250,7 @@ describe("LPRewards", () => {
     it("deploys contract for KEEP-ETH pair", async () => {
       const lpRewards = await LPRewardsKEEPETH.new(
         keepToken.address,
-        wrappedToken.address
+        wrappedToken.address,
       )
 
       expect(await lpRewards.keepToken.call()).equal(keepToken.address)
@@ -260,7 +260,7 @@ describe("LPRewards", () => {
     it("deploys contract for KEEP-TBTC pair", async () => {
       const lpRewards = await LPRewardsKEEPTBTC.new(
         keepToken.address,
-        wrappedToken.address
+        wrappedToken.address,
       )
 
       expect(await lpRewards.keepToken.call()).equal(keepToken.address)
@@ -300,41 +300,41 @@ describe("LPRewards", () => {
         "0x0",
         {
           from: keepTokenOwner,
-        }
+        },
       )
 
       // Deploy LP Rewards contracts for each pair.
       const lpReward1 = await LPRewardsTBTCETH.new(
         keepToken.address,
         wrappedToken.address,
-        { from: lpRewardsOwner }
+        { from: lpRewardsOwner },
       )
       const lpReward2 = await LPRewardsKEEPETH.new(
         keepToken.address,
         wrappedToken.address,
-        { from: lpRewardsOwner }
+        { from: lpRewardsOwner },
       )
 
       const lpReward3 = await LPRewardsKEEPTBTC.new(
         keepToken.address,
         wrappedToken.address,
-        { from: lpRewardsOwner }
+        { from: lpRewardsOwner },
       )
 
       // Deploy beneficiaries contracts for each LP Rewards contract.
       const beneficiary1 = await newRewardsEscrowBeneficiary(
         lpReward1,
-        fundingEscrow
+        fundingEscrow,
       )
 
       const beneficiary2 = await newRewardsEscrowBeneficiary(
         lpReward2,
-        fundingEscrow
+        fundingEscrow,
       )
 
       const beneficiary3 = await newRewardsEscrowBeneficiary(
         lpReward3,
-        fundingEscrow
+        fundingEscrow,
       )
 
       const beneficiaries = [
@@ -351,26 +351,26 @@ describe("LPRewards", () => {
       // Verify funds got transferred to the LP Rewards contracts.
       expect(
         await keepToken.balanceOf(lpReward1.address),
-        "invalid balance of LP Rewards 1"
+        "invalid balance of LP Rewards 1",
       ).to.eq.BN(rewards[0])
       expect(
         await keepToken.balanceOf(lpReward2.address),
-        "invalid balance of LP Rewards 2"
+        "invalid balance of LP Rewards 2",
       ).to.eq.BN(rewards[1])
       expect(
         await keepToken.balanceOf(lpReward3.address),
-        "invalid balance of LP Rewards 3"
+        "invalid balance of LP Rewards 3",
       ).to.eq.BN(rewards[2])
     })
 
     async function newRewardsEscrowBeneficiary(
       destinationRewardsContract,
-      fundingEscrow
+      fundingEscrow,
     ) {
       const beneficiary = await StakingPoolRewardsEscrowBeneficiary.new(
         keepToken.address,
         destinationRewardsContract.address,
-        { from: owner }
+        { from: owner },
       )
       await beneficiary.transferOwnership(fundingEscrow.address, {
         from: owner,
@@ -384,7 +384,7 @@ describe("LPRewards", () => {
         beneficiary.address,
         {
           from: lpRewardsOwner,
-        }
+        },
       )
 
       return beneficiary
@@ -429,11 +429,11 @@ describe("LPRewardsTBTCSaddle", () => {
     lpRewards = await LPRewardsTBTCSaddle.new(
       keepToken.address,
       lpToken.address,
-      { from: lpRewardsOwner }
+      { from: lpRewardsOwner },
     )
     stakerContract = await LPRewardsStaker.new(
       lpToken.address,
-      lpRewards.address
+      lpRewards.address,
     )
 
     const keepRewardsAmount = web3.utils.toBN(2016).mul(tokenDecimalMultiplier)
@@ -471,7 +471,7 @@ describe("LPRewardsTBTCSaddle", () => {
     it("can not be called by non-owner", async () => {
       await expectRevert(
         lpRewards.setGated(false, { from: thirdParty }),
-        "Ownable: caller is not the owner"
+        "Ownable: caller is not the owner",
       )
     })
 
@@ -529,7 +529,7 @@ describe("LPRewardsTBTCSaddle", () => {
       await lpToken.mint(stakerContract.address, lpTokenAmount)
       await expectRevert(
         stakerContract.stake(lpTokenAmount, { from: stakerEOA }),
-        "Only Externally Owned Account can stake"
+        "Only Externally Owned Account can stake",
       )
     })
 

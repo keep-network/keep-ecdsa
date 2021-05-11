@@ -27,7 +27,7 @@ const setupContext = (context) => {
             BondedECDSAKeepFactoryAddress,
             "isOperatorAuthorized",
             (inputs) => inputs.operator === operator,
-            false
+            false,
           ),
         }),
         hasMinimumStake: (operator) => ({
@@ -35,7 +35,7 @@ const setupContext = (context) => {
             BondedECDSAKeepFactoryAddress,
             "hasMinimumStake",
             (inputs) => inputs.operator === operator,
-            false
+            false,
           ),
         }),
         isOperatorRegistered: (operator, application) => ({
@@ -45,7 +45,7 @@ const setupContext = (context) => {
             (inputs) =>
               inputs.operator === operator &&
               inputs.application === application,
-            false
+            false,
           ),
         }),
       },
@@ -65,7 +65,7 @@ const setupContext = (context) => {
             (inputs) =>
               inputs.operator === operator &&
               inputs.poolAddress === sortitionPool,
-            false
+            false,
           ),
         }),
         unbondedValue: (operator) => ({
@@ -73,7 +73,7 @@ const setupContext = (context) => {
             KeepBondingAddress,
             "unbondedValue",
             (inputs) => inputs.operator === operator,
-            "0"
+            "0",
           ),
         }),
       },
@@ -180,7 +180,7 @@ describe("requirements", async () => {
       const operator = "0xA000000000000000000000000000000000000001"
 
       const result = await requirements.checkMinimumStakeAtIntervalStart(
-        operator
+        operator,
       )
 
       expect(result).to.be.true
@@ -190,7 +190,7 @@ describe("requirements", async () => {
       const operator = "0xA000000000000000000000000000000000000002"
 
       const result = await requirements.checkMinimumStakeAtIntervalStart(
-        operator
+        operator,
       )
 
       expect(result).to.be.false
@@ -215,7 +215,7 @@ describe("requirements", async () => {
       const operator = "0xA000000000000000000000000000000000000001"
 
       const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
-        operator
+        operator,
       )
 
       expect(result).to.be.true
@@ -225,7 +225,7 @@ describe("requirements", async () => {
       const operator = "0xA000000000000000000000000000000000000002"
 
       const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
-        operator
+        operator,
       )
 
       expect(result).to.be.true
@@ -235,7 +235,7 @@ describe("requirements", async () => {
       const operator = "0xA000000000000000000000000000000000000003"
 
       const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
-        operator
+        operator,
       )
 
       expect(result).to.be.false
@@ -245,7 +245,7 @@ describe("requirements", async () => {
       const operator = "0xA000000000000000000000000000000000000004"
 
       const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
-        operator
+        operator,
       )
 
       expect(result).to.be.true
@@ -255,7 +255,7 @@ describe("requirements", async () => {
       const operator = "0xA000000000000000000000000000000000000005"
 
       const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
-        operator
+        operator,
       )
 
       expect(result).to.be.false
@@ -265,7 +265,7 @@ describe("requirements", async () => {
       const operator = "0xA000000000000000000000000000000000000006"
 
       const result = await requirements.checkWasInPoolIfRequiredAtIntervalStart(
-        operator
+        operator,
       )
 
       expect(result).to.be.false

@@ -49,7 +49,7 @@ describe("SLA calculator", async () => {
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
-        interval
+        interval,
       )
 
       const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
@@ -57,7 +57,7 @@ describe("SLA calculator", async () => {
       assert.equal(operatorSLA.keygenCount, 2)
       assert.equal(operatorSLA.keygenFailCount, 0)
       assert.equal(operatorSLA.keygenSLA, 100)
-    }
+    },
   )
 
   it(
@@ -80,7 +80,7 @@ describe("SLA calculator", async () => {
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
-        interval
+        interval,
       )
 
       const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
@@ -88,7 +88,7 @@ describe("SLA calculator", async () => {
       assert.equal(operatorSLA.keygenCount, 9)
       assert.equal(operatorSLA.keygenFailCount, 1)
       assert.equal(operatorSLA.keygenSLA, 88)
-    }
+    },
   )
 
   it(
@@ -110,7 +110,7 @@ describe("SLA calculator", async () => {
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
-        interval
+        interval,
       )
 
       const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
@@ -118,7 +118,7 @@ describe("SLA calculator", async () => {
       assert.equal(operatorSLA.keygenCount, 0)
       assert.equal(operatorSLA.keygenFailCount, 0)
       assert.equal(operatorSLA.keygenSLA, "N/A")
-    }
+    },
   )
 
   it(
@@ -148,7 +148,7 @@ describe("SLA calculator", async () => {
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
-        interval
+        interval,
       )
 
       const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
@@ -156,7 +156,7 @@ describe("SLA calculator", async () => {
       assert.equal(operatorSLA.signatureCount, 2)
       assert.equal(operatorSLA.signatureFailCount, 0)
       assert.equal(operatorSLA.signatureSLA, 100)
-    }
+    },
   )
 
   it(
@@ -187,7 +187,7 @@ describe("SLA calculator", async () => {
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
-        interval
+        interval,
       )
 
       const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
@@ -195,7 +195,7 @@ describe("SLA calculator", async () => {
       assert.equal(operatorSLA.signatureCount, 3)
       assert.equal(operatorSLA.signatureFailCount, 1)
       assert.equal(operatorSLA.signatureSLA, 66)
-    }
+    },
   )
 
   it(
@@ -224,7 +224,7 @@ describe("SLA calculator", async () => {
 
       const slaCalculator = await SLACalculator.initialize(
         mockContext,
-        interval
+        interval,
       )
 
       const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
@@ -232,6 +232,6 @@ describe("SLA calculator", async () => {
       assert.equal(operatorSLA.signatureCount, 0)
       assert.equal(operatorSLA.signatureFailCount, 0)
       assert.equal(operatorSLA.signatureSLA, "N/A")
-    }
+    },
   )
 })
