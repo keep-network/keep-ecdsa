@@ -142,3 +142,65 @@ func TestElectrsConnection_IsAddressUnused(t *testing.T) {
 		})
 	}
 }
+
+func TestElectrsConnection_IsAddressUnused_ExpectedFailures(t *testing.T) {
+	testData := map[string]struct {
+		btcAddress   string
+		responseCode int
+		response     string
+		err          string
+	}{
+		"invalid btc address": {
+			"banana",
+			400,
+			"Invalid Bitcoin address",
+			"Invalid Bitcoin address",
+		},
+		"garbled response": {
+			"bcrt1qy6n80gen875en87ka798svvzrneq2erhhwfzzf",
+			200,
+			`[{"txi4fd49a9719be53affe55c4761abf00df1cda9b7a02419411bc9c04174c3f7","version":2,"locktime":14154,"vin":[{"txid":"fc4e62537ad932a84b4888826e10810119c854cbed1244091e864502282cee92","vout":0,"prevout":{"scriptpubkey":"001401160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 01160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bcrt1qqytqc2qvg2wtxjw9cd7hsmhdkkmml5lzqc04tk","value":9765625},"scriptsig":"","scriptsig_asm":"","witness":["304402202f3bf6827a90d566f7543119156d0b2aa19262379429ca58e95728479258c64d02202aee28e0083c900fe57a4a7f3f1a65fc2b012acdde88b99349a5bca17336486901","0360eda8d2a5e92cfa752f756a972442271381c1b2081f8e43e6f3475c7feedf76"],"is_coinbase":false,"sequence":4294967294},{"txid":"14e4defea6b2a164701562b0e9d379b23288b41b44ab8201749e5c5c312f0e59","vout":0,"prevout":{"scriptpubkey":"001401160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 01160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bcrt1qqytqc2qvg2wtxjw9cd7hsmhdkkmml5lzqc04tk","value":4768},"scriptsig":"","scriptsig_asm":"","witness":["304402206feee35d7a3de261c4ddd0e9bbccdc65b24226a9be8aef2bcacc87b032eca93702206e2040856bd7d61f3a8d9f24ef515e7660a99984f4e55fcd2f7ea16ad56ecf2b01","0360eda8d2a5e92cfa752f756a972442271381c1b2081f8e43e6f3475c7feedf76"],"is_coinbase":false,"sequence":4294967294},{"txid":"246d552c11741b7196f0f7dfd7c65a22daba9da20264edc26dbb8afcc2906465","vout":0,"prevout":{"scriptpubkey":"001401160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 01160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bcrt1qqytqc2qvg2wtxjw9cd7hsmhdkkmml5lzqc04tk","value":4768},"scriptsig":"","scriptsig_asm":"","witness":["304402206fc18ffa446f681d8901d7d211f7d972e5e18420ac991d44befd13f9740a26a5022030079817769551fb818149b1d146ff6c02859060e56118796b711ba6e9f5e37801","0360eda8d2a5e92cfa752f756a972442271381c1b2081f8e43e6f3475c7feedf76"],"is_coinbase":false,"sequence":4294967294},{"txid":"91517b69b67dee45c3cca4e2b1d5f0c4e04abc19363fc161b6dde9f72a2615ed","vout":0,"prevout":{"scriptpubkey":"001401160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 01160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bcrt1qqytqc2qvg2wtxjw9cd7hsmhdkkmml5lzqc04tk","value":152587},"scriptsig":"","scriptsig_asm":"","witness":["3044022073658ccf19f921eba6d46fa642dadaed54bf011438c63656a0466ed21ceaf58202202a90e99d3b9e599f1f88e0816f2b8076ca8238ef9b5149c0bfe1dfd5a4967a2801","0360eda8d2a5e92cfa752f756a972442271381c1b2081f8e43e6f3475c7feedf76"],"is_coinbase":false,"sequence":4294967294},{"txid":"8cff43db341777dc4a8de065a2357e5d546a922524adabc6c650b82bdb4a9db1","vout":0,"prevout":{"scriptpubkey":"001401160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 01160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bcrt1qqytqc2qvg2wtxjw9cd7hsmhdkkmml5lzqc04tk","value":10461},"scriptsig":"","scriptsig_asm":"","witness":["3044022056b40dd139f57caef154b327cb815e6976e4cacf226fa15c70f14ab0abe1059802204b864b4842e578c0ff11a0fea59bb91fb44162d1f7e9e9e048a1c560491cf62701","0360eda8d2a5e92cfa752f756a972442271381c1b2081f8e43e6f3475c7feedf76"],"is_coinbase":false,"sequence":4294967294},{"txid":"16c414db432c78fb2636e618b6b470265cbb68137d56101249c2d86a796cfc74","vout":0,"prevout":{"scriptpubkey":"001401160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 01160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bcrt1qqytqc2qvg2wtxjw9cd7hsmhdkkmml5lzqc04tk","value":12901},"scriptsig":"","scriptsig_asm":"","witness":["304402202c3d563122099edf16996dadf0bebcc5105eb6e5e53d5e5a8ab8939731e12ff802205bc8bdf99feef369b55832e5676a9d39f006643af35b7778c9dfa891a4b9792b01","0360eda8d2a5e92cfa752f756a972442271381c1b2081f8e43e6f3475c7feedf76"],"is_coinbase":false,"sequence":4294967294},{"txid":"3d93c2fef5cd7c8349170ec48dd96a4477bb6ca6958b6fb80a074ee7e80a421f","vout":0,"prevout":{"scriptpubkey":"001401160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 01160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bcrt1qqytqc2qvg2wtxjw9cd7hsmhdkkmml5lzqc04tk","value":19073},"scriptsig":"","scriptsig_asm":"","witness":["30440220034c0a3dbab8ccc7c9004ce8d5b1da25d3a527493368c98531acb47e147df37c02207646277753c9694aebc59ac47a230735c0c2b6c0ecf5d2251a9350b9171b330201","0360eda8d2a5e92cfa752f756a972442271381c1b2081f8e43e6f3475c7feedf76"],"is_coinbase":false,"sequence":4294967294},{"txid":"eb0d6c1f32f975b121fdbb0d5b010174fd47594fc7a2faa6184862d0688ac64d","vout":0,"prevout":{"scriptpubkey":"001401160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 01160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bcrt1qqytqc2qvg2wtxjw9cd7hsmhdkkmml5lzqc04tk","value":4768},"scriptsig":"","scriptsig_asm":"","witness":["30440220748e72af5018b7cc5774d7debe225b7ad304a1cfe9e0a469470affe9622fbac102200ea7c7a94bd7813b0ac472be36b1c7cb77d59b4b63363aac39e580003ec55c8501","0360eda8d2a5e92cfa752f756a972442271381c1b2081f8e43e6f3475c7feedf76"],"is_coinbase":false,"sequence":4294967294},{"txid":"0beb097b66aafd83f914dad6ebfee3bfbdc17c2111fa4dde964b928bba724330","vout":0,"prevout":{"scriptpubkey":"001401160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 01160c280c429cb349c5c37d786eedb5b7bfd3e2","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bcrt1qqytqc2qvg2wtxjw9cd7hsmhdkkmml5lzqc04tk","value":38146},"scriptsig":"","scriptsig_asm":"","witness":["30440220507ca93500dfd6f83f5b45b401b335563287a09906ee5a35e7877f2c1b87eaa202204c68e3eb43fa5f3054d823bacadfe644b4626e1b938d1ab564ee30dfe07dff8d01","0360eda8d2a5e92cfa752f756a972442271381c1b2081f8e43e6f3475c7feedf76"],"is_coinbase":false,"sequence":4294967294}],"vout":[{"scriptpubkey":"001426a677a3333fa9999fd6ef8a7831821cf2056477","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 26a677a3333fa9999fd6ef8a7831821cf2056477","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bcrt1qy6n80gen875en87ka798svvzrneq2erhhwfzzf","value":10000000}],"size":1375,"weight":2605,"fee":13097,"status":{"confirmed":true,"block_height":14208,"block_hash":"3c95707c627031feca93af0473cf5dc81e3f4fd6a660023924a85900d3b294ce","block_time":1620420106}}]`,
+			"invalid character ',' after object key",
+		},
+		"unexpected integer response": {
+			"bcrt1qy6n80gen875en87ka798svvzrneq2erhhwfzzf",
+			200,
+			"73",
+			"json: cannot unmarshal number into Go value of type []interface {}",
+		},
+	}
+	apiURL := "example.org/api"
+	for testName, testData := range testData {
+		t.Run(testName, func(t *testing.T) {
+			electrs := NewElectrsConnection(apiURL)
+			electrs.setClient(mockClient{
+				mockGet: func(url string) (*http.Response, error) {
+					expectedURL := fmt.Sprintf("%s/address/%s/txs", apiURL, testData.btcAddress)
+					if url != expectedURL {
+						t.Errorf("unexpected url\nexpected: %s\nactual:   %s", expectedURL, url)
+					}
+					return &http.Response{
+						StatusCode: testData.responseCode,
+						Body:       ioutil.NopCloser(bytes.NewReader([]byte(testData.response))),
+					}, nil
+				},
+				mockPost: func(url string, contentType string, reader io.Reader) (*http.Response, error) {
+					return nil, nil
+				},
+			})
+			_, err := electrs.IsAddressUnused(testData.btcAddress)
+			if err == nil {
+				t.Errorf("unexected error\nexpected: %s\nactual:   nil", testData.err)
+			}
+			checkError(err, testData.err, t)
+		})
+	}
+}
+
+func checkError(err error, expected string, t *testing.T) {
+	if err == nil {
+		t.Errorf("unexected error\nexpected: %s\nactual:   nil", expected)
+	} else if !strings.Contains(err.Error(), expected) {
+		t.Errorf("unexpected error\nexpected: %s\nactual:   %v", expected, err)
+	}
+}

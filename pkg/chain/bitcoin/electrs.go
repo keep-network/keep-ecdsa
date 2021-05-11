@@ -99,10 +99,16 @@ func (e ElectrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 		return false, err
 	}
 	if resp.StatusCode != 200 {
+		transactionIDBuffer := new(strings.Builder)
+		_, err = io.Copy(transactionIDBuffer, resp.Body)
+		if err != nil {
+			logger.Error("something went wrong trying to unmarshal the error response for address %s", btcAddress)
+		}
 		return false, fmt.Errorf(
-			"something went wrong trying to get information about address %s: [%s]",
+			"something went wrong trying to get information about address %s - status: [%s], payload: [%s]",
 			btcAddress,
 			resp.Status,
+			transactionIDBuffer.String(),
 		)
 	}
 
