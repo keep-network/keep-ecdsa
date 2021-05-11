@@ -6,6 +6,29 @@ import (
 	"testing"
 )
 
+type mockBitcoinHandle struct {
+	broadcast       func(transaction string) error
+	vbyteFee        func() (int32, error)
+	isAddressUnused func(btcAddress string) (bool, error)
+}
+
+func newMockBitcoinHandle() *mockBitcoinHandle {
+	return &mockBitcoinHandle{
+		broadcast:       func(_ string) error { return nil },
+		vbyteFee:        func() (int32, error) { return 75, nil },
+		isAddressUnused: func(_ string) (bool, error) { return true, nil },
+	}
+}
+func (mbh mockBitcoinHandle) Broadcast(transaction string) error {
+	return mbh.broadcast(transaction)
+}
+func (mbh mockBitcoinHandle) VbyteFee() (int32, error) {
+	return mbh.vbyteFee()
+}
+func (mbh mockBitcoinHandle) IsAddressUnused(btcAddress string) (bool, error) {
+	return mbh.isAddressUnused(btcAddress)
+}
+
 func TestDerivationIndexStorage_GetNextIndexOnNewKey(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	if err != nil {
@@ -16,7 +39,7 @@ func TestDerivationIndexStorage_GetNextIndexOnNewKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	index, err := dis.GetNextIndex("ypub6Z7s8wJuKsxjd16oe85WH1uSbcbbCXuMFEhPMgcf7jQqNhQbT9jE52XVu1eBe18q2J3LwnDd54ufL2jNvidjfCkbd34aVwLtYdztLUqucwR")
+	index, err := dis.GetNextIndex("ypub6Z7s8wJuKsxjd16oe85WH1uSbcbbCXuMFEhPMgcf7jQqNhQbT9jE52XVu1eBe18q2J3LwnDd54ufL2jNvidjfCkbd34aVwLtYdztLUqucwR", newMockBitcoinHandle())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,18 +112,18 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 			},
 			[]keyAndIndex{
 				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 5091},
-				{"       xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1          ", 5091},
+				{"       xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1          ", 5092},
 			},
 		},
 		"write to the same index multiple times": {
 			[]keyAndIndex{
-				{"xpub1sameidx", 777},
-				{"xpub1sameidx", 777},
-				{"xpub1sameidx", 777},
-				{"xpub1sameidx", 777},
+				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", 777},
+				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", 777},
+				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", 777},
+				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", 777},
 			},
 			[]keyAndIndex{
-				{"xpub1sameidx", 778},
+				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", 778},
 			},
 		},
 	}
@@ -118,7 +141,7 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				t.Fatal(err)
 			}
 			for _, input := range testData.inputs {
-				err = dis.Save(
+				err = dis.save(
 					input.publicKey,
 					uint32(input.index),
 				)
@@ -127,7 +150,7 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				}
 			}
 			for _, expectation := range testData.expectations {
-				index, err := dis.GetNextIndex(expectation.publicKey)
+				index, err := dis.GetNextIndex(expectation.publicKey, newMockBitcoinHandle())
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -152,11 +175,11 @@ func TestDerivationIndexStorage_OverwriteExistingPair(t *testing.T) {
 	}
 	extendedPublicKey := "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
 	index := uint32(89)
-	err = dis.Save(extendedPublicKey, index)
+	err = dis.save(extendedPublicKey, index)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = dis.Save(extendedPublicKey, index)
+	err = dis.save(extendedPublicKey, index)
 	if err != nil {
 		t.Errorf("unexpected error trying to overwrite extendedPublicKey [%s] at index [%d]: [%v]", extendedPublicKey, index, err)
 	}
@@ -185,7 +208,7 @@ func TestDerivationIndexStorage_ShortExtendedPublicKeys(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			err = dis.Save(testData.input.publicKey, uint32(testData.input.index))
+			err = dis.save(testData.input.publicKey, uint32(testData.input.index))
 			if testData.expectedError == null {
 				if err != nil {
 					t.Errorf("unexpected error: [%v]", err)
@@ -250,7 +273,7 @@ func TestDerviationIndexStorage_BadPermissions(t *testing.T) {
 	}
 }
 
-func TestDerivationIndexStorage_MultipleAsyncSavesAndGetNextIndexes(t *testing.T) {
+func TestDerivationIndexStorage_MultipleAsyncGetNextIndexes(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	if err != nil {
 		t.Fatal(err)
@@ -262,29 +285,36 @@ func TestDerivationIndexStorage_MultipleAsyncSavesAndGetNextIndexes(t *testing.T
 	}
 	extendedPublicKey := "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
 	index := uint32(831)
-	iterations := 10
-	errs := make(chan error, iterations)
-	for i := 0; i < iterations; i++ {
-		go func() {
-			err = dis.Save(extendedPublicKey, index)
-			errs <- err
-		}()
-	}
-	for i := 0; i < iterations; i++ {
-		err := <-errs
-		if err != nil {
-			t.Fatal(err)
-		}
+	err = dis.save(extendedPublicKey, index)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	type pair struct {
 		index uint32
 		err   error
 	}
+	iterations := 10
 	getNextIndexResults := make(chan pair, iterations)
 	for i := 0; i < iterations; i++ {
 		go func() {
-			nextIndex, err := dis.GetNextIndex(extendedPublicKey)
+			//only validate multiples of 10 to test that each concurrent hit respects the previous call's validation
+			handle := newMockBitcoinHandle()
+			validIndexes := make(map[string]bool)
+			for i := 0; i < iterations; i++ {
+				// the valid indexes should be 840, 850, 860, 870...
+				index := uint32(840) + 10*uint32(i)
+				derivedAddress, err := deriveAddress(extendedPublicKey, index)
+				if err != nil {
+					getNextIndexResults <- pair{0, err}
+					return
+				}
+				validIndexes[derivedAddress] = true
+			}
+			handle.isAddressUnused = func(btcAddress string) (bool, error) {
+				return validIndexes[btcAddress], nil
+			}
+			nextIndex, err := dis.GetNextIndex(extendedPublicKey, handle)
 			getNextIndexResults <- pair{nextIndex, err}
 		}()
 	}
@@ -293,8 +323,10 @@ func TestDerivationIndexStorage_MultipleAsyncSavesAndGetNextIndexes(t *testing.T
 		if result.err != nil {
 			t.Fatal(err)
 		}
-		if result.index != index+1 {
-			t.Errorf("unexpected next index\nexpected: %d\nactual:   %d", index+1, result.index)
+		// the valid indexes should be 840, 850, 860, 870...
+		expectedIndex := uint32(840) + 10*uint32(i)
+		if result.index != expectedIndex {
+			t.Errorf("unexpected next index\nexpected: %d\nactual:   %d", expectedIndex, result.index)
 		}
 	}
 }
@@ -313,7 +345,7 @@ func TestDerviationIndexStorage_SaveOverwrites(t *testing.T) {
 	index := uint32(831)
 	iterations := 10
 	for i := 0; i < iterations; i++ {
-		err = dis.Save(extendedPublicKey, index)
+		err = dis.save(extendedPublicKey, index)
 		if err != nil {
 			t.Fatal(err)
 		}

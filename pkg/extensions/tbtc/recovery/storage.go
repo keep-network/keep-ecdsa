@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 )
 
 const (
@@ -65,10 +66,8 @@ func (dis *DerivationIndexStorage) getStoragePath(extendedPublicKey string) (str
 	return path, directory, truncatedKey, nil
 }
 
-// Save marks an index as used for a particular extendedPublicKey
-func (dis *DerivationIndexStorage) Save(extendedPublicKey string, index uint32) error {
-	dis.mutex.Lock()
-	defer dis.mutex.Unlock()
+// save marks an index as used for a particular extendedPublicKey
+func (dis *DerivationIndexStorage) save(extendedPublicKey string, index uint32) error {
 	dirPath, directory, truncatedKey, err := dis.getStoragePath(extendedPublicKey)
 	if err != nil {
 		return err
@@ -132,7 +131,10 @@ func (dis *DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
 }
 
 // GetNextIndex returns the next unused index for the extended public key
-func (dis *DerivationIndexStorage) GetNextIndex(extendedPublicKey string) (uint32, error) {
+func (dis *DerivationIndexStorage) GetNextIndex(
+	extendedPublicKey string,
+	handle bitcoin.Handle,
+) (uint32, error) {
 	dis.mutex.Lock()
 	defer dis.mutex.Unlock()
 	dirPath, _, _, err := dis.getStoragePath(extendedPublicKey)
@@ -147,11 +149,28 @@ func (dis *DerivationIndexStorage) GetNextIndex(extendedPublicKey string) (uint3
 		return 0, err
 	}
 
-	index, err := dis.read(extendedPublicKey)
+	lastIndex, err := dis.read(extendedPublicKey)
 	if err != nil {
 		return 0, err
 	}
-	return uint32(index + 1), nil
+	nextIndex := uint32(lastIndex + 1)
+	numberOfTries := uint32(100)
+	for i := uint32(0); i < numberOfTries; i++ {
+		index := nextIndex + i
+		derivedAddress, err := deriveAddress(strings.TrimSpace(extendedPublicKey), index)
+		if err != nil {
+			return 0, err
+		}
+		ok, err := handle.IsAddressUnused(derivedAddress)
+		err = dis.save(extendedPublicKey, index)
+		if err != nil {
+			return 0, err
+		}
+		if ok {
+			return index, nil
+		}
+	}
+	return 0, fmt.Errorf("indexes %d through %d were all used", nextIndex, nextIndex+numberOfTries-1)
 }
 
 func closeFile(file *os.File) {
