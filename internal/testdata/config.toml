@@ -28,7 +28,8 @@
 	PreParamsTargetPoolSize = 36
 
 [Extensions.TBTC]
-	TBTCSystem = "0xa4888eDD97A5a3A739B4E0807C71817c8a418273"
+  TBTCSystem = "0xa4888eDD97A5a3A739B4E0807C71817c8a418273"
+  LiquidationRecoveryTimeout = "49h"
 
 	[Extensions.TBTC.Bitcoin]
 		BeneficiaryAddress = "bcrt1q0umle4fe6penqqyzuwsysqezwwptuyqa82jas4"

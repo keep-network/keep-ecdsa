@@ -989,7 +989,7 @@ func monitorKeepTerminatedEvent(
 
 			go func(event *chain.KeepTerminatedEvent) {
 				err := utils.DoWithDefaultRetry(
-					clientConfig.GetSigningTimeout(),
+					tbtcConfig.GetLiquidationRecoveryTimeout(),
 					func(ctx context.Context) error {
 						if shouldHandle := eventDeduplicator.NotifyTerminatingStarted(keep.ID()); !shouldHandle {
 							logger.Infof(
