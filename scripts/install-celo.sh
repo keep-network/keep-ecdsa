@@ -88,6 +88,13 @@ npm link
 if [ "$CONTRACTS_ONLY" = false ] ; then
         printf "${LOG_START}Building keep-ecdsa client...${LOG_END}"
         cd $KEEP_ECDSA_PATH
+
+        # solc doesn't support symbolic links that are made in `node_modules` by `npm link`
+        # command. We need to update the `--allow-paths` value to be the parent directory
+        # that is assumed to contain both current project and dependent project.
+        # Ref: https://github.com/ethereum/solidity/issues/4623
+        sed -i '' 's/--allow-paths ${solidity_dir}/--allow-paths $(realpath ${SOLIDITY_DIR}\/..\/..\/)/g' pkg/chain/gen/*/Makefile
+
         go generate ./...
         go build -a -o keep-ecdsa .
 fi
