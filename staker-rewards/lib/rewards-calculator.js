@@ -133,7 +133,10 @@ export default class RewardsCalculator {
       violations.push("poolDeauthorizedInInterval")
     }
 
-    if (requirements.minimumStakeAtStart === false) {
+    if (
+      requirements.minimumStakeAtStart === false &&
+      operatorAssets.isUndelegating === false
+    ) {
       violations.push("minimumStakeAtStart")
     }
 
