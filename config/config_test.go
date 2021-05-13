@@ -91,6 +91,10 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.TBTCSystem },
 			expectedValue: "0xa4888eDD97A5a3A739B4E0807C71817c8a418273",
 		},
+		"Extensions.TBTC.LiquidationRecoveryTimeout": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.GetLiquidationRecoveryTimeout() },
+			expectedValue: time.Duration(49 * 60 * 60 * 1000000000), // 49 hours in nanoseconds
+		},
 		"Extensions.TBTC.Bitcoin.ElectrsURL": {
 			readValueFunc: func(c *Config) interface{} { return *c.Extensions.TBTC.Bitcoin.ElectrsURL },
 			expectedValue: "example.com",
