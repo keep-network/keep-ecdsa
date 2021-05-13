@@ -162,12 +162,16 @@ func TestConsultsAuthorizedOperatorsCache(t *testing.T) {
 	policy.nonAuthorizedOperatorsCache.Add(remotePeer2Address.String())
 	localChain.AuthorizeOperator(remotePeer2Address)
 
-	err = policy.validateAuthorization(remotePeer1Address.String())
+	err = policy.validateAuthorization(localChain.PublicKeyToOperatorID(
+		(*ecdsa.PublicKey)(remotePeer1PublicKey),
+	))
 	if err != nil {
 		t.Errorf("expected no valdation error; has: [%v]", err)
 	}
 
-	err = policy.validateAuthorization(remotePeer2Address.String())
+	err = policy.validateAuthorization(localChain.PublicKeyToOperatorID(
+		(*ecdsa.PublicKey)(remotePeer2PublicKey),
+	))
 	if err != errNoAuthorization {
 		t.Errorf("expected error about no authorization; has: [%v]", err)
 	}
@@ -876,7 +880,7 @@ func (mf *mockCoreFirewall) updatePeer(
 
 func withCallCounter(handle local.Chain) *chainWithCallCounter {
 	return &chainWithCallCounter{
-		Chain:                   handle,
+		Chain: handle,
 		getKeepAtIndexCallCount: 0,
 	}
 }
@@ -913,7 +917,7 @@ func (khwc *keepHandleWithCounter) IsActive() (bool, error) {
 	return khwc.BondedECDSAKeepHandle.IsActive()
 }
 
-func (khwc *keepHandleWithCounter) GetMembers() ([]common.Address, error) {
+func (khwc *keepHandleWithCounter) GetMembers() ([]chain.ID, error) {
 	atomic.AddUint64(&khwc.getMembersCallCount, 1)
 	return khwc.BondedECDSAKeepHandle.GetMembers()
 }
