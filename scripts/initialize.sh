@@ -65,6 +65,9 @@ CONTRACTS_ONLY=${contracts_only:-false}
 
 cd $KEEP_ECDSA_SOL_PATH
 
+printf "${LOG_START}Linking dependencies...${LOG_END}"
+npm link @keep-network/keep-core @keep-network/tbtc
+
 # Dafault app address.
 output=$(npx truffle exec scripts/get-default-application-account.js --network $NETWORK)
 CLIENT_APP_ADDRESS=$(echo "$output" | tail -1)
