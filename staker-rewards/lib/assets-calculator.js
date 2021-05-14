@@ -124,7 +124,6 @@ export default class AssetsCalculator {
 
   async calculateKeepStaked(operator) {
     const block = this.interval.endBlock
-    const timestamp = this.interval.end
 
     const operatorContract = this.bondedECDSAKeepFactory.options.address
 
@@ -144,24 +143,19 @@ export default class AssetsCalculator {
       )
 
       for (let i = 0; i < locks.creators.length; i++) {
-        if (timestamp < locks.expirations[i]) {
-          const keepOpenedTimestamp = await callWithRetry(
-            this.bondedECDSAKeepFactory.methods.getKeepOpenedTimestamp(
-              locks.creators[i]
-            ),
+        const keepOpenedTimestamp = await callWithRetry(
+          this.bondedECDSAKeepFactory.methods.getKeepOpenedTimestamp(
+            locks.creators[i]
+          ),
+          block
+        )
+
+        if (keepOpenedTimestamp > 0) {
+          keepStaked = await callWithRetry(
+            this.tokenStaking.methods.balanceOf(operator),
             block
           )
-
-          if (keepOpenedTimestamp > 0) {
-            keepStaked = await callWithRetry(
-              this.tokenStaking.methods.activeStake(
-                operator,
-                locks.creators[i]
-              ),
-              block
-            )
-            break
-          }
+          break
         }
       }
     }
