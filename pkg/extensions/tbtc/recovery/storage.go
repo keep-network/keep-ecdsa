@@ -154,8 +154,7 @@ func (dis *DerivationIndexStorage) GetNextAddress(
 	}
 
 	startIndex := uint32(lastIndex + 1)
-	numberOfTries := uint32(100)
-	for i := uint32(0); i < numberOfTries; i++ {
+	for i := uint32(0); true; i++ {
 		index := startIndex + i
 		derivedAddress, err := deriveAddress(strings.TrimSpace(extendedPublicKey), index)
 		if err != nil {
@@ -174,7 +173,7 @@ func (dis *DerivationIndexStorage) GetNextAddress(
 			return derivedAddress, nil
 		}
 	}
-	return "", fmt.Errorf("indexes %d through %d were all used", startIndex, startIndex+numberOfTries-1)
+	return "", fmt.Errorf("something unexpected happened to break us out of the GetNextAddress retry loop")
 }
 
 func closeFile(file *os.File) {
