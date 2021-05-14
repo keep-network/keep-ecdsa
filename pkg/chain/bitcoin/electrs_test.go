@@ -67,16 +67,12 @@ func TestElectrsConnection_vbyteFee(t *testing.T) {
 	electrs := NewElectrsConnection(apiURL)
 	jsonResponse := `{ "1": 87.882, "2": 87.882, "3": 87.882, "4": 87.882, "5": 81.129, "6": 68.285, "7": 65.182, "8": 63.876, "9": 61.153, "10": 60.172, "11": 57.721, "12": 54.753, "13": 52.879, "14": 46.872, "15": 42.871, "16": 39.989, "17": 35.919, "18": 30.821, "19": 25.888, "20": 21.876, "21": 16.156, "22": 11.222, "23": 10.982, "24": 9.654, "25": 7.883, "144": 1.027, "504": 1.027, "1008": 1.027 }`
 	electrs.setClient(mockClient{
-		mockGet: func(url string) (*http.Response, error) {
-			expectedURL := fmt.Sprintf("%s/fee-estimates", apiURL)
-			if url != expectedURL {
-				t.Errorf("unexpected url\nexpected: %s\nactual:   %s", expectedURL, url)
-			}
-			return &http.Response{
-				StatusCode: 200,
-				Body:       ioutil.NopCloser(bytes.NewReader([]byte(jsonResponse))),
-			}, nil
-		},
+		mockGet: mockGet(
+			fmt.Sprintf("%s/fee-estimates", apiURL),
+			200,
+			jsonResponse,
+			t,
+		),
 		mockPost: func(url string, contentType string, reader io.Reader) (*http.Response, error) {
 			return nil, nil
 		},
@@ -118,16 +114,12 @@ func TestElectrsConnection_IsAddressUnused(t *testing.T) {
 			apiURL := "example.org/api"
 			electrs := NewElectrsConnection(apiURL)
 			electrs.setClient(mockClient{
-				mockGet: func(url string) (*http.Response, error) {
-					expectedURL := fmt.Sprintf("%s/address/%s/txs", apiURL, testData.btcAddress)
-					if url != expectedURL {
-						t.Errorf("unexpected url\nexpected: %s\nactual:   %s", expectedURL, url)
-					}
-					return &http.Response{
-						StatusCode: 200,
-						Body:       ioutil.NopCloser(bytes.NewReader([]byte(testData.response))),
-					}, nil
-				},
+				mockGet: mockGet(
+					fmt.Sprintf("%s/address/%s/txs", apiURL, testData.btcAddress),
+					200,
+					testData.response,
+					t,
+				),
 				mockPost: func(url string, contentType string, reader io.Reader) (*http.Response, error) {
 					return nil, nil
 				},
@@ -174,16 +166,12 @@ func TestElectrsConnection_IsAddressUnused_ExpectedFailures(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			electrs := NewElectrsConnection(apiURL)
 			electrs.setClient(mockClient{
-				mockGet: func(url string) (*http.Response, error) {
-					expectedURL := fmt.Sprintf("%s/address/%s/txs", apiURL, testData.btcAddress)
-					if url != expectedURL {
-						t.Errorf("unexpected url\nexpected: %s\nactual:   %s", expectedURL, url)
-					}
-					return &http.Response{
-						StatusCode: testData.responseCode,
-						Body:       ioutil.NopCloser(bytes.NewReader([]byte(testData.response))),
-					}, nil
-				},
+				mockGet: mockGet(
+					fmt.Sprintf("%s/address/%s/txs", apiURL, testData.btcAddress),
+					testData.responseCode,
+					testData.response,
+					t,
+				),
 				mockPost: func(url string, contentType string, reader io.Reader) (*http.Response, error) {
 					return nil, nil
 				},
@@ -194,6 +182,18 @@ func TestElectrsConnection_IsAddressUnused_ExpectedFailures(t *testing.T) {
 			}
 			checkError(err, testData.err, t)
 		})
+	}
+}
+
+func mockGet(expectedURL string, statusCode int, body string, t *testing.T) func(url string) (*http.Response, error) {
+	return func(url string) (*http.Response, error) {
+		if url != expectedURL {
+			t.Errorf("unexpected url\nexpected: %s\nactual:   %s", expectedURL, url)
+		}
+		return &http.Response{
+			StatusCode: statusCode,
+			Body:       ioutil.NopCloser(bytes.NewReader([]byte(body))),
+		}, nil
 	}
 }
 
