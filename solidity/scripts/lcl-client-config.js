@@ -54,7 +54,7 @@ module.exports = async function () {
               // Find keys that match exactly `Port`, `MiningCheckInterval`,
               // `MaxGasPrice` or end with `MetricsTick` or `Limit`.
               key.match(
-                /(^Port|^MiningCheckInterval|^MaxGasPrice|MetricsTick|Limit)$/
+                /(^Port|^MiningCheckInterval|^MaxGasPrice|^PreParamsTargetPoolSize|MetricsTick|Limit)$/
               )
                 ? value.toFixed(0) // convert float to integer
                 : false // do nothing
