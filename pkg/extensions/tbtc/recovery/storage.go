@@ -130,47 +130,47 @@ func (dis *DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
 	return index, nil
 }
 
-// GetNextIndex returns the next unused index for the extended public key
-func (dis *DerivationIndexStorage) GetNextIndex(
+// GetNextAddress returns the next unused btc address for the extended public key
+func (dis *DerivationIndexStorage) GetNextAddress(
 	extendedPublicKey string,
 	handle bitcoin.Handle,
-) (uint32, error) {
+) (string, error) {
 	dis.mutex.Lock()
 	defer dis.mutex.Unlock()
 	dirPath, _, _, err := dis.getStoragePath(extendedPublicKey)
 	if err != nil {
-		return 0, err
-	}
-	_, err = os.Stat(dirPath)
-	if os.IsNotExist(err) {
-		return 0, nil
-	}
-	if err != nil {
-		return 0, err
+		return "", err
 	}
 
-	lastIndex, err := dis.read(extendedPublicKey)
-	if err != nil {
-		return 0, err
+	lastIndex := -1
+	_, err = os.Stat(dirPath)
+	if err == nil {
+		lastIndex, err = dis.read(extendedPublicKey)
+		if err != nil {
+			return "", err
+		}
+	} else if !os.IsNotExist(err) {
+		return "", err
 	}
-	nextIndex := uint32(lastIndex + 1)
+
+	startIndex := uint32(lastIndex + 1)
 	numberOfTries := uint32(100)
 	for i := uint32(0); i < numberOfTries; i++ {
-		index := nextIndex + i
+		index := startIndex + i
 		derivedAddress, err := deriveAddress(strings.TrimSpace(extendedPublicKey), index)
 		if err != nil {
-			return 0, err
+			return "", err
 		}
 		ok, err := handle.IsAddressUnused(derivedAddress)
 		err = dis.save(extendedPublicKey, index)
 		if err != nil {
-			return 0, err
+			return "", err
 		}
 		if ok {
-			return index, nil
+			return derivedAddress, nil
 		}
 	}
-	return 0, fmt.Errorf("indexes %d through %d were all used", nextIndex, nextIndex+numberOfTries-1)
+	return "", fmt.Errorf("indexes %d through %d were all used", startIndex, startIndex+numberOfTries-1)
 }
 
 func closeFile(file *os.File) {

@@ -29,7 +29,7 @@ func (mbh mockBitcoinHandle) IsAddressUnused(btcAddress string) (bool, error) {
 	return mbh.isAddressUnused(btcAddress)
 }
 
-func TestDerivationIndexStorage_GetNextIndexOnNewKey(t *testing.T) {
+func TestDerivationIndexStorage_GetNextAddressOnNewKey(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	if err != nil {
 		t.Fatal(err)
@@ -39,13 +39,20 @@ func TestDerivationIndexStorage_GetNextIndexOnNewKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	index, err := dis.GetNextIndex("ypub6Z7s8wJuKsxjd16oe85WH1uSbcbbCXuMFEhPMgcf7jQqNhQbT9jE52XVu1eBe18q2J3LwnDd54ufL2jNvidjfCkbd34aVwLtYdztLUqucwR", newMockBitcoinHandle())
-	if err != nil {
-		t.Fatal(err)
-	}
-	expectedIndex := uint32(0)
-	if index != expectedIndex {
-		t.Errorf("incorrect extendedPublicKey index\nexpected: %d\nactual:   %d", expectedIndex, index)
+	extendedPublicKey := "ypub6Z7s8wJuKsxjd16oe85WH1uSbcbbCXuMFEhPMgcf7jQqNhQbT9jE52XVu1eBe18q2J3LwnDd54ufL2jNvidjfCkbd34aVwLtYdztLUqucwR"
+	for i := uint32(0); i < 10; i++ {
+		btcAddress, err := dis.GetNextAddress(extendedPublicKey, newMockBitcoinHandle())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expectedBtcAddress, err := deriveAddress(extendedPublicKey, i)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if btcAddress != expectedBtcAddress {
+			t.Errorf("incorrect derived address for call # %d\nexpected: %s\nactual:   %s", i, expectedBtcAddress, btcAddress)
+		}
 	}
 }
 
@@ -54,14 +61,19 @@ type keyAndIndex struct {
 	index     int
 }
 
-func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
+type keyAndAddress struct {
+	publicKey  string
+	btcAddress string
+}
+
+func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 	testData := map[string]struct {
 		inputs       []keyAndIndex
-		expectations []keyAndIndex
+		expectations []keyAndAddress
 	}{
 		"single key, single entry": {
 			[]keyAndIndex{{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 5}},
-			[]keyAndIndex{{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 6}},
+			[]keyAndAddress{{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1QETuEAw5UBdYtz6vJw8L9582TdrrE4b3B"}},
 		},
 		"multiple keys, single entry": {
 			[]keyAndIndex{
@@ -69,10 +81,10 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				{"ypub6ZpieGfpesfH3KqGr4zZPETidCze6RzeNMz7FLnSPgABwyQNZZmpA4tpUYFn53xtHkHXaoGviseJJcFhSn3Kw9sgzsiSnP5xEqp6Z2Yy4ZH", 48},
 				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", 112},
 			},
-			[]keyAndIndex{
-				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 6},
-				{"ypub6ZpieGfpesfH3KqGr4zZPETidCze6RzeNMz7FLnSPgABwyQNZZmpA4tpUYFn53xtHkHXaoGviseJJcFhSn3Kw9sgzsiSnP5xEqp6Z2Yy4ZH", 49},
-				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", 113},
+			[]keyAndAddress{
+				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1QETuEAw5UBdYtz6vJw8L9582TdrrE4b3B"},
+				{"ypub6ZpieGfpesfH3KqGr4zZPETidCze6RzeNMz7FLnSPgABwyQNZZmpA4tpUYFn53xtHkHXaoGviseJJcFhSn3Kw9sgzsiSnP5xEqp6Z2Yy4ZH", "3BRGrKZzkuuaqVGK5eZkcA5wrzeQULawMH"},
+				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", "bc1qcd39cwrsefagqh4y277q0rgm0stdsth4xr6mjr"},
 			},
 		},
 		"single key, multiple entries": {
@@ -81,8 +93,8 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 172},
 				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 39},
 			},
-			[]keyAndIndex{
-				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 173},
+			[]keyAndAddress{
+				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1Je1vYfst9yGF95KkYitQ7QhdLUkNVCzfX"},
 			},
 		},
 		"multiple keys, multiple entries": {
@@ -99,10 +111,10 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", 6999},
 				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", 8559},
 			},
-			[]keyAndIndex{
-				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 5091},
-				{"ypub6ZpieGfpesfH3KqGr4zZPETidCze6RzeNMz7FLnSPgABwyQNZZmpA4tpUYFn53xtHkHXaoGviseJJcFhSn3Kw9sgzsiSnP5xEqp6Z2Yy4ZH", 8983},
-				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", 8560},
+			[]keyAndAddress{
+				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1Cck1ps6NGB9LGjrymNS21KC7fJyU4X3fw"},
+				{"ypub6ZpieGfpesfH3KqGr4zZPETidCze6RzeNMz7FLnSPgABwyQNZZmpA4tpUYFn53xtHkHXaoGviseJJcFhSn3Kw9sgzsiSnP5xEqp6Z2Yy4ZH", "34c8quMWCqNsfVFhgTveC3s8kyTWf9m5t8"},
+				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", "bc1qdvy9xuq2368ywuvgfg77sz688x9v0fjg6f0gw8"},
 			},
 		},
 		"trim whitespaces": {
@@ -110,9 +122,9 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 513},
 				{"    xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1    ", 5090},
 			},
-			[]keyAndIndex{
-				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 5091},
-				{"       xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1          ", 5092},
+			[]keyAndAddress{
+				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1Cck1ps6NGB9LGjrymNS21KC7fJyU4X3fw"},
+				{"       xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1          ", "1GTZk2iwgiDvTpgQ2XK6N4L7Nr98AcbjG6"},
 			},
 		},
 		"write to the same index multiple times": {
@@ -122,8 +134,8 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", 777},
 				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", 777},
 			},
-			[]keyAndIndex{
-				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", 778},
+			[]keyAndAddress{
+				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", "bc1qj98w6u98t6t0pwew4fvlxcmcevhqkznp2qjx2f"},
 			},
 		},
 	}
@@ -150,13 +162,13 @@ func TestDerivationIndexStorage_SaveThenGetNextIndex(t *testing.T) {
 				}
 			}
 			for _, expectation := range testData.expectations {
-				index, err := dis.GetNextIndex(expectation.publicKey, newMockBitcoinHandle())
+				address, err := dis.GetNextAddress(expectation.publicKey, newMockBitcoinHandle())
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				if index != uint32(expectation.index) {
-					t.Errorf("incorrect extendedPublicKey index for %s\nexpected: %d\nactual:   %d", expectation.publicKey, expectation.index, index)
+				if address != expectation.btcAddress {
+					t.Errorf("incorrect derived address for %s\nexpected: %s\nactual:   %s", expectation.publicKey, expectation.btcAddress, address)
 				}
 			}
 		})
@@ -273,7 +285,7 @@ func TestDerviationIndexStorage_BadPermissions(t *testing.T) {
 	}
 }
 
-func TestDerivationIndexStorage_MultipleAsyncGetNextIndexes(t *testing.T) {
+func TestDerivationIndexStorage_MultipleAsyncGetNextAddresses(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	if err != nil {
 		t.Fatal(err)
@@ -291,11 +303,11 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextIndexes(t *testing.T) {
 	}
 
 	type pair struct {
-		index uint32
-		err   error
+		address string
+		err     error
 	}
 	iterations := 10
-	getNextIndexResults := make(chan pair, iterations)
+	getNextAddressResults := make(chan pair, iterations)
 	for i := 0; i < iterations; i++ {
 		go func() {
 			//only validate multiples of 10 to test that each concurrent hit respects the previous call's validation
@@ -306,7 +318,7 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextIndexes(t *testing.T) {
 				index := uint32(840) + 10*uint32(i)
 				derivedAddress, err := deriveAddress(extendedPublicKey, index)
 				if err != nil {
-					getNextIndexResults <- pair{0, err}
+					getNextAddressResults <- pair{"", err}
 					return
 				}
 				validIndexes[derivedAddress] = true
@@ -314,19 +326,23 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextIndexes(t *testing.T) {
 			handle.isAddressUnused = func(btcAddress string) (bool, error) {
 				return validIndexes[btcAddress], nil
 			}
-			nextIndex, err := dis.GetNextIndex(extendedPublicKey, handle)
-			getNextIndexResults <- pair{nextIndex, err}
+			address, err := dis.GetNextAddress(extendedPublicKey, handle)
+			getNextAddressResults <- pair{address, err}
 		}()
 	}
 	for i := 0; i < iterations; i++ {
-		result := <-getNextIndexResults
+		result := <-getNextAddressResults
 		if result.err != nil {
 			t.Fatal(err)
 		}
 		// the valid indexes should be 840, 850, 860, 870...
 		expectedIndex := uint32(840) + 10*uint32(i)
-		if result.index != expectedIndex {
-			t.Errorf("unexpected next index\nexpected: %d\nactual:   %d", expectedIndex, result.index)
+		expectedAddress, err := deriveAddress(extendedPublicKey, expectedIndex)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if result.address != expectedAddress {
+			t.Errorf("unexpected address\nexpected: %s\nactual:   %s", expectedAddress, result.address)
 		}
 	}
 }
