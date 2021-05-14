@@ -162,6 +162,10 @@ func (dis *DerivationIndexStorage) GetNextAddress(
 			return "", err
 		}
 		ok, err := handle.IsAddressUnused(derivedAddress)
+		if err != nil {
+			return "", err
+		}
+
 		err = dis.save(extendedPublicKey, index)
 		if err != nil {
 			return "", err
