@@ -3,7 +3,7 @@ package bitcoin
 // Handle serves as an interface abstraction around bitcoin network queries
 type Handle interface {
 	Broadcast(transaction string) error
-	VbyteFee() (int32, error)
+	VbyteFeeFor25Blocks() (int32, error)
 	IsAddressUnused(btcAddress string) (bool, error)
 }
 
@@ -18,9 +18,9 @@ func (oh OfflineHandle) Broadcast(transaction string) error {
 	return nil
 }
 
-// VbyteFee returns a default fee of 75 in lieu of a network to pull a current
+// VbyteFeeFor25Blocks returns a default fee of 75 in lieu of a network to pull a current
 // fee from.
-func (oh OfflineHandle) VbyteFee() (int32, error) {
+func (oh OfflineHandle) VbyteFeeFor25Blocks() (int32, error) {
 	return 75, nil
 }
 

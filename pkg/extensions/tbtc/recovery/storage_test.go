@@ -7,23 +7,23 @@ import (
 )
 
 type mockBitcoinHandle struct {
-	broadcast       func(transaction string) error
-	vbyteFee        func() (int32, error)
-	isAddressUnused func(btcAddress string) (bool, error)
+	broadcast           func(transaction string) error
+	vbyteFeeFor25Blocks func() (int32, error)
+	isAddressUnused     func(btcAddress string) (bool, error)
 }
 
 func newMockBitcoinHandle() *mockBitcoinHandle {
 	return &mockBitcoinHandle{
-		broadcast:       func(_ string) error { return nil },
-		vbyteFee:        func() (int32, error) { return 75, nil },
-		isAddressUnused: func(_ string) (bool, error) { return true, nil },
+		broadcast:           func(_ string) error { return nil },
+		vbyteFeeFor25Blocks: func() (int32, error) { return 75, nil },
+		isAddressUnused:     func(_ string) (bool, error) { return true, nil },
 	}
 }
 func (mbh mockBitcoinHandle) Broadcast(transaction string) error {
 	return mbh.broadcast(transaction)
 }
-func (mbh mockBitcoinHandle) VbyteFee() (int32, error) {
-	return mbh.vbyteFee()
+func (mbh mockBitcoinHandle) VbyteFeeFor25Blocks() (int32, error) {
+	return mbh.vbyteFeeFor25Blocks()
 }
 func (mbh mockBitcoinHandle) IsAddressUnused(btcAddress string) (bool, error) {
 	return mbh.isAddressUnused(btcAddress)

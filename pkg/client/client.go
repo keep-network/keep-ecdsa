@@ -1083,7 +1083,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						vbyteFee, vbyteFeeError := electrsConnection.VbyteFee()
+						vbyteFee, vbyteFeeError := electrsConnection.VbyteFeeFor25Blocks()
 						if vbyteFeeError != nil {
 							logger.Errorf(
 								"failed to retrieve a vbyte fee estimate from %s, [%v]",

@@ -78,7 +78,7 @@ func TestElectrsConnection_vbyteFee(t *testing.T) {
 		},
 	})
 	expectedFee := int32(7)
-	fee, err := electrs.VbyteFee()
+	fee, err := electrs.VbyteFeeFor25Blocks()
 	if err != nil {
 		t.Fatal(err)
 	}

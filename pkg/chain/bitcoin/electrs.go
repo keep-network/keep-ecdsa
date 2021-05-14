@@ -61,8 +61,8 @@ func (e ElectrsConnection) Broadcast(transaction string) error {
 	return nil
 }
 
-// VbyteFee retrieves the 25-block estimate fee per vbyte on the bitcoin network.
-func (e ElectrsConnection) VbyteFee() (int32, error) {
+// VbyteFeeFor25Blocks retrieves the 25-block estimate fee per vbyte on the bitcoin network.
+func (e ElectrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 	if e.apiURL == "" {
 		return 0, fmt.Errorf("attempted to call VbyteFee with no apiURL")
 	}
