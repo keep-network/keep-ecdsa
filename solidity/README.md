@@ -19,22 +19,24 @@ npm install
 
 ### keep-core contracts
 
-This project depends on contracts migrated by `keep-core` project and expects its 
-migration artifacts to be provided in `build/contracts` directory.
-The contracts can be fetched from Google Cloud Bucket (for CI) or copied over
-from local source (for development) after running migrations in `keep-core` project.
+This project depends on contracts migrated by `keep-core` project and expects its
+migration artifacts to be provided in `artifacts` directory.
+The contracts can be fetched from published NPM package or local source (for development)
+after running migrations in `keep-core` project.
 
-To fetch required contracts addresses from `keep-core` project execute command:
-```sh
-KEEP_CORE_ARTIFACTS=~/go/src/github.com/keep-network/keep-core/contracts/solidity/build/contracts \
-   ./scripts/lcl-provision-external-contracts.sh
-```
-Remember to update `KEEP_CORE_ARTIFACTS` with path where migrations artifacts are
-stored on your machine.
+To fetch required contracts addresses from local `keep-core` project use the following
+commands:
+
+- in `keep-core/solidity` directory execute: `npm link`,
+- in `keep-ecdsa/solidity` directory execute: `npm link @keep-network/keep-core`.
+
+Remember that migration artifacts have to be available in `artifacts` directory. Truffle
+by default places them in `build/contracts` so you need to copy them or create
+a symlink.
 
 ### Staking and bonding
 
-Keeps creation depends on operator's KEEP token staking and available bonding 
+Keeps creation depends on operator's KEEP token staking and available bonding
 value. To initialize the operator:
 
 1. Initialize token staking in keep-core:
@@ -43,10 +45,11 @@ value. To initialize the operator:
     truffle exec ./scripts/demo.js --network local
     ```
 
-2. Initialize operator for Bonded ECDSA keep factory.
+2. Initialize operator for Bonded ECDSA Keep Factory and TBTC System contract address.
     ```sh
     # Run from `keep-ecdsa/solidity` directory
-    truffle exec scripts/lcl-initialize.js`
+    CLIENT_APP_ADDRESS="<TBTC_SYSTEM_ADDRESS>"\
+        truffle exec scripts/lcl-initialize.js`
     ```
 
 ## Usage
