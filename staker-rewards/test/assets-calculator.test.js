@@ -20,7 +20,6 @@ console.debug = function () {}
 const interval = {
   startBlock: 1000,
   endBlock: 2000,
-  end: 1619740800,
 }
 
 const operator = "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181"
@@ -57,6 +56,13 @@ const setupContractsMock = (context) => {
             (inputs) =>
               inputs.operator === operator &&
               inputs.operatorContract === operatorContract
+          ),
+        }),
+        balanceOf: (operator) => ({
+          call: mockMethod(
+            TokenStakingAddress,
+            "balanceOf",
+            (inputs) => inputs.operator === operator
           ),
         }),
         getLocks: (operator) => ({
