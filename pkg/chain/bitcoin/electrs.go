@@ -38,10 +38,7 @@ func (e *ElectrsConnection) setClient(client httpClient) {
 // Broadcast broadcasts a transaction the configured bitcoin network.
 func (e ElectrsConnection) Broadcast(transaction string) error {
 	if e.apiURL == "" {
-		for i := 0; i < 5; i++ {
-			logger.Warningf("Please broadcast Bitcoin transaction %s", transaction)
-		}
-		return nil
+		return fmt.Errorf("attempted to call Broadcast with no apiURL")
 	}
 	resp, err := e.client.Post(fmt.Sprintf("%s/tx", e.apiURL), "text/plain", strings.NewReader(transaction))
 	if err != nil {
@@ -67,7 +64,7 @@ func (e ElectrsConnection) Broadcast(transaction string) error {
 // VbyteFee retrieves the 25-block estimate fee per vbyte on the bitcoin network.
 func (e ElectrsConnection) VbyteFee() (int32, error) {
 	if e.apiURL == "" {
-		return 0, nil
+		return 0, fmt.Errorf("attempted to call VbyteFee with no apiURL")
 	}
 	resp, err := e.client.Get(fmt.Sprintf("%s/fee-estimates", e.apiURL))
 	if err != nil {
@@ -92,7 +89,7 @@ func (e ElectrsConnection) VbyteFee() (int32, error) {
 
 func (e ElectrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 	if e.apiURL == "" {
-		return true, nil
+		return false, fmt.Errorf("attempted to call IsAddressUnused with no apiURL")
 	}
 	resp, err := e.client.Get(fmt.Sprintf("%s/address/%s/txs", e.apiURL, btcAddress))
 	if err != nil {
