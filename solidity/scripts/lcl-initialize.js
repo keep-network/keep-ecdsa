@@ -5,10 +5,8 @@ const TokenStaking = artifacts.require(
   "@keep-network/keep-core/build/truffle/TokenStaking"
 )
 
-const {
-  TokenStakingAddress,
-  TBTCSystemAddress,
-} = require("../migrations/external-contracts")
+const { contracts } = require("@keep-network/common.js")
+const { readExternalContractAddress } = contracts
 
 module.exports = async function () {
   try {
@@ -22,13 +20,19 @@ module.exports = async function () {
 
     const accounts = await web3.eth.getAccounts()
     const operators = [accounts[1], accounts[2], accounts[3], accounts[4]]
-    const application = TBTCSystemAddress
+    const application = process.env.CLIENT_APP_ADDRESS
 
     let sortitionPoolAddress
     let bondedECDSAKeepFactory
     let tokenStaking
     let keepBonding
     let operatorContract
+
+    const TokenStakingAddress = readExternalContractAddress(
+      "@keep-network/keep-core",
+      "TokenStaking",
+      deployer
+    )
 
     const authorizeOperator = async (operator) => {
       try {
