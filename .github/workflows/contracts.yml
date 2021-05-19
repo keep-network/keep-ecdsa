@@ -341,7 +341,7 @@ jobs:
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
           query: |
-            keep-ecdsa-solidity-version = github.com/keep-network/keep-ecdsa/solidity#version
+            keep-core-solidity-version = github.com/keep-network/keep-core/solidity#version
 
       - name: Resolve latest contracts
         run: |
