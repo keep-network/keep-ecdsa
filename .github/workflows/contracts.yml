@@ -335,24 +335,32 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Get upstream packages' versions
-        uses: keep-network/upstream-builds-query@v1
-        id: upstream-builds-query
+      - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
-          upstream-builds: ${{ github.event.inputs.upstream_builds }}
-          query: |
-            keep-core-solidity-version = github.com/keep-network/keep-core/solidity#version
+          project_id: ${{ env.GOOGLE_PROJECT_ID }}
+          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Fetch external contracts artifacts
+        env:
+          CONTRACT_DATA_BUCKET_DIR: keep-core-celo
+          ETH_NETWORK_ID: ${{ env.NETWORK_ID }}
+        run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Resolve latest contracts
         run: |
-            npm update @keep-network/sortition-pools
-            npm install --save-exact \
-              @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
+            npm update \
+              @keep-network/keep-core \
+              @keep-network/sortition-pools
 
       - name: Migrate contracts
         env:
           CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+
+      - name: Upload contract data
+        run: |
+          cd build/contracts
+          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-ecdsa-celo
 
       # TODO: add NPM publish step once it's clear how artifacts should be tagged
