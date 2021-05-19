@@ -1060,12 +1060,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						var electrsConnection bitcoin.Handle
-						if tbtcConfig.Bitcoin.ElectrsURLWithDefault() == "" {
-							electrsConnection = bitcoin.OfflineHandle{}
-						} else {
-							electrsConnection = bitcoin.NewElectrsConnection(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
-						}
+						electrsConnection := bitcoin.NewElectrsConnection(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
 
 						beneficiaryAddress, err := recovery.ResolveAddress(
 							tbtcConfig.Bitcoin.BeneficiaryAddress,
