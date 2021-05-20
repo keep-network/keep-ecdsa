@@ -63,7 +63,7 @@ func TestDoWithRetryExceedTimeout(t *testing.T) {
 		t.Fatal("expected a timeout error")
 	}
 
-	expectedError := "retry timeout [1s] exceeded"
+	expectedError := "retry timeout [1s] exceeded: [try again please]"
 	if err.Error() != expectedError {
 		t.Errorf(
 			"unexpected error message\nactual:   [%v]\nexpected: [%v]",

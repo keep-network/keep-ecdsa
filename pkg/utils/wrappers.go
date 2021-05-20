@@ -20,19 +20,20 @@ func DoWithRetry(
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	var err error
 	for {
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("retry timeout [%v] exceeded", timeout)
+			return fmt.Errorf("retry timeout [%v] exceeded: [%v]", timeout, err)
 		default:
-			err := doFn(ctx)
+			err = doFn(ctx)
 			if err == nil {
 				return nil
 			}
 
 			timedOut := backoffWait(ctx, backoffTime)
 			if timedOut {
-				return fmt.Errorf("retry timeout [%v] exceeded", timeout)
+				return fmt.Errorf("retry timeout [%v] exceeded: [%v]", timeout, err)
 			}
 
 			backoffTime = calculateBackoff(
