@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 type mockClient struct {
@@ -176,6 +177,7 @@ func TestElectrsConnection_IsAddressUnused_ExpectedFailures(t *testing.T) {
 					return nil, nil
 				},
 			})
+			electrs.timeout = 2 * time.Second
 			_, err := electrs.IsAddressUnused(testData.btcAddress)
 			if err == nil {
 				t.Errorf("unexected error\nexpected: %s\nactual:   nil", testData.err)

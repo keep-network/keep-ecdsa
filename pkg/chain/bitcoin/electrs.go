@@ -26,15 +26,17 @@ type httpClient interface {
 
 // ElectrsConnection exposes a native API for interacting with an electrs http API.
 type ElectrsConnection struct {
-	apiURL string
-	client httpClient
+	apiURL  string
+	client  httpClient
+	timeout time.Duration
 }
 
 // NewElectrsConnection is a constructor for ElectrsConnection.
 func NewElectrsConnection(apiURL string) *ElectrsConnection {
 	return &ElectrsConnection{
-		apiURL: apiURL,
-		client: http.DefaultClient,
+		apiURL:  apiURL,
+		client:  http.DefaultClient,
+		timeout: defaultTimeout,
 	}
 }
 
@@ -47,7 +49,7 @@ func (e ElectrsConnection) Broadcast(transaction string) error {
 	if e.apiURL == "" {
 		return fmt.Errorf("attempted to call Broadcast with no apiURL")
 	}
-	return utils.DoWithDefaultRetry(defaultTimeout, func(ctx context.Context) error {
+	return utils.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
 		resp, err := e.client.Post(fmt.Sprintf("%s/tx", e.apiURL), "text/plain", strings.NewReader(transaction))
 		if err != nil {
 			return err
@@ -74,7 +76,7 @@ func (e ElectrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 		return 0, fmt.Errorf("attempted to call VbyteFee with no apiURL")
 	}
 	var vbyteFee int32
-	err := utils.DoWithDefaultRetry(defaultTimeout, func(ctx context.Context) error {
+	err := utils.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
 		resp, err := e.client.Get(fmt.Sprintf("%s/fee-estimates", e.apiURL))
 		if err != nil {
 			return err
@@ -107,7 +109,7 @@ func (e ElectrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 		return false, fmt.Errorf("attempted to call IsAddressUnused with no apiURL")
 	}
 	isAddressUnused := false
-	err := utils.DoWithDefaultRetry(defaultTimeout, func(ctx context.Context) error {
+	err := utils.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
 		resp, err := e.client.Get(fmt.Sprintf("%s/address/%s/txs", e.apiURL, btcAddress))
 		if err != nil {
 			return err
