@@ -12,7 +12,7 @@ on:
       - '.github/workflows/npm.yml' # TODO: Remove after testing
 
 jobs:
-  npm-migrate-publish-contracts:
+  npm-compile-publish-contracts:
     runs-on: ubuntu-latest
     defaults:
       run:
