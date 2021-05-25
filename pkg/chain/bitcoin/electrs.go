@@ -82,7 +82,7 @@ func (e ElectrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 			return err
 		}
 		if resp.StatusCode != 200 {
-			return fmt.Errorf("something went wrong with broadcast: [%s]", resp.Status)
+			return fmt.Errorf("something went wrong retreiving the vbyte fee: [%s]", resp.Status)
 		}
 
 		var fees map[string]float32
@@ -104,6 +104,8 @@ func (e ElectrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 	return vbyteFee, nil
 }
 
+// IsAddressUnused returns true if and only if the supplied bitcoin address has
+// no recorded transactions.
 func (e ElectrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 	if e.apiURL == "" {
 		return false, fmt.Errorf("attempted to call IsAddressUnused with no apiURL")
