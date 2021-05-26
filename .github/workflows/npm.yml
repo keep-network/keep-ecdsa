@@ -8,6 +8,7 @@ on:
       - "solidity/contracts/**"
       - "solidity/package.json"
       - "solidity/package-lock.json"
+  workflow_dispatch:
 
 jobs:
   npm-compile-publish-contracts:
