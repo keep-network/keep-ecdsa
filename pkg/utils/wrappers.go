@@ -24,7 +24,7 @@ func DoWithRetry(
 	for {
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("retry timeout [%v] exceeded: [%v]", timeout, err)
+			return fmt.Errorf("retry timeout [%v] exceeded; most recent error: [%v]", timeout, err)
 		default:
 			err = doFn(ctx)
 			if err == nil {
@@ -33,7 +33,7 @@ func DoWithRetry(
 
 			timedOut := backoffWait(ctx, backoffTime)
 			if timedOut {
-				return fmt.Errorf("retry timeout [%v] exceeded: [%v]", timeout, err)
+				return fmt.Errorf("retry timeout [%v] exceeded; most recent error: [%v]", timeout, err)
 			}
 
 			backoffTime = calculateBackoff(
