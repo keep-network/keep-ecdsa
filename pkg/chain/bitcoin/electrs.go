@@ -32,7 +32,7 @@ type electrsConnection struct {
 }
 
 // newElectrsConnection is a constructor for ElectrsConnection.
-func newElectrsConnection(apiURL string) *electrsConnection {
+func Connect(apiURL string) Handle {
 	return &electrsConnection{
 		apiURL:  apiURL,
 		client:  http.DefaultClient,

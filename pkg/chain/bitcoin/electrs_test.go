@@ -24,6 +24,13 @@ func (m mockClient) Post(url string, contentType string, reader io.Reader) (*htt
 	return m.mockPost(url, contentType, reader)
 }
 
+func newElectrsConnection(apiURL string) *electrsConnection {
+	return &electrsConnection{
+		apiURL:  apiURL,
+		timeout: defaultTimeout,
+	}
+}
+
 func TestElectrsConnection_broadcast(t *testing.T) {
 	apiURL := "example.org/api"
 	electrs := newElectrsConnection(apiURL)
