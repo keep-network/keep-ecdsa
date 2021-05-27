@@ -24,28 +24,28 @@ type httpClient interface {
 	Get(url string) (*http.Response, error)
 }
 
-// ElectrsConnection exposes a native API for interacting with an electrs http API.
-type ElectrsConnection struct {
+// electrsConnection exposes a native API for interacting with an electrs http API.
+type electrsConnection struct {
 	apiURL  string
 	client  httpClient
 	timeout time.Duration
 }
 
-// NewElectrsConnection is a constructor for ElectrsConnection.
-func NewElectrsConnection(apiURL string) *ElectrsConnection {
-	return &ElectrsConnection{
+// newElectrsConnection is a constructor for ElectrsConnection.
+func newElectrsConnection(apiURL string) *electrsConnection {
+	return &electrsConnection{
 		apiURL:  apiURL,
 		client:  http.DefaultClient,
 		timeout: defaultTimeout,
 	}
 }
 
-func (e *ElectrsConnection) setClient(client httpClient) {
+func (e *electrsConnection) setClient(client httpClient) {
 	e.client = client
 }
 
 // Broadcast broadcasts a transaction the configured bitcoin network.
-func (e ElectrsConnection) Broadcast(transaction string) error {
+func (e electrsConnection) Broadcast(transaction string) error {
 	if e.apiURL == "" {
 		return fmt.Errorf("attempted to call Broadcast with no apiURL")
 	}
@@ -71,7 +71,7 @@ func (e ElectrsConnection) Broadcast(transaction string) error {
 }
 
 // VbyteFeeFor25Blocks retrieves the 25-block estimate fee per vbyte on the bitcoin network.
-func (e ElectrsConnection) VbyteFeeFor25Blocks() (int32, error) {
+func (e electrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 	if e.apiURL == "" {
 		return 0, fmt.Errorf("attempted to call VbyteFee with no apiURL")
 	}
@@ -106,7 +106,7 @@ func (e ElectrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 
 // IsAddressUnused returns true if and only if the supplied bitcoin address has
 // no recorded transactions.
-func (e ElectrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
+func (e electrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 	if e.apiURL == "" {
 		return false, fmt.Errorf("attempted to call IsAddressUnused with no apiURL")
 	}

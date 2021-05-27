@@ -1060,13 +1060,13 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						electrsConnection := bitcoin.NewElectrsConnection(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
+						bitcoinHandle := bitcoin.Connect(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
 
 						beneficiaryAddress, err := recovery.ResolveAddress(
 							tbtcConfig.Bitcoin.BeneficiaryAddress,
 							derivationIndexStorage,
 							chainParams,
-							electrsConnection,
+							bitcoinHandle,
 						)
 						if err != nil {
 							logger.Errorf(
@@ -1078,7 +1078,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						vbyteFee, vbyteFeeError := electrsConnection.VbyteFeeFor25Blocks()
+						vbyteFee, vbyteFeeError := bitcoinHandle.VbyteFeeFor25Blocks()
 						if vbyteFeeError != nil {
 							logger.Errorf(
 								"failed to retrieve a vbyte fee estimate from %s, [%v]",
@@ -1147,7 +1147,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						broadcastError := electrsConnection.Broadcast(recoveryTransactionHex)
+						broadcastError := bitcoinHandle.Broadcast(recoveryTransactionHex)
 						if broadcastError != nil {
 							logger.Errorf(
 								"failed to broadcast the recovery transaction to %s, [%v]",

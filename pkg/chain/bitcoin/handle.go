@@ -6,3 +6,7 @@ type Handle interface {
 	VbyteFeeFor25Blocks() (int32, error)
 	IsAddressUnused(btcAddress string) (bool, error)
 }
+
+func Connect(apiURL string) Handle {
+	return newElectrsConnection(apiURL)
+}
