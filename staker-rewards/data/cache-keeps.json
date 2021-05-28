@@ -43992,8 +43992,8 @@
       "creationBlock": 11503420,
       "creationTimestamp": 1608642043,
       "status": {
-        "name": "active",
-        "timestamp": 1608642043
+        "name": "closed",
+        "timestamp": 1621033634
       }
     },
     {
@@ -45099,8 +45099,8 @@
       "creationBlock": 11515413,
       "creationTimestamp": 1608801121,
       "status": {
-        "name": "active",
-        "timestamp": 1608801121
+        "name": "closed",
+        "timestamp": 1621017671
       }
     },
     {
@@ -45981,8 +45981,8 @@
       "creationBlock": 11519123,
       "creationTimestamp": 1608850259,
       "status": {
-        "name": "active",
-        "timestamp": 1608850259
+        "name": "closed",
+        "timestamp": 1621438594
       }
     },
     {
@@ -46009,8 +46009,8 @@
       "creationBlock": 11519131,
       "creationTimestamp": 1608850347,
       "status": {
-        "name": "active",
-        "timestamp": 1608850347
+        "name": "closed",
+        "timestamp": 1621421067
       }
     },
     {
@@ -46023,8 +46023,8 @@
       "creationBlock": 11519136,
       "creationTimestamp": 1608850482,
       "status": {
-        "name": "active",
-        "timestamp": 1608850482
+        "name": "closed",
+        "timestamp": 1621040824
       }
     },
     {
@@ -46037,8 +46037,8 @@
       "creationBlock": 11519145,
       "creationTimestamp": 1608850556,
       "status": {
-        "name": "active",
-        "timestamp": 1608850556
+        "name": "closed",
+        "timestamp": 1621036909
       }
     },
     {
@@ -46051,8 +46051,8 @@
       "creationBlock": 11519156,
       "creationTimestamp": 1608850660,
       "status": {
-        "name": "active",
-        "timestamp": 1608850660
+        "name": "closed",
+        "timestamp": 1621413183
       }
     },
     {
@@ -46079,8 +46079,8 @@
       "creationBlock": 11519160,
       "creationTimestamp": 1608850761,
       "status": {
-        "name": "active",
-        "timestamp": 1608850761
+        "name": "closed",
+        "timestamp": 1621351840
       }
     },
     {
@@ -46093,8 +46093,8 @@
       "creationBlock": 11519178,
       "creationTimestamp": 1608850958,
       "status": {
-        "name": "active",
-        "timestamp": 1608850958
+        "name": "closed",
+        "timestamp": 1621032347
       }
     },
     {
@@ -46107,8 +46107,8 @@
       "creationBlock": 11519187,
       "creationTimestamp": 1608851105,
       "status": {
-        "name": "active",
-        "timestamp": 1608851105
+        "name": "closed",
+        "timestamp": 1621337666
       }
     },
     {
@@ -46121,8 +46121,8 @@
       "creationBlock": 11519190,
       "creationTimestamp": 1608851138,
       "status": {
-        "name": "active",
-        "timestamp": 1608851138
+        "name": "closed",
+        "timestamp": 1621253566
       }
     },
     {
@@ -46135,8 +46135,8 @@
       "creationBlock": 11519224,
       "creationTimestamp": 1608851629,
       "status": {
-        "name": "active",
-        "timestamp": 1608851629
+        "name": "closed",
+        "timestamp": 1621249044
       }
     },
     {
@@ -47088,8 +47088,8 @@
       "creationBlock": 11530994,
       "creationTimestamp": 1609007718,
       "status": {
-        "name": "active",
-        "timestamp": 1609007718
+        "name": "closed",
+        "timestamp": 1621595063
       }
     },
     {
@@ -48033,8 +48033,8 @@
       "creationBlock": 11533475,
       "creationTimestamp": 1609040724,
       "status": {
-        "name": "active",
-        "timestamp": 1609040724
+        "name": "closed",
+        "timestamp": 1621594592
       }
     },
     {
@@ -48843,8 +48843,8 @@
       "creationBlock": 11535969,
       "creationTimestamp": 1609074134,
       "status": {
-        "name": "active",
-        "timestamp": 1609074134
+        "name": "closed",
+        "timestamp": 1621421133
       }
     },
     {
@@ -49039,8 +49039,8 @@
       "creationBlock": 11536627,
       "creationTimestamp": 1609083026,
       "status": {
-        "name": "active",
-        "timestamp": 1609083026
+        "name": "closed",
+        "timestamp": 1621577900
       }
     },
     {
@@ -50574,8 +50574,8 @@
       "creationBlock": 11582941,
       "creationTimestamp": 1609695864,
       "status": {
-        "name": "active",
-        "timestamp": 1609695864
+        "name": "closed",
+        "timestamp": 1620989145
       }
     },
     {
@@ -52767,8 +52767,8 @@
       "creationBlock": 11926632,
       "creationTimestamp": 1614260079,
       "status": {
-        "name": "active",
-        "timestamp": 1614260079
+        "name": "closed",
+        "timestamp": 1621569479
       }
     },
     {
@@ -52865,8 +52865,8 @@
       "creationBlock": 11927558,
       "creationTimestamp": 1614272547,
       "status": {
-        "name": "active",
-        "timestamp": 1614272547
+        "name": "closed",
+        "timestamp": 1621421133
       }
     },
     {
@@ -54587,7 +54587,119 @@
         "name": "active",
         "timestamp": 1620341524
       }
+    },
+    {
+      "address": "0x2E26151dF981B340Bae54f82750a38E9905a3bdb",
+      "members": [
+        "0x36C56A69c2aeA23879b59dB0e99D57eF2ff77f06",
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0xA543441313F7FA7F9215B84854E6DC8386B93383"
+      ],
+      "creationBlock": 12436485,
+      "creationTimestamp": 1621048049,
+      "status": {
+        "name": "active",
+        "timestamp": 1621048049
+      }
+    },
+    {
+      "address": "0x0662612f9aDD5568fe9d995c4e784A6a5c9a73b3",
+      "members": [
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0x36C56A69c2aeA23879b59dB0e99D57eF2ff77f06",
+        "0x1e5801DB6779b44A90104AE856602424D8853807"
+      ],
+      "creationBlock": 12436240,
+      "creationTimestamp": 1621044756,
+      "status": {
+        "name": "active",
+        "timestamp": 1621044756
+      }
+    },
+    {
+      "address": "0x424f00030343d10CAc429249d26702e75f3cc4c0",
+      "members": [
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0x4F4f0D0dfd93513B3f4Cb116Fe9d0A005466F725",
+        "0x045E511f53DeBF55c9C0B4522f14F602f7C7cA81"
+      ],
+      "creationBlock": 12436935,
+      "creationTimestamp": 1621054529,
+      "status": {
+        "name": "active",
+        "timestamp": 1621054529
+      }
+    },
+    {
+      "address": "0xd5A35520d50eb673C497D5b22D6E491C9C56f487",
+      "members": [
+        "0x64A8856cBD255765D16B901a0B899daefC78FB13",
+        "0x3d7764aE9aC8259E5A5d224F5F56414f9749902a",
+        "0x81e1B56db174a935fe81E4b9839d6D92528090f4"
+      ],
+      "creationBlock": 12475499,
+      "creationTimestamp": 1621570268,
+      "status": {
+        "name": "active",
+        "timestamp": 1621570268
+      }
+    },
+    {
+      "address": "0x41250D055ED51f28d6741a92eaE5e77CC7d2583C",
+      "members": [
+        "0x36C56A69c2aeA23879b59dB0e99D57eF2ff77f06",
+        "0xABFB52f4CfAC3e6631c19a7e4Aa752110E1187B5",
+        "0xA543441313F7FA7F9215B84854E6DC8386B93383"
+      ],
+      "creationBlock": 12437186,
+      "creationTimestamp": 1621057910,
+      "status": {
+        "name": "active",
+        "timestamp": 1621057910
+      }
+    },
+    {
+      "address": "0xd70f9b4d279807F8d8d03C774C2D46a57afe0969",
+      "members": [
+        "0x5CA1F949c75833432d6BC8E3cb6FB23386F63426",
+        "0x0ee446643973b3F5FeD132D0455fEa23fbad0D1E",
+        "0x2BAF3650263348f3304c18900A674bB0BF830801"
+      ],
+      "creationBlock": 12436957,
+      "creationTimestamp": 1621054807,
+      "status": {
+        "name": "active",
+        "timestamp": 1621054807
+      }
+    },
+    {
+      "address": "0xf7D657aB04d285716e2bEE7A82b73D69A895f464",
+      "members": [
+        "0xd977144724Bc77FaeFAe219F958AE3947205d0b5",
+        "0x4bFa10B1538E8E765E995688D8EEc39C717B6797",
+        "0x81e1B56db174a935fe81E4b9839d6D92528090f4"
+      ],
+      "creationBlock": 12476053,
+      "creationTimestamp": 1621578072,
+      "status": {
+        "name": "active",
+        "timestamp": 1621578072
+      }
+    },
+    {
+      "address": "0x12F41b1494915DBC2E5a3E167F6A370d2fE6dCd0",
+      "members": [
+        "0xC05e7327F7BF188badD27E31066E6F74bD266A4E",
+        "0x81e1B56db174a935fe81E4b9839d6D92528090f4",
+        "0x36C56A69c2aeA23879b59dB0e99D57eF2ff77f06"
+      ],
+      "creationBlock": 12477339,
+      "creationTimestamp": 1621595233,
+      "status": {
+        "name": "active",
+        "timestamp": 1621595233
+      }
     }
   ],
-  "lastRefreshBlock": 12383566
+  "lastRefreshBlock": 12477339
 }
