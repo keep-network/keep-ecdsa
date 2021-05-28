@@ -247,12 +247,16 @@ func TestResolveAddress(t *testing.T) {
 				t.Fatal(err)
 			}
 			for _, usedIndex := range testData.usedIndexes {
-				dis.Save(testData.beneficiaryAddress, usedIndex)
+				dis.save(testData.beneficiaryAddress, usedIndex)
 			}
-			resolvedAddress, _, err := ResolveAddress(
+
+			handle := newMockBitcoinHandle()
+
+			resolvedAddress, err := ResolveAddress(
 				testData.beneficiaryAddress,
 				dis,
 				testData.chainParams,
+				handle,
 			)
 			if err != nil {
 				t.Fatal(err)
@@ -307,10 +311,11 @@ func TestResolveBeneficiaryAddress_ExpectedFailure(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, _, err = ResolveAddress(
+			_, err = ResolveAddress(
 				testData.extendedAddress,
 				dis,
 				testData.chainParams,
+				nil,
 			)
 			if err == nil {
 				t.Errorf("no error found\nexpected: %s", testData.failure)

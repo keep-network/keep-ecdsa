@@ -1060,10 +1060,13 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						beneficiaryAddress, addressIndex, err := recovery.ResolveAddress(
+						bitcoinHandle := bitcoin.Connect(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
+
+						beneficiaryAddress, err := recovery.ResolveAddress(
 							tbtcConfig.Bitcoin.BeneficiaryAddress,
 							derivationIndexStorage,
 							chainParams,
+							bitcoinHandle,
 						)
 						if err != nil {
 							logger.Errorf(
@@ -1075,8 +1078,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						electrsConnection := bitcoin.NewElectrsConnection(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
-						vbyteFee, vbyteFeeError := electrsConnection.VbyteFee()
+						vbyteFee, vbyteFeeError := bitcoinHandle.VbyteFeeFor25Blocks()
 						if vbyteFeeError != nil {
 							logger.Errorf(
 								"failed to retrieve a vbyte fee estimate from %s, [%v]",
@@ -1145,7 +1147,7 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
-						broadcastError := electrsConnection.Broadcast(recoveryTransactionHex)
+						broadcastError := bitcoinHandle.Broadcast(recoveryTransactionHex)
 						if broadcastError != nil {
 							logger.Errorf(
 								"failed to broadcast the recovery transaction to %s, [%v]",
@@ -1155,17 +1157,6 @@ func monitorKeepTerminatedEvent(
 
 							for i := 0; i < 5; i++ {
 								logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
-							}
-						}
-
-						if tbtcConfig.Bitcoin.BeneficiaryAddress != beneficiaryAddress {
-							err = derivationIndexStorage.Save(tbtcConfig.Bitcoin.BeneficiaryAddress, addressIndex)
-							if err != nil {
-								logger.Errorf(
-									"failed to persist the latest address derivation index for keep [%s]: [%v]",
-									keep.ID(),
-									err,
-								)
 							}
 						}
 

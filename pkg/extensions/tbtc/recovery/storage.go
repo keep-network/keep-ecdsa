@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 )
 
 const (
@@ -65,10 +66,8 @@ func (dis *DerivationIndexStorage) getStoragePath(extendedPublicKey string) (str
 	return path, directory, truncatedKey, nil
 }
 
-// Save marks an index as used for a particular extendedPublicKey
-func (dis *DerivationIndexStorage) Save(extendedPublicKey string, index uint32) error {
-	dis.mutex.Lock()
-	defer dis.mutex.Unlock()
+// save marks an index as used for a particular extendedPublicKey
+func (dis *DerivationIndexStorage) save(extendedPublicKey string, index uint32) error {
 	dirPath, directory, truncatedKey, err := dis.getStoragePath(extendedPublicKey)
 	if err != nil {
 		return err
@@ -131,27 +130,50 @@ func (dis *DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
 	return index, nil
 }
 
-// GetNextIndex returns the next unused index for the extended public key
-func (dis *DerivationIndexStorage) GetNextIndex(extendedPublicKey string) (uint32, error) {
+// GetNextAddress returns the next unused btc address for the extended public key
+func (dis *DerivationIndexStorage) GetNextAddress(
+	extendedPublicKey string,
+	handle bitcoin.Handle,
+) (string, error) {
 	dis.mutex.Lock()
 	defer dis.mutex.Unlock()
 	dirPath, _, _, err := dis.getStoragePath(extendedPublicKey)
 	if err != nil {
-		return 0, err
-	}
-	_, err = os.Stat(dirPath)
-	if os.IsNotExist(err) {
-		return 0, nil
-	}
-	if err != nil {
-		return 0, err
+		return "", err
 	}
 
-	index, err := dis.read(extendedPublicKey)
-	if err != nil {
-		return 0, err
+	lastIndex := -1
+	_, err = os.Stat(dirPath)
+	if err == nil {
+		lastIndex, err = dis.read(extendedPublicKey)
+		if err != nil {
+			return "", err
+		}
+	} else if !os.IsNotExist(err) {
+		return "", err
 	}
-	return uint32(index + 1), nil
+
+	startIndex := uint32(lastIndex + 1)
+	for i := uint32(0); true; i++ {
+		index := startIndex + i
+		derivedAddress, err := deriveAddress(strings.TrimSpace(extendedPublicKey), index)
+		if err != nil {
+			return "", err
+		}
+		ok, err := handle.IsAddressUnused(derivedAddress)
+		if err != nil {
+			return "", err
+		}
+
+		err = dis.save(extendedPublicKey, index)
+		if err != nil {
+			return "", err
+		}
+		if ok {
+			return derivedAddress, nil
+		}
+	}
+	return "", fmt.Errorf("something unexpected happened to break us out of the GetNextAddress retry loop")
 }
 
 func closeFile(file *os.File) {
