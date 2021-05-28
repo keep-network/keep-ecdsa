@@ -5,13 +5,13 @@ const TokenStaking = artifacts.require(
   "@keep-network/keep-core/build/truffle/TokenStaking"
 )
 
-const {
-  TokenStakingAddress,
-  TBTCSystemAddress,
-} = require("../migrations/external-contracts")
+const { contracts } = require("@keep-network/common.js")
+const { readExternalContractAddress } = contracts
 
 module.exports = async function () {
   try {
+    const networkID = await web3.eth.net.getId()
+
     // Assuming BTC/ETH rate = 50 to cover a keep bond of 1 BTC we need to have
     // 50 ETH / 3 members = 16,67 ETH of unbonded value for each member.
     // Here we set the bonding value to bigger value so members can handle
@@ -22,13 +22,19 @@ module.exports = async function () {
 
     const accounts = await web3.eth.getAccounts()
     const operators = [accounts[1], accounts[2], accounts[3], accounts[4]]
-    const application = TBTCSystemAddress
+    const application = process.env.CLIENT_APP_ADDRESS
 
     let sortitionPoolAddress
     let bondedECDSAKeepFactory
     let tokenStaking
     let keepBonding
     let operatorContract
+
+    const TokenStakingAddress = readExternalContractAddress(
+      "@keep-network/keep-core",
+      "TokenStaking",
+      networkID
+    )
 
     const authorizeOperator = async (operator) => {
       try {

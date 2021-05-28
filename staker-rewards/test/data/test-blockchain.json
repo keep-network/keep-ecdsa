@@ -211,6 +211,29 @@
               "operator": "0xF1De9490Bf7298b5F350cE74332Ad7cf8d5cB181",
               "operatorContract": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
               "output": "500000000000000000000000"
+            },
+            {
+              "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+              "operatorContract": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
+              "output": "0"
+            }
+          ],
+          "balanceOf": [
+            {
+              "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+              "output": "350000000000000000000000"
+            }
+          ],
+          "getLocks": [
+            {
+              "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
+              "output": {
+                "creators": [
+                  "0xeFcBDd0a2Ff96bA7C04f14e5D628f82b1eb191de",
+                  "0xa3CdCC1B0f2a5b7eb24e502D967Ae97a81F48ed5"
+                ],
+                "expirations": [1619740800, 1619740900]
+              }
             }
           ]
         }
@@ -240,6 +263,17 @@
             }
           }
         ]
+      },
+      {
+        "address": "0xA7d9E842EFB252389d613dA88EDa3731512e40bD",
+        "methods": {
+          "getKeepOpenedTimestamp": [
+            {
+              "keepAddress": "0xa3CdCC1B0f2a5b7eb24e502D967Ae97a81F48ed5",
+              "output": 1619740600
+            }
+          ]
+        }
       }
     ]
   }

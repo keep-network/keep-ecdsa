@@ -30,17 +30,38 @@ const TestToken = artifacts.require("./test/TestToken")
 const ECDSARewards = artifacts.require("ECDSARewards")
 const ECDSARewardsDistributor = artifacts.require("ECDSARewardsDistributor")
 
+const { contracts } = require("@keep-network/common.js")
+const { readExternalContractAddress } = contracts
+
 let initializationPeriod = 43200 // 12 hours in seconds
 
-let {
-  RandomBeaconAddress,
-  TokenStakingAddress,
-  TokenGrantAddress,
-  RegistryAddress,
-  KeepTokenAddress,
-} = require("./external-contracts")
-
 module.exports = async function (deployer, network) {
+  const RandomBeaconAddress = readExternalContractAddress(
+    "@keep-network/keep-core",
+    "KeepRandomBeaconService",
+    deployer
+  )
+  const TokenStakingAddress = readExternalContractAddress(
+    "@keep-network/keep-core",
+    "TokenStaking",
+    deployer
+  )
+  const TokenGrantAddress = readExternalContractAddress(
+    "@keep-network/keep-core",
+    "TokenGrant",
+    deployer
+  )
+  const RegistryAddress = readExternalContractAddress(
+    "@keep-network/keep-core",
+    "KeepRegistry",
+    deployer
+  )
+  const KeepTokenAddress = readExternalContractAddress(
+    "@keep-network/keep-core",
+    "KeepToken",
+    deployer
+  )
+
   const testNetworks = ["local", "ropsten", "keep_dev", "alfajores"]
 
   // Set the stake initialization period to 1 second for local development and testnet.

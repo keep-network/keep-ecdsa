@@ -127,10 +127,38 @@ export default class AssetsCalculator {
 
     const operatorContract = this.bondedECDSAKeepFactory.options.address
 
-    const keepStaked = await callWithRetry(
+    let keepStaked = await callWithRetry(
       this.tokenStaking.methods.activeStake(operator, operatorContract),
       block
     )
+
+    // If keep staked (active stake) checked against the factory contract is
+    // zero, there is a possibility the operator undelegated. We need to check
+    // whether it still has a locked active stake in one of the keep contracts.
+    // If so, we count that stake as keep staked.
+    if (keepStaked === "0") {
+      const locks = await callWithRetry(
+        this.tokenStaking.methods.getLocks(operator),
+        block
+      )
+
+      for (let i = 0; i < locks.creators.length; i++) {
+        const keepOpenedTimestamp = await callWithRetry(
+          this.bondedECDSAKeepFactory.methods.getKeepOpenedTimestamp(
+            locks.creators[i]
+          ),
+          block
+        )
+
+        if (keepOpenedTimestamp > 0) {
+          keepStaked = await callWithRetry(
+            this.tokenStaking.methods.balanceOf(operator),
+            block
+          )
+          break
+        }
+      }
+    }
 
     return new BigNumber(keepStaked)
   }

@@ -32,6 +32,13 @@ const setupContractsMock = (context) => {
         getSortitionPool: () => ({
           call: () => SortitionPoolAddress,
         }),
+        getKeepOpenedTimestamp: (keepAddress) => ({
+          call: mockMethod(
+            BondedECDSAKeepFactoryAddress,
+            "getKeepOpenedTimestamp",
+            (inputs) => inputs.keepAddress === keepAddress
+          ),
+        }),
       },
       options: {
         address: BondedECDSAKeepFactoryAddress,
@@ -49,6 +56,20 @@ const setupContractsMock = (context) => {
             (inputs) =>
               inputs.operator === operator &&
               inputs.operatorContract === operatorContract
+          ),
+        }),
+        balanceOf: (operator) => ({
+          call: mockMethod(
+            TokenStakingAddress,
+            "balanceOf",
+            (inputs) => inputs.operator === operator
+          ),
+        }),
+        getLocks: (operator) => ({
+          call: mockMethod(
+            TokenStakingAddress,
+            "getLocks",
+            (inputs) => inputs.operator === operator
           ),
         }),
         getDelegationInfo: (operator) => ({
@@ -105,6 +126,30 @@ describe("assets calculator", async () => {
       true
     )
   })
+
+  it(
+    "should return the right value of KEEP staked when operator undelegated " +
+      "but still has a locked stake",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const assetsCalculator = await AssetsCalculator.initialize(
+        mockContext,
+        interval
+      )
+
+      const assets = await assetsCalculator.calculateOperatorAssets(
+        undelegatingOperator
+      )
+
+      assert.equal(
+        assets.keepStaked.isEqualTo(new BigNumber(350000).multipliedBy(1e18)),
+        true
+      )
+    }
+  )
 
   it("should return the right value of ETH unbonded", async () => {
     const mockContext = createMockContext()
