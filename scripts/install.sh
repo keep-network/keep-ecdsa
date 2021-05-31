@@ -91,9 +91,12 @@ if [ "$CONTRACTS_ONLY" = false ] ; then
   # command. We need to update the `--allow-paths` value to be the parent directory
   # that is assumed to contain both current project and dependent project.
   # Ref: https://github.com/ethereum/solidity/issues/4623
-  TMP_FILE=$(mktemp /tmp/Makefile.XXXXXXXXXX)
+  TMP_FILE=$(mktemp /tmp/Makefile-ethereum.XXXXXXXXXX)
   sed 's/--allow-paths ${solidity_dir}/--allow-paths $(realpath ${SOLIDITY_DIR}\/..\/..\/)/g' pkg/chain/gen/ethereum/Makefile > $TMP_FILE
   mv $TMP_FILE pkg/chain/gen/ethereum/Makefile
+  TMP_FILE=$(mktemp /tmp/Makefile-celo.XXXXXXXXXX)
+  sed 's/--allow-paths ${solidity_dir}/--allow-paths $(realpath ${SOLIDITY_DIR}\/..\/..\/)/g' pkg/chain/gen/celo/Makefile > $TMP_FILE
+  mv $TMP_FILE pkg/chain/gen/celo/Makefile
 
   go generate ./...
   go build -a -o keep-ecdsa .
