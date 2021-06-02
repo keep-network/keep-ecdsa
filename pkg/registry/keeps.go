@@ -144,7 +144,6 @@ func (k *Keeps) LoadExistingKeeps() {
 
 	go func() {
 		for keepSigner := range keepSignersChannel {
-			fmt.Println(keepSigner, keepSigner.keepID)
 			if _, exists := k.myKeeps[keepSigner.keepID]; exists {
 				logger.Errorf(
 					"signer for keep [%s] already loaded; "+
