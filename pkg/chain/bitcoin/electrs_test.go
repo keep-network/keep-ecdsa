@@ -26,6 +26,21 @@ func TestBroadcast(t *testing.T) {
 	}
 }
 
+func TestBroadcast_EmptyApiURL(t *testing.T) {
+	expectedError := "attempted to call Broadcast with no apiURL"
+
+	electrs := &electrsConnection{}
+
+	err := electrs.Broadcast("1234567890")
+	if err.Error() != expectedError {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v",
+			err,
+			expectedError,
+		)
+	}
+}
+
 func TestBroadcast_ExpectFailure(t *testing.T) {
 	transaction := "0123456789aBcDeF"
 	mockedResponseCode := 400
@@ -67,6 +82,25 @@ func TestVbyteFeeFor25Blocks(t *testing.T) {
 	fee, err := electrs.VbyteFeeFor25Blocks()
 	if err != nil {
 		t.Fatal(err)
+	}
+	if fee != expectedFee {
+		t.Errorf("unexpected fee\nexpected: %d\nactual:   %d", expectedFee, fee)
+	}
+}
+
+func TestVbyteFeeFor25Blocks_EmptyApiURL(t *testing.T) {
+	expectedError := "attempted to call VbyteFeeFor25Blocks with no apiURL"
+	expectedFee := int32(0)
+
+	electrs := &electrsConnection{}
+
+	fee, err := electrs.VbyteFeeFor25Blocks()
+	if err.Error() != expectedError {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v",
+			err,
+			expectedError,
+		)
 	}
 	if fee != expectedFee {
 		t.Errorf("unexpected fee\nexpected: %d\nactual:   %d", expectedFee, fee)
@@ -150,7 +184,32 @@ func TestIsAddressUnused(t *testing.T) {
 	}
 }
 
+func TestIsAddressUnused_EmptyApiURL(t *testing.T) {
+	expectedError := "attempted to call IsAddressUnused with no apiURL"
+	expectedUnusedFlag := false
+
+	electrs := &electrsConnection{}
+
+	unusedFlag, err := electrs.IsAddressUnused("BtcAddress123")
+	if err.Error() != expectedError {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v",
+			err,
+			expectedError,
+		)
+	}
+	if unusedFlag != expectedUnusedFlag {
+		t.Errorf(
+			"unexpected unused flag\nexpected: %v\nactual:   %v",
+			expectedUnusedFlag,
+			unusedFlag,
+		)
+	}
+}
+
 func TestIsAddressUnused_ExpectedFailures(t *testing.T) {
+	expectedUnusedFlag := false
+
 	testData := map[string]struct {
 		btcAddress   string
 		responseCode int
@@ -190,11 +249,20 @@ func TestIsAddressUnused_ExpectedFailures(t *testing.T) {
 				},
 			)
 
-			_, err := electrs.IsAddressUnused(testData.btcAddress)
+			unusedFlag, err := electrs.IsAddressUnused(testData.btcAddress)
 			if err == nil {
 				t.Errorf("unexected error\nexpected: %s\nactual:   nil", testData.err)
 			}
+
 			checkWrappedError(err, testData.err, t)
+
+			if unusedFlag != expectedUnusedFlag {
+				t.Errorf(
+					"unexpected unused flag\nexpected: %v\nactual:   %v",
+					expectedUnusedFlag,
+					unusedFlag,
+				)
+			}
 		})
 	}
 }
@@ -204,7 +272,6 @@ const testApiUrl = "example.org/api"
 func newTestElectrsConnection(client mockClient) *electrsConnection {
 	electrs := &electrsConnection{
 		apiURL:  testApiUrl,
-		client:  http.DefaultClient,
 		timeout: 100 * time.Millisecond,
 	}
 
@@ -278,7 +345,7 @@ func mockResponse(statusCode int, body string) *http.Response {
 func checkWrappedError(errWrapper error, expectedWrappedError string, t *testing.T) {
 	if errWrapper == nil {
 		t.Errorf(
-			"unexpected error\nexpected: %s\nactual:   %v",
+			"unexpected error\nexpected: %v\nactual:   %v",
 			expectedWrappedError,
 			errWrapper,
 		)
@@ -287,7 +354,7 @@ func checkWrappedError(errWrapper error, expectedWrappedError string, t *testing
 	wrappedError := errors.Unwrap(errWrapper)
 	if wrappedError.Error() != expectedWrappedError {
 		t.Errorf(
-			"unexpected unwrapped error\nexpected: %s\nactual:   %v",
+			"unexpected unwrapped error\nexpected: %v\nactual:   %v",
 			expectedWrappedError,
 			wrappedError,
 		)
