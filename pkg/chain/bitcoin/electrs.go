@@ -54,18 +54,29 @@ func (e electrsConnection) Broadcast(transaction string) error {
 		if err != nil {
 			return err
 		}
-		if resp.StatusCode != 200 {
-			return fmt.Errorf("something went wrong with broadcast: [%s], transaction: [%s]", resp.Status, transaction)
-		}
-		transactionIDBuffer := new(strings.Builder)
-		bytesCopied, err := io.Copy(transactionIDBuffer, resp.Body)
+
+		responseBody, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return fmt.Errorf("something went wrong reading the electrs response body: [%v]", err)
+			return fmt.Errorf(
+				"something went wrong trying to read response for bitcoin transaction broadcast: [%w]; raw transaction: [%s]",
+				err,
+				transaction,
+			)
 		}
-		if bytesCopied == 0 {
-			return fmt.Errorf("something went wrong reading the electrs response body: 0 bytes copied")
+
+		if resp.StatusCode != 200 {
+			return fmt.Errorf(
+				"failed to broadcast transaction - status: [%s], payload: [%s]; raw transaction: [%s]",
+				resp.Status,
+				responseBody,
+				transaction,
+			)
 		}
-		logger.Infof("successfully broadcast the bitcoin transaction: %s", transactionIDBuffer.String())
+
+		logger.Infof(
+			"successfully broadcast the bitcoin transaction: [%s]",
+			responseBody,
+		)
 		return nil
 	})
 }
@@ -82,7 +93,19 @@ func (e electrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 			return err
 		}
 		if resp.StatusCode != 200 {
-			return fmt.Errorf("something went wrong retreiving the vbyte fee: [%s]", resp.Status)
+			responseBody, err := io.ReadAll(resp.Body)
+			if err != nil {
+				logger.Error(
+					"something went wrong trying to read error response for bitcoin fee estimates: [%w]",
+					err,
+				)
+			}
+
+			return fmt.Errorf(
+				"failed to get fee estimates - status: [%s], payload: [%s]",
+				resp.Status,
+				responseBody,
+			)
 		}
 
 		var fees map[string]float32
@@ -117,23 +140,26 @@ func (e electrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 			return err
 		}
 		if resp.StatusCode != 200 {
-			transactionIDBuffer := new(strings.Builder)
-			_, err = io.Copy(transactionIDBuffer, resp.Body)
+			responseBody, err := io.ReadAll(resp.Body)
 			if err != nil {
-				logger.Error("something went wrong trying to unmarshal the error response for address %s", btcAddress)
+				logger.Error(
+					"something went wrong trying to read error response for transactions of bitcoin address [%s]: [%w]",
+					btcAddress,
+					err,
+				)
 			}
 			return fmt.Errorf(
-				"something went wrong trying to get information about address %s - status: [%s], payload: [%s]",
+				"something went wrong trying to get information about address [%s] - status: [%s], payload: [%s]",
 				btcAddress,
 				resp.Status,
-				transactionIDBuffer.String(),
+				responseBody,
 			)
 		}
 
 		responses := []interface{}{}
 		err = json.NewDecoder(resp.Body).Decode(&responses)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to decode response body: [%w]", err)
 		}
 
 		isAddressUnused = len(responses) == 0
