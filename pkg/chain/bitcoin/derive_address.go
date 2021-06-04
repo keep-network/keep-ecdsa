@@ -128,12 +128,15 @@ func ValidateAddress(btcAddress string, chainParams *chaincfg.Params) error {
 	_, err := btcutil.DecodeAddress(btcAddress, chainParams)
 	if err != nil {
 		_, err = DeriveAddress(btcAddress, 0)
-		return fmt.Errorf(
-			"[%s] is not a valid btc address using chain [%s]: [%w]",
-			btcAddress,
-			chainParams.Name,
-			err,
-		)
+		if err != nil {
+			return fmt.Errorf(
+				"[%s] is not a valid btc address using chain [%s]: [%w]",
+				btcAddress,
+				chainParams.Name,
+				err,
+			)
+		}
+		return nil
 	}
 	return nil
 }
