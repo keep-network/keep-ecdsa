@@ -14,6 +14,19 @@ type Config struct {
 	ElectrsURL         *string
 }
 
+// Validate returns nil if the configuration is suitable for bitcoin recovery,
+// and an error detailing what went wrong if not.
+func (c Config) Validate() error {
+	if c.BeneficiaryAddress == "" {
+		return fmt.Errorf("a bitcoin address or extended public key (*pub) is required; configure one at [Extensions.TBTC.Bitcoin.BeneficiaryAddress]")
+	}
+	_, err := c.ChainParams()
+	if err != nil {
+		return fmt.Errorf("a valid chain name is required; choose between [mainnet, regtest, simnet, testnet3] and configure it at [Extensions.TBTC.Bitcoin.BitcoinChainName]: [%v]", err)
+	}
+	return nil
+}
+
 // ChainParams parses the net param name into the associated chaincfg.Params
 func (c Config) ChainParams() (*chaincfg.Params, error) {
 	switch c.BitcoinChainName {
