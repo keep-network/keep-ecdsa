@@ -1054,7 +1054,7 @@ func monitorKeepTerminatedEvent(
 						chainParams, err := tbtcConfig.Bitcoin.ChainParams()
 						if err != nil {
 							logger.Errorf(
-								"failed to parse the the configured net params: [%v]",
+								"failed to parse the configured net params: [%v]",
 								err,
 							)
 							return err
