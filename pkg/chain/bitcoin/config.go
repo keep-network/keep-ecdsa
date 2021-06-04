@@ -20,9 +20,16 @@ func (c Config) Validate() error {
 	if c.BeneficiaryAddress == "" {
 		return fmt.Errorf("a bitcoin address or extended public key (*pub) is required; configure one at [Extensions.TBTC.Bitcoin.BeneficiaryAddress]")
 	}
-	_, err := c.ChainParams()
+	chainParams, err := c.ChainParams()
 	if err != nil {
-		return fmt.Errorf("a valid chain name is required; choose between [mainnet, regtest, simnet, testnet3] and configure it at [Extensions.TBTC.Bitcoin.BitcoinChainName]: [%v]", err)
+		return fmt.Errorf("a valid chain name is required; choose between [mainnet, regtest, simnet, testnet3] and configure it at [Extensions.TBTC.Bitcoin.BitcoinChainName]: [%w]", err)
+	}
+	err = ValidateAddress(c.BeneficiaryAddress, chainParams)
+	if err != nil {
+		return fmt.Errorf(
+			"a valid bitcoin address or extended public key (*pub) is required; configure one at [Extensions.TBTC.Bitcoin.BeneficiaryAddress]: [%w]",
+			err,
+		)
 	}
 	return nil
 }
