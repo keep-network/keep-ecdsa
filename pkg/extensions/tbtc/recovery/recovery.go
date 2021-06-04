@@ -145,6 +145,25 @@ func constructUnsignedTransaction(
 	return tx, nil
 }
 
+// serializeBtcTransaction encodes a transaction to a hex string.
+func serializeBtcTransaction(transaction *wire.MsgTx) string {
+	// BtcEncode writes bytes, we wrap it in an hex encoder wrapped
+	// around a strings. Builder to get a hex string.
+	transactionHexBuilder := &strings.Builder{}
+	transactionWriter := hex.NewEncoder(transactionHexBuilder)
+	// We use BtcEncode instead of Serialize here since we're preparing for the
+	// transaction to be sent out of our network or executed on the bitcoin
+	// blockchain, rather than persisting the information. For more information,
+	// check out the btcsuite/btcd/wire/msgtx.go documentation.
+	transaction.BtcEncode(
+		transactionWriter,
+		wire.ProtocolVersion,
+		wire.WitnessEncoding,
+	)
+
+	return transactionHexBuilder.String()
+}
+
 // buildSignedTransactionHexString generates the final transaction hex string
 // that can then be submitted to the chain
 func buildSignedTransactionHexString(
@@ -166,21 +185,7 @@ func buildSignedTransactionHexString(
 		(*btcec.PublicKey)(publicKey).SerializeCompressed(),
 	}
 
-	// BtcEncode writes bytes, we wrap it in an hex encoder wrapped
-	// around a strings. Builder to get a hex string.
-	transactionHexBuilder := &strings.Builder{}
-	transactionWriter := hex.NewEncoder(transactionHexBuilder)
-	// We use BtcEncode instead of Serialize here since we're preparing for the
-	// transaction to be sent out of our network or executed on the bitcoin
-	// blockchain, rather than persisting the information. For more information,
-	// check out the btcsuite/btcd/wire/msgtx.go documentation.
-	signedTransaction.BtcEncode(
-		transactionWriter,
-		wire.ProtocolVersion,
-		wire.WitnessEncoding,
-	)
-
-	return transactionHexBuilder.String(), nil
+	return serializeBtcTransaction(signedTransaction), nil
 }
 
 // BuildBitcoinTransaction generates a signed transaction hex string that can
@@ -245,6 +250,12 @@ func BuildBitcoinTransaction(
 		return "", err
 	}
 
+	logger.Debugf(
+		"constructed unsigned liquidation recovery transcation for keep [%s]: [%s]",
+		keep.ID(),
+		serializeBtcTransaction(unsignedTransaction),
+	)
+
 	sighashBytes, err := txscript.CalcWitnessSigHash(
 		scriptCodeBytes,
 		txscript.NewTxSigHashes(unsignedTransaction),
@@ -262,6 +273,12 @@ func BuildBitcoinTransaction(
 		return "", err
 	}
 
+	logger.Debugf(
+		"calculated liquidation recovery transcation sighash for keep [%s]: [%x]",
+		keep.ID(),
+		sighashBytes,
+	)
+
 	signature, err := signer.CalculateSignature(
 		ctx,
 		sighashBytes,
@@ -276,6 +293,12 @@ func BuildBitcoinTransaction(
 		)
 		return "", err
 	}
+
+	logger.Debugf(
+		"calculated liquidation recovery transcation signature for keep [%s]: [%v]",
+		keep.ID(),
+		signature,
+	)
 
 	return buildSignedTransactionHexString(
 		unsignedTransaction,
