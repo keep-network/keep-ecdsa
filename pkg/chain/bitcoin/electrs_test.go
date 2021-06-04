@@ -16,7 +16,7 @@ func TestBroadcast(t *testing.T) {
 
 	electrs := newTestElectrsConnection(
 		mockClient{
-			mockPost: mockPost(fmt.Sprintf("%s/tx", testApiUrl), transaction, 200, "<fake-tx-id>", t),
+			mockPost: mockPost(fmt.Sprintf("%s/tx", testAPIURL), transaction, 200, "<fake-tx-id>", t),
 		},
 	)
 
@@ -50,7 +50,7 @@ func TestBroadcast_ExpectFailure(t *testing.T) {
 	electrs := newTestElectrsConnection(
 		mockClient{
 			mockPost: mockPost(
-				fmt.Sprintf("%s/tx", testApiUrl),
+				fmt.Sprintf("%s/tx", testAPIURL),
 				transaction,
 				mockedResponseCode,
 				mockedResponseBody,
@@ -71,7 +71,7 @@ func TestVbyteFeeFor25Blocks(t *testing.T) {
 	electrs := newTestElectrsConnection(
 		mockClient{
 			mockGet: mockGet(
-				fmt.Sprintf("%s/fee-estimates", testApiUrl),
+				fmt.Sprintf("%s/fee-estimates", testAPIURL),
 				mockedResponseCode,
 				mockedResponseBody,
 				t,
@@ -116,7 +116,7 @@ func TestVbyteFeeFor25Blocks_ExpectFailure(t *testing.T) {
 	electrs := newTestElectrsConnection(
 		mockClient{
 			mockGet: mockGet(
-				fmt.Sprintf("%s/fee-estimates", testApiUrl),
+				fmt.Sprintf("%s/fee-estimates", testAPIURL),
 				mockedResponseCode,
 				mockedResponseBody,
 				t,
@@ -161,7 +161,7 @@ func TestIsAddressUnused(t *testing.T) {
 			electrs := newTestElectrsConnection(
 				mockClient{
 					mockGet: mockGet(
-						fmt.Sprintf("%s/address/%s/txs", testApiUrl, testData.btcAddress),
+						fmt.Sprintf("%s/address/%s/txs", testAPIURL, testData.btcAddress),
 						200,
 						testData.response,
 						t,
@@ -241,7 +241,7 @@ func TestIsAddressUnused_ExpectedFailures(t *testing.T) {
 			electrs := newTestElectrsConnection(
 				mockClient{
 					mockGet: mockGet(
-						fmt.Sprintf("%s/address/%s/txs", testApiUrl, testData.btcAddress),
+						fmt.Sprintf("%s/address/%s/txs", testAPIURL, testData.btcAddress),
 						testData.responseCode,
 						testData.response,
 						t,
@@ -267,11 +267,11 @@ func TestIsAddressUnused_ExpectedFailures(t *testing.T) {
 	}
 }
 
-const testApiUrl = "example.org/api"
+const testAPIURL = "example.org/api"
 
 func newTestElectrsConnection(client mockClient) *electrsConnection {
 	electrs := &electrsConnection{
-		apiURL:  testApiUrl,
+		apiURL:  testAPIURL,
 		timeout: 100 * time.Millisecond,
 	}
 
