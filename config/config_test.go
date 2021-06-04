@@ -122,6 +122,10 @@ func TestReadConfig(t *testing.T) {
 			},
 			expectedValue: chaincfg.MainNetParams,
 		},
+		"Extensions.TBTC.Bitcoin.Validate()": {
+			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.Bitcoin.Validate() },
+			expectedValue: nil,
+		},
 	}
 
 	for testName, test := range configReadTests {
