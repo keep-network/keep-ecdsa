@@ -1025,6 +1025,11 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
+						logger.Infof(
+							"starting liquidation recovery protocol for keep [%s]",
+							keep.ID(),
+						)
+
 						members, err := keep.GetMembers()
 						if err != nil {
 							logger.Errorf(
@@ -1126,6 +1131,14 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
+						logger.Infof(
+							"building liquidation recovery transaction for keep [%s] "+
+								"with receiving addresses [%v] and maxFeePerVByte [%d]",
+							keep.ID(),
+							btcAddresses,
+							maxFeePerVByte,
+						)
+
 						recoveryTransactionHex, err := recovery.BuildBitcoinTransaction(
 							ctx,
 							networkProvider,
@@ -1146,6 +1159,12 @@ func monitorKeepTerminatedEvent(
 							return err
 						}
 
+						logger.Debugf(
+							"broadcasting liquidation recovery transaction for keep [%s]: [%s]",
+							keep.ID(),
+							recoveryTransactionHex,
+						)
+
 						broadcastError := bitcoinHandle.Broadcast(recoveryTransactionHex)
 						if broadcastError != nil {
 							logger.Errorf(
@@ -1158,6 +1177,11 @@ func monitorKeepTerminatedEvent(
 								logger.Warningf("Please broadcast Bitcoin transaction %s", recoveryTransactionHex)
 							}
 						}
+
+						logger.Debugf(
+							"unregistering keep [%s] after liquidation recovery",
+							keep.ID(),
+						)
 
 						keepsRegistry.UnregisterKeep(keep.ID())
 						keepTerminated <- event
