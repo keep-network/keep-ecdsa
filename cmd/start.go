@@ -140,9 +140,13 @@ func Start(c *cli.Context) error {
 		return err
 	}
 
-	err = config.Extensions.TBTC.Bitcoin.Validate()
+	isUnconfigured, err := config.Extensions.TBTC.Bitcoin.Validate()
 	if err != nil {
-		logger.Warnf("invalid bitcoin configuration for tbtc extension: [%v]", err)
+		if isUnconfigured {
+			logger.Warnf("missing bitcoin configuration for tbtc extension: [%v]", err)
+		} else {
+			return err
+		}
 	}
 
 	clientHandle := client.Initialize(
