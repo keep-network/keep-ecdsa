@@ -31,7 +31,7 @@ type electrsConnection struct {
 	timeout time.Duration
 }
 
-// newElectrsConnection is a constructor for ElectrsConnection.
+// Connect is a constructor for electrsConnection.
 func Connect(apiURL string) Handle {
 	return &electrsConnection{
 		apiURL:  apiURL,
