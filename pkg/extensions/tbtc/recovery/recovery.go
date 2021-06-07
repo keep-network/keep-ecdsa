@@ -174,11 +174,14 @@ func buildSignedTransactionHexString(
 	// transaction to be sent out of our network or executed on the bitcoin
 	// blockchain, rather than persisting the information. For more information,
 	// check out the btcsuite/btcd/wire/msgtx.go documentation.
-	signedTransaction.BtcEncode(
+	err := signedTransaction.BtcEncode(
 		transactionWriter,
 		wire.ProtocolVersion,
 		wire.WitnessEncoding,
 	)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode signed transaction: [%w]", err)
+	}
 
 	return transactionHexBuilder.String(), nil
 }
