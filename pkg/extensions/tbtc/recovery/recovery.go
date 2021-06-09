@@ -145,28 +145,6 @@ func constructUnsignedTransaction(
 	return tx, nil
 }
 
-// serializeBtcTransaction encodes a transaction to a hex string.
-func serializeBtcTransaction(transaction *wire.MsgTx) (string, error) {
-	// BtcEncode writes bytes, we wrap it in an hex encoder wrapped
-	// around a strings. Builder to get a hex string.
-	transactionHexBuilder := &strings.Builder{}
-	transactionWriter := hex.NewEncoder(transactionHexBuilder)
-	// We use BtcEncode instead of Serialize here since we're preparing for the
-	// transaction to be sent out of our network or executed on the bitcoin
-	// blockchain, rather than persisting the information. For more information,
-	// check out the btcsuite/btcd/wire/msgtx.go documentation.
-	err := transaction.BtcEncode(
-		transactionWriter,
-		wire.ProtocolVersion,
-		wire.WitnessEncoding,
-	)
-	if err != nil {
-		return "", fmt.Errorf("failed to encode signed transaction: [%w]", err)
-	}
-
-	return transactionHexBuilder.String(), nil
-}
-
 // buildSignedTransactionHexString generates the final transaction hex string
 // that can then be submitted to the chain
 func buildSignedTransactionHexString(
@@ -188,7 +166,24 @@ func buildSignedTransactionHexString(
 		(*btcec.PublicKey)(publicKey).SerializeCompressed(),
 	}
 
-	return serializeBtcTransaction(signedTransaction)
+	// BtcEncode writes bytes, we wrap it in an hex encoder wrapped
+	// around a strings. Builder to get a hex string.
+	transactionHexBuilder := &strings.Builder{}
+	transactionWriter := hex.NewEncoder(transactionHexBuilder)
+	// We use BtcEncode instead of Serialize here since we're preparing for the
+	// transaction to be sent out of our network or executed on the bitcoin
+	// blockchain, rather than persisting the information. For more information,
+	// check out the btcsuite/btcd/wire/msgtx.go documentation.
+	err := signedTransaction.BtcEncode(
+		transactionWriter,
+		wire.ProtocolVersion,
+		wire.WitnessEncoding,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode signed transaction: [%w]", err)
+	}
+
+	return transactionHexBuilder.String(), nil
 }
 
 // BuildBitcoinTransaction generates a signed transaction hex string that can
