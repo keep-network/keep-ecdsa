@@ -6,6 +6,9 @@ The on- and off-chain pieces of ECDSA keeps and Bonded ECDSA keeps
 for the Keep network. Builds on top of and requires the
 https://github.com/keep-network/keep-core/[core system]
 
+This is development documentation, to see how to run ECDSA client on
+mainnet or testnet, please visit link:docs/run-keep-ecdsa.adoc[Run Keep ECDSA client].
+
 toc::[]
 
 
