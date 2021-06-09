@@ -1059,7 +1059,7 @@ func monitorKeepTerminatedEvent(
 						chainParams, err := tbtcConfig.Bitcoin.ChainParams()
 						if err != nil {
 							logger.Errorf(
-								"failed to parse the the configured net params: [%v]",
+								"failed to parse the configured net params: [%v]",
 								err,
 							)
 							return err
@@ -1086,8 +1086,7 @@ func monitorKeepTerminatedEvent(
 						vbyteFee, vbyteFeeError := bitcoinHandle.VbyteFeeFor25Blocks()
 						if vbyteFeeError != nil {
 							logger.Errorf(
-								"failed to retrieve a vbyte fee estimate from %s, [%v]",
-								tbtcConfig.Bitcoin.ElectrsURLWithDefault(),
+								"failed to retrieve a vbyte fee estimate, [%v]",
 								vbyteFeeError,
 							)
 							// Since the electrs connection is optional, we don't return the error
@@ -1169,8 +1168,8 @@ func monitorKeepTerminatedEvent(
 						broadcastError := bitcoinHandle.Broadcast(recoveryTransactionHex)
 						if broadcastError != nil {
 							logger.Errorf(
-								"failed to broadcast the recovery transaction to %s, [%v]",
-								*tbtcConfig.Bitcoin.ElectrsURL,
+								"failed to broadcast liquidation recovery transaction for keep [%s]: [%v]",
+								keep.ID(),
 								broadcastError,
 							)
 
