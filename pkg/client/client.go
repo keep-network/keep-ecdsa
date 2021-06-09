@@ -988,10 +988,14 @@ func monitorKeepTerminatedEvent(
 			)
 
 			go func(event *chain.KeepTerminatedEvent) {
-				_, err := tbtcConfig.Bitcoin.Validate()
+				err := tbtcConfig.Bitcoin.Validate()
 				if err != nil {
-					logger.Errorf("failed to handle KeepTerminatedEvent due to invalid bitcoin configuration for tbtc extension: [%v]", err)
-					return
+					if (bitcoin.Config{}) == tbtcConfig.Bitcoin {
+						logger.Warnf("missing bitcoin configuration for tbtc extension: [%v]", err)
+					} else {
+						logger.Errorf("misconfigured bitcoin configured for tbtc extension: [%v]", err)
+						return
+					}
 				}
 				err = utils.DoWithDefaultRetry(
 					tbtcConfig.GetLiquidationRecoveryTimeout(),

@@ -124,17 +124,9 @@ func TestReadConfig(t *testing.T) {
 		},
 		"Extensions.TBTC.Bitcoin.Validate() error": {
 			readValueFunc: func(c *Config) interface{} {
-				_, err := c.Extensions.TBTC.Bitcoin.Validate()
-				return err
+				return c.Extensions.TBTC.Bitcoin.Validate()
 			},
 			expectedValue: nil,
-		},
-		"Extensions.TBTC.Bitcoin.Validate() isUnconfigured": {
-			readValueFunc: func(c *Config) interface{} {
-				isUnconfigured, _ := c.Extensions.TBTC.Bitcoin.Validate()
-				return isUnconfigured
-			},
-			expectedValue: true,
 		},
 	}
 

@@ -19,6 +19,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-ecdsa/config"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 	"github.com/keep-network/keep-ecdsa/pkg/client"
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc/recovery"
 	"github.com/keep-network/keep-ecdsa/pkg/firewall"
@@ -140,11 +141,12 @@ func Start(c *cli.Context) error {
 		return err
 	}
 
-	isUnconfigured, err := config.Extensions.TBTC.Bitcoin.Validate()
+	err = config.Extensions.TBTC.Bitcoin.Validate()
 	if err != nil {
-		if isUnconfigured {
+		if (bitcoin.Config{}) == config.Extensions.TBTC.Bitcoin {
 			logger.Warnf("missing bitcoin configuration for tbtc extension: [%v]", err)
 		} else {
+			logger.Errorf("misconfigured bitcoin configured for tbtc extension: [%v]", err)
 			return err
 		}
 	}
