@@ -64,6 +64,15 @@ module.exports = {
       },
       network_id: 44787,
     },
+    mainnet: {
+      provider: function () {
+        return new HDWalletProvider({
+          privateKeys: [process.env.ETH_ACCOUNT_PRIVATE_KEY],
+          providerOrUrl: process.env.ETH_HOSTNAME,
+        })
+      },
+      network_id: 1,
+    },
   },
   // Configure your compilers
   compilers: {
