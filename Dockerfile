@@ -1,4 +1,4 @@
-FROM golang:1.13.8-alpine3.10 AS gobuild
+FROM golang:1.16.5-alpine3.12 AS gobuild
 
 # HOST_CHAIN argument defines the chain implementation which should be used
 # during image build process.
@@ -27,7 +27,7 @@ RUN apk add --update --no-cache \
 	make \
 	nodejs \
 	npm \
-	python \
+	python3 \
 	git \
 	protobuf && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
@@ -92,7 +92,7 @@ RUN GOOS=linux go build -tags "$APP_BUILD_TAGS" -ldflags "-X main.version=$VERSI
 	mv $APP_NAME $BIN_PATH
 
 # Configure runtime container.
-FROM alpine:3.10
+FROM alpine:3.12
 
 ENV APP_NAME=keep-ecdsa \
 	BIN_PATH=/usr/local/bin
