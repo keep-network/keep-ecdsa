@@ -80,7 +80,7 @@ jobs:
             HOST_CHAIN=celo
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-celo-cache
-          cache-to: type=local,dest=/tmp/.buildx-celo-cache
+          cache-to: type=local,dest=/tmp/.buildx-celo-cache-new
 
       - name: Run Go tests
         run: |
@@ -112,3 +112,13 @@ jobs:
             REVISION=${{ github.sha }}
           # VERSION= ? TODO: Configure version, sample: 1.7.6
           push: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - # Temp fix - move cache instead of copying (added below step and
+        # modified value of `cache-to`).
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        # Without the change some jobs were failing with `no space left on device`
+        name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-celo-cache
+          mv /tmp/.buildx-celo-cache-new /tmp/.buildx-celo-cache
