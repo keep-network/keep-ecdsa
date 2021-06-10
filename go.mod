@@ -1,6 +1,6 @@
 module github.com/keep-network/keep-ecdsa
 
-go 1.13
+go 1.16
 
 replace (
 	github.com/BurntSushi/toml => github.com/keep-network/toml v0.3.0
