@@ -193,24 +193,40 @@ func TestValidateAddress(t *testing.T) {
 			"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1",
 			&chaincfg.MainNetParams,
 		},
-
-		"Standard mainnet P2PKH btc address": {
+		"Mainnet P2PKH btc address": {
 			"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
 			&chaincfg.MainNetParams,
 		},
-
-		"Standard mainnet P2SH btc address": {
+		"Mainnet P2SH btc address": {
 			"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
 			&chaincfg.MainNetParams,
 		},
-
-		"Standard mainnet Bech32 btc address": {
+		"Mainnet Bech32 btc address": {
 			"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
 			&chaincfg.MainNetParams,
 		},
-
-		"Standard testnet btc address": {
+		"Testnet btc address": {
 			"mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt",
+			&chaincfg.TestNet3Params,
+		},
+		"Regression Network btc address": {
+			"bcrt1qlmyyz6klzk6ckv7lqy65k26763xdp6y4dpn9he",
+			&chaincfg.RegressionNetParams,
+		},
+		"Mainnet public key hash": {
+			"17VZNX1SN5NtKa8UQFxwQbFeFc3iqRYhem",
+			&chaincfg.MainNetParams,
+		},
+		"Mainnet script hash": {
+			"3EktnHQD7RiAE6uzMj2ZifT9YgRrkSgzQX",
+			&chaincfg.MainNetParams,
+		},
+		"Testnet public key hash": {
+			"mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn",
+			&chaincfg.TestNet3Params,
+		},
+		"Testnet script hash": {
+			"2MzQwSSnBHWHqSAqtTVQ6v47XtaisrJa1Vc",
 			&chaincfg.TestNet3Params,
 		},
 	}
@@ -235,11 +251,31 @@ func TestValidateAddress_ExpectedFailures(t *testing.T) {
 			&chaincfg.MainNetParams,
 			"[banana123] is not a valid btc address using chain [mainnet]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
 		},
+		"empty string": {
+			"",
+			&chaincfg.RegressionNetParams,
+			"[] is not a valid btc address using chain [regtest]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+		},
+		"Mainnet private key": {
+			"5Hwgr3u458GLafKBgxtssHSPqJnYoGrSzgQsPwLFhLNYskDPyyA",
+			&chaincfg.MainNetParams,
+			"[5Hwgr3u458GLafKBgxtssHSPqJnYoGrSzgQsPwLFhLNYskDPyyA] is not a valid btc address using chain [mainnet]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+		},
+		"testnet private key": {
+			"92Pg46rUhgTT7romnV7iGW6W1gbGdeezqdbJCzShkCsYNzyyNcc",
+			&chaincfg.TestNet3Params,
+			"[92Pg46rUhgTT7romnV7iGW6W1gbGdeezqdbJCzShkCsYNzyyNcc] is not a valid btc address using chain [testnet3]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+		},
 	}
 	for testName, testData := range testData {
 		t.Run(testName, func(t *testing.T) {
 			err := ValidateAddress(testData.beneficiaryAddress, testData.chainParams)
-			if !ErrorContains(err, testData.err) {
+			if err == nil {
+				t.Errorf(
+					"unexpected error message\nexpected: %s\nactual:   nil",
+					testData.err,
+				)
+			} else if !ErrorContains(err, testData.err) {
 				t.Errorf(
 					"unexpected error message\nexpected: %s\nactual:   %s",
 					testData.err,
