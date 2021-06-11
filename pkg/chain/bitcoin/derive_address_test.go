@@ -266,6 +266,16 @@ func TestValidateAddress_ExpectedFailures(t *testing.T) {
 			&chaincfg.TestNet3Params,
 			"[92Pg46rUhgTT7romnV7iGW6W1gbGdeezqdbJCzShkCsYNzyyNcc] is not a valid btc address using chain [testnet3]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
 		},
+		"testnet public key against mainnet": {
+			"mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt",
+			&chaincfg.MainNetParams,
+			"[mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt] is not a valid btc address using chain [mainnet]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+		},
+		"mainnet public key against testnet": {
+			"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
+			&chaincfg.TestNet3Params,
+			"[1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx] is not a valid btc address using chain [testnet3]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+		},
 	}
 	for testName, testData := range testData {
 		t.Run(testName, func(t *testing.T) {
