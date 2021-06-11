@@ -991,11 +991,11 @@ func monitorKeepTerminatedEvent(
 				err := tbtcConfig.Bitcoin.Validate()
 				if err != nil {
 					if (bitcoin.Config{}) == tbtcConfig.Bitcoin {
-						logger.Warnf("missing bitcoin configuration for tbtc extension: [%v]", err)
+						logger.Errorf("missing bitcoin configuration for tbtc extension: [%v]", err)
 					} else {
 						logger.Errorf("misconfigured bitcoin configured for tbtc extension: [%v]", err)
-						return
 					}
+					return
 				}
 				err = utils.DoWithDefaultRetry(
 					tbtcConfig.GetLiquidationRecoveryTimeout(),
