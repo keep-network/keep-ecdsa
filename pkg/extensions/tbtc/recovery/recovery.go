@@ -248,6 +248,12 @@ func BuildBitcoinTransaction(
 		return "", err
 	}
 
+	logger.Debugf(
+		"constructed unsigned liquidation recovery transcation for keep [%s]: [%+v]",
+		keep.ID(),
+		unsignedTransaction,
+	)
+
 	sighashBytes, err := txscript.CalcWitnessSigHash(
 		scriptCodeBytes,
 		txscript.NewTxSigHashes(unsignedTransaction),
@@ -265,6 +271,12 @@ func BuildBitcoinTransaction(
 		return "", err
 	}
 
+	logger.Debugf(
+		"calculated liquidation recovery transcation sighash for keep [%s]: [%x]",
+		keep.ID(),
+		sighashBytes,
+	)
+
 	signature, err := signer.CalculateSignature(
 		ctx,
 		sighashBytes,
@@ -279,6 +291,12 @@ func BuildBitcoinTransaction(
 		)
 		return "", err
 	}
+
+	logger.Debugf(
+		"calculated liquidation recovery transcation signature for keep [%s]: [%v]",
+		keep.ID(),
+		signature,
+	)
 
 	return buildSignedTransactionHexString(
 		unsignedTransaction,
