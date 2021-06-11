@@ -155,6 +155,28 @@ Application configurations are stored in a `.toml` file and passed to the applic
 # This is an optional parameter, if not provided timeout for TSS protocol
 # pre-parameters generation will be set to `2 minutes`.
   PreParamsGenerationTimeout = "2m30s"
+
+[Extensions.TBTC]
+  # The amount of time your client will try to communicate with  the other
+  # signers to recover the underlying bitcoin from a deposit after it has been
+  # liquidated.
+  LiquidationRecoveryTimeout = "48h"
+
+  [Extensions.TBTC.Bitcoin]
+    # The btc address or *pub (xpub, ypub, zpub) that you would like recovered btc funds to be sent too
+    BeneficiaryAddress = "<your btc address or *pub key for a hierarchical deterministic wallet>"
+    # The maximum fee per vbyte that you're willing to pay in order to claim
+    # your share of the underlying btc after a liquidation. The fee will be
+    # paid from the underlying deposit before your own share is calculated.
+    MaxFeePerVByte = 75
+    # The bitcoin chain that you want to connect to. default: "mainnet"
+    # allowed values: ["mainnet", "regtest", "simnet", "testnet3"]
+    BitcoinChainName = "mainnet"
+    # An endpoint pointing to a running electrs
+    # (https://github.com/Blockstream/electrs) service. The officially hosted
+    # one works, but you can run your own node!
+    # To explicitly disable automatic broadcasting, set this value to the empty string "".
+    ElectrsURL = "https://blockstream.info/api/"
 ----
 
 ==== Parameters
