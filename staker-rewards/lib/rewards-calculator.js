@@ -129,7 +129,10 @@ export default class RewardsCalculator {
       violations.push("poolAuthorizedAtStart")
     }
 
-    if (requirements.poolDeauthorizedInInterval === true) {
+    if (
+      requirements.poolDeauthorizedInInterval === true &&
+      operatorAssets.ethBonded.isEqualTo(new BigNumber(0))
+    ) {
       violations.push("poolDeauthorizedInInterval")
     }
 

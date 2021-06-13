@@ -200,7 +200,7 @@ describe("assets calculator", async () => {
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
-      assets.ethBonded.isEqualTo(new BigNumber(15).multipliedBy(1e18)),
+      assets.ethBonded.isEqualTo(new BigNumber(20).multipliedBy(1e18)),
       true
     )
   })
@@ -218,7 +218,7 @@ describe("assets calculator", async () => {
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
-      assets.ethTotal.isEqualTo(new BigNumber(40).multipliedBy(1e18)),
+      assets.ethTotal.isEqualTo(new BigNumber(45).multipliedBy(1e18)),
       true
     )
   })
@@ -242,6 +242,30 @@ describe("assets calculator", async () => {
 
       assert.equal(
         assets.ethTotal.isEqualTo(new BigNumber(10).multipliedBy(1e18)),
+        true
+      )
+    }
+  )
+
+  it(
+    "should return the right value of ETH total " +
+      "for a deauthorized operator",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const assetsCalculator = await AssetsCalculator.initialize(
+        mockContext,
+        interval
+      )
+
+      const assets = await assetsCalculator.calculateOperatorAssets(operator, {
+        poolDeauthorizedInInterval: true,
+      })
+
+      assert.equal(
+        assets.ethTotal.isEqualTo(new BigNumber(5).multipliedBy(1e18)),
         true
       )
     }

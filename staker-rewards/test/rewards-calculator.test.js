@@ -241,25 +241,55 @@ describe("rewards calculator", async () => {
     assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
   })
 
-  it("should set total rewards to zero if pool is deauthorized in interval", async () => {
-    const mockContext = createMockContext()
+  it(
+    "should set total rewards to zero if pool is deauthorized in interval " +
+      "and ETH_bonded is zero",
+    async () => {
+      const mockContext = createMockContext()
 
-    setupContractsMock(mockContext)
+      setupContractsMock(mockContext)
 
-    const operatorParameters = createOperatorParameters(operator, 70000, 100)
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
 
-    operatorParameters.requirements.poolDeauthorizedInInterval = true
+      operatorParameters.requirements.poolDeauthorizedInInterval = true
+      operatorParameters.operatorAssets.ethBonded = new BigNumber(0)
 
-    const rewardsCalculator = await RewardsCalculator.initialize(
-      mockContext,
-      interval,
-      [operatorParameters]
-    )
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
 
-    const rewards = rewardsCalculator.getOperatorRewards(operator)
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
 
-    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
-  })
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+    }
+  )
+
+  it(
+    "should NOT set total rewards to zero if pool is deauthorized in interval " +
+      "and ETH_bonded is not zero",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+      operatorParameters.requirements.poolDeauthorizedInInterval = true
+      operatorParameters.operatorAssets.ethBonded = new BigNumber(10)
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
+    }
+  )
 
   it(
     "should set total rewards to zero if no minimum stake at start " +

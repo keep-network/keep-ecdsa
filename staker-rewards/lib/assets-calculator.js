@@ -44,7 +44,7 @@ export default class AssetsCalculator {
     return assetsCalculator
   }
 
-  async calculateOperatorAssets(operator) {
+  async calculateOperatorAssets(operator, operatorRequirements = {}) {
     if (process.env.NODE_ENV !== "test") {
       console.log(
         `Calculating KEEP and ETH under management for operator ${operator}`
@@ -58,7 +58,7 @@ export default class AssetsCalculator {
     let ethTotal = ethBonded.plus(ethUnbonded).minus(ethWithdrawn)
 
     const isUndelegating = await this.isUndelegatingOperator(operator)
-    if (isUndelegating) {
+    if (isUndelegating || operatorRequirements.poolDeauthorizedInInterval) {
       ethTotal = ethBonded.minus(ethWithdrawn)
     }
 
