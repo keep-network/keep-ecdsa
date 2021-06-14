@@ -85,7 +85,7 @@ func connectChain(
 	// assume it has a single entry that is TBTCSystem, warn if
 	// SanctionedApplications needs to be used.
 	applicationAddresses := config.SanctionedApplications.AddressesStrings
-	if len(applicationAddresses) == 1 {
+	if len(applicationAddresses) != 0 {
 		logger.Warn(
 			"TBTCSystem address configuration in SanctionedApplications.Addresses " +
 				"is DEPRECATED and will be removed. Please configure the " +
@@ -96,19 +96,19 @@ func connectChain(
 		if !exists {
 			config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] =
 				applicationAddresses[0]
+		} else {
+			if config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] !=
+				applicationAddresses[0] {
+				panic(
+					"Configured TBTCSystem contract and SanctionedApplications list " +
+						"do not match. Failing to boot to avoid misconfiguration. " +
+						"Please ensure ethereum.ContractAddresses." +
+						ethereum.TBTCSystemContractName + "is set to the correct " +
+						"tBTC system contract and remove SanctionedApplications " +
+						"configuration list, then try starting again.",
+				)
+			}
 		}
-	}
-
-	if exists && len(applicationAddresses) > 0 &&
-		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] != applicationAddresses[0] {
-		panic(
-			"Configured TBTCSystem contract and SanctionedApplications list " +
-				"do not match. Failing to boot to avoid misconfiguration. " +
-				"Please ensure ethereum.ContractAddresses." +
-				ethereum.TBTCSystemContractName + "is set to the correct " +
-				"tBTC system contract and remove SanctionedApplications " +
-				"configuration list, then try starting again.",
-		)
 	}
 
 	ethereumChain, err := ethereum.Connect(
