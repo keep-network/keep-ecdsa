@@ -249,32 +249,37 @@ func TestValidateAddress_ExpectedFailures(t *testing.T) {
 		"nonsense address": {
 			"banana123",
 			&chaincfg.MainNetParams,
-			"[banana123] is not a valid btc address using chain [mainnet]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+			"[banana123] is not a valid btc address using chain [mainnet]: decode address failed with [checksum mismatch] and derive address failed with [error parsing extended public key: [the provided serialized extended key length is invalid]]",
 		},
 		"empty string": {
 			"",
 			&chaincfg.RegressionNetParams,
-			"[] is not a valid btc address using chain [regtest]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+			"[] is not a valid btc address using chain [regtest]: decode address failed with [decoded address is of unknown format] and derive address failed with [error parsing extended public key: [the provided serialized extended key length is invalid]]",
 		},
 		"Mainnet private key": {
 			"5Hwgr3u458GLafKBgxtssHSPqJnYoGrSzgQsPwLFhLNYskDPyyA",
 			&chaincfg.MainNetParams,
-			"[5Hwgr3u458GLafKBgxtssHSPqJnYoGrSzgQsPwLFhLNYskDPyyA] is not a valid btc address using chain [mainnet]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+			"[5Hwgr3u458GLafKBgxtssHSPqJnYoGrSzgQsPwLFhLNYskDPyyA] is not a valid btc address using chain [mainnet]: decode address failed with [decoded address is of unknown size] and derive address failed with [error parsing extended public key: [the provided serialized extended key length is invalid]]",
 		},
 		"testnet private key": {
 			"92Pg46rUhgTT7romnV7iGW6W1gbGdeezqdbJCzShkCsYNzyyNcc",
 			&chaincfg.TestNet3Params,
-			"[92Pg46rUhgTT7romnV7iGW6W1gbGdeezqdbJCzShkCsYNzyyNcc] is not a valid btc address using chain [testnet3]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+			"[92Pg46rUhgTT7romnV7iGW6W1gbGdeezqdbJCzShkCsYNzyyNcc] is not a valid btc address using chain [testnet3]: decode address failed with [decoded address is of unknown size] and derive address failed with [error parsing extended public key: [the provided serialized extended key length is invalid]]",
 		},
 		"testnet public key against mainnet": {
 			"mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt",
 			&chaincfg.MainNetParams,
-			"[mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt] is not a valid btc address using chain [mainnet]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+			"[mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt] is not a valid btc address using chain [mainnet]: decode address failed with [unknown address type] and derive address failed with [error parsing extended public key: [the provided serialized extended key length is invalid]]",
 		},
 		"mainnet public key against testnet": {
 			"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
 			&chaincfg.TestNet3Params,
-			"[1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx] is not a valid btc address using chain [testnet3]: [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+			"[1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx] is not a valid btc address using chain [testnet3]: decode address failed with [unknown address type] and derive address failed with [error parsing extended public key: [the provided serialized extended key length is invalid]]",
+		},
+		"bech32 address against testnet": {
+			"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+			&chaincfg.TestNet3Params,
+			"provided address [bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq] is not a valid btc address for chain [testnet3]",
 		},
 	}
 	for testName, testData := range testData {
