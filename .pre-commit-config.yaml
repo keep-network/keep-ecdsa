@@ -29,3 +29,9 @@ repos:
       files: 'staker-rewards\/.*\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"
+    - id: format
+      name: 'code formatting'
+      entry: /usr/bin/env bash -c "npm run format"
+      exclude: '^staker-rewards\/|^solidity\/'
+      language: script
+      description: 'Checks files formatting with prettier'
