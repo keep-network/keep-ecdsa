@@ -12,26 +12,24 @@ ARG HOST_CHAIN=ethereum
 ENV LIBC=musl
 
 ENV GOPATH=/go \
-	GOBIN=/go/bin \
-	APP_NAME=keep-ecdsa \
-	APP_DIR=/go/src/github.com/keep-network/keep-ecdsa \
-	BIN_PATH=/usr/local/bin \
-	# GO111MODULE required to support go modules
-	GO111MODULE=on \
-	APP_BUILD_TAGS="$HOST_CHAIN $LIBC" \
-	ABIGEN_BUILD_TAGS=$LIBC
+  GOBIN=/go/bin \
+  APP_NAME=keep-ecdsa \
+  APP_DIR=/go/src/github.com/keep-network/keep-ecdsa \
+  BIN_PATH=/usr/local/bin \
+  APP_BUILD_TAGS="$HOST_CHAIN $LIBC" \
+  ABIGEN_BUILD_TAGS=$LIBC
 
 RUN apk add --update --no-cache \
-	g++ \
-	linux-headers \
-	make \
-	nodejs \
-	npm \
-	python3 \
-	git \
-	protobuf && \
-	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
-	rm -rf /usr/share/man
+  g++ \
+  linux-headers \
+  make \
+  nodejs \
+  npm \
+  python3 \
+  git \
+  protobuf \
+  && rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ \
+  && rm -rf /usr/share/man
 
 RUN adduser -D -g '' keep
 RUN chown keep $BIN_PATH
@@ -78,24 +76,24 @@ COPY --chown=keep ./ $APP_DIR/
 # the ones which are currently in use. This helps reducing the size of
 # resulting binary and can prevent unexpected errors which may occur due to
 # transitive dependencies conflicts.
-RUN cd $APP_DIR/pkg/chain && \
-	mv ./gen/$HOST_CHAIN ./temp && \
-	rm -rf ./gen && \
-	mkdir ./gen && \
-	mv ./temp ./gen/$HOST_CHAIN
+RUN cd $APP_DIR/pkg/chain \
+  && mv ./gen/$HOST_CHAIN ./temp \
+  && rm -rf ./gen \
+  && mkdir ./gen \
+  && mv ./temp ./gen/$HOST_CHAIN
 
 # Client Versioning.
 ARG VERSION
 ARG REVISION
 
-RUN GOOS=linux go build -tags "$APP_BUILD_TAGS" -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ && \
-	mv $APP_NAME $BIN_PATH
+RUN GOOS=linux go build -tags "$APP_BUILD_TAGS" -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ \
+  && mv $APP_NAME $BIN_PATH
 
 # Configure runtime container.
 FROM alpine:3.12
 
 ENV APP_NAME=keep-ecdsa \
-	BIN_PATH=/usr/local/bin
+  BIN_PATH=/usr/local/bin
 
 COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
 

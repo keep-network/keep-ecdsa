@@ -8,14 +8,14 @@ metadata:
     keel.sh/policy: all
     app: keep
     type: ecdsa
-    id: '2'
+    id: "2"
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: keep
       type: ecdsa
-      id: '2'
+      id: "2"
   serviceName: keep-ecdsa-2
   volumeClaimTemplates:
     - metadata:
@@ -37,7 +37,7 @@ spec:
       labels:
         app: keep
         type: ecdsa
-        id: '2'
+        id: "2"
     spec:
       containers:
         - name: keep-ecdsa
@@ -52,7 +52,7 @@ spec:
                   name: eth-account-passphrases
                   key: account-2
             - name: LOG_LEVEL
-              value: 'keep*=debug tss-lib=warn'
+              value: "keep*=debug tss-lib=warn"
             - name: IPFS_LOGGING_FMT
               value: nocolor
           volumeMounts:
@@ -64,10 +64,10 @@ spec:
               mountPath: /mnt/keep-ecdsa/keyfile
           command:
             [
-              'keep-ecdsa',
-              '-config',
-              '/mnt/keep-ecdsa/config/keep-ecdsa-config.toml',
-              'start',
+              "keep-ecdsa",
+              "-config",
+              "/mnt/keep-ecdsa/config/keep-ecdsa-config.toml",
+              "start",
             ]
       initContainers:
         - name: initcontainer-provision-keep-ecdsa
@@ -104,19 +104,19 @@ spec:
             - name: KEEP_TECDSA_PEERS
               value: /ip4/10.102.100.8/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY
             - name: KEEP_TECDSA_ANNOUNCED_ADDRESSES
-              value: ''
+              value: ""
             - name: KEEP_TECDSA_PORT
-              value: '3919'
+              value: "3919"
             - name: KEEP_DATA_DIR
               value: /mnt/keep-ecdsa/data
             - name: TBTC_SYSTEM_ADDRESS
-              value: '0x7F68B90dce19d2ac034477B7ba2229106656A084' # Shall we extract this property to a configmap?
+              value: "0x7F68B90dce19d2ac034477B7ba2229106656A084" # Shall we extract this property to a configmap?
           volumeMounts:
             - name: keep-ecdsa-config
               mountPath: /mnt/keep-ecdsa/config
             - name: eth-account-keyfile
               mountPath: /mnt/keep-ecdsa/keyfile
-          command: ['node', '/tmp/provision-keep-ecdsa.js']
+          command: ["node", "/tmp/provision-keep-ecdsa.js"]
       volumes:
         - name: keep-ecdsa-config
           persistentVolumeClaim:
