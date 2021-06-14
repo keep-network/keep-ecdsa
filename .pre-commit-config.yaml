@@ -1,37 +1,37 @@
 repos:
- - repo: https://github.com/keep-network/pre-commit-golang.git
-   rev: 4cc73f21101f9da1208719b02bbbe0a4c491497e
-   hooks:
-    - id: go-imports
-    - id: go-vet
-    - id: go-lint
- - repo: https://github.com/keep-network/pre-commit-hooks.git
-   rev: 63e729f
-   hooks:
-    - id: check-added-large-files
- - repo: local
-   hooks:
-    - id: solidity-lint-js
-      name: 'solidity lint js'
-      entry: /usr/bin/env bash -c "cd solidity && npm run lint:js"
-      files: 'solidity\/.*\.js$'
-      language: script
-      description: "Checks JS code according to the package's linter configuration"
-    - id: solidity-lint-sol
-      name: 'solidity lint solidity'
-      entry: /usr/bin/env bash -c "cd solidity && npm run lint:sol"
-      files: '\.sol$'
-      language: script
-      description: "Checks Solidity code according to the package's linter configuration"
-    - id: staker-rewards-lint-js
-      name: 'staker rewards lint js'
-      entry: /usr/bin/env bash -c "cd staker-rewards && npm run lint:js"
-      files: 'staker-rewards\/.*\.js$'
-      language: script
-      description: "Checks JS code according to the package's linter configuration"
-    - id: format
-      name: 'code formatting'
-      entry: /usr/bin/env bash -c "npm run format"
-      exclude: '^staker-rewards\/|^solidity\/'
-      language: script
-      description: 'Checks files formatting with prettier'
+  - repo: https://github.com/keep-network/pre-commit-golang.git
+    rev: 4cc73f21101f9da1208719b02bbbe0a4c491497e
+    hooks:
+      - id: go-imports
+      - id: go-vet
+      - id: go-lint
+  - repo: https://github.com/keep-network/pre-commit-hooks.git
+    rev: 63e729f
+    hooks:
+      - id: check-added-large-files
+  - repo: local
+    hooks:
+      - id: solidity-lint-js
+        name: "solidity lint js"
+        entry: /usr/bin/env bash -c "cd solidity && npm run lint:js"
+        files: 'solidity\/.*\.js$'
+        language: script
+        description: "Checks JS code according to the package's linter configuration"
+      - id: solidity-lint-sol
+        name: "solidity lint solidity"
+        entry: /usr/bin/env bash -c "cd solidity && npm run lint:sol"
+        files: '\.sol$'
+        language: script
+        description: "Checks Solidity code according to the package's linter configuration"
+      - id: staker-rewards-lint-js
+        name: "staker rewards lint js"
+        entry: /usr/bin/env bash -c "cd staker-rewards && npm run lint:js"
+        files: 'staker-rewards\/.*\.js$'
+        language: script
+        description: "Checks JS code according to the package's linter configuration"
+      - id: format
+        name: "code formatting"
+        entry: /usr/bin/env bash -c "npm run format"
+        exclude: '^staker-rewards\/|^solidity\/'
+        language: script
+        description: "Checks files formatting with prettier"

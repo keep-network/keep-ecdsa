@@ -7,7 +7,7 @@ metadata:
   labels:
     app: keep
     type: ecdsa
-    id: '5'
+    id: "5"
     network: alfajores
     chain: celo
 spec:
@@ -19,6 +19,6 @@ spec:
   selector:
     app: keep
     type: ecdsa
-    id: '5'
+    id: "5"
     network: alfajores
     chain: celo
