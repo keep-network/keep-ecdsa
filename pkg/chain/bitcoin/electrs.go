@@ -49,23 +49,35 @@ func (e electrsConnection) Broadcast(transaction string) error {
 	if e.apiURL == "" {
 		return fmt.Errorf("attempted to call Broadcast with no apiURL")
 	}
+
 	return utils.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
 		resp, err := e.client.Post(fmt.Sprintf("%s/tx", e.apiURL), "text/plain", strings.NewReader(transaction))
 		if err != nil {
 			return err
 		}
-		if resp.StatusCode != 200 {
-			return fmt.Errorf("something went wrong with broadcast: [%s], transaction: [%s]", resp.Status, transaction)
-		}
-		transactionIDBuffer := new(strings.Builder)
-		bytesCopied, err := io.Copy(transactionIDBuffer, resp.Body)
+
+		responseBody, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return fmt.Errorf("something went wrong reading the electrs response body: [%v]", err)
+			return fmt.Errorf(
+				"something went wrong trying to read response for bitcoin transaction broadcast: [%w]; raw transaction: [%s]",
+				err,
+				transaction,
+			)
 		}
-		if bytesCopied == 0 {
-			return fmt.Errorf("something went wrong reading the electrs response body: 0 bytes copied")
+
+		if resp.StatusCode != 200 {
+			return fmt.Errorf(
+				"failed to broadcast transaction - status: [%s], payload: [%s]; raw transaction: [%s]",
+				resp.Status,
+				responseBody,
+				transaction,
+			)
 		}
-		logger.Infof("successfully broadcast the bitcoin transaction: %s", transactionIDBuffer.String())
+
+		logger.Infof(
+			"successfully broadcast the bitcoin transaction: [%s]",
+			responseBody,
+		)
 		return nil
 	})
 }
@@ -73,8 +85,9 @@ func (e electrsConnection) Broadcast(transaction string) error {
 // VbyteFeeFor25Blocks retrieves the 25-block estimate fee per vbyte on the bitcoin network.
 func (e electrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 	if e.apiURL == "" {
-		return 0, fmt.Errorf("attempted to call VbyteFee with no apiURL")
+		return 0, fmt.Errorf("attempted to call VbyteFeeFor25Blocks with no apiURL")
 	}
+
 	var vbyteFee int32
 	err := utils.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
 		resp, err := e.client.Get(fmt.Sprintf("%s/fee-estimates", e.apiURL))
@@ -82,7 +95,19 @@ func (e electrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 			return err
 		}
 		if resp.StatusCode != 200 {
-			return fmt.Errorf("something went wrong retreiving the vbyte fee: [%s]", resp.Status)
+			responseBody, err := io.ReadAll(resp.Body)
+			if err != nil {
+				logger.Error(
+					"something went wrong trying to read error response for bitcoin fee estimates: [%w]",
+					err,
+				)
+			}
+
+			return fmt.Errorf(
+				"failed to get fee estimates - status: [%s], payload: [%s]",
+				resp.Status,
+				responseBody,
+			)
 		}
 
 		var fees map[string]float32
@@ -110,6 +135,7 @@ func (e electrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 	if e.apiURL == "" {
 		return false, fmt.Errorf("attempted to call IsAddressUnused with no apiURL")
 	}
+
 	isAddressUnused := false
 	err := utils.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
 		resp, err := e.client.Get(fmt.Sprintf("%s/address/%s/txs", e.apiURL, btcAddress))
@@ -117,23 +143,26 @@ func (e electrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 			return err
 		}
 		if resp.StatusCode != 200 {
-			transactionIDBuffer := new(strings.Builder)
-			_, err = io.Copy(transactionIDBuffer, resp.Body)
+			responseBody, err := io.ReadAll(resp.Body)
 			if err != nil {
-				logger.Error("something went wrong trying to unmarshal the error response for address %s", btcAddress)
+				logger.Error(
+					"something went wrong trying to read error response for transactions of bitcoin address [%s]: [%w]",
+					btcAddress,
+					err,
+				)
 			}
 			return fmt.Errorf(
-				"something went wrong trying to get information about address %s - status: [%s], payload: [%s]",
+				"something went wrong trying to get information about address [%s] - status: [%s], payload: [%s]",
 				btcAddress,
 				resp.Status,
-				transactionIDBuffer.String(),
+				responseBody,
 			)
 		}
 
 		responses := []interface{}{}
 		err = json.NewDecoder(resp.Body).Decode(&responses)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to decode response body: [%w]", err)
 		}
 
 		isAddressUnused = len(responses) == 0
