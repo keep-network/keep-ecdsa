@@ -229,6 +229,10 @@ func TestValidateAddress(t *testing.T) {
 			"2MzQwSSnBHWHqSAqtTVQ6v47XtaisrJa1Vc",
 			&chaincfg.TestNet3Params,
 		},
+		"public key": {
+			"03b0bd634234abbb1ba1e986e884185c61cf43e001f9137f23c2c409273eb16e65",
+			&chaincfg.MainNetParams,
+		},
 	}
 	for testName, testData := range validateAddressData {
 		t.Run(testName, func(t *testing.T) {
