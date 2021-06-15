@@ -141,7 +141,7 @@ func TestDeriveAddress(t *testing.T) {
 	}
 }
 
-func TestValidateAddress_ExtendedMainNextAddresses(t *testing.T) {
+func TestValidateAddress_ExtendedMainNetAddresses(t *testing.T) {
 	for testName, testData := range deriveAddressTestData {
 		t.Run(testName, func(t *testing.T) {
 			err := ValidateAddress(testData.extendedAddress, &chaincfg.MainNetParams)
