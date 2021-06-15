@@ -221,7 +221,7 @@ describe("rewards calculator", async () => {
     assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
   })
 
-  it("should set total rewards to zero if pool is not authorized at start", async () => {
+  it("should set total rewards to zero if pool is not authorized at start and ETH_total is zero", async () => {
     const mockContext = createMockContext()
 
     setupContractsMock(mockContext)
@@ -229,6 +229,7 @@ describe("rewards calculator", async () => {
     const operatorParameters = createOperatorParameters(operator, 70000, 100)
 
     operatorParameters.requirements.poolAuthorizedAtStart = false
+    operatorParameters.operatorAssets.ethTotal = new BigNumber(0)
 
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
@@ -241,14 +242,15 @@ describe("rewards calculator", async () => {
     assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
   })
 
-  it("should set total rewards to zero if pool is deauthorized in interval", async () => {
+  it("should NOT set total rewards to zero if pool is not authorized at start and ETH_total is not zero", async () => {
     const mockContext = createMockContext()
 
     setupContractsMock(mockContext)
 
     const operatorParameters = createOperatorParameters(operator, 70000, 100)
 
-    operatorParameters.requirements.poolDeauthorizedInInterval = true
+    operatorParameters.requirements.poolAuthorizedAtStart = false
+    operatorParameters.operatorAssets.ethTotal = new BigNumber(10)
 
     const rewardsCalculator = await RewardsCalculator.initialize(
       mockContext,
@@ -258,8 +260,58 @@ describe("rewards calculator", async () => {
 
     const rewards = rewardsCalculator.getOperatorRewards(operator)
 
-    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+    assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
   })
+
+  it(
+    "should set total rewards to zero if pool is deauthorized in interval " +
+      "and ETH_total is zero",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+      operatorParameters.requirements.poolDeauthorizedInInterval = true
+      operatorParameters.operatorAssets.ethTotal = new BigNumber(0)
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), true)
+    }
+  )
+
+  it(
+    "should NOT set total rewards to zero if pool is deauthorized in interval " +
+      "and ETH_total is not zero",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+      operatorParameters.requirements.poolDeauthorizedInInterval = true
+      operatorParameters.operatorAssets.ethTotal = new BigNumber(10)
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
+    }
+  )
 
   it(
     "should set total rewards to zero if no minimum stake at start " +
