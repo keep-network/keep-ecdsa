@@ -45,8 +45,8 @@ Operator not meeting all requirements listed in this section is not getting any
 rewards for interval `T`. Rewards proportional to the operator's reward weight
 are deallocated and remains in the pool for future intervals. 
 
-* If the operator does not have `BondedECDSAKeepFactory` contract or tBTC sortition
-  pool authorized at `T_start`, they are not getting any rewards for interval `T`.
+* If the operator does not have `BondedECDSAKeepFactory` contract authorized at
+  `T_start`, they are not getting any rewards for interval `T`
   
 * If the operator does not have a minimum KEEP stake at `T_start`, they are not
   getting any rewards for interval `T`.
@@ -61,8 +61,8 @@ are deallocated and remains in the pool for future intervals.
   their stake, are still getting rewards for bonded ETH because that ETH is still 
   under the system's management.
   
-* If the operator deauthorized tBTC sortition pool between `T_start` and `T_end`, 
-  they are not getting any rewards for interval `T`.
+* If the operator does not have tBTC sortition pool authorized at `T_start` and
+  `ETH_bonded = 0` for that operator, they are not getting any rewards for interval `T`.
   
 * If the operator ever committed a fraud, they are not getting any rewards for
   interval `T`. 
