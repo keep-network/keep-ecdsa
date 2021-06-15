@@ -20,7 +20,7 @@ func ResolveAddress(
 	// If the address decodes without error, then we have a valid bitcoin
 	// address. Otherwise, we assume that it's an extended key and we attempt to
 	// derive the address.
-	_, err := btcutil.DecodeAddress(beneficiaryAddress, chainParams)
+	decodedAddress, err := btcutil.DecodeAddress(beneficiaryAddress, chainParams)
 	if err != nil {
 		derivedAddress, err := storage.GetNextAddress(beneficiaryAddress, handle)
 		if err != nil {
@@ -28,5 +28,5 @@ func ResolveAddress(
 		}
 		return derivedAddress, nil
 	}
-	return beneficiaryAddress, nil
+	return decodedAddress.EncodeAddress(), nil
 }
