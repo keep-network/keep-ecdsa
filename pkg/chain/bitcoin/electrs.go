@@ -13,7 +13,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
-var logger = log.Logger("bitcoin")
+var logger = log.Logger("keep-bitcoin")
 
 const (
 	defaultTimeout = 2 * time.Minute
