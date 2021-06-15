@@ -7,7 +7,7 @@ metadata:
   labels:
     app: keep
     type: ecdsa
-    id: '1'
+    id: "1"
 spec:
   ports:
     - port: 3919
@@ -16,4 +16,4 @@ spec:
   selector:
     app: keep
     type: ecdsa
-    id: '1'
+    id: "1"

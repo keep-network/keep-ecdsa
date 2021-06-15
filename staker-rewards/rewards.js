@@ -200,7 +200,8 @@ async function calculateOperatorsRewards(context, interval) {
     const operatorRequirements = await requirements.check(operator)
     const operatorSLA = slaCalculator.calculateOperatorSLA(operator)
     const operatorAssets = await assetsCalculator.calculateOperatorAssets(
-      operator
+      operator,
+      operatorRequirements
     )
 
     operatorsParameters.push(

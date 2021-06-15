@@ -44,7 +44,7 @@ export default class AssetsCalculator {
     return assetsCalculator
   }
 
-  async calculateOperatorAssets(operator) {
+  async calculateOperatorAssets(operator, operatorRequirements = {}) {
     if (process.env.NODE_ENV !== "test") {
       console.log(
         `Calculating KEEP and ETH under management for operator ${operator}`
@@ -52,14 +52,26 @@ export default class AssetsCalculator {
     }
 
     const keepStaked = await this.calculateKeepStaked(operator)
-    const ethBonded = await this.calculateETHBonded(operator)
+    const ethBonded = await this.calculateETHBonded(
+      operator,
+      this.bondEventsAtStart
+    )
     const ethUnbonded = await this.calculateETHUnbonded(operator)
     const ethWithdrawn = await this.calculateETHWithdrawn(operator)
     let ethTotal = ethBonded.plus(ethUnbonded).minus(ethWithdrawn)
 
     const isUndelegating = await this.isUndelegatingOperator(operator)
-    if (isUndelegating) {
-      ethTotal = ethBonded.minus(ethWithdrawn)
+    if (
+      isUndelegating ||
+      operatorRequirements.poolDeauthorizedInInterval === true ||
+      operatorRequirements.poolAuthorizedAtStart === false
+    ) {
+      const ethBondedAtEnd = await this.calculateETHBonded(
+        operator,
+        this.bondEventsAtEnd
+      )
+
+      ethTotal = BigNumber.min(ethBonded, ethBondedAtEnd)
     }
 
     if (ethTotal.isLessThan(new BigNumber(0))) {
@@ -78,13 +90,8 @@ export default class AssetsCalculator {
   }
 
   async fetchBondEvents() {
-    // The amount of ETH under the system management
-    // (the sum of bonded and unbonded ETH) for the operator is captured based
-    // on the state at the beginning of the interval. To calculate this state,
-    // we take all past BondCreated events from the moment the reward interval
-    // started and cross-check them with BondReleased and BondSeized events.
     const fromBlock = this.context.contracts.factoryDeploymentBlock
-    const toBlock = this.interval.startBlock
+    const toBlock = this.interval.endBlock
 
     const eventBySortitionPool = (event) =>
       event.returnValues.sortitionPool === this.sortitionPoolAddress
@@ -98,12 +105,27 @@ export default class AssetsCalculator {
         toBlock
       )
 
-    this.bondEvents = {
+    this.bondEventsAtEnd = {
       bondCreatedEvents: (await getBondEvents("BondCreated")).filter(
         eventBySortitionPool
       ),
       bondReleasedEvents: await getBondEvents("BondReleased"),
       bondSeizedEvents: await getBondEvents("BondSeized"),
+    }
+
+    const eventAtIntervalStart = (event) =>
+      event.blockNumber <= this.interval.startBlock
+
+    this.bondEventsAtStart = {
+      bondCreatedEvents: this.bondEventsAtEnd.bondCreatedEvents.filter(
+        eventAtIntervalStart
+      ),
+      bondReleasedEvents: this.bondEventsAtEnd.bondReleasedEvents.filter(
+        eventAtIntervalStart
+      ),
+      bondSeizedEvents: this.bondEventsAtEnd.bondSeizedEvents.filter(
+        eventAtIntervalStart
+      ),
     }
   }
 
@@ -163,21 +185,19 @@ export default class AssetsCalculator {
     return new BigNumber(keepStaked)
   }
 
-  async calculateETHBonded(operator) {
+  async calculateETHBonded(operator, bondEvents) {
     const eventByOperator = (event) => event.returnValues.operator === operator
     const eventByReferenceID = (referenceID) => {
       return (event) => event.returnValues.referenceID === referenceID
     }
 
-    const bondCreatedEvents = this.bondEvents.bondCreatedEvents.filter(
+    const bondCreatedEvents = bondEvents.bondCreatedEvents.filter(
       eventByOperator
     )
-    const bondReleasedEvents = this.bondEvents.bondReleasedEvents.filter(
+    const bondReleasedEvents = bondEvents.bondReleasedEvents.filter(
       eventByOperator
     )
-    const bondSeizedEvents = this.bondEvents.bondSeizedEvents.filter(
-      eventByOperator
-    )
+    const bondSeizedEvents = bondEvents.bondSeizedEvents.filter(eventByOperator)
 
     let weiBonded = new BigNumber(0)
 
