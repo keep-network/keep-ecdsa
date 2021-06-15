@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 )
 
 type mockBitcoinHandle struct {
@@ -46,7 +48,7 @@ func TestDerivationIndexStorage_GetNextAddressOnNewKey(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		expectedBtcAddress, err := deriveAddress(extendedPublicKey, i)
+		expectedBtcAddress, err := bitcoin.DeriveAddress(extendedPublicKey, i)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -316,7 +318,7 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextAddresses(t *testing.T) {
 			for i := 0; i < iterations; i++ {
 				// the valid indexes should be 840, 850, 860, 870...
 				index := uint32(840) + 10*uint32(i)
-				derivedAddress, err := deriveAddress(extendedPublicKey, index)
+				derivedAddress, err := bitcoin.DeriveAddress(extendedPublicKey, index)
 				if err != nil {
 					getNextAddressResults <- pair{"", err}
 					return
@@ -337,7 +339,7 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextAddresses(t *testing.T) {
 		}
 		// the valid indexes should be 840, 850, 860, 870...
 		expectedIndex := uint32(840) + 10*uint32(i)
-		expectedAddress, err := deriveAddress(extendedPublicKey, expectedIndex)
+		expectedAddress, err := bitcoin.DeriveAddress(extendedPublicKey, expectedIndex)
 		if err != nil {
 			t.Fatal(err)
 		}

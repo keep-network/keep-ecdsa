@@ -1,4 +1,4 @@
-package recovery
+package bitcoin
 
 import (
 	"fmt"
@@ -6,10 +6,9 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
-	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 )
 
-// deriveAddress uses the specified extended public key and address index to
+// DeriveAddress uses the specified extended public key and address index to
 // derive an address string in the appropriate format at the specified address
 // index. The extended public key can be at any level. deriveAddress will take
 // the first child `/0` until a depth of 4 is reached, and then produce the
@@ -36,7 +35,7 @@ import (
 // [BIP44]: https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
 // [BIP49]: https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
 // [BIP84]: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
-func deriveAddress(extendedPublicKey string, addressIndex uint32) (string, error) {
+func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error) {
 	extendedKey, err := hdkeychain.NewKeyFromString(extendedPublicKey)
 	if err != nil {
 		return "", fmt.Errorf(
@@ -123,27 +122,33 @@ func deriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 	return finalAddress.EncodeAddress(), nil
 }
 
-// ResolveAddress resolves a configured beneficiaryAddress into a
-// valid bitcoin address. If the supplied address is already a valid bitcoin
-// address, we don't have to do anything. If the supplied address is an
-// extended public key of a HD wallet, attempt to derive the bitcoin address at
-// the specified index.
-func ResolveAddress(
-	beneficiaryAddress string,
-	storage *DerivationIndexStorage,
-	chainParams *chaincfg.Params,
-	handle bitcoin.Handle,
-) (string, error) {
-	// If the address decodes without error, then we have a valid bitcoin
-	// address. Otherwise, we assume that it's an extended key and we attempt to
-	// derive the address.
-	_, err := btcutil.DecodeAddress(beneficiaryAddress, chainParams)
-	if err != nil {
-		derivedAddress, err := storage.GetNextAddress(beneficiaryAddress, handle)
-		if err != nil {
-			return "", err
+// ValidateAddress checks to see if the supplied btc address is valid on the
+// supplied chain. We check both raw btc addresses and *pub extended keys.
+func ValidateAddress(btcAddress string, chainParams *chaincfg.Params) error {
+	decodedAddress, decodeErr := btcutil.DecodeAddress(btcAddress, chainParams)
+	if decodeErr != nil {
+		_, deriveErr := DeriveAddress(btcAddress, 0)
+		if deriveErr != nil {
+			return fmt.Errorf(
+				"[%s] is not a valid btc address using chain [%s]: "+
+					"decode address failed with [%v] and "+
+					"derive address failed with [%v]",
+				btcAddress,
+				chainParams.Name,
+				decodeErr,
+				deriveErr,
+			)
 		}
-		return derivedAddress, nil
+		return nil
 	}
-	return beneficiaryAddress, nil
+
+	if !decodedAddress.IsForNet(chainParams) {
+		return fmt.Errorf(
+			"provided address [%s] is not a valid btc address for chain [%s]",
+			btcAddress,
+			chainParams.Name,
+		)
+	}
+
+	return nil
 }

@@ -156,7 +156,7 @@ func (dis *DerivationIndexStorage) GetNextAddress(
 	startIndex := uint32(lastIndex + 1)
 	for i := uint32(0); true; i++ {
 		index := startIndex + i
-		derivedAddress, err := deriveAddress(strings.TrimSpace(extendedPublicKey), index)
+		derivedAddress, err := bitcoin.DeriveAddress(strings.TrimSpace(extendedPublicKey), index)
 		if err != nil {
 			return "", err
 		}
