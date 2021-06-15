@@ -200,7 +200,7 @@ describe("assets calculator", async () => {
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
-      assets.ethBonded.isEqualTo(new BigNumber(20).multipliedBy(1e18)),
+      assets.ethBonded.isEqualTo(new BigNumber(25).multipliedBy(1e18)),
       true
     )
   })
@@ -218,7 +218,7 @@ describe("assets calculator", async () => {
     const assets = await assetsCalculator.calculateOperatorAssets(operator)
 
     assert.equal(
-      assets.ethTotal.isEqualTo(new BigNumber(45).multipliedBy(1e18)),
+      assets.ethTotal.isEqualTo(new BigNumber(50).multipliedBy(1e18)),
       true
     )
   })
@@ -241,7 +241,7 @@ describe("assets calculator", async () => {
       )
 
       assert.equal(
-        assets.ethTotal.isEqualTo(new BigNumber(10).multipliedBy(1e18)),
+        assets.ethTotal.isEqualTo(new BigNumber(15).multipliedBy(1e18)),
         true
       )
     }
@@ -265,7 +265,7 @@ describe("assets calculator", async () => {
       })
 
       assert.equal(
-        assets.ethTotal.isEqualTo(new BigNumber(5).multipliedBy(1e18)),
+        assets.ethTotal.isEqualTo(new BigNumber(20).multipliedBy(1e18)),
         true
       )
     }
