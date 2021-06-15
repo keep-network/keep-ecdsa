@@ -2,10 +2,10 @@
 set -e
 
 echo "Installing golang requirements..."
-brew list golang &> /dev/null || brew install golang
+brew list golang &>/dev/null || brew install golang
 
 echo "Installing jq..."
-brew list jq &> /dev/null || brew install jq
+brew list jq &>/dev/null || brew install jq
 
 echo "Installing ethereum requirements..."
 brew tap ethereum/ethereum

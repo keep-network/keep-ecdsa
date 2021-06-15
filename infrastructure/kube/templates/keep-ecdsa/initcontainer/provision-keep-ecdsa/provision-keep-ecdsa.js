@@ -29,7 +29,7 @@ const web3Provider = {
       )
 
       return new Web3(contractOwnerProvider, null, web3Options)
-    }
+    },
   },
 
   celo: {
@@ -38,8 +38,8 @@ const web3Provider = {
       // HD wallet provider as it conflicts with the Celo contract kit.
       // The web3 object should be initialized just with the RPC URL.
       return new Web3(ethRPCUrl)
-    }
-  }
+    },
+  },
 }
 
 // ETH host info
@@ -89,7 +89,9 @@ function getWeb3Contract(contractName) {
 
 async function provisionKeepTecdsa() {
   try {
-    console.log(`###########  Provisioning keep-ecdsa on ${hostChain} host chain! ###########`)
+    console.log(
+      `###########  Provisioning keep-ecdsa on ${hostChain} host chain! ###########`
+    )
 
     console.log(
       `\n<<<<<<<<<<<< Read operator address from key file >>>>>>>>>>>>`
@@ -129,9 +131,12 @@ async function provisionKeepTecdsa() {
 
     if (
       !sortitionPoolContractAddress ||
-      sortitionPoolContractAddress === "0x0000000000000000000000000000000000000000"
+      sortitionPoolContractAddress ===
+        "0x0000000000000000000000000000000000000000"
     ) {
-      throw new Error(`missing sortition pool for TBTCSystem contract: [${tbtcSystemAddress}]`)
+      throw new Error(
+        `missing sortition pool for TBTCSystem contract: [${tbtcSystemAddress}]`
+      )
     }
 
     console.log(
@@ -263,12 +268,11 @@ async function stakeOperator(
     Buffer.from(web3.utils.hexToBytes(authorizer)),
   ])
 
-  const txObject = await keepTokenContract.methods
-    .approveAndCall(
-      tokenStakingContract.options.address,
-      formatAmount(2000000, 18),
-      delegation
-    )
+  const txObject = await keepTokenContract.methods.approveAndCall(
+    tokenStakingContract.options.address,
+    formatAmount(2000000, 18),
+    delegation
+  )
 
   await transactor[hostChain].sendTransactionObject(txObject, {
     from: contractOwnerAddress,
@@ -295,11 +299,13 @@ async function authorizeOperatorContract(
     return
   }
 
-  const txObject = await tokenStakingContract.methods
-    .authorizeOperatorContract(operatorAddress, operatorContractAddress)
+  const txObject = await tokenStakingContract.methods.authorizeOperatorContract(
+    operatorAddress,
+    operatorContractAddress
+  )
 
   await transactor[hostChain].sendTransactionObject(txObject, {
-    from: authorizer
+    from: authorizer,
   })
 
   console.log(`Authorized!`)
@@ -323,14 +329,14 @@ async function authorizeSortitionPoolContract(
     return
   }
 
-  const txObject = await keepBondingContract.methods
-    .authorizeSortitionPoolContract(
+  const txObject =
+    await keepBondingContract.methods.authorizeSortitionPoolContract(
       operatorAddress,
       sortitionPoolContractAddress
     )
 
   await transactor[hostChain].sendTransactionObject(txObject, {
-    from: authorizer
+    from: authorizer,
   })
 
   console.log(`Authorized!`)
@@ -360,8 +366,7 @@ async function createKeepTecdsaConfig() {
   parsedConfigFile[hostChain].ContractAddresses.BondedECDSAKeepFactory =
     bondedECDSAKeepFactory.options.address
 
-  parsedConfigFile[hostChain].ContractAddresses.TBTCSystem =
-    tbtcSystemAddress
+  parsedConfigFile[hostChain].ContractAddresses.TBTCSystem = tbtcSystemAddress
 
   parsedConfigFile.LibP2P.Peers = libp2pPeers
   parsedConfigFile.LibP2P.Port = libp2pPort
@@ -413,7 +418,7 @@ const transactor = {
     sendTransactionObject: async (txObject, params) => {
       const tx = await txObject.send(params)
       console.log(`transaction ${tx.transactionHash} has been sent`)
-    }
+    },
   },
 
   celo: {
@@ -427,8 +432,8 @@ const transactor = {
       const tx = await getCeloKit().sendTransactionObject(txObject, params)
       await tx.waitReceipt()
       console.log(`transaction ${await tx.getHash()} has been sent`)
-    }
-  }
+    },
+  },
 }
 
 // Returns the Celo contract kit instance.

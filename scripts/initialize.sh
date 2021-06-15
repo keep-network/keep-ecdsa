@@ -13,48 +13,46 @@ KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 NETWORK_DEFAULT="local"
 CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 
-help()
-{
-   echo -e "\nUsage: $0"\
-           "--config-dir <path>"\
-           "--application-address <address>"\
-           "--network <network>"\
-           "--contracts-only"
-   echo -e "\nCommand line arguments:\n"
-   echo -e "\t--config-dir: Path to keep-ecdsa client configuration file(s)"
-   echo -e "\t--application-address: Address of application approved by the operator"
-   echo -e "\t--network: Ethereum network for keep-ecdsa client."\
-           "Available networks and settings are specified in 'truffle.js'"
-   echo -e "\t--contracts-only: Should execute contracts part only."\
-           "Client installation will not be executed.\n"
-   exit 1 # Exit script after printing help
+help() {
+  echo -e "\nUsage: $0" \
+    "--config-dir <path>" \
+    "--application-address <address>" \
+    "--network <network>" \
+    "--contracts-only"
+  echo -e "\nCommand line arguments:\n"
+  echo -e "\t--config-dir: Path to keep-ecdsa client configuration file(s)"
+  echo -e "\t--application-address: Address of application approved by the operator"
+  echo -e "\t--network: Ethereum network for keep-ecdsa client." \
+    "Available networks and settings are specified in 'truffle.js'"
+  echo -e "\t--contracts-only: Should execute contracts part only." \
+    "Client installation will not be executed.\n"
+  exit 1 # Exit script after printing help
 }
 
 # Transform long options to short ones
 for arg in "$@"; do
   shift
   case "$arg" in
-    "--config-dir")          set -- "$@" "-d" ;;
-    "--application-address") set -- "$@" "-a" ;;
-    "--network")             set -- "$@" "-n" ;;
-    "--contracts-only")      set -- "$@" "-m" ;;
-    "--help")                set -- "$@" "-h" ;;
-    *)                       set -- "$@" "$arg"
+  "--config-dir") set -- "$@" "-d" ;;
+  "--application-address") set -- "$@" "-a" ;;
+  "--network") set -- "$@" "-n" ;;
+  "--contracts-only") set -- "$@" "-m" ;;
+  "--help") set -- "$@" "-h" ;;
+  *) set -- "$@" "$arg" ;;
   esac
 done
 
 # Parse short options
 OPTIND=1
-while getopts "d:a:n:mh" opt
-do
-   case "$opt" in
-      d ) config_dir_path="$OPTARG" ;;
-      a ) client_app_address="$OPTARG" ;;
-      n ) network="$OPTARG" ;;
-      m ) contracts_only=true ;;
-      h ) help ;;
-      ? ) help ;; # Print help in case parameter is non-existent
-   esac
+while getopts "d:a:n:mh" opt; do
+  case "$opt" in
+  d) config_dir_path="$OPTARG" ;;
+  a) client_app_address="$OPTARG" ;;
+  n) network="$OPTARG" ;;
+  m) contracts_only=true ;;
+  h) help ;;
+  ?) help ;; # Print help in case parameter is non-existent
+  esac
 done
 shift $(expr $OPTIND - 1) # remove options from positional parameters
 
@@ -84,15 +82,14 @@ printf "${LOG_START}Application address:${LOG_END} $CLIENT_APP_ADDRESS"
 printf "${LOG_START}Starting initialization...${LOG_END}"
 
 printf "${LOG_START}Initializing contracts...${LOG_END}"
-  CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
-    npx truffle exec scripts/lcl-initialize.js --network $NETWORK
+CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
+  npx truffle exec scripts/lcl-initialize.js --network $NETWORK
 
-if [ "$CONTRACTS_ONLY" = false ] ; then
+if [ "$CONTRACTS_ONLY" = false ]; then
   printf "${LOG_START}Updating keep-ecdsa config files...${LOG_END}"
-  for CONFIG_FILE in $KEEP_ECDSA_CONFIG_DIR_PATH/*.toml
-  do
+  for CONFIG_FILE in $KEEP_ECDSA_CONFIG_DIR_PATH/*.toml; do
     KEEP_ECDSA_CONFIG_FILE_PATH=$CONFIG_FILE \
-    CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
+      CLIENT_APP_ADDRESS=$CLIENT_APP_ADDRESS \
       npx truffle exec scripts/lcl-client-config.js --network $NETWORK
   done
 fi
