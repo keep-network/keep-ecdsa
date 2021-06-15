@@ -263,13 +263,12 @@
             }
           },
           {
-            "name": "BondCreated",
+            "name": "BondSeized",
             "blockNumber": 2000,
             "returnValues": {
-              "referenceID": "0x64f68c710615F2c86c2d224A1101112076FfcB7E",
+              "referenceID": "0x63f68c710615F2c86c2d224A1101112076FfcB7E",
               "operator": "0x88Ed51f84c21Ae246c23137D090cdF441009D916",
-              "sortitionPool": "0xA3748633c6786e1842b5cC44fa43db1ecC710501",
-              "amount": "10000000000000000000"
+              "amount": "5000000000000000000"
             }
           },
           {

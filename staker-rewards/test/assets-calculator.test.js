@@ -241,7 +241,7 @@ describe("assets calculator", async () => {
       )
 
       assert.equal(
-        assets.ethTotal.isEqualTo(new BigNumber(15).multipliedBy(1e18)),
+        assets.ethTotal.isEqualTo(new BigNumber(10).multipliedBy(1e18)),
         true
       )
     }
