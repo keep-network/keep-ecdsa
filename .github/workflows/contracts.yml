@@ -10,16 +10,16 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment for workflow execution'
+        description: "Environment for workflow execution"
         required: false
-        default: 'dev'
+        default: "dev"
       upstream_builds:
-        description: 'Upstream builds'
+        description: "Upstream builds"
         required: false
       upstream_ref:
-        description: 'Git reference to checkout (e.g. branch name)'
+        description: "Git reference to checkout (e.g. branch name)"
         required: false
-        default: 'master'
+        default: "master"
 
 jobs:
   contracts-detect-changes:
@@ -127,13 +127,11 @@ jobs:
 
       - name: Load environment variables
         uses: keep-network/load-env-variables@v1
-        env: 
-          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
-          # TODO: Consider passing of `environment` input instead of using 
+          # TODO: Consider passing of `environment` input instead of using
           # hardcoded value. Would require some rework in action's code or
           # in config files.
-          environment: 'ropsten'
+          environment: "ropsten"
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -154,7 +152,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Get upstream packages' versions
         uses: keep-network/upstream-builds-query@v1
         id: upstream-builds-query
@@ -165,9 +163,9 @@ jobs:
 
       - name: Resolve latest contracts
         run: |
-            npm update @keep-network/sortition-pools
-            npm install --save-exact \
-              @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
+          npm update @keep-network/sortition-pools
+          npm install --save-exact \
+            @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
 
       - name: Migrate contracts
         env:
@@ -235,13 +233,11 @@ jobs:
 
       - name: Load environment variables
         uses: keep-network/load-env-variables@v1
-        env: 
-          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
-          # TODO: Consider passing of `environment` input instead of using 
+          # TODO: Consider passing of `environment` input instead of using
           # hardcoded value. Would require some rework in action's code or
           # in config files.
-          environment: 'ropsten'
+          environment: "ropsten"
 
       - name: Download migrated contracts artifacts
         uses: actions/download-artifact@v2
@@ -259,7 +255,7 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-            
+
       - name: Login to Google Container Registry
         uses: docker/login-action@v1
         with:
@@ -270,7 +266,7 @@ jobs:
       - name: Build and publish initcontainer
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'initcontainer-provision-keep-ecdsa'
+          IMAGE_NAME: "initcontainer-provision-keep-ecdsa"
         with:
           context: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
           # GCR image should be named according to following convention:
@@ -281,8 +277,18 @@ jobs:
             revision=${{ github.sha }}
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
-      
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - # Temp fix - move cache instead of copying (added below step and
+        # modified value of `cache-to`).
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        # Without the change some jobs were failing with `no space left on device`
+        name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
       - name: Notify CI about completion of the workflow
         uses: keep-network/notify-workflow-completed@v1
         env:
@@ -308,13 +314,11 @@ jobs:
 
       - name: Load environment variables
         uses: keep-network/load-env-variables@v1
-        env: 
-          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
-          # TODO: Consider passing of `environment` input instead of using 
+          # TODO: Consider passing of `environment` input instead of using
           # hardcoded value. Would require some rework in action's code or
           # in config files.
-          environment: 'alfajores'
+          environment: "alfajores"
 
       - uses: actions/setup-node@v2
         with:
@@ -352,9 +356,9 @@ jobs:
 
       - name: Resolve latest contracts
         run: |
-            npm update \
-              @keep-network/keep-core \
-              @keep-network/sortition-pools
+          npm update \
+            @keep-network/keep-core \
+            @keep-network/sortition-pools
 
       - name: Migrate contracts
         env:

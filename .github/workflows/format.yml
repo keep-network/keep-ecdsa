@@ -1,0 +1,23 @@
+name: Code Format Checks
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  code-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format
