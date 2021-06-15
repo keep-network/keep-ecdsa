@@ -30,11 +30,12 @@ For each Operator:
 
 * Read the amount of ETH unbonded at `T_start` as `ETH_unbonded`.
 
-* Calculate the sum of ETH unbonded and withdrawn for the entire interval
-  as `ETH_withdrawn`.
+* Calculate the sum of ETH withdrawn for the entire interval as `ETH_withdrawn`.
   
 * Calculate the total ETH under management as 
-  `ETH_locked = ETH_bonded + ETH_unbonded - ETH_withdrawn`. In case the operator is undelegating, `ETH_locked = ETH_bonded - ETH_withdrawn`.
+  `ETH_locked = ETH_bonded + ETH_unbonded - ETH_withdrawn`.
+  In case the operator is undelegating or has been de-authorized for the
+  sorition pool, `ETH_locked = min(ETH_bonded_T_start, ETH_bonded_T_end)`.
 
 === Requirements
 
