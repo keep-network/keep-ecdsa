@@ -292,7 +292,7 @@ reference].
 |`LiquidationRecoveryTimeout`
 |The amount of time your client will try to communicate with the other signers to recover the underlying bitcoin from a deposit after it has been liquidated.
 |"48h"
-|Yes
+|No
 |===
 
 [%header,cols=4*]
@@ -310,7 +310,7 @@ reference].
 |`MaxFeePerVByte`
 |The maximum fee per vbyte that you're willing to pay in order to claim your share of the underlying btc after a liquidation.
 |75
-|Yes
+|No
 
 |`BitcoinChainName`
 |The bitcoin chain that you want to connect to. Allowed Values: ["mainnet", "regtest", "simnet", "testnet3"]
