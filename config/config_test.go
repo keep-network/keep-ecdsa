@@ -105,7 +105,7 @@ func TestReadConfig(t *testing.T) {
 		},
 		"Extensions.TBTC.Bitcoin.BeneficiaryAddress": {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.Bitcoin.BeneficiaryAddress },
-			expectedValue: "bcrt1q0umle4fe6penqqyzuwsysqezwwptuyqa82jas4",
+			expectedValue: "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1",
 		},
 		"Extensions.TBTC.Bitcoin.MaxFeePerVByte": {
 			readValueFunc: func(c *Config) interface{} { return c.Extensions.TBTC.Bitcoin.MaxFeePerVByte },

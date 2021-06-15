@@ -32,7 +32,7 @@
   LiquidationRecoveryTimeout = "49h"
 
 	[Extensions.TBTC.Bitcoin]
-		BeneficiaryAddress = "bcrt1q0umle4fe6penqqyzuwsysqezwwptuyqa82jas4"
+		BeneficiaryAddress = "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
 		MaxFeePerVByte = 73
 		BitcoinChainName = "mainnet"
 		ElectrsURL = "example.com"
