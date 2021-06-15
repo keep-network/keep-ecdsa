@@ -125,13 +125,16 @@ export default class RewardsCalculator {
       violations.push("factoryAuthorizedAtStart")
     }
 
-    if (requirements.poolAuthorizedAtStart === false) {
+    if (
+      requirements.poolAuthorizedAtStart === false &&
+      operatorAssets.ethTotal.isEqualTo(new BigNumber(0))
+    ) {
       violations.push("poolAuthorizedAtStart")
     }
 
     if (
       requirements.poolDeauthorizedInInterval === true &&
-      operatorAssets.ethBonded.isEqualTo(new BigNumber(0))
+      operatorAssets.ethTotal.isEqualTo(new BigNumber(0))
     ) {
       violations.push("poolDeauthorizedInInterval")
     }

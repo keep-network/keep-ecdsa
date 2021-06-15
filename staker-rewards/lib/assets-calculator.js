@@ -61,7 +61,11 @@ export default class AssetsCalculator {
     let ethTotal = ethBonded.plus(ethUnbonded).minus(ethWithdrawn)
 
     const isUndelegating = await this.isUndelegatingOperator(operator)
-    if (isUndelegating || operatorRequirements.poolDeauthorizedInInterval) {
+    if (
+      isUndelegating ||
+      operatorRequirements.poolDeauthorizedInInterval === true ||
+      operatorRequirements.poolAuthorizedAtStart === false
+    ) {
       const ethBondedAtEnd = await this.calculateETHBonded(
         operator,
         this.bondEventsAtEnd
