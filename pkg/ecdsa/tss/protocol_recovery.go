@@ -161,24 +161,51 @@ func BroadcastRecoveryAddress(
 
 		retrievalAddresses := make([]string, 0, len(memberRecoveryInfo))
 		maxFeePerVByte := int32(2147483647) // since we're taking the min fee among the signers, start with the max int32
-		for _, recoveryInfo := range memberRecoveryInfo {
 
-			if _, err := btcutil.DecodeAddress(recoveryInfo.btcRecoveryAddress, chainParams); err != nil {
+		for memberID, recoveryInfo := range memberRecoveryInfo {
+			if err := ValidateReceivedBtcAddress(recoveryInfo.btcRecoveryAddress, chainParams); err != nil {
 				return nil, 0, fmt.Errorf(
-					"something went wrong validating btc address: [%s] during recovery broadcast: [%v]",
+					"failed to validate btc address [%s] received from [%s] during recovery broadcast: [%w]",
 					recoveryInfo.btcRecoveryAddress,
+					memberID,
 					err,
 				)
 			}
 			retrievalAddresses = append(retrievalAddresses, recoveryInfo.btcRecoveryAddress)
+
 			if recoveryInfo.maxFeePerVByte < maxFeePerVByte {
 				maxFeePerVByte = recoveryInfo.maxFeePerVByte
 			}
 		}
+
 		sort.Strings(retrievalAddresses)
 
 		return retrievalAddresses, maxFeePerVByte, nil
 	default:
 		return nil, 0, fmt.Errorf("unexpected context error: [%v]", ctx.Err())
 	}
+}
+
+// ValidateReceivedBtcAddress checks to see if the btc address is valid on the
+// supplied chain. At this stage we expect to receive final btc address from a peer
+// member, so address derivation from *pub key won't be executed.
+func ValidateReceivedBtcAddress(btcAddress string, chainParams *chaincfg.Params) error {
+	decodedAddress, decodeErr := btcutil.DecodeAddress(btcAddress, chainParams)
+	if decodeErr != nil {
+		return fmt.Errorf(
+			"failed to decode address [%s] for chain [%s]",
+			btcAddress,
+			chainParams.Name,
+		)
+	}
+
+	if !decodedAddress.IsForNet(chainParams) {
+		return fmt.Errorf(
+			"address [%s] is not a valid btc address for chain [%s]",
+			btcAddress,
+			chainParams.Name,
+		)
+	}
+
+	return nil
 }
