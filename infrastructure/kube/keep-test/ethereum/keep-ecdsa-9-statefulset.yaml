@@ -77,7 +77,7 @@ spec:
             ]
       initContainers:
         - name: initcontainer-provision-keep-ecdsa
-          image: gcr.io/keep-test-f3e0/initcontainer-provision-keep-ecdsa
+          image: gcr.io/keep-test-f3e0/initcontainer-provision-keep-ecdsa-ethereum
           imagePullPolicy: Always
           env:
             - name: ETH_RPC_URL
