@@ -51,7 +51,7 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 	for externalChain.Depth() < 4 {
 		// Descend the hierarchy at /0 until the external chain path, `m/*/*/*/0`.
 		// ex: If we get a `m/32'/5` extended key, we descend to `m/32'/5/0/0`.
-		externalChain, err = externalChain.Child(0)
+		externalChain, err = externalChain.Derive(0)
 		if err != nil {
 			return "", fmt.Errorf(
 				"error deriving external chain path /0 from extended key: [%s]",
@@ -60,7 +60,7 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 		}
 	}
 
-	requestedPublicKey, err := externalChain.Child(addressIndex)
+	requestedPublicKey, err := externalChain.Derive(addressIndex)
 	if err != nil {
 		return "", fmt.Errorf(
 			"error deriving requested address index /0/%v from extended key: [%s]",
