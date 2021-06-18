@@ -35,7 +35,11 @@ import (
 // [BIP44]: https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
 // [BIP49]: https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
 // [BIP84]: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
-func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error) {
+func DeriveAddress(
+	extendedPublicKey string,
+	addressIndex uint32,
+	chainParams *chaincfg.Params,
+) (string, error) {
 	extendedKey, err := hdkeychain.NewKeyFromString(extendedPublicKey)
 	if err != nil {
 		return "", fmt.Errorf(
@@ -63,26 +67,15 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 	requestedPublicKey, err := externalChain.Child(addressIndex)
 	if err != nil {
 		return "", fmt.Errorf(
-			"error deriving requested address index /0/%v from extended key: [%s]",
+			"error deriving requested address index /0/%v from extended key: [%w]",
 			addressIndex,
 			err,
 		)
 	}
 
-	// Now to decide how we want to serialize the address...
-	var chainParams *chaincfg.Params
-
 	publicKeyDescriptor := extendedPublicKey[0:4]
-	switch publicKeyDescriptor {
-	case "xpub", "ypub", "zpub":
-		chainParams = &chaincfg.MainNetParams
-	case "tpub", "upub", "vpub":
-		chainParams = &chaincfg.TestNet3Params
-	default:
-		return "", fmt.Errorf(
-			"unsupported public key format [%s]",
-			publicKeyDescriptor,
-		)
+	if err := validatePublicKeyDescriptor(publicKeyDescriptor, chainParams); err != nil {
+		return "", err
 	}
 
 	requestedAddress, err := requestedPublicKey.Address(chainParams)
@@ -122,11 +115,46 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 	return finalAddress.EncodeAddress(), nil
 }
 
+// validatePublicKeyDescriptor validates public key descriptor against chain network
+// type. `xpub`, `ypub`, and `zpub` are dedicated for mainnet. `tpub`, `upub`,
+// and `vpub` may be used on testnet and regtest.
+func validatePublicKeyDescriptor(
+	publicKeyDescriptor string,
+	chainParams *chaincfg.Params,
+) error {
+	switch publicKeyDescriptor {
+	case "xpub", "ypub", "zpub":
+		if chainParams.Name != chaincfg.MainNetParams.Name {
+			return fmt.Errorf(
+				"public key descriptor [%s] is invalid for network [%s]",
+				publicKeyDescriptor,
+				chainParams.Name,
+			)
+		}
+	case "tpub", "upub", "vpub":
+		if chainParams.Name != chaincfg.TestNet3Params.Name &&
+			chainParams.Name != chaincfg.RegressionNetParams.Name {
+			return fmt.Errorf(
+				"public key descriptor [%s] is invalid for network [%s]",
+				publicKeyDescriptor,
+				chainParams.Name,
+			)
+		}
+	default:
+		return fmt.Errorf(
+			"unsupported public key format [%s]",
+			publicKeyDescriptor,
+		)
+	}
+
+	return nil
+}
+
 // ValidateAddressOrKey checks to see if the supplied btc address is valid on the
 // supplied chain. We check both raw btc addresses and *pub extended keys.
 func ValidateAddressOrKey(btcAddress string, chainParams *chaincfg.Params) error {
 	if validateErr := ValidateAddress(btcAddress, chainParams); validateErr != nil {
-		_, deriveErr := DeriveAddress(btcAddress, 0)
+		_, deriveErr := DeriveAddress(btcAddress, 0, chainParams)
 		if deriveErr != nil {
 			return fmt.Errorf(
 				"[%s] is not a valid btc address or extended key using chain [%s]: "+

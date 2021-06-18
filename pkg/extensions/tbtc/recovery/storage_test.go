@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 )
 
@@ -32,6 +33,8 @@ func (mbh mockBitcoinHandle) IsAddressUnused(btcAddress string) (bool, error) {
 }
 
 func TestDerivationIndexStorage_GetNextAddressOnNewKey(t *testing.T) {
+	chainParams := &chaincfg.MainNetParams
+
 	dir, err := ioutil.TempDir("", "example")
 	if err != nil {
 		t.Fatal(err)
@@ -43,12 +46,12 @@ func TestDerivationIndexStorage_GetNextAddressOnNewKey(t *testing.T) {
 	}
 	extendedPublicKey := "ypub6Z7s8wJuKsxjd16oe85WH1uSbcbbCXuMFEhPMgcf7jQqNhQbT9jE52XVu1eBe18q2J3LwnDd54ufL2jNvidjfCkbd34aVwLtYdztLUqucwR"
 	for i := uint32(0); i < 10; i++ {
-		btcAddress, err := dis.GetNextAddress(extendedPublicKey, newMockBitcoinHandle())
+		btcAddress, err := dis.GetNextAddress(extendedPublicKey, newMockBitcoinHandle(), chainParams)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		expectedBtcAddress, err := bitcoin.DeriveAddress(extendedPublicKey, i)
+		expectedBtcAddress, err := bitcoin.DeriveAddress(extendedPublicKey, i, chainParams)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -164,7 +167,7 @@ func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 				}
 			}
 			for _, expectation := range testData.expectations {
-				address, err := dis.GetNextAddress(expectation.publicKey, newMockBitcoinHandle())
+				address, err := dis.GetNextAddress(expectation.publicKey, newMockBitcoinHandle(), &chaincfg.MainNetParams)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -304,6 +307,8 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextAddresses(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	chainParams := &chaincfg.MainNetParams
+
 	type pair struct {
 		address string
 		err     error
@@ -318,7 +323,7 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextAddresses(t *testing.T) {
 			for i := 0; i < iterations; i++ {
 				// the valid indexes should be 840, 850, 860, 870...
 				index := uint32(840) + 10*uint32(i)
-				derivedAddress, err := bitcoin.DeriveAddress(extendedPublicKey, index)
+				derivedAddress, err := bitcoin.DeriveAddress(extendedPublicKey, index, chainParams)
 				if err != nil {
 					getNextAddressResults <- pair{"", err}
 					return
@@ -328,7 +333,7 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextAddresses(t *testing.T) {
 			handle.isAddressUnused = func(btcAddress string) (bool, error) {
 				return validIndexes[btcAddress], nil
 			}
-			address, err := dis.GetNextAddress(extendedPublicKey, handle)
+			address, err := dis.GetNextAddress(extendedPublicKey, handle, chainParams)
 			getNextAddressResults <- pair{address, err}
 		}()
 	}
@@ -339,7 +344,7 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextAddresses(t *testing.T) {
 		}
 		// the valid indexes should be 840, 850, 860, 870...
 		expectedIndex := uint32(840) + 10*uint32(i)
-		expectedAddress, err := bitcoin.DeriveAddress(extendedPublicKey, expectedIndex)
+		expectedAddress, err := bitcoin.DeriveAddress(extendedPublicKey, expectedIndex, chainParams)
 		if err != nil {
 			t.Fatal(err)
 		}
