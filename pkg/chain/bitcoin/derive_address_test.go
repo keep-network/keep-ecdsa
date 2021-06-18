@@ -141,6 +141,43 @@ func TestDeriveAddress(t *testing.T) {
 	}
 }
 
+func TestDeriveAddress_ExpectedFailures(t *testing.T) {
+	deriveAddressTestFailureData := map[string]struct {
+		extendedAddress string
+		addressIndex    int
+		failure         string
+	}{
+		"BIP141 P2WPKH nested in P2SH ypub at m/6'/4'/9'/0/11'": {
+			"ypub6Z7s8wJuKsxjd16oe85WH1uSbcbbCXuMFEhPMgcf7jQqNhQbT9jE52XVu1eBe18q2J3LwnDd54ufL2jNvidjfCkbd34aVwLtYdztLUqucwR",
+			11 + 2147483648,
+			"error deriving requested address index /0/2147483659 from extended key: [cannot derive a hardened key from a public key]",
+		},
+		"BIP141 P2WPKH nested in P2SH ypub at m/6'/4'/9'/0/11' with a private key": {
+			"yprvAL8WjRn1VWQSQX2LY6YVusxi3am6o5BVt1mnZJD3ZPsrVu5SucQyXED23ikCvDeeFHTMeX9q5n5MHNTLWQvCSm3KWnA3KdyZuDXncTn2VW5",
+			11 + 2147483648,
+			"unsupported public key format [yprv]",
+		},
+		"BIP141 ypub is too deep at m/0/0/0/0/0/0": {
+			"ypub6bp11ZqNVMqm3C3eXAFGpEvKqNfEZ6Vhznd4Uo3S73RYTSFgmF7q9sWPoCFhLGVMSLqKZZpcpHoKgHNwStDuqQPnDfF13goQwS8qSFA6vnz",
+			0,
+			"extended public key is deeper than 4, depth: 5",
+		},
+	}
+
+	for testName, testData := range deriveAddressTestFailureData {
+		t.Run(testName, func(t *testing.T) {
+			_, err := DeriveAddress(testData.extendedAddress, uint32(testData.addressIndex))
+			if err == nil || err.Error() != testData.failure {
+				t.Errorf(
+					"unexpected error message\nexpected: %v\nactual:   %v",
+					testData.failure,
+					err,
+				)
+			}
+		})
+	}
+}
+
 func TestValidateAddressOrKey_ExtendedMainNetAddresses(t *testing.T) {
 	for testName, testData := range deriveAddressTestData {
 		t.Run(testName, func(t *testing.T) {
@@ -150,30 +187,6 @@ func TestValidateAddressOrKey_ExtendedMainNetAddresses(t *testing.T) {
 			}
 		})
 	}
-}
-
-var deriveAddressTestFailureData = map[string]struct {
-	extendedAddress string
-	addressIndex    int
-	failure         string
-}{
-	"BIP141 P2WPKH nested in P2SH ypub at m/6'/4'/9'/0/11'": {
-		"ypub6Z7s8wJuKsxjd16oe85WH1uSbcbbCXuMFEhPMgcf7jQqNhQbT9jE52XVu1eBe18q2J3LwnDd54ufL2jNvidjfCkbd34aVwLtYdztLUqucwR",
-		11 + 2147483648,
-		"cannot derive a hardened key from a public key",
-	},
-
-	"BIP141 P2WPKH nested in P2SH ypub at m/6'/4'/9'/0/11' with a private key": {
-		"yprvAL8WjRn1VWQSQX2LY6YVusxi3am6o5BVt1mnZJD3ZPsrVu5SucQyXED23ikCvDeeFHTMeX9q5n5MHNTLWQvCSm3KWnA3KdyZuDXncTn2VW5",
-		11 + 2147483648,
-		"unsupported public key format",
-	},
-
-	"BIP141 ypub is too deep at m/0/0/0/0/0/0": {
-		"ypub6bp11ZqNVMqm3C3eXAFGpEvKqNfEZ6Vhznd4Uo3S73RYTSFgmF7q9sWPoCFhLGVMSLqKZZpcpHoKgHNwStDuqQPnDfF13goQwS8qSFA6vnz",
-		0,
-		"extended public key is deeper than 4, depth: 5",
-	},
 }
 
 func TestValidateAddressOrKey(t *testing.T) {
