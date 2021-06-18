@@ -176,10 +176,6 @@ var deriveAddressTestFailureData = map[string]struct {
 	},
 }
 
-func ErrorContains(err error, expected string) bool {
-	return strings.Contains(err.Error(), expected)
-}
-
 func TestValidateAddressOrKey(t *testing.T) {
 	var validateAddressData = map[string]struct {
 		beneficiaryAddress string
@@ -414,4 +410,8 @@ func TestValidateAddress_ExpectedFailures(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ErrorContains(err error, expected string) bool {
+	return strings.Contains(err.Error(), expected)
 }
