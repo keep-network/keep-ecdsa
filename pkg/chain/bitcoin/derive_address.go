@@ -122,29 +122,44 @@ func DeriveAddress(extendedPublicKey string, addressIndex uint32) (string, error
 	return finalAddress.EncodeAddress(), nil
 }
 
-// ValidateAddress checks to see if the supplied btc address is valid on the
+// ValidateAddressOrKey checks to see if the supplied btc address is valid on the
 // supplied chain. We check both raw btc addresses and *pub extended keys.
-func ValidateAddress(btcAddress string, chainParams *chaincfg.Params) error {
-	decodedAddress, decodeErr := btcutil.DecodeAddress(btcAddress, chainParams)
-	if decodeErr != nil {
+func ValidateAddressOrKey(btcAddress string, chainParams *chaincfg.Params) error {
+	if validateErr := ValidateAddress(btcAddress, chainParams); validateErr != nil {
 		_, deriveErr := DeriveAddress(btcAddress, 0)
 		if deriveErr != nil {
 			return fmt.Errorf(
-				"[%s] is not a valid btc address using chain [%s]: "+
-					"decode address failed with [%v] and "+
-					"derive address failed with [%v]",
+				"[%s] is not a valid btc address or extended key using chain [%s]: "+
+					"address validation failed with [%v] and "+
+					"derivation from extended key failed with [%v]",
 				btcAddress,
 				chainParams.Name,
-				decodeErr,
+				validateErr,
 				deriveErr,
 			)
 		}
 		return nil
 	}
 
+	return nil
+}
+
+// ValidateAddress checks to see if the btc address is valid on the
+// supplied chain. It is expected that final bitcoin address is provided, *pub
+// extended key will fail the validation.
+func ValidateAddress(btcAddress string, chainParams *chaincfg.Params) error {
+	decodedAddress, decodeErr := btcutil.DecodeAddress(btcAddress, chainParams)
+	if decodeErr != nil {
+		return fmt.Errorf(
+			"failed to decode address from [%s] for chain [%s]",
+			btcAddress,
+			chainParams.Name,
+		)
+	}
+
 	if !decodedAddress.IsForNet(chainParams) {
 		return fmt.Errorf(
-			"provided address [%s] is not a valid btc address for chain [%s]",
+			"address [%s] is not a valid btc address for chain [%s]",
 			btcAddress,
 			chainParams.Name,
 		)
