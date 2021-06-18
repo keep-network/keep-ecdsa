@@ -178,7 +178,7 @@ func TestDeriveAddress_ExpectedFailures(t *testing.T) {
 	}
 }
 
-func TestValidateAddressOrKey_ExtendedMainNetAddresses(t *testing.T) {
+func TestValidateAddressOrKey_ExtendedPublicKeys(t *testing.T) {
 	for testName, testData := range deriveAddressTestData {
 		t.Run(testName, func(t *testing.T) {
 			err := ValidateAddressOrKey(testData.extendedAddress, &chaincfg.MainNetParams)
@@ -189,19 +189,11 @@ func TestValidateAddressOrKey_ExtendedMainNetAddresses(t *testing.T) {
 	}
 }
 
-func TestValidateAddressOrKey(t *testing.T) {
+func TestValidateAddressOrKey_Addresses(t *testing.T) {
 	var validateAddressData = map[string]struct {
 		beneficiaryAddress string
 		chainParams        *chaincfg.Params
 	}{
-		"BIP44: xpub at m/44'/0'/0'/0/0": {
-			"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1",
-			&chaincfg.MainNetParams,
-		},
-		"BIP44: xpub at m/44'/0'/0'/0/4": {
-			"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1",
-			&chaincfg.MainNetParams,
-		},
 		"Mainnet P2PKH btc address": {
 			"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
 			&chaincfg.MainNetParams,
