@@ -280,7 +280,7 @@ func TestDeriveAddress_ExpectedFailures(t *testing.T) {
 func TestValidateAddressOrKey_ExtendedPublicKeys(t *testing.T) {
 	for testName, testData := range deriveAddressTestData {
 		t.Run(testName, func(t *testing.T) {
-			err := ValidateAddressOrKey(testData.extendedAddress, &chaincfg.MainNetParams)
+			err := ValidateAddressOrKey(testData.extendedAddress, testData.chainParams)
 			if err != nil {
 				t.Error(err)
 			}
