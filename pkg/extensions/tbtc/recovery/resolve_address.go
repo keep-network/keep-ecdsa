@@ -11,6 +11,10 @@ import (
 // address, we don't have to do anything. If the supplied address is an
 // extended public key of a HD wallet, attempt to derive the bitcoin address at
 // the specified index.
+//
+// The function does not validate inputs. It is expected that validations are
+// performed before calling this function. Especially the beneficiary address
+// should be validated with the given chain network type.
 func ResolveAddress(
 	beneficiaryAddress string,
 	storage *DerivationIndexStorage,
@@ -22,7 +26,11 @@ func ResolveAddress(
 	// derive the address.
 	decodedAddress, err := btcutil.DecodeAddress(beneficiaryAddress, chainParams)
 	if err != nil {
-		derivedAddress, err := storage.GetNextAddress(beneficiaryAddress, handle)
+		derivedAddress, err := storage.GetNextAddress(
+			beneficiaryAddress,
+			handle,
+			chainParams,
+		)
 		if err != nil {
 			return "", err
 		}

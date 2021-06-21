@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 )
@@ -134,6 +135,7 @@ func (dis *DerivationIndexStorage) read(extendedPublicKey string) (int, error) {
 func (dis *DerivationIndexStorage) GetNextAddress(
 	extendedPublicKey string,
 	handle bitcoin.Handle,
+	chainParams *chaincfg.Params,
 ) (string, error) {
 	dis.mutex.Lock()
 	defer dis.mutex.Unlock()
@@ -156,7 +158,11 @@ func (dis *DerivationIndexStorage) GetNextAddress(
 	startIndex := uint32(lastIndex + 1)
 	for i := uint32(0); true; i++ {
 		index := startIndex + i
-		derivedAddress, err := bitcoin.DeriveAddress(strings.TrimSpace(extendedPublicKey), index)
+		derivedAddress, err := bitcoin.DeriveAddress(
+			strings.TrimSpace(extendedPublicKey),
+			index,
+			chainParams,
+		)
 		if err != nil {
 			return "", err
 		}
