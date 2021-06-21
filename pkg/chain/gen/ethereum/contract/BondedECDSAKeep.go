@@ -151,8 +151,8 @@ func (becdsak *BondedECDSAKeep) CloseKeep(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction closeKeep with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction closeKeep with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -178,8 +178,8 @@ func (becdsak *BondedECDSAKeep) CloseKeep(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction closeKeep with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction closeKeep with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -238,7 +238,7 @@ func (becdsak *BondedECDSAKeep) DistributeERC20Reward(
 ) (*types.Transaction, error) {
 	becdsakLogger.Debug(
 		"submitting transaction distributeERC20Reward",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_tokenAddress,
 			_value,
@@ -284,8 +284,8 @@ func (becdsak *BondedECDSAKeep) DistributeERC20Reward(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction distributeERC20Reward with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction distributeERC20Reward with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -315,8 +315,8 @@ func (becdsak *BondedECDSAKeep) DistributeERC20Reward(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction distributeERC20Reward with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction distributeERC20Reward with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -383,7 +383,7 @@ func (becdsak *BondedECDSAKeep) DistributeETHReward(
 ) (*types.Transaction, error) {
 	becdsakLogger.Debug(
 		"submitting transaction distributeETHReward",
-		"value: ", value,
+		" value: ", value,
 	)
 
 	becdsak.transactionMutex.Lock()
@@ -423,8 +423,8 @@ func (becdsak *BondedECDSAKeep) DistributeETHReward(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction distributeETHReward with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction distributeETHReward with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -450,8 +450,8 @@ func (becdsak *BondedECDSAKeep) DistributeETHReward(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction distributeETHReward with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction distributeETHReward with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -517,7 +517,7 @@ func (becdsak *BondedECDSAKeep) Initialize(
 ) (*types.Transaction, error) {
 	becdsakLogger.Debug(
 		"submitting transaction initialize",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_owner,
 			_members,
@@ -581,8 +581,8 @@ func (becdsak *BondedECDSAKeep) Initialize(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction initialize with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction initialize with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -624,8 +624,8 @@ func (becdsak *BondedECDSAKeep) Initialize(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction initialize with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction initialize with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -716,7 +716,7 @@ func (becdsak *BondedECDSAKeep) ReturnPartialSignerBonds(
 ) (*types.Transaction, error) {
 	becdsakLogger.Debug(
 		"submitting transaction returnPartialSignerBonds",
-		"value: ", value,
+		" value: ", value,
 	)
 
 	becdsak.transactionMutex.Lock()
@@ -756,8 +756,8 @@ func (becdsak *BondedECDSAKeep) ReturnPartialSignerBonds(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction returnPartialSignerBonds with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction returnPartialSignerBonds with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -783,8 +783,8 @@ func (becdsak *BondedECDSAKeep) ReturnPartialSignerBonds(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction returnPartialSignerBonds with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction returnPartialSignerBonds with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -879,8 +879,8 @@ func (becdsak *BondedECDSAKeep) SeizeSignerBonds(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction seizeSignerBonds with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction seizeSignerBonds with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -906,8 +906,8 @@ func (becdsak *BondedECDSAKeep) SeizeSignerBonds(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction seizeSignerBonds with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction seizeSignerBonds with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -965,7 +965,7 @@ func (becdsak *BondedECDSAKeep) Sign(
 ) (*types.Transaction, error) {
 	becdsakLogger.Debug(
 		"submitting transaction sign",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_digest,
 		),
@@ -1008,8 +1008,8 @@ func (becdsak *BondedECDSAKeep) Sign(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction sign with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction sign with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1037,8 +1037,8 @@ func (becdsak *BondedECDSAKeep) Sign(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction sign with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction sign with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1101,7 +1101,7 @@ func (becdsak *BondedECDSAKeep) SubmitPublicKey(
 ) (*types.Transaction, error) {
 	becdsakLogger.Debug(
 		"submitting transaction submitPublicKey",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_publicKey,
 		),
@@ -1144,8 +1144,8 @@ func (becdsak *BondedECDSAKeep) SubmitPublicKey(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction submitPublicKey with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction submitPublicKey with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1173,8 +1173,8 @@ func (becdsak *BondedECDSAKeep) SubmitPublicKey(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction submitPublicKey with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction submitPublicKey with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1239,7 +1239,7 @@ func (becdsak *BondedECDSAKeep) SubmitSignature(
 ) (*types.Transaction, error) {
 	becdsakLogger.Debug(
 		"submitting transaction submitSignature",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_r,
 			_s,
@@ -1288,8 +1288,8 @@ func (becdsak *BondedECDSAKeep) SubmitSignature(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction submitSignature with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction submitSignature with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1321,8 +1321,8 @@ func (becdsak *BondedECDSAKeep) SubmitSignature(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction submitSignature with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction submitSignature with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1397,7 +1397,7 @@ func (becdsak *BondedECDSAKeep) SubmitSignatureFraud(
 ) (*types.Transaction, error) {
 	becdsakLogger.Debug(
 		"submitting transaction submitSignatureFraud",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_v,
 			_r,
@@ -1452,8 +1452,8 @@ func (becdsak *BondedECDSAKeep) SubmitSignatureFraud(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction submitSignatureFraud with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction submitSignatureFraud with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1489,8 +1489,8 @@ func (becdsak *BondedECDSAKeep) SubmitSignatureFraud(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction submitSignatureFraud with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction submitSignatureFraud with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1569,7 +1569,7 @@ func (becdsak *BondedECDSAKeep) Withdraw(
 ) (*types.Transaction, error) {
 	becdsakLogger.Debug(
 		"submitting transaction withdraw",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_member,
 		),
@@ -1612,8 +1612,8 @@ func (becdsak *BondedECDSAKeep) Withdraw(
 	}
 
 	becdsakLogger.Infof(
-		"submitted transaction withdraw with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction withdraw with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1641,8 +1641,8 @@ func (becdsak *BondedECDSAKeep) Withdraw(
 			}
 
 			becdsakLogger.Infof(
-				"submitted transaction withdraw with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction withdraw with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 

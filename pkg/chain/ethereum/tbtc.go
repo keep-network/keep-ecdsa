@@ -88,7 +88,7 @@ func (ta *tbtcApplication) RegisterAsMemberCandidate() error {
 	}
 
 	logger.Debugf(
-		"submitted RegisterMemberCandidate transaction with hash: [%x]",
+		"submitted RegisterMemberCandidate transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -134,7 +134,7 @@ func (ta *tbtcApplication) UpdateStatusForApplication() error {
 	}
 
 	logger.Debugf(
-		"submitted UpdateOperatorStatus transaction with hash: [%x]",
+		"submitted UpdateOperatorStatus transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -328,7 +328,7 @@ func (ta *tbtcApplication) RetrieveSignerPubkey(
 	}
 
 	logger.Debugf(
-		"submitted RetrieveSignerPubkey transaction with hash: [%x]",
+		"submitted RetrieveSignerPubkey transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -354,7 +354,7 @@ func (ta *tbtcApplication) ProvideRedemptionSignature(
 	}
 
 	logger.Debugf(
-		"submitted ProvideRedemptionSignature transaction with hash: [%x]",
+		"submitted ProvideRedemptionSignature transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -381,7 +381,7 @@ func (ta *tbtcApplication) IncreaseRedemptionFee(
 	}
 
 	logger.Debugf(
-		"submitted IncreaseRedemptionFee transaction with hash: [%x]",
+		"submitted IncreaseRedemptionFee transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -418,7 +418,7 @@ func (ta *tbtcApplication) ProvideRedemptionProof(
 	}
 
 	logger.Debugf(
-		"submitted ProvideRedemptionProof transaction with hash: [%x]",
+		"submitted ProvideRedemptionProof transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
