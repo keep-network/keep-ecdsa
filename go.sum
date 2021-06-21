@@ -445,6 +445,8 @@ github.com/keep-network/keep-common v1.3.1-0.20210304083053-baf172c68552/go.mod 
 github.com/keep-network/keep-common v1.4.1-0.20210319095805-ebf46d0b62db/go.mod h1:E515VGCNeth7/yJafIWcZyZrHslQHBUKwIjpdipqMM4=
 github.com/keep-network/keep-common v1.4.1-0.20210601152253-1c6454e2a030 h1:PqJWataF/jObGfn7V0lkcgcmzJ3qWg3D+LAlvg9ledw=
 github.com/keep-network/keep-common v1.4.1-0.20210601152253-1c6454e2a030/go.mod h1:E515VGCNeth7/yJafIWcZyZrHslQHBUKwIjpdipqMM4=
+github.com/keep-network/keep-common v1.5.0 h1:dv+W+bZXw9vYG7g3i/Mn87y+JovEpwe4i97kq8qu61Y=
+github.com/keep-network/keep-common v1.5.0/go.mod h1:E515VGCNeth7/yJafIWcZyZrHslQHBUKwIjpdipqMM4=
 github.com/keep-network/keep-core v1.3.2-0.20210304083305-d08fdb9170d5 h1:o6kfolnjNHr6zDxxKmqgNYytHUv3LZsZ10fZ1LWfV4c=
 github.com/keep-network/keep-core v1.3.2-0.20210304083305-d08fdb9170d5/go.mod h1:wa98Eftg9XT7WKvuPkQQH5z8RIx93ApTVNMVit6non4=
 github.com/keep-network/tbtc v1.1.1-0.20210319100902-7a3b5230ffcf h1:dyz9+YbII6Iv90/QCvYrFnuJflXP2ijDFP+Uifm+vE0=
