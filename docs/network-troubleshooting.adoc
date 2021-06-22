@@ -1,0 +1,135 @@
+:toc: macro
+
+= Network troubleshooting
+
+:icons: font
+:numbered:
+toc::[]
+
+Clients forming the Keep Network are deployed in numerous ways using different
+infrastructure configurations and network topologies. This fact combined with
+the complexity of a p2p network may cause `keep-ecdsa` clients to experience
+some network problems occasionally. Those issues are typically noticed during
+key generation or signing processes which doesn't succeed at the first time
+and are retried. Usually, the problem is caused by clients going offline
+temporarily due to restart or network breaks. In that case, clients should
+recover automatically as `keep-ecdsa` clients are resilient and can
+continue their work after reconnecting to the network or coming up after the
+restart. However, sometimes the problem persists and troubleshooting process
+should be run on all clients taking part in the unlucky protocol execution.
+
+== Common problems
+
+Typically, there are several types of network-related problems reported by
+operators. Here is a brief description of them.
+
+=== Failed to get unicast channel with peer
+
+During key generation and signing, all keep members need to open a direct
+unicast channel between each other. If, from whatever reason, opening such
+a channel is not possible, the client will print a warning looking like:
+
+```
+failed to get unicast channel with peer [peer_id] because of: [cause]
+```
+
+=== Failed to announce signer presence
+
+Announce protocol is performed before the key generation process. It's purpose
+is to exchange public keys between members. Public keys are then used to
+derive the peers transport identifiers necessary to open unicast channels.
+Announce protocol duration is capped with a 2 minutes timeout. In case the
+timeout passes and the client doesn't receive public keys from all of other
+keep members, the following error will be printed in logs:
+
+```
+failed to announce signer presence: [waiting for announcements timed out after: [2m0s]]"
+```
+
+=== Readiness signaling protocol failed
+
+Readiness protocol is performed before both key generation and signing
+processes. It's purpose is to synchronize keep members and allows each member
+to signal their readiness to perform the TSS protocol. Like the announce
+protocol, a 2 minutes timeout applies here as well. In case the timeout
+is exceeded and the client doesn't receive readiness notifications from
+all of other keep members, the following log error is produced:
+
+```
+readiness signaling protocol failed: [waiting for readiness timed out after: [2m0s]]"
+```
+
+== Troubleshooting checklist
+
+The cause of aforementioned problems may lie in either member of the keep.
+To make sure your client performs well, please pass through the following
+checklist.
+
+=== Check your client health
+Check your client is up and doesn't experience frequent restarts. If your clients
+goes down, it breaks the ongoing protocol execution for other keep members.
+This is especially relevant for cloud workloads where things like VMs preemption
+or Kubernetes pod relocation may take place. It's strongly recommended to enable
+<<./run-keep-ecdsa.adoc#9-metrics, metrics>>
+for your client and use a monitoring system which allows catching all issues quickly
+(see https://github.com/boar-network/keep-monitoring[Boar Network monitoring system]).
+Using monitoring tools specific for your cloud provider may also be a good choice.
+
+=== Check internet connectivity
+Check your client has a working and stable internet connection. Temporary
+outages may make your client invisible for other keep members. Other members
+won't be able to connect your client and perform protocol executions. Metrics
+can help monitor network connectivity as they return the number of connected
+peers. A significant fall of connected peers number may indicate network
+issues.
+
+=== Check Ethereum connectivity
+Check if your node has a working connection with their ETH node. Broken
+ETH connection means that your client becomes blind for all chain events
+taking place for keeps it is a member of. For example, it may not notice a
+starting key generation or signing process. ETH connectivity can be
+watched using metrics and a monitoring system
+
+=== Check your client fulfills the minimum stake rule
+Check your client has the minimum amount of KEEP token staked. If the staked
+amount drops below the minimum threshold, your client won't be able to
+connect other clients and all existing connections will be dropped.
+
+=== Make sure your client is publicly reachable
+Check if your client uses a publicly available IP or DNS and announces it
+in the network. In case a private address is used, your node won't be able
+to receive incoming connections though it may be able to initiate them on their
+own. Public availability can be checked using the `nmap` tool. Regarding
+announcing, you need to use the
+<<./run-keep-ecdsa.adoc#322-parameters, `LibP2P.AnnounceAddresses`>>
+config property. Last but not least, your firewall rules should allow the
+ingress traffic to reach your client.
+
+=== Check your client is able to reach the public internet
+Your client should be able to reach other clients over the public internet.
+Make sure your network routing, NAT and firewall setup allows your client
+to do so. If this requirement is not fulfilled, your client won't be able
+to initiate outgoing connections though it may be able to receive incoming
+ones.
+
+=== Make sure your client address is stable
+Your client should not change it's announced address to often. All changes
+need time to be propagated over the network so other clients may not be able
+to reach your client immediately. It is also important that your client
+uses the same announced address for egress traffic as well. Using a different
+address may cause the traffic to be dropped by other clients. This is often
+the case in cloud environments using a public load balancer for ingress and
+a NAT gateway for egress.
+
+=== Enable debug logs
+Enabling debug logs may reveal additional details relevant for problem
+investigation. You can do it by passing the `LOG_LEVEL=DEBUG` env variable
+during client startup.
+
+
+
+
+
+
+
+
