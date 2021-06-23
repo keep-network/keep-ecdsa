@@ -70,9 +70,10 @@ Check your client is up and doesn't experience frequent restarts. If your client
 goes down, it breaks the ongoing protocol execution for other keep members.
 This is especially relevant for cloud workloads where things like VMs preemption
 or Kubernetes pod relocation may take place. It's strongly recommended to enable
-<<./run-keep-ecdsa.adoc#9-metrics, metrics>>
+<<./run-keep-ecdsa.adoc#Metrics, metrics>>
 for your client and use a monitoring system which allows catching all issues quickly
-(see https://github.com/boar-network/keep-monitoring[Boar Network monitoring system]).
+(see for one fairly complete example of such a monitoring system:
+ https://github.com/boar-network/keep-monitoring[Boar Network monitoring]).
 Using monitoring tools specific for your cloud provider may also be a good choice.
 
 === Check internet connectivity
@@ -101,9 +102,9 @@ in the network. In case a private address is used, your node won't be able
 to receive incoming connections though it may be able to initiate them on their
 own. Public availability can be checked using the `nmap` tool. Regarding
 announcing, you need to use the
-<<./run-keep-ecdsa.adoc#322-parameters, `LibP2P.AnnounceAddresses`>>
+<<./run-keep-ecdsa.adoc#Parameters, `LibP2P.AnnounceAddresses`>>
 config property. Last but not least, your firewall rules should allow the
-ingress traffic to reach your client.
+inbound traffic to reach your client.
 
 === Check your client is able to reach the public internet
 Your client should be able to reach other clients over the public internet.
@@ -116,15 +117,22 @@ ones.
 Your client should not change it's announced address to often. All changes
 need time to be propagated over the network so other clients may not be able
 to reach your client immediately. It is also important that your client
-uses the same announced address for egress traffic as well. Using a different
+uses the same announced address for outbound traffic as well. Using a different
 address may cause the traffic to be dropped by other clients. This is often
-the case in cloud environments using a public load balancer for ingress and
-a NAT gateway for egress.
+the case in cloud environments using a public load balancer for inbound traffic
+and a NAT gateway for outbound traffic.
 
 === Enable debug logs
 Enabling debug logs may reveal additional details relevant for problem
 investigation. You can do it by passing the `LOG_LEVEL=DEBUG` env variable
 during client startup.
+
+=== Reach out the Keep Discord
+If none of the above points solve the issue you're observing, reaching out
+the https://discord.keep.network[Keep Discord] is a good next step. Describe
+the problem and provide as much details as you can. Some debug logs would be
+also appreciated.
+
 
 
 
