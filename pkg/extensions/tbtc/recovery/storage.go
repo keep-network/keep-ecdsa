@@ -168,7 +168,11 @@ func (dis *DerivationIndexStorage) GetNextAddress(
 		}
 		ok, err := handle.IsAddressUnused(derivedAddress)
 		if err != nil {
-			return "", err
+			logger.Errorf(
+				"something went wrong checking to see if address [%s] is unused: [%v]",
+				derivedAddress,
+				err,
+			)
 		}
 
 		err = dis.save(extendedPublicKey, index)

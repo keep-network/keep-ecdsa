@@ -130,10 +130,12 @@ func (e electrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 }
 
 // IsAddressUnused returns true if and only if the supplied bitcoin address has
-// no recorded transactions.
+// no recorded transactions. NOTE: IsAddressUnused will return true rather than
+// false in the case that it encounters an error. This lets processing continue
+// in the case where there is not a working electrs connection.
 func (e electrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 	if e.apiURL == "" {
-		return false, fmt.Errorf("attempted to call IsAddressUnused with no apiURL")
+		return true, fmt.Errorf("attempted to call IsAddressUnused with no apiURL")
 	}
 
 	isAddressUnused := false
@@ -169,7 +171,7 @@ func (e electrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 		return nil
 	})
 	if err != nil {
-		return false, err
+		return true, err
 	}
 	return isAddressUnused, nil
 }
