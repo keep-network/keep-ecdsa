@@ -49,7 +49,7 @@ This activty log contains step-by-step actions to go from a new Ethereum account
   .. Copy/Paste the password in `keep-ecdsa-operator-account-password.txt`.
 
 . **Get a KEEP token grant**
-.. https://github.com/keep-network/keep-ecdsa/blob/master/docs/run-keep-ecdsa.adoc#72-testnet[Documentation]
+.. https://github.com/keep-network/keep-ecdsa/blob/main/docs/run-keep-ecdsa.adoc#72-testnet[Documentation]
 .. `https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten?account=0x91c9122ee29ab47908f00dc2cafaa41454f1722f` From Browser.  Results in Ethereum transaction.
 ... Expected Output:
     
@@ -75,8 +75,8 @@ This activty log contains step-by-step actions to go from a new Ethereum account
 .. Click `Add ETH`, add some nominal amount.  `0.5` used for demo.  Results in Ethereum Transaction.
 
 . **Prepare `keep-ecdsa-client` configuration file**
-.. See https://github.com/keep-network/keep-ecdsa/blob/master/docs/run-keep-ecdsa.adoc#application[Application Configuration] for template.
-.. Testnet contract addresses can be found https://github.com/keep-network/keep-ecdsa/blob/master/docs/run-keep-ecdsa.adoc#723-contracts[here].
+.. See https://github.com/keep-network/keep-ecdsa/blob/main/docs/run-keep-ecdsa.adoc#application[Application Configuration] for template.
+.. Testnet contract addresses can be found https://github.com/keep-network/keep-ecdsa/blob/main/docs/run-keep-ecdsa.adoc#723-contracts[here].
 .. See `/stakedrop-demo/config/config.toml` for prepared example.
 
 . Get latest Ropsten keep-ecdsa-client Docker iamge
@@ -103,5 +103,5 @@ keepnetwork/keep-ecdsa-client:v1.0.0 --config /mnt/keep-ecdsa-client/config/conf
 
 ## Supporting Documents
 
-- https://github.com/keep-network/keep-ecdsa/blob/master/docs/run-keep-ecdsa.adoc[Run Keep ECDSA]
+- https://github.com/keep-network/keep-ecdsa/blob/main/docs/run-keep-ecdsa.adoc[Run Keep ECDSA]
 - https://keep-network.gitbook.io/staking-documentation/[KEEP staking guide]
