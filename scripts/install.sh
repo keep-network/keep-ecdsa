@@ -63,6 +63,11 @@ printf "${LOG_START}Starting installation...${LOG_END}"
 cd $KEEP_ECDSA_SOL_PATH
 
 printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
+
+cd $KEEP_ECDSA_PATH
+npm install
+
+cd $KEEP_ECDSA_SOL_PATH
 npm install
 npm link @keep-network/keep-core
 
