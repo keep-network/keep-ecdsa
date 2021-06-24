@@ -323,6 +323,65 @@ reference].
 |No
 |===
 
+==== Example BeneficiaryAddresses
+
+[%header,cols=2*]
+|===
+|Description
+|Address
+
+|mainnet xpub extended public key
+|`BeneficiaryAddress = "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"`
+
+|mainnet ypub extended public key
+|`BeneficiaryAddress = "ypub6Xxan668aiJqvh4SVfd7EzqjWvf36gWufTkhWHv3gaxnBh44HpkTi2TTkm1u136qjUxk7F3jGzoyfrGpHvALMgJgbF4WNXpoPu3QYrqogMK"`
+
+|mainnet zpub extended public key
+|`BeneficiaryAddress = "zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9"`
+
+|testnet3/regtest tpub extended public key
+|`BeneficiaryAddress = "tpubDEXzoXkNdhoFeYrtS2BJKfok6LwH5PKkr5jPSMR6A2erw2yS3VgY5EoYdcKH24VPqeAgBTF6i82Ft9NG1iVjSQVAvFBfd2wkRQXF1W2Q8W1"`
+
+|testnet3/regtest upub extended public key
+|`BeneficiaryAddress = "upub5DnYQWgCDSGe6DAr6NZaD4jsh1Qz55jh7DeScVVyJJnHCp5BwyvM7Xm7S5r5n5ZYMJ1WrrM31i4kcsWwW2vxcJS1kfsuKgK9vME2z1cx6aX"`
+
+|testnet3/regest vpub extended public key
+|`BeneficiaryAddress = "vpub5Zx5difzitDBNPjrr9pTno6C44dJFd89naYzhyk9QWHFTpF7pJqnyAnADhbVrFYX7eCK8V2WBBVprxzJrSk15NsYHiB8CvV8h4JnXkU66as"`
+
+|standard mainnet P2PKH btc address
+|`BeneficiaryAddress = "1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx"`
+
+|standard testnet P2PKH btc address
+|`BeneficiaryAddress = "mkHS9ne12qx9pS9VojpwU5xtRd4T7X7ZUt"`
+
+|standard mainnet P2SH btc address
+|`BeneficiaryAddress = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"`
+
+|standard mainnet Bech32 (segwit) P2WPKH btc address
+|`BeneficiaryAddress = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"`
+
+|standard mainnet Bech32 (segwit) P2WPSH btc address
+|`BeneficiaryAddress = "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"`
+
+|mainnet P2PK compressed btc public key (0x02)
+|`BeneficiaryAddress = "02192d74d0cb94344c9569c2e77901573d8d7903c3ebec3a957724895dca52c6b4"`
+
+|mainnet P2PK compressed btc public key (0x03)
+|`BeneficiaryAddress = "03b0bd634234abbb1ba1e986e884185c61cf43e001f9137f23c2c409273eb16e65"`
+
+|mainnet P2PK compressed btc public key (0x04)
+|`BeneficiaryAddress = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3"`
+
+|standard testnet P2SH btc address
+|`BeneficiaryAddress = "2NBFNJTktNa7GZusGbDbGKRZTxdK9VVez3n"`
+
+|standard testnet Bech32 (segwit) P2WPKH btc address
+|`BeneficiaryAddress = "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"`
+
+|testnet P2PK compressed btc public key (0x02)
+|`BeneficiaryAddress = "02192d74d0cb94344c9569c2e77901573d8d7903c3ebec3a957724895dca52c6b4"`
+|===
+
 == Build from Source
 
 See the https://github.com/keep-network/keep-core/tree/master/docs/development#building[building] section in our developer docs.
