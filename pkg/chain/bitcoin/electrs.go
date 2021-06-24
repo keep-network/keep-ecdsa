@@ -145,8 +145,8 @@ func (e electrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 		if resp.StatusCode != 200 {
 			responseBody, err := io.ReadAll(resp.Body)
 			if err != nil {
-				logger.Error(
-					"something went wrong trying to read error response for transactions of bitcoin address [%s]: [%w]",
+				logger.Errorf(
+					"something went wrong trying to read error response for transactions of bitcoin address [%s]: [%v]",
 					btcAddress,
 					err,
 				)
