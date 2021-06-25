@@ -20,8 +20,8 @@ should be run on all clients taking part in the unlucky protocol execution.
 
 == Common problems
 
-Typically, there are several types of network-related problems reported by
-operators. Here is a brief description of them.
+Here are the most common problems reported by operators with a brief description
+for each one of them.
 
 === Failed to get unicast channel with peer
 
