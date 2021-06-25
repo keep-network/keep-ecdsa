@@ -89,7 +89,8 @@ Check if your node has a working connection with their ETH node. Broken
 ETH connection means that your client becomes blind for all chain events
 taking place for keeps it is a member of. For example, it may not notice a
 starting key generation or signing process. ETH connectivity can be
-watched using metrics and a monitoring system
+watched using metrics and a monitoring system. There should also be no errors
+in the logs about the state of websocket connection.
 
 === Make sure your client is publicly reachable
 Check if your client uses a publicly available IP or DNS and announces it
