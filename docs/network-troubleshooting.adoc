@@ -116,11 +116,15 @@ ones.
 === Make sure your client address is stable
 Your client should not change it's announced address to often. All changes
 need time to be propagated over the network so other clients may not be able
-to reach your client immediately. It is also important that your client
-uses the same announced address for outbound traffic as well. Using a different
-address may cause the traffic to be dropped by other clients. This is often
-the case in cloud environments using a public load balancer for inbound traffic
-and a NAT gateway for outbound traffic.
+to reach your client immediately. When the network contains 100+ clients,
+for example, propagation can take up to 20 minutes under normal conditions,
+and may take longer in certain cases. For example, larger peer numbers and
+unusual connectivity can lead to longer propagation time.
+
+It is also important that your client uses the same announced address for
+outbound traffic as well. Using a different address may cause the traffic to be
+dropped by other clients. This is often the case in cloud environments using a
+public load balancer for inbound traffic and a NAT gateway for outbound traffic.
 
 === Enable debug logs
 Enabling debug logs may reveal additional details relevant for problem
