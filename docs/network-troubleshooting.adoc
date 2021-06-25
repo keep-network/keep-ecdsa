@@ -109,7 +109,7 @@ to initiate outgoing connections though it may be able to receive incoming
 ones.
 
 === Make sure your client address is stable
-Your client should not change it's announced address to often. All changes
+Your client should not change its announced address to often. All changes
 need time to be propagated over the network so other clients may not be able
 to reach your client immediately. When the network contains 100+ clients,
 for example, propagation can take up to 20 minutes under normal conditions,
