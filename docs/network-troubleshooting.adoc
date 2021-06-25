@@ -49,7 +49,7 @@ failed to announce signer presence: [waiting for announcements timed out after: 
 === Readiness signaling protocol failed
 
 Readiness protocol is performed before both key generation and signing
-processes. It's purpose is to synchronize keep members and allows each member
+processes. Its purpose is to synchronize keep members and allows each member
 to signal their readiness to perform the TSS protocol. Like the announce
 protocol, a 2 minutes timeout applies here as well. In case the timeout
 is exceeded and the client doesn't receive readiness notifications from
