@@ -91,11 +91,6 @@ taking place for keeps it is a member of. For example, it may not notice a
 starting key generation or signing process. ETH connectivity can be
 watched using metrics and a monitoring system
 
-=== Check your client fulfills the minimum stake rule
-Check your client has the minimum amount of KEEP token staked. If the staked
-amount drops below the minimum threshold, your client won't be able to
-connect other clients and all existing connections will be dropped.
-
 === Make sure your client is publicly reachable
 Check if your client uses a publicly available IP or DNS and announces it
 in the network. In case a private address is used, your node won't be able
