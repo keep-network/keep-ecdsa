@@ -148,7 +148,8 @@ export default class RewardsCalculator {
 
     if (
       requirements.poolRequirementFulfilledAtStart === false &&
-      operatorAssets.isUndelegating === false
+      operatorAssets.isUndelegating === false &&
+      operatorAssets.ethTotal.isEqualTo(new BigNumber(0))
     ) {
       violations.push("poolRequirementFulfilledAtStart")
     }

@@ -365,13 +365,14 @@ describe("rewards calculator", async () => {
 
   it(
     "should set total rewards to zero if pool requirement is not " +
-      "fulfilled at start and operator is not undelegating",
+      "fulfilled at start and operator is neither undelegating " +
+      "nor has ETH_total bigger than zero",
     async () => {
       const mockContext = createMockContext()
 
       setupContractsMock(mockContext)
 
-      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+      const operatorParameters = createOperatorParameters(operator, 70000, 0)
 
       operatorParameters.requirements.poolRequirementFulfilledAtStart = false
       operatorParameters.operatorAssets.isUndelegating = false
@@ -400,6 +401,31 @@ describe("rewards calculator", async () => {
 
       operatorParameters.requirements.poolRequirementFulfilledAtStart = false
       operatorParameters.operatorAssets.isUndelegating = true
+
+      const rewardsCalculator = await RewardsCalculator.initialize(
+        mockContext,
+        interval,
+        [operatorParameters]
+      )
+
+      const rewards = rewardsCalculator.getOperatorRewards(operator)
+
+      assert.equal(rewards.totalRewards.isEqualTo(new BigNumber(0)), false)
+    }
+  )
+
+  it(
+    "should NOT set total rewards to zero if pool requirement is not " +
+      "fulfilled at start but operator has ETH_total bigger than zero",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const operatorParameters = createOperatorParameters(operator, 70000, 100)
+
+      operatorParameters.requirements.poolRequirementFulfilledAtStart = false
+      operatorParameters.operatorAssets.isUndelegating = false
 
       const rewardsCalculator = await RewardsCalculator.initialize(
         mockContext,
