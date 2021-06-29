@@ -37,7 +37,7 @@ For each Operator:
   is undelegating OR
   has been de-authorized for the sorition pool in current interval OR
   is not authorized for the sortition pool at the interval start OR
-  is not member of the sortition pool at the interval start
+  is not in the sortition pool for any moment of the interval
   their `ETH_locked = min(ETH_bonded_T_start, ETH_bonded_T_end)`.
 
 === Requirements
@@ -51,16 +51,6 @@ are deallocated and remains in the pool for future intervals.
   
 * If the operator does not have a minimum KEEP stake at `T_start` and is
   not undelegating, they are not getting any rewards for interval `T`.
-
-* If the operator is not in the sortition pool at `T_start` and `ETH_bonded = 0`
-  for that operator, they are not getting any rewards for interval `T`.
-
-* If the operator is deauthorized for the sortition pool during the interval
-  and `ETH_bonded = 0` for that operator, they are not getting any rewards
-  for interval `T`.
-
-* If the operator does not have tBTC sortition pool authorized at `T_start` and
-  `ETH_bonded = 0` for that operator, they are not getting any rewards for interval `T`.
   
 * If the operator ever committed a fraud, they are not getting any rewards for
   interval `T`. 
