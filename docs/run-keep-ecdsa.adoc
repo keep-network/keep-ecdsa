@@ -15,6 +15,8 @@ these capabilities consider the following criteria:
   stable and redundant internet connection.
 - A connection to a production grade self-hosted or third party Ethereum node deployment.
 - Persistent and redundant storage that will survive a VM or container rotation, and disk failure.
+- A way to monitor your operator wallet balance, node connectivity, underlying system
+  health, and logs. A good option is https://github.com/boar-network/keep-monitoring[boar].
 - Each Keep ECDSA client running on the network requires a unique Ethereum operator account.
 - Each Keep ECDSA client running on the network requires a unique IP address or a unique
   application port running under the same IP.
