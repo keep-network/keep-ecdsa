@@ -186,7 +186,7 @@ func TestIsAddressUnused(t *testing.T) {
 
 func TestIsAddressUnused_EmptyApiURL(t *testing.T) {
 	expectedError := "attempted to call IsAddressUnused with no apiURL"
-	expectedUnusedFlag := false
+	expectedUnusedFlag := true
 
 	electrs := &electrsConnection{}
 
@@ -208,7 +208,7 @@ func TestIsAddressUnused_EmptyApiURL(t *testing.T) {
 }
 
 func TestIsAddressUnused_ExpectedFailures(t *testing.T) {
-	expectedUnusedFlag := false
+	expectedUnusedFlag := true
 
 	testData := map[string]struct {
 		btcAddress   string
