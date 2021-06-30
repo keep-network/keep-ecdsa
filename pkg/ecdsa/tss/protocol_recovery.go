@@ -12,6 +12,18 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 )
 
+const (
+	// recoveryProtocolReadyTimeout defines a period within which the member sends
+	// and receives notifications from peer members about their readiness to begin
+	// the broadcast recovery address protocol execution. If the time limit is
+	// reached the ready protocol stage fails.
+	//
+	// It is important that this value is greater than the timeout defined for
+	// Electrs connection, so the nodes/ can correctly synchronize liquidation
+	// protocol execution.
+	recoveryProtocolReadyTimeout = 2 * time.Minute
+)
+
 // recoveryInfo represents the broadcasted information needed from the other
 // signers to complete liquidation recovery.
 type recoveryInfo struct {
@@ -34,7 +46,7 @@ func BroadcastRecoveryAddress(
 	pubKeyToAddressFn func(cecdsa.PublicKey) []byte,
 	chainParams *chaincfg.Params,
 ) ([]string, int32, error) {
-	const protocolReadyTimeout = 2 * time.Minute
+	protocolReadyTimeout := recoveryProtocolReadyTimeout
 
 	group := &groupInfo{
 		groupID:            groupID,
