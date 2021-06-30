@@ -16,7 +16,13 @@ import (
 var logger = log.Logger("keep-bitcoin")
 
 const (
-	defaultTimeout = 2 * time.Minute
+	// defaultTimeout defines a period within which the member tries to call Electrs
+	// API. If the time is reached an error will be returned.
+	//
+	// It is important that this value is less than the timeout used for a
+	// liquidation recovery protocol (recoveryProtocolReadyTimeout), so the nodes
+	// can correctly synchronize liquidation protocol execution.
+	defaultTimeout = 1 * time.Minute
 )
 
 type httpClient interface {
