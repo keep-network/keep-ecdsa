@@ -117,7 +117,11 @@ non-default ports configured, firewall rules will need to be adjusted accordingl
 === Application
 
 Application configurations are stored in a `.toml` file and passed to the application run command
- with the `--config` flag.
+ with the `--config` flag. Example:
+[source,bash]
+----
+./keep-ecdsa --config /path/to/your/config.toml start
+----
 
 ==== Sample
 
@@ -129,8 +133,15 @@ Application configurations are stored in a `.toml` file and passed to the applic
 
 # Connection details of ethereum blockchain.
 [ethereum]
+  # If you're connecting to a local ethereum node
   URL = "ws://127.0.0.1:8545"
+  # Otherwise, this would be a third party deployment like infura
+  # URL = "wss://mainnet.infura.io/ws/v3/<your-infura-api-key-here>""
+
+  # If you're connecting to a local ethereum node
   URLRPC = "http://127.0.0.1:8546"
+  # Otherwise, this would be a third party deployment like infura
+  # URL = "https://mainnet.infura.io/v3/<your-infura-api-key-here>"
 
 [ethereum.account]
   KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
@@ -348,7 +359,23 @@ Trust math, not hardware.
 -----------------------------------------------------------------------------------------------
 ```
 
-**Bonus**: If you want to share your LibP2P address with others you can get it from the startup log.  When sharing remember to substitute the `/ipv4/` address with the public facing IP of your client if you're running on a private machine, or replace the entire `/ipv4/` segment with a DNS entry if you're using a hostname.
+If you want to share your LibP2P address with others you can get it
+from the startup log. This can be helpful for debugging issues where a peer ID
+is needed. Additionally, if you're running multiple nodes, you may want to add
+your own nodes to the bootstrap list configured in `LibP2P.Peers`.
+
+When sharing remember to substitute the `/ipv4/` address
+with the public facing IP of your client if you're running on a private
+machine, or replace the entire `/ipv4/` segment with a DNS entry if you're
+using a hostname.
+
+Example:
+[source]
+----
+/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
+becomes
+/ip4/99.153.149.50/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
+----
 
 === Peer Connections
 
