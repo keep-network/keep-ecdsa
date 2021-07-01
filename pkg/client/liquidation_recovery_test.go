@@ -29,57 +29,35 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 )
 
-var (
-	keepIDString = "0x4e09cadc7037afa36603138d1c0b76fe2aa5039c"
-	keepAddress  = common.HexToAddress(keepIDString)
-
-	depositAddress = common.HexToAddress("0x39122253af729AA39FE886A105B6a580C0d54F80")
-
-	groupSize = 3
-
-	localChain chainLocal.Chain
-	keepID     chain.ID
-	keep       chain.BondedECDSAKeepHandle
-
-	tbtcHandle chain.TBTCHandle
-
-	networkProviders map[string]net.Provider
-
-	groupMemberIDs       []tss.MemberID
-	keepMembersAddresses []common.Address
-	signers              map[string]*tss.ThresholdSigner
-	signersMutex         *sync.RWMutex
-)
-
-func init() {
-	localChain = chainLocal.Connect(context.Background())
-
-	signersMutex = &sync.RWMutex{}
-
-	networkProviders = make(map[string]net.Provider)
-
-	var err error
-	keepID, err = localChain.UnmarshalID(keepIDString)
-	if err != nil {
-		panic(err)
-	}
-
-	groupMemberIDs, keepMembersAddresses, signers, err = initializeSigners()
-	if err != nil {
-		panic(err)
-	}
-
-	tbtcHandle, err = localChain.TBTCApplicationHandle()
-	if err != nil {
-		panic(err)
-	}
-	tbtcHandle.(*chainLocal.TBTCLocalChain).CreateDeposit(depositAddress.String(), keepMembersAddresses)
-}
-
 func TestHandleLiquidationRecovery(t *testing.T) {
 	if err := log.SetLogLevel("*", "DEBUG"); err != nil {
 		t.Fatal(err)
 	}
+
+	keepAddress := common.HexToAddress("0x4e09cadc7037afa36603138d1c0b76fe2aa5039c")
+	depositAddress := common.HexToAddress("0x39122253af729AA39FE886A105B6a580C0d54F80")
+
+	groupSize := 3
+
+	localChain := chainLocal.Connect(context.Background())
+
+	keepID, err := localChain.UnmarshalID(keepAddress.String())
+	if err != nil {
+		panic(err)
+	}
+
+	groupMemberIDs, keepMembersAddresses, signers, networkProviders, err := initializeSigners(groupSize, keepAddress)
+	if err != nil {
+		panic(err)
+	}
+
+	keep := localChain.OpenKeep(keepAddress, depositAddress, keepMembersAddresses)
+
+	tbtcHandle, err := localChain.TBTCApplicationHandle()
+	if err != nil {
+		panic(err)
+	}
+	tbtcHandle.(*chainLocal.TBTCLocalChain).CreateDeposit(depositAddress.String(), keepMembersAddresses)
 
 	bitcoinAddresses := []string{
 		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
@@ -240,14 +218,12 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 
 						tssNode := node.NewNode(localChain, networkProvider, &tss.Config{})
 
-						signersMutex.RLock()
 						signer, ok := signers[memberID.String()]
 						if !ok {
-							t.Fatalf("failed to load signer for member [%s]", memberID)
+							errChan <- fmt.Errorf("failed to load signer for member [%s]", memberID)
 						}
-						signersMutex.RUnlock()
 
-						persistenceMock, keepsRegistry := newTestKeepsRegistry()
+						persistenceMock, keepsRegistry := newTestKeepsRegistry(localChain)
 						keepsRegistry.RegisterSigner(keepID, signer)
 						persistenceMock.MockSigner(0, keepID.String(), signer)
 
@@ -436,31 +412,33 @@ func generateMemberKeys() ([]tss.MemberID, []common.Address, error) {
 	return memberIDs, memberAddresses, nil
 }
 
-func initializeSigners() ([]tss.MemberID, []common.Address, map[string]*tss.ThresholdSigner, error) {
+func initializeSigners(
+	groupSize int,
+	keepAddress common.Address,
+) (
+	[]tss.MemberID,
+	[]common.Address,
+	map[string]*tss.ThresholdSigner,
+	map[string]net.Provider, error,
+) {
 	if err := log.SetLogLevel("*", "INFO"); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := log.SetLogLevel("*", "DEBUG"); err != nil {
-		return nil, nil, nil, err
-	}
-
 	groupMemberIDs, keepMembersAddresses, err := generateMemberKeys()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
-
-	keep = localChain.OpenKeep(keepAddress, depositAddress, keepMembersAddresses)
 
 	doneChan := make(chan interface{})
 	errChan := make(chan error)
 
 	testData, err := testdata.LoadKeygenTestFixtures(groupSize)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to load key gen test fixtures: [%v]", err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to load key gen test fixtures: [%v]", err)
 	}
 
 	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
@@ -474,6 +452,9 @@ func initializeSigners() ([]tss.MemberID, []common.Address, map[string]*tss.Thre
 	providersInitializedWg.Add(groupSize)
 
 	signers := make(map[string]*tss.ThresholdSigner)
+	signersMutex := &sync.RWMutex{}
+
+	networkProviders := make(map[string]net.Provider)
 
 	go func() {
 		for i, memberID := range groupMemberIDs {
@@ -495,7 +476,7 @@ func initializeSigners() ([]tss.MemberID, []common.Address, map[string]*tss.Thre
 				// generating them with tss.GenerateThresholdSigner.
 				signer, err := tss.GenerateThresholdSigner(
 					ctx,
-					keep.ID().String(),
+					keepAddress.String(),
 					memberID,
 					groupMemberIDs,
 					uint(len(groupMemberIDs)-1),
@@ -522,15 +503,15 @@ func initializeSigners() ([]tss.MemberID, []common.Address, map[string]*tss.Thre
 
 	select {
 	case <-doneChan:
-		return groupMemberIDs, keepMembersAddresses, signers, nil
+		return groupMemberIDs, keepMembersAddresses, signers, networkProviders, nil
 	case err := <-errChan:
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	case <-ctx.Done():
-		return nil, nil, nil, ctx.Err()
+		return nil, nil, nil, nil, ctx.Err()
 	}
 }
 
-func newTestKeepsRegistry() (*testhelper.PersistenceHandleMock, *registry.Keeps) {
+func newTestKeepsRegistry(localChain chain.Handle) (*testhelper.PersistenceHandleMock, *registry.Keeps) {
 	persistenceMock := testhelper.NewPersistenceHandleMock(1)
 
 	return persistenceMock, registry.NewKeepsRegistry(persistenceMock, localChain.UnmarshalID)
