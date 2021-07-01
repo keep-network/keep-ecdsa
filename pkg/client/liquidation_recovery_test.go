@@ -88,7 +88,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 		"bc1q46uejlhm9vkswfcqs9plvujzzmqjvtfda3mra6",
 		"398r9poPaoKJ7vHkaVzNVsXBGRB3mFMXEK",
 	}
-	bitcoinExtenderPublicKeys := []string{
+	bitcoinExtendedPublicKeys := []string{
 		"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1",
 		"ypub6Xxan668aiJqvh4SVfd7EzqjWvf36gWufTkhWHv3gaxnBh44HpkTi2TTkm1u136qjUxk7F3jGzoyfrGpHvALMgJgbF4WNXpoPu3QYrqogMK",
 		"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9",
@@ -107,7 +107,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 			},
 		},
 		"bitcoin extended public keys and working bitcoin connection": {
-			bitcoinAddressesOrKeys: bitcoinExtenderPublicKeys,
+			bitcoinAddressesOrKeys: bitcoinExtendedPublicKeys,
 			configureBitcoinHandle: func() *localBitcoinConnection {
 				return newLocalBitcoinConnection()
 			},
@@ -123,7 +123,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 			},
 		},
 		"bitcoin extended public keys and failing bitcoin call to IsAddressUnused": {
-			bitcoinAddressesOrKeys: bitcoinExtenderPublicKeys,
+			bitcoinAddressesOrKeys: bitcoinExtendedPublicKeys,
 			configureBitcoinHandle: func() *localBitcoinConnection {
 				bitcoinHandle := newLocalBitcoinConnection()
 				bitcoinHandle.isAddressUnusedError = fmt.Errorf("mocked failure")
@@ -142,7 +142,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 			},
 		},
 		"bitcoin extended public keys and failing bitcoin call to VbyteFeeFor25Blocks": {
-			bitcoinAddressesOrKeys: bitcoinExtenderPublicKeys,
+			bitcoinAddressesOrKeys: bitcoinExtendedPublicKeys,
 			configureBitcoinHandle: func() *localBitcoinConnection {
 				bitcoinHandle := newLocalBitcoinConnection()
 				bitcoinHandle.vbyteFeeFor25BlocksError = fmt.Errorf("mocked failure")
@@ -161,7 +161,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 			},
 		},
 		"bitcoin extended public keys and failing bitcoin call to Broadcast": {
-			bitcoinAddressesOrKeys: bitcoinExtenderPublicKeys,
+			bitcoinAddressesOrKeys: bitcoinExtendedPublicKeys,
 			configureBitcoinHandle: func() *localBitcoinConnection {
 				bitcoinHandle := newLocalBitcoinConnection()
 				bitcoinHandle.broadcastError = fmt.Errorf("mocked failure")
