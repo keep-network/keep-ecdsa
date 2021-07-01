@@ -89,23 +89,7 @@ func handleLiquidationRecovery(
 		return err
 	}
 
-	vbyteFee, vbyteFeeError := bitcoinHandle.VbyteFeeFor25Blocks()
-	if vbyteFeeError != nil {
-		logger.Errorf(
-			"failed to retrieve a vbyte fee estimate: [%v]",
-			vbyteFeeError,
-		)
-		// Since the electrs connection is optional, we don't return the error
-	}
-	// If value of vByte fee was not fetched from the bitcoin handle try to read
-	// it from a config file. If the value is not defined in the config file use default
-	// vByte fee.
-	if vbyteFee == 0 {
-		vbyteFee = tbtcConfig.Bitcoin.MaxFeePerVByte
-	}
-	if vbyteFee == 0 {
-		vbyteFee = defaultVbyteFee
-	}
+	vbyteFee := resolveVbyteFee(bitcoinHandle, tbtcConfig)
 
 	btcAddresses, maxFeePerVByte, err := tss.BroadcastRecoveryAddress(
 		ctx,
@@ -188,4 +172,28 @@ func handleLiquidationRecovery(
 	}
 
 	return nil
+}
+
+// resolveVbyteFee fetches vByte fee for 25 blocks from the bitcoin handle. If a
+// call to Bitcoin API fails the function catches and logs the error but doesn't
+// fail the execution. If a value of vByte fee was not fetched from the bitcoin
+// handle the function tries to read it from a config file. If the value is not
+// defined in the config file it returns a default vByte fee.
+func resolveVbyteFee(bitcoinHandle bitcoin.Handle, tbtcConfig *tbtc.Config) int32 {
+	vbyteFee, vbyteFeeError := bitcoinHandle.VbyteFeeFor25Blocks()
+	if vbyteFeeError != nil {
+		logger.Errorf(
+			"failed to retrieve a vbyte fee estimate: [%v]",
+			vbyteFeeError,
+		)
+		// Since the electrs connection is optional, we don't return the error
+	}
+	if vbyteFee == 0 {
+		vbyteFee = tbtcConfig.Bitcoin.MaxFeePerVByte
+	}
+	if vbyteFee == 0 {
+		vbyteFee = defaultVbyteFee
+	}
+
+	return vbyteFee
 }
