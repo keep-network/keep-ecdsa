@@ -545,9 +545,17 @@ func (l *localBitcoinConnection) Broadcast(transaction string) error {
 }
 
 func (l *localBitcoinConnection) VbyteFeeFor25Blocks() (int32, error) {
-	return l.vbyteFeeFor25Blocks, l.vbyteFeeFor25BlocksError
+	if l.vbyteFeeFor25BlocksError != nil {
+		return 0, l.vbyteFeeFor25BlocksError
+	}
+
+	return l.vbyteFeeFor25Blocks, nil
 }
 
 func (l *localBitcoinConnection) IsAddressUnused(btcAddress string) (bool, error) {
+	if l.isAddressUnusedError != nil {
+		return true, nil
+	}
+
 	return l.isAddressUnused, l.isAddressUnusedError
 }
