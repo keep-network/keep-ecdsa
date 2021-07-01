@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 )
 
+// PersistenceHandleMock is a mock of persistence handle used in tests.
 type PersistenceHandleMock struct {
 	PersistedGroups  []*TestFileInfo
 	Snapshots        []*TestFileInfo
@@ -15,6 +16,7 @@ type PersistenceHandleMock struct {
 	outputErrorsChan chan error
 }
 
+// NewPersistenceHandleMock creates a mocked persistence handle.
 func NewPersistenceHandleMock(outputDataChanSize int) *PersistenceHandleMock {
 	return &PersistenceHandleMock{
 		outputDataChan:   make(chan persistence.DataDescriptor, outputDataChanSize),
@@ -22,12 +24,14 @@ func NewPersistenceHandleMock(outputDataChanSize int) *PersistenceHandleMock {
 	}
 }
 
+// TestFileInfo holds test data stored in persistence handle.
 type TestFileInfo struct {
 	Data      []byte
 	Directory string
 	Name      string
 }
 
+// Save stores data in persistence handle.
 func (phm *PersistenceHandleMock) Save(data []byte, directory string, name string) error {
 	phm.PersistedGroups = append(
 		phm.PersistedGroups,
@@ -37,6 +41,7 @@ func (phm *PersistenceHandleMock) Save(data []byte, directory string, name strin
 	return nil
 }
 
+// Snapshot creates a snapshot of data in persistence handle.
 func (phm *PersistenceHandleMock) Snapshot(data []byte, directory string, name string) error {
 	phm.Snapshots = append(
 		phm.Snapshots,
@@ -46,6 +51,7 @@ func (phm *PersistenceHandleMock) Snapshot(data []byte, directory string, name s
 	return nil
 }
 
+// MockSigner registers a mock of a signer for membership and keep.
 func (phm *PersistenceHandleMock) MockSigner(membershipIndex int, keepID string, signer *tss.ThresholdSigner) error {
 	signerBytes, err := signer.Marshal()
 	if err != nil {
@@ -61,6 +67,7 @@ func (phm *PersistenceHandleMock) MockSigner(membershipIndex int, keepID string,
 	return nil
 }
 
+// ReadAll reads all data stored in persistence handle.
 func (phm *PersistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, <-chan error) {
 	close(phm.outputDataChan)
 	close(phm.outputErrorsChan)
@@ -68,6 +75,7 @@ func (phm *PersistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, 
 	return phm.outputDataChan, phm.outputErrorsChan
 }
 
+// Archive archives data in persistence handle.
 func (phm *PersistenceHandleMock) Archive(directory string) error {
 	phm.ArchivedGroups = append(phm.ArchivedGroups, directory)
 	phm.PersistedGroups = phm.PersistedGroups[:len(phm.ArchivedGroups)-1]
