@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gogo/protobuf/proto"
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -23,7 +22,6 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 	chainLocal "github.com/keep-network/keep-ecdsa/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
-	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/gen/pb"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss/params"
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc/recovery"
@@ -359,12 +357,6 @@ func initializeSigners() ([]tss.MemberID, []common.Address, map[string]*tss.Thre
 
 				// FIXME: Load signers from local test data storage instead of
 				// generating them with tss.GenerateThresholdSigner.
-				//
-				// signer, err := newTestSigner(groupMemberIDs, index)
-				// if err != nil {
-				// 	errChan <- err
-				// 	return
-				// }
 				signer, err := tss.GenerateThresholdSigner(
 					ctx,
 					keep.ID().String(),
@@ -400,50 +392,6 @@ func initializeSigners() ([]tss.MemberID, []common.Address, map[string]*tss.Thre
 	case <-ctx.Done():
 		return nil, nil, nil, ctx.Err()
 	}
-}
-
-func newTestSigner(groupMemberIDs []tss.MemberID, memberIndex int) (*tss.ThresholdSigner, error) {
-	testData, err := testdata.LoadKeygenTestFixtures(memberIndex + 1)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load key gen test fixtures: [%v]", err)
-	}
-
-	thresholdKey := tss.ThresholdKey(testData[memberIndex])
-	threshdolKeyBytes, err := thresholdKey.Marshal()
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal threshold key: [%v]", err)
-	}
-
-	signer := &tss.ThresholdSigner{}
-
-	groupMemberIDsBytes := [][]byte{
-		groupMemberIDs[0],
-		groupMemberIDs[1],
-		groupMemberIDs[2],
-	}
-
-	pbGroup := &pb.ThresholdSigner_GroupInfo{
-		GroupID:            "test-group-1",
-		MemberID:           groupMemberIDsBytes[memberIndex],
-		GroupMemberIDs:     groupMemberIDsBytes,
-		DishonestThreshold: 2,
-	}
-	pbSigner := &pb.ThresholdSigner{
-		GroupInfo:    pbGroup,
-		ThresholdKey: threshdolKeyBytes,
-	}
-
-	bytes, err := proto.Marshal(pbSigner)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal signer: [%v]", err)
-	}
-
-	err = signer.Unmarshal(bytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal signer: [%v]", err)
-	}
-
-	return signer, nil
 }
 
 func newTestKeepsRegistry() (*testhelper.PersistenceHandleMock, *registry.Keeps) {
