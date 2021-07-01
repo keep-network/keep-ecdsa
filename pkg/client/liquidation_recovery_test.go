@@ -94,26 +94,26 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 
 	testCases := map[string]struct {
 		bitcoinAddressesOrKeys []string
-		configureBitcoinHandle func() *localBitcoinConnection
+		configureBitcoinHandle func(memberIndex int) *localBitcoinConnection
 		expectedErrors         []error
 	}{
 		// bitcoin connection working
 		"bitcoin addresses and working bitcoin connection": {
 			bitcoinAddressesOrKeys: bitcoinAddresses,
-			configureBitcoinHandle: func() *localBitcoinConnection {
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
 				return newLocalBitcoinConnection()
 			},
 		},
 		"bitcoin extended public keys and working bitcoin connection": {
 			bitcoinAddressesOrKeys: bitcoinExtendedPublicKeys,
-			configureBitcoinHandle: func() *localBitcoinConnection {
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
 				return newLocalBitcoinConnection()
 			},
 		},
 		// bitcoin connection not working: failing IsAddressUnused
 		"bitcoin addresses and failing bitcoin call to IsAddressUnused": {
 			bitcoinAddressesOrKeys: bitcoinAddresses,
-			configureBitcoinHandle: func() *localBitcoinConnection {
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
 				bitcoinHandle := newLocalBitcoinConnection()
 				bitcoinHandle.isAddressUnusedError = fmt.Errorf("mocked failure")
 
@@ -122,7 +122,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 		},
 		"bitcoin extended public keys and failing bitcoin call to IsAddressUnused": {
 			bitcoinAddressesOrKeys: bitcoinExtendedPublicKeys,
-			configureBitcoinHandle: func() *localBitcoinConnection {
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
 				bitcoinHandle := newLocalBitcoinConnection()
 				bitcoinHandle.isAddressUnusedError = fmt.Errorf("mocked failure")
 
@@ -132,7 +132,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 		// bitcoin connection not working: failing VbyteFeeFor25Blocks
 		"bitcoin addresses and failing bitcoin call to VbyteFeeFor25Blocks": {
 			bitcoinAddressesOrKeys: bitcoinAddresses,
-			configureBitcoinHandle: func() *localBitcoinConnection {
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
 				bitcoinHandle := newLocalBitcoinConnection()
 				bitcoinHandle.vbyteFeeFor25BlocksError = fmt.Errorf("mocked failure")
 
@@ -141,7 +141,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 		},
 		"bitcoin extended public keys and failing bitcoin call to VbyteFeeFor25Blocks": {
 			bitcoinAddressesOrKeys: bitcoinExtendedPublicKeys,
-			configureBitcoinHandle: func() *localBitcoinConnection {
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
 				bitcoinHandle := newLocalBitcoinConnection()
 				bitcoinHandle.vbyteFeeFor25BlocksError = fmt.Errorf("mocked failure")
 
@@ -151,7 +151,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 		// bitcoin connection not working: failing Broadcast
 		"bitcoin addresses and failing bitcoin call to Broadcast": {
 			bitcoinAddressesOrKeys: bitcoinAddresses,
-			configureBitcoinHandle: func() *localBitcoinConnection {
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
 				bitcoinHandle := newLocalBitcoinConnection()
 				bitcoinHandle.broadcastError = fmt.Errorf("mocked failure")
 
@@ -160,9 +160,39 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 		},
 		"bitcoin extended public keys and failing bitcoin call to Broadcast": {
 			bitcoinAddressesOrKeys: bitcoinExtendedPublicKeys,
-			configureBitcoinHandle: func() *localBitcoinConnection {
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
 				bitcoinHandle := newLocalBitcoinConnection()
 				bitcoinHandle.broadcastError = fmt.Errorf("mocked failure")
+
+				return bitcoinHandle
+			},
+		},
+		// bitcoin connection not working for 1 member:
+		"bitcoin addresses and failing bitcoin connection for one member": {
+			bitcoinAddressesOrKeys: bitcoinAddresses,
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
+				bitcoinHandle := newLocalBitcoinConnection()
+				bitcoinHandle.broadcastError = fmt.Errorf("mocked failure")
+
+				if memberIndex == 2 {
+					bitcoinHandle.isAddressUnusedError = fmt.Errorf("mocked failure")
+					bitcoinHandle.vbyteFeeFor25BlocksError = fmt.Errorf("mocked failure")
+					bitcoinHandle.broadcastError = fmt.Errorf("mocked failure")
+				}
+
+				return bitcoinHandle
+			},
+		},
+		"bitcoin extended public keys and failing bitcoin connection for one member": {
+			bitcoinAddressesOrKeys: bitcoinExtendedPublicKeys,
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
+				bitcoinHandle := newLocalBitcoinConnection()
+
+				if memberIndex == 2 {
+					bitcoinHandle.isAddressUnusedError = fmt.Errorf("mocked failure")
+					bitcoinHandle.vbyteFeeFor25BlocksError = fmt.Errorf("mocked failure")
+					bitcoinHandle.broadcastError = fmt.Errorf("mocked failure")
+				}
 
 				return bitcoinHandle
 			},
@@ -174,7 +204,10 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 
 	for testName, testData := range testCases {
 		t.Run(testName, func(t *testing.T) {
-			bitcoinHandle := testData.configureBitcoinHandle()
+			bitcoinHandles := []*localBitcoinConnection{}
+			for i := range groupMemberIDs {
+				bitcoinHandles = append(bitcoinHandles, testData.configureBitcoinHandle(i))
+			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
@@ -224,7 +257,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 							ctx,
 							localChain,
 							tbtcHandle,
-							bitcoinHandle,
+							bitcoinHandles[index],
 							networkProvider,
 							tbtcConfig,
 							tssNode,
@@ -246,25 +279,28 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 
 			select {
 			case <-doneChan:
-				if len(bitcoinHandle.transactions) != groupSize {
-					t.Errorf(
-						"unexpected number of broadcasted transactions\n"+
-							"expected: [%v]\n"+
-							"actual:   [%v]",
-						groupSize,
-						len(bitcoinHandle.transactions),
-					)
-				}
+				expectedTransaction := bitcoinHandles[0].transactions[0]
 
-				for i, transaction := range bitcoinHandle.transactions {
-					if transaction != bitcoinHandle.transactions[0] {
+				for i, bitcoinHandle := range bitcoinHandles {
+					if len(bitcoinHandle.transactions) != 1 {
+						t.Errorf(
+							"unexpected number of broadcasted transactions for member [%d]\n"+
+								"expected: [%v]\n"+
+								"actual:   [%v]",
+							i,
+							1,
+							len(bitcoinHandle.transactions),
+						)
+					}
+
+					if expectedTransaction != bitcoinHandle.transactions[0] {
 						t.Errorf(
 							"bitcoin transaction for member [%d] doesn't match first member's\n"+
 								"expected: [%s]\n"+
 								"actual:   [%s]",
 							i,
+							expectedTransaction,
 							bitcoinHandle.transactions[0],
-							transaction,
 						)
 					}
 
