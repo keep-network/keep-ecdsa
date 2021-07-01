@@ -356,8 +356,14 @@ reference].
 |mainnet P2SH btc address
 |`BeneficiaryAddress = "3J98t1WpEZ73C____REPLACE_WITH_VALID_DATA____NmQviecrnyiWrnqRhWNLy"`
 
+|testnet P2SH btc address
+|`BeneficiaryAddress = "2NBFNJTktNa7G____REPLACE_WITH_VALID_DATA____ZusGbDbGKRZTxdK9VVez3n"`
+
 |mainnet Bech32 (segwit) P2WPKH btc address
 |`BeneficiaryAddress = "bc1qar0srrr7x____REPLACE_WITH_VALID_DATA____fkvy5l643lydnw9re59gtzzwf5mdq"`
+
+|testnet Bech32 (segwit) P2WPKH btc address
+|`BeneficiaryAddress = "tb1qw508d6qej____REPLACE_WITH_VALID_DATA____xtdg4y5r3zarvary0c5xw7kxpjzsx"`
 
 |mainnet Bech32 (segwit) P2WPSH btc address
 |`BeneficiaryAddress = "bc1qrp33g0q5c____REPLACE_WITH_VALID_DATA____cefvpysxf3qccfmv3"`
@@ -370,12 +376,6 @@ reference].
 
 | P2PK compressed btc public key (0x04)
 |`BeneficiaryAddress = "0411db93e1dcd____REPLACE_WITH_VALID_DATA____1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3"`
-
-|testnet P2SH btc address
-|`BeneficiaryAddress = "2NBFNJTktNa7G____REPLACE_WITH_VALID_DATA____ZusGbDbGKRZTxdK9VVez3n"`
-
-|testnet Bech32 (segwit) P2WPKH btc address
-|`BeneficiaryAddress = "tb1qw508d6qej____REPLACE_WITH_VALID_DATA____xtdg4y5r3zarvary0c5xw7kxpjzsx"`
 
 == Build from Source
 
