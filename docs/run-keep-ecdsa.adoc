@@ -15,6 +15,8 @@ these capabilities consider the following criteria:
   stable and redundant internet connection.
 - A connection to a production grade self-hosted or third party Ethereum node deployment.
 - Persistent and redundant storage that will survive a VM or container rotation, and disk failure.
+- A way to monitor your operator wallet balance, node connectivity, underlying system
+  health, and logs. A good option is https://github.com/boar-network/keep-monitoring[boar].
 - Each Keep ECDSA client running on the network requires a unique Ethereum operator account.
 - Each Keep ECDSA client running on the network requires a unique IP address or a unique
   application port running under the same IP.
@@ -73,16 +75,19 @@ Below is the average gas cost of the most important transactions the client is s
 |No
 |===
 
-For example, if we expect the operator to handle 100 keeps by submitting all the transactions mentioned
-above for each keep, the operator needs to have `100 * (150 000 + 30 500 + 125 000) * gas_price` ETH on
+For example, if we expect the operator to handle a keep by submitting all the transactions mentioned
+above for each keep, the operator needs to have `(150 000 + 30 500 + 125 000) * gas_price` ETH on
 the account:
 
-- For the gas price of 20 Gwei, this is at least 0.611 ETH. 
-- For the gas price of 100 Gwei, this is at least 3.055 ETH. 
-- For the gas price of 800 Gwei, this is at least 24.44 ETH. 
+- For the gas price of 20 Gwei, this is at least 0.00611 ETH.
+- For the gas price of 100 Gwei, this is at least 0.03055 ETH.
+- For the gas price of 800 Gwei, this is at least 0.2444 ETH.
 
 It is paramount that the operators have some safety margin and consider the current gas price, stake, and
 unbonded value when funding their accounts.
+
+It is highly recommended to keep your operator account above 1 eth (and monitor
+it continuously) to be safe from surges in transactions.
 
 == Configuration
 

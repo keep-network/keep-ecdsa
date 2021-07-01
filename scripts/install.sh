@@ -55,14 +55,17 @@ shift $(expr $OPTIND - 1) # remove options from positional parameters
 NETWORK=${network:-$NETWORK_DEFAULT}
 CONTRACTS_ONLY=${contracts_only:-false}
 
-printf "${LOG_START}Network: $NETWORK ${LOG_END}"
-
 # Run script.
+printf "${LOG_START}Network: $NETWORK ${LOG_END}"
 printf "${LOG_START}Starting installation...${LOG_END}"
+printf "${LOG_START}Installing root NPM dependencies...${LOG_END}"
+
+cd $KEEP_ECDSA_PATH
+npm install
+
+printf "${LOG_START}Installing Solidity NPM dependencies...${LOG_END}"
 
 cd $KEEP_ECDSA_SOL_PATH
-
-printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
 npm install
 npm link @keep-network/keep-core
 
