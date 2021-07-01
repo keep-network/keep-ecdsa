@@ -162,7 +162,7 @@ func Initialize(
 
 			signer, err := keepsRegistry.GetSigner(keepID)
 			if err != nil {
-				// If there are no signer for loaded keep that something is clearly
+				// If there are no signer for loaded keep then something is clearly
 				// wrong. We don't want to continue processing for this keep.
 				logger.Errorf(
 					"no signer for keep [%s]: [%v]",
