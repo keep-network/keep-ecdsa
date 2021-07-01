@@ -303,7 +303,7 @@ reference].
 |Required
 
 |`BeneficiaryAddress`
-|The btc address or *pub (xpub, ypub, zpub) that you would like recovered btc funds to be sent too.
+|The btc address or *pub (xpub, ypub, zpub) that you would like recovered btc funds to be sent too, see <<example-beneficiary-addresses,examples>>.
 |""
 |Yes
 
@@ -323,6 +323,7 @@ reference].
 |No
 |===
 
+[[example-beneficiary-addresses]]
 ==== Example BeneficiaryAddresses
 
 [%header,cols=2*]
