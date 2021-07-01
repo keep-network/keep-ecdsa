@@ -452,9 +452,10 @@ func initializeSigners(
 	providersInitializedWg.Add(groupSize)
 
 	signers := make(map[string]*tss.ThresholdSigner)
-	signersMutex := &sync.RWMutex{}
+	signersMutex := &sync.Mutex{}
 
 	networkProviders := make(map[string]net.Provider)
+	networkProvidersMutex := &sync.Mutex{}
 
 	go func() {
 		for i, memberID := range groupMemberIDs {
@@ -467,7 +468,9 @@ func initializeSigners(
 				networkPublicKey := key.NetworkPublic(*operatorPublicKey)
 				networkProvider := localNet.ConnectWithKey(&networkPublicKey)
 
+				networkProvidersMutex.Lock()
 				networkProviders[memberID.String()] = networkProvider
+				networkProvidersMutex.Unlock()
 
 				providersInitializedWg.Done()
 				providersInitializedWg.Wait()
