@@ -1,0 +1,22 @@
+:toc: macro
+
+= Infrastructure
+
+:icons: font
+:numbered:
+toc::[]
+
+== Deployment Considerations
+
+// TODO: Flesh out this document
+
+=== Kubernetes
+
+At Keep we run on GCP + Kube. To accommodate the aforementioned system considerations we use the following pattern for each of our environments:
+
+- Regional Kube cluster.
+- 5 ECDSA clients, each running minimum stake required by the network.
+- A LoadBalancer Service for each client.
+- A StatefulSet for each client.
+
+You can see our Ropsten Kube configurations https://github.com/keep-network/keep-ecdsa/tree/master/infrastructure/kube/keep-test[here]
