@@ -76,7 +76,6 @@ func init() {
 		panic(err)
 	}
 	tbtcHandle.(*chainLocal.TBTCLocalChain).CreateDeposit(depositAddress.String(), keepMembersAddresses)
-
 }
 
 func TestHandleLiquidationRecovery(t *testing.T) {
