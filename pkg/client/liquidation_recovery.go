@@ -14,6 +14,10 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 )
 
+const (
+	defaultVbyteFee = 75
+)
+
 // TODO: Should this function be moved to `node` package under tss.Node?
 func handleLiquidationRecovery(
 	ctx context.Context,
@@ -93,11 +97,14 @@ func handleLiquidationRecovery(
 		)
 		// Since the electrs connection is optional, we don't return the error
 	}
+	// If value of vByte fee was not fetched from the bitcoin handle try to read
+	// it from a config file. If the value is not defined in the config file use default
+	// vByte fee.
 	if vbyteFee == 0 {
 		vbyteFee = tbtcConfig.Bitcoin.MaxFeePerVByte
 	}
 	if vbyteFee == 0 {
-		vbyteFee = 75
+		vbyteFee = defaultVbyteFee
 	}
 
 	btcAddresses, maxFeePerVByte, err := tss.BroadcastRecoveryAddress(
