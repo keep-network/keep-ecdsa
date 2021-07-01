@@ -168,7 +168,6 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 			},
 		},
 		// TODO: Add tests to verify logged output:
-		// - resolved maxFeePerVByte
 		// - logged 5x warn on broadcast failure
 		// - cover more failures
 	}
@@ -274,6 +273,107 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			case <-ctx.Done():
 				t.Fatal(ctx.Err())
+			}
+		})
+	}
+}
+
+func TestResolveVbyteFee(t *testing.T) {
+	testCases := map[string]struct {
+		configureBitcoinHandle func() *localBitcoinConnection
+		tbtcConfig             *tbtc.Config
+		expectedResult         int32
+	}{
+		"value returned from bitcoin handle greater than value defined in config": {
+			configureBitcoinHandle: func() *localBitcoinConnection {
+				bitcoinHandle := newLocalBitcoinConnection()
+				bitcoinHandle.vbyteFeeFor25Blocks = 15
+
+				return bitcoinHandle
+			},
+			tbtcConfig: &tbtc.Config{
+				Bitcoin: bitcoin.Config{
+					MaxFeePerVByte: 10,
+				},
+			},
+			expectedResult: 15,
+		},
+		"value returned from bitcoin handle less than value defined in config": {
+			configureBitcoinHandle: func() *localBitcoinConnection {
+				bitcoinHandle := newLocalBitcoinConnection()
+				bitcoinHandle.vbyteFeeFor25Blocks = 20
+
+				return bitcoinHandle
+			},
+			tbtcConfig: &tbtc.Config{
+				Bitcoin: bitcoin.Config{
+					MaxFeePerVByte: 25,
+				},
+			},
+			expectedResult: 20,
+		},
+		"value returned from bitcoin handle and missing value in config": {
+			configureBitcoinHandle: func() *localBitcoinConnection {
+				bitcoinHandle := newLocalBitcoinConnection()
+				bitcoinHandle.vbyteFeeFor25Blocks = 20
+
+				return bitcoinHandle
+			},
+			tbtcConfig:     &tbtc.Config{},
+			expectedResult: 20,
+		},
+		"value returned from bitcoin handle greater than value defined in config greater than default": {
+			configureBitcoinHandle: func() *localBitcoinConnection {
+				bitcoinHandle := newLocalBitcoinConnection()
+				bitcoinHandle.vbyteFeeFor25Blocks = defaultVbyteFee + 2
+
+				return bitcoinHandle
+			},
+			tbtcConfig: &tbtc.Config{
+				Bitcoin: bitcoin.Config{
+					MaxFeePerVByte: defaultVbyteFee + 1,
+				},
+			},
+			expectedResult: defaultVbyteFee + 2,
+		},
+		"non-working bitcoin handle connection and value defined in config": {
+			configureBitcoinHandle: func() *localBitcoinConnection {
+				bitcoinHandle := newLocalBitcoinConnection()
+				bitcoinHandle.vbyteFeeFor25BlocksError = fmt.Errorf("mocked failure")
+
+				return bitcoinHandle
+			},
+			tbtcConfig: &tbtc.Config{
+				Bitcoin: bitcoin.Config{
+					MaxFeePerVByte: 25,
+				},
+			},
+			expectedResult: 25,
+		},
+		"non-working bitcoin handle connection and missing value in config": {
+			configureBitcoinHandle: func() *localBitcoinConnection {
+				bitcoinHandle := newLocalBitcoinConnection()
+				bitcoinHandle.vbyteFeeFor25BlocksError = fmt.Errorf("mocked failure")
+
+				return bitcoinHandle
+			},
+			tbtcConfig:     &tbtc.Config{},
+			expectedResult: 75,
+		},
+	}
+
+	for testName, testData := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			actual := resolveVbyteFee(testData.configureBitcoinHandle(), testData.tbtcConfig)
+
+			if testData.expectedResult != actual {
+				t.Errorf(
+					"unexpected result\n"+
+						"expected: [%v]\n"+
+						"actual:   [%v]",
+					testData.expectedResult,
+					actual,
+				)
 			}
 		})
 	}
