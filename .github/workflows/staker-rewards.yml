@@ -3,7 +3,7 @@ name: Staker Rewards
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - "staker-rewards/**"
   pull_request:
@@ -15,15 +15,15 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-    - uses: actions/checkout@v2
-      if: github.event_name == 'pull_request' 
-    - uses: dorny/paths-filter@v2
-      if: github.event_name == 'pull_request' 
-      id: filter
-      with:
-        filters: |
-          path-filter:
-            - './staker-rewards/**'
+      - uses: actions/checkout@v2
+        if: github.event_name == 'pull_request'
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './staker-rewards/**'
 
   staker-rewards-test:
     needs: staker-rewards-detect-changes

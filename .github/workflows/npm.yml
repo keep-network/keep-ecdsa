@@ -3,7 +3,7 @@ name: NPM
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - "solidity/contracts/**"
       - "solidity/package.json"
@@ -35,7 +35,7 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-      
+
       - name: Install dependencies
         run: npm ci
 

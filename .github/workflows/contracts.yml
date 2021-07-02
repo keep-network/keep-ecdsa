@@ -3,23 +3,23 @@ name: Solidity
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - "solidity/**"
   pull_request:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment for workflow execution'
+        description: "Environment for workflow execution"
         required: false
-        default: 'dev'
+        default: "dev"
       upstream_builds:
-        description: 'Upstream builds'
+        description: "Upstream builds"
         required: false
       upstream_ref:
-        description: 'Git reference to checkout (e.g. branch name)'
+        description: "Git reference to checkout (e.g. branch name)"
         required: false
-        default: 'master'
+        default: "main"
 
 jobs:
   contracts-detect-changes:
@@ -144,7 +144,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Get upstream packages' versions
         uses: keep-network/upstream-builds-query@v1
         id: upstream-builds-query
@@ -155,9 +155,9 @@ jobs:
 
       - name: Resolve latest contracts
         run: |
-            npm update @keep-network/sortition-pools
-            npm install --save-exact \
-              @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
+          npm update @keep-network/sortition-pools
+          npm install --save-exact \
+            @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
 
       - name: Migrate contracts on Ethereum
         if: github.event.inputs.environment != 'alfajores'
@@ -251,7 +251,7 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-            
+
       - name: Login to Google Container Registry
         uses: docker/login-action@v1
         with:
@@ -275,16 +275,6 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
-      - # Temp fix - move cache instead of copying (added below step and
-        # modified value of `cache-to`).
-        # https://github.com/docker/build-push-action/issues/252
-        # https://github.com/moby/buildkit/issues/1896
-        # Without the change some jobs were failing with `no space left on device`
-        name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-      
       - name: Notify CI about completion of the workflow
         uses: keep-network/notify-workflow-completed@v1
         env:
@@ -296,3 +286,14 @@ jobs:
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           upstream_ref: ${{ github.event.inputs.upstream_ref }}
           version: ${{ needs.contracts-migrate-and-publish.outputs.version }}
+
+      - # Temp fix - move cache instead of copying (added below step and
+        # modified value of `cache-to`).
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        # Without the change some jobs were failing with `no space left on device`
+        name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+

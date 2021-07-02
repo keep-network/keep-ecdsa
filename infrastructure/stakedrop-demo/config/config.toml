@@ -1,35 +1,34 @@
 # This is a TOML configuration file.
-
 # Connection details of ethereum blockchain.
 [ethereum]
-  URL = "wss://eth-ropsten.ws.alchemyapi.io/v2/BfBlnbrARASF-TtU7Q3lcavbgnwW3ZDc"
-  URLRPC = "https://eth-ropsten.alchemyapi.io/v2/BfBlnbrARASF-TtU7Q3lcavbgnwW3ZDc"
+URL = "wss://eth-ropsten.ws.alchemyapi.io/v2/BfBlnbrARASF-TtU7Q3lcavbgnwW3ZDc"
+URLRPC = "https://eth-ropsten.alchemyapi.io/v2/BfBlnbrARASF-TtU7Q3lcavbgnwW3ZDc"
 
 [ethereum.account]
-  KeyFile = "/mnt/keep-ecdsa-client/config/keep-ecdsa-operator-account-keyfile"
+KeyFile = "/mnt/keep-ecdsa-client/config/keep-ecdsa-operator-account-keyfile"
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
-  BondedECDSAKeepFactory = "0x17caddf97a1d1123efb7b233cb16c76c31a96e02"
+BondedECDSAKeepFactory = "0x17caddf97a1d1123efb7b233cb16c76c31a96e02"
 
 # Addresses of applications approved by the operator.
 [SanctionedApplications]
-  Addresses = [
-    "0x2b70907b5c44897030ea1369591ddcd23c5d85d6"
-  ]
+Addresses = ["0x2b70907b5c44897030ea1369591ddcd23c5d85d6"]
 
 [Storage]
-  DataDir = "/mnt/keep-ecdsa-client/persistence"
+DataDir = "/mnt/keep-ecdsa-client/persistence"
 
 [LibP2P]
-  Peers = ["/dns4/bootstrap-1.ecdsa.keep.test.boar.network/tcp/4001/ipfs/16Uiu2HAmPFXDaeGWtnzd8s39NsaQguoWtKi77834A6xwYqeicq6N"]
-  Port = 3919
-  # Uncomment to override the node's default addresses announced in the network
-  AnnouncedAddresses = []
+Peers = [
+  "/dns4/bootstrap-1.ecdsa.keep.test.boar.network/tcp/4001/ipfs/16Uiu2HAmPFXDaeGWtnzd8s39NsaQguoWtKi77834A6xwYqeicq6N"
+]
+Port = 3919
+# Uncomment to override the node's default addresses announced in the network
+AnnouncedAddresses = []
 
 [TSS]
 # Timeout for TSS protocol pre-parameters generation. The value
 # should be provided based on resources available on the machine running the client.
 # This is an optional parameter, if not provided timeout for TSS protocol
 # pre-parameters generation will be set to `2 minutes`.
-  PreParamsGenerationTimeout = "2m30s"
+PreParamsGenerationTimeout = "2m30s"

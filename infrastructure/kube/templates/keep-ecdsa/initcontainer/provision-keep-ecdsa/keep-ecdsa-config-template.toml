@@ -1,35 +1,34 @@
 # This is a TOML configuration file.
-
 # Connection details of Ethereum blockchain.
 [ethereum]
-	URL = ""
-	URLRPC = ""
+URL = ""
+URLRPC = ""
 
 [ethereum.account]
-	KeyFile = ""
+KeyFile = ""
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
-	BondedECDSAKeepFactory = ""
-	TBTCSystem = ""
+BondedECDSAKeepFactory = ""
+TBTCSystem = ""
 
 # Connection details of Celo blockchain.
 [celo]
-	URL = ""
-	URLRPC = ""
+URL = ""
+URLRPC = ""
 
 [celo.account]
-	KeyFile = ""
+KeyFile = ""
 
 # Addresses of contracts deployed on Celo blockchain.
 [celo.ContractAddresses]
-	BondedECDSAKeepFactory = ""
-	TBTCSystem = ""
+BondedECDSAKeepFactory = ""
+TBTCSystem = ""
 
 [LibP2P]
-	Peers = []
-	Port = ""
-	AnnouncedAddresses = []
+Peers = []
+Port = ""
+AnnouncedAddresses = []
 
 [Storage]
-	DataDir = ""
+DataDir = ""

@@ -13,43 +13,41 @@ KEEP_ECDSA_SOL_PATH=$(realpath $KEEP_ECDSA_PATH/solidity)
 KEEP_ETHEREUM_PASSWORD=${KEEP_ETHEREUM_PASSWORD:-"password"}
 NETWORK_DEFAULT="local"
 
-help()
-{
-   echo -e "\nUsage: ENV_VAR(S) $0"\
-           "--network <network>"\
-           "--contracts-only"
-   echo -e "\nEnvironment variables:\n"
-   echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
-           "Required only for 'local' network. Default value is 'password'"
-   echo -e "\nCommand line arguments:\n"
-   echo -e "\t--network: Ethereum network for keep-ecdsa client."\
-           "Available networks and settings are specified in 'truffle.js'"
-   echo -e "\t--contracts-only: Should execute contracts part only."\
-           "Client installation will not be executed.\n"
-   exit 1 # Exit script after printing help
+help() {
+  echo -e "\nUsage: ENV_VAR(S) $0" \
+    "--network <network>" \
+    "--contracts-only"
+  echo -e "\nEnvironment variables:\n"
+  echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations." \
+    "Required only for 'local' network. Default value is 'password'"
+  echo -e "\nCommand line arguments:\n"
+  echo -e "\t--network: Ethereum network for keep-ecdsa client." \
+    "Available networks and settings are specified in 'truffle.js'"
+  echo -e "\t--contracts-only: Should execute contracts part only." \
+    "Client installation will not be executed.\n"
+  exit 1 # Exit script after printing help
 }
 
 # Transform long options to short ones
 for arg in "$@"; do
   shift
   case "$arg" in
-    "--network")        set -- "$@" "-n" ;;
-    "--contracts-only") set -- "$@" "-m" ;;
-    "--help")           set -- "$@" "-h" ;;
-    *)                  set -- "$@" "$arg"
+  "--network") set -- "$@" "-n" ;;
+  "--contracts-only") set -- "$@" "-m" ;;
+  "--help") set -- "$@" "-h" ;;
+  *) set -- "$@" "$arg" ;;
   esac
 done
 
 # Parse short options
 OPTIND=1
-while getopts "n:mh" opt
-do
-   case "$opt" in
-      n ) network="$OPTARG" ;;
-      m ) contracts_only=true ;;
-      h ) help ;;
-      ? ) help ;; # Print help in case parameter is non-existent
-   esac
+while getopts "n:mh" opt; do
+  case "$opt" in
+  n) network="$OPTARG" ;;
+  m) contracts_only=true ;;
+  h) help ;;
+  ?) help ;; # Print help in case parameter is non-existent
+  esac
 done
 shift $(expr $OPTIND - 1) # remove options from positional parameters
 
@@ -57,21 +55,24 @@ shift $(expr $OPTIND - 1) # remove options from positional parameters
 NETWORK=${network:-$NETWORK_DEFAULT}
 CONTRACTS_ONLY=${contracts_only:-false}
 
-printf "${LOG_START}Network: $NETWORK ${LOG_END}"
-
 # Run script.
+printf "${LOG_START}Network: $NETWORK ${LOG_END}"
 printf "${LOG_START}Starting installation...${LOG_END}"
+printf "${LOG_START}Installing root NPM dependencies...${LOG_END}"
+
+cd $KEEP_ECDSA_PATH
+npm install
+
+printf "${LOG_START}Installing Solidity NPM dependencies...${LOG_END}"
 
 cd $KEEP_ECDSA_SOL_PATH
-
-printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
 npm install
 npm link @keep-network/keep-core
 
 if [ "$NETWORK" == "local" ]; then
   printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
   KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
-      npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
+    npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
 fi
 
 printf "${LOG_START}Migrating contracts...${LOG_END}"
@@ -83,7 +84,7 @@ ln -sf build/contracts artifacts
 npm link
 npm link @keep-network/keep-core
 
-if [ "$CONTRACTS_ONLY" = false ] ; then
+if [ "$CONTRACTS_ONLY" = false ]; then
   printf "${LOG_START}Building keep-ecdsa client...${LOG_END}"
   cd $KEEP_ECDSA_PATH
 
@@ -92,10 +93,10 @@ if [ "$CONTRACTS_ONLY" = false ] ; then
   # that is assumed to contain both current project and dependent project.
   # Ref: https://github.com/ethereum/solidity/issues/4623
   TMP_FILE=$(mktemp /tmp/Makefile-ethereum.XXXXXXXXXX)
-  sed 's/--allow-paths ${solidity_dir}/--allow-paths $(realpath ${SOLIDITY_DIR}\/..\/..\/)/g' pkg/chain/gen/ethereum/Makefile > $TMP_FILE
+  sed 's/--allow-paths ${solidity_dir}/--allow-paths $(realpath ${SOLIDITY_DIR}\/..\/..\/)/g' pkg/chain/gen/ethereum/Makefile >$TMP_FILE
   mv $TMP_FILE pkg/chain/gen/ethereum/Makefile
   TMP_FILE=$(mktemp /tmp/Makefile-celo.XXXXXXXXXX)
-  sed 's/--allow-paths ${solidity_dir}/--allow-paths $(realpath ${SOLIDITY_DIR}\/..\/..\/)/g' pkg/chain/gen/celo/Makefile > $TMP_FILE
+  sed 's/--allow-paths ${solidity_dir}/--allow-paths $(realpath ${SOLIDITY_DIR}\/..\/..\/)/g' pkg/chain/gen/celo/Makefile >$TMP_FILE
   mv $TMP_FILE pkg/chain/gen/celo/Makefile
 
   go generate ./...
