@@ -96,10 +96,11 @@ in the logs about the state of websocket connection.
 Check if your client uses a publicly available IP or DNS and announces it
 in the network. In case a private address is used, your node won't be able
 to receive incoming connections though it may be able to initiate them on their
-own. Public availability can be checked using the `nmap` tool. Regarding
-announcing, you need to use the
-<<./run-keep-ecdsa.adoc#Parameters, `LibP2P.AnnounceAddresses`>>
-config property. Last but not least, your firewall rules should allow the
+own. Public availability can be checked using the `nmap` tool.
+For more complex deployment setups when the client is not publicly available
+under the default address resolved by the client, we recommend setting
+<<./run-keep-ecdsa.adoc#Parameters, `LibP2P.AnnounceAddresses`>> property in the
+config file. Last but not least, your firewall rules should allow the
 inbound traffic to reach your client.
 
 === Check your client is able to reach the public internet
@@ -110,7 +111,7 @@ to initiate outgoing connections though it may be able to receive incoming
 ones.
 
 === Make sure your client address is stable
-Your client should not change its announced address to often. All changes
+Your client should not change its announced address too often. All changes
 need time to be propagated over the network so other clients may not be able
 to reach your client immediately. When the network contains 100+ clients,
 for example, propagation can take up to 20 minutes under normal conditions,
