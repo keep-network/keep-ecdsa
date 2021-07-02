@@ -126,31 +126,10 @@ export default class RewardsCalculator {
     }
 
     if (
-      requirements.poolAuthorizedAtStart === false &&
-      operatorAssets.ethTotal.isEqualTo(new BigNumber(0))
-    ) {
-      violations.push("poolAuthorizedAtStart")
-    }
-
-    if (
-      requirements.poolDeauthorizedInInterval === true &&
-      operatorAssets.ethTotal.isEqualTo(new BigNumber(0))
-    ) {
-      violations.push("poolDeauthorizedInInterval")
-    }
-
-    if (
       requirements.minimumStakeAtStart === false &&
       operatorAssets.isUndelegating === false
     ) {
       violations.push("minimumStakeAtStart")
-    }
-
-    if (
-      requirements.poolRequirementFulfilledAtStart === false &&
-      operatorAssets.isUndelegating === false
-    ) {
-      violations.push("poolRequirementFulfilledAtStart")
     }
 
     if (operatorSLA.keygenSLA !== "N/A") {
