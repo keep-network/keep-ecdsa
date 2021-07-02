@@ -15,6 +15,8 @@ these capabilities consider the following criteria:
   stable and redundant internet connection.
 - A connection to a production grade self-hosted or third party Ethereum node deployment.
 - Persistent and redundant storage that will survive a VM or container rotation, and disk failure.
+- A way to monitor your operator wallet balance, node connectivity, underlying system
+  health, and logs. A good option is https://github.com/boar-network/keep-monitoring[boar].
 - Each Keep ECDSA client running on the network requires a unique Ethereum operator account.
 - Each Keep ECDSA client running on the network requires a unique IP address or a unique
   application port running under the same IP.
@@ -73,16 +75,19 @@ Below is the average gas cost of the most important transactions the client is s
 |No
 |===
 
-For example, if we expect the operator to handle 100 keeps by submitting all the transactions mentioned
-above for each keep, the operator needs to have `100 * (150 000 + 30 500 + 125 000) * gas_price` ETH on
+For example, if we expect the operator to handle a keep by submitting all the transactions mentioned
+above for each keep, the operator needs to have `(150 000 + 30 500 + 125 000) * gas_price` ETH on
 the account:
 
-- For the gas price of 20 Gwei, this is at least 0.611 ETH. 
-- For the gas price of 100 Gwei, this is at least 3.055 ETH. 
-- For the gas price of 800 Gwei, this is at least 24.44 ETH. 
+- For the gas price of 20 Gwei, this is at least 0.00611 ETH.
+- For the gas price of 100 Gwei, this is at least 0.03055 ETH.
+- For the gas price of 800 Gwei, this is at least 0.2444 ETH.
 
 It is paramount that the operators have some safety margin and consider the current gas price, stake, and
 unbonded value when funding their accounts.
+
+It is highly recommended to keep your operator account above 1 eth (and monitor
+it continuously) to be safe from surges in transactions.
 
 == Configuration
 
@@ -117,7 +122,11 @@ non-default ports configured, firewall rules will need to be adjusted accordingl
 === Application
 
 Application configurations are stored in a `.toml` file and passed to the application run command
- with the `--config` flag.
+ with the `--config` flag. Example:
+[source,bash]
+----
+./keep-ecdsa --config /path/to/your/config.toml start
+----
 
 ==== Sample
 
@@ -129,8 +138,15 @@ Application configurations are stored in a `.toml` file and passed to the applic
 
 # Connection details of ethereum blockchain.
 [ethereum]
+  # If you're connecting to a local ethereum node
   URL = "ws://127.0.0.1:8545"
+  # Otherwise, this would be a third party deployment like infura
+  # URL = "wss://mainnet.infura.io/ws/v3/<your-infura-api-key-here>""
+
+  # If you're connecting to a local ethereum node
   URLRPC = "http://127.0.0.1:8546"
+  # Otherwise, this would be a third party deployment like infura
+  # URLRPC = "https://mainnet.infura.io/v3/<your-infura-api-key-here>"
 
 [ethereum.account]
   KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
@@ -335,7 +351,24 @@ Trust math, not hardware.
 -----------------------------------------------------------------------------------------------
 ```
 
-**Bonus**: If you want to share your LibP2P address with others you can get it from the startup log.  When sharing remember to substitute the `/ipv4/` address with the public facing IP of your client if you're running on a private machine, or replace the entire `/ipv4/` segment with a DNS entry if you're using a hostname.
+If you want to share your LibP2P address with others you can get it
+from the startup log. This can be helpful for debugging issues where a peer ID
+is needed. Additionally, if you're running multiple nodes, you may want to add
+your own nodes to the bootstrap list configured in `LibP2P.Peers` *alongside*
+the official bootstrap nodes.
+
+When sharing remember to substitute the `/ipv4/` address
+with the public facing IP of your client if you're running on a private
+machine, or replace the entire `/ipv4/` segment with a DNS entry if you're
+using a hostname.
+
+Example:
+[source]
+----
+/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
+becomes
+/ip4/99.153.149.50/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH
+----
 
 === Peer Connections
 
