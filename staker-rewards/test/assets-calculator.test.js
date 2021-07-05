@@ -294,4 +294,28 @@ describe("assets calculator", async () => {
       )
     }
   )
+
+  it(
+    "should return the right value of ETH total " +
+      "for an operator without pool requirement fulfilled at start",
+    async () => {
+      const mockContext = createMockContext()
+
+      setupContractsMock(mockContext)
+
+      const assetsCalculator = await AssetsCalculator.initialize(
+        mockContext,
+        interval
+      )
+
+      const assets = await assetsCalculator.calculateOperatorAssets(operator, {
+        poolRequirementFulfilledAtStart: false,
+      })
+
+      assert.equal(
+        assets.ethTotal.isEqualTo(new BigNumber(20).multipliedBy(1e18)),
+        true
+      )
+    }
+  )
 })
