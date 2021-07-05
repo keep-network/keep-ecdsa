@@ -103,6 +103,19 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
+      # Below step is a workaround. We have two package-lock.json configs - one
+      # in the `keep-ecdsa` and one in `keep-ecdsa/solidity`.
+      # The `@keep-network/prettier-config-keep` dependency is defined in the
+      # former one, and is not present in the latter one. When `npm run lint` is
+      # run in the `keep-ecdsa/solidity`, the manager looks not only at the
+      # config file in that folder, but also at the config in the root directory.
+      # It throws an error about missing `@keep-network/prettier-config-keep` if
+      # `npm ci` isn't run in the root directory.
+      - name: Install dependencies in the root directory
+        run: |
+          cd ..
+          npm ci
+
       - name: Install dependencies
         run: npm ci
 
