@@ -89,7 +89,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-ecdsa-ethereum'
+          IMAGE_NAME: "keep-ecdsa-ethereum"
         with:
           labels: revision=${{ github.sha }}
           build-args: |
@@ -142,7 +142,7 @@ jobs:
         name: Move cache
         run: |
           rm -rf /tmp/.buildx-ethereum-cache
-          mv /tmp/.buildx-ethereum-cache-new /tmp/.buildx-ethereum-cache 
+          mv /tmp/.buildx-ethereum-cache-new /tmp/.buildx-ethereum-cache
 
   client-build-test-publish-celo:
     needs: client-detect-changes
@@ -202,7 +202,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-ecdsa-celo'
+          IMAGE_NAME: "keep-ecdsa-celo"
         with:
           labels: revision=${{ github.sha }}
           build-args: |
@@ -215,7 +215,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-ecdsa-celo'
+          IMAGE_NAME: "keep-ecdsa-celo"
         with:
           # GCR image should be named according to following convention:
           # HOSTNAME/PROJECT-ID/IMAGE:TAG
@@ -236,7 +236,7 @@ jobs:
         name: Move cache
         run: |
           rm -rf /tmp/.buildx-celo-cache
-          mv /tmp/.buildx-celo-cache-new /tmp/.buildx-celo-cache 
+          mv /tmp/.buildx-celo-cache-new /tmp/.buildx-celo-cache
 
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'
