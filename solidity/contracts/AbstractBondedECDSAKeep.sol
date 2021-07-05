@@ -10,6 +10,7 @@
 ▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
 
                            Trust math, not hardware.
+                           HELL YEAH!
 */
 
 pragma solidity 0.5.17;
