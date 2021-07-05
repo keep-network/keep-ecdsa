@@ -662,6 +662,45 @@
           "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
         }
       ]
+    },
+    {
+      "hash": "0xf9182e7a6515e0c68e89f563d44c22341921eb1bf5ca007ce8388e0eb2b1ca38",
+      "from": "0xd072bb639ca5933f5ca6dc4deebd259066547087",
+      "to": "0x27321f84704a599ab740281e285cc4463d89a3d5",
+      "block_number": 12732618,
+      "method": "deauthorizeSortitionPoolContract",
+      "decoded_input": [
+        {
+          "soltype": {
+            "name": "_operator",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xd072bb639ca5933f5ca6dc4deebd259066547087"
+        },
+        {
+          "soltype": {
+            "name": "_poolAddress",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
+        }
+      ]
     }
   ]
 }
