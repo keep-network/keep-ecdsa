@@ -197,6 +197,57 @@ go test ./...
 custom configuration CLI supports `+--config+` flag. Sample
 configuration can be found in [config.toml.SAMPLE](configs/config.toml.SAMPLE).
 
+==== Storage
+Users configure the root storage directory at `Storage.DataDir`. The storage layout looks like:
+```
+.
+├── archive
+│   ├── 0x08E0__ADDRESS__7695fCeb63A70FF85454B683E
+│   │   └── membership_046__MEMBERSHIP_ADDRESS__bfa1e3535ae57de
+│   ├── 0x33ed__ADDRESS__Bb76baD50EeedfE422793E4ED
+│   │   └── membership_046__MEMBERSHIP_ADDRESS__bfa1e3535ae57de
+├── bitcoin
+│   ├── derivation_indexes
+│   │   ├── xpub_zCAk9sk1
+│   │   │   ├── 172
+│   │   │   ├── 3544
+│   │   │   ├── 39
+│   │   │   ├── 5
+│   │   │   ├── 5090
+│   │   │   └── 513
+│   │   ├── ypub_6Z2Yy4ZH
+│   │   │   ├── 1692
+│   │   │   ├── 223
+│   │   │   ├── 48
+│   │   │   └── 8982
+│   │   └── zpub_VDaZuQT9
+│   │       ├── 112
+│   │       ├── 6311
+│   │       ├── 6999
+│   │       └── 8559
+├── current
+│   ├── 0x14AF__ADDRESS__d8E28c35Ad802d85b3fE12b6c
+│   │   └── membership_046__MEMBERSHIP_ADDRESS__bfa1e3535ae57de
+│   ├── 0x173b__ADDRESS__A418DdcF2fEb2592A21cd610A
+│   │   └── membership_046__MEMBERSHIP_ADDRESS__bfa1e3535ae57de
+└── snapshot
+    ├── 0x08E0__ADDRESS__7695fCeb63A70FF85454B683E
+    │   └── membership_046__MEMBERSHIP_ADDRESS__bfa1e3535ae57de.1622814956119
+    └── 0x14AF__ADDRESS__d8E28c35Ad802d85b3fE12b6c
+        └── membership_046__MEMBERSHIP_ADDRESS__bfa1e3535ae57de.1622664847754
+```
+
+The `archive`, `current`, and `snapshot` directories are for storing key
+material. The `current` directory represents currently active keeps, and the
+archive directory contains closed and terminated keeps. The snapshot directory
+exists to guarentee persistence of the key material before it is published on
+chain.
+
+The `bitcoin/derivation_indexes` directory is used to store used derivation
+indexes for extended public keys. Each folder represents a truncated public key
+and each 0-byte file within those folders represents a used index.
+
+==== Smoke Test
 
 To run a smoke test execute:
 
