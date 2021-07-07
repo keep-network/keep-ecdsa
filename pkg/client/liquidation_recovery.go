@@ -156,7 +156,7 @@ func handleLiquidationRecovery(
 		ctx,
 		networkProvider,
 		hostChain,
-		tbtcHandle,
+		fundingInfo,
 		keep,
 		signer,
 		chainParams,

@@ -199,7 +199,7 @@ func BuildBitcoinTransaction(
 	ctx context.Context,
 	networkProvider net.Provider,
 	hostChain chain.Handle,
-	tbtcHandle chain.TBTCHandle,
+	fundingInfo *chain.FundingInfo,
 	keep chain.BondedECDSAKeepHandle,
 	signer *tss.ThresholdSigner,
 	chainParams *chaincfg.Params,
@@ -210,26 +210,6 @@ func BuildBitcoinTransaction(
 	if err != nil {
 		logger.Errorf(
 			"failed to retrieve the script code for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
-	}
-	depositAddress, err := keep.GetOwner()
-	if err != nil {
-		logger.Errorf(
-			"failed to retrieve the owner for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
-	}
-
-	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.String())
-	if err != nil {
-		logger.Errorf(
-			"failed to retrieve the funding info of deposit [%s] for keep [%s]: [%v]",
-			depositAddress,
 			keep.ID(),
 			err,
 		)
