@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	cecdsa "crypto/ecdsa"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"strings"
@@ -140,6 +139,14 @@ func constructUnsignedTransaction(
 	perRecipientValue := (previousOutputValue - fee) / int64(len(recipientAddresses))
 	for _, txOut := range tx.TxOut {
 		txOut.Value = perRecipientValue
+	}
+
+	if fee > previousOutputValue/20 {
+		logger.Warnf(
+			"transaction fee [%d] is greater than 5%% of the UTXO value [%d]",
+			fee,
+			previousOutputValue,
+		)
 	}
 
 	return tx, nil
