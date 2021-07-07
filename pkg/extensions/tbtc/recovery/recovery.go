@@ -229,7 +229,7 @@ func BuildBitcoinTransaction(
 		return "", err
 	}
 
-	previousOutputValue := int64(binary.LittleEndian.Uint32(fundingInfo.UtxoValueBytes[:]))
+	previousOutputValue := int64(chain.UtxoValueBytesToUint32(fundingInfo.UtxoValueBytes))
 
 	unsignedTransaction, err := constructUnsignedTransaction(
 		fundingInfo.TransactionHash,
