@@ -230,7 +230,6 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 				networkProvider,
 				localChain,
 				fundingInfo,
-				keep,
 				signer,
 				&chaincfg.MainNetParams,
 				btcAddresses,

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -40,12 +41,11 @@ func handleLiquidationRecovery(
 
 	members, err := keep.GetMembers()
 	if err != nil {
-		logger.Errorf(
-			"failed to retrieve members from keep [%s]: [%v]",
+		return fmt.Errorf(
+			"failed to retrieve members from keep [%s]: [%w]",
 			keep.ID(),
 			err,
 		)
-		return err
 	}
 
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
@@ -57,21 +57,19 @@ func handleLiquidationRecovery(
 		members,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to announce signer presence on keep [%s] termination: [%v]",
+		return fmt.Errorf(
+			"failed to announce signer presence on keep [%s] termination: [%w]",
 			keep.ID(),
 			err,
 		)
-		return err
 	}
 
 	chainParams, err := tbtcConfig.Bitcoin.ChainParams()
 	if err != nil {
-		logger.Errorf(
-			"failed to parse the configured net params: [%v]",
+		return fmt.Errorf(
+			"failed to parse the configured net params: [%w]",
 			err,
 		)
-		return err
 	}
 
 	beneficiaryAddress, err := recovery.ResolveAddress(
@@ -81,8 +79,8 @@ func handleLiquidationRecovery(
 		bitcoinHandle,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to resolve a btc address for keep: [%s] address: [%s] err: [%v]",
+		return fmt.Errorf(
+			"failed to resolve a btc address for keep [%s] address: [%s]: [%w]",
 			keep.ID(),
 			tbtcConfig.Bitcoin.BeneficiaryAddress,
 			err,
@@ -124,24 +122,18 @@ func handleLiquidationRecovery(
 		chainParams,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to communicate recovery details for keep [%s]: [%v]",
+		return fmt.Errorf(
+			"failed to communicate recovery details for keep [%s]: [%w]",
 			keep.ID(),
 			err,
 		)
-		return err
 	}
 
 	signer, err := keepsRegistry.GetSigner(keep.ID())
 	if err != nil {
 		// If there are no signer for loaded keep then something is clearly
 		// wrong. We don't want to continue processing for this keep.
-		logger.Errorf(
-			"no signer for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return err
+		return fmt.Errorf("no signer for keep [%s]: [%w]", keep.ID(), err)
 	}
 
 	logger.Infof(
@@ -157,19 +149,17 @@ func handleLiquidationRecovery(
 		networkProvider,
 		hostChain,
 		fundingInfo,
-		keep,
 		signer,
 		chainParams,
 		btcAddresses,
 		maxFeePerVByte,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to build the transaction for keep [%s]: [%v]",
+		return fmt.Errorf(
+			"failed to build the transaction for keep [%s]: [%w]",
 			keep.ID(),
 			err,
 		)
-		return err
 	}
 
 	logger.Debugf(

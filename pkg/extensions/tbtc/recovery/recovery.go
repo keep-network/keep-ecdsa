@@ -200,7 +200,6 @@ func BuildBitcoinTransaction(
 	networkProvider net.Provider,
 	hostChain chain.Handle,
 	fundingInfo *chain.FundingInfo,
-	keep chain.BondedECDSAKeepHandle,
 	signer *tss.ThresholdSigner,
 	chainParams *chaincfg.Params,
 	retrievalAddresses []string,
@@ -208,12 +207,7 @@ func BuildBitcoinTransaction(
 ) (string, error) {
 	scriptCodeBytes, err := publicKeyToP2WPKHScriptCode(signer.PublicKey(), chainParams)
 	if err != nil {
-		logger.Errorf(
-			"failed to retrieve the script code for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
+		return "", fmt.Errorf("failed to retrieve the script code: [%v]", err)
 	}
 
 	previousOutputValue := int64(chain.UtxoValueBytesToUint32(fundingInfo.UtxoValueBytes))
@@ -227,17 +221,11 @@ func BuildBitcoinTransaction(
 		chainParams,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to construct the unsigned transaction for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
+		return "", fmt.Errorf("failed to construct the unsigned transaction: [%w]", err)
 	}
 
 	logger.Debugf(
-		"constructed unsigned liquidation recovery transcation for keep [%s]: [%+v]",
-		keep.ID(),
+		"constructed unsigned liquidation recovery transcation: [%+v]",
 		unsignedTransaction,
 	)
 
@@ -250,17 +238,11 @@ func BuildBitcoinTransaction(
 		previousOutputValue,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to calculate the sighash bytes for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
+		return "", fmt.Errorf("failed to calculate the sighash bytes: [%w]", err)
 	}
 
 	logger.Debugf(
-		"calculated liquidation recovery transcation sighash for keep [%s]: [%x]",
-		keep.ID(),
+		"calculated liquidation recovery transcation sighash: [%x]",
 		sighashBytes,
 	)
 
@@ -271,17 +253,11 @@ func BuildBitcoinTransaction(
 		hostChain.Signing().PublicKeyToAddress,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to calculate signature for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
+		return "", fmt.Errorf("failed to calculate signature: [%w]", err)
 	}
 
 	logger.Debugf(
-		"calculated liquidation recovery transcation signature for keep [%s]: [%v]",
-		keep.ID(),
+		"calculated liquidation recovery transcation signature: [%v]",
 		signature,
 	)
 
