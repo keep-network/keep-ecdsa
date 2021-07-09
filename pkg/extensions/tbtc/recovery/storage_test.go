@@ -249,7 +249,7 @@ func TestDerivationIndexStorage_NewDerivationIndexStorageOnNonexistantPath(t *te
 	}
 }
 
-func TestDerviationIndexStorage_BadPermissions(t *testing.T) {
+func TestDerivationIndexStorage_BadPermissions(t *testing.T) {
 	null := "\xff" // represents no error
 	testData := map[string]struct {
 		mode int
@@ -333,7 +333,7 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextAddresses(t *testing.T) {
 			handle.isAddressUnused = func(btcAddress string) (bool, error) {
 				return validIndexes[btcAddress], nil
 			}
-			address, err := dis.GetNextAddress(extendedPublicKey, handle, chainParams)
+			address, err := dis.GetNextAddress(extendedPublicKey, handle, chainParams, false)
 			getNextAddressResults <- pair{address, err}
 		}()
 	}
@@ -354,7 +354,7 @@ func TestDerivationIndexStorage_MultipleAsyncGetNextAddresses(t *testing.T) {
 	}
 }
 
-func TestDerviationIndexStorage_SaveOverwrites(t *testing.T) {
+func TestDervationIndexStorage_SaveOverwrites(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	if err != nil {
 		t.Fatal(err)
