@@ -78,6 +78,7 @@ func handleLiquidationRecovery(
 		derivationIndexStorage,
 		chainParams,
 		bitcoinHandle,
+		false,
 	)
 	if err != nil {
 		logger.Errorf(

@@ -136,6 +136,7 @@ func (dis *DerivationIndexStorage) GetNextAddress(
 	extendedPublicKey string,
 	handle bitcoin.Handle,
 	chainParams *chaincfg.Params,
+	isDryRun bool,
 ) (string, error) {
 	dis.mutex.Lock()
 	defer dis.mutex.Unlock()
@@ -175,10 +176,13 @@ func (dis *DerivationIndexStorage) GetNextAddress(
 			)
 		}
 
-		err = dis.save(extendedPublicKey, index)
-		if err != nil {
-			return "", err
+		if isDryRun != true {
+			err = dis.save(extendedPublicKey, index)
+			if err != nil {
+				return "", err
+			}
 		}
+
 		if ok {
 			return derivedAddress, nil
 		}

@@ -46,7 +46,7 @@ func TestDerivationIndexStorage_GetNextAddressOnNewKey(t *testing.T) {
 	}
 	extendedPublicKey := "ypub6Z7s8wJuKsxjd16oe85WH1uSbcbbCXuMFEhPMgcf7jQqNhQbT9jE52XVu1eBe18q2J3LwnDd54ufL2jNvidjfCkbd34aVwLtYdztLUqucwR"
 	for i := uint32(0); i < 10; i++ {
-		btcAddress, err := dis.GetNextAddress(extendedPublicKey, newMockBitcoinHandle(), chainParams)
+		btcAddress, err := dis.GetNextAddress(extendedPublicKey, newMockBitcoinHandle(), chainParams, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -168,7 +168,7 @@ func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 				}
 			}
 			for _, expectation := range testData.expectations {
-				address, err := dis.GetNextAddress(expectation.publicKey, newMockBitcoinHandle(), &chaincfg.MainNetParams)
+				address, err := dis.GetNextAddress(expectation.publicKey, newMockBitcoinHandle(), &chaincfg.MainNetParams, false)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -190,6 +190,49 @@ func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestDerivationIndexStorage_GetNextAddressDryRun(t *testing.T) {
+	publicKey := "xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
+	usedIndex := 5
+	expectedBtcAddress := "1QETuEAw5UBdYtz6vJw8L9582TdrrE4b3B"
+	isDryRun := true
+
+	dir, err := ioutil.TempDir("", "example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+	dis, err := NewDerivationIndexStorage(dir)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = dis.save(publicKey, uint32(usedIndex))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	address, err := dis.GetNextAddress(publicKey, newMockBitcoinHandle(), &chaincfg.MainNetParams, isDryRun)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if address != expectedBtcAddress {
+		t.Errorf("incorrect derived address\nexpected: %s\nactual:   %s", expectedBtcAddress, address)
+	}
+
+	storedIndex, err := dis.read(publicKey)
+	if err != nil {
+		t.Fatalf("failed to read last used index: %s", err)
+	}
+	if storedIndex != usedIndex {
+		t.Errorf(
+			"the resolved index does not match\nexpected: %d\nactual:   %d",
+			usedIndex,
+			storedIndex,
+		)
 	}
 }
 
