@@ -63,6 +63,7 @@ func main() {
 		cmd.StartCommand,
 		cmd.ChainCLICommand,
 		cmd.SigningCommand,
+		cmd.ResolveBitcoinBeneficiaryAddressCommand,
 	}
 
 	err = app.Run(os.Args)
