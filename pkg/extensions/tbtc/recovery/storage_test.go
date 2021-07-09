@@ -69,6 +69,7 @@ type keyAndIndex struct {
 type keyAndAddress struct {
 	publicKey  string
 	btcAddress string
+	index      int
 }
 
 func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
@@ -78,7 +79,7 @@ func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 	}{
 		"single key, single entry": {
 			[]keyAndIndex{{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 5}},
-			[]keyAndAddress{{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1QETuEAw5UBdYtz6vJw8L9582TdrrE4b3B"}},
+			[]keyAndAddress{{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1QETuEAw5UBdYtz6vJw8L9582TdrrE4b3B", 6}},
 		},
 		"multiple keys, single entry": {
 			[]keyAndIndex{
@@ -87,9 +88,9 @@ func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", 112},
 			},
 			[]keyAndAddress{
-				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1QETuEAw5UBdYtz6vJw8L9582TdrrE4b3B"},
-				{"ypub6ZpieGfpesfH3KqGr4zZPETidCze6RzeNMz7FLnSPgABwyQNZZmpA4tpUYFn53xtHkHXaoGviseJJcFhSn3Kw9sgzsiSnP5xEqp6Z2Yy4ZH", "3BRGrKZzkuuaqVGK5eZkcA5wrzeQULawMH"},
-				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", "bc1qcd39cwrsefagqh4y277q0rgm0stdsth4xr6mjr"},
+				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1QETuEAw5UBdYtz6vJw8L9582TdrrE4b3B", 6},
+				{"ypub6ZpieGfpesfH3KqGr4zZPETidCze6RzeNMz7FLnSPgABwyQNZZmpA4tpUYFn53xtHkHXaoGviseJJcFhSn3Kw9sgzsiSnP5xEqp6Z2Yy4ZH", "3BRGrKZzkuuaqVGK5eZkcA5wrzeQULawMH", 49},
+				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", "bc1qcd39cwrsefagqh4y277q0rgm0stdsth4xr6mjr", 113},
 			},
 		},
 		"single key, multiple entries": {
@@ -99,7 +100,7 @@ func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", 39},
 			},
 			[]keyAndAddress{
-				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1Je1vYfst9yGF95KkYitQ7QhdLUkNVCzfX"},
+				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1Je1vYfst9yGF95KkYitQ7QhdLUkNVCzfX", 173},
 			},
 		},
 		"multiple keys, multiple entries": {
@@ -117,9 +118,9 @@ func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", 8559},
 			},
 			[]keyAndAddress{
-				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1Cck1ps6NGB9LGjrymNS21KC7fJyU4X3fw"},
-				{"ypub6ZpieGfpesfH3KqGr4zZPETidCze6RzeNMz7FLnSPgABwyQNZZmpA4tpUYFn53xtHkHXaoGviseJJcFhSn3Kw9sgzsiSnP5xEqp6Z2Yy4ZH", "34c8quMWCqNsfVFhgTveC3s8kyTWf9m5t8"},
-				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", "bc1qdvy9xuq2368ywuvgfg77sz688x9v0fjg6f0gw8"},
+				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1Cck1ps6NGB9LGjrymNS21KC7fJyU4X3fw", 5091},
+				{"ypub6ZpieGfpesfH3KqGr4zZPETidCze6RzeNMz7FLnSPgABwyQNZZmpA4tpUYFn53xtHkHXaoGviseJJcFhSn3Kw9sgzsiSnP5xEqp6Z2Yy4ZH", "34c8quMWCqNsfVFhgTveC3s8kyTWf9m5t8", 8983},
+				{"zpub6rePDVHfRP14VpYiejwepBhzu45UbvqvzE3ZMdDnNykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9", "bc1qdvy9xuq2368ywuvgfg77sz688x9v0fjg6f0gw8", 8560},
 			},
 		},
 		"trim whitespaces": {
@@ -128,8 +129,8 @@ func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 				{"    xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1    ", 5090},
 			},
 			[]keyAndAddress{
-				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1Cck1ps6NGB9LGjrymNS21KC7fJyU4X3fw"},
-				{"       xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1          ", "1GTZk2iwgiDvTpgQ2XK6N4L7Nr98AcbjG6"},
+				{"xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1", "1Cck1ps6NGB9LGjrymNS21KC7fJyU4X3fw", 5091},
+				{"       xpub6Cg41S21VrxkW1WBTZJn95KNpHozP2Xc6AhG27ZcvZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1          ", "1GTZk2iwgiDvTpgQ2XK6N4L7Nr98AcbjG6", 5092},
 			},
 		},
 		"write to the same index multiple times": {
@@ -140,7 +141,7 @@ func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", 777},
 			},
 			[]keyAndAddress{
-				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", "bc1qj98w6u98t6t0pwew4fvlxcmcevhqkznp2qjx2f"},
+				{"zpub6p6mUAk2dpLVVsguhHA27Qgd8e4q394Csha9jfAJCABrFRcnSv6AYPsgmAzgR8feBR4Spu2piv4xMcneocZajEvKtoHp111pizpe6aAEqfp", "bc1qj98w6u98t6t0pwew4fvlxcmcevhqkznp2qjx2f", 778},
 			},
 		},
 	}
@@ -174,6 +175,18 @@ func TestDerivationIndexStorage_SaveThenGetNextAddress(t *testing.T) {
 
 				if address != expectation.btcAddress {
 					t.Errorf("incorrect derived address for %s\nexpected: %s\nactual:   %s", expectation.publicKey, expectation.btcAddress, address)
+				}
+
+				storedIndex, err := dis.read(expectation.publicKey)
+				if err != nil {
+					t.Fatalf("failed to read last used index: %s", err)
+				}
+				if storedIndex != int(expectation.index) {
+					t.Errorf(
+						"the resolved index does not match\nexpected: %d\nactual:   %d",
+						expectation.index,
+						storedIndex,
+					)
 				}
 			}
 		})
