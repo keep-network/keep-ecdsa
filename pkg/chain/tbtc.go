@@ -175,3 +175,9 @@ func ParseUtxoOutpoint(utxoOutpoint []uint8) (string, uint32) {
 	outputIndex := binary.LittleEndian.Uint32(utxoOutpoint[32:])
 	return transactionHash, outputIndex
 }
+
+// UtxoValueBytesToUint32 converts utxo value from little endian bytes8 that is
+// returned from chain to uin32.
+func UtxoValueBytesToUint32(utxoValueBytes [8]uint8) uint32 {
+	return binary.LittleEndian.Uint32(utxoValueBytes[:])
+}

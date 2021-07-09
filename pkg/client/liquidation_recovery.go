@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -15,7 +16,8 @@ import (
 )
 
 const (
-	defaultVbyteFee = 75
+	defaultVbyteFee               = 75
+	estimatedTransactionSizeVByte = 175
 )
 
 // TODO: Should this function be moved to `node` package under tss.Node?
@@ -39,12 +41,11 @@ func handleLiquidationRecovery(
 
 	members, err := keep.GetMembers()
 	if err != nil {
-		logger.Errorf(
-			"failed to retrieve members from keep [%s]: [%v]",
+		return fmt.Errorf(
+			"failed to retrieve members from keep [%s]: [%w]",
 			keep.ID(),
 			err,
 		)
-		return err
 	}
 
 	memberID := tss.MemberIDFromPublicKey(operatorPublicKey)
@@ -56,21 +57,19 @@ func handleLiquidationRecovery(
 		members,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to announce signer presence on keep [%s] termination: [%v]",
+		return fmt.Errorf(
+			"failed to announce signer presence on keep [%s] termination: [%w]",
 			keep.ID(),
 			err,
 		)
-		return err
 	}
 
 	chainParams, err := tbtcConfig.Bitcoin.ChainParams()
 	if err != nil {
-		logger.Errorf(
-			"failed to parse the configured net params: [%v]",
+		return fmt.Errorf(
+			"failed to parse the configured net params: [%w]",
 			err,
 		)
-		return err
 	}
 
 	beneficiaryAddress, err := recovery.ResolveAddress(
@@ -80,16 +79,35 @@ func handleLiquidationRecovery(
 		bitcoinHandle,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to resolve a btc address for keep: [%s] address: [%s] err: [%v]",
+		return fmt.Errorf(
+			"failed to resolve a btc address for keep [%s] address: [%s]: [%w]",
 			keep.ID(),
 			tbtcConfig.Bitcoin.BeneficiaryAddress,
 			err,
 		)
-		return err
 	}
 
-	vbyteFee := resolveVbyteFee(bitcoinHandle, tbtcConfig)
+	depositAddress, err := keep.GetOwner()
+	if err != nil {
+		return fmt.Errorf(
+			"failed to retrieve the owner for keep [%s]: [%w]",
+			keep.ID(),
+			err,
+		)
+	}
+
+	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.String())
+	if err != nil {
+		return fmt.Errorf(
+			"failed to retrieve the funding info of deposit [%s] for keep [%s]: [%w]",
+			depositAddress,
+			keep.ID(),
+			err,
+		)
+	}
+	previousOutputValue := int32(chain.UtxoValueBytesToUint32(fundingInfo.UtxoValueBytes))
+
+	vbyteFee := resolveVbyteFee(bitcoinHandle, tbtcConfig, previousOutputValue)
 
 	btcAddresses, maxFeePerVByte, err := tss.BroadcastRecoveryAddress(
 		ctx,
@@ -104,24 +122,18 @@ func handleLiquidationRecovery(
 		chainParams,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to communicate recovery details for keep [%s]: [%v]",
+		return fmt.Errorf(
+			"failed to communicate recovery details for keep [%s]: [%w]",
 			keep.ID(),
 			err,
 		)
-		return err
 	}
 
 	signer, err := keepsRegistry.GetSigner(keep.ID())
 	if err != nil {
 		// If there are no signer for loaded keep then something is clearly
 		// wrong. We don't want to continue processing for this keep.
-		logger.Errorf(
-			"no signer for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return err
+		return fmt.Errorf("no signer for keep [%s]: [%w]", keep.ID(), err)
 	}
 
 	logger.Infof(
@@ -136,20 +148,18 @@ func handleLiquidationRecovery(
 		ctx,
 		networkProvider,
 		hostChain,
-		tbtcHandle,
-		keep,
+		fundingInfo,
 		signer,
 		chainParams,
 		btcAddresses,
 		maxFeePerVByte,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to build the transaction for keep [%s]: [%v]",
+		return fmt.Errorf(
+			"failed to build the transaction for keep [%s]: [%w]",
 			keep.ID(),
 			err,
 		)
-		return err
 	}
 
 	logger.Debugf(
@@ -176,17 +186,59 @@ func handleLiquidationRecovery(
 
 // resolveVbyteFee fetches vByte fee for 25 blocks from the bitcoin handle. If a
 // call to Bitcoin API fails the function catches and logs the error but doesn't
-// fail the execution. If a value of vByte fee was not fetched from the bitcoin
-// handle the function tries to read it from a config file. If the value is not
-// defined in the config file it returns a default vByte fee.
-func resolveVbyteFee(bitcoinHandle bitcoin.Handle, tbtcConfig *tbtc.Config) int32 {
+// fail the execution.
+//
+// If a value of vByte fee was returned from the bitcoin handle it is used to
+// calculate transaction fee estimate. If the estimated transaction fee exceeds
+// the transaction value more than 5%, then the lesser of the suggested vByte fee
+// or configured MaxFeePerVByte is used.
+//
+// If a value of vByte fee was not fetched from the bitcoin handle the function
+// tries to read it from a config file. If the value is not defined in the config file
+// it returns a default vByte fee.
+func resolveVbyteFee(
+	bitcoinHandle bitcoin.Handle,
+	tbtcConfig *tbtc.Config,
+	previousOutputValue int32,
+) int32 {
 	vbyteFee, vbyteFeeError := bitcoinHandle.VbyteFeeFor25Blocks()
 	if vbyteFeeError != nil {
 		logger.Errorf(
 			"failed to retrieve a vbyte fee estimate: [%v]",
 			vbyteFeeError,
 		)
-		// Since the electrs connection is optional, we don't return the error
+		// Since the electrs connection is optional, we don't return the error.
+	}
+	if vbyteFee > 0 {
+		// Fee computation requires that the full transaction be assembled. The
+		// transaction fee should be estimated by assuming the final transaction
+		// will be 175 vBytes, which should be very close to accurate given the
+		// regular structure of liquidation refund transactions.
+		estimatedTransactionFee := vbyteFee * estimatedTransactionSizeVByte
+
+		fivePercentPreviousOutput := previousOutputValue / 20 // 5% of UTXO
+
+		// There is one exception to the rule that the 25-block suggested fee
+		// should be used in the presence of a Bitcoin connection. If this
+		// suggested fee would result in a fee consuming more than 5% of the UTXO
+		// value that is being split, then the lesser of the 25-block suggested
+		// fee and MaxFeePerVByte configured fee should be used.
+		if estimatedTransactionFee > fivePercentPreviousOutput {
+			if tbtcConfig.Bitcoin.MaxFeePerVByte > 0 {
+				vbyteFee = min(vbyteFee, tbtcConfig.Bitcoin.MaxFeePerVByte)
+			}
+
+			// If the final fee is computed as being >5% of UTXO value, the client
+			// should log a WARN message so that the operator can be aware of this
+			// and revise their max fee per vByte if desired.
+			logger.Warnf(
+				"estimated transaction fee [%d] is greater than 5%% of the UTXO value [%d]; "+
+					"using [%d] as fee per vByte",
+				estimatedTransactionFee,
+				previousOutputValue,
+				vbyteFee,
+			)
+		}
 	}
 	if vbyteFee == 0 {
 		vbyteFee = tbtcConfig.Bitcoin.MaxFeePerVByte
@@ -196,4 +248,11 @@ func resolveVbyteFee(bitcoinHandle bitcoin.Handle, tbtcConfig *tbtc.Config) int3
 	}
 
 	return vbyteFee
+}
+
+func min(a, b int32) int32 {
+	if a < b {
+		return a
+	}
+	return b
 }

@@ -1049,6 +1049,11 @@ func monitorKeepTerminatedEvent(
 							keepsRegistry,
 							derivationIndexStorage,
 						); err != nil {
+							logger.Errorf(
+								"failed to handle liquidation recovery for keep [%s]: [%w]",
+								keep.ID(),
+								err,
+							)
 							return err
 						}
 
