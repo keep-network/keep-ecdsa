@@ -209,21 +209,10 @@ Users configure the root storage directory at `Storage.DataDir`. The storage lay
 ├── bitcoin
 │   ├── derivation_indexes
 │   │   ├── xpub_zCAk9sk1
-│   │   │   ├── 172
-│   │   │   ├── 3544
-│   │   │   ├── 39
-│   │   │   ├── 5
-│   │   │   ├── 5090
 │   │   │   └── 513
 │   │   ├── ypub_6Z2Yy4ZH
-│   │   │   ├── 1692
-│   │   │   ├── 223
-│   │   │   ├── 48
 │   │   │   └── 8982
 │   │   └── zpub_VDaZuQT9
-│   │       ├── 112
-│   │       ├── 6311
-│   │       ├── 6999
 │   │       └── 8559
 ├── current
 │   ├── 0x14AF__ADDRESS__d8E28c35Ad802d85b3fE12b6c
@@ -245,7 +234,7 @@ chain.
 
 The `bitcoin/derivation_indexes` directory is used to store used derivation
 indexes for extended public keys. Each folder represents a truncated public key
-and each 0-byte file within those folders represents a used index.
+and each 0-byte file within those folders represents the largest used index.
 
 ==== Smoke Test
 
