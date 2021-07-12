@@ -588,3 +588,9 @@ in the config file. The operator must explicitly register as a candidate for sel
 as a safeguard against choosing clients that have not yet booted up; the sanctioned
 applications list allows the client software to automatically register as a candidate
 on startup.
+
+== Troubleshooting
+
+=== Network
+
+Please refer the <<./network-troubleshooting.adoc#title, network troubleshooting>> guide.
