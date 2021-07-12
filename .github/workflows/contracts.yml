@@ -159,13 +159,13 @@ jobs:
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
           query: |
-            keep-core-solidity-version = github.com/keep-network/keep-core/solidity#version
+            keep-core-contracts-version = github.com/keep-network/keep-core/solidity#version
 
       - name: Resolve latest contracts
         run: |
           npm update @keep-network/sortition-pools
           npm install --save-exact \
-            @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
+            @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-contracts-version }}
 
       - name: Migrate contracts on Ethereum
         if: github.event.inputs.environment != 'alfajores'
