@@ -67,6 +67,6 @@ func main() {
 
 	err = app.Run(os.Args)
 	if err != nil {
-		fmt.Print(err)
+		logger.Fatalf("could not run keep ecdsa client: [%w]", err)
 	}
 }

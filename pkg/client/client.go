@@ -981,7 +981,7 @@ func monitorKeepTerminatedEvent(
 
 	subscriptionOnKeepTerminated, err := keep.OnKeepTerminated(
 		func(event *chain.KeepTerminatedEvent) {
-			logger.Warningf(
+			logger.Infof(
 				"keep [%s] terminated event received at block [%d]",
 				keep.ID(),
 				event.BlockNumber,
