@@ -115,7 +115,7 @@ func TestBuildSignedTransactionHexString(t *testing.T) {
 }
 
 func TestBuildBitcoinTransaction(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 
 	localChain := lc.Connect(ctx)
 	tbtcHandle := lc.NewTBTCLocalChain(ctx)

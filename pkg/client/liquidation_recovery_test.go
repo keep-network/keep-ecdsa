@@ -187,7 +187,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 				bitcoinHandles = append(bitcoinHandles, testData.configureBitcoinHandle(i))
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 
 			doneChan := make(chan interface{})
