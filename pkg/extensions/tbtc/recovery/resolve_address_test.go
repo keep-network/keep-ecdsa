@@ -139,6 +139,7 @@ func TestResolveAddress(t *testing.T) {
 				dis,
 				testData.chainParams,
 				handle,
+				false,
 			)
 			if err != nil {
 				t.Fatal(err)
@@ -210,6 +211,7 @@ func TestResolveBeneficiaryAddress_ExpectedFailure(t *testing.T) {
 				dis,
 				testData.chainParams,
 				nil,
+				false,
 			)
 			if err == nil {
 				t.Errorf("no error found\nexpected: %s", testData.failure)

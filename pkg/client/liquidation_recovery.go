@@ -77,6 +77,7 @@ func handleLiquidationRecovery(
 		derivationIndexStorage,
 		chainParams,
 		bitcoinHandle,
+		false,
 	)
 	if err != nil {
 		return fmt.Errorf(
