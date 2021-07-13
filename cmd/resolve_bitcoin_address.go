@@ -10,6 +10,8 @@ import (
 	"github.com/urfave/cli"
 )
 
+// ResolveBitcoinBeneficiaryAddressCommand contains the definition of the
+// resolve-bitcoin-address command-line subcommand.
 var ResolveBitcoinBeneficiaryAddressCommand cli.Command
 
 const resolveBitcoinAddressDescription = `Uses details provided in the configuration ` +
@@ -26,6 +28,8 @@ func init() {
 		}
 }
 
+// ResolveBitcoinBeneficiaryAddress resolves the next bitcoin address that would
+// be used for liquidation recovery based on the nodes configuration.
 func ResolveBitcoinBeneficiaryAddress(c *cli.Context) error {
 	config, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
