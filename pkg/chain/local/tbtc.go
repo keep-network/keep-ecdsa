@@ -3,7 +3,6 @@ package local
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -17,9 +16,8 @@ import (
 )
 
 const (
-	defaultUTXOValue            = 10000000
 	defaultInitialRedemptionFee = 10
-	defaultUtxoValueHex         = "8096980000000000"
+	defaultUtxoValueHex         = "8096980000000000" // 10000000
 	defaultFundedAt             = "1615172517"
 	previousTransactionHashHex  = "c27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d51"
 	previousTransactionIndex    = 1
@@ -190,9 +188,9 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 	tlc.deposits[depositAddress] = &localDeposit{
 		keepAddress: keepAddress.Hex(),
 		state:       chain.AwaitingSignerSetup,
-		utxoValue:   big.NewInt(defaultUTXOValue),
+		utxoValue:   big.NewInt(int64(chain.UtxoValueBytesToUint32(utxoValueBytes))),
 		fundingInfo: &chain.FundingInfo{
-			UtxoValueBytes:  utxoValueBytes, // 0x0065cd1d00000000
+			UtxoValueBytes:  utxoValueBytes,
 			FundedAt:        fundedAt,
 			TransactionHash: previousTransactionHashHex,
 			OutputIndex:     previousTransactionIndex,
@@ -773,5 +771,5 @@ func (tlc *TBTCLocalChain) Logger() *ChainLogger {
 }
 
 func fromLittleEndianBytes(bytes [8]byte) *big.Int {
-	return new(big.Int).SetUint64(binary.LittleEndian.Uint64(bytes[:]))
+	return new(big.Int).SetUint64(uint64(chain.UtxoValueBytesToUint32(bytes)))
 }

@@ -73,3 +73,47 @@ func TestParseUtxoOutpoint(t *testing.T) {
 		})
 	}
 }
+
+func TestUtxoValueBytesToUint32(t *testing.T) {
+	testData := map[string]struct {
+		utxoValueBytes [8]uint8
+		expectedValue  uint32
+	}{
+		"0": {
+			[8]uint8{0, 0, 0, 0}, // 0x00000000
+			uint32(0),
+		},
+		"1": {
+			[8]uint8{1, 0, 0, 0}, // 0x01000000
+			uint32(1),
+		},
+		"16777216": {
+			[8]uint8{0, 0, 0, 1}, // 0x00000001
+			uint32(16777216),
+		},
+		"1000000": {
+			[8]uint8{64, 66, 15, 0}, // 0x40420f00
+			uint32(1000000),
+		},
+		"500000000": {
+			[8]uint8{0, 101, 205, 29}, // 0x0065cd1d
+			uint32(500000000),
+		},
+		"1000000000": {
+			[8]uint8{0, 202, 154, 59}, // 0x00ca9a3b
+			uint32(1000000000),
+		},
+		"4294967295": {
+			[8]uint8{255, 255, 255, 255}, // 0xffffffff
+			uint32(4294967295),
+		},
+	}
+	for testName, testData := range testData {
+		t.Run(testName, func(t *testing.T) {
+			actualValue := UtxoValueBytesToUint32(testData.utxoValueBytes)
+			if actualValue != testData.expectedValue {
+				t.Errorf("unexpected result\nexpected: %d\nactual:   %d", testData.expectedValue, actualValue)
+			}
+		})
+	}
+}

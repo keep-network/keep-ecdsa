@@ -115,7 +115,7 @@ func TestBuildSignedTransactionHexString(t *testing.T) {
 }
 
 func TestBuildBitcoinTransaction(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 
 	localChain := lc.Connect(ctx)
 	tbtcHandle := lc.NewTBTCLocalChain(ctx)
@@ -173,6 +173,11 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 	tbtcHandle.CreateDeposit(depositAddressString, memberAddresses)
 	keep := tbtcHandle.OpenKeep(keepAddress, depositAddress, memberAddresses)
 
+	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	btcAddresses := []string{
 		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
 		"3EktnHQD7RiAE6uzMj2ZifT9YgRrkSgzQX",
@@ -224,8 +229,7 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 				ctx,
 				networkProvider,
 				localChain,
-				tbtcHandle,
-				keep,
+				fundingInfo,
 				signer,
 				&chaincfg.MainNetParams,
 				btcAddresses,

@@ -64,7 +64,8 @@ export default class AssetsCalculator {
     if (
       isUndelegating ||
       operatorRequirements.poolDeauthorizedInInterval === true ||
-      operatorRequirements.poolAuthorizedAtStart === false
+      operatorRequirements.poolAuthorizedAtStart === false ||
+      operatorRequirements.poolRequirementFulfilledAtStart === false
     ) {
       const ethBondedAtEnd = await this.calculateETHBonded(
         operator,

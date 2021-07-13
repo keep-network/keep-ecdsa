@@ -1,9 +1,9 @@
-name: Go / Ethereum
+name: Go
 
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - "docs/**"
       - "infrastructure/**"
@@ -22,7 +22,7 @@ on:
       upstream_ref:
         description: "Git reference to checkout (e.g. branch name)"
         required: false
-        default: "master"
+        default: "main"
 
 jobs:
   client-detect-changes:
@@ -41,22 +41,22 @@ jobs:
             path-filter:
               - './!((docs|infrastructure|scripts|staker-rewards)/**)'
 
-  client-build-test-publish:
+  client-build-test-publish-ethereum:
     needs: client-detect-changes
     if: |
       github.event_name != 'pull_request'
         || needs.client-detect-changes.outputs.path-filter == 'true'
+        || (github.event_name == 'workflow_dispatch' 
+        && github.event.inputs.environment != 'alfajores')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
       - name: Load environment variables
         uses: keep-network/load-env-variables@v1
+        if: github.event_name == 'workflow_dispatch'
         with:
-          # TODO: Consider passing of `environment` input instead of using
-          # hardcoded value. Would require some rework in action's code or
-          # in config files.
-          environment: "ropsten"
+          environment: ${{ github.event.inputs.environment }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -85,6 +85,18 @@ jobs:
             go-build-env-ethereum \
             gotestsum
 
+      - name: Build Docker Runtime Image
+        if: github.event_name != 'workflow_dispatch'
+        uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: "keep-ecdsa-ethereum"
+        with:
+          labels: revision=${{ github.sha }}
+          build-args: |
+            REVISION=${{ github.sha }}
+          # VERSION= ? TODO: Configure version, sample: 1.7.6
+          push: false
+
       - name: Login to Google Container Registry
         if: github.event_name == 'workflow_dispatch'
         uses: docker/login-action@v1
@@ -94,6 +106,7 @@ jobs:
           password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
       - name: Build and publish Docker Runtime Image
+        if: github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v2
         env:
           IMAGE_NAME: "keep-ecdsa-ethereum"
@@ -106,7 +119,20 @@ jobs:
           build-args: |
             REVISION=${{ github.sha }}
           # VERSION= ? TODO: Configure version, sample: 1.7.6
-          push: ${{ github.event_name == 'workflow_dispatch' }}
+          push: true
+
+      - name: Notify CI about completion of the workflow
+        if: github.event_name == 'workflow_dispatch'
+        uses: keep-network/notify-workflow-completed@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          module: "github.com/keep-network/keep-ecdsa"
+          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          environment: ${{ github.event.inputs.environment }}
+          upstream_builds: ${{ github.event.inputs.upstream_builds }}
+          upstream_ref: ${{ github.event.inputs.upstream_ref }}
+          version: ${{ github.sha }} # TODO: replace with version once versioning ready
 
       - # Temp fix - move cache instead of copying (added below step and
         # modified value of `cache-to`).
@@ -117,6 +143,100 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-ethereum-cache
           mv /tmp/.buildx-ethereum-cache-new /tmp/.buildx-ethereum-cache
+
+  client-build-test-publish-celo:
+    needs: client-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.client-detect-changes.outputs.path-filter == 'true'
+        || (github.event_name == 'workflow_dispatch' 
+        && github.event.inputs.environment == 'alfajores')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          environment: ${{ github.event.inputs.environment }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-celo-cache
+          key: ${{ runner.os }}-buildx-celo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-celo-
+
+      - name: Build Docker Build Image
+        uses: docker/build-push-action@v2
+        with:
+          target: gobuild
+          tags: go-build-env-celo
+          build-args: |
+            HOST_CHAIN=celo
+          load: true # load image to local registry to use it in next steps
+          cache-from: type=local,src=/tmp/.buildx-celo-cache
+          cache-to: type=local,dest=/tmp/.buildx-celo-cache-new
+
+      - name: Run Go tests
+        run: |
+          docker run \
+            --workdir /go/src/github.com/keep-network/keep-ecdsa \
+            go-build-env-celo \
+            gotestsum -- -tags=celo,musl ./...
+
+      - name: Login to Google Container Registry
+        if: github.event_name == 'workflow_dispatch'
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.GCR_REGISTRY_URL }}
+          username: _json_key
+          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Build Docker Runtime Image
+        if: github.event_name != 'workflow_dispatch'
+        uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: "keep-ecdsa-celo"
+        with:
+          labels: revision=${{ github.sha }}
+          build-args: |
+            HOST_CHAIN=celo
+            REVISION=${{ github.sha }}
+          # VERSION= ? TODO: Configure version, sample: 1.7.6
+          push: false
+
+      - name: Build and publish Docker Runtime Image
+        if: github.event_name == 'workflow_dispatch'
+        uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: "keep-ecdsa-celo"
+        with:
+          # GCR image should be named according to following convention:
+          # HOSTNAME/PROJECT-ID/IMAGE:TAG
+          # We don't use TAG yet, will be added at later stages of work on RFC-18.
+          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          labels: revision=${{ github.sha }}
+          build-args: |
+            HOST_CHAIN=celo
+            REVISION=${{ github.sha }}
+          # VERSION= ? TODO: Configure version, sample: 1.7.6
+          push: true
+
+      - # Temp fix - move cache instead of copying (added below step and
+        # modified value of `cache-to`).
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        # Without the change some jobs were failing with `no space left on device`
+        name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-celo-cache
+          mv /tmp/.buildx-celo-cache-new /tmp/.buildx-celo-cache
 
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'

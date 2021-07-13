@@ -981,7 +981,7 @@ func monitorKeepTerminatedEvent(
 
 	subscriptionOnKeepTerminated, err := keep.OnKeepTerminated(
 		func(event *chain.KeepTerminatedEvent) {
-			logger.Warningf(
+			logger.Infof(
 				"keep [%s] terminated event received at block [%d]",
 				keep.ID(),
 				event.BlockNumber,
@@ -1049,6 +1049,11 @@ func monitorKeepTerminatedEvent(
 							keepsRegistry,
 							derivationIndexStorage,
 						); err != nil {
+							logger.Errorf(
+								"failed to handle liquidation recovery for keep [%s]: [%w]",
+								keep.ID(),
+								err,
+							)
 							return err
 						}
 

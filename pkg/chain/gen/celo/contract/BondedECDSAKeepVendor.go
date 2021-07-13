@@ -151,8 +151,8 @@ func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgrade(
 	}
 
 	becdsakvLogger.Infof(
-		"submitted transaction completeFactoryUpgrade with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction completeFactoryUpgrade with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -178,8 +178,8 @@ func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgrade(
 			}
 
 			becdsakvLogger.Infof(
-				"submitted transaction completeFactoryUpgrade with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction completeFactoryUpgrade with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -238,7 +238,7 @@ func (becdsakv *BondedECDSAKeepVendor) Initialize(
 ) (*types.Transaction, error) {
 	becdsakvLogger.Debug(
 		"submitting transaction initialize",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			registryAddress,
 			factory,
@@ -284,8 +284,8 @@ func (becdsakv *BondedECDSAKeepVendor) Initialize(
 	}
 
 	becdsakvLogger.Infof(
-		"submitted transaction initialize with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction initialize with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -315,8 +315,8 @@ func (becdsakv *BondedECDSAKeepVendor) Initialize(
 			}
 
 			becdsakvLogger.Infof(
-				"submitted transaction initialize with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction initialize with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -383,7 +383,7 @@ func (becdsakv *BondedECDSAKeepVendor) UpgradeFactory(
 ) (*types.Transaction, error) {
 	becdsakvLogger.Debug(
 		"submitting transaction upgradeFactory",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_factory,
 		),
@@ -426,8 +426,8 @@ func (becdsakv *BondedECDSAKeepVendor) UpgradeFactory(
 	}
 
 	becdsakvLogger.Infof(
-		"submitted transaction upgradeFactory with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction upgradeFactory with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -455,8 +455,8 @@ func (becdsakv *BondedECDSAKeepVendor) UpgradeFactory(
 			}
 
 			becdsakvLogger.Infof(
-				"submitted transaction upgradeFactory with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction upgradeFactory with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 

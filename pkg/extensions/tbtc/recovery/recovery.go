@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	cecdsa "crypto/ecdsa"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"strings"
@@ -142,6 +141,14 @@ func constructUnsignedTransaction(
 		txOut.Value = perRecipientValue
 	}
 
+	if fee > previousOutputValue/20 {
+		logger.Warnf(
+			"transaction fee [%d] is greater than 5%% of the UTXO value [%d]",
+			fee,
+			previousOutputValue,
+		)
+	}
+
 	return tx, nil
 }
 
@@ -192,8 +199,7 @@ func BuildBitcoinTransaction(
 	ctx context.Context,
 	networkProvider net.Provider,
 	hostChain chain.Handle,
-	tbtcHandle chain.TBTCHandle,
-	keep chain.BondedECDSAKeepHandle,
+	fundingInfo *chain.FundingInfo,
 	signer *tss.ThresholdSigner,
 	chainParams *chaincfg.Params,
 	retrievalAddresses []string,
@@ -201,35 +207,10 @@ func BuildBitcoinTransaction(
 ) (string, error) {
 	scriptCodeBytes, err := publicKeyToP2WPKHScriptCode(signer.PublicKey(), chainParams)
 	if err != nil {
-		logger.Errorf(
-			"failed to retrieve the script code for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
-	}
-	depositAddress, err := keep.GetOwner()
-	if err != nil {
-		logger.Errorf(
-			"failed to retrieve the owner for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
+		return "", fmt.Errorf("failed to retrieve the script code: [%v]", err)
 	}
 
-	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.String())
-	if err != nil {
-		logger.Errorf(
-			"failed to retrieve the funding info of deposit [%s] for keep [%s]: [%v]",
-			depositAddress,
-			keep.ID(),
-			err,
-		)
-		return "", err
-	}
-
-	previousOutputValue := int64(binary.LittleEndian.Uint32(fundingInfo.UtxoValueBytes[:]))
+	previousOutputValue := int64(chain.UtxoValueBytesToUint32(fundingInfo.UtxoValueBytes))
 
 	unsignedTransaction, err := constructUnsignedTransaction(
 		fundingInfo.TransactionHash,
@@ -240,17 +221,11 @@ func BuildBitcoinTransaction(
 		chainParams,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to construct the unsigned transaction for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
+		return "", fmt.Errorf("failed to construct the unsigned transaction: [%w]", err)
 	}
 
 	logger.Debugf(
-		"constructed unsigned liquidation recovery transcation for keep [%s]: [%+v]",
-		keep.ID(),
+		"constructed unsigned liquidation recovery transcation: [%+v]",
 		unsignedTransaction,
 	)
 
@@ -263,17 +238,11 @@ func BuildBitcoinTransaction(
 		previousOutputValue,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to calculate the sighash bytes for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
+		return "", fmt.Errorf("failed to calculate the sighash bytes: [%w]", err)
 	}
 
 	logger.Debugf(
-		"calculated liquidation recovery transcation sighash for keep [%s]: [%x]",
-		keep.ID(),
+		"calculated liquidation recovery transcation sighash: [%x]",
 		sighashBytes,
 	)
 
@@ -284,17 +253,11 @@ func BuildBitcoinTransaction(
 		hostChain.Signing().PublicKeyToAddress,
 	)
 	if err != nil {
-		logger.Errorf(
-			"failed to calculate signature for keep [%s]: [%v]",
-			keep.ID(),
-			err,
-		)
-		return "", err
+		return "", fmt.Errorf("failed to calculate signature: [%w]", err)
 	}
 
 	logger.Debugf(
-		"calculated liquidation recovery transcation signature for keep [%s]: [%v]",
-		keep.ID(),
+		"calculated liquidation recovery transcation signature: [%v]",
 		signature,
 	)
 
