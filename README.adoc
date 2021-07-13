@@ -2,6 +2,10 @@
 
 = keep-ecdsa
 
+https://github.com/keep-network/keep-ecdsa/actions/workflows/contracts.yml[image:https://img.shields.io/github/workflow/status/keep-network/keep-ecdsa/Solidity/master?event=push&label=Solidity build[Solidity contracts build status]]
+https://github.com/keep-network/keep-ecdsa/actions/workflows/client.yml[image:https://img.shields.io/github/workflow/status/keep-network/keep-ecdsa/Solidity/master?event=push&label=Go build[Go client build status]]
+https://discord.gg/wYezN7v[image:https://img.shields.io/badge/chat-Discord-blueViolet.svg[Chat with us on Discord]]
+
 The on- and off-chain pieces of ECDSA keeps and Bonded ECDSA keeps
 for the Keep network. Builds on top of and requires the
 https://github.com/keep-network/keep-core/[core system]
