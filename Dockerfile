@@ -97,5 +97,8 @@ ENV APP_NAME=keep-ecdsa \
 
 COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
 
+# Run as a user without privileges.
+USER nobody
+
 # docker caches more when using CMD [] resulting in a faster build.
 CMD []
