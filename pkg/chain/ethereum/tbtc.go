@@ -465,3 +465,26 @@ func (ta *tbtcApplication) getDepositContract(
 
 	return depositContract, nil
 }
+
+// FundingInfo retrieves the funding info for a particular deposit address
+func (ta *tbtcApplication) FundingInfo(
+	depositAddress string,
+) (*chain.FundingInfo, error) {
+	deposit, err := ta.getDepositContract(depositAddress)
+	if err != nil {
+		return nil, err
+	}
+	fundingInfo, err := deposit.FundingInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	transactionHash, outputIndex := chain.ParseUtxoOutpoint(fundingInfo.UtxoOutpoint)
+
+	return &chain.FundingInfo{
+		UtxoValueBytes:  fundingInfo.UtxoValueBytes,
+		FundedAt:        fundingInfo.FundedAt,
+		TransactionHash: transactionHash,
+		OutputIndex:     outputIndex,
+	}, nil
+}

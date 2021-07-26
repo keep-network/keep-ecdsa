@@ -63,10 +63,11 @@ func main() {
 		cmd.StartCommand,
 		cmd.ChainCLICommand,
 		cmd.SigningCommand,
+		cmd.ResolveBitcoinBeneficiaryAddressCommand,
 	}
 
 	err = app.Run(os.Args)
 	if err != nil {
-		fmt.Print(err)
+		logger.Fatal(err)
 	}
 }
