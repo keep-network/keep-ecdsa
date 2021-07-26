@@ -171,6 +171,28 @@ Application configurations are stored in a `.toml` file and passed to the applic
 # This is an optional parameter, if not provided timeout for TSS protocol
 # pre-parameters generation will be set to `2 minutes`.
   PreParamsGenerationTimeout = "2m30s"
+
+[Extensions.TBTC]
+  # The amount of time your client will try to communicate with  the other
+  # signers to recover the underlying bitcoin from a deposit after it has been
+  # liquidated.
+  LiquidationRecoveryTimeout = "48h"
+
+  [Extensions.TBTC.Bitcoin]
+    # The btc address or *pub (xpub, ypub, zpub) that you would like recovered btc funds to be sent too
+    BeneficiaryAddress = "<your btc address or *pub key for a hierarchical deterministic wallet>"
+    # The maximum fee per vbyte that you're willing to pay in order to claim
+    # your share of the underlying btc after a liquidation. The fee will be
+    # paid from the underlying deposit before your own share is calculated.
+    MaxFeePerVByte = 75
+    # The bitcoin chain that you want to connect to. default: "mainnet"
+    # allowed values: ["mainnet", "regtest", "simnet", "testnet3"]
+    BitcoinChainName = "mainnet"
+    # An endpoint pointing to a running electrs
+    # (https://github.com/Blockstream/electrs) service. The officially hosted
+    # one works, but you can run your own node!
+    # To explicitly disable automatic broadcasting, set this value to the empty string "".
+    ElectrsURL = "https://blockstream.info/api/"
 ----
 
 ==== Parameters
@@ -274,6 +296,114 @@ reference].
 |Timeout for TSS protocol pre-parameters generation.
 |"2m"
 |No
+|===
+
+[%header,cols=4*]
+|===
+|`Extensions.TBTC`
+|Description
+|Default
+|Required
+
+|`LiquidationRecoveryTimeout`
+|The amount of time your client will try to communicate with the other signers to recover the underlying bitcoin from a deposit after it has been liquidated.
+|"48h"
+|No
+|===
+
+[%header,cols=4*]
+|===
+|`Extensions.TBTC.Bitcoin`
+|Description
+|Default
+|Required
+
+|`BeneficiaryAddress`
+|The btc address or *pub (xpub, ypub, zpub) that you would like recovered btc funds to be sent too, see <<example-beneficiary-addresses,examples>>.
+|""
+|Yes
+
+|`MaxFeePerVByte`
+|The maximum fee per vbyte that you're willing to pay in order to claim your share of the underlying btc after a liquidation.
+|75
+|No
+
+|`BitcoinChainName`
+|The bitcoin chain that you want to connect to. Allowed Values: ["mainnet", "regtest", "simnet", "testnet3"]
+|"mainnet"
+|No
+
+|`ElectrsURL`
+|An endpoint pointing to a running [electrs](https://github.com/Blockstream/electrs) service.
+|"https://blockstream.info/api/"
+|No
+|===
+
+[[example-beneficiary-addresses]]
+==== Example BeneficiaryAddresses
+
+The following entries are examples of
+`Extensions.TBTC.Bitcoin.BeneficiaryAddress` configurations. For example, to
+configure the beneficiary address as a mainnet xpub extended public key, the
+configuration would be
+[source,toml]
+----
+[Extensions.TBTC.Bitcoin]
+  BeneficiaryAddress = "xpub6Cg41S21V____REPLACE_WITH_VALID_DATA____vZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
+----
+
+
+[%header,cols=2*]
+|===
+|Description
+|Address
+|mainnet xpub extended public key
+|`"xpub6Cg41S21V____REPLACE_WITH_VALID_DATA____vZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"`
+
+|mainnet ypub extended public key
+|`"ypub6Xxan668a____REPLACE_WITH_VALID_DATA____gaxnBh44HpkTi2TTkm1u136qjUxk7F3jGzoyfrGpHvALMgJgbF4WNXpoPu3QYrqogMK"`
+
+|mainnet zpub extended public key
+|`"zpub6rePDVHfR____REPLACE_WITH_VALID_DATA____ykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9"`
+
+|testnet3/regtest tpub extended public key
+|`"tpubDEXzoXkNd____REPLACE_WITH_VALID_DATA____2erw2yS3VgY5EoYdcKH24VPqeAgBTF6i82Ft9NG1iVjSQVAvFBfd2wkRQXF1W2Q8W1"`
+
+|testnet3/regtest upub extended public key
+|`"upub5DnYQWgCD____REPLACE_WITH_VALID_DATA____JnHCp5BwyvM7Xm7S5r5n5ZYMJ1WrrM31i4kcsWwW2vxcJS1kfsuKgK9vME2z1cx6aX"`
+
+|testnet3/regest vpub extended public key
+|`"vpub5Zx5difzi____REPLACE_WITH_VALID_DATA____WHFTpF7pJqnyAnADhbVrFYX7eCK8V2WBBVprxzJrSk15NsYHiB8CvV8h4JnXkU66as"`
+
+|mainnet P2PKH btc address
+|`"1MjCqoLqMZ6Ru____REPLACE_WITH_VALID_DATA____64TTtP16XnpSdiE8Kpgcx"`
+
+|testnet P2PKH btc address
+|`"mkHS9ne12qx9p____REPLACE_WITH_VALID_DATA____S9VojpwU5xtRd4T7X7ZUt"`
+
+|mainnet P2SH btc address
+|`"3J98t1WpEZ73C____REPLACE_WITH_VALID_DATA____NmQviecrnyiWrnqRhWNLy"`
+
+|testnet P2SH btc address
+|`"2NBFNJTktNa7G____REPLACE_WITH_VALID_DATA____ZusGbDbGKRZTxdK9VVez3n"`
+
+|mainnet Bech32 (segwit) P2WPKH btc address
+|`"bc1qar0srrr7x____REPLACE_WITH_VALID_DATA____fkvy5l643lydnw9re59gtzzwf5mdq"`
+
+|testnet Bech32 (segwit) P2WPKH btc address
+|`"tb1qw508d6qej____REPLACE_WITH_VALID_DATA____xtdg4y5r3zarvary0c5xw7kxpjzsx"`
+
+|mainnet Bech32 (segwit) P2WPSH btc address
+|`"bc1qrp33g0q5c____REPLACE_WITH_VALID_DATA____cefvpysxf3qccfmv3"`
+
+| P2PK compressed btc public key (0x02)
+|`"02192d74d0cb9____REPLACE_WITH_VALID_DATA____c3a957724895dca52c6b4"`
+
+| P2PK compressed btc public key (0x03)
+|`"03b0bd634234a____REPLACE_WITH_VALID_DATA____37f23c2c409273eb16e65"`
+
+| P2PK compressed btc public key (0x04)
+|`"0411db93e1dcd____REPLACE_WITH_VALID_DATA____1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3"`
 |===
 
 == Build from Source
@@ -588,3 +718,9 @@ in the config file. The operator must explicitly register as a candidate for sel
 as a safeguard against choosing clients that have not yet booted up; the sanctioned
 applications list allows the client software to automatically register as a candidate
 on startup.
+
+== Troubleshooting
+
+=== Network
+
+Please refer the <<./network-troubleshooting.adoc#title, network troubleshooting>> guide.

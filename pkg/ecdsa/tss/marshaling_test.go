@@ -177,3 +177,39 @@ func TestFuzzAnnounceMessageRoundtrip(t *testing.T) {
 func TestFuzzAnnounceMessageUnmarshaler(t *testing.T) {
 	pbutils.FuzzUnmarshaler(&AnnounceMessage{})
 }
+
+func TestFuzzLiquidationRecoveryAnnounceMessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var message LiquidationRecoveryAnnounceMessage
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f.Fuzz(&message)
+
+		_ = pbutils.RoundTrip(&message, &ReadyMessage{})
+	}
+}
+
+func TestLiquidationRecoveryAnnounceMessageMarshalling(t *testing.T) {
+	msg := &LiquidationRecoveryAnnounceMessage{
+		SenderID:           MemberID([]byte("member-1")),
+		BtcRecoveryAddress: "bcrt1qgvlmm6pe4epm7j3mjwkvdf2ymymu8tes04t6cr",
+		MaxFeePerVByte:     300,
+	}
+
+	unmarshaled := &LiquidationRecoveryAnnounceMessage{}
+
+	if err := pbutils.RoundTrip(msg, unmarshaled); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(msg, unmarshaled) {
+		t.Fatalf(
+			"unexpected content of unmarshaled message\nexpected: [%+v]\nactual:   [%+v]\n",
+			msg,
+			unmarshaled,
+		)
+	}
+}
+
+func TestFuzzLiquidationRecoveryAnnounceMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&LiquidationRecoveryAnnounceMessage{})
+}

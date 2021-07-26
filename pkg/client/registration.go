@@ -232,7 +232,7 @@ func monitorSignerPoolStatus(
 	blockCounter corechain.BlockCounter,
 	application chain.BondedECDSAKeepApplicationHandle,
 ) error {
-	logger.Debugf(
+	logger.Infof(
 		"starting monitoring operatator status for application [%s]",
 		application.ID(),
 	)
