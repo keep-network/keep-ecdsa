@@ -272,3 +272,26 @@ func (m *AnnounceMessage) Unmarshal(bytes []byte) error {
 
 	return nil
 }
+
+// Marshal converts this message to a byte array suitable for network communication.
+func (m *LiquidationRecoveryAnnounceMessage) Marshal() ([]byte, error) {
+	return (&pb.LiquidationRecoveryAnnounceMessage{
+		SenderID:           m.SenderID,
+		BtcRecoveryAddress: m.BtcRecoveryAddress,
+		MaxFeePerVByte:     m.MaxFeePerVByte,
+	}).Marshal()
+}
+
+// Unmarshal converts a byte array produced by Marshal to a message.
+func (m *LiquidationRecoveryAnnounceMessage) Unmarshal(bytes []byte) error {
+	pbMsg := &pb.LiquidationRecoveryAnnounceMessage{}
+	if err := pbMsg.Unmarshal(bytes); err != nil {
+		return err
+	}
+
+	m.SenderID = pbMsg.SenderID
+	m.BtcRecoveryAddress = pbMsg.BtcRecoveryAddress
+	m.MaxFeePerVByte = pbMsg.MaxFeePerVByte
+
+	return nil
+}
