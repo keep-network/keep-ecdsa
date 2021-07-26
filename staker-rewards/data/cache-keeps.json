@@ -56407,8 +56407,9 @@
       "creationBlock": 12800542,
       "creationTimestamp": 1625932071,
       "status": {
-        "name": "active",
-        "timestamp": 1625932071
+        "name": "terminated",
+        "timestamp": 1626618630,
+        "cause": "keygen-fail"
       }
     },
     {
@@ -56453,7 +56454,63 @@
         "name": "active",
         "timestamp": 1626284450
       }
+    },
+    {
+      "address": "0x73206Cf0BE5F59DE50D32f010219f2076014A995",
+      "members": [
+        "0x9c06Feb7Ebc8065ee11Cd5E8EEdaAFb2909A7087",
+        "0x0ee446643973b3F5FeD132D0455fEa23fbad0D1E",
+        "0xb034dE6226d765a343dc65932B6c114cB4e1a748"
+      ],
+      "creationBlock": 12868015,
+      "creationTimestamp": 1626846598,
+      "status": {
+        "name": "active",
+        "timestamp": 1626846598
+      }
+    },
+    {
+      "address": "0x38147004b1Bf71d4E83948F54Ad296e3e7C18020",
+      "members": [
+        "0xb034dE6226d765a343dc65932B6c114cB4e1a748",
+        "0x9c06Feb7Ebc8065ee11Cd5E8EEdaAFb2909A7087",
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8"
+      ],
+      "creationBlock": 12866767,
+      "creationTimestamp": 1626829402,
+      "status": {
+        "name": "active",
+        "timestamp": 1626829402
+      }
+    },
+    {
+      "address": "0x2829774643c30321e5bDE2B8c2e8966e9ACf28cA",
+      "members": [
+        "0x64A8856cBD255765D16B901a0B899daefC78FB13",
+        "0x0ee446643973b3F5FeD132D0455fEa23fbad0D1E",
+        "0x855A951162B1B93D70724484d5bdc9D00B56236B"
+      ],
+      "creationBlock": 12865932,
+      "creationTimestamp": 1626817792,
+      "status": {
+        "name": "active",
+        "timestamp": 1626817792
+      }
+    },
+    {
+      "address": "0xc87B635fc0EaDb1D8C0E452361559a1156f700b0",
+      "members": [
+        "0x64A8856cBD255765D16B901a0B899daefC78FB13",
+        "0x0d0271d1B2906Cc472A8e75148937967Be788F09",
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8"
+      ],
+      "creationBlock": 12868701,
+      "creationTimestamp": 1626855921,
+      "status": {
+        "name": "active",
+        "timestamp": 1626855921
+      }
     }
   ],
-  "lastRefreshBlock": 12826523
+  "lastRefreshBlock": 12868701
 }
