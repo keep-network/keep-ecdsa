@@ -16,9 +16,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
+	"github.com/keep-network/keep-ecdsa/pkg/chain/bitcoin"
 	"github.com/keep-network/keep-ecdsa/pkg/client/event"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc"
+	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc/recovery"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
@@ -57,7 +59,9 @@ func Initialize(
 	hostChain chain.Handle,
 	networkProvider net.Provider,
 	persistence persistence.Handle,
+	derivationIndexStorage *recovery.DerivationIndexStorage,
 	clientConfig *Config,
+	tbtcConfig *tbtc.Config,
 	tssConfig *tss.Config,
 ) *Handle {
 	keepsRegistry := registry.NewKeepsRegistry(
@@ -102,6 +106,20 @@ func Initialize(
 		return !isKeepActive
 	}
 
+	blockCounter := hostChain.BlockCounter()
+
+	tbtcApplicationHandle, err := hostChain.TBTCApplicationHandle()
+	if err != nil {
+		logger.Errorf(
+			"failed to look up on-chain tBTC application information for "+
+				"chain [%s]; this client WILL NOT ATTEMPT TO OPERATE "+
+				"on the tBTC system",
+			hostChain,
+		)
+	} else {
+		go checkStatusAndRegisterForApplication(ctx, blockCounter, tbtcApplicationHandle)
+	}
+
 	for _, keepID := range keepsRegistry.GetKeepsIDs() {
 		go func(keepID chain.ID) {
 			keep, err := hostChain.GetKeepWithID(keepID)
@@ -144,7 +162,7 @@ func Initialize(
 
 			signer, err := keepsRegistry.GetSigner(keepID)
 			if err != nil {
-				// If there are no signer for loaded keep that something is clearly
+				// If there are no signer for loaded keep then something is clearly
 				// wrong. We don't want to continue processing for this keep.
 				logger.Errorf(
 					"no signer for keep [%s]: [%v]",
@@ -181,11 +199,19 @@ func Initialize(
 				eventDeduplicator,
 			)
 			go monitorKeepTerminatedEvent(
+				ctx,
 				hostChain,
+				tbtcApplicationHandle,
+				networkProvider,
+				clientConfig,
+				tbtcConfig,
+				tssNode,
+				operatorPublicKey,
 				keep,
 				keepsRegistry,
-				subscriptionOnSignatureRequested,
+				derivationIndexStorage,
 				eventDeduplicator,
+				subscriptionOnSignatureRequested,
 			)
 
 		}(keepID)
@@ -194,10 +220,14 @@ func Initialize(
 	go checkAwaitingKeyGeneration(
 		ctx,
 		hostChain,
+		tbtcApplicationHandle,
+		networkProvider,
 		clientConfig,
+		tbtcConfig,
 		tssNode,
 		operatorPublicKey,
 		keepsRegistry,
+		derivationIndexStorage,
 		eventDeduplicator,
 	)
 
@@ -236,10 +266,14 @@ func Initialize(
 				generateKeyForKeep(
 					ctx,
 					hostChain,
+					tbtcApplicationHandle,
+					networkProvider,
 					clientConfig,
+					tbtcConfig,
 					tssNode,
 					operatorPublicKey,
 					keepsRegistry,
+					derivationIndexStorage,
 					eventDeduplicator,
 					keep,
 					event.MemberIDs,
@@ -253,20 +287,6 @@ func Initialize(
 			)
 		}
 	})
-
-	blockCounter := hostChain.BlockCounter()
-
-	tbtcApplicationHandle, err := hostChain.TBTCApplicationHandle()
-	if err != nil {
-		logger.Errorf(
-			"failed to look up on-chain tBTC application information for "+
-				"chain [%s]; this client WILL NOT ATTEMPT TO OPERATE "+
-				"on the tBTC system",
-			hostChain,
-		)
-	} else {
-		go checkStatusAndRegisterForApplication(ctx, blockCounter, tbtcApplicationHandle)
-	}
 
 	initializeExtensions(
 		ctx,
@@ -302,14 +322,18 @@ func initializeExtensions(
 
 func checkAwaitingKeyGeneration(
 	ctx context.Context,
-	ethereumChain chain.Handle,
+	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
+	networkProvider net.Provider,
 	clientConfig *Config,
+	tbtcConfig *tbtc.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
+	derivationIndexStorage *recovery.DerivationIndexStorage,
 	eventDeduplicator *event.Deduplicator,
 ) {
-	keepCount, err := ethereumChain.GetKeepCount()
+	keepCount, err := hostChain.GetKeepCount()
 	if err != nil {
 		logger.Warningf("could not get keep count: [%v]", err)
 		return
@@ -329,7 +353,7 @@ func checkAwaitingKeyGeneration(
 			keepIndex.String(),
 		)
 
-		keep, err := ethereumChain.GetKeepAtIndex(keepIndex)
+		keep, err := hostChain.GetKeepAtIndex(keepIndex)
 		if err != nil {
 			logger.Warningf(
 				"could not get keep at index [%v]: [%v]",
@@ -362,11 +386,15 @@ func checkAwaitingKeyGeneration(
 
 		err = checkAwaitingKeyGenerationForKeep(
 			ctx,
-			ethereumChain,
+			hostChain,
+			tbtcHandle,
+			networkProvider,
 			clientConfig,
+			tbtcConfig,
 			tssNode,
 			operatorPublicKey,
 			keepsRegistry,
+			derivationIndexStorage,
 			eventDeduplicator,
 			keep,
 		)
@@ -382,11 +410,15 @@ func checkAwaitingKeyGeneration(
 
 func checkAwaitingKeyGenerationForKeep(
 	ctx context.Context,
-	ethereumChain chain.Handle,
+	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
+	networkProvider net.Provider,
 	clientConfig *Config,
+	tbtcConfig *tbtc.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
+	derivationIndexStorage *recovery.DerivationIndexStorage,
 	eventDeduplicator *event.Deduplicator,
 	keep chain.BondedECDSAKeepHandle,
 ) error {
@@ -433,11 +465,15 @@ func checkAwaitingKeyGenerationForKeep(
 	if isThisOperatorMember {
 		go generateKeyForKeep(
 			ctx,
-			ethereumChain,
+			hostChain,
+			tbtcHandle,
+			networkProvider,
 			clientConfig,
+			tbtcConfig,
 			tssNode,
 			operatorPublicKey,
 			keepsRegistry,
+			derivationIndexStorage,
 			eventDeduplicator,
 			keep,
 			members,
@@ -450,11 +486,15 @@ func checkAwaitingKeyGenerationForKeep(
 
 func generateKeyForKeep(
 	ctx context.Context,
-	ethereumChain chain.Handle,
+	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
+	networkProvider net.Provider,
 	clientConfig *Config,
+	tbtcConfig *tbtc.Config,
 	tssNode *node.Node,
 	operatorPublicKey *operator.PublicKey,
 	keepsRegistry *registry.Keeps,
+	derivationIndexStorage *recovery.DerivationIndexStorage,
 	eventDeduplicator *event.Deduplicator,
 	keep chain.BondedECDSAKeepHandle,
 	members []chain.ID,
@@ -484,7 +524,7 @@ func generateKeyForKeep(
 
 	logger.Infof(
 		"member [%s] is starting signer generation for keep [%s]...",
-		ethereumChain.OperatorID(),
+		hostChain.OperatorID(),
 		keep.ID(),
 	)
 
@@ -523,7 +563,7 @@ func generateKeyForKeep(
 	}
 
 	subscriptionOnSignatureRequested, err := monitorSigningRequests(
-		ethereumChain,
+		hostChain,
 		clientConfig,
 		tssNode,
 		keep,
@@ -545,18 +585,27 @@ func generateKeyForKeep(
 	}
 
 	go monitorKeepClosedEvents(
-		ethereumChain,
+		hostChain,
 		keep,
 		keepsRegistry,
 		subscriptionOnSignatureRequested,
 		eventDeduplicator,
 	)
+
 	go monitorKeepTerminatedEvent(
-		ethereumChain,
+		ctx,
+		hostChain,
+		tbtcHandle,
+		networkProvider,
+		clientConfig,
+		tbtcConfig,
+		tssNode,
+		operatorPublicKey,
 		keep,
 		keepsRegistry,
-		subscriptionOnSignatureRequested,
+		derivationIndexStorage,
 		eventDeduplicator,
+		subscriptionOnSignatureRequested,
 	)
 }
 
@@ -584,7 +633,7 @@ func generateSignerForKeep(
 // monitorSigningRequests registers for signature requested events emitted by
 // specific keep contract.
 func monitorSigningRequests(
-	ethereumChain chain.Handle,
+	hostChain chain.Handle,
 	clientConfig *Config,
 	tssNode *node.Node,
 	keep chain.BondedECDSAKeepHandle,
@@ -592,7 +641,7 @@ func monitorSigningRequests(
 	eventDeduplicator *event.Deduplicator,
 ) (subscription.EventSubscription, error) {
 	go checkAwaitingSignature(
-		ethereumChain,
+		hostChain,
 		clientConfig,
 		tssNode,
 		keep,
@@ -643,7 +692,7 @@ func monitorSigningRequests(
 						defer eventDeduplicator.NotifySigningCompleted(keep.ID(), event.Digest)
 
 						isAwaitingSignature, err := ethlike.WaitForBlockConfirmations(
-							ethereumChain.BlockCounter(),
+							hostChain.BlockCounter(),
 							event.BlockNumber,
 							blockConfirmations,
 							func() (bool, error) {
@@ -696,7 +745,7 @@ func monitorSigningRequests(
 }
 
 func checkAwaitingSignature(
-	ethereumChain chain.Handle,
+	hostChain chain.Handle,
 	clientConfig *Config,
 	tssNode *node.Node,
 	keep chain.BondedECDSAKeepHandle,
@@ -770,7 +819,7 @@ func checkAwaitingSignature(
 				}
 
 				isStillAwaitingSignature, err := ethlike.WaitForBlockConfirmations(
-					ethereumChain.BlockCounter(),
+					hostChain.BlockCounter(),
 					startBlock,
 					blockConfirmations,
 					func() (bool, error) {
@@ -834,7 +883,7 @@ func checkAwaitingSignature(
 // unsubscribes from signing event for the given keep and unregisters it from
 // the keep registry.
 func monitorKeepClosedEvents(
-	ethereumChain chain.Handle,
+	hostChain chain.Handle,
 	keep chain.BondedECDSAKeepHandle,
 	keepsRegistry *registry.Keeps,
 	subscriptionOnSignatureRequested subscription.EventSubscription,
@@ -864,7 +913,7 @@ func monitorKeepClosedEvents(
 				defer eventDeduplicator.NotifyClosingCompleted(keep.ID())
 
 				isKeepActive, err := ethlike.WaitForBlockConfirmations(
-					ethereumChain.BlockCounter(),
+					hostChain.BlockCounter(),
 					event.BlockNumber,
 					blockConfirmations,
 					func() (bool, error) {
@@ -885,6 +934,8 @@ func monitorKeepClosedEvents(
 					return
 				}
 
+				// TODO: Rework how unregistering works in the context of
+				// completing/confirming btc recovery on the bitcoin chain.
 				keepsRegistry.UnregisterKeep(keep.ID())
 				keepClosed <- event
 			}(event)
@@ -912,59 +963,114 @@ func monitorKeepClosedEvents(
 // happens unsubscribes from signing event for the given keep and unregisters it
 // from the keep registry.
 func monitorKeepTerminatedEvent(
-	ethereumChain chain.Handle,
+	ctx context.Context,
+	hostChain chain.Handle,
+	tbtcHandle chain.TBTCHandle,
+	networkProvider net.Provider,
+	clientConfig *Config,
+	tbtcConfig *tbtc.Config,
+	tssNode *node.Node,
+	operatorPublicKey *operator.PublicKey,
 	keep chain.BondedECDSAKeepHandle,
 	keepsRegistry *registry.Keeps,
-	subscriptionOnSignatureRequested subscription.EventSubscription,
+	derivationIndexStorage *recovery.DerivationIndexStorage,
 	eventDeduplicator *event.Deduplicator,
+	subscriptionOnSignatureRequested subscription.EventSubscription,
 ) {
 	keepTerminated := make(chan *chain.KeepTerminatedEvent)
 
 	subscriptionOnKeepTerminated, err := keep.OnKeepTerminated(
 		func(event *chain.KeepTerminatedEvent) {
-			logger.Warningf(
+			logger.Infof(
 				"keep [%s] terminated event received at block [%d]",
 				keep.ID(),
 				event.BlockNumber,
 			)
 
 			go func(event *chain.KeepTerminatedEvent) {
-				if shouldHandle := eventDeduplicator.NotifyTerminatingStarted(keep.ID()); !shouldHandle {
-					logger.Infof(
-						"terminate event for keep [%s] already handled",
-						keep.ID(),
-					)
-
-					// currently handling or already handled in the past
-					// in case this event is a duplicate.
+				err := tbtcConfig.Bitcoin.Validate()
+				if err != nil {
+					if (bitcoin.Config{}) == tbtcConfig.Bitcoin {
+						logger.Errorf("missing bitcoin configuration for tbtc extension: [%v]", err)
+					} else {
+						logger.Errorf("misconfigured bitcoin configured for tbtc extension: [%v]", err)
+					}
 					return
 				}
-				defer eventDeduplicator.NotifyTerminatingCompleted(keep.ID())
+				err = utils.DoWithDefaultRetry(
+					tbtcConfig.GetLiquidationRecoveryTimeout(),
+					func(ctx context.Context) error {
+						if shouldHandle := eventDeduplicator.NotifyTerminatingStarted(keep.ID()); !shouldHandle {
+							logger.Infof(
+								"terminate event for keep [%s] already handled",
+								keep.ID(),
+							)
 
-				isKeepActive, err := ethlike.WaitForBlockConfirmations(
-					ethereumChain.BlockCounter(),
-					event.BlockNumber,
-					blockConfirmations,
-					func() (bool, error) {
-						return keep.IsActive()
+							// currently handling or already handled in the past
+							// in case this event is a duplicate.
+							return nil
+						}
+						defer eventDeduplicator.NotifyTerminatingCompleted(keep.ID())
+
+						isKeepActive, err := ethlike.WaitForBlockConfirmations(
+							hostChain.BlockCounter(),
+							event.BlockNumber,
+							blockConfirmations,
+							func() (bool, error) {
+								return keep.IsActive()
+							},
+						)
+						if err != nil {
+							logger.Errorf(
+								"failed to confirm keep [%s] termination: [%v]",
+								keep.ID(),
+								err,
+							)
+							return err
+						}
+
+						if isKeepActive {
+							logger.Warningf("keep [%s] has not been terminated", keep.ID())
+							return err
+						}
+
+						bitcoinHandle := bitcoin.Connect(tbtcConfig.Bitcoin.ElectrsURLWithDefault())
+
+						if err := handleLiquidationRecovery(
+							ctx,
+							hostChain,
+							tbtcHandle,
+							bitcoinHandle,
+							networkProvider,
+							tbtcConfig,
+							tssNode,
+							operatorPublicKey,
+							keep,
+							keepsRegistry,
+							derivationIndexStorage,
+						); err != nil {
+							logger.Errorf(
+								"failed to handle liquidation recovery for keep [%s]: [%w]",
+								keep.ID(),
+								err,
+							)
+							return err
+						}
+
+						logger.Debugf(
+							"unregistering keep [%s] after liquidation recovery",
+							keep.ID(),
+						)
+
+						keepsRegistry.UnregisterKeep(keep.ID())
+						keepTerminated <- event
+
+						return nil
 					},
 				)
 				if err != nil {
-					logger.Errorf(
-						"failed to confirm keep [%s] termination: [%v]",
-						keep.ID(),
-						err,
-					)
-					return
+					logger.Errorf("failed to broadcast the bitcoin recovery transaction: [%v]", err)
 				}
-
-				if isKeepActive {
-					logger.Warningf("keep [%s] has not been terminated", keep.ID())
-					return
-				}
-
-				keepsRegistry.UnregisterKeep(keep.ID())
-				keepTerminated <- event
 			}(event)
 		},
 	)

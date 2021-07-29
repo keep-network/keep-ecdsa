@@ -46,7 +46,7 @@ func AnnounceProtocol(
 		receivedMemberIDs[strings.ToLower(operatorID.String())] = memberID
 	}
 	hasAnnounced := func(keepMemberID chain.ID) bool {
-		_, ok := receivedMemberIDs[keepMemberID.String()]
+		_, ok := receivedMemberIDs[strings.ToLower(keepMemberID.String())]
 		return ok
 	}
 

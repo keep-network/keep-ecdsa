@@ -154,7 +154,10 @@ func (bekh *bondedEcdsaKeepHandle) SubmitKeepPublicKey(
 			return err
 		}
 
-		logger.Debugf("submitted SubmitPublicKey transaction with hash: [%x]", transaction.Hash())
+		logger.Debugf(
+			"submitted SubmitPublicKey transaction with hash: [%s]",
+			transaction.Hash(),
+		)
 		return nil
 	}
 
@@ -195,7 +198,7 @@ func (bekh *bondedEcdsaKeepHandle) SubmitSignature(
 	}
 
 	logger.Debugf(
-		"submitted SubmitSignature transaction with hash: [%x]",
+		"submitted SubmitSignature transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -273,6 +276,12 @@ func (bekh *bondedEcdsaKeepHandle) GetMembers() ([]chain.ID, error) {
 	}
 
 	return toIDSlice(addresses), err
+}
+
+// GetOwner returns keep's owner.
+func (bekh *bondedEcdsaKeepHandle) GetOwner() (chain.ID, error) {
+	owner, err := bekh.contract.GetOwner()
+	return celoChainID(owner), err
 }
 
 func (bekh *bondedEcdsaKeepHandle) IsThisOperatorMember() (bool, error) {

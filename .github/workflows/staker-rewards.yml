@@ -3,7 +3,7 @@ name: Staker Rewards
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - "staker-rewards/**"
   pull_request:
