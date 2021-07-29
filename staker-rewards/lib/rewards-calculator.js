@@ -125,26 +125,11 @@ export default class RewardsCalculator {
       violations.push("factoryAuthorizedAtStart")
     }
 
-    if (requirements.poolAuthorizedAtStart === false) {
-      violations.push("poolAuthorizedAtStart")
-    }
-
-    if (requirements.poolDeauthorizedInInterval === true) {
-      violations.push("poolDeauthorizedInInterval")
-    }
-
     if (
       requirements.minimumStakeAtStart === false &&
       operatorAssets.isUndelegating === false
     ) {
       violations.push("minimumStakeAtStart")
-    }
-
-    if (
-      requirements.poolRequirementFulfilledAtStart === false &&
-      operatorAssets.isUndelegating === false
-    ) {
-      violations.push("poolRequirementFulfilledAtStart")
     }
 
     if (operatorSLA.keygenSLA !== "N/A") {
