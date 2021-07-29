@@ -59,14 +59,6 @@ const libp2pPeers = [process.env.KEEP_TECDSA_PEERS]
 const libp2pPort = Number(process.env.KEEP_TECDSA_PORT)
 const libp2pAnnouncedAddresses = [process.env.KEEP_TECDSA_ANNOUNCED_ADDRESSES]
 
-// TBTCSystem contract address
-// TODO: The value is required to be defined as an environment variable
-// the address could be pulled from a contract artifact, but this gives an
-// additional dependency from keep-ecdsa to tbtc projects in the release
-// cycle, which would be too complex at this point. We should revisit it when
-// implementing RFC-18 modules integration.
-const tbtcSystemAddress = process.env.TBTC_SYSTEM_ADDRESS
-
 const web3 = web3Provider[hostChain].getWeb3()
 
 /*
@@ -77,6 +69,7 @@ const bondedECDSAKeepFactory = getWeb3Contract("BondedECDSAKeepFactory")
 const keepBondingContract = getWeb3Contract("KeepBonding")
 const tokenStakingContract = getWeb3Contract("TokenStaking")
 const keepTokenContract = getWeb3Contract("KeepToken")
+const tbtcSystem = getWeb3Contract("TBTCSystem")
 
 // Returns a web3 contract object based on a truffle contract artifact JSON file.
 function getWeb3Contract(contractName) {
@@ -123,10 +116,10 @@ async function provisionKeepTecdsa() {
     await depositUnbondedValue(operatorAddress, purse, "10")
 
     console.log(
-      `\n<<<<<<<<<<<< Check Sortition Pool for TBTCSystem: ${tbtcSystemAddress} >>>>>>>>>>>>`
+      `\n<<<<<<<<<<<< Check Sortition Pool for TBTCSystem: ${tbtcSystem.options.address} >>>>>>>>>>>>`
     )
     const sortitionPoolContractAddress = await getSortitionPool(
-      tbtcSystemAddress
+      tbtcSystem.options.address
     )
 
     if (
@@ -135,7 +128,7 @@ async function provisionKeepTecdsa() {
         "0x0000000000000000000000000000000000000000"
     ) {
       throw new Error(
-        `missing sortition pool for TBTCSystem contract: [${tbtcSystemAddress}]`
+        `missing sortition pool for TBTCSystem contract: [${tbtcSystem.options.address}]`
       )
     }
 
@@ -366,7 +359,8 @@ async function createKeepTecdsaConfig() {
   parsedConfigFile[hostChain].ContractAddresses.BondedECDSAKeepFactory =
     bondedECDSAKeepFactory.options.address
 
-  parsedConfigFile[hostChain].ContractAddresses.TBTCSystem = tbtcSystemAddress
+  parsedConfigFile[hostChain].ContractAddresses.TBTCSystem =
+      tbtcSystem.options.address
 
   parsedConfigFile.LibP2P.Peers = libp2pPeers
   parsedConfigFile.LibP2P.Port = libp2pPort
