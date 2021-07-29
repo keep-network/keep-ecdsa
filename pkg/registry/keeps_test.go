@@ -8,8 +8,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-ecdsa/internal/testdata"
+	"github.com/keep-network/keep-ecdsa/internal/testhelper"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 	"github.com/keep-network/keep-ecdsa/pkg/ecdsa/tss"
@@ -45,8 +45,15 @@ func init() {
 	}
 }
 
-func buildRegistry() (*persistenceHandleMock, *Keeps) {
-	persistenceMock := &persistenceHandleMock{}
+func buildRegistry() (*testhelper.PersistenceHandleMock, *Keeps) {
+	persistenceMock := testhelper.NewPersistenceHandleMock(3)
+
+	signers, _ := testSigners()
+	signer1 := signers[0]
+	signer2 := signers[1]
+
+	persistenceMock.MockSigner(0, keepID1.String(), signer1)
+	persistenceMock.MockSigner(0, keepID2.String(), signer2)
 
 	return persistenceMock, NewKeepsRegistry(persistenceMock, localChain.UnmarshalID)
 }
@@ -64,10 +71,10 @@ func TestRegisterSigner(t *testing.T) {
 		t.Fatalf("failed to marshal signer: [%v]", err)
 	}
 
-	expectedFile := &testFileInfo{
-		data:      expectedSignerBytes,
-		directory: keepID1.String(),
-		name:      fmt.Sprintf("/membership_%s", signer1.MemberID().String()),
+	expectedFile := &testhelper.TestFileInfo{
+		Data:      expectedSignerBytes,
+		Directory: keepID1.String(),
+		Name:      fmt.Sprintf("/membership_%s", signer1.MemberID().String()),
 	}
 
 	err = kr.RegisterSigner(keepID1, signer1)
@@ -76,22 +83,22 @@ func TestRegisterSigner(t *testing.T) {
 	}
 
 	// Verify persisted to storage.
-	if len(persistenceMock.persistedGroups) != 1 {
+	if len(persistenceMock.PersistedGroups) != 1 {
 		t.Errorf(
 			"unexpected number of persisted groups\nexpected: [%d]\nactual:   [%d]",
 			1,
-			len(persistenceMock.persistedGroups),
+			len(persistenceMock.PersistedGroups),
 		)
 	}
 
 	if !reflect.DeepEqual(
 		expectedFile,
-		persistenceMock.persistedGroups[0],
+		persistenceMock.PersistedGroups[0],
 	) {
 		t.Errorf(
 			"unexpected persisted group\nexpected: [%+v]\nactual:   [%+v]",
 			expectedFile,
-			persistenceMock.persistedGroups[0],
+			persistenceMock.PersistedGroups[0],
 		)
 	}
 }
@@ -136,10 +143,10 @@ func TestSnapshotSigner(t *testing.T) {
 		t.Fatalf("failed to marshal signer: [%v]", err)
 	}
 
-	expectedFile := &testFileInfo{
-		data:      expectedSignerBytes,
-		directory: keepID1.String(),
-		name:      fmt.Sprintf("/membership_%s", signer1.MemberID().String()),
+	expectedFile := &testhelper.TestFileInfo{
+		Data:      expectedSignerBytes,
+		Directory: keepID1.String(),
+		Name:      fmt.Sprintf("/membership_%s", signer1.MemberID().String()),
 	}
 
 	err = kr.SnapshotSigner(keepID1, signer1)
@@ -147,22 +154,22 @@ func TestSnapshotSigner(t *testing.T) {
 		t.Fatalf("failed to snapshot signer: [%v]", err)
 	}
 
-	if len(persistenceMock.snapshots) != 1 {
+	if len(persistenceMock.Snapshots) != 1 {
 		t.Errorf(
 			"unexpected number of persisted groups\nexpected: [%d]\nactual:   [%d]",
 			1,
-			len(persistenceMock.snapshots),
+			len(persistenceMock.Snapshots),
 		)
 	}
 
 	if !reflect.DeepEqual(
 		expectedFile,
-		persistenceMock.snapshots[0],
+		persistenceMock.Snapshots[0],
 	) {
 		t.Errorf(
 			"unexpected persisted group\nexpected: [%+v]\nactual:   [%+v]",
 			expectedFile,
-			persistenceMock.snapshots[0],
+			persistenceMock.Snapshots[0],
 		)
 	}
 }
@@ -182,19 +189,19 @@ func TestUnregisterSigner(t *testing.T) {
 
 	kr.UnregisterKeep(keepID1)
 
-	if len(persistenceMock.persistedGroups) != 0 {
+	if len(persistenceMock.PersistedGroups) != 0 {
 		t.Errorf(
 			"unexpected number of persisted groups\nexpected: [%d]\nactual:   [%d]",
 			1,
-			len(persistenceMock.persistedGroups),
+			len(persistenceMock.PersistedGroups),
 		)
 	}
 
-	if len(persistenceMock.archivedGroups) != 1 {
+	if len(persistenceMock.ArchivedGroups) != 1 {
 		t.Errorf(
 			"unexpected number of archived groups\nexpected: [%d]\nactual:   [%d]",
 			1,
-			len(persistenceMock.archivedGroups),
+			len(persistenceMock.ArchivedGroups),
 		)
 	}
 }
@@ -307,81 +314,6 @@ func TestLoadExistingGroups(t *testing.T) {
 			actualSigner2,
 		)
 	}
-}
-
-type persistenceHandleMock struct {
-	persistedGroups []*testFileInfo
-	snapshots       []*testFileInfo
-	archivedGroups  []string
-}
-
-type testFileInfo struct {
-	data      []byte
-	directory string
-	name      string
-}
-
-func (phm *persistenceHandleMock) Save(data []byte, directory string, name string) error {
-	phm.persistedGroups = append(
-		phm.persistedGroups,
-		&testFileInfo{data, directory, name},
-	)
-
-	return nil
-}
-
-func (phm *persistenceHandleMock) Snapshot(data []byte, directory string, name string) error {
-	phm.snapshots = append(
-		phm.snapshots,
-		&testFileInfo{data, directory, name},
-	)
-
-	return nil
-}
-
-func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, <-chan error) {
-	signers, _ := testSigners()
-	signer1 := signers[0]
-	signer2 := signers[1]
-
-	signerBytes1, _ := signer1.Marshal()
-	signerBytes2, _ := signer2.Marshal()
-
-	outputData := make(chan persistence.DataDescriptor, 3)
-	outputErrors := make(chan error)
-
-	outputData <- &testDataDescriptor{"/membership_0", keepID1.String(), signerBytes1}
-	outputData <- &testDataDescriptor{"/membership_0", keepID2.String(), signerBytes2}
-
-	close(outputData)
-	close(outputErrors)
-
-	return outputData, outputErrors
-}
-
-func (phm *persistenceHandleMock) Archive(directory string) error {
-	phm.archivedGroups = append(phm.archivedGroups, directory)
-	phm.persistedGroups = phm.persistedGroups[:len(phm.archivedGroups)-1]
-
-	return nil
-}
-
-type testDataDescriptor struct {
-	name      string
-	directory string
-	content   []byte
-}
-
-func (tdd *testDataDescriptor) Name() string {
-	return tdd.name
-}
-
-func (tdd *testDataDescriptor) Directory() string {
-	return tdd.directory
-}
-
-func (tdd *testDataDescriptor) Content() ([]byte, error) {
-	return tdd.content, nil
 }
 
 func testSigners() ([]*tss.ThresholdSigner, error) {

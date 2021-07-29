@@ -23,6 +23,7 @@ const (
 type localKeep struct {
 	chain  *localChain
 	keepID common.Address
+	owner  common.Address
 
 	publicKey    [64]byte
 	members      []common.Address
@@ -265,6 +266,13 @@ func (lk *localKeep) GetMembers() ([]chain.ID, error) {
 	defer lk.chain.localChainMutex.Unlock()
 
 	return toIDSlice(lk.members), nil
+}
+
+func (lk *localKeep) GetOwner() (chain.ID, error) {
+	lk.chain.localChainMutex.Lock()
+	defer lk.chain.localChainMutex.Unlock()
+
+	return localChainID(lk.owner), nil
 }
 
 func (lk *localKeep) GetHonestThreshold() (uint64, error) {

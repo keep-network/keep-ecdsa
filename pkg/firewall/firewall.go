@@ -32,10 +32,20 @@ const (
 	activeKeepMemberCachePeriod = 168 * time.Hour // one week
 )
 
-var errNoAuthorization = fmt.Errorf("remote peer has no authorization on the factory")
+func errNoAuthorization(remotePeerID chain.ID) error {
+	return fmt.Errorf(
+		"remote peer [%v] has no authorization on the factory",
+		remotePeerID,
+	)
+}
 
-var errNoMinStakeNoActiveKeep = fmt.Errorf("remote peer has no minimum " +
-	"stake and is not a member in any of active keeps")
+func errNoMinStakeNoActiveKeep(remotePeerID chain.ID) error {
+	return fmt.Errorf(
+		"remote peer [%v] has no minimum "+
+			"stake and is not a member in any of active keeps",
+		remotePeerID,
+	)
+}
 
 // NewStakeOrActiveKeepPolicy is a firewall policy checking if the remote peer
 // has a minimum stake and in case it has no minimum stake if it is a member of
@@ -117,7 +127,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateAuthorization(
 	}
 
 	if soakp.nonAuthorizedOperatorsCache.Has(remotePeerOperatorID.String()) {
-		return errNoAuthorization
+		return errNoAuthorization(remotePeerOperatorID)
 	}
 
 	// We do not know if the remote peer has or has not the authorization so
@@ -133,7 +143,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateAuthorization(
 
 	if !isAuthorized {
 		soakp.nonAuthorizedOperatorsCache.Add(remotePeerOperatorID.String())
-		return errNoAuthorization
+		return errNoAuthorization(remotePeerOperatorID)
 	}
 
 	soakp.authorizedOperatorsCache.Add(remotePeerOperatorID.String())
@@ -165,7 +175,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	}
 
 	if soakp.noActiveKeepMembersCache.Has(remotePeerOperatorID.String()) {
-		return errNoMinStakeNoActiveKeep
+		return errNoMinStakeNoActiveKeep(remotePeerOperatorID)
 	}
 
 	zero := big.NewInt(0)
@@ -235,7 +245,7 @@ func (soakp *stakeOrActiveKeepPolicy) validateActiveKeepMembership(
 	// If we are here, it means that the client is not a member in any of
 	// active keeps and it's minimum stake check failed as well. We are not
 	// allowing to connect with that peer.
-	return errNoMinStakeNoActiveKeep
+	return errNoMinStakeNoActiveKeep(remotePeerOperatorID)
 }
 
 // getKeepAtIndex returns keep handle for a keep registered in the factory

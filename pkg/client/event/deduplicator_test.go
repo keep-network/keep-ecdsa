@@ -16,6 +16,8 @@ import (
 
 const signStateConfirmTimeout = 10 * time.Second
 
+var keepAddress = common.HexToAddress("0x4e09cadc7037afa36603138d1c0b76fe2aa5039c")
+var emptyAddress = common.BytesToAddress([]byte{})
 var keepAddress1 = common.HexToAddress(keepID1String)
 var digest = sha256.Sum256([]byte("Do or do not. There is no try."))
 
@@ -67,7 +69,7 @@ func TestDoSign(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress1, []common.Address{})
+	keep := chain.OpenKeep(keepAddress1, emptyAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
@@ -101,7 +103,7 @@ func TestDoNotSignIfCurrentlySigning(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress1, []common.Address{})
+	keep := chain.OpenKeep(keepAddress1, emptyAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
@@ -141,7 +143,7 @@ func TestDoNotSignIfNotAwaitingASignature(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress1, []common.Address{})
+	keep := chain.OpenKeep(keepAddress1, emptyAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])
@@ -170,7 +172,7 @@ func TestDoSignOneMoreTime(t *testing.T) {
 
 	deduplicator, _, chain := newDeduplicator(ctx)
 
-	keep := chain.OpenKeep(keepAddress1, []common.Address{})
+	keep := chain.OpenKeep(keepAddress1, emptyAddress, []common.Address{})
 
 	var keepPublicKey [64]byte
 	rand.Read(keepPublicKey[:])

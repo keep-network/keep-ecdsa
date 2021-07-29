@@ -16,6 +16,8 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/chain/local"
 )
 
+var emptyAddress = common.BytesToAddress([]byte{})
+
 func TestAnnounceProtocol(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 
@@ -49,6 +51,7 @@ func TestAnnounceProtocol(t *testing.T) {
 
 	keep := localChain.OpenKeep(
 		common.HexToAddress(keepAddress),
+		emptyAddress,
 		groupMemberAddresses,
 	)
 	keepMembers, err := keep.GetMembers()
