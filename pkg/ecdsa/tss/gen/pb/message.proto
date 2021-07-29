@@ -17,3 +17,9 @@ message ReadyMessage {
 message AnnounceMessage {
   bytes senderID = 1;
 }
+
+message LiquidationRecoveryAnnounceMessage {
+	bytes senderID = 1;
+	string btcRecoveryAddress = 2;
+	int32 maxFeePerVByte = 3;
+}

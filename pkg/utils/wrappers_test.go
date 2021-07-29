@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -52,7 +53,7 @@ func TestDoWithRetryExceedTimeout(t *testing.T) {
 	doFn := func(ctx context.Context) error {
 		if actualFailCount < 10 {
 			actualFailCount++
-			return fmt.Errorf("try again please")
+			return fmt.Errorf("try again please %d", actualFailCount)
 		}
 
 		return nil
@@ -63,8 +64,16 @@ func TestDoWithRetryExceedTimeout(t *testing.T) {
 		t.Fatal("expected a timeout error")
 	}
 
-	expectedError := "retry timeout [1s] exceeded"
+	expectedLatestError := "try again please 4"
+	expectedError := "retry timeout [1s] exceeded; most recent error: [try again please 4]"
 	if err.Error() != expectedError {
+		t.Errorf(
+			"unexpected error message\nactual:   [%v]\nexpected: [%v]",
+			err.Error(),
+			expectedError,
+		)
+	}
+	if errors.Unwrap(err).Error() != expectedLatestError {
 		t.Errorf(
 			"unexpected error message\nactual:   [%v]\nexpected: [%v]",
 			err.Error(),
