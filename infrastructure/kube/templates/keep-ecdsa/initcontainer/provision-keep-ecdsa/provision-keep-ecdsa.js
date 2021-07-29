@@ -360,7 +360,7 @@ async function createKeepTecdsaConfig() {
     bondedECDSAKeepFactory.options.address
 
   parsedConfigFile[hostChain].ContractAddresses.TBTCSystem =
-      tbtcSystem.options.address
+    tbtcSystem.options.address
 
   parsedConfigFile.LibP2P.Peers = libp2pPeers
   parsedConfigFile.LibP2P.Port = libp2pPort
