@@ -115,7 +115,7 @@ func (becdsakf *BondedECDSAKeepFactory) BeaconCallback(
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction beaconCallback",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_relayEntry,
 		),
@@ -158,8 +158,8 @@ func (becdsakf *BondedECDSAKeepFactory) BeaconCallback(
 	}
 
 	becdsakfLogger.Infof(
-		"submitted transaction beaconCallback with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction beaconCallback with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -187,8 +187,8 @@ func (becdsakf *BondedECDSAKeepFactory) BeaconCallback(
 			}
 
 			becdsakfLogger.Infof(
-				"submitted transaction beaconCallback with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction beaconCallback with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -251,7 +251,7 @@ func (becdsakf *BondedECDSAKeepFactory) CreateSortitionPool(
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction createSortitionPool",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_application,
 		),
@@ -294,8 +294,8 @@ func (becdsakf *BondedECDSAKeepFactory) CreateSortitionPool(
 	}
 
 	becdsakfLogger.Infof(
-		"submitted transaction createSortitionPool with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction createSortitionPool with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -323,8 +323,8 @@ func (becdsakf *BondedECDSAKeepFactory) CreateSortitionPool(
 			}
 
 			becdsakfLogger.Infof(
-				"submitted transaction createSortitionPool with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction createSortitionPool with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -387,7 +387,7 @@ func (becdsakf *BondedECDSAKeepFactory) IsRecognized(
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction isRecognized",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_delegatedAuthorityRecipient,
 		),
@@ -430,8 +430,8 @@ func (becdsakf *BondedECDSAKeepFactory) IsRecognized(
 	}
 
 	becdsakfLogger.Infof(
-		"submitted transaction isRecognized with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction isRecognized with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -459,8 +459,8 @@ func (becdsakf *BondedECDSAKeepFactory) IsRecognized(
 			}
 
 			becdsakfLogger.Infof(
-				"submitted transaction isRecognized with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction isRecognized with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -528,7 +528,7 @@ func (becdsakf *BondedECDSAKeepFactory) OpenKeep(
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction openKeep",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_groupSize,
 			_honestThreshold,
@@ -536,7 +536,7 @@ func (becdsakf *BondedECDSAKeepFactory) OpenKeep(
 			_bond,
 			_stakeLockDuration,
 		),
-		"value: ", value,
+		" value: ", value,
 	)
 
 	becdsakf.transactionMutex.Lock()
@@ -586,8 +586,8 @@ func (becdsakf *BondedECDSAKeepFactory) OpenKeep(
 	}
 
 	becdsakfLogger.Infof(
-		"submitted transaction openKeep with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction openKeep with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -623,8 +623,8 @@ func (becdsakf *BondedECDSAKeepFactory) OpenKeep(
 			}
 
 			becdsakfLogger.Infof(
-				"submitted transaction openKeep with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction openKeep with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -704,7 +704,7 @@ func (becdsakf *BondedECDSAKeepFactory) RegisterMemberCandidate(
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction registerMemberCandidate",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_application,
 		),
@@ -747,8 +747,8 @@ func (becdsakf *BondedECDSAKeepFactory) RegisterMemberCandidate(
 	}
 
 	becdsakfLogger.Infof(
-		"submitted transaction registerMemberCandidate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction registerMemberCandidate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -776,8 +776,8 @@ func (becdsakf *BondedECDSAKeepFactory) RegisterMemberCandidate(
 			}
 
 			becdsakfLogger.Infof(
-				"submitted transaction registerMemberCandidate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction registerMemberCandidate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -840,7 +840,7 @@ func (becdsakf *BondedECDSAKeepFactory) RequestNewGroupSelectionSeed(
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction requestNewGroupSelectionSeed",
-		"value: ", value,
+		" value: ", value,
 	)
 
 	becdsakf.transactionMutex.Lock()
@@ -880,8 +880,8 @@ func (becdsakf *BondedECDSAKeepFactory) RequestNewGroupSelectionSeed(
 	}
 
 	becdsakfLogger.Infof(
-		"submitted transaction requestNewGroupSelectionSeed with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction requestNewGroupSelectionSeed with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -907,8 +907,8 @@ func (becdsakf *BondedECDSAKeepFactory) RequestNewGroupSelectionSeed(
 			}
 
 			becdsakfLogger.Infof(
-				"submitted transaction requestNewGroupSelectionSeed with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction requestNewGroupSelectionSeed with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -969,7 +969,7 @@ func (becdsakf *BondedECDSAKeepFactory) SetMinimumBondableValue(
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction setMinimumBondableValue",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_minimumBondableValue,
 			_groupSize,
@@ -1018,8 +1018,8 @@ func (becdsakf *BondedECDSAKeepFactory) SetMinimumBondableValue(
 	}
 
 	becdsakfLogger.Infof(
-		"submitted transaction setMinimumBondableValue with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction setMinimumBondableValue with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1051,8 +1051,8 @@ func (becdsakf *BondedECDSAKeepFactory) SetMinimumBondableValue(
 			}
 
 			becdsakfLogger.Infof(
-				"submitted transaction setMinimumBondableValue with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction setMinimumBondableValue with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1124,7 +1124,7 @@ func (becdsakf *BondedECDSAKeepFactory) UpdateOperatorStatus(
 ) (*types.Transaction, error) {
 	becdsakfLogger.Debug(
 		"submitting transaction updateOperatorStatus",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 			_application,
@@ -1170,8 +1170,8 @@ func (becdsakf *BondedECDSAKeepFactory) UpdateOperatorStatus(
 	}
 
 	becdsakfLogger.Infof(
-		"submitted transaction updateOperatorStatus with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction updateOperatorStatus with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1201,8 +1201,8 @@ func (becdsakf *BondedECDSAKeepFactory) UpdateOperatorStatus(
 			}
 
 			becdsakfLogger.Infof(
-				"submitted transaction updateOperatorStatus with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction updateOperatorStatus with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 

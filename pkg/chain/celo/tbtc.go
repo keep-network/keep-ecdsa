@@ -85,7 +85,7 @@ func (ta *tbtcApplication) RegisterAsMemberCandidate() error {
 	}
 
 	logger.Debugf(
-		"submitted RegisterMemberCandidate transaction with hash: [%x]",
+		"submitted RegisterMemberCandidate transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -131,7 +131,7 @@ func (ta *tbtcApplication) UpdateStatusForApplication() error {
 	}
 
 	logger.Debugf(
-		"submitted UpdateOperatorStatus transaction with hash: [%x]",
+		"submitted UpdateOperatorStatus transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -325,7 +325,7 @@ func (ta *tbtcApplication) RetrieveSignerPubkey(
 	}
 
 	logger.Debugf(
-		"submitted RetrieveSignerPubkey transaction with hash: [%x]",
+		"submitted RetrieveSignerPubkey transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -351,7 +351,7 @@ func (ta *tbtcApplication) ProvideRedemptionSignature(
 	}
 
 	logger.Debugf(
-		"submitted ProvideRedemptionSignature transaction with hash: [%x]",
+		"submitted ProvideRedemptionSignature transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -378,7 +378,7 @@ func (ta *tbtcApplication) IncreaseRedemptionFee(
 	}
 
 	logger.Debugf(
-		"submitted IncreaseRedemptionFee transaction with hash: [%x]",
+		"submitted IncreaseRedemptionFee transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -415,7 +415,7 @@ func (ta *tbtcApplication) ProvideRedemptionProof(
 	}
 
 	logger.Debugf(
-		"submitted ProvideRedemptionProof transaction with hash: [%x]",
+		"submitted ProvideRedemptionProof transaction with hash: [%s]",
 		transaction.Hash(),
 	)
 
@@ -437,6 +437,29 @@ func (ta *tbtcApplication) CurrentState(
 	}
 
 	return chain.DepositState(state.Uint64()), err
+}
+
+// FundingInfo retrieves the funding info for a particular deposit address
+func (ta *tbtcApplication) FundingInfo(
+	depositAddress string,
+) (*chain.FundingInfo, error) {
+	deposit, err := ta.getDepositContract(depositAddress)
+	if err != nil {
+		return nil, err
+	}
+	fundingInfo, err := deposit.FundingInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	transactionHash, outputIndex := chain.ParseUtxoOutpoint(fundingInfo.UtxoOutpoint)
+
+	return &chain.FundingInfo{
+		UtxoValueBytes:  fundingInfo.UtxoValueBytes,
+		FundedAt:        fundingInfo.FundedAt,
+		TransactionHash: transactionHash,
+		OutputIndex:     outputIndex,
+	}, nil
 }
 
 func (ta *tbtcApplication) getDepositContract(

@@ -1263,8 +1263,8 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedemptionRequested(
 	// invoke the action which will trigger the stop event in result
 	err = tbtcChain.IncreaseRedemptionFee(
 		depositAddress,
-		toLittleEndianBytes(big.NewInt(990)),
-		toLittleEndianBytes(big.NewInt(980)),
+		toLittleEndianBytes(big.NewInt(9999990)),
+		toLittleEndianBytes(big.NewInt(9999980)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -2283,6 +2283,61 @@ func TestGetSignerActionDelay(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestFundingInfo(t *testing.T) {
+	expectedFundingInfo := &chain.FundingInfo{
+		UtxoValueBytes:  [8]uint8{128, 150, 152, 0, 0, 0, 0, 0},
+		FundedAt:        big.NewInt(1615172517),
+		TransactionHash: "c27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d51",
+		OutputIndex:     1,
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+
+	tbtcChain.CreateDeposit(depositAddress, local.RandomSigningGroup(3))
+
+	fundingInfo, err := tbtcChain.FundingInfo(depositAddress)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(expectedFundingInfo, fundingInfo) {
+		t.Errorf(
+			"funding info does not match\nexpected: %v\nactual:   %v",
+			expectedFundingInfo,
+			fundingInfo,
+		)
+	}
+}
+
+func TestGetOwner(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := local.NewTBTCLocalChain(ctx)
+
+	signers := local.RandomSigningGroup(3)
+
+	tbtcChain.CreateDeposit(depositAddress, signers)
+	keep, err := tbtcChain.Keep(depositAddress)
+	if err != nil {
+		t.Fatalf("unexpected error %v", err)
+	}
+	owner, err := keep.GetOwner()
+	if err != nil {
+		t.Fatalf("unexpected error %v", err)
+	}
+	if owner.String() != depositAddress {
+		t.Errorf(
+			"unexpected owner address\nexpected: %s\nactual:   %s",
+			depositAddress,
+			owner.String(),
+		)
 	}
 }
 

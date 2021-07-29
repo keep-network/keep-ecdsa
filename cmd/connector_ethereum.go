@@ -50,19 +50,34 @@ func connectChain(
 	// for the TBTCSystem address from now on; default to Extensions.TBTC and
 	// warn if the ContractAddresses version is not set yet.
 	_, exists := config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName]
-	if !exists && len(config.Extensions.TBTC.TBTCSystem) != 0 {
+	if len(config.Extensions.TBTC.TBTCSystem) != 0 {
 		logger.Warn(
 			"TBTCSystem address configuration in Extensions.TBTC.TBTCSystem " +
 				"is DEPRECATED and will be removed. Please configure the " +
 				"TBTCSystem address alongside BondedECDSAKeep under " +
 				"Ethereum.ContractAddresses.",
 		)
-		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] =
-			config.Extensions.TBTC.TBTCSystem
 
-		// Flag that the contract address entry now exists to skip the next
-		// default.
-		exists = true
+		if !exists {
+			config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] =
+				config.Extensions.TBTC.TBTCSystem
+
+			// Flag that the contract address entry now exists to skip the next
+			// default.
+			exists = true
+		} else {
+			if config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] !=
+				config.Extensions.TBTC.TBTCSystem {
+				panic(
+					"Configured TBTCSystem contract and Extensions.TBTC.TBTCSystem " +
+						"do not match. Failing to boot to avoid misconfiguration. " +
+						"Please ensure ethereum.ContractAddresses." +
+						ethereum.TBTCSystemContractName + "is set to the correct " +
+						"tBTC system contract and remove Extensions.TBTC.TBTCSystem " +
+						"entry, then try starting again.",
+				)
+			}
+		}
 	}
 
 	// DEPRECATED: config.Ethereum.ContractAddresses is the correct container
@@ -70,27 +85,30 @@ func connectChain(
 	// assume it has a single entry that is TBTCSystem, warn if
 	// SanctionedApplications needs to be used.
 	applicationAddresses := config.SanctionedApplications.AddressesStrings
-	if !exists && len(applicationAddresses) == 1 {
+	if len(applicationAddresses) != 0 {
 		logger.Warn(
 			"TBTCSystem address configuration in SanctionedApplications.Addresses " +
 				"is DEPRECATED and will be removed. Please configure the " +
 				"TBTCSystem address alongside BondedECDSAKeep under " +
 				"Ethereum.ContractAddresses.",
 		)
-		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] =
-			applicationAddresses[0]
-	}
 
-	if exists && len(applicationAddresses) > 0 &&
-		config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] != applicationAddresses[0] {
-		panic(
-			"Configured TBTCSystem contract and SanctionedApplications list " +
-				"do not match. Failing to boot to avoid misconfiguration. " +
-				"Please ensure ethereum.ContractAddresses." +
-				ethereum.TBTCSystemContractName + "is set to the correct " +
-				"tBTC system contract and remove SanctionedApplications " +
-				"configuration list, then try starting again.",
-		)
+		if !exists {
+			config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] =
+				applicationAddresses[0]
+		} else {
+			if config.Ethereum.ContractAddresses[ethereum.TBTCSystemContractName] !=
+				applicationAddresses[0] {
+				panic(
+					"Configured TBTCSystem contract and SanctionedApplications list " +
+						"do not match. Failing to boot to avoid misconfiguration. " +
+						"Please ensure ethereum.ContractAddresses." +
+						ethereum.TBTCSystemContractName + "is set to the correct " +
+						"tBTC system contract and remove SanctionedApplications " +
+						"configuration list, then try starting again.",
+				)
+			}
+		}
 	}
 
 	ethereumChain, err := ethereum.Connect(
