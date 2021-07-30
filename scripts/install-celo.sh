@@ -79,8 +79,8 @@ npm run clean
 CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
   npx truffle migrate --reset --network $NETWORK
 
-printf "${LOG_START}Creating links...${LOG_END}"
-ln -sf build/contracts artifacts
+printf "${LOG_START}Copying contract artifacts...${LOG_END}"
+cp -r build/contracts artifacts
 npm link
 
 if [ "$CONTRACTS_ONLY" = false ]; then
