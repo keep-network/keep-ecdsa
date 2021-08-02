@@ -79,8 +79,8 @@ printf "${LOG_START}Migrating contracts...${LOG_END}"
 npm run clean
 npx truffle migrate --reset --network $NETWORK
 
-printf "${LOG_START}Creating links...${LOG_END}"
-ln -sf build/contracts artifacts
+printf "${LOG_START}Copying contract artifacts...${LOG_END}"
+cp -r build/contracts artifacts
 npm link
 npm link @keep-network/keep-core
 
