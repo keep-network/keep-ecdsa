@@ -23,6 +23,7 @@ node_modules/
 *.abi
 abi/
 .DS_Store
+artifacts/
 
 # Build output
 build/
