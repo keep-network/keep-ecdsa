@@ -33,6 +33,11 @@ jobs:
         with:
           node-version: "12.x"
 
+      # In the future we could switch to using cache functionality built-in to
+      # the `setup-node` action. Right now the functionality does not support
+      # cases when package.json resides outside of the root directory, but there's
+      # an open issue (https://github.com/actions/setup-node/issues/275) in the
+      # works for that.
       - name: Cache node modules
         uses: actions/cache@v2
         env:
