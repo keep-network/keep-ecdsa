@@ -95,7 +95,7 @@ jobs:
       - name: Build and publish initcontainer
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: initcontainer-provision-keep-ecdsa-${{ env.CHAIN }}-wip #TODO: remove `--wip` before merging to main
+          IMAGE_NAME: initcontainer-provision-keep-ecdsa-${{ env.CHAIN }}
         with:
           context: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
           # GCR image should be named according to following convention:
