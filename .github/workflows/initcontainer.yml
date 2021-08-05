@@ -31,7 +31,7 @@ jobs:
 
       - uses: actions/setup-node@v2
         with:
-          node-version: "12.x"
+          node-version: "14.x"
 
       # In the future we could switch to using cache functionality built-in to
       # the `setup-node` action. Right now the functionality does not support
