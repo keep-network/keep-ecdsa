@@ -58,7 +58,8 @@ jobs:
         run: |
           npm install --save-exact \
             @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-contracts-version }} \
-            @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-contracts-version }}
+            @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-contracts-version }} \
+            @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-contracts-version }}
 
       - name: Copy selected contracts
         run: |
@@ -66,6 +67,7 @@ jobs:
           cp ./node_modules/@keep-network/keep-core/artifacts/TokenStaking.json .
           cp ./node_modules/@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json .
           cp ./node_modules/@keep-network/keep-ecdsa/artifacts/KeepBonding.json .
+          cp ./node_modules/@keep-network/tbtc/artifacts/TBTCSystem.json .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
