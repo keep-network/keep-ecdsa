@@ -58,6 +58,7 @@ jobs:
           query: |
             keep-core-contracts-version = github.com/keep-network/keep-core/solidity#version
             keep-ecdsa-contracts-version = github.com/keep-network/keep-ecdsa/solidity#version
+            tbtc-contracts-version = github.com/keep-network/tbtc/solidity#version
 
       - name: Resolve latest contracts
         run: |
