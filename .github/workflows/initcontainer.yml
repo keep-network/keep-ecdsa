@@ -119,7 +119,7 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           upstream_ref: ${{ github.event.inputs.upstream_ref }}
-          version: ${{ needs.contracts-migrate-and-publish.outputs.version }}
+          version: ${{ steps.upstream-builds-query.outputs.keep-ecdsa-contracts-version }}
 
       - # Temp fix - move cache instead of copying (added below step and
         # modified value of `cache-to`).
