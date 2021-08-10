@@ -551,6 +551,30 @@ Contract addresses needed to boot a Keep ECDSA client:
 |`0xa3748633c6786e1842b5cc44fa43db1ecc710501`
 |===
 
+==== Did Everything Work?
+
+When you run your ecdsa node, you can check to make sure you didn't get any
+error logs and that you see a log entry that looks like:
+
+```
+2021-08-10T17:52:45.184Z        INFO    keep-ecdsa      operator is registered for application [0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a]
+```
+
+This indicates that you have successfully registered for the sortition pool! If
+you are not seeing that message, that means that either you're not eligible,
+have something misconfigured, etc. To further verify, you can navigate to
+
+https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD#readContract
+
+which is
+`"https://etherscan.io/address/<BondedECDSAKeepFactory-address>#readContract"`
+
+and find the functions `isOperatorRegistered` and `isOperatorEligible`. Fill in your operator address for
+`_operator (address)` and the TBTCSystem address
+(`0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a`) for the application address and
+run the query. If it returns `true`, you're in business! If it doesn't, it may
+be time to reach out for help at our https://discord.com/invite/wYezN7v[discord].
+
 === Testnet
 
 Keep uses the Ethereum Ropsten Testnet.
@@ -586,7 +610,7 @@ up, there is no need to worry.
 [.small]
 ```
 "/dns4/bootstrap-1.ecdsa.keep.test.boar.network/tcp/4001/ipfs/16Uiu2HAmPFXDaeGWtnzd8s39NsaQguoWtKi77834A6xwYqeicq6N",
-"/dns4/ecdsa-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp",	
+"/dns4/ecdsa-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp",
 "/dns4/ecdsa-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf",
 ```
 
@@ -649,13 +673,13 @@ Example diagnostics endpoint call result:
 ```
 $ curl localhost:9501/diagnostics
 {
-  "client_info" { 
+  "client_info" {
    "ethereum_address":"0xDcd4199e22d09248cA2583cBDD2759b2acD22381",
    "network_id":"16Uiu2HAkzYFHsqbwt64ZztWWK1hyeLntRNqWMYFiZjaKu1PZgikN"
   },
   "connected_peers": [
     {"ethereum_address":"0x3712C6fED51CECA83cA953f6FF3458f2339436b4","network_id":"16Uiu2HAkyYtzNoWuF3ULaA7RMfVAxvfQQ9YRvRT3TK4tXmuZtaWi"},
-    {"ethereum_address":"0x4bFa10B1538E8E765E995688D8EEc39C717B6797","network_id":"16Uiu2HAm9d4MG4LNrwkFmugD2pX7frm6ZmA4vE3EFAEjk7yaoeLd"}, 
+    {"ethereum_address":"0x4bFa10B1538E8E765E995688D8EEc39C717B6797","network_id":"16Uiu2HAm9d4MG4LNrwkFmugD2pX7frm6ZmA4vE3EFAEjk7yaoeLd"},
     {"ethereum_address":"0x650A9eD18Df873cad98C88dcaC8170531cAD2399","network_id":"16Uiu2HAkvjVWogUk2gq6VTNLQdFoSHXYpobJdZyuAYeoWD66e8BD"},
     ...
   ]
