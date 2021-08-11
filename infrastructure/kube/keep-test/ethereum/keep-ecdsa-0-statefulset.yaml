@@ -116,7 +116,7 @@ spec:
             - name: KEEP_DATA_DIR
               value: /mnt/keep-ecdsa/data
             - name: METRICS_PORT
-              value: '9601'
+              value: "9601"
           volumeMounts:
             - name: keep-ecdsa-config
               mountPath: /mnt/keep-ecdsa/config
