@@ -32,3 +32,6 @@ AnnouncedAddresses = []
 
 [Storage]
 DataDir = ""
+
+[Metrics]
+Port = ""
