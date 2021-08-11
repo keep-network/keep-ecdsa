@@ -104,7 +104,7 @@ func (e electrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 			responseBody, err := io.ReadAll(resp.Body)
 			if err != nil {
 				logger.Error(
-					"something went wrong trying to read error response for bitcoin fee estimates: [%w]",
+					"something went wrong trying to read error response for bitcoin fee estimates: [%v]",
 					err,
 				)
 			}
@@ -125,7 +125,7 @@ func (e electrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 		if !ok {
 			fee = 0
 		}
-		logger.Info("retrieved a vbyte fee of [%d]", fee)
+		logger.Infof("retrieved a vbyte fee of [%v]", fee)
 		vbyteFee = int32(fee)
 		return nil
 	})

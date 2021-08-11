@@ -1050,7 +1050,7 @@ func monitorKeepTerminatedEvent(
 							derivationIndexStorage,
 						); err != nil {
 							logger.Errorf(
-								"failed to handle liquidation recovery for keep [%s]: [%w]",
+								"failed to handle liquidation recovery for keep [%s]: [%v]",
 								keep.ID(),
 								err,
 							)
