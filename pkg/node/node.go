@@ -301,7 +301,8 @@ func (n *Node) CalculateSignature(
 		}
 
 		logger.Debugf(
-			"signature calculated:\nr: [%#x]\ns: [%#x]\nrecovery ID: [%d]\n",
+			"signature calculated for keep [%s]:\nr: [%#x]\ns: [%#x]\nrecovery ID: [%d]\n",
+			keepAddress.String(),
 			signature.R,
 			signature.S,
 			signature.RecoveryID,
