@@ -777,6 +777,11 @@ func (t *tbtc) watchKeepClosed(
 
 	keepClosedSubscription, err := keep.OnKeepClosed(
 		func(_ *chain.KeepClosedEvent) {
+			logger.Infof(
+				"keep closed event received for deposit [%s]",
+				depositAddress,
+			)
+
 			if t.waitKeepNotActiveConfirmation(keep) {
 				signalChan <- struct{}{}
 			}
@@ -788,6 +793,11 @@ func (t *tbtc) watchKeepClosed(
 
 	keepTerminatedSubscription, err := keep.OnKeepTerminated(
 		func(_ *chain.KeepTerminatedEvent) {
+			logger.Infof(
+				"keep terminated event received for deposit [%s]",
+				depositAddress,
+			)
+
 			if t.waitKeepNotActiveConfirmation(keep) {
 				signalChan <- struct{}{}
 			}
