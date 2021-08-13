@@ -23,6 +23,9 @@ const (
 	previousTransactionIndex    = 1
 )
 
+// A preset application id for tBTC on the local chain.
+var tbtcApplicationID = common.Big1
+
 type localDeposit struct {
 	keepAddress string
 	pubkey      []byte
@@ -38,9 +41,6 @@ type localDeposit struct {
 
 	redemptionRequestedEvents []*chain.DepositRedemptionRequestedEvent
 }
-
-// A preset application id for tBTC on the local chain.
-var tbtcApplicationID = common.Big1
 
 // Signature represents an ecdsa signature
 type Signature struct {
