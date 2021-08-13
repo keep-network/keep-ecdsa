@@ -176,13 +176,13 @@ func ParseUtxoOutpoint(utxoOutpoint []uint8) (string, uint32, error) {
 		return "", 0, fmt.Errorf("invalid length of utxo outpoint: %d", len(utxoOutpoint))
 	}
 
-	transactionBytes := utxoOutpoint[:32]
-
 	// the transaction bytes are little-endian, so we need to reverse them before converting them to hex
+	var transactionBytes [32]uint8
+	copy(transactionBytes[:], utxoOutpoint)
 	for i, j := 0, len(transactionBytes)-1; i < j; i, j = i+1, j-1 {
 		transactionBytes[i], transactionBytes[j] = transactionBytes[j], transactionBytes[i]
 	}
-	transactionHash := hex.EncodeToString(transactionBytes)
+	transactionHash := hex.EncodeToString(transactionBytes[:])
 
 	outputIndex := binary.LittleEndian.Uint32(utxoOutpoint[32:])
 

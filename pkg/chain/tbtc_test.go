@@ -95,6 +95,40 @@ func TestParseUtxoOutpoint(t *testing.T) {
 	}
 }
 
+func TestParseUtxoOutpoint_CalledManyTimes(t *testing.T) {
+	utxoOutpoint := []uint8{
+		118, 11, 174, 10, 36, 188, 103, 172, 237, 141,
+		123, 53, 103, 227, 100, 132, 14, 191, 93, 253,
+		103, 95, 152, 91, 214, 187, 60, 4, 110, 48,
+		161, 239, 29, 3, 1, 4,
+	}
+	expectedTransactionHash := "efa1306e043cbbd65b985f67fd5dbf0e8464e367357b8dedac67bc240aae0b76"
+	expectedOutputIndex := uint32(67175197)
+
+	for i := 0; i < 3; i++ {
+		transactionHash, outputIndex, err := ParseUtxoOutpoint(utxoOutpoint)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if transactionHash != expectedTransactionHash {
+			t.Errorf(
+				"unexpected transaction hash [%d]\nexpected: %s\nactual:   %s",
+				i,
+				expectedTransactionHash,
+				transactionHash,
+			)
+		}
+		if outputIndex != expectedOutputIndex {
+			t.Errorf(
+				"unexpected output index [%d]\nexpected: %d\nactual:   %d",
+				i,
+				expectedOutputIndex,
+				outputIndex,
+			)
+		}
+	}
+}
+
 func TestParseUtxoOutpoint_Failures(t *testing.T) {
 	testData := map[string]struct {
 		utxoOutpoint         []uint8
