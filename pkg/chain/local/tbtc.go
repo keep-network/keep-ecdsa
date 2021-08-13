@@ -776,7 +776,14 @@ func (tlc *TBTCLocalChain) FundingInfo(
 	if !ok {
 		return nil, fmt.Errorf("no deposit with address [%v]", depositAddress)
 	}
-	return deposit.fundingInfo, nil
+
+	fundingInfo := deposit.fundingInfo
+
+	if fundingInfo.FundedAt == nil || fundingInfo.FundedAt.Cmp(big.NewInt(0)) <= 0 {
+		return nil, chain.ErrDepositNotFunded
+	}
+
+	return fundingInfo, nil
 }
 
 // Logger surfaces the chain's logger

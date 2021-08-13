@@ -43,6 +43,32 @@ func TestFundingInfo(t *testing.T) {
 	}
 }
 
+func TestFundingInfo_NotFunded(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	tbtcChain := NewTBTCLocalChain(ctx)
+
+	tbtcChain.CreateDeposit(depositAddress, RandomSigningGroup(3))
+
+	fundingInfo, err := tbtcChain.FundingInfo(depositAddress)
+	if err != chain.ErrDepositNotFunded {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v",
+			chain.ErrDepositNotFunded,
+			err,
+		)
+	}
+
+	if fundingInfo != nil {
+		t.Errorf(
+			"funding info does not match\nexpected: %+v\nactual:   %+v",
+			nil,
+			fundingInfo,
+		)
+	}
+}
+
 func TestGetOwner(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
