@@ -58,6 +58,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 		panic(err)
 	}
 	tbtcHandle.(*chainLocal.TBTCLocalChain).CreateDeposit(depositAddress.String(), keepMembersAddresses)
+	tbtcHandle.(*chainLocal.TBTCLocalChain).FundDeposit(depositAddress.String())
 
 	bitcoinAddresses := []string{
 		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",

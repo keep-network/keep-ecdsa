@@ -493,6 +493,7 @@ func TestProvideRedemptionSignature_TimeoutElapsed(t *testing.T) {
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -569,6 +570,7 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositGotRedemptionSignat
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -660,6 +662,7 @@ func TestProvideRedemptionSignature_StopEventOccurred_DepositRedeemed(
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -742,6 +745,7 @@ func TestProvideRedemptionSignature_KeepClosedEventOccurred(t *testing.T) {
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -821,6 +825,7 @@ func TestProvideRedemptionSignature_KeepTerminatedEventOccurred(t *testing.T) {
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -900,6 +905,7 @@ func TestProvideRedemptionSignature_ActionFailed(t *testing.T) {
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -962,6 +968,7 @@ func TestProvideRedemptionSignature_ContextCancelled_WithoutWorkingMonitoring(
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1013,6 +1020,7 @@ func TestProvideRedemptionSignature_ContextCancelled_WithWorkingMonitoring(
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1069,6 +1077,7 @@ func TestProvideRedemptionSignature_OperatorNotInSigningGroup(
 	signers := local.RandomSigningGroup(3)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1123,6 +1132,7 @@ func TestProvideRedemptionProof_TimeoutElapsed(t *testing.T) {
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1223,6 +1233,7 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedemptionRequested(
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1334,6 +1345,7 @@ func TestProvideRedemptionProof_StopEventOccurred_DepositRedeemed(
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1425,6 +1437,7 @@ func TestProvideRedemptionProof_KeepClosedEventOccurred(t *testing.T) {
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1521,6 +1534,7 @@ func TestProvideRedemptionProof_KeepTerminatedEventOccurred(t *testing.T) {
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1617,6 +1631,7 @@ func TestProvideRedemptionProof_ActionFailed(t *testing.T) {
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1688,6 +1703,7 @@ func TestProvideRedemptionProof_ContextCancelled_WithoutWorkingMonitoring(
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1753,6 +1769,7 @@ func TestProvideRedemptionProof_ContextCancelled_WithWorkingMonitoring(
 	)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {
@@ -1823,6 +1840,7 @@ func TestProvideRedemptionProof_OperatorNotInSigningGroup(
 	signers := local.RandomSigningGroup(3)
 
 	tbtcChain.CreateDeposit(depositAddress, signers)
+	tbtcChain.FundDeposit(depositAddress)
 
 	_, err := submitKeepPublicKey(depositAddress, tbtcChain)
 	if err != nil {

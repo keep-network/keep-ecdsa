@@ -18,7 +18,7 @@ import (
 const (
 	defaultInitialRedemptionFee = 10
 	defaultUtxoValueHex         = "8096980000000000" // 10000000
-	defaultFundedAt             = "1615172517"
+	defaultFundedAt             = 1615172517
 	previousTransactionHashHex  = "c27c3bfa8293ac6b303b9f7455ae23b7c24b8814915a6511976027064efc4d51"
 	previousTransactionIndex    = 1
 )
@@ -180,20 +180,11 @@ func (tlc *TBTCLocalChain) CreateDeposit(
 	keepAddress := generateAddress()
 	tlc.OpenKeep(keepAddress, common.HexToAddress(depositAddress), signers)
 
-	utxoValueBytesSlice, _ := hex.DecodeString(defaultUtxoValueHex)
-	var utxoValueBytes [8]byte
-	copy(utxoValueBytes[:], utxoValueBytesSlice)
-	fundedAt, _ := new(big.Int).SetString(defaultFundedAt, 0)
-
 	tlc.deposits[depositAddress] = &localDeposit{
 		keepAddress: keepAddress.Hex(),
 		state:       chain.AwaitingSignerSetup,
-		utxoValue:   big.NewInt(int64(chain.UtxoValueBytesToUint32(utxoValueBytes))),
 		fundingInfo: &chain.FundingInfo{
-			UtxoValueBytes:  utxoValueBytes,
-			FundedAt:        fundedAt,
-			TransactionHash: previousTransactionHashHex,
-			OutputIndex:     previousTransactionIndex,
+			FundedAt: big.NewInt(0),
 		},
 		redemptionRequestedEvents: make([]*chain.DepositRedemptionRequestedEvent, 0),
 	}
@@ -243,6 +234,29 @@ func (tlc *TBTCLocalChain) OnDepositRegisteredPubkey(
 
 		delete(tlc.depositRegisteredPubkeyHandlers, handlerID)
 	})
+}
+
+// FundDeposit sets funding info for the deposit. It simulates result of providing
+// a funding proof for the deposit.
+func (tlc *TBTCLocalChain) FundDeposit(depositAddress string) {
+	tlc.tbtcLocalChainMutex.Lock()
+	defer tlc.tbtcLocalChainMutex.Unlock()
+
+	utxoValueBytesSlice, err := hex.DecodeString(defaultUtxoValueHex)
+	if err != nil {
+		panic(err)
+	}
+	var utxoValueBytes [8]byte
+	copy(utxoValueBytes[:], utxoValueBytesSlice)
+
+	tlc.deposits[depositAddress].fundingInfo = &chain.FundingInfo{
+		UtxoValueBytes:  utxoValueBytes,
+		FundedAt:        big.NewInt(defaultFundedAt),
+		TransactionHash: previousTransactionHashHex,
+		OutputIndex:     previousTransactionIndex,
+	}
+
+	tlc.deposits[depositAddress].utxoValue = fromLittleEndianBytes(utxoValueBytes)
 }
 
 // RedeemDeposit initiates the redemption process which involves trading the

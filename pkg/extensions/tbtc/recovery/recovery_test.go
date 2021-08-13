@@ -172,6 +172,7 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 	depositAddress := common.HexToAddress(depositAddressString)
 	tbtcHandle.CreateDeposit(depositAddressString, memberAddresses)
 	keep := tbtcHandle.OpenKeep(keepAddress, depositAddress, memberAddresses)
+	tbtcHandle.FundDeposit(depositAddressString)
 
 	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.String())
 	if err != nil {
