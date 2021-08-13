@@ -452,6 +452,16 @@ func (ta *tbtcApplication) FundingInfo(
 		return nil, err
 	}
 
+	logger.Debugf(
+		"deposit [%s] funding info: %+v",
+		depositAddress,
+		fundingInfo,
+	)
+
+	if fundingInfo.FundedAt == nil || fundingInfo.FundedAt.Cmp(big.NewInt(0)) <= 0 {
+		return nil, chain.ErrDepositNotFunded
+	}
+
 	transactionHash, outputIndex := chain.ParseUtxoOutpoint(fundingInfo.UtxoOutpoint)
 
 	return &chain.FundingInfo{

@@ -3,6 +3,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"math/big"
 	"time"
 
@@ -1049,6 +1050,18 @@ func monitorKeepTerminatedEvent(
 							keepsRegistry,
 							derivationIndexStorage,
 						); err != nil {
+							// If the deposit got liquidated before it had been
+							// funded we want to abort the recovery retries.
+							if errors.Is(err, chain.ErrDepositNotFunded) {
+								logger.Warnf(
+									"aborted liquidation recovery for keep [%s]: [%v]",
+									keep.ID(),
+									err,
+								)
+								// Exit without an error to abort retries.
+								return nil
+							}
+
 							logger.Errorf(
 								"failed to handle liquidation recovery for keep [%s]: [%v]",
 								keep.ID(),

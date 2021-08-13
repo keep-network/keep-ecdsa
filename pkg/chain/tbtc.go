@@ -3,10 +3,14 @@ package chain
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"math/big"
 
 	"github.com/keep-network/keep-common/pkg/subscription"
 )
+
+// ErrDepositNotFunded is an error returned when a deposit has not been funded.
+var ErrDepositNotFunded = errors.New("deposit not funded")
 
 // TBTCHandle represents handle to the tBTC on-chain application. It extends the
 // BondedECDSAKeepApplicationHandle interface with tBTC-specific functionality.
@@ -105,6 +109,8 @@ type TBTCSystem interface {
 	) ([]*DepositRedemptionRequestedEvent, error)
 
 	// FundingInfo retrieves the funding info for a particular deposit address
+	//
+	// Returns ErrDepositNotFunded error if the deposit has not been funded.
 	FundingInfo(
 		depositAddress string,
 	) (*FundingInfo, error)
