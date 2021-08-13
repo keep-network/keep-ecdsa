@@ -163,18 +163,22 @@ func TestBuildBitcoinTransaction(t *testing.T) {
 	waitGroup := &sync.WaitGroup{}
 	waitGroup.Add(groupSize)
 
-	keepAddress := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
 	memberAddresses := make([]common.Address, groupSize)
 	for i, memberAddress := range groupMemberAddresses {
 		memberAddresses[i] = common.HexToAddress(memberAddress)
 	}
-	depositAddressString := "0xa5FA806723A7c7c8523F33c39686f20b52612877"
-	depositAddress := common.HexToAddress(depositAddressString)
-	tbtcHandle.CreateDeposit(depositAddressString, memberAddresses)
-	keep := tbtcHandle.OpenKeep(keepAddress, depositAddress, memberAddresses)
-	tbtcHandle.FundDeposit(depositAddressString)
 
-	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress.String())
+	depositAddress := "0xa5FA806723A7c7c8523F33c39686f20b52612877"
+	tbtcHandle.CreateDeposit(depositAddress, memberAddresses)
+
+	keep, err := tbtcHandle.Keep(depositAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tbtcHandle.FundDeposit(depositAddress)
+
+	fundingInfo, err := tbtcHandle.FundingInfo(depositAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
