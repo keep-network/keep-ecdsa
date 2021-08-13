@@ -489,7 +489,14 @@ func (ta *tbtcApplication) FundingInfo(
 		return nil, chain.ErrDepositNotFunded
 	}
 
-	transactionHash, outputIndex := chain.ParseUtxoOutpoint(fundingInfo.UtxoOutpoint)
+	transactionHash, outputIndex, err := chain.ParseUtxoOutpoint(fundingInfo.UtxoOutpoint)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to parse utx outpoint [%v]: [%v]",
+			fundingInfo.UtxoOutpoint,
+			err,
+		)
+	}
 
 	return &chain.FundingInfo{
 		UtxoValueBytes:  fundingInfo.UtxoValueBytes,
