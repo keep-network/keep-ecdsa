@@ -57352,8 +57352,9 @@
       "creationBlock": 12956107,
       "creationTimestamp": 1628044900,
       "status": {
-        "name": "active",
-        "timestamp": 1628044900
+        "name": "terminated",
+        "timestamp": 1628854070,
+        "cause": "keygen-fail"
       }
     },
     {
@@ -57381,8 +57382,9 @@
       "creationBlock": 12956110,
       "creationTimestamp": 1628044947,
       "status": {
-        "name": "active",
-        "timestamp": 1628044947
+        "name": "terminated",
+        "timestamp": 1628854070,
+        "cause": "keygen-fail"
       }
     },
     {
@@ -57395,8 +57397,9 @@
       "creationBlock": 12956101,
       "creationTimestamp": 1628044768,
       "status": {
-        "name": "active",
-        "timestamp": 1628044768
+        "name": "terminated",
+        "timestamp": 1628854070,
+        "cause": "keygen-fail"
       }
     },
     {
@@ -57409,8 +57412,9 @@
       "creationBlock": 12956116,
       "creationTimestamp": 1628044998,
       "status": {
-        "name": "active",
-        "timestamp": 1628044998
+        "name": "terminated",
+        "timestamp": 1628853975,
+        "cause": "keygen-fail"
       }
     },
     {
@@ -57423,8 +57427,9 @@
       "creationBlock": 12958469,
       "creationTimestamp": 1628077792,
       "status": {
-        "name": "active",
-        "timestamp": 1628077792
+        "name": "terminated",
+        "timestamp": 1628853298,
+        "cause": "keygen-fail"
       }
     },
     {
@@ -57437,8 +57442,9 @@
       "creationBlock": 12956118,
       "creationTimestamp": 1628045060,
       "status": {
-        "name": "active",
-        "timestamp": 1628045060
+        "name": "terminated",
+        "timestamp": 1628853298,
+        "cause": "keygen-fail"
       }
     },
     {
@@ -57465,10 +57471,39 @@
       "creationBlock": 12960911,
       "creationTimestamp": 1628110309,
       "status": {
+        "name": "terminated",
+        "timestamp": 1628853222,
+        "cause": "keygen-fail"
+      }
+    },
+    {
+      "address": "0x2E428Ea38B8074B3B42e1b5365243F4f21630B82",
+      "members": [
+        "0xB62Fc1ADfFb2ab832041528C8178358338d85f76",
+        "0xc5795fa1EADF77FCDa0C6D9F9B340D634C2ba546",
+        "0x0d0271d1B2906Cc472A8e75148937967Be788F09"
+      ],
+      "creationBlock": 12996728,
+      "creationTimestamp": 1628589820,
+      "status": {
+        "name": "closed",
+        "timestamp": 1628601448
+      }
+    },
+    {
+      "address": "0x7Cd360eE5A48C0A4F839E5752715be60C9315Fd4",
+      "members": [
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0x64A8856cBD255765D16B901a0B899daefC78FB13",
+        "0x0d0271d1B2906Cc472A8e75148937967Be788F09"
+      ],
+      "creationBlock": 13017077,
+      "creationTimestamp": 1628861177,
+      "status": {
         "name": "active",
-        "timestamp": 1628110309
+        "timestamp": 1628861177
       }
     }
   ],
-  "lastRefreshBlock": 12960911
+  "lastRefreshBlock": 13017077
 }
