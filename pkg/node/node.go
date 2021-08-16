@@ -301,10 +301,9 @@ func (n *Node) CalculateSignature(
 		}
 
 		logger.Debugf(
-			"signature calculated:\nr: [%#x]\ns: [%#x]\nrecovery ID: [%d]\n",
-			signature.R,
-			signature.S,
-			signature.RecoveryID,
+			"signature calculated for keep [%s]: [%v]",
+			keepAddress.String(),
+			signature,
 		)
 
 		// We have the signature so now we need to publish it.
