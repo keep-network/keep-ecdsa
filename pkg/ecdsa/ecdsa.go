@@ -5,6 +5,7 @@
 package ecdsa
 
 import (
+	"fmt"
 	"math/big"
 )
 
@@ -18,4 +19,9 @@ type Signature struct {
 	R          *big.Int
 	S          *big.Int
 	RecoveryID int
+}
+
+// String formats Signature to a string that contains R and S values as hexadecimals.
+func (s *Signature) String() string {
+	return fmt.Sprintf("R: %#x, S: %#x, RecoveryID: %d", s.R, s.S, s.RecoveryID)
 }

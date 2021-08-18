@@ -956,7 +956,7 @@ func monitorKeepClosedEvents(
 
 	<-keepClosed
 
-	logger.Info("unsubscribing from events on keep closed")
+	logger.Infof("unsubscribing from events on keep [%s] closed", keep.ID())
 }
 
 // monitorKeepTerminatedEvent monitors KeepTerminated event and if that event
@@ -1050,7 +1050,7 @@ func monitorKeepTerminatedEvent(
 							derivationIndexStorage,
 						); err != nil {
 							logger.Errorf(
-								"failed to handle liquidation recovery for keep [%s]: [%w]",
+								"failed to handle liquidation recovery for keep [%s]: [%v]",
 								keep.ID(),
 								err,
 							)
@@ -1089,5 +1089,5 @@ func monitorKeepTerminatedEvent(
 
 	<-keepTerminated
 
-	logger.Info("unsubscribing from events on keep terminated")
+	logger.Infof("unsubscribing from events on keep [%s] terminated", keep.ID())
 }
