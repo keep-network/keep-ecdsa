@@ -60,15 +60,130 @@ func TestParseUtxoOutpoint(t *testing.T) {
 			"efa1306e043cbbd65b985f67fd5dbf0e8464e367357b8dedac67bc240aae0b76",
 			67175197,
 		},
+		"leading and trailing zeros": {
+			[]uint8{
+				0, 11, 174, 10, 36, 188, 103, 172, 237, 141,
+				123, 53, 103, 227, 100, 132, 14, 191, 93, 253,
+				103, 95, 152, 91, 214, 187, 60, 4, 110, 48,
+				161, 0, 0, 3, 1, 0,
+			},
+			"00a1306e043cbbd65b985f67fd5dbf0e8464e367357b8dedac67bc240aae0b00",
+			66304,
+		},
 	}
 	for testName, testData := range testData {
 		t.Run(testName, func(t *testing.T) {
-			transactionHash, outputIndex := ParseUtxoOutpoint(testData.utxoOutpoint)
+			transactionHash, outputIndex, err := ParseUtxoOutpoint(testData.utxoOutpoint)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if transactionHash != testData.expectedTransactionHash {
-				t.Errorf("unexpected transaction hash\nexpected: %s\nactual:   %s", testData.expectedTransactionHash, transactionHash)
+				t.Errorf(
+					"unexpected transaction hash\nexpected: %s\nactual:   %s",
+					testData.expectedTransactionHash,
+					transactionHash,
+				)
 			}
 			if outputIndex != testData.expectedOutputIndex {
-				t.Errorf("unexpected output index\nexpected: %d\nactual:   %d", testData.expectedOutputIndex, outputIndex)
+				t.Errorf(
+					"unexpected output index\nexpected: %d\nactual:   %d",
+					testData.expectedOutputIndex,
+					outputIndex,
+				)
+			}
+		})
+	}
+}
+
+func TestParseUtxoOutpoint_CalledManyTimes(t *testing.T) {
+	utxoOutpoint := []uint8{
+		118, 11, 174, 10, 36, 188, 103, 172, 237, 141,
+		123, 53, 103, 227, 100, 132, 14, 191, 93, 253,
+		103, 95, 152, 91, 214, 187, 60, 4, 110, 48,
+		161, 239, 29, 3, 1, 4,
+	}
+	expectedTransactionHash := "efa1306e043cbbd65b985f67fd5dbf0e8464e367357b8dedac67bc240aae0b76"
+	expectedOutputIndex := uint32(67175197)
+
+	for i := 0; i < 3; i++ {
+		transactionHash, outputIndex, err := ParseUtxoOutpoint(utxoOutpoint)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if transactionHash != expectedTransactionHash {
+			t.Errorf(
+				"unexpected transaction hash [%d]\nexpected: %s\nactual:   %s",
+				i,
+				expectedTransactionHash,
+				transactionHash,
+			)
+		}
+		if outputIndex != expectedOutputIndex {
+			t.Errorf(
+				"unexpected output index [%d]\nexpected: %d\nactual:   %d",
+				i,
+				expectedOutputIndex,
+				outputIndex,
+			)
+		}
+	}
+}
+
+func TestParseUtxoOutpoint_Failures(t *testing.T) {
+	testData := map[string]struct {
+		utxoOutpoint         []uint8
+		expectedErrorMessage string
+	}{
+		"empty": {
+			[]uint8{},
+			"invalid length of utxo outpoint: 0",
+		},
+		"1 byte": {
+			[]uint8{222},
+			"invalid length of utxo outpoint: 1",
+		},
+		"35 bytes": {
+			[]uint8{
+				0, 93, 69, 179, 7, 146, 227, 106, 188, 242,
+				116, 164, 222, 159, 208, 248, 123, 116, 86, 54,
+				92, 157, 139, 246, 61, 161, 250, 45, 205, 230,
+				140, 175, 44, 1, 0,
+			},
+			"invalid length of utxo outpoint: 35",
+		},
+		"37 bytes": {
+			[]uint8{
+				0, 173, 108, 198, 64, 153, 226, 149, 75, 126,
+				163, 248, 117, 187, 34, 19, 238, 59, 82, 18,
+				122, 29, 135, 136, 179, 34, 15, 29, 32, 16,
+				241, 213, 29, 3, 1, 0, 0,
+			},
+			"invalid length of utxo outpoint: 37",
+		},
+	}
+	for testName, testData := range testData {
+		t.Run(testName, func(t *testing.T) {
+			transactionHash, outputIndex, err := ParseUtxoOutpoint(testData.utxoOutpoint)
+			if transactionHash != "" {
+				t.Errorf(
+					"unexpected transaction hash\nexpected: %s\nactual:   %s",
+					"",
+					transactionHash,
+				)
+			}
+			if outputIndex != 0 {
+				t.Errorf(
+					"unexpected output index\nexpected: %d\nactual:   %d",
+					0,
+					outputIndex,
+				)
+			}
+			if err == nil || err.Error() != testData.expectedErrorMessage {
+				t.Errorf(
+					"unexpected error message\nexpected: %v\nactual:   %v",
+					testData.expectedErrorMessage,
+					err,
+				)
 			}
 		})
 	}
@@ -112,7 +227,11 @@ func TestUtxoValueBytesToUint32(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			actualValue := UtxoValueBytesToUint32(testData.utxoValueBytes)
 			if actualValue != testData.expectedValue {
-				t.Errorf("unexpected result\nexpected: %d\nactual:   %d", testData.expectedValue, actualValue)
+				t.Errorf(
+					"unexpected result\nexpected: %d\nactual:   %d",
+					testData.expectedValue,
+					actualValue,
+				)
 			}
 		})
 	}

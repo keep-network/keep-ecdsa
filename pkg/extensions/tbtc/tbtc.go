@@ -24,7 +24,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
-var logger = log.Logger("tbtc-extension")
+var logger = log.Logger("keep-tbtc-extension")
 
 const (
 	// Maximum number of action attempts before giving up and returning
