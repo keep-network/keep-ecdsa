@@ -5,69 +5,73 @@
 
 # Connection details of ethereum blockchain.
 [ethereum]
-  URL = "ws://127.0.0.1:8545"
-  URLRPC = "http://127.0.0.1:8546"
-  # Uncomment to override the defaults for transaction status monitoring.
-	#
-	# MiningCheckInterval is the interval in which transaction
-	# mining status is checked. If the transaction is not mined within this
-	# time, the gas price is increased and transaction is resubmitted.
-	#
-	# MiningCheckInterval = 60  # 60 sec (default value)
-	#
-	# MaxGasPrice specifies the default maximum gas price the client is
-	# willing to pay for the transaction to be mined. The offered transaction
-	# gas price can not be higher than the max gas price value. If the maximum
-	# allowed gas price is reached, no further resubmission attempts are
-	# performed.A value can be provided in `wei`, `Gwei` or `ether`, e.g.
-	# `800.5 Gwei`.
-	#
-	# MaxGasPrice = "1000 Gwei" # 1000 Gwei (default value)
-	#
-  # Uncomment to enable Ethereum node rate limiting. Both properties can be
-  # used together or separately.
-  	#
-	# RequestsPerSecondLimit sets the maximum average number of requests
-	# per second which can be executed against the Ethereum node.
-	# All types of Ethereum node requests are rate-limited,
-	# including view function calls.
-	#
-	# RequestsPerSecondLimit = 150
-	#
-	# ConcurrencyLimit sets the maximum number of concurrent requests which
-	# can be executed against the Ethereum node at the same time.
-	# This limit affects all types of Ethereum node requests,
-	# including view function calls.
-	#
-	# ConcurrencyLimit = 30
-	#
-	# BalanceAlertThreshold defines a minimum value of the operator's account
-	# balance below which the client will start reporting errors in logs.
-	# A value can be provided in `wei`, `Gwei` or `ether`, e.g. `7.5 ether`,
-	# `7500000000 Gwei`.
-	#
-	# BalanceAlertThreshold = "0.5 ether" # 0.5 ether (default value)
+# If you're connecting to a local ethereum node
+URL = "ws://127.0.0.1:8545"
+URLRPC = "http://127.0.0.1:8546"
+# Otherwise, this would be a third party deployment like infura
+# URL = "wss://mainnet.infura.io/ws/v3/<your-infura-api-key-here>""
+# URLRPC = "https://mainnet.infura.io/v3/<your-infura-api-key-here>"
+
+# MiningCheckInterval is the interval in which transaction
+# mining status is checked. If the transaction is not mined within this
+# time, the gas price is increased and transaction is resubmitted.
+#
+# MiningCheckInterval = 60 # 60 sec (default value)
+
+# MaxGasPrice specifies the default maximum gas price the client is
+# willing to pay for the transaction to be mined. The offered transaction
+# gas price can not be higher than the max gas price value. If the maximum
+# allowed gas price is reached, no further resubmission attempts are
+# performed.A value can be provided in `wei`, `Gwei` or `ether`, e.g.
+# `800.5 Gwei`.
+#
+# MaxGasPrice = "1000 Gwei" # 1000 Gwei (default value)
+
+# # Uncomment to enable Ethereum node rate limiting. Both properties can be
+# # used together or separately.
+# #
+# # RequestsPerSecondLimit sets the maximum average number of requests
+# # per second which can be executed against the Ethereum node.
+# # All types of Ethereum node requests are rate-limited,
+# # including view function calls.
+#
+# RequestsPerSecondLimit = 150
+#
+# # ConcurrencyLimit sets the maximum number of concurrent requests which
+# # can be executed against the Ethereum node at the same time.
+# # This limit affects all types of Ethereum node requests,
+# # including view function calls.
+#
+# ConcurrencyLimit = 30
+# # BalanceAlertThreshold defines a minimum value of the operator's account
+# # balance below which the client will start reporting errors in logs.
+# # A value can be provided in `wei`, `Gwei` or `ether`, e.g. `7.5 ether`,
+# # `7500000000 Gwei`.
+#
+# BalanceAlertThreshold = "0.5 ether" # 0.5 ether (default value)
 
 [ethereum.account]
-  KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
+KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
-  BondedECDSAKeepFactory = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-  # Uncomment to enable tBTC-specific extension. This extension takes care of
-  # executing actions that are assumed by tBTC to be the signer's responsibility,
-  # for example, retrieve public key from keep to tBTC deposit or
-  # increase redemption fee on tBTC deposit.
-  # TBTCSystem = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+BondedECDSAKeepFactory = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+
+# # Uncomment to enable tBTC-specific extension. This extension takes care of
+# # executing actions that are assumed by tBTC to be the signer's responsibility,
+# # for example, retrieve public key from keep to tBTC deposit or
+# # increase redemption fee on tBTC deposit.
+# TBTCSystem = "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
 
 [Storage]
-  DataDir = "/my/secure/location"
+DataDir = "/my/secure/location"
 
-# [LibP2P]
-# 	Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
-# 	Port = 3920
-#   # Uncomment to override the node's default addresses announced in the network
-#   # AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
+[LibP2P]
+Peers = [
+  "/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"
+]
+Port = 3919
+AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
 
 [Client]
 # Look-back period to check if existing, active keeps are awaiting signer generation.
@@ -75,78 +79,90 @@
 # whether it's a member of one of them and to generate the signing key if needed.
 # The client does not check keeps older than `AwaitingKeyGenerationLookback` to
 # minimize the number of calls to the chain.
-#  AwaitingKeyGenerationLookback = "24h"	# optional
+#
+# AwaitingKeyGenerationLookback = "24h"	# optional
 
 # Timeouts for processes execution. Within these timeouts the process will keep
 # retrying to generate a signer or calculate a signature. The values should be
 # provided based on the sanctioned application requirements.
-#  KeyGenerationTimeout = "3h" 				# optional
-#  SigningTimeout = "2h"					# optional
+#
+# KeyGenerationTimeout = "3h"  # optional
+# SigningTimeout = "2h"        # optional
 
 [TSS]
 # Timeout for TSS protocol pre-parameters generation. The value
 # should be provided based on resources available on the machine running the client.
 # This is an optional parameter, if not provided timeout for TSS protocol
 # pre-parameters generation will be set to `2 minutes`.
-#  PreParamsGenerationTimeout = "2m30s"
 #
+# PreParamsGenerationTimeout = "2m30s"
+
 # TSS pre-parameters target pool size. This value determines the number of
 # pre-parameters that should be generated and kept at hand ready to use.
 # That value should be set reasonably because a low target pool size may force
 # the client to generate parameters during protocol executions and cause unwanted
 # delays. On the other hand, a big target pool size can cause high CPU usage for
 # a long time. The default value of this parameter is `20`.
-#  PreParamsTargetPoolSize = 20
+#
+# PreParamsTargetPoolSize = 20
 
-# Uncomment to enable the metrics module which collects and exposes information
-# useful for external monitoring tools usually operating on time series data.
-# All values exposed by metrics module are quantifiable or countable.
-#
-# The following metrics are available:
-# - connected peers count
-# - connected bootstraps count
-# - eth client connectivity status
-#
-# The port on which the `/metrics` endpoint will be available and the frequency
-# with which the metrics will be collected can be customized using the
-# below parameters.
+# # Uncomment to enable the metrics module which collects and exposes information
+# # useful for external monitoring tools usually operating on time series data.
+# # All values exposed by metrics module are quantifiable or countable.
+# #
+# # The following metrics are available:
+# # - connected peers count
+# # - connected bootstraps count
+# # - eth client connectivity status
+# #
+# # The port on which the `/metrics` endpoint will be available and the frequency
+# # with which the metrics will be collected can be customized using the
+# # below parameters.
 # [Metrics]
-    # Port = 8080
-    # NetworkMetricsTick = 60
-    # EthereumMetricsTick = 600
-    # ClientMetricsTick = 60
+# Port = 8080
+# NetworkMetricsTick = 60
+# EthereumMetricsTick = 600
+# ClientMetricsTick = 60
 
-# Uncomment to enable the diagnostics module which exposes information useful
-# for debugging and diagnostic client's status.
-#
-# Diagnostics module exposes the following information:
-# - list of connected peers along with their network id and ethereum operator address
-# - information about the client's network id and ethereum operator address
-#
-# The port on which the `/diagnostics` endpoint will be available can be
-# customized below.
+# # Uncomment to enable the diagnostics module which exposes information useful
+# # for debugging and diagnostic client's status.
+# #
+# # Diagnostics module exposes the following information:
+# # - list of connected peers along with their network id and ethereum operator address
+# # - information about the client's network id and ethereum operator address
+# #
+# # The port on which the `/diagnostics` endpoint will be available can be
+# # customized below.
 # [Diagnostics]
-	# Port = 8081
+# Port = 8081
 
-# Uncomment to enable automatic liquidation recovery
+# # Uncomment to enable automatic liquidation recovery
 # [Extensions.TBTC]
-#   # The amount of time your client will try to communicate with the other
-#   # signers to recover the underlying bitcoin from a deposit after it has been
-#   # liquidated.
-#   LiquidationRecoveryTimeout = "48h"
+# # The amount of time your client will try to communicate with the other
+# # signers to recover the underlying bitcoin from a deposit after it has been
+# # liquidated.
 #
-# 	[Extensions.TBTC.Bitcoin]
-# 	  # The btc address or *pub (xpub, ypub, zpub) that you would like recovered btc funds to be sent to
-# 	BeneficiaryAddress = "<your btc address or *pub key for a hierarchical deterministic wallet>"
-# 	# The maximum fee per vbyte that you're willing to pay in order to claim
-# 	# your share of the underlying btc after a liquidation. The fee will be
-# 	# paid from the underlying deposit before your own share is calculated.
-# 	MaxFeePerVByte = 75
-# 	# The bitcoin chain that you want to connect to. default: "mainnet"
-# 	# allowed values: ["mainnet", "regtest", "simnet", "testnet3"]
-# 	BitcoinChainName = "mainnet"
-# 	# An endpoint pointing to a running electrs
-# 	# (https://github.com/Blockstream/electrs) service. The officially hosted
-# 	# one works, but you can run your own node!
-# 	# To explicitly disable automatic broadcasting, set this value to the empty string "".
-# 	ElectrsURL = "https://blockstream.info/api/"
+# # LiquidationRecoveryTimeout = "48h"
+
+# [Extensions.TBTC.Bitcoin]
+# # The btc address or *pub (xpub, ypub, zpub) that you would like recovered btc funds to be sent to
+#
+# BeneficiaryAddress = "<your btc address or *pub key for a hierarchical deterministic wallet>"
+#
+# # The maximum fee per vbyte that you're willing to pay in order to claim
+# # your share of the underlying btc after a liquidation. The fee will be
+# # paid from the underlying deposit before your own share is calculated.
+#
+# # MaxFeePerVByte = 75    # optional
+#
+# # The bitcoin chain that you want to connect to. default: "mainnet"
+# # allowed values: ["mainnet", "regtest", "simnet", "testnet3"]
+#
+# # BitcoinChainName = "mainnet"    # optional
+#
+# # An endpoint pointing to a running electrs
+# # (https://github.com/Blockstream/electrs) service. The officially hosted
+# # one works, but you can run your own node!
+# # To explicitly disable automatic broadcasting, set this value to the empty string "".
+#
+# # ElectrsURL = "https://blockstream.info/api/"    # optional

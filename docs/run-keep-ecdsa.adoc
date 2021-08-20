@@ -130,69 +130,9 @@ Application configurations are stored in a `.toml` file and passed to the applic
 
 ==== Sample
 
-// TODO: build + publish this with our docs build process, include ../configs/config.toml.SAMPLE
-// directly.
-[source,toml]
+[source,toml,role=small]
 ----
-# This is a TOML configuration file.
-
-# Connection details of ethereum blockchain.
-[ethereum]
-  # If you're connecting to a local ethereum node
-  URL = "ws://127.0.0.1:8545"
-  # Otherwise, this would be a third party deployment like infura
-  # URL = "wss://mainnet.infura.io/ws/v3/<your-infura-api-key-here>""
-
-  # If you're connecting to a local ethereum node
-  URLRPC = "http://127.0.0.1:8546"
-  # Otherwise, this would be a third party deployment like infura
-  # URLRPC = "https://mainnet.infura.io/v3/<your-infura-api-key-here>"
-
-[ethereum.account]
-  KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
-
-# Addresses of contracts deployed on ethereum blockchain.
-[ethereum.ContractAddresses]
-  BondedECDSAKeepFactory = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-  TBTCSystem = "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
-
-[Storage]
-  DataDir = "/my/secure/location"
-
-[LibP2P]
-  Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
-  Port = 3919
-  # Uncomment to override the node's default addresses announced in the network
-  AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
-
-[TSS]
-# Timeout for TSS protocol pre-parameters generation. The value
-# should be provided based on resources available on the machine running the client.
-# This is an optional parameter, if not provided timeout for TSS protocol
-# pre-parameters generation will be set to `2 minutes`.
-  PreParamsGenerationTimeout = "2m30s"
-
-[Extensions.TBTC]
-  # The amount of time your client will try to communicate with  the other
-  # signers to recover the underlying bitcoin from a deposit after it has been
-  # liquidated.
-  LiquidationRecoveryTimeout = "48h"
-
-  [Extensions.TBTC.Bitcoin]
-    # The btc address or *pub (xpub, ypub, zpub) that you would like recovered btc funds to be sent too
-    BeneficiaryAddress = "<your btc address or *pub key for a hierarchical deterministic wallet>"
-    # The maximum fee per vbyte that you're willing to pay in order to claim
-    # your share of the underlying btc after a liquidation. The fee will be
-    # paid from the underlying deposit before your own share is calculated.
-    MaxFeePerVByte = 75
-    # The bitcoin chain that you want to connect to. default: "mainnet"
-    # allowed values: ["mainnet", "regtest", "simnet", "testnet3"]
-    BitcoinChainName = "mainnet"
-    # An endpoint pointing to a running electrs
-    # (https://github.com/Blockstream/electrs) service. The officially hosted
-    # one works, but you can run your own node!
-    # To explicitly disable automatic broadcasting, set this value to the empty string "".
-    ElectrsURL = "https://blockstream.info/api/"
+include::../configs/config.toml.SAMPLE[]
 ----
 
 ==== Parameters
