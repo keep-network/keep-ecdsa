@@ -137,146 +137,105 @@ include::../configs/config.toml.SAMPLE[]
 
 ==== Parameters
 
-[%header,cols=4*]
+[%header,cols="m,5,^m,^"]
 |===
-|`ethereum`
+|Property
 |Description
 |Default
 |Required
 
-|`URL`
+4+h|`ethereum`
+
+|URL
 |The Ethereum host your keep-ecdsa will connect to.  Websocket protocol/port.
 |""
 |Yes
 
-|`URLRPC`
+|URLRPC
 |The Ethereum host your keep-ecdsa will connect to.  RPC protocol/port.
 |""
 |Yes
-|===
 
-[%header,cols=4*]
-|===
-|`ethereum.account`
-|Description
-|Default
-|Required
+4+h|`ethereum.account`
 
-|`KeyFile`
+|KeyFile
 |The local filesystem path to your Keep operator Ethereum account keyfile.
 |""
 |Yes
-|===
 
-[%header,cols=4*]
-|===
-|`ethereum.ContractAddresses`
-|Description
-|Default
-|Required
+4+h|`ethereum.ContractAddresses`
 
-|`BondedECDSAKeepFactory`
+|BondedECDSAKeepFactory
 |Hex-encoded address of the BondedECDSAKeepFactory Contract.
 |""
 |Yes
 
-|`TBTCSystem`
+|TBTCSystem
 |Hex-encoded address of the TBTCSystem Contract.
 |""
 |Yes, if operating for tBTC v1
-|===
 
-[%header,cols=4*]
-|===
-|`LibP2P`
-|Description
-|Default
-|Required
+4+h|`Storage`
 
-|`Peers`
-|Comma separated list of network peers to boostrap against.
+|DataDir
+|Location to store the Keep nodes group membership details.
+|""
+|Yes
+
+4+h|`LibP2P`
+
+|Peers
+|Comma separated list of network peers to bootstrap against. See list of <<bootstrap-peers-mainnet,bootstrap peers>>.
 |[""]
 |Yes
 
-|`Port`
+|Port
 |The port to run your instance of Keep on.
 |3919
 |Yes
 
-|`AnnouncedAddresses`
-|Multiaddr formatted hostnames or addresses annouced to the
-Keep Network. More on multiaddr format
-https://docs.libp2p.io/reference/glossary/#multiaddr[in the libp2p
-reference].
+|AnnouncedAddresses
+|Multiaddr formatted hostnames or addresses announced to the Keep Network.
+More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[in the libp2p reference].
 |[""]
 |No
-|===
 
-[%header,cols=4*]
-|===
-|`Storage`
-|Description
-|Default
-|Required
+4+h|`TSS`
 
-|`DataDir`
-|Location to store the Keep nodes group membership details.
-|""
-|Yes
-|===
-
-[%header,cols=4*]
-|===
-|`TSS`
-|Description
-|Default
-|Required
-
-|`PreParamsGenerationTimeout`
+|PreParamsGenerationTimeout
 |Timeout for TSS protocol pre-parameters generation.
 |"2m"
 |No
-|===
 
-[%header,cols=4*]
-|===
-|`Extensions.TBTC`
-|Description
-|Default
-|Required
+4+h|`Extensions.TBTC`
 
-|`LiquidationRecoveryTimeout`
+|LiquidationRecoveryTimeout
 |The amount of time your client will try to communicate with the other signers to recover the underlying bitcoin from a deposit after it has been liquidated.
 |"48h"
 |No
-|===
 
-[%header,cols=4*]
-|===
-|`Extensions.TBTC.Bitcoin`
-|Description
-|Default
-|Required
+4+h|`Extensions.TBTC.Bitcoin`
 
-|`BeneficiaryAddress`
+|BeneficiaryAddress
 |The btc address or *pub (xpub, ypub, zpub) that you would like recovered btc funds to be sent too, see <<example-beneficiary-addresses,examples>>.
 |""
 |Yes
 
-|`MaxFeePerVByte`
+|MaxFeePerVByte
 |The maximum fee per vbyte that you're willing to pay in order to claim your share of the underlying btc after a liquidation.
 |75
 |No
 
-|`BitcoinChainName`
+|BitcoinChainName
 |The bitcoin chain that you want to connect to. Allowed Values: ["mainnet", "regtest", "simnet", "testnet3"]
 |"mainnet"
 |No
 
-|`ElectrsURL`
-|An endpoint pointing to a running [electrs](https://github.com/Blockstream/electrs) service.
+|ElectrsURL
+|An endpoint pointing to a running https://github.com/Blockstream/electrs[electrs^] service.
 |"https://blockstream.info/api/"
 |No
+
 |===
 
 [[example-beneficiary-addresses]]
@@ -292,58 +251,64 @@ configuration would be
   BeneficiaryAddress = "xpub6Cg41S21V____REPLACE_WITH_VALID_DATA____vZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"
 ----
 
+Supported Beneficiary Address formats with examples:
 
-[%header,cols=2*]
+[%header,cols=",m"]
 |===
-|Description
-|Address
-|mainnet xpub extended public key
-|`"xpub6Cg41S21V____REPLACE_WITH_VALID_DATA____vZvH8XyNzunEqLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1"`
+|Description|Sample Value
 
-|mainnet ypub extended public key
-|`"ypub6Xxan668a____REPLACE_WITH_VALID_DATA____gaxnBh44HpkTi2TTkm1u136qjUxk7F3jGzoyfrGpHvALMgJgbF4WNXpoPu3QYrqogMK"`
+2+h|mainnet
 
-|mainnet zpub extended public key
-|`"zpub6rePDVHfR____REPLACE_WITH_VALID_DATA____ykG47mZYyGTjsuq6uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9"`
+|xpub extended public key
+|xpub6Cg41S21V____REPLACE_WITH_VALID_DATA____qLdk9dxyXQUoy7ALWQFNn5K1me74aEMtS6pUgNDuCYTTMsJzCAk9sk1
 
-|testnet3/regtest tpub extended public key
-|`"tpubDEXzoXkNd____REPLACE_WITH_VALID_DATA____2erw2yS3VgY5EoYdcKH24VPqeAgBTF6i82Ft9NG1iVjSQVAvFBfd2wkRQXF1W2Q8W1"`
+|ypub extended public key
+|ypub6Xxan668a____REPLACE_WITH_VALID_DATA____i2TTkm1u136qjUxk7F3jGzoyfrGpHvALMgJgbF4WNXpoPu3QYrqogMK
 
-|testnet3/regtest upub extended public key
-|`"upub5DnYQWgCD____REPLACE_WITH_VALID_DATA____JnHCp5BwyvM7Xm7S5r5n5ZYMJ1WrrM31i4kcsWwW2vxcJS1kfsuKgK9vME2z1cx6aX"`
+|zpub extended public key
+|zpub6rePDVHfR____REPLACE_WITH_VALID_DATA____ykG46uzQYRakSrHyix1YTXKohag4GDZLcHcLvhSAs2MQNF8VDaZuQT9
 
-|testnet3/regest vpub extended public key
-|`"vpub5Zx5difzi____REPLACE_WITH_VALID_DATA____WHFTpF7pJqnyAnADhbVrFYX7eCK8V2WBBVprxzJrSk15NsYHiB8CvV8h4JnXkU66as"`
+|P2PKH btc address
+|1MjCqoLqMZ6Ru____REPLACE_WITH_VALID_DATA____64TTtP16XnpSdiE8Kpgcx
 
-|mainnet P2PKH btc address
-|`"1MjCqoLqMZ6Ru____REPLACE_WITH_VALID_DATA____64TTtP16XnpSdiE8Kpgcx"`
+|P2SH btc address
+|3J98t1WpEZ73C____REPLACE_WITH_VALID_DATA____NmQviecrnyiWrnqRhWNLy
 
-|testnet P2PKH btc address
-|`"mkHS9ne12qx9p____REPLACE_WITH_VALID_DATA____S9VojpwU5xtRd4T7X7ZUt"`
+|Bech32 (segwit) P2WPKH btc address
+|bc1qar0srrr7x____REPLACE_WITH_VALID_DATA____fkvy5l643lydnw9re59gtzzwf5mdq
 
-|mainnet P2SH btc address
-|`"3J98t1WpEZ73C____REPLACE_WITH_VALID_DATA____NmQviecrnyiWrnqRhWNLy"`
+|Bech32 (segwit) P2WPSH btc address
+|bc1qrp33g0q5c____REPLACE_WITH_VALID_DATA____cefvpysxf3qccfmv3
 
-|testnet P2SH btc address
-|`"2NBFNJTktNa7G____REPLACE_WITH_VALID_DATA____ZusGbDbGKRZTxdK9VVez3n"`
+| P2PK compressed btc public key (`0x02`)
+|02192d74d0cb9____REPLACE_WITH_VALID_DATA____c3a957724895dca52c6b4
 
-|mainnet Bech32 (segwit) P2WPKH btc address
-|`"bc1qar0srrr7x____REPLACE_WITH_VALID_DATA____fkvy5l643lydnw9re59gtzzwf5mdq"`
+| P2PK compressed btc public key (`0x03`)
+|03b0bd634234a____REPLACE_WITH_VALID_DATA____37f23c2c409273eb16e65
 
-|testnet Bech32 (segwit) P2WPKH btc address
-|`"tb1qw508d6qej____REPLACE_WITH_VALID_DATA____xtdg4y5r3zarvary0c5xw7kxpjzsx"`
+| P2PK compressed btc public key (`0x04`)
+|0411db93e1dcd____REPLACE_WITH_VALID_DATA____dfb84ccf9744464f82e160bfa9b8b69d4c03f999b8643f656b412a3
 
-|mainnet Bech32 (segwit) P2WPSH btc address
-|`"bc1qrp33g0q5c____REPLACE_WITH_VALID_DATA____cefvpysxf3qccfmv3"`
+2+h|testnet3/regtest
 
-| P2PK compressed btc public key (0x02)
-|`"02192d74d0cb9____REPLACE_WITH_VALID_DATA____c3a957724895dca52c6b4"`
+|tpub extended public key
+|tpubDEXzoXkNd____REPLACE_WITH_VALID_DATA____2erw2yS3VgY5EoYdcKH6i82Ft9NG1iVjSQVAvFBfd2wkRQXF1W2Q8W1
 
-| P2PK compressed btc public key (0x03)
-|`"03b0bd634234a____REPLACE_WITH_VALID_DATA____37f23c2c409273eb16e65"`
+|upub extended public key
+|upub5DnYQWgCD____REPLACE_WITH_VALID_DATA____JnHCp5BwyvM7Xm7S5r5n5i4kcsWwW2vxcJS1kfsuKgK9vME2z1cx6aX
 
-| P2PK compressed btc public key (0x04)
-|`"0411db93e1dcd____REPLACE_WITH_VALID_DATA____1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3"`
+|vpub extended public key
+|vpub5Zx5difzi____REPLACE_WITH_VALID_DATA____WHFTpF7pJqnyAnADhbVrFYX7eCKJrSk15NsYHiB8CvV8h4JnXkU66as
+
+|P2PKH btc address
+|mkHS9ne12qx9p____REPLACE_WITH_VALID_DATA____S9VojpwU5xtRd4T7X7ZUt
+
+|P2SH btc address
+|2NBFNJTktNa7G____REPLACE_WITH_VALID_DATA____ZusGbDbGKRZTxdK9VVez3n
+
+|Bech32 (segwit) P2WPKH btc address
+|tb1qw508d6qej____REPLACE_WITH_VALID_DATA____xtdg4y5r3zarvary0c5xw7kxpjzsx
+
 |===
 
 == Build from Source
@@ -476,19 +441,19 @@ You may also see the number of peers you've connected to:
 
 Contract addresses needed to boot a Keep ECDSA client:
 
-[%header,cols=2*]
+[%header,cols="1,2m"]
 |===
-|Bonding
-|
+|Name
+|Address
 
 |BondedECDSAKeepFactory
-|`0xA7d9E842EFB252389d613dA88EDa3731512e40bD`
+|0xA7d9E842EFB252389d613dA88EDa3731512e40bD
 
 |TBTCSystem
-|`0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a`
+|0xe20A5C79b39bC8C363f0f49ADcFa82C2a01ab64a
 
-|tBTC Sortition pool (for <<Authorizations,authorization>>)
-|`0xa3748633c6786e1842b5cc44fa43db1ecc710501`
+|tBTC Sortition Pool (for <<Authorizations,authorization>>)
+|0xa3748633c6786e1842b5cc44fa43db1ecc710501
 |===
 
 ==== Did Everything Work?
@@ -558,19 +523,19 @@ up, there is no need to worry.
 
 Contract addresses needed to boot a Keep ECDSA client:
 
-[%header,cols=2*]
+[%header,cols="1,2m"]
 |===
-|Bonding
-|
+|Name
+|Address
 
 |BondedECDSAKeepFactory
-|`0x3521bFaa52D09Ce6F0cE882a69E59e9386feB676`
+|0x3521bFaa52D09Ce6F0cE882a69E59e9386feB676
 
 |TBTCSystem
-|`0x3b9072d3F1E3a7af139A9eF2A4f035cBFcf27BaF`
+|0x3b9072d3F1E3a7af139A9eF2A4f035cBFcf27BaF
 
 |tBTC Sortition pool (for <<Authorizations,authorization>>)
-|`0x1c56eB39fe8EcF577D79cd586D090239ec25701a`
+|0x1c56eB39fe8EcF577D79cd586D090239ec25701a
 |===
 
 == Metrics
