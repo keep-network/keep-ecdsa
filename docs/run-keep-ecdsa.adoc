@@ -208,7 +208,7 @@ More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[in
 |"2m"
 |No
 
-4+h|`Extensions.TBTC`
+4+h|[#config-extensions-tbtc]`Extensions.TBTC`
 
 |LiquidationRecoveryTimeout
 |The amount of time your client will try to communicate with the other signers to recover the underlying bitcoin from a deposit after it has been liquidated.

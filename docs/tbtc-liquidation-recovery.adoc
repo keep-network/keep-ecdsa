@@ -1,0 +1,114 @@
+:toc: macro
+:source-highlighter: rouge
+
+= tBTC Liquidation Recovery
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+.As described in xref:rfc/rfc-2.adoc[RFC 2]:
+[quote]
+____
+include::rfc/rfc-2.adoc[tag=background]
+____
+
+Keep ECDSA client implements a mechanism mentioned above to recover BTC after
+a tBTC Deposit got liquidated and split the amount among the Keep signers holding
+the BTC.
+
+== Configuration
+
+To enable the tBTC Liquidation Recovery mechanism you have to update TOML configuration
+file with details of destination (`BeneficiaryAddress`) to which Bitcoin funds should
+be sent once liquidation happens.
+
+.BeneficiaryAddress in TOML Config File
+```toml
+[Extensions.TBTC.Bitcoin]
+BeneficiaryAddress = "<your btc address or *pub key for a hierarchical deterministic wallet>"
+```
+
+The Beneficiary Address can be provided in one of two formats:
+
+1. A simple Bitcoin address, that will be used for all transactions.
+
+2. An extended public key (*pub), that will be used to derive unique addresses
+for each transaction, see <<Bitcoin Addresses Derivation>> section.
+
+For examples see xref:run-keep-ecdsa.adoc#example-beneficiary-addresses[Example Beneficiary Addresses].
+
+For all configuration parameters please see xref:run-keep-ecdsa.adoc#config-extensions-tbtc[tBTC Extension configuration properties].
+
+== Bitcoin Addresses Derivation
+
+`BeneficiaryAddress` can be provided as an extended public key described by https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki[BIP 32]. Following types are supported: 
+`xpub`, `ypub` and `zpub`.
+
+If the extended public key is provided the client will resolve a unique and unused
+Bitcoin address for each Bitcoin transaction.
+
+Addresses are resolved starting from `0` index. The index is incremented by 1 in
+case of the address being used already.
+
+The highest used index for the extended public keys will be stored in the client's
+local storage directory under `bitcoin/derivation_indexes/<EXTENDED_PUBLIC_KEY_ID>/<INDEX>`
+(e.g. `bitcoin/derivation_indexes/xpub_b1wex5vq/3`).
+
+Additionally to the local storage check the client will reach Bitcoin API to
+check if there are any existing transactions for the given address.
+
+If the Bitcoin connection is missing the client will check the address usage
+based on the local storage only.
+
+=== Bitcoin Chain Connectivity
+
+Connectivity to Bitcoin chain API is used for liquidation recovery handling but is not required for the process to complete.
+
+The Keep ECDSA client uses Electrs API to obtain information and submit transactions.
+
+By default the client reaches the Blockstream's API (`https://blockstream.info/api/`), but it can be connected to any endpoint supporting the Electrs API.
+The address can be specified under `ElectrsURL` config property.
+
+To disable Bitcoin connectivity set `ElectrsURL` property to empty value: `ElectrsURL = ""`.
+
+=== Configuration Verification
+
+To verify configuration and Bitcoin address derivation use `resolve-bitcoin-address`
+command exposed by the Keep ECDSA client. Use `--config <path>` argument to point
+to the TOML configuration file.
+
+.Sample execution of resolve-bitcoin-address command
+```console
+$ ./keep-ecdsa --config <config file path> resolve-bitcoin-address
+2021-08-19T11:23:03.946+0200	INFO	keep-cmd	resolved bitcoin beneficiary address: 2N89Sz5sDTrskGveo8jCVGofo46wnmPVwsR
+```
+
+== Backward Compatibility
+
+If the client version is updated but the configuration file doesn't provide required
+details following warning message will be logged:
+
+```
+2021-08-19T11:11:46.339+0200	WARN	keep-cmd	missing bitcoin configuration for tbtc extension: [a bitcoin address or extended public key (*pub) is required; configure one at [Extensions.TBTC.Bitcoin.BeneficiaryAddress]]
+```
+
+If other peer members are not updated or configured correctly to handle liquidation
+recovery the client will log an error message.
+
+== Time Frames
+
+There is a default timeout of `48 hours` defined for the client to retry handling
+the liquidation recovery.
+
+== Limitations
+
+The client starts liquidation recovery once an event is delivered from the Ethereum
+chain. If the client restarts during the event handling it won't retry to recover
+the liquidation recovery process that started before the restart.
+
+// === Obtain *pub key from Ledger
+// TODO: Verify the instruction based on
+// https://support.ledger.com/hc/en-us/articles/360011069619-Extended-public-key?docs=true
