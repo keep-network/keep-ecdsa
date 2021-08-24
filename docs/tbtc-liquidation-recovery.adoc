@@ -137,6 +137,34 @@ The client starts liquidation recovery once an event is delivered from the Ether
 chain. If the client restarts during the event handling it won't retry to recover
 the liquidation recovery process that started before the restart.
 
-// === Obtain *pub key from Ledger
-// TODO: Verify the instruction based on
-// https://support.ledger.com/hc/en-us/articles/360011069619-Extended-public-key?docs=true
+== Get xpub Key from Ledger Live
+
+Below you can find steps to create a dedicated Bitcoin account in the Ledger Live
+application. 
+
+[NOTE] 
+Ledger Live exports extended public keys in `xpub` format.
+It is recommended that you create an account of a `LEGACY` type to use its' `xpub`
+key in the Keep ECDSA client configuration.
+`xpub` keys exported from Ledger Live for other types of accounts (i.e. `SEGWIT`
+and `NATIVE SEGWIT`) require conversion to `ypub` or `zpub` before usage in the
+Keep ECDSA client configuration.
+
+. Create a new account in Ledger Live application:
+.. Navigate to _Accounts_ section.
+.. Press _+ Add Account_ button.
+.. In _Crypto asset_ section select _Bitcoin (BTC)_.
+.. Press _Continue_ button and connect your Ledger device.
+.. In _Accounts_ section press _Show all address types_ and select `LEGACY`.
+   image:img/ledger-live-add-account.png[Add account]
+.. Press _Add account_ button.
+.. In _Confirmation_ section press `Done` button.
+. Export xpub key for the account according to https://support.ledger.com/hc/en-us/articles/360011069619-Extended-public-key?docs=true:[Ledger's Documentation].
+
+The `xpub` obtained from Ledger Live can be used in the Keep ECDSA client
+configuration file. 
+
+IMPORTANT: Please remember to verify your Keep ECDSA client configuration as
+described in <<Configuration Verification>>. Compare the address resolved by the
+Keep ECDSA client matches the address that you get for the account in Ledger Live
+_Receive_ function.
