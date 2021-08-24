@@ -24,6 +24,7 @@ node_modules/
 abi/
 .DS_Store
 artifacts/
+docs/**/*.html
 
 # Build output
 build/
