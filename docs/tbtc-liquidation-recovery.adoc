@@ -105,6 +105,9 @@ To verify configuration and Bitcoin address derivation use `resolve-bitcoin-addr
 command exposed by the Keep ECDSA client. Use `--config <path>` argument to point
 to the TOML configuration file.
 
+IMPORTANT: Verify that you are in control of the Bitcoin beneficiary address resolved
+by the `resolve-bitcoin-address` command!
+
 .Sample execution of resolve-bitcoin-address command
 ```console
 $ ./keep-ecdsa --config <config file path> resolve-bitcoin-address
