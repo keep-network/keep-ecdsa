@@ -44,8 +44,33 @@ For all configuration parameters please see xref:run-keep-ecdsa.adoc#config-exte
 
 == Bitcoin Addresses Derivation
 
-`BeneficiaryAddress` can be provided as an extended public key described by https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki[BIP 32]. Following types are supported: 
-`xpub`, `ypub` and `zpub`.
+`BeneficiaryAddress` can be provided as an extended public key described by 
+https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki[BIP 32].
+
+Type of Bitcoin address that will be calculated is resolved based on the `*pub`
+prefix, according to https://github.com/satoshilabs/slips/blob/master/slip-0132.md[SLIP-0132].
+
+.Addresses Encoding Based on *pub Prefix
+[%header,cols="^1m,^2,3m"]
+|===
+|Prefix
+|Address Encoding
+^|Sample Address
+
+|xpub
+|P2PKH (Legacy)
+|1L3mGzLD9XLXKxkgLB5Gc6rW6s4ik4yd2r
+
+|ypub
+|P2WPKH nested in P2SH (Segwit)
+|3DMLhAwVrJxePftA8Q5emyoNFCj8Jn1q64
+
+|zpub
+|P2WPKH (Native Segwit)
+|bc1q6rczu6pcv2eq9gh9xvrwx6y9uhxk88f8xm020g
+|===
+
+For more examples see xref:run-keep-ecdsa.adoc#example-beneficiary-addresses[Example Beneficiary Addresses].
 
 If the extended public key is provided the client will resolve a unique and unused
 Bitcoin address for each Bitcoin transaction.
