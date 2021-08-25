@@ -30,10 +30,9 @@ jobs:
   docs-generate-and-publish-html:
     runs-on: ubuntu-latest
     needs: [docs-detect-changes]
-    if: | # `always()` returns true, even if job should be cancelled
-      always()
-        && (github.event_name != 'pull_request'
-        || needs.docs-detect-changes.outputs.path-filter == 'true')
+    if: |
+      github.event_name != 'pull_request'
+        || needs.docs-detect-changes.outputs.path-filter == 'true'
     steps:
       - uses: actions/checkout@v2
 
@@ -69,10 +68,9 @@ jobs:
   docs-generate-and-publish-pdf:
     runs-on: ubuntu-latest
     needs: [docs-detect-changes]
-    if: | # `always()` returns true, even if job should be cancelled
-      always()
-        && (github.event_name != 'pull_request'
-        || needs.docs-detect-changes.outputs.path-filter == 'true')
+    if: |
+      github.event_name != 'pull_request'
+        || needs.docs-detect-changes.outputs.path-filter == 'true'
     steps:
       - uses: actions/checkout@v2
 
