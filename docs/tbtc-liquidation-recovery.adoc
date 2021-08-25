@@ -23,14 +23,14 @@ ____
 include::rfc/rfc-2.adoc[tag=background]
 ____
 
-Keep ECDSA client implements a mechanism mentioned above to recover BTC after
+Keep ECDSA client implements the mechanism mentioned above to recover BTC after
 a tBTC Deposit got liquidated and split the amount among the Keep signers holding
 the BTC.
 
 == Configuration
 
-To enable the tBTC Liquidation Recovery mechanism you have to update TOML configuration
-file with details of destination (`BeneficiaryAddress`) to which Bitcoin funds should
+To enable the tBTC Liquidation Recovery mechanism, update the TOML configuration
+file with a destination (`BeneficiaryAddress`) to which Bitcoin funds should
 be sent once liquidation happens.
 
 .BeneficiaryAddress in TOML Config File
@@ -90,19 +90,21 @@ The highest used index for the extended public keys will be stored in the client
 local storage directory under `bitcoin/derivation_indexes/<EXTENDED_PUBLIC_KEY_ID>/<INDEX>`
 (e.g. `bitcoin/derivation_indexes/xpub_b1wex5vq/3`).
 
-Additionally to the local storage check the client will reach Bitcoin API to
-check if there are any existing transactions for the given address.
+The client will additionally reach the Bitcoin API to check if there are any
+existing transactions for the given address.
 
 If the Bitcoin connection is missing the client will check the address usage
 based on the local storage only.
 
 === Bitcoin Chain Connectivity
 
-Connectivity to Bitcoin chain API is used for liquidation recovery handling but is not required for the process to complete.
+Connectivity to Bitcoin API is used for liquidation recovery handling but is not
+required for the process to complete.
 
 The Keep ECDSA client uses Electrs API to obtain information and submit transactions.
 
-By default the client reaches the Blockstream's API (`https://blockstream.info/api/`), but it can be connected to any endpoint supporting the Electrs API.
+By default the client reaches the Blockstream's API (`https://blockstream.info/api/`),
+but it can be connected to any endpoint supporting the Electrs API.
 The address can be specified under `ElectrsURL` config property.
 
 To disable Bitcoin connectivity set `ElectrsURL` property to empty value: `ElectrsURL = ""`.
