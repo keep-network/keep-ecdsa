@@ -58,6 +58,10 @@ func (c Config) ChainParams() (*chaincfg.Params, error) {
 // letting a user connect to the node of their choice.
 func (c Config) ElectrsURLWithDefault() string {
 	if c.ElectrsURL == nil {
+		if c.BitcoinChainName == "testnet3" {
+			return "https://blockstream.info/testnet/api/"
+		}
+
 		return "https://blockstream.info/api/"
 	}
 	return *c.ElectrsURL
