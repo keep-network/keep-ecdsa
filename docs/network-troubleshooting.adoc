@@ -1,8 +1,8 @@
 :toc: macro
+:icons: font
 
 = Network troubleshooting
 
-:icons: font
 :numbered:
 toc::[]
 
@@ -133,12 +133,3 @@ If none of the above points solve the issue you're observing, reaching out
 the https://discord.keep.network[Keep Discord] is a good next step. Describe
 the problem and provide as much details as you can. Some debug logs would be
 also appreciated.
-
-
-
-
-
-
-
-
-
