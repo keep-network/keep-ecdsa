@@ -393,10 +393,9 @@ is needed. Additionally, if you're running multiple nodes, you may want to add
 your own nodes to the bootstrap list configured in `LibP2P.Peers` *alongside*
 the official bootstrap nodes.
 
-When sharing remember to substitute the `/ipv4/` address
-with the public facing IP of your client if you're running on a private
-machine, or replace the entire `/ipv4/` segment with a DNS entry if you're
-using a hostname.
+When sharing remember to substitute the `/ipv4/` address with the public facing
+IP of your client if you're running on a private machine, or replace the entire
+`/ipv4/` segment with a DNS entry if you're using a hostname.
 
 [%hardbreaks]
 Example:
