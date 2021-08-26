@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "docs/**"
+      - "./.github/workflows/docs.yml"
   pull_request:
   workflow_dispatch:
 
@@ -24,6 +25,7 @@ jobs:
           filters: |
             path-filter:
               - './docs/**'
+              - './.github/workflows/docs.yml'
 
   # TODO: Add generation of Solidity documentation
 
@@ -42,6 +44,9 @@ jobs:
         with:
           files: "docs/*.adoc docs/**/*.adoc"
           args: "-a revdate=`date +%Y-%m-%d` --failure-level=ERROR"
+
+      - name: Copy images to output directory
+        run: sudo cp -r docs/img/ ${{ steps.html.outputs.asciidoctor-artifacts }}/docs/
 
       # A push event is a main merge; deploy to primary bucket.
       - if: github.event_name == 'push'
