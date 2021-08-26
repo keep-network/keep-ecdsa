@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "docs/**"
+      - "./.github/workflows/docs.yml"
   pull_request:
   workflow_dispatch:
 
@@ -24,6 +25,7 @@ jobs:
           filters: |
             path-filter:
               - './docs/**'
+              - './.github/workflows/docs.yml'
 
   # TODO: Add generation of Solidity documentation
 
