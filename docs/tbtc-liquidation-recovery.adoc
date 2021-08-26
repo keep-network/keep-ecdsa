@@ -1,0 +1,180 @@
+:toc: macro
+:source-highlighter: rouge
+
+= tBTC Liquidation Recovery
+
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+.As described in xref:rfc/rfc-2.adoc[RFC 2]:
+[quote]
+____
+include::rfc/rfc-2.adoc[tag=background]
+____
+
+Keep ECDSA client implements the mechanism mentioned above to recover BTC after
+a tBTC Deposit got liquidated and split the amount among the Keep signers holding
+the BTC.
+
+== Configuration
+
+To enable the tBTC Liquidation Recovery mechanism, update the TOML configuration
+file with a destination (`BeneficiaryAddress`) to which Bitcoin funds should
+be sent once liquidation happens.
+
+.BeneficiaryAddress in TOML Config File
+```toml
+[Extensions.TBTC.Bitcoin]
+BeneficiaryAddress = "<your btc address or *pub key for a hierarchical deterministic wallet>"
+```
+
+The Beneficiary Address can be provided in one of two formats:
+
+1. A simple Bitcoin address, that will be used for all transactions.
+
+2. An extended public key (*pub), that will be used to derive unique addresses
+for each transaction, see <<Bitcoin Addresses Derivation>> section.
+
+For examples see xref:run-keep-ecdsa.adoc#example-beneficiary-addresses[Example Beneficiary Addresses].
+
+For all configuration parameters please see xref:run-keep-ecdsa.adoc#config-extensions-tbtc[tBTC Extension configuration properties].
+
+== Bitcoin Addresses Derivation
+
+`BeneficiaryAddress` can be provided as an extended public key described by 
+https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki[BIP 32].
+
+Type of Bitcoin address that will be calculated is resolved based on the `*pub`
+prefix, according to https://github.com/satoshilabs/slips/blob/master/slip-0132.md[SLIP-0132].
+
+.Addresses Encoding Based on *pub Prefix
+[%header,cols="^1m,^2,3m"]
+|===
+|Prefix
+|Address Encoding
+^|Sample Address
+
+|xpub
+|P2PKH (Legacy)
+|1L3mGzLD9XLXKxkgLB5Gc6rW6s4ik4yd2r
+
+|ypub
+|P2WPKH nested in P2SH (Segwit)
+|3DMLhAwVrJxePftA8Q5emyoNFCj8Jn1q64
+
+|zpub
+|P2WPKH (Native Segwit)
+|bc1q6rczu6pcv2eq9gh9xvrwx6y9uhxk88f8xm020g
+|===
+
+For more examples see xref:run-keep-ecdsa.adoc#example-beneficiary-addresses[Example Beneficiary Addresses].
+
+If the extended public key is provided the client will resolve a unique and unused
+Bitcoin address for each Bitcoin transaction.
+
+Addresses are resolved starting from `0` index. The index is incremented by 1 in
+case of the address being used already.
+
+The highest used index for the extended public keys will be stored in the client's
+local storage directory under `bitcoin/derivation_indexes/<EXTENDED_PUBLIC_KEY_ID>/<INDEX>`
+(e.g. `bitcoin/derivation_indexes/xpub_b1wex5vq/3`).
+
+The client will additionally reach the Bitcoin API to check if there are any
+existing transactions for the given address.
+
+If the Bitcoin connection is missing the client will check the address usage
+based on the local storage only.
+
+=== Bitcoin Chain Connectivity
+
+Connectivity to Bitcoin API is used for liquidation recovery handling but is not
+required for the process to complete.
+
+The Keep ECDSA client uses Electrs API to obtain information and submit transactions.
+
+By default the client reaches the Blockstream's API (`https://blockstream.info/api/`),
+but it can be connected to any endpoint supporting the Electrs API.
+The address can be specified under `ElectrsURL` config property.
+
+To disable Bitcoin connectivity set `ElectrsURL` property to empty value: `ElectrsURL = ""`.
+
+=== Configuration Verification
+
+To verify configuration and Bitcoin address derivation use `resolve-bitcoin-address`
+command exposed by the Keep ECDSA client. Use `--config <path>` argument to point
+to the TOML configuration file.
+
+IMPORTANT: Verify that you are in control of the Bitcoin beneficiary address resolved
+by the `resolve-bitcoin-address` command!
+
+.Sample execution of resolve-bitcoin-address command
+```console
+$ ./keep-ecdsa --config <config file path> resolve-bitcoin-address
+2021-08-19T11:23:03.946+0200	INFO	keep-cmd	resolved bitcoin beneficiary address: 2N89Sz5sDTrskGveo8jCVGofo46wnmPVwsR
+```
+
+== Backward Compatibility
+
+If the client version is updated but the configuration file doesn't provide required
+details following warning message will be logged:
+
+```
+2021-08-19T11:11:46.339+0200	WARN	keep-cmd	missing bitcoin configuration for tbtc extension: [a bitcoin address or extended public key (*pub) is required; configure one at [Extensions.TBTC.Bitcoin.BeneficiaryAddress]]
+```
+
+If other peer members are not updated or configured correctly to handle liquidation
+recovery the client will log an error message.
+
+== Time Frames
+
+There is a default timeout of `48 hours` defined for the client to retry handling
+the liquidation recovery.
+
+== Limitations
+
+The client starts liquidation recovery once an event is delivered from the Ethereum
+chain. If the client restarts during the event handling it won't retry to recover
+the liquidation recovery process that started before the restart.
+
+== Get xpub Key from Ledger Live
+
+Below you can find steps to create a dedicated Bitcoin account in the Ledger Live
+application. 
+
+[NOTE] 
+Ledger Live exports extended public keys in `xpub` format.
+It is recommended that you create an account of a `LEGACY` type to use its' `xpub`
+key in the Keep ECDSA client configuration.
+`xpub` keys exported from Ledger Live for other types of accounts (i.e. `SEGWIT`
+and `NATIVE SEGWIT`) require conversion to `ypub` or `zpub` before usage in the
+Keep ECDSA client configuration.
+
+. Create a new account in Ledger Live application:
+.. Navigate to _Accounts_ section.
+.. Press _+ Add Account_ button.
+.. In _Crypto asset_ section select _Bitcoin (BTC)_.
+.. Press _Continue_ button and connect your Ledger device.
+.. In _Accounts_ section press _Show all address types_ and select `LEGACY`.
+   image:img/ledger-live-add-account.png[Add account]
+.. Press _Add account_ button.
+.. In _Confirmation_ section press `Done` button.
+. Export xpub key for the account according to https://support.ledger.com/hc/en-us/articles/360011069619-Extended-public-key?docs=true:[Ledger's Documentation].
+
+The `xpub` obtained from Ledger Live can be used in the Keep ECDSA client
+configuration file. 
+
+IMPORTANT: Please remember to verify your Keep ECDSA client configuration as
+described in <<Configuration Verification>>. Compare the address resolved by the
+Keep ECDSA client matches the address that you get for the account in Ledger Live
+_Receive_ function.

@@ -8,6 +8,7 @@ toc::[]
 
 == Background
 
+// tag::background[]
 The Keep ECDSA client is a generic client for ECDSA keeps, which are on-chain
 smart contract representations of a signing group that can provide on-demand
 key generation and signature services for a consumer application (represented
@@ -28,6 +29,7 @@ In these scenarios, the ECDSA keep signers are in control of BTC that can be
 split among their owners. This RFC seeks to outline a tBTC-specific
 functionality that would allow the clients in the signer group to
 automatically recover the BTC to designated addresses on the Bitcoin chain.
+// end::background[]
 
 === Current Functionality
 
