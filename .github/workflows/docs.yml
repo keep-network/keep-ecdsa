@@ -40,7 +40,7 @@ jobs:
 
       - name: Build HTML docs
         id: html
-        uses: thesis/asciidoctor-action@v1.0.1
+        uses: thesis/asciidoctor-action@v1.1
         with:
           files: "docs/*.adoc docs/**/*.adoc"
           args: "-a revdate=`date +%Y-%m-%d` --failure-level=ERROR"
@@ -81,7 +81,7 @@ jobs:
 
       - name: Build PDF docs
         id: pdf
-        uses: thesis/asciidoctor-action@v1.0.1
+        uses: thesis/asciidoctor-action@v1.1
         with:
           files: "docs/*.adoc docs/**/*.adoc"
           format: pdf
