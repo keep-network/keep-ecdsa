@@ -1,6 +1,5 @@
 :toc: macro
 :icons: font
-:source-highlighter: rouge
 
 = Run ECDSA Keep
 
