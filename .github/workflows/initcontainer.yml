@@ -1,0 +1,132 @@
+name: Initcontainer
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment for workflow execution"
+        required: false
+        default: "dev"
+      upstream_builds:
+        description: "Upstream builds"
+        required: false
+      upstream_ref:
+        description: "Git reference to checkout (e.g. branch name)"
+        required: false
+        default: "main"
+
+jobs:
+  initcontainer-build-and-publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/ci/actions/load-env-variables@v1
+        with:
+          environment: ${{ github.event.inputs.environment }}
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      # In the future we could switch to using cache functionality built-in to
+      # the `setup-node` action. Right now the functionality does not support
+      # cases when package.json resides outside of the root directory, but there's
+      # an open issue (https://github.com/actions/setup-node/issues/275) in the
+      # works for that.
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Get upstream packages' versions
+        uses: keep-network/ci/actions/upstream-builds-query@v1
+        id: upstream-builds-query
+        with:
+          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          query: |
+            keep-core-contracts-version = github.com/keep-network/keep-core/solidity#version
+            keep-ecdsa-contracts-version = github.com/keep-network/keep-ecdsa/solidity#version
+            tbtc-contracts-version = github.com/keep-network/tbtc/solidity#version
+
+      - name: Resolve latest contracts
+        run: |
+          npm install --save-exact \
+            @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-contracts-version }} \
+            @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-contracts-version }} \
+            @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-contracts-version }}
+
+      - name: Copy selected contracts
+        run: |
+          cp ./node_modules/@keep-network/keep-core/artifacts/KeepToken.json .
+          cp ./node_modules/@keep-network/keep-core/artifacts/TokenStaking.json .
+          cp ./node_modules/@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json .
+          cp ./node_modules/@keep-network/keep-ecdsa/artifacts/KeepBonding.json .
+          cp ./node_modules/@keep-network/tbtc/artifacts/TBTCSystem.json .
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to Google Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.GCR_REGISTRY_URL }}
+          username: _json_key
+          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Build and publish initcontainer
+        uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: initcontainer-provision-keep-ecdsa-${{ env.CHAIN }}
+        with:
+          context: ./infrastructure/kube/templates/keep-ecdsa/initcontainer/provision-keep-ecdsa/
+          # GCR image should be named according to following convention:
+          # HOSTNAME/PROJECT-ID/IMAGE:TAG
+          # We don't use TAG yet, will be added at later stages of work on RFC-18.
+          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          labels: |
+            revision=${{ github.sha }}
+          push: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Notify CI about completion of the workflow
+        uses: keep-network/ci/actions/notify-workflow-completed@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          module: "github.com/keep-network/keep-ecdsa/initcontainer"
+          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          environment: ${{ github.event.inputs.environment }}
+          upstream_builds: ${{ github.event.inputs.upstream_builds }}
+          upstream_ref: ${{ github.event.inputs.upstream_ref }}
+          version: ${{ steps.upstream-builds-query.outputs.keep-ecdsa-contracts-version }}
+
+      - # Temp fix - move cache instead of copying (added below step and
+        # modified value of `cache-to`).
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        # Without the change some jobs were failing with `no space left on device`
+        name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache

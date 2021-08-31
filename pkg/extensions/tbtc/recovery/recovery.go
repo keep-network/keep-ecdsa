@@ -257,7 +257,8 @@ func BuildBitcoinTransaction(
 	}
 
 	logger.Debugf(
-		"calculated liquidation recovery transcation signature: [%v]",
+		"calculated liquidation recovery transcation signature for sighash [%x]: [%v]",
+		sighashBytes,
 		signature,
 	)
 

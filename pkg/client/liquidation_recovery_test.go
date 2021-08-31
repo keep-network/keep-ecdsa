@@ -4,6 +4,7 @@ import (
 	"context"
 	cecdsa "crypto/ecdsa"
 	"crypto/elliptic"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"sync"
@@ -53,11 +54,17 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 
 	keep := localChain.OpenKeep(keepAddress, depositAddress, keepMembersAddresses)
 
-	tbtcHandle, err := localChain.TBTCApplicationHandle()
-	if err != nil {
-		panic(err)
+	defaultTbtcHandle := func() chain.TBTCHandle {
+		tbtcHandle, err := localChain.TBTCApplicationHandle()
+		if err != nil {
+			panic(err)
+		}
+
+		tbtcHandle.(*chainLocal.TBTCLocalChain).CreateDeposit(depositAddress.String(), keepMembersAddresses)
+		tbtcHandle.(*chainLocal.TBTCLocalChain).FundDeposit(depositAddress.String())
+
+		return tbtcHandle
 	}
-	tbtcHandle.(*chainLocal.TBTCLocalChain).CreateDeposit(depositAddress.String(), keepMembersAddresses)
 
 	bitcoinAddresses := []string{
 		"1MjCqoLqMZ6Ru64TTtP16XnpSdiE8Kpgcx",
@@ -73,6 +80,7 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 	testCases := map[string]struct {
 		bitcoinAddressesOrKeys []string
 		configureBitcoinHandle func(memberIndex int) *localBitcoinConnection
+		configureTbtcHandle    func() chain.TBTCHandle
 		expectedErrors         []error
 	}{
 		// bitcoin connection working
@@ -175,6 +183,29 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 				return bitcoinHandle
 			},
 		},
+		// failures
+		"deposit not funded": {
+			bitcoinAddressesOrKeys: bitcoinAddresses,
+			configureBitcoinHandle: func(memberIndex int) *localBitcoinConnection {
+				return newLocalBitcoinConnection()
+			},
+			configureTbtcHandle: func() chain.TBTCHandle {
+				tbtcHandle, err := localChain.TBTCApplicationHandle()
+				if err != nil {
+					panic(err)
+				}
+
+				tbtcHandle.(*chainLocal.TBTCLocalChain).CreateDeposit(depositAddress.String(), keepMembersAddresses)
+
+				return tbtcHandle
+			},
+			expectedErrors: []error{
+				chain.ErrDepositNotFunded,
+				chain.ErrDepositNotFunded,
+				chain.ErrDepositNotFunded,
+			},
+		},
+
 		// TODO: Add tests to verify logged output:
 		// - logged 5x warn on broadcast failure
 		// - cover more failures
@@ -182,6 +213,13 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 
 	for testName, testData := range testCases {
 		t.Run(testName, func(t *testing.T) {
+			var tbtcHandle chain.TBTCHandle
+			if testData.configureTbtcHandle == nil {
+				tbtcHandle = defaultTbtcHandle()
+			} else {
+				tbtcHandle = testData.configureTbtcHandle()
+			}
+
 			bitcoinHandles := []*localBitcoinConnection{}
 			for i := range groupMemberIDs {
 				bitcoinHandles = append(bitcoinHandles, testData.configureBitcoinHandle(i))
@@ -192,6 +230,9 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 
 			doneChan := make(chan interface{})
 			errChan := make(chan error)
+
+			actualErrors := make(map[int]error)
+			actualErrorsMutex := &sync.Mutex{}
 
 			var testWait sync.WaitGroup
 			testWait.Add(groupSize)
@@ -242,7 +283,17 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 							keepsRegistry,
 							derivationIndexStorage,
 						); err != nil {
-							errChan <- fmt.Errorf("handle liquidation recovery failed for member index [%d]: %w", index, err)
+							if len(testData.expectedErrors) > 0 {
+								actualErrorsMutex.Lock()
+								actualErrors[index] = err
+								actualErrorsMutex.Unlock()
+							} else {
+								errChan <- fmt.Errorf(
+									"handle liquidation recovery failed for member index [%d]: %w",
+									index,
+									err,
+								)
+							}
 						}
 
 						testWait.Done()
@@ -255,31 +306,55 @@ func TestHandleLiquidationRecovery(t *testing.T) {
 
 			select {
 			case <-doneChan:
-				expectedTransaction := bitcoinHandles[0].transactions[0]
+				if len(testData.expectedErrors) > 0 {
+					actualErrorsMutex.Lock()
 
-				for i, bitcoinHandle := range bitcoinHandles {
-					if len(bitcoinHandle.transactions) != 1 {
+					if len(testData.expectedErrors) != len(actualErrors) {
 						t.Errorf(
-							"unexpected number of broadcasted transactions for member [%d]\n"+
-								"expected: [%v]\n"+
-								"actual:   [%v]",
-							i,
-							1,
-							len(bitcoinHandle.transactions),
+							"invalid number of errors\nexpected: %d\nactual:   %v",
+							len(testData.expectedErrors),
+							len(actualErrors),
 						)
 					}
 
-					if expectedTransaction != bitcoinHandle.transactions[0] {
-						t.Errorf(
-							"bitcoin transaction for member [%d] doesn't match first member's\n"+
-								"expected: [%s]\n"+
-								"actual:   [%s]",
-							i,
-							expectedTransaction,
-							bitcoinHandle.transactions[0],
-						)
+					for i, expectedError := range testData.expectedErrors {
+						if !errors.Is(actualErrors[i], expectedError) {
+							t.Errorf(
+								"invalid error for member %d\nexpected: %v\nactual:   %v",
+								i,
+								actualErrors[i],
+								expectedError,
+							)
+						}
 					}
 
+					actualErrorsMutex.Unlock()
+				} else {
+					expectedTransaction := bitcoinHandles[0].transactions[0]
+
+					for i, bitcoinHandle := range bitcoinHandles {
+						if len(bitcoinHandle.transactions) != 1 {
+							t.Errorf(
+								"unexpected number of broadcasted transactions for member [%d]\n"+
+									"expected: [%v]\n"+
+									"actual:   [%v]",
+								i,
+								1,
+								len(bitcoinHandle.transactions),
+							)
+						}
+
+						if expectedTransaction != bitcoinHandle.transactions[0] {
+							t.Errorf(
+								"bitcoin transaction for member [%d] doesn't match first member's\n"+
+									"expected: [%s]\n"+
+									"actual:   [%s]",
+								i,
+								expectedTransaction,
+								bitcoinHandle.transactions[0],
+							)
+						}
+					}
 				}
 			case err := <-errChan:
 				t.Fatalf("unexpected error: %v", err)

@@ -22,7 +22,9 @@ node_modules/
 # Generated files
 *.abi
 abi/
+.DS_Store
 artifacts/
+docs/**/*.html
 
 # Build output
 build/

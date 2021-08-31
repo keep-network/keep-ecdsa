@@ -3,10 +3,15 @@ package chain
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/keep-network/keep-common/pkg/subscription"
 )
+
+// ErrDepositNotFunded is an error returned when a deposit has not been funded.
+var ErrDepositNotFunded = errors.New("deposit not funded")
 
 // TBTCHandle represents handle to the tBTC on-chain application. It extends the
 // BondedECDSAKeepApplicationHandle interface with tBTC-specific functionality.
@@ -105,6 +110,8 @@ type TBTCSystem interface {
 	) ([]*DepositRedemptionRequestedEvent, error)
 
 	// FundingInfo retrieves the funding info for a particular deposit address
+	//
+	// Returns ErrDepositNotFunded error if the deposit has not been funded.
 	FundingInfo(
 		depositAddress string,
 	) (*FundingInfo, error)
@@ -164,16 +171,22 @@ const (
 // ParseUtxoOutpoint parses a 36-byte utxo outpoint into a transaction hash and
 // an output index. The first 32 bytes in reverse represet the transaction
 // hash, and the last 4 bytes are a little-endian represention of the output index.
-func ParseUtxoOutpoint(utxoOutpoint []uint8) (string, uint32) {
-	transactionBytes := utxoOutpoint[:32]
+func ParseUtxoOutpoint(utxoOutpoint []uint8) (string, uint32, error) {
+	if len(utxoOutpoint) != 36 {
+		return "", 0, fmt.Errorf("invalid length of utxo outpoint: %d", len(utxoOutpoint))
+	}
 
 	// the transaction bytes are little-endian, so we need to reverse them before converting them to hex
+	var transactionBytes [32]uint8
+	copy(transactionBytes[:], utxoOutpoint)
 	for i, j := 0, len(transactionBytes)-1; i < j; i, j = i+1, j-1 {
 		transactionBytes[i], transactionBytes[j] = transactionBytes[j], transactionBytes[i]
 	}
-	transactionHash := hex.EncodeToString(transactionBytes)
+	transactionHash := hex.EncodeToString(transactionBytes[:])
+
 	outputIndex := binary.LittleEndian.Uint32(utxoOutpoint[32:])
-	return transactionHash, outputIndex
+
+	return transactionHash, outputIndex, nil
 }
 
 // UtxoValueBytesToUint32 converts utxo value from little endian bytes8 that is

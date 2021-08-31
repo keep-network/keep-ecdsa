@@ -3,6 +3,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"math/big"
 	"time"
 
@@ -956,7 +957,7 @@ func monitorKeepClosedEvents(
 
 	<-keepClosed
 
-	logger.Info("unsubscribing from events on keep closed")
+	logger.Infof("unsubscribing from events on keep [%s] closed", keep.ID())
 }
 
 // monitorKeepTerminatedEvent monitors KeepTerminated event and if that event
@@ -1049,8 +1050,20 @@ func monitorKeepTerminatedEvent(
 							keepsRegistry,
 							derivationIndexStorage,
 						); err != nil {
+							// If the deposit got liquidated before it had been
+							// funded we want to abort the recovery retries.
+							if errors.Is(err, chain.ErrDepositNotFunded) {
+								logger.Warnf(
+									"aborted liquidation recovery for keep [%s]: [%v]",
+									keep.ID(),
+									err,
+								)
+								// Exit without an error to abort retries.
+								return nil
+							}
+
 							logger.Errorf(
-								"failed to handle liquidation recovery for keep [%s]: [%w]",
+								"failed to handle liquidation recovery for keep [%s]: [%v]",
 								keep.ID(),
 								err,
 							)
@@ -1089,5 +1102,5 @@ func monitorKeepTerminatedEvent(
 
 	<-keepTerminated
 
-	logger.Info("unsubscribing from events on keep terminated")
+	logger.Infof("unsubscribing from events on keep [%s] terminated", keep.ID())
 }

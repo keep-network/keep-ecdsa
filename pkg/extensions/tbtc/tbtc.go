@@ -24,7 +24,7 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
-var logger = log.Logger("tbtc-extension")
+var logger = log.Logger("keep-tbtc-extension")
 
 const (
 	// Maximum number of action attempts before giving up and returning
@@ -777,6 +777,11 @@ func (t *tbtc) watchKeepClosed(
 
 	keepClosedSubscription, err := keep.OnKeepClosed(
 		func(_ *chain.KeepClosedEvent) {
+			logger.Infof(
+				"keep closed event received for deposit [%s]",
+				depositAddress,
+			)
+
 			if t.waitKeepNotActiveConfirmation(keep) {
 				signalChan <- struct{}{}
 			}
@@ -788,6 +793,11 @@ func (t *tbtc) watchKeepClosed(
 
 	keepTerminatedSubscription, err := keep.OnKeepTerminated(
 		func(_ *chain.KeepTerminatedEvent) {
+			logger.Infof(
+				"keep terminated event received for deposit [%s]",
+				depositAddress,
+			)
+
 			if t.waitKeepNotActiveConfirmation(keep) {
 				signalChan <- struct{}{}
 			}
