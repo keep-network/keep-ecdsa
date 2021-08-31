@@ -115,7 +115,7 @@ func Initialize(
 			"failed to look up on-chain tBTC application information for "+
 				"chain [%s]; this client WILL NOT ATTEMPT TO OPERATE "+
 				"on the tBTC system",
-			hostChain,
+			hostChain.Name(),
 		)
 	} else {
 		go checkStatusAndRegisterForApplication(ctx, blockCounter, tbtcApplicationHandle)
