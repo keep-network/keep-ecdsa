@@ -13,6 +13,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-common/pkg/subscription"
+	"github.com/keep-network/keep-common/pkg/wrappers"
 	corechain "github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -24,7 +25,6 @@ import (
 	"github.com/keep-network/keep-ecdsa/pkg/extensions/tbtc/recovery"
 	"github.com/keep-network/keep-ecdsa/pkg/node"
 	"github.com/keep-network/keep-ecdsa/pkg/registry"
-	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
 var logger = log.Logger("keep-ecdsa")
@@ -660,7 +660,7 @@ func monitorSigningRequests(
 			)
 
 			go func(event *chain.SignatureRequestedEvent) {
-				err := utils.DoWithDefaultRetry(
+				err := wrappers.DoWithDefaultRetry(
 					clientConfig.GetSigningTimeout(),
 					// TODO: extract the code into a separate function and see if
 					// there is a way to deduplicate common parts with
@@ -779,7 +779,7 @@ func checkAwaitingSignature(
 			latestDigest,
 		)
 
-		err := utils.DoWithDefaultRetry(
+		err := wrappers.DoWithDefaultRetry(
 			clientConfig.GetSigningTimeout(),
 			func(ctx context.Context) error {
 				shouldHandle, err := eventDeduplicator.NotifySigningStarted(
@@ -998,7 +998,7 @@ func monitorKeepTerminatedEvent(
 					}
 					return
 				}
-				err = utils.DoWithDefaultRetry(
+				err = wrappers.DoWithDefaultRetry(
 					tbtcConfig.GetLiquidationRecoveryTimeout(),
 					func(ctx context.Context) error {
 						if shouldHandle := eventDeduplicator.NotifyTerminatingStarted(keep.ID()); !shouldHandle {

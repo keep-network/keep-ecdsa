@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/wrappers"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
 // Deduplicator decides whether the given event should be handled by the
@@ -125,7 +125,7 @@ func (d *Deduplicator) NotifySigningStarted(
 	// been handled.
 	// Repeat the check in case of a small chain reorg or if chain nodes
 	// are out of sync.
-	isAwaitingSignature, err := utils.ConfirmWithTimeoutDefaultBackoff(
+	isAwaitingSignature, err := wrappers.ConfirmWithTimeoutDefaultBackoff(
 		timeout,
 		func(ctx context.Context) (bool, error) {
 			return keep.IsAwaitingSignature(digest)
