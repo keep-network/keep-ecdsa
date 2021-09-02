@@ -260,3 +260,13 @@ contract LPRewardsTBTCSaddle is LPRewards {
         gated = _gated;
     }
 }
+
+/// @title KEEP rewards for the tBTC V2 Saddle liquidity pool.
+/// @dev LP token: https://etherscan.io/address/0x122Eca07139EB368245A29FB702c9ff11E9693B7
+///      Pool: https://saddle.exchange/#/pools/tbtc/deposit
+contract LPRewardsTBTCv2Saddle is LPRewards, LPRewardsTBTCSaddle {
+    constructor(KeepToken keepToken, IERC20 tbtcV2SaddleLPToken)
+        public
+        LPRewardsTBTCSaddle(keepToken, tbtcV2SaddleLPToken)
+    {}
+}
