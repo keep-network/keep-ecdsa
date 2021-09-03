@@ -169,7 +169,7 @@ func (ec *ethereumChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
 func (ec *ethereumChain) WeiBalanceOf(
 	address common.Address,
 ) (*ethereum.Wei, error) {
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelCtx()
 
 	balance, err := ec.client.BalanceAt(ctx, address, nil)
