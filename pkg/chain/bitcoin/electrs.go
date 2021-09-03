@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/keep-ecdsa/pkg/utils"
+	"github.com/keep-network/keep-common/pkg/wrappers"
 )
 
 var logger = log.Logger("keep-bitcoin")
@@ -56,7 +56,7 @@ func (e electrsConnection) Broadcast(transaction string) error {
 		return fmt.Errorf("attempted to call Broadcast with no apiURL")
 	}
 
-	return utils.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
+	return wrappers.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
 		resp, err := e.client.Post(fmt.Sprintf("%s/tx", e.apiURL), "text/plain", strings.NewReader(transaction))
 		if err != nil {
 			return err
@@ -95,7 +95,7 @@ func (e electrsConnection) VbyteFeeFor25Blocks() (int32, error) {
 	}
 
 	var vbyteFee int32
-	err := utils.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
+	err := wrappers.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
 		resp, err := e.client.Get(fmt.Sprintf("%s/fee-estimates", e.apiURL))
 		if err != nil {
 			return err
@@ -145,7 +145,7 @@ func (e electrsConnection) IsAddressUnused(btcAddress string) (bool, error) {
 	}
 
 	isAddressUnused := false
-	err := utils.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
+	err := wrappers.DoWithDefaultRetry(e.timeout, func(ctx context.Context) error {
 		resp, err := e.client.Get(fmt.Sprintf("%s/address/%s/txs", e.apiURL, btcAddress))
 		if err != nil {
 			return err
