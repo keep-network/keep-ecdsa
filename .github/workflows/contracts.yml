@@ -1,4 +1,4 @@
-name: Solidity / keep-ecdsa
+name: Solidity
 
 on:
   schedule:
