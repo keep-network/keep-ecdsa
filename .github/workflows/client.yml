@@ -1,6 +1,8 @@
-name: Go
+name: Go / keep-ecdsa
 
 on:
+  schedule:
+    - cron: "0 0 * * *"
   push:
     branches:
       - main
@@ -44,7 +46,7 @@ jobs:
   client-build-test-publish-ethereum:
     needs: client-detect-changes
     if: |
-      github.event_name == 'push'
+      github.event_name != 'pull_request'
         || needs.client-detect-changes.outputs.path-filter == 'true'
         || (github.event_name == 'workflow_dispatch' 
         && github.event.inputs.environment != 'alfajores')
@@ -147,7 +149,7 @@ jobs:
   client-build-test-publish-celo:
     needs: client-detect-changes
     if: |
-      github.event_name == 'push'
+      github.event_name != 'pull_request'
         || needs.client-detect-changes.outputs.path-filter == 'true'
         || (github.event_name == 'workflow_dispatch' 
         && github.event.inputs.environment == 'alfajores')
