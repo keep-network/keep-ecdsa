@@ -46,7 +46,8 @@ jobs:
   client-build-test-publish-ethereum:
     needs: client-detect-changes
     if: |
-      github.event_name != 'pull_request'
+      github.event_name == 'push'
+        || github.event_name == 'schedule'
         || needs.client-detect-changes.outputs.path-filter == 'true'
         || (github.event_name == 'workflow_dispatch' 
         && github.event.inputs.environment != 'alfajores')
@@ -149,7 +150,8 @@ jobs:
   client-build-test-publish-celo:
     needs: client-detect-changes
     if: |
-      github.event_name != 'pull_request'
+      github.event_name == 'push'
+        || github.event_name == 'schedule'
         || needs.client-detect-changes.outputs.path-filter == 'true'
         || (github.event_name == 'workflow_dispatch' 
         && github.event.inputs.environment == 'alfajores')
