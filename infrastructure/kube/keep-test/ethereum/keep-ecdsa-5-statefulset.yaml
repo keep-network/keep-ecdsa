@@ -47,7 +47,7 @@ spec:
     spec:
       containers:
         - name: keep-ecdsa
-          image: gcr.io/keep-test-f3e0/keep-ecdsa
+          image: gcr.io/keep-test-f3e0/keep-ecdsa-ethereum
           imagePullPolicy: Always
           ports:
             - containerPort: 3919
