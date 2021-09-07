@@ -24,6 +24,10 @@ var defaultBalanceAlertThreshold = celo.WrapWei(
 // check should be triggered.
 const defaultBalanceMonitoringTick = 10 * time.Minute
 
+// defaultBalanceMonitoringRetryTimeout determines the timeout for balance check
+// at each tick.
+const defaultBalanceMonitoringRetryTimeout = 5 * time.Minute
+
 func (cc *celoChain) initializeBalanceMonitoring(
 	ctx context.Context,
 ) {
@@ -43,6 +47,7 @@ func (cc *celoChain) initializeBalanceMonitoring(
 		cc.operatorAddress(),
 		alertThreshold,
 		defaultBalanceMonitoringTick,
+		defaultBalanceMonitoringRetryTimeout,
 	)
 
 	logger.Infof(

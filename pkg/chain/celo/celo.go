@@ -165,7 +165,7 @@ func (cc *celoChain) BlockTimestamp(blockNumber *big.Int) (uint64, error) {
 // weiBalanceOf returns the wei balance of the given address from the latest
 // known block.
 func (cc *celoChain) weiBalanceOf(address common.Address) (*celo.Wei, error) {
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelCtx()
 
 	balance, err := cc.client.BalanceAt(ctx, address, nil)

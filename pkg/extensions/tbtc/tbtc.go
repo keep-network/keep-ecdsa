@@ -19,9 +19,9 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/subscription"
+	"github.com/keep-network/keep-common/pkg/wrappers"
 	corechain "github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-ecdsa/pkg/chain"
-	"github.com/keep-network/keep-ecdsa/pkg/utils"
 )
 
 var logger = log.Logger("keep-tbtc-extension")
@@ -827,7 +827,7 @@ func (t *tbtc) shouldMonitorDeposit(
 		return false
 	}
 
-	hasInitialState, err := utils.ConfirmWithTimeoutDefaultBackoff(
+	hasInitialState, err := wrappers.ConfirmWithTimeoutDefaultBackoff(
 		confirmStateTimeout,
 		func(ctx context.Context) (bool, error) {
 			currentState, err := t.handle.CurrentState(depositAddress)
