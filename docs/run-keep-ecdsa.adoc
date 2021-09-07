@@ -535,13 +535,13 @@ Contract addresses needed to boot a Keep ECDSA client:
 |Address
 
 |BondedECDSAKeepFactory
-|0x3521bFaa52D09Ce6F0cE882a69E59e9386feB676
+|0x3847C6a69D94109d1D3cd777127d709B0427E57f
 
 |TBTCSystem
-|0x3b9072d3F1E3a7af139A9eF2A4f035cBFcf27BaF
+|0xfdF58a07AB18Ffa11927Af454a5dbD6d07ef050d
 
 |tBTC Sortition pool (for <<Authorizations,authorization>>)
-|0x1c56eB39fe8EcF577D79cd586D090239ec25701a
+|0x9D97d46D692E2BF4A24C7986439466E7Fd2A61B5
 |===
 
 == Metrics
