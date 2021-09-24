@@ -41,7 +41,7 @@ type BondedECDSAKeep struct {
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
 	nonceManager      *ethlike.NonceManager
-	miningWaiter      *ethlike.MiningWaiter
+	miningWaiter      *chainutil.MiningWaiter
 	blockCounter      *ethlike.BlockCounter
 
 	transactionMutex *sync.Mutex
@@ -53,7 +53,7 @@ func NewBondedECDSAKeep(
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
 	nonceManager *ethlike.NonceManager,
-	miningWaiter *ethlike.MiningWaiter,
+	miningWaiter *chainutil.MiningWaiter,
 	blockCounter *ethlike.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*BondedECDSAKeep, error) {
@@ -157,16 +157,11 @@ func (becdsak *BondedECDSAKeep) CloseKeep(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.CloseKeep(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, becdsak.errorResolver.ResolveError(
@@ -183,10 +178,7 @@ func (becdsak *BondedECDSAKeep) CloseKeep(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -290,16 +282,11 @@ func (becdsak *BondedECDSAKeep) DistributeERC20Reward(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.DistributeERC20Reward(
-				transactorOptions,
+				newTransactorOptions,
 				_tokenAddress,
 				_value,
 			)
@@ -320,10 +307,7 @@ func (becdsak *BondedECDSAKeep) DistributeERC20Reward(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -429,16 +413,11 @@ func (becdsak *BondedECDSAKeep) DistributeETHReward(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.DistributeETHReward(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, becdsak.errorResolver.ResolveError(
@@ -455,10 +434,7 @@ func (becdsak *BondedECDSAKeep) DistributeETHReward(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -587,16 +563,11 @@ func (becdsak *BondedECDSAKeep) Initialize(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.Initialize(
-				transactorOptions,
+				newTransactorOptions,
 				_owner,
 				_members,
 				_honestThreshold,
@@ -629,10 +600,7 @@ func (becdsak *BondedECDSAKeep) Initialize(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -762,16 +730,11 @@ func (becdsak *BondedECDSAKeep) ReturnPartialSignerBonds(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.ReturnPartialSignerBonds(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, becdsak.errorResolver.ResolveError(
@@ -788,10 +751,7 @@ func (becdsak *BondedECDSAKeep) ReturnPartialSignerBonds(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -885,16 +845,11 @@ func (becdsak *BondedECDSAKeep) SeizeSignerBonds(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.SeizeSignerBonds(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, becdsak.errorResolver.ResolveError(
@@ -911,10 +866,7 @@ func (becdsak *BondedECDSAKeep) SeizeSignerBonds(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1014,16 +966,11 @@ func (becdsak *BondedECDSAKeep) Sign(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.Sign(
-				transactorOptions,
+				newTransactorOptions,
 				_digest,
 			)
 			if err != nil {
@@ -1042,10 +989,7 @@ func (becdsak *BondedECDSAKeep) Sign(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1150,16 +1094,11 @@ func (becdsak *BondedECDSAKeep) SubmitPublicKey(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.SubmitPublicKey(
-				transactorOptions,
+				newTransactorOptions,
 				_publicKey,
 			)
 			if err != nil {
@@ -1178,10 +1117,7 @@ func (becdsak *BondedECDSAKeep) SubmitPublicKey(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1294,16 +1230,11 @@ func (becdsak *BondedECDSAKeep) SubmitSignature(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.SubmitSignature(
-				transactorOptions,
+				newTransactorOptions,
 				_r,
 				_s,
 				_recoveryID,
@@ -1326,10 +1257,7 @@ func (becdsak *BondedECDSAKeep) SubmitSignature(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1458,16 +1386,11 @@ func (becdsak *BondedECDSAKeep) SubmitSignatureFraud(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.SubmitSignatureFraud(
-				transactorOptions,
+				newTransactorOptions,
 				_v,
 				_r,
 				_s,
@@ -1494,10 +1417,7 @@ func (becdsak *BondedECDSAKeep) SubmitSignatureFraud(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1618,16 +1538,11 @@ func (becdsak *BondedECDSAKeep) Withdraw(
 	)
 
 	go becdsak.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := becdsak.contract.Withdraw(
-				transactorOptions,
+				newTransactorOptions,
 				_member,
 			)
 			if err != nil {
@@ -1646,10 +1561,7 @@ func (becdsak *BondedECDSAKeep) Withdraw(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
