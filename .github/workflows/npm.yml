@@ -42,7 +42,7 @@ jobs:
       - name: Resolve latest contracts
         working-directory: ./solidity
         run: |
-          npm update \
+          npm update --save-exact \
             @keep-network/keep-core \
             @keep-network/sortition-pools
 
