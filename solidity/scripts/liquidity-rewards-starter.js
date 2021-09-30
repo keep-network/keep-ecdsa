@@ -2,12 +2,14 @@ const LPRewardsTBTCETH = artifacts.require("LPRewardsTBTCETH")
 const LPRewardsKEEPETH = artifacts.require("LPRewardsKEEPETH")
 const LPRewardsKEEPTBTC = artifacts.require("LPRewardsKEEPTBTC")
 const LPRewardsTBTCSaddle = artifacts.require("LPRewardsTBTCSaddle")
+const LPRewardsTBTCv2Saddle = artifacts.require("LPRewardsTBTCv2Saddle")
 
 const TestToken = artifacts.require("./test/TestToken")
 const KeepToken = artifacts.require(
   "@keep-network/keep-core/build/truffle/KeepToken"
 )
-const { KeepTokenAddress } = require("../migrations/external-contracts")
+const { contracts } = require("@keep-network/common.js")
+const { readExternalContractAddress } = contracts
 
 const initLPRewardContract = async (
   LPRewardsContract,
@@ -48,8 +50,15 @@ const getWrappedTokenContract = async (lpRewardsContract) => {
 
 module.exports = async function () {
   try {
+    const networkID = await web3.eth.net.getId()
+
     const accounts = await web3.eth.getAccounts()
     const lpRewardsOwner = accounts[0]
+    const KeepTokenAddress = readExternalContractAddress(
+      "@keep-network/keep-core",
+      "KeepToken",
+      networkID
+    )
     const keepToken = await KeepToken.at(KeepTokenAddress)
     const reward = web3.utils.toWei("1000000")
     const LPRewardsContracts = [
@@ -57,6 +66,7 @@ module.exports = async function () {
       LPRewardsTBTCETH,
       LPRewardsKEEPTBTC,
       LPRewardsTBTCSaddle,
+      LPRewardsTBTCv2Saddle,
     ]
 
     for (const LPRewardsContract of LPRewardsContracts) {
