@@ -174,7 +174,7 @@ func (becdsakf *BondedECDSAKeepFactory) BeaconCallback(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakf.contract.BeaconCallback(
@@ -312,7 +312,7 @@ func (becdsakf *BondedECDSAKeepFactory) CreateSortitionPool(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakf.contract.CreateSortitionPool(
@@ -450,7 +450,7 @@ func (becdsakf *BondedECDSAKeepFactory) IsRecognized(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakf.contract.IsRecognized(
@@ -608,7 +608,7 @@ func (becdsakf *BondedECDSAKeepFactory) OpenKeep(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakf.contract.OpenKeep(
@@ -771,7 +771,7 @@ func (becdsakf *BondedECDSAKeepFactory) RegisterMemberCandidate(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakf.contract.RegisterMemberCandidate(
@@ -906,7 +906,7 @@ func (becdsakf *BondedECDSAKeepFactory) RequestNewGroupSelectionSeed(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakf.contract.RequestNewGroupSelectionSeed(
@@ -1046,7 +1046,7 @@ func (becdsakf *BondedECDSAKeepFactory) SetMinimumBondableValue(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakf.contract.SetMinimumBondableValue(
@@ -1200,7 +1200,7 @@ func (becdsakf *BondedECDSAKeepFactory) UpdateOperatorStatus(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakf.contract.UpdateOperatorStatus(

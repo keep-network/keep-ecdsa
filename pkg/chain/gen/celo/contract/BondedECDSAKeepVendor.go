@@ -167,7 +167,7 @@ func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgrade(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakv.contract.CompleteFactoryUpgrade(
@@ -302,7 +302,7 @@ func (becdsakv *BondedECDSAKeepVendor) Initialize(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakv.contract.Initialize(
@@ -446,7 +446,7 @@ func (becdsakv *BondedECDSAKeepVendor) UpgradeFactory(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsakv.contract.UpgradeFactory(

@@ -167,7 +167,7 @@ func (becdsak *BondedECDSAKeep) CloseKeep(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.CloseKeep(
@@ -302,7 +302,7 @@ func (becdsak *BondedECDSAKeep) DistributeERC20Reward(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.DistributeERC20Reward(
@@ -443,7 +443,7 @@ func (becdsak *BondedECDSAKeep) DistributeETHReward(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.DistributeETHReward(
@@ -603,7 +603,7 @@ func (becdsak *BondedECDSAKeep) Initialize(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.Initialize(
@@ -780,7 +780,7 @@ func (becdsak *BondedECDSAKeep) ReturnPartialSignerBonds(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.ReturnPartialSignerBonds(
@@ -905,7 +905,7 @@ func (becdsak *BondedECDSAKeep) SeizeSignerBonds(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.SeizeSignerBonds(
@@ -1036,7 +1036,7 @@ func (becdsak *BondedECDSAKeep) Sign(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.Sign(
@@ -1174,7 +1174,7 @@ func (becdsak *BondedECDSAKeep) SubmitPublicKey(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.SubmitPublicKey(
@@ -1320,7 +1320,7 @@ func (becdsak *BondedECDSAKeep) SubmitSignature(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.SubmitSignature(
@@ -1486,7 +1486,7 @@ func (becdsak *BondedECDSAKeep) SubmitSignatureFraud(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.SubmitSignatureFraud(
@@ -1648,7 +1648,7 @@ func (becdsak *BondedECDSAKeep) Withdraw(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := becdsak.contract.Withdraw(
