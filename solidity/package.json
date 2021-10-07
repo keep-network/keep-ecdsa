@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/keep-ecdsa",
-  "version": "1.7.0-dev",
+  "version": "1.8.0-dev",
   "description": "Smart contracts for ECDSA Keep",
   "repository": "ssh://git@github.com/keep-network/keep-ecdsa.git",
   "files": [
