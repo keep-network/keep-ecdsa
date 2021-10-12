@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
-	"time"
 
 	"github.com/celo-org/celo-blockchain/common"
 
@@ -29,22 +28,6 @@ const (
 	TBTCSystemContractName             = "TBTCSystem"
 )
 
-// TODO: revisit those constants values and adjust them to Celo blockchain.
-var (
-	// DefaultMiningCheckInterval is the default interval in which transaction
-	// mining status is checked. If the transaction is not mined within this
-	// time, the gas price is increased and transaction is resubmitted.
-	// This value can be overwritten in the configuration file.
-	DefaultMiningCheckInterval = 60 * time.Second
-
-	// DefaultMaxGasPrice specifies the default maximum gas price the client is
-	// willing to pay for the transaction to be mined. The offered transaction
-	// gas price can not be higher than the max gas price value. If the maximum
-	// allowed gas price is reached, no further resubmission attempts are
-	// performed. This value can be overwritten in the configuration file.
-	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
-)
-
 // celoChain is an implementation of Celo blockchain interface.
 type celoChain struct {
 	config                         *celo.Config
@@ -54,7 +37,7 @@ type celoChain struct {
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	tbtcSystemAddress              common.Address
 	blockCounter                   *ethlike.BlockCounter
-	miningWaiter                   *ethlike.MiningWaiter
+	miningWaiter                   *celoutil.MiningWaiter
 	nonceManager                   *ethlike.NonceManager
 
 	// transactionMutex allows interested parties to forcibly serialize
@@ -98,23 +81,7 @@ func Connect(
 
 	nonceManager := celoutil.NewNonceManager(wrappedClient, accountKey.Address)
 
-	checkInterval := DefaultMiningCheckInterval
-	maxGasPrice := DefaultMaxGasPrice
-	if config.MiningCheckInterval != 0 {
-		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
-	}
-	if config.MaxGasPrice != nil {
-		maxGasPrice = config.MaxGasPrice.Int
-	}
-
-	logger.Infof("using [%v] mining check interval", checkInterval)
-	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-
-	miningWaiter := celoutil.NewMiningWaiter(
-		wrappedClient,
-		checkInterval,
-		maxGasPrice,
-	)
+	miningWaiter := celoutil.NewMiningWaiter(wrappedClient, *config)
 
 	blockCounter, err := celoutil.NewBlockCounter(wrappedClient)
 	if err != nil {

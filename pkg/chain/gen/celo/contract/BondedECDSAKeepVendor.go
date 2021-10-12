@@ -41,7 +41,7 @@ type BondedECDSAKeepVendor struct {
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
 	nonceManager      *ethlike.NonceManager
-	miningWaiter      *ethlike.MiningWaiter
+	miningWaiter      *chainutil.MiningWaiter
 	blockCounter      *ethlike.BlockCounter
 
 	transactionMutex *sync.Mutex
@@ -53,7 +53,7 @@ func NewBondedECDSAKeepVendor(
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
 	nonceManager *ethlike.NonceManager,
-	miningWaiter *ethlike.MiningWaiter,
+	miningWaiter *chainutil.MiningWaiter,
 	blockCounter *ethlike.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*BondedECDSAKeepVendor, error) {
@@ -157,16 +157,21 @@ func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgrade(
 	)
 
 	go becdsakv.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
 
 			transaction, err := becdsakv.contract.CompleteFactoryUpgrade(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, becdsakv.errorResolver.ResolveError(
@@ -183,10 +188,7 @@ func (becdsakv *BondedECDSAKeepVendor) CompleteFactoryUpgrade(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -290,16 +292,21 @@ func (becdsakv *BondedECDSAKeepVendor) Initialize(
 	)
 
 	go becdsakv.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
 
 			transaction, err := becdsakv.contract.Initialize(
-				transactorOptions,
+				newTransactorOptions,
 				registryAddress,
 				factory,
 			)
@@ -320,10 +327,7 @@ func (becdsakv *BondedECDSAKeepVendor) Initialize(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -432,16 +436,21 @@ func (becdsakv *BondedECDSAKeepVendor) UpgradeFactory(
 	)
 
 	go becdsakv.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
 
 			transaction, err := becdsakv.contract.UpgradeFactory(
-				transactorOptions,
+				newTransactorOptions,
 				_factory,
 			)
 			if err != nil {
@@ -460,10 +469,7 @@ func (becdsakv *BondedECDSAKeepVendor) UpgradeFactory(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 

@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/celo-org/celo-blockchain/common"
 	"github.com/celo-org/celo-blockchain/common/hexutil"
@@ -1245,20 +1244,7 @@ func initializeBondedECDSAKeepFactory(c *cli.Context) (*contract.BondedECDSAKeep
 		)
 	}
 
-	checkInterval := cmd.DefaultMiningCheckInterval
-	maxGasPrice := cmd.DefaultMaxGasPrice
-	if config.MiningCheckInterval != 0 {
-		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
-	}
-	if config.MaxGasPrice != nil {
-		maxGasPrice = config.MaxGasPrice.Int
-	}
-
-	miningWaiter := chainutil.NewMiningWaiter(
-		client,
-		checkInterval,
-		maxGasPrice,
-	)
+	miningWaiter := chainutil.NewMiningWaiter(client, config)
 
 	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {

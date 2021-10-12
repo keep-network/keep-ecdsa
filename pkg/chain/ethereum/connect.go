@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
-	"time"
 
 	"github.com/keep-network/keep-common/pkg/rate"
 
@@ -29,21 +28,6 @@ const (
 	TBTCSystemContractName             = "TBTCSystem"
 )
 
-var (
-	// DefaultMiningCheckInterval is the default interval in which transaction
-	// mining status is checked. If the transaction is not mined within this
-	// time, the gas price is increased and transaction is resubmitted.
-	// This value can be overwritten in the configuration file.
-	DefaultMiningCheckInterval = 60 * time.Second
-
-	// DefaultMaxGasPrice specifies the default maximum gas price the client is
-	// willing to pay for the transaction to be mined. The offered transaction
-	// gas price can not be higher than the max gas price value. If the maximum
-	// allowed gas price is reached, no further resubmission attempts are
-	// performed. This value can be overwritten in the configuration file.
-	DefaultMaxGasPrice = big.NewInt(1000000000000) // 1000 Gwei
-)
-
 // ethereumChain is an implementation of ethereum blockchain interface.
 type ethereumChain struct {
 	config                         *ethereum.Config
@@ -53,7 +37,7 @@ type ethereumChain struct {
 	bondedECDSAKeepFactoryContract *contract.BondedECDSAKeepFactory
 	tbtcSystemAddress              common.Address
 	blockCounter                   *ethlike.BlockCounter
-	miningWaiter                   *ethlike.MiningWaiter
+	miningWaiter                   *ethutil.MiningWaiter
 	nonceManager                   *ethlike.NonceManager
 
 	// transactionMutex allows interested parties to forcibly serialize
@@ -97,23 +81,7 @@ func Connect(
 
 	nonceManager := ethutil.NewNonceManager(wrappedClient, accountKey.Address)
 
-	checkInterval := DefaultMiningCheckInterval
-	maxGasPrice := DefaultMaxGasPrice
-	if config.MiningCheckInterval != 0 {
-		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
-	}
-	if config.MaxGasPrice != nil {
-		maxGasPrice = config.MaxGasPrice.Int
-	}
-
-	logger.Infof("using [%v] mining check interval", checkInterval)
-	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-
-	miningWaiter := ethutil.NewMiningWaiter(
-		wrappedClient,
-		checkInterval,
-		maxGasPrice,
-	)
+	miningWaiter := ethutil.NewMiningWaiter(wrappedClient, *config)
 
 	blockCounter, err := ethutil.NewBlockCounter(wrappedClient)
 	if err != nil {
