@@ -21,7 +21,7 @@ require (
 	github.com/google/go-cmp v0.5.4
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
 	github.com/ipfs/go-log v1.0.4
-	github.com/keep-network/keep-common v1.7.1-0.20211004182652-9b7140698f46
+	github.com/keep-network/keep-common v1.7.1-0.20211012131917-7102d7b9c6a0
 	github.com/keep-network/keep-core v1.3.2-0.20211005093647-8e5d036364fa
 	github.com/keep-network/tbtc v1.1.1-0.20211005102550-e0f035c575a2
 	github.com/pkg/errors v0.9.1

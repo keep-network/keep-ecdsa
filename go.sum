@@ -484,6 +484,8 @@ github.com/keep-network/keep-common v1.7.1-0.20211004103702-0975a955b3bb h1:wjCt
 github.com/keep-network/keep-common v1.7.1-0.20211004103702-0975a955b3bb/go.mod h1:g4RTDmhQMgwnlkU5bzW6cSz9dM+0UiQDPtow5NWdYbc=
 github.com/keep-network/keep-common v1.7.1-0.20211004182652-9b7140698f46 h1:cY3+MWnDUdkJExvuUQisf22MmGUrlj09sGDyTY6/6OY=
 github.com/keep-network/keep-common v1.7.1-0.20211004182652-9b7140698f46/go.mod h1:g4RTDmhQMgwnlkU5bzW6cSz9dM+0UiQDPtow5NWdYbc=
+github.com/keep-network/keep-common v1.7.1-0.20211012131917-7102d7b9c6a0 h1:pQ6IV5wK1v5GESbLUQlQASCBorc13FJHFYoO1O7ftNU=
+github.com/keep-network/keep-common v1.7.1-0.20211012131917-7102d7b9c6a0/go.mod h1:g4RTDmhQMgwnlkU5bzW6cSz9dM+0UiQDPtow5NWdYbc=
 github.com/keep-network/keep-core v1.3.2-0.20210621132129-edc5dd03dad6 h1:bKgD8Jj2ujM5IspWIn2jgIPRFbrfQZPR3MBXaMVs3eY=
 github.com/keep-network/keep-core v1.3.2-0.20210621132129-edc5dd03dad6/go.mod h1:sMjz0L9L1mTUqi0se3GWXzU4IhDvGjS+aXNuhctBZeM=
 github.com/keep-network/keep-core v1.3.2-0.20211004104313-cf419511bae3 h1:/aEeR4v6o226W3w3Z0M0p6q0HVDRQux52NaWFN6ihCY=
