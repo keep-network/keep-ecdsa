@@ -53969,8 +53969,8 @@
       "creationBlock": 12292487,
       "creationTimestamp": 1619127534,
       "status": {
-        "name": "active",
-        "timestamp": 1619127534
+        "name": "closed",
+        "timestamp": 1633916277
       }
     },
     {
@@ -56902,8 +56902,8 @@
       "creationBlock": 12939632,
       "creationTimestamp": 1627821260,
       "status": {
-        "name": "active",
-        "timestamp": 1627821260
+        "name": "closed",
+        "timestamp": 1633726145
       }
     },
     {
@@ -57086,8 +57086,8 @@
       "creationBlock": 12944747,
       "creationTimestamp": 1627890620,
       "status": {
-        "name": "active",
-        "timestamp": 1627890620
+        "name": "closed",
+        "timestamp": 1633733377
       }
     },
     {
@@ -58773,8 +58773,9 @@
       "creationBlock": 13344585,
       "creationTimestamp": 1633242022,
       "status": {
-        "name": "active",
-        "timestamp": 1633242022
+        "name": "terminated",
+        "timestamp": 1633776256,
+        "cause": "keygen-fail"
       }
     },
     {
@@ -58819,7 +58820,35 @@
         "name": "active",
         "timestamp": 1633639453
       }
+    },
+    {
+      "address": "0x313C2eAa6046b578fD1492e6557bCeD8476ef90F",
+      "members": [
+        "0x2eBE08379f4fD866E871A9b9E1d5C695154C6A9F",
+        "0xb7c561e2069aCaE2c4480111B1606790BB4E13fE",
+        "0x9bD818Ab6ACC974f2Cf2BD2EBA7a250126Accb9F"
+      ],
+      "creationBlock": 13416743,
+      "creationTimestamp": 1634220174,
+      "status": {
+        "name": "active",
+        "timestamp": 1634220174
+      }
+    },
+    {
+      "address": "0x7088DD4E46eA407B682491D7CAC81B5AC8bfec9f",
+      "members": [
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0xABFB52f4CfAC3e6631c19a7e4Aa752110E1187B5",
+        "0x7E6332d18719a5463d3867a1a892359509589a3d"
+      ],
+      "creationBlock": 13384077,
+      "creationTimestamp": 1633776330,
+      "status": {
+        "name": "active",
+        "timestamp": 1633776330
+      }
     }
   ],
-  "lastRefreshBlock": 13374028
+  "lastRefreshBlock": 13416743
 }
