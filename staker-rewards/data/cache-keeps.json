@@ -58848,7 +58848,21 @@
         "name": "active",
         "timestamp": 1633776330
       }
+    },
+    {
+      "address": "0x67F8E238452ef65B642f9098369bBb62B27ec5Ad",
+      "members": [
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0xD52BfE62a163eB4eC8FC98f06eD3f02695ae491d",
+        "0xBDE07f1cA107Ef319b0Bb26eBF1d0a5b4c97ffc1"
+      ],
+      "creationBlock": 13491389,
+      "creationTimestamp": 1635229963,
+      "status": {
+        "name": "active",
+        "timestamp": 1635229963
+      }
     }
   ],
-  "lastRefreshBlock": 13416743
+  "lastRefreshBlock": 13491389
 }
