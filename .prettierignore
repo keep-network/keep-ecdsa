@@ -3,4 +3,4 @@ docs/**/*.html
 
 # Following directories have their own formatting configuration:
 solidity/
-staker-rewards/
+staker-rewards/merkle-distributor
