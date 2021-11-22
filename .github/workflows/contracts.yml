@@ -131,11 +131,21 @@ jobs:
           query: |
             keep-core-contracts-version = github.com/keep-network/keep-core/solidity-v1#version
 
+      # Newest version of `sortition-pools` is missing some of the contracts
+      # that are needed for `keep-ecdsa` deployment (due to migration to `v2`).
+      # Below we are hardcoding usage of the last version that had the needed
+      # contracts.
       - name: Resolve latest contracts
         run: |
-          npm update @keep-network/sortition-pools
+          npm install --save-exact @keep-network/sortition-pools@1.2.0-dev.1
           npm install --save-exact \
             @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-contracts-version }}
+
+      # - name: Resolve latest contracts
+      #   run: |
+      #     npm update @keep-network/sortition-pools
+      #     npm install --save-exact \
+      #       @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-contracts-version }}
 
       - name: Migrate contracts on Ethereum
         if: github.event.inputs.environment != 'alfajores'
