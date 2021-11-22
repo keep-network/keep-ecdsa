@@ -56,7 +56,7 @@ jobs:
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
           query: |
-            keep-core-contracts-version = github.com/keep-network/keep-core/solidity#version
+            keep-core-contracts-version = github.com/keep-network/keep-core/solidity-v1#version
             keep-ecdsa-contracts-version = github.com/keep-network/keep-ecdsa/solidity#version
             tbtc-contracts-version = github.com/keep-network/tbtc/solidity#version
 

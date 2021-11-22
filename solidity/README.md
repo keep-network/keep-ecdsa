@@ -27,7 +27,7 @@ after running migrations in `keep-core` project.
 To fetch required contracts addresses from local `keep-core` project use the following
 commands:
 
-- in `keep-core/solidity` directory execute: `npm link`,
+- in `keep-core/solidity-v1` directory execute: `npm link`,
 - in `keep-ecdsa/solidity` directory execute: `npm link @keep-network/keep-core`.
 
 Remember that migration artifacts have to be available in `artifacts` directory. Truffle
