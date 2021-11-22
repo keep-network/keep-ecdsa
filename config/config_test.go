@@ -40,8 +40,8 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.URLRPC },
 			expectedValue: "http://192.168.0.158:8545",
 		},
-		"Ethereum.MaxGasPrice": {
-			readValueFunc: func(c *Config) interface{} { return c.Ethereum.MaxGasPrice.Int },
+		"Ethereum.MaxGasFeeCap": {
+			readValueFunc: func(c *Config) interface{} { return c.Ethereum.MaxGasFeeCap.Int },
 			expectedValue: big.NewInt(140000000000),
 		},
 		"Ethereum.BalanceAlertThreshold": {

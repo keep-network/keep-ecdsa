@@ -1052,6 +1052,162 @@
           "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
         }
       ]
+    },
+    {
+      "hash": "0xd85d560c5900f8d248a092e27454d17fd5883ab45fcc6a6c0d41cce4d75b828c",
+      "from": "0xdd08121f4c80182c4748d12140477376324e2c93",
+      "to": "0x27321f84704a599ab740281e285cc4463d89a3d5",
+      "block_number": 13277955,
+      "method": "deauthorizeSortitionPoolContract",
+      "decoded_input": [
+        {
+          "soltype": {
+            "name": "_operator",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xe26e2d93bbc8fde0e1e3b290fc927fb374e7e34e"
+        },
+        {
+          "soltype": {
+            "name": "_poolAddress",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
+        }
+      ]
+    },
+    {
+      "hash": "0xa55cf8894b7da8df3d342ae0e203bfb4ae51e504eca912804c91523678013763",
+      "from": "0x3101927deec27a2bfa6c4a6316e3a221f631db91",
+      "to": "0x27321f84704a599ab740281e285cc4463d89a3d5",
+      "block_number": 13319266,
+      "method": "deauthorizeSortitionPoolContract",
+      "decoded_input": [
+        {
+          "soltype": {
+            "name": "_operator",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0x3101927deec27a2bfa6c4a6316e3a221f631db91"
+        },
+        {
+          "soltype": {
+            "name": "_poolAddress",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
+        }
+      ]
+    },
+    {
+      "hash": "0xabe128e17e53bc0c76cfd845c856167ae15844d20f1215c13f3269ab76800882",
+      "from": "0x7ecd7b098935ed7e72b893a68f82198c27aacbd4",
+      "to": "0x27321f84704a599ab740281e285cc4463d89a3d5",
+      "block_number": 13393302,
+      "method": "deauthorizeSortitionPoolContract",
+      "decoded_input": [
+        {
+          "soltype": {
+            "name": "_operator",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xf1de9490bf7298b5f350ce74332ad7cf8d5cb181"
+        },
+        {
+          "soltype": {
+            "name": "_poolAddress",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
+        }
+      ]
+    },
+    {
+      "hash": "0x7facb4e09bcab4b3f690b9dfb593ce3ffd948c8ed50e92f78d77e96fc2690363",
+      "from": "0x575f7bfd3d5eabaeb6cd1e2710819a5b19753a84",
+      "to": "0x27321f84704a599ab740281e285cc4463d89a3d5",
+      "block_number": 13456324,
+      "method": "deauthorizeSortitionPoolContract",
+      "decoded_input": [
+        {
+          "soltype": {
+            "name": "_operator",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0x575f7bfd3d5eabaeb6cd1e2710819a5b19753a84"
+        },
+        {
+          "soltype": {
+            "name": "_poolAddress",
+            "type": "address",
+            "storage_location": "default",
+            "components": null,
+            "offset": 0,
+            "index": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "indexed": false,
+            "simple_type": {
+              "type": "address"
+            }
+          },
+          "value": "0xa3748633c6786e1842b5cc44fa43db1ecc710501"
+        }
+      ]
     }
   ]
 }

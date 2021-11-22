@@ -26,6 +26,7 @@ const LPRewardsTBTCETH = artifacts.require("LPRewardsTBTCETH")
 const LPRewardsKEEPETH = artifacts.require("LPRewardsKEEPETH")
 const LPRewardsKEEPTBTC = artifacts.require("LPRewardsKEEPTBTC")
 const LPRewardsTBTCSaddle = artifacts.require("LPRewardsTBTCSaddle")
+const LPRewardsTBTCv2Saddle = artifacts.require("LPRewardsTBTCv2Saddle")
 const TestToken = artifacts.require("./test/TestToken")
 const ECDSARewards = artifacts.require("ECDSARewards")
 const ECDSARewardsDistributor = artifacts.require("ECDSARewardsDistributor")
@@ -163,6 +164,13 @@ module.exports = async function (deployer, network) {
     LPRewardsTBTCSaddle,
     KeepTokenAddress,
     WrappedTokenSaddle.address
+  )
+
+  const WrappedTokenTBTCv2Saddle = await deployer.deploy(TestToken)
+  await deployer.deploy(
+    LPRewardsTBTCv2Saddle,
+    KeepTokenAddress,
+    WrappedTokenTBTCv2Saddle.address
   )
 
   // ECDSA Rewards

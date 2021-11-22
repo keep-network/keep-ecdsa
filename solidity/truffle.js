@@ -71,4 +71,10 @@ module.exports = {
       version: "0.5.17", // Fetch exact version from solc-bin (default: truffle's version)
     },
   },
+
+  plugins: ["truffle-plugin-verify"],
+
+  api_keys: {
+    etherscan: process.env.ETHERSCAN_API_KEY,
+  },
 }
