@@ -38102,8 +38102,8 @@
       "creationBlock": 11275620,
       "creationTimestamp": 1605618420,
       "status": {
-        "name": "active",
-        "timestamp": 1605618420
+        "name": "closed",
+        "timestamp": 1637912084
       }
     },
     {
@@ -58919,7 +58919,21 @@
         "name": "active",
         "timestamp": 1637302502
       }
+    },
+    {
+      "address": "0x3E153612cB509cFe4B4cD3959539017565212019",
+      "members": [
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0x6dAfE16b14c95eB99c64e8d4E5435F7574B2825c",
+        "0x7E6332d18719a5463d3867a1a892359509589a3d"
+      ],
+      "creationBlock": 13685911,
+      "creationTimestamp": 1637876477,
+      "status": {
+        "name": "active",
+        "timestamp": 1637876477
+      }
     }
   ],
-  "lastRefreshBlock": 13644012
+  "lastRefreshBlock": 13685911
 }
