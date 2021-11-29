@@ -129,7 +129,7 @@ jobs:
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
           query: |
-            keep-core-contracts-version = github.com/keep-network/keep-core/solidity#version
+            keep-core-contracts-version = github.com/keep-network/keep-core/solidity-v1#version
 
       - name: Resolve latest contracts
         run: |
