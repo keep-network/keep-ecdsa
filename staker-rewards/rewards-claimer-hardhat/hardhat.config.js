@@ -167,8 +167,8 @@ task(
         return unclaimedMerkleObjects[mrklRootKey][operatorAddress].amount
       }
     )
-    // usually last period is in git but not on chain
-    unclaimedAmounts = unclaimedAmounts.slice(0, unclaimedAmounts.length - 2)
+    // NOTE: usually last period is in git but not on chain
+    unclaimedAmounts = unclaimedAmounts.slice(0, unclaimedAmounts.length)
     const claimAmountSum = unclaimedAmounts.reduce(
       bigNumberSum,
       BigNumber.from(0)
@@ -273,8 +273,8 @@ task("claim-ecdsa-rewards", "Calls target contract multiple times")
         ],
       }
     })
-    // usually last period is in git but not on chain
-    const slicedCalls = calls.slice(0, calls.length - 2)
+    // NOTE: usually last period is in git but not on chain
+    const slicedCalls = calls.slice(0, calls.length)
 
     const mcData = multicallAggregate(slicedCalls, multicallConfig)
 
