@@ -8,6 +8,7 @@ replace (
 	github.com/btcsuite/btcd => github.com/keep-network/btcd v0.0.0-20190427004231-96897255fd17
 	github.com/btcsuite/btcutil => github.com/keep-network/btcutil v0.0.0-20210527170813-e2ba6805a890
 	github.com/urfave/cli => github.com/keep-network/cli v1.20.0
+	github.com/binance-chain/tss-lib => github.com/keep-network/tss-lib v1.3.3-0.20211215091450-8afce0f07c9f // Branch: v1.3.3.keep
 )
 
 require (

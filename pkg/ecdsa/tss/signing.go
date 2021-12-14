@@ -119,6 +119,7 @@ func (s *ThresholdSigner) initializeSigningParty(
 	}
 
 	params := tss.NewParameters(
+		tss.EC(),
 		tss.NewPeerContext(tss.SortPartyIDs(groupPartiesIDs)),
 		currentPartyID,
 		len(groupPartiesIDs),

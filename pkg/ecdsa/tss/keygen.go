@@ -171,6 +171,7 @@ func initializeKeyGenerationParty(
 	}
 
 	params := tss.NewParameters(
+		tss.EC(),
 		tss.NewPeerContext(tss.SortPartyIDs(groupPartiesIDs)),
 		currentPartyID,
 		len(groupPartiesIDs),
