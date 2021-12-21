@@ -46979,8 +46979,8 @@
       "creationBlock": 11530826,
       "creationTimestamp": 1609005515,
       "status": {
-        "name": "active",
-        "timestamp": 1609005515
+        "name": "closed",
+        "timestamp": 1638552779
       }
     },
     {
@@ -52716,8 +52716,8 @@
       "creationBlock": 11925676,
       "creationTimestamp": 1614247279,
       "status": {
-        "name": "active",
-        "timestamp": 1614247279
+        "name": "closed",
+        "timestamp": 1638540149
       }
     },
     {
@@ -53676,8 +53676,8 @@
       "creationBlock": 12245820,
       "creationTimestamp": 1618505235,
       "status": {
-        "name": "active",
-        "timestamp": 1618505235
+        "name": "closed",
+        "timestamp": 1638926134
       }
     },
     {
@@ -55745,8 +55745,8 @@
       "creationBlock": 12672054,
       "creationTimestamp": 1624203930,
       "status": {
-        "name": "active",
-        "timestamp": 1624203930
+        "name": "closed",
+        "timestamp": 1639513863
       }
     },
     {
@@ -59047,8 +59047,9 @@
       "creationBlock": 13732518,
       "creationTimestamp": 1638519917,
       "status": {
-        "name": "active",
-        "timestamp": 1638519917
+        "name": "terminated",
+        "timestamp": 1638539108,
+        "cause": "keygen-fail"
       }
     },
     {
@@ -59079,7 +59080,91 @@
         "name": "active",
         "timestamp": 1638520729
       }
+    },
+    {
+      "address": "0xc93Bab534F31326DA4b392C57f980f29CD713227",
+      "members": [
+        "0x81e1B56db174a935fe81E4b9839d6D92528090f4",
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0xA543441313F7FA7F9215B84854E6DC8386B93383"
+      ],
+      "creationBlock": 13733991,
+      "creationTimestamp": 1638540220,
+      "status": {
+        "name": "active",
+        "timestamp": 1638540220
+      }
+    },
+    {
+      "address": "0x23A1B012094C3e8Ab76A3d1eF92a91Cd8cDd9AD9",
+      "members": [
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0x81e1B56db174a935fe81E4b9839d6D92528090f4",
+        "0xA543441313F7FA7F9215B84854E6DC8386B93383"
+      ],
+      "creationBlock": 13733987,
+      "creationTimestamp": 1638540182,
+      "status": {
+        "name": "active",
+        "timestamp": 1638540182
+      }
+    },
+    {
+      "address": "0xe4c8b67f31a7c329Ea5bb4BB7cAa128BB8319A06",
+      "members": [
+        "0xA543441313F7FA7F9215B84854E6DC8386B93383",
+        "0x4F4f0D0dfd93513B3f4Cb116Fe9d0A005466F725",
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8"
+      ],
+      "creationBlock": 13733989,
+      "creationTimestamp": 1638540193,
+      "status": {
+        "name": "active",
+        "timestamp": 1638540193
+      }
+    },
+    {
+      "address": "0x45e28A4C31A9208918611c724993342506a158E0",
+      "members": [
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8",
+        "0x81e1B56db174a935fe81E4b9839d6D92528090f4",
+        "0xA543441313F7FA7F9215B84854E6DC8386B93383"
+      ],
+      "creationBlock": 13734881,
+      "creationTimestamp": 1638552779,
+      "status": {
+        "name": "closed",
+        "timestamp": 1638757832
+      }
+    },
+    {
+      "address": "0x493614f863D060B17A91A883882dA063e5d27Eb0",
+      "members": [
+        "0xA543441313F7FA7F9215B84854E6DC8386B93383",
+        "0x81e1B56db174a935fe81E4b9839d6D92528090f4",
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8"
+      ],
+      "creationBlock": 13734887,
+      "creationTimestamp": 1638552881,
+      "status": {
+        "name": "active",
+        "timestamp": 1638552881
+      }
+    },
+    {
+      "address": "0x502654B4Fe0d2A11F0ef0C6877f15B2934e6ED81",
+      "members": [
+        "0x81e1B56db174a935fe81E4b9839d6D92528090f4",
+        "0xA543441313F7FA7F9215B84854E6DC8386B93383",
+        "0xB8A3AE209d153560993BFd8178E60F09B1c682E8"
+      ],
+      "creationBlock": 13749672,
+      "creationTimestamp": 1638758060,
+      "status": {
+        "name": "active",
+        "timestamp": 1638758060
+      }
     }
   ],
-  "lastRefreshBlock": 13732571
+  "lastRefreshBlock": 13749672
 }
