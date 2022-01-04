@@ -15,10 +15,7 @@ import (
 )
 
 // PasswordEnvVariable environment variable name for ethereum key password.
-// #nosec G101 (look for hardcoded credentials)
-// This line doesn't contain any credentials.
-// It's just the name of the environment variable.
-const PasswordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+const PasswordEnvVariable = "KEEP_ETHEREUM_PASSWORD" // #nosec G101 -- it's just env variable name
 
 // Config is the top level config structure.
 type Config struct {
