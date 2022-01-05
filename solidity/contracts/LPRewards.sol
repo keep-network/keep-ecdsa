@@ -270,3 +270,13 @@ contract LPRewardsTBTCv2Saddle is LPRewardsTBTCSaddle {
         LPRewardsTBTCSaddle(keepToken, tbtcV2SaddleLPToken)
     {}
 }
+
+/// @title KEEP rewards for the tBTC V2 Saddle V2 liquidity pool.
+/// @dev LP token: TODO: Fill
+///      Pool: TODO: Fill
+contract LPRewardsTBTCv2SaddleV2 is LPRewardsTBTCSaddle {
+    constructor(KeepToken keepToken, IERC20 tbtcV2SaddleLPToken)
+        public
+        LPRewardsTBTCSaddle(keepToken, tbtcV2SaddleLPToken)
+    {}
+}
