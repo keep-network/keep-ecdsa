@@ -32,9 +32,7 @@ jobs:
       - name: Resolve latest contracts
         working-directory: ./solidity
         run: |
-          npm update --save-exact \
-            @keep-network/keep-core \
-            @keep-network/sortition-pools
+          npm update --save-exact @keep-network/keep-core
 
       - name: Compile contracts
         run: npx truffle compile

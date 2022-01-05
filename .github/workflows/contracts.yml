@@ -134,7 +134,6 @@ jobs:
 
       - name: Resolve latest contracts
         run: |
-          npm update @keep-network/sortition-pools
           npm install --save-exact \
             @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-contracts-version }}
 
