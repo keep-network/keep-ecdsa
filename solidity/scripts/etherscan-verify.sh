@@ -23,6 +23,8 @@ npx truffle run verify \
     LPRewardsKEEPTBTC \
     LPRewardsTBTCETH \
     LPRewardsTBTCSaddle \
+    LPRewardsTBTCv2Saddle \
+    LPRewardsTBTCv2SaddleV2 \
     Migrations \
     Position \
     StackLib \

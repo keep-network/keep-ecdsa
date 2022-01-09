@@ -3,6 +3,7 @@ const LPRewardsKEEPETH = artifacts.require("LPRewardsKEEPETH")
 const LPRewardsKEEPTBTC = artifacts.require("LPRewardsKEEPTBTC")
 const LPRewardsTBTCSaddle = artifacts.require("LPRewardsTBTCSaddle")
 const LPRewardsTBTCv2Saddle = artifacts.require("LPRewardsTBTCv2Saddle")
+const LPRewardsTBTCv2SaddleV2 = artifacts.require("LPRewardsTBTCv2SaddleV2")
 
 const TestToken = artifacts.require("./test/TestToken")
 const KeepToken = artifacts.require(
@@ -67,6 +68,7 @@ module.exports = async function () {
       LPRewardsKEEPTBTC,
       LPRewardsTBTCSaddle,
       LPRewardsTBTCv2Saddle,
+      LPRewardsTBTCv2SaddleV2,
     ]
 
     for (const LPRewardsContract of LPRewardsContracts) {
