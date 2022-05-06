@@ -1,0 +1,366 @@
+= ECDSA Keep Signer Selection
+
+Selecting the participants of ECDSA keeps
+has some important differences to Random Beacon group selection.
+Instead of a large signing group with a honest majority,
+current threshold ECDSA implementations
+limit the practical group size to 3-of-3.
+
+For use in the Keep network,
+two schemes appear viable candidates:
+a non-interactive sortition with lazy evaluation of eligibility,
+and an adapted version of the current Random Beacon ticket-based protocol.
+
+== Requirements
+
+As in the Random Beacon,
+we have a number of basic requirements for the selection process:
+
+Proportionality::
+Each operator's chance of being selected
+is proportional to the amount of KEEP tokens backing them.
+
+Constant group size::
+We want to select 3 members.
+Not 4 members, nor 2 excepting that we then proceed to select a third member.
+5 members is right out.
+
+Efficiency::
+We need to select members for every ECDSA keep,
+as just reusing the same 3 every time would be bad.
+This means we pay the price of member selection every time.
+By the theorem of money is nice to have,
+we would like to avoid
+giving the miners money we could instead _keep_ to ourselves.
+
+Manipulation resistance::
+It's not good if we spend a whole load of money
+implementing some kind of a fancypants hunger games of a selection process
+only to find that some smartass operator circumvented the rules.
+It's embarrassing if someone gets to be more clever than us on-chain,
+so we need to be really clever to begin with.
+
+In addition to the basic requirements from the Random Beacon,
+such as the chances of getting selected
+being proportional to the operator's stake,
+ECDSA keeps have a number of more involved requirements
+for a viable member selection process.
+
+=== Fully backed bonding
+
+In addition to the normal KEEP token stake,
+ECDSA keeps must be able to utilize separate bonds as collateral.
+Unlike staked KEEP which may become leveraged,
+operations relying on these bonded tokens (initially ETH)
+must always be fully backed.
+
+Fully backed bonding makes eligibility determination more complex.
+However, we only need to apply proportionality to the staked KEEP
+so bonding can be a boolean
+"does this operator have enough of a bond to participate or not".
+
+=== Privileged customer applications
+
+Unlike in the Random Beacon,
+where the customer does not matter for group selection,
+ECDSA keeps must be able to have privileged customer applications
+that may seize the bonded tokens at their discretion.
+
+This means that it is not enough to ensure
+that the EDCSA keep factory is authorized to slash operators.
+Instead, each privileged customer must be individually authorized
+to seize the selected operators' bonds.
+Thus, eligibility must be determined on a per-customer basis.
+
+To make matters more complex,
+customers should not be able to interfere with each other.
+If adding a new privileged customer
+can increase the cost of on-chain actions for the old customers,
+a variety of DOS attacks becomes possible.
+
+=== Prohibiting visible duplicate members?
+
+In the Random Beacon,
+a single operator with a staker weight greater than 1
+can have multiple members in a single signing group.
+This ensures better proportionality,
+reduces incentives to blitzpants
+(and thus obfuscate the true level of centralization in stakes),
+and is harmless when groups have tens of members
+as a single operator is very unlikely to control a disproportionate fraction.
+
+With only 3 members,
+the probability of a single operator controlling the entire group
+is vastly higher.
+An operator with 5% of the total stake
+is astronomically unlikely to have a controlling majority
+of 33 in 64 members,
+but would have 1 in 8,000 chance of controlling 3 in 3 members.
+
+If such _visible duplicates_
+(members controlled by the same operator address)
+are permitted,
+it may cause unhappiness among customers
+who aren't accustomed to applying the security mindset.
+Because such individuals make up the vast majority
+of posts on Twitter and Hacker News,
+we can't tell them to just git gud
+and need to consider the optics of our member selection scheme.
+
+In the actual reality
+anyone planning malicious action
+would most likely blitzpants
+the hell out of their stakes anyway
+to conceal their capabilities for nefarious coordination.
+Thus the impact is only really limited
+to operators starting out as honest.
+And because honest whales are a wee bit less likely to be selected,
+naughty blitzpantsers will be ever so slightly overrepresented
+in the ECDSA keeps.
+
+However, a legit benefit of banning visible dupes
+is that a single operator's client node getting hacked
+can't result in the hacker immediately running away with the BTC deposit,
+no matter how lucky the unlucky operator previously was.
+
+Prohibiting visible duplicates
+harms the proportionality of the selection process
+as large stakers get marginally less return from their capital,
+and thus creates a slight incentive to blitzpants,
+but the impact is dramatically lesser than in the Random Beacon.
+Permitting visible duplicates
+may also lead to implementation complications
+because a single client node may need to play multiple roles simultaneously.
+
+To ensure we don't screw up right in the beginning of the process,
+this draft isn't going to commit either way on this question.
+Both options will be explored.
+
+=== Fast response time?
+
+In the Random Beacon,
+the signing group producing each entry
+is selected from a pool of existing groups.
+A signing group can only be called to perform work
+when member selection and key generation have finished.
+The only major downside of slower member selection and DKG
+is that the rate of signing group creation is limited
+as the current design requires any existing group creation
+to finish or time out before another group creation may begin.
+A future redesign to permit concurrent group creation
+could eliminate this constraint.
+
+When a request for an ECDSA keep is made,
+the keep may be required right away
+depending on the customer application.
+Significant latency in this process is detrimental to the service.
+== Common features
+
+Some solutions to various parts of the whole question
+don't vary between the candidate schemes.
+
+=== Independent bonding contracts
+
+We're likely to want to use currency bonding in future keep protocols.
+Thus, instead of implementing bonding separately in each protocol
+it is preferable to have one general-purpose bonding contract
+for each bonding scheme
+(a specific currency and ruleset).
+
+Just like the staking contract,
+these bonding contracts make the bond currency available
+to contracts authorized by the operator's authorizer.
+Unlike in the staking contract,
+the fully backed bonds can either be directly transferred to keeps,
+or assigned to them in the bonding contract.
+
+=== New authorizations
+
+When a keep/factory wants to use an operator's bond,
+it needs to be authorized.
+This authorization must be a part of an operator's eligibility for selection.
+
+In the case of privileged customer applications,
+the privileged application itself must be authorized.
+If the privileged applications can only seize bonds,
+the staking contract doesn't need to be changed to accommodate them.
+
+===  Pooling keeps?
+
+If ECDSA keeps are created in response to requests,
+creating a keep requires acquiring a selection seed from the Random Beacon.
+The Random Beacon cannot produce entries instantly,
+so ECDSA keeps could only be returned through a later callback.
+Any additional latency beyond the beacon entry
+would add further delay to the customer receiving the keep.
+
+If ECDSA keeps are created in advance and kept in a pool,
+most requests can be served immediately from the pool
+instead of requiring a later callback.
+
+Being able to return the keep address
+immediately when the customer requests a keep
+would provide a superior customer experience.
+However, this is impossible to guarantee
+as any number of pooled keeps
+can be exhausted by a greater number of keep requests
+in a sufficiently short period of time.
+Thus, an interface that can return a keep immediately
+would need to either error out when it cannot return a keep,
+requiring the customer to request again later,
+or to return a newly created keep in a callback
+if one isn't immediately available.
+In either case the customer application must be designed
+to deal with the more complex scenario.
+
+Another advantage of pooling keeps is that keeps can be created in batches.
+Standard methods exist for deriving an arbitrary number of pseudorandom numbers
+from a single high-entropy seed.
+If a single entry from the Random Beacon is used
+to create a large number of ECDSA keeps, e.g. 20,
+the cost of the beacon entry is divided among them.
+
+Additionally, selecting a larger number of members
+and dividing them among the batched keeps
+may affect the characteristics of the member selection scheme
+either favorably or unfavorably.
+
+include::sortition-pools.adoc[]
+
+== Implementation
+
+=== Bonding contract
+
+The bonding contract makes Ethereum bonds available as collateral
+for operator contracts and privileged customer applications.
+
+Unlike staked KEEP,
+the proportionality requirement does not apply to currency bonding.
+However, once an amount of ETH is bonded as collateral for an operation
+it is tied to the specific operation until freed,
+and unavailable for other operations.
+
+==== Unbonded value
+
+ETH that an operator has available for bonding
+but that has not been assigned for any specific bond
+is recorded in `unbondedValue`.
+
+Anyone can add bonding ETH to an operator at any time
+by calling `deposit(operator)` with a payment.
+The amount of ETH received by the bonding contract
+is added to the specified `operator`'s `unbondedValue`.
+
+An operator can withdraw some or all of their unbonded value
+at any time by calling `withdraw(amount, destination)`.
+If the specified `amount` is less than the `unbondedValue[msg.sender]`,
+it is transferred to the address `destination`.
+
+`mapping(address operator => uint) unbondedValue`::
+
+`payable deposit(address operator)`::
+
+`withdraw(uint amount, address destination)`::
+
+==== Authorizations
+
+As with the staking contract,
+operator contracts must be authorized by an operator's authorizer
+in order to create bonds.
+Once a bond has been created by an authorized operator contract
+it can be reassigned at will to any other contract.
+The current holder of a bond may reassign, seize or free it at will.
+An authorized operator contract is expected
+to treat bonds it creates with appropriate caution.
+
+Additionally, privileged customer applications
+that wish to have the authority to cause operators' bonds to be seized
+should be identified to the bonding contract
+and authorized by an operator's authorizer.
+This is done by authorizing the _sortition pool_
+associated with the privileged customer.
+
+However, seizing a bond based on input from a privileged customer application
+is actually performed by the holder of the bond,
+so this authorization is absolutely non-enforceable
+and serves as more of a sanity check.
+Authorized operator contracts are expected
+to play nice and honor this sanity check,
+and operators' authorizers are expected
+to not authorize operator contracts that do not respect the sanity check.
+
+Authorized operator contracts and authorized sortition pools
+are recorded in the bonding contract
+as `authorizedOperatorContracts[authorizer]`
+and `authorizedSortitionPools[authorizer]` respectively.
+As with the staking contract,
+all operators using `authorizer` as their authorizer
+share the authorizations.
+To reduce cross-contract calls to the staking contract,
+positive authorizations can be cached in the bonding contract.
+
+==== Creating a bond
+
+Similarly to the staking contract,
+the bonding contract provides a single function
+operator contracts can use to determine whether a bond can be created.
+`availableBondingValue(operator, bondCreator, authorizedSortitionPool)`
+performs all the applicable authorization checks 
+and returns the amount of ETH that can be bonded
+from the `operator`, by the `bondCreator`,
+trusting the privileged customer associated with the `authorizedSortitionPool`
+(or none, if the authorized pool is the default pool of `bondCreator`
+and not associated with any privileged customer).
+
+To actually create a bond,
+an operator contract calls
+`createBond(operator, reference, amount)`.
+This checks that `msg.sender` is allowed to create the bond,
+and if the amount available for the requested bond
+is equal or greater than the requested `amount`,
+the bond `amount` is subtracted from the `unbondedValue` of the operator
+and the bond is created at `lockedBonds[operator, msg.sender, reference]`.
+If the amount available is less than requested,
+`createBond()` returns an error.
+
+`availableBondingValue(address operator, address bondCreator, address authorizedSortitionPool)`
+
+`createBond(address operator, uint amount, uint reference)`.
+
+`mapping(address operator, address holder, uint reference => uint) lockedBonds`
+
+==== Assigned bonds
+
+When an operator joins an operation requiring a bond
+it is subtracted from the `unbondedValue` of the operator,
+and a bond is created.
+The created bond is identified by the address of the `operator`,
+the address of the operator contract that is the `holder` of the bond,
+and the `reference` identifier of the specific bond.
+
+The specific bond is recorded in `lockedBonds`.
+
+The `holder` of a bond can reassign it
+to a different holder and/or reference
+by calling `reassign(operator, reference, newHolder, newReference)`.
+This removes the bond `lockedBonds[operator, holder, reference]`
+and creates a new bond at `lockedBonds[operator, newHolder, newReference]`.
+
+The `holder` of a bond can seize some or all of a locked bond
+by calling `seizeBond(operator, reference, amount)`.
+The specified `amount` must be
+equal or less than the bond at `lockedBonds[operator, holder, reference]`.
+The `amount` is subtracted from the bond
+and transferred to the `holder`.
+
+The `holder` of a bond can free the bond
+by calling `freeBond(operator, reference)`.
+The bond at `lockedBonds[operator, holder, reference]` is removed
+and the bonded amount is added to `unbondedValue[operator]`.
+
+`reassign(address operator, uint reference, address newHolder, uint newReference)`
+
+`seizeBond(address operator, uint reference, uint amount)`
+
+`freeBond(address operator, uint reference)`
+
