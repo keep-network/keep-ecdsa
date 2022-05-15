@@ -1,0 +1,46 @@
+{
+  "name": "rewards-claimer-hardhat",
+  "version": "1.0.0",
+  "description": "Claim multiple ECDSA Staker rewards at once",
+  "main": "index.js",
+  "author": "Danilo Ramirez",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "@daramir/multicall": "git+https://github.com/daramir/multicall.js#f/extract-call-data",
+    "@keep-network/keep-ecdsa": "1.6.0",
+    "hardhat": "^2.6.6"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.0",
+    "@nomiclabs/hardhat-etherscan": "^2.1.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.0",
+    "chai": "^4.2.0",
+    "dotenv": "^10.0.0",
+    "eslint": "^7.29.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "ethereum-waffle": "^3.0.0",
+    "ethers": "^5.0.0",
+    "hardhat-gas-reporter": "^1.0.4",
+    "prettier": "^2.3.2",
+    "prettier-plugin-solidity": "^1.0.0-beta.13",
+    "solhint": "^3.3.6",
+    "solidity-coverage": "^0.7.16"
+  },
+  "scripts": {
+    "chain": "hardhat node",
+    "fork": "hardhat node --fork",
+    "test": "hardhat test --network hardhat",
+    "compile": "hardhat compile",
+    "deploy": "hardhat deploy",
+    "accounts": "hardhat accounts",
+    "balance": "hardhat balance",
+    "preview-claim": "hardhat preview-ecdsa-rewards",
+    "multi-claim": "hardhat claim-ecdsa-rewards"
+  }
+}
