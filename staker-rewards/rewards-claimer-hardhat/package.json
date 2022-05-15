@@ -7,7 +7,7 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "@daramir/multicall": "git://github.com/daramir/multicall.js#f/extract-call-data",
+    "@daramir/multicall": "git+https://github.com/daramir/multicall.js#f/extract-call-data",
     "@keep-network/keep-ecdsa": "1.6.0",
     "hardhat": "^2.6.6"
   },

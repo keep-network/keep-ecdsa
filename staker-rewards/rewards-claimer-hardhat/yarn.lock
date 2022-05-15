@@ -37,9 +37,9 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
-"@daramir/multicall@git://github.com/daramir/multicall.js#f/extract-call-data":
+"@daramir/multicall@git+https://github.com/daramir/multicall.js#f/extract-call-data":
   version "0.12.0"
-  resolved "git://github.com/daramir/multicall.js#7e243623138296b08d986b2202c856eac9a4f44b"
+  resolved "git+https://github.com/daramir/multicall.js#7e243623138296b08d986b2202c856eac9a4f44b"
   dependencies:
     "@babel/runtime" "^7.7.4"
     cross-fetch "^3.0.4"
