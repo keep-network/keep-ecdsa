@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	cecdsa "crypto/ecdsa"
-	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -200,7 +199,7 @@ func SignDigest(c *cli.Context) error {
 	signingOutcomesChannel := make(chan *signingOutcome, len(signers))
 
 	pubKeyToAddressFn := func(publicKey cecdsa.PublicKey) []byte {
-		return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
+		return cryptoPubkeyToAddress(publicKey).Bytes()
 	}
 
 	for i := range signers {
