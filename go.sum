@@ -502,8 +502,8 @@ github.com/keep-network/tbtc v1.1.1-0.20211005102550-e0f035c575a2 h1:KUkq7+GLFoi
 github.com/keep-network/tbtc v1.1.1-0.20211005102550-e0f035c575a2/go.mod h1:POTeEzpqsuuK9Hng5tbLLJckmfGAQqtVUoCpW0PkuJU=
 github.com/keep-network/toml v0.3.0 h1:G+NJwWR/ZiORqeLBsDXDchYoL29PXHdxOPcCueA7ctE=
 github.com/keep-network/toml v0.3.0/go.mod h1:Zeyd3lxbIlMYLREho3UK1dMP2xjqt2gLkQ5E5vM6K38=
-github.com/keep-network/tss-lib v1.3.3-0.20211215091450-8afce0f07c9f h1:yeErMU/AgG7R66yo11CD5Wqwm8IYyshRjrq3XvoyJFY=
-github.com/keep-network/tss-lib v1.3.3-0.20211215091450-8afce0f07c9f/go.mod h1:y85qADlz1+q+Eo01GupDnNt68XJDmb6I/jEwAolIHtQ=
+github.com/keep-network/tss-lib v1.3.3-0.20220914135540-bf17762025bf h1:se8JiIikGGG4Et4doGIwNZwWBdNvd34X3338xya3Xmw=
+github.com/keep-network/tss-lib v1.3.3-0.20220914135540-bf17762025bf/go.mod h1:y85qADlz1+q+Eo01GupDnNt68XJDmb6I/jEwAolIHtQ=
 github.com/kilic/bls12-381 v0.0.0-20201226121925-69dacb279461/go.mod h1:vDTTHJONJ6G+P2R74EhnyotQDTliQDnFEwhdmfzw1ig=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
