@@ -6,16 +6,14 @@ https://github.com/keep-network/keep-ecdsa/actions/workflows/contracts.yml[image
 https://github.com/keep-network/keep-ecdsa/actions/workflows/client.yml[image:https://img.shields.io/github/workflow/status/keep-network/keep-ecdsa/Solidity/master?event=push&label=Go build[Go client build status]]
 https://discord.gg/wYezN7v[image:https://img.shields.io/badge/chat-Discord-blueViolet.svg[Chat with us on Discord]]
 
-The on- and off-chain pieces of ECDSA keeps and Bonded ECDSA keeps
-for the Keep network. Builds on top of and requires the
+The on- and off-chain pieces of ECDSA keeps and Bonded ECDSA keeps for the Keep
+network. Builds on top of and requires the
 https://github.com/keep-network/keep-core/[core system]
 
-This is development documentation, to see how to run ECDSA client on
-mainnet or testnet, please visit link:docs/run-keep-ecdsa.adoc[Run Keep ECDSA client].
+This is development documentation, to see how to run ECDSA client on mainnet or
+testnet, please visit link:docs/run-keep-ecdsa.adoc[Run Keep ECDSA client].
 
 toc::[]
-
-
 
 == Contracts
 
@@ -23,10 +21,9 @@ See link:./solidity/[solidity] directory.
 
 == Getting Set Up
 
-If you’re on macOS, install Homebrew and run `scripts/macos-setup.sh`.
-Note that if you don’t have Homebrew or you’re not on macOS, the below
-information details what you’ll need. The script additionally sets up
-pre-commit hooks.
+If you’re on macOS, install Homebrew and run `scripts/macos-setup.sh`. Note that
+if you don’t have Homebrew or you’re not on macOS, the below information details
+what you’ll need. The script additionally sets up pre-commit hooks.
 
 ```
 ./scripts/macos-setup.sh
@@ -77,8 +74,8 @@ Specifically developer documentation for the various parts of Keep ECDSA.
 
 The smart contracts behind the ECDSA keeps.
 
-They handle creating and managing ECDSA keeps, bridging off-chain secret
-storage and the public blockchain.
+They handle creating and managing ECDSA keeps, bridging off-chain secret storage
+and the public blockchain.
 
 === link:pkg/[`pkg/`]
 
@@ -89,32 +86,30 @@ It runs hosts ECDSA keep nodes, and participates in keep computations.
 
 === Building
 
-Currently the easiest way to build the client is using the
-`+Dockerfile+` at the root of the repository. A simple `+docker build+`
-should get you a functioning container.
+Currently the easiest way to build the client is using the `+Dockerfile+` at the
+root of the repository. A simple `+docker build+` should get you a functioning
+container.
 
-To build manually, you’ll need to install `jq+`, `+truffle+`, and
-`+npm+`. Then you can follow the steps in the next section.
+To build manually, you’ll need to install `jq+`, `+truffle+`, and `+npm+`. Then
+you can follow the steps in the next section.
 
 ==== Quick installation
 
-To quickly install and start a single client use the installation
-script.
+To quickly install and start a single client use the installation script.
 
 ===== Prerequisites
 
 To run the script some manual preparation is needed:
 
-* https://docs.keep.network/development/local-keep-network.html[set
-up local ethereum chain],
+* https://docs.keep.network/development/local-keep-network.html[set up local
+  ethereum chain],
 * link:#Configuration[config file for the single client] (default name:
-`+config.toml+`),
-* link:./solidity/README.md#NPM-dependencies[npm authorized to access
-private packages in GitHub’s Package Registry].
+  `+config.toml+`),
+* link:./solidity/README.md#NPM-dependencies[npm authorized to access private
+  packages in GitHub’s Package Registry].
 
-Please note that the client config file doesn’t have to be
-pre-configured with contracts addresses as they will be populated during
-installation.
+Please note that the client config file doesn’t have to be pre-configured with
+contracts addresses as they will be populated during installation.
 
 ===== Install script
 
@@ -136,8 +131,8 @@ To start the installation execute:
 ===== Initialize script
 
 The `+initialize.sh+` script should be called after external customer
-application contract (i.e. `+TBTCSystem+`) using keep-ecdsa is known.
-The script will:
+application contract (i.e. `+TBTCSystem+`) using keep-ecdsa is known. The script
+will:
 
 * set address to the customer application,
 * initialize contracts,
@@ -145,10 +140,10 @@ The script will:
 
 The script will ask for the client config file path.
 
-It also requires an external client application address which is an
-address of an external contract that will be requesting keeps creation.
-For local smoke test execution this address should be the same as the
-account you will use in the smoke test to request keep opening.
+It also requires an external client application address which is an address of
+an external contract that will be requesting keeps creation. For local smoke
+test execution this address should be the same as the account you will use in
+the smoke test to request keep opening.
 
 To start the initialization execute:
 
@@ -170,8 +165,8 @@ To start the client execute:
 
 Building `keep-ecdsa` requires Go version 1.13 or later. 
 
-Dependencies are managed by
-https://github.com/golang/go/wiki/Modules[Modules] feature.
+Dependencies are managed by https://github.com/golang/go/wiki/Modules[Modules]
+feature.
 
 
 ==== Build
@@ -197,9 +192,9 @@ go test ./...
 
 ==== Configuration
 
-`+configs/config.toml+` is default path to the config file. To provide
-custom configuration CLI supports `+--config+` flag. Sample
-configuration can be found in [config.toml.SAMPLE](configs/config.toml.SAMPLE).
+`+configs/config.toml+` is default path to the config file. To provide custom
+configuration CLI supports `+--config+` flag. Sample configuration can be found
+in [config.toml.SAMPLE](configs/config.toml.SAMPLE).
 
 ==== Storage
 Users configure the root storage directory at `Storage.DataDir`. The storage layout looks like:
