@@ -4,6 +4,7 @@
 
 https://github.com/keep-network/keep-ecdsa/actions/workflows/contracts.yml[image:https://img.shields.io/github/actions/workflow/status/keep-network/keep-ecdsa/contracts.yml?branch=main&label=Solidity%20Build[Solidity contracts build status]]
 https://github.com/keep-network/keep-ecdsa/actions/workflows/client.yml[image:https://img.shields.io/github/actions/workflow/status/keep-network/keep-ecdsa/client.yml?branch=main&label=Go%20Build[Go client build status]]
+https://docs.threshold.network[image:https://img.shields.io/badge/docs-website-green.svg[Docs]]
 https://discord.gg/threshold[image:https://img.shields.io/badge/chat-Discord-5865f2.svg[Chat with us on Discord]]
 
 The on- and off-chain pieces of ECDSA keeps and Bonded ECDSA keeps for the Keep
