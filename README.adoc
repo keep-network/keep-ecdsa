@@ -1,6 +1,15 @@
 :toc: macro
 
+ifdef::env-github[]
+:important-caption: :heavy_exclamation_mark:
+endif::[]
+
+
 = keep-ecdsa
+
+IMPORTANT: This repository has been archived. tBTC v1 is no longer actively maintained and has been superseded by tBTC v2.
+           tBTC v2 smart contract code is available in the link:https://github.com/keep-network/tbtc-v2[keep-network/tbtc-v2] repository.
+           tBTC v2 client code is available in the link:https://github.com/keep-network/keep-core[keep-network/keep-core] repository.
 
 https://github.com/keep-network/keep-ecdsa/actions/workflows/contracts.yml[image:https://img.shields.io/github/actions/workflow/status/keep-network/keep-ecdsa/contracts.yml?branch=main&label=Solidity%20Build[Solidity contracts build status]]
 https://github.com/keep-network/keep-ecdsa/actions/workflows/client.yml[image:https://img.shields.io/github/actions/workflow/status/keep-network/keep-ecdsa/client.yml?branch=main&label=Go%20Build[Go client build status]]
